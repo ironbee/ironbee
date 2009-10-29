@@ -1,0 +1,223 @@
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+       
+#include "../htp/htp.h"
+#include "test.h"
+
+/**
+ * Destroys a test.
+ *
+ * @param test
+ */
+static void test_destroy(test_t *test) {
+    if (test->buf != NULL) {
+        free(test->buf);
+        test->buf = NULL;
+    }
+}
+
+/**
+ * Checks if there's a chunk boundary at the given position.
+ *
+ * @param test
+ * @param pos
+ * @return Zero if there is no boundary, SERVER or CLIENT if a boundary
+ *         was found, and a negative value on error (e.g., not enough data
+ *         to determine if a boundary is present).
+ */
+static int test_is_boundary(test_t *test, int pos) {
+    // Check that there's enough room
+    if (pos + 3 >= test->len) return -1;
+
+    if ((test->buf[pos] == '<') && (test->buf[pos + 1] == '<') && (test->buf[pos + 2] == '<')) {
+        if (test->buf[pos + 3] == '\n') {
+            return SERVER;
+        }
+
+        if (test->buf[pos + 3] == '\r') {
+            if (pos + 4 >= test->len) return -1;
+            else if (test->buf[pos + 4] == '\n') {
+                return SERVER;
+            }
+        }
+    }
+
+    if ((test->buf[pos] == '>') && (test->buf[pos + 1] == '>') && (test->buf[pos + 2] == '>')) {
+        if (test->buf[pos + 3] == '\n') {
+            return CLIENT;
+        }
+
+        if (test->buf[pos + 3] == '\r') {
+            if (pos + 4 >= test->len) return -1;
+            else if (test->buf[pos + 4] == '\n') {
+                return CLIENT;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Initializes test by loading the entire data file into a memory block.
+ *
+ * @param test
+ * @param filename
+ * @return Non-negative value on success, negative value on error.
+ */
+static int test_init(test_t *test, const char *filename) {
+    memset(test, 0, sizeof (test_t));
+
+    int fd = open(filename, O_RDONLY | O_BINARY);
+    if (fd < 0) return -1;
+
+    struct stat buf;
+    if (fstat(fd, &buf) < 0) {
+        return -1;
+    }
+
+    test->buf = malloc(buf.st_size);
+    test->len = 0;
+    test->pos = 0;
+
+    int bytes_read = 0;
+    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {
+        test->len += bytes_read;
+    }
+
+    if (test->len != buf.st_size) {
+        free(test->buf);
+        return -2;
+    }
+
+    close(fd);
+
+    return 1;
+}
+
+/**
+ * Finds the next data chunk in the given test.
+ *
+ * @param test
+ * @return One if a chunk is found or zero if there are no more chunks in the test. On
+ *         success, test->chunk will point to the beginning of the chunk, while
+ *         test->chunk_len will contain its length.
+ */
+static int test_next_chunk(test_t *test) {
+    if (test->pos >= test->len) {
+        return 0;
+    }
+
+    test->chunk = NULL;
+
+    while (test->pos < test->len) {
+        // Do we need to start another chunk?
+        if (test->chunk == NULL) {
+            // Are we at a boundary
+            test->chunk_direction = test_is_boundary(test, test->pos);
+            if (test->chunk_direction <= 0) {
+                // Error
+                return -1;
+            }
+
+            // Move over the boundary
+            test->pos += 4;
+            if (test->buf[test->pos] == '\n') test->pos++;
+
+            // Start new chunk
+            test->chunk = test->buf + test->pos;
+            test->chunk_offset = test->pos;
+        }
+
+        // Are we at the end of a line?
+        if (test->buf[test->pos] == '\n') {
+            int r = test_is_boundary(test, test->pos + 1);
+            if ((r == CLIENT) || (r == SERVER)) {
+                // We got ourselves a chunk
+                test->chunk_len = test->pos - test->chunk_offset;
+
+                // Remove one '\r' at the end, which belongs to the next boundary
+                if ((test->chunk_len > 0) && (test->chunk[test->chunk_len - 1] == '\r')) {
+                    test->chunk_len--;
+                }
+
+                // Position at the next boundary line
+                test->pos++;
+
+                return 1;
+            }
+        }
+
+        test->pos++;
+    }
+
+    if (test->chunk != NULL) {
+        test->chunk_len = test->pos - test->chunk_offset;
+        return 1;
+    }
+
+    return 0;
+}
+
+/**
+ * Runs a single test.
+ *
+ * @param filename
+ * @param cfg
+ * @return A pointer to the instance of htp_connp_t created during
+ *         the test, or NULL if the test failed for some reason.
+ */
+int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
+    char filename[1025];
+    test_t test;
+    struct timeval tv;
+    int rc;
+
+    *connp = NULL;
+
+    strncpy(filename, testsdir, 1024);
+    strncat(filename, "/", 1024 - strlen(filename));
+    strncat(filename, testname, 1024 - strlen(filename));
+
+    printf("Filename: %s\n", filename);
+
+    // Initinialize test
+
+    rc = test_init(&test, filename);
+    if (rc < 0) {
+        return rc;
+    }
+
+    gettimeofday(&tv, NULL);
+
+    // Create parser
+    *connp = htp_connp_create(cfg);
+
+    // Find all chunks and feed them to the parser
+    for (;;) {
+        if (test_next_chunk(&test) <= 0) {
+            break;
+        }
+
+        if (test.chunk_direction == CLIENT) {
+            if (htp_connp_req_data(*connp, tv.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+                return -101;
+            }
+        } else {
+            if (htp_connp_res_data(*connp, tv.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+                return -102;
+            }
+        }
+    }
+
+    // Clean up
+    test_destroy(&test);
+
+    return 1;
+}
