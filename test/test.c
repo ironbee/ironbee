@@ -101,6 +101,10 @@ static int test_init(test_t *test, const char *filename) {
     return 1;
 }
 
+void test_start(test_t *test) {
+    test->pos = 0;
+}
+
 /**
  * Finds the next data chunk in the given test.
  *
@@ -142,11 +146,6 @@ static int test_next_chunk(test_t *test) {
                 // We got ourselves a chunk
                 test->chunk_len = test->pos - test->chunk_offset;
 
-                // Remove one '\r' at the end, which belongs to the next boundary
-                if ((test->chunk_len > 0) && (test->chunk[test->chunk_len - 1] == '\r')) {
-                    test->chunk_len--;
-                }
-
                 // Position at the next boundary line
                 test->pos++;
 
@@ -165,6 +164,45 @@ static int test_next_chunk(test_t *test) {
     return 0;
 }
 
+static int parse_filename(const char *filename, char **remote_addr, int *remote_port, char **local_addr, int *local_port) {
+    char *copy = strdup(filename);
+    char *p, *saveptr;
+
+    char *start = copy;
+    char *q = strrchr(copy, '/');
+    if (q != NULL) start = q;
+
+    q = strrchr(start, '\\');
+    if (q != NULL) start = q;
+
+    int count = 0;
+    p = strtok_r(start, "_", &saveptr);
+    while (p != NULL) {
+        count++;
+        // printf("%i %s\n", count, p);
+        
+        switch (count) {
+            case 2:
+                *remote_addr = strdup(p);
+                break;
+            case 3 :
+                *remote_port = atoi(p);
+                break;
+            case 4:
+                *local_addr = strdup(p);
+            case 5:
+                *local_port = atoi(p);
+                break;
+        }
+
+        p = strtok_r(NULL, "_", &saveptr);
+    }
+
+    free(copy);
+
+    return 0;
+}
+
 /**
  * Runs a single test.
  *
@@ -176,7 +214,7 @@ static int test_next_chunk(test_t *test) {
 int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
     char filename[1025];
     test_t test;
-    struct timeval tv;
+    struct timeval tv_start, tv_end;
     int rc;
 
     *connp = NULL;
@@ -194,10 +232,24 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         return rc;
     }
 
-    gettimeofday(&tv, NULL);
-
+    gettimeofday(&tv_start, NULL);
+   
+    test_start(&test);
+    
     // Create parser
     *connp = htp_connp_create(cfg);
+    if (*connp == NULL) {
+        fprintf(stderr, "Failed to create connection parser\n");
+        exit(1);
+    }
+
+    if (strncmp(testname, "stream", 6) == 0) {
+        char *remote_addr, *local_addr;
+        int remote_port, local_port;
+
+        parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
+        htp_connp_open(*connp, (const char *)remote_addr, remote_port, (const char *)local_addr, local_port);
+    }
 
     // Find all chunks and feed them to the parser
     for (;;) {
@@ -206,15 +258,19 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         }
 
         if (test.chunk_direction == CLIENT) {
-            if (htp_connp_req_data(*connp, tv.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+            if (htp_connp_req_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
                 return -101;
             }
         } else {
-            if (htp_connp_res_data(*connp, tv.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+            if (htp_connp_res_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
                 return -102;
             }
         }
     }
+
+    gettimeofday(&tv_end, NULL);
+
+    // printf("Parsing time: %i\n", tv_end.tv_usec - tv_start.tv_usec);
 
     // Clean up
     test_destroy(&test);

@@ -41,7 +41,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         OUT_NEXT_BYTE_OR_RETURN(connp);
         connp->out_tx->response_body_len_actual++;
 
-        if (connp->out_next_byte == -1) {
+        if (connp->out_next_byte == -1) {            
             // Send data to callbacks
             hook_run_all(connp->cfg->hook_response_body_data, &d);
 
@@ -53,7 +53,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->out_chunked_length == 0) {
                 // End of data chunk
-
+                
                 // Send data to callbacks
                 hook_run_all(connp->cfg->hook_response_body_data, &d);
 
@@ -501,7 +501,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // Return straight away if there's no data to process
     if ((data == NULL) || (len == 0)) {
         return HTP_ERROR;
-    }
+    }   
 
     // Also return if the connection has had a fatal error
     if (connp->status != HTP_OK) {
