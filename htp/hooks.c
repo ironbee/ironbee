@@ -62,7 +62,7 @@ void hook_register(htp_hook_t **hook, int (*callback_fn)(), int priority) {
 
 /**
  * Runs all the callbacks associated with a given hook. Only stops if
- * one of the callbacks returns an error (HOOK_ERROR).
+ * one of the callbacks returns an error (HOOK_ERROR). 
  *
  * @param hook
  * @param data

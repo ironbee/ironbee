@@ -89,14 +89,14 @@ int htp_chomp(unsigned char *data, size_t *len) {
     // Loop until there's no more stuff in the buffer
     while (*len > 0) {
         // Try one LF first
-        if (data[*len - 1] == LF) {            
+        if (data[*len - 1] == LF) {
             (*len)--;
             r = 1;
 
             if (*len == 0) return r;
 
             // A CR is allowed before LF
-            if (data[*len - 1] == CR) {                
+            if (data[*len - 1] == CR) {
                 (*len)--;
                 r = 2;
             }
@@ -225,7 +225,7 @@ int htp_parse_positive_integer_whitespace(char *data, size_t len, int base) {
             printf("# %i %c\n", data[pos], data[pos]);
             return -1002;
         }
-        
+
         pos++;
     }
 
@@ -374,4 +374,126 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len) {
  */
 int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len) {
     return htp_connp_is_line_terminator(connp, data, len);
+}
+
+/**
+ *
+ * @param input
+ * @param uri
+ */
+int htp_parse_uri(bstr *input, htp_uri_t **uri) {
+    char *data = bstr_ptr(input);
+    size_t len = bstr_len(input);
+    size_t start, pos;   
+
+    // Allow the htp_uri_t structure to be provided, but
+    // allocate a new one if it isn't
+    if (*uri == NULL) {
+        *uri = calloc(1, sizeof (htp_uri_t));
+        if (*uri == NULL) return -1;
+    }
+
+    if (len == 0) {
+        // Empty string
+        return -1;
+    }
+
+    pos = 0;
+
+    if (data[0] != '/') {
+        // Parse scheme        
+        
+        // TODO Temporary parsing
+        start = pos;
+        while ((pos < len)&&(data[pos] != ':')) pos++;
+
+        (*uri)->scheme = bstr_memdup(data + start, pos - start);        
+
+        // Go over the colon
+        pos++;
+    }
+
+    if ((pos + 2 < len) && (data[pos] == '/') && (data[pos + 1] == '/') && (data[pos + 2] != '/')) {
+        // Parse authority
+
+        // Go over the two slash characters
+        start = pos = pos + 2;
+                
+        while ((pos < len) && (data[pos] != '?') && (data[pos] != '/') && (data[pos] != '#')) pos++;
+
+        char *hostname_start;
+        size_t hostname_len;
+
+        // Are the credentials included?
+        char *m = memchr(data + start, '@', pos - start);
+        if (m != NULL) {
+            char *credentials_start = data + start;
+            size_t credentials_len = m - data - start;
+
+            // Figure out just the hostname part
+            hostname_start = data + start + credentials_len + 1;
+            hostname_len = pos - start - credentials_len - 1;
+
+            // Extract the username and the password
+            m = memchr(credentials_start, ':', credentials_len);
+            if (m != NULL) {
+                // Username and password
+                (*uri)->username = bstr_memdup(credentials_start, m - credentials_start);
+                (*uri)->password = bstr_memdup(m + 1, credentials_len - (m - credentials_start) - 1);                
+            } else {
+                // Username alone
+                (*uri)->username = bstr_memdup(credentials_start, credentials_len);                
+            }
+        } else {
+            // No credentials
+            hostname_start = data + start;
+            hostname_len = pos - start;           
+        }
+
+        // Is there a port?
+        m = memchr(hostname_start, ':', hostname_len);
+        if (m != NULL) {
+            size_t port_len = hostname_len - (m - hostname_start) - 1;
+            hostname_len = hostname_len - port_len - 1;
+
+            (*uri)->port = bstr_memdup(m + 1, port_len);            
+        }
+
+        (*uri)->hostname = bstr_memdup(hostname_start, hostname_len);        
+    }
+
+    // Path
+    start = pos;
+
+    // The path part will end with a question mark or a hash character, which
+    // mark the beginning of the query part or the fragment part, respectively.
+    while ((pos < len) && (data[pos] != '?') && (data[pos] != '#')) pos++;
+
+    (*uri)->path = bstr_memdup(data + start, pos - start);    
+
+    if (pos == len) return 1;
+
+    // Query
+    if (data[pos] == '?') {
+        // Step over the question mark
+        start = pos + 1;
+
+        // The query part will end with the end of the input
+        // or the beginning of the fragment part
+        while((pos < len)&&(data[pos] != '#')) pos++;
+
+        (*uri)->query = bstr_memdup(data + start, pos - start);        
+        if (pos == len) return 1;
+    }
+
+    // Fragment
+    if (data[pos] == '#') {
+        // Step over the hash character
+        start = pos + 1;
+
+        // The fragment part ends with the end of the input
+        (*uri)->fragment = bstr_memdup(data + start, len - start);        
+    }
+
+    return 1;
 }

@@ -207,7 +207,17 @@ int test_expect(htp_cfg_t *cfg) {
     return 1;
 }
 
+/**
+ *
+ */
+int test_uri_normal(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
 
+    test_run(home, "06-uri-normal.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    return 1;
+}
 
 
 int callback_transaction_start(htp_connp_t *connp) {
@@ -421,7 +431,8 @@ int main(int argc, char** argv) {
     //RUN_TEST(test_apache_header_parsing, cfg);
     //RUN_TEST(test_post_urlencoded, cfg);
     //RUN_TEST(test_post_urlencoded_chunked, cfg);
-    RUN_TEST(test_expect, cfg);
+    //RUN_TEST(test_expect, cfg);
+    RUN_TEST(test_uri_normal, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

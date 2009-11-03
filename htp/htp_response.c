@@ -187,7 +187,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // response. Ignore it if found, and revert back to RES_FIRST_LINE.
     if (connp->out_tx->response_status_number == 100) {
         if (connp->out_tx->seen_100continue != 0) {
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Already seen 100 Continue");
+            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Already seen 100-Continue");
             return HTP_ERROR;
         }
 

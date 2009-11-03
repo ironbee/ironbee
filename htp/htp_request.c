@@ -436,6 +436,8 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
+            htp_parse_uri(connp->in_tx->request_uri, &connp->in_tx->uri);
+
             // Run hook REQUEST_LINE
             if (hook_run_all(connp->cfg->hook_request_line, connp) != HOOK_OK) {
                 return HTP_ERROR;

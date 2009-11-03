@@ -42,6 +42,20 @@
 //      For example, we need a hook that will potentially change the configuration after
 //      we parse request headers, but before we parse parameters.
 
+// TODO The plan for SSL handling is as follows:
+//
+//      - For fully encrypted streams, upstream is free to decrypt SSL and feed the
+//        parser just the data.
+//
+//      - On-demand SSL is not used with HTTP in practice but, in principle, the idea
+//        is to have the parser return the HTP_TLS_UPGRADE code. Upon detecting the
+//        code, upstream would handle the upgrade (either by passively decrypting the
+//        traffic stream or handling SSL/TLS directly) and provide plain text data
+//        to the HTTP parser on every subsequent invocation.
+//
+
+
+
 
 // -- Defines -------------------------------------------------------------------------------------
 
@@ -245,6 +259,7 @@ typedef struct htp_header_line_t htp_header_line_t;
 typedef struct htp_log_t htp_log_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
+typedef struct htp_uri_t htp_uri_t;
 
 struct htp_cfg_t {    
     size_t field_limit_hard;
@@ -427,6 +442,8 @@ struct htp_tx_t {
     bstr *request_uri;
     bstr *request_protocol;
     int protocol_is_simple;
+
+    htp_uri_t *uri;
     
     /** Protocol version as a number: -1 if not available 9 (HTTP_0_9) for 0.9,
      *  100 (HTTP_1_0) for 1.0 and 101 (HTTP_1_1) for 1.1.
@@ -474,6 +491,18 @@ struct htp_tx_data_t {
     size_t len;
 };
 
+struct htp_uri_t {
+    bstr *scheme;
+    bstr *hostname;
+    bstr *username;
+    bstr *password;
+    bstr *port;
+    int port_number;
+    bstr *path;
+    bstr *query;
+    bstr *fragment;
+};
+
 
 // -- Functions -----------------------------------------------------------------------------------
 
@@ -502,6 +531,7 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
+// TODO Is below all right for IPv6 too?
 void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port);
 void htp_connp_close(htp_connp_t *connp);
 void htp_connp_destroy(htp_connp_t *connp);
@@ -592,6 +622,7 @@ int htp_connp_is_line_folded(htp_connp_t *connp, char *data, size_t len);
 int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len);
 int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len);
 
+int htp_parse_uri(bstr *input, htp_uri_t **uri);
 int htp_parse_content_length(bstr *b);
 int htp_parse_chunked_length(char *data, size_t len);
 int htp_parse_positive_integer_whitespace(char *data, size_t len, int base);

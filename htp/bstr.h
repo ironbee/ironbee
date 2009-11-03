@@ -106,9 +106,9 @@ struct bstr_t {
     unsigned char *ptr;
 };
 
-#define bstr_len(X) ((*(bstr_t *)X).len)
-#define bstr_size(X) ((*(bstr_t *)X).size)
-#define bstr_ptr(X) ( ((*(bstr_t *)X).ptr == NULL) ? ((void *)X + sizeof(bstr_t)) : (*(bstr_t *)X).ptr )
+#define bstr_len(X) ((*(bstr_t *)(X)).len)
+#define bstr_size(X) ((*(bstr_t *)(X)).size)
+#define bstr_ptr(X) ( ((*(bstr_t *)(X)).ptr == NULL) ? ((void *)(X) + sizeof(bstr_t)) : (*(bstr_t *)(X)).ptr )
 
 #endif	/* _BSTR_H */
 
