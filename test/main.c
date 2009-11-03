@@ -195,6 +195,21 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
     return 1;
 }
 
+/**
+ *
+ */
+int test_expect(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "05-expect.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    return 1;
+}
+
+
+
+
 int callback_transaction_start(htp_connp_t *connp) {
     printf("-- Callback: transaction_start\n");
 }
@@ -324,6 +339,11 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
     return 1;
 }
 
+int main2(int argc, char** argv) {
+    htp_cfg_t *cfg = htp_config_create();
+    run_directory("c:/http_traces/run1/", cfg);
+}
+
 #define RUN_TEST(X, Y) \
     {\
     tests++; \
@@ -340,7 +360,7 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main2(int argc, char** argv) {
+int main(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
@@ -397,19 +417,15 @@ int main2(int argc, char** argv) {
     htp_config_register_response_trailer(cfg, callback_response_trailer, HOOK_MIDDLE);
     htp_config_register_response(cfg, callback_response, HOOK_MIDDLE);
 
-    RUN_TEST(test_get, cfg);
-    RUN_TEST(test_apache_header_parsing, cfg);
-    RUN_TEST(test_post_urlencoded, cfg);
-    RUN_TEST(test_post_urlencoded_chunked, cfg);
+    //RUN_TEST(test_get, cfg);
+    //RUN_TEST(test_apache_header_parsing, cfg);
+    //RUN_TEST(test_post_urlencoded, cfg);
+    //RUN_TEST(test_post_urlencoded_chunked, cfg);
+    RUN_TEST(test_expect, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
 
     return (EXIT_SUCCESS);
-}
-
-int main(int argc, char** argv) {
-    htp_cfg_t *cfg = htp_config_create();
-    run_directory("c:/http_traces/run1/", cfg);
 }
 

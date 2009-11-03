@@ -452,6 +452,7 @@ struct htp_tx_t {
     bstr *response_status;
     int response_status_number;
     bstr *response_message;
+    int seen_100continue;
 
     //int response_body_len_declared;
     int response_body_len_actual;

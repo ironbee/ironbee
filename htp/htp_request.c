@@ -9,7 +9,7 @@
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {    
+int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
     // so we should warn about anything else.
 
@@ -18,7 +18,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
 
         if (connp->in_next_byte == LF) {
             connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
-            
+
             return HTP_OK;
         }
     }
@@ -54,7 +54,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->in_chunked_length == 0) {
                 // End of data chunk
-                
+
                 // Send data to callbacks
                 if (hook_run_all(connp->cfg->hook_request_body_data, &d) != HOOK_OK) {
                     return HTP_ERROR;
@@ -130,9 +130,11 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
         if (connp->in_next_byte == -1) {
             // End of chunk
 
-            // Send data to callbacks            
-            if (hook_run_all(connp->cfg->hook_request_body_data, &d) != HOOK_OK) {
-                return HTP_ERROR;
+            if (d.len != 0) {
+                // Send data to callbacks
+                if (hook_run_all(connp->cfg->hook_request_body_data, &d) != HOOK_OK) {
+                    return HTP_ERROR;
+                }
             }
 
             // Ask for more data
@@ -144,9 +146,11 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
             if (connp->in_body_data_left == 0) {
                 // End of body
 
-                // Send data to callbacks                
-                if (hook_run_all(connp->cfg->hook_request_body_data, &d) != HOOK_OK) {
-                    return HTP_ERROR;
+                if (d.len != 0) {
+                    // Send data to callbacks
+                    if (hook_run_all(connp->cfg->hook_request_body_data, &d) != HOOK_OK) {
+                        return HTP_ERROR;
+                    }
                 }
 
                 // Done
@@ -165,7 +169,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {    
+int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     htp_header_t *cl = table_getc(connp->in_tx->request_headers, "content-length");
     htp_header_t *te = table_getc(connp->in_tx->request_headers, "transfer-encoding");
 
@@ -173,7 +177,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     // a chunked request body
     if (te != NULL) {
         // TODO Make sure it contains "chunked" only
-        
+
         // Chunked encoding is a HTTP/1.1 feature. Check
         // that some other protocol is not used. The flag will
         // also be set if the protocol could not be parsed.
@@ -183,7 +187,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (connp->in_tx->request_protocol_number < HTTP_1_1) {
             connp->in_tx->flags |= HTP_INVALID_CHUNKING;
             // TODO Log
-        }       
+        }
 
         // If the T-E header is present we are going to use it.
         connp->in_tx->body_encoding = BODY_CHUNKED;
@@ -198,8 +202,8 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
         connp->in_tx->progress = TX_PROGRESS_REQ_BODY;
     } else
-    // Next check for the presence of the Content-Length header
-    if (cl != NULL) {
+        // Next check for the presence of the Content-Length header
+        if (cl != NULL) {
         // It seems that we have a request body.
         connp->in_tx->body_encoding = BODY_IDENTITY;
 
@@ -357,7 +361,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             if (connp->in_header_line_index == -1) {
                 connp->in_header_line_index = connp->in_header_line_counter;
             }
-            
+
             connp->in_header_line_counter++;
         }
     }
@@ -484,7 +488,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     if (connp->in_tx == NULL) return HTP_ERROR;
 
     list_add(connp->conn->transactions, connp->in_tx);
-    
+
     connp->in_content_length = -1;
     connp->in_body_data_left = -1;
     connp->in_header_line_index = -1;

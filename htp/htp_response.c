@@ -9,7 +9,7 @@
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {    
+int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
     // so we should warn about anything else.
 
@@ -41,7 +41,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         OUT_NEXT_BYTE_OR_RETURN(connp);
         connp->out_tx->response_body_len_actual++;
 
-        if (connp->out_next_byte == -1) {            
+        if (connp->out_next_byte == -1) {
             // Send data to callbacks
             if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
                 return HTP_ERROR;
@@ -55,7 +55,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->out_chunked_length == 0) {
                 // End of data chunk
-                
+
                 // Send data to callbacks
                 if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
                     return HTP_ERROR;
@@ -132,15 +132,17 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             // End of chunk
 
             // Send data to callbacks
-            if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
-                return HTP_ERROR;
+            if (d.len != 0) {
+                if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                    return HTP_ERROR;
+                }
             }
 
             // Ask for more data
             return HTP_DATA;
         } else {
             connp->out_tx->response_body_len_actual++;
-            
+
             if (connp->out_body_data_left > 0) {
                 // We know the length of response body
 
@@ -151,8 +153,10 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                     // End of body
 
                     // Send data to callbacks
-                    if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
-                        return HTP_ERROR;
+                    if (d.len != 0) {
+                        if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                            return HTP_ERROR;
+                        }
                     }
 
                     // Done
@@ -179,6 +183,24 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
+    // First check for an interim "100 Continue"
+    // response. Ignore it if found, and revert back to RES_FIRST_LINE.
+    if (connp->out_tx->response_status_number == 100) {
+        if (connp->out_tx->seen_100continue != 0) {
+            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Already seen 100 Continue");
+            return HTP_ERROR;
+        }
+
+        // Ignore any response headers set
+        // TODO table_erase(connp->out_tx->response_headers);
+
+        connp->out_state = htp_connp_RES_FIRST_LINE;
+        connp->out_tx->progress = TX_PROGRESS_RES_LINE;
+        connp->out_tx->seen_100continue++;
+
+        return HTP_OK;
+    }
+
     // 1. Any response message which MUST NOT include a message-body
     //  (such as the 1xx, 204, and 304 responses and any response to a HEAD
     //  request) is always terminated by the first empty line after the
@@ -191,14 +213,14 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         connp->out_state = htp_connp_RES_IDLE;
     } else {
         // We have a response body
-        
+
         htp_header_t *cl = table_getc(connp->out_tx->response_headers, "content-length");
         htp_header_t *te = table_getc(connp->out_tx->response_headers, "transfer-encoding");
 
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
-        if (te != NULL) {            
+        if (te != NULL) {
             // TODO Make sure it contains "chunked" only
 
             // If the T-E header is present we are going to use it.
@@ -213,9 +235,9 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = TX_PROGRESS_RES_BODY;
         } else
-        // 3. If a Content-Length header field (section 14.14) is present, its
-        //   value in bytes represents the length of the message-body.
-        if (cl != NULL) {
+            // 3. If a Content-Length header field (section 14.14) is present, its
+            //   value in bytes represents the length of the message-body.
+            if (cl != NULL) {
             // We know the exact length
             connp->out_tx->body_encoding = BODY_IDENTITY;
 
@@ -282,7 +304,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  */
 int htp_connp_RES_HEADERS(htp_connp_t *connp) {
     for (;;) {
-        OUT_COPY_BYTE_OR_RETURN(connp);       
+        OUT_COPY_BYTE_OR_RETURN(connp);
 
         if (connp->out_header_line == NULL) {
             connp->out_header_line = calloc(1, sizeof (htp_header_line_t));
@@ -303,7 +325,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
         }
 
         // Have we reached the end of the line?
-        if (connp->out_next_byte == LF) {            
+        if (connp->out_next_byte == LF) {
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->out_line, connp->out_line_len)) {
                 // Terminator line
@@ -322,7 +344,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 connp->out_line_len = 0;
                 connp->out_header_line = NULL;
                 connp->out_header_line_index = -1;
-                connp->out_header_line_counter = 0;               
+                connp->out_header_line_counter = 0;
 
                 // We've seen all response headers
                 if (connp->out_tx->progress == TX_PROGRESS_RES_HEADERS) {
@@ -342,25 +364,25 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             }
 
             // Prepare line for consumption
-            htp_chomp(connp->out_line, &connp->out_line_len);           
+            htp_chomp(connp->out_line, &connp->out_line_len);
 
             // Check for header folding
             if (htp_connp_is_line_folded(connp, connp->out_line, connp->out_line_len) == 0) {
                 // New header line               
 
                 // Parse previous header, if any
-                if (connp->out_header_line_index != -1) {                    
-                    if (connp->cfg->process_response_header(connp) != HTP_OK) {                        
+                if (connp->out_header_line_index != -1) {
+                    if (connp->cfg->process_response_header(connp) != HTP_OK) {
                         return HTP_ERROR;
-                    }                   
+                    }
 
                     // Reset index
                     connp->out_header_line_index = -1;
-                }               
+                }
 
                 // Remember the index of the fist header line
                 connp->out_header_line_index = connp->out_header_line_counter;
-            } else {                
+            } else {
                 // Folding; check that there's a previous header line to add to
                 if (connp->out_header_line_index == -1) {
                     if (!(connp->out_tx->flags & HTP_INVALID_FOLDING)) {
@@ -368,7 +390,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                         htp_log(connp, LOG_MARK, LOG_WARNING, 0, "Invalid response field folding");
                     }
                 }
-            }           
+            }
 
             // Add the raw header line to the list
             connp->out_header_line->line = bstr_memdup(connp->out_line, connp->out_line_len);
@@ -449,7 +471,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // If we're here and an outgoing transaction object exists that
     // means we've just completed parsing a response. We need
     // to run the final hook in a transaction and start over.
-    if (connp->out_tx != NULL) {        
+    if (connp->out_tx != NULL) {
         // Run hook RESPONSE
         if (hook_run_all(connp->cfg->hook_response, connp) != HOOK_OK) {
             return HTP_ERROR;
@@ -486,7 +508,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     connp->out_content_length = -1;
     connp->out_body_data_left = -1;
     connp->out_header_line_index = -1;
-    connp->out_header_line_counter = 0;   
+    connp->out_header_line_counter = 0;
 
     // Change state into response line parsing, except if we're following
     // a short HTTP/0.9 request, because such requests to not have a
@@ -516,7 +538,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // Return straight away if there's no data to process
     if ((data == NULL) || (len == 0)) {
         return HTP_ERROR;
-    }   
+    }
 
     // Also return if the connection has had a fatal error
     if (connp->status != HTP_OK) {
@@ -527,7 +549,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     connp->out_timestamp = timestamp;
     connp->out_current_data = data;
     connp->out_current_len = len;
-    connp->out_current_offset = 0;   
+    connp->out_current_offset = 0;
 
     // Invoke a processor, in a loop, until an error
     // occurs or until we run out of data. Many processors
