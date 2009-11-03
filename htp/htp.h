@@ -50,6 +50,7 @@
 #define HTP_ERROR              -1
 #define HTP_OK                  0
 #define HTP_DATA                1
+#define HTP_DECLINED            2
 
 #define PROTOCOL_UNKNOWN        -1
 #define HTTP_0_9                9

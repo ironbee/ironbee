@@ -43,7 +43,9 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
         if (connp->out_next_byte == -1) {            
             // Send data to callbacks
-            hook_run_all(connp->cfg->hook_response_body_data, &d);
+            if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                return HTP_ERROR;
+            }
 
             // Ask for more data
             return HTP_DATA;
@@ -55,7 +57,9 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                 // End of data chunk
                 
                 // Send data to callbacks
-                hook_run_all(connp->cfg->hook_response_body_data, &d);
+                if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                    return HTP_ERROR;
+                }
 
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA_END;
 
@@ -128,7 +132,9 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             // End of chunk
 
             // Send data to callbacks
-            hook_run_all(connp->cfg->hook_response_body_data, &d);
+            if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                return HTP_ERROR;
+            }
 
             // Ask for more data
             return HTP_DATA;
@@ -145,7 +151,9 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                     // End of body
 
                     // Send data to callbacks
-                    hook_run_all(connp->cfg->hook_response_body_data, &d);
+                    if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                        return HTP_ERROR;
+                    }
 
                     // Done
                     connp->out_state = htp_connp_RES_IDLE;
@@ -259,7 +267,9 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     //      that is done earlier, before response line parsing begins
 
     // Run hook RESPONSE_HEADERS_COMPLETE
-    hook_run_all(connp->cfg->hook_response_headers, connp);
+    if (hook_run_all(connp->cfg->hook_response_headers, connp) != HOOK_OK) {
+        return HTP_ERROR;
+    }
 
     return HTP_OK;
 }
@@ -320,7 +330,9 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                     connp->out_state = htp_connp_RES_BODY_DETERMINE;
                 } else {
                     // Run hook response_TRAILER
-                    hook_run_all(connp->cfg->hook_response_trailer, connp);
+                    if (hook_run_all(connp->cfg->hook_response_trailer, connp) != HOOK_OK) {
+                        return HTP_ERROR;
+                    }
 
                     // We've completed parsing this response
                     connp->out_state = htp_connp_RES_IDLE;
@@ -410,7 +422,9 @@ int htp_connp_RES_FIRST_LINE(htp_connp_t *connp) {
             }
 
             // Run hook RESPONSE_LINE
-            hook_run_all(connp->cfg->hook_response_line, connp);
+            if (hook_run_all(connp->cfg->hook_response_line, connp) != HOOK_OK) {
+                return HTP_ERROR;
+            }
 
             // Clean up.
             connp->out_line_len = 0;
@@ -435,10 +449,11 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // If we're here and an outgoing transaction object exists that
     // means we've just completed parsing a response. We need
     // to run the final hook in a transaction and start over.
-    if (connp->out_tx != NULL) {
-        // TODO Rename RESPONSE to TRANSACTION_END?
+    if (connp->out_tx != NULL) {        
         // Run hook RESPONSE
-        hook_run_all(connp->cfg->hook_response, connp);
+        if (hook_run_all(connp->cfg->hook_response, connp) != HOOK_OK) {
+            return HTP_ERROR;
+        }
 
         connp->out_tx->progress = TX_PROGRESS_DONE;
 
