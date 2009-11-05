@@ -33,15 +33,6 @@
 
 // TODO Consider enums where appropriate.
 
-// TODO Handle configuration changes through copy-on-write, which will ensure that we only
-//      perform the expensive configuration copying when it's really necessary.
-//
-//      Similarly, make it possible to completely change the configuration of a parser
-//      whenever that's necessary.
-//
-//      For example, we need a hook that will potentially change the configuration after
-//      we parse request headers, but before we parse parameters.
-
 // TODO The plan for SSL handling is as follows:
 //
 //      - For fully encrypted streams, upstream is free to decrypt SSL and feed the
@@ -282,10 +273,7 @@ struct htp_cfg_t {
     int (*parse_request_line)(htp_connp_t *connp);
     int (*parse_response_line)(htp_connp_t *connp);
     int (*process_request_header)(htp_connp_t *connp);
-    int (*process_response_header)(htp_connp_t *connp);
-
-    // TODO Flag to control whether we keep raw header lines as
-    //      well as headers.
+    int (*process_response_header)(htp_connp_t *connp);   
 
     // TODO There will be two types of hook: connection and transaction hooks. If we want to allow
     //      a hook to disconnect itself (as we should) then we need to make sure the disconnect is
@@ -322,74 +310,153 @@ struct htp_conn_t {
 };
 
 struct htp_connp_t {
+    // General fields
+    
+    /** Current parser configuration structure. */
     htp_cfg_t *cfg;
-    htp_conn_t *conn;
-    void *user_data;
 
-    // TODO Flag that we've failed in parsing yet continued
-    //      doing our best.
+    /** The connection structure associated with this parser. */
+    htp_conn_t *conn;
+
+    /** Opaque user data associated with this parser. */
+    void *user_data;   
 
     /** On parser failure, this field will contain the error information. */
     htp_log_t *last_error;
 
     // Request parser fields
 
+    /** Parser status. Starts as HTP_OK, but may turn into HTP_ERROR. */
     unsigned int status; // TODO Consider using two status fields, one for each direction
 
     /** The time when the last request data chunk was received. */
     htp_time_t in_timestamp;
+
+    /** Pointer to the current request data chunk. */
     unsigned char *in_current_data;
+
+    /** The length of the current request data chunk. */
     size_t in_current_len;
+
+    /** The offset of the next byte in the request data chunk to consume. */
     size_t in_current_offset;
+
+    /** The offset, in the entire connection stream, of the next request byte. */
     size_t in_stream_offset;
+
+    /** The value of the request byte currently being processed. */
     int in_next_byte;
 
-    size_t in_line_len;
-    size_t in_line_size;
+    /** Pointer to the request line buffer. */
     unsigned char *in_line;
 
-    /** Ongoing inbound transaction */
+    /** Size of the request line buffer. */
+    size_t in_line_size;
+
+    /** Lenght of the current request line. */
+    size_t in_line_len;    
+
+    /** Ongoing inbound transaction. */
     htp_tx_t *in_tx;   
-    
-    htp_header_line_t *in_header_line;    
+
+    /** The request header line currently being processed. */
+    htp_header_line_t *in_header_line;
+
+    /** The index, in the structure holding all request header lines, of the
+     *  line with which the current header begins. The header lines are
+     *  kept in the transaction structure.
+     */
     int in_header_line_index;
+
+    /** How many lines are there in the current request header? */
     int in_header_line_counter;
 
+    /**
+     * The request body length declared in a valid request headers. The key here
+     * is "valid". This field will not be populated if a request contains both
+     * a Transfer-Encoding header and a Content-Lenght header.
+     */
     size_t in_content_length;
+
+    /** Holds the remaining request body length that we expect to read. This
+     *  field will be available only when the length of a request body is known
+     *  in advance, i.e. when request headers contain a Content-Length header.
+     */
     size_t in_body_data_left;
 
+    /** Holds the amount of data that needs to be read from the
+     *  current data chunk. Only used with chunked request bodies.
+     */
     int in_chunked_length;
-      
+
+    /** Current request parser state. */
     int (*in_state)(htp_connp_t *);
 
     // Response parser fields
 
+    /** Response counter, incremented with every new response. This field is
+     *  used to match responses to requests. The expectation is that for every
+     *  response there will already be a transaction (request) waiting.
+     */
     int out_next_tx_index;
 
     /** The time when the last response data chunk was received. */
     htp_time_t out_timestamp;
+
+    /** Pointer to the current response data chunk. */
     unsigned char *out_current_data;
+
+    /** The length of the current response data chunk. */
     size_t out_current_len;
+
+    /** The offset of the next byte in the response data chunk to consume. */
     size_t out_current_offset;
+
+    /** The offset, in the entire connection stream, of the next response byte. */
     size_t out_stream_offset;
+
+    /** The value of the response byte currently being processed. */
     int out_next_byte;
 
-    size_t out_line_len;
-    size_t out_line_size;
+    /** Pointer to the response line buffer. */
     unsigned char *out_line;
+
+    /** Size of the response line buffer. */
+    size_t out_line_size;
+
+    /** Lenght of the current response line. */
+    size_t out_line_len;       
         
     /** Ongoing outbound transaction */
     htp_tx_t *out_tx;
 
+    /** The response header line currently being processed. */
     htp_header_line_t *out_header_line;
+
+    /** The index, in the structure holding all response header lines, of the
+     *  line with which the current header begins. The header lines are
+     *  kept in the transaction structure.
+     */
     int out_header_line_index;
+
+    /** How many lines are there in the current response header? */
     int out_header_line_counter;
 
+    /**
+     * The length of the current response body as presented in the
+     * Content-Length response header.
+     */
     size_t out_content_length;
+
+    /** The remaining length of the current response body, if known. */
     size_t out_body_data_left;
 
+    /** Holds the amount of data that needs to be read from the
+     *  current response data chunk. Only used with chunked response bodies.
+     */
     int out_chunked_length;
 
+    /** Current response parser state. */
     int (*out_state)(htp_connp_t *);
 };
 
@@ -445,10 +512,39 @@ struct htp_tx_t {
 
     htp_uri_t *uri;
     
-    /** Protocol version as a number: -1 if not available 9 (HTTP_0_9) for 0.9,
-     *  100 (HTTP_1_0) for 1.0 and 101 (HTTP_1_1) for 1.1.
+    /** Protocol version as a number: -1 means unknown, 9 (HTTP_0_9) means 0.9,
+     *  100 (HTTP_1_0) means 1.0 and 101 (HTTP_1_1) means 1.1.
      */
     int request_protocol_number;
+
+    /** TODO The actual message length (the length _after_ transformations
+     *  have been applied). This field will change as a request body is being
+     *  received, with the final value available once the entire body has
+     *  been received.
+     */
+    size_t message_len;
+
+    /** TODO The actual entity length (the length _before_ transformations
+     *  have been applied). This field will change as a request body is being
+     *  received, with the final value available once the entire body has
+     *  been received.
+     */
+    size_t entity_len;
+
+    /** TODO The length of the data transmitted in a request body, minus the length
+     *  of the files (if any). At worst, this field will be equal to the entity
+     *  length if the entity encoding is not recognized. If we recognise the encoding
+     *  (e.g., if it is application/x-www-form-urlencoded or multipart/form-data), the
+     *  decoder may be able to separate the data from everything else, in which case
+     *  the value in this field will be lower.
+     */
+    size_t nonfiledata_len;
+
+    /** TODO The length of the files uploaded using multipart/form-data, or in a
+     *  request that uses PUT (in which case this field will be equal to the
+     *  entity length field). This field will be zero in all other cases.
+     */
+    size_t filedata_len;
     
     bstr *query_string;
 
