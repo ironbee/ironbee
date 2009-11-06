@@ -219,6 +219,50 @@ int test_uri_normal(htp_cfg_t *cfg) {
     return 1;
 }
 
+/**
+ *
+ */
+int test_pipelined_connection(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "07-pipelined-connection.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) != 2) {
+        printf("Expected 2 transactions but found %i.", list_size(connp->conn->transactions));
+        return -1;
+    }
+
+    if (!(connp->conn->flags & PIPELINED_CONNECTION)) {
+        printf("The pipelined flag not set on a pipelined connection.");
+        return -1;
+    }
+
+    return 1;
+}
+
+/**
+ *
+ */
+int test_not_pipelined_connection(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "08-not-pipelined-connection.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) != 2) {
+        printf("Expected 2 transactions but found %i.", list_size(connp->conn->transactions));
+        return -1;
+    }
+
+    if (connp->conn->flags & PIPELINED_CONNECTION) {
+        printf("The pipelined flag set on a connection that is not pipelined.");
+        return -1;
+    }
+
+    return 1;
+}
+
 
 int callback_transaction_start(htp_connp_t *connp) {
     printf("-- Callback: transaction_start\n");
@@ -432,7 +476,9 @@ int main(int argc, char** argv) {
     //RUN_TEST(test_post_urlencoded, cfg);
     //RUN_TEST(test_post_urlencoded_chunked, cfg);
     //RUN_TEST(test_expect, cfg);
-    RUN_TEST(test_uri_normal, cfg);
+    //RUN_TEST(test_uri_normal, cfg);
+    RUN_TEST(test_pipelined_connection, cfg);
+    RUN_TEST(test_not_pipelined_connection, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

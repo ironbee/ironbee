@@ -131,6 +131,8 @@
 #define HTP_INVALID_CHUNKING            256
 #define HTP_MULTI_PACKET_HEAD           512
 
+#define PIPELINED_CONNECTION    1
+
 #define HTP_SERVER_STRICT           0
 #define HTP_SERVER_PERMISSIVE       1
 #define HTP_SERVER_APACHE_2_2       2
@@ -304,8 +306,6 @@ struct htp_cfg_t {
 
     void *user_data;
 };
-
-#define PIPELINED_CONNECTION    1
 
 struct htp_conn_t {
     /** Connection parser associated with this connection. */

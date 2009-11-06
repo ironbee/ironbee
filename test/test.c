@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-       
+
 #include "../htp/htp.h"
 #include "test.h"
 
@@ -146,6 +146,12 @@ static int test_next_chunk(test_t *test) {
                 // We got ourselves a chunk
                 test->chunk_len = test->pos - test->chunk_offset;
 
+                // Remove one '\r' (in addition to the '\n' that we've already removed),
+                // which belongs to the next boundary
+                if ((test->chunk_len > 0) && (test->chunk[test->chunk_len - 1] == '\r')) {
+                    test->chunk_len--;
+                }
+
                 // Position at the next boundary line
                 test->pos++;
 
@@ -180,12 +186,12 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
     while (p != NULL) {
         count++;
         // printf("%i %s\n", count, p);
-        
+
         switch (count) {
             case 2:
                 *remote_addr = strdup(p);
                 break;
-            case 3 :
+            case 3:
                 *remote_port = atoi(p);
                 break;
             case 4:
@@ -233,9 +239,9 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     }
 
     gettimeofday(&tv_start, NULL);
-   
+
     test_start(&test);
-    
+
     // Create parser
     *connp = htp_connp_create(cfg);
     if (*connp == NULL) {
@@ -248,7 +254,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         int remote_port, local_port;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
-        htp_connp_open(*connp, (const char *)remote_addr, remote_port, (const char *)local_addr, local_port);
+        htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port);
     }
 
     // Find all chunks and feed them to the parser
