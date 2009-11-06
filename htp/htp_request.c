@@ -489,7 +489,10 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // connection.
     IN_TEST_NEXT_BYTE_OR_RETURN(connp);
 
-    // TODO Detect pipelining
+    // Detect pipelining
+    if (list_size(connp->conn->transactions) > connp->out_next_tx_index) {
+        connp->conn->flags |= PIPELINED_CONNECTION;
+    }
 
     // Parsing a new request
     connp->in_tx = htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);

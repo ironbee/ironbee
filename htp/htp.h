@@ -304,6 +304,8 @@ struct htp_cfg_t {
     void *user_data;
 };
 
+#define PIPELINED_CONNECTION    1
+
 struct htp_conn_t {
     /** Connection parser associated with this connection. */
     htp_connp_t *connp;
@@ -318,11 +320,9 @@ struct htp_conn_t {
     list_t *transactions;
 
     /** Log messages associated with this connection. */
-    list_t *messages;
+    list_t *messages;   
 
-    // TODO pipeline connection flag
-
-    /** TODO */
+    /** Parsing flags: PIPELINED_CONNECTION. */
     unsigned int flags;
     
     // TODO data counters (before and after SSL?)
