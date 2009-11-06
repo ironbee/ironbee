@@ -263,6 +263,30 @@ int test_not_pipelined_connection(htp_cfg_t *cfg) {
     return 1;
 }
 
+/**
+ *
+ */
+int test_multi_packet_request_head(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "09-multi-packet-request-head.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) != 1) {
+        printf("Expected 1 transactions but found %i.", list_size(connp->conn->transactions));
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (!(tx->flags & HTP_MULTI_PACKET_HEAD)) {
+        printf("The HTP_MULTI_PACKET_HEAD flag is not set on a multipacke transaction.");
+        return -1;
+    }
+
+    return 1;
+}
+
 
 int callback_transaction_start(htp_connp_t *connp) {
     printf("-- Callback: transaction_start\n");
@@ -477,8 +501,9 @@ int main(int argc, char** argv) {
     //RUN_TEST(test_post_urlencoded_chunked, cfg);
     //RUN_TEST(test_expect, cfg);
     //RUN_TEST(test_uri_normal, cfg);
-    RUN_TEST(test_pipelined_connection, cfg);
-    RUN_TEST(test_not_pipelined_connection, cfg);
+    // RUN_TEST(test_pipelined_connection, cfg);
+    // RUN_TEST(test_not_pipelined_connection, cfg);
+    RUN_TEST(test_multi_packet_request_head, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
