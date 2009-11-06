@@ -162,6 +162,7 @@ static int test_next_chunk(test_t *test) {
         test->pos++;
     }
 
+    
     if (test->chunk != NULL) {
         test->chunk_len = test->pos - test->chunk_offset;
         return 1;
