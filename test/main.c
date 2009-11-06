@@ -287,7 +287,7 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
     }
 
     printf("%s - - [%s] \"%s\" %i %i \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
-        request_line, tx->response_status_number, tx->response_body_len_actual,
+        request_line, tx->response_status_number, tx->response_message_len,
         referer, user_agent);
 
     free(referer);

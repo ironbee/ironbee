@@ -16,6 +16,8 @@ int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     for (;;) {
         OUT_NEXT_BYTE_OR_RETURN(connp);
 
+        connp->out_tx->request_message_len++;
+
         if (connp->out_next_byte == LF) {
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
 
@@ -38,8 +40,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     d.len = 0;
 
     for (;;) {
-        OUT_NEXT_BYTE_OR_RETURN(connp);
-        connp->out_tx->response_body_len_actual++;
+        OUT_NEXT_BYTE_OR_RETURN(connp);        
 
         if (connp->out_next_byte == -1) {
             // Send data to callbacks
@@ -50,6 +51,8 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             // Ask for more data
             return HTP_DATA;
         } else {
+            connp->out_tx->response_message_len++;
+            connp->out_tx->response_entity_len++;
             connp->out_chunked_length--;
             d.len++;
 
@@ -79,7 +82,7 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
-        // TODO NUL bytes?
+        connp->out_tx->response_message_len++;
 
         // Have we reached the end of the line?
         if (connp->out_next_byte == LF) {
@@ -141,7 +144,8 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             // Ask for more data
             return HTP_DATA;
         } else {
-            connp->out_tx->response_body_len_actual++;
+            connp->out_tx->response_message_len++;
+            connp->out_tx->response_entity_len++;            
 
             if (connp->out_body_data_left > 0) {
                 // We know the length of response body
@@ -224,7 +228,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // TODO Make sure it contains "chunked" only
 
             // If the T-E header is present we are going to use it.
-            connp->out_tx->body_encoding = BODY_CHUNKED;
+            connp->out_tx->response_transfer_coding = CHUNKED;
 
             // We are still going to check for the presence of C-L
             if (cl != NULL) {
@@ -239,7 +243,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             //   value in bytes represents the length of the message-body.
             if (cl != NULL) {
             // We know the exact length
-            connp->out_tx->body_encoding = BODY_IDENTITY;
+            connp->out_tx->response_transfer_coding = IDENTITY;
 
             // Check for multiple C-L headers
             if (cl->flags & HTP_FIELD_REPEATED) {
@@ -514,7 +518,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // a short HTTP/0.9 request, because such requests to not have a
     // response line and headers.
     if (connp->out_tx->protocol_is_simple) {
-        connp->out_tx->body_encoding = BODY_IDENTITY;
+        connp->out_tx->response_transfer_coding = IDENTITY;
         connp->out_state = htp_connp_RES_BODY_IDENTITY;
         connp->out_tx->progress = TX_PROGRESS_RES_BODY;
     } else {

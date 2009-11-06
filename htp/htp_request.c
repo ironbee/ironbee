@@ -16,6 +16,8 @@ int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     for (;;) {
         IN_NEXT_BYTE_OR_RETURN(connp);
 
+        connp->in_tx->request_message_len++;
+
         if (connp->in_next_byte == LF) {
             connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
 
@@ -49,6 +51,8 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             // Ask for more data
             return HTP_DATA;
         } else {
+            connp->in_tx->request_message_len++;
+            connp->in_tx->request_entity_len++;
             connp->in_chunked_length--;
             d.len++;
 
@@ -78,7 +82,7 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
         IN_COPY_BYTE_OR_RETURN(connp);
 
-        // TODO NUL bytes?
+        connp->in_tx->request_message_len++;
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
@@ -140,6 +144,8 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
             // Ask for more data
             return HTP_DATA;
         } else {
+            connp->in_tx->request_message_len++;
+            connp->in_tx->request_entity_len++;
             connp->in_body_data_left--;
             d.len++;
 
@@ -190,7 +196,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         }
 
         // If the T-E header is present we are going to use it.
-        connp->in_tx->body_encoding = BODY_CHUNKED;
+        connp->in_tx->request_transfer_coding = CHUNKED;
 
         // We are still going to check for the presence of C-L
         if (cl != NULL) {
@@ -205,7 +211,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // Next check for the presence of the Content-Length header
         if (cl != NULL) {
         // It seems that we have a request body.
-        connp->in_tx->body_encoding = BODY_IDENTITY;
+        connp->in_tx->request_transfer_coding = IDENTITY;
 
         // Check for a folded C-L header
         if (cl->flags & HTP_FIELD_FOLDED) {
@@ -436,7 +442,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
-            htp_parse_uri(connp->in_tx->request_uri, &connp->in_tx->uri);
+            htp_parse_uri(connp->in_tx->request_uri, &connp->in_tx->parsed_uri_incomplete);
 
             // Run hook REQUEST_LINE
             if (hook_run_all(connp->cfg->hook_request_line, connp) != HOOK_OK) {
