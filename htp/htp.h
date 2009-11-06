@@ -129,6 +129,7 @@
 #define HTP_REQUEST_SMUGGLING           64
 #define HTP_INVALID_FOLDING             128
 #define HTP_INVALID_CHUNKING            256
+#define HTP_MULTI_PACKET_HEAD           512
 
 #define HTP_SERVER_STRICT           0
 #define HTP_SERVER_PERMISSIVE       1
@@ -359,6 +360,12 @@ struct htp_connp_t {
 
     /** The offset of the next byte in the request data chunk to consume. */
     size_t in_current_offset;
+
+    /** How many data chunks does the inbound connection stream consist of? */
+    size_t in_chunk_count;
+
+    /** The index of the first chunk used in the current request. */
+    size_t in_chunk_request_index;
 
     /** The offset, in the entire connection stream, of the next request byte. */
     size_t in_stream_offset;
@@ -690,7 +697,9 @@ struct htp_tx_t {
     /** The highest log message seen. */
     int highest_log_level;
 
-    /** Parsing flags: TODO */
+    /** Parsing flags: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
+     *  HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD.
+     */
     unsigned int flags;
 
     /** Transaction progress. Look for the TX_PROGRESS_* constants for more information. */

@@ -311,6 +311,11 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 connp->in_header_line_counter = 0;
 
                 // We've seen all request headers
+                if (connp->in_chunk_count != connp->in_chunk_request_index) {
+                    connp->in_tx->flags |= HTP_MULTI_PACKET_HEAD;
+                }
+
+                // Move onto the next processing phase
                 if (connp->in_tx->progress == TX_PROGRESS_REQ_HEADERS) {
                     // Determine if this request has a body
                     connp->in_state = htp_connp_REQ_BODY_DETERMINE;
@@ -504,6 +509,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     connp->in_body_data_left = -1;
     connp->in_header_line_index = -1;
     connp->in_header_line_counter = 0;
+    connp->in_chunk_request_index = connp->in_chunk_count;
 
     // Run hook TRANSACTION_START
     if (hook_run_all(connp->cfg->hook_transaction_start, connp) != HOOK_OK) {
@@ -542,6 +548,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     connp->in_current_data = data;
     connp->in_current_len = len;
     connp->in_current_offset = 0;
+    connp->in_chunk_count++;
 
     // Invoke a processor, in a loop, until an error
     // occurs or until we run out of data. Many processors
