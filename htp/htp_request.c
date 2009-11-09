@@ -179,8 +179,8 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     htp_header_t *cl = table_getc(connp->in_tx->request_headers, "content-length");
     htp_header_t *te = table_getc(connp->in_tx->request_headers, "transfer-encoding");
 
-    // First check for the Transfer-Encoding header that will indicate
-    // a chunked request body
+    // First check for the Transfer-Encoding header, which
+    // would indicate a chunked request body
     if (te != NULL) {
         // TODO Make sure it contains "chunked" only
 
@@ -202,7 +202,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (cl != NULL) {
             // This is a violation of the RFC
             connp->in_tx->flags |= HTP_REQUEST_SMUGGLING;
-            // TODO Log
+            // XXX
         }
 
         connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
@@ -216,13 +216,13 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // Check for a folded C-L header
         if (cl->flags & HTP_FIELD_FOLDED) {
             connp->in_tx->flags |= HTP_REQUEST_SMUGGLING;
-            // TODO Log
+            // XXX
         }
 
         // Check for multiple C-L headers
         if (cl->flags & HTP_FIELD_REPEATED) {
             connp->in_tx->flags |= HTP_REQUEST_SMUGGLING;
-            // TODO Log
+            // XXX
         }
 
         // Get body length
@@ -244,13 +244,32 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         connp->in_tx->progress = TX_PROGRESS_WAIT;
     }
 
-    // TODO Host resolution
-    //
-    // - Hostname can be present in the URI
-    // - In the Host: header
-    //
-    // It's a conflict if there's a hostname in both locations (flag), but
-    // the one in the URI takes precedence.   
+    // Host resolution    
+    htp_header_t *h = table_getc(connp->in_tx->request_headers, "host");
+    if (h == NULL) {
+        // No host information in the headers
+
+        // HTTP/1.1 requires host information in the headers
+        if (connp->in_tx->request_protocol_number >= HTTP_1_1) {
+            connp->in_tx->flags |= HTP_HOST_MISSING;
+            htp_log(connp, LOG_MARK, LOG_WARNING, 0, "Host information in request headers required by HTTP/1.1");
+        }
+    } else {
+        // Host information available in the headers
+
+        // Is there host information in the URI?
+        if (connp->in_tx->parsed_uri->hostname == NULL) {
+            // There is no host information in the URI. Place the
+            // hostname from the headers into the parsed_uri structure.
+            htp_replace_hostname(connp, connp->in_tx->parsed_uri, h->value);
+        } else {
+            // The host information is present both in the
+            // headers and the URI. The HTTP RFC states that
+            // we should ignore the headers copy.
+            connp->in_tx->flags |= HTP_AMBIGUOUS_HOST;
+            htp_log(connp, LOG_MARK, LOG_WARNING, 0, "Host information ambiguous");
+        }
+    }
 
     // Run hook REQUEST_HEADERS
     if (hook_run_all(connp->cfg->hook_request_headers, connp) != HOOK_OK) {
@@ -447,7 +466,16 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
-            htp_parse_uri(connp->in_tx->request_uri, &connp->in_tx->parsed_uri_incomplete);
+            // Parse the request URI            
+            if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
+                return HTP_ERROR;
+            }
+
+            // Keep the original URI components, but 
+            // create a copy which we can normalize
+            if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri)) {
+                return HTP_ERROR;
+            }
 
             // Run hook REQUEST_LINE
             if (hook_run_all(connp->cfg->hook_request_line, connp) != HOOK_OK) {

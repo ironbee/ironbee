@@ -45,6 +45,8 @@ int bstr_indexofc_nocase(bstr *haystack, char *needle);
 int bstr_indexofmem(bstr *haystack, char *data, size_t len);
 int bstr_indexofmem_nocase(bstr *haystack, char *data, size_t len);
 
+void bstr_chop(bstr *b);
+
 /*
  * Function candidates:
  *

@@ -149,8 +149,8 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
     // TODO Do we need a timestamp here too?
     connp->conn->remote_addr = remote_addr;
     connp->conn->remote_port = remote_port;
-    connp->conn->remote_addr = local_addr;
-    connp->conn->remote_port = local_port;
+    connp->conn->local_addr = local_addr;
+    connp->conn->local_port = local_port;
 }
 
 /**

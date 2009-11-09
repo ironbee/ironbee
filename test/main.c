@@ -259,6 +259,13 @@ int test_not_pipelined_connection(htp_cfg_t *cfg) {
         printf("The pipelined flag set on a connection that is not pipelined.");
         return -1;
     }
+    
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->flags & HTP_MULTI_PACKET_HEAD) {
+        printf("The HTP_MULTI_PACKET_HEAD flag set on a single-packet transaction.");
+        return -1;
+    }
 
     return 1;
 }
@@ -273,14 +280,56 @@ int test_multi_packet_request_head(htp_cfg_t *cfg) {
     if (connp == NULL) return -1;
 
     if (list_size(connp->conn->transactions) != 1) {
-        printf("Expected 1 transactions but found %i.", list_size(connp->conn->transactions));
+        printf("Expected 1 transaction but found %i.", list_size(connp->conn->transactions));
         return -1;
     }
 
     htp_tx_t *tx = list_get(connp->conn->transactions, 0);
 
     if (!(tx->flags & HTP_MULTI_PACKET_HEAD)) {
-        printf("The HTP_MULTI_PACKET_HEAD flag is not set on a multipacke transaction.");
+        printf("The HTP_MULTI_PACKET_HEAD flag is not set on a multipacket transaction.");
+        return -1;
+    }
+
+    return 1;
+}
+
+/**
+ *
+ */
+int test_host_in_headers(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "10-host-in-headers.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) != 4) {
+        printf("Expected 4 transactions but found %i.", list_size(connp->conn->transactions));
+        return -1;
+    }
+
+    htp_tx_t *tx1 = list_get(connp->conn->transactions, 0);
+    htp_tx_t *tx2 = list_get(connp->conn->transactions, 1);
+    htp_tx_t *tx3 = list_get(connp->conn->transactions, 2);
+    htp_tx_t *tx4 = list_get(connp->conn->transactions, 3);
+
+    if ((tx1->parsed_uri->hostname == NULL)||(bstr_cmpc(tx1->parsed_uri->hostname, "www.example.com") != 0)) {
+        printf("1) Expected 'www.example.com' as hostname, but got: %s", tx1->parsed_uri->hostname);
+        return -1;
+    }
+
+    if ((tx2->parsed_uri->hostname == NULL)||(bstr_cmpc(tx2->parsed_uri->hostname, "www.example.com") != 0)) {
+        printf("2) Expected 'www.example.com' as hostname, but got: %s", tx2->parsed_uri->hostname);
+        return -1;
+    }
+
+    if ((tx3->parsed_uri->hostname == NULL)||(bstr_cmpc(tx3->parsed_uri->hostname, "www.example.com") != 0)) {
+        printf("3) Expected 'www.example.com' as hostname, but got: %s", tx3->parsed_uri->hostname);
+        return -1;
+    }
+
+    if ((tx4->parsed_uri->hostname == NULL)||(bstr_cmpc(tx4->parsed_uri->hostname, "www.example.com") != 0)) {
+        printf("4) Expected 'www.example.com' as hostname, but got: %s", tx4->parsed_uri->hostname);
         return -1;
     }
 
@@ -495,15 +544,16 @@ int main(int argc, char** argv) {
     htp_config_register_response_trailer(cfg, callback_response_trailer, HOOK_MIDDLE);
     htp_config_register_response(cfg, callback_response, HOOK_MIDDLE);
 
-    //RUN_TEST(test_get, cfg);
-    //RUN_TEST(test_apache_header_parsing, cfg);
-    //RUN_TEST(test_post_urlencoded, cfg);
-    //RUN_TEST(test_post_urlencoded_chunked, cfg);
-    //RUN_TEST(test_expect, cfg);
-    //RUN_TEST(test_uri_normal, cfg);
-    // RUN_TEST(test_pipelined_connection, cfg);
-    // RUN_TEST(test_not_pipelined_connection, cfg);
+    RUN_TEST(test_get, cfg);
+    RUN_TEST(test_apache_header_parsing, cfg);
+    RUN_TEST(test_post_urlencoded, cfg);
+    RUN_TEST(test_post_urlencoded_chunked, cfg);
+    RUN_TEST(test_expect, cfg);
+    RUN_TEST(test_uri_normal, cfg);
+    RUN_TEST(test_pipelined_connection, cfg);
+    RUN_TEST(test_not_pipelined_connection, cfg);
     RUN_TEST(test_multi_packet_request_head, cfg);
+    RUN_TEST(test_host_in_headers, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

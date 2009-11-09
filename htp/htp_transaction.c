@@ -22,6 +22,8 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
     tx->request_header_lines = list_array_create(32);
     tx->request_headers = table_create(32);
     tx->request_line_nul_offset = -1;
+    tx->parsed_uri = calloc(1, sizeof(htp_uri_t));
+    tx->parsed_uri_incomplete = calloc(1, sizeof(htp_uri_t));
     
     tx->response_header_lines = list_array_create(32);
     tx->response_headers = table_create(32);
@@ -45,6 +47,9 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
     free(tx->messages);
     free(tx->request_headers);
     free(tx->request_header_lines);
+
+    free(tx->parsed_uri_incomplete);
+    free(tx->parsed_uri);
 
     free(tx);
 }

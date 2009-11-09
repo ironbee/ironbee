@@ -268,7 +268,7 @@ int bstr_util_memtoip(char *data, size_t len, int base, size_t *lastlen) {
 
         // Check that the digit makes sense with the base
         // we are using.
-        if ((d == -1) || (d >= base)) {                        
+        if ((d == -1) || (d >= base)) {
             if (tflag) {
                 // Return what we have so far; lastlen points
                 // to the first non-digit position.
@@ -365,4 +365,11 @@ int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
     }
 
     return -1;
+}
+
+void bstr_chop(bstr *s) {
+    bstr_t *b = (bstr_t *) s;
+    if (b->len > 0) {
+        b->len--;
+    }
 }

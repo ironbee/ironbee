@@ -377,56 +377,73 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len) {
 }
 
 /**
- *
+ * Parses request URI, making no attempt to validate the contents.
+ * 
  * @param input
  * @param uri
+ * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
 int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
     size_t start, pos;   
 
-    // Allow the htp_uri_t structure to be provided, but
-    // allocate a new one if it isn't
+    // Allow a htp_uri_t structure to be provided on input,
+    // but allocate a new one if there isn't one
     if (*uri == NULL) {
         *uri = calloc(1, sizeof (htp_uri_t));
-        if (*uri == NULL) return -1;
+        if (*uri == NULL) return HTP_ERROR;
     }
 
     if (len == 0) {
         // Empty string
-        return -1;
+        return HTP_OK;
     }
 
     pos = 0;
 
+    // Scheme test: if it doesn't start with a forward slash character (which it must
+    // for the contents to be a path or an authority, then it must be the scheme part
     if (data[0] != '/') {
         // Parse scheme        
-        
-        // TODO Temporary parsing
+
+        // Find the colon, which marks the end of the scheme part
         start = pos;
         while ((pos < len)&&(data[pos] != ':')) pos++;
 
-        (*uri)->scheme = bstr_memdup(data + start, pos - start);        
+        if (data[pos] == ':') {
+            // Make a copy of the scheme
+            (*uri)->scheme = bstr_memdup(data + start, pos - start);
 
-        // Go over the colon
-        pos++;
+            // Go over the colon
+            pos++;
+        } else {
+            // We haven't found a colon, which means that the URI
+            // is invalid. Apache will ignore this problem and assume
+            // the URI contains an invalid path so, for the time being,
+            // we are going to do the same.
+            pos = 0;
+        }
     }
 
+    // Authority test: two forward slash characters and it's an authority.
+    // One, three or more slash characters, and it's a path
     if ((pos + 2 < len) && (data[pos] == '/') && (data[pos + 1] == '/') && (data[pos + 2] != '/')) {
         // Parse authority
 
         // Go over the two slash characters
         start = pos = pos + 2;
-                
+
+        // Authority ends with a question mark, forward slash or hash
         while ((pos < len) && (data[pos] != '?') && (data[pos] != '/') && (data[pos] != '#')) pos++;
 
         char *hostname_start;
         size_t hostname_len;
 
-        // Are the credentials included?
+        // Are the credentials included in the authority?
         char *m = memchr(data + start, '@', pos - start);
         if (m != NULL) {
+            // Credentials present
             char *credentials_start = data + start;
             size_t credentials_len = m - data - start;
 
@@ -450,15 +467,21 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
             hostname_len = pos - start;           
         }
 
-        // Is there a port?
+        // Still parsing authority; is there a port provided?
         m = memchr(hostname_start, ':', hostname_len);
         if (m != NULL) {
             size_t port_len = hostname_len - (m - hostname_start) - 1;
             hostname_len = hostname_len - port_len - 1;
 
-            (*uri)->port = bstr_memdup(m + 1, port_len);            
+            // Port string
+            (*uri)->port = bstr_memdup(m + 1, port_len);
+
+            // We deliberately don't want to try to convert the port
+            // string as a number. That will be done later, during
+            // the normalization and validation process.
         }
 
+        // Hostname
         (*uri)->hostname = bstr_memdup(hostname_start, hostname_len);        
     }
 
@@ -469,9 +492,10 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     // mark the beginning of the query part or the fragment part, respectively.
     while ((pos < len) && (data[pos] != '?') && (data[pos] != '#')) pos++;
 
+    // Path
     (*uri)->path = bstr_memdup(data + start, pos - start);    
 
-    if (pos == len) return 1;
+    if (pos == len) return HTP_OK;
 
     // Query
     if (data[pos] == '?') {
@@ -482,8 +506,10 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         // or the beginning of the fragment part
         while((pos < len)&&(data[pos] != '#')) pos++;
 
-        (*uri)->query = bstr_memdup(data + start, pos - start);        
-        if (pos == len) return 1;
+        // Query string
+        (*uri)->query = bstr_memdup(data + start, pos - start);
+        
+        if (pos == len) return HTP_OK;
     }
 
     // Fragment
@@ -491,9 +517,106 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         // Step over the hash character
         start = pos + 1;
 
-        // The fragment part ends with the end of the input
+        // Fragment; ends with the end of the input
         (*uri)->fragment = bstr_memdup(data + start, len - start);        
     }
 
-    return 1;
+    return HTP_OK;
+}
+
+/**
+ * Normalize a previously parsed request URI.
+ *
+ * @param connp
+ * @param parsed_uri_incomplete
+ * @param parsed_uri
+ * @return HTP_OK or HTP_ERROR
+ */
+int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
+    // Scheme
+
+    if (incomplete->scheme != NULL) {
+        // TODO Is the scheme allowed?
+    }
+
+    // Credentials
+    if ((incomplete->username != NULL)||(incomplete->password != NULL)) {
+        // TODO
+    }
+
+    // Hostname
+
+    if (incomplete->hostname != NULL) {
+        // We know that incomplete->hostname
+        // does not contain port information
+        normalized->hostname = bstr_strdup(incomplete->hostname);
+        htp_normalize_hostname_inplace(normalized->hostname);
+    }
+
+    // Port
+
+    if (incomplete->port != NULL) {
+        // Parse provided port
+
+        // TODO Parse port information
+
+        // TODO Is the port the same as the TCP port
+    } else {
+        // Use the default port
+        normalized->port_number = connp->conn->local_port;
+    }
+
+    // Path
+
+    // TODO Normalize path according to the backend characteristics
+
+    // Fragment
+
+    // TODO Are we expecting a fragment
+
+    return HTP_OK;
+}
+
+bstr *htp_normalize_hostname_inplace(bstr *hostname) {
+    bstr_tolowercase(hostname);
+
+    char *data = bstr_ptr(hostname);
+    size_t len = bstr_len(hostname);
+
+    while(len > 0) {
+        if (data[len - 1] != '.') return hostname;
+
+        bstr_chop(hostname);
+        len--;
+    }
+
+    return hostname;
+}
+
+void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
+    int colon = bstr_chr(hostname, ':');
+    if (colon == -1) {
+        // Hostname alone
+        parsed_uri->hostname = bstr_strdup(hostname);
+        htp_normalize_hostname_inplace(parsed_uri->hostname);
+    } else {
+        // Hostname
+        parsed_uri->hostname = bstr_strdup_ex(hostname, 0, colon);
+        htp_normalize_hostname_inplace(parsed_uri->hostname);
+
+        // Port
+        int port = htp_parse_positive_integer_whitespace(bstr_ptr(hostname) + colon, bstr_len(hostname) - colon - 1, 10);
+        if (port < 0) {
+            // Failed to parse port
+            // XXX
+        } else if ((port > 0)&&(port < 65536)) {
+            // Valid port
+            if (port != connp->conn->local_port) {
+                // Port is different from the TCP port
+                // XXX
+            } else {
+                parsed_uri->port_number = port;
+            }
+        }
+    }
 }

@@ -130,6 +130,8 @@
 #define HTP_INVALID_FOLDING             128
 #define HTP_INVALID_CHUNKING            256
 #define HTP_MULTI_PACKET_HEAD           512
+#define HTP_HOST_MISSING                1024
+#define HTP_AMBIGUOUS_HOST              2048
 
 #define PIPELINED_CONNECTION    1
 
@@ -317,6 +319,12 @@ struct htp_conn_t {
     /** Remote port. */
     int remote_port;
 
+    /** Local IP address. */
+    const char *local_addr;
+
+    /** Local port. */
+    int local_port;
+
     /** Transactions carried out on this connection. */
     list_t *transactions;
 
@@ -325,6 +333,10 @@ struct htp_conn_t {
 
     /** Parsing flags: PIPELINED_CONNECTION. */
     unsigned int flags;
+
+    // TODO transaction counter
+
+    // TODO when was this connection opened?
     
     // TODO data counters (before and after SSL?)
 };
@@ -586,13 +598,18 @@ struct htp_tx_t {
     int request_protocol_number;
 
     /** Is this request using a short-style HTTP/0.9 request? */
-    int protocol_is_simple;
+    int protocol_is_simple;   
 
-    // htp_uri_t *parsed_uri;
+    /** TODO */
+    htp_uri_t *parsed_uri;
+
+    /** This structure holds the individual components parsed out of the request URI. No
+     *  attempt is made to normalize the contents or replace the missing pieces with
+     *  defaults. The purpose of this field is to allow you to look at the data as it
+     *  was supplied. Use parsed_uri when you need to act on data. Note that this field
+     *  will never have the port as a number.
+     */
     htp_uri_t *parsed_uri_incomplete;
-
-    /** Request query string. This field is an alias for parsed_uri_incomplete.query. */
-    bstr *query_string;        
 
     /** The actual message length (the length _after_ transformations
      *  have been applied). This field will change as a request body is being
@@ -726,9 +743,9 @@ struct htp_tx_data_t {
  */
 struct htp_uri_t {
     bstr *scheme;
-    bstr *hostname;
     bstr *username;
     bstr *password;
+    bstr *hostname;    
     bstr *port;
     int port_number;
     bstr *path;
@@ -843,6 +860,10 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len);
 int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len);
 
 int htp_parse_uri(bstr *input, htp_uri_t **uri);
+int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
+bstr *htp_normalize_hostname_inplace(bstr *input);
+void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
+
 int htp_parse_content_length(bstr *b);
 int htp_parse_chunked_length(char *data, size_t len);
 int htp_parse_positive_integer_whitespace(char *data, size_t len, int base);
