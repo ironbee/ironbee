@@ -48,6 +48,17 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
 }
 
 /**
+ * Configures the filesystem sensitivity. This setting affects
+ * how URL paths are normalized.
+ *
+ * @param cfg
+ * @param path_case_insensitive
+ */
+void htp_config_fs_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive) {
+    cfg->path_case_insensitive = path_case_insensitive;
+}
+
+/**
  * Configure desired server personality.
  *
  * @param cfg
@@ -65,6 +76,8 @@ int htp_config_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->process_request_header = htp_process_request_header_apache_2_2;
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
+            cfg->path_backslash_separators = 0;
+            cfg->path_decode_separators = 0;
             break;
         case HTP_SERVER_IIS_5_1:
             break;

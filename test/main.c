@@ -554,6 +554,13 @@ int main(int argc, char** argv) {
     RUN_TEST(test_not_pipelined_connection, cfg);
     RUN_TEST(test_multi_packet_request_head, cfg);
     RUN_TEST(test_host_in_headers, cfg);
+    
+    //bstr *s = bstr_cstrdup("/a/b/c/./../../g");
+    //bstr *s = bstr_cstrdup("mid//content=5/../6");
+    //htp_prenormalize_uri_path_inplace(s, 1, 1, 1, 1);
+    //printf("Converted 1: %s\n", bstr_tocstr(s));
+    //htp_normalize_uri_path_inplace(s);
+    //printf("Converted 2: %s\n", bstr_tocstr(s));
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

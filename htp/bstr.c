@@ -373,3 +373,17 @@ void bstr_chop(bstr *s) {
         b->len--;
     }
 }
+
+void bstr_len_adjust(bstr *s, size_t newlen) {
+    bstr_t *b = (bstr_t *) s;
+    b->len = newlen;
+}
+
+unsigned char bstr_char_at(bstr *s, size_t pos) {
+    unsigned char *data = bstr_ptr(s);
+    size_t len = bstr_len(s);
+
+    if (pos > len) return -1;
+    return data[pos];
+}
+

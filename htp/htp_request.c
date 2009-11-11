@@ -466,15 +466,55 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
-            // Parse the request URI            
-            if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
-                return HTP_ERROR;
-            }
+            if (connp->in_tx->request_method_number == M_CONNECT) {
+                // XXX Handle CONNECT
+            } else {
+                // Parse the request URI
+                if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
+                    return HTP_ERROR;
+                }
 
-            // Keep the original URI components, but 
-            // create a copy which we can normalize
-            if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri)) {
-                return HTP_ERROR;
+                // Keep the original URI components, but
+                // create a copy which we can normalize and use internally
+                if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri)) {
+                    return HTP_ERROR;
+                }
+
+                // Finalize parsed_uri
+                
+                // Scheme
+                if (connp->in_tx->parsed_uri->scheme != NULL) {
+                    if (bstr_cmpc(connp->in_tx->parsed_uri->scheme, "http") != 0) {
+                        // TODO Invalid scheme
+                    }
+                } else {
+                    connp->in_tx->parsed_uri->scheme = bstr_cstrdup("http");
+                }
+
+                // Port
+                if (connp->in_tx->parsed_uri->port != NULL) {
+                    if (connp->in_tx->parsed_uri->port_number != -1) {
+                        // Check that the port in the URI is the same
+                        // as the port on which the client is talking
+                        // to the server
+                        if (connp->in_tx->parsed_uri->port_number != connp->conn->local_port) {
+                            // Incorrect port; use the real port instead
+                            connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                            // TODO Log
+                        }
+                    } else {
+                        // Invalid port; use the real port instead
+                        connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                        // TODO Log
+                    }
+                } else {
+                    connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                }
+
+                // Path
+                if (connp->in_tx->parsed_uri->path == NULL) {
+                    connp->in_tx->parsed_uri->path = bstr_cstrdup("/");
+                }
             }
 
             // Run hook REQUEST_LINE

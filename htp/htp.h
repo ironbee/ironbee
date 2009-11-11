@@ -132,6 +132,9 @@
 #define HTP_MULTI_PACKET_HEAD           512
 #define HTP_HOST_MISSING                1024
 #define HTP_AMBIGUOUS_HOST              2048
+#define HTP_PATH_URLENCODED_NUL         4096
+#define HTP_PATH_INVALID_ENCODING       8192
+#define HTP_PATH_INVALID                16384
 
 #define PIPELINED_CONNECTION    1
 
@@ -284,7 +287,11 @@ struct htp_cfg_t {
     int (*parse_request_line)(htp_connp_t *connp);
     int (*parse_response_line)(htp_connp_t *connp);
     int (*process_request_header)(htp_connp_t *connp);
-    int (*process_response_header)(htp_connp_t *connp);   
+    int (*process_response_header)(htp_connp_t *connp);
+
+    int path_case_insensitive;
+    int path_backslash_separators;
+    int path_decode_separators;
 
     // TODO There will be two types of hook: connection and transaction hooks. If we want to allow
     //      a hook to disconnect itself (as we should) then we need to make sure the disconnect is
@@ -758,7 +765,8 @@ struct htp_uri_t {
 
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create();
-int htp_config_server_personality(htp_cfg_t *cfg, int personality);
+ int htp_config_server_personality(htp_cfg_t *cfg, int personality);
+void htp_config_fs_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
@@ -863,6 +871,12 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri);
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
 bstr *htp_normalize_hostname_inplace(bstr *input);
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
+
+int htp_uriencoding_normalize_inplace(bstr *s);
+//int htp_normalize_path_inplace(htp_connp_t *connp, bstr *path);
+
+int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
+int htp_normalize_uri_path_inplace(bstr *s);
 
 int htp_parse_content_length(bstr *b);
 int htp_parse_chunked_length(char *data, size_t len);

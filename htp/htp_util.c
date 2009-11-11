@@ -386,7 +386,7 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len) {
 int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
-    size_t start, pos;   
+    size_t start, pos;
 
     // Allow a htp_uri_t structure to be provided on input,
     // but allocate a new one if there isn't one
@@ -409,7 +409,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
         // Find the colon, which marks the end of the scheme part
         start = pos;
-        while ((pos < len)&&(data[pos] != ':')) pos++;
+        while ((pos < len) && (data[pos] != ':')) pos++;
 
         if (data[pos] == ':') {
             // Make a copy of the scheme
@@ -456,15 +456,15 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
             if (m != NULL) {
                 // Username and password
                 (*uri)->username = bstr_memdup(credentials_start, m - credentials_start);
-                (*uri)->password = bstr_memdup(m + 1, credentials_len - (m - credentials_start) - 1);                
+                (*uri)->password = bstr_memdup(m + 1, credentials_len - (m - credentials_start) - 1);
             } else {
                 // Username alone
-                (*uri)->username = bstr_memdup(credentials_start, credentials_len);                
+                (*uri)->username = bstr_memdup(credentials_start, credentials_len);
             }
         } else {
             // No credentials
             hostname_start = data + start;
-            hostname_len = pos - start;           
+            hostname_len = pos - start;
         }
 
         // Still parsing authority; is there a port provided?
@@ -482,7 +482,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         }
 
         // Hostname
-        (*uri)->hostname = bstr_memdup(hostname_start, hostname_len);        
+        (*uri)->hostname = bstr_memdup(hostname_start, hostname_len);
     }
 
     // Path
@@ -493,7 +493,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     while ((pos < len) && (data[pos] != '?') && (data[pos] != '#')) pos++;
 
     // Path
-    (*uri)->path = bstr_memdup(data + start, pos - start);    
+    (*uri)->path = bstr_memdup(data + start, pos - start);
 
     if (pos == len) return HTP_OK;
 
@@ -504,11 +504,11 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
         // The query part will end with the end of the input
         // or the beginning of the fragment part
-        while((pos < len)&&(data[pos] != '#')) pos++;
+        while ((pos < len) && (data[pos] != '#')) pos++;
 
         // Query string
         (*uri)->query = bstr_memdup(data + start, pos - start);
-        
+
         if (pos == len) return HTP_OK;
     }
 
@@ -518,14 +518,14 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         start = pos + 1;
 
         // Fragment; ends with the end of the input
-        (*uri)->fragment = bstr_memdup(data + start, len - start);        
+        (*uri)->fragment = bstr_memdup(data + start, len - start);
     }
 
     return HTP_OK;
 }
 
 /**
- * Normalize a previously parsed request URI.
+ * Normalize a previously-parsed request URI.
  *
  * @param connp
  * @param parsed_uri_incomplete
@@ -533,46 +533,72 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
  * @return HTP_OK or HTP_ERROR
  */
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
+
+    // XXX We should URL-decode components here
+
     // Scheme
-
     if (incomplete->scheme != NULL) {
-        // TODO Is the scheme allowed?
-    }
-
-    // Credentials
-    if ((incomplete->username != NULL)||(incomplete->password != NULL)) {
-        // TODO
+        // Duplicate and convert to lowercase
+        normalized->scheme = bstr_dup_lower(incomplete->scheme);
     }
 
     // Hostname
-
     if (incomplete->hostname != NULL) {
-        // We know that incomplete->hostname
-        // does not contain port information
+        // Duplicate and normalize
         normalized->hostname = bstr_strdup(incomplete->hostname);
         htp_normalize_hostname_inplace(normalized->hostname);
     }
 
-    // Port
+    // Username
+    if (incomplete->username != NULL) {
+        normalized->username = bstr_strdup(incomplete->username);
+        htp_uriencoding_normalize_inplace(normalized->username);
+    }
 
+    // Password
+    if (incomplete->password != NULL) {
+        normalized->password = bstr_strdup(incomplete->password);
+        htp_uriencoding_normalize_inplace(normalized->password);
+    }
+
+    // Hostname
+    if (incomplete->hostname != NULL) {
+        // We know that incomplete->hostname does not contain
+        // port information, so no need to check for it here
+        normalized->hostname = bstr_strdup(incomplete->hostname);
+        htp_uriencoding_normalize_inplace(normalized->hostname);
+        htp_normalize_hostname_inplace(normalized->hostname);
+    }
+
+    // Port
     if (incomplete->port != NULL) {
         // Parse provided port
-
-        // TODO Parse port information
-
-        // TODO Is the port the same as the TCP port
-    } else {
-        // Use the default port
-        normalized->port_number = connp->conn->local_port;
+        normalized->port_number = htp_parse_positive_integer_whitespace(bstr_ptr(incomplete->port),
+            bstr_len(incomplete->port), 10);
+        // We do not report failed port parsing, but leave
+        // to upstream to detect and act upon it.
     }
 
     // Path
+    if (incomplete->path != NULL) {
+        normalized->path = bstr_strdup(incomplete->path);
+        htp_prenormalize_uri_path_inplace(normalized->path, &(connp->in_tx->flags),
+            connp->cfg->path_case_insensitive, connp->cfg->path_backslash_separators,
+            connp->cfg->path_decode_separators, 1 /* remove_consecutive */);
+        htp_normalize_uri_path_inplace(normalized->path);
+    }
 
-    // TODO Normalize path according to the backend characteristics
+    // Query
+    if (incomplete->query != NULL) {
+        normalized->query = bstr_strdup(incomplete->query);
+        htp_uriencoding_normalize_inplace(normalized->query);
+    }
 
     // Fragment
-
-    // TODO Are we expecting a fragment
+    if (incomplete->fragment != NULL) {
+        normalized->fragment = bstr_strdup(incomplete->fragment);
+        htp_uriencoding_normalize_inplace(normalized->fragment);
+    }
 
     return HTP_OK;
 }
@@ -583,7 +609,7 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     char *data = bstr_ptr(hostname);
     size_t len = bstr_len(hostname);
 
-    while(len > 0) {
+    while (len > 0) {
         if (data[len - 1] != '.') return hostname;
 
         bstr_chop(hostname);
@@ -609,7 +635,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         if (port < 0) {
             // Failed to parse port
             // XXX
-        } else if ((port > 0)&&(port < 65536)) {
+        } else if ((port > 0) && (port < 65536)) {
             // Valid port
             if (port != connp->conn->local_port) {
                 // Port is different from the TCP port
@@ -619,4 +645,244 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
             }
         }
     }
+}
+
+unsigned char x2c(unsigned char *what) {
+    register unsigned char digit;
+
+    digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
+    digit *= 16;
+    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
+
+    return digit;
+}
+
+int htp_is_uri_unreserved(unsigned char c) {
+    if (((c >= 0x41) && (c <= 0x5a)) ||
+        ((c >= 0x61) && (c <= 0x7a)) ||
+        ((c >= 0x30) && (c <= 0x39)) ||
+        (c == 0x2d) || (c == 0x2e) ||
+        (c == 0x5f) || (c == 0x7e)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int htp_uriencoding_normalize_inplace(bstr *s) {
+    char *data = bstr_ptr(s);
+    size_t len = bstr_len(s);
+
+    size_t rpos = len;
+    size_t wpos = rpos;
+
+    while (rpos < len) {
+        if (data[rpos] == '%') {
+            if (rpos + 2 < len) {
+                if (isxdigit(data[rpos + 1]) && (isxdigit(data[rpos + 2]))) {
+                    unsigned char c = x2c(&data[rpos + 1]);
+
+                    if (!htp_is_uri_unreserved(c)) {
+                        // Leave reserved characters encoded, but conver
+                        // the hexadecimal digits to uppercase
+                        data[wpos++] = data[rpos++];
+                        data[wpos++] = toupper(data[rpos++]);
+                        data[wpos++] = toupper(data[rpos++]);
+                    } else {
+                        // Decode unreserved character
+                        data[wpos++] = c;
+                        rpos += 3;
+                    }
+                } else {
+                    // Invalid URL encoding: invalid hex digits
+
+                    // Copy over what's there
+                    data[wpos++] = data[rpos++];
+                    data[wpos++] = toupper(data[rpos++]);
+                    data[wpos++] = toupper(data[rpos++]);
+                }
+            } else {
+                // Invalid URL encoding: string too short
+
+                // Copy over what's there
+                data[wpos++] = data[rpos++];
+                while (rpos < len) {
+                    data[wpos++] = toupper(data[rpos++]);
+                }
+            }
+        } else {
+            data[wpos++] = data[rpos++];
+        }
+    }
+
+    bstr_len_adjust(s, wpos - 1);
+}
+
+/**
+ *
+ */
+int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive) {
+    char *data = bstr_ptr(s);
+    size_t len = bstr_len(s);
+
+    size_t rpos = 0;
+    size_t wpos = 0;
+
+    while (rpos < len) {
+        char c = data[rpos];
+
+        // Convert backslash characters where necessary
+        if ((c == '/')||((c == '\\') && (backslash))) {
+            if ((!remove_consecutive)||(wpos == 0)||(data[wpos - 1] != '/')) {
+                data[wpos++] = '/';
+            }
+            
+            rpos++;
+        } else
+            if ((c == '%') && (decode_separators)) {
+            if (rpos + 2 < len) {
+                if (isxdigit(data[rpos + 1]) && (isxdigit(data[rpos + 2]))) {
+                    unsigned char x = x2c(&data[rpos + 1]);
+
+                    if (x == 0) {
+                        (*flags) |= HTP_PATH_URLENCODED_NUL;
+                    }
+
+                    if ((x == '/') || ((backslash) && (x == '\\'))) {
+                        data[wpos++] = '/';
+                        rpos += 3;
+                        continue;
+                    }
+                } else {
+                    // Invalid URL encoding
+                    (*flags) |= HTP_PATH_INVALID_ENCODING;
+
+                    // Copy over all three bytes
+                    data[wpos++] = data[rpos++];
+                    data[wpos++] = data[rpos++];
+                    data[wpos++] = data[rpos++];
+                }
+            } else {
+                // Not enough characters
+                (*flags) |= HTP_PATH_INVALID_ENCODING;
+
+                // Copy over what's there
+                while(rpos < len) {
+                    data[wpos++] = data[rpos++];
+                }
+            }
+        } else {
+            // Just copy the character
+            if (case_insensitive) {
+                data[wpos++] = tolower(c);
+            } else {
+                data[wpos++] = c;
+            }
+            
+            rpos++;
+        }
+    }
+
+    bstr_len_adjust(s, wpos);
+}
+
+/**
+ * Normalize URL path. This function implements the remove dot segments algorithm
+ * speficied in RFC 3986, section 5.2.4.
+ *
+ * @param s
+ */
+int htp_normalize_uri_path_inplace(bstr *s) {
+    char *data = bstr_ptr(s);
+    size_t len = bstr_len(s);
+
+    size_t rpos = 0;
+    size_t wpos = 0;
+
+    int c = -1;    
+    while (rpos < len) {
+        if (c == -1) {
+            c = data[rpos++];
+        }
+
+        // A. If the input buffer begins with a prefix of "../" or "./",
+        //    then remove that prefix from the input buffer; otherwise,
+        if (c == '.') {
+            if ((rpos + 1 < len) && (data[rpos] == '.') && (data[rpos + 1] == '/')) {
+                c = -1;
+                rpos += 2;
+                continue;
+            } else if ((rpos < len) && (data[rpos + 1] == '/')) {
+                c = -1;
+                rpos += 2;
+                continue;
+            }
+        }
+
+        if (c == '/') {
+            // B. if the input buffer begins with a prefix of "/./" or "/.",
+            //    where "." is a complete path segment, then replace that
+            //    prefix with "/" in the input buffer; otherwise,
+            if ((rpos + 1 < len) && (data[rpos] == '.') && (data[rpos + 1] == '/')) {
+                c = '/';
+                rpos += 2;
+                continue;
+            } else if ((rpos + 1 == len) && (data[rpos] == '.')) {
+                c = '/';
+                rpos += 1;
+                continue;
+            }
+
+            // C. if the input buffer begins with a prefix of "/../" or "/..",
+            //    where ".." is a complete path segment, then replace that
+            //    prefix with "/" in the input buffer and remove the last
+            //    segment and its preceding "/" (if any) from the output
+            //    buffer; otherwise,
+            if ((rpos + 2 < len) && (data[rpos] == '.') && (data[rpos + 1] == '.') && (data[rpos + 2] == '/')) {
+                c = '/';
+                rpos += 3;
+
+                // Remove the last segment
+                while ((wpos > 0) && (data[wpos - 1] != '/')) wpos--;
+                if (wpos > 0) wpos--;
+                continue;
+            } else if ((rpos + 2 == len) && (data[rpos] == '.') && (data[rpos + 1] == '.')) {
+                c = '/';
+                rpos += 2;
+
+                // Remove the last segment
+                while ((wpos > 0) && (data[wpos - 1] != '/')) wpos--;
+                if (wpos > 0) wpos--;
+                continue;
+            }
+        }
+
+        // D.  if the input buffer consists only of "." or "..", then remove
+        // that from the input buffer; otherwise,
+        if ((c == '.') && (rpos == len)) {
+            rpos++;
+            continue;
+        }
+
+        if ((c == '.') && (rpos + 1 == len) && (data[rpos] == '.')) {
+            rpos += 2;
+            continue;
+        }
+
+        // E.  move the first path segment in the input buffer to the end of
+        // the output buffer, including the initial "/" character (if
+        // any) and any subsequent characters up to, but not including,
+        // the next "/" character or the end of the input buffer.
+        data[wpos++] = c;
+
+        while ((rpos < len) && (data[rpos] != '/')) {
+            // data[wpos++] = data[rpos++];
+            int c2 = data[rpos++];
+            data[wpos++] = c2;
+        }
+
+        c = -1;
+    }
+
+    bstr_len_adjust(s, wpos);
 }
