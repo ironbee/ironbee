@@ -79,10 +79,21 @@ list_t *list_linked_create(void) {
     q->push = list_linked_push;
     q->pop = list_linked_pop;
     q->empty = list_linked_empty;
+    q->destroy = (void (*)(list_t *))list_linked_destroy;
 
     return (list_t *)q;
 }
 
+/**
+ *
+ */
+void list_linked_destroy(list_linked_t *l) {
+    // Free the list components
+    // XXX
+
+    // Free the list itself
+    free(l);
+}
 
 
 // -- Queue Array --
@@ -210,8 +221,17 @@ list_t *list_array_create(int size) {
     q->size = list_array_size;    
     q->iterator_reset = (void (*)(list_t *))list_array_iterator_reset;
     q->iterator_next = (void *(*)(list_t *))list_array_iterator_next;
+    q->destroy = (void (*)(list_t *))list_array_destroy;
 
     return (list_t *)q;
+}
+
+/**
+ *
+ */
+void list_array_destroy(list_array_t *l) {
+    free(l->elements);
+    free(l);
 }
 
 #if 0
@@ -241,6 +261,14 @@ table_t *table_create(int size) {
     // Use a list behind the scenes
     t->list = list_array_create(size * 2);
     return t;
+}
+
+/**
+ *
+ */
+void table_destroy(table_t * t) {
+    list_destroy(t->list);
+    free(t);
 }
 
 /**

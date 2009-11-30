@@ -12,6 +12,7 @@
 #define list_size(L) (L)->size(L)
 #define list_iterator_reset(L) (L)->iterator_reset(L)
 #define list_iterator_next(L) (L)->iterator_next(L)
+#define list_destroy(L) (L)->destroy(L)
 
 #define LIST_COMMON \
     int (*push)(list_t *, void *); \
@@ -20,7 +21,8 @@
     void *(*get)(list_t *, size_t index); \
     size_t (*size)(list_t *); \
     void (*iterator_reset)(list_t *); \
-    void *(*iterator_next)(list_t *);
+    void *(*iterator_next)(list_t *); \
+    void (*destroy)(list_t *);
 
 typedef struct list_t list_t;
 typedef struct list_array_t list_array_t;
@@ -58,7 +60,9 @@ struct list_array_t {
 };
 
 list_t *list_linked_create(void);
+void list_linked_destroy(list_linked_t *l);
 list_t *list_array_create(int size);
+void list_array_destroy(list_array_t *l);
 
 struct table_t {
     list_t *list;
@@ -72,6 +76,7 @@ void *table_getc(table_t *, char *);
 void table_iterator_reset(table_t *);
 bstr *table_iterator_next(table_t *, void **);
 int table_size(table_t *t);
+void table_destroy(table_t *);
 
 #endif	/* _DSLIB_H */
 

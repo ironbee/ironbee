@@ -296,9 +296,7 @@ struct htp_conn_t {
     list_t *messages;   
 
     /** Parsing flags: PIPELINED_CONNECTION. */
-    unsigned int flags;
-
-    // TODO transaction counter
+    unsigned int flags;   
 
     /** When was this connection opened? */
     htp_time_t open_timestamp;
