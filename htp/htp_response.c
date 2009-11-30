@@ -40,7 +40,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     d.len = 0;
 
     for (;;) {
-        OUT_NEXT_BYTE_OR_RETURN(connp);        
+        OUT_NEXT_BYTE_OR_RETURN(connp);
 
         if (connp->out_next_byte == -1) {
             // Send data to callbacks
@@ -129,7 +129,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
     d.len = 0;
 
     for (;;) {
-        OUT_NEXT_BYTE(connp);
+        OUT_NEXT_BYTE(connp);       
 
         if (connp->out_next_byte == -1) {
             // End of chunk
@@ -141,11 +141,21 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                 }
             }
 
-            // Ask for more data
-            return HTP_DATA;
+            // If we don't know the length, then we must check
+            // to see if the stream closed; that would signal the
+            // end of the response body (and the end of the transaction).
+            if ((connp->out_content_length == -1)&&(connp->out_status == STREAM_STATE_CLOSED)) {                
+                connp->out_state = htp_connp_RES_IDLE;
+                connp->out_tx->progress = TX_PROGRESS_WAIT;
+
+                return HTP_OK;
+           } else {
+                // Ask for more data
+                return HTP_DATA;
+           }
         } else {
             connp->out_tx->response_message_len++;
-            connp->out_tx->response_entity_len++;            
+            connp->out_tx->response_entity_len++;
 
             if (connp->out_body_data_left > 0) {
                 // We know the length of response body
@@ -196,7 +206,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         }
 
         // Ignore any response headers set
-        // TODO table_erase(connp->out_tx->response_headers);
+        // XXX table_erase(connp->out_tx->response_headers);
 
         connp->out_state = htp_connp_RES_FIRST_LINE;
         connp->out_tx->progress = TX_PROGRESS_RES_LINE;
@@ -238,10 +248,10 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = TX_PROGRESS_RES_BODY;
-        } else
-            // 3. If a Content-Length header field (section 14.14) is present, its
-            //   value in bytes represents the length of the message-body.
-            if (cl != NULL) {
+        }
+        // 3. If a Content-Length header field (section 14.14) is present, its
+        //   value in bytes represents the length of the message-body.
+        else if (cl != NULL) {
             // We know the exact length
             connp->out_tx->response_transfer_coding = IDENTITY;
 
@@ -539,14 +549,12 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
  * @return HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed
  */
 int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
-    // Return straight away if there's no data to process
-    if ((data == NULL) || (len == 0)) {
-        return HTP_ERROR;
-    }
-
-    // Also return if the connection has had a fatal error
-    if (connp->status != HTP_OK) {
-        return HTP_ERROR;
+    // Return if the connection has had a fatal error
+    if (connp->out_status != STREAM_STATE_OPEN) {
+        // We allow calls that allow the parser to finalize their work
+        if (!(connp->out_status == STREAM_STATE_CLOSED)&&(len == 0)) {
+            return STREAM_STATE_ERROR;
+        }
     }
 
     // Store the current chunk information
@@ -559,23 +567,23 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // occurs or until we run out of data. Many processors
     // will process a request, each pointing to the next
     // processor that needs to run.
-    for (;;) {
+    for (;;) {        
         // Return if there's been an error
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll
         // keep quiet here.
-        int status = connp->out_state(connp);
-        if (status != HTP_OK) {
+        int rc = connp->out_state(connp);
+        if (rc != HTP_OK) {
             // Do we need more data?
-            if (status == HTP_DATA) {
-                return HTP_DATA;
+            if (rc == HTP_DATA) {
+                return STREAM_STATE_DATA;
             }
 
             // Remember that we've had an error. Errors are
             // not possible to recover from.
-            connp->status = HTP_ERROR;
+            connp->out_status = STREAM_STATE_ERROR;
 
-            return HTP_ERROR;
+            return STREAM_STATE_ERROR;
         }
     }
 }

@@ -122,6 +122,12 @@
 #define TX_PROGRESS_RES_TRAILER     9
 #define TX_PROGRESS_DONE            10
 
+#define STREAM_STATE_NEW            0
+#define STREAM_STATE_OPEN           1
+#define STREAM_STATE_CLOSED         2
+#define STREAM_STATE_ERROR          3
+#define STREAM_STATE_DATA           9
+
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
     return HTP_DATA; \
@@ -326,8 +332,11 @@ struct htp_connp_t {
 
     // Request parser fields
 
-    /** Parser status. Starts as HTP_OK, but may turn into HTP_ERROR. */
-    unsigned int status; // TODO Consider using two status fields, one for each direction
+    /** Parser inbound status. Starts as HTP_OK, but may turn into HTP_ERROR. */
+    unsigned int in_status;
+
+    /** Parser output status. Starts as HTP_OK, but may turn into HTP_ERROR. */
+    unsigned int out_status;
 
     /** The time when the last request data chunk was received. */
     htp_time_t in_timestamp;

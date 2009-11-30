@@ -39,9 +39,16 @@ void htp_connp_clear_error(htp_connp_t *connp) {
  *
  * @param connp
  */
-void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp) {
+void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp) {    
+    // Update internal information
     connp->conn->close_timestamp = timestamp;
-    // TODO Set status to closed    
+    connp->in_status = STREAM_STATE_CLOSED;
+    connp->out_status = STREAM_STATE_CLOSED;
+
+    // Call the parsers one last time, which will allow them
+    // to process the events that depend on stream closure
+    htp_connp_req_data(connp, timestamp, NULL, 0);
+    htp_connp_res_data(connp, timestamp, NULL, 0);
 }
 
 /**
@@ -68,7 +75,7 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
         return NULL;
     }
 
-    connp->status = HTP_OK;
+    connp->in_status = HTP_OK;
 
     // Request parsing
 
@@ -98,6 +105,9 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     
     connp->out_header_line_index = -1;
     connp->out_state = htp_connp_RES_IDLE;
+
+    connp->in_status = STREAM_STATE_NEW;
+    connp->out_status = STREAM_STATE_NEW;
 
     return connp;
 }
@@ -193,6 +203,8 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
     connp->conn->local_addr = local_addr;
     connp->conn->local_port = local_port;
     connp->conn->open_timestamp = timestamp;
+    connp->in_status = STREAM_STATE_OPEN;
+    connp->out_status = STREAM_STATE_OPEN;
 }
 
 /**

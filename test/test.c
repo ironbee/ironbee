@@ -162,7 +162,7 @@ static int test_next_chunk(test_t *test) {
         test->pos++;
     }
 
-    
+
     if (test->chunk != NULL) {
         test->chunk_len = test->pos - test->chunk_offset;
         return 1;
@@ -250,12 +250,17 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         exit(1);
     }
 
+    // Does the filename contain connection metdata?
     if (strncmp(testname, "stream", 6) == 0) {
+        // It does; use it
         char *remote_addr, *local_addr;
         int remote_port, local_port;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
         htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, tv_start.tv_usec);
+    } else {
+        // No connection metadata; provide some fake information instead
+        htp_connp_open(*connp, (const char *) "127.0.0.1", 10000, (const char *) "127.0.0.1", 80, tv_start.tv_usec);
     }
 
     // Find all chunks and feed them to the parser
@@ -276,6 +281,9 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     }
 
     gettimeofday(&tv_end, NULL);
+
+    // Close the connection
+    htp_connp_close(*connp, tv_end.tv_usec);
 
     // printf("Parsing time: %i\n", tv_end.tv_usec - tv_start.tv_usec);
 

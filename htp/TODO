@@ -44,3 +44,6 @@
   transaction. This tells me that we need to keep a prototype of transaction hooks and to
   make a copy of it whenever a new transaction begins.
 
+- Does the API need to support closing one stream at a time? For example, when
+  a client sends his request(s), closes his side of a connection, then waits for
+  the server to respond.

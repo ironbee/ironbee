@@ -601,14 +601,12 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
  * @return HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
-    // Return straight away if there's no data to process
-    if ((data == NULL) || (len == 0)) {
-        return HTP_ERROR;
-    }
-
-    // Also return if the connection has had a fatal error
-    if (connp->status != HTP_OK) {
-        return HTP_ERROR;
+    // Return if the connection has had a fatal error
+    if (connp->in_status != STREAM_STATE_OPEN) {
+        // We allow calls that allow the parser to finalize their work
+        if (!(connp->in_status == STREAM_STATE_CLOSED)&&(len == 0)) {
+            return STREAM_STATE_ERROR;
+        }
     }
 
     // Store the current chunk information
@@ -627,18 +625,18 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll
         // keep quiet here.
-        int status = connp->in_state(connp);
-        if (status != HTP_OK) {
+        int rc = connp->in_state(connp);
+        if (rc != HTP_OK) {
             // Do we need more data?
-            if (status == HTP_DATA) {
-                return HTP_DATA;
+            if (rc == HTP_DATA) {
+                return STREAM_STATE_DATA;
             }
 
             // Remember that we've had an error. Errors are
             // not possible to recover from.
-            connp->status = HTP_ERROR;
+            connp->in_status = STREAM_STATE_ERROR;
 
-            return HTP_ERROR;
+            return STREAM_STATE_ERROR;
         }
     }
 }
