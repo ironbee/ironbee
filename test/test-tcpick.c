@@ -112,9 +112,9 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
             first = current;
 
             if (first == SERVER) {
-                htp_connp_open(*connp, local_addr, 80, remote_addr, 80);
+                htp_connp_open(*connp, local_addr, 80, remote_addr, 80, tv.tv_usec);
             } else {
-                htp_connp_open(*connp, remote_addr, 80, local_addr, 80);
+                htp_connp_open(*connp, remote_addr, 80, local_addr, 80, tv.tv_usec);
             }
         }
 
@@ -209,7 +209,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
 
     fclose(f);
 
-    htp_connp_close(*connp);
+    htp_connp_close(*connp, tv.tv_usec);
 
     return 1;
 }

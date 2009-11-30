@@ -9,17 +9,12 @@
 typedef void * bstr;
 
 bstr *bstr_alloc(size_t newsize);
-// bstr *bstr_alloc_p(size_t newsize, pool_t *pool);
+void  bstr_free(bstr *s);
 bstr *bstr_expand(bstr *s, size_t newsize);
-// bstr *bstr_expand_p(bstr *s, size_t newsize, pool_t *pool);
 bstr *bstr_cstrdup(unsigned char *);
-// bstr *bstr_cstrdup_p(unsigned char *, pool_t *pool);
 bstr *bstr_memdup(unsigned char *data, size_t len);
-//bstr *bstr_memdup_p(unsigned char *data, size_t len, pool_t *pool);
 bstr *bstr_strdup(bstr *b);
-// bstr *bstr_strdup_p(bstr *b, pool_t *pool);
 bstr *bstr_strdup_ex(bstr *b, size_t offset, size_t len);
-//bstr *bstr_strdup_ex_p(bstr *b, size_t offset, size_t len, pool_t *pool);
 char *bstr_tocstr(bstr *);
 
 int bstr_chr(bstr *, int);

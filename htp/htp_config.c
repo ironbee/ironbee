@@ -133,10 +133,11 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
 }
 
 /**
- *
+ * Destroy a configuration structure.
+ * 
  * @param cfg
  */
-htp_cfg_t *htp_config_destory(htp_cfg_t *cfg) {
+void htp_config_destroy(htp_cfg_t *cfg) {
     // Destroy the hooks
     hook_destroy(cfg->hook_transaction_start);
     hook_destroy(cfg->hook_request_line);

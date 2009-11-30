@@ -294,7 +294,11 @@ struct htp_conn_t {
 
     // TODO transaction counter
 
-    // TODO when was this connection opened?
+    /** When was this connection opened? */
+    htp_time_t open_timestamp;
+
+    /** When was this connection closed? */
+    htp_time_t close_timestamp;
     
     // TODO data counters (before and after SSL?)
 };
@@ -304,6 +308,12 @@ struct htp_connp_t {
     
     /** Current parser configuration structure. */
     htp_cfg_t *cfg;
+
+    /** Is the configuration structure only used with this connection
+     *  parser? If it is, then it can be changed as parsing goes on,
+     *  and destroyed along with the parser in the end.
+     */
+    int is_cfg_private;
 
     /** The connection structure associated with this parser. */
     htp_conn_t *conn;
@@ -736,9 +746,9 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
-// TODO Is below all right for IPv6 too?
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port);
-void htp_connp_close(htp_connp_t *connp);
+htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
+void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t timestamp);
+void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp);
 void htp_connp_destroy(htp_connp_t *connp);
 void htp_connp_destroy_all(htp_connp_t *connp);
 

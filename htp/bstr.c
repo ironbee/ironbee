@@ -20,6 +20,13 @@ bstr *bstr_alloc(size_t len) {
 /**
  *
  */
+void bstr_free(bstr *b) {
+    free(b);
+}
+
+/**
+ *
+ */
 bstr *bstr_add_str(bstr *s, bstr *s2) {
     return bstr_add_mem(s, bstr_ptr(s2), bstr_len(s2));
 }

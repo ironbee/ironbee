@@ -255,7 +255,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         int remote_port, local_port;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
-        htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port);
+        htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, tv_start.tv_usec);
     }
 
     // Find all chunks and feed them to the parser
