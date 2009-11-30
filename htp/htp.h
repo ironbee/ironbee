@@ -11,43 +11,6 @@
 #include "dslib.h"
 #include "hooks.h"
 
-
-// TODO We're currently using a fixed-size line buffer. Although one buffer isn't very big,
-//      they add up if we want to supports tens of thousands of concurrent connections. For
-//      example 20K connections x 20K buffer = 400M. We can perhaps start with a 2K buffer
-//      (configurable) and grow as needed.
-
-// TODO Memory allocation strategies. We want to support two strategies:
-//
-//      #1 Supply a pair of functions (alloc and free) along with a void * pointer.
-//
-//      #2 Use memory pools for all allocations. Desired functions:
-//
-//          - create pool (w/hierarchy), destroy pool, clear pool
-//          - alloc (calloc?), free
-//          - register callback
-//
-//      The plan is to have a simple memory pool implementation that does not pool memory
-//      but only tracks what is allocated so that it can free it all in one go. The library
-//      users can provide an external implementation to use if they so wish.
-
-// TODO Consider enums where appropriate.
-
-// TODO The plan for SSL handling is as follows:
-//
-//      - For fully encrypted streams, upstream is free to decrypt SSL and feed the
-//        parser just the data.
-//
-//      - On-demand SSL is not used with HTTP in practice but, in principle, the idea
-//        is to have the parser return the HTP_TLS_UPGRADE code. Upon detecting the
-//        code, upstream would handle the upgrade (either by passively decrypting the
-//        traffic stream or handling SSL/TLS directly) and provide plain text data
-//        to the HTTP parser on every subsequent invocation.
-//
-
-
-
-
 // -- Defines -------------------------------------------------------------------------------------
 
 #define HTP_DEBUG               1
@@ -85,10 +48,9 @@
 #define CR '\r'
 #define LF '\n'
 
-// TODO Document source for each method
 #define M_UNKNOWN              -1
 
-// The following are defined in Apache 2.2.13, in httpd.h.
+// The following request method are defined in Apache 2.2.13, in httpd.h.
 #define M_GET                   0
 #define M_PUT                   1
 #define M_POST                  2
@@ -136,7 +98,7 @@
 #define HTP_PATH_INVALID_ENCODING       8192
 #define HTP_PATH_INVALID                16384
 
-#define PIPELINED_CONNECTION    1
+#define PIPELINED_CONNECTION        1
 
 #define HTP_SERVER_STRICT           0
 #define HTP_SERVER_PERMISSIVE       1
@@ -159,10 +121,6 @@
 #define TX_PROGRESS_RES_BODY        8
 #define TX_PROGRESS_RES_TRAILER     9
 #define TX_PROGRESS_DONE            10
-
-// TODO At some point test the performance of these macros and
-//      determine if it makes more sense to implement the same
-//      functionality as functions
 
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
@@ -291,14 +249,7 @@ struct htp_cfg_t {
 
     int path_case_insensitive;
     int path_backslash_separators;
-    int path_decode_separators;
-
-    // TODO There will be two types of hook: connection and transaction hooks. If we want to allow
-    //      a hook to disconnect itself (as we should) then we need to make sure the disconnect is
-    //      applied to the correct scope. For example, a transaction hook that requires disconnection
-    //      should not be invoked for the same transaction, but should be invoked for the subsequent
-    //      transaction. This tells me that we need to keep a prototype of transaction hooks and to
-    //      make a copy of it whenever a new transaction begins.
+    int path_decode_separators;   
 
     htp_hook_t *hook_transaction_start;
     htp_hook_t *hook_request_line;
@@ -593,7 +544,7 @@ struct htp_tx_t {
     /** Request method, as number. Available only if we were able to recognize the request method. */
     int request_method_number;
 
-    /** Request URI. */
+    /** Request URI, raw, as given to us on the request line. */
     bstr *request_uri;
 
     /** Request protocol, as text. */
@@ -607,7 +558,11 @@ struct htp_tx_t {
     /** Is this request using a short-style HTTP/0.9 request? */
     int protocol_is_simple;   
 
-    /** TODO */
+    /** This structure holds a parsed request_uri, with the missing information
+     *  added (e.g., adding port number from the TCP information) and the fields
+     *  normalized. This structure should be used to make decisions about a request.
+     *  To inspect raw data, either use request_uri, or parsed_uri_incomplete.
+     */
     htp_uri_t *parsed_uri;
 
     /** This structure holds the individual components parsed out of the request URI. No
@@ -656,7 +611,7 @@ struct htp_tx_t {
     /** Request transfer coding: IDENTITY or CHUNKED. Only available on requests that have bodies. */
     int request_transfer_coding;
 
-    /** TODO Compression. */
+    /** TODO (phase 2) Compression support. */
     int request_content_encoding;
 
     // Response
@@ -710,7 +665,7 @@ struct htp_tx_t {
     /** Response transfer coding: IDENTITY or CHUNKED. Only available on responses that have bodies. */
     int response_transfer_coding;
 
-    /** TODO Compression. */
+    /** TODO (phase 2) Compression support. */
     int response_content_encoding;
     
     // Common
@@ -744,9 +699,7 @@ struct htp_tx_data_t {
 
 /** URI structure. Each of the fields provides access to a single
  *  URI element. A typical URI will look like this:
- *  http://username:password@hostname.com:8080/path?query#fragment. Only
- *  the fields corresponding to the elements present in the URI will be
- *  populated.
+ *  http://username:password@hostname.com:8080/path?query#fragment.
  */
 struct htp_uri_t {
     bstr *scheme;
@@ -754,7 +707,7 @@ struct htp_uri_t {
     bstr *password;
     bstr *hostname;    
     bstr *port;
-    int port_number;
+      int port_number;
     bstr *path;
     bstr *query;
     bstr *fragment;
@@ -765,21 +718,22 @@ struct htp_uri_t {
 
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create();
+      void htp_config_destroy(htp_cfg_t *cfg);
  int htp_config_server_personality(htp_cfg_t *cfg, int personality);
 void htp_config_fs_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
 
-void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
-void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
-void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
-void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *), int priority);
-void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
-void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
+void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
-void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
-void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
-void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *), int priority);
-void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
-void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *), int priority);
+void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
 // TODO Is below all right for IPv6 too?
@@ -846,7 +800,6 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
-
 
 // Utility functions
 

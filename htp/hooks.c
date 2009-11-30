@@ -7,21 +7,53 @@
  * @return New htp_hook_t structure on success, NULL on failure
  */
 htp_hook_t *hook_create() {
-   htp_hook_t *hook = calloc(1, sizeof(htp_hook_t));
-   if (hook == NULL) return NULL;
-   
-   hook->callbacks = list_array_create(4);
-   
-   return hook;
+    htp_hook_t *hook = calloc(1, sizeof (htp_hook_t));
+    if (hook == NULL) return NULL;
+
+    hook->callbacks = list_array_create(4);
+    if (hook->callbacks == NULL) {
+        free(hook);
+        return NULL;
+    }
+
+    return hook;
 }
 
 /**
- * Destroys an existing hook.
+ * Creates a copy of the provided hook. The hook is allowed to be NULL,
+ * in which case this function simply returns a NULL.
+ *
+ * @param hook
+ * @return A copy of the hook, or NULL (if the provided hook was NULL
+ *         or, if it wasn't, if there was a memory allocation problem while
+ *         constructing a copy).
+ */
+htp_hook_t * hook_copy(htp_hook_t *hook) {
+    if (hook == NULL) return NULL;
+
+    htp_hook_t *copy = hook_create();
+    if (copy == NULL) return NULL;
+
+    htp_callback_t *callback = NULL;
+    list_iterator_reset(hook->callbacks);
+    while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
+        if (hook_register(&copy, callback->fn) < 0) {
+            hook_destroy(copy);
+            return NULL;
+        }
+    }
+
+    return copy;
+}
+
+/**
+ * Destroys an existing hook. It is all right to send a NULL
+ * to this method because it will simply return straight away.
  *
  * @param hook
  */
 void hook_destroy(htp_hook_t *hook) {
-   if (hook == NULL) return;
+    if (hook == NULL) return;
 
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
@@ -29,35 +61,45 @@ void hook_destroy(htp_hook_t *hook) {
         free(callback);
     }
 
-   free(hook->callbacks);
-   free(hook);
+    free(hook->callbacks);
+    free(hook);
 }
 
 /**
- * Registers a new callback with the hook. The priority parameter is
- * not implemented yet.
+ * Registers a new callback with the hook.
  *
  * @param hook
  * @param callback_fn
- * @param priority
+ * @return 1 on success, -1 on memory allocation error
  */
-void hook_register(htp_hook_t **hook, int (*callback_fn)(), int priority) {
-    htp_callback_t *callback = calloc(1, sizeof(htp_callback_t));
-    if (callback == NULL) return;
-    
-    callback->fn = callback_fn;    
-    callback->priority = priority;
+int hook_register(htp_hook_t **hook, int (*callback_fn)()) {
+    int hook_created = 0;
+    htp_callback_t *callback = calloc(1, sizeof (htp_callback_t));
+    if (callback == NULL) return -1;
+
+    callback->fn = callback_fn;
 
     // Create a new hook if one does not exist
     if (*hook == NULL) {
         *hook = hook_create();
-        if (*hook == NULL) return;
+        if (*hook == NULL) {
+            free(callback);
+            return -1;
+        }
+
+        hook_created = 1;
     }
-    
-    // Add callback
-    // TODO Use priority to place the callback into
-    //      the correct position
-    list_add((*hook)->callbacks, callback);
+
+    // Add callback 
+    if (list_add((*hook)->callbacks, callback) < 0) {
+        if (hook_created) {
+            free(*hook);
+        }
+        free(callback);
+        return -1;
+    }
+
+    return 1;
 }
 
 /**
@@ -101,7 +143,6 @@ int hook_run_one(htp_hook_t *hook, void *data) {
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
         int status = callback->fn(data);
         // Both HOOK_OK and HOOK_ERROR will stop hook processing
-        // but HOOK_ERROR will also stop parsing
         if (status != HOOK_DECLINED) {
             return status;
         }

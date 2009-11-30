@@ -294,6 +294,24 @@ int test_multi_packet_request_head(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_misc(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "misc.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    printf("Parsed URI: %s\n", bstr_tocstr(tx->parsed_uri_incomplete->path));
+
+    return 1;
+}
+
 /**
  *
  */
@@ -530,37 +548,31 @@ int main(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
 
     // Register hooks
-    htp_config_register_transaction_start(cfg, callback_transaction_start, HOOK_MIDDLE);
+    htp_config_register_transaction_start(cfg, callback_transaction_start);
 
-    htp_config_register_request_line(cfg, callback_request_line, HOOK_MIDDLE);
-    htp_config_register_request_headers(cfg, callback_request_headers, HOOK_MIDDLE);
-    htp_config_register_request_body_data(cfg, callback_request_body_data, HOOK_MIDDLE);
-    htp_config_register_request_trailer(cfg, callback_request_trailer, HOOK_MIDDLE);
-    htp_config_register_request(cfg, callback_request, HOOK_MIDDLE);
+    htp_config_register_request_line(cfg, callback_request_line);
+    htp_config_register_request_headers(cfg, callback_request_headers);
+    htp_config_register_request_body_data(cfg, callback_request_body_data);
+    htp_config_register_request_trailer(cfg, callback_request_trailer);
+    htp_config_register_request(cfg, callback_request);
 
-    htp_config_register_response_line(cfg, callback_response_line, HOOK_MIDDLE);
-    htp_config_register_response_headers(cfg, callback_response_headers, HOOK_MIDDLE);
-    htp_config_register_response_body_data(cfg, callback_response_body_data, HOOK_MIDDLE);
-    htp_config_register_response_trailer(cfg, callback_response_trailer, HOOK_MIDDLE);
-    htp_config_register_response(cfg, callback_response, HOOK_MIDDLE);
+    htp_config_register_response_line(cfg, callback_response_line);
+    htp_config_register_response_headers(cfg, callback_response_headers);
+    htp_config_register_response_body_data(cfg, callback_response_body_data);
+    htp_config_register_response_trailer(cfg, callback_response_trailer);
+    htp_config_register_response(cfg, callback_response);
 
-    RUN_TEST(test_get, cfg);
-    RUN_TEST(test_apache_header_parsing, cfg);
-    RUN_TEST(test_post_urlencoded, cfg);
-    RUN_TEST(test_post_urlencoded_chunked, cfg);
-    RUN_TEST(test_expect, cfg);
-    RUN_TEST(test_uri_normal, cfg);
-    RUN_TEST(test_pipelined_connection, cfg);
-    RUN_TEST(test_not_pipelined_connection, cfg);
-    RUN_TEST(test_multi_packet_request_head, cfg);
-    RUN_TEST(test_host_in_headers, cfg);
-    
-    //bstr *s = bstr_cstrdup("/a/b/c/./../../g");
-    //bstr *s = bstr_cstrdup("mid//content=5/../6");
-    //htp_prenormalize_uri_path_inplace(s, 1, 1, 1, 1);
-    //printf("Converted 1: %s\n", bstr_tocstr(s));
-    //htp_normalize_uri_path_inplace(s);
-    //printf("Converted 2: %s\n", bstr_tocstr(s));
+    //RUN_TEST(test_get, cfg);
+    //RUN_TEST(test_apache_header_parsing, cfg);
+    //RUN_TEST(test_post_urlencoded, cfg);
+    //RUN_TEST(test_post_urlencoded_chunked, cfg);
+    //RUN_TEST(test_expect, cfg);
+    //RUN_TEST(test_uri_normal, cfg);
+    //RUN_TEST(test_pipelined_connection, cfg);
+    //RUN_TEST(test_not_pipelined_connection, cfg);
+    //RUN_TEST(test_multi_packet_request_head, cfg);
+    //RUN_TEST(test_host_in_headers, cfg);
+    RUN_TEST(test_misc, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
