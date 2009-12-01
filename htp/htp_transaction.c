@@ -9,11 +9,11 @@
  * @param conn
  * @return The newly created transaction, or NULL on memory allocation failure.
  */
-htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
-    // TODO Does the transaction care which connection it belongs to?
+htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {    
     htp_tx_t *tx = calloc(1, sizeof (htp_tx_t));
     if (tx == NULL) return NULL;
 
+    tx->conn = conn;
     tx->cfg = cfg;
     tx->is_cfg_shared = is_cfg_shared;
 
@@ -50,6 +50,10 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
 
     free(tx->parsed_uri_incomplete);
     free(tx->parsed_uri);
+
+    // Tell the connection to remove this transaction
+    // from the list
+    htp_conn_remove_tx(tx->conn, tx);
 
     free(tx);
 }

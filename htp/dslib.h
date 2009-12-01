@@ -8,6 +8,7 @@
 #define list_pop(L) (L)->pop(L)
 #define list_empty(L) (L)->empty(L)
 #define list_get(L, N) (L)->get((list_t *)L, N)
+#define list_replace(L, N, E) (L)->replace((list_t *)L, N, E)
 #define list_add(L, N) (L)->push(L, N)
 #define list_size(L) (L)->size(L)
 #define list_iterator_reset(L) (L)->iterator_reset(L)
@@ -19,6 +20,7 @@
     void *(*pop)(list_t *); \
     int (*empty)(list_t *); \
     void *(*get)(list_t *, size_t index); \
+    int (*replace)(list_t *, size_t index, void *); \
     size_t (*size)(list_t *); \
     void (*iterator_reset)(list_t *); \
     void *(*iterator_next)(list_t *); \
@@ -60,9 +62,7 @@ struct list_array_t {
 };
 
 list_t *list_linked_create(void);
-void list_linked_destroy(list_linked_t *l);
 list_t *list_array_create(int size);
-void list_array_destroy(list_array_t *l);
 
 struct table_t {
     list_t *list;

@@ -615,6 +615,8 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     connp->in_current_len = len;
     connp->in_current_offset = 0;
     connp->in_chunk_count++;
+    connp->conn->in_data_counter += len;
+    connp->conn->in_packet_counter++;
 
     // Invoke a processor, in a loop, until an error
     // occurs or until we run out of data. Many processors

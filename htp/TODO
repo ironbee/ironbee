@@ -1,4 +1,8 @@
 
+
+- Inspect storage size choices for all structures!
+
+
 - We're currently using a fixed-size line buffer. Although one buffer isn't very big,
   they add up if we want to supports tens of thousands of concurrent connections. For
   example 20K connections x 20K buffer = 400M. We can perhaps start with a 2K buffer
@@ -47,3 +51,15 @@
 - Does the API need to support closing one stream at a time? For example, when
   a client sends his request(s), closes his side of a connection, then waits for
   the server to respond.
+
+- Detect if the request headers were submitted across several packets (which would
+  indicate manual access).
+
+- Do we want to have separate limits for headers? Or should headers also use the line limits?
+
+- Perhaps we also want to limit the size of the request line and headers combined, like the
+  IIS does?
+
+- Chunk length evasion
+
+- Chunk length limit

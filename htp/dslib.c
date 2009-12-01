@@ -72,6 +72,17 @@ static int list_linked_empty(list_t *_q) {
 /**
  *
  */
+void list_linked_destroy(list_linked_t *l) {
+    // Free the list components
+    // XXX
+
+    // Free the list itself
+    free(l);
+}
+
+/**
+ *
+ */
 list_t *list_linked_create(void) {
     list_linked_t *q = calloc(1, sizeof(list_linked_t));
     if (q == NULL) return NULL;
@@ -83,18 +94,6 @@ list_t *list_linked_create(void) {
 
     return (list_t *)q;
 }
-
-/**
- *
- */
-void list_linked_destroy(list_linked_t *l) {
-    // Free the list components
-    // XXX
-
-    // Free the list itself
-    free(l);
-}
-
 
 // -- Queue Array --
 
@@ -181,6 +180,31 @@ static void *list_array_get(list_t *_l, size_t index) {
     return r;
 }
 
+/**
+ *
+ */
+static int list_array_replace(list_t *_l, size_t index, void *element) {
+    list_array_t *l = (list_array_t *)_l;
+    // void *r = NULL;
+
+    if (index + 1 > l->current_size) return 0;
+
+    int i = l->first;
+    //r = l->elements[l->first];
+
+    while(index--) {
+        if (++i == l->max_size) {
+            i = 0;
+        }
+
+        //r = l->elements[i];
+    }
+
+    l->elements[i] = element;
+
+    return 1;
+}
+
 void list_array_iterator_reset(list_array_t *l) {
     l->iterator_index = 0;
 }
@@ -194,6 +218,14 @@ void *list_array_iterator_next(list_array_t *l) {
     }
 
     return r;
+}
+
+/**
+ *
+ */
+void list_array_destroy(list_array_t *l) {
+    free(l->elements);
+    free(l);
 }
 
 /**
@@ -218,20 +250,13 @@ list_t *list_array_create(int size) {
     q->push = list_array_push;
     q->pop = list_array_pop;
     q->get = list_array_get;
+    q->replace = list_array_replace;
     q->size = list_array_size;    
     q->iterator_reset = (void (*)(list_t *))list_array_iterator_reset;
     q->iterator_next = (void *(*)(list_t *))list_array_iterator_next;
     q->destroy = (void (*)(list_t *))list_array_destroy;
 
     return (list_t *)q;
-}
-
-/**
- *
- */
-void list_array_destroy(list_array_t *l) {
-    free(l->elements);
-    free(l);
 }
 
 #if 0

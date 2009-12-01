@@ -562,6 +562,8 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     connp->out_current_data = data;
     connp->out_current_len = len;
     connp->out_current_offset = 0;
+    connp->conn->out_data_counter += len;
+    connp->conn->out_packet_counter++;
 
     // Invoke a processor, in a loop, until an error
     // occurs or until we run out of data. Many processors

@@ -230,46 +230,98 @@ typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
 
-struct htp_cfg_t {    
+struct htp_cfg_t {
+    /** Hard field limit length. If the parser encounters a line that's longer
+     *  than this value it will give up parsing. Do note that the line limit
+     *  is not the same thing as header length limit. Because of header folding,
+     *  a header can end up being longer than the line limit.
+     */
     size_t field_limit_hard;
-    // TODO The soft limit here relates to line length, not header (field) length. When
-    //      folding is used a field can be constructed from several lines, breaking the
-    //      soft limit.
-    size_t field_limit_soft;
-    // TODO Message headers soft limit
-    // TODO Message headers hard limit
+    
+    /** Soft field limit length. If this limit is reached the parser will issue
+     *  a warning but continue to run.
+     */
+    size_t field_limit_soft;              
 
-    // TODO Do we want to limit the size of the request headers part?
-
-    // TODO Option to detect evasion using request chunked encoding
-    // TODO Soft chunk length limit/flag
-
+    /** Log level, which will be used when deciding whether to store or
+     *  ignore the messages issued by the parser.
+     */
     int log_level;   
 
+    /**
+     * Server personality ID.
+     */
     int spersonality;
 
+    /** The function used for request line parsing. Depends on the personality. */
     int (*parse_request_line)(htp_connp_t *connp);
+
+    /** The function used for response line parsing. Depends on the personality. */
     int (*parse_response_line)(htp_connp_t *connp);
+
+    /** The function used for request header parsing. Depends on the personality. */
     int (*process_request_header)(htp_connp_t *connp);
+
+    /** The function used for response header parsing. Depends on the personality. */
     int (*process_response_header)(htp_connp_t *connp);
 
+    /** Should we treat paths as case insensitive? */
     int path_case_insensitive;
+
+    /** Should we treat backslash characters as path segment separators? */
     int path_backslash_separators;
+
+    /** Should we URL-decode encoded path segment separators? */
     int path_decode_separators;   
 
+    /** Transaction start hook, invoked when the parser receives the first
+     *  byte of a new transaction.
+     */
     htp_hook_t *hook_transaction_start;
+
+    /** Request line hook, invoked after a request line has been parsed. */
     htp_hook_t *hook_request_line;
+
+    /** Request headers hook, invoked after all request headers are seen. */
     htp_hook_t *hook_request_headers;
+
+    /** Request body data hook, invoked every time body data is available. Chunked data
+     *  will be dechunked and compressed data will be decompressed (not implemented at present)
+     *  before the data is passed to this hook.
+     */
     htp_hook_t *hook_request_body_data;
-    htp_hook_t *hook_request_trailer;    
+
+    /** Request trailer hook, invoked after all trailer headers are seen,
+     *  and if they are seen (not invoked otherwise).
+     */
+    htp_hook_t *hook_request_trailer;
+
+    /** Request hook, invoked after a complete request is seen. */
     htp_hook_t *hook_request;
 
+    /** Response line hook, invoked after a response line has been parsed. */
     htp_hook_t *hook_response_line;
+
+    /** Response headers book, invoked after all response headers have been seen. */
     htp_hook_t *hook_response_headers;
+
+    /** Response body data hook, invoked whenever a chunk of response data is available. Chunked
+     *  data will be dechunked and compressed data will be decompressed (not implemented
+     *  at present) before the data is passed to this hook.*/
     htp_hook_t *hook_response_body_data;
+
+    /** Response trailer hook, invoked after all trailer headers have been processed,
+     *  and only if the trailer exists.
+     */
     htp_hook_t *hook_response_trailer;
+
+    /** Response hook, invoked after a response has been seen. There isn't a separate
+     *  transaction hook, use this hook to do something whenever a transaction is
+     *  complete.
+     */
     htp_hook_t *hook_response;
 
+    /** Opaque user data associated with this configuration structure. */
     void *user_data;
 };
 
@@ -289,7 +341,10 @@ struct htp_conn_t {
     /** Local port. */
     int local_port;
 
-    /** Transactions carried out on this connection. */
+    /** Transactions carried out on this connection. The list may contain
+     *  NULL elements when some of the transactions are deleted (and then
+     *  removed from a connection by calling htp_conn_remove_tx().
+     */
     list_t *transactions;
 
     /** Log messages associated with this connection. */
@@ -304,7 +359,17 @@ struct htp_conn_t {
     /** When was this connection closed? */
     htp_time_t close_timestamp;
     
-    // TODO data counters (before and after SSL?)
+    /** Inbound data counter. */
+    size_t in_data_counter;
+
+    /** Outbound data counter. */
+    size_t out_data_counter;
+
+    /** Inbound packet counter. */
+    size_t in_packet_counter;
+
+    /** Outbound packet counter. */
+    size_t out_packet_counter;
 };
 
 struct htp_connp_t {
@@ -719,14 +784,31 @@ struct htp_tx_data_t {
  *  http://username:password@hostname.com:8080/path?query#fragment.
  */
 struct htp_uri_t {
+    /** Scheme */
     bstr *scheme;
+
+    /** Username */
     bstr *username;
+
+    /** Password */
     bstr *password;
-    bstr *hostname;    
+
+    /** Hostname */
+    bstr *hostname;
+
+    /** Port, as string */
     bstr *port;
+
+    /** Port, as number, but only if the port is valid. */
       int port_number;
+
+    /** The path part of this URI */
     bstr *path;
+
+    /** Query string */
     bstr *query;
+
+    /** Fragment identifier */
     bstr *fragment;
 };
 
@@ -764,7 +846,7 @@ void *htp_connp_get_user_data(htp_connp_t *connp);
 
 htp_conn_t *htp_conn_create();
        void htp_conn_destroy(htp_conn_t *conn);
-       // void htp_conn_destroy_all(htp_conn_t *conn);
+        int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx);
 
 int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len);
 // int htp_connp_req_data_missing(htp_connp_t *connp, htp_time_t timestamp, size_t len);

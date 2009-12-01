@@ -43,7 +43,11 @@ void htp_conn_destroy(htp_conn_t *conn) {
     htp_tx_t *tx = NULL;
     list_iterator_reset(conn->transactions);
     while ((tx = list_iterator_next(conn->transactions)) != NULL) {
-        htp_tx_destroy(tx);
+        // Allow for the possibility that some
+        // transactions were deleted earlier
+        if (tx != NULL) {
+            htp_tx_destroy(tx);
+        }
     }
 
     // Destroy the list...
@@ -51,4 +55,27 @@ void htp_conn_destroy(htp_conn_t *conn) {
 
     // ...and the connection structure itself.
     free(conn);
+}
+
+/**
+ * Removes the given transaction structure, which makes it possible to
+ * safely destroy it. It is safe to destroy transactions in this way
+ * because the index of the transactions (in a connection) is preserved.
+ *
+ * @param conn
+ * @param tx
+ */
+int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx) {
+    if (tx == NULL) return 0;
+
+    int i = 0;
+    for (i = 0; i < list_size(conn->transactions); i++) {
+        htp_tx_t *etx = list_get(conn->transactions, i);
+        if (tx == etx) {
+            list_replace(conn->transactions, i, NULL);
+            return 1;
+        }
+    }
+
+    return 0;
 }
