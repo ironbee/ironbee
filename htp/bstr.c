@@ -21,6 +21,7 @@ bstr *bstr_alloc(size_t len) {
  *
  */
 void bstr_free(bstr *b) {
+    if (b == NULL) return;
     free(b);
 }
 

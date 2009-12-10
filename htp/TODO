@@ -1,4 +1,5 @@
 
+- Make bstr C-friendly
 
 - Inspect storage size choices for all structures!
 
@@ -63,3 +64,9 @@
 - Chunk length evasion
 
 - Chunk length limit
+
+- Add callbacks to the list and table structures to automatically delete the elements
+  they contain when their respective destroy methods are invoked
+
+- Add "expecting this transaction to have a status XXX", based on our knowledge of the
+  terminating device

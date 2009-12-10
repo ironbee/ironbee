@@ -525,6 +525,238 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 }
 
 /**
+ *
+ */
+unsigned char x2c(unsigned char *what) {
+    register unsigned char digit;
+
+    digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
+    digit *= 16;
+    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
+
+    return digit;
+}
+
+/**
+ *
+ */
+int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
+    unsigned int c1 = x2c(data);
+    unsigned int c2 = x2c(data + 2);
+    int r = '?';
+
+    if (c1 == 0x00) {
+        r = c2;
+        tx->flags |= HTP_PATH_OVERLONG_U;        
+    } else {
+        // Check for fullwidth form evasion
+        if (c1 == 0xff) {
+            tx->flags |= HTP_PATH_OVERLONG_U;
+        }
+
+        // Use best-fit mapping
+        unsigned char *p = cfg->path_u_bestfit_map;
+
+        // TODO Optimize lookup
+
+        for (;;) {
+            // Have we reached the end of the map?
+            if ((p[0] == 0) && (p[1] == 0)) {
+                break;
+            }
+
+            // Have we found the mapping we're looking for?
+            if ((p[0] == c1) && (p[1] == c2)) {
+                r = p[2];
+                break;
+            }
+
+            // Move to the next triplet
+            p += 3;
+        }
+    }
+
+    // Check for encoded path separators
+    if ((r == '/') || ((cfg->path_backslash_separators) && (r == '\\'))) {
+        tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
+    }
+
+    return r;
+}
+
+/**
+ *
+ */
+int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
+    unsigned char *data = bstr_ptr(path);
+    size_t len = bstr_len(path);
+
+    size_t rpos = 0;
+    size_t wpos = 0;
+    int previous_was_separator = 0;
+
+    while (rpos < len) {
+        int c = data[rpos];
+
+        // Decode encoded characters
+        if (c == '%') {
+            if (rpos + 2 < len) {
+                if (cfg->path_decode_u_encoding) {
+                    // Check for the %u encoding
+                    if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
+                        if (rpos + 5 < len) {
+                            if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
+                                && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
+                                // Decode a valid %u encoding
+                                c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
+                                rpos += 5;
+                            } else {
+                                // Invalid %u encoding
+                                tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                                switch (cfg->path_invalid_encoding_handling) {
+                                    case URL_DECODER_REMOVE_PERCENT:
+                                        // Do not place anything in output; eat
+                                        // the percent character
+                                        rpos++;
+                                        continue;
+                                        break;
+                                    case URL_DECODER_LEAVE_PERCENT:
+                                        // Leave the percent character in output
+                                        rpos++;
+                                        break;
+                                    case URL_DECODER_DECODE_INVALID:
+                                        // Decode invalid %u encoding
+                                        c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
+                                        rpos += 5;
+                                        break;
+                                    default:
+                                        // XXX Unknown setting
+                                        break;
+                                }
+                            }
+                        } else {
+                            // Invalid %u encoding (not enough data)
+                            tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                            if (cfg->path_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
+                                // Do not place the percent character in output
+                                rpos++;
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                // Handle standard URL encoding
+                if (isxdigit(data[rpos + 1]) && (isxdigit(data[rpos + 2]))) {
+                    c = x2c(&data[rpos + 1]);
+
+                    if ((c == '/') || ((cfg->path_backslash_separators) && (c == '\\'))) {
+                        tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
+
+                        if (!cfg->path_decode_separators) {
+                            // Leave encoded
+                            c = '%';
+                            rpos++;
+                        } else {
+                            // Decode
+                            rpos += 3;
+                        }
+                    } else {
+                        // Decode
+                        rpos += 3;
+                    }
+                } else {
+                    // Invalid encoding
+                    tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                    switch (cfg->path_invalid_encoding_handling) {
+                        case URL_DECODER_REMOVE_PERCENT:
+                            // Do not place anything in output; eat
+                            // the percent character
+                            rpos++;
+                            continue;
+                            break;
+                        case URL_DECODER_LEAVE_PERCENT:
+                            // Leave the percent character in output
+                            rpos++;
+                            break;
+                        case URL_DECODER_DECODE_INVALID:
+                            // Decode
+                            c = x2c(&data[rpos + 1]);
+                            rpos += 3;
+                            // Note: What if an invalid encoding decodes into a path
+                            //       separator? This is theoretical at the moment, because
+                            //       the only platform we know doesn't convert separators is
+                            //       Apache, who will also respond with 400 if invalid encoding
+                            //       is encountered. Thus no check for a separator here.
+                            break;
+                        default:
+                            // XXX Unknown setting
+                            break;
+                    }
+                }
+            } else {
+                // Invalid encoding (not enough data)
+                tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                if (cfg->path_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
+                    // Do not place the percent character in output
+                    rpos++;
+                    continue;
+                }
+            }
+        } else {
+            // One non-encoded character
+            rpos++;
+        }
+
+        // Place the character into output
+
+        // Check if the character is a NUL
+        if (c == 0) {
+            tx->flags |= HTP_PATH_ENCODED_NUL;
+        } else {
+            // Character is not a NUL
+
+            // Convert backslashes to forward slashes, if necessary
+            if ((c == '\\') && (cfg->path_backslash_separators)) {
+                c = '/';
+            }
+
+            // Lowercase characters, if necessary
+            if (cfg->path_case_insensitive) {
+                c = tolower(c);
+            }
+        }
+
+        // If we're compressing separators then we need
+        // to track if the previous character was a separator
+        if (cfg->path_compress_separators) {
+            if (c == '/') {
+                if (!previous_was_separator) {
+                    data[wpos++] = c;
+                    previous_was_separator = 1;
+                } else {
+                    // Do nothing; we don't want
+                    // another separator in output
+                }
+            } else {
+                data[wpos++] = c;
+                previous_was_separator = 0;
+            }
+        } else {
+            data[wpos++] = c;
+        }
+    }
+
+    bstr_len_adjust(path, wpos);
+
+    return 1;
+}
+
+/**
  * Normalize a previously-parsed request URI.
  *
  * @param connp
@@ -581,11 +813,18 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
 
     // Path
     if (incomplete->path != NULL) {
+        // Make a copy of the path, on which we can work on
         normalized->path = bstr_strdup(incomplete->path);
-        htp_prenormalize_uri_path_inplace(normalized->path, &(connp->in_tx->flags),
-            connp->cfg->path_case_insensitive, connp->cfg->path_backslash_separators,
-            connp->cfg->path_decode_separators, 1 /* remove_consecutive */);
+
+        // Decode URL-encoded (and %u-encoded) characters, as well as lowercase,
+        // compress separators and convert backslashes.
+        htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
+
+        // RFC normalization
         htp_normalize_uri_path_inplace(normalized->path);
+
+        // Now check UTF-8 usage in path
+        // XXX
     }
 
     // Query
@@ -603,6 +842,9 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     return HTP_OK;
 }
 
+/**
+ *
+ */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     bstr_tolowercase(hostname);
 
@@ -619,6 +861,9 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     return hostname;
 }
 
+/**
+ *
+ */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
     int colon = bstr_chr(hostname, ':');
     if (colon == -1) {
@@ -647,16 +892,9 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
     }
 }
 
-unsigned char x2c(unsigned char *what) {
-    register unsigned char digit;
-
-    digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
-    digit *= 16;
-    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
-
-    return digit;
-}
-
+/**
+ *
+ */
 int htp_is_uri_unreserved(unsigned char c) {
     if (((c >= 0x41) && (c <= 0x5a)) ||
         ((c >= 0x61) && (c <= 0x7a)) ||
@@ -669,6 +907,9 @@ int htp_is_uri_unreserved(unsigned char c) {
     }
 }
 
+/**
+ *
+ */
 int htp_uriencoding_normalize_inplace(bstr *s) {
     char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
@@ -718,6 +959,7 @@ int htp_uriencoding_normalize_inplace(bstr *s) {
     bstr_len_adjust(s, wpos - 1);
 }
 
+#if 0
 /**
  *
  */
@@ -732,11 +974,11 @@ int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive,
         char c = data[rpos];
 
         // Convert backslash characters where necessary
-        if ((c == '/')||((c == '\\') && (backslash))) {
-            if ((!remove_consecutive)||(wpos == 0)||(data[wpos - 1] != '/')) {
+        if ((c == '/') || ((c == '\\') && (backslash))) {
+            if ((!remove_consecutive) || (wpos == 0) || (data[wpos - 1] != '/')) {
                 data[wpos++] = '/';
             }
-            
+
             rpos++;
         } else
             if ((c == '%') && (decode_separators)) {
@@ -745,7 +987,7 @@ int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive,
                     unsigned char x = x2c(&data[rpos + 1]);
 
                     if (x == 0) {
-                        (*flags) |= HTP_PATH_URLENCODED_NUL;
+                        (*flags) |= HTP_PATH_ENCODED_NUL;
                     }
 
                     if ((x == '/') || ((backslash) && (x == '\\'))) {
@@ -767,7 +1009,7 @@ int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive,
                 (*flags) |= HTP_PATH_INVALID_ENCODING;
 
                 // Copy over what's there
-                while(rpos < len) {
+                while (rpos < len) {
                     data[wpos++] = data[rpos++];
                 }
             }
@@ -778,13 +1020,14 @@ int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive,
             } else {
                 data[wpos++] = c;
             }
-            
+
             rpos++;
         }
     }
 
     bstr_len_adjust(s, wpos);
 }
+#endif
 
 /**
  * Normalize URL path. This function implements the remove dot segments algorithm
@@ -799,7 +1042,7 @@ int htp_normalize_uri_path_inplace(bstr *s) {
     size_t rpos = 0;
     size_t wpos = 0;
 
-    int c = -1;    
+    int c = -1;
     while (rpos < len) {
         if (c == -1) {
             c = data[rpos++];

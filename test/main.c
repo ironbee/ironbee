@@ -21,6 +21,8 @@ int test_get(htp_cfg_t *cfg) {
     test_run(home, "01-get.t", cfg, &connp);
     if (connp == NULL) return -1;
 
+    htp_connp_destroy_all(connp);
+
     return 1;
 }
 
@@ -42,6 +44,8 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
         printf("--   HEADER [%s][%s]\n", bstr_tocstr(h->name), bstr_tocstr(h->value));
     }
 
+    htp_connp_destroy_all(connp);
+
     return 1;
 }
 
@@ -53,6 +57,8 @@ int test_post_urlencoded(htp_cfg_t *cfg) {
 
     test_run(home, "03-post-urlencoded.t", cfg, &connp);
     if (connp == NULL) return -1;
+
+    htp_connp_destroy_all(connp);
 
     return 1;
 }
@@ -190,7 +196,7 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
         count++;
     }
 
-    htp_connp_destroy(connp);
+    htp_connp_destroy_all(connp);
 
     return 1;
 }
@@ -204,6 +210,8 @@ int test_expect(htp_cfg_t *cfg) {
     test_run(home, "05-expect.t", cfg, &connp);
     if (connp == NULL) return -1;
 
+    htp_connp_destroy_all(connp);
+
     return 1;
 }
 
@@ -215,6 +223,8 @@ int test_uri_normal(htp_cfg_t *cfg) {
 
     test_run(home, "06-uri-normal.t", cfg, &connp);
     if (connp == NULL) return -1;
+
+    htp_connp_destroy_all(connp);
 
     return 1;
 }
@@ -237,6 +247,8 @@ int test_pipelined_connection(htp_cfg_t *cfg) {
         printf("The pipelined flag not set on a pipelined connection.");
         return -1;
     }
+
+    htp_connp_destroy_all(connp);
 
     return 1;
 }
@@ -267,6 +279,8 @@ int test_not_pipelined_connection(htp_cfg_t *cfg) {
         return -1;
     }
 
+    htp_connp_destroy_all(connp);
+
     return 1;
 }
 
@@ -291,6 +305,8 @@ int test_multi_packet_request_head(htp_cfg_t *cfg) {
         return -1;
     }
 
+    htp_connp_destroy_all(connp);
+
     return 1;
 }
 
@@ -308,6 +324,8 @@ int test_misc(htp_cfg_t *cfg) {
     htp_tx_t *tx = list_get(connp->conn->transactions, 0);
 
     printf("Parsed URI: %s\n", bstr_tocstr(tx->parsed_uri_incomplete->path));
+
+    htp_connp_destroy_all(connp);
 
     return 1;
 }
@@ -351,6 +369,8 @@ int test_host_in_headers(htp_cfg_t *cfg) {
         return -1;
     }
 
+    htp_connp_destroy_all(connp);
+
     return 1;
 }
 
@@ -370,7 +390,9 @@ int test_response_stream_closure(htp_cfg_t *cfg) {
     if (tx->progress != TX_PROGRESS_DONE) {
         printf("Expected the only transaction to be complete (but got %i).", tx->progress);
         return -1;
-    }   
+    }
+
+    htp_connp_destroy_all(connp);
 
     return 1;
 }
@@ -525,7 +547,7 @@ int main2(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main(int argc, char** argv) {
+int main3(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
@@ -600,5 +622,87 @@ int main(int argc, char** argv) {
     printf("Failures: %i\n", failures);
 
     return (EXIT_SUCCESS);
+}
+
+int main(int argc, char** argv) {
+    htp_cfg_t *cfg = htp_config_create();
+    htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
+
+    bstr *path = NULL;
+
+    //
+    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    cfg->path_case_insensitive = 1;
+
+    printf("Before: %s\n", bstr_tocstr(path));    
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("After: %s\n\n", bstr_tocstr(path));
+
+    //
+    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    cfg->path_case_insensitive = 1;
+    cfg->path_compress_separators = 1;
+
+    printf("Before: %s\n", bstr_tocstr(path));
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("After: %s\n\n", bstr_tocstr(path));
+
+    //
+    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    cfg->path_case_insensitive = 1;
+    cfg->path_compress_separators = 1;
+    cfg->path_backslash_separators = 1;
+
+    printf("Before: %s\n", bstr_tocstr(path));
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("After: %s\n\n", bstr_tocstr(path));
+
+    //
+    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    cfg->path_case_insensitive = 1;
+    cfg->path_compress_separators = 1;
+    cfg->path_backslash_separators = 1;
+    cfg->path_decode_separators = 1;
+
+    printf("Before: %s\n", bstr_tocstr(path));
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("After: %s\n\n", bstr_tocstr(path));
+
+    //
+    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    cfg->path_case_insensitive = 1;
+    cfg->path_compress_separators = 1;
+    cfg->path_backslash_separators = 1;
+    cfg->path_decode_separators = 1;
+    cfg->path_invalid_encoding_handling = URL_DECODER_REMOVE_PERCENT;
+
+    printf("Before: %s\n", bstr_tocstr(path));
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("After: %s\n\n", bstr_tocstr(path));
+
+    //
+    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074");
+    cfg->path_case_insensitive = 1;
+    cfg->path_compress_separators = 1;
+    cfg->path_backslash_separators = 1;
+    cfg->path_decode_separators = 1;
+    cfg->path_invalid_encoding_handling = URL_DECODER_DECODE_INVALID;
+
+    printf("Before: %s\n", bstr_tocstr(path));
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("After: %s\n\n", bstr_tocstr(path));
+
+    //
+    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074%u0100");
+    cfg->path_case_insensitive = 1;
+    cfg->path_compress_separators = 1;
+    cfg->path_backslash_separators = 1;
+    cfg->path_decode_separators = 1;
+    cfg->path_invalid_encoding_handling = URL_DECODER_LEAVE_PERCENT;
+    cfg->path_decode_u_encoding = 1;
+
+    printf("Before: %s\n", bstr_tocstr(path));
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("After: %s\n\n", bstr_tocstr(path));   
 }
 

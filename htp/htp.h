@@ -94,17 +94,23 @@
 #define HTP_MULTI_PACKET_HEAD           512
 #define HTP_HOST_MISSING                1024
 #define HTP_AMBIGUOUS_HOST              2048
-#define HTP_PATH_URLENCODED_NUL         4096
+#define HTP_PATH_ENCODED_NUL            4096
 #define HTP_PATH_INVALID_ENCODING       8192
 #define HTP_PATH_INVALID                16384
+#define HTP_PATH_OVERLONG_U             32768
+#define HTP_PATH_ENCODED_SEPARATOR      65536
 
 #define PIPELINED_CONNECTION        1
 
 #define HTP_SERVER_STRICT           0
 #define HTP_SERVER_PERMISSIVE       1
 #define HTP_SERVER_APACHE_2_2       2
-#define HTP_SERVER_IIS_5_1          3
-#define HTP_SERVER_IIS_7_5          4
+#define HTP_SERVER_IIS_4_0          4   /* Windows NT 4.0 */
+#define HTP_SERVER_IIS_5_0          5   /* Windows 2000 */
+#define HTP_SERVER_IIS_5_1          6   /* Windows XP Professional */
+#define HTP_SERVER_IIS_6_0          7   /* Windows 2003 */
+#define HTP_SERVER_IIS_7_0          8   /* Vista */
+#define HTP_SERVER_IIS_7_5          9   
 
 #define NONE                        0
 #define IDENTITY                    1
@@ -127,6 +133,10 @@
 #define STREAM_STATE_CLOSED         2
 #define STREAM_STATE_ERROR          3
 #define STREAM_STATE_DATA           9
+
+#define URL_DECODER_LEAVE_PERCENT               0
+#define URL_DECODER_REMOVE_PERCENT              1
+#define URL_DECODER_DECODE_INVALID              2
 
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
@@ -229,6 +239,7 @@ typedef struct htp_log_t htp_log_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
+typedef struct htp_urldecoder_t htp_urldecoder_t;
 
 struct htp_cfg_t {
     /** Hard field limit length. If the parser encounters a line that's longer
@@ -264,7 +275,7 @@ struct htp_cfg_t {
 
     /** The function used for response header parsing. Depends on the personality. */
     int (*process_response_header)(htp_connp_t *connp);
-
+    
     /** Should we treat paths as case insensitive? */
     int path_case_insensitive;
 
@@ -272,7 +283,21 @@ struct htp_cfg_t {
     int path_backslash_separators;
 
     /** Should we URL-decode encoded path segment separators? */
-    int path_decode_separators;   
+    int path_decode_separators;
+
+    /** Should we compress multiple path segment separators into one? */
+    int path_compress_separators;
+
+    /** How do handle invalid encodings: URL_DECODER_LEAVE_PERCENT,
+     *  URL_DECODER_REMOVE_PERCENT or URL_DECODER_DECODE_INVALID.
+     */
+    int path_invalid_encoding_handling;
+
+    /** Should we decode %u-encoded characters? */
+    int path_decode_u_encoding;
+
+    /** The best-fit map to use to decode %u-encoded characters. */
+    unsigned char *path_u_bestfit_map;        
 
     /** Transaction start hook, invoked when the parser receives the first
      *  byte of a new transaction.
@@ -602,7 +627,10 @@ struct htp_tx_t {
     /** The configuration structure associated with this transaction. */
     htp_cfg_t *cfg;
 
-    /** Is the configuration structure shared with other transactions or connections? */
+    /** Is the configuration structure shared with other transactions or connections? As
+     *  a rule of thumb transactions will initially share their configuration structure, but
+     *  copy-on-write may be used when an attempt to modify configuration is detected.
+     */
     int is_cfg_shared;
 
     /** The user data associated with this transaction. */
@@ -684,7 +712,7 @@ struct htp_tx_t {
      */
     size_t request_filedata_len;        
 
-    /** Original request header lines. */
+    /** Original request header lines. This list stores instances of htp_header_line_t. */
     list_t *request_header_lines;
 
     /** Parsed request headers. */
@@ -812,7 +840,6 @@ struct htp_uri_t {
     bstr *fragment;
 };
 
-
 // -- Functions -----------------------------------------------------------------------------------
 
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
@@ -820,6 +847,8 @@ htp_cfg_t *htp_config_create();
       void htp_config_destroy(htp_cfg_t *cfg);
  int htp_config_server_personality(htp_cfg_t *cfg, int personality);
 void htp_config_fs_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
+
+void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
@@ -924,6 +953,8 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplet
 bstr *htp_normalize_hostname_inplace(bstr *input);
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
 
+int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
+
 int htp_uriencoding_normalize_inplace(bstr *s);
 //int htp_normalize_path_inplace(htp_connp_t *connp, bstr *path);
 
@@ -937,4 +968,5 @@ int htp_parse_positive_integer_whitespace(char *data, size_t len, int base);
 void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
 
 #endif	/* _HTP_H */
+
 
