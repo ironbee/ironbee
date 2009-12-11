@@ -82,23 +82,28 @@
 // Interestingly, Apache does not define M_HEAD
 #define M_HEAD                  1000
 
-#define HTP_FIELD_UNPARSEABLE           1
-#define HTP_FIELD_INVALID               2
-#define HTP_FIELD_FOLDED                4
-#define HTP_FIELD_REPEATED              8
-#define HTP_FIELD_LONG                  16
-#define HTP_FIELD_NUL_BYTE              32
-#define HTP_REQUEST_SMUGGLING           64
-#define HTP_INVALID_FOLDING             128
-#define HTP_INVALID_CHUNKING            256
-#define HTP_MULTI_PACKET_HEAD           512
-#define HTP_HOST_MISSING                1024
-#define HTP_AMBIGUOUS_HOST              2048
-#define HTP_PATH_ENCODED_NUL            4096
-#define HTP_PATH_INVALID_ENCODING       8192
-#define HTP_PATH_INVALID                16384
-#define HTP_PATH_OVERLONG_U             32768
-#define HTP_PATH_ENCODED_SEPARATOR      65536
+#define HTP_FIELD_UNPARSEABLE           0x000001
+#define HTP_FIELD_INVALID               0x000002
+#define HTP_FIELD_FOLDED                0x000004
+#define HTP_FIELD_REPEATED              0x000008
+#define HTP_FIELD_LONG                  0x000010
+#define HTP_FIELD_NUL_BYTE              0x000020
+#define HTP_REQUEST_SMUGGLING           0x000040
+#define HTP_INVALID_FOLDING             0x000080
+#define HTP_INVALID_CHUNKING            0x000100
+#define HTP_MULTI_PACKET_HEAD           0x000200
+#define HTP_HOST_MISSING                0x000400
+#define HTP_AMBIGUOUS_HOST              0x000800
+#define HTP_PATH_ENCODED_NUL            0x001000
+#define HTP_PATH_INVALID_ENCODING       0x002000
+#define HTP_PATH_INVALID                0x004000
+#define HTP_PATH_OVERLONG_U             0x008000
+#define HTP_PATH_ENCODED_SEPARATOR      0x010000
+
+#define HTP_PATH_UTF8_VALID             0x020000 /* At least one valid UTF-8 character and no invalid ones */
+#define HTP_PATH_UTF8_INVALID           0x040000
+#define HTP_PATH_UTF8_OVERLONG          0x080000
+#define HTP_PATH_FULLWIDTH_EVASION      0x100000 /* Range U+FF00 - U+FFFF detected */
 
 #define PIPELINED_CONNECTION        1
 
@@ -109,8 +114,8 @@
 #define HTP_SERVER_IIS_5_0          5   /* Windows 2000 */
 #define HTP_SERVER_IIS_5_1          6   /* Windows XP Professional */
 #define HTP_SERVER_IIS_6_0          7   /* Windows 2003 */
-#define HTP_SERVER_IIS_7_0          8   /* Vista */
-#define HTP_SERVER_IIS_7_5          9   
+#define HTP_SERVER_IIS_7_0          8   /* Windows 2008 */
+#define HTP_SERVER_IIS_7_5          9   /* Windows 7 */
 
 #define NONE                        0
 #define IDENTITY                    1
@@ -297,7 +302,15 @@ struct htp_cfg_t {
     int path_decode_u_encoding;
 
     /** The best-fit map to use to decode %u-encoded characters. */
-    unsigned char *path_u_bestfit_map;        
+    unsigned char *path_u_bestfit_map;
+
+    /** The replacement character used when there is no best-fit mapping. */
+    unsigned char path_replacement_char;
+
+    /** Should the parser convert UTF-8 into a single-byte stream, using
+     *  best-fit?
+     */
+    int path_convert_utf8;
 
     /** Transaction start hook, invoked when the parser receives the first
      *  byte of a new transaction.
@@ -960,6 +973,9 @@ int htp_uriencoding_normalize_inplace(bstr *s);
 
 int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
 int htp_normalize_uri_path_inplace(bstr *s);
+
+void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
+void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
 
 int htp_parse_content_length(bstr *b);
 int htp_parse_chunked_length(char *data, size_t len);

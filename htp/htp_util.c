@@ -1,5 +1,6 @@
 
 #include "htp.h"
+#include "utf8_decoder.h"
 
 /**
  * Is character a linear white space character?
@@ -134,7 +135,6 @@ int htp_is_space(int c) {
  */
 int htp_convert_method_to_number(bstr *method) {
     // TODO Add the remaining methods and optimize using parallel matching.
-
     if (bstr_cmpc(method, "GET") == 0) return M_GET;
     if (bstr_cmpc(method, "POST") == 0) return M_POST;
     if (bstr_cmpc(method, "HEAD") == 0) return M_HEAD;
@@ -222,7 +222,6 @@ int htp_parse_positive_integer_whitespace(char *data, size_t len, int base) {
     // Ignore LWS after
     while (pos < len) {
         if (!htp_is_lws(data[pos])) {
-            printf("# %i %c\n", data[pos], data[pos]);
             return -1002;
         }
 
@@ -540,18 +539,224 @@ unsigned char x2c(unsigned char *what) {
 /**
  *
  */
+uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
+    // Is it a single-byte codepoint?
+    if (codepoint < 0x100) {
+        return (uint8_t) codepoint;
+    }
+
+    // Our current implementation only converts the 2-byte codepoints
+    if (codepoint > 0xffff) {
+        return cfg->path_replacement_char;
+    }
+
+    uint8_t *p = cfg->path_u_bestfit_map;
+
+    // TODO Optimize lookup
+
+    for (;;) {
+        uint32_t x = p[0] << 8 + p[1];
+
+        if (x == 0) {
+            return cfg->path_replacement_char;
+        }
+
+        if (x == codepoint) {
+            return p[2];
+            break;
+        }
+
+        // Move to the next triplet
+        p += 3;
+    }
+}
+
+/**
+ *
+ */
+void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
+    uint8_t *data = bstr_ptr(path);
+    size_t len = bstr_len(path);
+    size_t rpos = 0;
+    size_t wpos = 0;
+    size_t charpos = 0;
+    uint32_t codepoint;
+    uint32_t state = UTF8_ACCEPT;
+    uint32_t counter = 0;
+    uint8_t seen_valid = 0;
+
+    while (rpos < len) {
+        counter++;
+
+        switch (utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
+            case UTF8_ACCEPT:
+                if (counter == 1) {
+                    data[wpos++] = (uint8_t) codepoint;
+                } else {
+                    seen_valid = 1;
+
+                    switch (counter) {
+                        case 2:
+                            if (codepoint < 0x80) {
+                                tx->flags |= HTP_PATH_UTF8_OVERLONG;
+                            }
+                            break;
+                        case 3:
+                            if (codepoint < 0x800) {
+                                tx->flags |= HTP_PATH_UTF8_OVERLONG;
+                            }
+                        case 4:
+                            if (codepoint < 0x10000) {
+                                tx->flags |= HTP_PATH_UTF8_OVERLONG;
+                            }
+                            break;
+                    }
+
+                    if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
+                        tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+                    }
+
+                    data[wpos++] = bestfit_codepoint(cfg, codepoint);
+                }
+
+                counter = 0;
+                rpos++;
+                charpos = rpos;
+
+                break;
+
+            case UTF8_REJECT:
+                tx->flags |= HTP_PATH_UTF8_INVALID;
+
+                state = UTF8_ACCEPT;
+
+                // Copy the invalid bytes
+                while (charpos < rpos) {
+                    data[wpos++] = data[charpos++];
+                }
+
+                // If this is the first invalid byte we will
+                // want to skip over it. Otherwise we will want
+                // to attempt to interpret it.
+                if (counter == 1) {
+                    data[wpos++] = data[rpos++];
+                }
+
+                counter = 0;
+
+                break;
+
+            default:
+                // Keep going
+                rpos++;
+                break;
+        }
+    }
+
+    if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
+        tx->flags |= HTP_PATH_UTF8_VALID;
+    }
+
+    bstr_len_adjust(path, wpos);
+}
+
+/**
+ *
+ */
+void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
+    unsigned char *data = bstr_ptr(path);
+    size_t len = bstr_len(path);
+    size_t rpos = 0;
+    size_t charpos = 0;
+    uint32_t codepoint;
+    uint32_t state = UTF8_ACCEPT;
+    uint32_t counter = 0;
+    uint8_t seen_valid = 0;
+
+    while (rpos < len) {
+        counter++;
+
+        switch (utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
+            case UTF8_ACCEPT:
+                if (counter > 1) {
+                    seen_valid = 1;
+
+                    switch (counter) {
+                        case 2:
+                            if (codepoint < 0x80) {
+                                tx->flags |= HTP_PATH_UTF8_OVERLONG;
+                            }
+                            break;
+                        case 3:
+                            if (codepoint < 0x800) {
+                                tx->flags |= HTP_PATH_UTF8_OVERLONG;
+                            }
+                        case 4:
+                            if (codepoint < 0x10000) {
+                                tx->flags |= HTP_PATH_UTF8_OVERLONG;
+                            }
+                            break;
+                    }
+                }
+
+                if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
+                    tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+                }
+
+                counter = 0;
+                rpos++;
+                charpos = rpos;
+
+                break;
+
+            case UTF8_REJECT:
+                tx->flags |= HTP_PATH_UTF8_INVALID;
+
+                state = UTF8_ACCEPT;
+
+                //while (charpos < rpos) {
+                //    printf("Invalid byte: %x\n", data[charpos]);
+                //    charpos++;
+                //}
+
+                // If this is the first invalid byte we will
+                // want to skip over it. Otherwise we will want
+                // to attempt to interpret it.
+                if (counter == 1) {
+                    rpos++;
+                }
+
+                counter = 0;
+
+                break;
+
+            default:
+                // Keep going
+                rpos++;
+                break;
+        }
+    }
+
+    if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
+        tx->flags |= HTP_PATH_UTF8_VALID;
+    }
+}
+
+/**
+ *
+ */
 int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
-    int r = '?';
+    int r = cfg->path_replacement_char;
 
     if (c1 == 0x00) {
         r = c2;
-        tx->flags |= HTP_PATH_OVERLONG_U;        
+        tx->flags |= HTP_PATH_OVERLONG_U;
     } else {
         // Check for fullwidth form evasion
         if (c1 == 0xff) {
-            tx->flags |= HTP_PATH_OVERLONG_U;
+            tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
         }
 
         // Use best-fit mapping
@@ -820,11 +1025,17 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // compress separators and convert backslashes.
         htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
 
+        // Handle UTF-8 in path
+        if (connp->cfg->path_convert_utf8) {
+            // Decode Unicode characters into a single-byte stream, using best-fit mapping
+            htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
+        } else {
+            // Only validate path as a UTF-8 stream
+            htp_utf8_validate_path(connp->cfg, connp->in_tx, normalized->path);
+        }
+
         // RFC normalization
         htp_normalize_uri_path_inplace(normalized->path);
-
-        // Now check UTF-8 usage in path
-        // XXX
     }
 
     // Query
@@ -960,6 +1171,7 @@ int htp_uriencoding_normalize_inplace(bstr *s) {
 }
 
 #if 0
+
 /**
  *
  */

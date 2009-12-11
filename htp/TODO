@@ -70,3 +70,5 @@
 
 - Add "expecting this transaction to have a status XXX", based on our knowledge of the
   terminating device
+
+- Perhaps best-fit maps should also have the replacement character?

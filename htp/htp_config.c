@@ -118,6 +118,7 @@ htp_cfg_t *htp_config_create() {
     cfg->log_level = LOG_NOTICE;
 
     cfg->path_u_bestfit_map = bestfit_1252;
+    cfg->path_replacement_char = '?';
 
     // No need to create hooks here; they will be created on-demand,
     // during callback registration
@@ -428,7 +429,8 @@ void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t
  * Update the best-fit map, which is used to convert UCS-2 characters into
  * single-byte characters. By default a Windows 1252 best-fit map is used. The map
  * is an list of triplets, the first 2 bytes being an UCS-2 character to map from,
- * and the third byte being the single byte to map to.
+ * and the third byte being the single byte to map to. Make sure that your map contains
+ * the mappings to cover the fullwidth form characters (U+FF00-FFEF).
  *
  * @param cfg
  * @param map

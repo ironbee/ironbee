@@ -271,7 +271,7 @@ int test_not_pipelined_connection(htp_cfg_t *cfg) {
         printf("The pipelined flag set on a connection that is not pipelined.");
         return -1;
     }
-    
+
     htp_tx_t *tx = list_get(connp->conn->transactions, 0);
 
     if (tx->flags & HTP_MULTI_PACKET_HEAD) {
@@ -349,22 +349,22 @@ int test_host_in_headers(htp_cfg_t *cfg) {
     htp_tx_t *tx3 = list_get(connp->conn->transactions, 2);
     htp_tx_t *tx4 = list_get(connp->conn->transactions, 3);
 
-    if ((tx1->parsed_uri->hostname == NULL)||(bstr_cmpc(tx1->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx1->parsed_uri->hostname == NULL) || (bstr_cmpc(tx1->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("1) Expected 'www.example.com' as hostname, but got: %s", tx1->parsed_uri->hostname);
         return -1;
     }
 
-    if ((tx2->parsed_uri->hostname == NULL)||(bstr_cmpc(tx2->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx2->parsed_uri->hostname == NULL) || (bstr_cmpc(tx2->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("2) Expected 'www.example.com' as hostname, but got: %s", tx2->parsed_uri->hostname);
         return -1;
     }
 
-    if ((tx3->parsed_uri->hostname == NULL)||(bstr_cmpc(tx3->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx3->parsed_uri->hostname == NULL) || (bstr_cmpc(tx3->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("3) Expected 'www.example.com' as hostname, but got: %s", tx3->parsed_uri->hostname);
         return -1;
     }
 
-    if ((tx4->parsed_uri->hostname == NULL)||(bstr_cmpc(tx4->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx4->parsed_uri->hostname == NULL) || (bstr_cmpc(tx4->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("4) Expected 'www.example.com' as hostname, but got: %s", tx4->parsed_uri->hostname);
         return -1;
     }
@@ -603,7 +603,7 @@ int main3(int argc, char** argv) {
     htp_config_register_response_body_data(cfg, callback_response_body_data);
     htp_config_register_response_trailer(cfg, callback_response_trailer);
     htp_config_register_response(cfg, callback_response);
-    
+
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -624,7 +624,7 @@ int main3(int argc, char** argv) {
     return (EXIT_SUCCESS);
 }
 
-int main(int argc, char** argv) {
+int main4(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
 
@@ -634,7 +634,7 @@ int main(int argc, char** argv) {
     path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
 
-    printf("Before: %s\n", bstr_tocstr(path));    
+    printf("Before: %s\n", bstr_tocstr(path));
     htp_decode_path_inplace(cfg, tx, path);
     printf("After: %s\n\n", bstr_tocstr(path));
 
@@ -703,6 +703,84 @@ int main(int argc, char** argv) {
 
     printf("Before: %s\n", bstr_tocstr(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));   
+    printf("After: %s\n\n", bstr_tocstr(path));
 }
 
+void encode_utf8_2(uint8_t *data, uint32_t i) {
+    i = i & 0x7ff;
+    data[0] = 0xc0 + (i >> 6);
+    data[1] = 0x80 + (i & 0x3f);
+}
+
+void encode_utf8_3(uint8_t *data, uint32_t i) {
+    i = i & 0xffff;
+    data[0] = 0xe0 + (i >> 12);
+    data[1] = 0x80 + ((i >> 6) & 0x3f);
+    data[2] = 0x80 + (i & 0x3f);
+}
+
+void encode_utf8_4(uint8_t *data, uint32_t i) {
+    i = i & 0x10ffff;
+    data[0] = 0xf0 + (i >> 18);
+    data[1] = 0x80 + ((i >> 12) & 0x3f);
+    data[2] = 0x80 + ((i >> 6) & 0x3f);
+    data[3] = 0x80 + (i & 0x3f);
+}
+
+int main(int argc, char** argv) {
+    htp_cfg_t *cfg = htp_config_create();
+    htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
+
+    bstr *path = NULL;
+
+    /*
+    path = bstr_cstrdup("/%c1%b4/%e0%81%b4/%f0%80%81%b4/%e0%80%2f");
+    cfg->path_decode_separators = 1;
+    htp_decode_path_inplace(cfg, tx, path);
+    printf("URL-decoded path: %s\n", bstr_tocstr(path));
+    //htp_utf8_validate_path(cfg, tx, path);
+    htp_utf8_decode_path_inplace(cfg, tx, path);
+    printf("UTF8-Decoded path: %s\n", bstr_tocstr(path));
+     */
+
+    path = bstr_cstrdup("//////////");
+    uint8_t *data = bstr_ptr(path);
+
+    int i = 0;
+
+    for (i = 0; i < 0x80; i++) {
+        memset(data, 0x2f, 10);
+        tx->flags = 0;
+        encode_utf8_2(data, i);
+        htp_utf8_validate_path(cfg, tx, path);
+        if (tx->flags != HTP_PATH_UTF8_OVERLONG) {
+            printf("#2 i %i data %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], tx->flags);
+        }
+    }
+
+    for (i = 0; i < 0x800; i++) {
+        memset(data, 0x2f, 10);
+        tx->flags = 0;
+        encode_utf8_3(data, i);
+        htp_utf8_validate_path(cfg, tx, path);
+        if (tx->flags != HTP_PATH_UTF8_OVERLONG) {
+            printf("#3 i %x data %x %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], (uint8_t) data[2], tx->flags);
+        }
+    }
+
+    for (i = 0; i < 0x10000; i++) {
+        memset(data, 0x2f, 10);
+        tx->flags = 0;
+        encode_utf8_4(data, i);
+        htp_utf8_validate_path(cfg, tx, path);
+        if ((i >= 0xff00) && (i <= 0xffff)) {
+            if (tx->flags != (HTP_PATH_UTF8_OVERLONG | HTP_PATH_FULLWIDTH_EVASION)) {
+                printf("#4 i %x data %x %x %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], (uint8_t) data[2], (uint8_t) data[3], tx->flags);
+            }
+        } else {
+            if (tx->flags != HTP_PATH_UTF8_OVERLONG) {
+                printf("#4 i %x data %x %x %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], (uint8_t) data[2], (uint8_t) data[3], tx->flags);
+            }
+        }
+    }
+}
