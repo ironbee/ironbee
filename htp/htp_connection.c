@@ -67,7 +67,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
  * @return 1 if transaction was removed or 0 if it wasn't found
  */
 int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx) {
-    if (tx == NULL) return 0;
+    if ((tx == NULL)||(conn == NULL)) return 0;
 
     int i = 0;
     for (i = 0; i < list_size(conn->transactions); i++) {

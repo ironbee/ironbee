@@ -1,6 +1,10 @@
 
 #include "htp.h"
 
+/**
+ * This map is used by default for best-fit mapping from the Unicode
+ * values U+0100-FFFF.
+ */
 static unsigned char bestfit_1252[] =
 { 0x01, 0x00, 0x41, 0x01, 0x01, 0x61, 0x01, 0x02, 0x41, 0x01, 0x03, 0x61,
   0x01, 0x04, 0x41, 0x01, 0x05, 0x61, 0x01, 0x06, 0x43, 0x01, 0x07, 0x63,
@@ -124,7 +128,7 @@ htp_cfg_t *htp_config_create() {
     // during callback registration
 
     // Set the default personality before we return
-    htp_config_server_personality(cfg, HTP_SERVER_APACHE_2_2);
+    htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
 
     return cfg;
 }
@@ -260,56 +264,10 @@ void htp_config_destroy(htp_cfg_t *cfg) {
 }
 
 /**
- * Configures filesystem sensitivity. This setting affects
- * how URL paths are normalized.
- *
- * @param cfg
- * @param path_case_insensitive
- */
-void htp_config_fs_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive) {
-    cfg->path_case_insensitive = path_case_insensitive;
-}
-
-/**
- * Configure desired server personality.
- *
- * @param cfg
- * @param personality
- * @return HTP_OK if the personality is supported, HTP_ERROR if it isn't.
- */
-int htp_config_server_personality(htp_cfg_t *cfg, int personality) {
-    switch (personality) {
-        //case HTP_SERVER_STRICT:
-        //    break;
-        //case HTP_SERVER_PERMISSIVE:
-        //    break;
-        case HTP_SERVER_APACHE_2_2:
-            cfg->parse_request_line = htp_parse_request_line_apache_2_2;            
-            cfg->process_request_header = htp_process_request_header_apache_2_2;
-            cfg->parse_response_line = htp_parse_response_line_generic;
-            cfg->process_response_header = htp_process_response_header_generic;
-            cfg->path_backslash_separators = 0;
-            cfg->path_decode_separators = 0;
-            break;
-        //case HTP_SERVER_IIS_5_1:
-        //    break;
-        //case HTP_SERVER_IIS_7_5:
-        //    break;
-        default:
-            return HTP_ERROR;
-    }
-
-    cfg->spersonality = personality;
-
-    return HTP_OK;
-}
-
-/**
  * Registers a transaction_start callback.
  * 
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_transaction_start, callback_fn);
@@ -319,8 +277,7 @@ void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(ht
  * Registers a request_line callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_request_line, callback_fn);
@@ -330,8 +287,7 @@ void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_con
  * Registers a request_headers callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_request_headers, callback_fn);
@@ -341,8 +297,7 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * Registers a request_trailer callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_request_trailer, callback_fn);
@@ -352,8 +307,7 @@ void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * Registers a request_body_data callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
     hook_register(&cfg->hook_request_body_data, callback_fn);
@@ -363,8 +317,7 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * Registers a request callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_request, callback_fn);
@@ -374,8 +327,7 @@ void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t 
  * Registers a request_line callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response_line, callback_fn);
@@ -385,8 +337,7 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
  * Registers a request_headers callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response_headers, callback_fn);
@@ -396,8 +347,7 @@ void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp
  * Registers a request_trailer callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response_trailer, callback_fn);
@@ -407,8 +357,7 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
  * Registers a request_body_data callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
     hook_register(&cfg->hook_response_body_data, callback_fn);
@@ -418,8 +367,7 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
  * Registers a request callback.
  *
  * @param cfg
- * @param callback_fn
- * @param callback_data
+ * @param callback_fn 
  */
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response, callback_fn);
@@ -437,4 +385,67 @@ void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t
  */
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map) {
     cfg->path_u_bestfit_map = map;
+}
+
+/**
+ * Configures filesystem sensitivity. This setting affects
+ * how URL paths are normalized.
+ *
+ * @param cfg
+ * @param path_case_insensitive
+ */
+void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive) {
+    cfg->path_case_insensitive = path_case_insensitive;
+}
+
+/**
+ * Configure desired server personality.
+ *
+ * @param cfg
+ * @param personality
+ * @return HTP_OK if the personality is supported, HTP_ERROR if it isn't.
+ */
+int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
+    switch (personality) {
+        case HTP_SERVER_APACHE_2_2:
+            cfg->parse_request_line = htp_parse_request_line_apache_2_2;
+            cfg->process_request_header = htp_process_request_header_apache_2_2;
+            cfg->parse_response_line = htp_parse_response_line_generic;
+            cfg->process_response_header = htp_process_response_header_generic;
+            
+            cfg->path_backslash_separators = NO;
+            cfg->path_decode_separators = NO;
+            cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
+            cfg->path_decode_u_encoding = STATUS_400;
+            break;
+        case HTP_SERVER_IIS_5_1:
+            cfg->path_backslash_separators = YES;
+            cfg->path_decode_separators = NO;
+            cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
+            cfg->path_decode_u_encoding = YES;
+            break;
+        case HTP_SERVER_IIS_6_0:
+            cfg->path_backslash_separators = YES;
+            cfg->path_decode_separators = YES;
+            cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
+            cfg->path_decode_u_encoding = YES;
+            break;
+        case HTP_SERVER_IIS_7_0:
+        case HTP_SERVER_IIS_7_5:
+            cfg->path_backslash_separators = YES;
+            cfg->path_decode_separators = YES;
+            cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
+            cfg->path_decode_u_encoding = STATUS_400;
+            break;        
+        default:
+            return HTP_ERROR;
+    }
+
+    // Remember the personality
+    cfg->spersonality = personality;
+
+    // Non server-specific defaults
+    cfg->path_compress_separators = 1;
+
+    return HTP_OK;
 }

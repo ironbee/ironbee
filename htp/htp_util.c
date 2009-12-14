@@ -806,15 +806,19 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
         // Decode encoded characters
         if (c == '%') {
             if (rpos + 2 < len) {
+                int handled = 0;
+
                 if (cfg->path_decode_u_encoding) {
                     // Check for the %u encoding
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
+                        handled = 1;
+
                         if (rpos + 5 < len) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
                                 && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
                                 // Decode a valid %u encoding
                                 c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
-                                rpos += 5;
+                                rpos += 6;
                             } else {
                                 // Invalid %u encoding
                                 tx->flags |= HTP_PATH_INVALID_ENCODING;
@@ -826,7 +830,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                         rpos++;
                                         continue;
                                         break;
-                                    case URL_DECODER_LEAVE_PERCENT:
+                                    case URL_DECODER_PRESERVE_PERCENT:
                                         // Leave the percent character in output
                                         rpos++;
                                         break;
@@ -835,8 +839,17 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                         c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
                                         rpos += 5;
                                         break;
+                                    //case URL_DECODER_STATUS_400:
+                                    //    // Backend will reject request with 400, which means
+                                    //    // that it does not matter what we do.
+                                    //    tx->response_status_expected_number = 400;
+                                    //
+                                    //    // Preserve the percent character.
+                                    //    rpos++;
+                                    //    break;
                                     default:
-                                        // XXX Unknown setting
+                                        // Unknown setting
+                                        return -1;
                                         break;
                                 }
                             }
@@ -845,61 +858,74 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                             tx->flags |= HTP_PATH_INVALID_ENCODING;
 
                             if (cfg->path_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
-                                // Do not place the percent character in output
+                                // Remove the percent character from output
                                 rpos++;
                                 continue;
+                            } else {
+                                rpos++;
                             }
                         }
                     }
                 }
 
                 // Handle standard URL encoding
-                if (isxdigit(data[rpos + 1]) && (isxdigit(data[rpos + 2]))) {
-                    c = x2c(&data[rpos + 1]);
+                if (!handled) {
+                    if ((isxdigit(data[rpos + 1])) && (isxdigit(data[rpos + 2]))) {
+                        c = x2c(&data[rpos + 1]);
 
-                    if ((c == '/') || ((cfg->path_backslash_separators) && (c == '\\'))) {
-                        tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
+                        if ((c == '/') || ((cfg->path_backslash_separators) && (c == '\\'))) {
+                            tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
 
-                        if (!cfg->path_decode_separators) {
-                            // Leave encoded
-                            c = '%';
-                            rpos++;
+                            if (!cfg->path_decode_separators) {
+                                // Leave encoded
+                                c = '%';
+                                rpos++;
+                            } else {
+                                // Decode
+                                rpos += 3;
+                            }
                         } else {
                             // Decode
                             rpos += 3;
                         }
                     } else {
-                        // Decode
-                        rpos += 3;
-                    }
-                } else {
-                    // Invalid encoding
-                    tx->flags |= HTP_PATH_INVALID_ENCODING;
+                        // Invalid encoding
+                        tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                    switch (cfg->path_invalid_encoding_handling) {
-                        case URL_DECODER_REMOVE_PERCENT:
-                            // Do not place anything in output; eat
-                            // the percent character
-                            rpos++;
-                            continue;
-                            break;
-                        case URL_DECODER_LEAVE_PERCENT:
-                            // Leave the percent character in output
-                            rpos++;
-                            break;
-                        case URL_DECODER_DECODE_INVALID:
-                            // Decode
-                            c = x2c(&data[rpos + 1]);
-                            rpos += 3;
-                            // Note: What if an invalid encoding decodes into a path
-                            //       separator? This is theoretical at the moment, because
-                            //       the only platform we know doesn't convert separators is
-                            //       Apache, who will also respond with 400 if invalid encoding
-                            //       is encountered. Thus no check for a separator here.
-                            break;
-                        default:
-                            // XXX Unknown setting
-                            break;
+                        switch (cfg->path_invalid_encoding_handling) {
+                            case URL_DECODER_REMOVE_PERCENT:
+                                // Do not place anything in output; eat
+                                // the percent character
+                                rpos++;
+                                continue;
+                                break;
+                            case URL_DECODER_PRESERVE_PERCENT:
+                                // Leave the percent character in output
+                                rpos++;
+                                break;
+                            case URL_DECODER_DECODE_INVALID:
+                                // Decode
+                                c = x2c(&data[rpos + 1]);
+                                rpos += 3;
+                                // Note: What if an invalid encoding decodes into a path
+                                //       separator? This is theoretical at the moment, because
+                                //       the only platform we know doesn't convert separators is
+                                //       Apache, who will also respond with 400 if invalid encoding
+                                //       is encountered. Thus no check for a separator here.
+                                break;
+                            case URL_DECODER_STATUS_400:
+                                // Backend will reject request with 400, which means
+                                // that it does not matter what we do.
+                                tx->response_status_expected_number = 400;
+
+                                // Preserve the percent character
+                                rpos++;
+                                break;
+                            default:
+                                // Unknown setting
+                                return -1;
+                                break;
+                        }
                     }
                 }
             } else {
@@ -910,6 +936,8 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     // Do not place the percent character in output
                     rpos++;
                     continue;
+                } else {
+                    rpos++;
                 }
             }
         } else {

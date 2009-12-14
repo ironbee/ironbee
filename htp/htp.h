@@ -107,8 +107,8 @@
 
 #define PIPELINED_CONNECTION        1
 
-#define HTP_SERVER_STRICT           0
-#define HTP_SERVER_PERMISSIVE       1
+// #define HTP_SERVER_STRICT           0
+// #define HTP_SERVER_PERMISSIVE       1
 #define HTP_SERVER_APACHE_2_2       2
 #define HTP_SERVER_IIS_4_0          4   /* Windows NT 4.0 */
 #define HTP_SERVER_IIS_5_0          5   /* Windows 2000 */
@@ -116,6 +116,7 @@
 #define HTP_SERVER_IIS_6_0          7   /* Windows 2003 */
 #define HTP_SERVER_IIS_7_0          8   /* Windows 2008 */
 #define HTP_SERVER_IIS_7_5          9   /* Windows 7 */
+// #define HTP_SERVER_TOMCAT_6_0       10
 
 #define NONE                        0
 #define IDENTITY                    1
@@ -139,9 +140,14 @@
 #define STREAM_STATE_ERROR          3
 #define STREAM_STATE_DATA           9
 
-#define URL_DECODER_LEAVE_PERCENT               0
+#define URL_DECODER_PRESERVE_PERCENT            0
 #define URL_DECODER_REMOVE_PERCENT              1
 #define URL_DECODER_DECODE_INVALID              2
+#define URL_DECODER_STATUS_400                  3
+
+#define NO          0
+#define YES         1
+#define STATUS_400  2
 
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
@@ -759,6 +765,11 @@ struct htp_tx_t {
     /** Reponse status code, available only if we were able to parse it. */
     int response_status_number;
 
+    /** This field is set by the protocol decoder with it thinks that the
+     *  backend server will reject a request with a particular status code.
+     */
+    int response_status_expected_number;
+
     /** The message associated with the response status code. */
     bstr *response_message;
 
@@ -857,11 +868,7 @@ struct htp_uri_t {
 
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create();
-      void htp_config_destroy(htp_cfg_t *cfg);
- int htp_config_server_personality(htp_cfg_t *cfg, int personality);
-void htp_config_fs_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
-
-void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
+      void htp_config_destroy(htp_cfg_t *cfg); 
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
@@ -875,6 +882,12 @@ void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+
+ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
+void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
+void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
+
+
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
 htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
