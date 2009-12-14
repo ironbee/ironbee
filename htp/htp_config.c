@@ -423,19 +423,20 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_decode_separators = NO;
             cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
             cfg->path_decode_u_encoding = YES;
+            cfg->path_unicode_mapping = BESTFIT;
             break;
         case HTP_SERVER_IIS_6_0:
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
             cfg->path_decode_u_encoding = YES;
+            cfg->path_unicode_mapping = STATUS_400;
             break;
         case HTP_SERVER_IIS_7_0:
         case HTP_SERVER_IIS_7_5:
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
-            cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
-            cfg->path_decode_u_encoding = STATUS_400;
+            cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;            
             break;        
         default:
             return HTP_ERROR;

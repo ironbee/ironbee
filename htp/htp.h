@@ -143,11 +143,14 @@
 #define URL_DECODER_PRESERVE_PERCENT            0
 #define URL_DECODER_REMOVE_PERCENT              1
 #define URL_DECODER_DECODE_INVALID              2
-#define URL_DECODER_STATUS_400                  3
+#define URL_DECODER_STATUS_400                  400
 
+#define NONE        0
 #define NO          0
 #define YES         1
-#define STATUS_400  2
+#define BESTFIT     0
+#define STATUS_400  400
+#define STATUS_404  401
 
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
@@ -304,8 +307,14 @@ struct htp_cfg_t {
      */
     int path_invalid_encoding_handling;
 
+    /** */
+    int path_invalid_utf8_handling;
+
     /** Should we decode %u-encoded characters? */
     int path_decode_u_encoding;
+
+    /** How will the server handle UCS-2 characters? */
+    int path_unicode_mapping;
 
     /** The best-fit map to use to decode %u-encoded characters. */
     unsigned char *path_u_bestfit_map;

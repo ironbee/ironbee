@@ -796,6 +796,7 @@ int main5(int argc, char** argv) {
 
 #define PATH_DECODE_TEST_AFTER() \
     htp_decode_path_inplace(cfg, tx, input); \
+    htp_utf8_decode_path_inplace(cfg, tx, input); \
     if (bstr_cmp(input, expected) == 0) success = 1; \
     else failures++; \
     printf("[%2i] %s: %s\n", tests, (success == 1 ? "SUCCESS" : "FAILURE"), test_name); \
@@ -829,8 +830,7 @@ int main(int argc, char** argv) {
     int expected_status = 0;
     int expected_flags = 0;
     char *test_name = NULL;
-
-    /*
+    
     PATH_DECODE_TEST_BEFORE("URL-decoding");
     input = bstr_cstrdup("/%64est");
     expected = bstr_cstrdup("/dest");    
@@ -864,9 +864,8 @@ int main(int argc, char** argv) {
     input = bstr_cstrdup("/%xxest");
     expected = bstr_cstrdup("/%xxest");
     expected_status = 400;
-    cfg->path_invalid_encoding_handling = URL_DECODER_REJECT_400;
+    cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
     PATH_DECODE_TEST_AFTER();
-    */
 
     PATH_DECODE_TEST_BEFORE("%u decoding (also overlong)");
     input = bstr_cstrdup("/%u0064");
@@ -919,6 +918,28 @@ int main(int argc, char** argv) {
     input = bstr_cstrdup("/%u0107");
     expected = bstr_cstrdup("/c");    
     cfg->path_decode_u_encoding = YES;
+    cfg->path_unicode_mapping = BESTFIT;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("%u decoding, 404 to UCS-2 characters");
+    input = bstr_cstrdup("/%u0107");
+    expected = bstr_cstrdup("/c");
+    expected_status = 404;
+    cfg->path_decode_u_encoding = YES;
+    cfg->path_unicode_mapping = STATUS_404;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded");
+    input = bstr_cstrdup("/%f7test");
+    expected = bstr_cstrdup("/\xf7test");
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded (400)");
+    input = bstr_cstrdup("/%f7test");
+    expected = bstr_cstrdup("/\xf7test");
+    expected_status = 400;
+    expected_flags = HTP_PATH_UTF8_INVALID;
+    cfg->path_invalid_utf8_handling = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     /*    

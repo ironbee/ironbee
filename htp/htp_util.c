@@ -628,6 +628,10 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
             case UTF8_REJECT:
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
+                if (cfg->path_invalid_utf8_handling == STATUS_400) {
+                    tx->response_status_expected_number = 400;
+                }
+
                 state = UTF8_ACCEPT;
 
                 // Copy the invalid bytes
@@ -757,6 +761,15 @@ int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
         // Check for fullwidth form evasion
         if (c1 == 0xff) {
             tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+        }
+
+        switch(cfg->path_unicode_mapping) {
+            case STATUS_400:
+                tx->response_status_expected_number = 400;
+                break;
+            case STATUS_404:
+                tx->response_status_expected_number = 404;
+                break;
         }
 
         // Use best-fit mapping
