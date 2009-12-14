@@ -147,8 +147,9 @@
 
 #define NONE        0
 #define NO          0
-#define YES         1
 #define BESTFIT     0
+#define YES         1
+#define TERMINATE   1
 #define STATUS_400  400
 #define STATUS_404  401
 
@@ -315,6 +316,10 @@ struct htp_cfg_t {
 
     /** How will the server handle UCS-2 characters? */
     int path_unicode_mapping;
+
+    int path_nul_encoded_handling;
+
+    int path_nul_raw_handling;
 
     /** The best-fit map to use to decode %u-encoded characters. */
     unsigned char *path_u_bestfit_map;

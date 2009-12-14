@@ -763,7 +763,7 @@ int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
             tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
         }
 
-        switch(cfg->path_unicode_mapping) {
+        switch (cfg->path_unicode_mapping) {
             case STATUS_400:
                 tx->response_status_expected_number = 400;
                 break;
@@ -832,6 +832,16 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 // Decode a valid %u encoding
                                 c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
                                 rpos += 6;
+
+                                if (c == 0) {
+                                    tx->flags |= HTP_PATH_ENCODED_NUL;
+
+                                    if (cfg->path_nul_encoded_handling == STATUS_400) {
+                                        tx->response_status_expected_number == 400;
+                                    } else if (cfg->path_nul_encoded_handling == STATUS_404) {
+                                        tx->response_status_expected_number == 404;
+                                    }
+                                }
                             } else {
                                 // Invalid %u encoding
                                 tx->flags |= HTP_PATH_INVALID_ENCODING;
@@ -852,14 +862,6 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                         c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
                                         rpos += 5;
                                         break;
-                                    //case URL_DECODER_STATUS_400:
-                                    //    // Backend will reject request with 400, which means
-                                    //    // that it does not matter what we do.
-                                    //    tx->response_status_expected_number = 400;
-                                    //
-                                    //    // Preserve the percent character.
-                                    //    rpos++;
-                                    //    break;
                                     default:
                                         // Unknown setting
                                         return -1;
@@ -886,16 +888,39 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     if ((isxdigit(data[rpos + 1])) && (isxdigit(data[rpos + 2]))) {
                         c = x2c(&data[rpos + 1]);
 
+                        if (c == 0) {
+                            tx->flags |= HTP_PATH_ENCODED_NUL;
+
+                            switch(cfg->path_nul_encoded_handling) {
+                                case TERMINATE :
+                                    bstr_len_adjust(path, wpos);
+                                    return 1;
+                                    break;
+                                case STATUS_400:                                    
+                                    tx->response_status_expected_number = 400;
+                                    break;
+                                case STATUS_404:                                    
+                                    tx->response_status_expected_number = 404;
+                                    break;
+                            }
+                        }
+
                         if ((c == '/') || ((cfg->path_backslash_separators) && (c == '\\'))) {
                             tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
 
-                            if (!cfg->path_decode_separators) {
-                                // Leave encoded
-                                c = '%';
-                                rpos++;
-                            } else {
-                                // Decode
-                                rpos += 3;
+                            switch (cfg->path_decode_separators) {
+                                case STATUS_404:
+                                    tx->response_status_expected_number = 404;
+                                    // Fall-through
+                                case NO:
+                                    // Leave encoded
+                                    c = '%';
+                                    rpos++;
+                                    break;
+                                case YES:
+                                    // Decode
+                                    rpos += 3;
+                                    break;
                             }
                         } else {
                             // Decode
@@ -955,27 +980,47 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
             }
         } else {
             // One non-encoded character
+
+            // Is it a NUL byte?
+            if (c == 0) {
+                switch (cfg->path_nul_raw_handling) {
+                    case TERMINATE:
+                        // Terminate path with a raw NUL byte
+                        bstr_len_adjust(path, wpos);
+                        return 1;
+                        break;
+                    case STATUS_400:
+                        // Leave the NUL byte, but set the expected status
+                        tx->response_status_expected_number = 400;
+                        break;
+                    case STATUS_404:
+                        // Leave the NUL byte, but set the expected status
+                        tx->response_status_expected_number = 404;
+                        break;
+                }
+            }
+
             rpos++;
         }
 
         // Place the character into output
 
         // Check if the character is a NUL
-        if (c == 0) {
-            tx->flags |= HTP_PATH_ENCODED_NUL;
-        } else {
-            // Character is not a NUL
+        //if (c == 0) {
+        //    tx->flags |= HTP_PATH_ENCODED_NUL;
+        //} else {
+        // Character is not a NUL
 
-            // Convert backslashes to forward slashes, if necessary
-            if ((c == '\\') && (cfg->path_backslash_separators)) {
-                c = '/';
-            }
-
-            // Lowercase characters, if necessary
-            if (cfg->path_case_insensitive) {
-                c = tolower(c);
-            }
+        // Convert backslashes to forward slashes, if necessary
+        if ((c == '\\') && (cfg->path_backslash_separators)) {
+            c = '/';
         }
+
+        // Lowercase characters, if necessary
+        if (cfg->path_case_insensitive) {
+            c = tolower(c);
+        }
+        //}
 
         // If we're compressing separators then we need
         // to track if the previous character was a separator

@@ -830,7 +830,7 @@ int main(int argc, char** argv) {
     int expected_status = 0;
     int expected_flags = 0;
     char *test_name = NULL;
-    
+   
     PATH_DECODE_TEST_BEFORE("URL-decoding");
     input = bstr_cstrdup("/%64est");
     expected = bstr_cstrdup("/dest");    
@@ -929,6 +929,73 @@ int main(int argc, char** argv) {
     cfg->path_unicode_mapping = STATUS_404;
     PATH_DECODE_TEST_AFTER();
 
+    PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), not expect to decode");
+    input = bstr_cstrdup("/one%2ftwo");
+    expected = bstr_cstrdup("/one%2ftwo");
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), expect to decode");
+    input = bstr_cstrdup("/one%2ftwo");
+    expected = bstr_cstrdup("/one/two");
+    cfg->path_decode_separators = YES;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), expect not do decode and 404");
+    input = bstr_cstrdup("/one%2ftwo");
+    expected = bstr_cstrdup("/one%2ftwo");
+    expected_status = 404;
+    cfg->path_decode_separators = STATUS_404;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded), expect to decode");
+    input = bstr_cstrdup("/one%u002ftwo");
+    expected = bstr_cstrdup("/one/two");    
+    cfg->path_decode_separators = YES;
+    cfg->path_decode_u_encoding = YES;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded, fullwidth), expect to decode");
+    input = bstr_cstrdup("/one%uff0ftwo");
+    expected = bstr_cstrdup("/one/two");
+    cfg->path_decode_separators = YES;
+    cfg->path_decode_u_encoding = YES;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Backslash (URL-encoded), not a separator; expect to decode");
+    input = bstr_cstrdup("/one%5ctwo");
+    expected = bstr_cstrdup("/one\\two");
+    cfg->path_decode_separators = YES;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Backslash (URL-encoded), as path segment separator");
+    input = bstr_cstrdup("/one%5ctwo");
+    expected = bstr_cstrdup("/one/two");
+    cfg->path_decode_separators = YES;
+    cfg->path_backslash_separators = 1;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Backslash (not encoded), as path segment separator");
+    input = bstr_cstrdup("/one\\two");
+    expected = bstr_cstrdup("/one/two");    
+    cfg->path_backslash_separators = YES;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Backslash (%u-encoded), as path segment separator");
+    input = bstr_cstrdup("/one%u005ctwo");
+    expected = bstr_cstrdup("/one/two");
+    cfg->path_decode_separators = YES;
+    cfg->path_backslash_separators = YES;
+    cfg->path_decode_u_encoding = YES;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Backslash (%u-encoded, fullwidth), as path segment separator");
+    input = bstr_cstrdup("/one%uff3ctwo");
+    expected = bstr_cstrdup("/one/two");
+    cfg->path_decode_separators = YES;
+    cfg->path_backslash_separators = 1;
+    cfg->path_decode_u_encoding = YES;
+    PATH_DECODE_TEST_AFTER();   
+
     PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded");
     input = bstr_cstrdup("/%f7test");
     expected = bstr_cstrdup("/\xf7test");
@@ -940,79 +1007,70 @@ int main(int argc, char** argv) {
     expected_status = 400;
     expected_flags = HTP_PATH_UTF8_INVALID;
     cfg->path_invalid_utf8_handling = STATUS_400;
+    PATH_DECODE_TEST_AFTER();   
+
+    PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; leave");
+    input = bstr_memdup("/test\0text", 10);
+    expected = bstr_memdup("/test\0text", 10);
     PATH_DECODE_TEST_AFTER();
 
-    /*    
+    PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; terminate path");
+    input = bstr_memdup("/test\0text", 10);
+    expected = bstr_cstrdup("/test");
+    cfg->path_nul_raw_handling = TERMINATE;
+    PATH_DECODE_TEST_AFTER();
 
-    // URL-encoded path separator #1
-    success = 0;
-    tests = 0;
-    failures = 0;
-    before = bstr_cstrdup("/one%2ftwo");
-    after = bstr_cstrdup("/one%2ftwo");
+    PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; 400");
+    input = bstr_memdup("/test\0text", 10);
+    expected = bstr_memdup("/test\0text", 10);
+    cfg->path_nul_raw_handling = STATUS_400;
+    PATH_DECODE_TEST_AFTER();
 
-    tests++;
-    printf("Before: %s\n", bstr_tocstr(before));
-    cfg->path_decode_separators = 0;
-    htp_decode_path_inplace(cfg, tx, before);
-    if (bstr_cmp(before, after) == 0) success = 1;
-    else failures++;
-    printf("Expected: %s\n", bstr_tocstr(after));
-    printf("Actual: %s [%s]\n", bstr_tocstr(before), ((success == 1) ? "SUCCESS" : "FAILURE"));
-    printf("\n");
+    PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; leave");
+    input = bstr_cstrdup("/test%00text");
+    expected = bstr_memdup("/test\0text", 10);
+    PATH_DECODE_TEST_AFTER();
 
-    // URL-encoded path segment separator #2
-    success = 0;
-    tests = 0;
-    failures = 0;
-    before = bstr_cstrdup("/one%2ftwo");
-    after = bstr_cstrdup("/one/two");
+    PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; terminate path");
+    input = bstr_cstrdup("/test%00text");
+    expected = bstr_cstrdup("/test");
+    cfg->path_nul_encoded_handling = TERMINATE;
+    PATH_DECODE_TEST_AFTER();
 
-    tests++;
-    printf("Before: %s\n", bstr_tocstr(before));
-    cfg->path_backslash_separators = 0;
-    cfg->path_decode_separators = 1;
-    htp_decode_path_inplace(cfg, tx, before);
-    if (bstr_cmp(before, after) == 0) success = 1;
-    else failures++;
-    printf("Expected: %s\n", bstr_tocstr(after));
-    printf("Actual: %s [%s]\n", bstr_tocstr(before), ((success == 1) ? "SUCCESS" : "FAILURE"));
-    printf("\n");
+    PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; 400");
+    input = bstr_cstrdup("/test%00text");
+    expected = bstr_memdup("/test\0text", 10);
+    cfg->path_nul_encoded_handling = STATUS_400;
+    expected_status = 400;
+    PATH_DECODE_TEST_AFTER();
 
-    // URL-encoded path segment separator #3
-    success = 0;
-    tests = 0;
-    failures = 0;
-    before = bstr_cstrdup("/one%2ftwo%5cthree");
-    after = bstr_cstrdup("/one/two\\three");
+    PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; 404");
+    input = bstr_cstrdup("/test%00text");
+    expected = bstr_memdup("/test\0text", 10);
+    cfg->path_nul_encoded_handling = STATUS_404;
+    expected_status = 404;
+    PATH_DECODE_TEST_AFTER();
 
-    tests++;
-    printf("Before: %s\n", bstr_tocstr(before));
-    cfg->path_backslash_separators = 0;
-    cfg->path_decode_separators = 1;
-    htp_decode_path_inplace(cfg, tx, before);
-    if (bstr_cmp(before, after) == 0) success = 1;
-    else failures++;
-    printf("Expected: %s\n", bstr_tocstr(after));
-    printf("Actual: %s [%s]\n", bstr_tocstr(before), ((success == 1) ? "SUCCESS" : "FAILURE"));
-    printf("\n");
+    PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; terminate path");
+    input = bstr_cstrdup("/test%00text");
+    expected = bstr_cstrdup("/test");
+    cfg->path_nul_encoded_handling = TERMINATE;
+    cfg->path_decode_u_encoding = YES;
+    PATH_DECODE_TEST_AFTER();
 
-    // URL-encoded path segment separator #4
-    success = 0;
-    tests = 0;
-    failures = 0;
-    before = bstr_cstrdup("/one%2ftwo%5cthree");
-    after = bstr_cstrdup("/one/two/three");
+    PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; 400");
+    input = bstr_cstrdup("/test%00text");
+    expected = bstr_memdup("/test\0text", 10);
+    cfg->path_nul_encoded_handling = STATUS_400;
+    cfg->path_decode_u_encoding = YES;
+    expected_status = 400;
+    PATH_DECODE_TEST_AFTER();
 
-    tests++;
-    printf("Before: %s\n", bstr_tocstr(before));
-    cfg->path_backslash_separators = 1;
-    cfg->path_decode_separators = 1;
-    htp_decode_path_inplace(cfg, tx, before);
-    if (bstr_cmp(before, after) == 0) success = 1;
-    else failures++;
-    printf("Expected: %s\n", bstr_tocstr(after));
-    printf("Actual: %s [%s]\n", bstr_tocstr(before), ((success == 1) ? "SUCCESS" : "FAILURE"));
-    printf("\n");
-    */
+    PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; 404");
+    input = bstr_cstrdup("/test%00text");
+    expected = bstr_memdup("/test\0text", 10);
+    cfg->path_nul_encoded_handling = STATUS_404;
+    cfg->path_decode_u_encoding = YES;
+    expected_status = 404;
+    PATH_DECODE_TEST_AFTER();
 }
