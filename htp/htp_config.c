@@ -408,12 +408,23 @@ void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensit
 int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
     switch (personality) {
         case HTP_SERVER_MINIMAL:
-            cfg->parse_request_line = htp_parse_request_line_apache_2_2;
-            cfg->process_request_header = htp_process_request_header_apache_2_2;
+            cfg->parse_request_line = htp_parse_request_line_generic;
+            cfg->process_request_header = htp_process_request_header_generic;
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
             break;
+
         case HTP_SERVER_GENERIC:
+            cfg->parse_request_line = htp_parse_request_line_generic;
+            cfg->process_request_header = htp_process_request_header_generic;
+            cfg->parse_response_line = htp_parse_response_line_generic;
+            cfg->process_response_header = htp_process_response_header_generic;
+
+            cfg->path_backslash_separators = YES;
+            cfg->path_decode_separators = YES;
+            break;
+
+        case HTP_SERVER_APACHE :
         case HTP_SERVER_APACHE_2_2:
             cfg->parse_request_line = htp_parse_request_line_apache_2_2;
             cfg->process_request_header = htp_process_request_header_apache_2_2;
@@ -425,7 +436,13 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;            
             cfg->path_control_chars_handling = NONE;
             break;
+
         case HTP_SERVER_IIS_5_1:
+            cfg->parse_request_line = htp_parse_request_line_generic;
+            cfg->process_request_header = htp_process_request_header_generic;
+            cfg->parse_response_line = htp_parse_response_line_generic;
+            cfg->process_response_header = htp_process_response_header_generic;
+
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = NO;
             cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
@@ -433,7 +450,13 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_unicode_mapping = BESTFIT;
             cfg->path_control_chars_handling = NONE;
             break;
+
         case HTP_SERVER_IIS_6_0:
+            cfg->parse_request_line = htp_parse_request_line_generic;
+            cfg->process_request_header = htp_process_request_header_generic;
+            cfg->parse_response_line = htp_parse_response_line_generic;
+            cfg->process_response_header = htp_process_response_header_generic;
+
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
@@ -441,13 +464,20 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_unicode_mapping = STATUS_400;
             cfg->path_control_chars_handling = STATUS_400;
             break;
+
         case HTP_SERVER_IIS_7_0:
         case HTP_SERVER_IIS_7_5:
+            cfg->parse_request_line = htp_parse_request_line_generic;
+            cfg->process_request_header = htp_process_request_header_generic;
+            cfg->parse_response_line = htp_parse_response_line_generic;
+            cfg->process_response_header = htp_process_response_header_generic;
+
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
             cfg->path_control_chars_handling = STATUS_400;
-            break;        
+            break;
+            
         default:
             return HTP_ERROR;
     }

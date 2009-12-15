@@ -8,7 +8,7 @@
  * @param connp
  * @return HTP_OK or HTP_ERROR
  */
-int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
+int htp_process_request_header_generic(htp_connp_t *connp) {
     bstr *tempstr = NULL;
     char *data = NULL;
     size_t len = 0;
@@ -61,7 +61,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
     }
 
     // Now try to oparse the header
-    if (htp_parse_request_header_apache_2_2(connp, h, data, len) != HTP_OK) {
+    if (htp_parse_request_header_generic(connp, h, data, len) != HTP_OK) {
         if (tempstr != NULL) {
             free(tempstr);
         }
@@ -103,7 +103,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
 }
 
 /**
- * Parses a message header line as Apache 2.2 does.
+ * Generic request header parser.
  *
  * @param connp
  * @param h
@@ -111,7 +111,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
  * @param len
  * @return HTP_OK or HTP_ERROR
  */
-int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, char *data, size_t len) {
+int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
 
@@ -119,9 +119,10 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, cha
 
     // Look for the colon
     int colon_pos = 0;
-    while ((colon_pos < len) && (data[colon_pos] != '\0') && (data[colon_pos] != ':')) colon_pos++;
-
-    if ((colon_pos == len) || (data[colon_pos] == '\0')) {
+    
+    while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
+    
+    if (colon_pos == len) {
         // Missing colon
         h->flags |= HTP_FIELD_UNPARSEABLE;
 
@@ -177,7 +178,8 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, cha
 
     // Look for the end of field-content
     value_end = value_start;
-    while ((value_end < len) && (data[value_end] != '\0')) value_end++;
+    
+    while (value_end < len) value_end++;
 
     // Ignore LWS after field-content
     prev = value_end - 1;
@@ -211,22 +213,16 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, cha
 }
 
 /**
- * Parse request line as Apache 2.2 does.
+ * Generic request line parser.
  *
  * @param connp
  * @return HTP_OK or HTP_ERROR
  */
-int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
+int htp_parse_request_line_generic(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
     unsigned char *data = bstr_ptr(tx->request_line);
     size_t len = bstr_len(tx->request_line);
-    int pos = 0;
-
-    // In this implementation we assume the
-    // line ends with the first NUL byte.
-    if (tx->request_line_nul_offset != -1) {
-        len = tx->request_line_nul_offset - 1;
-    }
+    int pos = 0;   
 
     // The request method starts at the beginning of the
     // line and ends with the first whitespace character.
@@ -241,8 +237,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
 
     // Ignore whitespace after request method. The RFC allows
     // for only one SP, but then suggests any number of SP and HT
-    // should be permitted. Apache uses isspace(), which is even
-    // more permitting, so that's what we use here.
+    // should be permitted.
     while ((pos < len) && (isspace(data[pos]))) {
         pos++;
     }
@@ -274,3 +269,4 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
 
     return HTP_OK;
 }
+

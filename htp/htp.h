@@ -109,14 +109,15 @@
 
 #define HTP_SERVER_MINIMAL          0
 #define HTP_SERVER_GENERIC          1
-#define HTP_SERVER_APACHE_2_2       2
 #define HTP_SERVER_IIS_4_0          4   /* Windows NT 4.0 */
 #define HTP_SERVER_IIS_5_0          5   /* Windows 2000 */
 #define HTP_SERVER_IIS_5_1          6   /* Windows XP Professional */
 #define HTP_SERVER_IIS_6_0          7   /* Windows 2003 */
 #define HTP_SERVER_IIS_7_0          8   /* Windows 2008 */
 #define HTP_SERVER_IIS_7_5          9   /* Windows 7 */
-// #define HTP_SERVER_TOMCAT_6_0       10
+//#define HTP_SERVER_TOMCAT_6_0       10
+#define HTP_SERVER_APACHE           11
+#define HTP_SERVER_APACHE_2_2       12
 
 #define NONE                        0
 #define IDENTITY                    1
@@ -941,7 +942,11 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
      void htp_tx_set_user_data(htp_tx_t *tx, void *user_data);
     void *htp_tx_get_user_data(htp_tx_t *tx);
 
-// Parse functions
+// Parsing functions
+
+int htp_parse_request_line_generic(htp_connp_t *connp);
+int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len);
+int htp_process_request_header_generic(htp_connp_t *);
 
 int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, char *data, size_t len);
 int htp_parse_request_line_apache_2_2(htp_connp_t *connp);

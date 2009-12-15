@@ -547,7 +547,7 @@ int main2(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main3(int argc, char** argv) {
+int main(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
@@ -588,6 +588,8 @@ int main3(int argc, char** argv) {
     }
 
     htp_cfg_t *cfg = htp_config_create();
+    //htp_config_set_server_personality(cfg, HTP_SERVER_GENERIC);
+    htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
 
     // Register hooks
     htp_config_register_transaction_start(cfg, callback_transaction_start);
@@ -604,17 +606,17 @@ int main3(int argc, char** argv) {
     htp_config_register_response_trailer(cfg, callback_response_trailer);
     htp_config_register_response(cfg, callback_response);
 
-    RUN_TEST(test_get, cfg);
+    //RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
-    RUN_TEST(test_post_urlencoded, cfg);
-    RUN_TEST(test_post_urlencoded_chunked, cfg);
-    RUN_TEST(test_expect, cfg);
-    RUN_TEST(test_uri_normal, cfg);
-    RUN_TEST(test_pipelined_connection, cfg);
-    RUN_TEST(test_not_pipelined_connection, cfg);
-    RUN_TEST(test_multi_packet_request_head, cfg);
-    RUN_TEST(test_host_in_headers, cfg);
-    RUN_TEST(test_response_stream_closure, cfg);
+    //RUN_TEST(test_post_urlencoded, cfg);
+    //RUN_TEST(test_post_urlencoded_chunked, cfg);
+    //RUN_TEST(test_expect, cfg);
+    //RUN_TEST(test_uri_normal, cfg);
+    //RUN_TEST(test_pipelined_connection, cfg);
+    //RUN_TEST(test_not_pipelined_connection, cfg);
+    //RUN_TEST(test_multi_packet_request_head, cfg);
+    //RUN_TEST(test_host_in_headers, cfg);
+    //RUN_TEST(test_response_stream_closure, cfg);
 
     //RUN_TEST(test_misc, cfg);
 
@@ -624,7 +626,7 @@ int main3(int argc, char** argv) {
     return (EXIT_SUCCESS);
 }
 
-int main4(int argc, char** argv) {
+int main_path_decoding_tests(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
 
@@ -727,21 +729,11 @@ void encode_utf8_4(uint8_t *data, uint32_t i) {
     data[3] = 0x80 + (i & 0x3f);
 }
 
-int main5(int argc, char** argv) {
+int main_utf8_decoder_tests(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
 
     bstr *path = NULL;
-
-    /*
-    path = bstr_cstrdup("/%c1%b4/%e0%81%b4/%f0%80%81%b4/%e0%80%2f");
-    cfg->path_decode_separators = 1;
-    htp_decode_path_inplace(cfg, tx, path);
-    printf("URL-decoded path: %s\n", bstr_tocstr(path));
-    //htp_utf8_validate_path(cfg, tx, path);
-    htp_utf8_decode_path_inplace(cfg, tx, path);
-    printf("UTF8-Decoded path: %s\n", bstr_tocstr(path));
-     */
 
     path = bstr_cstrdup("//////////");
     uint8_t *data = bstr_ptr(path);
@@ -819,7 +811,7 @@ int main5(int argc, char** argv) {
     bstr_free(expected); \
     bstr_free(input);
 
-int main(int argc, char** argv) {
+int main_path_tests(int argc, char** argv) {
     htp_cfg_t *cfg = NULL;
     htp_tx_t *tx = NULL;
     bstr *input = NULL;
