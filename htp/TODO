@@ -68,7 +68,6 @@
 - Add callbacks to the list and table structures to automatically delete the elements
   they contain when their respective destroy methods are invoked
 
-- Add "expecting this transaction to have a status XXX", based on our knowledge of the
-  terminating device
-
 - Perhaps best-fit maps should also have the replacement character?
+
+- Test double-decoding with IIS4 or IIS5

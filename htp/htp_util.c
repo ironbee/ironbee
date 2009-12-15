@@ -134,7 +134,8 @@ int htp_is_space(int c) {
  * @return Method number of M_UNKNOWN
  */
 int htp_convert_method_to_number(bstr *method) {
-    // TODO Add the remaining methods and optimize using parallel matching.
+    // XXXX Add the remaining methods
+    // TODO Optimize using parallel matching, or something
     if (bstr_cmpc(method, "GET") == 0) return M_GET;
     if (bstr_cmpc(method, "POST") == 0) return M_POST;
     if (bstr_cmpc(method, "HEAD") == 0) return M_HEAD;
@@ -524,7 +525,12 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 }
 
 /**
+ * Convert two input bytes, pointed to by the pointer parameter,
+ * into a single byte by assuming the input consists of hexadecimal
+ * characters. This function will happily convert invalid input.
  *
+ * @param what
+ * @return hex-decoded byte
  */
 unsigned char x2c(unsigned char *what) {
     register unsigned char digit;
@@ -537,7 +543,12 @@ unsigned char x2c(unsigned char *what) {
 }
 
 /**
+ * Convert a Unicode codepoint into a single-byte, using best-fit
+ * mapping (as specified in the provided configuration structure).
  *
+ * @param cfg
+ * @param codepoint
+ * @return converted single byte
  */
 uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
     // Is it a single-byte codepoint?
@@ -572,7 +583,13 @@ uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
 }
 
 /**
+ * Decode a UTF-8 encoded path. Overlong characters will be decoded, invalid
+ * chararacters will be left as-is. Best-fit mapping will be used to convert
+ * UTF-8 into a single-byte stream.
  *
+ * @param cfg
+ * @param tx
+ * @param path
  */
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     uint8_t *data = bstr_ptr(path);
@@ -591,10 +608,14 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
         switch (utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
             case UTF8_ACCEPT:
                 if (counter == 1) {
+                    // ASCII character
                     data[wpos++] = (uint8_t) codepoint;
                 } else {
+                    // A valid UTF-8 character
                     seen_valid = 1;
 
+                    // Check for overlong characters and set the
+                    // flag accordingly
                     switch (counter) {
                         case 2:
                             if (codepoint < 0x80) {
@@ -612,30 +633,39 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                             break;
                     }
 
+                    // Special flag for fullwidth form evasion
                     if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
                         tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
                     }
 
+                    // Use best-fit mapping to convert to a single byte
                     data[wpos++] = bestfit_codepoint(cfg, codepoint);
                 }
 
-                counter = 0;
+                // Advance over the consumed byte
                 rpos++;
-                charpos = rpos;
+
+                // Prepare for the next character
+                counter = 0;
+                charpos = rpos;               
 
                 break;
 
-            case UTF8_REJECT:
+            case UTF8_REJECT:                                
+                // Invalid UTF-8 character
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
+                // Is the server expected to respond with 400?
                 if (cfg->path_invalid_utf8_handling == STATUS_400) {
                     tx->response_status_expected_number = 400;
                 }
 
+                // Override the state in the UTF-8 decoder because
+                // we want to ignore invalid characters
                 state = UTF8_ACCEPT;
 
-                // Copy the invalid bytes
-                while (charpos < rpos) {
+                // Copy the invalid bytes into the output stream
+                while (charpos <= rpos) {
                     data[wpos++] = data[charpos++];
                 }
 
@@ -643,29 +673,38 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 // want to skip over it. Otherwise we will want
                 // to attempt to interpret it.
                 if (counter == 1) {
-                    data[wpos++] = data[rpos++];
+                    rpos++;
                 }
 
+                // Prepare for the next character
                 counter = 0;
+                charpos = rpos;
 
                 break;
 
             default:
-                // Keep going
+                // Keep going; the character is not yet formed
                 rpos++;
                 break;
         }
     }
 
+    // Did the input stream seem like a valid UTF-8 string?
     if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
         tx->flags |= HTP_PATH_UTF8_VALID;
     }
 
+    // Adjust the length of the string, because
+    // we're doing in-place decoding.
     bstr_len_adjust(path, wpos);
 }
 
 /**
+ * Validate a path that is quite possibly UTF-8 encoded.
  *
+ * @param cfg
+ * @param tx
+ * @param path
  */
 void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     unsigned char *data = bstr_ptr(path);
@@ -682,9 +721,14 @@ void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         switch (utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
             case UTF8_ACCEPT:
+                // ASCII character
+
                 if (counter > 1) {
+                    // A valid UTF-8 character
                     seen_valid = 1;
 
+                    // Check for overlong characters and set the
+                    // flag accordingly
                     switch (counter) {
                         case 2:
                             if (codepoint < 0x80) {
@@ -703,25 +747,27 @@ void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     }
                 }
 
+                // Special flag for fullwidth form evasion
                 if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
                     tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
                 }
 
-                counter = 0;
+                // Advance over the consumed byte
                 rpos++;
-                charpos = rpos;
+
+                // Prepare for the next character
+                counter = 0;                
+                charpos = rpos;               
 
                 break;
 
             case UTF8_REJECT:
+                // Invalid UTF-8 character
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
-                state = UTF8_ACCEPT;
-
-                //while (charpos < rpos) {
-                //    printf("Invalid byte: %x\n", data[charpos]);
-                //    charpos++;
-                //}
+                // Override the state in the UTF-8 decoder because
+                // we want to ignore invalid characters
+                state = UTF8_ACCEPT;               
 
                 // If this is the first invalid byte we will
                 // want to skip over it. Otherwise we will want
@@ -730,24 +776,32 @@ void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     rpos++;
                 }
 
+                // Prepare for the next character
                 counter = 0;
+                charpos = rpos;
 
                 break;
 
             default:
-                // Keep going
+                // Keep going; the character is not yet formed
                 rpos++;
                 break;
         }
     }
 
+    // Did the input stream seem like a valid UTF-8 string?
     if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
         tx->flags |= HTP_PATH_UTF8_VALID;
     }
 }
 
 /**
+ * Decode a %u-encoded character, using best-fit mapping as necessary.
  *
+ * @param cfg
+ * @param tx
+ * @param data
+ * @return decoded byte
  */
 int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
     unsigned int c1 = x2c(data);
@@ -803,7 +857,12 @@ int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
 }
 
 /**
+ * Decode a request path according to the settings in the
+ * provided configuration structure.
  *
+ * @param cfg
+ * @param tx
+ * @param path
  */
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     unsigned char *data = bstr_ptr(path);
@@ -826,6 +885,10 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
                         handled = 1;
 
+                        if (cfg->path_decode_u_encoding == STATUS_400) {
+                            tx->response_status_expected_number = 400;
+                        }
+
                         if (rpos + 5 < len) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
                                 && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
@@ -837,9 +900,9 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                     tx->flags |= HTP_PATH_ENCODED_NUL;
 
                                     if (cfg->path_nul_encoded_handling == STATUS_400) {
-                                        tx->response_status_expected_number == 400;
+                                        tx->response_status_expected_number = 400;
                                     } else if (cfg->path_nul_encoded_handling == STATUS_404) {
-                                        tx->response_status_expected_number == 404;
+                                        tx->response_status_expected_number = 404;
                                     }
                                 }
                             } else {
@@ -860,7 +923,16 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                     case URL_DECODER_DECODE_INVALID:
                                         // Decode invalid %u encoding
                                         c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
-                                        rpos += 5;
+                                        rpos += 6;
+                                        break;
+                                    case URL_DECODER_STATUS_400:
+                                        // Set expected status to 400
+                                        tx->response_status_expected_number = 400;
+
+                                        // Decode invalid %u encoding
+                                        c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
+                                        rpos += 6;
+                                        break;
                                         break;
                                     default:
                                         // Unknown setting
@@ -891,15 +963,15 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                         if (c == 0) {
                             tx->flags |= HTP_PATH_ENCODED_NUL;
 
-                            switch(cfg->path_nul_encoded_handling) {
-                                case TERMINATE :
+                            switch (cfg->path_nul_encoded_handling) {
+                                case TERMINATE:
                                     bstr_len_adjust(path, wpos);
                                     return 1;
                                     break;
-                                case STATUS_400:                                    
+                                case STATUS_400:
                                     tx->response_status_expected_number = 400;
                                     break;
-                                case STATUS_404:                                    
+                                case STATUS_404:
                                     tx->response_status_expected_number = 404;
                                     break;
                             }
@@ -1005,11 +1077,12 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         // Place the character into output
 
-        // Check if the character is a NUL
-        //if (c == 0) {
-        //    tx->flags |= HTP_PATH_ENCODED_NUL;
-        //} else {
-        // Character is not a NUL
+        // Check for control characters
+        if (c < 0x20) {
+            if (cfg->path_control_chars_handling == STATUS_400) {
+                tx->response_status_expected_number = 400;
+            }
+        }
 
         // Convert backslashes to forward slashes, if necessary
         if ((c == '\\') && (cfg->path_backslash_separators)) {
@@ -1140,7 +1213,11 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
 }
 
 /**
+ * Normalize request hostname. Convert all characters to lowercase and
+ * remove trailing dots from the end, if present.
  *
+ * @param hostname
+ * @return normalized hostnanme
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     bstr_tolowercase(hostname);
@@ -1159,7 +1236,12 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
 }
 
 /**
+ * Replace the URI in the structure with the one provided as the parameter
+ * to this function (which will typically be supplied in a Host header).
  *
+ * @param connp
+ * @param parsed_uri
+ * @param hostname
  */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
     int colon = bstr_chr(hostname, ':');
@@ -1190,7 +1272,10 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
 }
 
 /**
+ * Is URI character reserved?
  *
+ * @param c
+ * @return 1 if it is, 0 if it isn't
  */
 int htp_is_uri_unreserved(unsigned char c) {
     if (((c >= 0x41) && (c <= 0x5a)) ||
@@ -1205,7 +1290,10 @@ int htp_is_uri_unreserved(unsigned char c) {
 }
 
 /**
+ * Decode a URL-encoded string, leaving the reserved
+ * characters and invalid encodings alone.
  *
+ * @param s
  */
 int htp_uriencoding_normalize_inplace(bstr *s) {
     char *data = bstr_ptr(s);
@@ -1221,7 +1309,7 @@ int htp_uriencoding_normalize_inplace(bstr *s) {
                     unsigned char c = x2c(&data[rpos + 1]);
 
                     if (!htp_is_uri_unreserved(c)) {
-                        // Leave reserved characters encoded, but conver
+                        // Leave reserved characters encoded, but convert
                         // the hexadecimal digits to uppercase
                         data[wpos++] = data[rpos++];
                         data[wpos++] = toupper(data[rpos++]);

@@ -798,7 +798,6 @@ int main5(int argc, char** argv) {
     htp_decode_path_inplace(cfg, tx, input); \
     htp_utf8_decode_path_inplace(cfg, tx, input); \
     if (bstr_cmp(input, expected) == 0) success = 1; \
-    else failures++; \
     printf("[%2i] %s: %s\n", tests, (success == 1 ? "SUCCESS" : "FAILURE"), test_name); \
     if ((success == 0)||((expected_status != 0)&&(expected_status != tx->response_status_expected_number))) { \
         char *s1 = bstr_tocstr(input); \
@@ -813,6 +812,7 @@ int main5(int argc, char** argv) {
         } \
         free(s2); \
         free(s1); \
+        failures++; \
     } \
     htp_tx_destroy(tx); \
     htp_config_destroy(cfg); \
@@ -830,7 +830,7 @@ int main(int argc, char** argv) {
     int expected_status = 0;
     int expected_flags = 0;
     char *test_name = NULL;
-   
+    
     PATH_DECODE_TEST_BEFORE("URL-decoding");
     input = bstr_cstrdup("/%64est");
     expected = bstr_cstrdup("/dest");    
@@ -839,24 +839,28 @@ int main(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded, preserve %");
     input = bstr_cstrdup("/%xxest");
     expected = bstr_cstrdup("/%xxest");
+    expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded, remove %");
     input = bstr_cstrdup("/%xxest");
     expected = bstr_cstrdup("/xxest");
+    expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_REMOVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded (end of string, test 1), preserve %");
     input = bstr_cstrdup("/test/%2");
     expected = bstr_cstrdup("/test/%2");
+    expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded (end of string, test 2), preserve %");
     input = bstr_cstrdup("/test/%");
     expected = bstr_cstrdup("/test/%");
+    expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
@@ -864,8 +868,25 @@ int main(int argc, char** argv) {
     input = bstr_cstrdup("/%xxest");
     expected = bstr_cstrdup("/%xxest");
     expected_status = 400;
+    expected_flags = HTP_PATH_INVALID_ENCODING;
+    cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;    
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("%u decoding (expected not to decode; 400)");
+    input = bstr_cstrdup("/%u0064");
+    expected = bstr_cstrdup("/%u0064");
+    expected_flags = HTP_PATH_INVALID_ENCODING;
+    expected_status = 400;
     cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
     PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("%u decoding (decode; 400)");
+    input = bstr_cstrdup("/%u0064");
+    expected = bstr_cstrdup("/d");
+    expected_status = 400;
+    expected_flags = HTP_PATH_OVERLONG_U;
+    cfg->path_decode_u_encoding = STATUS_400;    
+    PATH_DECODE_TEST_AFTER();   
 
     PATH_DECODE_TEST_BEFORE("%u decoding (also overlong)");
     input = bstr_cstrdup("/%u0064");
@@ -874,12 +895,29 @@ int main(int argc, char** argv) {
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
 
-    PATH_DECODE_TEST_BEFORE("Invalid %u decoding, preserve percent");
-    input = bstr_cstrdup("/%uXXXX");
-    expected = bstr_cstrdup("/%uXXXX");
+    PATH_DECODE_TEST_BEFORE("Invalid %u decoding, leave; preserve percent");
+    input = bstr_cstrdup("/%uXXXX---");
+    expected = bstr_cstrdup("/%uXXXX---");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Invalid %u decoding, decode invalid; preserve percent");
+    input = bstr_cstrdup("/%uXXXX---");
+    expected = bstr_cstrdup("/?---");
+    expected_flags = HTP_PATH_INVALID_ENCODING;
+    cfg->path_decode_u_encoding = YES;
+    cfg->path_invalid_encoding_handling = URL_DECODER_DECODE_INVALID;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Invalid %u decoding, decode invalid; preserve percent; 400");
+    input = bstr_cstrdup("/%uXXXX---");
+    expected = bstr_cstrdup("/?---");
+    expected_flags = HTP_PATH_INVALID_ENCODING;
+    expected_status = 400;
+    cfg->path_decode_u_encoding = YES;
+    cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding (not enough data 1), preserve percent");
@@ -904,15 +942,7 @@ int main(int argc, char** argv) {
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
-    PATH_DECODE_TEST_AFTER();
-
-    PATH_DECODE_TEST_BEFORE("%u decoding (400)");
-    input = bstr_cstrdup("/%u0064");
-    expected = bstr_cstrdup("/%u0064");
-    expected_status = 400;
-    cfg->path_decode_u_encoding = NO;
-    cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
-    PATH_DECODE_TEST_AFTER();
+    PATH_DECODE_TEST_AFTER();  
 
     PATH_DECODE_TEST_BEFORE("%u decoding, best-fit mapping");
     input = bstr_cstrdup("/%u0107");
@@ -994,7 +1024,7 @@ int main(int argc, char** argv) {
     cfg->path_decode_separators = YES;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_u_encoding = YES;
-    PATH_DECODE_TEST_AFTER();   
+    PATH_DECODE_TEST_AFTER();    
 
     PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded");
     input = bstr_cstrdup("/%f7test");
@@ -1073,4 +1103,51 @@ int main(int argc, char** argv) {
     cfg->path_decode_u_encoding = YES;
     expected_status = 404;
     PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Control char in path, encoded (no effect)");
+    input = bstr_cstrdup("/%01test");
+    expected = bstr_cstrdup("/\x01test");
+    cfg->path_control_chars_handling = NONE;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Control char in path, raw (no effect)");
+    input = bstr_cstrdup("/\x01test");
+    expected = bstr_cstrdup("/\x01test");
+    cfg->path_control_chars_handling = NONE;
+    PATH_DECODE_TEST_AFTER();
+    
+    PATH_DECODE_TEST_BEFORE("Control char in path, encoded (400)");
+    input = bstr_cstrdup("/%01test");
+    expected = bstr_cstrdup("/\x01test");
+    expected_status = 400;
+    cfg->path_control_chars_handling = STATUS_400;    
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("Control char in path, raw (400)");
+    input = bstr_cstrdup("/\x01test");
+    expected = bstr_cstrdup("/\x01test");
+    expected_status = 400;
+    cfg->path_control_chars_handling = STATUS_400;
+    PATH_DECODE_TEST_AFTER();    
+
+    PATH_DECODE_TEST_BEFORE("UTF-8; overlong 2-byte sequence");
+    input = bstr_cstrdup("/%c1%b4est");
+    expected = bstr_cstrdup("/test");
+    expected_flags = HTP_PATH_UTF8_OVERLONG;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("UTF-8; overlong 3-byte sequence");
+    input = bstr_cstrdup("/%e0%81%b4est");
+    expected = bstr_cstrdup("/test");
+    expected_flags = HTP_PATH_UTF8_OVERLONG;
+    PATH_DECODE_TEST_AFTER();
+
+    PATH_DECODE_TEST_BEFORE("UTF-8; overlong 4-byte sequence");
+    input = bstr_cstrdup("/%f0%80%81%b4est");
+    expected = bstr_cstrdup("/test");
+    expected_flags = HTP_PATH_UTF8_OVERLONG;
+    PATH_DECODE_TEST_AFTER();
+
+    printf("\n");
+    printf("Total tests: %i, %i failure(s).\n", tests, failures);
 }

@@ -107,8 +107,8 @@
 
 #define PIPELINED_CONNECTION        1
 
-// #define HTP_SERVER_STRICT           0
-// #define HTP_SERVER_PERMISSIVE       1
+#define HTP_SERVER_MINIMAL          0
+#define HTP_SERVER_GENERIC          1
 #define HTP_SERVER_APACHE_2_2       2
 #define HTP_SERVER_IIS_4_0          4   /* Windows NT 4.0 */
 #define HTP_SERVER_IIS_5_0          5   /* Windows 2000 */
@@ -320,6 +320,10 @@ struct htp_cfg_t {
     int path_nul_encoded_handling;
 
     int path_nul_raw_handling;
+
+    int path_control_chars_handling;
+
+    int path_utf8_overlong_handling;
 
     /** The best-fit map to use to decode %u-encoded characters. */
     unsigned char *path_u_bestfit_map;
