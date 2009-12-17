@@ -434,18 +434,18 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         start = pos;
         while ((pos < len) && (data[pos] != ':')) pos++;
 
-        if (data[pos] == ':') {
-            // Make a copy of the scheme
-            (*uri)->scheme = bstr_memdup(data + start, pos - start);
-
-            // Go over the colon
-            pos++;
-        } else {
+        if (pos >= len) {
             // We haven't found a colon, which means that the URI
             // is invalid. Apache will ignore this problem and assume
             // the URI contains an invalid path so, for the time being,
             // we are going to do the same.
             pos = 0;
+        } else {
+            // Make a copy of the scheme
+            (*uri)->scheme = bstr_memdup(data + start, pos - start);
+
+            // Go over the colon
+            pos++;
         }
     }
 
