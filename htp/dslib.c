@@ -8,15 +8,19 @@
 // -- Queue List --
 
 /**
+ * Add element to list.
  *
+ * @param list
+ * @param element
+ * @return 1 on success, -1 on error (memory allocation failure)
  */
-static int list_linked_push(list_t *_q, void *data) {
+static int list_linked_push(list_t *_q, void *element) {
     list_linked_t *q = (list_linked_t *) _q;
     list_linked_element_t *qe = calloc(1, sizeof (list_linked_element_t));
     if (qe == NULL) return -1;
 
     // Rememeber the element
-    qe->data = data;
+    qe->data = element;
 
     // If the queue is empty, make this element first
     if (!q->first) {
@@ -33,7 +37,10 @@ static int list_linked_push(list_t *_q, void *data) {
 }
 
 /**
+ * Remove one element from the beginning of the list.
  *
+ * @param list
+ * @return a pointer to the removed element, or NULL if the list is empty.
  */
 static void *list_linked_pop(list_t *_q) {
     list_linked_t *q = (list_linked_t *) _q;
@@ -57,7 +64,10 @@ static void *list_linked_pop(list_t *_q) {
 }
 
 /**
+ * Is the list empty?
  *
+ * @param list
+ * @return 1 if the list is empty, 0 if it is not
  */
 static int list_linked_empty(list_t *_q) {
     list_linked_t *q = (list_linked_t *) _q;
@@ -70,10 +80,13 @@ static int list_linked_empty(list_t *_q) {
 }
 
 /**
+ * Destroy list. This function will not destroy any of the
+ * data stored in it. You'll have to do that manually beforehand.
  *
+ * @param list
  */
 void list_linked_destroy(list_linked_t *l) {
-    // Free the list components
+    // Free the list structures
     list_linked_element_t *temp = l->first;
     list_linked_element_t *prev = NULL;
     while (temp != NULL) {
@@ -88,7 +101,9 @@ void list_linked_destroy(list_linked_t *l) {
 }
 
 /**
+ * Create a new linked list.
  *
+ * @return a pointer to the newly creted list (list_t), or NULL on memory allocation failure
  */
 list_t *list_linked_create(void) {
     list_linked_t *q = calloc(1, sizeof (list_linked_t));
@@ -105,7 +120,13 @@ list_t *list_linked_create(void) {
 // -- Queue Array --
 
 /**
+ * Add new element to the end of the list, expanding the list
+ * as necessary.
  *
+ * @param list
+ * @param element
+ *
+ * @return 1 on success or -1 on failure (memory allocation)
  */
 static int list_array_push(list_t *_q, void *element) {
     list_array_t *q = (list_array_t *) _q;
@@ -114,12 +135,12 @@ static int list_array_push(list_t *_q, void *element) {
     if (q->current_size >= q->max_size) {
         int new_size = q->max_size * 2;
 
-        q->elements = realloc(q->elements, new_size * sizeof (void *));
-
-        if (q->elements == NULL) {
+        void *newblock = realloc(q->elements, new_size * sizeof (void *));
+        if (newblock == NULL) {
             return -1;
         }
 
+        q->elements = newblock;
         q->max_size = new_size;
         q->last = q->current_size;
     }
@@ -136,7 +157,10 @@ static int list_array_push(list_t *_q, void *element) {
 }
 
 /**
+ * Remove one element from the beginning of the list.
  *
+ * @param list
+ * @return the removed element, or NULL if the list is empty
  */
 static void *list_array_pop(list_t *_q) {
     list_array_t *q = (list_array_t *) _q;
@@ -158,14 +182,21 @@ static void *list_array_pop(list_t *_q) {
 }
 
 /**
+ * Returns the size of the list.
  *
+ * @param list
  */
 static size_t list_array_size(list_t *_l) {
     return ((list_array_t *) _l)->current_size;
 }
 
 /**
+ * Return the element at the given index.
  *
+ * @param list
+ * @param index
+ * @return the desired element, or NULL if the list is too small, or
+ *         if the element at that position carries a NULL
  */
 static void *list_array_get(list_t *_l, size_t index) {
     list_array_t *l = (list_array_t *) _l;
@@ -188,23 +219,25 @@ static void *list_array_get(list_t *_l, size_t index) {
 }
 
 /**
+ * Replace the element at the given index with the provided element.
  *
+ * @param list
+ * @param index
+ * @param element
+ *
+ * @return 1 if the element was replaced, or 0 if the list is too small
  */
 static int list_array_replace(list_t *_l, size_t index, void *element) {
-    list_array_t *l = (list_array_t *) _l;
-    // void *r = NULL;
+    list_array_t *l = (list_array_t *) _l;    
 
     if (index + 1 > l->current_size) return 0;
 
-    int i = l->first;
-    //r = l->elements[l->first];
+    int i = l->first;    
 
     while (index--) {
         if (++i == l->max_size) {
             i = 0;
         }
-
-        //r = l->elements[i];
     }
 
     l->elements[i] = element;
@@ -212,10 +245,22 @@ static int list_array_replace(list_t *_l, size_t index, void *element) {
     return 1;
 }
 
+/**
+ * Reset the list iterator.
+ *
+ * @param list
+ */
 void list_array_iterator_reset(list_array_t *l) {
     l->iterator_index = 0;
 }
 
+/**
+ * Advance to the next list value.
+ *
+ * @param list
+ * @return the next list value, or NULL if there aren't more elements
+ *         left to iterate over or if the element itself is NULL
+ */
 void *list_array_iterator_next(list_array_t *l) {
     void *r = NULL;
 
@@ -228,7 +273,10 @@ void *list_array_iterator_next(list_array_t *l) {
 }
 
 /**
+ * Free the memory occupied by this list. This function assumes
+ * the data elements were freed beforehand.
  *
+ * @param list
  */
 void list_array_destroy(list_array_t *l) {
     free(l->elements);
@@ -236,7 +284,10 @@ void list_array_destroy(list_array_t *l) {
 }
 
 /**
+ * Create new array-based list.
  *
+ * @param size
+ * @return newly allocated list (list_t)
  */
 list_t *list_array_create(int size) {
     // Allocate the list structure
@@ -266,6 +317,171 @@ list_t *list_array_create(int size) {
     return (list_t *) q;
 }
 
+
+// -- Table --
+
+/**
+ * Create a new table structure.
+ *
+ * @param size
+ * @return newly created table_t
+ */
+table_t *table_create(int size) {
+    table_t *t = calloc(1, sizeof (table_t));
+    if (t == NULL) return NULL;
+
+    // Use a list behind the scenes
+    t->list = list_array_create(size * 2);
+    if (t->list == NULL) {
+        free(t);
+        return NULL;
+    }
+    
+    return t;
+}
+
+/**
+ * Destroy a table.
+ *
+ * @param table
+ */
+void table_destroy(table_t * table) {
+    // Free keys only
+    int counter = 0;
+    void *data = NULL;
+
+    list_iterator_reset(table->list);
+
+    while ((data = list_iterator_next(table->list)) != NULL) {
+        // Free key
+        if ((counter % 2) == 0) {
+            free(data);
+        }
+
+        counter++;
+    }
+
+    list_destroy(table->list);
+
+    free(table);
+}
+
+/**
+ * Add a new table element. This function currently makes a copy of
+ * the key, which is inefficient.
+ *
+ * @param table
+ * @param key
+ * @param element
+ */
+int table_add(table_t *table, bstr *key, void *element) {
+    // Lowercase key
+    bstr *lkey = bstr_dup_lower(key);
+    if (lkey == NULL) {
+        return -1;
+    }   
+
+    // Add key
+    if (list_add(table->list, lkey) != 1) {
+        free(lkey);
+        return -1;
+    }
+
+    // Add element
+    if (list_add(table->list, element) != 1) {
+        list_pop(table->list);
+        free(lkey);
+        return -1;
+    }
+
+    return 1;
+}
+
+/**
+ *
+ */
+static void *table_get_internal(table_t *table, bstr *key) {
+    // Iterate through the list, comparing
+    // keys with the parameter, return data if found.
+    bstr *ts = NULL;
+    list_iterator_reset(table->list);
+    while ((ts = list_iterator_next(table->list)) != NULL) {
+        void *data = list_iterator_next(table->list);
+        if (bstr_cmp(ts, key) == 0) {
+            return data;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * Retrieve the first element in the table with the given
+ * key (as a NUL-terminated string).
+ *
+ * @param table
+ * @param key
+ * @return table element, or NULL if not found
+ */
+void *table_getc(table_t *table, char *cstr) {
+    // TODO This is very inefficient
+    bstr *key = bstr_cstrdup(cstr);
+    bstr_tolowercase(key);
+    void *data = table_get_internal(table, key);
+    free(key);
+    return data;
+}
+
+/**
+ * Retrieve the first element in the table with the given key.
+ *
+ * @param table
+ * @param key
+ * @return table element, or NULL if not found
+ */
+void *table_get(table_t *table, bstr *key) {
+    // TODO This is very inefficient
+    bstr *lkey = bstr_dup_lower(key);
+    void *data = table_get_internal(table, lkey);
+    free(lkey);
+    return data;
+}
+
+/**
+ * Reset the table iterator.
+ *
+ * @param table
+ */
+void table_iterator_reset(table_t *table) {
+    list_iterator_reset(table->list);
+}
+
+/**
+ * Advance to the next table element.
+ *
+ * @param t
+ * @param data
+ * @return pointer to the key and the element if there is a next element, NULL otherwise
+ */
+bstr *table_iterator_next(table_t *t, void **data) {
+    bstr *s = list_iterator_next(t->list);
+    if (s != NULL) {
+        *data = list_iterator_next(t->list);
+    }
+
+    return s;
+}
+
+/**
+ * Returns the size of the table.
+ *
+ * @param table
+ * @return table size
+ */
+int table_size(table_t *table) {
+    return list_size(table->list) / 2;
+}
+
 #if 0
 
 int main(int argc, char **argv) {
@@ -284,116 +500,3 @@ int main(int argc, char **argv) {
     free(q);
 }
 #endif
-
-/**
- *
- */
-table_t *table_create(int size) {
-    table_t *t = calloc(1, sizeof (table_t));
-    // Use a list behind the scenes
-    t->list = list_array_create(size * 2);
-    return t;
-}
-
-/**
- *
- */
-void table_destroy(table_t * t) {    
-    // Free keys only
-    int counter = 0;
-    void *data = NULL;
-
-    list_iterator_reset(t->list);
-
-    while ((data = list_iterator_next(t->list)) != NULL) {
-        // Free key
-        if ((counter % 2) == 0) {
-            free(data);
-        }
-
-        counter++;
-    }
-
-    list_destroy(t->list);
-
-    free(t);
-}
-
-/**
- *
- */
-void table_add(table_t *t, bstr *key, void *data) {
-    // Lowercase key
-    bstr *lkey = bstr_dup_lower(key);
-
-    // Is there room?
-    // XXX
-
-    // Add key and data to the list
-    list_add(t->list, lkey);
-    list_add(t->list, data);
-}
-
-static void *table_get_int(table_t *t, bstr *key) {
-    // Iterate through the list, comparing
-    // keys with the parameter, return data if found.
-    bstr *ts = NULL;
-    list_iterator_reset(t->list);
-    while ((ts = list_iterator_next(t->list)) != NULL) {
-        void *data = list_iterator_next(t->list);
-        if (bstr_cmp(ts, key) == 0) {
-            return data;
-        }
-    }
-
-    return NULL;
-}
-
-/**
- *
- */
-void *table_getc(table_t *t, char *cstr) {
-    bstr *key = bstr_cstrdup(cstr);
-    bstr_tolowercase(key);
-
-    void *data = table_get_int(t, key);
-    free(key);
-    return data;
-}
-
-/**
- * Note: we expect the key to already be lowercase.
- */
-void *table_get(table_t *t, bstr *key) {
-    bstr *lkey = bstr_dup_lower(key);
-
-    void *data = table_get_int(t, lkey);
-    free(lkey);
-    return data;
-}
-
-/**
- *
- */
-void table_iterator_reset(table_t *t) {
-    list_iterator_reset(t->list);
-}
-
-/**
- *
- */
-bstr *table_iterator_next(table_t *t, void **data) {
-    bstr *s = list_iterator_next(t->list);
-    if (s != NULL) {
-        *data = list_iterator_next(t->list);
-    }
-
-    return s;
-}
-
-/**
- *
- */
-int table_size(table_t *t) {
-    return list_size(t->list) / 2;
-}

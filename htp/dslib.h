@@ -4,6 +4,16 @@
 
 #include "bstr.h"
 
+// IMPORTANT This library is used internally by the parser and you should
+//           not rely on it in your code. The implementation may change at
+//           some point in the future.
+
+// What we have here is two implementations of a list structure (array- and link-list-based),
+// and one implementation of a table (case-insensitive keys; multiple key values are allowed).
+// The lists can be used as a stack.
+//
+// TODO The table element retrieval if very inefficient at the moment.
+
 #define list_push(L, E) (L)->push(L, E)
 #define list_pop(L) (L)->pop(L)
 #define list_empty(L) (L)->empty(L)
@@ -69,14 +79,14 @@ struct table_t {
 };
 
 table_t *table_create(int size);
-void table_add(table_t *, bstr *, void *);
-void table_set(table_t *, bstr *, void *);
-void *table_get(table_t *, bstr *);
-void *table_getc(table_t *, char *);
-void table_iterator_reset(table_t *);
-bstr *table_iterator_next(table_t *, void **);
-int table_size(table_t *t);
-void table_destroy(table_t *);
+     int table_add(table_t *, bstr *, void *);
+    void table_set(table_t *, bstr *, void *);
+   void *table_get(table_t *, bstr *);
+   void *table_getc(table_t *, char *);
+    void table_iterator_reset(table_t *);
+   bstr *table_iterator_next(table_t *, void **);
+     int table_size(table_t *t);
+    void table_destroy(table_t *);
 
 #endif	/* _DSLIB_H */
 
