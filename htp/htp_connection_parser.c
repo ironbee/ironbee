@@ -146,6 +146,16 @@ void htp_connp_destroy(htp_connp_t *connp) {
 
     free(connp->in_line);
 
+    if (connp->out_header_line != NULL) {
+        if (connp->out_header_line->line != NULL) {
+            free(connp->out_header_line->line);
+        }
+
+        free(connp->out_header_line);
+    }
+
+    free(connp->out_line);
+
     // Destroy the configuration structure, but only
     // if it is our private copy
     if (connp->is_cfg_private) {

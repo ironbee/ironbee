@@ -89,7 +89,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
-    }    
+    }
+
     table_destroy(tx->request_headers);
 
     bstr_free(tx->response_line);
