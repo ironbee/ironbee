@@ -87,6 +87,7 @@ table_t *table_create(int size);
    bstr *table_iterator_next(table_t *, void **);
      int table_size(table_t *t);
     void table_destroy(table_t *);
+    void table_clear(table_t *);
 
 #endif	/* _DSLIB_H */
 

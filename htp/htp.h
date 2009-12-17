@@ -115,7 +115,7 @@
 #define HTP_SERVER_IIS_6_0          7   /* Windows 2003 */
 #define HTP_SERVER_IIS_7_0          8   /* Windows 2008 */
 #define HTP_SERVER_IIS_7_5          9   /* Windows 7 */
-//#define HTP_SERVER_TOMCAT_6_0       10
+#define HTP_SERVER_TOMCAT_6_0       10  /* Unused */
 #define HTP_SERVER_APACHE           11
 #define HTP_SERVER_APACHE_2_2       12
 
@@ -1005,7 +1005,6 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
 
 int htp_uriencoding_normalize_inplace(bstr *s);
-//int htp_normalize_path_inplace(htp_connp_t *connp, bstr *path);
 
 int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
 int htp_normalize_uri_path_inplace(bstr *s);

@@ -1,10 +1,11 @@
 
 #include "htp.h"
 
+#if 0
+
 /**
  *
  */
-/*
 int htp_header_parse_internal_strict(unsigned char *data, size_t len, htp_header_t *h) {
     size_t name_start, name_end;
     size_t value_start, value_end;
@@ -81,7 +82,6 @@ int htp_header_parse_internal_strict(unsigned char *data, size_t len, htp_header
 /**
  *
  */
-/*
 htp_header_t *htp_connp_header_parse(htp_connp_t *reqp, unsigned char *data, size_t len) {
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return NULL;
@@ -106,4 +106,5 @@ htp_header_t *htp_connp_header_parse(htp_connp_t *reqp, unsigned char *data, siz
 
     return h;
 }
- */
+
+#endif

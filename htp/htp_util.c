@@ -133,13 +133,36 @@ int htp_is_space(int c) {
  * @param method
  * @return Method number of M_UNKNOWN
  */
-int htp_convert_method_to_number(bstr *method) {
-    // XXXX Add the remaining methods
+int htp_convert_method_to_number(bstr *method) {    
     // TODO Optimize using parallel matching, or something
     if (bstr_cmpc(method, "GET") == 0) return M_GET;
-    if (bstr_cmpc(method, "POST") == 0) return M_POST;
-    if (bstr_cmpc(method, "HEAD") == 0) return M_HEAD;
     if (bstr_cmpc(method, "PUT") == 0) return M_PUT;
+    if (bstr_cmpc(method, "POST") == 0) return M_POST;
+    if (bstr_cmpc(method, "DELETE") == 0) return M_DELETE;
+    if (bstr_cmpc(method, "CONNECT") == 0) return M_CONNECT;
+    if (bstr_cmpc(method, "OPTIONS") == 0) return M_OPTIONS;
+    if (bstr_cmpc(method, "TRACE") == 0) return M_TRACE;
+    if (bstr_cmpc(method, "PATCH") == 0) return M_PATCH;
+    if (bstr_cmpc(method, "PROPFIND") == 0) return M_PROPFIND;
+    if (bstr_cmpc(method, "PROPPATCH") == 0) return M_PROPPATCH;
+    if (bstr_cmpc(method, "MKCOL") == 0) return M_MKCOL;
+    if (bstr_cmpc(method, "COPY") == 0) return M_COPY;
+    if (bstr_cmpc(method, "MOVE") == 0) return M_MOVE;
+    if (bstr_cmpc(method, "LOCK") == 0) return M_LOCK;
+    if (bstr_cmpc(method, "UNLOCK") == 0) return M_UNLOCK;
+    if (bstr_cmpc(method, "VERSION_CONTROL") == 0) return M_VERSION_CONTROL;
+    if (bstr_cmpc(method, "CHECKOUT") == 0) return M_CHECKOUT;
+    if (bstr_cmpc(method, "UNCHECKOUT") == 0) return M_UNCHECKOUT;
+    if (bstr_cmpc(method, "CHECKIN") == 0) return M_CHECKIN;
+    if (bstr_cmpc(method, "UPDATE") == 0) return M_UPDATE;
+    if (bstr_cmpc(method, "LABEL") == 0) return M_LABEL;
+    if (bstr_cmpc(method, "REPORT") == 0) return M_REPORT;
+    if (bstr_cmpc(method, "MKWORKSPACE") == 0) return M_MKWORKSPACE;
+    if (bstr_cmpc(method, "MKACTIVITY") == 0) return M_MKACTIVITY;
+    if (bstr_cmpc(method, "BASELINE_CONTROL") == 0) return M_BASELINE_CONTROL;
+    if (bstr_cmpc(method, "MERGE") == 0) return M_MERGE;
+    if (bstr_cmpc(method, "INVALID") == 0) return M_INVALID;
+    if (bstr_cmpc(method, "HEAD") == 0) return M_HEAD;
 
     return M_UNKNOWN;
 }
@@ -868,6 +891,8 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     unsigned char *data = bstr_ptr(path);
     size_t len = bstr_len(path);
 
+    // TODO I don't like this function. It's too complex.
+
     size_t rpos = 0;
     size_t wpos = 0;
     int previous_was_separator = 0;
@@ -1093,7 +1118,6 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
         if (cfg->path_case_insensitive) {
             c = tolower(c);
         }
-        //}
 
         // If we're compressing separators then we need
         // to track if the previous character was a separator
@@ -1129,9 +1153,6 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
  * @return HTP_OK or HTP_ERROR
  */
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
-
-    // XXX We should URL-decode components here
-
     // Scheme
     if (incomplete->scheme != NULL) {
         // Duplicate and convert to lowercase
@@ -1192,8 +1213,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
 
     // Query
     if (incomplete->query != NULL) {
-        normalized->query = bstr_strdup(incomplete->query);
-        htp_uriencoding_normalize_inplace(normalized->query);
+        normalized->query = bstr_strdup(incomplete->query);        
     }
 
     // Fragment

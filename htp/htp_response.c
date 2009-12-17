@@ -97,6 +97,7 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Handle chunk length
             if (connp->out_chunked_length > 0) {
                 // More data available
+                // TODO Add a check for chunk length
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA;
             } else if (connp->out_chunked_length == 0) {
                 // End of data
@@ -206,7 +207,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         }
 
         // Ignore any response headers set
-        // XXX table_erase(connp->out_tx->response_headers);
+        table_clear(connp->out_tx->response_headers);
 
         connp->out_state = htp_connp_RES_FIRST_LINE;
         connp->out_tx->progress = TX_PROGRESS_RES_LINE;
@@ -243,6 +244,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // We are still going to check for the presence of C-L
             if (cl != NULL) {
                 // This is a violation of the RFC
+                connp->out_tx->flags |= HTP_REQUEST_SMUGGLING;
                 // TODO
             }
 

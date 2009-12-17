@@ -3,10 +3,6 @@
 
 #include "dslib.h"
 
-#define HOOK_FIRST      1000
-#define HOOK_MIDDLE     5000
-#define HOOK_LAST       9000
-
 #ifdef _HTP_H
 #define HOOK_ERROR      HTP_ERROR
 #define HOOK_OK         HTP_OK

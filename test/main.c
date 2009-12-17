@@ -443,7 +443,9 @@ int callback_response_headers(htp_connp_t *connp) {
 }
 
 int callback_response_body_data(htp_tx_data_t *d) {
-    printf("-- Callback: response_body_data: [%s] %i\n", bstr_memtocstr(d->data, d->len), d->len);
+    char *str = bstr_memtocstr(d->data, d->len);
+    printf("-- Callback: response_body_data: [%s] %i\n", str, d->len);
+    free(str);
 }
 
 int callback_response_trailer(htp_connp_t *connp) {

@@ -97,6 +97,7 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Handle chunk length
             if (connp->in_chunked_length > 0) {
                 // More data available
+                // TODO Add a check for chunk length
                 connp->in_state = htp_connp_REQ_BODY_CHUNKED_DATA;
             } else if (connp->in_chunked_length == 0) {
                 // End of data
@@ -182,13 +183,18 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     // First check for the Transfer-Encoding header, which
     // would indicate a chunked request body
     if (te != NULL) {
-        // TODO Make sure it contains "chunked" only
+        // Make sure it contains "chunked" only
+        if (bstr_cmpc(te->value, "chunked") != 0) {
+            // Invalid T-E header value
+            htp_log(connp, LOG_MARK, LOG_ERROR, 0,
+                "Invalid T-E value");
+        }
 
         // Chunked encoding is a HTTP/1.1 feature. Check
         // that some other protocol is not used. The flag will
         // also be set if the protocol could not be parsed.
         //
-        // TODO IIS 7.5, for example, would ignore the T-E header when it
+        // TODO IIS 7.0, for example, would ignore the T-E header when it
         //      it is used with a protocol below HTTP 1.1.
         if (connp->in_tx->request_protocol_number < HTTP_1_1) {
             connp->in_tx->flags |= HTP_INVALID_CHUNKING;
@@ -202,7 +208,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (cl != NULL) {
             // This is a violation of the RFC
             connp->in_tx->flags |= HTP_REQUEST_SMUGGLING;
-            // XXX
+            // TODO Log
         }
 
         connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
@@ -216,13 +222,13 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // Check for a folded C-L header
         if (cl->flags & HTP_FIELD_FOLDED) {
             connp->in_tx->flags |= HTP_REQUEST_SMUGGLING;
-            // XXX
+            // TODO Log
         }
 
         // Check for multiple C-L headers
         if (cl->flags & HTP_FIELD_REPEATED) {
             connp->in_tx->flags |= HTP_REQUEST_SMUGGLING;
-            // XXX
+            // TODO Log
         }
 
         // Get body length
@@ -482,7 +488,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 }
 
                 // Finalize parsed_uri
-                
+
                 // Scheme
                 if (connp->in_tx->parsed_uri->scheme != NULL) {
                     if (bstr_cmpc(connp->in_tx->parsed_uri->scheme, "http") != 0) {
@@ -605,7 +611,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // Return if the connection has had a fatal error
     if (connp->in_status != STREAM_STATE_OPEN) {
         // We allow calls that allow the parser to finalize their work
-        if (!(connp->in_status == STREAM_STATE_CLOSED)&&(len == 0)) {
+        if (!(connp->in_status == STREAM_STATE_CLOSED) && (len == 0)) {
             return STREAM_STATE_ERROR;
         }
     }

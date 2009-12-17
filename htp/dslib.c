@@ -482,6 +482,25 @@ int table_size(table_t *table) {
     return list_size(table->list) / 2;
 }
 
+/**
+ * Remove all elements from the table.
+ *
+ * @param table
+ */
+void table_clear(table_t *table) {    
+    // TODO Clear table by removing the existing elements
+    
+    int size = list_size(table->list);    
+
+    list_destroy(table->list);
+    
+    // Use a list behind the scenes
+    table->list = list_array_create(size == 0 ? 10 : size);
+    if (table->list == NULL) {
+        free(table);        
+    }    
+}
+
 #if 0
 
 int main(int argc, char **argv) {

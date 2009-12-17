@@ -259,7 +259,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     hook_destroy(cfg->hook_response_trailer);
     hook_destroy(cfg->hook_response);
 
-    // Release the last remaining bit of memory
+    // Free the structure itself
     free(cfg);
 }
 

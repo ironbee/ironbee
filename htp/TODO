@@ -1,13 +1,19 @@
 
-- Make bstr C-friendly
+TODO
+====
 
-- Inspect storage size choices for all structures!
+- Inspect storage size choices for all structures
 
+- Table key storage and element retrieval is inefficient.
 
 - We're currently using a fixed-size line buffer. Although one buffer isn't very big,
   they add up if we want to supports tens of thousands of concurrent connections. For
   example 20K connections x 20K buffer = 400M. We can perhaps start with a 2K buffer
  (configurable) and grow as needed.
+
+
+MISC NOTES
+==========
 
 - Memory allocation strategies. We want to support two strategies:
 

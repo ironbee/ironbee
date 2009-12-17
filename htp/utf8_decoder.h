@@ -1,6 +1,15 @@
 #ifndef _UTF8_DECODER_H
 #define	_UTF8_DECODER_H
 
+/* HTP changes:
+ * 
+ *     - Changed the name of the function from "decode" to "utf8_decode"
+ *     - Created a separate header file
+ *     - Copied the licence from the web page
+ *     - Created a copy of the data and function "utf8_decode_allow_overlong", which
+ *       does not treat overlong characters as invalid.
+ */
+
 /*
 Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 
