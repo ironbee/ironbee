@@ -541,7 +541,7 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
     return 1;
 }
 
-int main2(int argc, char** argv) {
+int main(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     run_directory("c:/http_traces/run1/", cfg);
 }
@@ -562,7 +562,7 @@ int main2(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main(int argc, char** argv) {
+int main_tests(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 

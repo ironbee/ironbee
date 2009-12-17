@@ -39,6 +39,8 @@ htp_conn_t *htp_conn_create(htp_connp_t *connp) {
  * @param conn
  */
 void htp_conn_destroy(htp_conn_t *conn) {
+    if (conn == NULL) return;
+    
     // Destroy individual transactions
     htp_tx_t *tx = NULL;
     list_iterator_reset(conn->transactions);

@@ -172,8 +172,14 @@ void htp_connp_destroy(htp_connp_t *connp) {
  * @param connp
  */
 void htp_connp_destroy_all(htp_connp_t *connp) {
+    if (connp->conn == NULL) {
+        fprintf(stderr, "HTP: htp_connp_destroy_all was invoked, but conn is NULL\n");
+        return;
+    }
+
     // Destroy connection
     htp_conn_destroy(connp->conn);
+    connp->conn = NULL;
 
     // Destroy everything else
     htp_connp_destroy(connp);
