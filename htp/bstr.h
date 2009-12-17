@@ -6,6 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+// IMPORTANT This binary string library is used internally by the parser and you should
+//           not rely on it in your code. The implementation may change at some point
+//           in the future.
+//
+// TODO
+//
+//           - Add a function that wraps an existing data
+//           - Support Unicode bstrings
+
 typedef void * bstr;
 
 bstr *bstr_alloc(size_t newsize);
@@ -44,60 +53,7 @@ void bstr_chop(bstr *b);
 void bstr_len_adjust(bstr *s, size_t newlen);
 
 unsigned char bstr_char_at(bstr *s, size_t pos);
-
-/*
- * Function candidates:
- *
- * - alloc from a pool
- * - compare
- * - compare binary string to a block of memory
- * - compareNoCase
- * - startsWithNoCase
- * - endsWithNoCase
- * - convert a binary string into a C string (e.g., escape NUL with \0)
- * - substring
- * - trim
- * - trimLeft
- * - trimRight
- * - concatenate
- * - replace character with character
- * - find character (first, last)
- * - find needle in a haystack
- * - find needle starting with index
- * - lowercase
- * - uppercase
- * - tokenize string
- * - convert string to number
- * - sprintf into a string
- *
- * Unicode:
- *
- * - get nth characters from an Unicode string (since bytes are not characters
- *   any more)
- * - I guess most of the above functions will have to be rewritten for
- *   Unicode
- *
- * Open issues and notes:
- *
- * - For the functions that accept two strings (e.g., comparison), we might
- *   want to allow one parameter to be a binary string and the other a C
- *   string. This is only safe if the second string is controlled by the
- *   programmer (e.g., it's static). This is useful in the cases where you
- *   want to look for something but you don't want to create a binary string
- *   out of it.
- * - Functions should be implemented to accept two sets of pointers and
- *   lengths, which would make them useful evenn in the cases where bstr is
- *   not used, and if we decide to change the implementation.
- * - Should we NUL-terminate all strings anyway?
- * - Implement binary strings that grow as needed, like ByteArrayOutputStream
- *   in Java.
- * - The current implementation makes wrapping (of available data) impossible.
- *   Perhaps we should use a proper structure, with pointers. Allocation can
- *   still be optimised in the way it is now (one allocation per string instead
- *   of two).
- * 
- */
-
+ 
 typedef struct bstr_t bstr_t;
 
 struct bstr_t {

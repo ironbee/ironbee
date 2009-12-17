@@ -3,7 +3,10 @@
 #include <ctype.h>
 
 /**
+ * Allocate a zero-length bstring, but reserving space for at least len bytes.
  *
+ * @param len
+ * @return New string
  */
 bstr *bstr_alloc(size_t len) {
     unsigned char *s = malloc(sizeof (bstr_t) + len);
@@ -18,7 +21,9 @@ bstr *bstr_alloc(size_t len) {
 }
 
 /**
+ * Deallocate a bstring. Allows a NULL bstring on input.
  *
+ * @param b
  */
 void bstr_free(bstr *b) {
     if (b == NULL) return;
@@ -26,43 +31,77 @@ void bstr_free(bstr *b) {
 }
 
 /**
+ * Append source bstring to destination bstring, growing
+ * destination if necessary.
  *
+ * @param destination
+ * @param source
+ * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_str(bstr *s, bstr *s2) {
-    return bstr_add_mem(s, bstr_ptr(s2), bstr_len(s2));
+bstr *bstr_add_str(bstr *destination, bstr *source) {
+    return bstr_add_mem(destination, bstr_ptr(source), bstr_len(source));
 }
 
 /**
+ * Append a NUL-terminated source to destination, growing
+ * destination if necessary.
  *
+ * @param destination
+ * @param source
+ * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_cstr(bstr *s, char *str) {
-    return bstr_add_mem(s, str, strlen(str));
+bstr *bstr_add_cstr(bstr *destination, char *source) {
+    return bstr_add_mem(destination, source, strlen(source));
 }
 
 /**
+ * Append a memory region to destination, growing destination
+ * if necessary.
  *
+ * @param destination
+ * @param data
+ * @param len
+ * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_mem(bstr *s, unsigned char *data, size_t len) {
-    if (bstr_size(s) < bstr_len(s) + len) {
-        s = bstr_expand(s, bstr_len(s) + len);
-        if (s == NULL) return NULL;
+bstr *bstr_add_mem(bstr *destination, unsigned char *data, size_t len) {
+    if (bstr_size(destination) < bstr_len(destination) + len) {
+        destination = bstr_expand(destination, bstr_len(destination) + len);
+        if (destination == NULL) return NULL;
     }
 
-    bstr_t *b = (bstr_t *) s;
-    memcpy(bstr_ptr(s) + b->len, data, len);
+    bstr_t *b = (bstr_t *) destination;
+    memcpy(bstr_ptr(destination) + b->len, data, len);
     b->len = b->len + len;
 
-    return s;
+    return destination;
 }
 
 /**
+ * Expand a string to support at least newsize bytes. The input bstring
+ * is not changed if it is big enough to accommodate the desired size. If
+ * the input bstring is smaller, however, it is expanded. The pointer to
+ * the bstring may change. If the expansion fails, the original bstring
+ * is left untouched (it is not freed).
  *
+ * @param s
+ * @param newsize
+ * @return new bstring, or NULL if memory allocation failed
  */
 bstr *bstr_expand(bstr *s, size_t newsize) {
     if (((bstr_t *) s)->ptr != NULL) {
-        ((bstr_t *) s)->ptr = realloc(((bstr_t *) s)->ptr, newsize);
+        void * newblock = realloc(((bstr_t *) s)->ptr, newsize);
+        if (newblock == NULL) {
+            return NULL;
+        } else {
+            ((bstr_t *) s)->ptr = newblock;
+        }
     } else {
-        s = realloc(s, sizeof (bstr_t) + newsize);
+        void *newblock = realloc(s, sizeof (bstr_t) + newsize);
+        if (newblock == NULL) {
+            return NULL;
+        } else {
+            s = newblock;
+        }
     }
 
     ((bstr_t *) s)->size = newsize;
@@ -71,14 +110,21 @@ bstr *bstr_expand(bstr *s, size_t newsize) {
 }
 
 /**
+ * Create a new bstring by copying the provided NUL-terminated string.
  *
+ * @param data
+ * @return new bstring
  */
 bstr *bstr_cstrdup(unsigned char *data) {
     return bstr_memdup(data, strlen(data));
 }
 
 /**
+ * Create a new bstring by copying the provided memory region.
  *
+ * @param data
+ * @param len
+ * @return new bstring
  */
 bstr *bstr_memdup(unsigned char *data, size_t len) {
     bstr *b = bstr_alloc(len);
@@ -89,14 +135,23 @@ bstr *bstr_memdup(unsigned char *data, size_t len) {
 }
 
 /**
+ * Create a new bstring by copying the provided bstring.
  *
+ * @param b
+ * @return new bstring
  */
 bstr *bstr_strdup(bstr *b) {
     return bstr_strdup_ex(b, 0, bstr_len(b));
 }
 
 /**
+ * Create a new bstring by copying a part of the provided
+ * bstring.
  *
+ * @param b
+ * @param offset
+ * @param len
+ * @return new bstring
  */
 bstr *bstr_strdup_ex(bstr *b, size_t offset, size_t len) {
     bstr *bnew = bstr_alloc(len);
@@ -107,7 +162,12 @@ bstr *bstr_strdup_ex(bstr *b, size_t offset, size_t len) {
 }
 
 /**
+ * Take the provided memory region and construct a NUL-terminated
+ * string, replacing NUL bytes with "\0".
  *
+ * @param data
+ * @param len
+ * @return new NUL-terminated string
  */
 char *bstr_memtocstr(unsigned char *data, size_t len) {
     // Count how many NUL bytes we have in the string.
@@ -121,6 +181,8 @@ char *bstr_memtocstr(unsigned char *data, size_t len) {
     // Now copy the string into a NUL-terminated buffer.
     char *r, *t;
     r = t = malloc(len + nulls + 1);
+    if (t == NULL) return NULL;
+
     while (len--) {
         // Escape NUL bytes, but just copy everything else.
         if (*data == '\0') {
@@ -139,7 +201,10 @@ char *bstr_memtocstr(unsigned char *data, size_t len) {
 }
 
 /**
+ * Create a new NUL-terminated string out of the provided bstring.
  *
+ * @param b
+ * @return new NUL-terminated string
  */
 char *bstr_tocstr(bstr *b) {
     if (b == NULL) return NULL;
@@ -147,7 +212,11 @@ char *bstr_tocstr(bstr *b) {
 }
 
 /**
+ * Return the first position of the provided character (byte).
  *
+ * @param b
+ * @param c
+ * @return the first position of the character, or -1 if it could not be found
  */
 int bstr_chr(bstr *b, int c) {
     char *data = bstr_ptr(b);
@@ -166,7 +235,11 @@ int bstr_chr(bstr *b, int c) {
 }
 
 /**
+ * Return the last position of a character (byte).
  *
+ * @param c
+ * @param c
+ * @return the last position of the character, or -1 if it could not be found
  */
 int bstr_rchr(bstr *b, int c) {
     char *data = bstr_ptr(b);
@@ -185,12 +258,16 @@ int bstr_rchr(bstr *b, int c) {
 }
 
 /**
+ * Compare two memory regions.
  *
+ * @param s1
+ * @param l1
+ * @param s2
+ * @param l2
+ * @return 0 if the memory regions are identical, -1 or +1 if they're not
  */
 int bstr_cmp_ex(unsigned char *s1, size_t l1, unsigned char *s2, size_t l2) {
     size_t p1 = 0, p2 = 0;
-
-    // TODO Not tested properly
 
     while ((p1 < l1) && (p2 < l2)) {
         if (s1[p1] != s2[p2]) {
@@ -213,21 +290,32 @@ int bstr_cmp_ex(unsigned char *s1, size_t l1, unsigned char *s2, size_t l2) {
 }
 
 /**
+ * Compare a bstring with a NUL-terminated string.
  *
+ * @param b
+ * @param c
+ * @return 0, -1 or +1
  */
 int bstr_cmpc(bstr *b, char *c) {
     return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
 /**
+ * Compare two bstrings.
  *
+ * @param b1
+ * @param b2
+ * @return 0, -1 or +1
  */
 int bstr_cmp(bstr *b1, bstr *b2) {
     return bstr_cmp_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
 
 /**
+ * Convert bstring to lowercase.
  *
+ * @param b
+ * @return b
  */
 bstr *bstr_tolowercase(bstr *b) {
     if (b == NULL) return NULL;
@@ -245,7 +333,10 @@ bstr *bstr_tolowercase(bstr *b) {
 }
 
 /**
+ * Create a copy of the provided bstring, then convert it to lowercase.
  *
+ * @param b
+ * @return bstring copy
  */
 bstr *bstr_dup_lower(bstr *b) {
     return bstr_tolowercase(bstr_strdup(b));
@@ -314,22 +405,58 @@ int bstr_util_memtoip(char *data, size_t len, int base, size_t *lastlen) {
     return rval;
 }
 
+/**
+ * Find needle in a haystack.
+ *
+ * @param haystack
+ * @param needle
+ * @return
+ */
 int bstr_indexof(bstr *haystack, bstr *needle) {
     return bstr_indexofmem(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
+/**
+ * Find index in the haystack, with the needle being a NUL-terminated string.
+ *
+ * @param haystack
+ * @param needle
+ * @return
+ */
 int bstr_indexofc(bstr *haystack, char *needle) {
     return bstr_indexofmem(haystack, needle, strlen(needle));
 }
 
+/**
+ * Find index in the haystack. Ignore case differences.
+ *
+ * @param haystack
+ * @param needle
+ * @return
+ */
 int bstr_indexof_nocase(bstr *haystack, bstr *needle) {
     return bstr_indexofmem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
+/**
+ * Find index in the haystack, with the needle being a NUL-terminated string.
+ * Ignore case differences.
+ *
+ * @param haystack
+ * @param needle
+ * @return
+ */
 int bstr_indexofc_nocase(bstr *haystack, char *needle) {
     return bstr_indexofmem_nocase(haystack, needle, strlen(needle));
 }
 
+/**
+ * Find index in the haystack, with the needle being a memory region.
+ *
+ * @param haystack
+ * @param needle
+ * @return
+ */
 int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
     char *data = bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
@@ -354,6 +481,14 @@ int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
     return -1;
 }
 
+/**
+ * Find index in the haystack, with the needle being a memory region.
+ * Ignore case differences.
+ *
+ * @param haystack
+ * @param needle
+ * @return
+ */
 int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
     char *data = bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
@@ -375,6 +510,11 @@ int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
     return -1;
 }
 
+/**
+ * Remove one byte from the end of the string.
+ *
+ * @param s
+ */
 void bstr_chop(bstr *s) {
     bstr_t *b = (bstr_t *) s;
     if (b->len > 0) {
@@ -382,11 +522,26 @@ void bstr_chop(bstr *s) {
     }
 }
 
+/**
+ * Adjust bstring length. You will need to use this method whenever
+ * you work directly with the string contents, and you end up changing
+ * its length.
+ *
+ * @param s
+ * @param newlen
+ */
 void bstr_len_adjust(bstr *s, size_t newlen) {
     bstr_t *b = (bstr_t *) s;
     b->len = newlen;
 }
 
+/**
+ * Return the character (byte) at the given position.
+ *
+ * @param s
+ * @param pos
+ * @return the character, or -1 if the bstring is too short
+ */
 unsigned char bstr_char_at(bstr *s, size_t pos) {
     unsigned char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
