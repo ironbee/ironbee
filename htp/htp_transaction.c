@@ -125,6 +125,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         free((void *)l->msg);
         free(l);
     }
+
     list_destroy(tx->messages);
 
     // Tell the connection to remove this transaction

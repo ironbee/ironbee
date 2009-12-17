@@ -50,10 +50,20 @@ void htp_conn_destroy(htp_conn_t *conn) {
         }
     }
 
-    // Destroy the list...
     list_destroy(conn->transactions);
 
-    // ...and the connection structure itself.
+    // Destroy individual messages
+    htp_log_t *l = NULL;
+    list_iterator_reset(conn->messages);
+    while ((l = list_iterator_next(conn->messages)) != NULL) {
+        free((void *)l->msg);
+        free(l);
+    }
+
+    list_destroy(conn->messages);
+   
+    // Finally, destroy the connection
+    // structure itself.
     free(conn);
 }
 
