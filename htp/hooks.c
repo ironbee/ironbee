@@ -14,7 +14,7 @@ htp_hook_t *hook_create() {
     if (hook->callbacks == NULL) {
         free(hook);
         return NULL;
-    }
+    }   
 
     return hook;
 }
@@ -61,7 +61,8 @@ void hook_destroy(htp_hook_t *hook) {
         free(callback);
     }
 
-    free(hook->callbacks);
+    list_destroy(hook->callbacks);
+    
     free(hook);
 }
 

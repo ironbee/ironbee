@@ -1136,14 +1136,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->scheme != NULL) {
         // Duplicate and convert to lowercase
         normalized->scheme = bstr_dup_lower(incomplete->scheme);
-    }
-
-    // Hostname
-    if (incomplete->hostname != NULL) {
-        // Duplicate and normalize
-        normalized->hostname = bstr_strdup(incomplete->hostname);
-        htp_normalize_hostname_inplace(normalized->hostname);
-    }
+    }   
 
     // Username
     if (incomplete->username != NULL) {

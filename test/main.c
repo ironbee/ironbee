@@ -41,7 +41,11 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
     htp_header_t *h = NULL;
     table_iterator_reset(tx->request_headers);
     while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
-        printf("--   HEADER [%s][%s]\n", bstr_tocstr(h->name), bstr_tocstr(h->value));
+        char *key = bstr_tocstr(h->name);
+        char *value = bstr_tocstr(h->value);
+        printf("--   HEADER [%s][%s]\n", key, value);
+        free(value);
+        free(key);
     }
 
     htp_connp_destroy_all(connp);
@@ -80,7 +84,11 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
     htp_header_t *h = NULL;
     table_iterator_reset(tx->request_headers);
     while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
-        printf("--   HEADER [%s][%s]\n", bstr_tocstr(h->name), bstr_tocstr(h->value));
+        char *key = bstr_tocstr(h->name);
+        char *value = bstr_tocstr(h->value);
+        printf("--   HEADER [%s][%s]\n", key, value);
+        free(value);
+        free(key);
     }
 
     // There must be 9 headers
@@ -183,12 +191,15 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
                 bstr *b = bstr_memdup("BEFORE", 6);
                 if (bstr_cmpc(h->name, "Header-With-NUL") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
+                    bstr_free(b);
                     return -1;
                 }
                 if (bstr_cmp(h->value, b) != 0) {
                     printf("Header %i incorrect value\n", count + 1);
+                    bstr_free(b);
                     return -1;
                 }
+                bstr_free(b);
             }
                 break;
         }
@@ -410,7 +421,9 @@ int callback_request_headers(htp_connp_t *connp) {
 }
 
 int callback_request_body_data(htp_tx_data_t *d) {
-    printf("-- Callback: request_body_data: [%s] %i\n", bstr_memtocstr(d->data, d->len), d->len);
+    char *str = bstr_memtocstr(d->data, d->len);
+    printf("-- Callback: request_body_data: [%s] %i\n", str, d->len);
+    free(str);
 }
 
 int callback_request_trailer(htp_connp_t *connp) {

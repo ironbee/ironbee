@@ -355,6 +355,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 }
 
                 // Cleanup
+                free(connp->out_header_line);                
                 connp->out_line_len = 0;
                 connp->out_header_line = NULL;
                 connp->out_header_line_index = -1;
@@ -409,13 +410,14 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             // Add the raw header line to the list
             connp->out_header_line->line = bstr_memdup(connp->out_line, connp->out_line_len);
             list_add(connp->out_tx->response_header_lines, connp->out_header_line);
-            connp->out_header_line = 0;
+            connp->out_header_line = NULL;
 
             // Cleanup for the next line
             connp->out_line_len = 0;
             if (connp->out_header_line_index == -1) {
                 connp->out_header_line_index = connp->out_header_line_counter;
             }
+            
             connp->out_header_line_counter++;
         }
     }
@@ -450,6 +452,25 @@ int htp_connp_RES_FIRST_LINE(htp_connp_t *connp) {
             // Process response line
 
             htp_chomp(connp->out_line, &connp->out_line_len);
+
+            // Deallocate previous response line allocations, which we woud have on a 100 response
+            // TODO Consider moving elsewhere; no need to make these checks on every response
+            if (connp->out_tx->response_line != NULL) {
+                bstr_free(connp->out_tx->response_line);
+            }
+
+            if (connp->out_tx->response_protocol != NULL) {
+                bstr_free(connp->out_tx->response_protocol);
+            }
+
+            if (connp->out_tx->response_status != NULL) {
+                bstr_free(connp->out_tx->response_status);
+            }
+
+            if (connp->out_tx->response_message != NULL) {
+                bstr_free(connp->out_tx->response_message);
+            }
+
             connp->out_tx->response_line = bstr_memdup(connp->out_line, connp->out_line_len);
 
             // Parse response line

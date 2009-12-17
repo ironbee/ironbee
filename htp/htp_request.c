@@ -324,6 +324,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 }
 
                 // Cleanup
+                free(connp->in_header_line);
                 connp->in_line_len = 0;
                 connp->in_header_line = NULL;
                 connp->in_header_line_index = -1;
@@ -384,7 +385,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             // Add the raw header line to the list
             connp->in_header_line->line = bstr_memdup(connp->in_line, connp->in_line_len);
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
-            connp->in_header_line = 0;
+            connp->in_header_line = NULL;
 
             // Cleanup for the next line
             connp->in_line_len = 0;

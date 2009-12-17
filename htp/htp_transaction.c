@@ -78,7 +78,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
         bstr_free(hl->line);
         // No need to destroy hl->header because
         // htp_header_line_t does not own it.
+        free(hl);
     }
+
     list_destroy(tx->request_header_lines);
 
     // Destroy request_headers
@@ -105,6 +107,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         bstr_free(hl->line);
         // No need to destroy hl->header because
         // htp_header_line_t does not own it.
+        free(hl);
     }
     list_destroy(tx->response_header_lines);
 
