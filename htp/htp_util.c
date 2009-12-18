@@ -1265,18 +1265,19 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
     } else {
         // Hostname
         parsed_uri->hostname = bstr_strdup_ex(hostname, 0, colon);
+        // TODO Handle whitespace around hostname
         htp_normalize_hostname_inplace(parsed_uri->hostname);
 
         // Port
         int port = htp_parse_positive_integer_whitespace(bstr_ptr(hostname) + colon, bstr_len(hostname) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
-            // XXX
+            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid hostname (port information) in request");
         } else if ((port > 0) && (port < 65536)) {
             // Valid port
             if (port != connp->conn->local_port) {
                 // Port is different from the TCP port
-                // XXX
+                htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Request port number differs from the actual TCP port");
             } else {
                 parsed_uri->port_number = port;
             }

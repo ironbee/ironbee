@@ -393,13 +393,13 @@ struct htp_conn_t {
     htp_connp_t *connp;
 
     /** Remote IP address. */
-    const char *remote_addr;
+    char *remote_addr;
 
     /** Remote port. */
     int remote_port;
 
     /** Local IP address. */
-    const char *local_addr;
+    char *local_addr;
 
     /** Local port. */
     int local_port;

@@ -11,7 +11,6 @@
 //           in the future.
 //
 // TODO
-//
 //           - Add a function that wraps an existing data
 //           - Support Unicode bstrings
 

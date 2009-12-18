@@ -63,6 +63,9 @@ void htp_conn_destroy(htp_conn_t *conn) {
     }
 
     list_destroy(conn->messages);
+
+    free(conn->local_addr);    
+    free(conn->remote_addr);
    
     // Finally, destroy the connection
     // structure itself.
