@@ -219,14 +219,23 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
         return;
     }
 
-    connp->conn->remote_addr = strdup(remote_addr);
-    if (connp->conn->remote_addr == NULL) return;
-    connp->conn->remote_port = remote_port;
-    connp->conn->local_addr = strdup(local_addr);
-    if (connp->conn->local_addr == NULL) {
-        free(connp->conn->remote_addr);
-        return;
+    if (remote_addr != NULL) {
+        connp->conn->remote_addr = strdup(remote_addr);
+        if (connp->conn->remote_addr == NULL) return;
     }
+
+    connp->conn->remote_port = remote_port;
+
+    if (local_addr != NULL) {
+        connp->conn->local_addr = strdup(local_addr);
+        if (connp->conn->local_addr == NULL) {
+            if (connp->conn->remote_addr != NULL) {
+                free(connp->conn->remote_addr);
+            }
+            return;
+        }
+    }
+
     connp->conn->local_port = local_port;
     connp->conn->open_timestamp = timestamp;
     connp->in_status = STREAM_STATE_OPEN;
