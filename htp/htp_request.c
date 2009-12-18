@@ -474,7 +474,10 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
             }
 
             if (connp->in_tx->request_method_number == M_CONNECT) {
-                // XXX Handle CONNECT
+                // Parse authority
+                if (htp_parse_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
+                    return HTP_ERROR;
+                }
             } else {
                 // Parse the request URI
                 if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {

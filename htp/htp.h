@@ -998,6 +998,7 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len);
 int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len);
 
 int htp_parse_uri(bstr *input, htp_uri_t **uri);
+int htp_parse_authority(htp_connp_t *connp, bstr *input, htp_uri_t **uri);
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
 bstr *htp_normalize_hostname_inplace(bstr *input);
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);

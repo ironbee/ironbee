@@ -529,7 +529,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
 
     // Parsing a new response
 
-    // Find the next outgoing transaction
+    // Find the next outgoing transaction    
     connp->out_tx = list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
         htp_log(connp, LOG_MARK, LOG_ERROR, 0,

@@ -133,7 +133,7 @@ int htp_is_space(int c) {
  * @param method
  * @return Method number of M_UNKNOWN
  */
-int htp_convert_method_to_number(bstr *method) {    
+int htp_convert_method_to_number(bstr *method) {
     // TODO Optimize using parallel matching, or something
     if (bstr_cmpc(method, "GET") == 0) return M_GET;
     if (bstr_cmpc(method, "PUT") == 0) return M_PUT;
@@ -397,6 +397,44 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len) {
  */
 int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len) {
     return htp_connp_is_line_terminator(connp, data, len);
+}
+
+/**
+ * Parses request URI, making no attempt to validate the contents.
+ *
+ * @param input
+ * @param uri
+ * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
+ */
+int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {    
+    int colon = bstr_chr(authority, ':');
+    if (colon == -1) {
+        // Hostname alone
+        (*uri)->hostname = bstr_strdup(authority);
+        htp_normalize_hostname_inplace((*uri)->hostname);
+    } else {
+        // Hostname and port
+
+        // Hostname
+        (*uri)->hostname = bstr_strdup_ex(authority, 0, colon);
+        // TODO Handle whitespace around hostname
+        htp_normalize_hostname_inplace((*uri)->hostname);       
+
+        // Port
+        int port = htp_parse_positive_integer_whitespace(bstr_ptr(authority) + colon + 1,
+            bstr_len(authority) - colon - 1, 10);
+        if (port < 0) {
+            // Failed to parse port
+            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid server port information in request");
+        } else if ((port > 0) && (port < 65536)) {
+            // Valid port            
+            (*uri)->port_number = port;
+        } else {
+            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid authority port");
+        }
+    }
+
+    return 1;
 }
 
 /**
@@ -670,11 +708,11 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                 // Prepare for the next character
                 counter = 0;
-                charpos = rpos;               
+                charpos = rpos;
 
                 break;
 
-            case UTF8_REJECT:                                
+            case UTF8_REJECT:
                 // Invalid UTF-8 character
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
@@ -779,8 +817,8 @@ void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 rpos++;
 
                 // Prepare for the next character
-                counter = 0;                
-                charpos = rpos;               
+                counter = 0;
+                charpos = rpos;
 
                 break;
 
@@ -790,7 +828,7 @@ void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                 // Override the state in the UTF-8 decoder because
                 // we want to ignore invalid characters
-                state = UTF8_ACCEPT;               
+                state = UTF8_ACCEPT;
 
                 // If this is the first invalid byte we will
                 // want to skip over it. Otherwise we will want
@@ -1157,7 +1195,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->scheme != NULL) {
         // Duplicate and convert to lowercase
         normalized->scheme = bstr_dup_lower(incomplete->scheme);
-    }   
+    }
 
     // Username
     if (incomplete->username != NULL) {
@@ -1213,7 +1251,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
 
     // Query
     if (incomplete->query != NULL) {
-        normalized->query = bstr_strdup(incomplete->query);        
+        normalized->query = bstr_strdup(incomplete->query);
     }
 
     // Fragment
@@ -1269,15 +1307,16 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         htp_normalize_hostname_inplace(parsed_uri->hostname);
 
         // Port
-        int port = htp_parse_positive_integer_whitespace(bstr_ptr(hostname) + colon, bstr_len(hostname) - colon - 1, 10);
+        int port = htp_parse_positive_integer_whitespace(bstr_ptr(hostname) + colon + 1,
+            bstr_len(hostname) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid hostname (port information) in request");
+            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid server port information in request");
         } else if ((port > 0) && (port < 65536)) {
             // Valid port
             if (port != connp->conn->local_port) {
                 // Port is different from the TCP port
-                htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Request port number differs from the actual TCP port");
+                htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Request server port number differs from the actual TCP port");
             } else {
                 parsed_uri->port_number = port;
             }
