@@ -608,6 +608,9 @@ struct htp_log_t {
     /** XXX */
     htp_connp_t *connp;
 
+    /** XXX */
+    htp_tx_t *tx;
+
     /** Log message. */
     const char *msg;
 

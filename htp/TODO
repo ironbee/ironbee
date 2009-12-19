@@ -2,6 +2,8 @@
 TODO
 ====
 
+- Store all log messages in conn->messages
+
 - Inspect storage size choices for all structures
 
 - Table key storage and element retrieval is inefficient.

@@ -317,6 +317,8 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
 
     // ...and add it to the list
     if (connp->in_tx != NULL) {
+        log->tx = connp->in_tx;
+        
         list_add(connp->in_tx->messages, log);
 
         // Keep track of the highest log level encountered
