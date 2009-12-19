@@ -284,12 +284,10 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     char buf[1024];
     va_list args;
 
-#ifndef HTP_DEBUG
     // Ignore messages below our log level
     if (connp->cfg->log_level < level) {
         return;
     }
-#endif
 
     va_start(args, fmt);
 
@@ -310,6 +308,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     htp_log_t *log = calloc(1, sizeof (htp_log_t));
     if (log == NULL) return;
 
+    log->connp = connp;
     log->file = file;
     log->line = line;
     log->level = level;
@@ -333,11 +332,9 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
         connp->last_error = log;
     }
 
-    va_end(args);
+    hook_run_all(connp->cfg->hook_log, log);
 
-#if HTP_DEBUG
-    htp_print_log_stderr(log);
-#endif
+    va_end(args);
 }
 
 /**

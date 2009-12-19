@@ -237,6 +237,14 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
 
+    if (cfg->hook_log != NULL) {
+        copy->hook_log = hook_copy(cfg->hook_log);
+        if (copy->hook_log == NULL) {
+            free(copy);
+            return NULL;
+        }
+    }
+
     return copy;
 }
 
@@ -258,6 +266,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     hook_destroy(cfg->hook_response_body_data);
     hook_destroy(cfg->hook_response_trailer);
     hook_destroy(cfg->hook_response);
+    hook_destroy(cfg->hook_log);
 
     // Free the structure itself
     free(cfg);
@@ -371,6 +380,16 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
  */
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response, callback_fn);
+}
+
+/**
+ * XXX
+ *
+ * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
+    hook_register(&cfg->hook_log, callback_fn);
 }
 
 /**

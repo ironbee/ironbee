@@ -483,6 +483,10 @@ int callback_response(htp_connp_t *connp) {
     printf("-- Callback: response\n");
 }
 
+int callback_log(htp_log_t *log) {    
+    htp_print_log_stderr(log);
+}
+
 static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
     char *request_line = bstr_tocstr(tx->request_line);
     htp_header_t *h_user_agent = table_getc(tx->request_headers, "user-agent");
@@ -647,6 +651,8 @@ int main(int argc, char** argv) {
     htp_config_register_response_body_data(cfg, callback_response_body_data);
     htp_config_register_response_trailer(cfg, callback_response_trailer);
     htp_config_register_response(cfg, callback_response);
+
+    htp_config_register_log(cfg, callback_log);
     
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);

@@ -13,8 +13,6 @@
 
 // -- Defines -------------------------------------------------------------------------------------
 
-#define HTP_DEBUG               1
-
 #define HTP_ERROR              -1
 #define HTP_OK                  0
 #define HTP_DATA                1
@@ -384,6 +382,11 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_response;
 
+    /**
+     * XXX
+     */
+    htp_hook_t *hook_log;
+
     /** Opaque user data associated with this configuration structure. */
     void *user_data;
 };
@@ -602,6 +605,9 @@ struct htp_connp_t {
 };
 
 struct htp_log_t {
+    /** XXX */
+    htp_connp_t *connp;
+
     /** Log message. */
     const char *msg;
 
@@ -902,6 +908,8 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
+void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
+
  int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
 void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
@@ -1018,6 +1026,7 @@ int htp_parse_chunked_length(char *data, size_t len);
 int htp_parse_positive_integer_whitespace(char *data, size_t len, int base);
 
 void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
+void htp_print_log_stderr(htp_log_t *log);
 
 #endif	/* _HTP_H */
 
