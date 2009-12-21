@@ -40,7 +40,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     d.len = 0;
 
     for (;;) {
-        OUT_NEXT_BYTE_OR_RETURN(connp);
+        OUT_NEXT_BYTE(connp);
 
         if (connp->out_next_byte == -1) {
             // Send data to callbacks
