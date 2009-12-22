@@ -234,7 +234,7 @@ int htp_parse_chunked_length(char *data, size_t len) {
  * @return The parsed number, or -1 on error.
  */
 int htp_parse_positive_integer_whitespace(char *data, size_t len, int base) {
-    int pos = 0;
+    size_t pos = 0;
 
     // Ignore LWS before
     while ((pos < len) && (htp_is_lws(data[pos]))) pos++;

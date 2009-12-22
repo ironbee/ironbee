@@ -576,7 +576,8 @@ int main(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_config_register_log(cfg, callback_log);
     //htp_config_register_response_body_data(cfg, callback_response_body_data);
-    run_directory("c:/http_traces/1/", cfg);
+    //run_directory("c:/http_traces/1/", cfg);
+    run_directory("/home/ivanr/work/traces/run3/", cfg);
 }
 
 #define RUN_TEST(X, Y) \
@@ -595,7 +596,7 @@ int main(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main_tests(int argc, char** argv) {
+int main_test(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
