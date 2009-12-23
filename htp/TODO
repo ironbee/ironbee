@@ -2,6 +2,8 @@
 TODO
 ====
 
+- Add zlib dependency.
+
 - Implement htp_get_version().
 
 - Make sure that all errors are accompanied by log messages.

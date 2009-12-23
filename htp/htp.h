@@ -23,6 +23,11 @@
 #define HTTP_1_0                100
 #define HTTP_1_1                101
 
+#define COMPRESSION_NONE        0
+#define COMPRESSION_GZIP        1
+#define COMPRESSION_COMPRESS    2 // Not implemented
+#define COMPRESSION_DEFLATE     3 // Not implemented
+
 #define HTP_LOG_MARK                __FILE__,__LINE__
 
 #define HTP_LOG_ERROR               1
@@ -248,6 +253,7 @@ typedef uint32_t htp_time_t;
 typedef struct htp_cfg_t htp_cfg_t;
 typedef struct htp_conn_t htp_conn_t;
 typedef struct htp_connp_t htp_connp_t;
+typedef struct htp_decompressor_t htp_decompressor_t;
 typedef struct htp_header_t htp_header_t;
 typedef struct htp_header_line_t htp_header_line_t;
 typedef struct htp_log_t htp_log_t;
@@ -618,6 +624,12 @@ struct htp_connp_t {
     int (*out_state)(htp_connp_t *);
 };
 
+struct htp_decompressor_t {
+    int (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
+    int (*callback)(htp_tx_data_t *);
+    void (*destroy)(htp_decompressor_t *);
+};
+
 struct htp_log_t {
     /** The connection parser associated with this log message. */
     htp_connp_t *connp;
@@ -682,6 +694,9 @@ struct htp_header_t {
 };
 
 struct htp_tx_t {
+    /** The connection parsed associated with this transaction. */
+    htp_connp_t *connp;
+
     /** The connection to which this transaction belongs. */
     htp_conn_t *conn;
 
@@ -782,7 +797,7 @@ struct htp_tx_t {
     /** Request transfer coding: IDENTITY or CHUNKED. Only available on requests that have bodies. */
     int request_transfer_coding;
 
-    /** TODO (phase 2) Compression support. */
+    /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
     int request_content_encoding;
 
     // Response
@@ -841,8 +856,12 @@ struct htp_tx_t {
     /** Response transfer coding: IDENTITY or CHUNKED. Only available on responses that have bodies. */
     int response_transfer_coding;
 
-    /** TODO (phase 2) Compression support. */
+    /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
     int response_content_encoding;
+
+    /** XXX */
+    // XXX Handle deallocation
+    htp_decompressor_t *response_decompressor;
     
     // Common
 
@@ -867,7 +886,7 @@ struct htp_tx_data_t {
     htp_tx_t *tx;
 
     /** Pointer to the data buffer. */
-    char *data;
+    unsigned char *data;
 
     /** Buffer length. */
     size_t len;

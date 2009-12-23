@@ -435,6 +435,29 @@ int test_connect(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_compression(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "13-compressed-gzip-ct.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int callback_transaction_start(htp_connp_t *connp) {
     printf("-- Callback: transaction_start\n");
 }
@@ -656,7 +679,8 @@ int main(int argc, char** argv) {
     htp_config_register_response(cfg, callback_response);
 
     htp_config_register_log(cfg, callback_log);
-    
+
+    /*
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -669,8 +693,9 @@ int main(int argc, char** argv) {
     RUN_TEST(test_response_stream_closure, cfg);
     RUN_TEST(test_host_in_headers, cfg);        
     RUN_TEST(test_connect, cfg);
+    */
 
-    //RUN_TEST(test_misc, cfg);
+    RUN_TEST(test_compression, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

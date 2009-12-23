@@ -4,6 +4,20 @@
 #include "htp.h"
 
 /**
+ * Invoked whenever decompressed response body data becomes available.
+ *
+ * @param d
+ */
+static int htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK(htp_tx_data_t *d) {
+    // Invoke all callbacks
+    if (hook_run_all(d->tx->connp->cfg->hook_response_body_data, d) != HOOK_OK) {
+        return HTP_ERROR;
+    }
+
+    return HTP_OK;
+}
+
+/**
  * Consumes bytes until the end of the current line.
  *
  * @param connp
@@ -42,10 +56,14 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     for (;;) {
         OUT_NEXT_BYTE(connp);
 
-        if (connp->out_next_byte == -1) {
-            // Send data to callbacks
-            if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
-                return HTP_ERROR;
+        if (connp->out_next_byte == -1) {            
+            if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
+                connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+            } else {
+                // Send data to callbacks
+                if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                    return HTP_ERROR;
+                }
             }
 
             // Ask for more data
@@ -58,10 +76,14 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->out_chunked_length == 0) {
                 // End of data chunk
-
-                // Send data to callbacks
-                if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
-                    return HTP_ERROR;
+                
+                if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
+                    connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+                } else {
+                    // Send data to callbacks
+                    if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                        return HTP_ERROR;
+                    }
                 }
 
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA_END;
@@ -130,30 +152,34 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
     d.len = 0;
 
     for (;;) {
-        OUT_NEXT_BYTE(connp);       
+        OUT_NEXT_BYTE(connp);
 
         if (connp->out_next_byte == -1) {
             // End of chunk
 
             // Send data to callbacks
             if (d.len != 0) {
-                if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
-                    return HTP_ERROR;
-                }
+                if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {                    
+                    connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+                } else {
+                    if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                        return HTP_ERROR;
+                    }
+                }                
             }
 
             // If we don't know the length, then we must check
             // to see if the stream closed; that would signal the
             // end of the response body (and the end of the transaction).
-            if ((connp->out_content_length == -1)&&(connp->out_status == STREAM_STATE_CLOSED)) {                
+            if ((connp->out_content_length == -1) && (connp->out_status == STREAM_STATE_CLOSED)) {
                 connp->out_state = htp_connp_RES_IDLE;
                 connp->out_tx->progress = TX_PROGRESS_WAIT;
 
                 return HTP_OK;
-           } else {
+            } else {
                 // Ask for more data
                 return HTP_DATA;
-           }
+            }
         } else {
             connp->out_tx->response_message_len++;
             connp->out_tx->response_entity_len++;
@@ -169,8 +195,12 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
                     // Send data to callbacks
                     if (d.len != 0) {
-                        if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
-                            return HTP_ERROR;
+                        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {                            
+                            connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+                        } else {
+                            if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
+                                return HTP_ERROR;
+                            }
                         }
                     }
 
@@ -216,6 +246,20 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         return HTP_OK;
     }
 
+    // Check for compression
+    htp_header_t *ce = table_getc(connp->out_tx->response_headers, "content-encoding");
+    if (ce != NULL) {
+        // XXX Improve detection
+        // XXX How would a Content-Range header affect us?
+        if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {            
+            connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
+
+            connp->out_tx->response_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create();
+            // TODO Check for NULL
+            connp->out_tx->response_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
+        }
+    }
+
     // 1. Any response message which MUST NOT include a message-body
     //  (such as the 1xx, 204, and 304 responses and any response to a HEAD
     //  request) is always terminated by the first empty line after the
@@ -236,7 +280,11 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
         if (te != NULL) {
-            // TODO Make sure it contains "chunked" only
+            if (bstr_cmpc(te->value, "chunked") != 0) {
+                // Invalid T-E header value
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "Invalid T-E value in response");
+            }
 
             // If the T-E header is present we are going to use it.
             connp->out_tx->response_transfer_coding = CHUNKED;
@@ -250,9 +298,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = TX_PROGRESS_RES_BODY;
-        }
-        // 3. If a Content-Length header field (section 14.14) is present, its
-        //   value in bytes represents the length of the message-body.
+        }// 3. If a Content-Length header field (section 14.14) is present, its
+            //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
             connp->out_tx->response_transfer_coding = IDENTITY;
@@ -357,7 +404,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 }
 
                 // Cleanup
-                free(connp->out_header_line);                
+                free(connp->out_header_line);
                 connp->out_line_len = 0;
                 connp->out_header_line = NULL;
                 connp->out_header_line_index = -1;
@@ -419,7 +466,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             if (connp->out_header_line_index == -1) {
                 connp->out_header_line_index = connp->out_header_line_counter;
             }
-            
+
             connp->out_header_line_counter++;
         }
     }
@@ -575,7 +622,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // Return if the connection has had a fatal error
     if (connp->out_status != STREAM_STATE_OPEN) {
         // We allow calls that allow the parser to finalize their work
-        if (!(connp->out_status == STREAM_STATE_CLOSED)&&(len == 0)) {
+        if (!(connp->out_status == STREAM_STATE_CLOSED) && (len == 0)) {
             return STREAM_STATE_ERROR;
         }
     }
@@ -592,7 +639,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // occurs or until we run out of data. Many processors
     // will process a request, each pointing to the next
     // processor that needs to run.
-    for (;;) {        
+    for (;;) {
         // Return if there's been an error
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll

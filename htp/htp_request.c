@@ -187,7 +187,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (bstr_cmpc(te->value, "chunked") != 0) {
             // Invalid T-E header value
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Invalid T-E value");
+                "Invalid T-E value in request");
         }
 
         // Chunked encoding is a HTTP/1.1 feature. Check
@@ -581,6 +581,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     connp->in_tx = htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);
     if (connp->in_tx == NULL) return HTP_ERROR;
 
+    connp->in_tx->connp = connp;
     htp_tx_set_user_data(connp->in_tx, connp->user_data);
 
     list_add(connp->conn->transactions, connp->in_tx);

@@ -168,5 +168,5 @@ void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared) {
  * @param user_data
  */
 void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
-    tx->user_data = user_data;
+    tx->user_data = user_data;    
 }
