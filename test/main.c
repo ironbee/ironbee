@@ -449,7 +449,7 @@ int callback_request_headers(htp_connp_t *connp) {
 
 int callback_request_body_data(htp_tx_data_t *d) {
     char *str = bstr_memtocstr(d->data, d->len);
-    printf("-- Callback: request_body_data: [%s] %i\n", str, d->len);
+    printf("-- Callback: request_body_data: [%s] %i %x\n", str, d->len, htp_tx_get_user_data(d->tx));
     free(str);
 }
 
@@ -471,7 +471,7 @@ int callback_response_headers(htp_connp_t *connp) {
 
 int callback_response_body_data(htp_tx_data_t *d) {
     char *str = bstr_memtocstr(d->data, d->len);
-    printf("-- Callback: response_body_data: [%s] %i\n", str, d->len);
+    printf("-- Callback: response_body_data: [%s] %i %x\n", str, d->len, htp_tx_get_user_data(d->tx));
     free(str);
 }
 
@@ -572,7 +572,7 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
     return 1;
 }
 
-int main(int argc, char** argv) {
+int main_dir(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_config_register_log(cfg, callback_log);
     //htp_config_register_response_body_data(cfg, callback_response_body_data);
@@ -596,7 +596,7 @@ int main(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main_test(int argc, char** argv) {
+int main(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 

@@ -581,6 +581,8 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     connp->in_tx = htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);
     if (connp->in_tx == NULL) return HTP_ERROR;
 
+    htp_tx_set_user_data(connp->in_tx, connp->user_data);
+
     list_add(connp->conn->transactions, connp->in_tx);
 
     connp->in_content_length = -1;

@@ -250,6 +250,8 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         exit(1);
     }
 
+    htp_connp_set_user_data(*connp, (void *)0x02);
+
     // Does the filename contain connection metdata?
     if (strncmp(testname, "stream", 6) == 0) {
         // It does; use it

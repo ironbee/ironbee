@@ -894,6 +894,8 @@ struct htp_uri_t {
 
 // -- Functions -----------------------------------------------------------------------------------
 
+const char *htp_get_version();
+
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create();
       void htp_config_destroy(htp_cfg_t *cfg); 
@@ -916,7 +918,6 @@ void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
  int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
 void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
-
 
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
