@@ -107,6 +107,7 @@
 
 #define HTP_SERVER_MINIMAL          0
 #define HTP_SERVER_GENERIC          1
+#define HTP_SERVER_IDS              2
 #define HTP_SERVER_IIS_4_0          4   /* Windows NT 4.0 */
 #define HTP_SERVER_IIS_5_0          5   /* Windows 2000 */
 #define HTP_SERVER_IIS_5_1          6   /* Windows XP Professional */
@@ -324,13 +325,13 @@ struct htp_cfg_t {
      */
     int path_invalid_encoding_handling;
 
-    /** */
+    /** Controls how invalid UTF-8 characters are handled. */
     int path_invalid_utf8_handling;
 
-    /** */
+    /** Controls how encoded NUL bytes are handled. */
     int path_nul_encoded_handling;
 
-    /** */
+    /** Controls how raw NUL bytes are handled. */
     int path_nul_raw_handling;
 
     /** The replacement character used when there is no best-fit mapping. */
@@ -339,7 +340,7 @@ struct htp_cfg_t {
     /** How will the server handle UCS-2 characters? */
     int path_unicode_mapping;      
 
-    /** */
+    /** XXX Unused */
     int path_utf8_overlong_handling;
 
     /** The best-fit map to use to decode %u-encoded characters. */
@@ -396,7 +397,7 @@ struct htp_cfg_t {
     htp_hook_t *hook_response;
 
     /**
-     * XXX
+     * Log hook, invoked every time the library wants to log.
      */
     htp_hook_t *hook_log;
 

@@ -499,7 +499,7 @@ void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding
  * Configures how server reacts to invalid encoding in path.
  *
  * @param cfg
- * @param invalid_encoding_handling The available options are: URL_DECODER_LEAVE_PERCENT,
+ * @param invalid_encoding_handling The available options are: URL_DECODER_PRESERVE_PERCENT,
  *                                  URL_DECODER_REMOVE_PERCENT, URL_DECODER_DECODE_INVALID
  *                                  and URL_DECODER_STATUS_400.
  */
@@ -606,6 +606,22 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
+            cfg->path_compress_separators = YES;
+            break;
+
+        case HTP_SERVER_IDS:
+            cfg->parse_request_line = htp_parse_request_line_generic;
+            cfg->process_request_header = htp_process_request_header_generic;
+            cfg->parse_response_line = htp_parse_response_line_generic;
+            cfg->process_response_header = htp_process_response_header_generic;
+
+            cfg->path_backslash_separators = YES;
+            cfg->path_case_insensitive = YES;
+            cfg->path_decode_separators = YES;
+            cfg->path_compress_separators = YES;
+            cfg->path_decode_u_encoding = YES;
+            cfg->path_unicode_mapping = BESTFIT;
+            cfg->path_convert_utf8 = YES;
             break;
 
         case HTP_SERVER_APACHE :
@@ -617,6 +633,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             
             cfg->path_backslash_separators = NO;
             cfg->path_decode_separators = NO;
+            cfg->path_compress_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;            
             cfg->path_control_char_handling = NONE;
             break;
@@ -629,6 +646,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = NO;
+            cfg->path_compress_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
             cfg->path_decode_u_encoding = YES;
             cfg->path_unicode_mapping = BESTFIT;
@@ -643,6 +661,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
+            cfg->path_compress_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
             cfg->path_decode_u_encoding = YES;
             cfg->path_unicode_mapping = STATUS_400;
@@ -658,6 +677,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
+            cfg->path_compress_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
             cfg->path_control_char_handling = STATUS_400;
             break;
@@ -667,10 +687,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
     }
 
     // Remember the personality
-    cfg->spersonality = personality;
-
-    // Non server-specific defaults
-    cfg->path_compress_separators = 1;
+    cfg->spersonality = personality;   
 
     return HTP_OK;
 }
