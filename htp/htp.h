@@ -23,14 +23,14 @@
 #define HTTP_1_0                100
 #define HTTP_1_1                101
 
-#define LOG_MARK                __FILE__,__LINE__
+#define HTP_LOG_MARK                __FILE__,__LINE__
 
-#define LOG_ERROR               1
-#define LOG_WARNING             2
-#define LOG_NOTICE              3
-#define LOG_INFO                4
-#define LOG_DEBUG               5
-#define LOG_DEBUG2              6
+#define HTP_LOG_ERROR               1
+#define HTP_LOG_WARNING             2
+#define HTP_LOG_NOTICE              3
+#define HTP_LOG_INFO                4
+#define HTP_LOG_DEBUG               5
+#define HTP_LOG_DEBUG2              6
 
 #define HTP_HEADER_MISSING_COLON            1
 #define HTP_HEADER_INVALID_NAME             2
@@ -189,10 +189,10 @@ if ((X)->in_line_len < (X)->in_line_size) { \
     (X)->in_line_len++; \
     if (((X)->in_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->in_tx->flags & HTP_FIELD_LONG))) { \
         (X)->in_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), LOG_MARK, LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Request field over soft limit"); \
+        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Request field over soft limit"); \
     } \
 } else { \
-    htp_log((X), LOG_MARK, LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Request field over hard limit"); \
+    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Request field over hard limit"); \
     return HTP_ERROR; \
 }
 
@@ -233,10 +233,10 @@ if ((X)->out_line_len < (X)->out_line_size) { \
     (X)->out_line_len++; \
     if (((X)->out_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->out_tx->flags & HTP_FIELD_LONG))) { \
         (X)->out_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), LOG_MARK, LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Response field over soft limit"); \
+        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Response field over soft limit"); \
     } \
 } else { \
-    htp_log((X), LOG_MARK, LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Response field over hard limit"); \
+    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Response field over hard limit"); \
     return HTP_ERROR; \
 }
 
@@ -289,18 +289,35 @@ struct htp_cfg_t {
 
     /** The function used for response header parsing. Depends on the personality. */
     int (*process_response_header)(htp_connp_t *connp);
+
+    
+    // Path handling
+
+    /** Should we treat backslash characters as path segment separators? */
+    int path_backslash_separators;
     
     /** Should we treat paths as case insensitive? */
     int path_case_insensitive;
 
-    /** Should we treat backslash characters as path segment separators? */
-    int path_backslash_separators;
+    /** Should we compress multiple path segment separators into one? */
+    int path_compress_separators;
+
+    /** This parameter is used to predict how a server will react when control
+     *  characters are present in a request path, but does not affect path
+     *  normalization.
+     */
+    int path_control_char_handling;
+
+    /** Should the parser convert UTF-8 into a single-byte stream, using
+     *  best-fit?
+     */
+    int path_convert_utf8;
 
     /** Should we URL-decode encoded path segment separators? */
     int path_decode_separators;
 
-    /** Should we compress multiple path segment separators into one? */
-    int path_compress_separators;
+    /** Should we decode %u-encoded characters? */
+    int path_decode_u_encoding;
 
     /** How do handle invalid encodings: URL_DECODER_LEAVE_PERCENT,
      *  URL_DECODER_REMOVE_PERCENT or URL_DECODER_DECODE_INVALID.
@@ -310,30 +327,26 @@ struct htp_cfg_t {
     /** */
     int path_invalid_utf8_handling;
 
-    /** Should we decode %u-encoded characters? */
-    int path_decode_u_encoding;
-
-    /** How will the server handle UCS-2 characters? */
-    int path_unicode_mapping;
-
+    /** */
     int path_nul_encoded_handling;
 
+    /** */
     int path_nul_raw_handling;
 
-    int path_control_chars_handling;
+    /** The replacement character used when there is no best-fit mapping. */
+    unsigned char path_replacement_char;
 
+    /** How will the server handle UCS-2 characters? */
+    int path_unicode_mapping;      
+
+    /** */
     int path_utf8_overlong_handling;
 
     /** The best-fit map to use to decode %u-encoded characters. */
     unsigned char *path_u_bestfit_map;
 
-    /** The replacement character used when there is no best-fit mapping. */
-    unsigned char path_replacement_char;
 
-    /** Should the parser convert UTF-8 into a single-byte stream, using
-     *  best-fit?
-     */
-    int path_convert_utf8;
+    // Hooks
 
     /** Transaction start hook, invoked when the parser receives the first
      *  byte of a new transaction.
@@ -605,10 +618,10 @@ struct htp_connp_t {
 };
 
 struct htp_log_t {
-    /** XXX */
+    /** The connection parser associated with this log message. */
     htp_connp_t *connp;
 
-    /** XXX */
+    /** The transaction associated with this log message, if any. */
     htp_tx_t *tx;
 
     /** Log message. */
@@ -916,8 +929,21 @@ void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
 
  int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
-void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
+
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
+void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators);
+void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
+void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators);
+void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling);
+void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8);
+void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int backslash_separators);
+void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_u_encoding);
+void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling);
+void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling);
+void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_handling);
+void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling);
+void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
+void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
 
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);

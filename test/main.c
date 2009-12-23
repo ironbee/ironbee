@@ -1153,27 +1153,27 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (no effect)");
     input = bstr_cstrdup("/%01test");
     expected = bstr_cstrdup("/\x01test");
-    cfg->path_control_chars_handling = NONE;
+    cfg->path_control_char_handling = NONE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (no effect)");
     input = bstr_cstrdup("/\x01test");
     expected = bstr_cstrdup("/\x01test");
-    cfg->path_control_chars_handling = NONE;
+    cfg->path_control_char_handling = NONE;
     PATH_DECODE_TEST_AFTER();
     
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (400)");
     input = bstr_cstrdup("/%01test");
     expected = bstr_cstrdup("/\x01test");
     expected_status = 400;
-    cfg->path_control_chars_handling = STATUS_400;    
+    cfg->path_control_char_handling = STATUS_400;    
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (400)");
     input = bstr_cstrdup("/\x01test");
     expected = bstr_cstrdup("/\x01test");
     expected_status = 400;
-    cfg->path_control_chars_handling = STATUS_400;
+    cfg->path_control_char_handling = STATUS_400;
     PATH_DECODE_TEST_AFTER();    
 
     PATH_DECODE_TEST_BEFORE("UTF-8; overlong 2-byte sequence");

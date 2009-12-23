@@ -83,7 +83,7 @@ static int list_linked_empty(list_t *_q) {
  * Destroy list. This function will not destroy any of the
  * data stored in it. You'll have to do that manually beforehand.
  *
- * @param list
+ * @param l
  */
 void list_linked_destroy(list_linked_t *l) {
     // Free the list structures
@@ -248,7 +248,7 @@ static int list_array_replace(list_t *_l, size_t index, void *element) {
 /**
  * Reset the list iterator.
  *
- * @param list
+ * @param l
  */
 void list_array_iterator_reset(list_array_t *l) {
     l->iterator_index = 0;
@@ -257,7 +257,7 @@ void list_array_iterator_reset(list_array_t *l) {
 /**
  * Advance to the next list value.
  *
- * @param list
+ * @param l
  * @return the next list value, or NULL if there aren't more elements
  *         left to iterate over or if the element itself is NULL
  */
@@ -276,7 +276,7 @@ void *list_array_iterator_next(list_array_t *l) {
  * Free the memory occupied by this list. This function assumes
  * the data elements were freed beforehand.
  *
- * @param list
+ * @param l
  */
 void list_array_destroy(list_array_t *l) {
     free(l->elements);
@@ -398,7 +398,8 @@ int table_add(table_t *table, bstr *key, void *element) {
 }
 
 /**
- *
+ * @param table
+ * @param key
  */
 static void *table_get_internal(table_t *table, bstr *key) {
     // Iterate through the list, comparing
@@ -420,7 +421,7 @@ static void *table_get_internal(table_t *table, bstr *key) {
  * key (as a NUL-terminated string).
  *
  * @param table
- * @param key
+ * @param cstr
  * @return table element, or NULL if not found
  */
 void *table_getc(table_t *table, char *cstr) {

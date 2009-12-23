@@ -7,8 +7,7 @@
 #include <string.h>
 
 // IMPORTANT This binary string library is used internally by the parser and you should
-//           not rely on it in your code. The implementation may change at some point
-//           in the future.
+//           not rely on it in your code. The implementation may change.
 //
 // TODO
 //           - Add a function that wraps an existing data
@@ -56,8 +55,19 @@ unsigned char bstr_char_at(bstr *s, size_t pos);
 typedef struct bstr_t bstr_t;
 
 struct bstr_t {
+    /** The length of the string stored in the buffer. */
     size_t len;
+      
+    /** The current size of the buffer. If the buffer is bigger than the
+     *  string then it will be able to expand without having to reallocate.
+     */
     size_t size;
+
+    /** Optional buffer pointer. If this pointer is NUL (as it currently is
+     *  in virtually all cases, the string buffer will immediatelly follow
+     *  this structure. If the pointer is not NUL, it points to the actual
+     *  buffer used, and there's no data following this structure.
+     */
     unsigned char *ptr;
 };
 

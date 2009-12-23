@@ -38,6 +38,7 @@ void htp_connp_clear_error(htp_connp_t *connp) {
  * Closes the connection associated with the supplied parser.
  *
  * @param connp
+ * @param timestamp
  */
 void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp) {    
     // Update internal information
@@ -210,12 +211,15 @@ htp_log_t *htp_connp_get_last_error(htp_connp_t *connp) {
  * Opens connection.
  *
  * @param connp
- * @param addr Remote IP address
- * @param port Remote port
+ * @param remote_addr Remote address
+ * @param remote_port Remote port
+ * @param local_addr Local address
+ * @param local_port Local port
+ * @param timestamp
  */
 void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t timestamp) {
     if ((connp->in_status != STREAM_STATE_NEW)||(connp->out_status != STREAM_STATE_NEW)) {
-        htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Connection is already open");
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
         return;
     }
 

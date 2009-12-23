@@ -105,7 +105,7 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
                 connp->in_tx->progress = TX_PROGRESS_REQ_TRAILER;
             } else {
                 // Invalid chunk length
-                htp_log(connp, LOG_MARK, LOG_ERROR, 0,
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Request chunk encoding: Invalid chunk length");
 
                 return HTP_ERROR;
@@ -186,7 +186,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // Make sure it contains "chunked" only
         if (bstr_cmpc(te->value, "chunked") != 0) {
             // Invalid T-E header value
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0,
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                 "Invalid T-E value");
         }
 
@@ -234,7 +234,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // Get body length
         int i = htp_parse_content_length(cl->value);
         if (i < 0) {
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid C-L field in request");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in request");
             return HTP_ERROR;
         } else {
             connp->in_content_length = i;
@@ -258,7 +258,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // HTTP/1.1 requires host information in the headers
         if (connp->in_tx->request_protocol_number >= HTTP_1_1) {
             connp->in_tx->flags |= HTP_HOST_MISSING;
-            htp_log(connp, LOG_MARK, LOG_WARNING, 0, "Host information in request headers required by HTTP/1.1");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information in request headers required by HTTP/1.1");
         }
     } else {
         // Host information available in the headers
@@ -273,7 +273,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
             // headers and the URI. The HTTP RFC states that
             // we should ignore the headers copy.
             connp->in_tx->flags |= HTP_AMBIGUOUS_HOST;
-            htp_log(connp, LOG_MARK, LOG_WARNING, 0, "Host information ambiguous");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
         }
     }
 
@@ -383,7 +383,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 if (connp->in_header_line_index == -1) {
                     if (!(connp->in_tx->flags & HTP_INVALID_FOLDING)) {
                         connp->in_tx->flags |= HTP_INVALID_FOLDING;
-                        htp_log(connp, LOG_MARK, LOG_WARNING, 0, "Invalid request field folding");
+                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid request field folding");
                     }
                 }
             }

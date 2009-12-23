@@ -237,7 +237,7 @@ int bstr_chr(bstr *b, int c) {
 /**
  * Return the last position of a character (byte).
  *
- * @param c
+ * @param b
  * @param c
  * @return the last position of the character, or -1 if it could not be found
  */
@@ -454,7 +454,8 @@ int bstr_indexofc_nocase(bstr *haystack, char *needle) {
  * Find index in the haystack, with the needle being a memory region.
  *
  * @param haystack
- * @param needle
+ * @param data2
+ * @param len2
  * @return
  */
 int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
@@ -486,7 +487,8 @@ int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
  * Ignore case differences.
  *
  * @param haystack
- * @param needle
+ * @param data2
+ * @param len2
  * @return
  */
 int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {

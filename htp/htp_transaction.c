@@ -37,7 +37,7 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
 /**
  * Destroys the supplied transaction.
  *
- * @param htp_tx_t
+ * @param tx
  */
 void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(tx->request_line);

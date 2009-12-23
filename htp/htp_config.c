@@ -119,7 +119,7 @@ htp_cfg_t *htp_config_create() {
 
     cfg->field_limit_hard = HTP_HEADER_LIMIT_HARD;
     cfg->field_limit_soft = HTP_HEADER_LIMIT_SOFT;
-    cfg->log_level = LOG_NOTICE;
+    cfg->log_level = HTP_LOG_NOTICE;
 
     cfg->path_u_bestfit_map = bestfit_1252;
     cfg->path_replacement_char = '?';
@@ -383,7 +383,7 @@ void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t
 }
 
 /**
- * XXX
+ * Registers a callback that is invoked every time there is a log message.
  *
  * @param cfg
  * @param callback_fn
@@ -407,14 +407,179 @@ void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map) {
 }
 
 /**
- * Configures filesystem sensitivity. This setting affects
- * how URL paths are normalized.
+ * Configures whether backslash characters are treated as path segment separators. They
+ * are not on Unix systems, but are on Windows systems. If this setting is enabled, a path
+ * such as "/one\two/three" will be converted to "/one/two/three".
  *
  * @param cfg
- * @param path_case_insensitive
+ * @param backslash_separators
  */
-void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive) {
-    cfg->path_case_insensitive = path_case_insensitive;
+void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators) {
+    cfg->path_backslash_separators = backslash_separators;
+}
+
+/**
+ * Configures filesystem sensitivity. This setting affects
+ * how URL paths are normalized. There are no path modifications by default, but
+ * on a case-insensitive systems path will be converted to lowercase.
+ *
+ * @param cfg
+ * @param case_insensitive
+ */
+void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int case_insensitive) {
+    cfg->path_case_insensitive = case_insensitive;
+}
+
+/**
+ * Configures whether consecutive path segment separators will be compressed. When
+ * enabled, a path such as "/one//two" will be normalized to "/one/two". The backslash_separators
+ * and decode_separators parameters are used before compression takes place. For example, if
+ * backshasl_deparators and decode_separators are both enabled, the path "/one\\/two\/%5cthree/%2f//four"
+ * will be converted to "/one/two/three/four".
+ *
+ * @param cfg
+ * @param compress_separators
+ */
+void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators) {
+    cfg->path_compress_separators = compress_separators;
+}
+
+/**
+ * This parameter is used to predict how a server will react when control
+ * characters are present in a request path, but does not affect path
+ * normalization.
+ *
+ * @param cfg
+ * @param control_char_handling Use NONE with servers that ignore control characters in
+ *                              request path, and STATUS_400 with servers that respond
+ *                              with 400.
+ */
+void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling) {
+    cfg->path_control_char_handling = control_char_handling;
+}
+
+/**
+ * Controls the UTF-8 treatment of request paths. One option is to only validate
+ * path as UTF-8. In this case, the UTF-8 flags will be raised as appropriate, and
+ * the path will remain in UTF-8 (if it was UTF-8in the first place). The other option
+ * is to convert a UTF-8 path into a single byte stream using best-fit mapping.
+ *
+ * @param cfg
+ * @param convert_utf8
+ */
+void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8) {
+    cfg->path_convert_utf8 = convert_utf8;
+}
+
+/**
+ * Configures whether encoded path segment separators will be decoded. Apache does
+ * not do this, but IIS does. If enabled, a path such as "/one%2ftwo" will be normalized
+ * to "/one/two". If the backslash_separators option is also enabled, encoded backslash
+ * characters will be converted too (and subseqently normalized to forward slashes).
+ *
+ * @param cfg
+ * @param decode_separators
+ */
+void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_separators) {
+    cfg->path_decode_separators = decode_separators;
+}
+
+/**
+ * Configures whether %u-encoded sequences in path will be decoded. Such sequences
+ * will be treated as invalid URL encoding if decoding is not desireable. 
+ *
+ * @param cfg
+ * @param decode_u_encoding
+ */
+void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding) {
+    cfg->path_decode_u_encoding = decode_u_encoding;
+}
+
+/**
+ * Configures how server reacts to invalid encoding in path.
+ *
+ * @param cfg
+ * @param invalid_encoding_handling The available options are: URL_DECODER_LEAVE_PERCENT,
+ *                                  URL_DECODER_REMOVE_PERCENT, URL_DECODER_DECODE_INVALID
+ *                                  and URL_DECODER_STATUS_400.
+ */
+void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling) {
+    cfg->path_invalid_encoding_handling = invalid_encoding_handling;
+}
+
+
+
+/**
+ * Configures how server reacts to invalid UTF-8 characters in path. This setting will
+ * not affect path normalization; it only controls what response status we expect for
+ * a request that contains invalid UTF-8 characters.
+ *
+ * @param cfg
+ * @param invalid_utf8_handling Possible values: NONE or STATUS_400.
+ */
+void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling) {
+    cfg->path_invalid_utf8_handling = invalid_utf8_handling;
+}
+
+/**
+ * Configures how server reacts to encoded NUL bytes. Some servers will terminate
+ * path at NUL, while some will respond with 400 or 404. When the termination option
+ * is not used, the NUL byte will remain in the path.
+ *
+ * @param cfg
+ * @param nul_encoded_handling Possible values: TERMINATE, STATUS_400, STATUS_404
+ */
+void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_handling) {
+    cfg->path_nul_encoded_handling = nul_encoded_handling;
+}
+
+/**
+ * Configures how server reacts to raw NUL bytes. Some servers will terminate
+ * path at NUL, while some will respond with 400 or 404. When the termination option
+ * is not used, the NUL byte will remain in the path.
+ *
+ * @param cfg
+ * @param nul_raw_handling Possible values: TERMINATE, STATUS_400, STATUS_404
+ */
+void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling) {
+    cfg->path_nul_raw_handling = nul_raw_handling;
+}
+
+/**
+ * Sets the replacement characater that will be used to in the lossy best-fit
+ * mapping from Unicode characters into single-byte streams. The question mark
+ * is the default replacement character.
+ *
+ * @param cfg
+ * @param replacement_char
+ */
+void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char) {
+    cfg->path_replacement_char = replacement_char;
+}
+
+/**
+ * Controls what the library does when it encounters an Unicode character where
+ * only a single-byte would do (e.g., the %u-encoded characters). Conversion always
+ * takes place; this parameter is used to correctly predict the status code used
+ * in response. In the future there will probably be an option to convert such
+ * characters to UCS-2 or UTF-8.
+ *
+ * @param cfg
+ * @param unicode_mapping Possible values: BESTFIT, STATUS_400, STATUS_404.
+ */
+void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping) {
+    cfg->path_unicode_mapping = unicode_mapping;
+}
+
+/**
+ * Controls how server reacts to overlong UTF-8 characters.
+ * XXX Not used at the moment.
+ *
+ * @param cfg
+ * @param utf8_overlong_handling
+ */
+void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling) {
+    cfg->path_utf8_overlong_handling = utf8_overlong_handling;
 }
 
 /**
@@ -453,7 +618,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_backslash_separators = NO;
             cfg->path_decode_separators = NO;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;            
-            cfg->path_control_chars_handling = NONE;
+            cfg->path_control_char_handling = NONE;
             break;
 
         case HTP_SERVER_IIS_5_1:
@@ -467,7 +632,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
             cfg->path_decode_u_encoding = YES;
             cfg->path_unicode_mapping = BESTFIT;
-            cfg->path_control_chars_handling = NONE;
+            cfg->path_control_char_handling = NONE;
             break;
 
         case HTP_SERVER_IIS_6_0:
@@ -481,7 +646,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
             cfg->path_decode_u_encoding = YES;
             cfg->path_unicode_mapping = STATUS_400;
-            cfg->path_control_chars_handling = STATUS_400;
+            cfg->path_control_char_handling = STATUS_400;
             break;
 
         case HTP_SERVER_IIS_7_0:
@@ -494,7 +659,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_backslash_separators = YES;
             cfg->path_decode_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
-            cfg->path_control_chars_handling = STATUS_400;
+            cfg->path_control_char_handling = STATUS_400;
             break;
             
         default:

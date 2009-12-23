@@ -105,7 +105,7 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
                 connp->out_tx->progress = TX_PROGRESS_RES_TRAILER;
             } else {
                 // Invalid chunk length
-                htp_log(connp, LOG_MARK, LOG_ERROR, 0,
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Response chunk encoding: Invalid chunk length: %i", connp->out_chunked_length);
 
                 return HTP_ERROR;
@@ -202,7 +202,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // response. Ignore it if found, and revert back to RES_FIRST_LINE.
     if (connp->out_tx->response_status_number == 100) {
         if (connp->out_tx->seen_100continue != 0) {
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Already seen 100-Continue");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Already seen 100-Continue");
             return HTP_ERROR;
         }
 
@@ -266,7 +266,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // Get body length
             int i = htp_parse_content_length(cl->value);
             if (i < 0) {
-                htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid C-L field in response");
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response");
                 return HTP_ERROR;
             } else {
                 connp->out_content_length = i;
@@ -287,7 +287,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
                 // TODO Handle multipart/byteranges
 
                 if (bstr_indexofc_nocase(ct->value, "multipart/byteranges") != -1) {
-                    htp_log(connp, LOG_MARK, LOG_ERROR, 0,
+                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "C-T multipart/byteranges in responses not supported");
                     return HTP_ERROR;
                 }
@@ -404,7 +404,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 if (connp->out_header_line_index == -1) {
                     if (!(connp->out_tx->flags & HTP_INVALID_FOLDING)) {
                         connp->out_tx->flags |= HTP_INVALID_FOLDING;
-                        htp_log(connp, LOG_MARK, LOG_WARNING, 0, "Invalid response field folding");
+                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response field folding");
                     }
                 }
             }
@@ -532,7 +532,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // Find the next outgoing transaction    
     connp->out_tx = list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
-        htp_log(connp, LOG_MARK, LOG_ERROR, 0,
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
             "Unable to match response to request");
         return HTP_ERROR;
     }

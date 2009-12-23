@@ -217,7 +217,8 @@ int htp_parse_content_length(bstr *b) {
  * Parses chunk length (positive hexadecimal number).
  * White space is allowed before and after the number.
  *
- * @param b
+ * @param data
+ * @param len
  * @return Chunk length, or -1 on error.
  */
 int htp_parse_chunked_length(char *data, size_t len) {
@@ -262,10 +263,10 @@ int htp_parse_positive_integer_whitespace(char *data, size_t len, int base) {
  */
 void htp_print_log_stderr(htp_log_t *log) {
     if (log->code != 0) {
-        fprintf(stderr, "[%i][code %i][file %s][line %i] %s\n", log->level,
+        fprintf(stderr, "[%d][code %d][file %s][line %d] %s\n", log->level,
             log->code, log->file, log->line, log->msg);
     } else {
-        fprintf(stderr, "[%i][file %s][line %i] %s\n", log->level,
+        fprintf(stderr, "[%d][file %s][line %d] %s\n", log->level,
             log->file, log->line, log->msg);
     }
 }
@@ -295,7 +296,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
 
     if (r < 0) {
         // TODO Will vsnprintf ever return an error?
-        snprintf(buf, 1024, "[vnsprintf returned error %i]", r);
+        snprintf(buf, 1024, "[vnsprintf returned error %d]", r);
     }
 
     // Indicate overflow with a '+' at the end
@@ -330,7 +331,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
         list_add(connp->conn->messages, log);
     }
 
-    if (level == LOG_ERROR) {
+    if (level == HTP_LOG_ERROR) {
         connp->last_error = log;
     }
 
@@ -401,7 +402,8 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len) {
 /**
  * Parses request URI, making no attempt to validate the contents.
  *
- * @param input
+ * @param connp
+ * @param authority
  * @param uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
@@ -424,12 +426,12 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
             bstr_len(authority) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid server port information in request");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
         } else if ((port > 0) && (port < 65536)) {
             // Valid port            
             (*uri)->port_number = port;
         } else {
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid authority port");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid authority port");
         }
     }
 
@@ -1141,7 +1143,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         // Check for control characters
         if (c < 0x20) {
-            if (cfg->path_control_chars_handling == STATUS_400) {
+            if (cfg->path_control_char_handling == STATUS_400) {
                 tx->response_status_expected_number = 400;
             }
         }
@@ -1185,8 +1187,8 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
  * Normalize a previously-parsed request URI.
  *
  * @param connp
- * @param parsed_uri_incomplete
- * @param parsed_uri
+ * @param incomplete
+ * @param normalized
  * @return HTP_OK or HTP_ERROR
  */
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
@@ -1310,12 +1312,12 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
             bstr_len(hostname) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
-            htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Invalid server port information in request");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
         } else if ((port > 0) && (port < 65536)) {
             // Valid port
             if (port != connp->conn->local_port) {
                 // Port is different from the TCP port
-                htp_log(connp, LOG_MARK, LOG_ERROR, 0, "Request server port number differs from the actual TCP port");
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port number differs from the actual TCP port");
             } else {
                 parsed_uri->port_number = port;
             }
