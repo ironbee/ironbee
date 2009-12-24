@@ -435,10 +435,33 @@ int test_connect(htp_cfg_t *cfg) {
     return 1;
 }
 
-int test_compression(htp_cfg_t *cfg) {
+int test_compressed_response_gzip_ct(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "13-compressed-gzip-ct.t", cfg, &connp);
+    test_run(home, "13-compressed-response-gzip-ct.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
+int test_compressed_response_gzip_chunked(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
     if (connp == NULL) return -1;
 
     if (list_size(connp->conn->transactions) == 0) {
@@ -695,7 +718,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_connect, cfg);
     */
 
-    RUN_TEST(test_compression, cfg);
+    //RUN_TEST(test_compressed_response_gzip_ct, cfg);
+    RUN_TEST(test_compressed_response_gzip_chunked, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
