@@ -859,8 +859,8 @@ struct htp_tx_t {
     /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
     int response_content_encoding;
 
-    /** XXX */
-    // XXX Handle deallocation
+    /** Response decompressor used to decompress response body data. */
+    // TODO Move into the connection parser structure
     htp_decompressor_t *response_decompressor;
     
     // Common

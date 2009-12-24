@@ -23,5 +23,9 @@ struct htp_decompressor_gzip_t {
     unsigned long crc;    
 };
 
+htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp);
+static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d);
+static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec);
+
 #endif	/* _HTP_DECOMPRESSORS_H */
 

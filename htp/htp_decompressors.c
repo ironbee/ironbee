@@ -3,14 +3,17 @@
 #include "htp_decompressors.h"
 
 /**
+ * Decompress a chunk of gzip-compressed data.
  *
+ * @param drec
+ * @param d
  */
 static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
-    size_t consumed = 0;   
+    size_t consumed = 0;
 
     // Return if we've previously had an error
     if (drec->initialized < 0) {
-        return 0;
+        return drec->initialized;
     }
 
     // Do we need to initialize?
@@ -19,13 +22,15 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
         if ((drec->header_len == 0) && (d->len >= 10)) {
             // We have received enough data initialize; use the input buffer directly
             if ((d->data[0] != DEFLATE_MAGIC_1) || (d->data[1] != DEFLATE_MAGIC_2)) {
-                printf("## No deflate magic bytes (1)!\n");
+                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                    "GZip decompressor: Magic bytes mismatch");
                 drec->initialized = -1;
                 return -1;
             }
 
             if (d->data[3] != 0) {
-                printf("## Unable to handle flags!\n");
+                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                    "GZip decompressor: Unable to handle flags: %d", d->data[3]);
                 drec->initialized = -1;
                 return -1;
             }
@@ -51,13 +56,15 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             if (drec->header_len == 10) {
                 // We do!
                 if ((drec->header[0] != DEFLATE_MAGIC_1) || (drec->header[1] != DEFLATE_MAGIC_2)) {
-                    printf("## No deflate magic bytes (2)!\n");
+                    htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                        "GZip decompressor: Magic bytes mismatch");
                     drec->initialized = -1;
                     return -1;
                 }
 
                 if (drec->header[3] != 0) {
-                    printf("## Unable to handle flags!\n");
+                    htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                        "GZip decompressor: Unable to handle flags: %d", d->data[3]);
                     drec->initialized = -1;
                     return -1;
                 }
@@ -79,15 +86,20 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
         // If there's no more data left in the
         // buffer, send that information out
         if (drec->stream.avail_out == 0) {
-            drec->crc = crc32(drec->crc, drec->buffer, GZIP_BUF_SIZE);           
+            drec->crc = crc32(drec->crc, drec->buffer, GZIP_BUF_SIZE);
 
-            // Execute callback with available data
+            // Prepare data for callback
             htp_tx_data_t d2;
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = GZIP_BUF_SIZE;
-            // XXX Abort on error
-            drec->super.callback(&d2);
+
+            // Send decompressed data to callback
+            if (drec->super.callback(&d2) < 0) {
+                inflateEnd(&drec->stream);
+                drec->zlib_initialized = 0;
+                return -1;
+            }
 
             drec->stream.next_out = drec->buffer;
             drec->stream.avail_out = GZIP_BUF_SIZE;
@@ -100,29 +112,33 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             size_t len = GZIP_BUF_SIZE - drec->stream.avail_out;
 
             // Update CRC
-            drec->crc = crc32(drec->crc, drec->buffer, len);           
+            drec->crc = crc32(drec->crc, drec->buffer, len);
 
-            // Execute callback with available data
+            // Prepare data for callback
             htp_tx_data_t d2;
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = len;
-            // XXX Abort on error
-            drec->super.callback(&d2);
+            
+            // Send decompressed data to callback
+            if (drec->super.callback(&d2) < 0) {
+                inflateEnd(&drec->stream);
+                drec->zlib_initialized = 0;
+                return -1;
+            }
 
-            // TODO Handle trailer
-
-            // printf("## Zlib: Inflated %ld to %ld\n", drec->stream.total_in, drec->stream.total_out);
+            // TODO Handle trailer           
 
             return 1;
         }
 
         if (rc != Z_OK) {
-            printf("## inflate failed: %d\n", rc);
+            htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                    "GZip decompressor: inflate failed with %d", rc);
 
             inflateEnd(&drec->stream);
             drec->zlib_initialized = 0;
-            
+
             return -1;
         }
     }
@@ -130,13 +146,14 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
     return 1;
 }
 
-/**s
+/**
+ * Shut down gzip decompressor.
  *
+ * @param drec
  */
 static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
     if (drec == NULL) return;
 
-    // TODO End inflate
     if (drec->zlib_initialized) {
         inflateEnd(&drec->stream);
         drec->zlib_initialized = 0;
@@ -147,9 +164,11 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
 }
 
 /**
+ * Initialize gzip decompressor.
  *
+ * @param connp
  */
-htp_decompressor_t * htp_gzip_decompressor_create() {
+htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp) {
     htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));
     if (drec == NULL) return NULL;
 
@@ -164,11 +183,13 @@ htp_decompressor_t * htp_gzip_decompressor_create() {
 
     int rc = inflateInit2(&drec->stream, GZIP_WINDOW_SIZE);
     if (rc != Z_OK) {
-        // TODO Message
-        printf("## Failed inflateInit2: %d", rc);
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+            "GZip decompressor: inflateInit2 failed with code %d", rc);
+
         inflateEnd(&drec->stream);
         free(drec->buffer);
         free(drec);
+
         return NULL;
     }
 

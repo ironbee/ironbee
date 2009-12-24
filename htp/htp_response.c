@@ -129,7 +129,6 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
                 // Invalid chunk length
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Response chunk encoding: Invalid chunk length: %i", connp->out_chunked_length);
-
                 return HTP_ERROR;
             }
 
@@ -249,14 +248,17 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // Check for compression
     htp_header_t *ce = table_getc(connp->out_tx->response_headers, "content-encoding");
     if (ce != NULL) {
-        // XXX Improve detection
-        // XXX How would a Content-Range header affect us?
-        if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {            
-            connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
-
-            connp->out_tx->response_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create();
-            // TODO Check for NULL
-            connp->out_tx->response_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
+        // TODO Improve detection
+        // TODO How would a Content-Range header affect us?
+        if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {
+            connp->out_tx->response_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp);
+            if (connp->out_tx->response_decompressor != NULL) {
+                connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
+                connp->out_tx->response_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
+            } else {
+                // No need to do anything; the error will have already
+                // been reported by the failed decompressor.
+            }
         }
     }
 
@@ -556,6 +558,12 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // means we've just completed parsing a response. We need
     // to run the final hook in a transaction and start over.
     if (connp->out_tx != NULL) {
+        // Shut down the decompressor, if we've used one
+        if (connp->out_tx->response_decompressor != NULL) {
+            connp->out_tx->response_decompressor->destroy(connp->out_tx->response_decompressor);
+            connp->out_tx->response_decompressor = NULL;
+        }
+
         // Run hook RESPONSE
         if (hook_run_all(connp->cfg->hook_response, connp) != HOOK_OK) {
             return HTP_ERROR;
