@@ -65,6 +65,20 @@ AM_SANITY_CHECK
 
 
 dnl -----------------------------------------------
+dnl Checks for libs.
+dnl -----------------------------------------------
+AC_CHECK_HEADER(zlib.h,,[AC_ERROR(zlib.h not found ...)])
+ZLIB=""
+AC_CHECK_LIB(z, inflate,, ZLIB="no")
+if test "$ZLIB" = "no"; then
+echo
+echo "   ERROR! zlib library not found"
+echo
+exit 1
+fi
+
+
+dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
 
