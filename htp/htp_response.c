@@ -128,7 +128,7 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             } else {
                 // Invalid chunk length
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Response chunk encoding: Invalid chunk length: %i", connp->out_chunked_length);
+                    "Response chunk encoding: Invalid chunk length: %d", connp->out_chunked_length);
                 return HTP_ERROR;
             }
 
@@ -630,10 +630,10 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // Return if the connection has had a fatal error
     if (connp->out_status != STREAM_STATE_OPEN) {
         // We allow calls that allow the parser to finalize their work
-        if (!(connp->out_status == STREAM_STATE_CLOSED) && (len == 0)) {
+        if (!((connp->out_status == STREAM_STATE_CLOSED) && (len == 0))) {
             return STREAM_STATE_ERROR;
         }
-    }
+    }   
 
     // Store the current chunk information
     connp->out_timestamp = timestamp;

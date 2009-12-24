@@ -107,7 +107,6 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
                 // Invalid chunk length
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Request chunk encoding: Invalid chunk length");
-
                 return HTP_ERROR;
             }
 
@@ -258,7 +257,8 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // HTTP/1.1 requires host information in the headers
         if (connp->in_tx->request_protocol_number >= HTTP_1_1) {
             connp->in_tx->flags |= HTP_HOST_MISSING;
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information in request headers required by HTTP/1.1");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                "Host information in request headers required by HTTP/1.1");
         }
     } else {
         // Host information available in the headers
@@ -383,7 +383,8 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 if (connp->in_header_line_index == -1) {
                     if (!(connp->in_tx->flags & HTP_INVALID_FOLDING)) {
                         connp->in_tx->flags |= HTP_INVALID_FOLDING;
-                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid request field folding");
+                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                            "Invalid request field folding");
                     }
                 }
             }
@@ -617,7 +618,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // Return if the connection has had a fatal error
     if (connp->in_status != STREAM_STATE_OPEN) {
         // We allow calls that allow the parser to finalize their work
-        if (!(connp->in_status == STREAM_STATE_CLOSED) && (len == 0)) {
+        if (!((connp->out_status == STREAM_STATE_CLOSED) && (len == 0))) {
             return STREAM_STATE_ERROR;
         }
     }

@@ -702,8 +702,7 @@ int main(int argc, char** argv) {
     htp_config_register_response(cfg, callback_response);
 
     htp_config_register_log(cfg, callback_log);
-
-    /*
+    
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -715,11 +714,11 @@ int main(int argc, char** argv) {
     RUN_TEST(test_multi_packet_request_head, cfg);    
     RUN_TEST(test_response_stream_closure, cfg);
     RUN_TEST(test_host_in_headers, cfg);        
-    RUN_TEST(test_connect, cfg);
-    */
-
-    //RUN_TEST(test_compressed_response_gzip_ct, cfg);
+    RUN_TEST(test_connect, cfg);    
+    RUN_TEST(test_compressed_response_gzip_ct, cfg);
     RUN_TEST(test_compressed_response_gzip_chunked, cfg);
+
+    //RUN_TEST(test_misc, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
