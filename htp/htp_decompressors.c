@@ -42,7 +42,7 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             // to copy some data into our internal header buffer.
 
             // How many bytes do we need?
-            int copylen = 10 - drec->header_len;
+            size_t copylen = 10 - drec->header_len;
 
             // Is there enough in input?
             if (copylen > d->len) copylen = d->len;

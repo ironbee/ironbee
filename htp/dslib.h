@@ -34,7 +34,7 @@
     size_t (*size)(list_t *); \
     void (*iterator_reset)(list_t *); \
     void *(*iterator_next)(list_t *); \
-    void (*destroy)(list_t *);
+    void (*destroy)(list_t *)
 
 typedef struct list_t list_t;
 typedef struct list_array_t list_array_t;
@@ -62,30 +62,30 @@ struct list_linked_t {
 struct list_array_t {
     LIST_COMMON;
 
-    int first;
-    int last;
-    int max_size;
-    int current_size;
+    size_t first;
+    size_t last;
+    size_t max_size;
+    size_t current_size;
     void **elements;
 
     size_t iterator_index;
 };
 
 list_t *list_linked_create(void);
-list_t *list_array_create(int size);
+list_t *list_array_create(size_t size);
 
 struct table_t {
     list_t *list;
 };
 
-table_t *table_create(int size);
+table_t *table_create(size_t size);
      int table_add(table_t *, bstr *, void *);
     void table_set(table_t *, bstr *, void *);
    void *table_get(table_t *, bstr *);
    void *table_getc(table_t *, char *);
     void table_iterator_reset(table_t *);
    bstr *table_iterator_next(table_t *, void **);
-     int table_size(table_t *t);
+  size_t table_size(table_t *t);
     void table_destroy(table_t *);
     void table_clear(table_t *);
 

@@ -63,7 +63,7 @@ bstr *bstr_add_cstr(bstr *destination, char *source) {
  * @param len
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_mem(bstr *destination, unsigned char *data, size_t len) {
+bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {
     if (bstr_size(destination) < bstr_len(destination) + len) {
         destination = bstr_expand(destination, bstr_len(destination) + len);
         if (destination == NULL) return NULL;
@@ -115,7 +115,7 @@ bstr *bstr_expand(bstr *s, size_t newsize) {
  * @param data
  * @return new bstring
  */
-bstr *bstr_cstrdup(unsigned char *data) {
+bstr *bstr_cstrdup(char *data) {
     return bstr_memdup(data, strlen(data));
 }
 
@@ -126,7 +126,7 @@ bstr *bstr_cstrdup(unsigned char *data) {
  * @param len
  * @return new bstring
  */
-bstr *bstr_memdup(unsigned char *data, size_t len) {
+bstr *bstr_memdup(char *data, size_t len) {
     bstr *b = bstr_alloc(len);
     if (b == NULL) return NULL;
     memcpy(bstr_ptr(b), data, len);
@@ -169,9 +169,9 @@ bstr *bstr_strdup_ex(bstr *b, size_t offset, size_t len) {
  * @param len
  * @return new NUL-terminated string
  */
-char *bstr_memtocstr(unsigned char *data, size_t len) {
+char *bstr_memtocstr(char *data, size_t len) {
     // Count how many NUL bytes we have in the string.
-    int i, nulls = 0;
+    size_t i, nulls = 0;
     for (i = 0; i < len; i++) {
         if (data[i] == '\0') {
             nulls++;
@@ -222,7 +222,7 @@ int bstr_chr(bstr *b, int c) {
     char *data = bstr_ptr(b);
     size_t len = bstr_len(b);
 
-    int i = 0;
+    size_t i = 0;
     while (i < len) {
         if (data[i] == c) {
             return i;
@@ -266,7 +266,7 @@ int bstr_rchr(bstr *b, int c) {
  * @param l2
  * @return 0 if the memory regions are identical, -1 or +1 if they're not
  */
-int bstr_cmp_ex(unsigned char *s1, size_t l1, unsigned char *s2, size_t l2) {
+int bstr_cmp_ex(char *s1, size_t l1, char *s2, size_t l2) {
     size_t p1 = 0, p2 = 0;
 
     while ((p1 < l1) && (p2 < l2)) {
@@ -320,10 +320,10 @@ int bstr_cmp(bstr *b1, bstr *b2) {
 bstr *bstr_tolowercase(bstr *b) {
     if (b == NULL) return NULL;
 
-    char *data = bstr_ptr(b);
+    unsigned char *data = (unsigned char *)bstr_ptr(b);
     size_t len = bstr_len(b);
 
-    int i = 0;
+    size_t i = 0;
     while (i < len) {
         data[i] = tolower(data[i]);
         i++;
@@ -348,9 +348,9 @@ bstr *bstr_dup_lower(bstr *b) {
 int bstr_util_memtoip(char *data, size_t len, int base, size_t *lastlen) {
     int rval = 0, tval = 0, tflag = 0;
 
-    int i = *lastlen = 0;
+    size_t i = *lastlen = 0;
     for (i = 0; i < len; i++) {
-        unsigned int d = data[i];
+        int d = data[i];
 
         *lastlen = i;
 
@@ -459,16 +459,15 @@ int bstr_indexofc_nocase(bstr *haystack, char *needle) {
  * @return
  */
 int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
-    char *data = bstr_ptr(haystack);
+    unsigned char *data = (unsigned char *)bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
-    int i, j;
+    size_t i, j;
 
     // TODO Is an optimisation here justified?
     //      http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
-
-    // TODO No need to inspect the last len2 - 1 bytes
+    
     for (i = 0; i < len; i++) {
-        int k = i;
+        size_t k = i;
 
         for (j = 0; ((j < len2) && (k < len)); j++) {
             if (data[k++] != data2[j]) break;
@@ -492,16 +491,16 @@ int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
  * @return
  */
 int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
-    char *data = bstr_ptr(haystack);
+    unsigned char *data = (unsigned char *)bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
-    int i, j;
+    size_t i, j;
 
     // TODO No need to inspect the last len2 - 1 bytes
     for (i = 0; i < len; i++) {
-        int k = i;
+        size_t k = i;
 
         for (j = 0; ((j < len2) && (k < len)); j++) {
-            if (toupper(data[k++]) != toupper(data2[j])) break;
+            if (toupper(data[k++]) != toupper((unsigned char)data2[j])) break;
         }
 
         if ((k - i) == len2) {
@@ -544,8 +543,8 @@ void bstr_len_adjust(bstr *s, size_t newlen) {
  * @param pos
  * @return the character, or -1 if the bstring is too short
  */
-unsigned char bstr_char_at(bstr *s, size_t pos) {
-    unsigned char *data = bstr_ptr(s);
+char bstr_char_at(bstr *s, size_t pos) {
+    unsigned char *data = (unsigned char *)bstr_ptr(s);
     size_t len = bstr_len(s);
 
     if (pos > len) return -1;

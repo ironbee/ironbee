@@ -54,6 +54,11 @@ VERSION=$GENERIC_VERSION
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
+AC_ARG_ENABLE(debug, [ --enable-debug  Enable debug output], [ enable_debug=yes ])
+if test "$enable_debug" = "yes"; then
+    CFLAGS="${CFLAGS} -DHTP_DEBUG"
+    echo "Debug mode enabled"
+fi
 
 dnl -----------------------------------------------
 dnl Checks for programs.
@@ -71,10 +76,10 @@ AC_CHECK_HEADER(zlib.h,,[AC_ERROR(zlib.h not found ...)])
 ZLIB=""
 AC_CHECK_LIB(z, inflate,, ZLIB="no")
 if test "$ZLIB" = "no"; then
-echo
-echo "   ERROR! zlib library not found"
-echo
-exit 1
+    echo
+    echo "   ERROR! zlib library not found"
+    echo
+    exit 1
 fi
 
 

@@ -9,9 +9,9 @@
  */
 int htp_parse_response_line_generic(htp_connp_t *connp) {
     htp_tx_t *tx = connp->out_tx;
-    unsigned char *data = bstr_ptr(tx->response_line);
+    unsigned char *data = (unsigned char *)bstr_ptr(tx->response_line);
     size_t len = bstr_len(tx->response_line);
-    int pos = 0;   
+    size_t pos = 0;
 
     // The request method starts at the beginning of the
     // line and ends with the first whitespace character.
@@ -19,7 +19,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->response_protocol = bstr_memdup(data, pos);
+    tx->response_protocol = bstr_memdup((char *)data, pos);
     tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);
 
     // Ignore whitespace after response protocol
@@ -34,7 +34,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->response_status = bstr_memdup(data + start, pos - start);
+    tx->response_status = bstr_memdup((char *)data + start, pos - start);
     tx->response_status_number = htp_parse_status(tx->response_status);
 
     // Ignore whitespace that follows
@@ -42,7 +42,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->response_message = bstr_memdup(data + pos, len - pos);
+    tx->response_message = bstr_memdup((char *)data + pos, len - pos);
     
     return HTP_OK;
 }
@@ -63,7 +63,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
     name_start = 0;
 
     // Look for the colon
-    int colon_pos = 0;
+    size_t colon_pos = 0;
     while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
 
     if (colon_pos == len) {
@@ -132,7 +132,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
     }
 
     // Check that the header name is a token
-    int i = name_start;
+    size_t i = name_start;
     while (i < name_end) {
         if (!htp_is_token(data[i])) {
             h->flags |= HTP_FIELD_INVALID;

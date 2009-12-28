@@ -2,14 +2,28 @@
 #ifndef _HTP_H
 #define	_HTP_H
 
+typedef struct htp_cfg_t htp_cfg_t;
+typedef struct htp_conn_t htp_conn_t;
+typedef struct htp_connp_t htp_connp_t;
+typedef struct htp_header_t htp_header_t;
+typedef struct htp_header_line_t htp_header_line_t;
+typedef struct htp_log_t htp_log_t;
+typedef struct htp_tx_data_t htp_tx_data_t;
+typedef struct htp_tx_t htp_tx_t;
+typedef struct htp_uri_t htp_uri_t;
+typedef struct htp_urldecoder_t htp_urldecoder_t;
+
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bstr.h"
 #include "dslib.h"
 #include "hooks.h"
+#include "htp_decompressors.h"
 
 // -- Defines -------------------------------------------------------------------------------------
 
@@ -249,18 +263,6 @@ if ((X)->out_line_len < (X)->out_line_size) { \
 typedef uint32_t htp_time_t;
 
 // -- Data structures -----------------------------------------------------------------------------
-
-typedef struct htp_cfg_t htp_cfg_t;
-typedef struct htp_conn_t htp_conn_t;
-typedef struct htp_connp_t htp_connp_t;
-typedef struct htp_decompressor_t htp_decompressor_t;
-typedef struct htp_header_t htp_header_t;
-typedef struct htp_header_line_t htp_header_line_t;
-typedef struct htp_log_t htp_log_t;
-typedef struct htp_tx_data_t htp_tx_data_t;
-typedef struct htp_tx_t htp_tx_t;
-typedef struct htp_uri_t htp_uri_t;
-typedef struct htp_urldecoder_t htp_urldecoder_t;
 
 struct htp_cfg_t {
     /** Hard field limit length. If the parser encounters a line that's longer
@@ -562,7 +564,7 @@ struct htp_connp_t {
      *  used to match responses to requests. The expectation is that for every
      *  response there will already be a transaction (request) waiting.
      */
-    int out_next_tx_index;
+    size_t out_next_tx_index;
 
     /** The time when the last response data chunk was received. */
     htp_time_t out_timestamp;
@@ -610,7 +612,7 @@ struct htp_connp_t {
      * The length of the current response body as presented in the
      * Content-Length response header.
      */
-    size_t out_content_length;
+    long int out_content_length;
 
     /** The remaining length of the current response body, if known. */
     size_t out_body_data_left;
@@ -622,12 +624,6 @@ struct htp_connp_t {
 
     /** Current response parser state. */
     int (*out_state)(htp_connp_t *);
-};
-
-struct htp_decompressor_t {
-    int (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
-    int (*callback)(htp_tx_data_t *);
-    void (*destroy)(htp_decompressor_t *);
 };
 
 struct htp_log_t {
@@ -1003,10 +999,10 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
 // Parsing functions
 
 int htp_parse_request_line_generic(htp_connp_t *connp);
-int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len);
+int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
 int htp_process_request_header_generic(htp_connp_t *);
 
-int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, char *data, size_t len);
+int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
 int htp_parse_request_line_apache_2_2(htp_connp_t *connp);
 int htp_process_request_header_apache_2_2(htp_connp_t *);
 
@@ -1016,7 +1012,7 @@ int htp_process_response_header_generic(htp_connp_t *connp);
 // Parser states
 
 int htp_connp_REQ_IDLE(htp_connp_t *connp);
-int htp_connp_REQ_FIRST_LINE(htp_connp_t *connp);
+int htp_connp_REQ_LINE(htp_connp_t *connp);
 int htp_connp_REQ_PROTOCOL(htp_connp_t *connp);
 int htp_connp_REQ_HEADERS(htp_connp_t *connp);
 int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp);
@@ -1024,17 +1020,17 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
-int htp_connp_REQ_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
+//int htp_connp_REQ_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
 
 int htp_connp_RES_IDLE(htp_connp_t *connp);
-int htp_connp_RES_FIRST_LINE(htp_connp_t *connp);
+int htp_connp_RES_LINE(htp_connp_t *connp);
 int htp_connp_RES_HEADERS(htp_connp_t *connp);
 int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp);
 int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
+//int htp_connp_RES_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
 
 // Utility functions
 
@@ -1048,12 +1044,12 @@ int htp_is_space(int c);
 
 int htp_parse_protocol(bstr *protocol);
 
-int htp_is_line_empty(char *data, int len);
-int htp_is_line_whitespace(char *data, int len);
+int htp_is_line_empty(unsigned char *data, size_t len);
+int htp_is_line_whitespace(unsigned char *data, size_t len);
 
-int htp_connp_is_line_folded(htp_connp_t *connp, char *data, size_t len);
-int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len);
-int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len);
+int htp_connp_is_line_folded(unsigned char *data, size_t len);
+int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len);
+int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len);
 
 int htp_parse_uri(bstr *input, htp_uri_t **uri);
 int htp_parse_authority(htp_connp_t *connp, bstr *input, htp_uri_t **uri);
@@ -1063,20 +1059,26 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
 
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
 
-int htp_uriencoding_normalize_inplace(bstr *s);
+void htp_uriencoding_normalize_inplace(bstr *s);
 
-int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
-int htp_normalize_uri_path_inplace(bstr *s);
+ int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
+void htp_normalize_uri_path_inplace(bstr *s);
 
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
-void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
+void htp_utf8_validate_path(htp_tx_t *tx, bstr *path);
 
 int htp_parse_content_length(bstr *b);
-int htp_parse_chunked_length(char *data, size_t len);
-int htp_parse_positive_integer_whitespace(char *data, size_t len, int base);
+int htp_parse_chunked_length(unsigned char *data, size_t len);
+int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base);
+int htp_parse_status(bstr *status);
 
 void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
 void htp_print_log_stderr(htp_log_t *log);
+
+void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len);
+
+char *htp_connp_in_state_as_string(htp_connp_t *connp);
+char *htp_tx_progress_as_string(htp_tx_t *tx);
 
 #endif	/* _HTP_H */
 

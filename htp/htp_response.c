@@ -238,7 +238,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // Ignore any response headers set
         table_clear(connp->out_tx->response_headers);
 
-        connp->out_state = htp_connp_RES_FIRST_LINE;
+        connp->out_state = htp_connp_RES_LINE;
         connp->out_tx->progress = TX_PROGRESS_RES_LINE;
         connp->out_tx->seen_100continue++;
 
@@ -433,7 +433,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             htp_chomp(connp->out_line, &connp->out_line_len);
 
             // Check for header folding
-            if (htp_connp_is_line_folded(connp, connp->out_line, connp->out_line_len) == 0) {
+            if (htp_connp_is_line_folded(connp->out_line, connp->out_line_len) == 0) {
                 // New header line               
 
                 // Parse previous header, if any
@@ -459,7 +459,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             }
 
             // Add the raw header line to the list
-            connp->out_header_line->line = bstr_memdup(connp->out_line, connp->out_line_len);
+            connp->out_header_line->line = bstr_memdup((char *) connp->out_line, connp->out_line_len);
             list_add(connp->out_tx->response_header_lines, connp->out_header_line);
             connp->out_header_line = NULL;
 
@@ -480,7 +480,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_FIRST_LINE(htp_connp_t *connp) {
+int htp_connp_RES_LINE(htp_connp_t *connp) {
     for (;;) {
         // Get one byte
         OUT_COPY_BYTE_OR_RETURN(connp);
@@ -522,7 +522,7 @@ int htp_connp_RES_FIRST_LINE(htp_connp_t *connp) {
                 bstr_free(connp->out_tx->response_message);
             }
 
-            connp->out_tx->response_line = bstr_memdup(connp->out_line, connp->out_line_len);
+            connp->out_tx->response_line = bstr_memdup((char *) connp->out_line, connp->out_line_len);
 
             // Parse response line
             if (connp->cfg->parse_response_line(connp) != HTP_OK) {
@@ -610,7 +610,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
         connp->out_state = htp_connp_RES_BODY_IDENTITY;
         connp->out_tx->progress = TX_PROGRESS_RES_BODY;
     } else {
-        connp->out_state = htp_connp_RES_FIRST_LINE;
+        connp->out_state = htp_connp_RES_LINE;
         connp->out_tx->progress = TX_PROGRESS_RES_LINE;
     }
 
@@ -627,13 +627,17 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
  * @return HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed
  */
 int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, data, len);
+#endif
+
     // Return if the connection has had a fatal error
     if (connp->out_status != STREAM_STATE_OPEN) {
         // We allow calls that allow the parser to finalize their work
         if (!((connp->out_status == STREAM_STATE_CLOSED) && (len == 0))) {
             return STREAM_STATE_ERROR;
         }
-    }   
+    }
 
     // Store the current chunk information
     connp->out_timestamp = timestamp;

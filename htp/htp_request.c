@@ -315,6 +315,10 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
+#ifdef HTP_DEBUG
+            fprint_raw_data(stderr, __FUNCTION__, connp->in_line, connp->in_line_len);
+#endif
+
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->in_line, connp->in_line_len)) {
                 // Terminator line
@@ -363,7 +367,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             htp_chomp(connp->in_line, &connp->in_line_len);
 
             // Check for header folding
-            if (htp_connp_is_line_folded(connp, connp->in_line, connp->in_line_len) == 0) {
+            if (htp_connp_is_line_folded(connp->in_line, connp->in_line_len) == 0) {
                 // New header line
 
                 // Parse previous header, if any
@@ -390,7 +394,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             }
 
             // Add the raw header line to the list
-            connp->in_header_line->line = bstr_memdup(connp->in_line, connp->in_line_len);
+            connp->in_header_line->line = bstr_memdup((char *) connp->in_line, connp->in_line_len);
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 
@@ -451,6 +455,10 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
+#ifdef HTP_DEBUG
+            fprint_raw_data(stderr, __FUNCTION__, connp->in_line, connp->in_line_len);
+#endif
+
             // Is this a line that should be ignored?
             if (htp_connp_is_line_ignorable(connp, connp->in_line, connp->in_line_len)) {
                 // We have an empty/whitespace line, which we'll note, ignore and move on
@@ -467,7 +475,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
             // Process request line
 
             htp_chomp(connp->in_line, &connp->in_line_len);
-            connp->in_tx->request_line = bstr_memdup(connp->in_line, connp->in_line_len);
+            connp->in_tx->request_line = bstr_memdup((char *) connp->in_line, connp->in_line_len);
 
             // Parse request line
             if (connp->cfg->parse_request_line(connp) != HTP_OK) {
@@ -615,6 +623,11 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
  * @return HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
+#ifdef HTP_DEBUG
+    fprintf(stderr, "htp_connp_req_data(connp->in_status %x)\n", connp->in_status);
+    fprint_raw_data(stderr, __FUNCTION__, data, len);
+#endif    
+
     // Return if the connection has had a fatal error
     if (connp->in_status != STREAM_STATE_OPEN) {
         // We allow calls that allow the parser to finalize their work
@@ -637,6 +650,12 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // will process a request, each pointing to the next
     // processor that needs to run.
     for (;;) {
+#ifdef HTP_DEBUG
+        fprintf(stderr, "htp_connp_req_data: state=%s, progress=%s\n",
+            htp_connp_in_state_as_string(connp),
+            htp_tx_progress_as_string(connp->in_tx));
+#endif
+
         // Return if there's been an error
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll
@@ -656,3 +675,4 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         }
     }
 }
+

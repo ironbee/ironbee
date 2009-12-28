@@ -39,5 +39,5 @@ int htp_parse_protocol(bstr *protocol) {
  * @return Status code on success, or -1 on error.
  */
 int htp_parse_status(bstr *status) {
-    return htp_parse_positive_integer_whitespace(bstr_ptr(status), bstr_len(status), 10);
+    return htp_parse_positive_integer_whitespace((unsigned char *)bstr_ptr(status), bstr_len(status), 10);
 }

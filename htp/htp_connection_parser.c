@@ -1,6 +1,4 @@
 
-#include <stdlib.h>
-
 #include "htp.h"
 
 // NOTE The parser contains a lot of duplicated code. That is on purpose.

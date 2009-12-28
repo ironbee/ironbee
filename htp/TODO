@@ -2,7 +2,11 @@
 TODO
 ====
 
-- Add zlib dependency.
+- There's a function called "index" (variable name in dslib)
+
+- XXX What is the largest C-T we can handle?
+
+- Do not propagate connp user data to tx.
 
 - Implement htp_get_version().
 

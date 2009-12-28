@@ -494,9 +494,8 @@ int callback_request_headers(htp_connp_t *connp) {
 }
 
 int callback_request_body_data(htp_tx_data_t *d) {
-    char *str = bstr_memtocstr(d->data, d->len);
-    printf("-- Callback: request_body_data: [%s] %i %x\n", str, d->len, htp_tx_get_user_data(d->tx));
-    free(str);
+    printf("-- Callback: request_body_data\n");
+    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
 }
 
 int callback_request_trailer(htp_connp_t *connp) {
@@ -516,9 +515,8 @@ int callback_response_headers(htp_connp_t *connp) {
 }
 
 int callback_response_body_data(htp_tx_data_t *d) {
-    char *str = bstr_memtocstr(d->data, d->len);
-    printf("-- Callback: response_body_data: [%s] %i %x\n", str, d->len, htp_tx_get_user_data(d->tx));
-    free(str);
+    printf("-- Callback: response_body_data\n");
+    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
 }
 
 int callback_response_trailer(htp_connp_t *connp) {
@@ -711,10 +709,10 @@ int main(int argc, char** argv) {
     RUN_TEST(test_uri_normal, cfg);
     RUN_TEST(test_pipelined_connection, cfg);
     RUN_TEST(test_not_pipelined_connection, cfg);
-    RUN_TEST(test_multi_packet_request_head, cfg);    
+    RUN_TEST(test_multi_packet_request_head, cfg);
     RUN_TEST(test_response_stream_closure, cfg);
-    RUN_TEST(test_host_in_headers, cfg);        
-    RUN_TEST(test_connect, cfg);    
+    RUN_TEST(test_host_in_headers, cfg);
+    RUN_TEST(test_connect, cfg);
     RUN_TEST(test_compressed_response_gzip_ct, cfg);
     RUN_TEST(test_compressed_response_gzip_chunked, cfg);
 
@@ -846,7 +844,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
         memset(data, 0x2f, 10);
         tx->flags = 0;
         encode_utf8_2(data, i);
-        htp_utf8_validate_path(cfg, tx, path);
+        htp_utf8_validate_path(tx, path);
         if (tx->flags != HTP_PATH_UTF8_OVERLONG) {
             printf("#2 i %i data %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], tx->flags);
         }
@@ -856,7 +854,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
         memset(data, 0x2f, 10);
         tx->flags = 0;
         encode_utf8_3(data, i);
-        htp_utf8_validate_path(cfg, tx, path);
+        htp_utf8_validate_path(tx, path);
         if (tx->flags != HTP_PATH_UTF8_OVERLONG) {
             printf("#3 i %x data %x %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], (uint8_t) data[2], tx->flags);
         }
@@ -866,7 +864,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
         memset(data, 0x2f, 10);
         tx->flags = 0;
         encode_utf8_4(data, i);
-        htp_utf8_validate_path(cfg, tx, path);
+        htp_utf8_validate_path(tx, path);
         if ((i >= 0xff00) && (i <= 0xffff)) {
             if (tx->flags != (HTP_PATH_UTF8_OVERLONG | HTP_PATH_FULLWIDTH_EVASION)) {
                 printf("#4 i %x data %x %x %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], (uint8_t) data[2], (uint8_t) data[3], tx->flags);

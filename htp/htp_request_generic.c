@@ -10,7 +10,7 @@
  */
 int htp_process_request_header_generic(htp_connp_t *connp) {
     bstr *tempstr = NULL;
-    char *data = NULL;
+    unsigned char *data = NULL;
     size_t len = 0;
 
     // Create new header structure
@@ -32,7 +32,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
             return HTP_ERROR;
         }
 
-        data = bstr_ptr(hl->line);
+        data = (unsigned char *)bstr_ptr(hl->line);
         len = bstr_len(hl->line);
         hl->header = h;
     } else {
@@ -57,7 +57,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
             hl->header = h;
         }
 
-        data = bstr_ptr(tempstr);
+        data = (unsigned char *)bstr_ptr(tempstr);
     }
 
     // Now try to oparse the header
@@ -111,14 +111,14 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
  * @param len
  * @return HTP_OK or HTP_ERROR
  */
-int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len) {
+int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
 
     name_start = 0;
 
     // Look for the colon
-    int colon_pos = 0;
+    size_t colon_pos = 0;
     
     while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
     
@@ -189,7 +189,7 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, char *
     }
 
     // Check that the header name is a token
-    int i = name_start;
+    size_t i = name_start;
     while (i < name_end) {
         if (!htp_is_token(data[i])) {
             h->flags |= HTP_FIELD_INVALID;
@@ -206,8 +206,8 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, char *
     }
 
     // Now extract the name and the value
-    h->name = bstr_memdup(data + name_start, name_end - name_start);
-    h->value = bstr_memdup(data + value_start, value_end - value_start);
+    h->name = bstr_memdup((char *)data + name_start, name_end - name_start);
+    h->value = bstr_memdup((char *)data + value_start, value_end - value_start);
 
     return HTP_OK;
 }
@@ -220,9 +220,9 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, char *
  */
 int htp_parse_request_line_generic(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
-    unsigned char *data = bstr_ptr(tx->request_line);
+    unsigned char *data = (unsigned char *)bstr_ptr(tx->request_line);
     size_t len = bstr_len(tx->request_line);
-    int pos = 0;   
+    size_t pos = 0;
 
     // The request method starts at the beginning of the
     // line and ends with the first whitespace character.
@@ -232,7 +232,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
 
     // No, we don't care if the method is empty.
 
-    tx->request_method = bstr_memdup(data, pos);
+    tx->request_method = bstr_memdup((char *)data, pos);
     tx->request_method_number = htp_convert_method_to_number(tx->request_method);
 
     // Ignore whitespace after request method. The RFC allows
@@ -249,7 +249,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->request_uri = bstr_memdup(data + start, pos - start);
+    tx->request_uri = bstr_memdup((char *)data + start, pos - start);
 
     // Ignore whitespace after URI
     while ((pos < len) && (htp_is_space(data[pos]))) {
@@ -264,7 +264,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
     }
 
     // The protocol information spreads until the end of the line.
-    tx->request_protocol = bstr_memdup(data + pos, len - pos);
+    tx->request_protocol = bstr_memdup((char *)data + pos, len - pos);
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
 
     return HTP_OK;

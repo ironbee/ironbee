@@ -175,7 +175,7 @@ int htp_convert_method_to_number(bstr *method) {
  * @param len
  * @return 0 or 1
  */
-int htp_is_line_empty(char *data, int len) {
+int htp_is_line_empty(unsigned char *data, size_t len) {
     if ((len == 1) || ((len == 2) && (data[0] == CR))) {
         return 1;
     }
@@ -190,8 +190,8 @@ int htp_is_line_empty(char *data, int len) {
  * @param len
  * @return 0 or 1
  */
-int htp_is_line_whitespace(char *data, int len) {
-    int i;
+int htp_is_line_whitespace(unsigned char *data, size_t len) {
+    size_t i;
 
     for (i = 0; i < len; i++) {
         if (!isspace(data[i])) {
@@ -210,7 +210,7 @@ int htp_is_line_whitespace(char *data, int len) {
  * @return Content-Length as a number, or -1 on error.
  */
 int htp_parse_content_length(bstr *b) {
-    return htp_parse_positive_integer_whitespace(bstr_ptr(b), bstr_len(b), 10);
+    return htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(b), bstr_len(b), 10);
 }
 
 /**
@@ -221,7 +221,7 @@ int htp_parse_content_length(bstr *b) {
  * @param len
  * @return Chunk length, or -1 on error.
  */
-int htp_parse_chunked_length(char *data, size_t len) {
+int htp_parse_chunked_length(unsigned char *data, size_t len) {
     return htp_parse_positive_integer_whitespace(data, len, 16);
 }
 
@@ -234,14 +234,14 @@ int htp_parse_chunked_length(char *data, size_t len) {
  * @param base
  * @return The parsed number, or -1 on error.
  */
-int htp_parse_positive_integer_whitespace(char *data, size_t len, int base) {
+int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
     size_t pos = 0;
 
     // Ignore LWS before
     while ((pos < len) && (htp_is_lws(data[pos]))) pos++;
     if (pos == len) return -1001;
 
-    int r = bstr_util_memtoip(data + pos, len - pos, base, &pos);
+    int r = bstr_util_memtoip((char *) data + pos, len - pos, base, &pos);
     if (r < 0) return r;
 
     // Ignore LWS after
@@ -319,7 +319,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     // ...and add it to the list
     if (connp->in_tx != NULL) {
         log->tx = connp->in_tx;
-        
+
         list_add(connp->in_tx->messages, log);
 
         // Keep track of the highest log level encountered
@@ -348,7 +348,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
  * @param len
  * @return 0 or 1
  */
-int htp_connp_is_line_folded(htp_connp_t *connp, char *data, size_t len) {
+int htp_connp_is_line_folded(unsigned char *data, size_t len) {
     // Is there a line?
     if (len == 0) {
         return -1;
@@ -366,7 +366,7 @@ int htp_connp_is_line_folded(htp_connp_t *connp, char *data, size_t len) {
  * @param len
  * @return 0 or 1
  */
-int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len) {
+int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len) {
     // Is this the end of request headers?
     switch (connp->cfg->spersonality) {
         case HTP_SERVER_IIS_5_1:
@@ -395,7 +395,7 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, char *data, size_t len) {
  * @param len
  * @return 0 or 1
  */
-int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len) {
+int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len) {
     return htp_connp_is_line_terminator(connp, data, len);
 }
 
@@ -407,7 +407,7 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, char *data, size_t len) {
  * @param uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
-int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {    
+int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
     int colon = bstr_chr(authority, ':');
     if (colon == -1) {
         // Hostname alone
@@ -419,11 +419,11 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
         // Hostname
         (*uri)->hostname = bstr_strdup_ex(authority, 0, colon);
         // TODO Handle whitespace around hostname
-        htp_normalize_hostname_inplace((*uri)->hostname);       
+        htp_normalize_hostname_inplace((*uri)->hostname);
 
         // Port
-        int port = htp_parse_positive_integer_whitespace(bstr_ptr(authority) + colon + 1,
-            bstr_len(authority) - colon - 1, 10);
+        int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(authority)
+            + colon + 1, bstr_len(authority) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
@@ -628,7 +628,7 @@ uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
     // TODO Optimize lookup
 
     for (;;) {
-        uint32_t x = p[0] << 8 + p[1];
+        uint32_t x = (p[0] << 8) + p[1];
 
         if (x == 0) {
             return cfg->path_replacement_char;
@@ -654,7 +654,7 @@ uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
  * @param path
  */
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
-    uint8_t *data = bstr_ptr(path);
+    uint8_t *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
     size_t rpos = 0;
     size_t wpos = 0;
@@ -768,8 +768,8 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
  * @param tx
  * @param path
  */
-void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
-    unsigned char *data = bstr_ptr(path);
+void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
+    unsigned char *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
     size_t rpos = 0;
     size_t charpos = 0;
@@ -865,7 +865,7 @@ void htp_utf8_validate_path(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
  * @param data
  * @return decoded byte
  */
-int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
+int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
     int r = cfg->path_replacement_char;
@@ -927,7 +927,7 @@ int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, char *data) {
  * @param path
  */
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
-    unsigned char *data = bstr_ptr(path);
+    unsigned char *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
 
     // TODO I don't like this function. It's too complex.
@@ -1222,7 +1222,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     // Port
     if (incomplete->port != NULL) {
         // Parse provided port
-        normalized->port_number = htp_parse_positive_integer_whitespace(bstr_ptr(incomplete->port),
+        normalized->port_number = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(incomplete->port),
             bstr_len(incomplete->port), 10);
         // We do not report failed port parsing, but leave
         // to upstream to detect and act upon it.
@@ -1243,7 +1243,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
             htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
         } else {
             // Only validate path as a UTF-8 stream
-            htp_utf8_validate_path(connp->cfg, connp->in_tx, normalized->path);
+            htp_utf8_validate_path(connp->in_tx, normalized->path);
         }
 
         // RFC normalization
@@ -1308,7 +1308,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         htp_normalize_hostname_inplace(parsed_uri->hostname);
 
         // Port
-        int port = htp_parse_positive_integer_whitespace(bstr_ptr(hostname) + colon + 1,
+        int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(hostname) + colon + 1,
             bstr_len(hostname) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
@@ -1349,8 +1349,8 @@ int htp_is_uri_unreserved(unsigned char c) {
  *
  * @param s
  */
-int htp_uriencoding_normalize_inplace(bstr *s) {
-    char *data = bstr_ptr(s);
+void htp_uriencoding_normalize_inplace(bstr *s) {
+    unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
     size_t rpos = len;
@@ -1475,7 +1475,7 @@ int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive,
  *
  * @param s
  */
-int htp_normalize_uri_path_inplace(bstr *s) {
+void htp_normalize_uri_path_inplace(bstr *s) {
     char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -1568,4 +1568,111 @@ int htp_normalize_uri_path_inplace(bstr *s) {
     }
 
     bstr_len_adjust(s, wpos);
+}
+
+/**
+ *
+ */
+void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len) {
+    char buf[160];
+    size_t offset = 0;
+
+    fprintf(stream, "\n%s: data %x len %d (0x%x)\n", name, (unsigned int) data, len, len);
+
+    while (offset < len) {
+        size_t i;
+
+        sprintf(buf, "%08x", offset);
+        strcat(buf + strlen(buf), "  ");
+
+        i = 0;
+        while (i < 8) {
+            if (offset + i < len) {
+                sprintf(buf + strlen(buf), "%02x ", data[offset + i]);
+            } else {
+                strcat(buf + strlen(buf), "   ");
+            }
+
+            i++;
+        }
+
+        strcat(buf + strlen(buf), " ");
+
+        i = 8;
+        while (i < 16) {
+            if (offset + i < len) {
+                sprintf(buf + strlen(buf), "%02x ", data[offset + i]);
+            } else {
+                strcat(buf + strlen(buf), "   ");
+            }
+
+            i++;
+        }
+
+        strcat(buf + strlen(buf), " |");
+
+        i = 0;
+        char *p = buf + strlen(buf);
+        while ((offset + i < len) && (i < 16)) {
+            int c = data[offset + i];
+
+            if (isprint(c)) {
+                *p++ = c;
+            } else {
+                *p++ = '.';
+            }
+
+            i++;
+        }
+
+        *p++ = '|';
+        *p++ = '\n';
+        *p++ = '\0';
+
+        fprintf(stream, "%s", buf);
+        offset += 16;
+    }
+
+    fprintf(stream, "\n");
+}
+
+
+/*
+int htp_connp_RES_IDLE(htp_connp_t *connp);
+int htp_connp_RES_LINE(htp_connp_t *connp);
+int htp_connp_RES_HEADERS(htp_connp_t *connp);
+int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp);
+int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp);
+int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
+int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
+int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
+int htp_connp_RES_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
+ */
+
+/**
+ *
+ */
+char *htp_connp_in_state_as_string(htp_connp_t *connp) {
+    if (connp == NULL) return "NULL";
+
+    if (connp->in_state == htp_connp_REQ_IDLE) return "REQ_IDLE";
+    if (connp->in_state == htp_connp_REQ_LINE) return "REQ_FIRST_LINE";
+    if (connp->in_state == htp_connp_REQ_PROTOCOL) return "REQ_PROTOCOL";
+    if (connp->in_state == htp_connp_REQ_HEADERS) return "REQ_HEADERS";
+    if (connp->in_state == htp_connp_REQ_BODY_DETERMINE) return "REQ_BODY_DETERMINE";
+    if (connp->in_state == htp_connp_REQ_BODY_IDENTITY) return "REQ_BODY_IDENTITY";
+    if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_LENGTH) return "REQ_BODY_CHUNKED_LENGTH";
+    if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA) return "REQ_BODY_CHUNKED_DATA";
+    if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA_END) return "REQ_BODY_CHUNKED_DATA_END";
+    //if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_TRAILER) return "REQ_BODY_CHUNKED_TRAILER";
+
+    return "UNKNOWN";
+}
+
+/**
+ *
+ */
+char *htp_tx_progress_as_string(htp_tx_t *tx) {
+    if (tx == NULL) return "NULL";
+    return "UNKOWN";
 }

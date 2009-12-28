@@ -89,7 +89,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
 int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx) {
     if ((tx == NULL)||(conn == NULL)) return 0;
 
-    int i = 0;
+    unsigned int i = 0;
     for (i = 0; i < list_size(conn->transactions); i++) {
         htp_tx_t *etx = list_get(conn->transactions, i);
         if (tx == etx) {

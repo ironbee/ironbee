@@ -2,7 +2,7 @@
 #include "htp.h"
 
 /**
- * Creates a new transaction.
+ * Creates a new transaction structure.
  *
  * @param cfg
  * @param is_cfg_shared
@@ -140,7 +140,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
 }
 
 /**
- * Returns the user data associated with this transaction.
+ * Returns the user data associated with this transaction. 
  *
  * @param tx
  * @return A pointer to user data or NULL

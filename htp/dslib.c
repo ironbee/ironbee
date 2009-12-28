@@ -204,7 +204,7 @@ static void *list_array_get(list_t *_l, size_t index) {
 
     if (index + 1 > l->current_size) return NULL;
 
-    int i = l->first;
+    size_t i = l->first;
     r = l->elements[l->first];
 
     while (index--) {
@@ -232,7 +232,7 @@ static int list_array_replace(list_t *_l, size_t index, void *element) {
 
     if (index + 1 > l->current_size) return 0;
 
-    int i = l->first;    
+    size_t i = l->first;
 
     while (index--) {
         if (++i == l->max_size) {
@@ -289,7 +289,7 @@ void list_array_destroy(list_array_t *l) {
  * @param size
  * @return newly allocated list (list_t)
  */
-list_t *list_array_create(int size) {
+list_t *list_array_create(size_t size) {
     // Allocate the list structure
     list_array_t *q = calloc(1, sizeof (list_array_t));
     if (q == NULL) return NULL;
@@ -326,7 +326,7 @@ list_t *list_array_create(int size) {
  * @param size
  * @return newly created table_t
  */
-table_t *table_create(int size) {
+table_t *table_create(size_t size) {
     table_t *t = calloc(1, sizeof (table_t));
     if (t == NULL) return NULL;
 
@@ -479,7 +479,7 @@ bstr *table_iterator_next(table_t *t, void **data) {
  * @param table
  * @return table size
  */
-int table_size(table_t *table) {
+size_t table_size(table_t *table) {
     return list_size(table->list) / 2;
 }
 
@@ -491,7 +491,7 @@ int table_size(table_t *table) {
 void table_clear(table_t *table) {    
     // TODO Clear table by removing the existing elements
     
-    int size = list_size(table->list);    
+    size_t size = list_size(table->list);
 
     list_destroy(table->list);
     
