@@ -621,7 +621,8 @@ int main_dir(int argc, char** argv) {
     htp_config_register_log(cfg, callback_log);
     //htp_config_register_response_body_data(cfg, callback_response_body_data);
     //run_directory("c:/http_traces/1/", cfg);
-    run_directory("/home/ivanr/work/traces/run3/", cfg);
+    run_directory("/home/ivanr/work/nids/run1/", cfg);
+    htp_config_destroy(cfg);
 }
 
 #define RUN_TEST(X, Y) \
