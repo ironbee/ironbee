@@ -1577,12 +1577,12 @@ void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t
     char buf[160];
     size_t offset = 0;
 
-    fprintf(stream, "\n%s: data %x len %d (0x%x)\n", name, (unsigned int) data, len, len);
+    fprintf(stream, "\n%s: data len %zd (0x%zx)\n", name, len, len);
 
     while (offset < len) {
         size_t i;
 
-        sprintf(buf, "%08x", offset);
+        sprintf(buf, "%08zx", offset);
         strcat(buf + strlen(buf), "  ");
 
         i = 0;
