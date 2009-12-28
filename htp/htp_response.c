@@ -58,7 +58,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
         if (connp->out_next_byte == -1) {            
             if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
-                connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+                connp->out_decompressor->decompress(connp->out_decompressor, &d);
             } else {
                 // Send data to callbacks
                 if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
@@ -78,7 +78,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                 // End of data chunk
                 
                 if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
-                    connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+                    connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {
                     // Send data to callbacks
                     if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
@@ -159,7 +159,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             // Send data to callbacks
             if (d.len != 0) {
                 if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {                    
-                    connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+                    connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {
                     if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
                         return HTP_ERROR;
@@ -195,7 +195,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                     // Send data to callbacks
                     if (d.len != 0) {
                         if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {                            
-                            connp->out_tx->response_decompressor->decompress(connp->out_tx->response_decompressor, &d);
+                            connp->out_decompressor->decompress(connp->out_decompressor, &d);
                         } else {
                             if (hook_run_all(connp->cfg->hook_response_body_data, &d) != HOOK_OK) {
                                 return HTP_ERROR;
@@ -251,10 +251,10 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // TODO Improve detection
         // TODO How would a Content-Range header affect us?
         if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {
-            connp->out_tx->response_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp);
-            if (connp->out_tx->response_decompressor != NULL) {
+            connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp);
+            if (connp->out_decompressor != NULL) {
                 connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
-                connp->out_tx->response_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
+                connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
             } else {
                 // No need to do anything; the error will have already
                 // been reported by the failed decompressor.
@@ -559,9 +559,9 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // to run the final hook in a transaction and start over.
     if (connp->out_tx != NULL) {
         // Shut down the decompressor, if we've used one
-        if (connp->out_tx->response_decompressor != NULL) {
-            connp->out_tx->response_decompressor->destroy(connp->out_tx->response_decompressor);
-            connp->out_tx->response_decompressor = NULL;
+        if (connp->out_decompressor != NULL) {
+            connp->out_decompressor->destroy(connp->out_decompressor);
+            connp->out_decompressor = NULL;
         }
 
         // Run hook RESPONSE

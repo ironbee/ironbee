@@ -624,6 +624,9 @@ struct htp_connp_t {
 
     /** Current response parser state. */
     int (*out_state)(htp_connp_t *);
+
+    /** Response decompressor used to decompress response body data. */
+    htp_decompressor_t *out_decompressor;
 };
 
 struct htp_log_t {
@@ -853,11 +856,7 @@ struct htp_tx_t {
     int response_transfer_coding;
 
     /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
-    int response_content_encoding;
-
-    /** Response decompressor used to decompress response body data. */
-    // TODO Move into the connection parser structure
-    htp_decompressor_t *response_decompressor;
+    int response_content_encoding;   
     
     // Common
 

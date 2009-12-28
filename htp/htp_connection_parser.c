@@ -22,7 +22,6 @@
 //
 //      For the time being, anyway. I will review at a later time.
 
-
 /**
  * Clears an existing parser error, if any.
  *
@@ -38,7 +37,7 @@ void htp_connp_clear_error(htp_connp_t *connp) {
  * @param connp
  * @param timestamp
  */
-void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp) {    
+void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp) {
     // Update internal information
     connp->conn->close_timestamp = timestamp;
     connp->in_status = STREAM_STATE_CLOSED;
@@ -91,7 +90,7 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     connp->in_state = htp_connp_REQ_IDLE;
 
     // Response parsing
-    
+
     connp->out_line_size = cfg->field_limit_hard;
     connp->out_line_len = 0;
     connp->out_line = malloc(connp->out_line_size);
@@ -101,7 +100,7 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
         free(connp);
         return NULL;
     }
-    
+
     connp->out_header_line_index = -1;
     connp->out_state = htp_connp_RES_IDLE;
 
@@ -135,6 +134,11 @@ htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg) {
  * @param connp
  */
 void htp_connp_destroy(htp_connp_t *connp) {
+    if (connp->out_decompressor != NULL) {
+        connp->out_decompressor->destroy(connp->out_decompressor);
+        connp->out_decompressor = NULL;
+    }
+
     if (connp->in_header_line != NULL) {
         if (connp->in_header_line->line != NULL) {
             free(connp->in_header_line->line);
@@ -216,7 +220,7 @@ htp_log_t *htp_connp_get_last_error(htp_connp_t *connp) {
  * @param timestamp
  */
 void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t timestamp) {
-    if ((connp->in_status != STREAM_STATE_NEW)||(connp->out_status != STREAM_STATE_NEW)) {
+    if ((connp->in_status != STREAM_STATE_NEW) || (connp->out_status != STREAM_STATE_NEW)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
         return;
     }
