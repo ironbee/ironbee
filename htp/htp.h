@@ -1020,7 +1020,6 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
-//int htp_connp_REQ_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
 
 int htp_connp_RES_IDLE(htp_connp_t *connp);
 int htp_connp_RES_LINE(htp_connp_t *connp);
@@ -1030,7 +1029,6 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
-//int htp_connp_RES_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
 
 // Utility functions
 
@@ -1078,6 +1076,7 @@ void htp_print_log_stderr(htp_log_t *log);
 void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len);
 
 char *htp_connp_in_state_as_string(htp_connp_t *connp);
+char *htp_connp_out_state_as_string(htp_connp_t *connp);
 char *htp_tx_progress_as_string(htp_tx_t *tx);
 
 #endif	/* _HTP_H */

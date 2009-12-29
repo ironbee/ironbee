@@ -553,23 +553,24 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_IDLE(htp_connp_t * connp) {
+int htp_connp_RES_IDLE(htp_connp_t * connp) {    
     // If we're here and an outgoing transaction object exists that
     // means we've just completed parsing a response. We need
     // to run the final hook in a transaction and start over.
-    if (connp->out_tx != NULL) {
+    if (connp->out_tx != NULL) {        
         // Shut down the decompressor, if we've used one
         if (connp->out_decompressor != NULL) {
             connp->out_decompressor->destroy(connp->out_decompressor);
             connp->out_decompressor = NULL;
         }
 
-        // Run hook RESPONSE
-        if (hook_run_all(connp->cfg->hook_response, connp) != HOOK_OK) {
-            return HTP_ERROR;
-        }
-
         connp->out_tx->progress = TX_PROGRESS_DONE;
+
+        // Run hook RESPONSE
+        int rc = hook_run_all(connp->cfg->hook_response, connp);
+        if (rc == HOOK_ERROR) {
+            return HTP_ERROR;
+        }       
 
         // Start afresh
         connp->out_tx = NULL;
@@ -628,6 +629,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
  */
 int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
 #ifdef HTP_DEBUG
+    fprintf(stderr, "htp_connp_req_data(connp->out_status %x)\n", connp->out_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
 #endif
 
@@ -652,6 +654,11 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // will process a request, each pointing to the next
     // processor that needs to run.
     for (;;) {
+#ifdef HTP_DEBUG
+        fprintf(stderr, "htp_connp_res_data: out state=%s, progress=%s\n",
+            htp_connp_out_state_as_string(connp),
+            htp_tx_progress_as_string(connp->out_tx));
+#endif
         // Return if there's been an error
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll

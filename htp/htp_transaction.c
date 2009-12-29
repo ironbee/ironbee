@@ -136,6 +136,15 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // from the list
     htp_conn_remove_tx(tx->conn, tx);
 
+    // Invalidate the pointer to this transactions held
+    // by the connection parser. This is to allow a transaction
+    // to be destroyed from within the final response callback.
+    if (tx->connp != NULL) {
+        if (tx->connp->out_tx == tx) {
+            tx->connp->out_tx = NULL;
+        }
+    }
+
     free(tx);
 }
 

@@ -96,6 +96,7 @@ int hook_register(htp_hook_t **hook, int (*callback_fn)()) {
         if (hook_created) {
             free(*hook);
         }
+        
         free(callback);
         return -1;
     }

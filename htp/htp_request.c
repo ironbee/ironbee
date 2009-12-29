@@ -20,7 +20,6 @@ int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
 
         if (connp->in_next_byte == LF) {
             connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
-
             return HTP_OK;
         }
     }
@@ -650,7 +649,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // processor that needs to run.
     for (;;) {
 #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_connp_req_data: state=%s, progress=%s\n",
+        fprintf(stderr, "htp_connp_req_data: in state=%s, progress=%s\n",
             htp_connp_in_state_as_string(connp),
             htp_tx_progress_as_string(connp->in_tx));
 #endif

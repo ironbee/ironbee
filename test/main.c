@@ -524,7 +524,12 @@ int callback_response_trailer(htp_connp_t *connp) {
 }
 
 int callback_response(htp_connp_t *connp) {
-    printf("-- Callback: response\n");
+    printf("-- Callback: response\n");    
+}
+
+int callback_response_destroy(htp_connp_t *connp) {
+    htp_tx_destroy(connp->out_tx);
+    printf("-- Destroyed transaction");
 }
 
 int callback_log(htp_log_t *log) {    
@@ -619,10 +624,10 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
 int main_dir(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_config_register_log(cfg, callback_log);
+    htp_config_register_response(cfg, callback_response_destroy);
     //htp_config_register_response_body_data(cfg, callback_response_body_data);
-    //run_directory("c:/http_traces/1/", cfg);
-    run_directory("/home/ivanr/work/nids/run1/", cfg);
-    htp_config_destroy(cfg);
+    run_directory("c:/http_traces/run-nikto/", cfg);
+    //run_directory("/home/ivanr/work/traces/run3/", cfg);
 }
 
 #define RUN_TEST(X, Y) \

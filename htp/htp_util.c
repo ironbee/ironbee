@@ -1638,15 +1638,7 @@ void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t
 
 
 /*
-int htp_connp_RES_IDLE(htp_connp_t *connp);
-int htp_connp_RES_LINE(htp_connp_t *connp);
-int htp_connp_RES_HEADERS(htp_connp_t *connp);
-int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp);
-int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_TRAILER(htp_connp_t *connp);
+
  */
 
 /**
@@ -1664,7 +1656,24 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp) {
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_LENGTH) return "REQ_BODY_CHUNKED_LENGTH";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA) return "REQ_BODY_CHUNKED_DATA";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA_END) return "REQ_BODY_CHUNKED_DATA_END";
-    //if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_TRAILER) return "REQ_BODY_CHUNKED_TRAILER";
+
+    return "UNKNOWN";
+}
+
+/**
+ *
+ */
+char *htp_connp_out_state_as_string(htp_connp_t *connp) {
+    if (connp == NULL) return "NULL";
+
+    if (connp->out_state == htp_connp_RES_IDLE) return "RES_IDLE";
+    if (connp->out_state == htp_connp_RES_LINE) return "";
+    if (connp->out_state == htp_connp_RES_HEADERS) return "RES_HEADERS";
+    if (connp->out_state == htp_connp_RES_BODY_DETERMINE) return "RES_BODY_DETERMINE";
+    if (connp->out_state == htp_connp_RES_BODY_IDENTITY) return "RES_BODY_IDENTITY";
+    if (connp->out_state == htp_connp_RES_BODY_CHUNKED_LENGTH) return "RES_BODY_CHUNKED_LENGTH";
+    if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA) return "RES_BODY_CHUNKED_DATA";
+    if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA_END) return "RES_BODY_CHUNKED_DATA_END";
 
     return "UNKNOWN";
 }
@@ -1674,5 +1683,31 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp) {
  */
 char *htp_tx_progress_as_string(htp_tx_t *tx) {
     if (tx == NULL) return "NULL";
+
+    switch (tx->progress) {
+        case TX_PROGRESS_NEW:
+            return "NEW";
+        case TX_PROGRESS_REQ_LINE:
+            return "REQ_LINE";
+        case TX_PROGRESS_REQ_HEADERS:
+            return "REQ_HEADERS";
+        case TX_PROGRESS_REQ_BODY:
+            return "REQ_BODY";
+        case TX_PROGRESS_REQ_TRAILER:
+            return "REQ_TRAILER";
+        case TX_PROGRESS_WAIT:
+            return "WAIT";
+        case TX_PROGRESS_RES_LINE:
+            return "RES_LINE";
+        case TX_PROGRESS_RES_HEADERS:
+            return "RES_HEADERS";
+        case TX_PROGRESS_RES_BODY:
+            return "RES_BODY";
+        case TX_PROGRESS_RES_TRAILER:
+            return "RES_TRAILER";
+        case TX_PROGRESS_DONE:
+            return "DONE";
+    }
+
     return "UNKOWN";
 }
