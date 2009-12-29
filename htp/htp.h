@@ -500,10 +500,10 @@ struct htp_connp_t {
     unsigned char *in_current_data;
 
     /** The length of the current request data chunk. */
-    size_t in_current_len;
+    int64_t in_current_len;
 
     /** The offset of the next byte in the request data chunk to consume. */
-    size_t in_current_offset;
+    int64_t in_current_offset;
 
     /** How many data chunks does the inbound connection stream consist of? */
     size_t in_chunk_count;
@@ -577,7 +577,7 @@ struct htp_connp_t {
     unsigned char *out_current_data;
 
     /** The length of the current response data chunk. */
-    size_t out_current_len;
+    int64_t out_current_len;
 
     /** The offset of the next byte in the response data chunk to consume. */
     int64_t out_current_offset;
