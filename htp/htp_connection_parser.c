@@ -199,7 +199,9 @@ void *htp_connp_get_data(htp_connp_t *connp) {
 }
 
 /**
- * Returns the last error that occured with this connection parser.
+ * Returns the last error that occured with this connection parser. Do note, however,
+ * that the value in this field will only be valid immediately after an error condition,
+ * but it is not guaranteed to remain valid if the parser is invoked again.
  *
  * @param connp
  * @return A pointer to an htp_log_t instance if there is an error, or NULL

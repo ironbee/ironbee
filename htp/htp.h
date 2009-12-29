@@ -479,7 +479,10 @@ struct htp_connp_t {
     /** Opaque user data associated with this parser. */
     void *user_data;   
 
-    /** On parser failure, this field will contain the error information. */
+    /** On parser failure, this field will contain the error information. Do note, however,
+     *  that the value in this field will only be valid immediately after an error condition,
+     *  but it is not guaranteed to remain valid if the parser is invoked again.
+     */
     htp_log_t *last_error;
 
     // Request parser fields
