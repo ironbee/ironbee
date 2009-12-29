@@ -476,7 +476,9 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     }
 
     // Authority test: two forward slash characters and it's an authority.
-    // One, three or more slash characters, and it's a path
+    // One, three or more slash characters, and it's a path. We, however,
+    // only attempt to parse authority if we've seen a scheme.
+    if ((*uri)->scheme != NULL)
     if ((pos + 2 < len) && (data[pos] == '/') && (data[pos + 1] == '/') && (data[pos + 2] != '/')) {
         // Parse authority
 
