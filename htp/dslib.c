@@ -198,16 +198,16 @@ static size_t list_array_size(list_t *_l) {
  * @return the desired element, or NULL if the list is too small, or
  *         if the element at that position carries a NULL
  */
-static void *list_array_get(list_t *_l, size_t index) {
+static void *list_array_get(list_t *_l, size_t idx) {
     list_array_t *l = (list_array_t *) _l;
     void *r = NULL;
 
-    if (index + 1 > l->current_size) return NULL;
+    if (idx + 1 > l->current_size) return NULL;
 
     size_t i = l->first;
     r = l->elements[l->first];
 
-    while (index--) {
+    while (idx--) {
         if (++i == l->max_size) {
             i = 0;
         }
@@ -227,14 +227,14 @@ static void *list_array_get(list_t *_l, size_t index) {
  *
  * @return 1 if the element was replaced, or 0 if the list is too small
  */
-static int list_array_replace(list_t *_l, size_t index, void *element) {
+static int list_array_replace(list_t *_l, size_t idx, void *element) {
     list_array_t *l = (list_array_t *) _l;    
 
-    if (index + 1 > l->current_size) return 0;
+    if (idx + 1 > l->current_size) return 0;
 
     size_t i = l->first;
 
-    while (index--) {
+    while (idx--) {
         if (++i == l->max_size) {
             i = 0;
         }
