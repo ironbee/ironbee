@@ -864,12 +864,6 @@ struct htp_tx_t {
     
     // Common
 
-    /** Log messages associated with this transaction. */
-    list_t *messages;
-
-    /** The highest log message seen. */
-    int highest_log_level;
-
     /** Parsing flags: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
      *  HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD.
      */

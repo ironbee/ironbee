@@ -28,7 +28,6 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
     tx->response_header_lines = list_array_create(32);
     tx->response_headers = table_create(32);
 
-    tx->messages = list_array_create(8);
     tx->request_protocol_number = -1;
 
     return tx;
@@ -121,16 +120,6 @@ void htp_tx_destroy(htp_tx_t *tx) {
         free(h);
     }
     table_destroy(tx->response_headers);
-
-    // Destroy messages
-    htp_log_t *l = NULL;
-    list_iterator_reset(tx->messages);
-    while ((l = list_iterator_next(tx->messages)) != NULL) {
-        free((void *)l->msg);
-        free(l);
-    }
-
-    list_destroy(tx->messages);
 
     // Tell the connection to remove this transaction
     // from the list

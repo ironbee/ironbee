@@ -316,20 +316,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     log->code = code;
     log->msg = strdup(buf);
 
-    // ...and add it to the list
-    if (connp->in_tx != NULL) {
-        log->tx = connp->in_tx;
-
-        list_add(connp->in_tx->messages, log);
-
-        // Keep track of the highest log level encountered
-        if ((level < connp->in_tx->highest_log_level)
-            || (connp->in_tx->highest_log_level == 0)) {
-            connp->in_tx->highest_log_level = level;
-        }
-    } else {
-        list_add(connp->conn->messages, log);
-    }
+    list_add(connp->conn->messages, log);
 
     if (level == HTP_LOG_ERROR) {
         connp->last_error = log;
