@@ -184,7 +184,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             // end of the response body (and the end of the transaction).
             if ((connp->out_content_length == -1) && (connp->out_status == STREAM_STATE_CLOSED)) {
                 connp->out_state = htp_connp_RES_IDLE;
-                connp->out_tx->progress = TX_PROGRESS_WAIT;
+                connp->out_tx->progress = TX_PROGRESS_DONE;
 
                 return HTP_OK;
             } else {
@@ -220,7 +220,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
                     // Done
                     connp->out_state = htp_connp_RES_IDLE;
-                    connp->out_tx->progress = TX_PROGRESS_WAIT;
+                    connp->out_tx->progress = TX_PROGRESS_DONE;
 
                     return HTP_OK;
                 }
@@ -336,8 +336,13 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
                 connp->out_content_length = i;
                 connp->out_body_data_left = connp->out_content_length;
 
-                connp->out_state = htp_connp_RES_BODY_IDENTITY;
-                connp->out_tx->progress = TX_PROGRESS_RES_BODY;
+                if (connp->out_content_length != 0) {
+                    connp->out_state = htp_connp_RES_BODY_IDENTITY;
+                    connp->out_tx->progress = TX_PROGRESS_RES_BODY;
+                } else {
+                    connp->out_state = htp_connp_RES_IDLE;
+                    connp->out_tx->progress = TX_PROGRESS_DONE;
+                }
             }
         } else {
             // 4. If the message uses the media type "multipart/byteranges", which is

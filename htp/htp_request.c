@@ -248,8 +248,13 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
             connp->in_content_length = i;
             connp->in_body_data_left = connp->in_content_length;
 
-            connp->in_state = htp_connp_REQ_BODY_IDENTITY;
-            connp->in_tx->progress = TX_PROGRESS_REQ_BODY;
+            if (connp->in_content_length != 0) {
+                connp->in_state = htp_connp_REQ_BODY_IDENTITY;
+                connp->in_tx->progress = TX_PROGRESS_REQ_BODY;
+            } else {
+                connp->in_state = htp_connp_REQ_IDLE;
+                connp->in_tx->progress = TX_PROGRESS_WAIT;
+            }
         }
     } else {
         // This request does not have a body, which
