@@ -76,7 +76,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field invalid: colon missing");
         }
 
-        return -1;
+        return HTP_ERROR;
     }
 
     if (colon_pos == 0) {
@@ -169,10 +169,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
     // Parse header
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
-    if (h == NULL) {
-        // TODO
-        return HTP_ERROR;
-    }   
+    if (h == NULL) return HTP_ERROR;    
 
     // Ensure we have the necessary header data in a single buffer
     if (connp->out_header_line_index + 1 == connp->out_header_line_counter) {
@@ -181,7 +178,8 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
             connp->out_header_line_index);
         if (hl == NULL) {
             // Internal error
-            // TODO
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Process response header (generic): Internal error");
             free(h);
             return HTP_ERROR;
         }
@@ -200,7 +198,8 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
         tempstr = bstr_alloc(len);
         if (tempstr == NULL) {
-            // TODO
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Process reqsponse header (generic): Failed to allocate bstring of %d bytes", len);
             free(h);
             return HTP_ERROR;
         }
@@ -215,6 +214,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
     }
 
     if (htp_parse_response_header_generic(connp, h, data, len) != HTP_OK) {
+        // Note: downstream responsible for error logging
         if (tempstr != NULL) {
             free(tempstr);
         }
@@ -252,4 +252,3 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
     return HTP_OK;
 }
-

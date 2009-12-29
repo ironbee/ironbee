@@ -15,10 +15,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
 
     // Create new header structure
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
-    if (h == NULL) {
-        // TODO
-        return HTP_ERROR;
-    }
+    if (h == NULL) return HTP_ERROR;
 
     // Ensure we have the necessary header data in a single buffer
     if (connp->in_header_line_index + 1 == connp->in_header_line_counter) {
@@ -27,12 +24,13 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
             connp->in_header_line_index);
         if (hl == NULL) {
             // Internal error
-            // TODO
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Process request header (Apache 2.2): Internal error");
             free(h);
             return HTP_ERROR;
         }
 
-        data = (unsigned char *)bstr_ptr(hl->line);
+        data = (unsigned char *) bstr_ptr(hl->line);
         len = bstr_len(hl->line);
         hl->header = h;
     } else {
@@ -46,7 +44,8 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
 
         tempstr = bstr_alloc(len);
         if (tempstr == NULL) {
-            // TODO
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Process request header (Apache 2.2): Failed to allocate bstring of %d bytes", len);
             free(h);
             return HTP_ERROR;
         }
@@ -57,17 +56,16 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
             hl->header = h;
         }
 
-        data = (unsigned char *)bstr_ptr(tempstr);
+        data = (unsigned char *) bstr_ptr(tempstr);
     }
 
     // Now try to oparse the header
     if (htp_parse_request_header_apache_2_2(connp, h, data, len) != HTP_OK) {
+        // Note: downstream responsible for error logging
         if (tempstr != NULL) {
             free(tempstr);
         }
-
         free(h);
-
         return HTP_ERROR;
     }
 
@@ -124,10 +122,6 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
     if ((colon_pos == len) || (data[colon_pos] == '\0')) {
         // Missing colon
         h->flags |= HTP_FIELD_UNPARSEABLE;
-
-        #ifdef HTP_DEBUG
-        fprint_raw_data(stderr, __FUNCTION__, data, len);
-        #endif
 
         if (!(connp->in_tx->flags & HTP_FIELD_UNPARSEABLE)) {
             connp->in_tx->flags |= HTP_FIELD_UNPARSEABLE;
@@ -208,8 +202,8 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
     }
 
     // Now extract the name and the value
-    h->name = bstr_memdup((char *)data + name_start, name_end - name_start);
-    h->value = bstr_memdup((char *)data + value_start, value_end - value_start);
+    h->name = bstr_memdup((char *) data + name_start, name_end - name_start);
+    h->value = bstr_memdup((char *) data + value_start, value_end - value_start);
 
     return HTP_OK;
 }
@@ -222,9 +216,9 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
  */
 int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
-    unsigned char *data = (unsigned char *)bstr_ptr(tx->request_line);
+    unsigned char *data = (unsigned char *) bstr_ptr(tx->request_line);
     size_t len = bstr_len(tx->request_line);
-    size_t pos = 0;   
+    size_t pos = 0;
 
     // In this implementation we assume the
     // line ends with the first NUL byte.
@@ -236,13 +230,13 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     // line and ends with the first whitespace character.
     while ((pos < len) && (!htp_is_space(data[pos]))) {
         pos++;
-    }   
+    }
 
     // No, we don't care if the method is empty.
 
-    tx->request_method = bstr_memdup((char *)data, pos);      
+    tx->request_method = bstr_memdup((char *) data, pos);
 
-    tx->request_method_number = htp_convert_method_to_number(tx->request_method);   
+    tx->request_method_number = htp_convert_method_to_number(tx->request_method);
 
     // Ignore whitespace after request method. The RFC allows
     // for only one SP, but then suggests any number of SP and HT
@@ -257,9 +251,9 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     // The URI ends with the first whitespace.
     while ((pos < len) && (!htp_is_space(data[pos]))) {
         pos++;
-    }   
+    }
 
-    tx->request_uri = bstr_memdup((char *)data + start, pos - start);   
+    tx->request_uri = bstr_memdup((char *) data + start, pos - start);
 
     // Ignore whitespace after URI
     while ((pos < len) && (htp_is_space(data[pos]))) {
@@ -274,7 +268,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     }
 
     // The protocol information spreads until the end of the line.
-    tx->request_protocol = bstr_memdup((char *)data + pos, len - pos);
+    tx->request_protocol = bstr_memdup((char *) data + pos, len - pos);
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
 
     return HTP_OK;

@@ -2,9 +2,8 @@
 TODO
 ====
 
-- XXX Store all log messages in conn->messages
-
-- XXX Make sure that all errors are accompanied by log messages.
+- A failure to parse a part of a transaction does not necessarily mean we have to
+  give up (on the transaction and on the connection).
 
 - Inspect storage size choices for all structures
 
