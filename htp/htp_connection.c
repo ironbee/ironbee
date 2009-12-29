@@ -41,17 +41,18 @@ htp_conn_t *htp_conn_create(htp_connp_t *connp) {
 void htp_conn_destroy(htp_conn_t *conn) {
     if (conn == NULL) return;
     
-    // Destroy individual transactions
-    htp_tx_t *tx = NULL;
-    list_iterator_reset(conn->transactions);
-    while ((tx = list_iterator_next(conn->transactions)) != NULL) {
-        // Allow for the possibility that some
-        // transactions were deleted earlier
+    // Destroy individual transactions. Do note that iterating
+    // using the iterator does not work here because some of the
+    // list element may be NULL (and with the iterator it is impossible
+    // to distinguish a NULL element from the end of the list).
+    size_t i;
+    for (i = 0; i < list_size(conn->transactions); i++) {
+        htp_tx_t *tx = (htp_tx_t *)list_get(conn->transactions, i);
         if (tx != NULL) {
             htp_tx_destroy(tx);
         }
     }
-
+    
     list_destroy(conn->transactions);
 
     // Destroy individual messages
