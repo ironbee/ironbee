@@ -1068,7 +1068,7 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
 int htp_parse_status(bstr *status);
 
 void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
-void htp_print_log_stderr(htp_log_t *log);
+void htp_print_log(FILE *stream, htp_log_t *log);
 
 void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len);
 

@@ -261,12 +261,12 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
  * 
  * @param log
  */
-void htp_print_log_stderr(htp_log_t *log) {
+void htp_print_log(FILE *stream, htp_log_t *log) {
     if (log->code != 0) {
-        fprintf(stderr, "[%d][code %d][file %s][line %d] %s\n", log->level,
+        fprintf(stream, "[%d][code %d][file %s][line %d] %s\n", log->level,
             log->code, log->file, log->line, log->msg);
     } else {
-        fprintf(stderr, "[%d][file %s][line %d] %s\n", log->level,
+        fprintf(stream, "[%d][file %s][line %d] %s\n", log->level,
             log->file, log->line, log->msg);
     }
 }

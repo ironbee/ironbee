@@ -533,7 +533,7 @@ int callback_response_destroy(htp_connp_t *connp) {
 }
 
 int callback_log(htp_log_t *log) {    
-    htp_print_log_stderr(log);
+    htp_print_log(stdout, log);
 }
 
 static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
