@@ -15,6 +15,7 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 
 #include <ctype.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -508,7 +509,7 @@ struct htp_connp_t {
     size_t in_chunk_request_index;
 
     /** The offset, in the entire connection stream, of the next request byte. */
-    size_t in_stream_offset;
+    int64_t in_stream_offset;
 
     /** The value of the request byte currently being processed. */
     int in_next_byte;
@@ -542,13 +543,13 @@ struct htp_connp_t {
      * is "valid". This field will not be populated if a request contains both
      * a Transfer-Encoding header and a Content-Lenght header.
      */
-    size_t in_content_length;
+    int64_t in_content_length;
 
     /** Holds the remaining request body length that we expect to read. This
      *  field will be available only when the length of a request body is known
      *  in advance, i.e. when request headers contain a Content-Length header.
      */
-    size_t in_body_data_left;
+    int64_t in_body_data_left;
 
     /** Holds the amount of data that needs to be read from the
      *  current data chunk. Only used with chunked request bodies.
@@ -576,10 +577,10 @@ struct htp_connp_t {
     size_t out_current_len;
 
     /** The offset of the next byte in the response data chunk to consume. */
-    size_t out_current_offset;
+    int64_t out_current_offset;
 
     /** The offset, in the entire connection stream, of the next response byte. */
-    size_t out_stream_offset;
+    int64_t out_stream_offset;
 
     /** The value of the response byte currently being processed. */
     int out_next_byte;
@@ -612,10 +613,10 @@ struct htp_connp_t {
      * The length of the current response body as presented in the
      * Content-Length response header.
      */
-    long int out_content_length;
+    int64_t out_content_length;
 
     /** The remaining length of the current response body, if known. */
-    size_t out_body_data_left;
+    int64_t out_body_data_left;
 
     /** Holds the amount of data that needs to be read from the
      *  current response data chunk. Only used with chunked response bodies.
