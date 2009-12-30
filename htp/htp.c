@@ -5,9 +5,8 @@
 /**
  * Returns the library version.
  */
-const char *htp_get_version() {
-    // TODO
-    return "Not implemented yet";
+const char *htp_get_version() {    
+    return "0.2.0";
 }
 
 
