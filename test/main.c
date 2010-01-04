@@ -617,12 +617,12 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
     return 1;
 }
 
-int main_dir(int argc, char** argv) {
+int main(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_config_register_log(cfg, callback_log);
     htp_config_register_response(cfg, callback_response_destroy);
     
-    run_directory("C:\\http_traces\\run-nikto-faulty", cfg);
+    run_directory("C:\\http_traces\\run5", cfg);
     //run_directory("/home/ivanr/work/traces/run3/", cfg);
     
     htp_config_destroy(cfg);
@@ -644,7 +644,7 @@ int main_dir(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main(int argc, char** argv) {
+int main_tests(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
