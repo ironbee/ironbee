@@ -422,7 +422,7 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
         }
     }
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -1656,7 +1656,7 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp) {
     if (connp == NULL) return "NULL";
 
     if (connp->out_state == htp_connp_RES_IDLE) return "RES_IDLE";
-    if (connp->out_state == htp_connp_RES_LINE) return "";
+    if (connp->out_state == htp_connp_RES_LINE) return "RES_LINE";
     if (connp->out_state == htp_connp_RES_HEADERS) return "RES_HEADERS";
     if (connp->out_state == htp_connp_RES_BODY_DETERMINE) return "RES_BODY_DETERMINE";
     if (connp->out_state == htp_connp_RES_BODY_IDENTITY) return "RES_BODY_IDENTITY";
