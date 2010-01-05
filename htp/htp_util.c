@@ -741,7 +741,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     }
 
     // Did the input stream seem like a valid UTF-8 string?
-    if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
+    if ((seen_valid) && (!(tx->flags & HTP_PATH_UTF8_INVALID))) {
         tx->flags |= HTP_PATH_UTF8_VALID;
     }
 
@@ -841,7 +841,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     }
 
     // Did the input stream seem like a valid UTF-8 string?
-    if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
+    if ((seen_valid) && (!(tx->flags & HTP_PATH_UTF8_INVALID))) {
         tx->flags |= HTP_PATH_UTF8_VALID;
     }
 }
