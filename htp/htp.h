@@ -158,6 +158,7 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define STREAM_STATE_OPEN           1
 #define STREAM_STATE_CLOSED         2
 #define STREAM_STATE_ERROR          3
+#define STREAM_STATE_TUNNEL         4
 #define STREAM_STATE_DATA           9
 
 #define URL_DECODER_PRESERVE_PERCENT            0

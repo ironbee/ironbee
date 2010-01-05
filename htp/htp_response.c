@@ -242,7 +242,18 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
-    // First check for an interim "100 Continue"
+    // If the request uses the CONNECT method, then not only are we
+    // to assume there's no body, but we need to ignore all
+    // subsequent data in the stream.
+    if (connp->out_tx->request_method_number == M_CONNECT) {
+        connp->out_status = STREAM_STATE_TUNNEL;
+        connp->out_state = htp_connp_RES_IDLE;
+        connp->out_tx->progress = TX_PROGRESS_DONE;
+
+        return HTP_OK;
+    }
+
+    // Check for an interim "100 Continue"
     // response. Ignore it if found, and revert back to RES_FIRST_LINE.
     if (connp->out_tx->response_status_number == 100) {
         if (connp->out_tx->seen_100continue != 0) {
@@ -676,9 +687,12 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 #endif
 
     // Return if the connection has had a fatal error
-    if (connp->out_status != STREAM_STATE_OPEN) {
+    if ((connp->out_status != STREAM_STATE_OPEN) && (connp->out_status != STREAM_STATE_TUNNEL)) {
         // We allow calls that allow the parser to finalize their work
         if (!((connp->out_status == STREAM_STATE_CLOSED) && (len == 0))) {
+#ifdef HTP_DEBUG
+            fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_ERROR\n");
+#endif
             return STREAM_STATE_ERROR;
         }
     }
@@ -690,6 +704,15 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     connp->out_current_offset = 0;
     connp->conn->out_data_counter += len;
     connp->conn->out_packet_counter++;
+
+    // Return without processing any data if the stream is in tunneling
+    // mode (which it would be after an initial CONNECT transaction.
+    if (connp->out_status == STREAM_STATE_TUNNEL) {
+#ifdef HTP_DEBUG
+        fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA (tunnel)\n");
+#endif
+        return STREAM_STATE_DATA;
+    }
 
     // Invoke a processor, in a loop, until an error
     // occurs or until we run out of data. Many processors

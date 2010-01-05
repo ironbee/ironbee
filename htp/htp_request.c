@@ -188,7 +188,18 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     htp_header_t *cl = table_getc(connp->in_tx->request_headers, "content-length");
     htp_header_t *te = table_getc(connp->in_tx->request_headers, "transfer-encoding");
 
-    // First check for the Transfer-Encoding header, which
+    // If the request uses the CONNECT method, then not only are we
+    // to assume there's no body, but we need to ignore all
+    // subsequent data in the stream.
+    if (connp->in_tx->request_method_number == M_CONNECT) {
+        connp->in_status = STREAM_STATE_TUNNEL;
+        connp->in_state = htp_connp_REQ_IDLE;
+        connp->in_tx->progress = TX_PROGRESS_WAIT;
+
+        return HTP_OK;
+    }
+
+    // Check for the Transfer-Encoding header, which
     // would indicate a chunked request body
     if (te != NULL) {
         // Make sure it contains "chunked" only
@@ -663,11 +674,11 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 #endif    
 
     // Return if the connection has had a fatal error
-    if (connp->in_status != STREAM_STATE_OPEN) {
+    if ((connp->in_status != STREAM_STATE_OPEN) && (connp->in_status != STREAM_STATE_TUNNEL)) {
         // We allow calls that allow the parser to finalize their work
         if (!((connp->out_status == STREAM_STATE_CLOSED) && (len == 0))) {
 #ifdef HTP_DEBUG
-            fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA\n");
+            fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_ERROR\n");
 #endif
             return STREAM_STATE_ERROR;
         }
@@ -681,6 +692,15 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     connp->in_chunk_count++;
     connp->conn->in_data_counter += len;
     connp->conn->in_packet_counter++;
+
+    // Return without processing any data if the stream is in tunneling
+    // mode (which it would be after an initial CONNECT transaction.
+    if (connp->in_status == STREAM_STATE_TUNNEL) {
+#ifdef HTP_DEBUG
+        fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (tunnel)\n");
+#endif
+        return STREAM_STATE_DATA;
+    }
 
     // Invoke a processor, in a loop, until an error
     // occurs or until we run out of data. Many processors
