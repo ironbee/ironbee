@@ -28,6 +28,8 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 
 // -- Defines -------------------------------------------------------------------------------------
 
+#define HTP_BASE_VERSION_TEXT	"Trunk"
+
 #define HTP_ERROR              -1
 #define HTP_OK                  0
 #define HTP_DATA                1

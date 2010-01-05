@@ -6,7 +6,7 @@
  * Returns the library version.
  */
 const char *htp_get_version() {    
-    return "Trunk (r$rev)";
+    return HTP_BASE_VERSION_TEXT " (r$REVISION_MISSING)";
 }
 
 
