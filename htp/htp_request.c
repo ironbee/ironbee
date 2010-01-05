@@ -505,9 +505,9 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
-            if (connp->in_tx->request_method_number == M_CONNECT) {                
+            if (connp->in_tx->request_method_number == M_CONNECT) {
                 // Parse authority
-                if (htp_parse_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {                    
+                if (htp_parse_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
                     // Note: downstream responsible for error logging
                     return HTP_ERROR;
                 }
@@ -666,6 +666,9 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     if (connp->in_status != STREAM_STATE_OPEN) {
         // We allow calls that allow the parser to finalize their work
         if (!((connp->out_status == STREAM_STATE_CLOSED) && (len == 0))) {
+#ifdef HTP_DEBUG
+            fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA\n");
+#endif
             return STREAM_STATE_ERROR;
         }
     }

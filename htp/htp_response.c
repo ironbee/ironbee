@@ -414,6 +414,10 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
         // Have we reached the end of the line?
         if (connp->out_next_byte == LF) {
+#ifdef HTP_DEBUG
+            fprint_raw_data(stderr, __FUNCTION__, connp->out_line, connp->out_line_len);
+#endif
+
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->out_line, connp->out_line_len)) {
                 // Terminator line
@@ -515,6 +519,10 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
 
         // Have we reached the end of the line?
         if (connp->out_next_byte == LF) {
+#ifdef HTP_DEBUG
+            fprint_raw_data(stderr, __FUNCTION__, connp->out_line, connp->out_line_len);
+#endif
+
             // Is this a line that should be ignored?
             if (htp_connp_is_line_ignorable(connp, connp->out_line, connp->out_line_len)) {
                 // We have an empty/whitespace line, which we'll note, ignore and move on
@@ -663,7 +671,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
  */
 int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
 #ifdef HTP_DEBUG
-    fprintf(stderr, "htp_connp_req_data(connp->out_status %x)\n", connp->out_status);
+    fprintf(stderr, "htp_connp_res_data(connp->out_status %x)\n", connp->out_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
 #endif
 
