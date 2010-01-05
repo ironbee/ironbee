@@ -274,11 +274,11 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         }
 
         if (test.chunk_direction == CLIENT) {
-            if (htp_connp_req_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+            if (htp_connp_req_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) != STREAM_STATE_DATA) {
                 return -101;
             }
         } else {
-            if (htp_connp_res_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+            if (htp_connp_res_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) != STREAM_STATE_DATA) {
                 return -102;
             }
         }
