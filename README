@@ -1,0 +1,34 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
+
+INSTALLATION
+------------
+
+The installation process should be as simple as:
+
+  $ ./configure
+  $ make install
+
+If you want to use a repository version of LibHTP, do the following:
+
+ 1. Use svn export to retrieve the sources of the version you wish to use
+
+ 2. Run ./update_version, which will update htp.c with the latest Subversion
+    revision used
+
+ 3. You may wish to also update htp.pc.in with the correct version
+
+ 4. Run autoconf -i --force, which will prepare the library for installation
+
+ 5. Continue to install as described above
