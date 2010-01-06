@@ -760,8 +760,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
-    size_t rpos = 0;
-    size_t charpos = 0;
+    size_t rpos = 0;    
     uint32_t codepoint;
     uint32_t state = UTF8_ACCEPT;
     uint32_t counter = 0;
@@ -807,8 +806,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
                 rpos++;
 
                 // Prepare for the next character
-                counter = 0;
-                charpos = rpos;
+                counter = 0;                
 
                 break;
 
@@ -829,7 +827,6 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 
                 // Prepare for the next character
                 counter = 0;
-                charpos = rpos;
 
                 break;
 

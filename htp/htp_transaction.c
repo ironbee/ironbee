@@ -82,11 +82,10 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     list_destroy(tx->request_header_lines);
 
-    // Destroy request_headers
-    bstr *key = NULL;
+    // Destroy request_headers    
     htp_header_t *h = NULL;
     table_iterator_reset(tx->request_headers);
-    while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
+    while (table_iterator_next(tx->request_headers, (void **) & h) != NULL) {
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
@@ -110,11 +109,10 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
     list_destroy(tx->response_header_lines);
 
-    // Destroy response headers
-    key = NULL;
+    // Destroy response headers    
     h = NULL;
     table_iterator_reset(tx->response_headers);
-    while ((key = table_iterator_next(tx->response_headers, (void **) & h)) != NULL) {
+    while (table_iterator_next(tx->response_headers, (void **) & h) != NULL) {
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
