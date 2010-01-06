@@ -258,7 +258,10 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // If the request uses the CONNECT method, then not only are we
     // to assume there's no body, but we need to ignore all
     // subsequent data in the stream.
-    if (connp->out_tx->request_method_number == M_CONNECT) {
+    if ((connp->out_tx->request_method_number == M_CONNECT)
+        &&(connp->out_tx->response_status_number >= 200)
+        &&(connp->out_tx->response_status_number <= 299))
+    {
         connp->out_status = STREAM_STATE_TUNNEL;
         connp->out_state = htp_connp_RES_IDLE;
         connp->out_tx->progress = TX_PROGRESS_DONE;
@@ -610,6 +613,10 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
     }
 }
 
+size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
+    return connp->out_current_offset;
+}
+
 /**
  * The response idle state will initialize response processing, as well as
  * finalize each transactions after we are done with it.
@@ -638,9 +645,18 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
             return HTP_ERROR;
         }
 
+        // Check if the inbound parser is waiting on us. If it is that means that
+        // there might be request data that the inbound parser hasn't consumed yet.
+        // If we don't stop parsing we might encounter a response without a
+        // request.
+        if ((connp->in_status == STREAM_STATE_DATA_OTHER)&&(connp->in_tx == connp->out_tx)) {
+            connp->out_tx = NULL;
+            return HTP_DATA_OTHER;
+        }
+
         // Start afresh
         connp->out_tx = NULL;
-    }
+    }   
 
     // We want to start parsing the next response (and change
     // the state from IDLE) only if there's at least one
@@ -697,7 +713,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_res_data(connp->out_status %x)\n", connp->out_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
-#endif
+#endif   
 
     // Return if the connection has had a fatal error
     if ((connp->out_status != STREAM_STATE_OPEN) && (connp->out_status != STREAM_STATE_TUNNEL)) {
@@ -708,7 +724,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 #endif
             return STREAM_STATE_ERROR;
         }
-    }
+    }   
 
     // Store the current chunk information
     connp->out_timestamp = timestamp;
@@ -716,7 +732,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     connp->out_current_len = len;
     connp->out_current_offset = 0;
     connp->conn->out_data_counter += len;
-    connp->conn->out_packet_counter++;
+    connp->conn->out_packet_counter++;   
 
     // Return without processing any data if the stream is in tunneling
     // mode (which it would be after an initial CONNECT transaction.
@@ -746,7 +762,16 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
             // Do we need more data?
             if (rc == HTP_DATA) {
                 return STREAM_STATE_DATA;
-            }
+            }           
+
+            if (connp->out_current_offset >= connp->out_current_len) {
+                // Do not send STREAM_DATE_DATA_OTHER if we've
+                // consumed the entire chunk
+                return STREAM_STATE_DATA;
+            } else {
+                // Partial chunk consumption
+                return STREAM_STATE_DATA_OTHER;
+            }           
 
             // Remember that we've had an error. Errors are
             // not possible to recover from.

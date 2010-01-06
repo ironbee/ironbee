@@ -1656,6 +1656,9 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp) {
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA) return "REQ_BODY_CHUNKED_DATA";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA_END) return "REQ_BODY_CHUNKED_DATA_END";
 
+    if (connp->in_state == htp_connp_REQ_CONNECT_CHECK) return "htp_connp_REQ_CONNECT_CHECK";
+    if (connp->in_state == htp_connp_REQ_CONNECT_WAIT_RESPONSE) return "htp_connp_REQ_CONNECT_WAIT_RESPONSE";
+
     return "UNKNOWN";
 }
 

@@ -513,6 +513,32 @@ int test_connect_complete(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_connect_extra(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    int rc = test_run(home, "16-connect-extra.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int test_compressed_response_gzip_ct(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
@@ -800,10 +826,12 @@ int main(int argc, char** argv) {
     RUN_TEST(test_multi_packet_request_head, cfg);
     RUN_TEST(test_response_stream_closure, cfg);
     RUN_TEST(test_host_in_headers, cfg);
-    RUN_TEST(test_connect, cfg);
-    RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_compressed_response_gzip_ct, cfg);
     RUN_TEST(test_compressed_response_gzip_chunked, cfg);
+    
+    RUN_TEST(test_connect, cfg);
+    RUN_TEST(test_connect_complete, cfg);
+    RUN_TEST(test_connect_extra, cfg);
 
     //RUN_TEST(test_misc, cfg);
 
