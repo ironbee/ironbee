@@ -1,3 +1,16 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
 
 #include "htp.h"
 #include "utf8_decoder.h"
@@ -741,7 +754,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     }
 
     // Did the input stream seem like a valid UTF-8 string?
-    if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
+    if ((seen_valid) && (!(tx->flags & HTP_PATH_UTF8_INVALID))) {
         tx->flags |= HTP_PATH_UTF8_VALID;
     }
 
@@ -760,8 +773,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
-    size_t rpos = 0;
-    size_t charpos = 0;
+    size_t rpos = 0;    
     uint32_t codepoint;
     uint32_t state = UTF8_ACCEPT;
     uint32_t counter = 0;
@@ -807,8 +819,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
                 rpos++;
 
                 // Prepare for the next character
-                counter = 0;
-                charpos = rpos;
+                counter = 0;                
 
                 break;
 
@@ -829,7 +840,6 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 
                 // Prepare for the next character
                 counter = 0;
-                charpos = rpos;
 
                 break;
 
@@ -841,7 +851,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     }
 
     // Did the input stream seem like a valid UTF-8 string?
-    if ((seen_valid) && (!(tx->flags | HTP_PATH_UTF8_INVALID))) {
+    if ((seen_valid) && (!(tx->flags & HTP_PATH_UTF8_INVALID))) {
         tx->flags |= HTP_PATH_UTF8_VALID;
     }
 }

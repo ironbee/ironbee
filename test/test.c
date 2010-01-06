@@ -1,3 +1,16 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -274,11 +287,11 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         }
 
         if (test.chunk_direction == CLIENT) {
-            if (htp_connp_req_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+            if (htp_connp_req_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) != STREAM_STATE_DATA) {
                 return -101;
             }
         } else {
-            if (htp_connp_res_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) == HTP_ERROR) {
+            if (htp_connp_res_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len) != STREAM_STATE_DATA) {
                 return -102;
             }
         }

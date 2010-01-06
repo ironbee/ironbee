@@ -1,3 +1,16 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
 
 #include <dirent.h>
 #include <stdio.h>
@@ -435,6 +448,29 @@ int test_connect(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_connect_complete(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    test_run(home, "15-connect-complete.t", cfg, &connp);
+    if (connp == NULL) return -1;
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }   
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int test_compressed_response_gzip_ct(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
@@ -622,7 +658,7 @@ int main_dir(int argc, char** argv) {
     htp_config_register_log(cfg, callback_log);
     htp_config_register_response(cfg, callback_response_destroy);
     
-    run_directory("C:\\http_traces\\run-nikto-faulty", cfg);
+    run_directory("C:\\http_traces\\run5", cfg);
     //run_directory("/home/ivanr/work/traces/run3/", cfg);
     
     htp_config_destroy(cfg);
@@ -717,6 +753,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_response_stream_closure, cfg);
     RUN_TEST(test_host_in_headers, cfg);
     RUN_TEST(test_connect, cfg);
+    RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_compressed_response_gzip_ct, cfg);
     RUN_TEST(test_compressed_response_gzip_chunked, cfg);
 

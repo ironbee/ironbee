@@ -1,3 +1,16 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
 
 #include "htp.h"
 
@@ -82,11 +95,10 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     list_destroy(tx->request_header_lines);
 
-    // Destroy request_headers
-    bstr *key = NULL;
+    // Destroy request_headers    
     htp_header_t *h = NULL;
     table_iterator_reset(tx->request_headers);
-    while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
+    while (table_iterator_next(tx->request_headers, (void **) & h) != NULL) {
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
@@ -110,11 +122,10 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
     list_destroy(tx->response_header_lines);
 
-    // Destroy response headers
-    key = NULL;
+    // Destroy response headers    
     h = NULL;
     table_iterator_reset(tx->response_headers);
-    while ((key = table_iterator_next(tx->response_headers, (void **) & h)) != NULL) {
+    while (table_iterator_next(tx->response_headers, (void **) & h) != NULL) {
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);

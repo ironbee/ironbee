@@ -1,3 +1,16 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
 
 #ifndef _HTP_H
 #define	_HTP_H
@@ -160,6 +173,7 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define STREAM_STATE_OPEN           1
 #define STREAM_STATE_CLOSED         2
 #define STREAM_STATE_ERROR          3
+#define STREAM_STATE_TUNNEL         4
 #define STREAM_STATE_DATA           9
 
 #define URL_DECODER_PRESERVE_PERCENT            0

@@ -1,3 +1,16 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
 
 #include "htp.h"
 
@@ -236,6 +249,10 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
 
     tx->request_method = bstr_memdup((char *) data, pos);
 
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_method), bstr_len(tx->request_method));
+#endif
+
     tx->request_method_number = htp_convert_method_to_number(tx->request_method);
 
     // Ignore whitespace after request method. The RFC allows
@@ -255,6 +272,10 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
 
     tx->request_uri = bstr_memdup((char *) data + start, pos - start);
 
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
+#endif
+
     // Ignore whitespace after URI
     while ((pos < len) && (htp_is_space(data[pos]))) {
         pos++;
@@ -270,6 +291,10 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     // The protocol information spreads until the end of the line.
     tx->request_protocol = bstr_memdup((char *) data + pos, len - pos);
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
+
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_protocol), bstr_len(tx->request_protocol));
+#endif
 
     return HTP_OK;
 }

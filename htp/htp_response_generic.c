@@ -1,3 +1,16 @@
+/*
+ * LibHTP (http://www.libhtp.org)
+ * Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+ *
+ * LibHTP is an open source product, released under terms of the General Public Licence
+ * version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
+ * of the license.
+ *
+ * In addition, there is a special exception that allows LibHTP to be freely
+ * used with any OSI-approved open source licence. Please refer to the file
+ * LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+ *
+ */
 
 #include "htp.h"
 
@@ -22,6 +35,10 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
     tx->response_protocol = bstr_memdup((char *)data, pos);
     tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);
 
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
+#endif
+
     // Ignore whitespace after response protocol
     while ((pos < len) && (isspace(data[pos]))) {
         pos++;
@@ -37,12 +54,20 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
     tx->response_status = bstr_memdup((char *)data + start, pos - start);
     tx->response_status_number = htp_parse_status(tx->response_status);
 
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->response_status), bstr_len(tx->response_status));
+#endif
+
     // Ignore whitespace that follows
     while ((pos < len) && (isspace(data[pos]))) {
         pos++;
     }
 
     tx->response_message = bstr_memdup((char *)data + pos, len - pos);
+
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->response_message), bstr_len(tx->response_message));
+#endif
     
     return HTP_OK;
 }
