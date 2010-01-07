@@ -25,7 +25,8 @@ INSTALLATION
 The installation process should be as simple as:
 
   $ ./configure
-  $ make install
+  $ make
+  # make install
 
 If you want to use a repository version of LibHTP, do the following:
 
