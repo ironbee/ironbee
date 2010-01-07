@@ -19,9 +19,5 @@
  * Returns the library version.
  */
 const char *htp_get_version() {    
-    return HTP_BASE_VERSION_TEXT " (r111:117M)";
+    return HTP_BASE_VERSION_TEXT " (r118)";
 }
-
-
-
-
