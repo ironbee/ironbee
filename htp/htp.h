@@ -46,7 +46,8 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define HTP_ERROR              -1
 #define HTP_OK                  0
 #define HTP_DATA                1
-#define HTP_DECLINED            2
+#define HTP_DATA_OTHER          2
+#define HTP_DECLINED            3
 
 #define PROTOCOL_UNKNOWN        -1
 #define HTTP_0_9                9
@@ -174,6 +175,7 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define STREAM_STATE_CLOSED         2
 #define STREAM_STATE_ERROR          3
 #define STREAM_STATE_TUNNEL         4
+#define STREAM_STATE_DATA_OTHER     5
 #define STREAM_STATE_DATA           9
 
 #define URL_DECODER_PRESERVE_PERCENT            0
@@ -989,10 +991,10 @@ htp_conn_t *htp_conn_create();
        void htp_conn_destroy(htp_conn_t *conn);
         int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx);
 
-int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len);
-// int htp_connp_req_data_missing(htp_connp_t *connp, htp_time_t timestamp, size_t len);
-int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len);
-// int htp_connp_res_data_missing(htp_connp_t *connp, htp_time_t timestamp, size_t len);
+   int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len);
+size_t htp_connp_req_data_consumed(htp_connp_t *connp);
+   int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len);
+size_t htp_connp_res_data_consumed(htp_connp_t *connp);
 
       void htp_connp_clear_error(htp_connp_t *connp);
 htp_log_t *htp_connp_get_last_error(htp_connp_t *connp);
@@ -1033,6 +1035,9 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
+
+int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp);
+int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp);
 
 int htp_connp_RES_IDLE(htp_connp_t *connp);
 int htp_connp_RES_LINE(htp_connp_t *connp);

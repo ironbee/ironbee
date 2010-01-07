@@ -31,10 +31,13 @@ char *home = NULL;
 int test_get(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "01-get.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "01-get.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
-    htp_connp_destroy_all(connp);
+    htp_connp_destroy_all(connp);    
 
     return 1;
 }
@@ -45,8 +48,11 @@ int test_get(htp_cfg_t *cfg) {
 int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     htp_tx_t *tx = list_get(connp->conn->transactions, 0);
 
@@ -72,8 +78,11 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
 int test_post_urlencoded(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "03-post-urlencoded.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "03-post-urlencoded.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     htp_connp_destroy_all(connp);
 
@@ -86,8 +95,11 @@ int test_post_urlencoded(htp_cfg_t *cfg) {
 int test_apache_header_parsing(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "02-header-test-apache2.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "02-header-test-apache2.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     htp_tx_t *tx = list_get(connp->conn->transactions, 0);
     if (tx == NULL) return -1;
@@ -231,8 +243,11 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
 int test_expect(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "05-expect.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "05-expect.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     htp_connp_destroy_all(connp);
 
@@ -245,8 +260,11 @@ int test_expect(htp_cfg_t *cfg) {
 int test_uri_normal(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "06-uri-normal.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "06-uri-normal.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     htp_connp_destroy_all(connp);
 
@@ -259,8 +277,11 @@ int test_uri_normal(htp_cfg_t *cfg) {
 int test_pipelined_connection(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "07-pipelined-connection.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "07-pipelined-connection.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) != 2) {
         printf("Expected 2 transactions but found %i.", list_size(connp->conn->transactions));
@@ -283,8 +304,11 @@ int test_pipelined_connection(htp_cfg_t *cfg) {
 int test_not_pipelined_connection(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "08-not-pipelined-connection.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "08-not-pipelined-connection.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) != 2) {
         printf("Expected 2 transactions but found %i.", list_size(connp->conn->transactions));
@@ -314,8 +338,11 @@ int test_not_pipelined_connection(htp_cfg_t *cfg) {
 int test_multi_packet_request_head(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "09-multi-packet-request-head.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "09-multi-packet-request-head.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) != 1) {
         printf("Expected 1 transaction but found %i.", list_size(connp->conn->transactions));
@@ -337,8 +364,11 @@ int test_multi_packet_request_head(htp_cfg_t *cfg) {
 int test_misc(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "misc.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "misc.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -360,8 +390,11 @@ int test_misc(htp_cfg_t *cfg) {
 int test_host_in_headers(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "10-host-in-headers.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "10-host-in-headers.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) != 4) {
         printf("Expected 4 transactions but found %i.", list_size(connp->conn->transactions));
@@ -401,8 +434,11 @@ int test_host_in_headers(htp_cfg_t *cfg) {
 int test_response_stream_closure(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "11-response-stream-closure.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "11-response-stream-closure.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -424,8 +460,11 @@ int test_response_stream_closure(htp_cfg_t *cfg) {
 int test_connect(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "12-connect-request.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "12-connect-request.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -451,8 +490,11 @@ int test_connect(htp_cfg_t *cfg) {
 int test_connect_complete(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "15-connect-complete.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "15-connect-complete.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -471,11 +513,40 @@ int test_connect_complete(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_connect_extra(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    int rc = test_run(home, "16-connect-extra.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int test_compressed_response_gzip_ct(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "13-compressed-response-gzip-ct.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "13-compressed-response-gzip-ct.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -497,8 +568,11 @@ int test_compressed_response_gzip_ct(htp_cfg_t *cfg) {
 int test_compressed_response_gzip_chunked(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
-    if (connp == NULL) return -1;
+    int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -752,10 +826,12 @@ int main(int argc, char** argv) {
     RUN_TEST(test_multi_packet_request_head, cfg);
     RUN_TEST(test_response_stream_closure, cfg);
     RUN_TEST(test_host_in_headers, cfg);
-    RUN_TEST(test_connect, cfg);
-    RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_compressed_response_gzip_ct, cfg);
     RUN_TEST(test_compressed_response_gzip_chunked, cfg);
+    
+    RUN_TEST(test_connect, cfg);
+    RUN_TEST(test_connect_complete, cfg);
+    RUN_TEST(test_connect_extra, cfg);
 
     //RUN_TEST(test_misc, cfg);
 
