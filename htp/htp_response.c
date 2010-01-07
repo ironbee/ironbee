@@ -717,6 +717,8 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 
     // Return if the connection has had a fatal error
     if (connp->out_status == STREAM_STATE_ERROR) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Outbound parser is in STREAM_STATE_ERROR");
+
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA (previous error)\n");
         #endif
@@ -728,6 +730,8 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // chunks in the API, but we use it internally to force the parsers
     // to finalize parsing.
     if ((len == 0) && (connp->out_status != STREAM_STATE_CLOSED)) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
+
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA (zero-length chunk)\n");
         #endif
