@@ -298,31 +298,39 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
         if (test.chunk_direction == CLIENT) {
             if (in_data_other) {
-                // XXX destroy test
+                test_destroy(&test);
                 fprintf(stderr, "Unable to buffer more than one inbound chunk.\n");
                 return -1;
             }
 
             int rc = htp_connp_req_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len);
-            if (rc == STREAM_STATE_ERROR) return -101; // XXX destroy test
+            if (rc == STREAM_STATE_ERROR) {
+                test_destroy(&test);
+                return -101;
+            }
             if (rc == STREAM_STATE_DATA_OTHER) {
                 // Parser needs to see the outbound stream in order to continue
                 // parsing the inbound stream.
                 in_data_other = 1;
                 in_data = test.chunk;
                 in_data_len = test.chunk_len;
-                in_data_offset = htp_connp_req_data_consumed(*connp);
-                // printf("# YYY in ffset is %d\n", in_data_offset);
+                in_data_offset = htp_connp_req_data_consumed(*connp);                
             }
         } else {
             if (out_data_other) {
                 int rc = htp_connp_res_data(*connp, tv_start.tv_usec, out_data + out_data_offset, out_data_len - out_data_offset);
-                if (rc == STREAM_STATE_ERROR) return -104; // XXX destroy test
+                if (rc == STREAM_STATE_ERROR) {
+                    test_destroy(&test);
+                    return -104;
+                }
                 out_data_other = 0;
             }
 
             int rc = htp_connp_res_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len);
-            if (rc == STREAM_STATE_ERROR) return -102; // XXX destroy test
+            if (rc == STREAM_STATE_ERROR) {
+                test_destroy(&test);
+                return -102;
+            }
             if (rc == STREAM_STATE_DATA_OTHER) {
                 // Parser needs to see the outbound stream in order to continue
                 // parsing the inbound stream.
@@ -335,7 +343,10 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
             if (in_data_other) {
                 int rc = htp_connp_req_data(*connp, tv_start.tv_usec, in_data + in_data_offset, in_data_len - in_data_offset);
-                if (rc == STREAM_STATE_ERROR) return -103; // XXX destroy test                
+                if (rc == STREAM_STATE_ERROR) {
+                    test_destroy(&test);
+                    return -103;
+                }
                 in_data_other = 0;
             }
         }
@@ -343,7 +354,10 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
     if (out_data_other) {
         int rc = htp_connp_res_data(*connp, tv_start.tv_usec, out_data + out_data_offset, out_data_len - out_data_offset);
-        if (rc == STREAM_STATE_ERROR) return -104; // XXX destroy test
+        if (rc == STREAM_STATE_ERROR) {
+            test_destroy(&test);
+            return -104;
+        }
         out_data_other = 0;
     }
 
