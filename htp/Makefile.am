@@ -12,3 +12,10 @@ lib_LTLIBRARIES= libhtp.la
 libhtp_la_SOURCES= $(h_sources) $(c_sources)
 libhtp_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
 
+# An early version of LibHTP would install in /usr, rather
+# than /usr/local. The following code removes the older
+# installation.
+install-exec-hook:
+	rm -rf /usr/lib/libhtp.*
+	rm -rf /usr/lib/libhtp-0.1.*
+	rm -rf /usr/include/htp/
