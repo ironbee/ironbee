@@ -6,7 +6,7 @@ library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
 INCLUDES = -I$(top_srcdir)
-AM_CFLAGS = -D_GNU_SOURCE -g -O2 -Wall -Wextra -std=gnu99 -pedantic-errors
+AM_CFLAGS = -D_GNU_SOURCE -g -O2 -Wall -Wextra -std=gnu99 -pedantic
 
 lib_LTLIBRARIES= libhtp.la
 libhtp_la_SOURCES= $(h_sources) $(c_sources)
