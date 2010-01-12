@@ -76,15 +76,63 @@ bstr *bstr_add_cstr(bstr *destination, char *source) {
  * @param len
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {
-    if (bstr_size(destination) < bstr_len(destination) + len) {
+bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {    
+    if (bstr_size(destination) < bstr_len(destination) + len) {        
         destination = bstr_expand(destination, bstr_len(destination) + len);
-        if (destination == NULL) return NULL;
-    }
+        if (destination == NULL) return NULL;        
+    }    
 
     bstr_t *b = (bstr_t *) destination;
     memcpy(bstr_ptr(destination) + b->len, data, len);
-    b->len = b->len + len;
+    b->len = b->len + len;   
+
+    return destination;
+}
+
+/**
+ * Append source bstring to destination bstring, growing
+ * destination if necessary.
+ *
+ * @param destination
+ * @param source
+ * @return destination, at a potentially different memory location
+ */
+bstr *bstr_add_str_noex(bstr *destination, bstr *source) {
+    return bstr_add_mem_noex(destination, bstr_ptr(source), bstr_len(source));
+}
+
+/**
+ * Append a NUL-terminated source to destination, growing
+ * destination if necessary.
+ *
+ * @param destination
+ * @param source
+ * @return destination, at a potentially different memory location
+ */
+bstr *bstr_add_cstr_noex(bstr *destination, char *source) {
+    return bstr_add_mem_noex(destination, source, strlen(source));
+}
+
+/**
+ * Append a memory region to destination, growing destination
+ * if necessary.
+ *
+ * @param destination
+ * @param data
+ * @param len
+ * @return destination, at a potentially different memory location
+ */
+bstr *bstr_add_mem_noex(bstr *destination, char *data, size_t len) {
+    size_t copylen = len;
+
+    if (bstr_size(destination) < bstr_len(destination) + copylen) {
+        copylen = bstr_size(destination) - bstr_len(destination);
+        if (copylen <= 0) return destination;
+    }
+
+    bstr_t *b = (bstr_t *) destination;
+    memcpy(bstr_ptr(destination) + b->len, data, copylen);
+    b->len = b->len + copylen;
 
     return destination;
 }

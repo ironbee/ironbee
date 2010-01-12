@@ -373,6 +373,9 @@ struct htp_cfg_t {
     /** The best-fit map to use to decode %u-encoded characters. */
     unsigned char *path_u_bestfit_map;
 
+    /** Whether to generate the request_uri_normalized field. */
+    int generate_request_uri_normalized;
+
 
     // Hooks
 
@@ -754,6 +757,13 @@ struct htp_tx_t {
     /** Request URI, raw, as given to us on the request line. */
     bstr *request_uri;
 
+    /**
+     * Normalized request URI as a single string. The availability of this
+     * field depends on configuration. Use htp_config_set_generate_request_uri_normalized()
+     * to ask for the field to be generated.
+     */
+    bstr *request_uri_normalized;
+
     /** Request protocol, as text. */
     bstr *request_protocol;
 
@@ -976,6 +986,8 @@ void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling);
 void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
 void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
 
+void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
+
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
 htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
@@ -1010,6 +1022,8 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
 
      void htp_tx_set_user_data(htp_tx_t *tx, void *user_data);
     void *htp_tx_get_user_data(htp_tx_t *tx);
+
+    bstr *htp_tx_get_request_uri_normalized(htp_tx_t *tx);
 
 // Parsing functions
 
@@ -1096,6 +1110,8 @@ void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t
 char *htp_connp_in_state_as_string(htp_connp_t *connp);
 char *htp_connp_out_state_as_string(htp_connp_t *connp);
 char *htp_tx_progress_as_string(htp_tx_t *tx);
+
+bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
 #endif	/* _HTP_H */
 

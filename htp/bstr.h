@@ -50,6 +50,10 @@ bstr *bstr_add_mem(bstr *, char *, size_t);
 bstr *bstr_add_str(bstr *, bstr *);
 bstr *bstr_add_cstr(bstr *, char *);
 
+bstr *bstr_add_mem_noex(bstr *, char *, size_t);
+bstr *bstr_add_str_noex(bstr *, bstr *);
+bstr *bstr_add_cstr_noex(bstr *, char *);
+
 int bstr_util_memtoip(char *data, size_t len, int base, size_t *lastlen);
 char *bstr_memtocstr(char *data, size_t len);
 
