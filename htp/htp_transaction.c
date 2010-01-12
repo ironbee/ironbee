@@ -55,6 +55,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(tx->request_line);
     bstr_free(tx->request_method);
     bstr_free(tx->request_uri);
+    bstr_free(tx->request_uri_normalized);
     bstr_free(tx->request_protocol);
 
     if (tx->parsed_uri != NULL) {

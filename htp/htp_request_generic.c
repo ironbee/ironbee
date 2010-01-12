@@ -66,7 +66,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
             htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
-            bstr_add_str(tempstr, hl->line);
+            bstr_add_str_noex(tempstr, hl->line);
             hl->header = h;
         }
 
@@ -93,8 +93,8 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         // Add to existing header
         h_existing->value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
             + 2 + bstr_len(h->value));
-        bstr_add_mem(h_existing->value, ", ", 2);
-        bstr_add_str(h_existing->value, h->value);
+        bstr_add_mem_noex(h_existing->value, ", ", 2);
+        bstr_add_str_noex(h_existing->value, h->value);
 
         // The header is no longer needed
         free(h->name);

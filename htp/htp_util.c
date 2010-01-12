@@ -492,62 +492,62 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     // One, three or more slash characters, and it's a path. We, however,
     // only attempt to parse authority if we've seen a scheme.
     if ((*uri)->scheme != NULL)
-    if ((pos + 2 < len) && (data[pos] == '/') && (data[pos + 1] == '/') && (data[pos + 2] != '/')) {
-        // Parse authority
+        if ((pos + 2 < len) && (data[pos] == '/') && (data[pos + 1] == '/') && (data[pos + 2] != '/')) {
+            // Parse authority
 
-        // Go over the two slash characters
-        start = pos = pos + 2;
+            // Go over the two slash characters
+            start = pos = pos + 2;
 
-        // Authority ends with a question mark, forward slash or hash
-        while ((pos < len) && (data[pos] != '?') && (data[pos] != '/') && (data[pos] != '#')) pos++;
+            // Authority ends with a question mark, forward slash or hash
+            while ((pos < len) && (data[pos] != '?') && (data[pos] != '/') && (data[pos] != '#')) pos++;
 
-        char *hostname_start;
-        size_t hostname_len;
+            char *hostname_start;
+            size_t hostname_len;
 
-        // Are the credentials included in the authority?
-        char *m = memchr(data + start, '@', pos - start);
-        if (m != NULL) {
-            // Credentials present
-            char *credentials_start = data + start;
-            size_t credentials_len = m - data - start;
-
-            // Figure out just the hostname part
-            hostname_start = data + start + credentials_len + 1;
-            hostname_len = pos - start - credentials_len - 1;
-
-            // Extract the username and the password
-            m = memchr(credentials_start, ':', credentials_len);
+            // Are the credentials included in the authority?
+            char *m = memchr(data + start, '@', pos - start);
             if (m != NULL) {
-                // Username and password
-                (*uri)->username = bstr_memdup(credentials_start, m - credentials_start);
-                (*uri)->password = bstr_memdup(m + 1, credentials_len - (m - credentials_start) - 1);
+                // Credentials present
+                char *credentials_start = data + start;
+                size_t credentials_len = m - data - start;
+
+                // Figure out just the hostname part
+                hostname_start = data + start + credentials_len + 1;
+                hostname_len = pos - start - credentials_len - 1;
+
+                // Extract the username and the password
+                m = memchr(credentials_start, ':', credentials_len);
+                if (m != NULL) {
+                    // Username and password
+                    (*uri)->username = bstr_memdup(credentials_start, m - credentials_start);
+                    (*uri)->password = bstr_memdup(m + 1, credentials_len - (m - credentials_start) - 1);
+                } else {
+                    // Username alone
+                    (*uri)->username = bstr_memdup(credentials_start, credentials_len);
+                }
             } else {
-                // Username alone
-                (*uri)->username = bstr_memdup(credentials_start, credentials_len);
+                // No credentials
+                hostname_start = data + start;
+                hostname_len = pos - start;
             }
-        } else {
-            // No credentials
-            hostname_start = data + start;
-            hostname_len = pos - start;
+
+            // Still parsing authority; is there a port provided?
+            m = memchr(hostname_start, ':', hostname_len);
+            if (m != NULL) {
+                size_t port_len = hostname_len - (m - hostname_start) - 1;
+                hostname_len = hostname_len - port_len - 1;
+
+                // Port string
+                (*uri)->port = bstr_memdup(m + 1, port_len);
+
+                // We deliberately don't want to try to convert the port
+                // string as a number. That will be done later, during
+                // the normalization and validation process.
+            }
+
+            // Hostname
+            (*uri)->hostname = bstr_memdup(hostname_start, hostname_len);
         }
-
-        // Still parsing authority; is there a port provided?
-        m = memchr(hostname_start, ':', hostname_len);
-        if (m != NULL) {
-            size_t port_len = hostname_len - (m - hostname_start) - 1;
-            hostname_len = hostname_len - port_len - 1;
-
-            // Port string
-            (*uri)->port = bstr_memdup(m + 1, port_len);
-
-            // We deliberately don't want to try to convert the port
-            // string as a number. That will be done later, during
-            // the normalization and validation process.
-        }
-
-        // Hostname
-        (*uri)->hostname = bstr_memdup(hostname_start, hostname_len);
-    }
 
     // Path
     start = pos;
@@ -773,7 +773,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
-    size_t rpos = 0;    
+    size_t rpos = 0;
     uint32_t codepoint;
     uint32_t state = UTF8_ACCEPT;
     uint32_t counter = 0;
@@ -819,7 +819,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
                 rpos++;
 
                 // Prepare for the next character
-                counter = 0;                
+                counter = 0;
 
                 break;
 
@@ -1251,6 +1251,8 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
 
     // Query
     if (incomplete->query != NULL) {
+        // We cannot URL-decode the query string here; it needs to be
+        // parsed into individual key-value pairs first.
         normalized->query = bstr_strdup(incomplete->query);
     }
 
@@ -1352,8 +1354,8 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
     unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
-    size_t rpos = len;
-    size_t wpos = rpos;
+    size_t rpos = 0;
+    size_t wpos = 0;
 
     while (rpos < len) {
         if (data[rpos] == '%') {
@@ -1394,7 +1396,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
         }
     }
 
-    bstr_len_adjust(s, wpos - 1);
+    bstr_len_adjust(s, wpos);
 }
 
 #if 0
@@ -1712,4 +1714,108 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
     }
 
     return "UNKOWN";
+}
+
+bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
+    if (uri == NULL) {
+        return NULL;
+    }   
+
+    // On the first pass determine the length of the final string
+    size_t len = 0;
+
+    if (uri->scheme != NULL) {
+        len += bstr_len(uri->scheme);
+        len += 3; // "://"
+    }
+
+    if ((uri->username != NULL) || (uri->password != NULL)) {
+        if (uri->username != NULL) {
+            len += bstr_len(uri->username);
+        }
+
+        len += 1; // ":"
+
+        if (uri->password != NULL) {
+            len += bstr_len(uri->password);
+        }
+
+        len += 1; // "@"
+    }   
+
+    if (uri->hostname != NULL) {
+        len += bstr_len(uri->hostname);
+    }   
+
+    if (uri->port != NULL) {
+        len += 1; // ":"
+        len += bstr_len(uri->port);
+    }
+
+    if (uri->path != NULL) {
+        len += bstr_len(uri->path);
+    }
+
+    if (uri->query != NULL) {
+        len += 1; // "?"
+        len += bstr_len(uri->query);
+    }
+
+    if (uri->fragment != NULL) {
+        len += 1; // "#"
+        len += bstr_len(uri->fragment);
+    }    
+
+    // On the second pass construct the string
+    bstr *r = bstr_alloc(len);
+    if (r == NULL) {
+        return NULL;
+    }   
+
+    if (uri->scheme != NULL) {
+        bstr_add_str_noex(r, uri->scheme);
+        bstr_add_cstr_noex(r, "://");
+    }   
+
+    if ((uri->username != NULL) || (uri->password != NULL)) {
+        if (uri->username != NULL) {
+            bstr_add_str_noex(r, uri->username);
+        }
+
+        bstr_add_cstr(r, ":");
+
+        if (uri->password != NULL) {
+            bstr_add_str_noex(r, uri->password);
+        }
+
+        bstr_add_cstr_noex(r, "@");
+    }   
+
+    if (uri->hostname != NULL) {
+        bstr_add_str_noex(r, uri->hostname);
+    }   
+
+    if (uri->port != NULL) {
+        bstr_add_cstr(r, ":");
+        bstr_add_str_noex(r, uri->port);
+    }   
+
+    if (uri->path != NULL) {
+        bstr_add_str_noex(r, uri->path);
+    }  
+
+    if (uri->query != NULL) {
+        bstr *query = bstr_strdup(uri->query);
+        htp_uriencoding_normalize_inplace(query);
+        bstr_add_cstr_noex(r, "?");
+        bstr_add_str_noex(r, query);
+        bstr_free(query);
+    }     
+
+    if (uri->fragment != NULL) {
+        bstr_add_cstr_noex(r, "#");
+        bstr_add_str_noex(r, uri->fragment);
+    }
+   
+    return r;
 }

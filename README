@@ -4,11 +4,33 @@ Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
 ======================================================
 
 LibHTP is a security-aware parser for the HTTP protocol and the related bits
-and pieces.
+and pieces. The goals of the project, in the order of importance, are as
+follows:
 
- | IMPORTANT: LIBHTP IS NOT YET CONSIDERED STABLE. USE AT YOUR OWN RISK.
- | DO NOT USE IN PRODUCTION. WORK IS CURRENTLY UNDER WAY TO ENSURE THAT
- | LIBHTP IS SECURE AND THAT IT PERFORMS WELL.
+ 1. Completeness of coverage; LibHTP must be able to parse virtually all
+    traffic that is found in practice.
+
+ 2. Permissive parsing; LibHTP must never fail to parse a stream that would
+    be parsed by some other web server.
+
+ 3. Awareness of evasion techniques; LibHTP must be able to detect and
+    effectively deal with various evasion techniques, producing, where
+    practical, identical or practically identical results as the web
+    server processing the same traffic stream.
+
+ 4. Performance; The performance must be adequate for the desired tasks.
+    Completeness and security are often detremental to performance. Our
+    idea of handling the conflicting requirements is to put the library
+    user in control, allowing him to choose the most desired library
+    characteristic.
+
+ | IMPORTANT   LIBHTP IS NOT YET CONSIDERED STABLE. USE AT YOUR OWN RISK. DO NOT
+ |             USE IN PRODUCTION. WORK IS CURRENTLY UNDER WAY TO ENSURE THAT
+ |             LIBHTP IS SECURE AND THAT IT PERFORMS WELL.
+
+ | STATUS      LIBHTP IS VERY YOUNG AT THIS POINT. IT WILL BE SOME TIME BEFORE
+ |             IT CAN BE CONSIDER COMPLETE. AT THE MOMENT, THE FOCUS OF DEVELOPMENT
+ |             IS ON ACHIEVING THE FIRST TWO GOALS.
 
 LibHTP is an open source product, released under terms of the General Public Licence
 version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
@@ -35,11 +57,13 @@ If you want to use a repository version of LibHTP, do the following:
  2. Run ./update_version, which will update htp.c with the latest Subversion
     revision used
 
- 3. You may wish to also update htp.pc.in with the correct version
+ 3. You may wish to also update htp.pc.in and configure.ac with the correct version
 
  4. Run autoconf -i --force, which will prepare the library for installation
 
- 5. Continue to install as described above
+ 5. Run doxygen to generate the API documentation
+
+ 6. Continue to install as described above
 
 
 DOCUMENTATION

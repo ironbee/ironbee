@@ -814,7 +814,9 @@ int main(int argc, char** argv) {
     htp_config_register_response(cfg, callback_response);
 
     htp_config_register_log(cfg, callback_log);
-    
+
+    htp_config_set_generate_request_uri_normalized(cfg, 1);
+
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -1027,6 +1029,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     htp_config_destroy(cfg); \
     bstr_free(expected); \
     bstr_free(input);
+
 
 int main_path_tests(int argc, char** argv) {
     htp_cfg_t *cfg = NULL;
