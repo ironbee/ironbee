@@ -593,43 +593,32 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
                     // Note: downstream responsible for error logging
                     return HTP_ERROR;
-                }
-
-                printf("# XXX1\n");
+                }               
 
                 // Keep the original URI components, but
                 // create a copy which we can normalize and use internally
                 if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri)) {
                     // Note: downstream responsible for error logging
                     return HTP_ERROR;
-                }
-
-                printf("# XXX2\n");
+                }               
 
                 // Now is a good time to generate request_uri_normalized, before we finalize
                 // parsed_uri (and lose the information which parts were provided in the request and
                 // which parts we added).
-                if (connp->cfg->generate_request_uri_normalized) {
-                    printf("# XXX2-1\n");
-                    connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);
-
-                    printf("# XXX2-2\n");
+                if (connp->cfg->generate_request_uri_normalized) {                 
+                    connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);                   
 
                     if (connp->in_tx->request_uri_normalized == NULL) {
                         // There's no sense in logging anything on a memory allocation failure
                         return HTP_ERROR;
-                    }
-
-                    printf("# XXX2-3\n");
+                    }                   
 
                     #ifdef HTP_DEBUG
                     fprint_raw_data(stderr, "request_uri_normalized",
                         (unsigned char *) bstr_ptr(connp->in_tx->request_uri_normalized),
                         bstr_len(connp->in_tx->request_uri_normalized));
                     #endif
-                }
-
-                printf("# XXX3\n");
+                }               
 
                 // Finalize parsed_uri
 
@@ -665,9 +654,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 // Path
                 if (connp->in_tx->parsed_uri->path == NULL) {
                     connp->in_tx->parsed_uri->path = bstr_cstrdup("/");
-                }
-
-                printf("# XXX4\n");
+                }               
             }
 
             // Run hook REQUEST_LINE
