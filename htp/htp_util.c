@@ -1575,10 +1575,17 @@ void htp_normalize_uri_path_inplace(bstr *s) {
  *
  */
 void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len) {
-    char buf[160];
-    size_t offset = 0;
+    fprint_raw_data_ex(stream, name, data, 0, len);
+}
 
-    fprintf(stream, "\n%s: data len %zd (0x%zx)\n", name, len, len);
+/**
+ *
+ */
+void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, size_t offset, size_t printlen) {
+    char buf[160];
+    size_t len = offset + printlen;
+
+    fprintf(stream, "\n%s: offset %zd len %zd\n", name, offset, len);
 
     while (offset < len) {
         size_t i;

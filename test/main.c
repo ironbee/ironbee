@@ -754,7 +754,7 @@ int main_dir(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main(int argc, char** argv) {
+int main_tests(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
@@ -817,6 +817,7 @@ int main(int argc, char** argv) {
 
     htp_config_set_generate_request_uri_normalized(cfg, 1);
 
+    /*
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -834,8 +835,9 @@ int main(int argc, char** argv) {
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_connect_extra, cfg);
+    */
 
-    //RUN_TEST(test_misc, cfg);
+    RUN_TEST(test_misc, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
@@ -1362,4 +1364,23 @@ int main_path_tests(int argc, char** argv) {
 
     printf("\n");
     printf("Total tests: %i, %i failure(s).\n", tests, failures);
+}
+
+//int main_urlenp_tests(int argc, char** argv) {
+int main(int argc, char** argv) {
+    htp_urlenp_t *urlenp = NULL;
+
+    urlenp = htp_urlenp_create();
+    unsigned char *input = "A=1&B=2&C=&=4&=";
+    htp_urlenp_parse_complete(urlenp, input, strlen(input));
+    htp_urlenp_destroy(urlenp);
+
+    /*
+    bstr_builder_t *bb = bstr_builder_create();
+    bstr_builder_append_cstr(bb, "|123|");
+    bstr_builder_append_cstr(bb, "|456|");
+    bstr_builder_append_cstr(bb, "|789|");
+    bstr *b = bstr_builder_to_str(bb);
+    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(b), bstr_len(b));
+    */
 }

@@ -1,5 +1,6 @@
 >>>
-GET http://www.example%64.com/one/two/three.php?p=%64&q=%64#fff HTTP/1.0
+GET /../../images.gif HTTP/1.1
+Host: www.ExAmPlE.cOM
 
 
 <<<

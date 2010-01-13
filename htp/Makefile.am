@@ -1,6 +1,6 @@
 
-h_sources = bstr.h dslib.h hooks.h htp.h utf8_decoder.h htp_decompressors.h
-c_sources = bstr.c hooks.c htp_config.c htp_connection_parser.c htp_request_apache_2_2.c htp_request_generic.c htp_request_parsers.c htp_response_generic.c htp_util.c dslib.c htp.c htp_connection.c htp_parsers.c htp_request.c htp_response.c htp_transaction.c utf8_decoder.c htp_decompressors.c
+h_sources = bstr.h bstr_builder.h dslib.h hooks.h htp.h utf8_decoder.h htp_decompressors.h htp_urlencoded.h
+c_sources = bstr.c bstr_builder.c hooks.c htp_config.c htp_connection_parser.c htp_request_apache_2_2.c htp_request_generic.c htp_request_parsers.c htp_response_generic.c htp_util.c dslib.c htp.c htp_connection.c htp_parsers.c htp_request.c htp_response.c htp_transaction.c utf8_decoder.c htp_decompressors.c htp_urlencoded.c
 
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
@@ -18,5 +18,5 @@ libhtp_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_R
 install-exec-hook:
 	rm -rf /usr/lib/libhtp.*
 	rm -rf /usr/lib/libhtp-0.1.*
-    rm -rf /usr/lib/libhtp-0.2.*
+	rm -rf /usr/lib/libhtp-0.2.*
 	rm -rf /usr/include/htp/
