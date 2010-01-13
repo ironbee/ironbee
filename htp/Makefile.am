@@ -18,5 +18,5 @@ libhtp_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_R
 install-exec-hook:
 	rm -rf /usr/lib/libhtp.*
 	rm -rf /usr/lib/libhtp-0.1.*
-    rm -rf /usr/lib/libhtp-0.2.*
+	rm -rf /usr/lib/libhtp-0.2.*
 	rm -rf /usr/include/htp/
