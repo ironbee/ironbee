@@ -1371,8 +1371,16 @@ int main(int argc, char** argv) {
     htp_urlenp_t *urlenp = NULL;
 
     urlenp = htp_urlenp_create();
-    unsigned char *input = "A=1&B=2&C=&=4&=";
-    htp_urlenp_parse_complete(urlenp, input, strlen(input));
+    //unsigned char *input = "A=1&B=2&C=&=4&=";
+    //htp_urlenp_parse_complete(urlenp, input, strlen(input));
+
+    unsigned char *i1 = "A=01234567";
+    unsigned char *i2 = "89&B";
+    
+    htp_urlenp_parse_partial(urlenp, i1, strlen(i1));
+    htp_urlenp_parse_partial(urlenp, i2, strlen(i2));
+    htp_urlenp_finalize(urlenp);
+    
     htp_urlenp_destroy(urlenp);
 
     /*

@@ -60,45 +60,49 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
 /**
  *
  */
-static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data, size_t startpos, size_t endpos, int c) {
-    //fprint_raw_data_ex(stderr, "FIELD", data, startpos, endpos - startpos);
-
+static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data, size_t startpos, size_t endpos, int c) {    
     // Add field if we know it ended or if we know that
     // we've used all of the input data
-    if ((c != -1) || (urlenp->_complete)) {
+    if ((c != -1) || (urlenp->_complete)) {        
         // Add field
         bstr *field = NULL;
-        
-        if (bstr_builder_size(urlenp->_bb) > 0) {
+
+        if (bstr_builder_size(urlenp->_bb) > 0) {            
             // Add current piece to string builder
             if (endpos - startpos > 0) {
-                bstr_builder_append_mem(urlenp->_bb, (char *)data + startpos, endpos - startpos);
+                bstr_builder_append_mem(urlenp->_bb, (char *) data + startpos, endpos - startpos);
             }
 
             field = bstr_builder_to_str(urlenp->_bb);
 
-            // XXX Clear builder
+            bstr_builder_clear(urlenp->_bb);
         } else {
             // We only have the current piece to work with, so
             // no need to involve the string builder
-            field = bstr_memdup((char *)data + startpos, endpos - startpos);
+            field = bstr_memdup((char *) data + startpos, endpos - startpos);
         }
-
+        
         // Process the field differently, depending on the current state
-        if (urlenp->_state == HTP_URLENP_STATE_KEY) {
+        if (urlenp->_state == HTP_URLENP_STATE_KEY) {            
+            // Store the name for later
             urlenp->_name = field;
+
+            if (urlenp->_complete) {
+                // Param with key but no value
+                htp_urlen_param_t *param = calloc(1, sizeof (htp_urlen_param_t));
+                param->name = urlenp->_name;
+                param->value = bstr_cstrdup("");
+            }
         } else {
-            htp_urlen_param_t *param = calloc(1, sizeof(htp_urlen_param_t));
+            // Param with key and value
+            htp_urlen_param_t *param = calloc(1, sizeof (htp_urlen_param_t));
             param->name = urlenp->_name;
             param->value = field;
-
-            fprint_raw_data(stderr, "NAME", (unsigned char *)bstr_ptr(param->name), bstr_len(param->name));
-            fprint_raw_data(stderr, "VALUE", (unsigned char *)bstr_ptr(param->value), bstr_len(param->value));
         }
-    } else {
+    } else {        
         // Make a copy of the data and store it in an array for later
         if (endpos - startpos > 0) {
-            bstr_builder_append_mem(urlenp->_bb, (char *)data + startpos, endpos - startpos);
+            bstr_builder_append_mem(urlenp->_bb, (char *) data + startpos, endpos - startpos);
         }
     }
 }
@@ -107,7 +111,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
  *
  */
 int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t len) {
-    // TODO urlenp->complete must not be 1
+    // TODO urlenp->complete must not already be 1
     urlenp->_complete = 1;
     return htp_urlenp_parse_partial(urlenp, data, len);
 }
@@ -119,6 +123,8 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
     size_t startpos = 0;
     size_t pos = 0;
     int c;
+
+    if (data == NULL) len = 0;
 
     for (;;) {
         // Get the next character, or -1
@@ -135,9 +141,11 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
                     // Data from startpos to pos                    
                     htp_urlenp_add_field_piece(urlenp, data, startpos, pos, c);
 
-                    // Next state                    
-                    startpos = pos + 1;
-                    urlenp->_state = HTP_URLENP_STATE_VALUE;
+                    if (c != -1) {
+                        // Next state
+                        startpos = pos + 1;
+                        urlenp->_state = HTP_URLENP_STATE_VALUE;
+                    }
                 }
                 break;
 
@@ -148,9 +156,11 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
                     // Data from startpos to pos                    
                     htp_urlenp_add_field_piece(urlenp, data, startpos, pos, c);
 
-                    // Next state                    
-                    startpos = pos + 1;
-                    urlenp->_state = HTP_URLENP_STATE_KEY;
+                    if (c != -1) {
+                        // Next state
+                        startpos = pos + 1;
+                        urlenp->_state = HTP_URLENP_STATE_KEY;
+                    }
                 }
                 break;
         }
@@ -162,4 +172,8 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
     }
 
     return HTP_OK;
+}
+
+int htp_urlenp_finalize(htp_urlenp_t *urlenp) {
+    return htp_urlenp_parse_complete(urlenp, NULL, 0);
 }

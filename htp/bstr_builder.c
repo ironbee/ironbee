@@ -20,6 +20,20 @@ size_t bstr_builder_size(bstr_builder_t *bb) {
     return list_size(bb->pieces);
 }
 
+void bstr_builder_clear(bstr_builder_t *bb) {
+    // Destroy any pieces we might have
+    bstr *b = NULL;
+    list_iterator_reset(bb->pieces);
+    while ((b = list_iterator_next(bb->pieces)) != NULL) {
+        bstr_free(b);
+    }
+
+    list_destroy(bb->pieces);
+
+    bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);
+    // TODO What should we do on allocation failure?
+}
+
 bstr_builder_t * bstr_builder_create() {
     bstr_builder_t *bb = calloc(1, sizeof(bstr_builder_t));
     if (bb == NULL) return NULL;

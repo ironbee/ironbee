@@ -22,7 +22,6 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
 
 #define HTP_URLENP_DEFAULT_PARAMS_SIZE 32
 
-#define HTP_URLENP_STATE_KEY_NEW    0
 #define HTP_URLENP_STATE_KEY        1
 #define HTP_URLENP_STATE_VALUE      2
 
@@ -60,6 +59,7 @@ htp_urlenp_t *htp_urlenp_create();
          
          int  htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t len);
          int  htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t len);
+         int  htp_urlenp_finalize(htp_urlenp_t *urlenp);
 
 #endif	/* _HTP_URLENCODED_H */
 

@@ -29,6 +29,7 @@ bstr_builder_t * bstr_builder_create();
 void bstr_builder_destroy(bstr_builder_t *bb);
 
 size_t bstr_builder_size(bstr_builder_t *bb);
+void bstr_builder_clear(bstr_builder_t *bb);
 
 int bstr_builder_append(bstr_builder_t *bb, bstr *b);
 int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len);
