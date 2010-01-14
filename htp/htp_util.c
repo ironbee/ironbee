@@ -1644,11 +1644,6 @@ void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, siz
     fprintf(stream, "\n");
 }
 
-
-/*
-
- */
-
 /**
  *
  */
