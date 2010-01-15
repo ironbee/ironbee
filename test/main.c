@@ -1366,8 +1366,8 @@ int main_path_tests(int argc, char** argv) {
     printf("Total tests: %i, %i failure(s).\n", tests, failures);
 }
 
-//int main_urlenp_tests(int argc, char** argv) {
-int main(int argc, char** argv) {
+int main_urlenp_tests(int argc, char** argv) {
+//int main(int argc, char** argv) {
     htp_urlenp_t *urlenp = NULL;
 
     urlenp = htp_urlenp_create();
@@ -1392,3 +1392,43 @@ int main(int argc, char** argv) {
     fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(b), bstr_len(b));
     */
 }
+
+//int main_multipart(int argc, char** argv) {
+int main(int argc, char** argv) {
+    htp_mpartp_t *mpartp = NULL;
+
+    mpartp = htp_mpartp_create("BBB");
+
+    unsigned char *i1 = "x0000x\n--BBB\nx1111x\n--\nx2222x\n--";
+    unsigned char *i2 = "BBB\nx3333x\n--B";
+    unsigned char *i3 = "B\nx4444x\n--B";
+    unsigned char *i4 = "B\n--BBB\n\nx5555x\r";
+    unsigned char *i5 = "\n--x6666x\r";
+    unsigned char *i6 = "-";
+    unsigned char *i7 = "-";
+
+    htp_mpartp_parse(mpartp, i1, strlen(i1));
+    htp_mpartp_parse(mpartp, i2, strlen(i2));
+    htp_mpartp_parse(mpartp, i3, strlen(i3));
+    htp_mpartp_parse(mpartp, i4, strlen(i4));
+    htp_mpartp_parse(mpartp, i5, strlen(i5));
+    htp_mpartp_parse(mpartp, i6, strlen(i6));
+    htp_mpartp_parse(mpartp, i7, strlen(i7));
+    htp_mpartp_finalize(mpartp);
+
+    /*
+       "x0000x"
+       "x1111x\n--\nx2222x"
+       "x3333x"
+       "\n--B"
+       "B\nx4444x"
+       "\n--B"
+       "B" "\nx5555x"
+       "\r"
+       "\n--x6666x"
+    */
+
+    htp_mpartp_destroy(mpartp);
+}
+
+

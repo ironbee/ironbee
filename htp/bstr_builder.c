@@ -35,6 +35,9 @@ size_t bstr_builder_size(bstr_builder_t *bb) {
  * @param bb
  */
 void bstr_builder_clear(bstr_builder_t *bb) {
+    // Do nothing if the list is empty
+    if (list_size(bb->pieces) == 0) return;
+    
     // Destroy any pieces we might have
     bstr *b = NULL;
     list_iterator_reset(bb->pieces);

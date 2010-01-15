@@ -39,6 +39,7 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #include "hooks.h"
 #include "htp_decompressors.h"
 #include "htp_urlencoded.h"
+#include "htp_multipart.h"
 
 // -- Defines -------------------------------------------------------------------------------------
 
