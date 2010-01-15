@@ -82,7 +82,7 @@ void htp_mpartp_destroy(htp_mpartp_t *mpartp) {
 /**
  *
  */
-int htp_mpartp_finalize(htp_mpartp_t *mpartp) {
+void htp_mpartp_finalize(htp_mpartp_t *mpartp) {
     // If a CR byte was put aside, process it now as a single data byte
     if (mpartp->cr_aside) {
         mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1);
@@ -121,6 +121,13 @@ int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {
 STATE_SWITCH:
         switch (mpartp->state) {
             case MULTIPART_STATE_DATA:
+                // If a CR byte was put aside, but we don't have a boundary
+                // condition, process the byte now as a single data byte
+                if ((mpartp->cr_aside)&&(data[pos] != LF)) {
+                    mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1);
+                    mpartp->cr_aside = 0;
+                }
+
                 // Process data
                 while (pos < len) {
                     if (data[pos] == CR) {
@@ -226,6 +233,7 @@ DATA_CONTINUE:
                 // Preveserve the partial boundary; we'll need it later, if it
                 // turns out that it isn't a boundary after all
                 bstr_builder_append_mem(mpartp->boundary_pieces, (char *) data + boundarypos, pos - boundarypos);
+                fprint_raw_data(stderr, "SET ASIDE", data + boundarypos, pos - boundarypos);
 
                 break;
 
