@@ -37,7 +37,7 @@ int test_get(htp_cfg_t *cfg) {
         return -1;
     }
 
-    htp_connp_destroy_all(connp);    
+    htp_connp_destroy_all(connp);
 
     return 1;
 }
@@ -506,7 +506,7 @@ int test_connect_complete(htp_cfg_t *cfg) {
     if (tx->progress != TX_PROGRESS_DONE) {
         printf("Expected the only transaction to be complete (but got %i).", tx->progress);
         return -1;
-    }   
+    }
 
     htp_connp_destroy_all(connp);
 
@@ -634,7 +634,7 @@ int callback_response_trailer(htp_connp_t *connp) {
 }
 
 int callback_response(htp_connp_t *connp) {
-    printf("-- Callback: response\n");    
+    printf("-- Callback: response\n");
 }
 
 int callback_response_destroy(htp_connp_t *connp) {
@@ -642,7 +642,7 @@ int callback_response_destroy(htp_connp_t *connp) {
     printf("-- Destroyed transaction\n");
 }
 
-int callback_log(htp_log_t *log) {    
+int callback_log(htp_log_t *log) {
     htp_print_log(stdout, log);
 }
 
@@ -689,7 +689,7 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
     }
 
     while ((entry = readdir(d)) != NULL) {
-        if (strncmp(entry->d_name, "stream", 6) == 0) {   
+        if (strncmp(entry->d_name, "stream", 6) == 0) {
             int rc = test_run(dirname, entry->d_name, cfg, &connp);
 
             if (rc < 0) {
@@ -731,10 +731,10 @@ int main_dir(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_config_register_log(cfg, callback_log);
     htp_config_register_response(cfg, callback_response_destroy);
-    
+
     run_directory("C:\\http_traces\\run5", cfg);
     //run_directory("/home/ivanr/work/traces/run3/", cfg);
-    
+
     htp_config_destroy(cfg);
 }
 
@@ -835,7 +835,7 @@ int main_tests(int argc, char** argv) {
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_connect_extra, cfg);
-    */
+     */
 
     RUN_TEST(test_misc, cfg);
 
@@ -1032,7 +1032,6 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     bstr_free(expected); \
     bstr_free(input);
 
-
 int main_path_tests(int argc, char** argv) {
     htp_cfg_t *cfg = NULL;
     htp_tx_t *tx = NULL;
@@ -1040,14 +1039,14 @@ int main_path_tests(int argc, char** argv) {
     bstr *expected = NULL;
     int success = 0;
     int tests = 0;
-    int failures = 0;        
+    int failures = 0;
     int expected_status = 0;
     int expected_flags = 0;
     char *test_name = NULL;
-    
+
     PATH_DECODE_TEST_BEFORE("URL-decoding");
     input = bstr_cstrdup("/%64est");
-    expected = bstr_cstrdup("/dest");    
+    expected = bstr_cstrdup("/dest");
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded, preserve %");
@@ -1083,7 +1082,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_cstrdup("/%xxest");
     expected_status = 400;
     expected_flags = HTP_PATH_INVALID_ENCODING;
-    cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;    
+    cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (expected not to decode; 400)");
@@ -1099,8 +1098,8 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_cstrdup("/d");
     expected_status = 400;
     expected_flags = HTP_PATH_OVERLONG_U;
-    cfg->path_decode_u_encoding = STATUS_400;    
-    PATH_DECODE_TEST_AFTER();   
+    cfg->path_decode_u_encoding = STATUS_400;
+    PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (also overlong)");
     input = bstr_cstrdup("/%u0064");
@@ -1156,11 +1155,11 @@ int main_path_tests(int argc, char** argv) {
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
-    PATH_DECODE_TEST_AFTER();  
+    PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding, best-fit mapping");
     input = bstr_cstrdup("/%u0107");
-    expected = bstr_cstrdup("/c");    
+    expected = bstr_cstrdup("/c");
     cfg->path_decode_u_encoding = YES;
     cfg->path_unicode_mapping = BESTFIT;
     PATH_DECODE_TEST_AFTER();
@@ -1193,7 +1192,7 @@ int main_path_tests(int argc, char** argv) {
 
     PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded), expect to decode");
     input = bstr_cstrdup("/one%u002ftwo");
-    expected = bstr_cstrdup("/one/two");    
+    expected = bstr_cstrdup("/one/two");
     cfg->path_decode_separators = YES;
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
@@ -1220,7 +1219,7 @@ int main_path_tests(int argc, char** argv) {
 
     PATH_DECODE_TEST_BEFORE("Backslash (not encoded), as path segment separator");
     input = bstr_cstrdup("/one\\two");
-    expected = bstr_cstrdup("/one/two");    
+    expected = bstr_cstrdup("/one/two");
     cfg->path_backslash_separators = YES;
     PATH_DECODE_TEST_AFTER();
 
@@ -1238,7 +1237,7 @@ int main_path_tests(int argc, char** argv) {
     cfg->path_decode_separators = YES;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_u_encoding = YES;
-    PATH_DECODE_TEST_AFTER();    
+    PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded");
     input = bstr_cstrdup("/%f7test");
@@ -1251,7 +1250,7 @@ int main_path_tests(int argc, char** argv) {
     expected_status = 400;
     expected_flags = HTP_PATH_UTF8_INVALID;
     cfg->path_invalid_utf8_handling = STATUS_400;
-    PATH_DECODE_TEST_AFTER();   
+    PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; leave");
     input = bstr_memdup("/test\0text", 10);
@@ -1329,12 +1328,12 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_cstrdup("/\x01test");
     cfg->path_control_char_handling = NONE;
     PATH_DECODE_TEST_AFTER();
-    
+
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (400)");
     input = bstr_cstrdup("/%01test");
     expected = bstr_cstrdup("/\x01test");
     expected_status = 400;
-    cfg->path_control_char_handling = STATUS_400;    
+    cfg->path_control_char_handling = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (400)");
@@ -1342,7 +1341,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_cstrdup("/\x01test");
     expected_status = 400;
     cfg->path_control_char_handling = STATUS_400;
-    PATH_DECODE_TEST_AFTER();    
+    PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("UTF-8; overlong 2-byte sequence");
     input = bstr_cstrdup("/%c1%b4est");
@@ -1367,20 +1366,20 @@ int main_path_tests(int argc, char** argv) {
 }
 
 int main_urlenp_tests(int argc, char** argv) {
-//int main(int argc, char** argv) {
+    //int main(int argc, char** argv) {
     htp_urlenp_t *urlenp = NULL;
 
     urlenp = htp_urlenp_create();
-    //unsigned char *input = "A=1&B=2&C=&=4&=";
+    //parts[nput = "A=1&B=2&C=&=4&=";
     //htp_urlenp_parse_complete(urlenp, input, strlen(input));
 
     unsigned char *i1 = "A=01234567";
     unsigned char *i2 = "89&BB";
-    
+
     htp_urlenp_parse_partial(urlenp, i1, strlen(i1));
     htp_urlenp_parse_partial(urlenp, i2, strlen(i2));
     htp_urlenp_finalize(urlenp);
-    
+
     htp_urlenp_destroy(urlenp);
 
     /*
@@ -1390,11 +1389,11 @@ int main_urlenp_tests(int argc, char** argv) {
     bstr_builder_append_cstr(bb, "|789|");
     bstr *b = bstr_builder_to_str(bb);
     fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(b), bstr_len(b));
-    */
+     */
 }
 
-//int main_multipart(int argc, char** argv) {
-int main(int argc, char** argv) {
+int main_multipart1(int argc, char** argv) {
+    //int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
 
     mpartp = htp_mpartp_create("BBB");
@@ -1426,7 +1425,46 @@ int main(int argc, char** argv) {
        "B" "\nx5555x"
        "\r"
        "\n--x6666x"
-    */
+     */
+
+    htp_mpartp_destroy(mpartp);
+}
+
+//int main_multipart2(int argc, char** argv) {
+int main(int argc, char** argv) {
+    htp_mpartp_t *mpartp = NULL;
+
+    mpartp = htp_mpartp_create("---------------------------41184676334");
+
+    unsigned char *parts[999];
+    parts[1] = "-----------------------------41184676334\r\n";
+    parts[2] = "Content-Disposition: form-data; name=\"field1\"\r\n";
+    parts[3] = "\r\n";
+    parts[4] = "0123456789\r\n";
+    parts[5] = "-----------------------------41184676334\r\n";    
+    parts[6] = "Content-Disposition: form-data; name=\"field2\"\r\n";    
+    parts[7] = "\r\n";
+    parts[8] = "9876543210\r\n";
+    parts[9] = "-----------------------------41184676334\r\n";
+    parts[10] = "Content-Disposition: form-data; name=\"file1\"; filename=\"New Text Document.txt\"\r\n";
+    parts[11] = "Content-Type: text/plain\r\n";
+    parts[12] = "\r\n";
+    parts[13] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[14] = "-----------------------------41184676334\r\n";
+    parts[15] = "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
+    parts[16] = "Content-Type: text/plain\r\n";
+    parts[17] = "\r\n";
+    parts[18] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[19] = "-----------------------------41184676334--\r\n";    
+    parts[20] = NULL;
+
+    int i = 1;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        i++;
+    }
+    htp_mpartp_finalize(mpartp);
 
     htp_mpartp_destroy(mpartp);
 }
