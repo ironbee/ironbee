@@ -1437,28 +1437,27 @@ int main(int argc, char** argv) {
     mpartp = htp_mpartp_create("---------------------------41184676334");
 
     unsigned char *parts[999];
-    parts[1] = "-----------------------------41184676334\r\n";
-    parts[2] = "Content-Disposition: form-data; name=\"field1\"\r\n";
-    parts[3] = "\r\n";
-    parts[4] = "0123456789\r\n";
-    parts[5] = "-----------------------------41184676334\r\n";    
-    parts[6] = "Content-Disposition: form-data; name=\"field2\"\r\n";    
-    parts[7] = "\r\n";
-    parts[8] = "9876543210\r\n";
-    parts[9] = "-----------------------------41184676334\r\n";
-    parts[10] = "Content-Disposition: form-data; name=\"file1\"; filename=\"New Text Document.txt\"\r\n";
-    parts[11] = "Content-Type: text/plain\r\n";
-    parts[12] = "\r\n";
-    parts[13] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
-    parts[14] = "-----------------------------41184676334\r\n";
-    parts[15] = "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
-    parts[16] = "Content-Type: text/plain\r\n";
-    parts[17] = "\r\n";
-    parts[18] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
-    parts[19] = "-----------------------------41184676334--\r\n";    
-    parts[20] = NULL;
-
     int i = 1;
+    parts[i++] = "-----------------------------41184676334\r\n";
+    parts[i++] = "Content-Disposition: form-data; name=\"field1\"\r\n";
+    parts[i++] = "\r\n";
+    parts[i++] = "0123456789\r\n";
+    parts[i++] = "-----------------------------41184676334\r\n";
+    parts[i++] = "Content-Disposition: form-data; name=\"field2\"\r\n";
+    parts[i++] = "\r\n";
+    parts[i++] = "9876543210\r\n";
+    parts[i++] = "-----------------------------41184676334\r\n";
+    parts[i++] = "Content-Disposition: form-data; name=\"file1\"; filename=\"New Text Document.txt\"\r\nContent-Type: text/plain\r\n\r\n";
+    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[i++] = "-----------------------------41184676334\r\n";
+    parts[i++] = "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
+    parts[i++] = "Content-Type: text/plain\r\n";
+    parts[i++] = "\r\n";
+    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[i++] = "-----------------------------41184676334--\r\n";
+    parts[i++] = NULL;
+
+    i = 1;
     for (;;) {
         if (parts[i] == NULL) break;
         htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
