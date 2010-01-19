@@ -59,7 +59,10 @@ struct htp_mpart_part_t {
     size_t len;
    
     /** */
-    char *name;
+    bstr *name;
+
+    /** */
+    bstr *value;
 
     /** */
     table_t *headers;
@@ -94,6 +97,7 @@ struct htp_mpartp_t {
     htp_mpart_part_t *current_part;
     size_t current_len;
     bstr_builder_t *boundary_pieces;
+    bstr_builder_t *part_pieces;
     unsigned char aside_buf[3];
     short aside_len;
 };

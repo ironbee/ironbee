@@ -45,6 +45,12 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
     // We currently do not process the preamble and epilogue parts
     if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) return 1;
 
+    if (part->type != MULTIPART_PART_FILE) {
+        part->value = bstr_builder_to_str(part->mpartp->part_pieces);
+        fprint_raw_data(stderr, "PART DATA", (unsigned char *) bstr_ptr(part->value), bstr_len(part->value));
+        bstr_builder_clear(part->mpartp->part_pieces);
+    }
+
     return 1;
 }
 
@@ -66,6 +72,33 @@ int htp_mpart_part_receive_data(htp_mpart_part_t *part, unsigned char *data, siz
 
     // We currently do not process the preamble and epilogue parts
     if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) return 1;
+
+    if (part->mode == MULTIPART_MODE_LINE) {
+        // Line mode
+
+        if (line) {
+            // End of line
+
+            // Is it an empty line?
+            if ((len == 0) && (bstr_builder_size(part->mpartp->part_pieces) == 0)) {
+                // Yes, it's an empty line; switch to data mode
+                part->mode = MULTIPART_MODE_DATA;
+            } else {
+                // Not an empty line
+                bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
+                // XXX Do something with the line
+                bstr_builder_clear(part->mpartp->part_pieces);
+            }
+        } else {
+            // Not end of line; keep the data chunk for later
+            bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
+        }
+    } else {
+        // Data mode; keep the data chunk for later (but not if it is a file)
+        if (part->type != MULTIPART_PART_FILE) {
+            bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
+        }
+    }
 
     return 1;
 }
@@ -102,7 +135,7 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, siz
 /**
  *
  */
-static int htp_mpartp_handle_boundary(htp_mpartp_t *mpartp) {
+static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
     fprintf(stderr, "HANDLE BOUNDARY\n");
 
     // TODO Having mpartp->seen_last_boundary set here means that there's
@@ -127,12 +160,19 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t *mpartp) {
  * @param boundar
  * @return New parser, or NULL on memory allocation failure.
  */
-htp_mpartp_t *htp_mpartp_create(char *boundary) {
+htp_mpartp_t * htp_mpartp_create(char *boundary) {
     htp_mpartp_t *mpartp = calloc(1, sizeof (htp_mpartp_t));
     if (mpartp == NULL) return NULL;
 
     mpartp->boundary_pieces = bstr_builder_create();
     if (mpartp->boundary_pieces == NULL) {
+        free(mpartp);
+        return NULL;
+    }
+
+    mpartp->part_pieces = bstr_builder_create();
+    if (mpartp->part_pieces == NULL) {
+        bstr_builder_destroy(mpartp->part_pieces);
         free(mpartp);
         return NULL;
     }
@@ -170,10 +210,13 @@ htp_mpartp_t *htp_mpartp_create(char *boundary) {
 /**
  * Destroys a multipart/form-data parser.
  */
-void htp_mpartp_destroy(htp_mpartp_t *mpartp) {
+void htp_mpartp_destroy(htp_mpartp_t * mpartp) {
     if (mpartp == NULL) return;
 
     free(mpartp->boundary);
+
+    bstr_builder_destroy(mpartp->part_pieces);
+    bstr_builder_destroy(mpartp->boundary_pieces);
 
     free(mpartp);
 }
@@ -181,7 +224,7 @@ void htp_mpartp_destroy(htp_mpartp_t *mpartp) {
 /**
  *
  */
-void htp_mpartp_finalize(htp_mpartp_t *mpartp) {
+void htp_mpartp_finalize(htp_mpartp_t * mpartp) {
     // If some data was put aside, process it now
     if (mpartp->aside_len > 0) {
         mpartp->handle_data(mpartp, mpartp->aside_buf, mpartp->aside_len, 0);
@@ -216,9 +259,9 @@ int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {
 
     // Loop while there's data in the buffer
     while (pos < len) {
-        // fprintf(stderr, "STATE %d pos %d\n", mpartp->state, pos);
-
 STATE_SWITCH:
+        fprintf(stderr, "STATE %d pos %d\n", mpartp->state, pos);
+
         switch (mpartp->state) {
             case MULTIPART_STATE_DATA:
                 // If we encounter any data set aside in this state, that means it's
@@ -250,7 +293,7 @@ STATE_SWITCH:
                             // We have CR and at least one more byte in the buffer, so we
                             // are able to test for the LF byte too.
                             if (data[pos + 1] == LF) {
-                                pos += 2; // Take CR and LF from input                                
+                                pos += 2; // Take CR and LF from input
                                 mpartp->aside_buf[0] = CR;
                                 mpartp->aside_buf[1] = LF;
                                 mpartp->aside_len = 2;
@@ -275,7 +318,7 @@ STATE_SWITCH:
                         }
                     } else if (data[pos] == LF) {
                         // Possible boundary start position (LF line)
-                        pos++; // Take LF from input                       
+                        pos++; // Take LF from input
 
                         // We may see a CR that was set aside in the previous chunk.
                         if (mpartp->aside_len != 0) {
@@ -323,7 +366,7 @@ STATE_SWITCH:
                     // Check if the bytes match
                     if (!(data[pos] == mpartp->boundary[mpartp->bpos])) {
                         // Mismatch
-
+                        
                         // Do we have any pieces in our buffer (which would happen with a boundary
                         // that was spread across several input packets)?
                         if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
@@ -345,10 +388,15 @@ STATE_SWITCH:
                             }
 
                             bstr_builder_clear(mpartp->boundary_pieces);
-                        }
+                        } else if ((boundarypos == 0)&&(mpartp->aside_len > 0)) {
+                            // The set-aside data is from a previous chunk
+                            mpartp->handle_data(mpartp, mpartp->aside_buf, mpartp->aside_len, 0 /* Not end of line */);
+                            mpartp->aside_len = 0;
+                        }                       
 
                         // Revert state back to data parsing
                         pos = boundarypos;
+                        mpartp->aside_len = 0;
                         mpartp->state = MULTIPART_STATE_DATA;
 
                         goto STATE_SWITCH;
@@ -366,6 +414,9 @@ STATE_SWITCH:
                             mpartp->handle_data(mpartp, data + startpos, boundarypos - startpos - local_aside_len, 0);
                         }
 
+                        // Clear any data we have set aside
+                        mpartp->aside_len = 0;
+
                         // Remove the boundary pieces, if any.
                         bstr_builder_clear(mpartp->boundary_pieces);
 
@@ -376,7 +427,7 @@ STATE_SWITCH:
                         mpartp->handle_boundary(mpartp);
 
                         // We now need to check if this is the last boundary in the payload
-                        mpartp->state = MULTIPART_STATE_BOUNDARY_IS_LAST2;                        
+                        mpartp->state = MULTIPART_STATE_BOUNDARY_IS_LAST2;
                         goto STATE_SWITCH;
                     }
                 } // while
@@ -391,8 +442,7 @@ STATE_SWITCH:
                 // Preveserve the partial boundary; we'll need it later, if it
                 // turns out that it isn't a boundary after all
                 if (pos - boundarypos > 0) {
-                    bstr_builder_append_mem(mpartp->boundary_pieces, (char *) data + boundarypos, pos - boundarypos);
-                    //fprint_raw_data(stderr, "SET ASIDE", data + boundarypos, pos - boundarypos);
+                    bstr_builder_append_mem(mpartp->boundary_pieces, (char *) data + boundarypos, pos - boundarypos);                    
                 }
 
                 break;

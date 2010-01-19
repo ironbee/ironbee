@@ -1448,7 +1448,10 @@ int main(int argc, char** argv) {
     parts[i++] = "9876543210\r\n";
     parts[i++] = "-----------------------------41184676334\r\n";
     parts[i++] = "Content-Disposition: form-data; name=\"file1\"; filename=\"New Text Document.txt\"\r\nContent-Type: text/plain\r\n\r\n";
-    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[i++] = "1FFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[i++] = "2FFFFFFFFFFFFFFFFFFFFFFFFFFE\r\n";
+    parts[i++] = "3FFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n4FFFFFFFFFFFFFFFFFFFFFFFFFFE";
+    parts[i++] = "\r\n";
     parts[i++] = "-----------------------------41184676334\r\n";
     parts[i++] = "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
     parts[i++] = "Content-Type: text/plain\r\n";
