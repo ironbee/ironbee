@@ -98,6 +98,7 @@ struct htp_mpartp_t {
     size_t current_len;
     bstr_builder_t *boundary_pieces;
     bstr_builder_t *part_pieces;
+    int pieces_form_line;
     unsigned char aside_buf[3];
     short aside_len;
 };
