@@ -81,7 +81,7 @@ struct htp_mpartp_t {
     int seen_last_boundary;
 
     /** */
-    list_t parts;
+    list_t *parts;
 
     // Parsing callbacks
     int (*handle_data)(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int line_end);
@@ -97,8 +97,6 @@ struct htp_mpartp_t {
     bstr_builder_t *boundary_pieces;
     bstr_builder_t *part_pieces;
     int pieces_form_line;
-    //unsigned char aside_buf[3];
-    //short aside_len;
     unsigned char first_boundary_byte;
     size_t boundarypos;
     int cr_aside;

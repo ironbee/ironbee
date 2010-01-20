@@ -28,8 +28,6 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
     part->mpartp->pieces_form_line = 0;
     bstr_builder_clear(mpartp->part_pieces);
 
-    printf("NEW PART\n");
-
     return part;
 }
 
@@ -40,6 +38,11 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
  */
 void htp_mpart_part_destroy(htp_mpart_part_t *part) {
     if (part == NULL) return;
+
+    bstr_free(part->name);
+    bstr_free(part->value);
+
+    // TODO Headers
 
     free(part);
 }
@@ -109,7 +112,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                     // Do we have more than once piece?
                     if (bstr_builder_size(part->mpartp->part_pieces) > 0) {
                         // Line in pieces
-                        
+
                         bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
 
                         // XXX
@@ -176,8 +179,9 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, siz
             }
         }
 
-        // XXX Add part to the list. Perhaps we need a flag to know if a part has
-        //     been finalized.
+        // Add part to the list.
+        // TODO Perhaps we need a flag to know if a part has been finalized.
+        list_push(mpartp->parts, mpartp->current_part);
     }
 
     // Send data to part
@@ -232,21 +236,27 @@ htp_mpartp_t * htp_mpartp_create(char *boundary) {
         return NULL;
     }
 
-    // XXX Lowercase boundary
+    // Copy the boundary and convert it to lowercase
 
-    mpartp->boundary = malloc(strlen(boundary) + 3 + 1);
+    mpartp->blen = strlen(boundary) + 4;
+    mpartp->boundary = malloc(mpartp->blen + 1);
     if (mpartp->boundary == NULL) {
         bstr_builder_destroy(mpartp->boundary_pieces);
         free(mpartp);
         return NULL;
     }
 
+    // TODO Not using the CR and LF any more
     mpartp->boundary[0] = CR;
     mpartp->boundary[1] = LF;
     mpartp->boundary[2] = '-';
     mpartp->boundary[3] = '-';
-    strcpy(mpartp->boundary + 4, boundary);
-    mpartp->blen = strlen(mpartp->boundary);
+
+    size_t i = 4;
+    while (i < mpartp->blen) {
+        mpartp->boundary[i] = tolower((int) ((unsigned char) boundary[i - 4]));
+        i++;
+    }
 
     mpartp->state = MULTIPART_STATE_BOUNDARY;
     mpartp->bpos = 2;
@@ -269,6 +279,13 @@ void htp_mpartp_destroy(htp_mpartp_t * mpartp) {
 
     bstr_builder_destroy(mpartp->part_pieces);
     bstr_builder_destroy(mpartp->boundary_pieces);
+
+    // Free parts
+    htp_mpart_part_t *part = NULL;
+    list_iterator_reset(mpartp->parts);
+    while ((part = list_iterator_next(mpartp->parts)) != NULL) {
+        htp_mpart_part_destroy(part);
+    }
 
     free(mpartp);
 }
@@ -319,9 +336,12 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
                         // But if there was a match, the line ending belongs to the boundary
                         unsigned char *dx = (unsigned char *) bstr_ptr(b);
                         size_t lx = mpartp->boundarypos;
-                        if (dx[lx - 1] == LF) {
+
+                        // Remove LF or CRLF                        
+                        if ((lx > 0) && (dx[lx - 1] == LF)) {
                             lx--;
-                            if (dx[lx - 1 ] == CR) {
+                            // Remove CR
+                            if ((lx > 0) && (dx[lx - 1] == CR)) {
                                 lx--;
                             }
                         }
@@ -343,7 +363,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
         }
     } else {
         // Data mode and no match
-        
+
         // In data mode, we process the lone CR byte as data
         if (mpartp->cr_aside) {
             mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, 0 /* Not end of line */);
@@ -371,9 +391,9 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
  * @param mpartp
  */
 int htp_mpartp_finalize(htp_mpartp_t * mpartp) {
-    if (mpartp->current_part != NULL) {        
+    if (mpartp->current_part != NULL) {
         htp_martp_process_aside(mpartp, 0);
-        
+
         if (htp_mpart_part_finalize_data(mpartp->current_part) < 0) return -1; // TODO RC
     }
 
