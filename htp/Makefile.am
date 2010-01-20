@@ -16,7 +16,8 @@ libhtp_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_R
 # than /usr/local. The following code removes the older
 # installation.
 install-exec-hook:
-	rm -rf /usr/lib/libhtp.*
-	rm -rf /usr/lib/libhtp-0.1.*
-	rm -rf /usr/lib/libhtp-0.2.*
-	rm -rf /usr/include/htp/
+	rm -f /usr/lib/libhtp.*
+	rm -f /usr/lib/libhtp-0.1.*
+	rm -f /usr/lib/libhtp-0.2.*
+	rm -f /usr/include/htp/*
+	rmdir /usr/include/htp/
