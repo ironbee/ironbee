@@ -50,10 +50,7 @@ struct htp_mpart_part_t {
     htp_mpartp_t *mpartp;
 
     /** */
-    int type;
-
-    /** */
-    int mode;
+    int type;   
 
     /** */
     size_t len;
@@ -95,19 +92,23 @@ struct htp_mpartp_t {
     int state;
     unsigned char *current_data;
     htp_mpart_part_t *current_part;
+    int current_mode;
     size_t current_len;
     bstr_builder_t *boundary_pieces;
     bstr_builder_t *part_pieces;
     int pieces_form_line;
-    unsigned char aside_buf[3];
-    short aside_len;
+    //unsigned char aside_buf[3];
+    //short aside_len;
+    unsigned char first_boundary_byte;
+    size_t boundarypos;
+    int cr_aside;
 };
 
 htp_mpartp_t *htp_mpartp_create(char *boundary);
 void htp_mpartp_destroy(htp_mpartp_t *mpartp);
 
- int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len);
-void htp_mpartp_finalize(htp_mpartp_t *mpartp);
+int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len);
+int htp_mpartp_finalize(htp_mpartp_t *mpartp);
 
 htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp);
 int htp_mpart_part_receive_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int line);

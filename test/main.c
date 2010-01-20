@@ -1441,9 +1441,12 @@ int main(int argc, char** argv) {
     parts[i++] = "-----------------------------41184676334\r\n";
     parts[i++] = "Content-Disposition: form-data;\n name=\"field1\"\r\n";
     parts[i++] = "\r\n";
-    parts[i++] = "0123456789\r\n";
-    parts[i++] = "-----------------------------41184676334\r\n";
-    parts[i++] = "Content-Disposition: form-data; name=\"field2\"\r\n";
+    parts[i++] = "0123456789\r\n-";    
+    parts[i++] = "-------------";
+    parts[i++] = "---------------41184676334\r\n";
+    parts[i++] = "Content-Disposition: form-data;\n";
+    parts[i++] = " ";
+    parts[i++] = "name=\"field2\"\r\n";
     parts[i++] = "\r\n";
     parts[i++] = "9876543210\r\n";
     parts[i++] = "-----------------------------41184676334\r\n";
@@ -1456,7 +1459,7 @@ int main(int argc, char** argv) {
     parts[i++] = "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
     parts[i++] = "Content-Type: text/plain\r\n";
     parts[i++] = "\r\n";
-    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ\r\n";    
     parts[i++] = "-----------------------------41184676334--\r\n";
     parts[i++] = NULL;
 
