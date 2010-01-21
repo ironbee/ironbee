@@ -46,53 +46,52 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 #endif
 
 struct htp_mpart_part_t {
-    /** */
+    /** Pointer to the parser. */
     htp_mpartp_t *mpartp;
 
-    /** */
+    /** Part type; see the MULTIPART_PART_* constants. */
     int type;   
 
-    /** */
+    /** Raw part length. */
     size_t len;
    
-    /** */
+    /** Part name, from the Content-Disposition header. */
     bstr *name;
 
-    /** */
+    /** Part filename, from the Content-Disposition header. */
     bstr *filename;
 
-    /** */
+    /** Part value; currently only available for MULTIPART_PART_TEXT parts. */
     bstr *value;
 
-    /** */
+    /** Part headers (htp_header_t instances), indexed by name. */
     table_t *headers;
-
-    /** */
-    bstr *body;
 };
 
 struct htp_mpartp_t {
-    /** */
+    /** Boundary to be used to extract parts. */
     char *boundary;
-    size_t blen;
-    size_t bpos;
 
-    /** */
+    /** Boundary length. */
+    size_t boundary_len;
+    
+    /** How many boundaries were seen? */
     int boundary_count;
 
-    /** */
+    /** Did we see the last boundary? */
     int seen_last_boundary;
 
-    /** */
+    /** List of parts. */
     list_t *parts;
 
     // Parsing callbacks
     int (*handle_data)(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int line_end);
     int (*handle_boundary)(htp_mpartp_t *mpartp);
 
-    // Parsing fields
-
+    // Internal parsing fields
+    // TODO Consider prefixing them with an underscore.
     int state;
+    size_t bpos;
     unsigned char *current_data;
     htp_mpart_part_t *current_part;
     int current_mode;
@@ -113,7 +112,6 @@ int htp_mpartp_finalize(htp_mpartp_t *mpartp);
 
 htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp);
 int htp_mpart_part_receive_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int line);
-//int htp_mpart_part_receive_line(htp_mpart_part_t *part, unsigned char *data, size_t len);
 int htp_mpart_part_finalize_data(htp_mpart_part_t *part);
 void htp_mpart_part_destroy(htp_mpart_part_t *part);
 

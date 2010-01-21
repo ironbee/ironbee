@@ -1475,6 +1475,7 @@ int main(int argc, char** argv) {
         htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
         i++;
     }
+    
     htp_mpartp_finalize(mpartp);
 
     htp_mpartp_destroy(mpartp);

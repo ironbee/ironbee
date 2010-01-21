@@ -524,8 +524,8 @@ htp_mpartp_t * htp_mpartp_create(char *boundary) {
 
     // Copy the boundary and convert it to lowercase
 
-    mpartp->blen = strlen(boundary) + 4;
-    mpartp->boundary = malloc(mpartp->blen + 1);
+    mpartp->boundary_len = strlen(boundary) + 4;
+    mpartp->boundary = malloc(mpartp->boundary_len + 1);
     if (mpartp->boundary == NULL) {
         bstr_builder_destroy(mpartp->boundary_pieces);
         free(mpartp);
@@ -539,7 +539,7 @@ htp_mpartp_t * htp_mpartp_create(char *boundary) {
     mpartp->boundary[3] = '-';
 
     size_t i = 4;
-    while (i < mpartp->blen) {
+    while (i < mpartp->boundary_len) {
         mpartp->boundary[i] = tolower((int) ((unsigned char) boundary[i - 4]));
         i++;
     }
@@ -822,7 +822,7 @@ STATE_SWITCH:
                     pos++;
 
                     // Have we seen all boundary bytes?
-                    if (++mpartp->bpos == mpartp->blen) {
+                    if (++mpartp->bpos == mpartp->boundary_len) {
                         // Boundary match!
 
                         // Process stored data
