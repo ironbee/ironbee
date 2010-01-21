@@ -1444,6 +1444,12 @@ int main(int argc, char** argv) {
     parts[i++] = "0123456789\r\n-";    
     parts[i++] = "-------------";
     parts[i++] = "---------------41184676334\r\n";
+    parts[i++] = "Content-Disposition: form-data;\n name=\"field3\"\r\n";
+    parts[i++] = "\r\n";
+    parts[i++] = "0123456789\r\n-";
+    parts[i++] = "-------------";
+    parts[i++] = "--------------X\r\n";
+    parts[i++] = "-----------------------------41184676334\r\n";
     parts[i++] = "Content-Disposition: form-data;\n";
     parts[i++] = " ";
     parts[i++] = "name=\"field2\"\r\n";
