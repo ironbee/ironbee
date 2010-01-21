@@ -301,6 +301,7 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
     if (part == NULL) return;
 
     bstr_free(part->name);
+    bstr_free(part->filename);
     bstr_free(part->value);
 
     if (part->headers != NULL) {
@@ -559,7 +560,7 @@ htp_mpartp_t * htp_mpartp_create(char *boundary) {
  */
 void htp_mpartp_destroy(htp_mpartp_t * mpartp) {
     if (mpartp == NULL) return;
-
+    
     free(mpartp->boundary);
 
     bstr_builder_destroy(mpartp->part_pieces);
@@ -569,9 +570,10 @@ void htp_mpartp_destroy(htp_mpartp_t * mpartp) {
     htp_mpart_part_t * part = NULL;
     list_iterator_reset(mpartp->parts);
     while ((part = list_iterator_next(mpartp->parts)) != NULL) {
-
         htp_mpart_part_destroy(part);
     }
+
+    list_destroy(mpartp->parts);
 
     free(mpartp);
 }
