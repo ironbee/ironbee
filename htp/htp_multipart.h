@@ -59,6 +59,9 @@ struct htp_mpart_part_t {
     bstr *name;
 
     /** */
+    bstr *filename;
+
+    /** */
     bstr *value;
 
     /** */

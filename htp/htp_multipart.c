@@ -15,8 +15,154 @@
 #include "htp.h"
 #include "htp_multipart.h"
 
+#define PARAM_OTHER     0
+#define PARAM_NAME      1
+#define PARAM_FILENAME  2
+
 /**
+ * Determines the type of a Content-Disposition parameter.
  *
+ * @param data
+ * @param startpos
+ * @param pos
+ * @return PARAM_OTHER, PARAM_NAME or PARAM_FILENAME
+ */
+static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t pos) {
+    if ((pos - startpos) == 4) {
+        if (memcmp(data + startpos, "name", 4) == 0) return PARAM_NAME;
+    } else if ((pos - startpos) == 8) {
+        if (memcmp(data + startpos, "filename", 8) == 0) return PARAM_FILENAME;
+    }
+
+    return PARAM_OTHER;
+}
+
+/**
+ * Process part headers. In the current implementation, we only parse the
+ * Content-Disposition header if it is present.
+ *
+ * @param part
+ * @return Success indication
+ */
+int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
+    // Find C-D header
+    htp_header_t *h = (htp_header_t *) table_getc(part->headers, "content-disposition");
+    if (h == NULL) {
+        // TODO Error message
+        return 0;
+    }
+
+    // fprint_raw_data(stderr, "C-D", (unsigned char *) bstr_ptr(h->value), bstr_len(h->value));
+
+    if (bstr_indexofc(h->value, "form-data") != 0) {
+        return -1;
+    }
+
+    // The parsing starts here
+    unsigned char *data = (unsigned char *) bstr_ptr(h->value);
+    size_t len = bstr_len(h->value);
+    size_t pos = 9; // Start after "form-data"
+
+    // Main parameter parsing loop (once per parameter)
+    while (pos < len) {        
+        // Find semicolon and go over it
+        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        if (pos == len) return -2;
+
+        // Semicolon
+        if (data[pos] != ';') return -3;
+        pos++;
+
+        // Go over the whitespace before parameter name
+        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        if (pos == len) return -4;
+
+        // Found starting position (name)
+        size_t start = pos;
+
+        // Look for ending position
+        while ((pos < len) && (data[pos] != '\t') && (data[pos] != ' ') && (data[pos] != '=')) pos++;
+        if (pos == len) return -5;
+
+        // Ending position is in "pos" now
+
+        // Is it a parameter we are interested in?
+        int param_type = htp_mpartp_cd_param_type(data, start, pos);        
+
+        // Ignore whitespace
+        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        if (pos == len) return -6;
+
+        // Equals
+        if (data[pos] != '=') return -7;
+        pos++;
+
+        // Go over the whitespace before value
+        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        if (pos == len) return -8;
+
+        // Found starting point (value)
+        start = pos;
+
+        // Quoting char indicator
+        int qchar = -1;
+
+        // Different handling for quoted and bare strings
+        if (data[start] == '"') {
+            // Quoted string
+            qchar = data[start];
+            start = ++pos;
+
+            // Find the end of the value
+            while ((pos < len) && (data[pos] != qchar)) {
+                if (data[pos] == '\\') {
+                    // Ignore invalid quoting pairs
+                    if (pos + 1 < len) return -9;
+                    // Go over the quoted character
+                    pos++;
+                }
+
+                pos++;
+            }
+        } else {
+            // Bare string
+            while ((pos < len) && (!htp_is_token(data[pos]))) pos++;
+        }
+
+        switch (param_type) {
+            case PARAM_NAME:
+                // TODO Unquote
+                part->name = bstr_memdup((char *)data + start, pos - start);
+                // fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(part->name), bstr_len(part->name));
+                break;
+            case PARAM_FILENAME:
+                // TODO Unquote
+                part->filename = bstr_memdup((char *)data + start, pos - start);
+                // fprint_raw_data(stderr, "FILENAME", (unsigned char *) bstr_ptr(part->filename), bstr_len(part->filename));
+                break;
+            default:
+                // Ignore unknown parameter
+                // TODO Warn/log?
+                break;
+        }
+
+        // Skip over the quoting character
+        if (qchar != -1) {
+            pos++;
+        }
+
+        // Continue to parse the next parameter, if any
+    }
+
+    return 1;
+}
+
+/**
+ * Parses one part header.
+ *
+ * @param data
+ * @param len
+ * @param Success indication
  */
 int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t len) {
     size_t name_start, name_end;
@@ -96,10 +242,10 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
     if (h == NULL) return -1;
 
     h->name = bstr_memdup((char *) data + name_start, name_end - name_start);
-    h->value = bstr_memdup((char *) data + value_start, value_end - value_start);   
+    h->value = bstr_memdup((char *) data + value_start, value_end - value_start);
 
     // Check if the header already exists
-    htp_header_t *h_existing = table_get(part->headers, h->name);
+    htp_header_t * h_existing = table_get(part->headers, h->name);
     if (h_existing != NULL) {
         // Add to existing header
         h_existing->value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
@@ -116,6 +262,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header
+
         table_add(part->headers, h->name, h);
     }
 
@@ -123,7 +270,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
 }
 
 /**
- * Creates a new part.
+ * Creates new multipart part.
  *
  * @param mpartp
  */
@@ -146,7 +293,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
 }
 
 /**
- * Destroys one part.
+ * Destroys multipart part.
  *
  * @param part
  */
@@ -161,6 +308,7 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
         htp_header_t *h = NULL;
         table_iterator_reset(part->headers);
         while (table_iterator_next(part->headers, (void **) & h) != NULL) {
+
             bstr_free(h->name);
             bstr_free(h->value);
             free(h);
@@ -182,6 +330,7 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
     if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) return 1;
 
     if (bstr_builder_size(part->mpartp->part_pieces) > 0) {
+
         part->value = bstr_builder_to_str(part->mpartp->part_pieces);
         bstr_builder_clear(part->mpartp->part_pieces);
         // fprint_raw_data(stderr, "PART DATA", (unsigned char *) bstr_ptr(part->value), bstr_len(part->value));
@@ -217,7 +366,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
         // TODO Remove the extra characters from folded lines
 
         if (is_line) {
-            // End of line 
+            // End of line
 
             // Ignore the line ending
             if (len > 1) {
@@ -229,8 +378,9 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
 
             // Is it an empty line?
             if ((len == 0) && ((bstr_builder_size(part->mpartp->part_pieces) == 0))) {
-                // Empty line; switch to data mode  
+                // Empty line; switch to data mode
                 part->mpartp->current_mode = MULTIPART_MODE_DATA;
+                htp_mpart_part_process_headers(part); // TODO RC                
             } else {
                 // Not an empty line
 
@@ -270,6 +420,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
     } else {
         // Data mode; keep the data chunk for later (but not if it is a file)
         if (part->type != MULTIPART_PART_FILE) {
+
             bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
         }
     }
@@ -326,7 +477,8 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
     //      a boundary after the "last boundary".
 
     if (mpartp->current_part != NULL) {
-        if (htp_mpart_part_finalize_data(mpartp->current_part) < 0) return -1; // TODO RC       
+
+        if (htp_mpart_part_finalize_data(mpartp->current_part) < 0) return -1; // TODO RC
 
         // We're done with this part
         mpartp->current_part = NULL;
@@ -414,9 +566,10 @@ void htp_mpartp_destroy(htp_mpartp_t * mpartp) {
     bstr_builder_destroy(mpartp->boundary_pieces);
 
     // Free parts
-    htp_mpart_part_t *part = NULL;
+    htp_mpart_part_t * part = NULL;
     list_iterator_reset(mpartp->parts);
     while ((part = list_iterator_next(mpartp->parts)) != NULL) {
+
         htp_mpart_part_destroy(part);
     }
 
@@ -470,7 +623,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
                         unsigned char *dx = (unsigned char *) bstr_ptr(b);
                         size_t lx = mpartp->boundarypos;
 
-                        // Remove LF or CRLF                        
+                        // Remove LF or CRLF
                         if ((lx > 0) && (dx[lx - 1] == LF)) {
                             lx--;
                             // Remove CR
@@ -515,6 +668,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
             bstr *b = NULL;
             list_iterator_reset(mpartp->boundary_pieces->pieces);
             while ((b = list_iterator_next(mpartp->boundary_pieces->pieces)) != NULL) {
+
                 mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), bstr_len(b), 0);
             }
 
