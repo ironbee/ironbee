@@ -16,6 +16,113 @@
 #include "htp_multipart.h"
 
 /**
+ *
+ */
+int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t len) {
+    size_t name_start, name_end;
+    size_t value_start, value_end;
+
+    name_start = 0;
+
+    // Look for the colon
+    size_t colon_pos = 0;
+
+    while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
+
+    if (colon_pos == len) {
+        // Missing colon
+        // TODO Error message
+        return -1;
+    }
+
+    if (colon_pos == 0) {
+        // Empty header name
+        // TODO Error message
+    }
+
+    name_end = colon_pos;
+
+    // Ignore LWS after field-name
+    size_t prev = name_end - 1;
+    while ((prev > name_start) && (htp_is_lws(data[prev]))) {
+        prev--;
+        name_end--;
+
+        // LWS after field name
+        // TODO Error message
+    }
+
+    // Value
+
+    value_start = colon_pos;
+
+    // Go over the colon
+    if (value_start < len) {
+        value_start++;
+    }
+
+    // Ignore LWS before field-content
+    while ((value_start < len) && (htp_is_lws(data[value_start]))) {
+        value_start++;
+    }
+
+    // Look for the end of field-content
+    value_end = value_start;
+
+    while (value_end < len) value_end++;
+
+    // Ignore LWS after field-content
+    prev = value_end - 1;
+    while ((prev > value_start) && (htp_is_lws(data[prev]))) {
+        prev--;
+        value_end--;
+    }
+
+    // Check that the header name is a token
+    size_t i = name_start;
+    while (i < name_end) {
+        if (!htp_is_token(data[i])) {
+            // Request field is not a token
+            // TODO Error message
+
+            break;
+        }
+
+        i++;
+    }
+
+    // Now extract the name and the value
+    htp_header_t *h = calloc(1, sizeof (htp_header_t));
+    if (h == NULL) return -1;
+
+    h->name = bstr_memdup((char *) data + name_start, name_end - name_start);
+    h->value = bstr_memdup((char *) data + value_start, value_end - value_start);   
+
+    // Check if the header already exists
+    htp_header_t *h_existing = table_get(part->headers, h->name);
+    if (h_existing != NULL) {
+        // Add to existing header
+        h_existing->value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
+            + 2 + bstr_len(h->value));
+        bstr_add_mem_noex(h_existing->value, ", ", 2);
+        bstr_add_str_noex(h_existing->value, h->value);
+
+        // The header is no longer needed
+        bstr_free(h->name);
+        bstr_free(h->value);
+        free(h);
+
+        // Keep track of same-name headers
+        h_existing->flags |= HTP_FIELD_REPEATED;
+    } else {
+        // Add as a new header
+        table_add(part->headers, h->name, h);
+    }
+
+    return 1;
+}
+
+/**
  * Creates a new part.
  *
  * @param mpartp
@@ -24,8 +131,15 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
     htp_mpart_part_t * part = calloc(1, sizeof (htp_mpart_part_t));
     if (part == NULL) return NULL;
 
+    part->headers = table_create(32);
+    if (part->headers == NULL) {
+        free(part);
+        return NULL;
+    }
+
     part->mpartp = mpartp;
     part->mpartp->pieces_form_line = 0;
+
     bstr_builder_clear(mpartp->part_pieces);
 
     return part;
@@ -42,7 +156,18 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
     bstr_free(part->name);
     bstr_free(part->value);
 
-    // TODO Headers
+    if (part->headers != NULL) {
+        // Destroy request_headers
+        htp_header_t *h = NULL;
+        table_iterator_reset(part->headers);
+        while (table_iterator_next(part->headers, (void **) & h) != NULL) {
+            bstr_free(h->name);
+            bstr_free(h->value);
+            free(h);
+        }
+
+        table_destroy(part->headers);
+    }
 
     free(part);
 }
@@ -59,8 +184,7 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
     if (bstr_builder_size(part->mpartp->part_pieces) > 0) {
         part->value = bstr_builder_to_str(part->mpartp->part_pieces);
         bstr_builder_clear(part->mpartp->part_pieces);
-        // XXX
-        fprint_raw_data(stderr, "PART DATA", (unsigned char *) bstr_ptr(part->value), bstr_len(part->value));
+        // fprint_raw_data(stderr, "PART DATA", (unsigned char *) bstr_ptr(part->value), bstr_len(part->value));
     }
 
     return 1;
@@ -120,19 +244,15 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
 
                         bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
 
-                        // XXX
-                        bstr *line = bstr_builder_to_str(part->mpartp->part_pieces);
-                        fprint_raw_data(stderr, "LINE(1)", (unsigned char *) bstr_ptr(line), bstr_len(line));
+                        bstr *line = bstr_builder_to_str(part->mpartp->part_pieces); // TODO RC
+                        // fprint_raw_data(stderr, "LINE(1)", (unsigned char *) bstr_ptr(line), bstr_len(line));
+                        htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line)); // TODO RC
                         bstr_free(line);
 
                         bstr_builder_clear(part->mpartp->part_pieces);
                     } else {
                         // Just this line
-
-                        // XXX
-                        bstr *line = bstr_memdup((char *) data, len);
-                        fprint_raw_data(stderr, "LINE(2)", (unsigned char *) bstr_ptr(line), bstr_len(line));
-                        bstr_free(line);
+                        htp_mpartp_parse_header(part, data, len); // TODO RC
                     }
 
                     part->mpartp->pieces_form_line = 0;
@@ -324,7 +444,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
     // Do we need to do any chunk splitting?
     if (matched || (mpartp->current_mode == MULTIPART_MODE_LINE)) {
         // Line mode or boundary match
-        
+
         // In line mode, we ignore lone CR bytes
         mpartp->cr_aside = 0;
 
@@ -334,14 +454,14 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
         // or in the first stored chunk.
         if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
             // We have stored chunks
-            
+
             bstr *b = NULL;
             int first = 1;
             list_iterator_reset(mpartp->boundary_pieces->pieces);
             while ((b = list_iterator_next(mpartp->boundary_pieces->pieces)) != NULL) {
                 if (first) {
                     // Split the first chunk
-                    
+
                     if (!matched) {
                         // In line mode, we are OK with line endings
                         mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), mpartp->boundarypos, 1);
@@ -360,7 +480,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
                         }
 
                         mpartp->handle_data(mpartp, dx, lx, 0);
-                    }                   
+                    }
 
                     // The second part of the split chunks belongs to the boundary
                     // when matched, data otherwise.
@@ -370,7 +490,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
                     }
 
                     first = 0;
-                } else {                    
+                } else {
                     // Do not send data if there was a boundary match. The stored
                     // data belongs to the boundary.
                     if (!matched) {
