@@ -20,4 +20,3 @@ install-exec-local:
 	rm -f /usr/lib/libhtp-0.1.*
 	rm -f /usr/lib/libhtp-0.2.*
 	rm -f /usr/include/htp/*
-	rmdir /usr/include/htp/
