@@ -147,24 +147,43 @@ static int list_array_push(list_t *_q, void *element) {
     // Check if we're full
     if (q->current_size >= q->max_size) {
         int new_size = q->max_size * 2;
+        void *newblock = NULL;
+        
+        if (q->first == 0) {
+            // The simple case of expansion is when the first
+            // element in the list resides in the first slot. In
+            // that case we just add some new space to the end,
+            // adjust the max_size and that's that.
+            newblock = realloc(q->elements, new_size * sizeof (void *));
+            if (newblock == NULL) return -1;
+        } else {
+            // When the first element is not in the first
+            // memory slot, we need to rearrange the order
+            // of the elements in order to expand the storage area.
+            newblock = malloc(new_size * sizeof (void *));
+            if (newblock == NULL) return -1;
 
-        void *newblock = realloc(q->elements, new_size * sizeof (void *));
-        if (newblock == NULL) {
-            return -1;
+            // Copy the beginning of the list to the beginning of the new memory block
+            memcpy(newblock, (char *)q->elements + q->first * sizeof (void *), (q->max_size - q->first) * sizeof (void *));
+            // Append the second part of the list to the end
+            memcpy((char *)newblock + (q->max_size - q->first) * sizeof (void *), q->elements, q->first * sizeof (void *));
+            
+            free(q->elements);
         }
-
-        q->elements = newblock;
-        q->max_size = new_size;
+        
+        q->first = 0;
         q->last = q->current_size;
+        q->max_size = new_size;
+        q->elements = newblock;
     }
 
     q->elements[q->last] = element;
+    q->current_size++;
+    
     q->last++;
     if (q->last == q->max_size) {
         q->last = 0;
     }
-
-    q->current_size++;
 
     return 1;
 }
