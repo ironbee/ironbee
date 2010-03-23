@@ -323,13 +323,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
-        if (te != NULL) {
-            if (bstr_cmpc(te->value, "chunked") != 0) {
-                // Invalid T-E header value
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Invalid T-E value in response");
-            }
-
+        if ((te != NULL)&&(bstr_cmpc(te->value, "chunked") == 0)) {
             // If the T-E header is present we are going to use it.
             connp->out_tx->response_transfer_coding = CHUNKED;
 
@@ -342,8 +336,9 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = TX_PROGRESS_RES_BODY;
-        }// 3. If a Content-Length header field (section 14.14) is present, its
-            //   value in bytes represents the length of the message-body.
+        }
+        // 3. If a Content-Length header field (section 14.14) is present, its
+        //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
             connp->out_tx->response_transfer_coding = IDENTITY;
@@ -357,7 +352,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // Get body length
             int i = htp_parse_content_length(cl->value);
             if (i < 0) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response");
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: %d", i);
                 return HTP_ERROR;
             } else {
                 connp->out_content_length = i;

@@ -362,13 +362,14 @@ int test_multi_packet_request_head(htp_cfg_t *cfg) {
 }
 
 int test_misc(htp_cfg_t *cfg) {
-    htp_connp_t *connp = NULL;
+    htp_connp_t *connp = NULL;   
 
     int rc = test_run(home, "misc.t", cfg, &connp);
-    if (rc < 0) {
+    
+    if (rc < 0) {        
         if (connp != NULL) htp_connp_destroy_all(connp);
         return -1;
-    }
+    }   
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -727,12 +728,13 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
     return 1;
 }
 
-int main_dir(int argc, char** argv) {
+//int main_dir(int argc, char** argv) {
+int main(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_config_register_log(cfg, callback_log);
     htp_config_register_response(cfg, callback_response_destroy);
 
-    run_directory("C:\\http_traces\\run5", cfg);
+    run_directory("C:\\http_traces\\run1", cfg);
     //run_directory("/home/ivanr/work/traces/run3/", cfg);
 
     htp_config_destroy(cfg);
@@ -754,6 +756,7 @@ int main_dir(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
+//int main(int argc, char** argv) {
 int main_tests(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
@@ -816,8 +819,7 @@ int main_tests(int argc, char** argv) {
     htp_config_register_log(cfg, callback_log);
 
     htp_config_set_generate_request_uri_normalized(cfg, 1);
-
-    /*
+    
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -834,10 +836,9 @@ int main_tests(int argc, char** argv) {
     
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
-    RUN_TEST(test_connect_extra, cfg);
-     */
+    RUN_TEST(test_connect_extra, cfg);    
 
-    RUN_TEST(test_misc, cfg);
+    //RUN_TEST(test_misc, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
@@ -1430,8 +1431,8 @@ int main_multipart1(int argc, char** argv) {
     htp_mpartp_destroy(mpartp);
 }
 
-//int main_multipart2(int argc, char** argv) {
-int main(int argc, char** argv) {
+int main_multipart2(int argc, char** argv) {
+//int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
 
     mpartp = htp_mpartp_create("---------------------------41184676334");
@@ -1480,5 +1481,3 @@ int main(int argc, char** argv) {
 
     htp_mpartp_destroy(mpartp);
 }
-
-

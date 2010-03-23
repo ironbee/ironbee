@@ -144,7 +144,7 @@ list_t *list_linked_create(void) {
 static int list_array_push(list_t *_q, void *element) {
     list_array_t *q = (list_array_t *) _q;
 
-    // Check if we're full
+    // Check whether we're full
     if (q->current_size >= q->max_size) {
         int new_size = q->max_size * 2;
         void *newblock = NULL;
