@@ -144,6 +144,8 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define HTP_PATH_UTF8_OVERLONG          0x080000
 #define HTP_PATH_FULLWIDTH_EVASION      0x100000 /* Range U+FF00 - U+FFFF detected */
 
+#define HTP_STATUS_LINE_INVALID         0x200000
+
 #define PIPELINED_CONNECTION        1
 
 #define HTP_SERVER_MINIMAL          0

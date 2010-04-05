@@ -1831,7 +1831,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
  * line parsing. In most cases they will only look for the
  * words "http" at the beginning.
  *
- * @param x
+ * @param tx
  * @return 1 for good enough or 0 for not good enough
  */
 int htp_resembles_response_line(htp_tx_t *tx) {
@@ -1856,7 +1856,14 @@ int htp_resembles_response_line(htp_tx_t *tx) {
 }
 
 /**
+ * Runs the request_headers_raw hook, sending the request header lines specified by
+ * the parameters first and last.
  *
+ * @param connp
+ * @param first
+ * @param last
+ *
+ * @return HTP_OK or HTP_ERROR
  */
 int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_t last) {
     size_t len = 0;
@@ -1869,10 +1876,9 @@ int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_
     }
 
     tempstr = bstr_alloc(len);
-    if (tempstr == NULL) {
-        // XXX
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-            "Process reqsponse header (generic): Failed to allocate bstring of %d bytes", len);
+    if (tempstr == NULL) {        
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Failed to allocate bstring of %d bytes", len);
+        
         return HTP_ERROR;
     }
 
@@ -1890,10 +1896,8 @@ int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_
     int rc = hook_run_all(connp->cfg->hook_request_headers_raw, &d);
     if (rc != HOOK_OK) {
         bstr_free(tempstr);
-
-        // XXX
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-            "Response body data callback returned error (%d)", rc);
+        
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request headers raw callback returned error (%d)", rc);
 
         return HTP_ERROR;
     }

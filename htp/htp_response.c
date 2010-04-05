@@ -590,6 +590,8 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
                 || (connp->out_tx->response_status_number < HTP_VALID_STATUS_MAX)) {
                 // Response line is invalid
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
+                
+                connp->out_tx->flags |= HTP_STATUS_LINE_INVALID;
             }
 
             // Even when the response line is invalid, determine if it looks like
@@ -841,4 +843,3 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         }
     }
 }
-
