@@ -22,53 +22,60 @@
  */
 int htp_parse_response_line_generic(htp_connp_t *connp) {
     htp_tx_t *tx = connp->out_tx;
-    unsigned char *data = (unsigned char *)bstr_ptr(tx->response_line);
+    unsigned char *data = (unsigned char *) bstr_ptr(tx->response_line);
     size_t len = bstr_len(tx->response_line);
     size_t pos = 0;
-
-    // The request method starts at the beginning of the
-    // line and ends with the first whitespace character.
-    while ((pos < len) && (!htp_is_space(data[pos]))) {
-        pos++;
-    }
-
-    tx->response_protocol = bstr_memdup((char *)data, pos);
-    tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);
-
-#ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
-#endif
-
-    // Ignore whitespace after response protocol
-    while ((pos < len) && (isspace(data[pos]))) {
+    
+    // Ignore whitespace at the beginning of the line
+    while ((pos < len) && (htp_is_space(data[pos]))) {
         pos++;
     }
 
     size_t start = pos;
+
+    // Find the end of the protocol string
+    while ((pos < len) && (!htp_is_space(data[pos]))) {
+        pos++;
+    }
+
+    tx->response_protocol = bstr_memdup((char *) data + start, pos - start);
+    tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);        
+
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
+    #endif
+
+    // Ignore whitespace after response protocol
+    // XXX Why use both isspace (below) and htp_is_space (above)?
+    while ((pos < len) && (isspace(data[pos]))) {
+        pos++;
+    }
+
+    start = pos;
 
     // Find the next whitespace character
     while ((pos < len) && (!htp_is_space(data[pos]))) {
         pos++;
     }
 
-    tx->response_status = bstr_memdup((char *)data + start, pos - start);
-    tx->response_status_number = htp_parse_status(tx->response_status);
+    tx->response_status = bstr_memdup((char *) data + start, pos - start);
+    tx->response_status_number = htp_parse_status(tx->response_status);    
 
-#ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->response_status), bstr_len(tx->response_status));
-#endif
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_status), bstr_len(tx->response_status));
+    #endif
 
     // Ignore whitespace that follows
     while ((pos < len) && (isspace(data[pos]))) {
         pos++;
     }
 
-    tx->response_message = bstr_memdup((char *)data + pos, len - pos);
+    tx->response_message = bstr_memdup((char *) data + pos, len - pos);
 
-#ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->response_message), bstr_len(tx->response_message));
-#endif
-    
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_message), bstr_len(tx->response_message));
+    #endif
+
     return HTP_OK;
 }
 
@@ -98,7 +105,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
         if (!(connp->out_tx->flags & HTP_FIELD_UNPARSEABLE)) {
             connp->out_tx->flags |= HTP_FIELD_UNPARSEABLE;
             // Only log once per transaction
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field invalid: colon missing");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field invalid: colon missing");
         }
 
         return HTP_ERROR;
@@ -194,7 +201,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
     // Parse header
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
-    if (h == NULL) return HTP_ERROR;    
+    if (h == NULL) return HTP_ERROR;
 
     // Ensure we have the necessary header data in a single buffer
     if (connp->out_header_line_index + 1 == connp->out_header_line_counter) {

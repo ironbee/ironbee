@@ -23,6 +23,11 @@
  * @return Protocol version or PROTOCOL_UKNOWN.
  */
 int htp_parse_protocol(bstr *protocol) {
+    // TODO This function uses a very strict approach to parsing, whereas
+    //      browsers will typically be more flexible, allowing whitespace
+    //      before and after the forward slash, as well as allowing leading
+    //      zeroes in the numbers. We should be able to parse such malformed
+    //      content correctly (but emit a warning).
     if (bstr_len(protocol) == 8) {
         char *ptr = bstr_ptr(protocol);
         if ((ptr[0] == 'H') && (ptr[1] == 'T') && (ptr[2] == 'T') && (ptr[3] == 'P')

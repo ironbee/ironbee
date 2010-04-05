@@ -72,7 +72,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     for (;;) {
         OUT_NEXT_BYTE(connp);
 
-        if (connp->out_next_byte == -1) {            
+        if (connp->out_next_byte == -1) {
             if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                 connp->out_decompressor->decompress(connp->out_decompressor, &d);
             } else {
@@ -95,7 +95,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->out_chunked_length == 0) {
                 // End of data chunk
-                
+
                 if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                     connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {
@@ -170,7 +170,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
     d.tx = connp->out_tx;
     d.data = &connp->out_current_data[connp->out_current_offset];
-    d.len = 0;
+    d.len = 0;   
 
     for (;;) {
         OUT_NEXT_BYTE(connp);
@@ -180,7 +180,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
             // Send data to callbacks
             if (d.len != 0) {
-                if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {                    
+                if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                     connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {
                     int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
@@ -189,7 +189,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                             "Response body data callback returned error (%d)", rc);
                         return HTP_ERROR;
                     }
-                }                
+                }
             }
 
             // If we don't know the length, then we must check
@@ -219,7 +219,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
                     // Send data to callbacks
                     if (d.len != 0) {
-                        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {                            
+                        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                             connp->out_decompressor->decompress(connp->out_decompressor, &d);
                         } else {
                             int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
@@ -241,8 +241,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                 // We don't know the length of the response body, which means
                 // that the body will consume all data until the connection
                 // is closed.
-                //
-                // We don't need to do anything here.
+                d.len++;
             }
         }
     }
@@ -259,9 +258,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // to assume there's no body, but we need to ignore all
     // subsequent data in the stream.
     if ((connp->out_tx->request_method_number == M_CONNECT)
-        &&(connp->out_tx->response_status_number >= 200)
-        &&(connp->out_tx->response_status_number <= 299))
-    {
+        && (connp->out_tx->response_status_number >= 200)
+        && (connp->out_tx->response_status_number <= 299)) {
         connp->out_status = STREAM_STATE_TUNNEL;
         connp->out_state = htp_connp_RES_IDLE;
         connp->out_tx->progress = TX_PROGRESS_DONE;
@@ -323,7 +321,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
-        if ((te != NULL)&&(bstr_cmpc(te->value, "chunked") == 0)) {
+        if ((te != NULL) && (bstr_cmpc(te->value, "chunked") == 0)) {
             // If the T-E header is present we are going to use it.
             connp->out_tx->response_transfer_coding = CHUNKED;
 
@@ -336,9 +334,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = TX_PROGRESS_RES_BODY;
-        }
-        // 3. If a Content-Length header field (section 14.14) is present, its
-        //   value in bytes represents the length of the message-body.
+        }// 3. If a Content-Length header field (section 14.14) is present, its
+            //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
             connp->out_tx->response_transfer_coding = IDENTITY;
@@ -446,10 +443,9 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
                 // Parse previous header, if any
                 if (connp->out_header_line_index != -1) {
-                    if (connp->cfg->process_response_header(connp) != HTP_OK) {
-                        // Note: downstream responsible for error logging
-                        return HTP_ERROR;
-                    }
+                    // Only try to parse a header, but ignore
+                    // any problems. That's what browsers do.
+                    connp->cfg->process_response_header(connp);
 
                     // Reset index
                     connp->out_header_line_index = -1;
@@ -491,10 +487,9 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
                 // Parse previous header, if any
                 if (connp->out_header_line_index != -1) {
-                    if (connp->cfg->process_response_header(connp) != HTP_OK) {
-                        // Note: downstream responsible for error logging
-                        return HTP_ERROR;
-                    }
+                    // Only try to parse a header, but ignore
+                    // any problems. That's what browsers do.
+                    connp->cfg->process_response_header(connp);
 
                     // Reset index
                     connp->out_header_line_index = -1;
@@ -560,7 +555,7 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
 
             // Process response line
 
-            htp_chomp(connp->out_line, &connp->out_line_len);
+            int chomp_result = htp_chomp(connp->out_line, &connp->out_line_len);
 
             // Deallocate previous response line allocations, which we woud have on a 100 response
             // TODO Consider moving elsewhere; no need to make these checks on every response
@@ -586,6 +581,43 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
             if (connp->cfg->parse_response_line(connp) != HTP_OK) {
                 // Note: downstream responsible for error logging
                 return HTP_ERROR;
+            }
+
+            // Is the response line valid?
+            if ((connp->out_tx->response_protocol_number < 0)
+                || (connp->out_tx->response_status_number < 0)
+                || (connp->out_tx->response_status_number < HTP_VALID_STATUS_MIN)
+                || (connp->out_tx->response_status_number < HTP_VALID_STATUS_MAX)) {
+                // Response line is invalid
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
+            }
+
+            // Even when the response line is invalid, determine if it looks like
+            // a response line (which is what browsers do).            
+            if (htp_resembles_response_line(connp->out_tx) == 0) {
+                // Process this line as response body data
+                htp_tx_data_t d;
+
+                d.tx = connp->out_tx;
+                d.data = connp->out_line;
+                d.len = connp->out_line_len + chomp_result;
+
+                connp->out_tx->response_message_len += d.len;
+                connp->out_tx->response_entity_len += d.len;
+
+                int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                if (rc != HOOK_OK) {
+                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                        "Response body data callback returned error (%d)", rc);
+                    return HTP_ERROR;
+                }
+
+                // Continue to process response body
+                connp->out_tx->response_transfer_coding = IDENTITY;
+                connp->out_state = htp_connp_RES_BODY_IDENTITY;
+                connp->out_tx->progress = TX_PROGRESS_RES_BODY;                
+
+                return HTP_OK;
             }
 
             // Run hook RESPONSE_LINE
@@ -760,6 +792,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
             htp_connp_out_state_as_string(connp),
             htp_tx_progress_as_string(connp->out_tx));
         #endif
+
         // Return if there's been an error
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll
@@ -768,6 +801,10 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         if (rc != HTP_OK) {
             // Do we need more data?
             if (rc == HTP_DATA) {
+                #ifdef HTP_DEBUG
+                fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA\n");
+                #endif
+
                 return STREAM_STATE_DATA;
             }
 
@@ -775,20 +812,26 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
             if (rc == HTP_DATA_OTHER) {
                 // We might have actually consumed the entire data chunk?
                 if (connp->out_current_offset >= connp->out_current_len) {
-                    // Do not send STREAM_DATE_DATA_OTHER if we've
-                    // consumed the entire chunk
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA (suspended parsing)\n");
                     #endif
+
+                    // Do not send STREAM_DATE_DATA_OTHER if we've
+                    // consumed the entire chunk
                     return STREAM_STATE_DATA;
                 } else {
-                    // Partial chunk consumption
                     #ifdef HTP_DEBUG
-                    fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA_OTHER\n");
+                    fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA_OTHER\n");
                     #endif
+
+                    // Partial chunk consumption                    
                     return STREAM_STATE_DATA_OTHER;
                 }
             }
+
+            #ifdef HTP_DEBUG
+            fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_ERROR\n");
+            #endif
 
             // Remember that we've had an error. Errors are
             // not possible to recover from.

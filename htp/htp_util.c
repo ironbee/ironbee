@@ -1718,6 +1718,9 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
     return "UNKOWN";
 }
 
+/**
+ *
+ */
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     if (uri == NULL) {
         return NULL;
@@ -1821,3 +1824,35 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
    
     return r;
 }
+
+/**
+ * Determine if the information provided on the response line
+ * is good enough. Browsers are lax when it comes to response
+ * line parsing. In most cases they will only look for the
+ * words "http" at the beginning.
+ *
+ * @param x
+ * @return 1 for good enough or 0 for not good enough
+ */
+int htp_resembles_response_line(htp_tx_t *tx) {
+    // TODO This function should be replaced with several implementations,
+    //      one for every different browser handling. For example:
+    //
+    //      Firefox 3.5.x: (?i)^\s*http
+    //      IE: (?i)^\s*http\s*/
+    //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
+    
+    if (tx->response_protocol == NULL) return 0;
+    if (bstr_len(tx->response_protocol) < 4) return 0;
+
+    char *data = bstr_ptr(tx->response_protocol);
+
+    if ((data[0] != 'H')&&(data[0] != 'h')) return 0;
+    if ((data[1] != 'T')&&(data[1] != 't')) return 0;
+    if ((data[2] != 'T')&&(data[2] != 't')) return 0;
+    if ((data[3] != 'P')&&(data[3] != 'p')) return 0;
+
+    return 1;
+}
+
+

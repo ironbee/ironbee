@@ -441,8 +441,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
                 // Move onto the next processing phase
                 if (connp->in_tx->progress == TX_PROGRESS_REQ_HEADERS) {
-                    // Determine if this request has a body
-                    //connp->in_state = htp_connp_REQ_BODY_DETERMINE;
+                    // Determine if this request has a body                    
                     connp->in_state = htp_connp_REQ_CONNECT_CHECK;
                 } else {
                     // Run hook REQUEST_TRAILER
@@ -742,6 +741,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     return HTP_OK;
 }
 
+// XXX
 size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
     return connp->in_current_offset;
 }
@@ -761,7 +761,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     fprint_raw_data(stderr, __FUNCTION__, data, len);
     #endif
 
-    // Return if the connection has had a fatal error
+    // Return if the connection had a fatal error earlier
     if (connp->in_status == STREAM_STATE_ERROR) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Inbound parser is in STREAM_STATE_ERROR");
 
@@ -773,7 +773,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 
     // If the length of the supplied data chunk is zero, proceed
     // only if the stream has been closed. We do not allow zero-sized
-    // chunks in the API, but we use it internally to force the parsers
+    // chunks in the API, but we use them internally to force the parsers
     // to finalize parsing.
     if ((len == 0) && (connp->in_status != STREAM_STATE_CLOSED)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");

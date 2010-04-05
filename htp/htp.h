@@ -79,6 +79,9 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define HTP_HEADER_LIMIT_HARD               18000
 #define HTP_HEADER_LIMIT_SOFT               9000
 
+#define HTP_VALID_STATUS_MIN    100
+#define HTP_VALID_STATUS_MAX    999
+
 #define LOG_NO_CODE             0
 
 #define CR '\r'
@@ -1115,6 +1118,8 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp);
 char *htp_tx_progress_as_string(htp_tx_t *tx);
 
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
+
+int htp_resembles_response_line(htp_tx_t *tx);
 
 #endif	/* _HTP_H */
 
