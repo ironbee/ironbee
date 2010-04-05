@@ -395,6 +395,11 @@ struct htp_cfg_t {
     /** Request headers hook, invoked after all request headers are seen. */
     htp_hook_t *hook_request_headers;
 
+    /** Raw request headers hook. This hook may be invoked twice if there
+     *  are any trailer headers in a request.
+     */
+    htp_hook_t *hook_request_headers_raw;
+
     /** Request body data hook, invoked every time body data is available. Chunked data
      *  will be dechunked and compressed data will be decompressed (not implemented at present)
      *  before the data is passed to this hook.
@@ -827,6 +832,9 @@ struct htp_tx_t {
     /** Original request header lines. This list stores instances of htp_header_line_t. */
     list_t *request_header_lines;
 
+    /** How many request headers were there before trailers? */
+    size_t request_header_lines_no_trailers;
+
     /** Parsed request headers. */
     table_t *request_headers;
 
@@ -962,6 +970,7 @@ htp_cfg_t *htp_config_create();
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_headers_raw(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
@@ -1120,6 +1129,8 @@ char *htp_tx_progress_as_string(htp_tx_t *tx);
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
 int htp_resembles_response_line(htp_tx_t *tx);
+
+int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_t last);
 
 #endif	/* _HTP_H */
 

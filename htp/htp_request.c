@@ -388,6 +388,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
     for (;;) {
         IN_COPY_BYTE_OR_RETURN(connp);
 
+        // Allocate structure to hold one header line
         if (connp->in_header_line == NULL) {
             connp->in_header_line = calloc(1, sizeof (htp_header_line_t));
             if (connp->in_header_line == NULL) return HTP_ERROR;
@@ -435,15 +436,34 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 connp->in_header_line_counter = 0;
 
                 // We've seen all request headers
+
+                // Did this request arrive in multiple chunks?
                 if (connp->in_chunk_count != connp->in_chunk_request_index) {
                     connp->in_tx->flags |= HTP_MULTI_PACKET_HEAD;
                 }
 
                 // Move onto the next processing phase
                 if (connp->in_tx->progress == TX_PROGRESS_REQ_HEADERS) {
+                    // Remember how many header lines there were before trailers
+                    connp->in_tx->request_header_lines_no_trailers = list_size(connp->in_tx->request_header_lines);
+
+                    // XXX
+                    if (connp->cfg->hook_request_headers_raw != NULL) {
+                        htp_req_run_hook_request_headers_raw(connp, 0,
+                            connp->in_tx->request_header_lines_no_trailers);
+                    }
+
                     // Determine if this request has a body                    
                     connp->in_state = htp_connp_REQ_CONNECT_CHECK;
                 } else {
+                    // XXX
+                    if ((connp->cfg->hook_request_headers_raw != NULL)
+                        && (list_size(connp->in_tx->request_header_lines) > connp->in_tx->request_header_lines_no_trailers)) {
+                        htp_req_run_hook_request_headers_raw(connp,
+                            connp->in_tx->request_header_lines_no_trailers,
+                            list_size(connp->in_tx->request_header_lines));
+                    }
+
                     // Run hook REQUEST_TRAILER
                     int rc = hook_run_all(connp->cfg->hook_request_trailer, connp);
                     if (rc != HOOK_OK) {
@@ -461,7 +481,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             }
 
             // Prepare line for consumption
-            htp_chomp(connp->in_line, &connp->in_line_len);
+            int chomp_result = htp_chomp(connp->in_line, &connp->in_line_len);
 
             // Check for header folding
             if (htp_connp_is_line_folded(connp->in_line, connp->in_line_len) == 0) {
@@ -492,7 +512,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             }
 
             // Add the raw header line to the list
-            connp->in_header_line->line = bstr_memdup((char *) connp->in_line, connp->in_line_len);
+            connp->in_header_line->line = bstr_memdup((char *) connp->in_line, connp->in_line_len + chomp_result);
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 
@@ -592,32 +612,32 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
                     // Note: downstream responsible for error logging
                     return HTP_ERROR;
-                }               
+                }
 
                 // Keep the original URI components, but
                 // create a copy which we can normalize and use internally
                 if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri)) {
                     // Note: downstream responsible for error logging
                     return HTP_ERROR;
-                }               
+                }
 
                 // Now is a good time to generate request_uri_normalized, before we finalize
                 // parsed_uri (and lose the information which parts were provided in the request and
                 // which parts we added).
-                if (connp->cfg->generate_request_uri_normalized) {                 
-                    connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);                   
+                if (connp->cfg->generate_request_uri_normalized) {
+                    connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);
 
                     if (connp->in_tx->request_uri_normalized == NULL) {
                         // There's no sense in logging anything on a memory allocation failure
                         return HTP_ERROR;
-                    }                   
+                    }
 
                     #ifdef HTP_DEBUG
                     fprint_raw_data(stderr, "request_uri_normalized",
                         (unsigned char *) bstr_ptr(connp->in_tx->request_uri_normalized),
                         bstr_len(connp->in_tx->request_uri_normalized));
                     #endif
-                }               
+                }
 
                 // Finalize parsed_uri
 
@@ -653,7 +673,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 // Path
                 if (connp->in_tx->parsed_uri->path == NULL) {
                     connp->in_tx->parsed_uri->path = bstr_cstrdup("/");
-                }               
+                }
             }
 
             // Run hook REQUEST_LINE
@@ -742,6 +762,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
 }
 
 // XXX
+
 size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
     return connp->in_current_offset;
 }
@@ -858,4 +879,3 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         }
     }
 }
-

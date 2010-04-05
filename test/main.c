@@ -604,6 +604,11 @@ int callback_request_headers(htp_connp_t *connp) {
     printf("-- Callback: request_headers\n");
 }
 
+int callback_request_headers_raw(htp_tx_data_t *d) {
+    printf("-- Callback: request_headers_raw\n");
+    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
+}
+
 int callback_request_body_data(htp_tx_data_t *d) {
     printf("-- Callback: request_body_data\n");
     fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
@@ -806,6 +811,7 @@ int main(int argc, char** argv) {
 
     htp_config_register_request_line(cfg, callback_request_line);
     htp_config_register_request_headers(cfg, callback_request_headers);
+    htp_config_register_request_headers_raw(cfg, callback_request_headers_raw);
     htp_config_register_request_body_data(cfg, callback_request_body_data);
     htp_config_register_request_trailer(cfg, callback_request_trailer);
     htp_config_register_request(cfg, callback_request);
@@ -838,7 +844,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_connect_extra, cfg);    
 
-    //RUN_TEST(test_misc, cfg);
+    // RUN_TEST(test_misc, cfg);
+    // RUN_TEST(test_post_urlencoded_chunked, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

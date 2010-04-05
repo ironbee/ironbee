@@ -186,6 +186,14 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
 
+    if (cfg->hook_request_headers_raw != NULL) {
+        copy->hook_request_headers_raw = hook_copy(cfg->hook_request_headers_raw);
+        if (copy->hook_request_headers_raw == NULL) {
+            free(copy);
+            return NULL;
+        }
+    }
+
     if (cfg->hook_request_body_data != NULL) {
         copy->hook_request_body_data = hook_copy(cfg->hook_request_body_data);
         if (copy->hook_request_body_data == NULL) {
@@ -224,7 +232,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
             free(copy);
             return NULL;
         }
-    }
+    }   
 
     if (cfg->hook_response_body_data != NULL) {
         copy->hook_response_body_data = hook_copy(cfg->hook_response_body_data);
@@ -313,6 +321,11 @@ void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_con
  */
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_request_headers, callback_fn);
+}
+
+// XXX
+void htp_config_register_request_headers_raw(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
+    hook_register(&cfg->hook_request_headers_raw, callback_fn);
 }
 
 /**

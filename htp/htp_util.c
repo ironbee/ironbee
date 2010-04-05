@@ -1724,7 +1724,7 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     if (uri == NULL) {
         return NULL;
-    }   
+    }
 
     // On the first pass determine the length of the final string
     size_t len = 0;
@@ -1746,11 +1746,11 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
         }
 
         len += 1; // "@"
-    }   
+    }
 
     if (uri->hostname != NULL) {
         len += bstr_len(uri->hostname);
-    }   
+    }
 
     if (uri->port != NULL) {
         len += 1; // ":"
@@ -1769,18 +1769,18 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     if (uri->fragment != NULL) {
         len += 1; // "#"
         len += bstr_len(uri->fragment);
-    }    
+    }
 
     // On the second pass construct the string
     bstr *r = bstr_alloc(len);
     if (r == NULL) {
         return NULL;
-    }   
+    }
 
     if (uri->scheme != NULL) {
         bstr_add_str_noex(r, uri->scheme);
         bstr_add_cstr_noex(r, "://");
-    }   
+    }
 
     if ((uri->username != NULL) || (uri->password != NULL)) {
         if (uri->username != NULL) {
@@ -1794,20 +1794,20 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
         }
 
         bstr_add_cstr_noex(r, "@");
-    }   
+    }
 
     if (uri->hostname != NULL) {
         bstr_add_str_noex(r, uri->hostname);
-    }   
+    }
 
     if (uri->port != NULL) {
         bstr_add_cstr(r, ":");
         bstr_add_str_noex(r, uri->port);
-    }   
+    }
 
     if (uri->path != NULL) {
         bstr_add_str_noex(r, uri->path);
-    }  
+    }
 
     if (uri->query != NULL) {
         bstr *query = bstr_strdup(uri->query);
@@ -1815,13 +1815,13 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
         bstr_add_cstr_noex(r, "?");
         bstr_add_str_noex(r, query);
         bstr_free(query);
-    }     
+    }
 
     if (uri->fragment != NULL) {
         bstr_add_cstr_noex(r, "#");
         bstr_add_str_noex(r, uri->fragment);
     }
-   
+
     return r;
 }
 
@@ -1841,18 +1841,64 @@ int htp_resembles_response_line(htp_tx_t *tx) {
     //      Firefox 3.5.x: (?i)^\s*http
     //      IE: (?i)^\s*http\s*/
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
-    
+
     if (tx->response_protocol == NULL) return 0;
     if (bstr_len(tx->response_protocol) < 4) return 0;
 
     char *data = bstr_ptr(tx->response_protocol);
 
-    if ((data[0] != 'H')&&(data[0] != 'h')) return 0;
-    if ((data[1] != 'T')&&(data[1] != 't')) return 0;
-    if ((data[2] != 'T')&&(data[2] != 't')) return 0;
-    if ((data[3] != 'P')&&(data[3] != 'p')) return 0;
+    if ((data[0] != 'H') && (data[0] != 'h')) return 0;
+    if ((data[1] != 'T') && (data[1] != 't')) return 0;
+    if ((data[2] != 'T') && (data[2] != 't')) return 0;
+    if ((data[3] != 'P') && (data[3] != 'p')) return 0;
 
     return 1;
 }
 
+/**
+ *
+ */
+int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_t last) {
+    size_t len = 0;
+    bstr *tempstr = NULL;
+    size_t i;
 
+    for (i = first; i < last; i++) {
+        htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+        len += bstr_len(hl->line);
+    }
+
+    tempstr = bstr_alloc(len);
+    if (tempstr == NULL) {
+        // XXX
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+            "Process reqsponse header (generic): Failed to allocate bstring of %d bytes", len);
+        return HTP_ERROR;
+    }
+
+    for (i = first; i < last; i++) {
+        htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+        bstr_add_str_noex(tempstr, hl->line);
+    }
+
+    htp_tx_data_t d;
+
+    d.tx = connp->in_tx;
+    d.data = (unsigned char *) bstr_ptr(tempstr);
+    d.len = bstr_len(tempstr);
+
+    int rc = hook_run_all(connp->cfg->hook_request_headers_raw, &d);
+    if (rc != HOOK_OK) {
+        bstr_free(tempstr);
+
+        // XXX
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+            "Response body data callback returned error (%d)", rc);
+
+        return HTP_ERROR;
+    }
+
+    bstr_free(tempstr);
+
+    return HTP_OK;
+}
