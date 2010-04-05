@@ -374,7 +374,7 @@ struct htp_cfg_t {
     /** How will the server handle UCS-2 characters? */
     int path_unicode_mapping;      
 
-    /** XXX Unused */
+    /** TODO Unused */
     int path_utf8_overlong_handling;
 
     /** The best-fit map to use to decode %u-encoded characters. */

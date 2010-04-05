@@ -323,7 +323,12 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
     hook_register(&cfg->hook_request_headers, callback_fn);
 }
 
-// XXX
+/**
+ * Registers a request_headers_raw callback.
+ *
+ * @param cfg
+ * @param callback_fn
+ */
 void htp_config_register_request_headers_raw(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
     hook_register(&cfg->hook_request_headers_raw, callback_fn);
 }
@@ -608,8 +613,7 @@ void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping) {
 }
 
 /**
- * Controls how server reacts to overlong UTF-8 characters.
- * XXX Not used at the moment.
+ * Controls how server reacts to overlong UTF-8 characters. Not used at the moment.
  *
  * @param cfg
  * @param utf8_overlong_handling

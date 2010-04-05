@@ -46,7 +46,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
     #endif
 
     // Ignore whitespace after response protocol
-    // XXX Why use both isspace (below) and htp_is_space (above)?
+    // TODO Why use both isspace (below) and htp_is_space (above)?
     while ((pos < len) && (isspace(data[pos]))) {
         pos++;
     }

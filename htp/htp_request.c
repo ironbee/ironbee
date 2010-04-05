@@ -447,7 +447,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     // Remember how many header lines there were before trailers
                     connp->in_tx->request_header_lines_no_trailers = list_size(connp->in_tx->request_header_lines);
 
-                    // XXX
+                    // Run hook REQUEST_HEADERS_RAW
                     if (connp->cfg->hook_request_headers_raw != NULL) {
                         htp_req_run_hook_request_headers_raw(connp, 0,
                             connp->in_tx->request_header_lines_no_trailers);
@@ -456,7 +456,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     // Determine if this request has a body                    
                     connp->in_state = htp_connp_REQ_CONNECT_CHECK;
                 } else {
-                    // XXX
+                    // Run hook REQUEST_HEADERS_RAW
                     if ((connp->cfg->hook_request_headers_raw != NULL)
                         && (list_size(connp->in_tx->request_header_lines) > connp->in_tx->request_header_lines_no_trailers)) {
                         htp_req_run_hook_request_headers_raw(connp,
@@ -761,8 +761,12 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     return HTP_OK;
 }
 
-// XXX
-
+/**
+ * Returns how many bytes from the current data chunks were consumed so far.
+ *
+ * @param connp
+ * @return The number of bytes consumed.
+ */
 size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
     return connp->in_current_offset;
 }
