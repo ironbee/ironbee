@@ -306,7 +306,12 @@ struct htp_cfg_t {
     /** Log level, which will be used when deciding whether to store or
      *  ignore the messages issued by the parser.
      */
-    int log_level;   
+    int log_level;
+
+    /** Whether to delete each transaction after the last hook is invoked. This
+     *  feature should be used when parsing traffic streams in real time.
+     */
+    int tx_auto_destroy;
 
     /**
      * Server personality ID.
@@ -984,6 +989,8 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
+
+void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy);
 
  int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
 

@@ -731,3 +731,15 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 
     return HTP_OK;
 }
+
+/**
+ * Configures whether transactions will be automatically destroyed once they
+ * are no longer needed.
+ * 
+ * @param cfg
+ * @param tx_auto_destroy
+ */
+void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
+    cfg->tx_auto_destroy = tx_auto_destroy;
+}
+

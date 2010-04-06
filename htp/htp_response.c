@@ -674,17 +674,20 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
             return HTP_ERROR;
         }
 
+        if (connp->cfg->tx_auto_destroy) {
+            htp_tx_destroy(connp->out_tx);
+        }
+
         // Check if the inbound parser is waiting on us. If it is that means that
         // there might be request data that the inbound parser hasn't consumed yet.
-        // If we don't stop parsing we might encounter a response without a
-        // request.
+        // If we don't stop parsing we might encounter a response without a request.
         if ((connp->in_status == STREAM_STATE_DATA_OTHER) && (connp->in_tx == connp->out_tx)) {
             connp->out_tx = NULL;
             return HTP_DATA_OTHER;
         }
 
         // Start afresh
-        connp->out_tx = NULL;
+        connp->out_tx = NULL;             
     }
 
     // We want to start parsing the next response (and change

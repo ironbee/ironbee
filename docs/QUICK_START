@@ -29,8 +29,9 @@ Every parsing operation needs to follow these steps:
           For callback registration, look up the htp_config_register_* functions.
 
           If your program operates in real-time then it may be desirable to dispose of
-          the used resources after each transaction is parsed. To do that, you are allowed
-          to call htp_tx_destroy() at the end of the RESPONSE callback.
+          the used resources after each transaction is parsed. To do that, use the
+          htp_config_set_tx_auto_destroy() function to tell LibHTP to delete transactions
+          after they are no longer needed.
 
   2. Run-time:
 
