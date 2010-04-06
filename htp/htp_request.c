@@ -793,6 +793,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (previous error)\n");
         #endif
+
         return STREAM_STATE_ERROR;
     }
 
@@ -806,6 +807,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (zero-length chunk)\n");
         #endif
+
         return STREAM_STATE_ERROR;
     }
 
@@ -822,9 +824,10 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     // mode (which it would be after an initial CONNECT transaction).
     if (connp->in_status == STREAM_STATE_TUNNEL) {
         #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (tunnel)\n");
+        fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_TUNNEL\n");
         #endif
-        return STREAM_STATE_DATA;
+
+        return STREAM_STATE_TUNNEL;
     }
 
     // Invoke a processor, in a loop, until an error
@@ -843,12 +846,21 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         // on processors to add error messages, so we'll
         // keep quiet here.
         int rc = connp->in_state(connp);
-        if (rc != HTP_OK) {
+        if (rc == HTP_OK) {
+            if (connp->in_status == STREAM_STATE_TUNNEL) {
+                #ifdef HTP_DEBUG
+                fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_TUNNEL\n");
+                #endif
+
+                return STREAM_STATE_TUNNEL;
+            }
+        } else {
             // Do we need more data?
             if (rc == HTP_DATA) {
                 #ifdef HTP_DEBUG
                 fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA\n");
                 #endif
+
                 return STREAM_STATE_DATA;
             }
 
