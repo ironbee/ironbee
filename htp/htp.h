@@ -405,7 +405,7 @@ struct htp_cfg_t {
     /** Raw request headers hook. This hook may be invoked twice if there
      *  are any trailer headers in a request.
      */
-    htp_hook_t *hook_request_headers_raw;
+    //htp_hook_t *hook_request_headers_raw;
 
     /** Request body data hook, invoked every time body data is available. Chunked data
      *  will be dechunked and compressed data will be decompressed (not implemented at present)
@@ -845,6 +845,16 @@ struct htp_tx_t {
     /** Parsed request headers. */
     table_t *request_headers;
 
+    /** Contains raw request headers. This field is generated on demand, use
+     *  htp_tx_get_request_headers_raw() to get it.
+     */
+    bstr *request_headers_raw;
+
+    /** How many request header lines have been included in the raw
+     *  buffer (above).
+     */
+    int request_headers_raw_lines;
+
     /** Request transfer coding: IDENTITY or CHUNKED. Only available on requests that have bodies. */
     int request_transfer_coding;
 
@@ -977,7 +987,7 @@ htp_cfg_t *htp_config_create();
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_headers_raw(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+//void htp_config_register_request_headers_raw(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
@@ -1139,7 +1149,9 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
 int htp_resembles_response_line(htp_tx_t *tx);
 
-int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_t last);
+// int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_t last);
+
+bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
 
 #endif	/* _HTP_H */
 

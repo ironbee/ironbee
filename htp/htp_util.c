@@ -1865,6 +1865,8 @@ int htp_resembles_response_line(htp_tx_t *tx) {
  *
  * @return HTP_OK or HTP_ERROR
  */
+
+/*
 int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_t last) {
     size_t len = 0;
     bstr *tempstr = NULL;
@@ -1905,4 +1907,67 @@ int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_
     bstr_free(tempstr);
 
     return HTP_OK;
+}
+ */
+
+/**
+ * Construct a bstr that contains the raw request headers.
+ *
+ * @param tx
+ * @return
+ */
+bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
+    bstr *request_headers_raw = NULL;
+    size_t i, len = 0;    
+
+    for (i = 0; i < list_size(tx->request_header_lines); i++) {
+        htp_header_line_t *hl = list_get(tx->request_header_lines, i);
+        len += bstr_len(hl->line);
+    }
+
+    request_headers_raw = bstr_alloc(len);
+    if (request_headers_raw == NULL) {
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Failed to allocate bstring of %d bytes", len);
+        return NULL;
+    }
+
+    for (i = 0; i < list_size(tx->request_header_lines); i++) {
+        htp_header_line_t *hl = list_get(tx->request_header_lines, i);
+        bstr_add_str_noex(request_headers_raw, hl->line);
+    }
+
+    return request_headers_raw;
+}
+
+/**
+ * Get a bstr that contains the raw request headers. This method will always
+ * return an up-to-date buffer, containing the last known headers. Thus, if
+ * it is called once after REQUEST_HEADERS phase it will return one buffer, but
+ * it may return a different buffer if called after REQUEST_TRAILERS phase (but
+ * only if the request actually contains trailer headers). Do not retain the
+ * bstr pointer, as the buffer may change. If there are no changes to the
+ * request header structure, only one buffer will be contstructed and used. (Multiple
+ * invocations of this method will not cause multiple buffers to be created.)
+ *
+ * @param tx
+ * @return
+ */
+bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
+    // Check that we are not called too early
+    if (tx->progress < TX_PROGRESS_REQ_HEADERS) return NULL;
+
+    if (tx->request_headers_raw == NULL) {
+        tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
+        tx->request_headers_raw_lines = list_size(tx->request_header_lines);
+    } else {
+        // Check that the buffer we have is not obsolete
+        if (tx->request_headers_raw_lines < list_size(tx->request_header_lines)) {
+            // Rebuild raw buffer
+            bstr_free(tx->request_headers_raw);
+            tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
+            tx->request_headers_raw_lines = list_size(tx->request_header_lines);
+        }
+    }
+
+    return tx->request_headers_raw;
 }

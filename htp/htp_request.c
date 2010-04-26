@@ -431,9 +431,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 // Cleanup
                 free(connp->in_header_line);
                 connp->in_line_len = 0;
-                connp->in_header_line = NULL;
-                connp->in_header_line_index = -1;
-                connp->in_header_line_counter = 0;
+                connp->in_header_line = NULL;                
 
                 // We've seen all request headers
 
@@ -448,21 +446,21 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     connp->in_tx->request_header_lines_no_trailers = list_size(connp->in_tx->request_header_lines);
 
                     // Run hook REQUEST_HEADERS_RAW
-                    if (connp->cfg->hook_request_headers_raw != NULL) {
-                        htp_req_run_hook_request_headers_raw(connp, 0,
-                            connp->in_tx->request_header_lines_no_trailers);
-                    }
+                    //if (connp->cfg->hook_request_headers_raw != NULL) {
+                    //    htp_req_run_hook_request_headers_raw(connp, 0,
+                    //        connp->in_tx->request_header_lines_no_trailers);
+                    //}
 
                     // Determine if this request has a body                    
                     connp->in_state = htp_connp_REQ_CONNECT_CHECK;
                 } else {
                     // Run hook REQUEST_HEADERS_RAW
-                    if ((connp->cfg->hook_request_headers_raw != NULL)
-                        && (list_size(connp->in_tx->request_header_lines) > connp->in_tx->request_header_lines_no_trailers)) {
-                        htp_req_run_hook_request_headers_raw(connp,
-                            connp->in_tx->request_header_lines_no_trailers,
-                            list_size(connp->in_tx->request_header_lines));
-                    }
+                    //if ((connp->cfg->hook_request_headers_raw != NULL)
+                    //    && (list_size(connp->in_tx->request_header_lines) > connp->in_tx->request_header_lines_no_trailers)) {
+                    //    htp_req_run_hook_request_headers_raw(connp,
+                    //        connp->in_tx->request_header_lines_no_trailers,
+                    //        list_size(connp->in_tx->request_header_lines));
+                    //}
 
                     // Run hook REQUEST_TRAILER
                     int rc = hook_run_all(connp->cfg->hook_request_trailer, connp);

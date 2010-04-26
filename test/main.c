@@ -67,6 +67,9 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
         free(key);
     }
 
+    bstr *raw = htp_tx_get_request_headers_raw(tx);
+    fprint_raw_data(stdout, "REQUEST HEADERS RAW 2", bstr_ptr(raw), bstr_len(raw));
+
     htp_connp_destroy_all(connp);
 
     return 1;
@@ -602,12 +605,14 @@ int callback_request_line(htp_connp_t *connp) {
 
 int callback_request_headers(htp_connp_t *connp) {
     printf("-- Callback: request_headers\n");
+    bstr *raw = htp_tx_get_request_headers_raw(connp->in_tx);
+    fprint_raw_data(stdout, "REQUEST HEADERS RAW 1", bstr_ptr(raw), bstr_len(raw));
 }
 
-int callback_request_headers_raw(htp_tx_data_t *d) {
-    printf("-- Callback: request_headers_raw\n");
-    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
-}
+//int callback_request_headers_raw(htp_tx_data_t *d) {
+//    printf("-- Callback: request_headers_raw\n");
+//    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
+//}
 
 int callback_request_body_data(htp_tx_data_t *d) {
     printf("-- Callback: request_body_data\n");
@@ -811,7 +816,7 @@ int main(int argc, char** argv) {
 
     htp_config_register_request_line(cfg, callback_request_line);
     htp_config_register_request_headers(cfg, callback_request_headers);
-    htp_config_register_request_headers_raw(cfg, callback_request_headers_raw);
+    //htp_config_register_request_headers_raw(cfg, callback_request_headers_raw);
     htp_config_register_request_body_data(cfg, callback_request_body_data);
     htp_config_register_request_trailer(cfg, callback_request_trailer);
     htp_config_register_request(cfg, callback_request);
@@ -825,7 +830,8 @@ int main(int argc, char** argv) {
     htp_config_register_log(cfg, callback_log);
 
     htp_config_set_generate_request_uri_normalized(cfg, 1);
-    
+
+    /*
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -842,10 +848,11 @@ int main(int argc, char** argv) {
     
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
-    RUN_TEST(test_connect_extra, cfg);    
+    RUN_TEST(test_connect_extra, cfg);
+    */
 
     // RUN_TEST(test_misc, cfg);
-    // RUN_TEST(test_post_urlencoded_chunked, cfg);
+    RUN_TEST(test_post_urlencoded_chunked, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
