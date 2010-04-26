@@ -569,10 +569,10 @@ int test_compressed_response_gzip_ct(htp_cfg_t *cfg) {
     return 1;
 }
 
-int test_compressed_response_gzip_chunked(htp_cfg_t *cfg) {
+int test_compressed_response_deflate(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
-    int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
+    int rc = test_run(home, "18-compressed-response-deflate.t", cfg, &connp);
     if (rc < 0) {
         if (connp != NULL) htp_connp_destroy_all(connp);
         return -1;
@@ -852,7 +852,9 @@ int main(int argc, char** argv) {
     */
 
     // RUN_TEST(test_misc, cfg);
-    RUN_TEST(test_post_urlencoded_chunked, cfg);
+    // RUN_TEST(test_post_urlencoded_chunked, cfg);
+    RUN_TEST(test_compressed_response_deflate, cfg);
+
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

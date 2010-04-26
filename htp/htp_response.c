@@ -288,18 +288,22 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // Check for compression
     htp_header_t *ce = table_getc(connp->out_tx->response_headers, "content-encoding");
     if (ce != NULL) {
-        // TODO Improve detection
-        // TODO How would a Content-Range header affect us?
         if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {
-            connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp);
+            connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
+        } else if ((bstr_cmpc(ce->value, "deflate") == 0) || (bstr_cmpc(ce->value, "x-deflate") == 0)) {
+            connp->out_tx->response_content_encoding = COMPRESSION_DEFLATE;
+        }
+
+        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
+            connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
+                connp->out_tx->response_content_encoding);
             if (connp->out_decompressor != NULL) {
-                connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
                 connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
             } else {
                 // No need to do anything; the error will have already
                 // been reported by the failed decompressor.
             }
-        }
+        }       
     }
 
     // 1. Any response message which MUST NOT include a message-body

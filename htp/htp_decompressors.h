@@ -27,6 +27,10 @@ typedef struct htp_decompressor_t htp_decompressor_t;
 #define DEFLATE_MAGIC_1     0x1f
 #define DEFLATE_MAGIC_2     0x8b
 
+#define COMPRESSION_NONE        0
+#define COMPRESSION_GZIP        1
+#define COMPRESSION_DEFLATE     2
+
 struct htp_decompressor_t {
     int (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
     int (*callback)(htp_tx_data_t *);
@@ -44,7 +48,7 @@ struct htp_decompressor_gzip_t {
     unsigned long crc;    
 };
 
-htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp);
+htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp, int format);
 
 #endif	/* _HTP_DECOMPRESSORS_H */
 

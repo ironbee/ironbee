@@ -56,11 +56,6 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define HTTP_1_0                100
 #define HTTP_1_1                101
 
-#define COMPRESSION_NONE        0
-#define COMPRESSION_GZIP        1
-#define COMPRESSION_COMPRESS    2 // Not implemented
-#define COMPRESSION_DEFLATE     3 // Not implemented
-
 #define HTP_LOG_MARK                __FILE__,__LINE__
 
 #define HTP_LOG_ERROR               1

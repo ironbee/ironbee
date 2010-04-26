@@ -181,7 +181,7 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
  *
  * @param connp
  */
-htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp) {
+htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp, int format) {
     htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));
     if (drec == NULL) return NULL;
 
@@ -209,6 +209,10 @@ htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp) {
     drec->zlib_initialized = 1;
     drec->stream.avail_out = GZIP_BUF_SIZE;
     drec->stream.next_out = drec->buffer;
+
+    if (format == COMPRESSION_DEFLATE) {
+        drec->initialized = 1;
+    }
 
     return (htp_decompressor_t *) drec;
 }
