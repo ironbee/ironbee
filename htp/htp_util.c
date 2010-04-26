@@ -1946,7 +1946,7 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
  * it may return a different buffer if called after REQUEST_TRAILERS phase (but
  * only if the request actually contains trailer headers). Do not retain the
  * bstr pointer, as the buffer may change. If there are no changes to the
- * request header structure, only one buffer will be contstructed and used. (Multiple
+ * request header structure, only one buffer will be constructed and used. (Multiple
  * invocations of this method will not cause multiple buffers to be created.)
  *
  * @param tx
