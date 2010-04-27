@@ -66,6 +66,7 @@ struct stream_data {
     int chunk_counter;
     int log_level;
     list_t *chunks;
+    int req_count;
 };
 
 htp_cfg_t *cfg;
@@ -129,6 +130,7 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
         sd->fd = -1;
         sd->log_level = -1;
         sd->chunks = list_array_create(16);
+        sd->req_count = 1;
         
         // Init LibHTP parser
         sd->connp = htp_connp_create(cfg);
@@ -258,8 +260,10 @@ int callback_response(htp_connp_t *connp) {
     stream_data *sd = (stream_data *)htp_connp_get_user_data(connp);
     
     char *x = bstr_tocstr(connp->out_tx->request_line);
-    fprintf(stdout, "[#%d] %s\n", sd->id, x);
+    fprintf(stdout, "[#%d/%d] %s\n", sd->id, sd->req_count, x);
     free(x);
+    
+    sd->req_count++;
 }
 
 /**
@@ -273,10 +277,10 @@ int callback_log(htp_log_t *log) {
     }
 
     if (log->code != 0) {
-        fprintf(stderr, "[#%d][%d][code %d][file %s][line %d] %s\n", sd->id,
+        fprintf(stderr, "[#%d/%d][%d][code %d][file %s][line %d] %s\n", sd->id, sd->req_count,
             log->level, log->code, log->file, log->line, log->msg);
     } else {
-        fprintf(stderr, "[#%d][%d][file %s][line %d] %s\n", sd->id,
+        fprintf(stderr, "[#%d/%d][%d][file %s][line %d] %s\n", sd->id, sd->req_count,
             log->level, log->file, log->line, log->msg);
     }
     
