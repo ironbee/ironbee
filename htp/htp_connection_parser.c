@@ -207,7 +207,7 @@ void htp_connp_destroy_all(htp_connp_t *connp) {
  * @param connp
  * @return User data, or NULL if there isn't any.
  */
-void *htp_connp_get_data(htp_connp_t *connp) {
+void *htp_connp_get_user_data(htp_connp_t *connp) {
     return connp->user_data;
 }
 
