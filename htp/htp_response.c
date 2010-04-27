@@ -593,7 +593,7 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
             if ((connp->out_tx->response_protocol_number < 0)
                 || (connp->out_tx->response_status_number < 0)
                 || (connp->out_tx->response_status_number < HTP_VALID_STATUS_MIN)
-                || (connp->out_tx->response_status_number < HTP_VALID_STATUS_MAX)) {
+                || (connp->out_tx->response_status_number > HTP_VALID_STATUS_MAX)) {
                 // Response line is invalid
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
 
