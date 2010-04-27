@@ -383,6 +383,9 @@ struct htp_cfg_t {
     /** Whether to generate the request_uri_normalized field. */
     int generate_request_uri_normalized;
 
+    /** Whether to automatically decompress compressed response bodies. */
+    int response_decompression_enabled;
+
 
     // Hooks
 
@@ -998,6 +1001,7 @@ void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy);
 
  int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
+void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled);
 
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
 void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators);

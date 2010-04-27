@@ -286,24 +286,26 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     }
 
     // Check for compression
-    htp_header_t *ce = table_getc(connp->out_tx->response_headers, "content-encoding");
-    if (ce != NULL) {
-        if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {
-            connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
-        } else if ((bstr_cmpc(ce->value, "deflate") == 0) || (bstr_cmpc(ce->value, "x-deflate") == 0)) {
-            connp->out_tx->response_content_encoding = COMPRESSION_DEFLATE;
-        }
-
-        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
-            connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
-                connp->out_tx->response_content_encoding);
-            if (connp->out_decompressor != NULL) {
-                connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
-            } else {
-                // No need to do anything; the error will have already
-                // been reported by the failed decompressor.
+    if (connp->cfg->response_decompression_enabled) {
+        htp_header_t *ce = table_getc(connp->out_tx->response_headers, "content-encoding");
+        if (ce != NULL) {
+            if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {
+                connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
+            } else if ((bstr_cmpc(ce->value, "deflate") == 0) || (bstr_cmpc(ce->value, "x-deflate") == 0)) {
+                connp->out_tx->response_content_encoding = COMPRESSION_DEFLATE;
             }
-        }       
+
+            if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
+                connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
+                    connp->out_tx->response_content_encoding);
+                if (connp->out_decompressor != NULL) {
+                    connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
+                } else {
+                    // No need to do anything; the error will have already
+                    // been reported by the failed decompressor.
+                }
+            }
+        }
     }
 
     // 1. Any response message which MUST NOT include a message-body
@@ -594,7 +596,7 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
                 || (connp->out_tx->response_status_number < HTP_VALID_STATUS_MAX)) {
                 // Response line is invalid
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
-                
+
                 connp->out_tx->flags |= HTP_STATUS_LINE_INVALID;
             }
 
@@ -621,7 +623,7 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
                 // Continue to process response body
                 connp->out_tx->response_transfer_coding = IDENTITY;
                 connp->out_state = htp_connp_RES_BODY_IDENTITY;
-                connp->out_tx->progress = TX_PROGRESS_RES_BODY;                
+                connp->out_tx->progress = TX_PROGRESS_RES_BODY;
 
                 return HTP_OK;
             }
@@ -691,7 +693,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
         }
 
         // Start afresh
-        connp->out_tx = NULL;             
+        connp->out_tx = NULL;
     }
 
     // We want to start parsing the next response (and change

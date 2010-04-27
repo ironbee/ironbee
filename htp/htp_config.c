@@ -137,6 +137,8 @@ htp_cfg_t *htp_config_create() {
     cfg->path_u_bestfit_map = bestfit_1252;
     cfg->path_replacement_char = '?';
 
+    cfg->response_decompression_enabled = 1;
+
     // No need to create hooks here; they will be created on-demand,
     // during callback registration
 
@@ -622,6 +624,16 @@ void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping) {
  */
 void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling) {
     cfg->path_utf8_overlong_handling = utf8_overlong_handling;
+}
+
+/**
+ * Controls whether compressed response bodies will be automatically decompressed.
+ *
+ * @param cfg
+ * @param enabled set to 1 to enable decompression, 0 otherwise
+ */
+void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
+    cfg->response_decompression_enabled = enabled;
 }
 
 /**
