@@ -271,8 +271,12 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         } else {
             // This is a failed CONNECT stream, which means that
             // we can unblock request parsing
-            connp->in_status = STREAM_STATE_DATA;            
-            return HTP_DATA;
+            connp->in_status = STREAM_STATE_DATA;
+            
+            // We are going to continue processing this transaction,
+            // adding a note for ourselves to stop at the end (because
+            // we don't want to see the beginning of a new transaction).
+            connp->out_data_other_at_tx_end = 1;
         }       
     }
 
@@ -704,6 +708,14 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
 
         // Start afresh
         connp->out_tx = NULL;
+        
+        // Do we have a signal to yield to inbound processing at
+        // the end of the next transaction?
+        if (connp->out_data_other_at_tx_end) {
+            // We do. Let's yield then.
+            connp->out_data_other_at_tx_end = 0;
+            return HTP_DATA_OTHER;
+        }
     }
 
     // We want to start parsing the next response (and change
@@ -838,9 +850,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
                 fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA\n");
                 #endif
 
-                // We purposfully avoid to set the outbound
-                // status to STREAM_STATE_DATA here.
-                //connp->out_status = STREAM_STATE_DATA;
+                connp->out_status = STREAM_STATE_DATA;
 
                 return STREAM_STATE_DATA;
             }

@@ -523,6 +523,8 @@ struct htp_connp_t {
 
     /** Parser output status. Starts as HTP_OK, but may turn into HTP_ERROR. */
     unsigned int out_status;
+    
+    unsigned int out_data_other_at_tx_end;
 
     /** The time when the last request data chunk was received. */
     htp_time_t in_timestamp;

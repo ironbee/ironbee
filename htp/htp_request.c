@@ -827,6 +827,10 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 
         return STREAM_STATE_TUNNEL;
     }
+    
+    if (connp->out_status == STREAM_STATE_DATA_OTHER) {
+        connp->out_status = STREAM_STATE_DATA;
+    }
 
     // Invoke a processor, in a loop, until an error
     // occurs or until we run out of data. Many processors
