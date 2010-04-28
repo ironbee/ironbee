@@ -67,6 +67,9 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
         free(key);
     }
 
+    bstr *raw = htp_tx_get_request_headers_raw(tx);
+    fprint_raw_data(stdout, "REQUEST HEADERS RAW 2", bstr_ptr(raw), bstr_len(raw));
+
     htp_connp_destroy_all(connp);
 
     return 1;
@@ -816,7 +819,7 @@ int main(int argc, char** argv) {
     htp_config_register_log(cfg, callback_log);
 
     htp_config_set_generate_request_uri_normalized(cfg, 1);
-
+    
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -833,9 +836,10 @@ int main(int argc, char** argv) {
     
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
-    RUN_TEST(test_connect_extra, cfg);
+    RUN_TEST(test_connect_extra, cfg);    
 
     //RUN_TEST(test_misc, cfg);
+    //RUN_TEST(test_post_urlencoded_chunked, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
