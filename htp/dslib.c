@@ -50,12 +50,48 @@ static int list_linked_push(list_t *_q, void *element) {
 }
 
 /**
- * Remove one element from the beginning of the list.
+ * Remove one element from the end of the list.
  *
  * @param list
  * @return a pointer to the removed element, or NULL if the list is empty.
  */
 static void *list_linked_pop(list_t *_q) {
+    list_linked_t *q = (list_linked_t *) _q;
+    void *r = NULL;
+
+    if (!q->first) {
+        return NULL;
+    }
+
+    // Find the last element
+    list_linked_element_t *qprev = NULL;
+    list_linked_element_t *qe = q->first;
+    while(qe->next != NULL) {
+        qprev = qe;
+        qe = qe->next;
+    }
+
+    r = qe->data;
+    free(qe);
+
+    if (qprev != NULL) {
+        qprev->next = NULL;
+        q->last = qprev;
+    } else {
+        q->first = NULL;
+        q->last = NULL;
+    }      
+
+    return r;
+}
+
+/**
+ * Remove one element from the beginning of the list.
+ *
+ * @param list
+ * @return a pointer to the removed element, or NULL if the list is empty.
+ */
+static void *list_linked_shift(list_t *_q) {
     list_linked_t *q = (list_linked_t *) _q;
     void *r = NULL;
 
@@ -126,6 +162,7 @@ list_t *list_linked_create(void) {
     q->pop = list_linked_pop;
     q->empty = list_linked_empty;
     q->destroy = (void (*)(list_t *))list_linked_destroy;
+    q->shift = list_linked_shift;
 
     return (list_t *) q;
 }
@@ -142,7 +179,7 @@ list_t *list_linked_create(void) {
  * @return 1 on success or -1 on failure (memory allocation)
  */
 static int list_array_push(list_t *_q, void *element) {
-    list_array_t *q = (list_array_t *) _q;
+    list_array_t *q = (list_array_t *) _q;   
 
     // Check whether we're full
     if (q->current_size >= q->max_size) {
@@ -189,14 +226,39 @@ static int list_array_push(list_t *_q, void *element) {
 }
 
 /**
- * Remove one element from the beginning of the list.
+ * Remove one element from the end of the list.
  *
  * @param list
  * @return the removed element, or NULL if the list is empty
  */
 static void *list_array_pop(list_t *_q) {
     list_array_t *q = (list_array_t *) _q;
-    void *r = NULL;
+    void *r = NULL;   
+
+    if (q->current_size == 0) {
+        return NULL;
+    }
+
+    size_t pos = q->first + q->current_size - 1;    
+    if (pos > q->max_size - 1) pos -= q->max_size;    
+
+    r = q->elements[pos];
+    q->last = pos;
+
+    q->current_size--;   
+
+    return r;
+}
+
+/**
+ * Remove one element from the beginning of the list.
+ *
+ * @param list
+ * @return the removed element, or NULL if the list is empty
+ */
+static void *list_array_shift(list_t *_q) {
+    list_array_t *q = (list_array_t *) _q;
+    void *r = NULL;   
 
     if (q->current_size == 0) {
         return NULL;
@@ -345,6 +407,7 @@ list_t *list_array_create(size_t size) {
     q->iterator_reset = (void (*)(list_t *))list_array_iterator_reset;
     q->iterator_next = (void *(*)(list_t *))list_array_iterator_next;
     q->destroy = (void (*)(list_t *))list_array_destroy;
+    q->shift = list_array_shift;
 
     return (list_t *) q;
 }
@@ -537,18 +600,35 @@ void table_clear(table_t *table) {
 #if 0
 
 int main(int argc, char **argv) {
-    list_t *q = list_linked_create();
+    list_t *q = list_array_create(4);
 
     list_push(q, "1");
     list_push(q, "2");
     list_push(q, "3");
     list_push(q, "4");
 
+    list_shift(q);
+    list_push(q, "5");
+    list_push(q, "6");
+
     char *s = NULL;
     while ((s = (char *) list_pop(q)) != NULL) {
         printf("Got: %s\n", s);
     }
 
+    printf("---\n");
+
+    list_push(q, "1");
+    list_push(q, "2");
+    list_push(q, "3");
+    list_push(q, "4");
+
+    while ((s = (char *) list_shift(q)) != NULL) {
+        printf("Got: %s\n", s);
+    }
+
     free(q);
+
+    return 0;
 }
 #endif
