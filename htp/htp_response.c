@@ -460,9 +460,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 // Cleanup
                 free(connp->out_header_line);
                 connp->out_line_len = 0;
-                connp->out_header_line = NULL;
-                connp->out_header_line_index = -1;
-                connp->out_header_line_counter = 0;
+                connp->out_header_line = NULL;                
 
                 // We've seen all response headers
                 if (connp->out_tx->progress == TX_PROGRESS_RES_HEADERS) {
