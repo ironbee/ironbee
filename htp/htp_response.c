@@ -773,7 +773,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA (zero-length chunk)\n");
         #endif
 
-        return STREAM_STATE_ERROR;
+        return STREAM_STATE_CLOSED;
     }
 
     // Store the current chunk information
@@ -825,6 +825,8 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
                 fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA\n");
                 #endif
 
+                connp->out_status = STREAM_STATE_DATA;
+
                 return STREAM_STATE_DATA;
             }
 
@@ -836,6 +838,8 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
                     fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA (suspended parsing)\n");
                     #endif
 
+                    connp->out_status = STREAM_STATE_DATA;
+
                     // Do not send STREAM_DATE_DATA_OTHER if we've
                     // consumed the entire chunk
                     return STREAM_STATE_DATA;
@@ -843,6 +847,8 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA_OTHER\n");
                     #endif
+
+                    connp->out_status = STREAM_STATE_DATA_OTHER;
 
                     // Partial chunk consumption                    
                     return STREAM_STATE_DATA_OTHER;

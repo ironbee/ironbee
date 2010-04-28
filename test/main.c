@@ -886,8 +886,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_compressed_response_deflate, cfg);
     */
 
-    // RUN_TEST(test_misc, cfg);
-    RUN_TEST(test_post_urlencoded_chunked, cfg);    
+    RUN_TEST(test_misc, cfg);
+    //RUN_TEST(test_post_urlencoded_chunked, cfg);
 
 
     printf("Tests: %i\n", tests);

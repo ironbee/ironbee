@@ -806,7 +806,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
         fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (zero-length chunk)\n");
         #endif
 
-        return STREAM_STATE_ERROR;
+        return STREAM_STATE_CLOSED;
     }
 
     // Store the current chunk information
@@ -859,6 +859,8 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
                 fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA\n");
                 #endif
 
+                connp->in_status = STREAM_STATE_DATA;
+
                 return STREAM_STATE_DATA;
             }
 
@@ -871,18 +873,23 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (suspended parsing)\n");
                     #endif
+
+                    connp->in_status = STREAM_STATE_DATA;
+
                     return STREAM_STATE_DATA;
                 } else {
                     // Partial chunk consumption
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA_OTHER\n");
                     #endif
+
+                    connp->in_status = STREAM_STATE_DATA_OTHER;
+
                     return STREAM_STATE_DATA_OTHER;
                 }
             }
 
-            // Remember that we've had an error. Errors are
-            // (at least at present) not possible to recover from.
+            // If we're here that means we've encountered an error.
             connp->in_status = STREAM_STATE_ERROR;
 
             #ifdef HTP_DEBUG
