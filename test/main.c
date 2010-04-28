@@ -62,7 +62,16 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
     while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
         char *key = bstr_tocstr(h->name);
         char *value = bstr_tocstr(h->value);
-        printf("--   HEADER [%s][%s]\n", key, value);
+        printf("--   REQUEST HEADER [%s][%s]\n", key, value);
+        free(value);
+        free(key);
+    }
+
+    table_iterator_reset(tx->response_headers);
+    while ((key = table_iterator_next(tx->response_headers, (void **) & h)) != NULL) {
+        char *key = bstr_tocstr(h->name);
+        char *value = bstr_tocstr(h->value);
+        printf("--   RESPONSE HEADER [%s][%s]\n", key, value);
         free(value);
         free(key);
     }
@@ -569,6 +578,32 @@ int test_compressed_response_gzip_ct(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_compressed_response_gzip_chunked(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int test_compressed_response_deflate(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
@@ -844,16 +879,15 @@ int main(int argc, char** argv) {
     RUN_TEST(test_response_stream_closure, cfg);
     RUN_TEST(test_host_in_headers, cfg);
     RUN_TEST(test_compressed_response_gzip_ct, cfg);
-    RUN_TEST(test_compressed_response_gzip_chunked, cfg);
-    
+    RUN_TEST(test_compressed_response_gzip_chunked, cfg);    
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_connect_extra, cfg);
+    RUN_TEST(test_compressed_response_deflate, cfg);
     */
 
     // RUN_TEST(test_misc, cfg);
-    // RUN_TEST(test_post_urlencoded_chunked, cfg);
-    RUN_TEST(test_compressed_response_deflate, cfg);
+    RUN_TEST(test_post_urlencoded_chunked, cfg);    
 
 
     printf("Tests: %i\n", tests);

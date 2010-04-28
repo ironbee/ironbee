@@ -92,6 +92,8 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
     size_t name_start, name_end;
     size_t value_start, value_end;
 
+    htp_chomp((unsigned char *)data, &len);
+
     name_start = 0;
 
     // Look for the colon
@@ -238,7 +240,10 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
         for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
             htp_header_line_t *hl = list_get(connp->out_tx->response_header_lines, i);
-            bstr_add_str_noex(tempstr, hl->line);
+            char *data = bstr_ptr(hl->line);
+            size_t len = bstr_len(hl->line);
+            htp_chomp((unsigned char *)data, &len);
+            bstr_add_mem_noex(tempstr, data, len);
             hl->header = h;
         }
 

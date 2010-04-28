@@ -483,7 +483,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             }
 
             // Prepare line for consumption
-            htp_chomp(connp->out_line, &connp->out_line_len);
+            int chomp_result = htp_chomp(connp->out_line, &connp->out_line_len);
 
             // Check for header folding
             if (htp_connp_is_line_folded(connp->out_line, connp->out_line_len) == 0) {
@@ -512,7 +512,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             }
 
             // Add the raw header line to the list
-            connp->out_header_line->line = bstr_memdup((char *) connp->out_line, connp->out_line_len);
+            connp->out_header_line->line = bstr_memdup((char *) connp->out_line, connp->out_line_len + chomp_result);
             list_add(connp->out_tx->response_header_lines, connp->out_header_line);
             connp->out_header_line = NULL;
 
