@@ -43,6 +43,7 @@
 #include <fcntl.h>
 
 #include <htp/htp.h>
+#include <htp/dslib.h>
 
 #define CLIENT 1
 #define SERVER 2
@@ -54,19 +55,23 @@ struct chunk_t {
     char *data;
     size_t len;
     int direction;
+    size_t consumed;
 };
 
 struct stream_data {
     int id;
     htp_connp_t *connp;
     int direction;
-    int inbound_status;
-    int outbound_status;
+    //int inbound_status;
+    //int outbound_status;
+    int parser_status;
     int fd;    
     int chunk_counter;
     int log_level;
-    list_t *chunks;
     int req_count;
+    list_t *chunks;
+    list_t *inbound_chunks;
+    list_t *outbound_chunks;
 };
 
 htp_cfg_t *cfg;
@@ -101,6 +106,170 @@ void free_stream_data(stream_data *sd) {
 /**
  *
  *
+ * @param sd
+ */
+void process_stored_stream_data(stream_data *sd) {
+    int loop = 0;
+
+    do {
+        loop = 0;
+        
+        fprintf(stdout, "process_stored_stream_data: in_status %d out_status %d\n",
+            sd->connp->in_status, sd->connp->out_status);
+        
+        // Send as much inbound data as possible    
+        while((sd->connp->in_status == STREAM_STATE_DATA)&&(list_size(sd->inbound_chunks) > 0)) {
+            fprintf(stdout, "%d inbound chunks in queue\n", list_size(sd->inbound_chunks));
+                
+            chunk_t *chunk = (chunk_t *)list_get(sd->inbound_chunks, 0);
+            //fprint_raw_data(stdout, "INBOUND DATA", chunk->data + chunk->consumed, chunk->len - chunk->consumed);
+                
+            int rc = htp_connp_req_data(sd->connp, 0, chunk->data + chunk->consumed, chunk->len - chunk->consumed);
+                
+            fprintf(stdout, "INBOUND STATUS: %d; CONSUMED DATA: %d; OUTBOUND STATUS: %d\n",
+                sd->connp->in_status, htp_connp_req_data_consumed(sd->connp), sd->connp->out_status);                
+                    
+            if (rc == STREAM_STATE_DATA) {
+                list_shift(sd->inbound_chunks);
+            } else {
+                chunk->consumed = htp_connp_req_data_consumed(sd->connp);
+            }
+        }
+   
+        // Send as much outbound data as possible          
+        while((sd->connp->out_status == STREAM_STATE_DATA)&&(list_size(sd->outbound_chunks) > 0)) {
+            fprintf(stdout, "%d outbound chunks in queue\n", list_size(sd->outbound_chunks));
+                
+            chunk_t *chunk = (chunk_t *)list_get(sd->outbound_chunks, 0);
+            //fprint_raw_data(stdout, "OUTBOUND DATA", chunk->data + chunk->consumed, chunk->len - chunk->consumed);
+                
+            int rc = htp_connp_res_data(sd->connp, 0, chunk->data + chunk->consumed, chunk->len - chunk->consumed);
+                
+            fprintf(stdout, "INBOUND STATUS: %d; CONSUMED DATA: %d; OUTBOUND STATUS: %d\n",
+                sd->connp->in_status, htp_connp_res_data_consumed(sd->connp), sd->connp->out_status);                
+                    
+            if (rc == STREAM_STATE_DATA) {
+                list_shift(sd->outbound_chunks);
+            } else {
+                chunk->consumed = htp_connp_res_data_consumed(sd->connp);
+            }
+            
+            loop = 1;
+        }
+    } while(loop);
+}
+
+/**
+ *
+ *
+ * @param sd
+ * @param direction
+ * @param hlf
+ */
+void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf) {
+    chunk_t *chunk = NULL;
+    int rc;
+    
+    if (sd->direction == direction) {
+        // Inbound data
+        switch(sd->connp->in_status) {
+            case STREAM_STATE_NEW :
+            case STREAM_STATE_DATA :
+                // Send data to parser
+                //fprint_raw_data(stdout, "INBOUND DATA", hlf->data, hlf->count_new);
+                
+                rc = htp_connp_req_data(sd->connp, 0, hlf->data, hlf->count_new);
+                
+                fprintf(stdout, "INBOUND STATUS: %d; CONSUMED DATA: %d; OUTBOUND STATUS: %d\n",
+                    sd->connp->in_status, htp_connp_req_data_consumed(sd->connp), sd->connp->out_status);
+                
+                if (rc == STREAM_STATE_DATA_OTHER) {
+                    // Encountered inbound parsing block
+                    
+                    // Store partial chunk for later
+                    chunk = calloc(1, sizeof(chunk_t));
+                    chunk->len = hlf->count_new - htp_connp_req_data_consumed(sd->connp);
+                    chunk->data = malloc(chunk->len);
+                    memcpy(chunk->data, hlf->data + htp_connp_req_data_consumed(sd->connp), chunk->len);
+                    list_add(sd->inbound_chunks, chunk);
+                    
+                    fprintf(stdout, "Added chunk with %d bytes to inbound\n", chunk->len);
+                } else
+                if (rc != STREAM_STATE_DATA) {
+                    // Inbound parsing error
+                    sd->log_level = 0;
+                    fprintf(stderr, "[#%d] Inbound parsing error: %d\n", sd->id, rc);
+                }
+                break;
+                
+            case STREAM_STATE_ERROR :
+                // Do nothing
+                break;
+                
+            case STREAM_STATE_DATA_OTHER :
+                // Store data for later
+                chunk = calloc(1, sizeof(chunk_t));
+                chunk->len = hlf->count_new;
+                chunk->data = malloc(chunk->len);
+                memcpy(chunk->data, hlf->data, chunk->len);
+                list_add(sd->inbound_chunks, chunk);
+                fprintf(stdout, "Added chunk with %d bytes to inbound\n", chunk->len);
+                break;
+        }
+    } else {
+        // Outbound data
+        switch(sd->connp->out_status) {
+            case STREAM_STATE_NEW :
+            case STREAM_STATE_DATA :
+                // Send data to parser
+                //fprint_raw_data(stdout, "OUTBOUND DATA", hlf->data, hlf->count_new);
+                
+                rc = htp_connp_res_data(sd->connp, 0, hlf->data, hlf->count_new);
+                
+                fprintf(stdout, "INBOUND STATUS: %d; CONSUMED DATA: %d; OUTBOUND STATUS: %d\n",
+                    sd->connp->in_status, htp_connp_res_data_consumed(sd->connp), sd->connp->out_status);
+                
+                if (rc == STREAM_STATE_DATA_OTHER) {
+                    // Encountered outbound parsing block
+                    
+                    // Store partial chunk for later
+                    chunk = calloc(1, sizeof(chunk_t));
+                    chunk->len = hlf->count_new - htp_connp_res_data_consumed(sd->connp);
+                    chunk->data = malloc(chunk->len);
+                    memcpy(chunk->data, hlf->data + htp_connp_res_data_consumed(sd->connp), chunk->len);
+                    list_add(sd->outbound_chunks, chunk);
+                    fprintf(stdout, "Added chunk with %d bytes to outbound\n", chunk->len);
+                } else
+                if (rc != STREAM_STATE_DATA) {
+                    // Outbound parsing error
+                    sd->log_level = 0;
+                    fprintf(stderr, "[#%d] Outbound parsing error: %d\n", sd->id, rc);
+                }
+                break;
+                
+            case STREAM_STATE_ERROR :
+                // Do nothing
+                break;
+                
+            case STREAM_STATE_DATA_OTHER :
+                // Store data for later
+                chunk = calloc(1, sizeof(chunk_t));
+                chunk->len = hlf->count_new;
+                chunk->data = malloc(chunk->len);
+                memcpy(chunk->data, hlf->data, chunk->len);
+                list_add(sd->outbound_chunks, chunk);
+                fprintf(stdout, "Added chunk with %d bytes to outbound\n", chunk->len);
+                break;
+        }
+    }
+    
+    // Process as much stored data as possible    
+    process_stored_stream_data(sd);
+}
+
+/**
+ *
+ *
  * @param tcp
  * @param user_data
  */
@@ -125,11 +294,15 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
 
         // Allocate custom per-stream data      
         sd = calloc(1, sizeof(stream_data));
+        //sd->inbound_status = STREAM_STATE_DATA;
+        //sd->outbound_status = STREAM_STATE_DATA;
         sd->id = counter++;
         sd->direction = -1;
         sd->fd = -1;
         sd->log_level = -1;
         sd->chunks = list_array_create(16);
+        sd->inbound_chunks = list_array_create(16);
+        sd->outbound_chunks = list_array_create(16);
         sd->req_count = 1;
         
         // Init LibHTP parser
@@ -201,6 +374,7 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
             sd->direction = direction;
         }
 
+        // Write data to disk or store for later        
         if (sd->fd == -1) {
             // Store data, as we may need it later
             chunk_t *chunk = calloc(1, sizeof(chunk_t));
@@ -229,26 +403,10 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
             
             sd->chunk_counter++;
         }
-        
-        // Process data
-        if (sd->direction == direction) {
-            if (sd->inbound_status != STREAM_STATE_ERROR) {
-                sd->inbound_status = htp_connp_req_data(sd->connp, 0, hlf->data, hlf->count_new);
-                if (sd->inbound_status != STREAM_STATE_DATA) {
-                    sd->log_level = 0;
-                    fprintf(stderr, "[#%d] Inbound parsing error: %d\n", sd->id, sd->inbound_status);
-                }
-            }
-        } else {
-            if (sd->outbound_status != STREAM_STATE_ERROR) {
-                sd->outbound_status = htp_connp_res_data(sd->connp, 0, hlf->data, hlf->count_new);
-                if (sd->outbound_status != STREAM_STATE_DATA) {
-                    sd->log_level = 0;
-                    fprintf(stderr, "[#%d] Outbound parsing error: %d\n", sd->id, sd->outbound_status);
-                }
-            }
-        }        
 
+        // Process data        
+        process_stream_data(sd, direction, hlf);
+        
         return;        
     }
 }
@@ -372,3 +530,4 @@ int main(int argc, char *argv[]) {
     
     return 0;    
 }
+
