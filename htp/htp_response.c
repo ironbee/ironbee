@@ -838,7 +838,9 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
                 fprintf(stderr, "htp_connp_res_data: returning STREAM_STATE_DATA\n");
                 #endif
 
-                connp->out_status = STREAM_STATE_DATA;
+                // We purposfully avoid to set the outbound
+                // status to STREAM_STATE_DATA here.
+                //connp->out_status = STREAM_STATE_DATA;
 
                 return STREAM_STATE_DATA;
             }
