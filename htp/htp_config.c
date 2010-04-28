@@ -188,16 +188,6 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
 
-    /*
-    if (cfg->hook_request_headers_raw != NULL) {
-        copy->hook_request_headers_raw = hook_copy(cfg->hook_request_headers_raw);
-        if (copy->hook_request_headers_raw == NULL) {
-            free(copy);
-            return NULL;
-        }
-    }
-    */
-
     if (cfg->hook_request_body_data != NULL) {
         copy->hook_request_body_data = hook_copy(cfg->hook_request_body_data);
         if (copy->hook_request_body_data == NULL) {
@@ -326,16 +316,6 @@ void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_con
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_request_headers, callback_fn);
 }
-
-/**
- * Registers a request_headers_raw callback.
- *
- * @param cfg
- * @param callback_fn
- */
-//void htp_config_register_request_headers_raw(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
-//    hook_register(&cfg->hook_request_headers_raw, callback_fn);
-//}
 
 /**
  * Registers a request_trailer callback.
@@ -756,4 +736,3 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
     cfg->tx_auto_destroy = tx_auto_destroy;
 }
-

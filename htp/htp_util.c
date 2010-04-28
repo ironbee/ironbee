@@ -1856,61 +1856,6 @@ int htp_resembles_response_line(htp_tx_t *tx) {
 }
 
 /**
- * Runs the request_headers_raw hook, sending the request header lines specified by
- * the parameters first and last.
- *
- * @param connp
- * @param first
- * @param last
- *
- * @return HTP_OK or HTP_ERROR
- */
-
-/*
-int htp_req_run_hook_request_headers_raw(htp_connp_t *connp, size_t first, size_t last) {
-    size_t len = 0;
-    bstr *tempstr = NULL;
-    size_t i;
-
-    for (i = first; i < last; i++) {
-        htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
-        len += bstr_len(hl->line);
-    }
-
-    tempstr = bstr_alloc(len);
-    if (tempstr == NULL) {        
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Failed to allocate bstring of %d bytes", len);
-        
-        return HTP_ERROR;
-    }
-
-    for (i = first; i < last; i++) {
-        htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
-        bstr_add_str_noex(tempstr, hl->line);
-    }
-
-    htp_tx_data_t d;
-
-    d.tx = connp->in_tx;
-    d.data = (unsigned char *) bstr_ptr(tempstr);
-    d.len = bstr_len(tempstr);
-
-    int rc = hook_run_all(connp->cfg->hook_request_headers_raw, &d);
-    if (rc != HOOK_OK) {
-        bstr_free(tempstr);
-        
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request headers raw callback returned error (%d)", rc);
-
-        return HTP_ERROR;
-    }
-
-    bstr_free(tempstr);
-
-    return HTP_OK;
-}
- */
-
-/**
  * Construct a bstr that contains the raw request headers.
  *
  * @param tx
