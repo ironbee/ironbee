@@ -257,14 +257,23 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // If the request uses the CONNECT method, then not only are we
     // to assume there's no body, but we need to ignore all
     // subsequent data in the stream.
-    if ((connp->out_tx->request_method_number == M_CONNECT)
-        && (connp->out_tx->response_status_number >= 200)
-        && (connp->out_tx->response_status_number <= 299)) {
-        connp->out_status = STREAM_STATE_TUNNEL;
-        connp->out_state = htp_connp_RES_IDLE;
-        connp->out_tx->progress = TX_PROGRESS_DONE;
-
-        return HTP_OK;
+    if (connp->out_tx->request_method_number == M_CONNECT) {
+        if ((connp->out_tx->response_status_number >= 200)
+            && (connp->out_tx->response_status_number <= 299))
+        {
+            // This is a successful CONNECT stream, which means
+            // we need to switch into tunnelling mode.
+            connp->in_status = STREAM_STATE_TUNNEL;
+            connp->out_status = STREAM_STATE_TUNNEL;
+            connp->out_state = htp_connp_RES_IDLE;
+            connp->out_tx->progress = TX_PROGRESS_DONE;
+            return HTP_OK;
+        } else {
+            // This is a failed CONNECT stream, which means that
+            // we can unblock request parsing
+            connp->in_status = STREAM_STATE_DATA;            
+            return HTP_DATA;
+        }       
     }
 
     // Check for an interim "100 Continue"
@@ -403,6 +412,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     if (rc != HOOK_OK) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
             "Response headers callback returned error (%d)", rc);
+
         return HTP_ERROR;
     }
 
@@ -415,7 +425,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_HEADERS(htp_connp_t *connp) {
+int htp_connp_RES_HEADERS(htp_connp_t * connp) {
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
@@ -460,7 +470,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 // Cleanup
                 free(connp->out_header_line);
                 connp->out_line_len = 0;
-                connp->out_header_line = NULL;                
+                connp->out_header_line = NULL;
 
                 // We've seen all response headers
                 if (connp->out_tx->progress == TX_PROGRESS_RES_HEADERS) {
@@ -487,7 +497,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
             // Check for header folding
             if (htp_connp_is_line_folded(connp->out_line, connp->out_line_len) == 0) {
-                // New header line               
+                // New header line
 
                 // Parse previous header, if any
                 if (connp->out_header_line_index != -1) {
@@ -519,6 +529,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
             // Cleanup for the next line
             connp->out_line_len = 0;
             if (connp->out_header_line_index == -1) {
+
                 connp->out_header_line_index = connp->out_header_line_counter;
             }
 
@@ -533,7 +544,7 @@ int htp_connp_RES_HEADERS(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_LINE(htp_connp_t *connp) {
+int htp_connp_RES_LINE(htp_connp_t * connp) {
     for (;;) {
         // Get one byte
         OUT_COPY_BYTE_OR_RETURN(connp);
@@ -599,7 +610,7 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
             }
 
             // Even when the response line is invalid, determine if it looks like
-            // a response line (which is what browsers do).            
+            // a response line (which is what browsers do).
             if (htp_resembles_response_line(connp->out_tx) == 0) {
                 // Process this line as response body data
                 htp_tx_data_t d;
@@ -646,7 +657,8 @@ int htp_connp_RES_LINE(htp_connp_t *connp) {
     }
 }
 
-size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
+size_t htp_connp_res_data_consumed(htp_connp_t * connp) {
+
     return connp->out_current_offset;
 }
 
@@ -703,7 +715,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
 
     // Parsing a new response
 
-    // Find the next outgoing transaction    
+    // Find the next outgoing transaction
     connp->out_tx = list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -729,6 +741,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
         connp->out_state = htp_connp_RES_BODY_IDENTITY;
         connp->out_tx->progress = TX_PROGRESS_RES_BODY;
     } else {
+
         connp->out_state = htp_connp_RES_LINE;
         connp->out_tx->progress = TX_PROGRESS_RES_LINE;
     }
@@ -850,7 +863,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 
                     connp->out_status = STREAM_STATE_DATA_OTHER;
 
-                    // Partial chunk consumption                    
+                    // Partial chunk consumption
                     return STREAM_STATE_DATA_OTHER;
                 }
             }
