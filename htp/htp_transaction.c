@@ -198,3 +198,13 @@ void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
     hook_register(&tx->hook_request_body_data, callback_fn);
 }
+
+/**
+ * Register callback for the transaction-specific RESPONSE_BODY_DATA hook.
+ *
+ * @param tx
+ * @pram callback_fn
+ */
+void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
+    hook_register(&tx->hook_response_body_data, callback_fn);
+}

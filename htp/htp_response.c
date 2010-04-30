@@ -23,7 +23,8 @@
  */
 static int htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK(htp_tx_data_t *d) {
     // Invoke all callbacks
-    int rc = hook_run_all(d->tx->connp->cfg->hook_response_body_data, d);
+    //int rc = hook_run_all(d->tx->connp->cfg->hook_response_body_data, d);
+    int rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HTP_OK) {
         htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
             "Response body data callback returned error (%d)", rc);
@@ -77,7 +78,8 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                 connp->out_decompressor->decompress(connp->out_decompressor, &d);
             } else {
                 // Send data to callbacks
-                int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                //int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                int rc = htp_res_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Response body data callback returned error (%d)", rc);
@@ -100,7 +102,8 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                     connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {
                     // Send data to callbacks
-                    int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                    //int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                    int rc = htp_res_run_hook_body_data(connp, &d);
                     if (rc != HOOK_OK) {
                         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                             "Response body data callback returned error (%d)", rc);
@@ -183,7 +186,8 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                 if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                     connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {
-                    int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                    //int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                    int rc = htp_res_run_hook_body_data(connp, &d);
                     if (rc != HOOK_OK) {
                         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                             "Response body data callback returned error (%d)", rc);
@@ -222,7 +226,8 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                         if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                             connp->out_decompressor->decompress(connp->out_decompressor, &d);
                         } else {
-                            int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                            //int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                            int rc = htp_res_run_hook_body_data(connp, &d);
                             if (rc != HOOK_OK) {
                                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                                     "Response body data callback returned error (%d)", rc);
@@ -626,7 +631,8 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 connp->out_tx->response_message_len += d.len;
                 connp->out_tx->response_entity_len += d.len;
 
-                int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                //int rc = hook_run_all(connp->cfg->hook_response_body_data, &d);
+                int rc = htp_res_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Response body data callback returned error (%d)", rc);
@@ -685,6 +691,15 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
         }
 
         connp->out_tx->progress = TX_PROGRESS_DONE;
+
+        // Run the last RESPONSE_BODY_DATA HOOK, but
+        // only if there was a response body
+        if (connp->out_tx->response_transfer_coding != -1) {
+            htp_tx_data_t d;
+            d.data = NULL;
+            d.tx = connp->out_tx;
+            htp_res_run_hook_body_data(connp, &d);
+        }
 
         // Run hook RESPONSE
         int rc = hook_run_all(connp->cfg->hook_response, connp);

@@ -400,9 +400,11 @@ struct htp_cfg_t {
     /** Request headers hook, invoked after all request headers are seen. */
     htp_hook_t *hook_request_headers;   
 
-    /** Request body data hook, invoked every time body data is available. Chunked data
-     *  will be dechunked and compressed data will be decompressed (not implemented at present)
-     *  before the data is passed to this hook.
+    /** Request body data hook, invoked every time body data is available. Each
+     *  invocation will provide a htp_tx_data_t instance. Chunked data
+     *  will be dechunked before the data is passed to this hook. Decompression
+     *  is not currently implemented. At the end of the request body
+     *  there will be a call with the data pointer set to NULL.
      */
     htp_hook_t *hook_request_body_data;
 
@@ -420,9 +422,13 @@ struct htp_cfg_t {
     /** Response headers book, invoked after all response headers have been seen. */
     htp_hook_t *hook_response_headers;
 
-    /** Response body data hook, invoked whenever a chunk of response data is available. Chunked
-     *  data will be dechunked and compressed data will be decompressed (not implemented
-     *  at present) before the data is passed to this hook.*/
+    /** Response body data hook, invoked every time body data is available. Each
+     *  invocation will provide a htp_tx_data_t instance. Chunked data
+     *  will be dechunked before the data is passed to this hook. By default,
+     *  compressed data will be decompressed, but decompression can be disabled
+     *  in configuration. At the end of the response body there will be a call
+     *  with the data pointer set to NULL.
+     */
     htp_hook_t *hook_response_body_data;
 
     /** Response trailer hook, invoked after all trailer headers have been processed,
@@ -864,10 +870,25 @@ struct htp_tx_t {
      */
     bstr *request_content_type;
 
+
+    /** Transaction-specific REQUEST_BODY_DATA hook. Behaves as
+     *  the configuration hook with the same name.
+     */
     htp_hook_t *hook_request_body_data;
 
+    /** Transaction-specific RESPONSE_BODY_DATA hook. Behaves as
+     *  the configuration hook with the same name.
+     */
+    htp_hook_t *hook_response_body_data;
+
+    /** Query string URLENCODED parser. Available only
+     *  when the query string is not NULL and not empty.
+      */
     htp_urlenp_t *request_urlenp_query;
 
+    /** Request body URLENCODED parser. Available only when
+     *  the request body is in the application/x-www-form-urlencoded format.
+     */
     htp_urlenp_t *request_urlenp_body;
 
     // Response
@@ -1165,7 +1186,10 @@ int htp_resembles_response_line(htp_tx_t *tx);
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
 
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
+int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
+
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
+void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 #endif	/* _HTP_H */
 

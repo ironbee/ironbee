@@ -118,8 +118,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         IN_NEXT_BYTE(connp);
 
         if (connp->in_next_byte == -1) {
-            // Send data to callbacks
-            //int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+            // Send data to callbacks            
             int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -138,8 +137,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             if (connp->in_chunked_length == 0) {
                 // End of data chunk
 
-                // Send data to callbacks
-                // int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+                // Send data to callbacks               
                 int rc = htp_req_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -216,16 +214,13 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
         if (connp->in_next_byte == -1) {
             // End of chunk
-
-            //if (d.len != 0) {
-                int rc = htp_req_run_hook_body_data(connp, &d);
-                //int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
-                if (rc != HOOK_OK) {
-                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request body data callback returned error (%d)", rc);
-                    return HTP_ERROR;
-                }
-            //}
+            
+            int rc = htp_req_run_hook_body_data(connp, &d);            
+            if (rc != HOOK_OK) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "Request body data callback returned error (%d)", rc);
+                return HTP_ERROR;
+            }
 
             // Ask for more data
             return HTP_DATA;
@@ -237,16 +232,13 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
             if (connp->in_body_data_left == 0) {
                 // End of body
-
-                //if (d.len != 0) {
-                    //int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
-                    int rc = htp_req_run_hook_body_data(connp, &d);
-                    if (rc != HOOK_OK) {
-                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Request body data callback returned error (%d)", rc);
-                        return HTP_ERROR;
-                    }
-                //}
+                                
+                int rc = htp_req_run_hook_body_data(connp, &d);
+                if (rc != HOOK_OK) {
+                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                        "Request body data callback returned error (%d)", rc);
+                    return HTP_ERROR;
+                }                
 
                 // Done
                 connp->in_state = htp_connp_REQ_IDLE;

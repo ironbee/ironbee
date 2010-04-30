@@ -1937,3 +1937,24 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     rc = hook_run_all(connp->cfg->hook_request_body_data, d);
     return rc;
 }
+
+/**
+ * Run the RESPONSE_BODY_DATA hook.
+ *
+ * @param connp
+ * @param d
+ */
+int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
+    // Do not invoke callbacks with an empty data chunk
+    if ((d->data != NULL)&&(d->len == 0)) {
+        return HOOK_OK;
+    }
+
+    // Run transaction hooks first
+    int rc = hook_run_all(connp->in_tx->hook_response_body_data, d);
+    if (rc != HOOK_OK) return rc;
+
+    // Run configuration hooks second
+    rc = hook_run_all(connp->cfg->hook_response_body_data, d);
+    return rc;
+}

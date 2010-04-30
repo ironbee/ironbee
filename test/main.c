@@ -696,8 +696,12 @@ int callback_response_headers(htp_connp_t *connp) {
 }
 
 int callback_response_body_data(htp_tx_data_t *d) {
-    printf("-- Callback: response_body_data\n");
-    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
+    if (d->data != NULL) {
+        printf("-- Callback: response_body_data\n");
+        fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
+    } else {
+        printf("-- Callback: response_body_data (LAST)\n");
+    }
 }
 
 int callback_response_trailer(htp_connp_t *connp) {
