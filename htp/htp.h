@@ -850,11 +850,25 @@ struct htp_tx_t {
      */
     size_t request_headers_raw_lines;
 
-    /** Request transfer coding: IDENTITY or CHUNKED. Only available on requests that have bodies. */
+    /** Request transfer coding: IDENTITY or CHUNKED. Only available
+     *  on requests that have bodies (-1 otherwise).
+     */
     int request_transfer_coding;
 
-    /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
+    /** Compression: COMPRESSION_NONE, COMPRESSION_GZIP or COMPRESSION_DEFLATE. */
     int request_content_encoding;
+
+    /** This field will contain the request content type when that information
+     *  is available in request headers. The contents of the field will be converted
+     *  to lowercase and any parameters (e.g., character set information) removed.
+     */
+    bstr *request_content_type;
+
+    htp_hook_t *hook_request_body_data;
+
+    htp_urlenp_t *request_urlenp_query;
+
+    htp_urlenp_t *request_urlenp_body;
 
     // Response
 
@@ -1016,6 +1030,8 @@ void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
 
 void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
 
+void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
+
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
 htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
@@ -1052,6 +1068,8 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
     void *htp_tx_get_user_data(htp_tx_t *tx);
 
     bstr *htp_tx_get_request_uri_normalized(htp_tx_t *tx);
+
+void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 // Parsing functions
 
@@ -1145,6 +1163,9 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 int htp_resembles_response_line(htp_tx_t *tx);
 
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
+
+int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
+void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 #endif	/* _HTP_H */
 

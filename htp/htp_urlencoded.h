@@ -20,10 +20,12 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
 
 #include "htp.h"
 
-#define HTP_URLENP_DEFAULT_PARAMS_SIZE 32
+#define HTP_URLENP_DEFAULT_PARAMS_SIZE  32
 
-#define HTP_URLENP_STATE_KEY        1
-#define HTP_URLENP_STATE_VALUE      2
+#define HTP_URLENP_STATE_KEY            1
+#define HTP_URLENP_STATE_VALUE          2
+
+#define HTP_URLENP_MIME_TYPE            "application/x-www-form-urlencoded"
 
 /**
  * This is the main URLENCODED parser structure. It is used to store
@@ -68,6 +70,9 @@ void htp_urlenp_set_decode_url_encoding(htp_urlenp_t *urlenp, int decode_url_enc
 int  htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t len);
 int  htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t len);
 int  htp_urlenp_finalize(htp_urlenp_t *urlenp);
+
+ int htp_urlenp_callback_request_line(htp_connp_t *connp);
+ int htp_urlenp_callback_request_headers(htp_connp_t *connp);
 
 #endif	/* _HTP_URLENCODED_H */
 

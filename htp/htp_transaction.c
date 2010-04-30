@@ -149,6 +149,11 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
     }
 
+    htp_urlenp_destroy(tx->request_urlenp_query);
+    htp_urlenp_destroy(tx->request_urlenp_body);
+
+    hook_destroy(tx->hook_request_body_data);
+
     free(tx);
 }
 
@@ -182,4 +187,14 @@ void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared) {
  */
 void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
     tx->user_data = user_data;    
+}
+
+/**
+ * Register callback for the transaction-specific REQUEST_BODY_DATA hook.
+ *
+ * @param tx
+ * @pram callback_fn
+ */
+void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
+    hook_register(&tx->hook_request_body_data, callback_fn);
 }

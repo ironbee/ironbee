@@ -119,7 +119,8 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
         if (connp->in_next_byte == -1) {
             // Send data to callbacks
-            int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+            //int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+            int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Request body data callback returned error (%d)", rc);
@@ -138,7 +139,8 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                 // End of data chunk
 
                 // Send data to callbacks
-                int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+                // int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+                int rc = htp_req_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Request body data callback returned error (%d)", rc);
@@ -215,14 +217,15 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
         if (connp->in_next_byte == -1) {
             // End of chunk
 
-            if (d.len != 0) {
-                int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+            //if (d.len != 0) {
+                int rc = htp_req_run_hook_body_data(connp, &d);
+                //int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Request body data callback returned error (%d)", rc);
                     return HTP_ERROR;
                 }
-            }
+            //}
 
             // Ask for more data
             return HTP_DATA;
@@ -235,14 +238,15 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
             if (connp->in_body_data_left == 0) {
                 // End of body
 
-                if (d.len != 0) {
-                    int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+                //if (d.len != 0) {
+                    //int rc = hook_run_all(connp->cfg->hook_request_body_data, &d);
+                    int rc = htp_req_run_hook_body_data(connp, &d);
                     if (rc != HOOK_OK) {
                         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                             "Request body data callback returned error (%d)", rc);
                         return HTP_ERROR;
                     }
-                }
+                //}
 
                 // Done
                 connp->in_state = htp_connp_REQ_IDLE;
@@ -364,6 +368,25 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
             // we should ignore the headers copy.
             connp->in_tx->flags |= HTP_AMBIGUOUS_HOST;
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
+        }
+    }
+
+    // Parse Content-Type
+    htp_header_t *ct = table_getc(connp->in_tx->request_headers, "content-type");
+    if (ct != NULL) {
+        connp->in_tx->request_content_type = bstr_dup_lower(ct->value);
+        // Ignore parameters        
+        char *data = bstr_ptr(connp->in_tx->request_content_type);
+        size_t len = bstr_len(ct->value);
+        size_t newlen = 0;
+        while(newlen < len) {
+            // TODO Some platforms may do things differently here
+            if (htp_is_space(data[newlen])||(data[newlen] == ';')) {
+                bstr_len_adjust(connp->in_tx->request_content_type, newlen);
+                break;
+            }
+
+            newlen++;
         }
     }
 
@@ -706,6 +729,15 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // means we've just completed parsing a request. We need
     // to run the final hook and start over.
     if (connp->in_tx != NULL) {
+        // Run the last REQUEST_BODY_DATA HOOK, but
+        // only if there was a request body
+        if (connp->in_tx->request_transfer_coding != -1) {
+            htp_tx_data_t d;
+            d.data = NULL;
+            d.tx = connp->in_tx;
+            htp_req_run_hook_body_data(connp, &d);
+        }
+
         // Run hook REQUEST
         int rc = hook_run_all(connp->cfg->hook_request, connp);
         if (rc != HOOK_OK) {

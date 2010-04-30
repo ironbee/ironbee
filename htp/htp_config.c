@@ -736,3 +736,15 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
     cfg->tx_auto_destroy = tx_auto_destroy;
 }
+
+/**
+ * Registers the URLENCODED parser with the configuration. The parser will
+ * parse the query string when available, as well as the request body when
+ * in correct format.
+ *
+ * @param cfg
+ */
+void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
+    htp_config_register_request_line(cfg, htp_urlenp_callback_request_line);
+    htp_config_register_request_headers(cfg, htp_urlenp_callback_request_headers);
+}

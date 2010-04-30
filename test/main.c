@@ -630,6 +630,32 @@ int test_compressed_response_deflate(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_urlencoded_test(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    int rc = test_run(home, "19-urlencoded-test.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int callback_transaction_start(htp_connp_t *connp) {
     printf("-- Callback: transaction_start\n");
 }
@@ -644,14 +670,13 @@ int callback_request_headers(htp_connp_t *connp) {
     fprint_raw_data(stdout, "REQUEST HEADERS RAW 1", bstr_ptr(raw), bstr_len(raw));
 }
 
-//int callback_request_headers_raw(htp_tx_data_t *d) {
-//    printf("-- Callback: request_headers_raw\n");
-//    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
-//}
-
 int callback_request_body_data(htp_tx_data_t *d) {
-    printf("-- Callback: request_body_data\n");
-    fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
+    if (d->data != NULL) {
+        printf("-- Callback: request_body_data\n");
+        fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
+    } else {
+        printf("-- Callback: request_body_data (LAST)\n");
+    }
 }
 
 int callback_request_trailer(htp_connp_t *connp) {
@@ -865,6 +890,7 @@ int main(int argc, char** argv) {
     htp_config_register_log(cfg, callback_log);
 
     htp_config_set_generate_request_uri_normalized(cfg, 1);
+    htp_config_register_urlencoded_parser(cfg);
 
     /*
     RUN_TEST(test_get, cfg);
@@ -886,8 +912,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_compressed_response_deflate, cfg);
     */
 
-    RUN_TEST(test_misc, cfg);
-    //RUN_TEST(test_post_urlencoded_chunked, cfg);
+    //RUN_TEST(test_misc, cfg);
+    RUN_TEST(test_urlencoded_test, cfg);
 
 
     printf("Tests: %i\n", tests);

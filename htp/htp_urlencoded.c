@@ -105,6 +105,66 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
 }
 
 /**
+ * Invoked to process a part of request body data.
+ *
+ * @param d
+ */
+int htp_urlenp_callback_request_body_data(htp_tx_data_t *d) {
+    if (d->data != NULL) {
+        htp_urlenp_parse_partial(d->tx->request_urlenp_body, d->data, d->len);
+    } else {
+        htp_urlenp_finalize(d->tx->request_urlenp_body);
+    }
+
+    return HOOK_OK;
+}
+
+/**
+ * Determine if the request has a URLENCODED body, then
+ * create and attach the URLENCODED parser if it does.
+ */
+int htp_urlenp_callback_request_headers(htp_connp_t *connp) {
+    // Check the request content type to see if it matches our MIME type
+    if ((connp->in_tx->request_content_type == NULL) || (!bstr_cmpc(connp->in_tx->request_content_type, HTP_URLENP_MIME_TYPE))) {
+        return HOOK_OK;
+    }
+
+    // Create parser instance
+    connp->in_tx->request_urlenp_body = htp_urlenp_create();
+    if (connp->in_tx->request_urlenp_body == NULL) {
+        return HOOK_ERROR;
+    }
+
+    // Register request body data callbacks
+    htp_tx_register_request_body_data(connp->in_tx, htp_urlenp_callback_request_body_data);
+
+    return HOOK_OK;
+}
+
+/**
+ * Parse query string, if available. This method is invoked after the
+ * request line has been processed.
+ *
+ * @param connp
+ */
+int htp_urlenp_callback_request_line(htp_connp_t *connp) {
+    // Parse query string, when available
+    if ((connp->in_tx->parsed_uri->query != NULL) && (bstr_len(connp->in_tx->parsed_uri->query) > 0)) {
+        connp->in_tx->request_urlenp_query = htp_urlenp_create();
+        if (connp->in_tx->request_urlenp_query == NULL) {
+            return HOOK_ERROR;
+        }
+
+        htp_urlenp_parse_complete(connp->in_tx->request_urlenp_query,
+            (unsigned char *) bstr_ptr(connp->in_tx->parsed_uri->query),
+            bstr_len(connp->in_tx->parsed_uri->query));
+    }
+
+    return HOOK_OK;
+}
+
+
+/**
  * Creates a new URLENCODED parser.
  *
  * @return New parser, or NULL on memory allocation failure.
@@ -170,7 +230,8 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
  * @return Success indication
  */
 int htp_urlenp_finalize(htp_urlenp_t *urlenp) {
-    return htp_urlenp_parse_complete(urlenp, NULL, 0);
+    urlenp->_complete = 1;
+    return htp_urlenp_parse_partial(urlenp, NULL, 0);
 }
 
 /**
@@ -185,9 +246,8 @@ int htp_urlenp_finalize(htp_urlenp_t *urlenp) {
  * @return
  */
 int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t len) {
-    // TODO urlenp->complete must not already be 1
-    urlenp->_complete = 1;
-    return htp_urlenp_parse_partial(urlenp, data, len);
+    htp_urlenp_parse_partial(urlenp, data, len);
+    return htp_urlenp_finalize(urlenp);
 }
 
 /**
@@ -212,10 +272,8 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
         if (pos < len) c = data[pos];
         else c = -1;
 
-        // printf("Pos %d C %c state %d\n", pos, c, urlenp->state);
-
         switch (urlenp->_state) {
-                // Process key
+            // Process key
             case HTP_URLENP_STATE_KEY:
                 // Look for =, argument separator, or end of input
                 if ((c == '=') || (c == urlenp->argument_separator) || (c == -1)) {
@@ -230,7 +288,7 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
                 }
                 break;
 
-                // Process value
+            // Process value
             case HTP_URLENP_STATE_VALUE:
                 // Look for argument separator or end of input
                 if ((c == urlenp->argument_separator) || (c == -1)) {
