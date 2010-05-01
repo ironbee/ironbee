@@ -60,40 +60,38 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
             urlenp->_name = field;
 
             if (urlenp->_complete) {
-                // Param with key but no value                
-                htp_urlen_param_t *param = calloc(1, sizeof (htp_urlen_param_t));
-                param->name = urlenp->_name;
-                urlenp->_name = NULL;
-                param->value = bstr_cstrdup("");
+                // Param with key but no value
+                bstr *name = urlenp->_name;
+                bstr *value = bstr_cstrdup("");
 
                 if (urlenp->decode_url_encoding) {
-                    htp_uriencoding_normalize_inplace(param->name);
+                    //htp_uriencoding_normalize_inplace(param->name);
+                    htp_uriencoding_normalize_inplace(name);
                 }
 
-                table_add(urlenp->params, param->name, param);
+                //table_add(urlenp->params, param->name, param);
+                table_add(urlenp->params, name, value);
 
                 #ifdef HTP_DEBUG
-                fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(param->name), bstr_len(param->name));
-                fprint_raw_data(stderr, "VALUE", (unsigned char *) bstr_ptr(param->value), bstr_len(param->value));
+                fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));
+                fprint_raw_data(stderr, "VALUE", (unsigned char *) bstr_ptr(value), bstr_len(value));
                 #endif
             }
         } else {
-            // Param with key and value            
-            htp_urlen_param_t *param = calloc(1, sizeof (htp_urlen_param_t));
-            param->name = urlenp->_name;
-            urlenp->_name = NULL;
-            param->value = field;
+            // Param with key and value                        
+            bstr *name = urlenp->_name;
+            bstr *value = field;
 
             if (urlenp->decode_url_encoding) {
-                htp_uriencoding_normalize_inplace(param->name);
-                htp_uriencoding_normalize_inplace(param->value);
+                htp_uriencoding_normalize_inplace(name);
+                htp_uriencoding_normalize_inplace(value);
             }
 
-            table_add(urlenp->params, param->name, param);
+            table_add(urlenp->params, name, value);
 
             #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(param->name), bstr_len(param->name));
-            fprint_raw_data(stderr, "VALUE", (unsigned char *) bstr_ptr(param->value), bstr_len(param->value));
+            fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));
+            fprint_raw_data(stderr, "VALUE", (unsigned char *) bstr_ptr(value), bstr_len(value));
             #endif
         }
     } else {
@@ -103,8 +101,6 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
         }
     }
 }
-
-
 
 /**
  * Creates a new URLENCODED parser.
@@ -147,18 +143,18 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
         bstr_free(&urlenp->_name);
     }
 
-    bstr_builder_destroy(urlenp->_bb);
+    bstr_builder_destroy(urlenp->_bb);   
 
-    // Destroy individual parameters
-    htp_urlen_param_t *param = NULL;
-    table_iterator_reset(urlenp->params);
-    while (table_iterator_next(urlenp->params, (void **) & param) != NULL) {
-        bstr_free(&param->name);
-        bstr_free(&param->value);
-        free(param);
+    if (urlenp->params != NULL) {        
+        // Destroy parameters
+        bstr *name, *value;
+        table_iterator_reset(urlenp->params);
+        while ((name = table_iterator_next(urlenp->params, (void **) & value)) != NULL) {            
+            bstr_free(&value);
+        }       
+        
+        table_destroy(&urlenp->params);
     }
-
-    table_destroy(&urlenp->params);
 
     free(urlenp);
 }
@@ -215,7 +211,7 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
         else c = -1;
 
         switch (urlenp->_state) {
-            // Process key
+                // Process key
             case HTP_URLENP_STATE_KEY:
                 // Look for =, argument separator, or end of input
                 if ((c == '=') || (c == urlenp->argument_separator) || (c == -1)) {
@@ -230,7 +226,7 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
                 }
                 break;
 
-            // Process value
+                // Process value
             case HTP_URLENP_STATE_VALUE:
                 // Look for argument separator or end of input
                 if ((c == urlenp->argument_separator) || (c == -1)) {

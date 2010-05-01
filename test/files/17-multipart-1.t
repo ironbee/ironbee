@@ -1,5 +1,5 @@
 >>>
-POST /upload.php HTTP/1.1
+POST /upload.php?qsp1=1 HTTP/1.1
 Host: 192.168.3.100:8080
 User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7 (.NET CLR 3.5.30729)
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8

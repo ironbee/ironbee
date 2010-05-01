@@ -923,6 +923,8 @@ int main(int argc, char** argv) {
     htp_config_register_urlencoded_parser(cfg);
     htp_config_register_multipart_parser(cfg);
 
+    cfg->parameter_processor = htp_php_parameter_processor;
+
     /*
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);

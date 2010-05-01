@@ -1589,7 +1589,7 @@ void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, siz
     char buf[160];
     size_t len = offset + printlen;
 
-    fprintf(stream, "\n%s: offset %zd len %zd\n", name, offset, len);
+    fprintf(stream, "\n%s: ptr %p offset %zd len %zd\n", name, data, offset, len);
 
     while (offset < len) {
         size_t i;

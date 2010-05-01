@@ -449,7 +449,7 @@ table_t *table_create(size_t size) {
  * @param table
  */
 void table_destroy(table_t **_table) {
-    if ((_table == NULL)||(*_table == NULL)) return;
+    if ((_table == NULL)||(*_table == NULL)) return;    
 
     table_t *table = *_table;
     // Free keys only
@@ -457,17 +457,17 @@ void table_destroy(table_t **_table) {
     void *data = NULL;
 
     list_iterator_reset(table->list);
-
-    while ((data = list_iterator_next(table->list)) != NULL) {
+   
+    while ((data = list_iterator_next(table->list)) != NULL) {   
         // Free key
         if ((counter % 2) == 0) {
             free(data);
-        }
+        }        
 
         counter++;
-    }
+    }    
 
-    list_destroy(&table->list);
+    list_destroy(&table->list);   
 
     free(table);
     *_table = NULL;

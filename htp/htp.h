@@ -325,6 +325,9 @@ struct htp_cfg_t {
     /** The function used for response header parsing. Depends on the personality. */
     int (*process_response_header)(htp_connp_t *connp);
 
+    /** The function to use to transform parameters after parsing. */
+    int (*parameter_processor)(table_t *params, bstr *name, bstr *value);
+
     
     // Path handling
 
@@ -1208,6 +1211,8 @@ void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_
 int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
 int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
 int htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
+
+int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value);
 
 #endif	/* _HTP_H */
 
