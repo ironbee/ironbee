@@ -1,5 +1,5 @@
 >>>
-POST / HTTP/1.0
+POST /?qsp1=1&%20p%20q=2 HTTP/1.0
 Content-Length: 12
 Content-Type: application/x-www-form-urlencoded
 User-Agent: Mozilla

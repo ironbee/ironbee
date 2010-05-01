@@ -1357,19 +1357,19 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
     size_t rpos = 0;
     size_t wpos = 0;
 
-    while (rpos < len) {
+    while (rpos < len) {        
         if (data[rpos] == '%') {
             if (rpos + 2 < len) {
                 if (isxdigit(data[rpos + 1]) && (isxdigit(data[rpos + 2]))) {
-                    unsigned char c = x2c(&data[rpos + 1]);
+                    unsigned char c = x2c(&data[rpos + 1]);                   
 
-                    if (!htp_is_uri_unreserved(c)) {
+                    if (htp_is_uri_unreserved(c)) {                        
                         // Leave reserved characters encoded, but convert
                         // the hexadecimal digits to uppercase
                         data[wpos++] = data[rpos++];
                         data[wpos++] = toupper(data[rpos++]);
                         data[wpos++] = toupper(data[rpos++]);
-                    } else {
+                    } else {                        
                         // Decode unreserved character
                         data[wpos++] = c;
                         rpos += 3;
@@ -1572,7 +1572,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
 }
 
 void fprint_bstr(FILE *stream, const char *name, bstr *b) {
-    fprint_raw_data_ex(stream, name, bstr_ptr(b), 0, bstr_len(b));
+    fprint_raw_data_ex(stream, name, (unsigned char *)bstr_ptr(b), 0, bstr_len(b));
 }
 
 /**

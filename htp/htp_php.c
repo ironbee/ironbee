@@ -14,8 +14,33 @@
 
 #include "htp.h"
 
-int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {     
-    fprint_bstr(stdout, "PHP NAME", name);
-    fprint_bstr(stdout, "PHP VALUE", value);
+int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
+    // TODO Examine the PHP source code to determine the exact
+    //      algorithm it uses to transform parameter names
+
+    // TODO Support parameter value transformation
+
+    // Ignore whitespace at the beginning
+    char *data = bstr_ptr(name);
+    size_t len = bstr_len(name);
+    size_t pos = 0;
+
+    while ((pos < len) && (isspace((int)data[pos]))) pos++;
+
+    bstr * new_name = bstr_memdup(data + pos, len - pos);
+
+    // Convert the remaining whitespace underscores
+    data = bstr_ptr(new_name);
+    len = bstr_len(new_name);
+    pos = 0;
+
+    while (pos < len) {
+        if (isspace((int)data[pos])) data[pos] = '_';
+        pos++;
+    }
+
+    // Add parameter to table
+    table_add(params, new_name, value);
+
     return HTP_OK;
 }

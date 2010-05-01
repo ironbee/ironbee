@@ -946,7 +946,8 @@ int main(int argc, char** argv) {
     */
 
     //RUN_TEST(test_misc, cfg);    
-    RUN_TEST(test_multipart_1, cfg);
+    //RUN_TEST(test_multipart_1, cfg);
+    RUN_TEST(test_post_urlencoded, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);

@@ -64,12 +64,10 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                 bstr *name = urlenp->_name;
                 bstr *value = bstr_cstrdup("");
 
-                if (urlenp->decode_url_encoding) {
-                    //htp_uriencoding_normalize_inplace(param->name);
+                if (urlenp->decode_url_encoding) {                    
                     htp_uriencoding_normalize_inplace(name);
                 }
-
-                //table_add(urlenp->params, param->name, param);
+                
                 table_add(urlenp->params, name, value);
 
                 #ifdef HTP_DEBUG
@@ -81,8 +79,8 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
             // Param with key and value                        
             bstr *name = urlenp->_name;
             bstr *value = field;
-
-            if (urlenp->decode_url_encoding) {
+            
+            if (urlenp->decode_url_encoding) {                
                 htp_uriencoding_normalize_inplace(name);
                 htp_uriencoding_normalize_inplace(value);
             }
