@@ -1475,33 +1475,6 @@ int main_path_tests(int argc, char** argv) {
     printf("Total tests: %i, %i failure(s).\n", tests, failures);
 }
 
-int main_urlenp_tests(int argc, char** argv) {
-    //int main(int argc, char** argv) {
-    htp_urlenp_t *urlenp = NULL;
-
-    urlenp = htp_urlenp_create();
-    //parts[nput = "A=1&B=2&C=&=4&=";
-    //htp_urlenp_parse_complete(urlenp, input, strlen(input));
-
-    unsigned char *i1 = "A=01234567";
-    unsigned char *i2 = "89&BB";
-
-    htp_urlenp_parse_partial(urlenp, i1, strlen(i1));
-    htp_urlenp_parse_partial(urlenp, i2, strlen(i2));
-    htp_urlenp_finalize(urlenp);
-
-    htp_urlenp_destroy(&urlenp);
-
-    /*
-    bstr_builder_t *bb = bstr_builder_create();
-    bstr_builder_append_cstr(bb, "|123|");
-    bstr_builder_append_cstr(bb, "|456|");
-    bstr_builder_append_cstr(bb, "|789|");
-    bstr *b = bstr_builder_to_str(bb);
-    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(b), bstr_len(b));
-     */
-}
-
 /*
 int main_multipart1(int argc, char** argv) {
     //int main(int argc, char** argv) {

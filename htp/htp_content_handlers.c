@@ -59,7 +59,7 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     }
 
     // Create parser instance
-    connp->in_tx->request_urlenp_body = htp_urlenp_create();
+    connp->in_tx->request_urlenp_body = htp_urlenp_create(connp->in_tx);
     if (connp->in_tx->request_urlenp_body == NULL) {
         return HOOK_ERROR;
     }
@@ -79,7 +79,7 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
 int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {    
     // Parse query string, when available
     if ((connp->in_tx->parsed_uri->query != NULL) && (bstr_len(connp->in_tx->parsed_uri->query) > 0)) {
-        connp->in_tx->request_urlenp_query = htp_urlenp_create();
+        connp->in_tx->request_urlenp_query = htp_urlenp_create(connp->in_tx);
         if (connp->in_tx->request_urlenp_query == NULL) {
             return HOOK_ERROR;
         }       

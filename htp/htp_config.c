@@ -134,10 +134,15 @@ htp_cfg_t *htp_config_create() {
     cfg->field_limit_soft = HTP_HEADER_LIMIT_SOFT;
     cfg->log_level = HTP_LOG_NOTICE;
 
-    cfg->path_u_bestfit_map = bestfit_1252;
-    cfg->path_replacement_char = '?';
+    cfg->bestfit_map = bestfit_1252;
+    cfg->bestfit_replacement_char = '?';
 
     cfg->response_decompression_enabled = 1;
+
+    cfg->params_decode_u_encoding = NO;
+    cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
+    cfg->params_nul_encoded_handling = NONE;
+    cfg->params_nul_raw_handling = NONE;
 
     // No need to create hooks here; they will be created on-demand,
     // during callback registration
@@ -418,7 +423,7 @@ void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
  * @param map
  */
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map) {
-    cfg->path_u_bestfit_map = map;
+    cfg->bestfit_map = map;
 }
 
 /**
@@ -579,7 +584,7 @@ void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling) 
  * @param replacement_char
  */
 void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char) {
-    cfg->path_replacement_char = replacement_char;
+    cfg->bestfit_replacement_char = replacement_char;
 }
 
 /**
@@ -624,6 +629,9 @@ void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
  * @return HTP_OK if the personality is supported, HTP_ERROR if it isn't.
  */
 int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
+
+
+
     switch (personality) {
         case HTP_SERVER_MINIMAL:
             cfg->parse_request_line = htp_parse_request_line_generic;

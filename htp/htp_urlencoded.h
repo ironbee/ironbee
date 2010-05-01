@@ -32,6 +32,8 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
  * parser configuration, temporary parsing data, as well as the parameters.
  */
 struct htp_urlenp_t {
+    htp_tx_t *tx;
+    
     /** The character used to separate parameters. Defaults to & and should
      *  not be changed without good reason.
      */
@@ -61,7 +63,7 @@ struct htp_urlen_param_t {
     bstr *value;
 };
 
-htp_urlenp_t *htp_urlenp_create();
+htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx);
 void htp_urlenp_destroy(htp_urlenp_t **urlenp);
 
 void htp_urlenp_set_argument_separator(htp_urlenp_t *urlenp, unsigned char argument_separator);         

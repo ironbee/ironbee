@@ -372,7 +372,12 @@ struct htp_cfg_t {
     int path_nul_raw_handling;
 
     /** The replacement character used when there is no best-fit mapping. */
-    unsigned char path_replacement_char;
+    unsigned char bestfit_replacement_char;
+
+    int params_decode_u_encoding;
+    int params_invalid_encoding_handling;    
+    int params_nul_encoded_handling;
+    int params_nul_raw_handling;    
 
     /** How will the server handle UCS-2 characters? */
     int path_unicode_mapping;      
@@ -381,7 +386,7 @@ struct htp_cfg_t {
     int path_utf8_overlong_handling;
 
     /** The best-fit map to use to decode %u-encoded characters. */
-    unsigned char *path_u_bestfit_map;
+    unsigned char *bestfit_map;
 
     /** Whether to generate the request_uri_normalized field. */
     int generate_request_uri_normalized;

@@ -65,7 +65,8 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                 bstr *value = bstr_cstrdup("");
 
                 if (urlenp->decode_url_encoding) {                    
-                    htp_uriencoding_normalize_inplace(name);
+                    // htp_uriencoding_normalize_inplace(name);
+                    htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
                 }
                 
                 table_add(urlenp->params, name, value);
@@ -81,8 +82,10 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
             bstr *value = field;
             
             if (urlenp->decode_url_encoding) {                
-                htp_uriencoding_normalize_inplace(name);
-                htp_uriencoding_normalize_inplace(value);
+                //htp_uriencoding_normalize_inplace(name);
+                //htp_uriencoding_normalize_inplace(value);
+                htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
+                htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, value);
             }
 
             table_add(urlenp->params, name, value);
@@ -105,9 +108,11 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
  *
  * @return New parser, or NULL on memory allocation failure.
  */
-htp_urlenp_t *htp_urlenp_create() {
+htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
     htp_urlenp_t *urlenp = calloc(1, sizeof (htp_urlenp_t));
     if (urlenp == NULL) return NULL;
+
+    urlenp->tx = tx;
 
     urlenp->params = table_create(HTP_URLENP_DEFAULT_PARAMS_SIZE);
     if (urlenp->params == NULL) {

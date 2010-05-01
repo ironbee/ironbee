@@ -147,7 +147,7 @@ int htp_is_space(int c) {
  * @return Method number of M_UNKNOWN
  */
 int htp_convert_method_to_number(bstr *method) {
-    // TODO Optimize using parallel matching, or something
+    // TODO Optimize using parallel matching, or something similar
     if (bstr_cmpc(method, "GET") == 0) return M_GET;
     if (bstr_cmpc(method, "PUT") == 0) return M_PUT;
     if (bstr_cmpc(method, "POST") == 0) return M_POST;
@@ -622,10 +622,10 @@ uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
 
     // Our current implementation only converts the 2-byte codepoints
     if (codepoint > 0xffff) {
-        return cfg->path_replacement_char;
+        return cfg->bestfit_replacement_char;
     }
 
-    uint8_t *p = cfg->path_u_bestfit_map;
+    uint8_t *p = cfg->bestfit_map;
 
     // TODO Optimize lookup
 
@@ -633,7 +633,7 @@ uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
         uint32_t x = (p[0] << 8) + p[1];
 
         if (x == 0) {
-            return cfg->path_replacement_char;
+            return cfg->bestfit_replacement_char;
         }
 
         if (x == codepoint) {
@@ -857,17 +857,17 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 }
 
 /**
- * Decode a %u-encoded character, using best-fit mapping as necessary.
+ * Decode a %u-encoded character, using best-fit mapping as necessary. Path version.
  *
  * @param cfg
  * @param tx
  * @param data
  * @return decoded byte
  */
-int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
+int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
-    int r = cfg->path_replacement_char;
+    int r = cfg->bestfit_replacement_char;
 
     if (c1 == 0x00) {
         r = c2;
@@ -888,7 +888,7 @@ int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
         }
 
         // Use best-fit mapping
-        unsigned char *p = cfg->path_u_bestfit_map;
+        unsigned char *p = cfg->bestfit_map;
 
         // TODO Optimize lookup
 
@@ -913,6 +913,55 @@ int decode_u_encoding(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     if ((r == '/') || ((cfg->path_backslash_separators) && (r == '\\'))) {
         tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
     }
+
+    return r;
+}
+
+/**
+ * Decode a %u-encoded character, using best-fit mapping as necessary. Params version.
+ *
+ * @param cfg
+ * @param tx
+ * @param data
+ * @return decoded byte
+ */
+int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
+    unsigned int c1 = x2c(data);
+    unsigned int c2 = x2c(data + 2);
+    int r = cfg->bestfit_replacement_char;
+
+    if (c1 == 0x00) {
+        r = c2;
+        // XXX
+        // tx->flags |= HTP_PATH_OVERLONG_U;
+    } else {
+        // Check for fullwidth form evasion
+        if (c1 == 0xff) {
+            // XXX
+            // tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+        }       
+
+        // Use best-fit mapping
+        unsigned char *p = cfg->bestfit_map;
+
+        // TODO Optimize lookup
+
+        for (;;) {
+            // Have we reached the end of the map?
+            if ((p[0] == 0) && (p[1] == 0)) {
+                break;
+            }
+
+            // Have we found the mapping we're looking for?
+            if ((p[0] == c1) && (p[1] == c2)) {
+                r = p[2];
+                break;
+            }
+
+            // Move to the next triplet
+            p += 3;
+        }
+    }   
 
     return r;
 }
@@ -956,7 +1005,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
                                 && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
                                 // Decode a valid %u encoding
-                                c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
+                                c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
                                 rpos += 6;
 
                                 if (c == 0) {
@@ -985,7 +1034,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                         break;
                                     case URL_DECODER_DECODE_INVALID:
                                         // Decode invalid %u encoding
-                                        c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
+                                        c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
                                         break;
                                     case URL_DECODER_STATUS_400:
@@ -993,7 +1042,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                         tx->response_status_expected_number = 400;
 
                                         // Decode invalid %u encoding
-                                        c = decode_u_encoding(cfg, tx, &data[rpos + 2]);
+                                        c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
                                         break;
                                         break;
@@ -1182,6 +1231,211 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     return 1;
 }
 
+int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
+    unsigned char *data = (unsigned char *) bstr_ptr(input);
+    size_t len = bstr_len(input);
+
+    // TODO I don't like this function, either.
+
+    size_t rpos = 0;
+    size_t wpos = 0;
+
+    while (rpos < len) {
+        int c = data[rpos];
+
+        // Decode encoded characters
+        if (c == '%') {
+            if (rpos + 2 < len) {
+                int handled = 0;
+
+                if (cfg->params_decode_u_encoding) {
+                    // Check for the %u encoding
+                    if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
+                        handled = 1;
+
+                        if (cfg->params_decode_u_encoding == STATUS_400) {
+                            tx->response_status_expected_number = 400;
+                        }
+
+                        if (rpos + 5 < len) {
+                            if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
+                                && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
+                                // Decode a valid %u encoding
+                                c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
+                                rpos += 6;
+
+                                if (c == 0) {
+                                    // XXX
+                                    // tx->flags |= HTP_PATH_ENCODED_NUL;
+                                
+                                    if (cfg->params_nul_encoded_handling == STATUS_400) {
+                                        tx->response_status_expected_number = 400;
+                                    } else if (cfg->params_nul_encoded_handling == STATUS_404) {
+                                        tx->response_status_expected_number = 404;
+                                    }
+                                }
+                            } else {
+                                // XXX
+                                // Invalid %u encoding                                
+                                //tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                                switch (cfg->params_invalid_encoding_handling) {
+                                    case URL_DECODER_REMOVE_PERCENT:
+                                        // Do not place anything in output; eat
+                                        // the percent character
+                                        rpos++;
+                                        continue;
+                                        break;
+                                    case URL_DECODER_PRESERVE_PERCENT:
+                                        // Leave the percent character in output
+                                        rpos++;
+                                        break;
+                                    case URL_DECODER_DECODE_INVALID:
+                                        // Decode invalid %u encoding
+                                        c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
+                                        rpos += 6;
+                                        break;
+                                    case URL_DECODER_STATUS_400:
+                                        // Set expected status to 400
+                                        tx->response_status_expected_number = 400;
+
+                                        // Decode invalid %u encoding
+                                        c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
+                                        rpos += 6;
+                                        break;
+                                        break;
+                                    default:
+                                        // Unknown setting
+                                        return -1;
+                                        break;
+                                }
+                            }
+                        } else {
+                            // XXX
+                            // Invalid %u encoding (not enough data)
+                            // tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                            if (cfg->params_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
+                                // Remove the percent character from output
+                                rpos++;
+                                continue;
+                            } else {
+                                rpos++;
+                            }
+                        }
+                    }
+                }
+
+                // Handle standard URL encoding
+                if (!handled) {
+                    if ((isxdigit(data[rpos + 1])) && (isxdigit(data[rpos + 2]))) {
+                        c = x2c(&data[rpos + 1]);
+
+                        if (c == 0) {
+                            // XXX
+                            // tx->flags |= HTP_PATH_ENCODED_NUL;
+
+                            switch (cfg->params_nul_encoded_handling) {
+                                case TERMINATE:
+                                    bstr_len_adjust(input, wpos);
+                                    return 1;
+                                    break;
+                                case STATUS_400:
+                                    tx->response_status_expected_number = 400;
+                                    break;
+                                case STATUS_404:
+                                    tx->response_status_expected_number = 404;
+                                    break;
+                            }
+                        }
+
+                        // Decode
+                        rpos += 3;
+                    } else {
+                        // XXX
+                        // Invalid encoding
+                        // tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                        switch (cfg->params_invalid_encoding_handling) {
+                            case URL_DECODER_REMOVE_PERCENT:
+                                // Do not place anything in output; eat
+                                // the percent character
+                                rpos++;
+                                continue;
+                                break;
+                            case URL_DECODER_PRESERVE_PERCENT:
+                                // Leave the percent character in output
+                                rpos++;
+                                break;
+                            case URL_DECODER_DECODE_INVALID:
+                                // Decode
+                                c = x2c(&data[rpos + 1]);
+                                rpos += 3;                                
+                                break;
+                            case URL_DECODER_STATUS_400:
+                                // Backend will reject request with 400, which means
+                                // that it does not matter what we do.
+                                tx->response_status_expected_number = 400;
+
+                                // Preserve the percent character
+                                rpos++;
+                                break;
+                            default:
+                                // Unknown setting
+                                return -1;
+                                break;
+                        }
+                    }
+                }
+            } else {
+                // XXX
+                // Invalid encoding (not enough data)
+                // tx->flags |= HTP_PATH_INVALID_ENCODING;
+
+                if (cfg->params_invalid_encoding_handling == URL_DECODER_REMOVE_PERCENT) {
+                    // Do not place the percent character in output
+                    rpos++;
+                    continue;
+                } else {
+                    rpos++;
+                }
+            }
+        } else {
+            // One non-encoded character
+
+            // Is it a NUL byte?
+            if (c == 0) {
+                switch (cfg->params_nul_raw_handling) {
+                    case TERMINATE:
+                        // Terminate path with a raw NUL byte
+                        bstr_len_adjust(input, wpos);
+                        return 1;
+                        break;
+                    case STATUS_400:
+                        // Leave the NUL byte, but set the expected status
+                        tx->response_status_expected_number = 400;
+                        break;
+                    case STATUS_404:
+                        // Leave the NUL byte, but set the expected status
+                        tx->response_status_expected_number = 404;
+                        break;
+                }
+            } else if (c == '+') {
+                c = 0x20;
+            }
+
+            rpos++;
+        }
+
+        // Place the character into output               
+        data[wpos++] = c;        
+    }
+
+    bstr_len_adjust(input, wpos);
+
+    return 1;
+}
+
 /**
  * Normalize a previously-parsed request URI.
  *
@@ -1357,19 +1611,19 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
     size_t rpos = 0;
     size_t wpos = 0;
 
-    while (rpos < len) {        
+    while (rpos < len) {
         if (data[rpos] == '%') {
             if (rpos + 2 < len) {
                 if (isxdigit(data[rpos + 1]) && (isxdigit(data[rpos + 2]))) {
-                    unsigned char c = x2c(&data[rpos + 1]);                   
+                    unsigned char c = x2c(&data[rpos + 1]);
 
-                    if (htp_is_uri_unreserved(c)) {                        
+                    if (htp_is_uri_unreserved(c)) {
                         // Leave reserved characters encoded, but convert
                         // the hexadecimal digits to uppercase
                         data[wpos++] = data[rpos++];
                         data[wpos++] = toupper(data[rpos++]);
                         data[wpos++] = toupper(data[rpos++]);
-                    } else {                        
+                    } else {
                         // Decode unreserved character
                         data[wpos++] = c;
                         rpos += 3;
@@ -1398,77 +1652,6 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
 
     bstr_len_adjust(s, wpos);
 }
-
-#if 0
-
-/**
- *
- */
-int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive) {
-    char *data = bstr_ptr(s);
-    size_t len = bstr_len(s);
-
-    size_t rpos = 0;
-    size_t wpos = 0;
-
-    while (rpos < len) {
-        char c = data[rpos];
-
-        // Convert backslash characters where necessary
-        if ((c == '/') || ((c == '\\') && (backslash))) {
-            if ((!remove_consecutive) || (wpos == 0) || (data[wpos - 1] != '/')) {
-                data[wpos++] = '/';
-            }
-
-            rpos++;
-        } else
-            if ((c == '%') && (decode_separators)) {
-            if (rpos + 2 < len) {
-                if (isxdigit(data[rpos + 1]) && (isxdigit(data[rpos + 2]))) {
-                    unsigned char x = x2c(&data[rpos + 1]);
-
-                    if (x == 0) {
-                        (*flags) |= HTP_PATH_ENCODED_NUL;
-                    }
-
-                    if ((x == '/') || ((backslash) && (x == '\\'))) {
-                        data[wpos++] = '/';
-                        rpos += 3;
-                        continue;
-                    }
-                } else {
-                    // Invalid URL encoding
-                    (*flags) |= HTP_PATH_INVALID_ENCODING;
-
-                    // Copy over all three bytes
-                    data[wpos++] = data[rpos++];
-                    data[wpos++] = data[rpos++];
-                    data[wpos++] = data[rpos++];
-                }
-            } else {
-                // Not enough characters
-                (*flags) |= HTP_PATH_INVALID_ENCODING;
-
-                // Copy over what's there
-                while (rpos < len) {
-                    data[wpos++] = data[rpos++];
-                }
-            }
-        } else {
-            // Just copy the character
-            if (case_insensitive) {
-                data[wpos++] = tolower(c);
-            } else {
-                data[wpos++] = c;
-            }
-
-            rpos++;
-        }
-    }
-
-    bstr_len_adjust(s, wpos);
-}
-#endif
 
 /**
  * Normalize URL path. This function implements the remove dot segments algorithm
@@ -1571,8 +1754,11 @@ void htp_normalize_uri_path_inplace(bstr *s) {
     bstr_len_adjust(s, wpos);
 }
 
+/**
+ *
+ */
 void fprint_bstr(FILE *stream, const char *name, bstr *b) {
-    fprint_raw_data_ex(stream, name, (unsigned char *)bstr_ptr(b), 0, bstr_len(b));
+    fprint_raw_data_ex(stream, name, (unsigned char *) bstr_ptr(b), 0, bstr_len(b));
 }
 
 /**
@@ -1867,7 +2053,7 @@ int htp_resembles_response_line(htp_tx_t *tx) {
  */
 bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
     bstr *request_headers_raw = NULL;
-    size_t i, len = 0;    
+    size_t i, len = 0;
 
     for (i = 0; i < list_size(tx->request_header_lines); i++) {
         htp_header_line_t *hl = list_get(tx->request_header_lines, i);
@@ -1927,9 +2113,9 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
  * @param connp
  * @param d
  */
-int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {    
+int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
-    if ((d->data != NULL)&&(d->len == 0)) {
+    if ((d->data != NULL) && (d->len == 0)) {
         return HOOK_OK;
     }
 
@@ -1950,7 +2136,7 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
  */
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
-    if ((d->data != NULL)&&(d->len == 0)) {
+    if ((d->data != NULL) && (d->len == 0)) {
         return HOOK_OK;
     }
 
