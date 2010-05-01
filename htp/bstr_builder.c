@@ -42,10 +42,10 @@ void bstr_builder_clear(bstr_builder_t *bb) {
     bstr *b = NULL;
     list_iterator_reset(bb->pieces);
     while ((b = list_iterator_next(bb->pieces)) != NULL) {
-        bstr_free(b);
+        bstr_free(&b);
     }
 
-    list_destroy(bb->pieces);
+    list_destroy(&bb->pieces);
 
     bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);
     // TODO What should we do on allocation failure?
@@ -82,10 +82,10 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
     bstr *b = NULL;
     list_iterator_reset(bb->pieces);
     while ((b = list_iterator_next(bb->pieces)) != NULL) {
-        bstr_free(b);
+        bstr_free(&b);
     }
 
-    list_destroy(bb->pieces);
+    list_destroy(&bb->pieces);
     
     free(bb);
 }

@@ -52,34 +52,34 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
  * @param tx
  */
 void htp_tx_destroy(htp_tx_t *tx) {
-    bstr_free(tx->request_line);
-    bstr_free(tx->request_method);
-    bstr_free(tx->request_uri);
-    bstr_free(tx->request_uri_normalized);
-    bstr_free(tx->request_protocol);
+    bstr_free(&tx->request_line);
+    bstr_free(&tx->request_method);
+    bstr_free(&tx->request_uri);
+    bstr_free(&tx->request_uri_normalized);
+    bstr_free(&tx->request_protocol);
 
     if (tx->parsed_uri != NULL) {
-        bstr_free(tx->parsed_uri->scheme);
-        bstr_free(tx->parsed_uri->username);
-        bstr_free(tx->parsed_uri->password);
-        bstr_free(tx->parsed_uri->hostname);
-        bstr_free(tx->parsed_uri->port);
-        bstr_free(tx->parsed_uri->path);
-        bstr_free(tx->parsed_uri->query);
-        bstr_free(tx->parsed_uri->fragment);
+        bstr_free(&tx->parsed_uri->scheme);
+        bstr_free(&tx->parsed_uri->username);
+        bstr_free(&tx->parsed_uri->password);
+        bstr_free(&tx->parsed_uri->hostname);
+        bstr_free(&tx->parsed_uri->port);
+        bstr_free(&tx->parsed_uri->path);
+        bstr_free(&tx->parsed_uri->query);
+        bstr_free(&tx->parsed_uri->fragment);
 
         free(tx->parsed_uri);
     }
 
     if (tx->parsed_uri_incomplete != NULL) {
-        bstr_free(tx->parsed_uri_incomplete->scheme);
-        bstr_free(tx->parsed_uri_incomplete->username);
-        bstr_free(tx->parsed_uri_incomplete->password);
-        bstr_free(tx->parsed_uri_incomplete->hostname);
-        bstr_free(tx->parsed_uri_incomplete->port);
-        bstr_free(tx->parsed_uri_incomplete->path);
-        bstr_free(tx->parsed_uri_incomplete->query);
-        bstr_free(tx->parsed_uri_incomplete->fragment);
+        bstr_free(&tx->parsed_uri_incomplete->scheme);
+        bstr_free(&tx->parsed_uri_incomplete->username);
+        bstr_free(&tx->parsed_uri_incomplete->password);
+        bstr_free(&tx->parsed_uri_incomplete->hostname);
+        bstr_free(&tx->parsed_uri_incomplete->port);
+        bstr_free(&tx->parsed_uri_incomplete->path);
+        bstr_free(&tx->parsed_uri_incomplete->query);
+        bstr_free(&tx->parsed_uri_incomplete->fragment);
         free(tx->parsed_uri_incomplete);
     }
 
@@ -87,54 +87,54 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_header_line_t *hl = NULL;
     list_iterator_reset(tx->request_header_lines);
     while ((hl = list_iterator_next(tx->request_header_lines)) != NULL) {
-        bstr_free(hl->line);
+        bstr_free(&hl->line);
         // No need to destroy hl->header because
         // htp_header_line_t does not own it.
         free(hl);
     }
 
-    list_destroy(tx->request_header_lines);
+    list_destroy(&tx->request_header_lines);
 
     // Destroy request_headers    
     htp_header_t *h = NULL;
     table_iterator_reset(tx->request_headers);
     while (table_iterator_next(tx->request_headers, (void **) & h) != NULL) {
-        bstr_free(h->name);
-        bstr_free(h->value);
+        bstr_free(&h->name);
+        bstr_free(&h->value);
         free(h);
     }
 
-    table_destroy(tx->request_headers);
+    table_destroy(&tx->request_headers);
 
     if (tx->request_headers_raw != NULL) {
-        bstr_free(tx->request_headers_raw);
+        bstr_free(&tx->request_headers_raw);
     }
 
-    bstr_free(tx->response_line);
-    bstr_free(tx->response_protocol);
-    bstr_free(tx->response_status);
-    bstr_free(tx->response_message);
+    bstr_free(&tx->response_line);
+    bstr_free(&tx->response_protocol);
+    bstr_free(&tx->response_status);
+    bstr_free(&tx->response_message);
 
     // Destroy response_header_lines
     hl = NULL;
     list_iterator_reset(tx->response_header_lines);
     while ((hl = list_iterator_next(tx->response_header_lines)) != NULL) {
-        bstr_free(hl->line);
+        bstr_free(&hl->line);
         // No need to destroy hl->header because
         // htp_header_line_t does not own it.
         free(hl);
     }
-    list_destroy(tx->response_header_lines);
+    list_destroy(&tx->response_header_lines);
 
     // Destroy response headers    
     h = NULL;
     table_iterator_reset(tx->response_headers);
     while (table_iterator_next(tx->response_headers, (void **) & h) != NULL) {
-        bstr_free(h->name);
-        bstr_free(h->value);
+        bstr_free(&h->name);
+        bstr_free(&h->value);
         free(h);
     }
-    table_destroy(tx->response_headers);
+    table_destroy(&tx->response_headers);
 
     // Tell the connection to remove this transaction
     // from the list

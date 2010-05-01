@@ -42,7 +42,7 @@ typedef struct table_t table_t;
 #define list_size(L) (L)->size(L)
 #define list_iterator_reset(L) (L)->iterator_reset(L)
 #define list_iterator_next(L) (L)->iterator_next(L)
-#define list_destroy(L) (L)->destroy(L)
+#define list_destroy(L) (*(L))->destroy(L)
 #define list_shift(L) (L)->shift(L)
 
 #define LIST_COMMON \
@@ -54,7 +54,7 @@ typedef struct table_t table_t;
     size_t (*size)(list_t *); \
     void (*iterator_reset)(list_t *); \
     void *(*iterator_next)(list_t *); \
-    void (*destroy)(list_t *); \
+    void (*destroy)(list_t **); \
     void *(*shift)(list_t *)
 
 struct list_t {
@@ -100,7 +100,7 @@ table_t *table_create(size_t size);
     void table_iterator_reset(table_t *);
    bstr *table_iterator_next(table_t *, void **);
   size_t table_size(table_t *t);
-    void table_destroy(table_t *);
+    void table_destroy(table_t **);
     void table_clear(table_t *);
 
 #endif	/* _DSLIB_H */

@@ -59,7 +59,7 @@ struct bstr_t {
 // Functions
 
 bstr *bstr_alloc(size_t newsize);
-void bstr_free(bstr *s);
+void bstr_free(bstr **s);
 bstr *bstr_expand(bstr *s, size_t newsize);
 bstr *bstr_cstrdup(char *);
 bstr *bstr_memdup(char *data, size_t len);

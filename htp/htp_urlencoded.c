@@ -123,7 +123,7 @@ htp_urlenp_t *htp_urlenp_create() {
 
     urlenp->_bb = bstr_builder_create();
     if (urlenp->_bb == NULL) {
-        table_destroy(urlenp->params);
+        table_destroy(&urlenp->params);
         free(urlenp);
         return NULL;
     }
@@ -144,7 +144,7 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
     if (urlenp == NULL) return;
 
     if (urlenp->_name != NULL) {
-        bstr_free(urlenp->_name);
+        bstr_free(&urlenp->_name);
     }
 
     bstr_builder_destroy(urlenp->_bb);
@@ -153,12 +153,12 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
     htp_urlen_param_t *param = NULL;
     table_iterator_reset(urlenp->params);
     while (table_iterator_next(urlenp->params, (void **) & param) != NULL) {
-        bstr_free(param->name);
-        bstr_free(param->value);
+        bstr_free(&param->name);
+        bstr_free(&param->value);
         free(param);
     }
 
-    table_destroy(urlenp->params);
+    table_destroy(&urlenp->params);
 
     free(urlenp);
 }

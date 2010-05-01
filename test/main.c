@@ -228,15 +228,15 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
                 bstr *b = bstr_memdup("BEFORE", 6);
                 if (bstr_cmpc(h->name, "Header-With-NUL") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
-                    bstr_free(b);
+                    bstr_free(&b);
                     return -1;
                 }
                 if (bstr_cmp(h->value, b) != 0) {
                     printf("Header %i incorrect value\n", count + 1);
-                    bstr_free(b);
+                    bstr_free(&b);
                     return -1;
                 }
-                bstr_free(b);
+                bstr_free(&b);
             }
                 break;
         }
@@ -1136,8 +1136,8 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     } \
     htp_tx_destroy(tx); \
     htp_config_destroy(cfg); \
-    bstr_free(expected); \
-    bstr_free(input);
+    bstr_free(&expected); \
+    bstr_free(&input);
 
 int main_path_tests(int argc, char** argv) {
     htp_cfg_t *cfg = NULL;

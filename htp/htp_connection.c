@@ -34,7 +34,7 @@ htp_conn_t *htp_conn_create(htp_connp_t *connp) {
 
     conn->messages = list_array_create(8);
     if (conn->messages == NULL) {
-        list_destroy(conn->transactions);
+        list_destroy(&conn->transactions);
         free(conn);
         return NULL;
     }
@@ -66,7 +66,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
         }
     }
     
-    list_destroy(conn->transactions);
+    list_destroy(&conn->transactions);
 
     // Destroy individual messages
     htp_log_t *l = NULL;
@@ -76,7 +76,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
         free(l);
     }
 
-    list_destroy(conn->messages);
+    list_destroy(&conn->messages);
 
     if (conn->local_addr != NULL) {
         free(conn->local_addr);

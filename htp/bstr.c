@@ -38,9 +38,10 @@ bstr *bstr_alloc(size_t len) {
  *
  * @param b
  */
-void bstr_free(bstr *b) {
-    if (b == NULL) return;
-    free(b);
+void bstr_free(bstr **b) {
+    if ((b == NULL)||(*b == NULL)) return;
+    free(*b);
+    *b = NULL;
 }
 
 /**

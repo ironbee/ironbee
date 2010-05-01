@@ -1571,6 +1571,10 @@ void htp_normalize_uri_path_inplace(bstr *s) {
     bstr_len_adjust(s, wpos);
 }
 
+void fprint_bstr(FILE *stream, const char *name, bstr *b) {
+    fprint_raw_data_ex(stream, name, bstr_ptr(b), 0, bstr_len(b));
+}
+
 /**
  *
  */
@@ -1814,7 +1818,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
         htp_uriencoding_normalize_inplace(query);
         bstr_add_cstr_noex(r, "?");
         bstr_add_str_noex(r, query);
-        bstr_free(query);
+        bstr_free(&query);
     }
 
     if (uri->fragment != NULL) {
@@ -1908,7 +1912,7 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
         // Check that the buffer we have is not obsolete
         if (tx->request_headers_raw_lines < list_size(tx->request_header_lines)) {
             // Rebuild raw buffer
-            bstr_free(tx->request_headers_raw);
+            bstr_free(&tx->request_headers_raw);
             tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
             tx->request_headers_raw_lines = list_size(tx->request_header_lines);
         }

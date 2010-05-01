@@ -22,9 +22,14 @@
  */
 int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
     if (d->data != NULL) {
+        // Process one chunk of data
         htp_urlenp_parse_partial(d->tx->request_urlenp_body, d->data, d->len);
     } else {
+        // Finalize parsing
         htp_urlenp_finalize(d->tx->request_urlenp_body);
+
+        // We are going to use the parser table directly
+        d->tx->request_params_body = d->tx->request_urlenp_body->params;
     }
 
     return HOOK_OK;
@@ -69,6 +74,9 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
         htp_urlenp_parse_complete(connp->in_tx->request_urlenp_query,
             (unsigned char *) bstr_ptr(connp->in_tx->parsed_uri->query),
             bstr_len(connp->in_tx->parsed_uri->query));
+
+        // We are going to use the parser table directly
+        connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
     }
 
     return HOOK_OK;
@@ -80,10 +88,22 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
  * @param d
  */
 int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
-    if (d->data != NULL) {        
+    if (d->data != NULL) {
+        // Process one chunk of data
         htp_mpartp_parse(d->tx->request_mpartp, d->data, d->len);
     } else {
+        // Finalize parsing
         htp_mpartp_finalize(d->tx->request_mpartp);
+
+        // Extract parameters
+        htp_mpart_part_t *part = NULL;
+        list_iterator_reset(d->tx->request_mpartp->parts);
+        while ((part = (htp_mpart_part_t *)list_iterator_next(d->tx->request_mpartp->parts)) != NULL) {
+            // Only use text parameters
+            if (part->type == MULTIPART_PART_TEXT) {
+                table_add(d->tx->request_params_body, part->name, part->value);
+            }
+        }
     }
 
     return HOOK_OK;

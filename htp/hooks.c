@@ -74,7 +74,7 @@ void hook_destroy(htp_hook_t *hook) {
         free(callback);
     }
 
-    list_destroy(hook->callbacks);
+    list_destroy(&hook->callbacks);
     
     free(hook);
 }

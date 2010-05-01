@@ -254,8 +254,8 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
         bstr_add_str_noex(h_existing->value, h->value);
 
         // The header is no longer needed
-        bstr_free(h->name);
-        bstr_free(h->value);
+        bstr_free(&h->name);
+        bstr_free(&h->value);
         free(h);
 
         // Keep track of same-name headers
@@ -300,22 +300,21 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
 void htp_mpart_part_destroy(htp_mpart_part_t *part) {
     if (part == NULL) return;
 
-    bstr_free(part->name);
-    bstr_free(part->filename);
-    bstr_free(part->value);
+    bstr_free(&part->name);
+    bstr_free(&part->filename);
+    bstr_free(&part->value);
 
     if (part->headers != NULL) {
         // Destroy request_headers
         htp_header_t *h = NULL;
         table_iterator_reset(part->headers);
         while (table_iterator_next(part->headers, (void **) & h) != NULL) {
-
-            bstr_free(h->name);
-            bstr_free(h->value);
+            bstr_free(&h->name);
+            bstr_free(&h->value);
             free(h);
         }
 
-        table_destroy(part->headers);
+        table_destroy(&part->headers);
     }
 
     free(part);
@@ -394,7 +393,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
 
                         bstr *line = bstr_builder_to_str(part->mpartp->part_pieces); // TODO RC                        
                         htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line)); // TODO RC
-                        bstr_free(line);
+                        bstr_free(&line);
 
                         bstr_builder_clear(part->mpartp->part_pieces);
                     } else {
@@ -568,7 +567,7 @@ void htp_mpartp_destroy(htp_mpartp_t * mpartp) {
         htp_mpart_part_destroy(part);
     }
 
-    list_destroy(mpartp->parts);
+    list_destroy(&mpartp->parts);
 
     free(mpartp);
 }

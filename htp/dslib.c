@@ -134,7 +134,10 @@ static int list_linked_empty(list_t *_q) {
  *
  * @param l
  */
-void list_linked_destroy(list_linked_t *l) {
+void list_linked_destroy(list_linked_t **_l) {
+    if ((_l == NULL)||(*_l == NULL)) return;
+    
+    list_linked_t *l = *_l;
     // Free the list structures
     list_linked_element_t *temp = l->first;
     list_linked_element_t *prev = NULL;
@@ -147,6 +150,7 @@ void list_linked_destroy(list_linked_t *l) {
 
     // Free the list itself
     free(l);
+    *_l = NULL;
 }
 
 /**
@@ -161,7 +165,7 @@ list_t *list_linked_create(void) {
     q->push = list_linked_push;
     q->pop = list_linked_pop;
     q->empty = list_linked_empty;
-    q->destroy = (void (*)(list_t *))list_linked_destroy;
+    q->destroy = (void (*)(list_t **))list_linked_destroy;
     q->shift = list_linked_shift;
 
     return (list_t *) q;
@@ -372,9 +376,13 @@ void *list_array_iterator_next(list_array_t *l) {
  *
  * @param l
  */
-void list_array_destroy(list_array_t *l) {
+void list_array_destroy(list_array_t **_l) {
+    if ((_l == NULL)||(*_l == NULL)) return;
+
+    list_array_t *l = *_l;
     free(l->elements);
     free(l);
+    *_l = NULL;
 }
 
 /**
@@ -406,7 +414,7 @@ list_t *list_array_create(size_t size) {
     q->size = list_array_size;
     q->iterator_reset = (void (*)(list_t *))list_array_iterator_reset;
     q->iterator_next = (void *(*)(list_t *))list_array_iterator_next;
-    q->destroy = (void (*)(list_t *))list_array_destroy;
+    q->destroy = (void (*)(list_t **))list_array_destroy;
     q->shift = list_array_shift;
 
     return (list_t *) q;
@@ -440,7 +448,10 @@ table_t *table_create(size_t size) {
  *
  * @param table
  */
-void table_destroy(table_t * table) {
+void table_destroy(table_t **_table) {
+    if ((_table == NULL)||(*_table == NULL)) return;
+
+    table_t *table = *_table;
     // Free keys only
     int counter = 0;
     void *data = NULL;
@@ -456,9 +467,10 @@ void table_destroy(table_t * table) {
         counter++;
     }
 
-    list_destroy(table->list);
+    list_destroy(&table->list);
 
     free(table);
+    *_table = NULL;
 }
 
 /**
@@ -588,7 +600,7 @@ void table_clear(table_t *table) {
     
     size_t size = list_size(table->list);
 
-    list_destroy(table->list);
+    list_destroy(&table->list);
     
     // Use a list behind the scenes
     table->list = list_array_create(size == 0 ? 10 : size);

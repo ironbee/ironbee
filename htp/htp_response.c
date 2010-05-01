@@ -579,19 +579,19 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             // Deallocate previous response line allocations, which we woud have on a 100 response
             // TODO Consider moving elsewhere; no need to make these checks on every response
             if (connp->out_tx->response_line != NULL) {
-                bstr_free(connp->out_tx->response_line);
+                bstr_free(&connp->out_tx->response_line);
             }
 
             if (connp->out_tx->response_protocol != NULL) {
-                bstr_free(connp->out_tx->response_protocol);
+                bstr_free(&connp->out_tx->response_protocol);
             }
 
             if (connp->out_tx->response_status != NULL) {
-                bstr_free(connp->out_tx->response_status);
+                bstr_free(&connp->out_tx->response_status);
             }
 
             if (connp->out_tx->response_message != NULL) {
-                bstr_free(connp->out_tx->response_message);
+                bstr_free(&connp->out_tx->response_message);
             }
 
             connp->out_tx->response_line = bstr_memdup((char *) connp->out_line, connp->out_line_len);

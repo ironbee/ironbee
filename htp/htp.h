@@ -891,7 +891,17 @@ struct htp_tx_t {
      */
     htp_urlenp_t *request_urlenp_body;
 
+    /** Request body MULTIPART parser. Available only when the
+     *  body is in the multipart/form-data format and when the parser
+     *  was invoked in configuration.
+     */
     htp_mpartp_t *request_mpartp;
+
+    /** Parameters from the query string. */
+    table_t *request_params_query;
+
+    /** Parameters from request body. */
+    table_t *request_params_body;
 
     // Response
 
@@ -1175,6 +1185,7 @@ int htp_parse_status(bstr *status);
 void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
 void htp_print_log(FILE *stream, htp_log_t *log);
 
+void fprint_bstr(FILE *stream, const char *name, bstr *b);
 void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len);
 void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, size_t offset, size_t len);
 
