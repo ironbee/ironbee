@@ -945,7 +945,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_compressed_response_deflate, cfg);
     */
 
-    //RUN_TEST(test_misc, cfg);
+    //RUN_TEST(test_misc, cfg);    
     RUN_TEST(test_multipart_1, cfg);
 
     printf("Tests: %i\n", tests);
@@ -1489,7 +1489,7 @@ int main_urlenp_tests(int argc, char** argv) {
     htp_urlenp_parse_partial(urlenp, i2, strlen(i2));
     htp_urlenp_finalize(urlenp);
 
-    htp_urlenp_destroy(urlenp);
+    htp_urlenp_destroy(&urlenp);
 
     /*
     bstr_builder_t *bb = bstr_builder_create();

@@ -149,9 +149,12 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
     }
 
-    htp_urlenp_destroy(tx->request_urlenp_query);
-    htp_urlenp_destroy(tx->request_urlenp_body);
-    htp_mpartp_destroy(tx->request_mpartp);
+    htp_urlenp_destroy(&tx->request_urlenp_query);
+    htp_urlenp_destroy(&tx->request_urlenp_body);
+    htp_mpartp_destroy(&tx->request_mpartp);
+
+    table_destroy(&tx->request_params_query);
+    table_destroy(&tx->request_params_body);
 
     hook_destroy(tx->hook_request_body_data);
 

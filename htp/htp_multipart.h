@@ -106,7 +106,7 @@ struct htp_mpartp_t {
 };
 
 htp_mpartp_t *htp_mpartp_create(char *boundary);
-void htp_mpartp_destroy(htp_mpartp_t *mpartp);
+void htp_mpartp_destroy(htp_mpartp_t **mpartp);
 
 int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len);
 int htp_mpartp_finalize(htp_mpartp_t *mpartp);

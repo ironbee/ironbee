@@ -136,8 +136,9 @@ htp_urlenp_t *htp_urlenp_create() {
  * 
  * @param urlenp
  */
-void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
-    if (urlenp == NULL) return;
+void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
+    htp_urlenp_t *urlenp = *_urlenp;
+    if ((_urlenp == NULL)||(urlenp == NULL)) return;
 
     if (urlenp->_name != NULL) {
         bstr_free(&urlenp->_name);
@@ -157,6 +158,8 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
     }
 
     free(urlenp);
+
+    *_urlenp = NULL;
 }
 
 /**

@@ -62,7 +62,7 @@ struct htp_urlen_param_t {
 };
 
 htp_urlenp_t *htp_urlenp_create();
-void htp_urlenp_destroy(htp_urlenp_t *urlenp);
+void htp_urlenp_destroy(htp_urlenp_t **urlenp);
 
 void htp_urlenp_set_argument_separator(htp_urlenp_t *urlenp, unsigned char argument_separator);         
 void htp_urlenp_set_decode_url_encoding(htp_urlenp_t *urlenp, int decode_url_encoding);
