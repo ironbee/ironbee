@@ -348,10 +348,7 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
  * @param len
  * @param is_line
  */
-int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line) {
-    // fprint_raw_data_ex(stderr, "PART DATA", data, 0, len);
-    // printf("PART DATA is_line %d mode %d\n", is_line, part->mpartp->current_mode);
-
+int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line) {    
     // TODO We don't actually need the is_line parameter, because we can
     //      discover that ourselves by looking at the last byte in the buffer.
 
@@ -395,8 +392,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
 
                         bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
 
-                        bstr *line = bstr_builder_to_str(part->mpartp->part_pieces); // TODO RC
-                        // fprint_raw_data(stderr, "LINE(1)", (unsigned char *) bstr_ptr(line), bstr_len(line));
+                        bstr *line = bstr_builder_to_str(part->mpartp->part_pieces); // TODO RC                        
                         htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line)); // TODO RC
                         bstr_free(line);
 

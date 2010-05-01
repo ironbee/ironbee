@@ -105,6 +105,7 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // TODO Is NULL?
 
     char *boundary = NULL;
+
     int rc = htp_mpartp_extract_boundary(ct->value, &boundary);
     if (rc != HTP_OK) {        
         // TODO Invalid boundary
@@ -114,8 +115,11 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Create parser instance
     connp->in_tx->request_mpartp = htp_mpartp_create(boundary);
     if (connp->in_tx->request_mpartp == NULL) {
+        free(boundary);
         return HOOK_ERROR;
     }
+
+    free(boundary);
 
     // Register request body data callbacks
     htp_tx_register_request_body_data(connp->in_tx, htp_ch_multipart_callback_request_body_data);
