@@ -64,7 +64,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
     size_t pos = 9; // Start after "form-data"
 
     // Main parameter parsing loop (once per parameter)
-    while (pos < len) {        
+    while (pos < len) {
         // Find semicolon and go over it
         while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
         if (pos == len) return -2;
@@ -87,7 +87,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
         // Ending position is in "pos" now
 
         // Is it a parameter we are interested in?
-        int param_type = htp_mpartp_cd_param_type(data, start, pos);        
+        int param_type = htp_mpartp_cd_param_type(data, start, pos);
 
         // Ignore whitespace
         while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
@@ -132,12 +132,12 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
         switch (param_type) {
             case PARAM_NAME:
                 // TODO Unquote
-                part->name = bstr_memdup((char *)data + start, pos - start);
+                part->name = bstr_memdup((char *) data + start, pos - start);
                 // fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(part->name), bstr_len(part->name));
                 break;
             case PARAM_FILENAME:
                 // TODO Unquote
-                part->filename = bstr_memdup((char *)data + start, pos - start);
+                part->filename = bstr_memdup((char *) data + start, pos - start);
                 // fprint_raw_data(stderr, "FILENAME", (unsigned char *) bstr_ptr(part->filename), bstr_len(part->filename));
                 break;
             default:
@@ -522,8 +522,7 @@ htp_mpartp_t * htp_mpartp_create(char *boundary) {
         return NULL;
     }
 
-    // Copy the boundary and convert it to lowercase
-
+    // Copy the boundary and convert it to lowercase    
     mpartp->boundary_len = strlen(boundary) + 4;
     mpartp->boundary = malloc(mpartp->boundary_len + 1);
     if (mpartp->boundary == NULL) {
@@ -560,7 +559,7 @@ htp_mpartp_t * htp_mpartp_create(char *boundary) {
  */
 void htp_mpartp_destroy(htp_mpartp_t * mpartp) {
     if (mpartp == NULL) return;
-    
+
     free(mpartp->boundary);
 
     bstr_builder_destroy(mpartp->part_pieces);
@@ -891,4 +890,114 @@ STATE_SWITCH:
     }
 
     return 1;
+}
+
+/**
+ * Determine if the supplied character is allowed in boundary.
+ *
+ * @param c
+ */
+int htp_mpartp_is_boundary_character(int c) {
+    if ((c < 32) || (c > 126)) {
+        return 0;
+    }
+
+    switch (c) {
+        case '(':
+        case ')':
+        case '<':
+        case '>':
+        case '@':
+        case ',':
+        case ';':
+        case ':':
+        case '\\':
+        case '"':
+        case '/':
+        case '[':
+        case ']':
+        case '?':
+        case '=':
+            return 0;            
+    }
+
+    return 1;
+}
+
+/**
+ * Extract boundary from the supplied Content-Type request header. The extracted
+ * boundary will be allocated on heap.
+ *
+ * @param content_type
+ * @param boundary
+ * @return rc
+ */
+int htp_mpartp_extract_boundary(bstr * content_type, char **boundary) {
+    char *data = bstr_ptr(content_type);
+    size_t len = bstr_len(content_type);
+    size_t pos, start;
+
+    pos = 0;
+
+    // Look for the semicolon
+    while ((pos < len) && (data[pos] != ';')) pos++;
+    if (pos == len) {
+        // Error: missing semicolon
+        return -1;
+    }
+
+    // Skip over semicolon
+    pos++;
+
+    // Skip over whitespace
+    while ((pos < len) && (data[pos] == ' ')) pos++;
+    if (pos == len) {
+        // Error: missing boundary parameter
+        return -2;
+    }
+
+    if (pos + 8 >= len) {
+        // Error: invalid parameter
+        return -3;
+    }   
+
+    if ((data[pos] != 'b') || (data[pos + 1] != 'o') || (data[pos + 2] != 'u') || (data[pos + 3] != 'n')
+        || (data[pos + 4] != 'd') || (data[pos + 5] != 'a') || (data[pos + 6] != 'r') || (data[pos + 7] != 'y')) {
+        // Error invalid parameter
+        return -4;
+    }
+
+    // Skip over "boundary"
+    pos += 8;   
+
+    // Skip over whitespace, if any
+    while ((pos < len) && (data[pos] == ' ')) pos++;
+    if (pos == len) {
+        // Error: invalid parameter
+        return -5;
+    }
+
+    // Expecting "=" next
+    if (data[pos] != '=') {
+        // Error: invalid parameter
+        return -6;
+    }
+
+    // Skip over "="
+    pos++;   
+
+    start = pos;
+
+    while ((pos < len) && (htp_mpartp_is_boundary_character(data[pos]))) pos++;
+    if (pos != len) {        
+        // Error: invalid character in boundary
+        return -7;
+    }   
+
+    *boundary = malloc(pos - start + 1);
+    if (*boundary == NULL) return -8;
+    memcpy(*boundary, data + start, pos - start);
+    (*boundary)[pos - start] = '\0';
+
+    return HTP_OK;
 }

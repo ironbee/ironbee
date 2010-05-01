@@ -656,6 +656,32 @@ int test_urlencoded_test(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_multipart_1(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+
+    int rc = test_run(home, "17-multipart-1.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
+
+    if (list_size(connp->conn->transactions) == 0) {
+        printf("Expected at least one transaction");
+        return -1;
+    }
+
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+
+    if (tx->progress != TX_PROGRESS_DONE) {
+        printf("Expected the only transaction to be complete (but got %i).", tx->progress);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int callback_transaction_start(htp_connp_t *connp) {
     printf("-- Callback: transaction_start\n");
 }
@@ -895,6 +921,7 @@ int main(int argc, char** argv) {
 
     htp_config_set_generate_request_uri_normalized(cfg, 1);
     htp_config_register_urlencoded_parser(cfg);
+    htp_config_register_multipart_parser(cfg);
 
     /*
     RUN_TEST(test_get, cfg);
@@ -917,8 +944,7 @@ int main(int argc, char** argv) {
     */
 
     //RUN_TEST(test_misc, cfg);
-    RUN_TEST(test_urlencoded_test, cfg);
-
+    RUN_TEST(test_multipart_1, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
@@ -1473,6 +1499,7 @@ int main_urlenp_tests(int argc, char** argv) {
      */
 }
 
+/*
 int main_multipart1(int argc, char** argv) {
     //int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
@@ -1494,19 +1521,7 @@ int main_multipart1(int argc, char** argv) {
     htp_mpartp_parse(mpartp, i5, strlen(i5));
     htp_mpartp_parse(mpartp, i6, strlen(i6));
     htp_mpartp_parse(mpartp, i7, strlen(i7));
-    htp_mpartp_finalize(mpartp);
-
-    /*
-       "x0000x"
-       "x1111x\n--\nx2222x"
-       "x3333x"
-       "\n--B"
-       "B\nx4444x"
-       "\n--B"
-       "B" "\nx5555x"
-       "\r"
-       "\n--x6666x"
-     */
+    htp_mpartp_finalize(mpartp);   
 
     htp_mpartp_destroy(mpartp);
 }
@@ -1561,5 +1576,6 @@ int main_multipart2(int argc, char** argv) {
 
     htp_mpartp_destroy(mpartp);
 }
+*/
 
 

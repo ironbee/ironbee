@@ -151,6 +151,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     htp_urlenp_destroy(tx->request_urlenp_query);
     htp_urlenp_destroy(tx->request_urlenp_body);
+    htp_mpartp_destroy(tx->request_mpartp);
 
     hook_destroy(tx->hook_request_body_data);
 

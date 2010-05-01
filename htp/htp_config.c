@@ -745,6 +745,10 @@ void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
  * @param cfg
  */
 void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
-    htp_config_register_request_line(cfg, htp_urlenp_callback_request_line);
-    htp_config_register_request_headers(cfg, htp_urlenp_callback_request_headers);
+    htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
+    htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
+}
+
+void htp_config_register_multipart_parser(htp_cfg_t *cfg) {    
+    htp_config_register_request_headers(cfg, htp_ch_multipart_callback_request_headers);
 }

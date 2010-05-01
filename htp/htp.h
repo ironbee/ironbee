@@ -891,6 +891,8 @@ struct htp_tx_t {
      */
     htp_urlenp_t *request_urlenp_body;
 
+    htp_mpartp_t *request_mpartp;
+
     // Response
 
     /** How many empty lines did we ignore before reaching the status line? */
@@ -1052,6 +1054,7 @@ void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
 void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
 
 void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
+void htp_config_register_multipart_parser(htp_cfg_t *cfg);
 
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
@@ -1090,7 +1093,7 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
 
     bstr *htp_tx_get_request_uri_normalized(htp_tx_t *tx);
 
-void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
+// void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 // Parsing functions
 
@@ -1190,6 +1193,10 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
+
+int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
+int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
+int htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 
 #endif	/* _HTP_H */
 

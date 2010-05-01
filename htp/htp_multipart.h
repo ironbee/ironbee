@@ -34,8 +34,9 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 #define MULTIPART_STATE_BOUNDARY            2
 #define MULTIPART_STATE_BOUNDARY_IS_LAST1   3
 #define MULTIPART_STATE_BOUNDARY_IS_LAST2   4
-//#define MULTIPART_STATE_BOUNDARY_EAT_CRLF   5
-#define MULTIPART_STATE_BOUNDARY_EAT_LF     6
+#define MULTIPART_STATE_BOUNDARY_EAT_LF     5
+
+#define HTP_MULTIPART_MIME_TYPE             "multipart/form-data"
 
 #ifndef CR
 #define CR '\r'
@@ -114,6 +115,8 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp);
 int htp_mpart_part_receive_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int line);
 int htp_mpart_part_finalize_data(htp_mpart_part_t *part);
 void htp_mpart_part_destroy(htp_mpart_part_t *part);
+
+int htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
 
 #endif	/* _HTP_MULTIPART_H */
 
