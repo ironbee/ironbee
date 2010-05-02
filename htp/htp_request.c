@@ -214,8 +214,8 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
         if (connp->in_next_byte == -1) {
             // End of chunk
-            
-            int rc = htp_req_run_hook_body_data(connp, &d);            
+
+            int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Request body data callback returned error (%d)", rc);
@@ -232,13 +232,13 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
             if (connp->in_body_data_left == 0) {
                 // End of body
-                                
+
                 int rc = htp_req_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Request body data callback returned error (%d)", rc);
                     return HTP_ERROR;
-                }                
+                }
 
                 // Done
                 connp->in_state = htp_connp_REQ_IDLE;
@@ -371,9 +371,9 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         char *data = bstr_ptr(connp->in_tx->request_content_type);
         size_t len = bstr_len(ct->value);
         size_t newlen = 0;
-        while(newlen < len) {
+        while (newlen < len) {
             // TODO Some platforms may do things differently here
-            if (htp_is_space(data[newlen])||(data[newlen] == ';')) {
+            if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
                 bstr_len_adjust(connp->in_tx->request_content_type, newlen);
                 break;
             }
@@ -383,7 +383,14 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     }
 
     // Parse cookies
-    htp_parse_cookies_v0(connp);
+    if (connp->cfg->parse_request_cookies) {
+        htp_parse_cookies_v0(connp);
+    }
+
+    // Parse authentication information
+    if (connp->cfg->parse_request_http_authentication) {
+        htp_parse_authorization(connp);
+    }
 
     // Run hook REQUEST_HEADERS
     int rc = hook_run_all(connp->cfg->hook_request_headers, connp);
@@ -449,7 +456,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 // Cleanup
                 free(connp->in_header_line);
                 connp->in_line_len = 0;
-                connp->in_header_line = NULL;                
+                connp->in_header_line = NULL;
 
                 // We've seen all request headers
 
@@ -854,7 +861,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
 
         return STREAM_STATE_TUNNEL;
     }
-    
+
     if (connp->out_status == STREAM_STATE_DATA_OTHER) {
         connp->out_status = STREAM_STATE_DATA;
     }

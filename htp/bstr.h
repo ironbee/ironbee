@@ -94,6 +94,13 @@ int bstr_indexofc_nocase(bstr *haystack, char *needle);
 int bstr_indexofmem(bstr *haystack, char *data, size_t len);
 int bstr_indexofmem_nocase(bstr *haystack, char *data, size_t len);
 
+int bstr_begins_with_mem(bstr *haystack, char *data, size_t len);
+int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len);
+int bstr_begins_with(bstr *haystack, bstr *needle);
+int bstr_begins_with_c(bstr *haystack, char *needle);
+int bstr_begins_with_nocase(bstr *haystack, bstr *needle);
+int bstr_begins_with_c_nocase(bstr *haystack, char *needle);
+
 void bstr_chop(bstr *b);
 void bstr_len_adjust(bstr *s, size_t newlen);
 

@@ -194,6 +194,11 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define STATUS_400  400
 #define STATUS_404  401
 
+#define HTP_AUTH_NONE       0
+#define HTP_AUTH_BASIC      1
+#define HTP_AUTH_DIGEST     2
+#define HTP_AUTH_UNKNOWN    9
+
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
     return HTP_DATA; \
@@ -399,7 +404,8 @@ struct htp_cfg_t {
 
     char *internal_encoding;
 
-    iconv_t iconv;
+    int parse_request_cookies;
+    int parse_request_http_authentication;
 
 
     // Hooks
@@ -923,6 +929,10 @@ struct htp_tx_t {
     /** Request cookies */
     table_t *request_cookies;
 
+    int request_auth_type;
+    bstr *request_auth_username;
+    bstr *request_auth_password;
+
     // Response
 
     /** How many empty lines did we ignore before reaching the status line? */
@@ -1235,6 +1245,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old);
 int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output);
 
 int htp_parse_cookies_v0(htp_connp_t *connp);
+int htp_parse_authorization(htp_connp_t *connp);
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 

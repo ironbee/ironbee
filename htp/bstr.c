@@ -39,7 +39,7 @@ bstr *bstr_alloc(size_t len) {
  * @param b
  */
 void bstr_free(bstr **b) {
-    if ((b == NULL)||(*b == NULL)) return;
+    if ((b == NULL) || (*b == NULL)) return;
     free(*b);
     *b = NULL;
 }
@@ -77,15 +77,15 @@ bstr *bstr_add_cstr(bstr *destination, char *source) {
  * @param len
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {    
-    if (bstr_size(destination) < bstr_len(destination) + len) {        
+bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {
+    if (bstr_size(destination) < bstr_len(destination) + len) {
         destination = bstr_expand(destination, bstr_len(destination) + len);
-        if (destination == NULL) return NULL;        
-    }    
+        if (destination == NULL) return NULL;
+    }
 
     bstr_t *b = (bstr_t *) destination;
     memcpy(bstr_ptr(destination) + b->len, data, len);
-    b->len = b->len + len;   
+    b->len = b->len + len;
 
     return destination;
 }
@@ -382,7 +382,7 @@ int bstr_cmp(bstr *b1, bstr *b2) {
 bstr *bstr_tolowercase(bstr *b) {
     if (b == NULL) return NULL;
 
-    unsigned char *data = (unsigned char *)bstr_ptr(b);
+    unsigned char *data = (unsigned char *) bstr_ptr(b);
     size_t len = bstr_len(b);
 
     size_t i = 0;
@@ -521,21 +521,21 @@ int bstr_indexofc_nocase(bstr *haystack, char *needle) {
  * @return
  */
 int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
-    unsigned char *data = (unsigned char *)bstr_ptr(haystack);
+    unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
 
     // TODO Is an optimisation here justified?
     //      http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
-    
-    for (i = 0; i < len; i++) {
-        size_t k = i;
 
-        for (j = 0; ((j < len2) && (k < len)); j++) {
+    for (i = 0; i < len; i++) {
+        size_t k = i;       
+
+        for (j = 0; ((j < len2) && (k < len)); j++) {        
             if (data[k++] != data2[j]) break;
         }
 
-        if ((k - i) == len2) {
+        if (j == len2) {
             return i;
         }
     }
@@ -553,7 +553,7 @@ int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
  * @return
  */
 int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
-    unsigned char *data = (unsigned char *)bstr_ptr(haystack);
+    unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
 
@@ -562,7 +562,7 @@ int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
         size_t k = i;
 
         for (j = 0; ((j < len2) && (k < len)); j++) {
-            if (toupper(data[k++]) != toupper((unsigned char)data2[j])) break;
+            if (toupper(data[k++]) != toupper((unsigned char) data2[j])) break;
         }
 
         if ((k - i) == len2) {
@@ -606,10 +606,65 @@ void bstr_len_adjust(bstr *s, size_t newlen) {
  * @return the character, or -1 if the bstring is too short
  */
 char bstr_char_at(bstr *s, size_t pos) {
-    unsigned char *data = (unsigned char *)bstr_ptr(s);
+    unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
     if (pos > len) return -1;
     return data[pos];
 }
 
+int bstr_begins_with_mem(bstr *haystack, char *data, size_t len) {
+    char *hdata = bstr_ptr(haystack);
+    size_t hlen = bstr_len(haystack);
+    size_t pos = 0;
+
+    while ((pos < len) && (pos < hlen)) {
+        if (hdata[pos] != data[pos]) {
+            return 0;
+        }
+
+        pos++;
+    }
+
+    if (pos == len) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len) {
+    char *hdata = bstr_ptr(haystack);
+    size_t hlen = bstr_len(haystack);
+    size_t pos = 0;   
+
+    while ((pos < len) && (pos < hlen)) {        
+        if (tolower((int)hdata[pos]) != tolower((int)data[pos])) {
+            return 0;
+        }
+
+        pos++;
+    }
+
+    if (pos == len) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int bstr_begins_with(bstr *haystack, bstr *needle) {
+    return bstr_begins_with_mem(haystack, bstr_ptr(needle), bstr_len(needle));
+}
+
+int bstr_begins_with_c(bstr *haystack, char *needle) {
+    return bstr_begins_with_mem(haystack, needle, strlen(needle));
+}
+
+int bstr_begins_with_nocase(bstr *haystack, bstr *needle) {
+    return bstr_begins_with_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
+}
+
+int bstr_begins_with_c_nocase(bstr *haystack, char *needle) {
+    return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
+}

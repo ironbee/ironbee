@@ -161,6 +161,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
         table_destroy(&tx->request_params_body);
     }
 
+    table_destroy(&tx->request_cookies);
+
     hook_destroy(tx->hook_request_body_data);
 
     free(tx);

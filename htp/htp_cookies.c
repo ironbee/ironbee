@@ -64,6 +64,9 @@ int htp_parse_cookies_v0(htp_connp_t *connp) {
     htp_header_t *cookie_header = table_getc(connp->in_tx->request_headers, "cookie");
     if (cookie_header == NULL) return HTP_OK;
 
+    // Create a new table to store cookies
+    connp->in_tx->request_cookies = table_create(4);
+
     char *data = bstr_ptr(cookie_header->value);
     size_t len = bstr_len(cookie_header->value);
     size_t pos = 0;

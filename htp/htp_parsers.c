@@ -13,6 +13,7 @@
  */
 
 #include "htp.h"
+#include "htp_base64.h"
 
 /**
  * Determines protocol number from a textual representation (i.e., "HTTP/1.1"). This
@@ -57,5 +58,71 @@ int htp_parse_protocol(bstr *protocol) {
  * @return Status code on success, or -1 on error.
  */
 int htp_parse_status(bstr *status) {
-    return htp_parse_positive_integer_whitespace((unsigned char *)bstr_ptr(status), bstr_len(status), 10);
+    return htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(status), bstr_len(status), 10);
+}
+
+/**
+ * Parses Digest Authorization request header.
+ *
+ * @param connp
+ * @param auth_header
+ */
+int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {
+    // TODO
+    return HTP_OK;
+}
+
+/**
+ * Parses Basic Authorization request header.
+ * 
+ * @param connp
+ * @param auth_header
+ */
+int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header) {
+    char *data = bstr_ptr(auth_header->value);
+    size_t len = bstr_len(auth_header->value);
+    size_t pos = 5;   
+
+    // Ignore whitespace
+    while ((pos < len) && (isspace((int) data[pos]))) pos++;
+    if (pos == len) return HTP_ERROR;
+
+    // Decode base64-encoded data
+    bstr *decoded = htp_base64_decode_mem(data + pos, len - pos);   
+
+    // Now extract the username and password
+    int i = bstr_indexofc(decoded, ":");
+    if (i == -1) return HTP_ERROR;
+
+    connp->in_tx->request_auth_username = bstr_strdup_ex(decoded, 0, i);    
+    connp->in_tx->request_auth_password = bstr_strdup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);       
+
+    bstr_free(&decoded);
+
+    return HTP_OK;
+}
+
+/**
+ * Parses Authorization request header.
+ *
+ * @param connp
+ */
+int htp_parse_authorization(htp_connp_t *connp) {
+    htp_header_t *auth_header = table_getc(connp->in_tx->request_headers, "authorization");
+    if (auth_header == NULL) return HTP_OK;    
+
+    if (bstr_begins_with_c_nocase(auth_header->value, "basic")) {
+        // Basic authentication
+        connp->in_tx->request_auth_type = HTP_AUTH_BASIC;
+        return htp_parse_authorization_basic(connp, auth_header);
+    } else if (bstr_begins_with_c_nocase(auth_header->value, "digest")) {
+        // Digest authentication
+        connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;        
+        return htp_parse_authorization_digest(connp, auth_header);        
+    } else {
+        // TODO Report unknown Authorization header
+        connp->in_tx->request_auth_type = HTP_AUTH_UNKNOWN;
+    }   
+
+    return HTP_OK;
 }

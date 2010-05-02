@@ -2,6 +2,7 @@
 GET / HTTP/1.0
 User-Agent: Mozilla
 Cookie: a=1; b =2; =3; c
+Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
 
 
 <<<
