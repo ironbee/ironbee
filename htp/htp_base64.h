@@ -32,7 +32,8 @@ void htp_base64_decoder_init(htp_base64_decoder* state_in);
 
 int htp_base64_decode_single(char value_in);
 
-int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in, char* plaintext_out);
+int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in,
+    char* plaintext_out, const int length_out);
 
 bstr *htp_base64_decode_bstr(bstr *input);
 bstr *htp_base64_decode_mem(char *data, size_t len);

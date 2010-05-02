@@ -36,16 +36,19 @@ void htp_base64_decoder_init(htp_base64_decoder* decoder) {
     decoder->plainchar = 0;
 }
 
-int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in, char* plaintext_out) {
+int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in,
+    char* plaintext_out, const int length_out) {
     const char* codechar = code_in;
     char* plainchar = plaintext_out;
     char fragment;
 
+    if (length_out <= 0) return 0;
+
     *plainchar = decoder->plainchar;
 
     switch (decoder->step) {
-        while (1) {
-            case step_a:
+            while (1) {
+                case step_a:
                 do {
                     if (codechar == code_in + length_in) {
                         decoder->step = step_a;
@@ -55,7 +58,8 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar = (fragment & 0x03f) << 2;
-            case step_b:
+
+                case step_b:
                 do {
                     if (codechar == code_in + length_in) {
                         decoder->step = step_b;
@@ -65,8 +69,12 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x030) >> 4;
-                *plainchar = (fragment & 0x00f) << 4;
-            case step_c:
+                *plainchar = (fragment & 0x00f) << 4;                
+                if (--length_out == 0) {
+                    return plainchar - plaintext_out;
+                }
+
+                case step_c:
                 do {
                     if (codechar == code_in + length_in) {
                         decoder->step = step_c;
@@ -77,7 +85,11 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x03c) >> 2;
                 *plainchar = (fragment & 0x003) << 6;
-            case step_d:
+                if (--length_out == 0) {
+                    return plainchar - plaintext_out;
+                }
+
+                case step_d:
                 do {
                     if (codechar == code_in + length_in) {
                         decoder->step = step_d;
@@ -87,7 +99,10 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x03f);
-        }
+                if (--length_out == 0) {
+                    return plainchar - plaintext_out;
+                }
+            }
     }
 
     /* control should not reach here */
