@@ -382,6 +382,9 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         }
     }
 
+    // Parse cookies
+    htp_parse_cookies_v0(connp);
+
     // Run hook REQUEST_HEADERS
     int rc = hook_run_all(connp->cfg->hook_request_headers, connp);
     if (rc != HOOK_OK) {

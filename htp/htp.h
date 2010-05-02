@@ -920,6 +920,9 @@ struct htp_tx_t {
     table_t *request_params_body;
     int request_params_body_reused;
 
+    /** Request cookies */
+    table_t *request_cookies;
+
     // Response
 
     /** How many empty lines did we ignore before reaching the status line? */
@@ -1230,6 +1233,10 @@ int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value);
 
 int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old);
 int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output);
+
+int htp_parse_cookies_v0(htp_connp_t *connp);
+
+int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 
 #endif	/* _HTP_H */
 
