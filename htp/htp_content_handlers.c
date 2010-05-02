@@ -30,6 +30,9 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         if (d->tx->connp->cfg->parameter_processor == NULL) {
             // We are going to use the parser table directly
             d->tx->request_params_body = d->tx->request_urlenp_body->params;
+            d->tx->request_params_body_reused = 1;
+
+            htp_transcode_params(d->tx->connp, &d->tx->request_params_body, 0);
         } else {
             // We have a parameter processor defined, which means we'll
             // need to create a new table
@@ -42,7 +45,9 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
                 d->tx->connp->cfg->parameter_processor(d->tx->request_params_query, name, value);
                 // TODO Check return code
             }
-        }
+
+            htp_transcode_params(d->tx->connp, &d->tx->request_params_body, 1);
+        }       
     }
 
     return HOOK_OK;
@@ -91,19 +96,24 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
         if (connp->cfg->parameter_processor == NULL) {
             // We are going to use the parser table directly
             connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
+            connp->in_tx->request_params_query_reused = 1;
+
+            htp_transcode_params(connp, &connp->in_tx->request_params_query, 0);
         } else {            
             // We have a parameter processor defined, which means we'll
             // need to create a new table
-            connp->in_tx->request_params_query = table_create(table_size(connp->in_tx->request_urlenp_query->params));            
+            connp->in_tx->request_params_query = table_create(table_size(connp->in_tx->request_urlenp_query->params));
 
             // Transform parameters and store them into the new table
             bstr *name, *value;
             table_iterator_reset(connp->in_tx->request_urlenp_query->params);
-            while ((name = table_iterator_next(connp->in_tx->request_urlenp_query->params, (void **) & value)) != NULL) {                
+            while ((name = table_iterator_next(connp->in_tx->request_urlenp_query->params, (void **) & value)) != NULL) {
                 connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, value);
                 // TODO Check return code
             }
-        }
+
+            htp_transcode_params(connp, &connp->in_tx->request_params_query, 1);
+        }       
     }
 
     return HOOK_OK;

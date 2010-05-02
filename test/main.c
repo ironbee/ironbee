@@ -924,6 +924,9 @@ int main(int argc, char** argv) {
     htp_config_register_multipart_parser(cfg);
 
     cfg->parameter_processor = htp_php_parameter_processor;
+    
+    cfg->request_encoding = "UTF-8";
+    cfg->internal_encoding = "ISO-8859-1";
 
     /*
     RUN_TEST(test_get, cfg);

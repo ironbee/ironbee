@@ -16,9 +16,9 @@
 
 int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
     // TODO Examine the PHP source code to determine the exact
-    //      algorithm it uses to transform parameter names
+    //      algorithm it uses to transform parameter names    
 
-    // TODO Support parameter value transformation
+    // Name transformation
 
     // Ignore whitespace at the beginning
     char *data = bstr_ptr(name);
@@ -39,8 +39,12 @@ int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
         pos++;
     }
 
+    // Value transformation
+    // TODO Support parameter value transformation
+    bstr *new_value = bstr_strdup(value);
+
     // Add parameter to table
-    table_add(params, new_name, value);
+    table_add(params, new_name, new_value);
 
     return HTP_OK;
 }

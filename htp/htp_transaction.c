@@ -153,8 +153,13 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_urlenp_destroy(&tx->request_urlenp_body);
     htp_mpartp_destroy(&tx->request_mpartp);
 
-    table_destroy(&tx->request_params_query);
-    table_destroy(&tx->request_params_body);
+    if (tx->request_params_query_reused == 0) {
+        table_destroy(&tx->request_params_query);
+    }
+
+    if (tx->request_params_body_reused == 0) {
+        table_destroy(&tx->request_params_body);
+    }
 
     hook_destroy(tx->hook_request_body_data);
 
@@ -190,7 +195,7 @@ void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared) {
  * @param user_data
  */
 void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
-    tx->user_data = user_data;    
+    tx->user_data = user_data;
 }
 
 /**

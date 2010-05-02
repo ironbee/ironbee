@@ -27,6 +27,7 @@ typedef struct htp_uri_t htp_uri_t;
 typedef struct htp_urldecoder_t htp_urldecoder_t;
 
 #include <ctype.h>
+#include <iconv.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -393,6 +394,12 @@ struct htp_cfg_t {
 
     /** Whether to automatically decompress compressed response bodies. */
     int response_decompression_enabled;
+
+    char *request_encoding;
+
+    char *internal_encoding;
+
+    iconv_t iconv;
 
 
     // Hooks
@@ -907,9 +914,11 @@ struct htp_tx_t {
 
     /** Parameters from the query string. */
     table_t *request_params_query;
+    int request_params_query_reused;
 
     /** Parameters from request body. */
     table_t *request_params_body;
+    int request_params_body_reused;
 
     // Response
 
@@ -1218,6 +1227,9 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
 int htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 
 int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value);
+
+int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old);
+int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output);
 
 #endif	/* _HTP_H */
 

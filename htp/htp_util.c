@@ -939,7 +939,7 @@ int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) 
         if (c1 == 0xff) {
             // XXX
             // tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
-        }       
+        }
 
         // Use best-fit mapping
         unsigned char *p = cfg->bestfit_map;
@@ -961,7 +961,7 @@ int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) 
             // Move to the next triplet
             p += 3;
         }
-    }   
+    }
 
     return r;
 }
@@ -1267,7 +1267,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 if (c == 0) {
                                     // XXX
                                     // tx->flags |= HTP_PATH_ENCODED_NUL;
-                                
+
                                     if (cfg->params_nul_encoded_handling == STATUS_400) {
                                         tx->response_status_expected_number = 400;
                                     } else if (cfg->params_nul_encoded_handling == STATUS_404) {
@@ -1370,7 +1370,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                             case URL_DECODER_DECODE_INVALID:
                                 // Decode
                                 c = x2c(&data[rpos + 1]);
-                                rpos += 3;                                
+                                rpos += 3;
                                 break;
                             case URL_DECODER_STATUS_400:
                                 // Backend will reject request with 400, which means
@@ -1428,7 +1428,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
         }
 
         // Place the character into output               
-        data[wpos++] = c;        
+        data[wpos++] = c;
     }
 
     bstr_len_adjust(input, wpos);
@@ -2148,3 +2148,4 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     rc = hook_run_all(connp->cfg->hook_response_body_data, d);
     return rc;
 }
+
