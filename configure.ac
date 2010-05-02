@@ -69,7 +69,7 @@ dnl -----------------------------------------------
 AC_PROG_CC
 AM_PROG_LIBTOOL
 AM_SANITY_CHECK
-
+AM_ICONV
 
 dnl -----------------------------------------------
 dnl Checks for libs.
@@ -83,7 +83,6 @@ if test "$ZLIB" = "no"; then
     echo
     exit 1
 fi
-
 
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
