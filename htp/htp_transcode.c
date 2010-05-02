@@ -35,10 +35,12 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
         return HTP_ERROR;
     }
 
+    #if (_LIBICONV_VERSION >= 0x0108)
     int iconv_param = 0;
     iconvctl(cd, ICONV_SET_TRANSLITERATE, &iconv_param);
     iconv_param = 1;
     iconvctl(cd, ICONV_SET_DISCARD_ILSEQ, &iconv_param);
+    #endif
 
     // Convert parameters, one by one
     bstr *name = NULL;
