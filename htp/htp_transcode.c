@@ -12,6 +12,8 @@
  *
  */
 
+#include <errno.h>
+
 #include "htp.h"
 
 int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) {
