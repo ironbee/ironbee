@@ -1249,6 +1249,8 @@ int htp_parse_authorization(htp_connp_t *connp);
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 
+bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset);
+
 #endif	/* _HTP_H */
 
 

@@ -37,7 +37,7 @@ void htp_base64_decoder_init(htp_base64_decoder* decoder) {
 }
 
 int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in,
-    char* plaintext_out, const int length_out) {
+    char* plaintext_out, int length_out) {
     const char* codechar = code_in;
     char* plainchar = plaintext_out;
     char fragment;
@@ -122,7 +122,7 @@ bstr *htp_base64_decode_mem(char *data, size_t len) {
     char *tmpstr = malloc(len);
     if (tmpstr == NULL) return NULL;
 
-    int resulting_len = htp_base64_decode(&decoder, data, len, tmpstr);
+    int resulting_len = htp_base64_decode(&decoder, data, len, tmpstr, len);
     if (resulting_len > 0) {
         r = bstr_memdup(tmpstr, resulting_len);
     }

@@ -67,8 +67,24 @@ int htp_parse_status(bstr *status) {
  * @param connp
  * @param auth_header
  */
-int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {
-    // TODO
+int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {    
+    // Extract the username
+    int i = bstr_indexofc(auth_header->value, "username=");
+    if (i == -1) return HTP_ERROR;   
+
+    char *data = bstr_ptr(auth_header->value);
+    size_t len = bstr_len(auth_header->value);
+    size_t pos = i + 9;
+
+    // Ignore whitespace
+    while ((pos < len) && (isspace((int) data[pos]))) pos++;   
+
+    if (data[pos] == '"') {
+        connp->in_tx->request_auth_username = htp_extract_quoted_string_as_bstr(data + pos, len - pos, NULL);        
+    } else {
+        return HTP_ERROR;
+    }   
+
     return HTP_OK;
 }
 
@@ -81,21 +97,21 @@ int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header) {
     char *data = bstr_ptr(auth_header->value);
     size_t len = bstr_len(auth_header->value);
-    size_t pos = 5;   
+    size_t pos = 5;
 
     // Ignore whitespace
     while ((pos < len) && (isspace((int) data[pos]))) pos++;
     if (pos == len) return HTP_ERROR;
 
     // Decode base64-encoded data
-    bstr *decoded = htp_base64_decode_mem(data + pos, len - pos);   
+    bstr *decoded = htp_base64_decode_mem(data + pos, len - pos);
 
     // Now extract the username and password
     int i = bstr_indexofc(decoded, ":");
     if (i == -1) return HTP_ERROR;
 
-    connp->in_tx->request_auth_username = bstr_strdup_ex(decoded, 0, i);    
-    connp->in_tx->request_auth_password = bstr_strdup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);       
+    connp->in_tx->request_auth_username = bstr_strdup_ex(decoded, 0, i);
+    connp->in_tx->request_auth_password = bstr_strdup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);
 
     bstr_free(&decoded);
 
@@ -109,7 +125,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
  */
 int htp_parse_authorization(htp_connp_t *connp) {
     htp_header_t *auth_header = table_getc(connp->in_tx->request_headers, "authorization");
-    if (auth_header == NULL) return HTP_OK;    
+    if (auth_header == NULL) return HTP_OK;
 
     if (bstr_begins_with_c_nocase(auth_header->value, "basic")) {
         // Basic authentication
@@ -117,12 +133,12 @@ int htp_parse_authorization(htp_connp_t *connp) {
         return htp_parse_authorization_basic(connp, auth_header);
     } else if (bstr_begins_with_c_nocase(auth_header->value, "digest")) {
         // Digest authentication
-        connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;        
-        return htp_parse_authorization_digest(connp, auth_header);        
+        connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;
+        return htp_parse_authorization_digest(connp, auth_header);
     } else {
         // TODO Report unknown Authorization header
         connp->in_tx->request_auth_type = HTP_AUTH_UNKNOWN;
-    }   
+    }
 
     return HTP_OK;
 }

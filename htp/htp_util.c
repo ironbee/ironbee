@@ -2149,3 +2149,63 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     return rc;
 }
 
+bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset) {
+    size_t pos = 0;
+    size_t escaped_chars = 0;
+
+    // Check the first character
+    if (data[pos] != '"') return NULL;
+
+    // Step over double quote
+    pos++;
+    if (pos == len) return NULL;
+
+    // Calculate length
+    while(pos < len) {
+        if (data[pos] == '\\') {
+            if (pos + 1 < len) {
+                escaped_chars++;
+                pos += 2;
+                continue;
+            }
+        } else if (data[pos] == '"') {
+            break;
+        }
+
+        pos++;
+    }
+
+    if (pos == len) {
+        return NULL;
+    }   
+
+    // Copy the data and unescape the escaped characters
+    size_t outlen = pos - 1 - escaped_chars;
+    bstr *result = bstr_alloc(outlen);
+    if (result == NULL) return NULL;
+    char *outptr = bstr_ptr(result);    
+    size_t outpos = 0;
+
+    pos = 1;
+    while((pos < len)&&(outpos < outlen)) {
+        if (data[pos] == '\\') {
+            if (pos + 1 < len) {
+                outptr[outpos++] = data[pos + 1];
+                pos += 2;
+                continue;
+            }
+        } else if (data[pos] == '"') {
+            break;
+        }
+     
+        outptr[outpos++] = data[pos++];
+    }
+
+    bstr_len_adjust(result, outlen);   
+
+    if (endoffset != NULL) {
+        *endoffset = pos;
+    }
+    
+    return result;
+}
