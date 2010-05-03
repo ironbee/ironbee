@@ -132,12 +132,15 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // Finalize parsing
         htp_mpartp_finalize(d->tx->request_mpartp);
 
+        d->tx->request_params_body = table_create(list_size(d->tx->request_mpartp->parts));
+        // TODO RC
+
         // Extract parameters
         htp_mpart_part_t *part = NULL;
         list_iterator_reset(d->tx->request_mpartp->parts);
         while ((part = (htp_mpart_part_t *) list_iterator_next(d->tx->request_mpartp->parts)) != NULL) {
             // Only use text parameters
-            if (part->type == MULTIPART_PART_TEXT) {
+            if (part->type == MULTIPART_PART_TEXT) {                
                 if (d->tx->connp->cfg->parameter_processor == NULL) {
                     table_add(d->tx->request_params_body, part->name, part->value);
                 } else {

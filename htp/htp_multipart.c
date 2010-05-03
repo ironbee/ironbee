@@ -131,14 +131,12 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
 
         switch (param_type) {
             case PARAM_NAME:
-                // TODO Unquote
-                part->name = bstr_memdup((char *) data + start, pos - start);
-                // fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(part->name), bstr_len(part->name));
+                // TODO Unquote quoted characters
+                part->name = bstr_memdup((char *) data + start, pos - start);                
                 break;
             case PARAM_FILENAME:
-                // TODO Unquote
-                part->filename = bstr_memdup((char *) data + start, pos - start);
-                // fprint_raw_data(stderr, "FILENAME", (unsigned char *) bstr_ptr(part->filename), bstr_len(part->filename));
+                // TODO Unquote quoted characters
+                part->filename = bstr_memdup((char *) data + start, pos - start);                
                 break;
             default:
                 // Ignore unknown parameter
@@ -330,11 +328,13 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
     if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) return 1;
 
     if (bstr_builder_size(part->mpartp->part_pieces) > 0) {
-
         part->value = bstr_builder_to_str(part->mpartp->part_pieces);
-        bstr_builder_clear(part->mpartp->part_pieces);
-        // fprint_raw_data(stderr, "PART DATA", (unsigned char *) bstr_ptr(part->value), bstr_len(part->value));
+        bstr_builder_clear(part->mpartp->part_pieces);        
     }
+
+    //if (part->value != NULL) {
+    //    fprint_bstr(stdout, "# PART VALUE", part->value);
+    //}
 
     return 1;
 }
@@ -377,7 +377,14 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
             if ((len == 0) && ((bstr_builder_size(part->mpartp->part_pieces) == 0))) {
                 // Empty line; switch to data mode
                 part->mpartp->current_mode = MULTIPART_MODE_DATA;
-                htp_mpart_part_process_headers(part); // TODO RC                
+                htp_mpart_part_process_headers(part);
+                // TODO RC
+
+                if (part->filename != NULL) {
+                    part->type = MULTIPART_PART_FILE;
+                } else {
+                    part->type = MULTIPART_PART_TEXT;
+                }
             } else {
                 // Not an empty line
 
@@ -391,14 +398,17 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
 
                         bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
 
-                        bstr *line = bstr_builder_to_str(part->mpartp->part_pieces); // TODO RC                        
-                        htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line)); // TODO RC
+                        bstr *line = bstr_builder_to_str(part->mpartp->part_pieces);
+                        // TODO RC
+                        htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line));
+                        // TODO RC
                         bstr_free(&line);
 
                         bstr_builder_clear(part->mpartp->part_pieces);
                     } else {
                         // Just this line
-                        htp_mpartp_parse_header(part, data, len); // TODO RC
+                        htp_mpartp_parse_header(part, data, len);
+                        // TODO RC
                     }
 
                     part->mpartp->pieces_form_line = 0;
@@ -416,7 +426,6 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
     } else {
         // Data mode; keep the data chunk for later (but not if it is a file)
         if (part->type != MULTIPART_PART_FILE) {
-
             bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
         }
     }
@@ -433,6 +442,8 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
  * @param is_line
  */
 static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int is_line) {
+    // fprint_raw_data(stdout, "HANDLE_DATA", data, len);
+    
     if (len == 0) return 1;
 
     // Do we have a part already?
@@ -442,22 +453,24 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, siz
         if (mpartp->current_part == NULL) return -1; // TODO RC
 
         if (mpartp->boundary_count == 0) {
+            // We haven't seen a boundary yet
             mpartp->current_part->type = MULTIPART_PART_PREAMBLE;
             mpartp->current_mode = MULTIPART_MODE_DATA;
         } else {
             if (mpartp->seen_last_boundary) {
+                // We've seen the last boundary
                 mpartp->current_part->type = MULTIPART_PART_EPILOGUE;
                 mpartp->current_mode = MULTIPART_MODE_DATA;
             }
         }
 
-        // Add part to the list.
-        // TODO Perhaps we need a flag to know if a part has been finalized.
+        // Add part to the list.        
         list_push(mpartp->parts, mpartp->current_part);
     }
 
     // Send data to part
-    htp_mpart_part_handle_data(mpartp->current_part, data, len, is_line); // TODO RC
+    htp_mpart_part_handle_data(mpartp->current_part, data, len, is_line);
+     // TODO RC
 
     return 1;
 }
@@ -715,7 +728,7 @@ int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {
     // Loop while there's data in the buffer
     while (pos < len) {
 STATE_SWITCH:
-        // fprintf(stderr, "STATE %d pos %d\n", mpartp->state, pos);
+        //fprintf(stderr, "STATE %d pos %d\n", mpartp->state, pos);
 
         switch (mpartp->state) {
 
@@ -784,9 +797,7 @@ STATE_SWITCH:
 
             case MULTIPART_STATE_BOUNDARY:
                 // Possible boundary
-                while (pos < len) {
-                    // fprintf(stderr, "B byte %d desired %d\n", data[pos], mpartp->boundary[mpartp->bpos]);
-
+                while (pos < len) {                    
                     // Remember the first byte in the new line; we'll need to
                     // determine if the line is a part of a folder header.
                     if (mpartp->bpos == 2) {
@@ -794,12 +805,11 @@ STATE_SWITCH:
                     }
 
                     // Check if the bytes match
-                    if (!(data[pos] == mpartp->boundary[mpartp->bpos])) {
+                    if (!(tolower((int)data[pos]) == mpartp->boundary[mpartp->bpos])) {
                         // Boundary mismatch
 
                         // Process stored data
                         htp_martp_process_aside(mpartp, 0);
-
 
                         // Return back where DATA parsing left off
                         if (mpartp->current_mode == MULTIPART_MODE_LINE) {
@@ -825,8 +835,15 @@ STATE_SWITCH:
                         // Process stored data
                         htp_martp_process_aside(mpartp, 1);
 
-                        // Process data prior to the boundary in the local chunk
-                        mpartp->handle_data(mpartp, data + startpos, data_return_pos - startpos, 0);
+                        // Process data prior to the boundary in the local chunk. Because
+                        // we know this is the last chunk before boundary, we can remove
+                        // the line endings
+                        size_t len = data_return_pos - startpos;
+                        //printf("# LEN %d\n", len);
+                        if ((len > 1)&&(data[startpos + len - 1] == LF)) len--;
+                        if ((len > 1)&&(data[startpos + len - 1] == CR)) len--;
+                        //printf("# LEN %d\n", len);
+                        mpartp->handle_data(mpartp, data + startpos, len, 1);
 
                         // Keep track of how many boundaries we've seen.
                         mpartp->boundary_count++;

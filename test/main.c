@@ -374,14 +374,14 @@ int test_multi_packet_request_head(htp_cfg_t *cfg) {
 }
 
 int test_misc(htp_cfg_t *cfg) {
-    htp_connp_t *connp = NULL;   
+    htp_connp_t *connp = NULL;
 
     int rc = test_run(home, "misc.t", cfg, &connp);
-    
-    if (rc < 0) {        
+
+    if (rc < 0) {
         if (connp != NULL) htp_connp_destroy_all(connp);
         return -1;
-    }   
+    }
 
     if (list_size(connp->conn->transactions) == 0) {
         printf("Expected at least one transaction");
@@ -829,7 +829,7 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
 }
 
 int main_dir(int argc, char** argv) {
-//int main(int argc, char** argv) {
+    //int main(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_config_register_log(cfg, callback_log);
     htp_config_register_response(cfg, callback_response_destroy);
@@ -856,8 +856,9 @@ int main_dir(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-int main(int argc, char** argv) {
-//int main_tests(int argc, char** argv) {
+// int main(int argc, char** argv) {
+
+int main_tests(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
@@ -923,7 +924,7 @@ int main(int argc, char** argv) {
     htp_config_register_urlencoded_parser(cfg);
     htp_config_register_multipart_parser(cfg);
 
-    cfg->parameter_processor = htp_php_parameter_processor;    
+    cfg->parameter_processor = htp_php_parameter_processor;
     cfg->request_encoding = "UTF-8";
     cfg->internal_encoding = "ISO-8859-1";
     cfg->parse_request_http_authentication = 1;
@@ -946,10 +947,10 @@ int main(int argc, char** argv) {
     RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_connect_extra, cfg);
     RUN_TEST(test_compressed_response_deflate, cfg);
-    */
+     */
 
-    RUN_TEST(test_misc, cfg);    
-    //RUN_TEST(test_multipart_1, cfg);
+    //RUN_TEST(test_misc, cfg);
+    RUN_TEST(test_multipart_1, cfg);
     //RUN_TEST(test_post_urlencoded, cfg);
 
     printf("Tests: %i\n", tests);
@@ -1478,9 +1479,8 @@ int main_path_tests(int argc, char** argv) {
     printf("Total tests: %i, %i failure(s).\n", tests, failures);
 }
 
-/*
 int main_multipart1(int argc, char** argv) {
-    //int main(int argc, char** argv) {
+// int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
 
     mpartp = htp_mpartp_create("BBB");
@@ -1500,23 +1500,42 @@ int main_multipart1(int argc, char** argv) {
     htp_mpartp_parse(mpartp, i5, strlen(i5));
     htp_mpartp_parse(mpartp, i6, strlen(i6));
     htp_mpartp_parse(mpartp, i7, strlen(i7));
-    htp_mpartp_finalize(mpartp);   
+    htp_mpartp_finalize(mpartp);
 
-    htp_mpartp_destroy(mpartp);
+    htp_mpart_part_t *part = NULL;
+    list_iterator_reset(mpartp->parts);
+    while ((part = (htp_mpart_part_t *) list_iterator_next(mpartp->parts)) != NULL) {
+        if (part->name != NULL) fprint_bstr(stdout, "NAME", part->name);
+        if (part->value != NULL) fprint_bstr(stdout, "VALUE", part->value);
+    }
+
+    htp_mpartp_destroy(&mpartp);
+
+    // "x0000x"
+    // "x1111x\n--\nx2222x"
+    // "x3333x"
+    // "\n--B"
+    // "B\nx4444x"
+    // "\n--B"
+    // "B"
+    // "\nx5555x"
+    // "\r"
+    // "\n--x6666x"
 }
 
-int main_multipart2(int argc, char** argv) {
-//int main(int argc, char** argv) {
+//int main_multipart2(int argc, char** argv) {
+int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
+    char boundary[] = "---------------------------41184676334";
 
-    mpartp = htp_mpartp_create("---------------------------41184676334");
+    mpartp = htp_mpartp_create(boundary);
 
     unsigned char *parts[999];
     int i = 1;
     parts[i++] = "-----------------------------41184676334\r\n";
     parts[i++] = "Content-Disposition: form-data;\n name=\"field1\"\r\n";
     parts[i++] = "\r\n";
-    parts[i++] = "0123456789\r\n-";    
+    parts[i++] = "0123456789\r\n-";
     parts[i++] = "-------------";
     parts[i++] = "---------------41184676334\r\n";
     parts[i++] = "Content-Disposition: form-data;\n name=\"field3\"\r\n";
@@ -1540,7 +1559,7 @@ int main_multipart2(int argc, char** argv) {
     parts[i++] = "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
     parts[i++] = "Content-Type: text/plain\r\n";
     parts[i++] = "\r\n";
-    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ\r\n";    
+    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ\r\n";
     parts[i++] = "-----------------------------41184676334--\r\n";
     parts[i++] = NULL;
 
@@ -1550,11 +1569,17 @@ int main_multipart2(int argc, char** argv) {
         htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
         i++;
     }
-    
+
     htp_mpartp_finalize(mpartp);
 
-    htp_mpartp_destroy(mpartp);
+    htp_mpart_part_t *part = NULL;
+    list_iterator_reset(mpartp->parts);
+    while ((part = (htp_mpart_part_t *) list_iterator_next(mpartp->parts)) != NULL) {
+        if (part->name != NULL) fprint_bstr(stdout, "NAME", part->name);
+        if (part->value != NULL) fprint_bstr(stdout, "VALUE", part->value);
+    }
+
+    htp_mpartp_destroy(&mpartp);
 }
-*/
 
 
