@@ -21,6 +21,7 @@ typedef struct htp_connp_t htp_connp_t;
 typedef struct htp_header_t htp_header_t;
 typedef struct htp_header_line_t htp_header_line_t;
 typedef struct htp_log_t htp_log_t;
+typedef struct htp_reqfile_t htp_reqfile_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
@@ -429,6 +430,8 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_request_body_data;
 
+    htp_hook_t *hook_request_file_data;
+
     /** Request trailer hook, invoked after all trailer headers are seen,
      *  and if they are seen (not invoked otherwise).
      */
@@ -756,6 +759,17 @@ struct htp_header_t {
     unsigned int flags;
 };
 
+struct htp_reqfile_t {
+    htp_tx_t *tx;
+    
+    bstr *name;
+    bstr *filename;
+    void *user_data;
+
+    char *data;
+    size_t len;
+};
+
 struct htp_tx_t {
     /** The connection parsed associated with this transaction. */
     htp_connp_t *connp;
@@ -1060,6 +1074,7 @@ void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_reqfile_t *));
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 

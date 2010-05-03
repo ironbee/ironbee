@@ -67,6 +67,9 @@ struct htp_mpart_part_t {
 
     /** Part headers (htp_header_t instances), indexed by name. */
     table_t *headers;
+
+    char *file_tmpname;
+    int file_fd;
 };
 
 struct htp_mpartp_t {
