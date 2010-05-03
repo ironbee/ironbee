@@ -1074,7 +1074,6 @@ void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
-void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_reqfile_t *));
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 

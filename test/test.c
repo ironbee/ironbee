@@ -100,7 +100,7 @@ static int test_init(test_t *test, const char *filename) {
     test->pos = 0;
 
     int bytes_read = 0;
-    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {
+    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {        
         test->len += bytes_read;
     }
 
@@ -109,7 +109,7 @@ static int test_init(test_t *test, const char *filename) {
         return -2;
     }
 
-    close(fd);
+    close(fd);   
 
     return 1;
 }
@@ -302,7 +302,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 fprintf(stderr, "Unable to buffer more than one inbound chunk.\n");
                 return -1;
             }
-
+            
             int rc = htp_connp_req_data(*connp, tv_start.tv_usec, test.chunk, test.chunk_len);
             if (rc == STREAM_STATE_ERROR) {
                 test_destroy(&test);

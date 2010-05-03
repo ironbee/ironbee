@@ -18,7 +18,8 @@
  * HTTP parsing.
  *
  * This program is only meant as an demonstration; it is not suitable
- * to be used in production.
+ * to be used in production. Furthermore, libnids itself was unreliable
+ * in my tests.
  *
  * Compile with:
  *

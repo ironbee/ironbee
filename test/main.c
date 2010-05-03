@@ -697,12 +697,14 @@ int callback_request_headers(htp_connp_t *connp) {
 }
 
 int callback_request_body_data(htp_tx_data_t *d) {
+    /*
     if (d->data != NULL) {
         printf("-- Callback: request_body_data\n");
         fprint_raw_data(stdout, __FUNCTION__, d->data, d->len);
     } else {
         printf("-- Callback: request_body_data (LAST)\n");
     }
+    */
 }
 
 int callback_request_trailer(htp_connp_t *connp) {
@@ -856,8 +858,7 @@ int main_dir(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-// int main(int argc, char** argv) {
-
+//int main(int argc, char** argv) {
 int main_tests(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
@@ -951,7 +952,7 @@ int main_tests(int argc, char** argv) {
 
     //RUN_TEST(test_misc, cfg);
     RUN_TEST(test_multipart_1, cfg);
-    //RUN_TEST(test_post_urlencoded, cfg);
+    //RUN_TEST(test_post_urlencoded, cfg);    
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
@@ -1559,8 +1560,8 @@ int main(int argc, char** argv) {
     parts[i++] = "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
     parts[i++] = "Content-Type: text/plain\r\n";
     parts[i++] = "\r\n";
-    parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ\r\n";
-    parts[i++] = "-----------------------------41184676334--\r\n";
+    //parts[i++] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ\r\n";
+    //parts[i++] = "-----------------------------41184676334--\r\n";
     parts[i++] = NULL;
 
     i = 1;
@@ -1570,14 +1571,47 @@ int main(int argc, char** argv) {
         i++;
     }
 
+    int fd = open("c:/temp/test.zip", O_RDONLY | O_BINARY);
+    if (fd < 0) return -1;
+
+    struct stat statbuf;
+    if (fstat(fd, &statbuf) < 0) {
+        return -1;
+    }
+
+    char *buf = malloc(statbuf.st_size);
+    size_t buflen;
+    size_t pos = 0;
+
+    int bytes_read = 0;
+    while ((bytes_read = read(fd, buf + buflen, statbuf.st_size - buflen)) > 0) {
+        buflen += bytes_read;
+    }
+
+    if (buflen != statbuf.st_size) {
+        free(buf);
+        return -2;
+    }
+
+    close(fd);
+
+    htp_mpartp_parse(mpartp, buf, buflen);
+
+    free(buf);
+
+    char *final = "-----------------------------41184676334--\r\n";;
+    htp_mpartp_parse(mpartp, final, strlen(final));
+
     htp_mpartp_finalize(mpartp);
 
+    /*
     htp_mpart_part_t *part = NULL;
     list_iterator_reset(mpartp->parts);
     while ((part = (htp_mpart_part_t *) list_iterator_next(mpartp->parts)) != NULL) {
         if (part->name != NULL) fprint_bstr(stdout, "NAME", part->name);
         if (part->value != NULL) fprint_bstr(stdout, "VALUE", part->value);
     }
+    */
 
     htp_mpartp_destroy(&mpartp);
 }
