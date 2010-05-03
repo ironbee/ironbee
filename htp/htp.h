@@ -21,7 +21,6 @@ typedef struct htp_connp_t htp_connp_t;
 typedef struct htp_header_t htp_header_t;
 typedef struct htp_header_line_t htp_header_line_t;
 typedef struct htp_log_t htp_log_t;
-typedef struct htp_reqfile_t htp_reqfile_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
@@ -407,7 +406,8 @@ struct htp_cfg_t {
 
     int parse_request_cookies;
     int parse_request_http_authentication;
-
+    int extract_request_files;
+    char *tmpdir;
 
     // Hooks
 
@@ -757,17 +757,6 @@ struct htp_header_t {
 
     /** Parsing flags: HTP_FIELD_INVALID_NOT_FATAL, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
     unsigned int flags;
-};
-
-struct htp_reqfile_t {
-    htp_tx_t *tx;
-    
-    bstr *name;
-    bstr *filename;
-    void *user_data;
-
-    char *data;
-    size_t len;
 };
 
 struct htp_tx_t {

@@ -143,6 +143,7 @@ htp_cfg_t *htp_config_create() {
     cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->params_nul_encoded_handling = NONE;
     cfg->params_nul_raw_handling = NONE;
+    cfg->tmpdir = "/tmp";
 
     // No need to create hooks here; they will be created on-demand,
     // during callback registration
@@ -351,7 +352,7 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
     hook_register(&cfg->hook_request_body_data, callback_fn);
 }
 
-void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_reqfile_t *)) {
+void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
     hook_register(&cfg->hook_request_file_data, callback_fn);
 }
 

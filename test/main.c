@@ -1531,6 +1531,9 @@ int main(int argc, char** argv) {
 
     mpartp = htp_mpartp_create(boundary);
 
+    mpartp->extract_files = 1;
+    mpartp->extract_dir = "c:/temp";
+
     unsigned char *parts[999];
     int i = 1;
     parts[i++] = "-----------------------------41184676334\r\n";
@@ -1614,6 +1617,8 @@ int main(int argc, char** argv) {
     */
 
     htp_mpartp_destroy(&mpartp);
+
+    return 0;
 }
 
 

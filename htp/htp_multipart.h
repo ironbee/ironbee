@@ -21,20 +21,22 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 #include "bstr.h"
 #include "dslib.h"
 
-#define MULTIPART_PART_UNKNOWN              0
-#define MULTIPART_PART_TEXT                 1
-#define MULTIPART_PART_FILE                 2
-#define MULTIPART_PART_PREAMBLE             3
-#define MULTIPART_PART_EPILOGUE             4
+#define MULTIPART_PART_UNKNOWN                  0
+#define MULTIPART_PART_TEXT                     1
+#define MULTIPART_PART_FILE                     2
+#define MULTIPART_PART_PREAMBLE                 3
+#define MULTIPART_PART_EPILOGUE                 4
 
-#define MULTIPART_MODE_LINE                 0
-#define MULTIPART_MODE_DATA                 1
+#define MULTIPART_MODE_LINE                     0
+#define MULTIPART_MODE_DATA                     1
 
-#define MULTIPART_STATE_DATA                1
-#define MULTIPART_STATE_BOUNDARY            2
-#define MULTIPART_STATE_BOUNDARY_IS_LAST1   3
-#define MULTIPART_STATE_BOUNDARY_IS_LAST2   4
-#define MULTIPART_STATE_BOUNDARY_EAT_LF     5
+#define MULTIPART_STATE_DATA                    1
+#define MULTIPART_STATE_BOUNDARY                2
+#define MULTIPART_STATE_BOUNDARY_IS_LAST1       3
+#define MULTIPART_STATE_BOUNDARY_IS_LAST2       4
+#define MULTIPART_STATE_BOUNDARY_EAT_LF         5
+
+#define MULTIPART_DEFAULT_FILE_EXTRACT_LIMIT    16
 
 #define HTP_MULTIPART_MIME_TYPE             "multipart/form-data"
 
@@ -87,6 +89,11 @@ struct htp_mpartp_t {
 
     /** List of parts. */
     list_t *parts;
+
+    int extract_files;
+    int extract_limit;
+    char *extract_dir;
+    int file_count;
 
     // Parsing callbacks
     int (*handle_data)(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int line_end);

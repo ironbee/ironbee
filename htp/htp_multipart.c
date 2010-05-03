@@ -50,7 +50,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
     if (h == NULL) {
         // TODO Error message
         return 0;
-    }   
+    }
 
     if (bstr_indexofc(h->value, "form-data") != 0) {
         return -1;
@@ -387,9 +387,18 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                 // TODO RC
 
                 if (part->filename != NULL) {
-                    part->type = MULTIPART_PART_FILE;                    
-                    part->file_tmpname = strdup("C:/temp/file-XXXXXX");
-                    part->file_fd = mkstemp(part->file_tmpname);
+                    part->type = MULTIPART_PART_FILE;
+                    
+                    if ((part->mpartp->extract_files)&&(part->mpartp->file_count < part->mpartp->extract_limit)) {
+                        char buf[255];
+                        strncpy(buf, part->mpartp->extract_dir, 254);
+                        strncat(buf, "/libhtp-multipart-file-XXXXXX", 254 - strlen(buf));
+                        part->file_tmpname = strdup(buf);                        
+                        part->file_fd = mkstemp(part->file_tmpname);
+                        // TODO RC
+
+                        part->mpartp->file_count++;
+                    }
                 } else {
                     part->type = MULTIPART_PART_TEXT;
                 }
@@ -438,12 +447,12 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                 bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
                 break;
             case MULTIPART_PART_FILE:
-                if (part->file_fd != -1) {                    
-                    write(part->file_fd, data, len);                    
+                if (part->file_fd != -1) {
+                    write(part->file_fd, data, len);
                 }
                 break;
         }
-    }   
+    }
 
     return 1;
 }
@@ -456,7 +465,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
  * @param len
  * @param is_line
  */
-static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int is_line) {    
+static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int is_line) {
     if (len == 0) return 1;
 
     // Do we have a part already?
@@ -566,6 +575,7 @@ htp_mpartp_t * htp_mpartp_create(char *boundary) {
 
     mpartp->state = MULTIPART_STATE_BOUNDARY;
     mpartp->bpos = 2;
+    mpartp->extract_limit = MULTIPART_DEFAULT_FILE_EXTRACT_LIMIT;
 
     mpartp->handle_data = htp_mpartp_handle_data;
     mpartp->handle_boundary = htp_mpartp_handle_boundary;
@@ -730,7 +740,7 @@ int htp_mpartp_finalize(htp_mpartp_t * mpartp) {
  * @param len
  * @return Status indicator
  */
-int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {    
+int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {
     size_t pos = 0; // Current position in the input chunk.
     size_t startpos = 0; // The starting position of data.
     size_t data_return_pos = 0; // The position of the (possible) boundary.    
@@ -740,7 +750,7 @@ int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {
 STATE_SWITCH:
         switch (mpartp->state) {
 
-            case MULTIPART_STATE_DATA:                
+            case MULTIPART_STATE_DATA:
                 if ((pos == 0) && (mpartp->cr_aside) && (pos < len)) {
                     mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, 0);
                     mpartp->cr_aside = 0;
@@ -748,11 +758,11 @@ STATE_SWITCH:
 
                 // Loop through available data
                 while (pos < len) {
-                    if (data[pos] == CR) {                        
+                    if (data[pos] == CR) {
                         // We have a CR byte
 
                         // Is this CR the last byte?
-                        if (pos + 1 == len) {                            
+                        if (pos + 1 == len) {
                             // We have CR as the last byte in input. We are going to process
                             // what we have in the buffer as data, except for the CR byte,
                             // which we're going to leave for later. If it happens that a
@@ -760,8 +770,8 @@ STATE_SWITCH:
                             // to be discarded.
                             pos++; // Take CR from input
 
-                            mpartp->cr_aside = 1;                            
-                        } else {                            
+                            mpartp->cr_aside = 1;
+                        } else {
                             // We have CR and at least one more byte in the buffer, so we
                             // are able to test for the LF byte too.
                             if (data[pos + 1] == LF) {
@@ -779,7 +789,7 @@ STATE_SWITCH:
                                 mpartp->cr_aside = 0;
                             }
                         }
-                    } else if (data[pos] == LF) {                        
+                    } else if (data[pos] == LF) {
                         // Possible boundary start position (LF line)
                         pos++; // Take LF from input
 
@@ -845,9 +855,9 @@ STATE_SWITCH:
                         // Process data prior to the boundary in the local chunk. Because
                         // we know this is the last chunk before boundary, we can remove
                         // the line endings
-                        size_t len = data_return_pos - startpos;                        
+                        size_t len = data_return_pos - startpos;
                         if ((len > 1) && (data[startpos + len - 1] == LF)) len--;
-                        if ((len > 1) && (data[startpos + len - 1] == CR)) len--;                        
+                        if ((len > 1) && (data[startpos + len - 1] == CR)) len--;
                         mpartp->handle_data(mpartp, data + startpos, len, 1);
 
                         // Keep track of how many boundaries we've seen.

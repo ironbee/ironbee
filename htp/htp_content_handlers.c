@@ -183,6 +183,11 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
         return HOOK_ERROR;
     }
 
+    if (connp->cfg->extract_request_files) {
+        connp->in_tx->request_mpartp->extract_files = 1;
+        connp->in_tx->request_mpartp->extract_dir = connp->cfg->tmpdir;
+    }
+
     free(boundary);
 
     // Register request body data callbacks
