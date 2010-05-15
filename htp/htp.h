@@ -18,6 +18,7 @@
 typedef struct htp_cfg_t htp_cfg_t;
 typedef struct htp_conn_t htp_conn_t;
 typedef struct htp_connp_t htp_connp_t;
+typedef struct htp_file_t htp_file_t;
 typedef struct htp_header_t htp_header_t;
 typedef struct htp_header_line_t htp_header_line_t;
 typedef struct htp_log_t htp_log_t;
@@ -694,6 +695,26 @@ struct htp_connp_t {
 
     /** Response decompressor used to decompress response body data. */
     htp_decompressor_t *out_decompressor;
+};
+
+struct htp_file_t {
+    /** Where did this file come from? */
+    int source;
+
+    /** File name. */
+    bstr *filename;
+
+    /** Declared length of the file, -1 if not known. */
+    int64_t declared_len;
+
+    /** Current file length. */
+    int64_t len;
+
+    /** The unique filename in which this file is stored. */
+    char *tmpname;
+
+    /** The file descriptor that is used for the external storage. */
+    int fd;
 };
 
 struct htp_log_t {

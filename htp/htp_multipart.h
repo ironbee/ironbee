@@ -20,6 +20,7 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 
 #include "bstr.h"
 #include "dslib.h"
+#include "htp.h"
 
 #define MULTIPART_PART_UNKNOWN                  0
 #define MULTIPART_PART_TEXT                     1
@@ -59,10 +60,7 @@ struct htp_mpart_part_t {
     size_t len;
    
     /** Part name, from the Content-Disposition header. */
-    bstr *name;
-
-    /** Part filename, from the Content-Disposition header. */
-    bstr *filename;
+    bstr *name;   
 
     /** Part value; currently only available for MULTIPART_PART_TEXT parts. */
     bstr *value;
@@ -70,8 +68,7 @@ struct htp_mpart_part_t {
     /** Part headers (htp_header_t instances), indexed by name. */
     table_t *headers;
 
-    char *file_tmpname;
-    int file_fd;
+    htp_file_t *file;
 };
 
 struct htp_mpartp_t {

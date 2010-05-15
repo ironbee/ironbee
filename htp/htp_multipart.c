@@ -134,7 +134,9 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
                 break;
             case PARAM_FILENAME:
                 // TODO Unquote quoted characters
-                part->filename = bstr_memdup((char *) data + start, pos - start);
+                part->file = calloc(1, sizeof (htp_file_t));
+                // TODO
+                part->file->filename = bstr_memdup((char *) data + start, pos - start);
                 break;
             default:
                 // Ignore unknown parameter
@@ -282,7 +284,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
 
     part->mpartp = mpartp;
     part->mpartp->pieces_form_line = 0;
-    part->file_fd = -1;
+    //part->file_fd = -1;
 
     bstr_builder_clear(mpartp->part_pieces);
 
@@ -297,13 +299,16 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
 void htp_mpart_part_destroy(htp_mpart_part_t *part) {
     if (part == NULL) return;
 
-    if (part->file_tmpname != NULL) {
-        //unlink(part->file_tmpname);
-        free(part->file_tmpname);
+    if (part->file != NULL) {
+        bstr_free(&part->file->filename);
+        
+        if (part->file->tmpname != NULL) {
+            unlink(part->file->tmpname);
+            free(part->file->tmpname);
+        }
     }
 
-    bstr_free(&part->name);
-    bstr_free(&part->filename);
+    bstr_free(&part->name);    
     bstr_free(&part->value);
 
     if (part->headers != NULL) {
@@ -337,8 +342,8 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
             bstr_builder_clear(part->mpartp->part_pieces);
         }
     } else if (part->type == MULTIPART_PART_FILE) {
-        if (part->file_fd != -1) {
-            close(part->file_fd);
+        if (part->file->fd != -1) {
+            close(part->file->fd);
         }
     }
 
@@ -386,15 +391,15 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                 htp_mpart_part_process_headers(part);
                 // TODO RC
 
-                if (part->filename != NULL) {
+                if (part->file != NULL) {
                     part->type = MULTIPART_PART_FILE;
-                    
-                    if ((part->mpartp->extract_files)&&(part->mpartp->file_count < part->mpartp->extract_limit)) {
+
+                    if ((part->mpartp->extract_files) && (part->mpartp->file_count < part->mpartp->extract_limit)) {
                         char buf[255];
                         strncpy(buf, part->mpartp->extract_dir, 254);
                         strncat(buf, "/libhtp-multipart-file-XXXXXX", 254 - strlen(buf));
-                        part->file_tmpname = strdup(buf);                        
-                        part->file_fd = mkstemp(part->file_tmpname);
+                        part->file->tmpname = strdup(buf);
+                        part->file->fd = mkstemp(part->file->tmpname);
                         // TODO RC
 
                         part->mpartp->file_count++;
@@ -447,8 +452,8 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                 bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
                 break;
             case MULTIPART_PART_FILE:
-                if (part->file_fd != -1) {
-                    write(part->file_fd, data, len);
+                if (part->file->fd != -1) {
+                    write(part->file->fd, data, len);
                 }
                 break;
         }
