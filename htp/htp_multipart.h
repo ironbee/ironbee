@@ -72,6 +72,8 @@ struct htp_mpart_part_t {
 };
 
 struct htp_mpartp_t {
+    htp_connp_t *connp;
+
     /** Boundary to be used to extract parts. */
     char *boundary;
 
@@ -112,7 +114,7 @@ struct htp_mpartp_t {
     int cr_aside;
 };
 
-htp_mpartp_t *htp_mpartp_create(char *boundary);
+htp_mpartp_t *htp_mpartp_create(htp_connp_t *connp, char *boundary);
 void htp_mpartp_destroy(htp_mpartp_t **mpartp);
 
 int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len);
@@ -124,6 +126,8 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part);
 void htp_mpart_part_destroy(htp_mpart_part_t *part);
 
 int htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
+
+int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char *data, size_t len);
 
 #endif	/* _HTP_MULTIPART_H */
 

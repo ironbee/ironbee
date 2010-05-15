@@ -19,6 +19,7 @@ typedef struct htp_cfg_t htp_cfg_t;
 typedef struct htp_conn_t htp_conn_t;
 typedef struct htp_connp_t htp_connp_t;
 typedef struct htp_file_t htp_file_t;
+typedef struct htp_file_data_t htp_file_data_t;
 typedef struct htp_header_t htp_header_t;
 typedef struct htp_header_line_t htp_header_line_t;
 typedef struct htp_log_t htp_log_t;
@@ -717,6 +718,20 @@ struct htp_file_t {
     int fd;
 };
 
+struct htp_file_data_t {
+    /** Transaction pointer. */
+    htp_tx_t *tx;
+
+    /** File information. */
+    htp_file_t *file;
+
+    /** Pointer to the data buffer. */
+    unsigned char *data;
+
+    /** Buffer length. */
+    size_t len;
+};
+
 struct htp_log_t {
     /** The connection parser associated with this log message. */
     htp_connp_t *connp;
@@ -1084,6 +1099,7 @@ void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *));
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 

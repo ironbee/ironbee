@@ -732,6 +732,15 @@ int callback_response_body_data(htp_tx_data_t *d) {
     }
 }
 
+int callback_request_file_data(htp_file_data_t *file_data) {
+    if (file_data->data != NULL) {
+        printf("-- Callback: request_file_data\n");
+        fprint_raw_data(stdout, __FUNCTION__, file_data->data, file_data->len);
+    } else {
+        printf("-- Callback: request_file_data (LAST)\n");
+    }
+}
+
 int callback_response_trailer(htp_connp_t *connp) {
     printf("-- Callback: response_trailer\n");
 }
@@ -1484,7 +1493,7 @@ int main_multipart1(int argc, char** argv) {
 // int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
 
-    mpartp = htp_mpartp_create("BBB");
+    mpartp = htp_mpartp_create(NULL, "BBB");
 
     unsigned char *i1 = "x0000x\n--BBB\nx1111x\n--\nx2222x\n--";
     unsigned char *i2 = "BBB\nx3333x\n--B";
@@ -1529,7 +1538,14 @@ int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
     char boundary[] = "---------------------------41184676334";
 
-    mpartp = htp_mpartp_create(boundary);
+    htp_cfg_t *cfg = htp_config_create();
+    htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
+    htp_config_register_request_file_data(cfg, callback_request_file_data);
+    htp_config_register_urlencoded_parser(cfg);
+    htp_config_register_multipart_parser(cfg);
+
+    htp_connp_t *connp = htp_connp_create(cfg);
+    mpartp = htp_mpartp_create(connp, boundary);
 
     mpartp->extract_files = 1;
     mpartp->extract_dir = "c:/temp";
@@ -1574,7 +1590,8 @@ int main(int argc, char** argv) {
         i++;
     }
 
-    int fd = open("c:/temp/test.zip", O_RDONLY | O_BINARY);
+    //int fd = open("c:/temp/test.zip", O_RDONLY | O_BINARY);
+    int fd = open("c:/temp/test.dat", O_RDONLY | O_BINARY);
     if (fd < 0) return -1;
 
     struct stat statbuf;
@@ -1602,7 +1619,7 @@ int main(int argc, char** argv) {
 
     free(buf);
 
-    char *final = "-----------------------------41184676334--\r\n";;
+    char *final = "\r\n-----------------------------41184676334--";
     htp_mpartp_parse(mpartp, final, strlen(final));
 
     htp_mpartp_finalize(mpartp);

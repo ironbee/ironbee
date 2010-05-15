@@ -352,7 +352,13 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
     hook_register(&cfg->hook_request_body_data, callback_fn);
 }
 
-void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
+/**
+ * Registers a request_file_data callback.
+ *
+ * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *)) {
     hook_register(&cfg->hook_request_file_data, callback_fn);
 }
 
