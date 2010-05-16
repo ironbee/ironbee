@@ -201,6 +201,9 @@ typedef struct htp_urldecoder_t htp_urldecoder_t;
 #define HTP_AUTH_DIGEST     2
 #define HTP_AUTH_UNKNOWN    9
 
+#define HTP_FILE_MULTIPART  1
+#define HTP_FILE_PUT        2
+
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
     return HTP_DATA; \
@@ -696,6 +699,8 @@ struct htp_connp_t {
 
     /** Response decompressor used to decompress response body data. */
     htp_decompressor_t *out_decompressor;
+
+    htp_file_t *put_file;
 };
 
 struct htp_file_t {
@@ -703,13 +708,10 @@ struct htp_file_t {
     int source;
 
     /** File name. */
-    bstr *filename;
-
-    /** Declared length of the file, -1 if not known. */
-    int64_t declared_len;
+    bstr *filename;   
 
     /** Current file length. */
-    int64_t len;
+    size_t len;
 
     /** The unique filename in which this file is stored. */
     char *tmpname;

@@ -2113,7 +2113,7 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
  * @param connp
  * @param d
  */
-int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
+int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {        
     // Do not invoke callbacks with an empty data chunk
     if ((d->data != NULL) && (d->len == 0)) {
         return HOOK_OK;
@@ -2125,6 +2125,21 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
 
     // Run configuration hooks second
     rc = hook_run_all(connp->cfg->hook_request_body_data, d);
+
+    // On PUT requests, treat request body as file
+    if (connp->put_file != NULL) {
+        htp_file_data_t file_data;
+        
+        file_data.data = d->data;
+        file_data.len = d->len;
+        file_data.tx = connp->in_tx;
+        file_data.file = connp->put_file;
+        file_data.file->len += d->len;
+
+        hook_run_all(connp->cfg->hook_request_file_data, &file_data);
+        // TODO Handle rc
+    }
+
     return rc;
 }
 
@@ -2161,7 +2176,7 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
     if (pos == len) return NULL;
 
     // Calculate length
-    while(pos < len) {
+    while (pos < len) {
         if (data[pos] == '\\') {
             if (pos + 1 < len) {
                 escaped_chars++;
@@ -2177,17 +2192,17 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
 
     if (pos == len) {
         return NULL;
-    }   
+    }
 
     // Copy the data and unescape the escaped characters
     size_t outlen = pos - 1 - escaped_chars;
     bstr *result = bstr_alloc(outlen);
     if (result == NULL) return NULL;
-    char *outptr = bstr_ptr(result);    
+    char *outptr = bstr_ptr(result);
     size_t outpos = 0;
 
     pos = 1;
-    while((pos < len)&&(outpos < outlen)) {
+    while ((pos < len) && (outpos < outlen)) {
         if (data[pos] == '\\') {
             if (pos + 1 < len) {
                 outptr[outpos++] = data[pos + 1];
@@ -2197,15 +2212,15 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
         } else if (data[pos] == '"') {
             break;
         }
-     
+
         outptr[outpos++] = data[pos++];
     }
 
-    bstr_len_adjust(result, outlen);   
+    bstr_len_adjust(result, outlen);
 
     if (endoffset != NULL) {
         *endoffset = pos;
     }
-    
+
     return result;
 }

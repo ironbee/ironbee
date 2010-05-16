@@ -38,8 +38,8 @@ int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
         return HTP_DATA_OTHER;
     }
 
-    // Continue to the next step to determine the presence
-    // of the request body
+    // Continue to the next step to determine 
+    // the presence of request body
     connp->in_state = htp_connp_REQ_BODY_DETERMINE;
 
     return HTP_OK;
@@ -333,6 +333,19 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // means that we're done with it
         connp->in_state = htp_connp_REQ_IDLE;
         connp->in_tx->progress = TX_PROGRESS_WAIT;
+    }
+
+    // Check for PUT requests, which we need to treat as file uploads
+    if (connp->in_tx->request_method_number == M_PUT) {
+        if (connp->in_tx->connp->in_tx->request_transfer_coding != 0) {
+            // Prepare to treat PUT request body as a file
+            connp->put_file = calloc(1, sizeof (htp_file_t));
+            connp->put_file->source = HTP_FILE_PUT;
+        } else {
+            // TODO PUT request without a body
+        }
+
+        return HTP_OK;
     }
 
     // Host resolution    
@@ -746,6 +759,13 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                 "Request callback returned error (%d)", rc);
             return HTP_ERROR;
+        }
+
+        // Clean-up
+        if (connp->put_file != NULL) {
+            bstr_free(&connp->put_file->filename);
+            free(connp->put_file);
+            connp->put_file = NULL;
         }
 
         // Start afresh

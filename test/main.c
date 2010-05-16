@@ -867,8 +867,8 @@ int main_dir(int argc, char** argv) {
 /**
  * Entry point; runs a bunch of tests and exits.
  */
-//int main(int argc, char** argv) {
-int main_tests(int argc, char** argv) {
+int main(int argc, char** argv) {
+//int main_tests(int argc, char** argv) {
     char buf[1025];
     int tests = 0, failures = 0;
 
@@ -919,6 +919,7 @@ int main_tests(int argc, char** argv) {
     htp_config_register_request_headers(cfg, callback_request_headers);
     //htp_config_register_request_headers_raw(cfg, callback_request_headers_raw);
     htp_config_register_request_body_data(cfg, callback_request_body_data);
+    htp_config_register_request_file_data(cfg, callback_request_file_data);
     htp_config_register_request_trailer(cfg, callback_request_trailer);
     htp_config_register_request(cfg, callback_request);
 
@@ -959,8 +960,8 @@ int main_tests(int argc, char** argv) {
     RUN_TEST(test_compressed_response_deflate, cfg);
      */
 
-    //RUN_TEST(test_misc, cfg);
-    RUN_TEST(test_multipart_1, cfg);
+    RUN_TEST(test_misc, cfg);
+    //RUN_TEST(test_multipart_1, cfg);
     //RUN_TEST(test_post_urlencoded, cfg);    
 
     printf("Tests: %i\n", tests);
@@ -1533,8 +1534,8 @@ int main_multipart1(int argc, char** argv) {
     // "\n--x6666x"
 }
 
-//int main_multipart2(int argc, char** argv) {
-int main(int argc, char** argv) {
+int main_multipart2(int argc, char** argv) {
+//int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
     char boundary[] = "---------------------------41184676334";
 

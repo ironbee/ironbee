@@ -137,6 +137,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
                 part->file = calloc(1, sizeof (htp_file_t));
                 // TODO
                 part->file->filename = bstr_memdup((char *) data + start, pos - start);
+                part->file->source = HTP_FILE_MULTIPART;
                 break;
             default:
                 // Ignore unknown parameter
@@ -283,8 +284,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
     }
 
     part->mpartp = mpartp;
-    part->mpartp->pieces_form_line = 0;
-    //part->file_fd = -1;
+    part->mpartp->pieces_form_line = 0;    
 
     bstr_builder_clear(mpartp->part_pieces);
 
@@ -359,6 +359,7 @@ int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char 
 
     file_data.tx = part->mpartp->connp->in_tx;
     file_data.file = part->file;
+    file_data.file->len += len;
     file_data.data = data;
     file_data.len = len;
 
@@ -606,7 +607,6 @@ htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
     mpartp->state = MULTIPART_STATE_BOUNDARY;
     mpartp->bpos = 2;
     mpartp->extract_limit = MULTIPART_DEFAULT_FILE_EXTRACT_LIMIT;
-
     mpartp->handle_data = htp_mpartp_handle_data;
     mpartp->handle_boundary = htp_mpartp_handle_boundary;
 
