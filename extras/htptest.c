@@ -98,7 +98,7 @@ void free_stream_data(stream_data *sd) {
             free(chunk);
         }
         
-        list_destroy(sd->chunks);
+        list_destroy(&sd->chunks);
     }
     
     // Free inbound chunks, if any
@@ -111,7 +111,7 @@ void free_stream_data(stream_data *sd) {
             free(chunk);
         }
         
-        list_destroy(sd->inbound_chunks);
+        list_destroy(&sd->inbound_chunks);
     }
     
     // Free outbound chunks, if any
@@ -124,7 +124,7 @@ void free_stream_data(stream_data *sd) {
             free(chunk);
         }
         
-        list_destroy(sd->outbound_chunks);
+        list_destroy(&sd->outbound_chunks);
     }
 
     // Close the stream file, if we have it open    
@@ -197,6 +197,8 @@ void process_stored_stream_data(stream_data *sd) {
 void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf) {
     chunk_t *chunk = NULL;
     int rc;
+    
+    //printf("#DATA direction %d bytes %d\n", sd->direction, hlf->count_new);
     
     if (sd->direction == direction) {
         // Inbound data
