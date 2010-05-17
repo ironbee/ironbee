@@ -940,7 +940,6 @@ int main(int argc, char** argv) {
     cfg->internal_encoding = "ISO-8859-1";
     cfg->parse_request_http_authentication = 1;
 
-    /*
     RUN_TEST(test_get, cfg);
     RUN_TEST(test_apache_header_parsing, cfg);
     RUN_TEST(test_post_urlencoded, cfg);
@@ -957,10 +956,9 @@ int main(int argc, char** argv) {
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_connect_extra, cfg);
-    RUN_TEST(test_compressed_response_deflate, cfg);
-     */
+    RUN_TEST(test_compressed_response_deflate, cfg);    
 
-    RUN_TEST(test_misc, cfg);
+    //RUN_TEST(test_misc, cfg);
     //RUN_TEST(test_multipart_1, cfg);
     //RUN_TEST(test_post_urlencoded, cfg);    
 
