@@ -42,7 +42,7 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
             bstr *name, *value;
             table_iterator_reset(d->tx->request_urlenp_body->params);
             while ((name = table_iterator_next(d->tx->request_urlenp_body->params, (void **) & value)) != NULL) {
-                d->tx->connp->cfg->parameter_processor(d->tx->request_params_query, name, value);
+                d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, name, value);
                 // TODO Check return code
             }
 
