@@ -473,6 +473,20 @@ void table_destroy(table_t **_table) {
     *_table = NULL;
 }
 
+int table_add(table_t *table, bstr *key, void *element) {
+    bstr *dupkey = bstr_strdup(key);
+    if (dupkey == NULL) {
+        return -1;
+    }
+
+    int rc = table_addn(table, dupkey, element);
+    if (rc == -1) {
+        free(dupkey);
+    }
+
+    return rc;
+}
+
 /**
  * Add a new table element. This function currently makes a copy of
  * the key, which is inefficient.
@@ -481,23 +495,15 @@ void table_destroy(table_t **_table) {
  * @param key
  * @param element
  */
-int table_add(table_t *table, bstr *key, void *element) {
-    // Lowercase key
-    bstr *lkey = bstr_dup_lower(key);
-    if (lkey == NULL) {
-        return -1;
-    }   
-
+int table_addn(table_t *table, bstr *key, void *element) {    
     // Add key
-    if (list_add(table->list, lkey) != 1) {
-        free(lkey);
+    if (list_add(table->list, key) != 1) {    
         return -1;
     }
 
     // Add element
     if (list_add(table->list, element) != 1) {
-        list_pop(table->list);
-        free(lkey);
+        list_pop(table->list);        
         return -1;
     }
 
@@ -508,6 +514,7 @@ int table_add(table_t *table, bstr *key, void *element) {
  * @param table
  * @param key
  */
+/*
 static void *table_get_internal(table_t *table, bstr *key) {
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
@@ -515,13 +522,14 @@ static void *table_get_internal(table_t *table, bstr *key) {
     list_iterator_reset(table->list);
     while ((ts = list_iterator_next(table->list)) != NULL) {
         void *data = list_iterator_next(table->list);
-        if (bstr_cmp(ts, key) == 0) {
+        if (bstr_cmp_nocase(ts, key) == 0) {
             return data;
         }
     }
 
     return NULL;
 }
+*/
 
 /**
  * Retrieve the first element in the table with the given
@@ -532,12 +540,18 @@ static void *table_get_internal(table_t *table, bstr *key) {
  * @return table element, or NULL if not found
  */
 void *table_getc(table_t *table, char *cstr) {
-    // TODO This is very inefficient
-    bstr *key = bstr_cstrdup(cstr);
-    bstr_tolowercase(key);
-    void *data = table_get_internal(table, key);
-    free(key);
-    return data;
+    // Iterate through the list, comparing
+    // keys with the parameter, return data if found.
+    bstr *ts = NULL;
+    list_iterator_reset(table->list);
+    while ((ts = list_iterator_next(table->list)) != NULL) {
+        void *data = list_iterator_next(table->list);
+        if (bstr_cmpc_nocase(ts, cstr) == 0) {
+            return data;
+        }
+    }
+
+    return NULL;
 }
 
 /**
@@ -548,11 +562,18 @@ void *table_getc(table_t *table, char *cstr) {
  * @return table element, or NULL if not found
  */
 void *table_get(table_t *table, bstr *key) {
-    // TODO This is very inefficient
-    bstr *lkey = bstr_dup_lower(key);
-    void *data = table_get_internal(table, lkey);
-    free(lkey);
-    return data;
+    // Iterate through the list, comparing
+    // keys with the parameter, return data if found.
+    bstr *ts = NULL;
+    list_iterator_reset(table->list);
+    while ((ts = list_iterator_next(table->list)) != NULL) {
+        void *data = list_iterator_next(table->list);
+        if (bstr_cmp_nocase(ts, key) == 0) {
+            return data;
+        }
+    }
+
+    return NULL;
 }
 
 /**
@@ -595,9 +616,7 @@ size_t table_size(table_t *table) {
  *
  * @param table
  */
-void table_clear(table_t *table) {    
-    // TODO Clear table by removing the existing elements
-    
+void table_clear(table_t *table) {        
     size_t size = list_size(table->list);
 
     list_destroy(&table->list);
