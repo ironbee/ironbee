@@ -74,6 +74,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         }
 
         data = (unsigned char *)bstr_ptr(tempstr);
+        len = bstr_len(tempstr);
     }
 
     // Now try to oparse the header

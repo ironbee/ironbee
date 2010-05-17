@@ -51,7 +51,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         int i = 0;
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);            
             len += bstr_len(hl->line);
         }
 
@@ -67,12 +67,13 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
             htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
             char *data = bstr_ptr(hl->line);
             size_t len = bstr_len(hl->line);
-            htp_chomp((unsigned char *)data, &len);
+            htp_chomp((unsigned char *)data, &len);            
             bstr_add_mem_noex(tempstr, data, len);
             hl->header = h;
         }
 
         data = (unsigned char *) bstr_ptr(tempstr);
+        len = bstr_len(tempstr);
     }
 
     // Now try to parse the header
