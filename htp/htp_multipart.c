@@ -306,6 +306,9 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
             unlink(part->file->tmpname);
             free(part->file->tmpname);
         }
+        
+        free(part->file);
+        part->file = NULL;
     }
 
     bstr_free(&part->name);

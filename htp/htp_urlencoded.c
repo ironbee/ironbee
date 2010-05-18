@@ -69,7 +69,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                     htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
                 }
                 
-                table_add(urlenp->params, name, value);
+                table_addn(urlenp->params, name, value);
 
                 #ifdef HTP_DEBUG
                 fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));
@@ -82,13 +82,11 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
             bstr *value = field;
             
             if (urlenp->decode_url_encoding) {                
-                //htp_uriencoding_normalize_inplace(name);
-                //htp_uriencoding_normalize_inplace(value);
                 htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
                 htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, value);
             }
 
-            table_add(urlenp->params, name, value);
+            table_addn(urlenp->params, name, value);
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));

@@ -34,6 +34,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     iconv_t cd = iconv_open(connp->cfg->internal_encoding, connp->cfg->request_encoding);
     if (cd == (iconv_t) - 1) {
         // TODO Report iconv initialization error
+        table_destroy(&output_params);
         return HTP_ERROR;
     }
 
@@ -54,6 +55,8 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
         htp_transcode_bstr(cd, name, &new_name);
         htp_transcode_bstr(cd, value, &new_value);
         if ((new_name == NULL)||(new_value == NULL)) {
+            iconv_close(cd);
+            table_destroy(&output_params);
             return HTP_ERROR;
         }
 
@@ -63,7 +66,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
         }
 
         // Add to new table
-        table_add(output_params, new_name, new_value);
+        table_addn(output_params, new_name, new_value);
     }
 
     // Replace the old parameter table
@@ -73,6 +76,8 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     if (destroy_old) {
         table_destroy(&input_params);
     }
+    
+    iconv_close(cd);
 
     return HTP_OK;
 }
@@ -83,7 +88,6 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
 
     bstr_builder_t *bb = NULL;
 
-    //size_t buflen = bstr_len(input) * 10;
     size_t buflen = 10;
     char *buf = malloc(buflen);
     if (buf == NULL) {
@@ -105,6 +109,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
                 if (bb == NULL) {
                     bb = bstr_builder_create();
                     if (bb == NULL) {
+                        free(buf);
                         return HTP_ERROR;
                     }
                 }
@@ -118,6 +123,8 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
                 loop = 1;
             } else {
                 // Error
+                if (bb != NULL) bstr_builder_destroy(bb);
+                free(buf);
                 return HTP_ERROR;
             }
         }
@@ -127,14 +134,21 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
         bstr_builder_append_mem(bb, buf, buflen - outleft);
         *output = bstr_builder_to_str(bb);
         if (*output == NULL) {
+            if (bb != NULL) bstr_builder_destroy(bb);
+            free(buf);
             return HTP_ERROR;
         }
     } else {
         *output = bstr_memdup(buf, buflen - outleft);
         if (*output == NULL) {
+            if (bb != NULL) bstr_builder_destroy(bb);
+            free(buf);
             return HTP_ERROR;
         }
     }
+    
+    if (bb != NULL) bstr_builder_destroy(bb);
+    free(buf);
 
     return HTP_OK;
 }

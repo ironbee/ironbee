@@ -44,7 +44,7 @@ int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
     bstr *new_value = bstr_strdup(value);
 
     // Add parameter to table
-    table_add(params, new_name, new_value);
+    table_addn(params, new_name, new_value);
 
     return HTP_OK;
 }

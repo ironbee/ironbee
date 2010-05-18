@@ -153,11 +153,21 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_urlenp_destroy(&tx->request_urlenp_body);
     htp_mpartp_destroy(&tx->request_mpartp);
 
-    if (tx->request_params_query_reused == 0) {
+    if ((tx->request_params_query_reused == 0)&&(tx->request_params_query != NULL)) {
+        bstr *val = NULL;
+        table_iterator_reset(tx->request_params_query);
+        while(table_iterator_next(tx->request_params_query, (void **) &val) != NULL) {
+            bstr_free(&val);
+        }
         table_destroy(&tx->request_params_query);
     }
 
-    if (tx->request_params_body_reused == 0) {
+    if ((tx->request_params_body_reused == 0)&&(tx->request_params_body != NULL)) {
+        bstr *val = NULL;
+        table_iterator_reset(tx->request_params_body);
+        while(table_iterator_next(tx->request_params_body, (void **) &val) != NULL) {
+            bstr_free(&val);
+        }
         table_destroy(&tx->request_params_body);
     }
 
