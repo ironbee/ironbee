@@ -70,6 +70,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                 }
                 
                 table_addn(urlenp->params, name, value);
+                urlenp->_name = NULL;
 
                 #ifdef HTP_DEBUG
                 fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));
@@ -87,6 +88,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
             }
 
             table_addn(urlenp->params, name, value);
+            urlenp->_name = NULL;
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, "NAME", (unsigned char *) bstr_ptr(name), bstr_len(name));
@@ -149,9 +151,10 @@ void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
 
     if (urlenp->params != NULL) {        
         // Destroy parameters
-        bstr *name, *value;
+        bstr *name = NULL;
+        bstr *value = NULL;
         table_iterator_reset(urlenp->params);
-        while ((name = table_iterator_next(urlenp->params, (void **) & value)) != NULL) {            
+        while ((name = table_iterator_next(urlenp->params, (void **) & value)) != NULL) {
             bstr_free(&value);
         }       
         

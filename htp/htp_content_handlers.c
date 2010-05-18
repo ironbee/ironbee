@@ -93,25 +93,36 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
             (unsigned char *) bstr_ptr(connp->in_tx->parsed_uri->query),
             bstr_len(connp->in_tx->parsed_uri->query));       
 
+        // Is there a parameter processor?
         if (connp->cfg->parameter_processor == NULL) {
-            // We are going to use the parser table directly
-            connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
-            connp->in_tx->request_params_query_reused = 1;
-
-            htp_transcode_params(connp, &connp->in_tx->request_params_query, 0);
+            // There's no parameter processor
+            
+            if (connp->cfg->internal_encoding == NULL) {
+                // No transcoding; use the parser table directly
+                connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
+                connp->in_tx->request_params_query_reused = 1;
+            } else {
+                // Transcode values
+                connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
+                htp_transcode_params(connp, &connp->in_tx->request_params_query, 0);
+            }
         } else {            
-            // We have a parameter processor defined, which means we'll
-            // need to create a new table
+            // We have a parameter processor defined, which 
+            // means we'll need to create a new table
+            
             connp->in_tx->request_params_query = table_create(table_size(connp->in_tx->request_urlenp_query->params));
 
-            // Transform parameters and store them into the new table
-            bstr *name, *value;
+            // Use the parameter processor on each parameter, storing
+            // the results in the newly created table
+            bstr *name = NULL;
+            bstr *value = NULL;
             table_iterator_reset(connp->in_tx->request_urlenp_query->params);
             while ((name = table_iterator_next(connp->in_tx->request_urlenp_query->params, (void **) & value)) != NULL) {
                 connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, value);
                 // TODO Check return code
             }
 
+            // Transcode as necessary
             htp_transcode_params(connp, &connp->in_tx->request_params_query, 1);
         }       
     }
