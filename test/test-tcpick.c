@@ -66,7 +66,7 @@ static int parse_chunk_info(char *buf, size_t *response_offset, size_t *response
 
     while (isspace(*p)) p++;
 
-    *response_offset = bstr_util_memtoip(p, strlen(p), 10, &lastlen);
+    *response_offset = bstr_util_mem_to_pint(p, strlen(p), 10, &lastlen);
 
     p += lastlen;
 
@@ -74,7 +74,7 @@ static int parse_chunk_info(char *buf, size_t *response_offset, size_t *response
     if (*p == '\0') return -1;
     p++;
 
-    *response_len = bstr_util_memtoip(p, strlen(p), 10, &lastlen);
+    *response_len = bstr_util_mem_to_pint(p, strlen(p), 10, &lastlen);
 
     return 1;
 }
@@ -228,7 +228,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
 }
 
 static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
-    char *request_line = bstr_tocstr(tx->request_line);
+    char *request_line = bstr_util_strdup_to_c(tx->request_line);
     htp_header_t *h_user_agent = table_getc(tx->request_headers, "user-agent");
     htp_header_t *h_referer = table_getc(tx->request_headers, "referer");
     char *referer, *user_agent;
@@ -241,12 +241,12 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
 
     if (h_user_agent == NULL) user_agent = strdup("-");
     else {
-        user_agent = bstr_tocstr(h_user_agent->value);
+        user_agent = bstr_util_strdup_to_c(h_user_agent->value);
     }
 
     if (h_referer == NULL) referer = strdup("-");
     else {
-        referer = bstr_tocstr(h_referer->value);
+        referer = bstr_util_strdup_to_c(h_referer->value);
     }
 
     printf("%s - - [%s] \"%s\" %i %i \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,

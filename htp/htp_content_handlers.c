@@ -59,7 +59,7 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
  */
 int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     // Check the request content type to see if it matches our MIME type
-    if ((connp->in_tx->request_content_type == NULL) || (bstr_cmpc(connp->in_tx->request_content_type, HTP_URLENCODED_MIME_TYPE) != 0)) {
+    if ((connp->in_tx->request_content_type == NULL) || (bstr_cmp_c(connp->in_tx->request_content_type, HTP_URLENCODED_MIME_TYPE) != 0)) {
         return HOOK_OK;
     }
 
@@ -172,7 +172,7 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
  */
 int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Check the request content type to see if it matches our MIME type
-    if ((connp->in_tx->request_content_type == NULL) || (bstr_cmpc(connp->in_tx->request_content_type, HTP_MULTIPART_MIME_TYPE) != 0)) {
+    if ((connp->in_tx->request_content_type == NULL) || (bstr_cmp_c(connp->in_tx->request_content_type, HTP_MULTIPART_MIME_TYPE) != 0)) {
         return HOOK_OK;
     }
 

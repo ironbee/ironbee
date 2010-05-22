@@ -52,7 +52,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
         return 0;
     }
 
-    if (bstr_indexofc(h->value, "form-data") != 0) {
+    if (bstr_index_of_c(h->value, "form-data") != 0) {
         return -1;
     }
 
@@ -130,13 +130,13 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
         switch (param_type) {
             case PARAM_NAME:
                 // TODO Unquote quoted characters
-                part->name = bstr_memdup((char *) data + start, pos - start);
+                part->name = bstr_dup_mem((char *) data + start, pos - start);
                 break;
             case PARAM_FILENAME:
                 // TODO Unquote quoted characters
                 part->file = calloc(1, sizeof (htp_file_t));
                 // TODO
-                part->file->filename = bstr_memdup((char *) data + start, pos - start);
+                part->file->filename = bstr_dup_mem((char *) data + start, pos - start);
                 part->file->source = HTP_FILE_MULTIPART;
                 break;
             default:
@@ -240,8 +240,8 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return -1;
 
-    h->name = bstr_memdup((char *) data + name_start, name_end - name_start);
-    h->value = bstr_memdup((char *) data + value_start, value_end - value_start);
+    h->name = bstr_dup_mem((char *) data + name_start, name_end - name_start);
+    h->value = bstr_dup_mem((char *) data + value_start, value_end - value_start);
 
     // Check if the header already exists
     htp_header_t * h_existing = table_get(part->headers, h->name);
@@ -250,7 +250,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
         h_existing->value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
             + 2 + bstr_len(h->value));
         bstr_add_mem_noex(h_existing->value, ", ", 2);
-        bstr_add_str_noex(h_existing->value, h->value);
+        bstr_add_noex(h_existing->value, h->value);
 
         // The header is no longer needed
         bstr_free(&h->name);

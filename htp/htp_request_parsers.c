@@ -103,19 +103,19 @@ htp_header_t *htp_connp_header_parse(htp_connp_t *reqp, unsigned char *data, siz
     if (reqp->impl_header_parse(data, len, h) < 0) {
         // Invalid header line
         h->is_parsed = 0;
-        h->name = bstr_memdup(data, len);
+        h->name = bstr_dup_mem(data, len);
 
         return h;
     }
 
     // Now extract the name and the value
-    h->name = bstr_memdup(data + h->name_offset, h->name_len);
-    h->value = bstr_memdup(data + h->value_offset, h->value_len);
+    h->name = bstr_dup_mem(data + h->name_offset, h->name_len);
+    h->value = bstr_dup_mem(data + h->value_offset, h->value_len);
     h->is_parsed = 1;
 
     // Because header names are case-insensitive, we will convert
     // the name to lowercase to use it as a lookup key.
-    h->name_lowercase = bstr_tolowercase(h->name);
+    h->name_lowercase = bstr_to_lowercase(h->name);
 
     return h;
 }

@@ -34,7 +34,8 @@ bstr *bstr_alloc(size_t len) {
 }
 
 /**
- * Deallocate a bstring. Allows a NULL bstring on input.
+ * Deallocate the supplied bstring and overwrite the supplied
+ * pointer to it. Allows a NULL bstring on input.
  *
  * @param b
  */
@@ -46,31 +47,41 @@ void bstr_free(bstr **b) {
 
 /**
  * Append source bstring to destination bstring, growing
- * destination if necessary.
+ * destination if necessary. If the string is expanded, the
+ * pointer will change. You must replace the original destination
+ * pointer with the returned one. Destination is not changed
+ * on memory allocation failure.
  *
  * @param destination
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_str(bstr *destination, bstr *source) {
+bstr *bstr_add(bstr *destination, bstr *source) {
     return bstr_add_mem(destination, bstr_ptr(source), bstr_len(source));
 }
 
 /**
  * Append a NUL-terminated source to destination, growing
- * destination if necessary.
+ * destination if necessary. If the string is expanded, the
+ * pointer will change. You must replace the original destination
+ * pointer with the returned one. Destination is not changed
+ * on memory allocation failure. Destination is not changed
+ * on memory allocation failure.
  *
  * @param destination
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_cstr(bstr *destination, char *source) {
+bstr *bstr_add_c(bstr *destination, char *source) {
     return bstr_add_mem(destination, source, strlen(source));
 }
 
 /**
  * Append a memory region to destination, growing destination
- * if necessary.
+ * if necessary. If the string is expanded, the
+ * pointer will change. You must replace the original destination
+ * pointer with the returned one. Destination is not changed
+ * on memory allocation failure.
  *
  * @param destination
  * @param data
@@ -78,11 +89,13 @@ bstr *bstr_add_cstr(bstr *destination, char *source) {
  * @return destination, at a potentially different memory location
  */
 bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {
+    // Expand the destination if necessary
     if (bstr_size(destination) < bstr_len(destination) + len) {
         destination = bstr_expand(destination, bstr_len(destination) + len);
         if (destination == NULL) return NULL;
     }
 
+    // Add source to destination
     bstr_t *b = (bstr_t *) destination;
     memcpy(bstr_ptr(destination) + b->len, data, len);
     b->len = b->len + len;
@@ -92,31 +105,38 @@ bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {
 
 /**
  * Append source bstring to destination bstring, growing
- * destination if necessary.
+ * destination if necessary. If the string is expanded, the
+ * pointer will change. You must replace the original destination
+ * pointer with the returned one. Destination is not changed
+ * on memory allocation failure.
  *
  * @param destination
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_str_noex(bstr *destination, bstr *source) {
+bstr *bstr_add_noex(bstr *destination, bstr *source) {
     return bstr_add_mem_noex(destination, bstr_ptr(source), bstr_len(source));
 }
 
 /**
  * Append a NUL-terminated source to destination, growing
- * destination if necessary.
+ * destination if necessary. If the string is expanded, the
+ * pointer will change. You must replace the original destination
+ * pointer with the returned one. Destination is not changed
+ * on memory allocation failure.
  *
  * @param destination
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_cstr_noex(bstr *destination, char *source) {
+bstr *bstr_add_c_noex(bstr *destination, char *source) {
     return bstr_add_mem_noex(destination, source, strlen(source));
 }
 
 /**
- * Append a memory region to destination, growing destination
- * if necessary.
+ * Append a memory region to destination. If there is not
+ * enough room in the destination, copy as many bytes as
+ * possible.
  *
  * @param destination
  * @param data
@@ -126,11 +146,13 @@ bstr *bstr_add_cstr_noex(bstr *destination, char *source) {
 bstr *bstr_add_mem_noex(bstr *destination, char *data, size_t len) {
     size_t copylen = len;
 
+    // Is there enough room in the destination?
     if (bstr_size(destination) < bstr_len(destination) + copylen) {
         copylen = bstr_size(destination) - bstr_len(destination);
         if (copylen <= 0) return destination;
     }
 
+    // Copy over the bytes
     bstr_t *b = (bstr_t *) destination;
     memcpy(bstr_ptr(destination) + b->len, data, copylen);
     b->len = b->len + copylen;
@@ -177,8 +199,8 @@ bstr *bstr_expand(bstr *s, size_t newsize) {
  * @param data
  * @return new bstring
  */
-bstr *bstr_cstrdup(char *data) {
-    return bstr_memdup(data, strlen(data));
+bstr *bstr_dup_c(char *data) {
+    return bstr_dup_mem(data, strlen(data));
 }
 
 /**
@@ -188,7 +210,7 @@ bstr *bstr_cstrdup(char *data) {
  * @param len
  * @return new bstring
  */
-bstr *bstr_memdup(char *data, size_t len) {
+bstr *bstr_dup_mem(char *data, size_t len) {
     bstr *b = bstr_alloc(len);
     if (b == NULL) return NULL;
     memcpy(bstr_ptr(b), data, len);
@@ -202,8 +224,8 @@ bstr *bstr_memdup(char *data, size_t len) {
  * @param b
  * @return new bstring
  */
-bstr *bstr_strdup(bstr *b) {
-    return bstr_strdup_ex(b, 0, bstr_len(b));
+bstr *bstr_dup(bstr *b) {
+    return bstr_dup_ex(b, 0, bstr_len(b));
 }
 
 /**
@@ -215,7 +237,7 @@ bstr *bstr_strdup(bstr *b) {
  * @param len
  * @return new bstring
  */
-bstr *bstr_strdup_ex(bstr *b, size_t offset, size_t len) {
+bstr *bstr_dup_ex(bstr *b, size_t offset, size_t len) {
     bstr *bnew = bstr_alloc(len);
     if (bnew == NULL) return NULL;
     memcpy(bstr_ptr(bnew), bstr_ptr(b) + offset, len);
@@ -231,7 +253,7 @@ bstr *bstr_strdup_ex(bstr *b, size_t offset, size_t len) {
  * @param len
  * @return new NUL-terminated string
  */
-char *bstr_memtocstr(char *data, size_t len) {
+char *bstr_util_memdup_to_c(char *data, size_t len) {
     // Count how many NUL bytes we have in the string.
     size_t i, nulls = 0;
     for (i = 0; i < len; i++) {
@@ -246,6 +268,7 @@ char *bstr_memtocstr(char *data, size_t len) {
     if (t == NULL) return NULL;
 
     while (len--) {
+        // TODO We have to at least escape the \ characters too
         // Escape NUL bytes, but just copy everything else.
         if (*data == '\0') {
             data++;
@@ -268,9 +291,9 @@ char *bstr_memtocstr(char *data, size_t len) {
  * @param b
  * @return new NUL-terminated string
  */
-char *bstr_tocstr(bstr *b) {
+char *bstr_util_strdup_to_c(bstr *b) {
     if (b == NULL) return NULL;
-    return bstr_memtocstr(bstr_ptr(b), bstr_len(b));
+    return bstr_util_memdup_to_c(bstr_ptr(b), bstr_len(b));
 }
 
 /**
@@ -320,7 +343,7 @@ int bstr_rchr(bstr *b, int c) {
 }
 
 /**
- * Compare two memory regions.
+ * Case-sensitive comparison of two memory regions.
  *
  * @param s1
  * @param l1
@@ -351,6 +374,15 @@ int bstr_cmp_ex(char *s1, size_t l1, char *s2, size_t l2) {
     }
 }
 
+/**
+ * Case-insensitive comparison of two memory regions.
+ *
+ * @param s1
+ * @param l1
+ * @param s2
+ * @param l2
+ * @return 0 if the memory regions are identical, -1 or +1 if they're not
+ */
 int bstr_cmp_nocase_ex(char *s1, size_t l1, char *s2, size_t l2) {
     size_t p1 = 0, p2 = 0;
 
@@ -375,22 +407,29 @@ int bstr_cmp_nocase_ex(char *s1, size_t l1, char *s2, size_t l2) {
 }
 
 /**
- * Compare a bstring with a NUL-terminated string.
+ * Case-sensitive comparison of a bstring with a NUL-terminated string.
  *
  * @param b
  * @param c
  * @return 0, -1 or +1
  */
-int bstr_cmpc(bstr *b, char *c) {
+int bstr_cmp_c(bstr *b, char *c) {
     return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
-int bstr_cmpc_nocase(bstr *b, char *c) {
+/**
+ * Case-insensitive comparison of a bstring with a NUL-terminated string.
+ *
+ * @param b
+ * @param c
+ * @return 0, -1 or +1
+ */
+int bstr_cmp_c_nocase(bstr *b, char *c) {
     return bstr_cmp_nocase_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
 /**
- * Compare two bstrings.
+ * Case-sensitive comparison two bstrings.
  *
  * @param b1
  * @param b2
@@ -400,6 +439,13 @@ int bstr_cmp(bstr *b1, bstr *b2) {
     return bstr_cmp_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
 
+/**
+ * Case-insensitive comparison two bstrings.
+ *
+ * @param b1
+ * @param b2
+ * @return 0, -1 or +1
+ */
 int bstr_cmp_nocase(bstr *b1, bstr *b2) {
     return bstr_cmp_nocase_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
@@ -410,7 +456,7 @@ int bstr_cmp_nocase(bstr *b1, bstr *b2) {
  * @param b
  * @return b
  */
-bstr *bstr_tolowercase(bstr *b) {
+bstr *bstr_to_lowercase(bstr *b) {
     if (b == NULL) return NULL;
 
     unsigned char *data = (unsigned char *) bstr_ptr(b);
@@ -432,14 +478,21 @@ bstr *bstr_tolowercase(bstr *b) {
  * @return bstring copy
  */
 bstr *bstr_dup_lower(bstr *b) {
-    return bstr_tolowercase(bstr_strdup(b));
+    return bstr_to_lowercase(bstr_dup(b));
 }
 
 /**
+ * Convert the memory region into a positive integer.
  *
+ * @param data Pointer to the start of the memory region.
+ * @param len Length of the memory region.
+ * @param base The desired base.
+ * @param lastlen Points to the first unused byte in the region
+ * @return the number, or -1 if there wasn't a single valid digit, -2
+ *         if there was an overflow
  */
-int bstr_util_memtoip(char *data, size_t len, int base, size_t *lastlen) {
-    int rval = 0, tval = 0, tflag = 0;
+int64_t bstr_util_mem_to_pint(char *data, size_t len, int base, size_t *lastlen) {
+    int64_t rval = 0, tval = 0, tflag = 0;
 
     size_t i = *lastlen = 0;
     for (i = 0; i < len; i++) {
@@ -499,14 +552,14 @@ int bstr_util_memtoip(char *data, size_t len, int base, size_t *lastlen) {
 }
 
 /**
- * Find needle in a haystack.
+ * Find needle in haystack.
  *
  * @param haystack
  * @param needle
- * @return
+ * @return position of the match, or -1 if there is no match
  */
-int bstr_indexof(bstr *haystack, bstr *needle) {
-    return bstr_indexofmem(haystack, bstr_ptr(needle), bstr_len(needle));
+int bstr_index_of(bstr *haystack, bstr *needle) {
+    return bstr_index_of_mem(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
 /**
@@ -514,10 +567,10 @@ int bstr_indexof(bstr *haystack, bstr *needle) {
  *
  * @param haystack
  * @param needle
- * @return
+ * @return position of the match, or -1 if there is no match
  */
-int bstr_indexofc(bstr *haystack, char *needle) {
-    return bstr_indexofmem(haystack, needle, strlen(needle));
+int bstr_index_of_c(bstr *haystack, char *needle) {
+    return bstr_index_of_mem(haystack, needle, strlen(needle));
 }
 
 /**
@@ -525,10 +578,10 @@ int bstr_indexofc(bstr *haystack, char *needle) {
  *
  * @param haystack
  * @param needle
- * @return
+ * @return position of the match, or -1 if there is no match
  */
-int bstr_indexof_nocase(bstr *haystack, bstr *needle) {
-    return bstr_indexofmem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
+int bstr_index_of_nocase(bstr *haystack, bstr *needle) {
+    return bstr_index_of_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
 /**
@@ -537,10 +590,10 @@ int bstr_indexof_nocase(bstr *haystack, bstr *needle) {
  *
  * @param haystack
  * @param needle
- * @return
+ * @return position of the match, or -1 if there is no match
  */
-int bstr_indexofc_nocase(bstr *haystack, char *needle) {
-    return bstr_indexofmem_nocase(haystack, needle, strlen(needle));
+int bstr_index_of_c_nocase(bstr *haystack, char *needle) {
+    return bstr_index_of_mem_nocase(haystack, needle, strlen(needle));
 }
 
 /**
@@ -549,9 +602,9 @@ int bstr_indexofc_nocase(bstr *haystack, char *needle) {
  * @param haystack
  * @param data2
  * @param len2
- * @return
+ * @return position of the match, or -1 if there is no match
  */
-int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
+int bstr_index_of_mem(bstr *haystack, char *data2, size_t len2) {
     unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
@@ -581,9 +634,9 @@ int bstr_indexofmem(bstr *haystack, char *data2, size_t len2) {
  * @param haystack
  * @param data2
  * @param len2
- * @return
+ * @return position of the match, or -1 if there is no match
  */
-int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
+int bstr_index_of_mem_nocase(bstr *haystack, char *data2, size_t len2) {
     unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
@@ -605,7 +658,8 @@ int bstr_indexofmem_nocase(bstr *haystack, char *data2, size_t len2) {
 }
 
 /**
- * Remove one byte from the end of the string.
+ * Remove one byte from the end of the string, provided
+ * the it contains at least one byte.
  *
  * @param s
  */
@@ -624,7 +678,7 @@ void bstr_chop(bstr *s) {
  * @param s
  * @param newlen
  */
-void bstr_len_adjust(bstr *s, size_t newlen) {
+void bstr_util_adjust_len(bstr *s, size_t newlen) {
     bstr_t *b = (bstr_t *) s;
     b->len = newlen;
 }
@@ -636,7 +690,7 @@ void bstr_len_adjust(bstr *s, size_t newlen) {
  * @param pos
  * @return the character, or -1 if the bstring is too short
  */
-char bstr_char_at(bstr *s, size_t pos) {
+unsigned char bstr_char_at(bstr *s, size_t pos) {
     unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -644,6 +698,13 @@ char bstr_char_at(bstr *s, size_t pos) {
     return data[pos];
 }
 
+/**
+ * Checks whether bstring begins with memory block. Case sensitive.
+ *
+ * @param haystack
+ * @param needle
+ * @return 1 if true, otherwise
+ */
 int bstr_begins_with_mem(bstr *haystack, char *data, size_t len) {
     char *hdata = bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
@@ -664,6 +725,13 @@ int bstr_begins_with_mem(bstr *haystack, char *data, size_t len) {
     }
 }
 
+/**
+ * Checks whether bstring begins with memory block. Case insensitive.
+ *
+ * @param haystack
+ * @param needle
+ * @return 1 if true, otherwise
+ */
 int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len) {
     char *hdata = bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
@@ -684,18 +752,46 @@ int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len) {
     }
 }
 
+/**
+ * Checks whether bstring begins with another bstring. Case sensitive.
+ * 
+ * @param haystack
+ * @param needle
+ * @return 1 if true, otherwise
+ */
 int bstr_begins_with(bstr *haystack, bstr *needle) {
     return bstr_begins_with_mem(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
+/**
+ * Checks whether bstring begins with NUL-terminated string. Case sensitive.
+ *
+ * @param haystack
+ * @param needle
+ * @return
+ */
 int bstr_begins_with_c(bstr *haystack, char *needle) {
     return bstr_begins_with_mem(haystack, needle, strlen(needle));
 }
 
+/**
+ * Checks whether bstring begins with another bstring. Case insensitive.
+ *
+ * @param haystack
+ * @param needle
+ * @return 1 if true, 0 otherwise
+ */
 int bstr_begins_with_nocase(bstr *haystack, bstr *needle) {
     return bstr_begins_with_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
-int bstr_begins_with_c_nocase(bstr *haystack, char *needle) {
+/**
+ * Checks whether bstring begins with NUL-terminated string. Case insensitive.
+ *
+ * @param haystack
+ * @param needle
+ * @return 1 if true, 0 otherwise
+ */
+int bstr_begins_withc_nocase(bstr *haystack, char *needle) {
     return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
 }

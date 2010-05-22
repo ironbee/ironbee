@@ -25,11 +25,8 @@ typedef void * bstr;
 #include "bstr_builder.h"
 
 // IMPORTANT This binary string library is used internally by the parser and you should
-//           not rely on it in your code. The implementation may change.
-//
-// TODO
-//           - Add a function that wraps an existing data
-//           - Support Unicode bstrings
+//           not rely on it in your code. The interface and the implementation may change
+//           without warning.
 
 struct bstr_t {
     /** The length of the string stored in the buffer. */
@@ -40,8 +37,8 @@ struct bstr_t {
      */
     size_t size;
 
-    /** Optional buffer pointer. If this pointer is NUL (as it currently is
-     *  in virtually all cases, the string buffer will immediatelly follow
+    /** Optional buffer pointer. If this pointer is NULL (as it currently is
+     *  in virtually all cases) the string buffer will immediatelly follow
      *  this structure. If the pointer is not NUL, it points to the actual
      *  buffer used, and there's no data following this structure.
      */
@@ -59,56 +56,54 @@ struct bstr_t {
 // Functions
 
 bstr *bstr_alloc(size_t newsize);
-void bstr_free(bstr **s);
+ void bstr_free(bstr **s);
 bstr *bstr_expand(bstr *s, size_t newsize);
-bstr *bstr_cstrdup(char *);
-bstr *bstr_memdup(char *data, size_t len);
-bstr *bstr_strdup(bstr *b);
-bstr *bstr_strdup_ex(bstr *b, size_t offset, size_t len);
-char *bstr_tocstr(bstr *);
 
-int bstr_chr(bstr *, int);
-int bstr_rchr(bstr *, int);
-
-int bstr_cmpc(bstr *, char *);
-int bstr_cmp(bstr *, bstr *);
-int bstr_cmpc_nocase(bstr *, char *);
-int bstr_cmp_nocase(bstr *, bstr *);
+bstr *bstr_dup(bstr *b);
+bstr *bstr_dup_ex(bstr *b, size_t offset, size_t len);
+bstr *bstr_dup_c(char *);
+bstr *bstr_dup_mem(char *data, size_t len);
 
 bstr *bstr_dup_lower(bstr *);
-bstr *bstr_tolowercase(bstr *);
 
+  int bstr_chr(bstr *, int);
+  int bstr_rchr(bstr *, int);
+
+  int bstr_cmp(bstr *, bstr *);
+  int bstr_cmp_nocase(bstr *, bstr *);
+  int bstr_cmp_c(bstr *, char *);
+  int bstr_cmp_c_nocase(bstr *, char *);
+
+bstr *bstr_to_lowercase(bstr *);
+
+bstr *bstr_add(bstr *, bstr *);
+bstr *bstr_add_c(bstr *, char *);
 bstr *bstr_add_mem(bstr *, char *, size_t);
-bstr *bstr_add_str(bstr *, bstr *);
-bstr *bstr_add_cstr(bstr *, char *);
 
+bstr *bstr_add_noex(bstr *, bstr *);
+bstr *bstr_add_c_noex(bstr *, char *);
 bstr *bstr_add_mem_noex(bstr *, char *, size_t);
-bstr *bstr_add_str_noex(bstr *, bstr *);
-bstr *bstr_add_cstr_noex(bstr *, char *);
 
-int bstr_util_memtoip(char *data, size_t len, int base, size_t *lastlen);
-char *bstr_memtocstr(char *data, size_t len);
+  int bstr_index_of(bstr *haystack, bstr *needle);
+  int bstr_index_of_nocase(bstr *haystack, bstr *needle);
+  int bstr_index_of_c(bstr *haystack, char *needle);
+  int bstr_index_of_c_nocase(bstr *haystack, char *needle);
+  int bstr_index_of_mem(bstr *haystack, char *data, size_t len);
+  int bstr_index_of_mem_nocase(bstr *haystack, char *data, size_t len);
 
-int bstr_indexof(bstr *haystack, bstr *needle);
-int bstr_indexofc(bstr *haystack, char *needle);
-int bstr_indexof_nocase(bstr *haystack, bstr *needle);
-int bstr_indexofc_nocase(bstr *haystack, char *needle);
-int bstr_indexofmem(bstr *haystack, char *data, size_t len);
-int bstr_indexofmem_nocase(bstr *haystack, char *data, size_t len);
+  int bstr_begins_with_mem(bstr *haystack, char *data, size_t len);
+  int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len);
+  int bstr_begins_with(bstr *haystack, bstr *needle);
+  int bstr_begins_with_c(bstr *haystack, char *needle);
+  int bstr_begins_with_nocase(bstr *haystack, bstr *needle);
+  int bstr_begins_withc_nocase(bstr *haystack, char *needle);
 
-int bstr_begins_with_mem(bstr *haystack, char *data, size_t len);
-int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len);
-int bstr_begins_with(bstr *haystack, bstr *needle);
-int bstr_begins_with_c(bstr *haystack, char *needle);
-int bstr_begins_with_nocase(bstr *haystack, bstr *needle);
-int bstr_begins_with_c_nocase(bstr *haystack, char *needle);
+unsigned char bstr_char_at(bstr *s, size_t pos);
 
-void bstr_chop(bstr *b);
-void bstr_len_adjust(bstr *s, size_t newlen);
-
-char bstr_char_at(bstr *s, size_t pos);
-
-
+   void bstr_chop(bstr *b);
+   void bstr_util_adjust_len(bstr *s, size_t newlen);
+int64_t bstr_util_mem_to_pint(char *data, size_t len, int base, size_t *lastlen);
+  char *bstr_util_memdup_to_c(char *data, size_t len);
+  char *bstr_util_strdup_to_c(bstr *);
 
 #endif	/* _BSTR_H */
-

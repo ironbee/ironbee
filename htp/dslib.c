@@ -474,7 +474,7 @@ void table_destroy(table_t **_table) {
 }
 
 int table_add(table_t *table, bstr *key, void *element) {
-    bstr *dupkey = bstr_strdup(key);
+    bstr *dupkey = bstr_dup(key);
     if (dupkey == NULL) {
         return -1;
     }
@@ -546,7 +546,7 @@ void *table_getc(table_t *table, char *cstr) {
     list_iterator_reset(table->list);
     while ((ts = list_iterator_next(table->list)) != NULL) {
         void *data = list_iterator_next(table->list);
-        if (bstr_cmpc_nocase(ts, cstr) == 0) {
+        if (bstr_cmp_c_nocase(ts, cstr) == 0) {
             return data;
         }
     }

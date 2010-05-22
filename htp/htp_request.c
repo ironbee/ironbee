@@ -264,7 +264,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     // would indicate a chunked request body
     if (te != NULL) {
         // Make sure it contains "chunked" only
-        if (bstr_cmpc(te->value, "chunked") != 0) {
+        if (bstr_cmp_c(te->value, "chunked") != 0) {
             // Invalid T-E header value
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                 "Invalid T-E value in request");
@@ -387,7 +387,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         while (newlen < len) {
             // TODO Some platforms may do things differently here
             if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
-                bstr_len_adjust(connp->in_tx->request_content_type, newlen);
+                bstr_util_adjust_len(connp->in_tx->request_content_type, newlen);
                 break;
             }
 
@@ -548,7 +548,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             }
 
             // Add the raw header line to the list
-            connp->in_header_line->line = bstr_memdup((char *) connp->in_line, connp->in_line_len + chomp_result);
+            connp->in_header_line->line = bstr_dup_mem((char *) connp->in_line, connp->in_line_len + chomp_result);
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 
@@ -629,7 +629,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
             // Process request line
 
             htp_chomp(connp->in_line, &connp->in_line_len);
-            connp->in_tx->request_line = bstr_memdup((char *) connp->in_line, connp->in_line_len);
+            connp->in_tx->request_line = bstr_dup_mem((char *) connp->in_line, connp->in_line_len);
 
             // Parse request line
             if (connp->cfg->parse_request_line(connp) != HTP_OK) {
@@ -679,11 +679,11 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
                 // Scheme
                 if (connp->in_tx->parsed_uri->scheme != NULL) {
-                    if (bstr_cmpc(connp->in_tx->parsed_uri->scheme, "http") != 0) {
+                    if (bstr_cmp_c(connp->in_tx->parsed_uri->scheme, "http") != 0) {
                         // TODO Invalid scheme
                     }
                 } else {
-                    connp->in_tx->parsed_uri->scheme = bstr_cstrdup("http");
+                    connp->in_tx->parsed_uri->scheme = bstr_dup_c("http");
                 }
 
                 // Port
@@ -708,7 +708,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
                 // Path
                 if (connp->in_tx->parsed_uri->path == NULL) {
-                    connp->in_tx->parsed_uri->path = bstr_cstrdup("/");
+                    connp->in_tx->parsed_uri->path = bstr_dup_c("/");
                 }
             }
 

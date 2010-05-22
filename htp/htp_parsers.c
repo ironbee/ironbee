@@ -69,7 +69,7 @@ int htp_parse_status(bstr *status) {
  */
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {    
     // Extract the username
-    int i = bstr_indexofc(auth_header->value, "username=");
+    int i = bstr_index_of_c(auth_header->value, "username=");
     if (i == -1) return HTP_ERROR;   
 
     char *data = bstr_ptr(auth_header->value);
@@ -107,11 +107,11 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
     bstr *decoded = htp_base64_decode_mem(data + pos, len - pos);
 
     // Now extract the username and password
-    int i = bstr_indexofc(decoded, ":");
+    int i = bstr_index_of_c(decoded, ":");
     if (i == -1) return HTP_ERROR;
 
-    connp->in_tx->request_auth_username = bstr_strdup_ex(decoded, 0, i);
-    connp->in_tx->request_auth_password = bstr_strdup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);
+    connp->in_tx->request_auth_username = bstr_dup_ex(decoded, 0, i);
+    connp->in_tx->request_auth_password = bstr_dup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);
 
     bstr_free(&decoded);
 
@@ -127,11 +127,11 @@ int htp_parse_authorization(htp_connp_t *connp) {
     htp_header_t *auth_header = table_getc(connp->in_tx->request_headers, "authorization");
     if (auth_header == NULL) return HTP_OK;
 
-    if (bstr_begins_with_c_nocase(auth_header->value, "basic")) {
+    if (bstr_begins_withc_nocase(auth_header->value, "basic")) {
         // Basic authentication
         connp->in_tx->request_auth_type = HTP_AUTH_BASIC;
         return htp_parse_authorization_basic(connp, auth_header);
-    } else if (bstr_begins_with_c_nocase(auth_header->value, "digest")) {
+    } else if (bstr_begins_withc_nocase(auth_header->value, "digest")) {
         // Digest authentication
         connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;
         return htp_parse_authorization_digest(connp, auth_header);

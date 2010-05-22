@@ -111,7 +111,7 @@ int bstr_builder_append(bstr_builder_t *bb, bstr *b) {
  * @return Success indication
  */
 int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len) {
-    bstr *b = bstr_memdup(data, len);
+    bstr *b = bstr_dup_mem(data, len);
     if (b == NULL) return -1; // TODO Is the return code correct?
     return list_push(bb->pieces, b);
 }
@@ -125,7 +125,7 @@ int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len) {
  * @return Success indication
  */
 int bstr_builder_append_cstr(bstr_builder_t *bb, char *cstr) {
-    bstr *b = bstr_cstrdup(cstr);
+    bstr *b = bstr_dup_c(cstr);
     if (b == NULL) return -1; // TODO Is the return code correct?
     return list_push(bb->pieces, b);
 }
@@ -154,7 +154,7 @@ bstr * bstr_builder_to_str(bstr_builder_t *bb) {
     // Determine the size of the string
     list_iterator_reset(bb->pieces);
     while ((b = list_iterator_next(bb->pieces)) != NULL) {
-        bstr_add_str_noex(bnew, b);
+        bstr_add_noex(bnew, b);
     }
 
     return bnew;

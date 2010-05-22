@@ -51,7 +51,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
         } else {
             // We only have the current piece to work with, so
             // no need to involve the string builder
-            field = bstr_memdup((char *) data + startpos, endpos - startpos);
+            field = bstr_dup_mem((char *) data + startpos, endpos - startpos);
         }
 
         // Process the field differently, depending on the current state
@@ -62,7 +62,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
             if (urlenp->_complete) {
                 // Param with key but no value
                 bstr *name = urlenp->_name;
-                bstr *value = bstr_cstrdup("");
+                bstr *value = bstr_dup_c("");
 
                 if (urlenp->decode_url_encoding) {                    
                     // htp_uriencoding_normalize_inplace(name);

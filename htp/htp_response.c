@@ -302,9 +302,9 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     if (connp->cfg->response_decompression_enabled) {
         htp_header_t *ce = table_getc(connp->out_tx->response_headers, "content-encoding");
         if (ce != NULL) {
-            if ((bstr_cmpc(ce->value, "gzip") == 0) || (bstr_cmpc(ce->value, "x-gzip") == 0)) {
+            if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
                 connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
-            } else if ((bstr_cmpc(ce->value, "deflate") == 0) || (bstr_cmpc(ce->value, "x-deflate") == 0)) {
+            } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
                 connp->out_tx->response_content_encoding = COMPRESSION_DEFLATE;
             }
 
@@ -340,7 +340,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
-        if ((te != NULL) && (bstr_cmpc(te->value, "chunked") == 0)) {
+        if ((te != NULL) && (bstr_cmp_c(te->value, "chunked") == 0)) {
             // If the T-E header is present we are going to use it.
             connp->out_tx->response_transfer_coding = CHUNKED;
 
@@ -393,7 +393,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             if (ct != NULL) {
                 // TODO Handle multipart/byteranges
 
-                if (bstr_indexofc_nocase(ct->value, "multipart/byteranges") != -1) {
+                if (bstr_index_of_c_nocase(ct->value, "multipart/byteranges") != -1) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "C-T multipart/byteranges in responses not supported");
                     return HTP_ERROR;
@@ -526,7 +526,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
             }
 
             // Add the raw header line to the list
-            connp->out_header_line->line = bstr_memdup((char *) connp->out_line, connp->out_line_len + chomp_result);
+            connp->out_header_line->line = bstr_dup_mem((char *) connp->out_line, connp->out_line_len + chomp_result);
             list_add(connp->out_tx->response_header_lines, connp->out_header_line);
             connp->out_header_line = NULL;
 
@@ -594,7 +594,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 bstr_free(&connp->out_tx->response_message);
             }
 
-            connp->out_tx->response_line = bstr_memdup((char *) connp->out_line, connp->out_line_len);
+            connp->out_tx->response_line = bstr_dup_mem((char *) connp->out_line, connp->out_line_len);
 
             // Parse response line
             if (connp->cfg->parse_response_line(connp) != HTP_OK) {

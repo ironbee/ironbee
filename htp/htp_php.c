@@ -27,7 +27,7 @@ int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
 
     while ((pos < len) && (isspace((int)data[pos]))) pos++;
 
-    bstr * new_name = bstr_memdup(data + pos, len - pos);
+    bstr * new_name = bstr_dup_mem(data + pos, len - pos);
 
     // Convert the remaining whitespace underscores
     data = bstr_ptr(new_name);
@@ -41,7 +41,7 @@ int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
 
     // Value transformation
     // TODO Support parameter value transformation
-    bstr *new_value = bstr_strdup(value);
+    bstr *new_value = bstr_dup(value);
 
     // Add parameter to table
     table_addn(params, new_name, new_value);

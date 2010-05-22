@@ -124,7 +124,7 @@ bstr *htp_base64_decode_mem(char *data, size_t len) {
 
     int resulting_len = htp_base64_decode(&decoder, data, len, tmpstr, len);
     if (resulting_len > 0) {
-        r = bstr_memdup(tmpstr, resulting_len);
+        r = bstr_dup_mem(tmpstr, resulting_len);
     }
 
     free(tmpstr);

@@ -32,8 +32,8 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
 
     if (pos == len) {
         // Just a name and no value        
-        bstr *name = bstr_memdup(data, pos);
-        bstr *value = bstr_cstrdup("");
+        bstr *name = bstr_dup_mem(data, pos);
+        bstr *value = bstr_dup_c("");
         
         if (connp->cfg->parameter_processor == NULL) {            
             table_add(connp->in_tx->request_cookies, name, value);
@@ -42,8 +42,8 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
         }
     } else {
         // Cookie has name and value        
-        bstr *name = bstr_memdup(data, pos);
-        bstr *value = bstr_memdup(data + pos + 1, len - pos - 1);
+        bstr *name = bstr_dup_mem(data, pos);
+        bstr *value = bstr_dup_mem(data + pos + 1, len - pos - 1);
 
         if (connp->cfg->parameter_processor == NULL) {
             table_add(connp->in_tx->request_cookies, name, value);

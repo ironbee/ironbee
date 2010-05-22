@@ -148,34 +148,34 @@ int htp_is_space(int c) {
  */
 int htp_convert_method_to_number(bstr *method) {
     // TODO Optimize using parallel matching, or something similar
-    if (bstr_cmpc(method, "GET") == 0) return M_GET;
-    if (bstr_cmpc(method, "PUT") == 0) return M_PUT;
-    if (bstr_cmpc(method, "POST") == 0) return M_POST;
-    if (bstr_cmpc(method, "DELETE") == 0) return M_DELETE;
-    if (bstr_cmpc(method, "CONNECT") == 0) return M_CONNECT;
-    if (bstr_cmpc(method, "OPTIONS") == 0) return M_OPTIONS;
-    if (bstr_cmpc(method, "TRACE") == 0) return M_TRACE;
-    if (bstr_cmpc(method, "PATCH") == 0) return M_PATCH;
-    if (bstr_cmpc(method, "PROPFIND") == 0) return M_PROPFIND;
-    if (bstr_cmpc(method, "PROPPATCH") == 0) return M_PROPPATCH;
-    if (bstr_cmpc(method, "MKCOL") == 0) return M_MKCOL;
-    if (bstr_cmpc(method, "COPY") == 0) return M_COPY;
-    if (bstr_cmpc(method, "MOVE") == 0) return M_MOVE;
-    if (bstr_cmpc(method, "LOCK") == 0) return M_LOCK;
-    if (bstr_cmpc(method, "UNLOCK") == 0) return M_UNLOCK;
-    if (bstr_cmpc(method, "VERSION_CONTROL") == 0) return M_VERSION_CONTROL;
-    if (bstr_cmpc(method, "CHECKOUT") == 0) return M_CHECKOUT;
-    if (bstr_cmpc(method, "UNCHECKOUT") == 0) return M_UNCHECKOUT;
-    if (bstr_cmpc(method, "CHECKIN") == 0) return M_CHECKIN;
-    if (bstr_cmpc(method, "UPDATE") == 0) return M_UPDATE;
-    if (bstr_cmpc(method, "LABEL") == 0) return M_LABEL;
-    if (bstr_cmpc(method, "REPORT") == 0) return M_REPORT;
-    if (bstr_cmpc(method, "MKWORKSPACE") == 0) return M_MKWORKSPACE;
-    if (bstr_cmpc(method, "MKACTIVITY") == 0) return M_MKACTIVITY;
-    if (bstr_cmpc(method, "BASELINE_CONTROL") == 0) return M_BASELINE_CONTROL;
-    if (bstr_cmpc(method, "MERGE") == 0) return M_MERGE;
-    if (bstr_cmpc(method, "INVALID") == 0) return M_INVALID;
-    if (bstr_cmpc(method, "HEAD") == 0) return M_HEAD;
+    if (bstr_cmp_c(method, "GET") == 0) return M_GET;
+    if (bstr_cmp_c(method, "PUT") == 0) return M_PUT;
+    if (bstr_cmp_c(method, "POST") == 0) return M_POST;
+    if (bstr_cmp_c(method, "DELETE") == 0) return M_DELETE;
+    if (bstr_cmp_c(method, "CONNECT") == 0) return M_CONNECT;
+    if (bstr_cmp_c(method, "OPTIONS") == 0) return M_OPTIONS;
+    if (bstr_cmp_c(method, "TRACE") == 0) return M_TRACE;
+    if (bstr_cmp_c(method, "PATCH") == 0) return M_PATCH;
+    if (bstr_cmp_c(method, "PROPFIND") == 0) return M_PROPFIND;
+    if (bstr_cmp_c(method, "PROPPATCH") == 0) return M_PROPPATCH;
+    if (bstr_cmp_c(method, "MKCOL") == 0) return M_MKCOL;
+    if (bstr_cmp_c(method, "COPY") == 0) return M_COPY;
+    if (bstr_cmp_c(method, "MOVE") == 0) return M_MOVE;
+    if (bstr_cmp_c(method, "LOCK") == 0) return M_LOCK;
+    if (bstr_cmp_c(method, "UNLOCK") == 0) return M_UNLOCK;
+    if (bstr_cmp_c(method, "VERSION_CONTROL") == 0) return M_VERSION_CONTROL;
+    if (bstr_cmp_c(method, "CHECKOUT") == 0) return M_CHECKOUT;
+    if (bstr_cmp_c(method, "UNCHECKOUT") == 0) return M_UNCHECKOUT;
+    if (bstr_cmp_c(method, "CHECKIN") == 0) return M_CHECKIN;
+    if (bstr_cmp_c(method, "UPDATE") == 0) return M_UPDATE;
+    if (bstr_cmp_c(method, "LABEL") == 0) return M_LABEL;
+    if (bstr_cmp_c(method, "REPORT") == 0) return M_REPORT;
+    if (bstr_cmp_c(method, "MKWORKSPACE") == 0) return M_MKWORKSPACE;
+    if (bstr_cmp_c(method, "MKACTIVITY") == 0) return M_MKACTIVITY;
+    if (bstr_cmp_c(method, "BASELINE_CONTROL") == 0) return M_BASELINE_CONTROL;
+    if (bstr_cmp_c(method, "MERGE") == 0) return M_MERGE;
+    if (bstr_cmp_c(method, "INVALID") == 0) return M_INVALID;
+    if (bstr_cmp_c(method, "HEAD") == 0) return M_HEAD;
 
     return M_UNKNOWN;
 }
@@ -254,7 +254,7 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
     while ((pos < len) && (htp_is_lws(data[pos]))) pos++;
     if (pos == len) return -1001;
 
-    int r = bstr_util_memtoip((char *) data + pos, len - pos, base, &pos);
+    int r = bstr_util_mem_to_pint((char *) data + pos, len - pos, base, &pos);
     if (r < 0) return r;
 
     // Ignore LWS after
@@ -411,13 +411,13 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
     int colon = bstr_chr(authority, ':');
     if (colon == -1) {
         // Hostname alone
-        (*uri)->hostname = bstr_strdup(authority);
+        (*uri)->hostname = bstr_dup(authority);
         htp_normalize_hostname_inplace((*uri)->hostname);
     } else {
         // Hostname and port
 
         // Hostname
-        (*uri)->hostname = bstr_strdup_ex(authority, 0, colon);
+        (*uri)->hostname = bstr_dup_ex(authority, 0, colon);
         // TODO Handle whitespace around hostname
         htp_normalize_hostname_inplace((*uri)->hostname);
 
@@ -481,7 +481,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
             pos = 0;
         } else {
             // Make a copy of the scheme
-            (*uri)->scheme = bstr_memdup(data + start, pos - start);
+            (*uri)->scheme = bstr_dup_mem(data + start, pos - start);
 
             // Go over the colon
             pos++;
@@ -519,11 +519,11 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
                 m = memchr(credentials_start, ':', credentials_len);
                 if (m != NULL) {
                     // Username and password
-                    (*uri)->username = bstr_memdup(credentials_start, m - credentials_start);
-                    (*uri)->password = bstr_memdup(m + 1, credentials_len - (m - credentials_start) - 1);
+                    (*uri)->username = bstr_dup_mem(credentials_start, m - credentials_start);
+                    (*uri)->password = bstr_dup_mem(m + 1, credentials_len - (m - credentials_start) - 1);
                 } else {
                     // Username alone
-                    (*uri)->username = bstr_memdup(credentials_start, credentials_len);
+                    (*uri)->username = bstr_dup_mem(credentials_start, credentials_len);
                 }
             } else {
                 // No credentials
@@ -538,7 +538,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
                 hostname_len = hostname_len - port_len - 1;
 
                 // Port string
-                (*uri)->port = bstr_memdup(m + 1, port_len);
+                (*uri)->port = bstr_dup_mem(m + 1, port_len);
 
                 // We deliberately don't want to try to convert the port
                 // string as a number. That will be done later, during
@@ -546,7 +546,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
             }
 
             // Hostname
-            (*uri)->hostname = bstr_memdup(hostname_start, hostname_len);
+            (*uri)->hostname = bstr_dup_mem(hostname_start, hostname_len);
         }
 
     // Path
@@ -557,7 +557,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     while ((pos < len) && (data[pos] != '?') && (data[pos] != '#')) pos++;
 
     // Path
-    (*uri)->path = bstr_memdup(data + start, pos - start);
+    (*uri)->path = bstr_dup_mem(data + start, pos - start);
 
     if (pos == len) return HTP_OK;
 
@@ -571,7 +571,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         while ((pos < len) && (data[pos] != '#')) pos++;
 
         // Query string
-        (*uri)->query = bstr_memdup(data + start, pos - start);
+        (*uri)->query = bstr_dup_mem(data + start, pos - start);
 
         if (pos == len) return HTP_OK;
     }
@@ -582,7 +582,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         start = pos + 1;
 
         // Fragment; ends with the end of the input
-        (*uri)->fragment = bstr_memdup(data + start, len - start);
+        (*uri)->fragment = bstr_dup_mem(data + start, len - start);
     }
 
     return HTP_OK;
@@ -760,7 +760,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     // Adjust the length of the string, because
     // we're doing in-place decoding.
-    bstr_len_adjust(path, wpos);
+    bstr_util_adjust_len(path, wpos);
 }
 
 /**
@@ -1077,7 +1077,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                             switch (cfg->path_nul_encoded_handling) {
                                 case TERMINATE:
-                                    bstr_len_adjust(path, wpos);
+                                    bstr_util_adjust_len(path, wpos);
                                     return 1;
                                     break;
                                 case STATUS_400:
@@ -1170,7 +1170,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 switch (cfg->path_nul_raw_handling) {
                     case TERMINATE:
                         // Terminate path with a raw NUL byte
-                        bstr_len_adjust(path, wpos);
+                        bstr_util_adjust_len(path, wpos);
                         return 1;
                         break;
                     case STATUS_400:
@@ -1226,7 +1226,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
         }
     }
 
-    bstr_len_adjust(path, wpos);
+    bstr_util_adjust_len(path, wpos);
 
     return 1;
 }
@@ -1337,7 +1337,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                             switch (cfg->params_nul_encoded_handling) {
                                 case TERMINATE:
-                                    bstr_len_adjust(input, wpos);
+                                    bstr_util_adjust_len(input, wpos);
                                     return 1;
                                     break;
                                 case STATUS_400:
@@ -1408,7 +1408,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 switch (cfg->params_nul_raw_handling) {
                     case TERMINATE:
                         // Terminate path with a raw NUL byte
-                        bstr_len_adjust(input, wpos);
+                        bstr_util_adjust_len(input, wpos);
                         return 1;
                         break;
                     case STATUS_400:
@@ -1431,7 +1431,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
         data[wpos++] = c;
     }
 
-    bstr_len_adjust(input, wpos);
+    bstr_util_adjust_len(input, wpos);
 
     return 1;
 }
@@ -1453,13 +1453,13 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
 
     // Username
     if (incomplete->username != NULL) {
-        normalized->username = bstr_strdup(incomplete->username);
+        normalized->username = bstr_dup(incomplete->username);
         htp_uriencoding_normalize_inplace(normalized->username);
     }
 
     // Password
     if (incomplete->password != NULL) {
-        normalized->password = bstr_strdup(incomplete->password);
+        normalized->password = bstr_dup(incomplete->password);
         htp_uriencoding_normalize_inplace(normalized->password);
     }
 
@@ -1467,7 +1467,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->hostname != NULL) {
         // We know that incomplete->hostname does not contain
         // port information, so no need to check for it here
-        normalized->hostname = bstr_strdup(incomplete->hostname);
+        normalized->hostname = bstr_dup(incomplete->hostname);
         htp_uriencoding_normalize_inplace(normalized->hostname);
         htp_normalize_hostname_inplace(normalized->hostname);
     }
@@ -1484,7 +1484,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     // Path
     if (incomplete->path != NULL) {
         // Make a copy of the path, on which we can work on
-        normalized->path = bstr_strdup(incomplete->path);
+        normalized->path = bstr_dup(incomplete->path);
 
         // Decode URL-encoded (and %u-encoded) characters, as well as lowercase,
         // compress separators and convert backslashes.
@@ -1507,12 +1507,12 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->query != NULL) {
         // We cannot URL-decode the query string here; it needs to be
         // parsed into individual key-value pairs first.
-        normalized->query = bstr_strdup(incomplete->query);
+        normalized->query = bstr_dup(incomplete->query);
     }
 
     // Fragment
     if (incomplete->fragment != NULL) {
-        normalized->fragment = bstr_strdup(incomplete->fragment);
+        normalized->fragment = bstr_dup(incomplete->fragment);
         htp_uriencoding_normalize_inplace(normalized->fragment);
     }
 
@@ -1527,7 +1527,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
  * @return normalized hostnanme
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
-    bstr_tolowercase(hostname);
+    bstr_to_lowercase(hostname);
 
     char *data = bstr_ptr(hostname);
     size_t len = bstr_len(hostname);
@@ -1554,11 +1554,11 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
     int colon = bstr_chr(hostname, ':');
     if (colon == -1) {
         // Hostname alone
-        parsed_uri->hostname = bstr_strdup(hostname);
+        parsed_uri->hostname = bstr_dup(hostname);
         htp_normalize_hostname_inplace(parsed_uri->hostname);
     } else {
         // Hostname
-        parsed_uri->hostname = bstr_strdup_ex(hostname, 0, colon);
+        parsed_uri->hostname = bstr_dup_ex(hostname, 0, colon);
         // TODO Handle whitespace around hostname
         htp_normalize_hostname_inplace(parsed_uri->hostname);
 
@@ -1650,7 +1650,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
         }
     }
 
-    bstr_len_adjust(s, wpos);
+    bstr_util_adjust_len(s, wpos);
 }
 
 /**
@@ -1751,7 +1751,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
         c = -1;
     }
 
-    bstr_len_adjust(s, wpos);
+    bstr_util_adjust_len(s, wpos);
 }
 
 /**
@@ -1968,48 +1968,48 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
     }
 
     if (uri->scheme != NULL) {
-        bstr_add_str_noex(r, uri->scheme);
-        bstr_add_cstr_noex(r, "://");
+        bstr_add_noex(r, uri->scheme);
+        bstr_add_c_noex(r, "://");
     }
 
     if ((uri->username != NULL) || (uri->password != NULL)) {
         if (uri->username != NULL) {
-            bstr_add_str_noex(r, uri->username);
+            bstr_add_noex(r, uri->username);
         }
 
-        bstr_add_cstr(r, ":");
+        bstr_add_c(r, ":");
 
         if (uri->password != NULL) {
-            bstr_add_str_noex(r, uri->password);
+            bstr_add_noex(r, uri->password);
         }
 
-        bstr_add_cstr_noex(r, "@");
+        bstr_add_c_noex(r, "@");
     }
 
     if (uri->hostname != NULL) {
-        bstr_add_str_noex(r, uri->hostname);
+        bstr_add_noex(r, uri->hostname);
     }
 
     if (uri->port != NULL) {
-        bstr_add_cstr(r, ":");
-        bstr_add_str_noex(r, uri->port);
+        bstr_add_c(r, ":");
+        bstr_add_noex(r, uri->port);
     }
 
     if (uri->path != NULL) {
-        bstr_add_str_noex(r, uri->path);
+        bstr_add_noex(r, uri->path);
     }
 
     if (uri->query != NULL) {
-        bstr *query = bstr_strdup(uri->query);
+        bstr *query = bstr_dup(uri->query);
         htp_uriencoding_normalize_inplace(query);
-        bstr_add_cstr_noex(r, "?");
-        bstr_add_str_noex(r, query);
+        bstr_add_c_noex(r, "?");
+        bstr_add_noex(r, query);
         bstr_free(&query);
     }
 
     if (uri->fragment != NULL) {
-        bstr_add_cstr_noex(r, "#");
-        bstr_add_str_noex(r, uri->fragment);
+        bstr_add_c_noex(r, "#");
+        bstr_add_noex(r, uri->fragment);
     }
 
     return r;
@@ -2068,7 +2068,7 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
 
     for (i = 0; i < list_size(tx->request_header_lines); i++) {
         htp_header_line_t *hl = list_get(tx->request_header_lines, i);
-        bstr_add_str_noex(request_headers_raw, hl->line);
+        bstr_add_noex(request_headers_raw, hl->line);
     }
 
     return request_headers_raw;
@@ -2216,7 +2216,7 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
         outptr[outpos++] = data[pos++];
     }
 
-    bstr_len_adjust(result, outlen);
+    bstr_util_adjust_len(result, outlen);
 
     if (endoffset != NULL) {
         *endoffset = pos;

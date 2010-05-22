@@ -60,8 +60,8 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
     htp_header_t *h = NULL;
     table_iterator_reset(tx->request_headers);
     while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
-        char *key = bstr_tocstr(h->name);
-        char *value = bstr_tocstr(h->value);
+        char *key = bstr_util_strdup_to_c(h->name);
+        char *value = bstr_util_strdup_to_c(h->value);
         printf("--   REQUEST HEADER [%s][%s]\n", key, value);
         free(value);
         free(key);
@@ -69,8 +69,8 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
 
     table_iterator_reset(tx->response_headers);
     while ((key = table_iterator_next(tx->response_headers, (void **) & h)) != NULL) {
-        char *key = bstr_tocstr(h->name);
-        char *value = bstr_tocstr(h->value);
+        char *key = bstr_util_strdup_to_c(h->name);
+        char *value = bstr_util_strdup_to_c(h->value);
         printf("--   RESPONSE HEADER [%s][%s]\n", key, value);
         free(value);
         free(key);
@@ -121,8 +121,8 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
     htp_header_t *h = NULL;
     table_iterator_reset(tx->request_headers);
     while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
-        char *key = bstr_tocstr(h->name);
-        char *value = bstr_tocstr(h->value);
+        char *key = bstr_util_strdup_to_c(h->name);
+        char *value = bstr_util_strdup_to_c(h->value);
         printf("--   HEADER [%s][%s]\n", key, value);
         free(value);
         free(key);
@@ -144,89 +144,89 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
 
         switch (count) {
             case 0:
-                if (bstr_cmpc(h->name, " Invalid-Folding") != 0) {
+                if (bstr_cmp_c(h->name, " Invalid-Folding") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "1") != 0) {
+                if (bstr_cmp_c(h->value, "1") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 1:
-                if (bstr_cmpc(h->name, "Valid-Folding") != 0) {
+                if (bstr_cmp_c(h->name, "Valid-Folding") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "2 2") != 0) {
+                if (bstr_cmp_c(h->value, "2 2") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 2:
-                if (bstr_cmpc(h->name, "Normal-Header") != 0) {
+                if (bstr_cmp_c(h->name, "Normal-Header") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "3") != 0) {
+                if (bstr_cmp_c(h->value, "3") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 3:
-                if (bstr_cmpc(h->name, "Invalid Header Name") != 0) {
+                if (bstr_cmp_c(h->name, "Invalid Header Name") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "4") != 0) {
+                if (bstr_cmp_c(h->value, "4") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 4:
-                if (bstr_cmpc(h->name, "Same-Name-Headers") != 0) {
+                if (bstr_cmp_c(h->name, "Same-Name-Headers") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "5, 6") != 0) {
+                if (bstr_cmp_c(h->value, "5, 6") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 5:
-                if (bstr_cmpc(h->name, "Empty-Value-Header") != 0) {
+                if (bstr_cmp_c(h->name, "Empty-Value-Header") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "") != 0) {
+                if (bstr_cmp_c(h->value, "") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 6:
-                if (bstr_cmpc(h->name, "") != 0) {
+                if (bstr_cmp_c(h->name, "") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "8, ") != 0) {
+                if (bstr_cmp_c(h->value, "8, ") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 7:
-                if (bstr_cmpc(h->name, "Header-With-LWS-After") != 0) {
+                if (bstr_cmp_c(h->name, "Header-With-LWS-After") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     return -1;
                 }
-                if (bstr_cmpc(h->value, "9") != 0) {
+                if (bstr_cmp_c(h->value, "9") != 0) {
                     printf("Header %i incorrect value\n", count + 1);
                     return -1;
                 }
                 break;
             case 8:
             {
-                bstr *b = bstr_memdup("BEFORE", 6);
-                if (bstr_cmpc(h->name, "Header-With-NUL") != 0) {
+                bstr *b = bstr_dup_mem("BEFORE", 6);
+                if (bstr_cmp_c(h->name, "Header-With-NUL") != 0) {
                     printf("Header %i incorrect name\n", count + 1);
                     bstr_free(&b);
                     return -1;
@@ -390,7 +390,7 @@ int test_misc(htp_cfg_t *cfg) {
 
     htp_tx_t *tx = list_get(connp->conn->transactions, 0);
 
-    printf("Parsed URI: %s\n", bstr_tocstr(tx->parsed_uri_incomplete->path));
+    printf("Parsed URI: %s\n", bstr_util_strdup_to_c(tx->parsed_uri_incomplete->path));
 
     htp_connp_destroy_all(connp);
 
@@ -419,22 +419,22 @@ int test_host_in_headers(htp_cfg_t *cfg) {
     htp_tx_t *tx3 = list_get(connp->conn->transactions, 2);
     htp_tx_t *tx4 = list_get(connp->conn->transactions, 3);
 
-    if ((tx1->parsed_uri->hostname == NULL) || (bstr_cmpc(tx1->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx1->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx1->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("1) Expected 'www.example.com' as hostname, but got: %s", tx1->parsed_uri->hostname);
         return -1;
     }
 
-    if ((tx2->parsed_uri->hostname == NULL) || (bstr_cmpc(tx2->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx2->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx2->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("2) Expected 'www.example.com' as hostname, but got: %s", tx2->parsed_uri->hostname);
         return -1;
     }
 
-    if ((tx3->parsed_uri->hostname == NULL) || (bstr_cmpc(tx3->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx3->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx3->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("3) Expected 'www.example.com' as hostname, but got: %s", tx3->parsed_uri->hostname);
         return -1;
     }
 
-    if ((tx4->parsed_uri->hostname == NULL) || (bstr_cmpc(tx4->parsed_uri->hostname, "www.example.com") != 0)) {
+    if ((tx4->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx4->parsed_uri->hostname, "www.example.com") != 0)) {
         printf("4) Expected 'www.example.com' as hostname, but got: %s", tx4->parsed_uri->hostname);
         return -1;
     }
@@ -759,7 +759,7 @@ int callback_log(htp_log_t *log) {
 }
 
 static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
-    char *request_line = bstr_tocstr(tx->request_line);
+    char *request_line = bstr_util_strdup_to_c(tx->request_line);
     htp_header_t *h_user_agent = table_getc(tx->request_headers, "user-agent");
     htp_header_t *h_referer = table_getc(tx->request_headers, "referer");
     char *referer, *user_agent;
@@ -772,12 +772,12 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
 
     if (h_user_agent == NULL) user_agent = strdup("-");
     else {
-        user_agent = bstr_tocstr(h_user_agent->value);
+        user_agent = bstr_util_strdup_to_c(h_user_agent->value);
     }
 
     if (h_referer == NULL) referer = strdup("-");
     else {
-        referer = bstr_tocstr(h_referer->value);
+        referer = bstr_util_strdup_to_c(h_referer->value);
     }
 
     printf("%s - - [%s] \"%s\" %i %i \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
@@ -977,69 +977,69 @@ int main_path_decoding_tests(int argc, char** argv) {
     bstr *path = NULL;
 
     //
-    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
 
-    printf("Before: %s\n", bstr_tocstr(path));
+    printf("Before: %s\n", bstr_util_strdup_to_c(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));
+    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
 
     //
-    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
 
-    printf("Before: %s\n", bstr_tocstr(path));
+    printf("Before: %s\n", bstr_util_strdup_to_c(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));
+    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
 
     //
-    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
 
-    printf("Before: %s\n", bstr_tocstr(path));
+    printf("Before: %s\n", bstr_util_strdup_to_c(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));
+    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
 
     //
-    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_separators = 1;
 
-    printf("Before: %s\n", bstr_tocstr(path));
+    printf("Before: %s\n", bstr_util_strdup_to_c(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));
+    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
 
     //
-    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven");
+    path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_separators = 1;
     cfg->path_invalid_encoding_handling = URL_DECODER_REMOVE_PERCENT;
 
-    printf("Before: %s\n", bstr_tocstr(path));
+    printf("Before: %s\n", bstr_util_strdup_to_c(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));
+    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
 
     //
-    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074");
+    path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074");
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_separators = 1;
     cfg->path_invalid_encoding_handling = URL_DECODER_DECODE_INVALID;
 
-    printf("Before: %s\n", bstr_tocstr(path));
+    printf("Before: %s\n", bstr_util_strdup_to_c(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));
+    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
 
     //
-    path = bstr_cstrdup("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074%u0100");
+    path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074%u0100");
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
@@ -1047,9 +1047,9 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->path_decode_u_encoding = 1;
 
-    printf("Before: %s\n", bstr_tocstr(path));
+    printf("Before: %s\n", bstr_util_strdup_to_c(path));
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_tocstr(path));
+    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
 }
 
 void encode_utf8_2(uint8_t *data, uint32_t i) {
@@ -1079,7 +1079,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
 
     bstr *path = NULL;
 
-    path = bstr_cstrdup("//////////");
+    path = bstr_dup_c("//////////");
     uint8_t *data = bstr_ptr(path);
 
     int i = 0;
@@ -1136,8 +1136,8 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     if (bstr_cmp(input, expected) == 0) success = 1; \
     printf("[%2i] %s: %s\n", tests, (success == 1 ? "SUCCESS" : "FAILURE"), test_name); \
     if ((success == 0)||((expected_status != 0)&&(expected_status != tx->response_status_expected_number))) { \
-        char *s1 = bstr_tocstr(input); \
-        char *s2 = bstr_tocstr(expected); \
+        char *s1 = bstr_util_strdup_to_c(input); \
+        char *s2 = bstr_util_strdup_to_c(expected); \
         printf("      Output: [%s]\n", s1); \
         printf("    Expected: [%s]\n", s2); \
         if (expected_status != 0) { \
@@ -1168,88 +1168,88 @@ int main_path_tests(int argc, char** argv) {
     char *test_name = NULL;
 
     PATH_DECODE_TEST_BEFORE("URL-decoding");
-    input = bstr_cstrdup("/%64est");
-    expected = bstr_cstrdup("/dest");
+    input = bstr_dup_c("/%64est");
+    expected = bstr_dup_c("/dest");
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded, preserve %");
-    input = bstr_cstrdup("/%xxest");
-    expected = bstr_cstrdup("/%xxest");
+    input = bstr_dup_c("/%xxest");
+    expected = bstr_dup_c("/%xxest");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded, remove %");
-    input = bstr_cstrdup("/%xxest");
-    expected = bstr_cstrdup("/xxest");
+    input = bstr_dup_c("/%xxest");
+    expected = bstr_dup_c("/xxest");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_REMOVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded (end of string, test 1), preserve %");
-    input = bstr_cstrdup("/test/%2");
-    expected = bstr_cstrdup("/test/%2");
+    input = bstr_dup_c("/test/%2");
+    expected = bstr_dup_c("/test/%2");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded (end of string, test 2), preserve %");
-    input = bstr_cstrdup("/test/%");
-    expected = bstr_cstrdup("/test/%");
+    input = bstr_dup_c("/test/%");
+    expected = bstr_dup_c("/test/%");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid URL-encoded, preserve % and 400");
-    input = bstr_cstrdup("/%xxest");
-    expected = bstr_cstrdup("/%xxest");
+    input = bstr_dup_c("/%xxest");
+    expected = bstr_dup_c("/%xxest");
     expected_status = 400;
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (expected not to decode; 400)");
-    input = bstr_cstrdup("/%u0064");
-    expected = bstr_cstrdup("/%u0064");
+    input = bstr_dup_c("/%u0064");
+    expected = bstr_dup_c("/%u0064");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     expected_status = 400;
     cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (decode; 400)");
-    input = bstr_cstrdup("/%u0064");
-    expected = bstr_cstrdup("/d");
+    input = bstr_dup_c("/%u0064");
+    expected = bstr_dup_c("/d");
     expected_status = 400;
     expected_flags = HTP_PATH_OVERLONG_U;
     cfg->path_decode_u_encoding = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (also overlong)");
-    input = bstr_cstrdup("/%u0064");
-    expected = bstr_cstrdup("/d");
+    input = bstr_dup_c("/%u0064");
+    expected = bstr_dup_c("/d");
     expected_flags = HTP_PATH_OVERLONG_U;
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding, leave; preserve percent");
-    input = bstr_cstrdup("/%uXXXX---");
-    expected = bstr_cstrdup("/%uXXXX---");
+    input = bstr_dup_c("/%uXXXX---");
+    expected = bstr_dup_c("/%uXXXX---");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding, decode invalid; preserve percent");
-    input = bstr_cstrdup("/%uXXXX---");
-    expected = bstr_cstrdup("/?---");
+    input = bstr_dup_c("/%uXXXX---");
+    expected = bstr_dup_c("/?---");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_DECODE_INVALID;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding, decode invalid; preserve percent; 400");
-    input = bstr_cstrdup("/%uXXXX---");
-    expected = bstr_cstrdup("/?---");
+    input = bstr_dup_c("/%uXXXX---");
+    expected = bstr_dup_c("/?---");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     expected_status = 400;
     cfg->path_decode_u_encoding = YES;
@@ -1257,230 +1257,230 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding (not enough data 1), preserve percent");
-    input = bstr_cstrdup("/%u123");
-    expected = bstr_cstrdup("/%u123");
+    input = bstr_dup_c("/%u123");
+    expected = bstr_dup_c("/%u123");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding (not enough data 2), preserve percent");
-    input = bstr_cstrdup("/%u12");
-    expected = bstr_cstrdup("/%u12");
+    input = bstr_dup_c("/%u12");
+    expected = bstr_dup_c("/%u12");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding (not enough data 3), preserve percent");
-    input = bstr_cstrdup("/%u1");
-    expected = bstr_cstrdup("/%u1");
+    input = bstr_dup_c("/%u1");
+    expected = bstr_dup_c("/%u1");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     cfg->path_decode_u_encoding = YES;
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding, best-fit mapping");
-    input = bstr_cstrdup("/%u0107");
-    expected = bstr_cstrdup("/c");
+    input = bstr_dup_c("/%u0107");
+    expected = bstr_dup_c("/c");
     cfg->path_decode_u_encoding = YES;
     cfg->path_unicode_mapping = BESTFIT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding, 404 to UCS-2 characters");
-    input = bstr_cstrdup("/%u0107");
-    expected = bstr_cstrdup("/c");
+    input = bstr_dup_c("/%u0107");
+    expected = bstr_dup_c("/c");
     expected_status = 404;
     cfg->path_decode_u_encoding = YES;
     cfg->path_unicode_mapping = STATUS_404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), not expect to decode");
-    input = bstr_cstrdup("/one%2ftwo");
-    expected = bstr_cstrdup("/one%2ftwo");
+    input = bstr_dup_c("/one%2ftwo");
+    expected = bstr_dup_c("/one%2ftwo");
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), expect to decode");
-    input = bstr_cstrdup("/one%2ftwo");
-    expected = bstr_cstrdup("/one/two");
+    input = bstr_dup_c("/one%2ftwo");
+    expected = bstr_dup_c("/one/two");
     cfg->path_decode_separators = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), expect not do decode and 404");
-    input = bstr_cstrdup("/one%2ftwo");
-    expected = bstr_cstrdup("/one%2ftwo");
+    input = bstr_dup_c("/one%2ftwo");
+    expected = bstr_dup_c("/one%2ftwo");
     expected_status = 404;
     cfg->path_decode_separators = STATUS_404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded), expect to decode");
-    input = bstr_cstrdup("/one%u002ftwo");
-    expected = bstr_cstrdup("/one/two");
+    input = bstr_dup_c("/one%u002ftwo");
+    expected = bstr_dup_c("/one/two");
     cfg->path_decode_separators = YES;
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded, fullwidth), expect to decode");
-    input = bstr_cstrdup("/one%uff0ftwo");
-    expected = bstr_cstrdup("/one/two");
+    input = bstr_dup_c("/one%uff0ftwo");
+    expected = bstr_dup_c("/one/two");
     cfg->path_decode_separators = YES;
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (URL-encoded), not a separator; expect to decode");
-    input = bstr_cstrdup("/one%5ctwo");
-    expected = bstr_cstrdup("/one\\two");
+    input = bstr_dup_c("/one%5ctwo");
+    expected = bstr_dup_c("/one\\two");
     cfg->path_decode_separators = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (URL-encoded), as path segment separator");
-    input = bstr_cstrdup("/one%5ctwo");
-    expected = bstr_cstrdup("/one/two");
+    input = bstr_dup_c("/one%5ctwo");
+    expected = bstr_dup_c("/one/two");
     cfg->path_decode_separators = YES;
     cfg->path_backslash_separators = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (not encoded), as path segment separator");
-    input = bstr_cstrdup("/one\\two");
-    expected = bstr_cstrdup("/one/two");
+    input = bstr_dup_c("/one\\two");
+    expected = bstr_dup_c("/one/two");
     cfg->path_backslash_separators = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (%u-encoded), as path segment separator");
-    input = bstr_cstrdup("/one%u005ctwo");
-    expected = bstr_cstrdup("/one/two");
+    input = bstr_dup_c("/one%u005ctwo");
+    expected = bstr_dup_c("/one/two");
     cfg->path_decode_separators = YES;
     cfg->path_backslash_separators = YES;
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (%u-encoded, fullwidth), as path segment separator");
-    input = bstr_cstrdup("/one%uff3ctwo");
-    expected = bstr_cstrdup("/one/two");
+    input = bstr_dup_c("/one%uff3ctwo");
+    expected = bstr_dup_c("/one/two");
     cfg->path_decode_separators = YES;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded");
-    input = bstr_cstrdup("/%f7test");
-    expected = bstr_cstrdup("/\xf7test");
+    input = bstr_dup_c("/%f7test");
+    expected = bstr_dup_c("/\xf7test");
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded (400)");
-    input = bstr_cstrdup("/%f7test");
-    expected = bstr_cstrdup("/\xf7test");
+    input = bstr_dup_c("/%f7test");
+    expected = bstr_dup_c("/\xf7test");
     expected_status = 400;
     expected_flags = HTP_PATH_UTF8_INVALID;
     cfg->path_invalid_utf8_handling = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; leave");
-    input = bstr_memdup("/test\0text", 10);
-    expected = bstr_memdup("/test\0text", 10);
+    input = bstr_dup_mem("/test\0text", 10);
+    expected = bstr_dup_mem("/test\0text", 10);
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; terminate path");
-    input = bstr_memdup("/test\0text", 10);
-    expected = bstr_cstrdup("/test");
+    input = bstr_dup_mem("/test\0text", 10);
+    expected = bstr_dup_c("/test");
     cfg->path_nul_raw_handling = TERMINATE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; 400");
-    input = bstr_memdup("/test\0text", 10);
-    expected = bstr_memdup("/test\0text", 10);
+    input = bstr_dup_mem("/test\0text", 10);
+    expected = bstr_dup_mem("/test\0text", 10);
     cfg->path_nul_raw_handling = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; leave");
-    input = bstr_cstrdup("/test%00text");
-    expected = bstr_memdup("/test\0text", 10);
+    input = bstr_dup_c("/test%00text");
+    expected = bstr_dup_mem("/test\0text", 10);
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; terminate path");
-    input = bstr_cstrdup("/test%00text");
-    expected = bstr_cstrdup("/test");
+    input = bstr_dup_c("/test%00text");
+    expected = bstr_dup_c("/test");
     cfg->path_nul_encoded_handling = TERMINATE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; 400");
-    input = bstr_cstrdup("/test%00text");
-    expected = bstr_memdup("/test\0text", 10);
+    input = bstr_dup_c("/test%00text");
+    expected = bstr_dup_mem("/test\0text", 10);
     cfg->path_nul_encoded_handling = STATUS_400;
     expected_status = 400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; 404");
-    input = bstr_cstrdup("/test%00text");
-    expected = bstr_memdup("/test\0text", 10);
+    input = bstr_dup_c("/test%00text");
+    expected = bstr_dup_mem("/test\0text", 10);
     cfg->path_nul_encoded_handling = STATUS_404;
     expected_status = 404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; terminate path");
-    input = bstr_cstrdup("/test%00text");
-    expected = bstr_cstrdup("/test");
+    input = bstr_dup_c("/test%00text");
+    expected = bstr_dup_c("/test");
     cfg->path_nul_encoded_handling = TERMINATE;
     cfg->path_decode_u_encoding = YES;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; 400");
-    input = bstr_cstrdup("/test%00text");
-    expected = bstr_memdup("/test\0text", 10);
+    input = bstr_dup_c("/test%00text");
+    expected = bstr_dup_mem("/test\0text", 10);
     cfg->path_nul_encoded_handling = STATUS_400;
     cfg->path_decode_u_encoding = YES;
     expected_status = 400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; 404");
-    input = bstr_cstrdup("/test%00text");
-    expected = bstr_memdup("/test\0text", 10);
+    input = bstr_dup_c("/test%00text");
+    expected = bstr_dup_mem("/test\0text", 10);
     cfg->path_nul_encoded_handling = STATUS_404;
     cfg->path_decode_u_encoding = YES;
     expected_status = 404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (no effect)");
-    input = bstr_cstrdup("/%01test");
-    expected = bstr_cstrdup("/\x01test");
+    input = bstr_dup_c("/%01test");
+    expected = bstr_dup_c("/\x01test");
     cfg->path_control_char_handling = NONE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (no effect)");
-    input = bstr_cstrdup("/\x01test");
-    expected = bstr_cstrdup("/\x01test");
+    input = bstr_dup_c("/\x01test");
+    expected = bstr_dup_c("/\x01test");
     cfg->path_control_char_handling = NONE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (400)");
-    input = bstr_cstrdup("/%01test");
-    expected = bstr_cstrdup("/\x01test");
+    input = bstr_dup_c("/%01test");
+    expected = bstr_dup_c("/\x01test");
     expected_status = 400;
     cfg->path_control_char_handling = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (400)");
-    input = bstr_cstrdup("/\x01test");
-    expected = bstr_cstrdup("/\x01test");
+    input = bstr_dup_c("/\x01test");
+    expected = bstr_dup_c("/\x01test");
     expected_status = 400;
     cfg->path_control_char_handling = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("UTF-8; overlong 2-byte sequence");
-    input = bstr_cstrdup("/%c1%b4est");
-    expected = bstr_cstrdup("/test");
+    input = bstr_dup_c("/%c1%b4est");
+    expected = bstr_dup_c("/test");
     expected_flags = HTP_PATH_UTF8_OVERLONG;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("UTF-8; overlong 3-byte sequence");
-    input = bstr_cstrdup("/%e0%81%b4est");
-    expected = bstr_cstrdup("/test");
+    input = bstr_dup_c("/%e0%81%b4est");
+    expected = bstr_dup_c("/test");
     expected_flags = HTP_PATH_UTF8_OVERLONG;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("UTF-8; overlong 4-byte sequence");
-    input = bstr_cstrdup("/%f0%80%81%b4est");
-    expected = bstr_cstrdup("/test");
+    input = bstr_dup_c("/%f0%80%81%b4est");
+    expected = bstr_dup_c("/test");
     expected_flags = HTP_PATH_UTF8_OVERLONG;
     PATH_DECODE_TEST_AFTER();
 

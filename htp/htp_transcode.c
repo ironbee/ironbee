@@ -174,7 +174,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
             return HTP_ERROR;
         }
     } else {
-        *output = bstr_memdup(buf, buflen - outleft);
+        *output = bstr_dup_mem(buf, buflen - outleft);
         if (*output == NULL) {
             free(buf);
             return HTP_ERROR;

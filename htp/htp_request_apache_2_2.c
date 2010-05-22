@@ -96,7 +96,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         h_existing->value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
             + 2 + bstr_len(h->value));
         bstr_add_mem_noex(h_existing->value, ", ", 2);
-        bstr_add_str_noex(h_existing->value, h->value);
+        bstr_add_noex(h_existing->value, h->value);
 
         // The header is no longer needed
         free(h->name);
@@ -221,8 +221,8 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
     }
 
     // Now extract the name and the value
-    h->name = bstr_memdup((char *) data + name_start, name_end - name_start);
-    h->value = bstr_memdup((char *) data + value_start, value_end - value_start);
+    h->name = bstr_dup_mem((char *) data + name_start, name_end - name_start);
+    h->value = bstr_dup_mem((char *) data + value_start, value_end - value_start);
 
     return HTP_OK;
 }
@@ -253,7 +253,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
 
     // No, we don't care if the method is empty.
 
-    tx->request_method = bstr_memdup((char *) data, pos);
+    tx->request_method = bstr_dup_mem((char *) data, pos);
 
 #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_method), bstr_len(tx->request_method));
@@ -276,7 +276,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->request_uri = bstr_memdup((char *) data + start, pos - start);
+    tx->request_uri = bstr_dup_mem((char *) data + start, pos - start);
 
 #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
@@ -295,7 +295,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     }
 
     // The protocol information spreads until the end of the line.
-    tx->request_protocol = bstr_memdup((char *) data + pos, len - pos);
+    tx->request_protocol = bstr_dup_mem((char *) data + pos, len - pos);
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
 
 #ifdef HTP_DEBUG

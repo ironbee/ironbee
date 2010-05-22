@@ -424,7 +424,7 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
 int callback_response(htp_connp_t *connp) {
     stream_data *sd = (stream_data *)htp_connp_get_user_data(connp);
     
-    char *x = bstr_tocstr(connp->out_tx->request_line);
+    char *x = bstr_util_strdup_to_c(connp->out_tx->request_line);
     fprintf(stdout, "[#%d/%d] %s\n", sd->id, sd->req_count, x);
     free(x);
     
