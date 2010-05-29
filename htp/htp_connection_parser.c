@@ -14,27 +14,6 @@
 
 #include "htp.h"
 
-// NOTE The parser contains a lot of duplicated code. That is on purpose.
-//
-//      Within the request parser alone there are several states in which
-//      bytes are copied into the line buffer and lines are processed one at a time.
-//      This code could be made more elegant by adding a new line-reading state along
-//      with a what-fn-to-invoke-to-handle-line pointer.
-//
-//      Furthermore, the entire request parser is terribly similar to the response parser.
-//      It is imaginable that a single parser could handle both.
-//
-//      After some thought, I decided not to make any changes (at least not for the time
-//      being). State-based parsers are sometimes difficult to understand. I remember trying
-//      to figure one once and I had a hard time following the logic because each function
-//      was small and did exactly one thing. There was jumping all around. You could probably
-//      say that it was elegant, but I saw it as difficult to understand, verify and maintain.
-//
-//      Thus, I am keeping this inelegant but quite straightforward parser with duplicated code,
-//      mostly for the sake of maintenance.
-//
-//      For the time being, anyway. I will review at a later time.
-
 /**
  * Clears an existing parser error, if any.
  *

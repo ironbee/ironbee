@@ -124,7 +124,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
  * @param connp
  */
 int htp_parse_authorization(htp_connp_t *connp) {
-    htp_header_t *auth_header = table_getc(connp->in_tx->request_headers, "authorization");
+    htp_header_t *auth_header = table_get_c(connp->in_tx->request_headers, "authorization");
     if (auth_header == NULL) return HTP_OK;
 
     if (bstr_begins_withc_nocase(auth_header->value, "basic")) {

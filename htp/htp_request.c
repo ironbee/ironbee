@@ -257,8 +257,8 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
-    htp_header_t *cl = table_getc(connp->in_tx->request_headers, "content-length");
-    htp_header_t *te = table_getc(connp->in_tx->request_headers, "transfer-encoding");
+    htp_header_t *cl = table_get_c(connp->in_tx->request_headers, "content-length");
+    htp_header_t *te = table_get_c(connp->in_tx->request_headers, "transfer-encoding");
 
     // Check for the Transfer-Encoding header, which
     // would indicate a chunked request body
@@ -349,7 +349,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     }
 
     // Host resolution    
-    htp_header_t *h = table_getc(connp->in_tx->request_headers, "host");
+    htp_header_t *h = table_get_c(connp->in_tx->request_headers, "host");
     if (h == NULL) {
         // No host information in the headers
 
@@ -377,7 +377,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     }
 
     // Parse Content-Type
-    htp_header_t *ct = table_getc(connp->in_tx->request_headers, "content-type");
+    htp_header_t *ct = table_get_c(connp->in_tx->request_headers, "content-type");
     if (ct != NULL) {
         connp->in_tx->request_content_type = bstr_dup_lower(ct->value);
         // Ignore parameters        

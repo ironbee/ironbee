@@ -539,7 +539,7 @@ static void *table_get_internal(table_t *table, bstr *key) {
  * @param cstr
  * @return table element, or NULL if not found
  */
-void *table_getc(table_t *table, char *cstr) {
+void *table_get_c(table_t *table, char *cstr) {
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
     bstr *ts = NULL;

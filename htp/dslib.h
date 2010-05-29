@@ -96,7 +96,7 @@ table_t *table_create(size_t size);
      int table_addn(table_t *, bstr *, void *);
     void table_set(table_t *, bstr *, void *);     
    void *table_get(table_t *, bstr *);
-   void *table_getc(table_t *, char *);
+   void *table_get_c(table_t *, char *);
     void table_iterator_reset(table_t *);
    bstr *table_iterator_next(table_t *, void **);         
   size_t table_size(table_t *t);

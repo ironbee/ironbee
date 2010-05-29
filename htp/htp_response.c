@@ -300,7 +300,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
     // Check for compression
     if (connp->cfg->response_decompression_enabled) {
-        htp_header_t *ce = table_getc(connp->out_tx->response_headers, "content-encoding");
+        htp_header_t *ce = table_get_c(connp->out_tx->response_headers, "content-encoding");
         if (ce != NULL) {
             if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
                 connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
@@ -334,8 +334,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     } else {
         // We have a response body
 
-        htp_header_t *cl = table_getc(connp->out_tx->response_headers, "content-length");
-        htp_header_t *te = table_getc(connp->out_tx->response_headers, "transfer-encoding");
+        htp_header_t *cl = table_get_c(connp->out_tx->response_headers, "content-length");
+        htp_header_t *te = table_get_c(connp->out_tx->response_headers, "transfer-encoding");
 
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
@@ -389,7 +389,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             //   the presence in a request of a Range header with multiple byte-range
             //   specifiers implies that the client can parse multipart/byteranges
             //   responses.
-            htp_header_t *ct = table_getc(connp->out_tx->response_headers, "content-type");
+            htp_header_t *ct = table_get_c(connp->out_tx->response_headers, "content-type");
             if (ct != NULL) {
                 // TODO Handle multipart/byteranges
 

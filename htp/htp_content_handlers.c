@@ -176,7 +176,7 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
         return HOOK_OK;
     }
 
-    htp_header_t *ct = table_getc(connp->in_tx->request_headers, "content-type");
+    htp_header_t *ct = table_get_c(connp->in_tx->request_headers, "content-type");
     // TODO Is NULL?
 
     char *boundary = NULL;

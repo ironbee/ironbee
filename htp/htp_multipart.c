@@ -46,7 +46,7 @@ static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t
  */
 int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
     // Find C-D header
-    htp_header_t *h = (htp_header_t *) table_getc(part->headers, "content-disposition");
+    htp_header_t *h = (htp_header_t *) table_get_c(part->headers, "content-disposition");
     if (h == NULL) {
         // TODO Error message
         return 0;
