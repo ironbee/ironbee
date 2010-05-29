@@ -130,15 +130,13 @@ htp_cfg_t *htp_config_create() {
     htp_cfg_t *cfg = calloc(1, sizeof(htp_cfg_t));
     if (cfg == NULL) return NULL;
 
+    // Default settings
     cfg->field_limit_hard = HTP_HEADER_LIMIT_HARD;
     cfg->field_limit_soft = HTP_HEADER_LIMIT_SOFT;
     cfg->log_level = HTP_LOG_NOTICE;
-
     cfg->bestfit_map = bestfit_1252;
     cfg->bestfit_replacement_char = '?';
-
     cfg->response_decompression_enabled = 1;
-
     cfg->params_decode_u_encoding = NO;
     cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->params_nul_encoded_handling = NONE;
@@ -283,7 +281,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
  * @param cfg
  */
 void htp_config_destroy(htp_cfg_t *cfg) {
-    // Destroy the hooks
+    // Destroy hooks
     hook_destroy(cfg->hook_transaction_start);
     hook_destroy(cfg->hook_request_line);
     hook_destroy(cfg->hook_request_headers);
@@ -303,43 +301,33 @@ void htp_config_destroy(htp_cfg_t *cfg) {
 }
 
 /**
- * Registers a transaction_start callback.
- * 
+ * Registers a callback that is invoked every time there is a log message.
+ *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
-void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_transaction_start, callback_fn);
+void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
+    hook_register(&cfg->hook_log, callback_fn);
 }
 
 /**
- * Registers a request_line callback.
+ * Registers the MULTIPART parser. This parser will extract information stored in request
+ * bodies, when they are in multipart/form-data format.
  *
  * @param cfg
- * @param callback_fn 
  */
-void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_line, callback_fn);
+void htp_config_register_multipart_parser(htp_cfg_t *cfg) {
+    htp_config_register_request_headers(cfg, htp_ch_multipart_callback_request_headers);
 }
 
 /**
- * Registers a request_headers callback.
+ * Registers a request callback.
  *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
-void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_headers, callback_fn);
-}
-
-/**
- * Registers a request_trailer callback.
- *
- * @param cfg
- * @param callback_fn 
- */
-void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_trailer, callback_fn);
+void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_request, callback_fn);
 }
 
 /**
@@ -352,6 +340,8 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
     hook_register(&cfg->hook_request_body_data, callback_fn);
 }
 
+
+
 /**
  * Registers a request_file_data callback.
  *
@@ -363,33 +353,73 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
 }
 
 /**
- * Registers a request callback.
+ * Registers a request_headers callback.
  *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
-void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request, callback_fn);
+void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_request_headers, callback_fn);
 }
 
 /**
  * Registers a request_line callback.
  *
  * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_request_line, callback_fn);
+}
+
+/**
+ * Registers a request_trailer callback.
+ *
+ * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_request_trailer, callback_fn);
+}
+
+/**
+ * Registers a response callback.
+ *
+ * @param cfg
  * @param callback_fn 
  */
-void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_line, callback_fn);
+void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_response, callback_fn);
+}
+
+/**
+ * Registers a request_body_data callback.
+ *
+ * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
+    hook_register(&cfg->hook_response_body_data, callback_fn);
 }
 
 /**
  * Registers a request_headers callback.
  *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response_headers, callback_fn);
+}
+
+/**
+ * Registers a request_line callback.
+ *
+ * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_response_line, callback_fn);
 }
 
 /**
@@ -403,33 +433,25 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
 }
 
 /**
- * Registers a request_body_data callback.
+ * Registers the URLENCODED parser with the configuration. The parser will
+ * parse the query string when available, as well as the request body when
+ * in correct format.
  *
  * @param cfg
- * @param callback_fn 
  */
-void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&cfg->hook_response_body_data, callback_fn);
+void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
+    htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
+    htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
 }
 
 /**
- * Registers a request callback.
- *
- * @param cfg
- * @param callback_fn 
- */
-void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response, callback_fn);
-}
-
-/**
- * Registers a callback that is invoked every time there is a log message.
+ * Registers a transaction_start callback.
  *
  * @param cfg
  * @param callback_fn
  */
-void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
-    hook_register(&cfg->hook_log, callback_fn);
+void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_transaction_start, callback_fn);
 }
 
 /**
@@ -649,9 +671,6 @@ void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
  * @return HTP_OK if the personality is supported, HTP_ERROR if it isn't.
  */
 int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
-
-
-
     switch (personality) {
         case HTP_SERVER_MINIMAL:
             cfg->parse_request_line = htp_parse_request_line_generic;
@@ -763,20 +782,4 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
  */
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
     cfg->tx_auto_destroy = tx_auto_destroy;
-}
-
-/**
- * Registers the URLENCODED parser with the configuration. The parser will
- * parse the query string when available, as well as the request body when
- * in correct format.
- *
- * @param cfg
- */
-void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
-    htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
-    htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
-}
-
-void htp_config_register_multipart_parser(htp_cfg_t *cfg) {    
-    htp_config_register_request_headers(cfg, htp_ch_multipart_callback_request_headers);
 }

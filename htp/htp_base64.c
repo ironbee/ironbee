@@ -17,6 +17,12 @@
 #include "htp_base64.h"
 #include "bstr.h"
 
+/**
+ * Decode single base64-encoded character.
+ *
+ * @param value_in
+ * @return decoded character
+ */
 int htp_base64_decode_single(char value_in) {
     static const char decoding[] = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
         -1, -1, -1, -2, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
@@ -31,11 +37,26 @@ int htp_base64_decode_single(char value_in) {
     return decoding[(int) value_in];
 }
 
+/**
+ *
+ *
+ * @param decoder
+ */
 void htp_base64_decoder_init(htp_base64_decoder* decoder) {
     decoder->step = step_a;
     decoder->plainchar = 0;
 }
 
+/**
+ * Feed the supplied memory range to the decoder.
+ *
+ * @param decoder
+ * @param code_in
+ * @param length_in
+ * @param plaintext_out
+ * @param length_out
+ * @return how many bytes were placed into plaintext output
+ */
 int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in,
     char* plaintext_out, int length_out) {
     const char* codechar = code_in;
@@ -109,10 +130,23 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
     return plainchar - plaintext_out;
 }
 
+/**
+ * Base64-decode input, given as bstring.
+ *
+ * @param input
+ * @return new base64-decoded bstring
+ */
 bstr *htp_base64_decode_bstr(bstr *input) {
     return htp_base64_decode_mem(bstr_ptr(input), bstr_len(input));
 }
 
+/**
+ * Base64-decode input, given as memory range.
+ *
+ * @param data
+ * @param len
+ * @return new base64-decoded bstring
+ */
 bstr *htp_base64_decode_mem(char *data, size_t len) {
     htp_base64_decoder decoder;
     bstr *r = NULL;
