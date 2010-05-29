@@ -229,8 +229,8 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
 
 static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
     char *request_line = bstr_util_strdup_to_c(tx->request_line);
-    htp_header_t *h_user_agent = table_getc(tx->request_headers, "user-agent");
-    htp_header_t *h_referer = table_getc(tx->request_headers, "referer");
+    htp_header_t *h_user_agent = table_get_c(tx->request_headers, "user-agent");
+    htp_header_t *h_referer = table_get_c(tx->request_headers, "referer");
     char *referer, *user_agent;
     char buf[256];
 

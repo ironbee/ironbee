@@ -70,10 +70,19 @@ static const uint8_t utf8d_allow_overlong[] = {
   1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
 };
 
-inline uint32_t utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
+/**
+ * Process one byte of UTF-8 data and return a code point if one is available.
+ *
+ * @param state
+ * @param codep
+ * @param byte
+ * @return HTP_UTF8_ACCEPT for a valid character, HTP_UTF8_REJECT for an invalid character,
+ *         or something else if the character has not yet been formed
+ */
+inline uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
   uint32_t type = utf8d[byte];
 
-  *codep = (*state != UTF8_ACCEPT) ?
+  *codep = (*state != HTP_UTF8_ACCEPT) ?
     (byte & 0x3fu) | (*codep << 6) :
     (0xff >> type) & (byte);
 
@@ -81,14 +90,23 @@ inline uint32_t utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
   return *state;
 }
 
-inline uint32_t utf8_decode_allow_overlong(uint32_t* state, uint32_t* codep, uint32_t byte) {
+/**
+ * Process one byte of UTF-8 data and return a code point if one is available. Allows
+ * overlong characters in input.
+ *
+ * @param state
+ * @param codep
+ * @param byte
+ * @return HTP_UTF8_ACCEPT for a valid character, HTP_UTF8_REJECT for an invalid character,
+ *         or something else if the character has not yet been formed
+ */
+inline uint32_t htp_utf8_decode_allow_overlong(uint32_t* state, uint32_t* codep, uint32_t byte) {
   uint32_t type = utf8d_allow_overlong[byte];
 
-  *codep = (*state != UTF8_ACCEPT) ?
+  *codep = (*state != HTP_UTF8_ACCEPT) ?
     (byte & 0x3fu) | (*codep << 6) :
     (0xff >> type) & (byte);
 
   *state = utf8d[256 + *state*16 + type];
   return *state;
 }
-

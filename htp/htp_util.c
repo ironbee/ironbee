@@ -662,15 +662,15 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     size_t wpos = 0;
     size_t charpos = 0;
     uint32_t codepoint;
-    uint32_t state = UTF8_ACCEPT;
+    uint32_t state = HTP_UTF8_ACCEPT;
     uint32_t counter = 0;
     uint8_t seen_valid = 0;
 
     while (rpos < len) {
         counter++;
 
-        switch (utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
-            case UTF8_ACCEPT:
+        switch (htp_utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
+            case HTP_UTF8_ACCEPT:
                 if (counter == 1) {
                     // ASCII character
                     data[wpos++] = (uint8_t) codepoint;
@@ -715,7 +715,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                 break;
 
-            case UTF8_REJECT:
+            case HTP_UTF8_REJECT:
                 // Invalid UTF-8 character
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
@@ -726,7 +726,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                 // Override the state in the UTF-8 decoder because
                 // we want to ignore invalid characters
-                state = UTF8_ACCEPT;
+                state = HTP_UTF8_ACCEPT;
 
                 // Copy the invalid bytes into the output stream
                 while (charpos <= rpos) {
@@ -775,15 +775,15 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     size_t len = bstr_len(path);
     size_t rpos = 0;
     uint32_t codepoint;
-    uint32_t state = UTF8_ACCEPT;
+    uint32_t state = HTP_UTF8_ACCEPT;
     uint32_t counter = 0;
     uint8_t seen_valid = 0;
 
     while (rpos < len) {
         counter++;
 
-        switch (utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
-            case UTF8_ACCEPT:
+        switch (htp_utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
+            case HTP_UTF8_ACCEPT:
                 // ASCII character
 
                 if (counter > 1) {
@@ -823,13 +823,13 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 
                 break;
 
-            case UTF8_REJECT:
+            case HTP_UTF8_REJECT:
                 // Invalid UTF-8 character
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
                 // Override the state in the UTF-8 decoder because
                 // we want to ignore invalid characters
-                state = UTF8_ACCEPT;
+                state = HTP_UTF8_ACCEPT;
 
                 // If this is the first invalid byte we will
                 // want to skip over it. Otherwise we will want

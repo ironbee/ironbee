@@ -32,6 +32,7 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
  * parser configuration, temporary parsing data, as well as the parameters.
  */
 struct htp_urlenp_t {
+    /** The transaction this parser belongs to. */
     htp_tx_t *tx;
     
     /** The character used to separate parameters. Defaults to & and should
@@ -45,7 +46,7 @@ struct htp_urlenp_t {
     /** This table contains the list of parameters, indexed by name. */
     table_t *params;
 
-    // Private fields; they are used during the parsing process
+    // Private fields; these are used during the parsing process only
     int _state;
     int _complete;
     bstr *_name;
