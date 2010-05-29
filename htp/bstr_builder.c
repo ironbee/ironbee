@@ -35,6 +35,8 @@ size_t bstr_builder_size(bstr_builder_t *bb) {
  * @param bb
  */
 void bstr_builder_clear(bstr_builder_t *bb) {
+    // TODO Need list_clear() here.
+
     // Do nothing if the list is empty
     if (list_size(bb->pieces) == 0) return;
     
@@ -47,8 +49,7 @@ void bstr_builder_clear(bstr_builder_t *bb) {
 
     list_destroy(&bb->pieces);
 
-    bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);
-    // TODO What should we do on allocation failure?
+    bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);    
 }
 
 /**
@@ -112,7 +113,7 @@ int bstr_builder_append(bstr_builder_t *bb, bstr *b) {
  */
 int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len) {
     bstr *b = bstr_dup_mem(data, len);
-    if (b == NULL) return -1; // TODO Is the return code correct?
+    if (b == NULL) return -1;
     return list_push(bb->pieces, b);
 }
 
@@ -124,9 +125,9 @@ int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len) {
  * @param cstr
  * @return Success indication
  */
-int bstr_builder_append_cstr(bstr_builder_t *bb, char *cstr) {
+int bstr_builder_append_c(bstr_builder_t *bb, char *cstr) {
     bstr *b = bstr_dup_c(cstr);
-    if (b == NULL) return -1; // TODO Is the return code correct?
+    if (b == NULL) return -1;
     return list_push(bb->pieces, b);
 }
 

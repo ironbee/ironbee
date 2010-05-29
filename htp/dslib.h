@@ -25,13 +25,9 @@ typedef struct table_t table_t;
 
 // IMPORTANT This library is used internally by the parser and you should
 //           not rely on it in your code. The implementation may change at
-//           some point in the future.
+//           any time.s
 
-// What we have here is two implementations of a list structure (array- and link-list-based),
-// and one implementation of a table (case-insensitive keys; multiple key values are allowed).
-// The lists can be used as a stack.
-//
-// TODO The table element retrieval if very inefficient at the moment.
+// Lists
 
 #define list_push(L, E) (L)->push(L, E)
 #define list_pop(L) (L)->pop(L)
@@ -87,6 +83,9 @@ struct list_array_t {
 
 list_t *list_linked_create(void);
 list_t *list_array_create(size_t size);
+
+
+// Table
 
 struct table_t {
     list_t *list;
