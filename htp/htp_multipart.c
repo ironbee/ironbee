@@ -622,9 +622,9 @@ htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
  * @param mpartp
  */
 void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
+    if ((_mpartp == NULL) || (*_mpartp == NULL)) return;
     htp_mpartp_t * mpartp = *_mpartp;
-    if ((_mpartp == NULL) || (mpartp == NULL)) return;
-
+    
     free(mpartp->boundary);
 
     bstr_builder_destroy(mpartp->part_pieces);

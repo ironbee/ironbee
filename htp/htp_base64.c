@@ -32,7 +32,7 @@ int htp_base64_decode_single(char value_in) {
 
     value_in -= 43;
 
-    if (value_in < 0 || value_in > decoding_size) return -1;
+    if ((value_in < 0) || (value_in > decoding_size - 1)) return -1;
 
     return decoding[(int) value_in];
 }

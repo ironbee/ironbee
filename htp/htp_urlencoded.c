@@ -140,8 +140,8 @@ htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
  * @param urlenp
  */
 void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
-    htp_urlenp_t *urlenp = *_urlenp;
-    if ((_urlenp == NULL)||(urlenp == NULL)) return;
+    if ((_urlenp == NULL)||(*_urlenp == NULL)) return;
+    htp_urlenp_t *urlenp = *_urlenp;    
 
     if (urlenp->_name != NULL) {
         bstr_free(&urlenp->_name);
