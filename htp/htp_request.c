@@ -340,9 +340,10 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (connp->in_tx->connp->in_tx->request_transfer_coding != 0) {
             // Prepare to treat PUT request body as a file
             connp->put_file = calloc(1, sizeof (htp_file_t));
+            if (connp->put_file == NULL) return HTP_ERROR;
             connp->put_file->source = HTP_FILE_PUT;
         } else {
-            // TODO PUT request without a body
+            // TODO Warn about PUT request without a body
         }
 
         return HTP_OK;
@@ -380,6 +381,8 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     htp_header_t *ct = table_get_c(connp->in_tx->request_headers, "content-type");
     if (ct != NULL) {
         connp->in_tx->request_content_type = bstr_dup_lower(ct->value);
+        if (connp->in_tx->request_content_type == NULL) return HTP_ERROR;
+        
         // Ignore parameters        
         char *data = bstr_ptr(connp->in_tx->request_content_type);
         size_t len = bstr_len(ct->value);

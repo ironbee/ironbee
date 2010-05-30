@@ -47,11 +47,13 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
 
             // Generate the field and clear the string builder
             field = bstr_builder_to_str(urlenp->_bb);
+            if (field == NULL) return;
             bstr_builder_clear(urlenp->_bb);
         } else {
             // We only have the current piece to work with, so
             // no need to involve the string builder
             field = bstr_dup_mem((char *) data + startpos, endpos - startpos);
+            if (field == NULL) return;
         }
 
         // Process the field differently, depending on the current state

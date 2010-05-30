@@ -38,7 +38,7 @@ int htp_base64_decode_single(char value_in) {
 }
 
 /**
- *
+ * Initialize base64 decoder.
  *
  * @param decoder
  */

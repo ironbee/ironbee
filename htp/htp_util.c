@@ -410,14 +410,16 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
 int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
     int colon = bstr_chr(authority, ':');
     if (colon == -1) {
-        // Hostname alone
+        // Hostname alone; no port
         (*uri)->hostname = bstr_dup(authority);
+        if (((*uri)->hostname) == NULL) return HTP_ERROR;
         htp_normalize_hostname_inplace((*uri)->hostname);
     } else {
         // Hostname and port
 
         // Hostname
         (*uri)->hostname = bstr_dup_ex(authority, 0, colon);
+        if (((*uri)->hostname) == NULL) return HTP_ERROR;
         // TODO Handle whitespace around hostname
         htp_normalize_hostname_inplace((*uri)->hostname);
 
@@ -1551,16 +1553,23 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
  * @param hostname
  */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
+    bstr *new_hostname = NULL;
+
     int colon = bstr_chr(hostname, ':');
     if (colon == -1) {
-        // Hostname alone
-        parsed_uri->hostname = bstr_dup(hostname);
-        htp_normalize_hostname_inplace(parsed_uri->hostname);
+        // Hostname alone (no port information)
+        new_hostname = bstr_dup(hostname);
+        if (new_hostname == NULL) return;
+        htp_normalize_hostname_inplace(new_hostname);
+
+        if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
+        parsed_uri->hostname = new_hostname;
     } else {
-        // Hostname
-        parsed_uri->hostname = bstr_dup_ex(hostname, 0, colon);
+        // Hostname and port
+        new_hostname = bstr_dup_ex(hostname, 0, colon);
+        if (new_hostname == NULL) return;
         // TODO Handle whitespace around hostname
-        htp_normalize_hostname_inplace(parsed_uri->hostname);
+        htp_normalize_hostname_inplace(new_hostname);
 
         // Port
         int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(hostname) + colon + 1,
@@ -1574,7 +1583,9 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
                 // Port is different from the TCP port
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port number differs from the actual TCP port");
             } else {
-                parsed_uri->port_number = port;
+                if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
+                parsed_uri->hostname = new_hostname;
+                parsed_uri->port_number = port;                
             }
         }
     }

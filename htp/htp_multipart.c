@@ -131,12 +131,14 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
             case PARAM_NAME:
                 // TODO Unquote quoted characters
                 part->name = bstr_dup_mem((char *) data + start, pos - start);
+                if (part->name == NULL) return -1;
                 break;
             case PARAM_FILENAME:
                 // TODO Unquote quoted characters
                 part->file = calloc(1, sizeof (htp_file_t));
-                // TODO
+                if (part->file == NULL) return -1;
                 part->file->filename = bstr_dup_mem((char *) data + start, pos - start);
+                if (part->file->filename == NULL) return -1;
                 part->file->source = HTP_FILE_MULTIPART;
                 break;
             default:
@@ -247,8 +249,16 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
     htp_header_t * h_existing = table_get(part->headers, h->name);
     if (h_existing != NULL) {
         // Add to existing header
-        h_existing->value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
+        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
             + 2 + bstr_len(h->value));
+        if (new_value == NULL) {
+            bstr_free(&h->name);
+            bstr_free(&h->value);
+            free(h);
+            return -1;
+        }
+
+        h_existing->value = new_value;
         bstr_add_mem_noex(h_existing->value, ", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
@@ -261,7 +271,6 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header
-
         table_add(part->headers, h->name, h);
     }
 
@@ -424,8 +433,9 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                         strncpy(buf, part->mpartp->extract_dir, 254);
                         strncat(buf, "/libhtp-multipart-file-XXXXXX", 254 - strlen(buf));
                         part->file->tmpname = strdup(buf);
+                        if (part->file->tmpname == NULL) return -1;
                         part->file->fd = mkstemp(part->file->tmpname);
-                        // TODO RC
+                        if (part->file->fd < 0) return -1;
 
                         part->mpartp->file_count++;
                     }
@@ -446,7 +456,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                         bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
 
                         bstr *line = bstr_builder_to_str(part->mpartp->part_pieces);
-                        // TODO RC
+                        if (line == NULL) return -1;
                         htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line));
                         // TODO RC
                         bstr_free(&line);
@@ -560,6 +570,7 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
  * @return New parser, or NULL on memory allocation failure.
  */
 htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
+    if ((connp == NULL)||(boundary == NULL)) return NULL;
     htp_mpartp_t *mpartp = calloc(1, sizeof (htp_mpartp_t));
     if (mpartp == NULL) return NULL;
 
@@ -567,35 +578,30 @@ htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
 
     mpartp->boundary_pieces = bstr_builder_create();
     if (mpartp->boundary_pieces == NULL) {
-        free(mpartp);
+        htp_mpartp_destroy(&mpartp);
         return NULL;
     }
 
     mpartp->part_pieces = bstr_builder_create();
     if (mpartp->part_pieces == NULL) {
-        bstr_builder_destroy(mpartp->boundary_pieces);
-        free(mpartp);
+        htp_mpartp_destroy(&mpartp);
         return NULL;
     }
 
     mpartp->parts = list_array_create(64);
     if (mpartp->parts == NULL) {
-        bstr_builder_destroy(mpartp->part_pieces);
-        bstr_builder_destroy(mpartp->boundary_pieces);
-        free(mpartp);
+        htp_mpartp_destroy(&mpartp);
         return NULL;
     }
 
     // Copy the boundary and convert it to lowercase    
-    mpartp->boundary_len = strlen(boundary) + 4;
+    mpartp->boundary_len = strlen(boundary) + 4 + 1;
     mpartp->boundary = malloc(mpartp->boundary_len + 1);
     if (mpartp->boundary == NULL) {
-        bstr_builder_destroy(mpartp->boundary_pieces);
-        free(mpartp);
+        htp_mpartp_destroy(&mpartp);
         return NULL;
     }
 
-    // TODO Not using the CR and LF any more
     mpartp->boundary[0] = CR;
     mpartp->boundary[1] = LF;
     mpartp->boundary[2] = '-';
@@ -624,20 +630,24 @@ htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
 void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
     if ((_mpartp == NULL) || (*_mpartp == NULL)) return;
     htp_mpartp_t * mpartp = *_mpartp;
-    
-    free(mpartp->boundary);
+
+    if (mpartp->boundary != NULL) {
+        free(mpartp->boundary);
+    }
 
     bstr_builder_destroy(mpartp->part_pieces);
     bstr_builder_destroy(mpartp->boundary_pieces);
 
     // Free parts
-    htp_mpart_part_t * part = NULL;
-    list_iterator_reset(mpartp->parts);
-    while ((part = list_iterator_next(mpartp->parts)) != NULL) {
-        htp_mpart_part_destroy(part);
-    }
+    if (mpartp->parts != NULL) {
+        htp_mpart_part_t * part = NULL;
+        list_iterator_reset(mpartp->parts);
+        while ((part = list_iterator_next(mpartp->parts)) != NULL) {
+            htp_mpart_part_destroy(part);
+        }
 
-    list_destroy(&mpartp->parts);
+        list_destroy(&mpartp->parts);
+    }
 
     free(mpartp);
 

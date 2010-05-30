@@ -70,6 +70,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
             }
             
             table_destroy(&output_params);
+            return HTP_ERROR;
         }
         
         // Convert value        

@@ -105,13 +105,27 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
 
     // Decode base64-encoded data
     bstr *decoded = htp_base64_decode_mem(data + pos, len - pos);
+    if (decoded == NULL) return HTP_ERROR;
 
     // Now extract the username and password
     int i = bstr_index_of_c(decoded, ":");
-    if (i == -1) return HTP_ERROR;
+    if (i == -1) {
+        bstr_free(&decoded);    
+        return HTP_ERROR;
+    }
 
     connp->in_tx->request_auth_username = bstr_dup_ex(decoded, 0, i);
+    if (connp->in_tx->request_auth_username == NULL) {
+        bstr_free(&decoded);
+        return HTP_ERROR;
+    }
+    
     connp->in_tx->request_auth_password = bstr_dup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);
+    if (connp->in_tx->request_auth_password) {
+        bstr_free(&decoded);
+        bstr_free(&connp->in_tx->request_auth_username);
+        return HTP_ERROR;
+    }
 
     bstr_free(&decoded);
 

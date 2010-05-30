@@ -79,12 +79,8 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 
     // Now try to oparse the header
     if (htp_parse_request_header_generic(connp, h, data, len) != HTP_OK) {
-        if (tempstr != NULL) {
-            free(tempstr);
-        }
-
+        bstr_free(&tempstr);
         free(h);
-
         return HTP_ERROR;
     }
 
@@ -95,8 +91,17 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         //      allowed to be combined in this way?
 
         // Add to existing header
-        h_existing->value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
-            + 2 + bstr_len(h->value));
+        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
+            + 2 + bstr_len(h->value));        
+        if (new_value == NULL) {
+            bstr_free(&h->name);
+            bstr_free(&h->value);
+            free(h);
+            bstr_free(&tempstr);
+            return HTP_ERROR;
+        }
+
+        h_existing->value = new_value;
         bstr_add_mem_noex(h_existing->value, ", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
@@ -112,9 +117,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         table_add(connp->in_tx->request_headers, h->name, h);
     }
 
-    if (tempstr != NULL) {
-        free(tempstr);
-    }
+    bstr_free(&tempstr);
 
     return HTP_OK;
 }

@@ -171,7 +171,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_transaction_start != NULL) {
         copy->hook_transaction_start = hook_copy(cfg->hook_transaction_start);
         if (copy->hook_transaction_start == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -179,7 +179,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_request_line != NULL) {
         copy->hook_request_line = hook_copy(cfg->hook_request_line);
         if (copy->hook_request_line == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -187,7 +187,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_request_headers != NULL) {
         copy->hook_request_headers = hook_copy(cfg->hook_request_headers);
         if (copy->hook_request_headers == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -195,7 +195,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_request_body_data != NULL) {
         copy->hook_request_body_data = hook_copy(cfg->hook_request_body_data);
         if (copy->hook_request_body_data == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -203,7 +203,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_request_file_data != NULL) {
         copy->hook_request_file_data = hook_copy(cfg->hook_request_file_data);
         if (copy->hook_request_file_data == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -211,7 +211,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_request_trailer != NULL) {
         copy->hook_request_trailer = hook_copy(cfg->hook_request_trailer);
         if (copy->hook_request_trailer == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -219,7 +219,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_request != NULL) {
         copy->hook_request = hook_copy(cfg->hook_request);
         if (copy->hook_request == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -227,7 +227,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_response_line != NULL) {
         copy->hook_response_line = hook_copy(cfg->hook_response_line);
         if (copy->hook_response_line == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -235,7 +235,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_response_headers != NULL) {
         copy->hook_response_headers = hook_copy(cfg->hook_response_headers);
         if (copy->hook_response_headers == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }   
@@ -243,7 +243,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_response_body_data != NULL) {
         copy->hook_response_body_data = hook_copy(cfg->hook_response_body_data);
         if (copy->hook_response_body_data == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -251,7 +251,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_response_trailer != NULL) {
         copy->hook_response_trailer = hook_copy(cfg->hook_response_trailer);
         if (copy->hook_response_trailer == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -259,7 +259,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_response != NULL) {
         copy->hook_response = hook_copy(cfg->hook_response);
         if (copy->hook_response == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
@@ -267,7 +267,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_log != NULL) {
         copy->hook_log = hook_copy(cfg->hook_log);
         if (copy->hook_log == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
