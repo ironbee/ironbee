@@ -20,6 +20,7 @@ typedef void * bstr;
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "bstr_builder.h"
@@ -73,6 +74,9 @@ bstr *bstr_dup_lower(bstr *);
   int bstr_cmp_nocase(bstr *, bstr *);
   int bstr_cmp_c(bstr *, char *);
   int bstr_cmp_c_nocase(bstr *, char *);
+  int bstr_cmp_ex(char *, size_t, char *, size_t);
+  int bstr_cmp_nocase_ex(char *, size_t, char *, size_t);
+
 
 bstr *bstr_to_lowercase(bstr *);
 

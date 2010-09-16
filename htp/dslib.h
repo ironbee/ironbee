@@ -82,7 +82,12 @@ struct list_array_t {
 };
 
 list_t *list_linked_create(void);
+void list_linked_destroy(list_linked_t **_l);
+
 list_t *list_array_create(size_t size);
+void list_array_iterator_reset(list_array_t *l);
+void *list_array_iterator_next(list_array_t *l);
+void list_array_destroy(list_array_t **_l);
 
 
 // Table

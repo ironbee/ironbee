@@ -598,7 +598,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
  * @param what
  * @return hex-decoded byte
  */
-unsigned char x2c(unsigned char *what) {
+static unsigned char x2c(unsigned char *what) {
     register unsigned char digit;
 
     digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
@@ -616,7 +616,7 @@ unsigned char x2c(unsigned char *what) {
  * @param codepoint
  * @return converted single byte
  */
-uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
+static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
     // Is it a single-byte codepoint?
     if (codepoint < 0x100) {
         return (uint8_t) codepoint;
@@ -866,7 +866,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
  * @param data
  * @return decoded byte
  */
-int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
+static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
     int r = cfg->bestfit_replacement_char;
@@ -927,7 +927,7 @@ int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
  * @param data
  * @return decoded byte
  */
-int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
+static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
     unsigned int c2 = x2c(data + 2);
     int r = cfg->bestfit_replacement_char;
@@ -2235,3 +2235,4 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
 
     return result;
 }
+

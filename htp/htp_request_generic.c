@@ -66,10 +66,10 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
             htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
-            char *data = bstr_ptr(hl->line);
-            size_t len = bstr_len(hl->line);
-            htp_chomp((unsigned char *)data, &len);
-            bstr_add_mem_noex(tempstr, data, len);
+            char *line = bstr_ptr(hl->line);
+            size_t llen = bstr_len(hl->line);
+            htp_chomp((unsigned char *)line, &llen);
+            bstr_add_mem_noex(tempstr, line, llen);
             hl->header = h;
         }
 

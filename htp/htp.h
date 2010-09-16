@@ -1091,10 +1091,10 @@ struct htp_uri_t {
 
 // -- Functions -----------------------------------------------------------------------------------
 
-const char *htp_get_version();
+const char *htp_get_version(void);
 
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
-htp_cfg_t *htp_config_create();
+htp_cfg_t *htp_config_create(void);
       void htp_config_destroy(htp_cfg_t *cfg); 
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
@@ -1125,13 +1125,14 @@ void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separa
 void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling);
 void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8);
 void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int backslash_separators);
-void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_u_encoding);
+void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding);
 void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling);
 void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling);
 void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_handling);
 void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling);
 void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
 void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
+void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling);
 
 void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
 
@@ -1149,7 +1150,7 @@ void htp_connp_destroy_all(htp_connp_t *connp);
  void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
 void *htp_connp_get_user_data(htp_connp_t *connp);
 
-htp_conn_t *htp_conn_create();
+htp_conn_t *htp_conn_create(htp_connp_t *connp);
        void htp_conn_destroy(htp_conn_t *conn);
         int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx);
 
@@ -1188,6 +1189,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp);
 int htp_process_request_header_apache_2_2(htp_connp_t *);
 
 int htp_parse_response_line_generic(htp_connp_t *connp);
+int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len);
 int htp_process_response_header_generic(htp_connp_t *connp);
 
 // Parser states
@@ -1238,6 +1240,7 @@ int htp_parse_authority(htp_connp_t *connp, bstr *input, htp_uri_t **uri);
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
 bstr *htp_normalize_hostname_inplace(bstr *input);
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
+int htp_is_uri_unreserved(unsigned char c);
 
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
 
@@ -1253,6 +1256,8 @@ int htp_parse_content_length(bstr *b);
 int htp_parse_chunked_length(unsigned char *data, size_t len);
 int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base);
 int htp_parse_status(bstr *status);
+int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header);
+int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header);
 
 void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
 void htp_print_log(FILE *stream, htp_log_t *log);
@@ -1269,6 +1274,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
 int htp_resembles_response_line(htp_tx_t *tx);
 
+bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
 
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
@@ -1277,8 +1283,10 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
+int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
 int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
 int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
+int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
 int htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 
 int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value);
@@ -1286,12 +1294,18 @@ int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value);
 int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old);
 int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output);
 
+int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len);
 int htp_parse_cookies_v0(htp_connp_t *connp);
 int htp_parse_authorization(htp_connp_t *connp);
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 
 bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset);
+
+int htp_mpart_part_process_headers(htp_mpart_part_t *part);
+int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t len);
+int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line);
+int htp_mpartp_is_boundary_character(int c);
 
 #endif	/* _HTP_H */
 

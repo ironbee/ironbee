@@ -897,10 +897,10 @@ STATE_SWITCH:
                         // Process data prior to the boundary in the local chunk. Because
                         // we know this is the last chunk before boundary, we can remove
                         // the line endings
-                        size_t len = data_return_pos - startpos;                        
-                        if ((len > 0) && (data[startpos + len - 1] == LF)) len--;
-                        if ((len > 0) && (data[startpos + len - 1] == CR)) len--;                        
-                        mpartp->handle_data(mpartp, data + startpos, len, 1);
+                        size_t dlen = data_return_pos - startpos;                        
+                        if ((dlen > 0) && (data[startpos + dlen - 1] == LF)) dlen--;
+                        if ((dlen > 0) && (data[startpos + dlen - 1] == CR)) dlen--;                        
+                        mpartp->handle_data(mpartp, data + startpos, dlen, 1);
 
                         // Keep track of how many boundaries we've seen.
                         mpartp->boundary_count++;

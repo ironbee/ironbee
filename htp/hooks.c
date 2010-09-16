@@ -19,7 +19,7 @@
  *
  * @return New htp_hook_t structure on success, NULL on failure
  */
-htp_hook_t *hook_create() {
+htp_hook_t *hook_create(void) {
     htp_hook_t *hook = calloc(1, sizeof (htp_hook_t));
     if (hook == NULL) return NULL;
 
@@ -86,7 +86,7 @@ void hook_destroy(htp_hook_t *hook) {
  * @param callback_fn
  * @return 1 on success, -1 on memory allocation error
  */
-int hook_register(htp_hook_t **hook, int (*callback_fn)()) {
+int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
     int hook_created = 0;
     htp_callback_t *callback = calloc(1, sizeof (htp_callback_t));
     if (callback == NULL) return -1;

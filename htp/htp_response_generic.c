@@ -240,10 +240,10 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
         for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
             htp_header_line_t *hl = list_get(connp->out_tx->response_header_lines, i);
-            char *data = bstr_ptr(hl->line);
-            size_t len = bstr_len(hl->line);
-            htp_chomp((unsigned char *)data, &len);
-            bstr_add_mem_noex(tempstr, data, len);
+            char *line = bstr_ptr(hl->line);
+            size_t llen = bstr_len(hl->line);
+            htp_chomp((unsigned char *)line, &llen);
+            bstr_add_mem_noex(tempstr, line, llen);
             hl->header = h;
         }
 

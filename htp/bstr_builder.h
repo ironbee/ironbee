@@ -25,7 +25,7 @@ struct bstr_builder_t {
 
 #define BSTR_BUILDER_DEFAULT_SIZE 16
 
-bstr_builder_t * bstr_builder_create();
+bstr_builder_t * bstr_builder_create(void);
 void bstr_builder_destroy(bstr_builder_t *bb);
 
 size_t bstr_builder_size(bstr_builder_t *bb);

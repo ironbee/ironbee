@@ -29,20 +29,21 @@
 
 typedef struct htp_hook_t htp_hook_t;
 typedef struct htp_callback_t htp_callback_t;
+typedef int (*htp_callback_fn_t) (void *);
 
 struct htp_hook_t {
     list_t *callbacks;
 };
 
 struct htp_callback_t {
-    int (*fn)();        
+    htp_callback_fn_t fn;
 };
 
- int hook_register(htp_hook_t **hook, int (*callback_fn)());
+ int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn);
  int hook_run_one(htp_hook_t *hook, void *data);
  int hook_run_all(htp_hook_t *hook, void *data);
 
-htp_hook_t *hook_create();
+htp_hook_t *hook_create(void);
 htp_hook_t *hook_copy(htp_hook_t *hook);
        void hook_destroy(htp_hook_t *hook);
 

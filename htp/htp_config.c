@@ -126,7 +126,7 @@ static unsigned char bestfit_1252[] =
  *
  * @return New configuration structure.
  */
-htp_cfg_t *htp_config_create() {
+htp_cfg_t *htp_config_create(void) {
     htp_cfg_t *cfg = calloc(1, sizeof(htp_cfg_t));
     if (cfg == NULL) return NULL;
 
@@ -307,7 +307,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
  * @param callback_fn
  */
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
-    hook_register(&cfg->hook_log, callback_fn);
+    hook_register(&cfg->hook_log, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -327,7 +327,7 @@ void htp_config_register_multipart_parser(htp_cfg_t *cfg) {
  * @param callback_fn
  */
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request, callback_fn);
+    hook_register(&cfg->hook_request, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -337,7 +337,7 @@ void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t 
  * @param callback_fn 
  */
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&cfg->hook_request_body_data, callback_fn);
+    hook_register(&cfg->hook_request_body_data, (htp_callback_fn_t)callback_fn);
 }
 
 
@@ -349,7 +349,7 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * @param callback_fn
  */
 void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *)) {
-    hook_register(&cfg->hook_request_file_data, callback_fn);
+    hook_register(&cfg->hook_request_file_data, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -359,7 +359,7 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * @param callback_fn
  */
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_headers, callback_fn);
+    hook_register(&cfg->hook_request_headers, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -369,7 +369,7 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * @param callback_fn
  */
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_line, callback_fn);
+    hook_register(&cfg->hook_request_line, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -379,7 +379,7 @@ void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_con
  * @param callback_fn
  */
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_trailer, callback_fn);
+    hook_register(&cfg->hook_request_trailer, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -389,7 +389,7 @@ void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * @param callback_fn 
  */
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response, callback_fn);
+    hook_register(&cfg->hook_response, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -399,7 +399,7 @@ void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t
  * @param callback_fn
  */
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&cfg->hook_response_body_data, callback_fn);
+    hook_register(&cfg->hook_response_body_data, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -409,7 +409,7 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
  * @param callback_fn
  */
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_headers, callback_fn);
+    hook_register(&cfg->hook_response_headers, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -419,7 +419,7 @@ void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp
  * @param callback_fn
  */
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_line, callback_fn);
+    hook_register(&cfg->hook_response_line, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -429,7 +429,7 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
  * @param callback_fn 
  */
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_trailer, callback_fn);
+    hook_register(&cfg->hook_response_trailer, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -451,7 +451,7 @@ void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
  * @param callback_fn
  */
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_transaction_start, callback_fn);
+    hook_register(&cfg->hook_transaction_start, (htp_callback_fn_t)callback_fn);
 }
 
 /**
