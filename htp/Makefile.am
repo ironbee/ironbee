@@ -10,7 +10,7 @@ AM_CFLAGS = -D_GNU_SOURCE -g -O2 -Wall -Wextra -std=gnu99 -pedantic \
     -Wstrict-overflow=1 -Wextra -Wno-missing-field-initializers \
     -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes \
     -Wno-unused-parameter -Wformat -Wformat-security \
-    -fstack-protector -D_FORTIFY_SOURCE=2
+    -D_FORTIFY_SOURCE=2
 
 lib_LTLIBRARIES= libhtp.la
 libhtp_la_SOURCES= $(h_sources) $(c_sources)
