@@ -381,7 +381,9 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     htp_header_t *ct = table_get_c(connp->in_tx->request_headers, "content-type");
     if (ct != NULL) {
         connp->in_tx->request_content_type = bstr_dup_lower(ct->value);
-        if (connp->in_tx->request_content_type == NULL) return HTP_ERROR;
+        if (connp->in_tx->request_content_type == NULL) {
+            return HTP_ERROR;
+        }
         
         // Ignore parameters        
         char *data = bstr_ptr(connp->in_tx->request_content_type);
@@ -552,6 +554,10 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
             // Add the raw header line to the list
             connp->in_header_line->line = bstr_dup_mem((char *) connp->in_line, connp->in_line_len + chomp_result);
+            if (connp->in_header_line->line == NULL) {
+                return HTP_ERROR;
+            }
+            
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 
@@ -633,6 +639,9 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
             htp_chomp(connp->in_line, &connp->in_line_len);
             connp->in_tx->request_line = bstr_dup_mem((char *) connp->in_line, connp->in_line_len);
+            if (connp->in_tx->request_line == NULL) {
+                return HTP_ERROR;
+            }
 
             // Parse request line
             if (connp->cfg->parse_request_line(connp) != HTP_OK) {
@@ -687,6 +696,9 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                     }
                 } else {
                     connp->in_tx->parsed_uri->scheme = bstr_dup_c("http");
+                    if (connp->in_tx->parsed_uri->scheme == NULL) {
+                        return HTP_ERROR;
+                    }
                 }
 
                 // Port
@@ -712,6 +724,9 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 // Path
                 if (connp->in_tx->parsed_uri->path == NULL) {
                     connp->in_tx->parsed_uri->path = bstr_dup_c("/");
+                    if (connp->in_tx->parsed_uri->path == NULL) {
+                        return HTP_ERROR;
+                    }
                 }
             }
 
