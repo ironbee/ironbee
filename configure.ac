@@ -85,6 +85,58 @@ if test "$ZLIB" = "no"; then
 fi
 
 dnl -----------------------------------------------
+dnl Check and enable the GCC opts we want to use.
+dnl We may need to add more checks
+dnl -----------------------------------------------
+
+dnl -----------------------------------------------
+dnl Check for GCC signed overflow warning support
+dnl -----------------------------------------------
+AC_MSG_CHECKING(for gcc support of -Wstrict-overflow=1)
+TMPCFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -Wstrict-overflow=1"
+AC_TRY_COMPILE(,,[gcc_have_strict_overflow=yes],[gcc_have_strict_overflow=no])
+AC_MSG_RESULT($gcc_have_strict_overflow)
+if test "$gcc_have_strict_overflow" != "yes"; then
+    CFLAGS="${TMPCFLAGS}"
+fi
+
+dnl -----------------------------------------------
+dnl Check for GCC stack smashing protection
+dnl -----------------------------------------------
+AC_MSG_CHECKING(for gcc support of stack smashing protection)
+TMPCFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -fstack-protector"
+AC_TRY_COMPILE(,,[gcc_have_fstack_protector=yes],[gcc_have_fstack_protector=no])
+AC_MSG_RESULT($gcc_have_fstack_protector)
+if test "$gcc_have_fstack_protector" != "yes"; then
+    CFLAGS="${TMPCFLAGS}"
+fi
+dnl -----------------------------------------------
+dnl Check for GCC -D_FORTIFY_SOURCE support
+dnl -----------------------------------------------
+AC_MSG_CHECKING(for gcc support of FORTIFY_SOURCE)
+TMPCFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -D_FORTIFY_SOURCE=2"
+AC_TRY_COMPILE(,,[gcc_have_fortify_source=yes],[gcc_have_fortify_source=no])
+AC_MSG_RESULT($gcc_have_fortify_source)
+if test "$gcc_have_fortify_source" != "yes"; then
+    CFLAGS="${TMPCFLAGS}"
+fi
+
+dnl -----------------------------------------------
+dnl Check for GCC -Wformat-security support
+dnl -----------------------------------------------
+AC_MSG_CHECKING(for gcc support of -Wformat -Wformat-security)
+TMPCFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -Wformat -Wformat-security"
+AC_TRY_COMPILE(,,[gcc_have_format_security=yes],[gcc_have_format_security=no])
+AC_MSG_RESULT($gcc_have_format_security)
+if test "$gcc_have_format_security" != "yes"; then
+    CFLAGS="${TMPCFLAGS}"
+fi
+
+dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
 
