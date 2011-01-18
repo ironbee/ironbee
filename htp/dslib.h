@@ -23,6 +23,10 @@ typedef struct table_t table_t;
 
 #include "bstr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // IMPORTANT This library is used internally by the parser and you should
 //           not rely on it in your code. The implementation may change at
 //           any time.s
@@ -107,6 +111,10 @@ table_t *table_create(size_t size);
   size_t table_size(table_t *t);
     void table_destroy(table_t **);
     void table_clear(table_t *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _DSLIB_H */
 

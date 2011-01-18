@@ -49,6 +49,10 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 #define LF '\n'
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct htp_mpart_part_t {
     /** Pointer to the parser. */
     htp_mpartp_t *mpartp;
@@ -128,6 +132,10 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part);
 int htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
 
 int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char *data, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _HTP_MULTIPART_H */
 

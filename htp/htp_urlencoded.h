@@ -27,6 +27,10 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
 
 #define HTP_URLENCODED_MIME_TYPE        "application/x-www-form-urlencoded"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * This is the main URLENCODED parser structure. It is used to store
  * parser configuration, temporary parsing data, as well as the parameters.
@@ -76,6 +80,10 @@ int  htp_urlenp_finalize(htp_urlenp_t *urlenp);
 
  int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
  int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _HTP_URLENCODED_H */
 

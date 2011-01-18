@@ -19,6 +19,10 @@
 
 #include "bstr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     step_a, step_b, step_c, step_d
 } htp_base64_decodestep;
@@ -37,6 +41,10 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
 
 bstr *htp_base64_decode_bstr(bstr *input);
 bstr *htp_base64_decode_mem(char *data, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _HTP_BASE64_H */
 

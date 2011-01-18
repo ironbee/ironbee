@@ -25,6 +25,10 @@ typedef void * bstr;
 
 #include "bstr_builder.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // IMPORTANT This binary string library is used internally by the parser and you should
 //           not rely on it in your code. The interface and the implementation may change
 //           without warning.
@@ -109,5 +113,9 @@ unsigned char bstr_char_at(bstr *s, size_t pos);
 int64_t bstr_util_mem_to_pint(char *data, size_t len, int base, size_t *lastlen);
   char *bstr_util_memdup_to_c(char *data, size_t len);
   char *bstr_util_strdup_to_c(bstr *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _BSTR_H */

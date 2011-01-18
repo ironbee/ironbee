@@ -31,6 +31,10 @@ typedef struct htp_decompressor_t htp_decompressor_t;
 #define COMPRESSION_GZIP        1
 #define COMPRESSION_DEFLATE     2
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct htp_decompressor_t {
     int (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
     int (*callback)(htp_tx_data_t *);
@@ -49,6 +53,10 @@ struct htp_decompressor_gzip_t {
 };
 
 htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp, int format);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _HTP_DECOMPRESSORS_H */
 

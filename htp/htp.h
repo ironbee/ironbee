@@ -292,6 +292,10 @@ if ((X)->out_line_len < (X)->out_line_size) { \
     return HTP_ERROR; \
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef uint32_t htp_time_t;
 
 // -- Data structures -----------------------------------------------------------------------------
@@ -1306,6 +1310,10 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part);
 int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t len);
 int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line);
 int htp_mpartp_is_boundary_character(int c);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _HTP_H */
 
