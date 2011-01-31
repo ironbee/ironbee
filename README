@@ -1,6 +1,6 @@
 
-LibHTP (http://www.libhtp.org)
-Copyright 2009,2010 Ivan Ristic <ivanr@webkreator.com>
+LibHTP (http://www.libhtp.org/)
+Copyright 2009-2011 Qualys, Inc.
 ======================================================
 
 LibHTP is a security-aware parser for the HTTP protocol and the related bits
@@ -32,13 +32,10 @@ follows:
  |             IT CAN BE CONSIDER COMPLETE. AT THE MOMENT, THE FOCUS OF DEVELOPMENT
  |             IS ON ACHIEVING THE FIRST TWO GOALS.
 
-LibHTP is an open source product, released under terms of the General Public Licence
-version 2 (GPLv2). Please refer to the file LICENSE, which contains the complete text
-of the license.
-
-In addition, there is a special exception that allows LibHTP to be freely
-used with any OSI-approved open source licence. Please refer to the file
-LIBHTP_LICENSING_EXCEPTION for the full text of the exception.
+LibHTP is an open source product, released under terms of the Apache
+Software License version 2.0 (ASLv2). Please refer to the file LICENSE,
+which contains the complete text of the license, and NOTICE containing further
+information.
 
 
 INSTALLATION

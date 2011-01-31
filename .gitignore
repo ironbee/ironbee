@@ -1,0 +1,45 @@
+# Build files:
+*.[oa]
+*.l[oa]
+*.slo
+*.lai
+*.so
+
+# Editor files
+*~
+*.swp
+
+# Crash files
+core
+
+# Git files
+*.patch
+
+# Autotools generated files:
+config.h.in
+aclocal.m4
+config.log
+config.status
+config.guess
+config.sub
+configure.in
+configure
+libtool
+stamp-h1
+depcomp
+install-sh
+ltmain.sh
+missing
+Makefile
+Makefile.in
+m4/libtool*
+m4/lt*
+autom4te.cache/
+.deps/
+.libs/
+
+# Build Generated files:
+htp.pc
+
+# PoC
+poc/
