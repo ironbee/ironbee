@@ -1,0 +1,3 @@
+[submodule "libs/luajit-2.0-ironbee"]
+	path = libs/luajit-2.0-ironbee
+	url = git://github.com/ironbee/luajit-2.0-ironbee.git
