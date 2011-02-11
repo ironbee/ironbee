@@ -1,0 +1,90 @@
+Source Code Repository
+======================
+
+IronBee code is availalbe via a git source code repository from git-hub. The
+latest source is always available from here as are all releases.
+
+https://github.com/ironbee/ironbee
+
+To get started with github, please see help.github.com.  However, below are
+basic instructions to get you started...
+
+Get the code:
+
+  git clone git://github.com/ironbee/ironbee.git
+
+Update code from submodules:
+
+  cd ironbee
+  git submodule init
+  git submodule update
+
+Set your name/email:
+
+  git config user.name "Your Name"
+  git config user.email "email@your.dom.ain"
+  
+Keep the code up-to-date:
+
+  git checkout master
+  git rebase origin
+
+Make a local branch for your work:
+
+  git checkout -b mywork
+
+Keep your local branch up-to-date with changes upstream:
+
+  git checkout master
+  git rebase origin
+  git checkout mywork
+  git rebase master
+
+Submit a patch:
+
+  # Make some changes
+  vi libs/qi/engine.c
+  git add libs/qi/engine.c
+
+  # Add some new files
+  git add modules/mymodule.c
+
+  # Check the status of your local repo
+  git status
+
+  # Show a diff of your changes
+  git diff
+
+  # Commit your changes locally. If fixing a bug, then add the issue
+  # number to the commit message like this:
+  #  [#1234] Fixed foo by doing bar.
+  git commit
+
+  # Now produce patches of all your commits, which you can email to
+  # us at the developer mailing list or attach to a bug/feature report.
+  git format-patch origin
+
+
+Development Workflow
+====================
+
+This is a general guide to how development workflow is intended with git.
+
+1) Developer makes changes to code.
+
+2) Developer commits to their own local git repository with "git commit" or use "git citool" or "git gui" for each major change (bug/feature).
+
+3) If more changes are needed (another bug/feature), then goto 1.
+
+4) Developer uses "git format-patch origin" to generate a set of patches and
+   send upstream to be approved.  See also "git-send-email" and "git-imap-send"
+   to make this easier.
+
+5) Approver will save the email/patches and use "git am < patch" to apply,
+   review and test.
+
+6) Approver will then use "git commit -a -s" or "git citool" or "git gui" to
+   re-commit the patches with a "Signed-off-by" header to their own repo.
+
+7) Approver, if capable, will commit to svn with "git svn dcommit" or generate
+   another set of signed-off patches and forward to a commiter.

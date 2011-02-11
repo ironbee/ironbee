@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="variables">
+    <title>Variables</title>
+    <para>...</para>
+    <section>
+        <title>ARGS</title>
+        <para>All request parameters combined.</para>
+    </section>
+    <section>
+        <title>ARGS_GET</title>
+        <para>Request parameters transported in query string.</para>
+    </section>
+    <section>
+        <title>ARGS_POST</title>
+        <para>Request parameters transported in request body. [Note: This variable may not be
+            implemented in v0.1.]</para>
+    </section>
+    <section>
+        <title>REMOTE_ADDR</title>
+        <para>Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6
+            format.</para>
+    </section>
+    <section>
+        <title>REMOTE_PORT</title>
+        <para>Remote (client) port, extracted from the TCP connection.</para>
+    </section>
+    <section>
+        <title>REQUEST_HEADERS</title>
+        <para>Request headers.</para>
+    </section>
+    <section>
+        <title>REQUEST_HOST</title>
+        <para>Request hostname information, extracted from the request and normalized. The following
+            rules apply:</para>
+        <orderedlist>
+            <listitem>
+                <para>Use the hostname information if provided on the request line</para>
+            </listitem>
+            <listitem>
+                <para>Alternatively, look up the <literal>Host</literal> request header</para>
+            </listitem>
+            <listitem>
+                <para>If the hostname information is provided in both locations, the information in
+                    the <literal>Host</literal> header is ignored</para>
+            </listitem>
+        </orderedlist>
+        <para>Normalization [TODO What RFC should we refer to?]:</para>
+        <orderedlist>
+            <listitem>
+                <para>Lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Remove trailing dot</para>
+            </listitem>
+        </orderedlist>
+    </section>
+    <section>
+        <title>REQUEST_FILENAME</title>
+        <para>Request filename, extracted from request URI and normalized according to the current
+            personality.</para>
+        <para>Normalization algorithm, with all "features" enabled, is as follows:</para>
+        <orderedlist>
+            <listitem>
+                <para>Decode URL-encoded characters (both <literal>%HH</literal> and
+                        <literal>%uHHHH</literal> formats), convert to lowercase, compress
+                    separators, convert backslashes, and terminate NUL.</para>
+            </listitem>
+            <listitem>
+                <para>Convert UTF-8 to single-byte stream using best-fit mapping</para>
+            </listitem>
+            <listitem>
+                <para>Perform RFC 3986 normalization</para>
+            </listitem>
+        </orderedlist>
+    </section>
+    <section>
+        <title>REQUEST_URI</title>
+        <para>Request URI, extracted from request and normalized according to the current
+            personality (see <literal>REQUEST_FILENAME</literal> for more details).</para>
+        <para>Default normalization:</para>
+        <orderedlist>
+            <listitem>
+                <para>RFC normalization</para>
+            </listitem>
+            <listitem>
+                <para>Convert to lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Reduce consecutive forward slashes to a single character</para>
+            </listitem>
+        </orderedlist>
+        <para>All normalization options:</para>
+        <itemizedlist>
+            <listitem>
+                <para>RFC normalization</para>
+            </listitem>
+            <listitem>
+                <para>Convert to lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Convert \ characters to /</para>
+            </listitem>
+            <listitem>
+                <para>Reduce consecutive forward slashes to a single character</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>RESPONSE_HEADERS</title>
+        <para>Response headers.</para>
+    </section>
+    <section>
+        <title>SERVER_ADDR</title>
+        <para>Server IP address, extracted from the TCP connection. Can be in IPv4 or IPv6
+            format.</para>
+    </section>
+    <section>
+        <title>SERVER_PORT</title>
+        <para>Server port, extracted from the TCP connection.</para>
+    </section>
+    <section>
+        <title>SITE_NAME</title>
+        <para>The name of the site to which the current transaction was assigned.</para>
+    </section>
+</chapter>

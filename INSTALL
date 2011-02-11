@@ -1,0 +1,33 @@
+IronBee is not ready for users yet.  Currently it is available in a technology preview.  To build this code:
+
+Get the code:
+
+  git clone git://github.com/ironbee/ironbee.git
+
+Update code from submodules:
+
+  cd ironbee
+  git submodule init
+  git submodule update
+
+Build:
+
+  ./configure
+  make
+  make check
+  sudo make install
+
+Configure:
+
+  # NOTE: Java required
+  make manual
+
+  And then read the manual in docs/docbook/manual/output/
+
+If you would like to take a look at the developer docs, then:
+
+  # NOTE: doxygen and graphviz required
+  make doxygen
+
+  And take a look at those docs in docs/doxygen/html/index.html
+

@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<appendix version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="configuration-examples">
+    <title>Configuration Examples</title>
+    <para>...</para>
+    <section>
+        <title>Simple Configuration</title>
+        <programlisting># Enable inspection engine
+InspectionEngine On
+
+# Enable audit engine
+AuditEngine On
+AuditLog /var/log/ironbee/auditlog.log
+AuditLogStorageDir /var/log/ironbee/auditlog/
+
+# -- Sites --
+
+# IronBee
+&lt;Site ironbee>
+    Hostname *.ironbee.com ironbee.com ip=192.168.1.1
+&lt;/Site>
+
+# SSL Labs
+&lt;Site ssllabs>
+    Hostname *.ssllabs.com ssllabs.com ip=192.168.1.2
+&lt;/Site>
+
+# Default
+&lt;Site default>
+    Hostnanme *
+&lt;/Site></programlisting>
+    </section>
+</appendix>

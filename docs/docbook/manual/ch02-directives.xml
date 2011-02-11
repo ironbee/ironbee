@@ -1,0 +1,260 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="directives">
+    <title>Directives</title>
+    <para>...</para>
+    <section>
+        <title>AuditEngine</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the inspection engine</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditEngine On|Off</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>AuditEngine Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> main</para>
+        <para>Note: Setting <literal>AuditEngine</literal> to <literal>On</literal> activates audit
+            logging, but does not log any transactions in itself. Further activity (e.g., a rule
+            match) is required for a transaction to be recorded.</para>
+    </section>
+    <section>
+        <title>AuditLog</title>
+        <para/>
+    </section>
+    <section>
+        <title>AuditLogDirMode</title>
+        <para/>
+    </section>
+    <section>
+        <title>AuditLogFileMode</title>
+        <para/>
+    </section>
+    <section>
+        <title>AuditLogStorageDir</title>
+        <para/>
+    </section>
+    <section>
+        <title>AuditLogPartsClear</title>
+        <para/>
+    </section>
+    <section>
+        <title>AuditLogPart</title>
+        <para>Note: still need to determine if we need all the features specified here. If we don't
+            I will simplify the syntax, possibly making it forward compatible.</para>
+        <programlisting>AuditLogPart [+|-]partType [partName]; param=value; param=value</programlisting>
+        <para>A directive without the prefix will create or overwrite part of that type.</para>
+        <para>Prefix <literal>partType</literal> with a plus to add a new part of that type. This is
+            only useful if parts are configurable, in which case the audit log will have several
+            parts of the same type, but with different contents. In fact, only parametrized parts
+            can be repeated.</para>
+        <para>Prefix <literal>partType</literal> with a dash to remove part from
+            configuration.</para>
+    </section>
+    <section>
+        <title>Include</title>
+        <para><emphasis role="bold">Description:</emphasis> Includes external file into
+            configuration</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Include <replaceable>filename</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> none</para>
+        <para><emphasis role="bold">Context:</emphasis> any</para>
+        <para>Allows inclusion of another file into the current configuration file. The following
+            line will include the contents of the file <filename>sites.conf</filename> into
+            configuration:</para>
+        <programlisting>Include conf/sites.conf</programlisting>
+        <para>If you specify a relative path, the location of the current configuration file will be
+            used to resolve it.</para>
+    </section>
+    <section>
+        <title>InspectionEngine</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the inspection engine</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>InspectionEngine On|DetectionOnly|Off</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>InspectionEngine Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> main</para>
+    </section>
+    <section>
+        <title>Hostname</title>
+        <para><emphasis role="bold">Description:</emphasis> Maps hostname, URL, IP address, and port
+            combinations to a site</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Hostname <replaceable>hostname</replaceable>
+                    [<replaceable>hostname</replaceable>] ...
+                    [ip=<replaceable>ipaddress</replaceable>]
+                [port=<replaceable>port</replaceable>]</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> none</para>
+        <para><emphasis role="bold">Context:</emphasis> Site</para>
+        <para>The <literal>Hostname</literal> directive establishes a mapping between a site and one
+            or more URL spaces. </para>
+        <para>In the simplest case, a site will occupy an entire domain name:</para>
+        <programlisting>Hostname www.ironbee.com</programlisting>
+        <para>More often than not, however, several domain names will be used:</para>
+        <programlisting>Hostname www.ironbee.com ironbee.com</programlisting>
+        <para>Wildcards are permitted when there is a large number of subdomains to map or when the
+            subdomains are not known in advance. Only one wildcard character per hostname is
+            allowed:</para>
+        <programlisting>Hostname *.ironbee.com ironbee.com</programlisting>
+        <para>When there is a unique IP address assigned to the site, you can configure a site to
+            match any hostname that uses the IP address:</para>
+        <programlisting>Hostname * ip=192.168.1.1</programlisting>
+        <para>Finally, to match any hostname on any IP address (which you will need to do in default
+            sites), use a single asterisk:</para>
+        <programlisting>Hostname *</programlisting>
+    </section>
+    <section>
+        <title>PersonalityAdd</title>
+        <para><emphasis role="bold">Description:</emphasis> Adds a personality to the current
+            configuration, configuring all the parameters the alias contains</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAdd <replaceable>alias</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> none</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para>The parameters extracted from the personality being added will overwrite the existing
+            settings. This allows multiple personalities to be stacked as needed.</para>
+    </section>
+    <section>
+        <title>PersonalityAliasClear</title>
+        <para><emphasis role="bold">Description:</emphasis> Clears a previously configured
+            personality alias</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAliasClear <replaceable>alias</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> none</para>
+        <para><emphasis role="bold">Context:</emphasis> main</para>
+    </section>
+    <section>
+        <title>PersonalityAliasParam</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures a parameter for the given
+            alias</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAliasParam <replaceable>alias</replaceable>
+                <replaceable>paramName</replaceable>
+                <replaceable>paramValue</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> none</para>
+        <para><emphasis role="bold">Context:</emphasis> main</para>
+        <para>See <literal>PersonalityParam</literal> for the list of all parameters.</para>
+    </section>
+    <section>
+        <title>PersonalityClear</title>
+        <para><emphasis role="bold">Description:</emphasis> Clears all personality
+            configuration</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityClear</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> none</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para/>
+    </section>
+    <section>
+        <title>PersonalityParam</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures a specific personality
+            parameter</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityParam <replaceable>paramName</replaceable>
+                <replaceable>paramValue</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> none</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para>HTTP personality parameters:</para>
+        <variablelist>
+            <varlistentry>
+                <term><literal>http.path.convert_backslash_characters</literal></term>
+                <listitem>
+                    <para>Converts backslash characters into forward slash characters.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>http.path.convert_to_lowercase</literal></term>
+                <listitem>
+                    <para>Converts path to lowercase.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>http.path.compress_separators</literal></term>
+                <listitem>
+                    <para>Compresses multiple consecutive path separators into a single
+                        character.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>http.path.convert_utf8_to_best_fit</literal></term>
+                <listitem>
+                    <para>Converts a UTF-8 path into a best-fit string. The parameter is the file
+                        containing the conversion map.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>http.path.terminate_with_null</literal></term>
+                <listitem>
+                    <para>Terminates path with the first NULL character.</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+        <para>Request parameters personality parameters:</para>
+        <variablelist>
+            <varlistentry>
+                <term><literal>params.urlencoded_separator</literal></term>
+                <listitem>
+                    <para>Default separator: <literal>&amp;</literal></para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.multi_retrieval</literal></term>
+                <listitem>
+                    <para>Possible values: <literal>first</literal>, <literal>last</literal>,
+                            <literal>combined_comma</literal>, <literal>combined_dbman</literal>,
+                            <literal>array_perl</literal>, <literal>array_python</literal>. No
+                        default setting; a configuration error is raised if an attempt to use a
+                        single variable is detected and the personality has not been
+                        configured.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>param.name_transformation</literal></term>
+                <listitem>
+                    <para>Possible values: <literal>none</literal> (default),
+                        <literal>php</literal>.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>param.source_order</literal></term>
+                <listitem>
+                    <para>Possible values: place source identifiers in the order you wish data to be
+                        processed (<literal>G</literal> for query string parameters,
+                            <literal>P</literal> for request body parameters, <literal>C</literal>
+                        for cookies, and <literal>U</literal> for parameters extracted from request
+                        URL). Default: <literal>GP</literal>.</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+    </section>
+    <section>
+        <title>Site</title>
+        <para>A site is one of the main concepts in the configuration in IronBee. The idea is to
+            have an element to correspond to real-life web sites. With most web sites there is an
+            one-to-one mapping to domain names, but our mapping mechanism is quite flexible: you can
+            have one site per domain name, many domain names for a single site, or even have one
+            domain name shared among several sites [Note: URL-based mapping is not planned for
+            v0.1].</para>
+        <para>At the highest level, a configuration will contain one or more sites. For
+            example:</para>
+        <programlisting>&lt;Site site1>
+    Hostname site1.example.com
+&lt;/Site>
+
+&lt;Site site2>
+    Hostname site2.example.com
+&lt;/Site>
+
+&lt;Site default>
+    Hostname *
+&lt;/Site></programlisting>
+        <para>Before it can process a transaction, IronBee will examine the current configuration
+            looking for a site to assign the transaction to. The default site is used as the choice
+            of last resort, when a better selection cannot be made. The <literal>Site</literal>
+            directive only establishes site boundaries and assigns a unique handle to each site; the
+                <literal>Hostname</literal> directive is responsible for the mapping.</para>
+        <note><para>By convention, every configuration should have a default site. If you don't use a default site
+                and IronBee is unable to find a site to assign to a transaction it will generate a
+                runtime error, which will cause the transaction to be blocked if blocking is enabled
+                and the policy is to block on runtime errors.</para></note>
+    </section>
+</chapter>

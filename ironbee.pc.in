@@ -1,0 +1,16 @@
+# IronBee - pkg-config source
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: @PACKAGE_NAME@
+Description: IronBee
+Version: @VERSION@
+Requires:
+Conflicts:
+Libs: -L${libdir} -lqi -lqiutil
+Libs.private: @LIBS@
+Cflags: -I${includedir}
+

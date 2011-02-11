@@ -1,0 +1,140 @@
+/*****************************************************************************
+ * Licensed to Qualys, Inc. (QUALYS) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * QUALYS licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *****************************************************************************/
+
+/**
+ * @file
+ * @brief IronBee - Utility Functions
+ * @author Brian Rectanus <brectanus@qualys.com>
+ */
+
+#include "ironbee_config_auto.h"
+
+#include <stdio.h>
+#include <apr_lib.h>
+#include <apr_general.h>
+
+#include <ironbee/util.h>
+
+#include "ironbee_util_private.h"
+
+
+/* -- Logging -- */
+
+static struct _ibutil_logger_t {
+    ib_util_fn_logger_t   callback;
+    int                   level;
+    void                 *cbdata;
+} _ibutil_logger;
+
+/**
+ * @internal
+ *
+ * Builtin Logger.
+ */
+static void _builtin_logger(FILE *fh, int level,
+                            const char *prefix, const char *file, int line,
+                            const char *fmt, va_list ap)
+{
+    char fmt2[1024 + 1];
+
+    /// @todo Builtin logger only logs level<4
+    if (level > 4) {
+        return;
+    }
+
+    if ((file != NULL) && (line > 0)) {
+        int ec = snprintf(fmt2, 1024,
+                          "%s[%d] (%s:%d) %s\n",
+                          (prefix?prefix:""), level, file, line, fmt);
+        if (ec > 1024) {
+            /// @todo Do something better
+            abort();
+        }
+    }
+    else {
+        int ec = snprintf(fmt2, 1024,
+                          "%s[%d] %s\n",
+                          (prefix?prefix:""), level, fmt);
+        if (ec > 1024) {
+            /// @todo Do something better
+            abort();
+        }
+    }
+
+    vfprintf(fh, fmt2, ap);
+    fflush(fh);
+}
+
+ib_status_t ib_util_log_level(int level)
+{
+    _ibutil_logger.level = level;
+
+    return IB_OK;
+}
+
+ib_status_t ib_util_log_logger(ib_util_fn_logger_t callback,
+                               void *cbdata)
+{
+    _ibutil_logger.callback = callback;
+    _ibutil_logger.cbdata = cbdata;
+
+    return IB_OK;
+}
+
+void ib_util_log_ex(int level,
+                    const char *prefix, const char *file, int line,
+                    const char *fmt, ...)
+{
+    va_list ap;
+
+    if ((_ibutil_logger.callback == NULL) || (level > _ibutil_logger.level)) {
+        return;
+    }
+
+    va_start(ap, fmt);
+    _ibutil_logger.callback(_ibutil_logger.cbdata, level,
+                            prefix, file, line, fmt, ap);
+    va_end(ap);
+}
+
+
+/* -- Library Setup -- */
+
+ib_status_t ib_initialize(void)
+{
+    ib_status_t rc;
+
+    if (apr_initialize() != APR_SUCCESS) {
+        return IB_EUNKNOWN;
+    }
+
+    rc = ib_util_log_logger((ib_util_fn_logger_t)_builtin_logger, stderr);
+    if (rc != IB_OK) {
+        rc = ib_util_log_logger(NULL, NULL);
+        return rc;
+    }
+
+    ib_util_log_level(3);
+
+    return IB_OK;
+}
+
+void ib_shutdown(void)
+{
+    apr_terminate();
+}
+

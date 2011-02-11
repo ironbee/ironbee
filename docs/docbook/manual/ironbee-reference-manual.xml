@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<book version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg">
+
+    <info>
+        <title>IronBee Reference Manual</title>
+        <authorgroup>
+            <author>
+                <personname>Brian Rectanus</personname>
+            </author>
+            <author>
+                <personname>Ivan Ristic</personname>
+            </author>
+            <author>
+                <personname>William Metcalf</personname>
+            </author>
+        </authorgroup>
+
+        <copyright>
+            <year>2009-2011</year>
+            <holder>Qualys, Inc. All rights reserved.</holder>
+        </copyright>
+    </info>
+
+    <xi:include href="ch00-preface.xml"/>
+    <xi:include href="ch01-introduction.xml"/>
+    <xi:include href="ch02-directives.xml"/>
+    <xi:include href="ch03-variables.xml"/>    
+    <xi:include href="chXX-extending-ironbee.xml"/>
+    <xi:include href="chXX-installation.xml"/>    
+    <xi:include href="xx01-configuration-examples.xml"/>    
+    <xi:include href="xx02-todo.xml"/>
+</book>
