@@ -12,6 +12,7 @@ Update code from submodules:
 
 Build:
 
+  ./autogen.sh
   ./configure
   make
   make check
