@@ -5,7 +5,7 @@ include $(top_srcdir)/build/common.mk
 pkglibdir = $(prefix)/lib
 
 if FREEBSD
-AM_LDFLAGS = -L/usr/local/lib -no-undefined -module -avoid-version
+AM_LDFLAGS = -L/usr/local/lib -no-undefined -module -avoid-version -lssp_nonshared
 else
 AM_LDFLAGS = -no-undefined -module -avoid-version
 endif

@@ -61,6 +61,16 @@ case "$OS" in
                 OS_FREEBSD="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/local/include/htp"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+                AC_PATH_PROG([GCC45BIN], [gcc45],[yes],[no])
+                if test "$GCC45BIN" = "yes"; then
+                    CC="gcc45"
+                    CPP="cpp45"
+                else
+                    echo
+                    echo "   You must have gcc45 to compile on FreeBSD 7/8"
+                    echo
+                    exit 1
+                fi
         ;;
         Linux*)
                 AC_MSG_RESULT(Linux)
