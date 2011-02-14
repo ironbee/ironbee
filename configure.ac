@@ -84,6 +84,25 @@ if test "$ZLIB" = "no"; then
     exit 1
 fi
 
+# Determine the OS 
+AC_MSG_CHECKING([OS])
+OS=`uname -s`
+case "$OS" in
+        FreeBSD*)
+                AC_MSG_RESULT(FreeBSD)
+                OS_FREEBSD="true"
+                CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+                LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+        ;;
+        Linux*)
+                AC_MSG_RESULT(Linux)
+                OS_LINUX="true"
+        ;;
+        *)
+                AC_MSG_RESULT(no)
+        ;;
+esac
+
 dnl -----------------------------------------------
 dnl Check and enable the GCC opts we want to use.
 dnl We may need to add more checks
