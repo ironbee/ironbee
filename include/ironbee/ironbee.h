@@ -1194,13 +1194,13 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 #define ib_log_debug(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),"IronBee DBG: ",__FILE__,__LINE__,__VA_ARGS__)
 
 /** Normal Context Logger. */
-#define ib_clog(ib,lvl,...) ib_clog_ex((ib),(lvl),"IronBee: ",NULL,0,__VA_ARGS__)
+#define ib_clog(ctx,lvl,...) ib_clog_ex((ctx),(lvl),"IronBee: ",NULL,0,__VA_ARGS__)
 /** Error Logger. */
-#define ib_clog_error(ib,lvl,...) ib_clog_ex((ib),(lvl),"IronBee ERROR: ",NULL,0,__VA_ARGS__)
+#define ib_clog_error(ctx,lvl,...) ib_clog_ex((ctx),(lvl),"IronBee ERROR: ",NULL,0,__VA_ARGS__)
 /** Abort Logger. */
-#define ib_clog_abort(ib,...) do { ib_clog_ex((ib),0,"IronBee ABORT: ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
+#define ib_clog_abort(ctx,...) do { ib_clog_ex((ctx),0,"IronBee ABORT: ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
 /** Debug Logger. */
-#define ib_clog_debug(ib,lvl,...) ib_clog_ex((ib),(lvl),"IronBee DBG: ",__FILE__,__LINE__,__VA_ARGS__)
+#define ib_clog_debug(ctx,lvl,...) ib_clog_ex((ctx),(lvl),"IronBee DBG: ",__FILE__,__LINE__,__VA_ARGS__)
 
 /**
  * Initialize logging.
