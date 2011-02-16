@@ -1049,6 +1049,7 @@ static ib_status_t modlua_init(ib_engine_t *ib)
     /* Load lua modules */
     ib_log_debug(ib, 4, "Loading test lua module");
     modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "example.lua");
+    modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "example-ffi.lua");
 
     /* Hook to initialize the lua runtime with the connection. */
     ib_hook_register(ib, conn_started_event,
@@ -1095,6 +1096,7 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
 
     /* Init the lua modules that were loaded */
     modlua_module_init(ib, ctx, "example");
+    modlua_module_init(ib, ctx, "example-ffi");
 
     /* Register connection data event handlers. */
     ib_hook_register_context(ctx, conn_data_in_event,
