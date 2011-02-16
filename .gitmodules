@@ -4,3 +4,6 @@
 [submodule "docs/docbook"]
 	path = docs/docbook
 	url = git://github.com/ironbee/ironbee-documentation.git
+[submodule "tests/gtest"]
+	path = tests/gtest
+	url = git://github.com/ironbee/ironbee-gtest.git
