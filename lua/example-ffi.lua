@@ -35,7 +35,7 @@ function onEventHandleRequestHeaders(ib, tx)
                        _NAME, ib, tx)
  
     local req_line = ibffi.ib_data_get(c_tx.dpi, "request_line")
-    ibffi.ib_log_debug(ib, 4, "Request Line: %s", uri);
+    ibffi.ib_log_debug(ib, 4, "Request Line: %s", req_line);
 
     -- Do something interesting
 
