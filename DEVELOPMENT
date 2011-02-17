@@ -42,52 +42,52 @@ Keep your local branch up-to-date with changes upstream:
 
 Submit a patch:
 
-  # Make some changes
-  vi libs/qi/engine.c
-  git add libs/qi/engine.c
-
-  # Add some new files
-  git add modules/mymodule.c
-
-  # Check the status of your local repo
-  git status
-
-  # Show a diff of your changes
-  git diff
-
-  # Commit your changes locally. If fixing a bug, then add the issue
-  # number to the commit message like this:
-  #  [#1234] Fixed foo by doing bar.
-  git commit
-
-  # Now produce patches of all your commits, which you can email to
-  # us at the developer mailing list or attach to a bug/feature report.
-  git format-patch origin
 
 
-Development Workflow
-====================
+Contributing
+============
 
-This is a general guide to how development workflow is intended with git.
+To contribute code to the project, you will need to be using git to format
+patches which you can email to the team.
 
-1) Developer makes changes to code.
+1) Make a local topic branch
 
-2) Developer commits to their own local git repository with "git commit" or use "git citool" or "git gui" for each major change (bug/feature).
+  git checkout -b fix-bug-1234
 
-3) If more changes are needed (another bug/feature), then goto 1.
+2) Make changes to code and commit locally as many times as needed.
 
-4) Developer uses "git format-patch origin" to generate a set of patches and
-   send upstream to be approved.  See also "git-send-email" and "git-imap-send"
-   to make this easier.
+   # Make some changes
+   vi libs/qi/engine.c
 
-5) Approver will save the email/patches and use "git am < patch" to apply,
-   review and test.
+   # Add the changes to the index
+   git add libs/qi/engine.c
 
-6) Approver will then use "git commit -a -s" or "git citool" or "git gui" to
-   re-commit the patches with a "Signed-off-by" header to their own repo.
+   # Add some new files to the index
+   git add modules/mymodule.c
 
-7) Approver, if capable, will commit to svn with "git svn dcommit" or generate
-   another set of signed-off patches and forward to a commiter.
+   # Check the status of your local repo
+   git status
+
+   # Show a diff of your changes
+   git diff
+
+   # Commit your changes locally. If fixing a bug, then add the issue
+   # number to the commit message like this:
+   #  [#1234] Fixed foo by doing bar.
+   git commit
+
+3) Use git-format-patch to generate a set of patches and send upstream to be
+   approved/applied.  See also "git-send-email" and "git-imap-send" to make
+   this easier.
+
+   * The following would produce a patch file for each commit:
+   git format-patch -M origin/master
+
+4) Approver will save the email/patches and use "git am < patch" to apply,
+   review, test, signoff and commit on your behalf.
+
+   * All commits maintain the original author's name, so you will get
+     recognition for your work.
 
 
 Ongoing Contributions
@@ -156,6 +156,4 @@ instructions for doing this.
    official repository.
 
    * http://help.github.com/pull-requests/
-
-
 
