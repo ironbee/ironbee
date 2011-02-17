@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include <ironbee/ironbee.h>
+#include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/module.h>
 

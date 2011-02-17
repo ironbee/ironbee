@@ -15,8 +15,8 @@
  * limitations under the License.
  *****************************************************************************/
 
-#ifndef IB_H_
-#define IB_H_
+#ifndef _IB_ENGINE_H_
+#define _IB_ENGINE_H_
 
 /**
  * @file
@@ -1398,4 +1398,4 @@ ib_status_t DLL_PUBLIC ib_tfn_transform(ib_tfn_t *tfn,
 }
 #endif
 
-#endif /* IB_H_ */
+#endif /* _IB_ENGINE_H_ */

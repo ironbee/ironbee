@@ -25,7 +25,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/ironbee.h>
+#include <ironbee/engine.h>
 #include <ironbee/util.h>
 
 #ifdef __cplusplus

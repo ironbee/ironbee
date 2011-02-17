@@ -37,7 +37,7 @@
 #include <errno.h>
 
 
-#include <ironbee/ironbee.h>
+#include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/config.h>
 

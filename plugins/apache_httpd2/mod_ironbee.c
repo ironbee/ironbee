@@ -41,7 +41,7 @@
 #include <unistd.h>
 #endif
 
-#include <ironbee/ironbee.h>
+#include <ironbee/engine.h>
 #include <ironbee/plugin.h>
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */

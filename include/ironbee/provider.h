@@ -32,7 +32,7 @@
 #include <ironbee/build.h>
 #include <ironbee/release.h>
 
-#include <ironbee/ironbee.h>
+#include <ironbee/engine.h>
 #include <ironbee/util.h>
 
 #ifdef __cplusplus
