@@ -134,11 +134,14 @@ instructions for doing this.
 
 4) And fetch changes from upstream when you want.
 
-  * See what has changed upstream:
+  * Keep track of Github's "Fork Queue", which will list all changes
+    upstream and allow you to apply them to your fork.
+
+  * Manually see what has changed upstream:
 
     git diff HEAD..upstream/master
 
-  * When an upstream change occurs which you need, then fetch and merge:
+  * Manually fetch/merge when an upstream change occurs which you need.
 
     git fetch upstream
     git diff HEAD..FETCH_HEAD
