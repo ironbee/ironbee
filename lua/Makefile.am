@@ -10,7 +10,8 @@ else
 AM_LDFLAGS = -no-undefined -static-libtool-libs
 endif
 
-lua_DATA = example.lua \
+lua_DATA = ironbee-ffi.lua \
+           example.lua \
            example-ffi.lua
 
 noinst_LTLIBRARIES = libironbee-lua.la

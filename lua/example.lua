@@ -27,9 +27,7 @@ _VERSION = "0.1"
 ----------------------------------------------------------------------------
 
 -- This is called when the request headers are avalable to inspect.
-function onEventHandleRequestHeaders(...)
-    local ib, tx = ...
-
+function onEventHandleRequestHeaders(ib, tx)
     ironbee.log_debug(ib, 4, "Lua: %s.onEventHandleRequestHeaders", _NAME)
  
     -- Do something interesting
