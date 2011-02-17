@@ -88,3 +88,71 @@ This is a general guide to how development workflow is intended with git.
 
 7) Approver, if capable, will commit to svn with "git svn dcommit" or generate
    another set of signed-off patches and forward to a commiter.
+
+
+Ongoing Contributions
+=====================
+
+If you or your group will have ongoing contributions, then you should consider
+using Github's "fork" feature instead of sending in patches. This forks a 
+working copy of the primary IronBee git repository for your own use which you
+can commit to as you wish. In addition, others can pull, test and contribute to
+your code as well. Periodically you will want to sync up with the upstream
+repository and Github allows this through "Pull Requests". Below are some basic
+instructions for doing this.
+
+1) Create a forked repository in Github
+
+   * Login to your github account
+   * Browse to https://github.com/ironbee/ironbee/
+   * Click the "Fork" button
+   * This creates a "master" branch
+
+2) Clone the repository locally and setup for collaboration
+
+   * Clone (using your private URI):
+
+     git clone git@github.com:YOURACCOUNT/ironbee.git
+
+   * You now have the "origin" pointing at your own repo's "master" branch.
+
+   * Add the originating repository URI (the public one) as the "upstream"
+     repo:
+
+     git remote add upstream git://github.com/ironbee/ironbee.git
+     git fetch upstream
+
+   * This "upstream" remote is then used to sync upstream changes or see
+     what has changed.
+
+3) Now you can use this as the repository, commiting whenever you wish.
+
+  * Make some changes locally, commit locally, make more changes, etc.
+  * Push your local changes to github:
+  
+    git push origin master
+
+4) And fetch changes from upstream when you want.
+
+  * See what has changed upstream:
+
+    git diff HEAD..upstream/master
+
+  * When an upstream change occurs which you need, then fetch and merge:
+
+    git fetch upstream
+    git diff HEAD..FETCH_HEAD
+    git merge upstream/master
+
+    Or just do it all at once with:
+
+    git pull upstream/master
+
+5) When you have your changes working and tested, send a pull request to
+   the upstream repository so that we can merge in your changes to the
+   official repository.
+
+   * http://help.github.com/pull-requests/
+
+
+
