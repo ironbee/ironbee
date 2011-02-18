@@ -64,9 +64,17 @@ typedef struct ib_context_t ib_context_t;
 /* Public type declarations */
 typedef struct ib_conn_t ib_conn_t;
 typedef struct ib_conndata_t ib_conndata_t;
+typedef struct ib_txdata_t ib_txdata_t;
 typedef struct ib_tx_t ib_tx_t;
 typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
+
+typedef enum {
+    IB_TXDATA_HTTP_LINE,
+    IB_TXDATA_HTTP_HEADER,
+    IB_TXDATA_HTTP_BODY,
+    IB_TXDATA_HTTP_TRAILER
+} ib_txdata_type_t;
 
 /* Connection Flags */
 /// @todo Do we need anymore???
@@ -83,15 +91,17 @@ typedef struct ib_logevent_t ib_logevent_t;
 #define IB_TX_FNONE             (0)
 #define IB_TX_FERROR            (1 << 0) /**< Transaction had an error */
 #define IB_TX_FPIPELINED        (1 << 1) /**< Transaction is pipelined */
-#define IB_TX_FREQ_STARTED      (1 << 2) /**< Request started */
-#define IB_TX_FREQ_SEENHEADERS  (1 << 3) /**< Request headers seen */
-#define IB_TX_FREQ_NOBODY       (1 << 4) /**< Request should not have body */
-#define IB_TX_FREQ_SEENBODY     (1 << 5) /**< Request body seen */
-#define IB_TX_FREQ_FINISHED     (1 << 6) /**< Request finished */
-#define IB_TX_FRES_STARTED      (1 << 7) /**< Response started */
-#define IB_TX_FRES_SEENHEADERS  (1 << 8) /**< Response headers seen */
-#define IB_TX_FRES_SEENBODY     (1 << 9) /**< Response body seen */
-#define IB_TX_FRES_FINISHED     (1 <<10) /**< Response finished  */
+#define IB_TX_FSEENDATAIN       (1 << 2) /**< Transaction had data in */
+#define IB_TX_FSEENDATAOUT      (1 << 3) /**< Transaction had data out */
+#define IB_TX_FREQ_STARTED      (1 << 4) /**< Request started */
+#define IB_TX_FREQ_SEENHEADERS  (1 << 5) /**< Request headers seen */
+#define IB_TX_FREQ_NOBODY       (1 << 6) /**< Request should not have body */
+#define IB_TX_FREQ_SEENBODY     (1 << 7) /**< Request body seen */
+#define IB_TX_FREQ_FINISHED     (1 << 8) /**< Request finished */
+#define IB_TX_FRES_STARTED      (1 << 9) /**< Response started */
+#define IB_TX_FRES_SEENHEADERS  (1 << 0) /**< Response headers seen */
+#define IB_TX_FRES_SEENBODY     (1 <<11) /**< Response body seen */
+#define IB_TX_FRES_FINISHED     (1 <<12) /**< Response finished  */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
@@ -148,6 +158,17 @@ struct ib_conndata_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Data memory pool */
     ib_conn_t          *conn;            /**< Connection */
+    size_t              dalloc;          /**< Data buffer allocated */
+    size_t              dlen;            /**< Data buffer length */
+    uint8_t            *data;            /**< Data buffer */
+};
+
+/** Transaction Data Structure */
+struct ib_txdata_t {
+    ib_engine_t        *ib;              /**< Engine handle */
+    ib_mpool_t         *mp;              /**< Data memory pool */
+    ib_tx_t            *tx;              /**< Transaction */
+    ib_txdata_type_t    dtype;           /**< Transaction data type */
     size_t              dalloc;          /**< Data buffer allocated */
     size_t              dlen;            /**< Data buffer length */
     uint8_t            *data;            /**< Data buffer */
@@ -585,21 +606,30 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *
  * @dot
  * digraph states {
- *   { mclimit=5.0 }
  *
  *   start [label="start",style=bold,shape=plaintext]
  *   finish [label="finish",style=bold,shape=plaintext]
  *
- *   request [label="HTTP\nRequest\nData",style=solid,shape=box]
- *   response [label="HTTP\nResponse\nData",style=solid,shape=box]
+ *   incoming [label="Raw (unparsed)\nIncoming\nData",style=solid,shape=box]
+ *   outgoing [label="Raw (unparsed)\nOutgoing\nData",style=solid,shape=box]
+ *   request [label="HTTP (parsed)\nRequest\nData",style=solid,shape=box]
+ *   response [label="HTTP (parsed)\nResponse\nData",style=solid,shape=box]
  *
  *   context_conn_selected [label="At this point the connection context is\nselected. Events that follow will use the context\nselected here, which may impose a different\nconfiguration than previous events. Anything\nused in the context selection process must\nbe generated in a previous event handler.",style=bold,shape=note,URL="\ref handle_context_conn_event"]
  *   context_tx_selected [label="At this point the transaction context is\nselected. Events that follow will use the context\nselected here, which may impose a different\nconfiguration than previous events. Anything\nused in the context selection process must\nbe generated in a previous event handler.",style=filled,fillcolor="#e6e6e6",shape=note,URL="\ref handle_context_tx_event"]
  *
+ *   conn_started_event [label="conn_started",style=bold,shape=diamond,URL="\ref conn_started_event"]
  *   conn_opened_event [label="conn_opened",style=bold,shape=octagon,URL="\ref conn_opened_event"]
  *   conn_data_in_event [label="conn_data_in",style=solid,shape=octagon,peripheries=2,URL="\ref conn_data_in_event"]
  *   conn_data_out_event [label="conn_data_out",style=solid,shape=octagon,peripheries=2,URL="\ref conn_data_out_event"]
  *   conn_closed_event [label="conn_closed",style=bold,shape=octagon,URL="\ref conn_closed_event"]
+ *   conn_finished_event [label="conn_finished",style=bold,shape=diamond,URL="\ref conn_finished_event"]
+ *
+ *   tx_started_event [label="tx_started",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_started_event"]
+ *   tx_data_in_event [label="tx_data_in",style=solid,shape=octagon,peripheries=2,URL="\ref tx_data_in_event"]
+ *   tx_process_event [label="tx_process",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_process_event"]
+ *   tx_data_out_event [label="tx_data_out",style=solid,shape=octagon,peripheries=2,URL="\ref tx_data_out_event"]
+ *   tx_finished_event [label="tx_finished",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_finished_event"]
  *
  *   request_started_event [label="request_started *",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_started_event"]
  *   request_headers_event [label="request_headers",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_headers_event"]
@@ -609,12 +639,6 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   response_headers_event [label="response_headers",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_headers_event"]
  *   response_body_event [label="response_body",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_body_event"]
  *   response_finished_event [label="response_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_finished_event"]
- *
- *   conn_started_event [label="conn_started",style=bold,shape=diamond,URL="\ref conn_started_event"]
- *   conn_finished_event [label="conn_finished",style=bold,shape=diamond,URL="\ref conn_finished_event"]
- *   tx_started_event [label="tx_started",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_started_event"]
- *   tx_process_event [label="tx_process",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_process_event"]
- *   tx_finished_event [label="tx_finished",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_finished_event"]
  *
  *   handle_context_conn_event [label="handle_context_conn **",style=bold,shape=parallelogram,URL="\ref handle_context_conn_event"]
  *   handle_connect_event [label="handle_connect",style=bold,shape=parallelogram,URL="\ref handle_connect_event"]
@@ -626,53 +650,72 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   handle_disconnect_event [label="handle_disconnect",style=bold,shape=parallelogram,URL="\ref handle_disconnect_event"]
  *   handle_postprocess_event [label="handle_postprocess",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_postprocess_event"]
  *
- *   start -> conn_started_event [weight=100.0]
+ *   // These are just for organizational purposes
+ *   conn_started_event -> incoming [style=invis,weight=5.0]
+ *   conn_data_in_event -> request [style=invis,weight=100.0]
+ *   conn_data_out_event -> response [style=invis,weight=100.0]
+ *   tx_started_event -> request [style=invis,weight=5.0]
+ *   tx_started_event -> tx_finished_event [style=invis,weight=5.0]
+ *   tx_process_event -> outgoing [style=invis]
+ *   response_started_event -> response [style=invis,weight=5.0]
  *
- *   tx_started_event -> request [style=invis]
- *   request -> conn_data_in_event [dir=none,weight=100.0]
+ *   start -> conn_started_event [weight=500.0]
+ *   incoming -> conn_data_in_event [dir=none,weight=100.0]
  *   conn_data_in_event -> conn_data_in_event [weight=0.1]
- *   conn_data_in_event -> request_started_event [style=dotted,arrowhead=none,weight=1.5]
- *   conn_data_in_event -> request_headers_event [style=dotted,arrowhead=none,weight=1.5]
- *   conn_data_in_event -> request_body_event [style=dotted,arrowhead=none,weight=1.5]
+ *   conn_data_in_event -> tx_data_in_event [weight=0.1]
+ *   tx_data_in_event -> tx_data_in_event [weight=0.1]
  *
- *   tx_process_event -> response [style=invis]
- *   response -> conn_data_out_event [dir=none,weight=100.0]
- *   conn_data_out_event -> conn_data_out_event [weight=0.1]
- *   conn_data_out_event -> response_started_event [style=dotted,arrowhead=none,weight=1.5]
- *   conn_data_out_event -> response_headers_event [style=dotted,arrowhead=none,weight=1.5]
- *   conn_data_out_event -> response_body_event [style=dotted,arrowhead=none,weight=1.5]
+ *   conn_started_event -> conn_opened_event [weight=100.0]
+ *   conn_opened_event -> context_conn_selected [weight=100.0]
+ *   context_conn_selected -> handle_context_conn_event [weight=100.0]
+ *   handle_context_conn_event -> handle_connect_event [weight=100.0]
+ *   handle_connect_event -> tx_started_event [weight=100.0]
  *
- *   conn_started_event -> conn_opened_event [weight=3.0]
- *   conn_opened_event -> context_conn_selected [weight=3.0]
- *   context_conn_selected -> handle_context_conn_event [weight=3.0]
- *   handle_context_conn_event -> handle_connect_event [weight=3.0]
- *   handle_connect_event -> tx_started_event [weight=3.0]
- *   tx_started_event -> request_started_event [weight=3.0]
- *   request_started_event -> request_headers_event [weight=3.0]
- *   request_headers_event -> context_tx_selected [weight=3.0]
- *   context_tx_selected -> handle_context_tx_event [weight=3.0]
- *   handle_context_tx_event -> handle_request_headers_event [weight=3.0]
+ *   request -> tx_data_in_event [dir=none,weight=100.0]
+ *   tx_data_in_event -> request_started_event [style=dotted,arrowhead=none,weight=1.5]
+ *   tx_data_in_event -> request_headers_event [style=dotted,arrowhead=none,weight=1.5]
+ *   tx_data_in_event -> request_body_event [style=dotted,arrowhead=none,weight=1.5]
+ *
+ *   tx_started_event -> request_started_event [weight=5.0]
+ *   request_started_event -> request_headers_event [weight=1.0]
+ *   request_headers_event -> context_tx_selected [weight=1.0]
+ *   context_tx_selected -> handle_context_tx_event [weight=1.0]
+ *   handle_context_tx_event -> handle_request_headers_event [weight=1.0]
  *   handle_request_headers_event -> request_started_event [label="HTTP\nPipeline\nRequest",style=dashed,weight=10.0]
- *   handle_request_headers_event -> request_body_event [weight=3.0]
- *   request_body_event -> handle_request_event [weight=3.0]
- *   handle_request_event -> request_finished_event [weight=3.0]
- *   request_finished_event -> tx_process_event [weight=3.0]
- *   tx_process_event -> response_started_event [weight=3.0]
- *   response_started_event -> response_headers_event [weight=3.0]
- *   response_headers_event -> handle_response_headers_event [weight=3.0]
- *   handle_response_headers_event -> response_body_event [weight=3.0]
- *   response_body_event -> handle_response_event [weight=3.0]
- *   handle_response_event -> response_finished_event [weight=3.0]
- *   handle_postprocess_event -> tx_finished_event [weight=3.0]
- *   tx_finished_event -> tx_started_event [weight=3.0]
+ *   handle_request_headers_event -> request_body_event [weight=1.0]
+ *   request_body_event -> handle_request_event [weight=1.0]
+ *   handle_request_event -> request_finished_event [weight=1.0]
+ *   request_finished_event -> tx_process_event [weight=1.0]
+ *
+ *   tx_process_event -> response_started_event [weight=1.0]
+ *
+ *   response -> tx_data_out_event [dir=none,weight=100.0]
+ *   outgoing -> conn_data_out_event [dir=none,weight=100.0]
+ *   conn_data_out_event -> conn_data_out_event [weight=0.1]
+ *   conn_data_out_event -> tx_data_out_event [weight=0.1]
+ *   tx_data_out_event -> tx_data_out_event [weight=0.1]
+ *
+ *   tx_data_out_event -> response_started_event [style=dotted,arrowhead=none,weight=1.5]
+ *   tx_data_out_event -> response_headers_event [style=dotted,arrowhead=none,weight=1.5]
+ *   tx_data_out_event -> response_body_event [style=dotted,arrowhead=none,weight=1.5]
+ *
+ *   response_started_event -> response_headers_event [weight=1.0]
+ *   response_headers_event -> handle_response_headers_event [weight=1.0]
+ *   handle_response_headers_event -> response_body_event [weight=1.0]
+ *   response_body_event -> handle_response_event [weight=1.0]
+ *   handle_response_event -> response_finished_event [weight=5.0]
  *   response_finished_event -> response_started_event [label="HTTP\nPipeline\nResponse",style=dashed,weight=10.0]
  *
  *   response_finished_event -> handle_postprocess_event [weight=5.0]
- *   tx_finished_event -> conn_closed_event [weight=3.0]
- *   conn_closed_event -> handle_disconnect_event [weight=3.0]
+ *   handle_postprocess_event -> tx_finished_event [weight=5.0]
+ *
+ *   tx_finished_event -> tx_started_event [weight=5.0,constraint=false]
+ *   tx_finished_event -> conn_closed_event [weight=5.0]
+ *
+ *   conn_closed_event -> handle_disconnect_event [weight=5.0]
  *   handle_disconnect_event -> conn_finished_event [weight=10.0]
  *
- *   conn_finished_event -> finish [weight=100.0]
+ *   conn_finished_event -> finish [weight=500.0]
  * }
  * @enddot
  *
@@ -686,37 +729,40 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  */
 typedef enum {
     /* Engine States */
-    conn_started_event,             /**< Connection started */
-    conn_finished_event,            /**< Connection finished */
-    tx_started_event,               /**< Transaction started */
-    tx_process_event,               /**< Transaction is being processed */
-    tx_finished_event,              /**< Transaction finished */
+    conn_started_event,            /**< Connection started */
+    conn_finished_event,           /**< Connection finished */
+    tx_started_event,              /**< Transaction started */
+    tx_process_event,              /**< Transaction is about to be processed */
+    tx_finished_event,             /**< Transaction finished */
 
     /* Handler States */
-    handle_context_conn_event,      /**< Handle connection context chosen */
-    handle_connect_event,           /**< Handle a connect */
-    handle_context_tx_event,        /**< Handle transaction context chosen */
-    handle_request_headers_event,   /**< Handle the request headers */
-    handle_request_event,           /**< Handle the full request */
-    handle_response_headers_event,  /**< Handle the response headers */
-    handle_response_event,          /**< Handle the full response */
-    handle_disconnect_event,        /**< Handle a disconnect */
-    handle_postprocess_event,       /**< Handle transaction post processing */
+    handle_context_conn_event,     /**< Handle connection context chosen */
+    handle_connect_event,          /**< Handle a connect */
+    handle_context_tx_event,       /**< Handle transaction context chosen */
+    handle_request_headers_event,  /**< Handle the request headers */
+    handle_request_event,          /**< Handle the full request */
+    handle_response_headers_event, /**< Handle the response headers */
+    handle_response_event,         /**< Handle the full response */
+    handle_disconnect_event,       /**< Handle a disconnect */
+    handle_postprocess_event,      /**< Handle transaction post processing */
 
     /* Plugin States */
-    conn_opened_event,              /**< Plugin notified connection opened */
-    conn_data_in_event,             /**< Plugin notified of request data */
-    conn_data_out_event,            /**< Plugin notified of response data */
-    conn_closed_event,              /**< Plugin notified connection closed */
-    request_started_event,          /**< Plugin notified request has started */
-    request_headers_event,          /**< Plugin notified of request headers */
-    request_body_event,             /**< Plugin notified of request body */
-    request_finished_event,         /**< Plugin notified request finished */
-    response_started_event,         /**< Plugin notified response started */
-    response_headers_event,         /**< Plugin notified of response headers */
-    response_body_event,            /**< Plugin notified of response body */
-    response_finished_event,        /**< Plugin notified response finished */
-    log_event,                      /**< Plugin notified of transaction log */
+    conn_opened_event,             /**< Plugin notified connection opened */
+    conn_data_in_event,            /**< Plugin notified of incoming data */
+    conn_data_out_event,           /**< Plugin notified of outgoing data */
+    conn_closed_event,             /**< Plugin notified connection closed */
+
+    /* Parser States */
+    tx_data_in_event,              /**< Parser notified of request data */
+    tx_data_out_event,             /**< Parser notified of response data */
+    request_started_event,         /**< Parser notified request has started */
+    request_headers_event,         /**< Parser notified of request headers */
+    request_body_event,            /**< Parser notified of request body */
+    request_finished_event,        /**< Parser notified request finished */
+    response_started_event,        /**< Parser notified response started */
+    response_headers_event,        /**< Parser notified of response headers */
+    response_body_event,           /**< Parser notified of response body */
+    response_finished_event,       /**< Parser notified response finished */
 
     /* Not an event, but keeps track of the number of events. */
     IB_STATE_EVENT_NUM,
@@ -746,7 +792,7 @@ const char *ib_state_event_name(ib_state_event_type_t event);
  * Notify the state machine that a connection started.
  *
  * @param ib Engine handle
- * @param conn Connection data
+ * @param conn Connection
  *
  * @returns Status code
  */
@@ -754,10 +800,10 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_opened(ib_engine_t *ib,
                                                    ib_conn_t *conn);
 
 /**
- * Notify the state machine that a connection data came in.
+ * Notify the state machine that connection data came in.
  *
  * @param ib Engine handle
- * @param conn Connection data
+ * @param conndata Connection data
  *
  * @returns Status code
  */
@@ -765,10 +811,10 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_data_in(ib_engine_t *ib,
                                                     ib_conndata_t *conndata);
 
 /**
- * Notify the state machine that a connection data is headed out.
+ * Notify the state machine that connection data is headed out.
  *
  * @param ib Engine handle
- * @param conn Connection data
+ * @param conndata Connection data
  *
  * @returns Status code
  */
@@ -779,12 +825,34 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_data_out(ib_engine_t *ib,
  * Notify the state machine that a connection finished.
  *
  * @param ib Engine handle
- * @param conn Connection data
+ * @param conn Connection
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_conn_closed(ib_engine_t *ib,
                                                    ib_conn_t *conn);
+
+/**
+ * Notify the state machine that transaction data came in.
+ *
+ * @param ib Engine handle
+ * @param txdata Transaction data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_state_notify_tx_data_in(ib_engine_t *ib,
+                                                  ib_txdata_t *txdata);
+
+/**
+ * Notify the state machine that transaction data is headed out.
+ *
+ * @param ib Engine handle
+ * @param txdata Transaction data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_state_notify_tx_data_out(ib_engine_t *ib,
+                                                   ib_txdata_t *txdata);
 
 /**
  * Notify the state machine that the request started.
@@ -885,17 +953,6 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_body(ib_engine_t *ib,
  */
 ib_status_t DLL_PUBLIC ib_state_notify_response_finished(ib_engine_t *ib,
                                                          ib_tx_t *tx);
-
-/**
- * Notify the state machine that the logging phase has been reached.
- *
- * @param ib Engine handle
- * @param tx Transaction data
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_state_notify_log(ib_engine_t *ib,
-                                           ib_tx_t *tx);
 
 /**
  * @} QEngineState

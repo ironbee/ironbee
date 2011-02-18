@@ -532,6 +532,10 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(conn_data_in_event),
     IB_STRINGIFY(conn_data_out_event),
     IB_STRINGIFY(conn_closed_event),
+
+    /* Parser States */
+    IB_STRINGIFY(tx_data_in_event),
+    IB_STRINGIFY(tx_data_out_event),
     IB_STRINGIFY(request_started_event),
     IB_STRINGIFY(request_headers_event),
     IB_STRINGIFY(request_body_event),
@@ -680,6 +684,50 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
 /**
  * @internal
+ * Notify the engine that a transaction data event has occured.
+ *
+ * @param ib Engine
+ * @param event Event
+ * @param txdata Connection data
+ *
+ * @returns Status code
+ */
+static ib_status_t ib_state_notify_tx_data(ib_engine_t *ib,
+                                           ib_state_event_type_t event,
+                                           ib_txdata_t *txdata)
+{
+    IB_FTRACE_INIT(ib_state_notify_tx_data);
+    ib_tx_t *tx = txdata->tx;
+    ib_hook_t *hook = NULL;
+    ib_status_t rc = IB_OK;
+    
+    rc = ib_state_notify(ib, event, txdata);
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (tx->ctx != ib->ctx) {
+        hook = tx->ctx->hook[event];
+    }
+
+    while (hook != NULL) {
+        ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
+        rc = cb(ib, txdata, hook->cdata);
+        if (rc != IB_OK) {
+            /// @todo Or should we go on???
+            ib_log_error(ib, 4, "Hook returned error: %s=%d",
+                         ib_state_event_name(event), rc);
+            break;
+        }
+
+        hook = hook->next;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
  * Notify the engine that a transaction event has occured.
  *
  * @param ib Engine
@@ -721,6 +769,25 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Notify engine of additional events when notifcation of a
+ * @ref conn_opened_event occurs.
+ *
+ * When the event is notified, additional events are notified immediatly
+ * prior to it:
+ *
+ *  - @ref conn_started_event
+ *
+ * And immediatly following it:
+ *
+ *  - @ref handle_context_conn_event
+ *  - @ref handle_connect_event
+ *
+ * @param ib Engine
+ * @param conn Connection
+ *
+ * @returns Status code
+ */
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
@@ -786,6 +853,21 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Notify engine of additional events when notifcation of a
+ * @ref conn_closed_event occurs.
+ *
+ * When the event is notified, additional events are notified immediatly
+ * prior to it:
+ *
+ *  - @ref handle_disconnect_event
+ *  - @ref conn_finished_event
+ *
+ * @param ib Engine
+ * @param conn Connection
+ *
+ * @returns Status code
+ */
 ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
@@ -815,6 +897,53 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Notify engine of additional events when notifcation of a
+ * @ref tx_data_in_event occurs.
+ *
+ * When the event is notified, additional events are notified immediatly
+ * prior to it:
+ *
+ *  - @ref tx_started_event
+ *
+ * @param ib Engine
+ * @param txdata Transaction data
+ *
+ * @returns Status code
+ */
+ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
+                                       ib_txdata_t *txdata)
+{
+    IB_FTRACE_INIT(ib_state_notify_tx_data_in);
+    ib_status_t rc;
+
+    if ((txdata->tx->flags & IB_TX_FSEENDATAIN) == 0) {
+        ib_tx_flags_set(txdata->tx, IB_TX_FSEENDATAIN);
+
+        rc = ib_state_notify_tx(ib, tx_started_event, txdata->tx);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    rc = ib_state_notify_tx_data(ib, tx_data_in_event, txdata);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_state_notify_tx_data_out(ib_engine_t *ib,
+                                        ib_txdata_t *txdata)
+{
+    IB_FTRACE_INIT(ib_state_notify_tx_data_out);
+    ib_status_t rc;
+
+    if ((txdata->tx->flags & IB_TX_FSEENDATAOUT) == 0) {
+        ib_tx_flags_set(txdata->tx, IB_TX_FSEENDATAOUT);
+    }
+
+    rc = ib_state_notify_tx_data(ib, tx_data_out_event, txdata);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
                                             ib_tx_t *tx)
 {
@@ -823,21 +952,35 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(tx_started_event));
+                     ib_state_event_name(request_started_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
 
-    rc = ib_state_notify_tx(ib, tx_started_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     rc = ib_state_notify_tx(ib, request_started_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Notify engine of additional events when notifcation of a
+ * @ref request_headers_event occurs.
+ *
+ * When the event is notified, additional events are notified immediatly
+ * prior to it:
+ *
+ *  - @ref request_started_event (if not already notified)
+ *
+ * And immediatly following it:
+ *
+ *  - @ref handle_context_tx_event
+ *  - @ref handle_request_headers_event
+ *
+ * @param ib Engine
+ * @param txdata Transaction data
+ *
+ * @returns Status code
+ */
 ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
                                             ib_tx_t *tx)
 {
@@ -882,11 +1025,10 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
  * Notify engine of additional events when notifcation of a
  * @ref request_body_event occurs.
  *
- * When the request_body_event is notified, additional events are notified
- * immediatly following it:
+ * When the event is notified, additional events are notified immediatly
+ * following it:
  *
  *  - @ref handle_request_event
- *  - @ref tx_process_event
  *
  * @param ib Engine
  * @param tx Transaction
@@ -907,7 +1049,6 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_state_notify_tx(ib, tx_process_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -929,6 +1070,24 @@ ib_status_t ib_state_notify_request_body(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Notify engine of additional events when notifcation of a
+ * @ref request_finished_event occurs.
+ *
+ * When the event is notified, additional events are notified
+ * immediatly prior to it:
+ *
+ *  - @ref request_body_event (only if not already notified)
+ *
+ * And immediatly following it:
+ *
+ *  - @ref tx_process_event
+ *
+ * @param ib Engine
+ * @param tx Transaction
+ *
+ * @returns Status code
+ */
 ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
@@ -958,6 +1117,11 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_tx(ib, request_finished_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_state_notify_tx(ib, tx_process_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -979,6 +1143,24 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Notify engine of additional events when notifcation of a
+ * @ref response_headers_event occurs.
+ *
+ * When the event is notified, additional events are notified
+ * immediatly prior to it:
+ *
+ *  - @ref response_started_event (only if not already notified)
+ *
+ * And immediatly following it:
+ *
+ *  - @ref handle_response_headers_event
+ *
+ * @param ib Engine
+ * @param tx Transaction
+ *
+ * @returns Status code
+ */
 ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
@@ -1008,6 +1190,20 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Notify engine of additional events when notifcation of a
+ * @ref response_body_event  occurs.
+ *
+ * When the event is notified, additional events are notified
+ * immediatly following it:
+ *
+ *  - @ref handle_response_event
+ *
+ * @param ib Engine
+ * @param tx Transaction
+ *
+ * @returns Status code
+ */
 ib_status_t ib_state_notify_response_body(ib_engine_t *ib,
                                           ib_tx_t *tx)
 {
@@ -1124,6 +1320,9 @@ ib_status_t ib_hook_register_context(ib_context_t *ctx,
     ib_engine_t *ib = ctx->ib;
     ib_hook_t *last = ctx->hook[event];
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ctx->mp, sizeof(*hook));
+
+    ib_log_debug(ib, 4, "ib_hook_register_context(%p,%d,%p,%p)",
+                 ctx, event, (intptr_t)cb, cdata);
 
     if (hook == NULL) {
         ib_log_abort(ib, "Error in ib_mpool_calloc");

@@ -229,12 +229,53 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     IB_FTRACE_RET_INT(HTP_OK);
 }
 
+static int modhtp_htp_request_line(htp_connp_t *connp)
+{
+    IB_FTRACE_INIT(modhtp_htp_request_line);
+    modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
+    ib_conn_t *qconn = modctx->qconn;
+    ib_engine_t *ib = qconn->ib;
+    ib_txdata_t qtxdata;
+    ib_tx_t *qtx;
+
+    /* Use the current parser transaction to generate fields. */
+    /// @todo Check htp state, etc.
+    if (modctx->htp_tx == NULL) {
+        /// @todo Set error.
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
+
+    /* Fetch the ironbee transaction and notify the engine
+     * that more transaction data has arrived.
+     */
+    qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /* Fill in a temporary ib_txdata_t structure and use it
+     * to notify the engine of transaction data.
+     */
+    qtxdata.ib = ib;
+    qtxdata.mp = qtx->mp;
+    qtxdata.tx = qtx;
+    qtxdata.dtype = IB_TXDATA_HTTP_LINE;
+    qtxdata.dalloc = bstr_size(tx->request_line);
+    qtxdata.dlen = bstr_len(tx->request_line);
+    qtxdata.data = (uint8_t *)bstr_ptr(tx->request_line);
+
+    ib_state_notify_tx_data_in(ib, &qtxdata);
+
+    IB_FTRACE_RET_INT(HTP_OK);
+}
+
 static int modhtp_htp_request_headers(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request_headers);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
+    htp_header_line_t *hline;
     ib_conn_t *qconn = modctx->qconn;
     ib_engine_t *ib = qconn->ib;
+    ib_txdata_t qtxdata;
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
@@ -248,7 +289,78 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
      * that the request headers are now available.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /* Fill in a temporary ib_txdata_t structure for each header line
+     * and use it to notify the engine of transaction data.
+     */
+    qtxdata.ib = ib;
+    qtxdata.mp = qtx->mp;
+    qtxdata.tx = qtx;
+    qtxdata.dtype = IB_TXDATA_HTTP_HEADER;
+    list_iterator_reset(tx->request_header_lines);
+    while ((hline = list_iterator_next(tx->request_header_lines)) != NULL) {
+        qtxdata.dalloc = bstr_size(hline->line);
+        qtxdata.dlen = bstr_len(hline->line);
+        qtxdata.data = (uint8_t *)bstr_ptr(hline->line);
+
+        ib_state_notify_tx_data_in(ib, &qtxdata);
+    }
+
     ib_state_notify_request_headers(ib, qtx);
+
+    IB_FTRACE_RET_INT(HTP_OK);
+}
+
+static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
+{
+    IB_FTRACE_INIT(modhtp_htp_body_data);
+    htp_connp_t *connp = txdata->tx->connp;
+    modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    ib_conn_t *qconn = modctx->qconn;
+    ib_engine_t *ib = qconn->ib;
+    ib_tx_t *qtx;
+
+    /* Use the current parser transaction to generate fields. */
+    /// @todo Check htp state, etc.
+    if (modctx->htp_tx == NULL) {
+        /// @todo Set error.
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
+
+
+    /* Fetch the ironbee transaction and notify the engine
+     * that more transaction data has arrived.
+     */
+    qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /// @todo Notify tx_datain_event w/body chunk
+    ib_log_debug(ib, 4, "TODO: tx_datain_event w/body chunk: tx=%p", qtx);
+
+    IB_FTRACE_RET_INT(HTP_OK);
+}
+
+static int modhtp_htp_request_trailer(htp_connp_t *connp)
+{
+    IB_FTRACE_INIT(modhtp_htp_request_trailer);
+    modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    ib_conn_t *qconn = modctx->qconn;
+    ib_engine_t *ib = qconn->ib;
+    ib_tx_t *qtx;
+
+    /* Use the current parser transaction to generate fields. */
+    /// @todo Check htp state, etc.
+    if (modctx->htp_tx == NULL) {
+        /// @todo Set error.
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
+
+    /* Fetch the ironbee transaction and notify the engine
+     * that more transaction data has arrived.
+     */
+    qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /// @todo Notify tx_datain_event w/request trailer
+    ib_log_debug(ib, 4, "TODO: tx_datain_event w/request trailer: tx=%p", qtx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -284,9 +396,9 @@ static int modhtp_htp_request(htp_connp_t *connp)
     IB_FTRACE_RET_INT(HTP_OK);
 }
 
-static int modhtp_htp_response_start(htp_connp_t *connp)
+static int modhtp_htp_response_line(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_response_start);
+    IB_FTRACE_INIT(modhtp_htp_response_line);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     ib_conn_t *qconn = modctx->qconn;
     ib_engine_t *ib = qconn->ib;
@@ -303,6 +415,10 @@ static int modhtp_htp_response_start(htp_connp_t *connp)
      * response started.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /// @todo Notify tx_dataout_event w/response line
+    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response line: tx=%p", qtx);
+
     ib_state_notify_response_started(ib, qtx);
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -327,7 +443,38 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
      * that the response headers are now available.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /// @todo Notify tx_dataout_event w/request headers
+    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response headers: tx=%p", qtx);
+
     ib_state_notify_response_headers(ib, qtx);
+
+    IB_FTRACE_RET_INT(HTP_OK);
+}
+
+static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
+{
+    IB_FTRACE_INIT(modhtp_htp_response_body_data);
+    htp_connp_t *connp = txdata->tx->connp;
+    modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    ib_conn_t *qconn = modctx->qconn;
+    ib_engine_t *ib = qconn->ib;
+    ib_tx_t *qtx;
+
+    /* Use the current parser transaction to generate fields. */
+    /// @todo Check htp state, etc.
+    if (modctx->htp_tx == NULL) {
+        /// @todo Set error.
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
+
+    /* Fetch the ironbee transaction and notify the engine
+     * that more transaction data has arrived.
+     */
+    qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /// @todo Notify tx_dataout_event w/response body chunks
+    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response body chunks: tx=%p", qtx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -360,6 +507,32 @@ static int modhtp_htp_response(htp_connp_t *connp)
     ib_log_debug(ib, 9, "Destroying transaction structure");
     ib_tx_destroy(qtx);
     htp_tx_destroy(modctx->htp_tx);
+
+    IB_FTRACE_RET_INT(HTP_OK);
+}
+
+static int modhtp_htp_response_trailer(htp_connp_t *connp)
+{
+    IB_FTRACE_INIT(modhtp_htp_response_trailer);
+    modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    ib_conn_t *qconn = modctx->qconn;
+    ib_engine_t *ib = qconn->ib;
+    ib_tx_t *qtx;
+
+    /* Use the current parser transaction to generate fields. */
+    /// @todo Check htp state, etc.
+    if (modctx->htp_tx == NULL) {
+        /// @todo Set error.
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
+
+    /* Fetch the ironbee transaction and notify the engine
+     * that more transaction data has arrived.
+     */
+    qtx = htp_tx_get_user_data(modctx->htp_tx);
+
+    /// @todo Notify tx_dataout_event w/response trailer
+    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response trailer: tx=%p", qtx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -433,14 +606,24 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     /* Register callbacks. */
     htp_config_register_transaction_start(modctx->htp_cfg,
                                           modhtp_htp_tx_start);
+    htp_config_register_request_line(modctx->htp_cfg,
+                                     modhtp_htp_request_line);
     htp_config_register_request_headers(modctx->htp_cfg,
                                         modhtp_htp_request_headers);
+    htp_config_register_request_body_data(modctx->htp_cfg,
+                                          modhtp_htp_request_body_data);
+    htp_config_register_request_trailer(modctx->htp_cfg,
+                                        modhtp_htp_request_trailer);
     htp_config_register_request(modctx->htp_cfg,
                                 modhtp_htp_request);
     htp_config_register_response_line(modctx->htp_cfg,
-                                      modhtp_htp_response_start);
+                                      modhtp_htp_response_line);
     htp_config_register_response_headers(modctx->htp_cfg,
                                          modhtp_htp_response_headers);
+    htp_config_register_response_body_data(modctx->htp_cfg,
+                                           modhtp_htp_response_body_data);
+    htp_config_register_response_trailer(modctx->htp_cfg,
+                                         modhtp_htp_response_trailer);
     htp_config_register_response(modctx->htp_cfg,
                                  modhtp_htp_response);
 
