@@ -782,11 +782,6 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
  *
  *  - @ref handle_context_conn_event
  *  - @ref handle_connect_event
- *
- * @param ib Engine
- * @param conn Connection
- *
- * @returns Status code
  */
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
                                         ib_conn_t *conn)
@@ -854,7 +849,6 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
 }
 
 /**
- * Notify engine of additional events when notifcation of a
  * @ref conn_closed_event occurs.
  *
  * When the event is notified, additional events are notified immediatly
@@ -862,11 +856,6 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
  *
  *  - @ref handle_disconnect_event
  *  - @ref conn_finished_event
- *
- * @param ib Engine
- * @param conn Connection
- *
- * @returns Status code
  */
 ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                                         ib_conn_t *conn)
@@ -898,18 +887,12 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 }
 
 /**
- * Notify engine of additional events when notifcation of a
  * @ref tx_data_in_event occurs.
  *
  * When the event is notified, additional events are notified immediatly
  * prior to it:
  *
  *  - @ref tx_started_event
- *
- * @param ib Engine
- * @param txdata Transaction data
- *
- * @returns Status code
  */
 ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
                                        ib_txdata_t *txdata)
@@ -963,7 +946,6 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
 }
 
 /**
- * Notify engine of additional events when notifcation of a
  * @ref request_headers_event occurs.
  *
  * When the event is notified, additional events are notified immediatly
@@ -975,11 +957,6 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
  *
  *  - @ref handle_context_tx_event
  *  - @ref handle_request_headers_event
- *
- * @param ib Engine
- * @param txdata Transaction data
- *
- * @returns Status code
  */
 ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
                                             ib_tx_t *tx)
@@ -1022,18 +999,12 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
 }
 
 /**
- * Notify engine of additional events when notifcation of a
  * @ref request_body_event occurs.
  *
  * When the event is notified, additional events are notified immediatly
  * following it:
  *
  *  - @ref handle_request_event
- *
- * @param ib Engine
- * @param tx Transaction
- *
- * @returns Status code
  */
 static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
                                                    ib_tx_t *tx)
@@ -1071,7 +1042,6 @@ ib_status_t ib_state_notify_request_body(ib_engine_t *ib,
 }
 
 /**
- * Notify engine of additional events when notifcation of a
  * @ref request_finished_event occurs.
  *
  * When the event is notified, additional events are notified
@@ -1082,11 +1052,6 @@ ib_status_t ib_state_notify_request_body(ib_engine_t *ib,
  * And immediatly following it:
  *
  *  - @ref tx_process_event
- *
- * @param ib Engine
- * @param tx Transaction
- *
- * @returns Status code
  */
 ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
                                              ib_tx_t *tx)
@@ -1144,7 +1109,6 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 }
 
 /**
- * Notify engine of additional events when notifcation of a
  * @ref response_headers_event occurs.
  *
  * When the event is notified, additional events are notified
@@ -1155,11 +1119,6 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
  * And immediatly following it:
  *
  *  - @ref handle_response_headers_event
- *
- * @param ib Engine
- * @param tx Transaction
- *
- * @returns Status code
  */
 ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
                                              ib_tx_t *tx)
@@ -1191,18 +1150,12 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
 }
 
 /**
- * Notify engine of additional events when notifcation of a
  * @ref response_body_event  occurs.
  *
  * When the event is notified, additional events are notified
  * immediatly following it:
  *
  *  - @ref handle_response_event
- *
- * @param ib Engine
- * @param tx Transaction
- *
- * @returns Status code
  */
 ib_status_t ib_state_notify_response_body(ib_engine_t *ib,
                                           ib_tx_t *tx)
