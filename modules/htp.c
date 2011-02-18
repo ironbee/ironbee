@@ -354,7 +354,6 @@ static int modhtp_htp_response(htp_connp_t *connp)
     qtx = htp_tx_get_user_data(modctx->htp_tx);
     ib_state_notify_response_body(ib, qtx);
     ib_state_notify_response_finished(ib, qtx);
-    ib_state_notify_log(ib, qtx);
 
     /* Destroy the transaction. */
     /// @todo Perhaps the engine should do this instead via an event???

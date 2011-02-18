@@ -540,7 +540,6 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(response_headers_event),
     IB_STRINGIFY(response_body_event),
     IB_STRINGIFY(response_finished_event),
-    IB_STRINGIFY(log_event),
 
     NULL
 };
@@ -1047,34 +1046,6 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     ib_tx_flags_set(tx, IB_TX_FRES_FINISHED);
 
     rc = ib_state_notify_tx(ib, response_finished_event, tx);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-ib_status_t ib_state_notify_log(ib_engine_t *ib,
-                                ib_tx_t *tx)
-{
-    IB_FTRACE_INIT(ib_state_notify_log);
-    ib_status_t rc;
-
-    if (ib_tx_flags_isset(tx,IB_TX_FLOGGED )) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(log_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    ib_tx_flags_set(tx, IB_TX_FLOGGED);
-
-    rc = ib_state_notify_tx(ib, log_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_state_notify_tx(ib, tx_finished_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 

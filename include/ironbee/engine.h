@@ -92,7 +92,6 @@ typedef struct ib_logevent_t ib_logevent_t;
 #define IB_TX_FRES_SEENHEADERS  (1 << 8) /**< Response headers seen */
 #define IB_TX_FRES_SEENBODY     (1 << 9) /**< Response body seen */
 #define IB_TX_FRES_FINISHED     (1 <<10) /**< Response finished  */
-#define IB_TX_FLOGGED           (1 <<11) /**< Transaction logged  */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
@@ -610,7 +609,6 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   response_headers_event [label="response_headers",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_headers_event"]
  *   response_body_event [label="response_body",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_body_event"]
  *   response_finished_event [label="response_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_finished_event"]
- *   log_event [label="log",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref log_event"]
  *
  *   conn_started_event [label="conn_started",style=bold,shape=diamond,URL="\ref conn_started_event"]
  *   conn_finished_event [label="conn_finished",style=bold,shape=diamond,URL="\ref conn_finished_event"]
@@ -665,12 +663,11 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   handle_response_headers_event -> response_body_event [weight=3.0]
  *   response_body_event -> handle_response_event [weight=3.0]
  *   handle_response_event -> response_finished_event [weight=3.0]
- *   response_finished_event -> log_event [weight=3.0]
- *   log_event -> handle_postprocess_event [weight=3.0]
  *   handle_postprocess_event -> tx_finished_event [weight=3.0]
  *   tx_finished_event -> tx_started_event [weight=3.0]
  *   response_finished_event -> response_started_event [label="HTTP\nPipeline\nResponse",style=dashed,weight=10.0]
  *
+ *   response_finished_event -> handle_postprocess_event [weight=5.0]
  *   tx_finished_event -> conn_closed_event [weight=3.0]
  *   conn_closed_event -> handle_disconnect_event [weight=3.0]
  *   handle_disconnect_event -> conn_finished_event [weight=10.0]

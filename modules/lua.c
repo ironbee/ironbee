@@ -1233,9 +1233,6 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
     ib_hook_register_context(ctx, response_finished_event,
                              (ib_void_fn_t)modlua_handle_lua_tx_event,
                              (void *)response_finished_event);
-    ib_hook_register_context(ctx, log_event,
-                             (ib_void_fn_t)modlua_handle_lua_tx_event,
-                             (void *)log_event);
     ib_hook_register_context(ctx, handle_postprocess_event,
                              (ib_void_fn_t)modlua_handle_lua_tx_event,
                              (void *)handle_postprocess_event);
