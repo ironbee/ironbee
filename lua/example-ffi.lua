@@ -42,3 +42,14 @@ function onEventHandleRequestHeaders(ib, tx)
     return 0
 end
 
+-- This is called when there is incoming data for the transaction
+function onEventTxDataIn(ib, txdata)
+    local c_txdata = ibffi.cast_txdata(txdata);
+
+    -- Just dump the data to the logs
+    ibffi.ib_log_debug(ib, 4, "%s.onEventTxDataIn[%d]: %.*s",
+                       _NAME, c_txdata.dtype, c_txdata.dlen, c_txdata.data)
+ 
+    return 0
+end
+

@@ -48,7 +48,7 @@ ffi.cdef[[
     typedef struct ib_field_t ib_field_t;
     typedef struct ib_field_val_t ib_field_val_t;
     typedef struct ib_bytestr_t ib_bytestr_t;
-    typedef enum ib_status_t {
+    typedef enum {
         IB_OK,
         IB_DECLINED,
         IB_EUNKNOWN,
@@ -59,13 +59,19 @@ ffi.cdef[[
         IB_ENOENT,
         IB_ETIMEDOUT,
     } ib_status_t;
-    typedef enum ib_ftype_t {
+    typedef enum {
         IB_FTYPE_GENERIC,
         IB_FTYPE_NUM,
         IB_FTYPE_NULSTR,
         IB_FTYPE_BYTESTR,
         IB_FTYPE_LIST
-    };
+    } ib_ftype_t;
+    typedef enum {
+        IB_TXDATA_HTTP_LINE,
+        IB_TXDATA_HTTP_HEADER,
+        IB_TXDATA_HTTP_BODY,
+        IB_TXDATA_HTTP_TRAILER
+    } ib_txdata_type_t;
 
     /* Engine Types */
     typedef struct ib_engine_t ib_engine_t;
@@ -73,6 +79,7 @@ ffi.cdef[[
     typedef struct ib_conn_t ib_conn_t;
     typedef struct ib_conndata_t ib_conndata_t;
     typedef struct ib_tx_t ib_tx_t;
+    typedef struct ib_txdata_t ib_txdata_t;
     typedef struct ib_tfn_t ib_tfn_t;
     typedef struct ib_logevent_t ib_logevent_t;
     typedef struct ib_plugin_t ib_plugin_t;
@@ -111,6 +118,25 @@ ffi.cdef[[
         const char         *path;
         ib_flags_t          flags;
     };
+
+    /* Transaction Data Structure */
+    struct ib_txdata_t {
+        ib_engine_t        *ib;
+        ib_mpool_t         *mp;
+        ib_tx_t            *tx;
+        /* These three fail with the given types and
+         * may be due to 64-bit types.
+         *
+        ib_txdata_type_t    dtype;
+        size_t              dalloc;
+        size_t              dlen;
+         */
+        unsigned long       dtype;
+        unsigned long       dalloc;
+        unsigned long       dlen;
+        const char         *data;
+    };
+
 
     /* Data Field Structure */
     struct ib_field_t {
@@ -217,12 +243,17 @@ function register_module(m)
     base["ironbee-module"] = m
 end
 
--- Wrapper around casting to avoid the caller having to revert too using
+-- Wrappers around casting to avoid the caller having to revert too using
 -- the FFI directly.
 function cast_tx(tx)
     return ffi.cast("ib_tx_t *", tx);
 end
 
+function cast_txdata(txdata)
+    return ffi.cast("ib_txdata_t *", txdata);
+end
+
+-- Debug Functions
 function ib_log_debug(ib, lvl, fmt, ...)
     local c_ib = ffi.cast("ib_engine_t *", ib)
     local c_ctx = c.ib_context_main(c_ib)

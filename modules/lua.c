@@ -319,6 +319,9 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib,
     if (strcmp("HandleRequestHeaders", event_name) == 0) {
         event = handle_request_headers_event;
     }
+    else if (strcmp("TxDataIn", event_name) == 0) {
+        event = tx_data_in_event;
+    }
     else {
         ib_log_debug(ib, 4, "Unhandled event %s", event_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -822,6 +825,9 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
         case handle_request_headers_event:
             funcname = "onEventHandleRequestHeaders";
             break;
+        case tx_data_in_event:
+            funcname = "onEventTxDataIn";
+            break;
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
             break;
@@ -834,7 +840,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
     if (lua_istable(L, -1)) {
         lua_getfield(L, -1, funcname);
         if (lua_isfunction(L, -1)) {
-            ib_log_debug(ib, 4, "Executing lua handler \"%s.%s\"",
+            ib_log_debug(ib, 9, "Executing lua handler \"%s.%s\"",
                          modname, funcname);
             lua_pushlightuserdata(L, ib);
             lua_pushlightuserdata(L, arg);
@@ -936,9 +942,84 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug(ib, 9, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+        ib_log_debug(ib, 4, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
                      m->name, m, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, conndata, lua, m->name, event);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3, "Error executing lua handler");
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Generic event handler for Lua transaction data events.
+ *
+ * @param ib Engine
+ * @param txdata Transaction data
+ * @param cbdata Event number passed as pointer value
+ *
+ * @return Status code
+ */
+static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
+                                                  ib_txdata_t *txdata,
+                                                  void *cbdata)
+{
+    IB_FTRACE_INIT(modlua_handle_lua_txdata_event);
+    ib_tx_t *tx = txdata->tx;
+    ib_conn_t *conn = tx->conn;
+    ib_state_event_type_t event;
+    modlua_cfg_t *modcfg;
+    modlua_runtime_t *lua;
+    ib_list_t *luaevents;
+    ib_list_node_t *node;
+    ib_status_t rc;
+
+    /* Get the module config. */
+    rc = ib_context_module_config(tx->ctx,
+                                  &IB_MODULE_SYM, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
+                     MODULE_NAME_STR, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Verify cbdata is in range for an event. */
+    if ((uintptr_t)cbdata >= IB_STATE_EVENT_NUM) {
+        ib_log_error(ib, 3, "Lua event was out of range: %" PRIxMAX,
+                     (uintptr_t)cbdata);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    event = (ib_state_event_type_t)(uintptr_t)cbdata;
+
+
+    /* Get the list of lua events. If it is NULL, then there are no
+     * registered lua events of this type, so just exit cleanly.
+     */
+    luaevents = modcfg->event_reg[event];
+    if (luaevents == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Get the lua runtime. */
+    lua = modlua_runtime_get(conn);
+    if (lua == NULL) {
+        ib_log_error(ib, 3, "Failed to fetch lua runtime for tx=%p", tx);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* Run through the luaevents list, which is a list of loaded
+     * lua modules that have an event handler for this event. The
+     * corresponding lua event handler (onEventFoo) need to be 
+     * executed for each module in the list.
+     */
+    IB_LIST_LOOP(luaevents, node) {
+        ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
+        ib_log_debug(ib, 9, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+                     m->name, m, event, ib_state_event_name(event));
+        rc = modlua_exec_lua_handler(ib, txdata, lua, m->name, event);
         if (rc != IB_OK) {
             ib_log_error(ib, 3, "Error executing lua handler");
         }
@@ -1119,6 +1200,35 @@ static ib_status_t modlua_init(ib_engine_t *ib)
                      (ib_void_fn_t)modlua_destroy_lua_runtime,
                      (void *)conn_finished_event);
 
+    /* Register pre-context event handlers. */
+    ib_hook_register(ib, conn_started_event,
+                     (ib_void_fn_t)modlua_handle_lua_conn_event,
+                     (void *)conn_started_event);
+    ib_hook_register(ib, conn_opened_event,
+                     (ib_void_fn_t)modlua_handle_lua_conn_event,
+                     (void *)conn_opened_event);
+    ib_hook_register(ib, conn_data_in_event,
+                     (ib_void_fn_t)modlua_handle_lua_conndata_event,
+                     (void *)conn_data_in_event);
+    ib_hook_register(ib, conn_data_out_event,
+                     (ib_void_fn_t)modlua_handle_lua_conndata_event,
+                     (void *)conn_data_out_event);
+    ib_hook_register(ib, tx_started_event,
+                     (ib_void_fn_t)modlua_handle_lua_tx_event,
+                     (void *)tx_started_event);
+    ib_hook_register(ib, tx_data_in_event,
+                     (ib_void_fn_t)modlua_handle_lua_txdata_event,
+                     (void *)tx_data_in_event);
+    ib_hook_register(ib, tx_data_out_event,
+                     (ib_void_fn_t)modlua_handle_lua_txdata_event,
+                     (void *)tx_data_out_event);
+    ib_hook_register(ib, request_started_event,
+                     (ib_void_fn_t)modlua_handle_lua_tx_event,
+                     (void *)request_started_event);
+    ib_hook_register(ib, request_headers_event,
+                     (ib_void_fn_t)modlua_handle_lua_tx_event,
+                     (void *)request_headers_event);
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1156,21 +1266,7 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
     modlua_module_init(ib, ctx, "example");
     modlua_module_init(ib, ctx, "example-ffi");
 
-    /* Register connection data event handlers. */
-    ib_hook_register_context(ctx, conn_data_in_event,
-                             (ib_void_fn_t)modlua_handle_lua_conndata_event,
-                             (void *)conn_data_in_event);
-    ib_hook_register_context(ctx, conn_data_out_event,
-                             (ib_void_fn_t)modlua_handle_lua_conndata_event,
-                             (void *)conn_data_out_event);
-
     /* Register connection event handlers. */
-    ib_hook_register_context(ctx, conn_started_event,
-                             (ib_void_fn_t)modlua_handle_lua_conn_event,
-                             (void *)conn_started_event);
-    ib_hook_register_context(ctx, conn_opened_event,
-                             (ib_void_fn_t)modlua_handle_lua_conn_event,
-                             (void *)conn_opened_event);
     ib_hook_register_context(ctx, handle_context_conn_event,
                              (ib_void_fn_t)modlua_handle_lua_conn_event,
                              (void *)handle_context_conn_event);
@@ -1188,15 +1284,6 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
                              (void *)conn_finished_event);
 
     /* Register transaction event handlers. */
-    ib_hook_register_context(ctx, tx_started_event,
-                             (ib_void_fn_t)modlua_handle_lua_tx_event,
-                             (void *)tx_started_event);
-    ib_hook_register_context(ctx, request_started_event,
-                             (ib_void_fn_t)modlua_handle_lua_tx_event,
-                             (void *)request_started_event);
-    ib_hook_register_context(ctx, request_headers_event,
-                             (ib_void_fn_t)modlua_handle_lua_tx_event,
-                             (void *)request_headers_event);
     ib_hook_register_context(ctx, handle_context_tx_event,
                              (ib_void_fn_t)modlua_handle_lua_tx_event,
                              (void *)handle_context_tx_event);
