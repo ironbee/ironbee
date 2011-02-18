@@ -11,9 +11,9 @@ mod_ironbee_la_SOURCES = mod_ironbee.c
 mod_ironbee_la_CFLAGS = @APXS_CFLAGS@ @APR_CFLAGS@ @APU_CFLAGS@
 mod_ironbee_la_CPPFLAGS = @APR_CPPFLAGS@
 mod_ironbee_la_LIBADD = @APR_LDADD@ @APU_LDADD@ \
-                           $(top_builddir)/engine/libironbee.la
-mod_ironbee_la_LDFLAGS = -no-undefined -module -avoid-version \
-                            @APR_LDFLAGS@ @APU_LDFLAGS@ @APXS_LDFLAGS@
+                        $(top_builddir)/engine/libironbee.la
+mod_ironbee_la_LDFLAGS = -module -avoid-version \
+                         @APR_LDFLAGS@ @APU_LDFLAGS@ @APXS_LDFLAGS@
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
