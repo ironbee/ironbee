@@ -124,16 +124,9 @@ ffi.cdef[[
         ib_engine_t        *ib;
         ib_mpool_t         *mp;
         ib_tx_t            *tx;
-        /* These three fail with the given types and
-         * may be due to 64-bit types.
-         *
         ib_txdata_type_t    dtype;
         size_t              dalloc;
         size_t              dlen;
-         */
-        unsigned long       dtype;
-        unsigned long       dalloc;
-        unsigned long       dlen;
         const char         *data;
     };
 
@@ -251,6 +244,10 @@ end
 
 function cast_txdata(txdata)
     return ffi.cast("ib_txdata_t *", txdata);
+end
+
+function cast_int(val)
+    return ffi.cast("int", val);
 end
 
 -- Debug Functions

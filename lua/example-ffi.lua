@@ -48,7 +48,10 @@ function onEventTxDataIn(ib, txdata)
 
     -- Just dump the data to the logs
     ibffi.ib_log_debug(ib, 4, "%s.onEventTxDataIn[%d]: %.*s",
-                       _NAME, c_txdata.dtype, c_txdata.dlen, c_txdata.data)
+                       _NAME,
+                       ibffi.cast_int(c_txdata.dtype),
+                       ibffi.cast_int(c_txdata.dlen),
+                       c_txdata.data)
  
     return 0
 end
