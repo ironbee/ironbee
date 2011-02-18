@@ -311,48 +311,6 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
     } while (blen < nbytes);
 }
 
-
-/* -- Apache Hook Handlers -- */
-
-/**
- * @internal
- *
- * Called when the child process exits.
- */
-static apr_status_t ironbee_child_exit(void *data)
-{
-    server_rec *s = (server_rec *)data;
-
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 MODULE_NAME_STR ": Child exit pid=%d",
-                 (int)getpid());
-
-    return APR_SUCCESS;
-}
-
-/**
- * @internal
- *
- * Called when the child process is created.
- */
-static void ironbee_child_init(apr_pool_t *p, server_rec *s)
-{
-    ironbee_config_t *modcfg =
-        (ironbee_config_t *)ap_get_module_config(s->module_config,
-                                               &ironbee_module);
-
-    if (!modcfg->enabled) {
-        return;
-    }
-
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 MODULE_NAME_STR ": Child init pid=%d",
-                 (int)getpid());
-
-    /* Register callback when child exits. */
-    apr_pool_cleanup_register(p, s, ironbee_child_exit, apr_pool_cleanup_null);
-}
-
 /**
  * @internal
  *
@@ -411,6 +369,57 @@ static apr_status_t ironbee_disconnection(void *data)
     ib_conn_destroy(ctx_in->qconndata->conn);
 
     return OK;
+}
+
+/**
+ * @internal
+ *
+ * Cleanup.
+ */
+static apr_status_t ironbee_module_cleanup(void *data)
+{
+    ib_engine_destroy(ironbee);
+
+    return APR_SUCCESS;
+}
+
+/**
+ * @internal
+ *
+ * Called when the child process exits.
+ */
+static apr_status_t ironbee_child_exit(void *data)
+{
+    server_rec *s = (server_rec *)data;
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                 MODULE_NAME_STR ": Child exit pid=%d",
+                 (int)getpid());
+
+    return APR_SUCCESS;
+}
+
+/**
+ * @internal
+ *
+ * Called when the child process is created.
+ */
+static void ironbee_child_init(apr_pool_t *p, server_rec *s)
+{
+    ironbee_config_t *modcfg =
+        (ironbee_config_t *)ap_get_module_config(s->module_config,
+                                               &ironbee_module);
+
+    if (!modcfg->enabled) {
+        return;
+    }
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                 MODULE_NAME_STR ": Child init pid=%d",
+                 (int)getpid());
+
+    /* Register callback when child exits. */
+    apr_pool_cleanup_register(p, s, ironbee_child_exit, apr_pool_cleanup_null);
 }
 
 /**
@@ -485,8 +494,7 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
 }
 
 
-
-/* -- IB Hooks -- */
+/* -- IronBee Hooks -- */
 
 /**
  * @internal
@@ -644,18 +652,6 @@ static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
 /**
  * @internal
  *
- * Cleanup.
- */
-static apr_status_t ironbee_module_cleanup(void *data)
-{
-    ib_engine_destroy(ironbee);
-
-    return APR_SUCCESS;
-}
-
-/**
- * @internal
- *
  * Called to create a configuration context.
  */
 static void *ironbee_create_config(apr_pool_t *p, server_rec *s)
@@ -695,16 +691,8 @@ static void *ironbee_merge_config(apr_pool_t *p, void *parent, void *child)
     return modcfg;
 }
 
-static int ironbee_pre_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp)
-{
-    /// @todo nothing yet
-    return OK;
-}
-
 /**
- * Initializes the ironbee engine.
- *
- * TEMP: Loads and configures modules.
+ * Initializes and configures the ironbee engine.
  */
 static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp,
                              server_rec *s)
@@ -824,48 +812,6 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                      MODULE_NAME_STR ": No config specified with IronBeeConfig directive");
     }
 
-
-#if 0
-    /* -- Test PCRE -- */
-    {
-        ib_mpool_t *mptmp = ib_engine_pool_temp_get(ironbee);
-        ib_provider_t *mpr;
-        IB_PROVIDER_API_TYPE(matcher) *mapi;
-
-        ib_log_debug(ironbee, 4, "Testing PCRE");
-
-        rc = ib_provider_lookup(ironbee,
-                                IB_PROVIDER_NAME_MATCHER,
-                                "pcre",
-                                &mpr);
-        if (rc != IB_OK) {
-            ib_log_debug(ironbee, 4, "Failed to fetch pcre matcher: %d", rc);
-        }
-        else {
-            const char *errptr;
-            int erroffset;
-            void *cpatt;
-
-            mapi = (IB_PROVIDER_API_TYPE(matcher) *)mpr->api;
-            rc = mapi->compile_pattern(mpr, mptmp, &cpatt, "foo.*bar", &errptr, &erroffset);
-            if (rc != IB_OK) {
-                ib_log_debug(ironbee, 4, "Failed to compile pcre patt: (%d) %s at offset %d", rc, errptr, erroffset);
-            }
-            else {
-                ib_match_result_t *res;
-                rc = mapi->match_compiled_buf(mpr, &res, cpatt, 0, (const uint8_t *)"fooXbar", 7);
-                if (rc != IB_OK) {
-                    ib_log_debug(ironbee, 4, "Failed to match pcre patt: %d", rc);
-                }
-                rc = mapi->match_compiled_buf(mpr, &res, cpatt, 0, (const uint8_t *)"NoMatchHere", 7);
-                if (rc == IB_OK) {
-                    ib_log_debug(ironbee, 4, "Matched unmatchable pcre patt: %d", rc);
-                }
-            }
-        }
-    }
-#endif
-
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ironbee);
 
@@ -877,9 +823,9 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
  *
  * Called to handle the "IronBeeEnable" configuration directive.
  */
-static const char *cmd_ibenable(cmd_parms *cmd,
-                                void *dummy,
-                                int flag)
+static const char *ironbee_cmd_ibenable(cmd_parms *cmd,
+                                        void *dummy,
+                                        int flag)
 {
     ironbee_config_t *modcfg;
 
@@ -903,9 +849,9 @@ static const char *cmd_ibenable(cmd_parms *cmd,
  *
  * Called to handle the "IronBeeConfig" configuration directive.
  */
-static const char *cmd_ibconfig(cmd_parms *cmd,
-                                void *dummy,
-                                const char *p1)
+static const char *ironbee_cmd_ibconfig(cmd_parms *cmd,
+                                        void *dummy,
+                                        const char *p1)
 {
     ironbee_config_t *modcfg;
 
@@ -929,9 +875,9 @@ static const char *cmd_ibconfig(cmd_parms *cmd,
  *
  * Called to handle the "IronBeeBufferSize" configuration directive.
  */
-static const char *cmd_ibbuffersize(cmd_parms *cmd,
-                                    void *dummy,
-                                    const char *p1)
+static const char *ironbee_cmd_ibbuffersize(cmd_parms *cmd,
+                                            void *dummy,
+                                            const char *p1)
 {
     ironbee_config_t *modcfg;
     long longval;
@@ -961,9 +907,9 @@ static const char *cmd_ibbuffersize(cmd_parms *cmd,
  *
  * Called to handle the "IronBeeBufferFlushSize" configuration directive.
  */
-static const char *cmd_ibbufferflushsize(cmd_parms *cmd,
-                                         void *dummy,
-                                         const char *p1)
+static const char *ironbee_cmd_ibbufferflushsize(cmd_parms *cmd,
+                                                 void *dummy,
+                                                 const char *p1)
 {
     ironbee_config_t *modcfg;
     long longval;
@@ -996,28 +942,28 @@ static const char *cmd_ibbufferflushsize(cmd_parms *cmd,
 static const command_rec ironbee_cmds[] = {
     AP_INIT_FLAG(
       "IronBeeEnable",
-      cmd_ibenable,
+      ironbee_cmd_ibenable,
       NULL,
       RSRC_CONF,
       "enable ironbee module"
     ),
     AP_INIT_TAKE1(
       "IronBeeConfig",
-      cmd_ibconfig,
+      ironbee_cmd_ibconfig,
       NULL,
       RSRC_CONF,
       "specify ironbee configuration file"
     ),
     AP_INIT_TAKE1(
       "IronBeeBufferSize",
-      cmd_ibbuffersize,
+      ironbee_cmd_ibbuffersize,
       NULL,
       RSRC_CONF,
       "specify buffer size (bytes)"
     ),
     AP_INIT_TAKE1(
       "IronBeeBufferFlushSize",
-      cmd_ibbufferflushsize,
+      ironbee_cmd_ibbufferflushsize,
       NULL,
       RSRC_CONF,
       "specify buffer size (bytes) to trigger a flush"
@@ -1061,10 +1007,6 @@ static void ironbee_register_hooks(apr_pool_t *p)
                        NULL, NULL,
                        APR_HOOK_FIRST);
 
-    ap_hook_pre_config(ironbee_pre_config,
-                       NULL, NULL,
-                       APR_HOOK_MIDDLE);
-
     ap_hook_post_config(ironbee_post_config,
                         NULL, NULL,
                         APR_HOOK_MIDDLE);
@@ -1081,8 +1023,8 @@ static void ironbee_register_hooks(apr_pool_t *p)
  */
 module AP_MODULE_DECLARE_DATA ironbee_module = {
     STANDARD20_MODULE_STUFF,
-    NULL,                     /* per-directory config creator */
-    NULL,                     /* dir config merger */
+    NULL,                       /* per-directory config creator */
+    NULL,                       /* dir config merger */
     ironbee_create_config,      /* server config creator */
     ironbee_merge_config,       /* server config merger */
     ironbee_cmds,               /* command table */
