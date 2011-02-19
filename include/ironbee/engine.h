@@ -140,11 +140,11 @@ struct ib_conn_t {
     ib_hash_t          *data;            /**< Generic data store */
 
     const char         *remote_ipstr;    /**< Remote IP as string */
-    struct sockaddr_storage remote_addr; /**< Remote address */
+//    struct sockaddr_storage remote_addr; /**< Remote address */
     int                 remote_port;     /**< Remote port */
 
     const char         *local_ipstr;     /**< Local IP as string */
-    struct sockaddr_storage local_addr;  /**< Local address */
+//    struct sockaddr_storage local_addr;  /**< Local address */
     int                 local_port;      /**< Local port */
 
     ib_tx_t            *tx;              /**< Pending transaction(s) */
