@@ -1,11 +1,27 @@
+-- =========================================================================
+-- =========================================================================
+-- Licensed to Qualys, Inc. (QUALYS) under one or more
+-- contributor license agreements.  See the NOTICE file distributed with
+-- this work for additional information regarding copyright ownership.
+-- QUALYS licenses this file to You under the Apache License, Version 2.0
+-- (the "License"); you may not use this file except in compliance with
+-- the License.  You may obtain a copy of the License at
 --
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+-- =========================================================================
 -- =========================================================================
 --
 -- This module allows accessing the IronBee API via luajit FFI. It is
 -- loaded through ironbee, and should not be used directly.
 --
+-- Author: Brian Rectanus <brectanus@qualys.com>
 -- =========================================================================
---
 
 local base = _G
 local ffi = require("ffi")
@@ -20,20 +36,16 @@ base.package.preload["ironbee-ffi"] = _M
 -- TODO: remove this need to register with engine
 base["ironbee-module"] = _M
 
---
--- =========================================================================
--- Setup some module metadata
--- =========================================================================
---
+-- ===============================================
+-- Setup some module metadata.
+-- ===============================================
 _COPYRIGHT = "Copyright (C) 2010-2011 Qualys, Inc."
 _DESCRIPTION = "IronBee API via luajit FFI"
 _VERSION = "0.1"
 
---
--- =========================================================================
--- Setup the IronBee C definitions
--- =========================================================================
---
+-- ===============================================
+-- Setup the IronBee C definitions.
+-- ===============================================
 ffi.cdef[[
     /* Util Types */
     typedef struct ib_mpool_t ib_mpool_t;
@@ -186,10 +198,6 @@ ffi.cdef[[
                                        ib_engine_t *ib);
 
     /* Logging */
-    void ib_util_log_ex(int level, const char *prefix,
-                        const char *file, int line,
-                        const char *fmt, ...);
-
     void ib_clog_ex(ib_context_t *ctx,
                     int level,
                     const char *prefix,
@@ -203,6 +211,7 @@ ffi.cdef[[
 local c = ffi.C
 
 -- 
+-- =========================================================================
 -- =========================================================================
 -- Implementation Notes:
 --   * A "c_" prefix is used here to denote a C type.
@@ -229,28 +238,47 @@ local c = ffi.C
 --     table, polluting the namespace.
 --
 -- =========================================================================
+-- =========================================================================
 -- 
 
--- TODO: Figure out a way around this
+-- ===============================================
+-- TODO: Figure out a way around this.
+-- ===============================================
 function register_module(m)
     base["ironbee-module"] = m
 end
 
--- Wrappers around casting to avoid the caller having to revert too using
--- the FFI directly.
-function cast_tx(tx)
-    return ffi.cast("ib_tx_t *", tx);
+-- ===============================================
+-- Cast a value as a C "ib_conn_t *".
+-- ===============================================
+function cast_conn(val)
+    return ffi.cast("ib_conn_t *", val);
 end
 
-function cast_txdata(txdata)
-    return ffi.cast("ib_txdata_t *", txdata);
+-- ===============================================
+-- Cast a value as a C "ib_tx_t *".
+-- ===============================================
+function cast_tx(val)
+    return ffi.cast("ib_tx_t *", val);
 end
 
+-- ===============================================
+-- Cast a value as a C "ib_txdata_t *".
+-- ===============================================
+function cast_txdata(val)
+    return ffi.cast("ib_txdata_t *", val);
+end
+
+-- ===============================================
+-- Cast a value as a C "int".
+-- ===============================================
 function cast_int(val)
     return ffi.cast("int", val);
 end
 
--- Debug Functions
+-- ===============================================
+-- Debug Functions.
+-- ===============================================
 function ib_log_debug(ib, lvl, fmt, ...)
     local c_ib = ffi.cast("ib_engine_t *", ib)
     local c_ctx = c.ib_context_main(c_ib)
@@ -258,13 +286,12 @@ function ib_log_debug(ib, lvl, fmt, ...)
     c.ib_clog_ex(c_ctx, 4, "LuaFFI: ", nil, 0, fmt, ...)
 end
 
-function ib_util_log_debug(lvl, fmt, ...)
-    local c_ctx = c.ib_context_main(c_ib)
-
-    c.ib_util_log_ex(4, "LuaFFI: ", nil, 0, fmt, ...)
-end
-
--- Convert an IronBee field to an appropriate Lua type.
+-- ===============================================
+-- Convert an IronBee field to an appropriate Lua
+-- type.
+--
+-- NOTE: This currently makes a copy of the data.
+-- ===============================================
 function field_convert(c_f)
     if c_f.type == c.IB_FTYPE_BYTESTR then
         c_val = ffi.cast("ib_bytestr_t **", c_f.pval)[0]
@@ -282,13 +309,14 @@ function field_convert(c_f)
     return nil
 end
 
+-- ===============================================
+-- ===============================================
 function ib_data_get(dpi, name)
     local c_dpi = ffi.cast("ib_provider_inst_t *", dpi)
 --    local c_ib = c_dpi.pr.ib
     local c_pf = ffi.new("ib_field_t*[1]")
     local rc
     local c_val
-
 
     -- Get the named data field.
     rc = c.ib_data_get_ex(c_dpi, name, string.len(name), c_pf)

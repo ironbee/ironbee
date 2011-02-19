@@ -211,7 +211,10 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 
     /* Store this as the current transaction. */
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     tx = list_get(modctx->htp->conn->transactions,
                   modctx->htp->out_next_tx_index);
     if (tx == NULL) {
@@ -240,7 +243,10 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -279,7 +285,10 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -306,6 +315,9 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
         ib_state_notify_tx_data_in(ib, &qtxdata);
     }
 
+    /// @todo Here we should send the header/body separator,
+    ///       but how to know???
+
     ib_state_notify_request_headers(ib, qtx);
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -318,23 +330,47 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     ib_conn_t *qconn = modctx->qconn;
     ib_engine_t *ib = qconn->ib;
+    ib_txdata_t qtxdata;
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
 
-    /// @todo Notify tx_datain_event w/body chunk
-    ib_log_debug(ib, 4, "TODO: tx_datain_event w/body chunk: tx=%p", qtx);
+    /* Check for the "end-of-request" indicator. */
+    if (txdata->data == NULL) {
+        if (modctx->htp_tx->request_entity_len == 0) {
+            /// @todo Need a way to determine if the request was supposed to
+            ///       have body, not if it did have a body.
+            ib_tx_mark_nobody(qtx);
+        }
+        ib_state_notify_request_body(ib, qtx);
+        IB_FTRACE_RET_INT(HTP_OK);
+    }
+
+    /* Fill in a temporary ib_txdata_t structure and use it
+     * to notify the engine of transaction data.
+     */
+    qtxdata.ib = ib;
+    qtxdata.mp = qtx->mp;
+    qtxdata.tx = qtx;
+    qtxdata.dtype = IB_TXDATA_HTTP_BODY;
+    qtxdata.dalloc = txdata->len;
+    qtxdata.dlen = txdata->len;
+    qtxdata.data = (uint8_t *)txdata->data;
+
+    ib_state_notify_tx_data_in(ib, &qtxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -348,7 +384,10 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -374,7 +413,10 @@ static int modhtp_htp_request(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -385,12 +427,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
      * and is now finished.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
-    if (modctx->htp_tx->request_entity_len == 0) {
-        /// @todo Need a way to determine if the request was supposed to
-        ///       have body, not if it did have a body.
-        ib_tx_mark_nobody(qtx);
-    }
-    ib_state_notify_request_body(ib, qtx);
+
     ib_state_notify_request_finished(ib, qtx);
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -400,26 +437,41 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response_line);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
     ib_conn_t *qconn = modctx->qconn;
     ib_engine_t *ib = qconn->ib;
+    ib_txdata_t qtxdata;
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
-    /* Fetch the ironbee transaction and notify the engine that the
-     * response started.
+    /* Fetch the ironbee transaction and notify the engine
+     * that more transaction data has arrived.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
 
-    /// @todo Notify tx_dataout_event w/response line
-    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response line: tx=%p", qtx);
-
     ib_state_notify_response_started(ib, qtx);
+
+    /* Fill in a temporary ib_txdata_t structure and use it
+     * to notify the engine of transaction data.
+     */
+    qtxdata.ib = ib;
+    qtxdata.mp = qtx->mp;
+    qtxdata.tx = qtx;
+    qtxdata.dtype = IB_TXDATA_HTTP_LINE;
+    qtxdata.dalloc = bstr_size(tx->response_line);
+    qtxdata.dlen = bstr_len(tx->response_line);
+    qtxdata.data = (uint8_t *)bstr_ptr(tx->response_line);
+
+    ib_state_notify_tx_data_out(ib, &qtxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -428,24 +480,46 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response_headers);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
+    htp_header_line_t *hline;
     ib_conn_t *qconn = modctx->qconn;
     ib_engine_t *ib = qconn->ib;
+    ib_txdata_t qtxdata;
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
     /* Fetch the ironbee transaction and notify the engine
-     * that the response headers are now available.
+     * that the request headers are now available.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
 
-    /// @todo Notify tx_dataout_event w/request headers
-    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response headers: tx=%p", qtx);
+    /* Fill in a temporary ib_txdata_t structure for each header line
+     * and use it to notify the engine of transaction data.
+     */
+    qtxdata.ib = ib;
+    qtxdata.mp = qtx->mp;
+    qtxdata.tx = qtx;
+    qtxdata.dtype = IB_TXDATA_HTTP_HEADER;
+    list_iterator_reset(tx->response_header_lines);
+    while ((hline = list_iterator_next(tx->response_header_lines)) != NULL) {
+        qtxdata.dalloc = bstr_size(hline->line);
+        qtxdata.dlen = bstr_len(hline->line);
+        qtxdata.data = (uint8_t *)bstr_ptr(hline->line);
+
+        ib_state_notify_tx_data_out(ib, &qtxdata);
+    }
+
+    /// @todo Here we should send the header/body separator,
+    ///       but how to know???
 
     ib_state_notify_response_headers(ib, qtx);
 
@@ -459,10 +533,14 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     ib_conn_t *qconn = modctx->qconn;
     ib_engine_t *ib = qconn->ib;
+    ib_txdata_t qtxdata;
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -473,8 +551,24 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
 
-    /// @todo Notify tx_dataout_event w/response body chunks
-    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response body chunks: tx=%p", qtx);
+    /* Check for the "end-of-response" indicator. */
+    if (txdata->data == NULL) {
+        ib_state_notify_response_body(ib, qtx);
+        IB_FTRACE_RET_INT(HTP_OK);
+    }
+
+    /* Fill in a temporary ib_txdata_t structure and use it
+     * to notify the engine of transaction data.
+     */
+    qtxdata.ib = ib;
+    qtxdata.mp = qtx->mp;
+    qtxdata.tx = qtx;
+    qtxdata.dtype = IB_TXDATA_HTTP_BODY;
+    qtxdata.dalloc = txdata->len;
+    qtxdata.dlen = txdata->len;
+    qtxdata.data = (uint8_t *)txdata->data;
+
+    ib_state_notify_tx_data_out(ib, &qtxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -488,7 +582,10 @@ static int modhtp_htp_response(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -499,7 +596,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
      * is finished and logging has begun.
      */
     qtx = htp_tx_get_user_data(modctx->htp_tx);
-    ib_state_notify_response_body(ib, qtx);
+
     ib_state_notify_response_finished(ib, qtx);
 
     /* Destroy the transaction. */
@@ -521,6 +618,10 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
+    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
+    if (connp->in_status == STREAM_STATE_ERROR) {
+        ib_log_error(ib, 3, "HTP Parser Error");
+    }
     if (modctx->htp_tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
