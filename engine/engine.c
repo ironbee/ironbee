@@ -902,11 +902,6 @@ ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
 
     if ((txdata->tx->flags & IB_TX_FSEENDATAIN) == 0) {
         ib_tx_flags_set(txdata->tx, IB_TX_FSEENDATAIN);
-
-        rc = ib_state_notify_tx(ib, tx_started_event, txdata->tx);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
     }
 
     rc = ib_state_notify_tx_data(ib, tx_data_in_event, txdata);
@@ -937,6 +932,11 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(request_started_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rc = ib_state_notify_tx(ib, tx_started_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
@@ -1195,6 +1195,16 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     ib_tx_flags_set(tx, IB_TX_FRES_FINISHED);
 
     rc = ib_state_notify_tx(ib, response_finished_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_state_notify_tx(ib, tx_finished_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
