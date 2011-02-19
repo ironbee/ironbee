@@ -315,8 +315,77 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    if (strcmp("HandleRequestHeaders", event_name) == 0) {
+    if (strcmp("ConnStarted", event_name) == 0) {
+        event = conn_started_event;
+    }
+    else if (strcmp("ConnOpened", event_name) == 0) {
+        event = conn_opened_event;
+    }
+    else if (strcmp("HandleContextConn", event_name) == 0) {
+        event = handle_context_conn_event;
+    }
+    else if (strcmp("HandleConnect", event_name) == 0) {
+        event = handle_connect_event;
+    }
+    else if (strcmp("TxStarted", event_name) == 0) {
+        event = tx_started_event;
+    }
+    else if (strcmp("RequestStarted", event_name) == 0) {
+        event = request_started_event;
+    }
+    else if (strcmp("RequestHeaders", event_name) == 0) {
+        event = request_headers_event;
+    }
+    else if (strcmp("HandleRequestHeaders", event_name) == 0) {
         event = handle_request_headers_event;
+    }
+    else if (strcmp("HandleContextTx", event_name) == 0) {
+        event = handle_context_tx_event;
+    }
+    else if (strcmp("RequestBody", event_name) == 0) {
+        event = request_body_event;
+    }
+    else if (strcmp("HandleRequest", event_name) == 0) {
+        event = handle_request_event;
+    }
+    else if (strcmp("RequestFinished", event_name) == 0) {
+        event = request_finished_event;
+    }
+    else if (strcmp("TxProcess", event_name) == 0) {
+        event = tx_process_event;
+    }
+    else if (strcmp("ResponseStarted", event_name) == 0) {
+        event = response_started_event;
+    }
+    else if (strcmp("ResponseHeaders", event_name) == 0) {
+        event = response_headers_event;
+    }
+    else if (strcmp("HandleResponseHeaders", event_name) == 0) {
+        event = handle_response_headers_event;
+    }
+    else if (strcmp("ResponseBody", event_name) == 0) {
+        event = response_body_event;
+    }
+    else if (strcmp("HandleResponse", event_name) == 0) {
+        event = handle_response_event;
+    }
+    else if (strcmp("ResponseFinished", event_name) == 0) {
+        event = response_finished_event;
+    }
+    else if (strcmp("HandlePostprocess", event_name) == 0) {
+        event = handle_postprocess_event;
+    }
+    else if (strcmp("TxFinished", event_name) == 0) {
+        event = tx_finished_event;
+    }
+    else if (strcmp("ConnClosed", event_name) == 0) {
+        event = conn_closed_event;
+    }
+    else if (strcmp("HandleDisconnect", event_name) == 0) {
+        event = handle_disconnect_event;
+    }
+    else if (strcmp("ConnFinished", event_name) == 0) {
+        event = conn_finished_event;
     }
     else if (strcmp("TxDataIn", event_name) == 0) {
         event = tx_data_in_event;
@@ -829,22 +898,102 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
     int ec;
 
+    /* Order here is by most common use. */
     switch(event) {
+        /* Normal Event Handlers */
         case handle_request_headers_event:
             funcname = "onEventHandleRequestHeaders";
             break;
+        case handle_request_event:
+            funcname = "onEventHandleRequest";
+            break;
+        case handle_response_headers_event:
+            funcname = "onEventHandleResponseHeaders";
+            break;
+        case handle_response_event:
+            funcname = "onEventHandleResponse";
+            break;
+        case handle_postprocess_event:
+            funcname = "onEventHandlePostprocess";
+            break;
+        case handle_connect_event:
+            funcname = "onEventHandleConnect";
+            break;
+        case handle_disconnect_event:
+            funcname = "onEventHandleDisconnect";
+            break;
+        case handle_context_conn_event:
+            funcname = "onEventHandleContextConn";
+            break;
+        case handle_context_tx_event:
+            funcname = "onEventHandleContextTx";
+            break;
+
+        /* Request Handlers */
+        case request_headers_event:
+            funcname = "onEventRequestHeaders";
+            break;
+        case request_body_event:
+            funcname = "onEventRequestBody";
+            break;
+        case request_started_event:
+            funcname = "onEventRequestStarted";
+            break;
+        case request_finished_event:
+            funcname = "onEventRequestFinished";
+            break;
+
+        /* Response Handlers */
+        case response_started_event:
+            funcname = "onEventResponseStarted";
+            break;
+        case response_headers_event:
+            funcname = "onEventResponseHeaders";
+            break;
+        case response_body_event:
+            funcname = "onEventResponseBody";
+            break;
+        case response_finished_event:
+            funcname = "onEventResponseFinished";
+            break;
+
+        /* Transaction Handlers */
         case tx_data_in_event:
             funcname = "onEventTxDataIn";
             break;
         case tx_data_out_event:
             funcname = "onEventTxDataOut";
             break;
+        case tx_started_event:
+            funcname = "onEventTxStarted";
+            break;
+        case tx_process_event:
+            funcname = "onEventTxProcess";
+            break;
+        case tx_finished_event:
+            funcname = "onEventTxFinished";
+            break;
+
+        /* Connection Handlers */
         case conn_data_in_event:
             funcname = "onEventConnDataIn";
             break;
         case conn_data_out_event:
             funcname = "onEventConnDataOut";
             break;
+        case conn_started_event:
+            funcname = "onEventConnStarted";
+            break;
+        case conn_opened_event:
+            funcname = "onEventConnOpened";
+            break;
+        case conn_closed_event:
+            funcname = "onEventConnClosed";
+            break;
+        case conn_finished_event:
+            funcname = "onEventConnFinished";
+            break;
+
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
             break;

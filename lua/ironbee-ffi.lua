@@ -116,6 +116,37 @@ ffi.cdef[[
         const char              *name;
     };
 
+    /** Connection Structure */
+    struct ib_conn_t {
+        ib_engine_t        *ib;
+        ib_mpool_t         *mp;
+        ib_context_t       *ctx;
+        void               *pctx;
+        ib_provider_inst_t *dpi;
+        ib_hash_t          *data;
+
+        const char         *remote_ipstr;
+        int                 remote_port;
+
+        const char         *local_ipstr;
+        int                 local_port;
+
+        ib_tx_t            *tx;
+        ib_tx_t            *tx_last;
+
+        ib_flags_t          flags;
+    };
+
+    /* Connection Data Structure */
+    struct ib_conndata_t {
+        ib_engine_t        *ib;
+        ib_mpool_t         *mp;
+        ib_conn_t          *conn;
+        size_t              dalloc;
+        size_t              dlen;
+        const char         *data;
+    };
+
     /* Transaction Structure */
     struct ib_tx_t {
         ib_engine_t        *ib;
@@ -253,6 +284,13 @@ end
 -- ===============================================
 function cast_conn(val)
     return ffi.cast("ib_conn_t *", val);
+end
+
+-- ===============================================
+-- Cast a value as a C "ib_conndata_t *".
+-- ===============================================
+function cast_conndata(val)
+    return ffi.cast("ib_conndata_t *", val);
 end
 
 -- ===============================================
