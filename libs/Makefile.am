@@ -14,10 +14,10 @@ else
 endif
 
 .build-luajit: $(srcdir)/luajit-2.0-ironbee/* $(srcdir)/luajit-2.0-ironbee/src/*
-	@if [ "$(builddir)" != "$(srcdir)" ]; then \
-		cp -rp $(srcdir)/luajit-2.0-ironbee $(builddir); \
-		chmod -R u+w $(builddir)/luajit-2.0-ironbee; \
-	fi;
+#@if [ "$(builddir)" != "$(srcdir)" ]; then \
+#	cp -rp $(srcdir)/luajit-2.0-ironbee $(builddir); \
+#	chmod -R u+w $(builddir)/luajit-2.0-ironbee; \
+#fi;
 if FREEBSD
 	(cd luajit-2.0-ironbee && gmake amalg CCDEBUG=-g CC=$(CC) LDFLAGS="-lssp_nonshared" STATIC_CC=$(CC) DYNAMIC_CC=$(CC) && touch ../.build-luajit)
 else
