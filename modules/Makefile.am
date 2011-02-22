@@ -24,9 +24,9 @@ ibmod_pcre_la_LDFLAGS = $(AM_LDFLAGS) \
                         @PCRE_LDFLAGS@
 ibmod_pcre_la_LIBADD = @PCRE_LDADD@
 
-ibmod_lua_la_SOURCES = lua.c
+ibmod_lua_la_SOURCES = lua.c 
 ibmod_lua_la_CPPFLAGS = $(CPPFLAGS) \
-                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
+                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
 ibmod_lua_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
@@ -38,3 +38,11 @@ install-exec-hook: $(pkglib_LTLIBRARIES)
 	  base=`echo $$m | sed 's/\..*//'`; \
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*a; \
 	done
+
+uninstall-local: $(pkglib_LTLIBRARIES)
+	@echo "Uninstalling Modules..."; \
+	for m in $(pkglib_LTLIBRARIES); do \
+	  base=`echo $$m | sed 's/\..*//'`; \
+	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
+	done
+

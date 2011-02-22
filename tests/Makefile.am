@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I../acinclude
 SUBDIRS = gtest
-
+EXTRA_DIST = gtest
 include $(top_srcdir)/build/tests.mk
 
 LDADD = gtest/libgtest.la

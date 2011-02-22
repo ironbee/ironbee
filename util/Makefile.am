@@ -3,9 +3,10 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 
 lib_LTLIBRARIES = libibutil.la
-libibutil_la_SOURCES = util.c debug.c mpool.c dso.c \
+libibutil_la_SOURCES = util.c \
+                       debug.c mpool.c dso.c \
                        array.c list.c hash.c bytestr.c field.c \
-                       cfgmap.c
+                       cfgmap.c ironbee_util_private.h
 libibutil_la_CFLAGS = @APR_CFLAGS@ @HTP_CFLAGS@
 libibutil_la_CPPFLAGS = @APR_CPPFLAGS@ @HTP_CPPFLAGS@
 if FREEBSD
