@@ -1165,7 +1165,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib)
     ib_status_t rc;
 
     /* Register as a parser provider. */
-    rc = ib_provider_register(ib, IB_PROVIDER_NAME_PARSER,
+    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_PARSER,
                               MODULE_NAME_STR, NULL,
                               &modhtp_parser_iface,
                               NULL);

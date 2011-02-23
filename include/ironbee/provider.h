@@ -215,7 +215,7 @@ void DLL_PUBLIC ib_provider_data_set(ib_provider_t *pr, void *data);
 /* -- Builtin Provider Interface/API Definitions -- */
 
 /* Logger */
-#define IB_PROVIDER_NAME_LOGGER     IB_XSTRINGIFY(logger)
+#define IB_PROVIDER_TYPE_LOGGER     IB_XSTRINGIFY(logger)
 #define IB_PROVIDER_VERSION_LOGGER  0
 
 /** Logger Interface Definition. */
@@ -266,7 +266,7 @@ void DLL_PUBLIC ib_log_provider_set_instance(ib_context_t *ctx,
 
 
 /* Parser */
-#define IB_PROVIDER_NAME_PARSER     IB_XSTRINGIFY(parser)
+#define IB_PROVIDER_TYPE_PARSER     IB_XSTRINGIFY(parser)
 #define IB_PROVIDER_VERSION_PARSER  0
 
 /** Parser Interface Definition. */
@@ -331,7 +331,7 @@ void DLL_PUBLIC ib_parser_provider_set_instance(ib_context_t *ctx,
 
 
 /* Data */
-#define IB_PROVIDER_NAME_DATA     IB_XSTRINGIFY(data)
+#define IB_PROVIDER_TYPE_DATA     IB_XSTRINGIFY(data)
 #define IB_PROVIDER_VERSION_DATA  0
 
 /** Data Interface Definition. */
@@ -414,7 +414,7 @@ IB_PROVIDER_DECLARE_API(data) {
 
 
 /* Matcher */
-#define IB_PROVIDER_NAME_MATCHER     IB_XSTRINGIFY(matcher)
+#define IB_PROVIDER_TYPE_MATCHER     IB_XSTRINGIFY(matcher)
 #define IB_PROVIDER_VERSION_MATCHER  0
 
 typedef ib_list_t ib_match_result_t; /// TODO: for now
@@ -490,7 +490,7 @@ IB_PROVIDER_DECLARE_API(matcher) {
 };
 
 /* Log Event */
-#define IB_PROVIDER_NAME_LOGEVENT     IB_XSTRINGIFY(logevent)
+#define IB_PROVIDER_TYPE_LOGEVENT     IB_XSTRINGIFY(logevent)
 #define IB_PROVIDER_VERSION_LOGEVENT  0
 
 /** Log Event Interface Definition. */

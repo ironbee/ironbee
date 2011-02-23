@@ -313,7 +313,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 
     /* Create the core data provider instance */
     rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_NAME_DATA,
+                                     IB_PROVIDER_TYPE_DATA,
                                      "core",
                                      &((*pconn)->dpi),
                                      (*pconn)->mp,
@@ -427,7 +427,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
 
     /* Create the core data provider instance */
     rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_NAME_DATA,
+                                     IB_PROVIDER_TYPE_DATA,
                                      "core",
                                      &((*ptx)->dpi),
                                      (*ptx)->mp,

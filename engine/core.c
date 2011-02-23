@@ -1658,14 +1658,14 @@ static ib_status_t core_init(ib_engine_t *ib)
     ib_status_t rc;
 
     /* Define the logger provider API. */
-    rc = ib_provider_define(ib, IB_PROVIDER_NAME_LOGGER,
+    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGGER,
                             logger_register, &logger_api);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Register the core logger. */
-    rc = ib_provider_register(ib, IB_PROVIDER_NAME_LOGGER,
+    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_LOGGER,
                               MODULE_NAME_STR, &core_log_provider,
                               &core_logger_iface,
                               logger_init);
@@ -1682,7 +1682,7 @@ static ib_status_t core_init(ib_engine_t *ib)
     }
 
     /* Define the parser provider API. */
-    rc = ib_provider_define(ib, IB_PROVIDER_NAME_PARSER,
+    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_PARSER,
                             parser_register, NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to define parser provider: %d", rc);
@@ -1708,7 +1708,7 @@ static ib_status_t core_init(ib_engine_t *ib)
                      (ib_void_fn_t)parser_hook_resp_header, NULL);
 
     /* Define the data field provider API */
-    rc = ib_provider_define(ib, IB_PROVIDER_NAME_DATA,
+    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_DATA,
                             data_register, &data_api);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to define data provider: %d", rc);
@@ -1716,7 +1716,7 @@ static ib_status_t core_init(ib_engine_t *ib)
     }
 
     /* Register the core data provider. */
-    rc = ib_provider_register(ib, IB_PROVIDER_NAME_DATA,
+    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_DATA,
                               MODULE_NAME_STR, &core_data_provider,
                               &core_data_iface,
                               data_init);
@@ -1725,7 +1725,7 @@ static ib_status_t core_init(ib_engine_t *ib)
     }
 
     /* Define the matcher provider API */
-    rc = ib_provider_define(ib, IB_PROVIDER_NAME_MATCHER,
+    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_MATCHER,
                             matcher_register, &matcher_api);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to define matcher provider: %d", rc);
@@ -1775,11 +1775,11 @@ static ib_status_t core_config_init(ib_engine_t *ib,
     }
 
     /* Lookup/set log provider. */
-    rc = ib_provider_instance_create(ib, IB_PROVIDER_NAME_LOGGER,
+    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGGER,
                                      ctx->core_cfg->logger, &logger,
                                      ib->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_NAME_LOGGER, rc);
+        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_LOGGER, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_provider_set_instance(ctx, logger);
@@ -1787,11 +1787,11 @@ static ib_status_t core_config_init(ib_engine_t *ib,
     /* Lookup/set parser provider if not the "core" parser. */
     ib_log_debug(ib, 9, "PARSER: %s ctx=%p", ctx->core_cfg->parser, ctx);
     if (strcmp(MODULE_NAME_STR, ctx->core_cfg->parser) != 0) {
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_NAME_PARSER,
+        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
                                          ctx->core_cfg->parser, &parser,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_NAME_PARSER, rc);
+            ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_PARSER, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_parser_provider_set_instance(ctx, parser);
@@ -1810,21 +1810,21 @@ static ib_status_t core_config_init(ib_engine_t *ib,
 static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     /* Logger */
     IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_NAME_LOGGER,
+        IB_PROVIDER_TYPE_LOGGER,
         IB_FTYPE_NULSTR,
         &core_global_cfg,
         logger,
         (const uintptr_t)MODULE_NAME_STR
     ),
     IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_NAME_LOGGER ".log_level",
+        IB_PROVIDER_TYPE_LOGGER ".log_level",
         IB_FTYPE_NUM,
         &core_global_cfg,
         log_level,
         4
     ),
     IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_NAME_LOGGER ".log_uri",
+        IB_PROVIDER_TYPE_LOGGER ".log_uri",
         IB_FTYPE_NULSTR,
         &core_global_cfg,
         log_uri,
@@ -1833,7 +1833,7 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
 
     /* Parser */
     IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_NAME_PARSER,
+        IB_PROVIDER_TYPE_PARSER,
         IB_FTYPE_NULSTR,
         &core_global_cfg,
         parser,
@@ -1842,7 +1842,7 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
 
     /* Data Aquisition */
     IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_NAME_DATA,
+        IB_PROVIDER_TYPE_DATA,
         IB_FTYPE_NULSTR,
         &core_global_cfg,
         data,

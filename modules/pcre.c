@@ -172,7 +172,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib)
 
     /* Register as a matcher provider. */
     rc = ib_provider_register(ib,
-                              IB_PROVIDER_NAME_MATCHER,
+                              IB_PROVIDER_TYPE_MATCHER,
                               MODULE_NAME_STR,
                               NULL,
                               &modpcre_matcher_iface,

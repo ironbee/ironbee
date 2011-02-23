@@ -738,7 +738,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     }
 
     /* Register the logger. */
-    rc = ib_provider_register(ironbee, IB_PROVIDER_NAME_LOGGER,
+    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER,
                               MODULE_NAME_STR, NULL,
                               &ironbee_logger_iface,
                               NULL);
@@ -750,10 +750,10 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
 
     /* Default logger */
     ib_context_set_string(ib_context_engine(ironbee),
-                          IB_PROVIDER_NAME_LOGGER,
+                          IB_PROVIDER_TYPE_LOGGER,
                           MODULE_NAME_STR);
     ib_context_set_num(ib_context_engine(ironbee),
-                       IB_PROVIDER_NAME_LOGGER ".log_level",
+                       IB_PROVIDER_TYPE_LOGGER ".log_level",
                        4);
 
 
@@ -783,7 +783,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
         ib_context_create_main(&ctx, ironbee);
 
         /* Set some defaults */
-        ib_context_set_string(ctx, IB_PROVIDER_NAME_LOGGER, MODULE_NAME_STR);
+        ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, MODULE_NAME_STR);
         ib_context_set_num(ctx, "logger.log_level", 4);
 
         /* Parse the config file. */
