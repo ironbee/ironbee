@@ -211,7 +211,6 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 
     /* Store this as the current transaction. */
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -243,7 +242,6 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -285,7 +283,6 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -334,7 +331,6 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -384,7 +380,6 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -413,7 +408,6 @@ static int modhtp_htp_request(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -444,7 +438,6 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -488,7 +481,6 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -537,7 +529,6 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -582,7 +573,6 @@ static int modhtp_htp_response(htp_connp_t *connp)
     ib_tx_t *qtx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
@@ -618,7 +608,6 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
-    ib_log_debug(ib, 4, "HTPStatus: %d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }

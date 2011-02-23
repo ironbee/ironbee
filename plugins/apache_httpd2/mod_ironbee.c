@@ -151,22 +151,23 @@ static void ironbee_logger(server_rec *s, int level,
             ap_level = APLOG_WARNING;
             break;
         case 4:
-            ap_level = APLOG_NOTICE;
+            ap_level = APLOG_DEBUG; /// @todo For now, so we get file/line
             break;
         case 9:
             ap_level = APLOG_DEBUG;
             break;
         default:
-            ap_level = APLOG_NOTICE; /// @todo Make configurable
+            ap_level = APLOG_DEBUG; /// @todo Make configurable
     }
 
+    /// @todo Make configurable
     if ((s == NULL) && (ap_level > APLOG_NOTICE)) {
         ap_level = APLOG_NOTICE;
     }
 
     /* Write it to the error log. */
     ap_log_error(file, line, ap_level, 0, s,
-                 MODULE_NAME_STR ": %s", buf);
+                 MODULE_NAME_STR ": %s%s", prefix?prefix:"", buf);
 }
 
 static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
