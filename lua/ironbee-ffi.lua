@@ -53,6 +53,8 @@ ffi.cdef[[
     typedef struct ib_dso_t ib_dso_t;
     typedef void ib_dso_sym_t;
     typedef struct ib_hash_t ib_hash_t;
+    typedef struct ib_list_t ib_list_t;
+    typedef struct ib_list_node_t ib_list_node_t;
     typedef uint32_t ib_ftype_t;
     typedef uint32_t ib_flags_t;
     typedef uint64_t ib_flags64_t;
@@ -244,6 +246,20 @@ ffi.cdef[[
     ib_context_t *ib_context_engine(ib_engine_t *ib);
     ib_context_t *ib_context_main(ib_engine_t *ib);
 
+    /* List */
+    ib_status_t ib_list_create(ib_list_t **plist, ib_mpool_t *pool);
+    ib_status_t ib_list_push(ib_list_t *list, void *data);
+    ib_status_t ib_list_pop(ib_list_t *list, void *pdata);
+    ib_status_t ib_list_unshift(ib_list_t *list, void *data);
+    ib_status_t ib_list_shift(ib_list_t *list, void *pdata);
+    void ib_list_clear(ib_list_t *list);
+    size_t ib_list_elements(ib_list_t *list);
+    ib_list_node_t *ib_list_first(ib_list_t *list);
+    ib_list_node_t *ib_list_last(ib_list_t *list);
+    ib_list_node_t *ib_list_node_next(ib_list_node_t *node);
+    ib_list_node_t *ib_list_node_prev(ib_list_node_t *node);
+    void *ib_list_node_data(ib_list_node_t *node);
+
     /* Byte String */
     size_t ib_bytestr_length(ib_bytestr_t *bs);
     size_t ib_bytestr_size(ib_bytestr_t *bs);
@@ -314,6 +330,7 @@ function register_module(m)
 end
 
 -- Lua OO Wrappers around IronBee raw C types
+-- TODO: Add metatable w/__tostring for each type
 local function newProvider(val)
     local c_val = ffi.cast("ib_provider_t *", val)
     return {
@@ -338,77 +355,80 @@ end
 local function newField(val)
     local c_val = ffi.cast("ib_field_t *", val)
     local c_list
-    local l_val
-    local l_size
-    if c_val.type ~= c.IB_FTYPE_LIST then
-        l_size = 1
-    end
     local t = {
         cvalue = function() return c_val end,
-        value = function()
-            if l_val ~= nil then
-                return l_val
-            elseif c_val.type == c.IB_FTYPE_BYTESTR then
-                c_fval = ffi.cast("ib_bytestr_t **", c_val.pval)[0]
-                l_val = ffi.string(c.ib_bytestr_ptr(c_fval), c.ib_bytestr_length(c_fval))
-            elseif c_val.type == c.IB_FTYPE_LIST then
-                -- TODO: Loop through and create a table of fields
-            elseif c_val.type == c.IB_FTYPE_NULSTR then
-                c_fval = ffi.cast("const char **", c_val.pval)[0]
-                l_val = ffi.string(c_fval[0])
-            elseif c_val.type == c.IB_FTYPE_NUM then
-                c_fval = ffi.cast("int64_t **", c_val.pval)[0]
-                l_val = base.tonumber(c_fval[0])
-            end
-
-            return l_val
-        end,
-        size = function()
-            if l_size ~= nil and c_val.type == c.IB_FTYPE_LIST then
-                if c_list == nil then
-                    c_list = ffi.cast("ib_list_t **", c_val.pval)[0]
-                end
-                l_size = base.tonumber(c.ib_list_elements(c_list))
-            end
-            return l_size
-        end,
-
+        type = function() return ffi.cast("int", c_val.type) end,
+        name = function() return ffi.string(c_val.name, c_val.nlen) end,
+        nlen = function() return ffi.cast("size_t", c_val.nlen) end,
+        pval = function() return c_val.pval end,
     }
---     setmetatable(t, {
---         __newindex = function (t, k, v)
---             error("attempt to modify a read-only field", 2)
---         end,
--- --
--- -- TODO This may end up not working with non-numeric indexes as
--- --      there could be a name clash (ie myfield["size"] would
--- --      just execute the size() here and not find the "size"
--- --      field???  And numeric indexes are not that useful. So
--- --      better may be a subfield() method???
--- --
---         __index = function (t, k)
---             -- Be very careful with indexes as there is no protection
---             local ktype = base.type(k)
---             if ktype ~= "number" or ktype <= 0 then
---                 -- TODO Instead loop through returning table of matching fields
---                 error("invalid index \"" .. k .. "\"", 2)
---             end
---             if c_val.type == c.IB_FTYPE_LIST then
---                 local c_idx;
---                 local size = t.size()
---                 local c_node
---                 -- c_list is now available after calling size()
---                 if k > t.size() then
---                     error("index is too large: " .. k, 2)
+    -- TODO: Add metatable w/__tostring for each sub-type
+    if c_val.type == c.IB_FTYPE_BYTESTR then
+        t["value"] = function()
+            c_fval = ffi.cast("ib_bytestr_t **", c_val.pval)[0]
+            return ffi.string(c.ib_bytestr_ptr(c_fval), c.ib_bytestr_length(c_fval))
+        end
+    elseif c_val.type == c.IB_FTYPE_LIST then
+        c_list = ffi.cast("ib_list_t **", c_val.pval)[0]
+        t["value"] = function()
+            -- Loop through and create a table of fields to return
+            local l_vals = {}
+            local c_node = c.ib_list_first(c_list)
+            while c_node ~= nil do
+                local c_f = ffi.cast("ib_field_t *", c.ib_list_node_data(c_node))
+                local l_fname = ffi.string(c_f.name, c_f.nlen)
+                l_vals[l_fname] = newField(c_f)
+                c_node = c.ib_list_node_next(c_node)
+            end
+            return l_vals
+        end
+--         setmetatable(t, {
+--             __newindex = function (t, k, v)
+--                 error("attempt to modify a read-only field", 2)
+--             end,
+--     --
+--     -- TODO This may end up not working with non-numeric indexes as
+--     --      there could be a name clash (ie myfield["size"] would
+--     --      just execute the size() here and not find the "size"
+--     --      field???  And numeric indexes are not that useful. So
+--     --      better may be a subfield() method???
+--     --
+--             __index = function (t, k)
+--                 -- Be very careful with indexes as there is no protection
+--                 local ktype = base.type(k)
+--                 if ktype ~= "number" or ktype <= 0 then
+--                     -- TODO Instead loop through returning table of matching fields
+--                     error("invalid index \"" .. k .. "\"", 2)
 --                 end
---                 c_idx = ffi.cast("size_t", k)
---                 -- c_node = c.ib_list_node(c_list, c_idx)
---                 -- return newField(ffi.cast("ib_field_t *", c.ib_list_node_data(c_node)))
---             elseif k ~= 1 then
---                 -- Any type has one value
---                 return t.value()
---             end
---         end,
---     })
+--                 if c_val.type == c.IB_FTYPE_LIST then
+--                     local c_idx;
+--                     local size = t.size()
+--                     local c_node
+--                     -- c_list is now available after calling size()
+--                     if k > t.size() then
+--                         error("index is too large: " .. k, 2)
+--                     end
+--                     c_idx = ffi.cast("size_t", k)
+--                     -- c_node = c.ib_list_node(c_list, c_idx)
+--                     -- return newField(ffi.cast("ib_field_t *", c.ib_list_node_data(c_node)))
+--                 elseif k ~= 1 then
+--                     -- Any type has one value
+--                     return t.value()
+--                 end
+--             end,
+--         })
+    elseif c_val.type == c.IB_FTYPE_NULSTR then
+        t["value"] = function()
+            local c_fval = ffi.cast("const char **", c_val.pval)[0]
+            return ffi.string(c_fval[0])
+        end
+    elseif c_val.type == c.IB_FTYPE_NUM then
+        t["value"] = function()
+            local c_fval = ffi.cast("int64_t **", c_val.pval)[0]
+            return base.tonumber(c_fval[0])
+        end
+    end
+
     return t
 end
 
@@ -455,6 +475,15 @@ local function newTx(val)
 end
 
 -- ===============================================
+-- Field Types
+-- ===============================================
+IB_FTYPE_GENERIC = ffi.cast("int", c.IB_FTYPE_GENERIC)
+IB_FTYPE_NUM = ffi.cast("int", c.IB_FTYPE_NUM)
+IB_FTYPE_NULSTR = ffi.cast("int", c.IB_FTYPE_NULSTR)
+IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
+IB_FTYPE_LIST = ffi.cast("int", c.IB_FTYPE_LIST)
+
+-- ===============================================
 -- Cast a value as a C "ib_conn_t *".
 -- ===============================================
 function cast_conn(val)
@@ -495,7 +524,7 @@ end
 function ib_log_debug(ib, lvl, fmt, ...)
     local c_ctx = c.ib_context_main(ib.cvalue())
 
-    c.ib_clog_ex(c_ctx, 4, "LuaFFI: ", nil, 0, fmt, ...)
+    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ", nil, 0, fmt, ...)
 end
 
 -- ===============================================

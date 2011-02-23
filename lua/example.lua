@@ -166,10 +166,39 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandleRequestHeaders(ib, tx)
-    local req_line = ironbee.ib_data_get(tx.dpi(), "request_line")
     ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequestHeaders ib=%p tx=%p",
                        _NAME, ib.cvalue(), tx.cvalue())
-    ironbee.ib_log_debug(ib, 4, "Request Line: %s", req_line.value());
+
+    -- Request line is a scalar value (a field object type)
+    local req_line = ironbee.ib_data_get(tx.dpi(), "request_line")
+    ironbee.ib_log_debug(ib, 4, "Request line is a field type: %d", req_line.type())
+    ironbee.ib_log_debug(ib, 4, "Request Line: %s", req_line.value())
+
+    -- Request headers are a collection (table of field objects)
+    local req_headers = ironbee.ib_data_get(tx.dpi(), "request_headers")
+    ironbee.ib_log_debug(ib, 4, "Request headers is a field type: %d", req_headers.type())
+    if req_headers.type() == ironbee.IB_FTYPE_LIST then
+        for k,f in base.pairs(req_headers.value()) do
+            if f.type() == ironbee.IB_FTYPE_LIST then
+                ironbee.ib_log_debug(ib, 4, "Request Header: %s=<list>", k)
+            else
+                ironbee.ib_log_debug(ib, 4, "Request Header: %s=%s", k, f.value())
+            end
+        end
+    end
+
+    -- Request URI params are a collection (table of field objects)
+    local req_uri_params = ironbee.ib_data_get(tx.dpi(), "request_uri_params")
+    ironbee.ib_log_debug(ib, 4, "Request URI Params is a field type: %d", req_uri_params.type())
+    if req_uri_params.type() == ironbee.IB_FTYPE_LIST then
+        for k,f in base.pairs(req_uri_params.value()) do
+            if f.type() == ironbee.IB_FTYPE_LIST then
+                ironbee.ib_log_debug(ib, 4, "Request URI Param: %s=<list>", k)
+            else
+                ironbee.ib_log_debug(ib, 4, "Request URI Param: %s=%s", k, f.value())
+            end
+        end
+    end
     return 0
 end
 
