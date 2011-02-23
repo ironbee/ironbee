@@ -927,12 +927,17 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  "request_uri_hostname",
                                  tx->parsed_uri->hostname,
                                  NULL);
-#if 0
-        if (tx->parsed_uri->hostname) {
-            /// @todo This need to be done in libhtp
+
+        /* This should be the the correct hostname based on URI specified 
+         * or taken from the HTTP Host header.
+         */
+        if (tx->parsed_uri != NULL) {
             qtx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
+            modhtp_field_gen_bytestr(qtx->dpi,
+                                     "request_hostname",
+                                     tx->parsed_uri->hostname,
+                                     NULL);
         }
-#endif
 
         modhtp_field_gen_bytestr(qtx->dpi,
                                  "request_uri_port",
@@ -944,7 +949,6 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  tx->parsed_uri->path,
                                  NULL);
         if (tx->parsed_uri->path) {
-            /// @todo This need to be done in libhtp
             qtx->path = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->path);
         }
 
@@ -971,8 +975,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             {
                 ib_field_t *lf;
 
-                /* Grab the hostname if not already chosen */
-                /// @todo This need to be done in libhtp
+                /* Grab the hostname if not already there (it should be) */
                 if (   (qtx->hostname == NULL)
                     && (bstr_cmp_c_nocase(h->name, (char *)"host") == 0))
                 {
