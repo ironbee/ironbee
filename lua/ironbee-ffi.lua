@@ -24,6 +24,7 @@
 -- =========================================================================
 
 local base = _G
+local modules = package.loaded
 local ffi = require("ffi")
 local io = require("io")
 local string = require("string")
@@ -84,6 +85,37 @@ ffi.cdef[[
         IB_TXDATA_HTTP_BODY,
         IB_TXDATA_HTTP_TRAILER
     } ib_txdata_type_t;
+    typedef enum {
+        conn_started_event,
+        conn_finished_event,
+        tx_started_event,
+        tx_process_event,
+        tx_finished_event,
+        handle_context_conn_event,
+        handle_connect_event,
+        handle_context_tx_event,
+        handle_request_headers_event,
+        handle_request_event,
+        handle_response_headers_event,
+        handle_response_event,
+        handle_disconnect_event,
+        handle_postprocess_event,
+        conn_opened_event,
+        conn_data_in_event,
+        conn_data_out_event,
+        conn_closed_event,
+        tx_data_in_event,
+        tx_data_out_event,
+        request_started_event,
+        request_headers_event,
+        request_body_event,
+        request_finished_event,
+        response_started_event,
+        response_headers_event,
+        response_body_event,
+        response_finished_event
+    } ib_state_event_type_t;
+
 
     /* Engine Types */
     typedef struct ib_engine_t ib_engine_t;
@@ -245,6 +277,8 @@ local c = ffi.C
 -- =========================================================================
 -- =========================================================================
 -- Implementation Notes:
+--   * A "l_" prefix is used here to denote a Lua type.
+--
 --   * A "c_" prefix is used here to denote a C type.
 --
 --   * A C type still uses zero based indexes.
@@ -277,6 +311,147 @@ local c = ffi.C
 -- ===============================================
 function register_module(m)
     base["ironbee-module"] = m
+end
+
+-- Lua OO Wrappers around IronBee raw C types
+local function newProvider(val)
+    local c_val = ffi.cast("ib_provider_t *", val)
+    return {
+        cvalue = function() return c_val end,
+    }
+end
+
+local function newProviderInst(val)
+    local c_val = ffi.cast("ib_provider_inst_t *", val)
+    return {
+        cvalue = function() return c_val end,
+    }
+end
+
+local function newContext(val)
+    local c_val = ffi.cast("ib_context_t *", val)
+    return {
+        cvalue = function() return c_val end,
+    }
+end
+
+local function newField(val)
+    local c_val = ffi.cast("ib_field_t *", val)
+    local c_list
+    local l_val
+    local l_size
+    if c_val.type ~= c.IB_FTYPE_LIST then
+        l_size = 1
+    end
+    local t = {
+        cvalue = function() return c_val end,
+        value = function()
+            if l_val ~= nil then
+                return l_val
+            elseif c_val.type == c.IB_FTYPE_BYTESTR then
+                c_fval = ffi.cast("ib_bytestr_t **", c_val.pval)[0]
+                l_val = ffi.string(c.ib_bytestr_ptr(c_fval), c.ib_bytestr_length(c_fval))
+            elseif c_val.type == c.IB_FTYPE_LIST then
+                -- TODO: Loop through and create a table of fields
+            elseif c_val.type == c.IB_FTYPE_NULSTR then
+                c_fval = ffi.cast("const char **", c_val.pval)[0]
+                l_val = ffi.string(c_fval[0])
+            elseif c_val.type == c.IB_FTYPE_NUM then
+                c_fval = ffi.cast("int64_t **", c_val.pval)[0]
+                l_val = base.tonumber(c_fval[0])
+            end
+
+            return l_val
+        end,
+        size = function()
+            if l_size ~= nil and c_val.type == c.IB_FTYPE_LIST then
+                if c_list == nil then
+                    c_list = ffi.cast("ib_list_t **", c_val.pval)[0]
+                end
+                l_size = base.tonumber(c.ib_list_elements(c_list))
+            end
+            return l_size
+        end,
+
+    }
+--     setmetatable(t, {
+--         __newindex = function (t, k, v)
+--             error("attempt to modify a read-only field", 2)
+--         end,
+-- --
+-- -- TODO This may end up not working with non-numeric indexes as
+-- --      there could be a name clash (ie myfield["size"] would
+-- --      just execute the size() here and not find the "size"
+-- --      field???  And numeric indexes are not that useful. So
+-- --      better may be a subfield() method???
+-- --
+--         __index = function (t, k)
+--             -- Be very careful with indexes as there is no protection
+--             local ktype = base.type(k)
+--             if ktype ~= "number" or ktype <= 0 then
+--                 -- TODO Instead loop through returning table of matching fields
+--                 error("invalid index \"" .. k .. "\"", 2)
+--             end
+--             if c_val.type == c.IB_FTYPE_LIST then
+--                 local c_idx;
+--                 local size = t.size()
+--                 local c_node
+--                 -- c_list is now available after calling size()
+--                 if k > t.size() then
+--                     error("index is too large: " .. k, 2)
+--                 end
+--                 c_idx = ffi.cast("size_t", k)
+--                 -- c_node = c.ib_list_node(c_list, c_idx)
+--                 -- return newField(ffi.cast("ib_field_t *", c.ib_list_node_data(c_node)))
+--             elseif k ~= 1 then
+--                 -- Any type has one value
+--                 return t.value()
+--             end
+--         end,
+--     })
+    return t
+end
+
+local function newEngine(val)
+    local c_val = ffi.cast("ib_engine_t *", val)
+    return {
+        cvalue = function() return c_val end,
+    }
+end
+
+local function newConnData(val)
+    local c_val = ffi.cast("ib_conndata_t *", val)
+    return {
+        cvalue = function() return c_val end,
+        dlen = function() return ffi.cast("size_t", c_val.dlen) end,
+        data = function() return c_val.data end,
+    }
+end
+
+local function newConn(val)
+    local c_val = ffi.cast("ib_conn_t *", val)
+    return {
+        cvalue = function() return c_val end,
+        dpi = function() return newProviderInst(c_val.dpi) end,
+    }
+end
+
+local function newTxData(val)
+    local c_val = ffi.cast("ib_txdata_t *", val)
+    return {
+        cvalue = function() return c_val end,
+        dtype = function() return ffi.cast("int", c_val.dtype) end,
+        dlen = function() return ffi.cast("size_t", c_val.dlen) end,
+        data = function() return c_val.data end,
+    }
+end
+
+local function newTx(val)
+    local c_val = ffi.cast("ib_tx_t *", val)
+    return {
+        cvalue = function() return c_val end,
+        dpi = function() return newProviderInst(c_val.dpi) end,
+    }
 end
 
 -- ===============================================
@@ -318,39 +493,16 @@ end
 -- Debug Functions.
 -- ===============================================
 function ib_log_debug(ib, lvl, fmt, ...)
-    local c_ib = ffi.cast("ib_engine_t *", ib)
-    local c_ctx = c.ib_context_main(c_ib)
+    local c_ctx = c.ib_context_main(ib.cvalue())
 
     c.ib_clog_ex(c_ctx, 4, "LuaFFI: ", nil, 0, fmt, ...)
 end
 
 -- ===============================================
--- Convert an IronBee field to an appropriate Lua
--- type.
---
--- NOTE: This currently makes a copy of the data.
--- ===============================================
-function field_convert(c_f)
-    if c_f.type == c.IB_FTYPE_BYTESTR then
-        c_val = ffi.cast("ib_bytestr_t **", c_f.pval)[0]
-        return ffi.string(c.ib_bytestr_ptr(c_val), c.ib_bytestr_length(c_val))
-    elseif c_f.type == c.IB_FTYPE_LIST then
-        -- TODO: Loop through and create a table of converted values
-    elseif c_f.type == c.IB_FTYPE_NULSTR then
-        c_val = ffi.cast("const char **", c_f.pval)[0]
-        return ffi.string(c_val[0])
-    elseif c_f.type == c.IB_FTYPE_NUM then
-        c_val = ffi.cast("int64_t **", c_f.pval)[0]
-        return base.tonumber(c_val[0])
-    end
-
-    return nil
-end
-
--- ===============================================
+-- Get a data field by name.
 -- ===============================================
 function ib_data_get(dpi, name)
-    local c_dpi = ffi.cast("ib_provider_inst_t *", dpi)
+    local c_dpi = dpi.cvalue()
 --    local c_ib = c_dpi.pr.ib
     local c_pf = ffi.new("ib_field_t*[1]")
     local rc
@@ -362,6 +514,87 @@ function ib_data_get(dpi, name)
         return nil
     end
 
-    return field_convert(c_pf[0]);
+    return newField(c_pf[0]);
 end
 
+-- ===============================================
+-- Wrapper function to call Lua event handler.
+-- ===============================================
+function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
+    local c_ib = ffi.cast("ib_engine_t *", ib);
+    local l_ib = newEngine(ib)
+    local l_arg
+    local m
+
+    if     event == c.conn_started_event then
+        l_arg = newConn(arg)
+    elseif event == c.conn_finished_event then
+        l_arg = newConn(arg)
+    elseif event == c.tx_started_event then
+        l_arg = newTx(arg)
+    elseif event == c.tx_process_event then
+        l_arg = newTx(arg)
+    elseif event == c.tx_finished_event then
+        l_arg = newTx(arg)
+    elseif event == c.handle_context_conn_event then
+        l_arg = newConn(arg)
+    elseif event == c.handle_connect_event then
+        l_arg = newConn(arg)
+    elseif event == c.handle_context_tx_event then
+        l_arg = newTx(arg)
+    elseif event == c.handle_request_headers_event then
+        l_arg = newTx(arg)
+    elseif event == c.handle_request_event then
+        l_arg = newTx(arg)
+    elseif event == c.handle_response_headers_event then
+        l_arg = newTx(arg)
+    elseif event == c.handle_response_event then
+        l_arg = newTx(arg)
+    elseif event == c.handle_disconnect_event then
+        l_arg = newConn(arg)
+    elseif event == c.handle_postprocess_event then
+        l_arg = newConn(arg)
+    elseif event == c.conn_opened_event then
+        l_arg = newConn(arg)
+    elseif event == c.conn_data_in_event then
+        l_arg = newConnData(arg)
+    elseif event == c.conn_data_out_event then
+        l_arg = newConnData(arg)
+    elseif event == c.conn_closed_event then
+        l_arg = newConn(arg)
+    elseif event == c.tx_data_in_event then
+        l_arg = newTxData(arg)
+    elseif event == c.tx_data_out_event then
+        l_arg = newTxData(arg)
+    elseif event == c.request_started_event then
+        l_arg = newTx(arg)
+    elseif event == c.request_headers_event then
+        l_arg = newTx(arg)
+    elseif event == c.request_body_event then
+        l_arg = newTx(arg)
+    elseif event == c.request_finished_event then
+        l_arg = newTx(arg)
+    elseif event == c.response_started_event then
+        l_arg = newTx(arg)
+    elseif event == c.response_headers_event then
+        l_arg = newTx(arg)
+    elseif event == c.response_body_event then
+        l_arg = newTx(arg)
+    elseif event == c.response_finished_event then
+        l_arg = newTx(arg)
+    else
+        ib_log_debug(l_ib, 4, "Unhandled event for module \"%s\": %d",
+                     modname, ffi.cast("int", event))
+        return nil
+    end
+
+--    ib_log_debug(l_ib, 9, "Executing event handler for module \"%s\" event=%d",
+--                 modname, ffi.cast("int", event))
+    m = modules[modname]
+    if m == nil then
+        return c.IB_ENOENT
+    end
+
+    return m[funcname](l_ib, l_arg, ...)
+    -- return c.IB_OK
+end

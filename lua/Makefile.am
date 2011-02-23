@@ -13,8 +13,7 @@ EXTRA_DIST = ironbee-ffi.lua \
              example.lua \
              example-ffi.lua
 lua_DATA = ironbee-ffi.lua \
-           example.lua \
-           example-ffi.lua
+           example.lua
 
 noinst_LTLIBRARIES = libironbee-lua.la
 libironbee_lua_la_SOURCES = ironbee.c ironbee.h 

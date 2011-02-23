@@ -17,7 +17,7 @@
 -- =========================================================================
 -- =========================================================================
 --
--- This is an example IronBee lua module.
+-- This is an example IronBee lua module using the new FFI interface.
 --
 -- Author: Brian Rectanus <brectanus@qualys.com>
 -- =========================================================================
@@ -27,7 +27,7 @@
 -- Define local aliases of any globals to be used.
 -- ===============================================
 local base = _G
-local ironbee = require("ironbee")
+local ironbee = require("ironbee-ffi")
 
 -- ===============================================
 -- Declare the rest of the file as a module and
@@ -46,6 +46,10 @@ ironbee.register_module(_M)
 -- ===============================================
 -- Event Handlers
 --
+-- Normally only the onEventHandle* functions are
+-- used for detection, but they are all listed
+-- here.
+--
 -- NOTE: As a best practice, you should avoid
 -- using the "onEvent" prefix in any public
 -- functions that are NOT to be used as event
@@ -55,6 +59,106 @@ ironbee.register_module(_M)
 -- ===============================================
 
 -- ===============================================
+-- This is called when a connection is started.
+--
+-- ib: IronBee engine handle
+-- conn: IronBee connection handle
+-- ===============================================
+function onEventConnStarted(ib, conn)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventConnStarted ib=%p conn=%p",
+                       _NAME, ib.cvalue(), conn.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when a connection is opened.
+--
+-- ib: IronBee engine handle
+-- conn: IronBee connection handle
+-- ===============================================
+function onEventConnOpened(ib, conn)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventConnOpened ib=%p conn=%p",
+                       _NAME, ib.cvalue(), conn.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when a connection context was
+-- chosen and is ready to be handled.
+--
+-- ib: IronBee engine handle
+-- conn: IronBee connection handle
+-- ===============================================
+function onEventHandleContextConn(ib, conn)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleContextConn ib=%p conn=%p",
+                       _NAME, ib.cvalue(), conn.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the connection is ready to
+-- be handled.
+--
+-- ib: IronBee engine handle
+-- conn: IronBee connection handle
+-- ===============================================
+function onEventHandleConnect(ib, conn)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleConnect ib=%p conn=%p",
+                       _NAME, ib.cvalue(), conn.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the transaction starts.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventTxStarted(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxStarted ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when a request starts.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventRequestStarted(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestStarted ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the request headers are
+-- available.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventRequestHeaders(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestHeaders ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the transaction context
+-- is ready to be handled.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventHandleContextTx(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleContextTx ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
 -- This is called when the request headers are
 -- avalable to inspect.
 --
@@ -62,9 +166,263 @@ ironbee.register_module(_M)
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandleRequestHeaders(ib, tx)
-    ironbee.log_debug(ib, 4, "Lua: %s.onEventHandleRequestHeaders", _NAME)
- 
-    -- Do something interesting
-
+    local req_line = ironbee.ib_data_get(tx.dpi(), "request_line")
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequestHeaders ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "Request Line: %s", req_line.value());
     return 0
 end
+
+-- ===============================================
+-- This is called when the request body is
+-- available.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventRequestBody(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestBody ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the complete request is
+-- ready to be handled.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventHandleRequest(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequest ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the request is finished.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventRequestFinished(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestFinished ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the transaction is ready
+-- to be processed.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventTxProcess(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxProcess ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the response is started.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventResponseStarted(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseStarted ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the response headers are
+-- available.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventResponseHeaders(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseHeaders ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the response headers are
+-- ready to be handled.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventHandleResponseHeaders(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleResponseHeaders ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the response body is
+-- available.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventResponseBody(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseBody ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the complete response is
+-- ready to be handled.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventHandleResponse(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleResponse ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the response is finished.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventResponseFinished(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseFinished ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called after the transaction is done
+-- and any post processing can be done.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventHandlePostprocess(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandlePostprocess ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the transaction is
+-- finished.
+--
+-- ib: IronBee engine handle
+-- tx: IronBee transaction handle
+-- ===============================================
+function onEventTxFinished(ib, tx)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxFinished ib=%p tx=%p",
+                       _NAME, ib.cvalue(), tx.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when a connection is closed.
+--
+-- ib: IronBee engine handle
+-- conn: IronBee connection handle
+-- ===============================================
+function onEventConnClosed(ib, conn)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventConnClosed ib=%p conn=%p",
+                       _NAME, ib.cvalue(), conn.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This is called when the connection disconnect
+-- is ready to handle.
+--
+-- ib: IronBee engine handle
+-- conn: IronBee connection handle
+-- ===============================================
+function onEventHandleDisconnect(ib, conn)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleDisconnect ib=%p conn=%p",
+                       _NAME, ib.cvalue(), conn.cvalue())
+    return 0
+end
+
+-- ===============================================
+-- This one cannot be used in Lua as the Lua
+-- state is destroyed before it is called.
+--
+-- -- ===============================================
+-- -- This is called when a connection is finished.
+-- --
+-- -- ib: IronBee engine handle
+-- -- conn: IronBee connection handle
+-- -- ===============================================
+-- function onEventConnFinished(ib, conn)
+--     ironbee.ib_log_debug(ib, 4, "%s.onEventConnFinished ib=%p conn=%p",
+--                        _NAME, ib, conn)
+--     return 0
+-- end
+-- ===============================================
+
+-- ===============================================
+-- This is called when there is incoming data for
+-- the connection.
+--
+-- ib: IronBee engine handle
+-- conndata: IronBee connection data handle
+-- ===============================================
+function onEventConnDataIn(ib, conndata)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventConnDataIn: %.*s",
+                       _NAME,
+                       conndata.dlen(), conndata.data())
+    return 0
+end
+
+-- ===============================================
+-- This is called when there is outgoing data for
+-- the connection.
+--
+-- ib: IronBee engine handle
+-- conndata: IronBee connection data handle
+-- ===============================================
+function onEventConnDataOut(ib, conndata)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventConnDataOut: %.*s",
+                       _NAME,
+                       conndata.dlen(), conndata.data())
+    return 0
+end
+
+-- ===============================================
+-- This is called when there is incoming data for
+-- the transaction.
+--
+-- ib: IronBee engine handle
+-- txdata: IronBee transaction data handle
+-- ===============================================
+function onEventTxDataIn(ib, txdata)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxDataIn[%d]: %.*s",
+                       _NAME,
+                       txdata.dtype(),
+                       txdata.dlen(), txdata.data())
+    return 0
+end
+
+-- ===============================================
+-- This is called when there is outgoing data for
+-- the transaction.
+--
+-- ib: IronBee engine handle
+-- txdata: IronBee transaction data handle
+-- ===============================================
+function onEventTxDataOut(ib, txdata)
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxDataOut[%d]: %.*s",
+                       _NAME,
+                       txdata.dtype(),
+                       txdata.dlen(), txdata.data())
+    return 0
+end
+

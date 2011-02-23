@@ -242,6 +242,9 @@ static int modlua_load(ib_engine_t *ib, lua_State *L, modlua_chunk_t *chunk)
 #define IB_FFI_MODULE  ironbee-ffi
 #define IB_FFI_MODULE_STR IB_XSTRINGIFY(IB_FFI_MODULE)
 
+#define IB_FFI_MODULE_WRAPPER     _IRONBEE_CALL_EVENT_HANDLER
+#define IB_FFI_MODULE_WRAPPER_STR IB_XSTRINGIFY(IB_FFI_MODULE_WRAPPER)
+
 static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
                                               lua_State *L)
 {
@@ -292,6 +295,14 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
                      IB_FFI_MODULE_STR, lua_tostring(L, -1), ec);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+
+    /* Cache wrapper function to global for faster lookup. */
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "loaded");
+    lua_getfield(L, -1, IB_FFI_MODULE_STR);
+    lua_getfield(L, -1, IB_FFI_MODULE_WRAPPER_STR);
+    lua_setglobal(L, IB_FFI_MODULE_WRAPPER_STR);
+    lua_pop(L, 3); /* cleanup stack */
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -899,6 +910,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
     int ec;
 
     /* Order here is by most common use. */
+    /// @todo No longer needed.
     switch(event) {
         /* Normal Event Handlers */
         case handle_request_headers_event:
@@ -999,48 +1011,43 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
             break;
     }
 
-    lua_checkstack(L, 10);
-    lua_getglobal(L, "package");
-    lua_getfield(L, -1, "loaded");
-    lua_getfield(L, -1, modname);
-    if (lua_istable(L, -1)) {
-        lua_getfield(L, -1, funcname);
-        if (lua_isfunction(L, -1)) {
-            ib_log_debug(ib, 9, "Executing lua handler \"%s.%s\"",
-                         modname, funcname);
-            lua_pushlightuserdata(L, ib);
-            lua_pushlightuserdata(L, arg);
-            lua_pushnil(L);
-            ec = lua_pcall(L, 3, 1, 0);
-            if (ec != 0) {
-                ib_log_error(ib, 1, "Failed to exec lua \"%s.%s\" - %s (%d)",
-                             modname, funcname, lua_tostring(L, -1), ec);
-                rc = IB_EINVAL;
-            }
-            else if (lua_isnumber(L, -1)) {
-                rc = (ib_status_t)(int)lua_tointeger(L, -1);
-            }
-            else {
-                ib_log_error(ib, 1,
-                             "Expected %s returned from lua \"%s.%s\", "
-                             "but received %s",
-                             lua_typename(L, LUA_TNUMBER),
-                             modname, funcname,
-                             lua_typename(L, lua_type(L, -1)));
-                rc = IB_EINVAL;
-            }
-            lua_pop(L, 1); /* cleanup return val on stack */
+    /* Call event handler via a wrapper. */
+    lua_getglobal(L, IB_FFI_MODULE_WRAPPER_STR);
+    if (lua_isfunction(L, -1)) {
+        ib_log_debug(ib, 9, "Executing lua handler \"%s.%s\" via wrapper",
+                     modname, funcname);
+        lua_pushlightuserdata(L, ib);
+        lua_pushstring(L, modname);
+        lua_pushstring(L, funcname);
+        lua_pushinteger(L, event);
+        lua_pushlightuserdata(L, arg);
+        lua_pushnil(L); /* reserved */
+        /// @todo Use errfunc w/debug.traceback()
+        ec = lua_pcall(L, 6, 1, 0);
+        if (ec != 0) {
+            ib_log_error(ib, 1, "Failed to exec lua wrapper for \"%s.%s\" - %s (%d)",
+                         modname, funcname, lua_tostring(L, -1), ec);
+            rc = IB_EINVAL;
+        }
+        else if (lua_isnumber(L, -1)) {
+            rc = (ib_status_t)(int)lua_tointeger(L, -1);
         }
         else {
-            ib_log_debug(ib, 4, "Lua function lookup returned type=%s",
+            ib_log_error(ib, 1,
+                         "Expected %s returned from lua \"%s.%s\", "
+                         "but received %s",
+                         lua_typename(L, LUA_TNUMBER),
+                         modname, funcname,
                          lua_typename(L, lua_type(L, -1)));
+            rc = IB_EINVAL;
         }
+        lua_pop(L, 1); /* cleanup return val on stack */
     }
     else {
-        ib_log_debug(ib, 4, "Lua module lookup returned type=%s",
+        ib_log_debug(ib, 4, "Lua wrapper function lookup returned type=%s",
                      lua_typename(L, lua_type(L, -1)));
     }
-    lua_pop(L, 3); /* cleanup stack */
+
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1363,7 +1370,6 @@ static ib_status_t modlua_init(ib_engine_t *ib)
     modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "ironbee-ffi.lua");
     ib_log_debug(ib, 4, "Loading example lua modules");
     modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "example.lua");
-    modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "example-ffi.lua");
 
     /* Hook to initialize the lua runtime with the connection. */
     ib_hook_register(ib, conn_started_event,
@@ -1501,7 +1507,6 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
 
     /* Init the lua modules that were loaded */
     modlua_module_init(ib, ctx, "example");
-    modlua_module_init(ib, ctx, "example-ffi");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
