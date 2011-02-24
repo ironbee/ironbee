@@ -702,6 +702,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
         (ironbee_config_t *)ap_get_module_config(s->module_config,
                                                  &ironbee_module);
     ib_cfgparser_t *cp;
+    ib_provider_t *lpr;
     void *init = NULL;
     ib_status_t rc;
 
@@ -739,7 +740,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
 
     /* Register the logger. */
     rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER,
-                              MODULE_NAME_STR, NULL,
+                              MODULE_NAME_STR, &lpr,
                               &ironbee_logger_iface,
                               NULL);
     if (rc != IB_OK) {
@@ -747,6 +748,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                      MODULE_NAME_STR ": Error registering log provider: %d", rc);
         return OK;
     }
+    lpr->data = (void *)s;
 
     /* Default logger */
     ib_context_set_string(ib_context_engine(ironbee),

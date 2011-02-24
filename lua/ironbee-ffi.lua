@@ -26,7 +26,7 @@
 local base = _G
 local modules = package.loaded
 local ffi = require("ffi")
-local io = require("io")
+local debug = require("debug")
 local string = require("string")
 
 module("ironbee-ffi")
@@ -581,8 +581,10 @@ end
 -- ===============================================
 function ib_log_debug(ib, lvl, fmt, ...)
     local c_ctx = c.ib_context_main(ib.cvalue())
+    local dinfo = debug.getinfo(2)
 
-    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ", nil, 0, fmt, ...)
+    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ",
+                 dinfo.source .. ".lua", dinfo.linedefined, fmt, ...)
 end
 
 -- ===============================================
