@@ -92,6 +92,13 @@ end
 function onEventHandleContextConn(ib, conn)
     ironbee.ib_log_debug(ib, 4, "%s.onEventHandleContextConn ib=%p conn=%p",
                        _NAME, ib.cvalue(), conn.cvalue())
+
+    -- Create a pcre matcher for later use
+    if pcre == nil then
+        pcre = ironbee.ib_matcher_create(ib, conn.mp(), "pcre")
+        ironbee.ib_log_debug(ib, 4, "Created PCRE matcher=%p", pcre)
+    end
+
     return 0
 end
 
@@ -199,6 +206,18 @@ function onEventHandleRequestHeaders(ib, tx)
             end
         end
     end
+
+    -- Use the PCRE matcher
+    if pcre ~= nil then
+        local patt = "(?i:foo)"
+        local rc = ironbee.ib_matcher_match_field(pcre, patt, 0, req_line)
+        if rc == ironbee.IB_OK then
+            ironbee.ib_log_debug(ib, 4, "Request Line matches: %s", patt)
+        else
+            ironbee.ib_log_debug(ib, 4, "Request Line does not match: %s", patt)
+        end
+    end
+
     return 0
 end
 

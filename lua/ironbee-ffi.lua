@@ -132,6 +132,7 @@ ffi.cdef[[
     typedef struct ib_provider_def_t ib_provider_def_t;
     typedef struct ib_provider_t ib_provider_t;
     typedef struct ib_provider_inst_t ib_provider_inst_t;
+    typedef struct ib_matcher_t ib_matcher_t;
 
 
     /** Function called when a provider is registered. */
@@ -259,6 +260,48 @@ ffi.cdef[[
     ib_list_node_t *ib_list_node_next(ib_list_node_t *node);
     ib_list_node_t *ib_list_node_prev(ib_list_node_t *node);
     void *ib_list_node_data(ib_list_node_t *node);
+
+    /* Providers */
+    ib_status_t ib_provider_define(ib_engine_t *ib,
+                                   const char *type,
+                                   ib_provider_register_fn_t fn_reg,
+                                   void *api);
+    ib_status_t ib_provider_register(ib_engine_t *ib,
+                                     const char *type,
+                                     const char *key,
+                                     ib_provider_t **ppr,
+                                     void *iface,
+                                     ib_provider_inst_init_fn_t fn_init);
+    ib_status_t ib_provider_lookup(ib_engine_t *ib,
+                                   const char *type,
+                                   const char *key,
+                                   ib_provider_t **ppr);
+    ib_status_t ib_provider_instance_create(ib_engine_t *ib,
+                                            const char *type,
+                                            const char *key,
+                                            ib_provider_inst_t **ppi,
+                                            ib_mpool_t *pool,
+                                            void *data);
+
+    /* Matchers */
+    ib_status_t ib_matcher_create(ib_engine_t *ib,
+                                  ib_mpool_t *pool,
+                                  const char *key,
+                                  ib_matcher_t **pm);
+    void *ib_matcher_compile(ib_matcher_t *m,
+                             const char *patt,
+                             const char **errptr,
+                             int *erroffset);
+    ib_status_t ib_matcher_match_buf(ib_matcher_t *m,
+                                     void *cpatt,
+                                     ib_flags_t flags,
+                                     const uint8_t *data,
+                                     size_t dlen);
+    ib_status_t ib_matcher_match_field(ib_matcher_t *m,
+                                       void *cpatt,
+                                       ib_flags_t flags,
+                                       ib_field_t *f);
+
 
     /* Byte String */
     size_t ib_bytestr_length(ib_bytestr_t *bs);
@@ -452,6 +495,7 @@ local function newConn(val)
     local c_val = ffi.cast("ib_conn_t *", val)
     return {
         cvalue = function() return c_val end,
+        mp = function() return ffi.cast("ib_mpool_t *", c_val.mp) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
     }
 end
@@ -470,9 +514,23 @@ local function newTx(val)
     local c_val = ffi.cast("ib_tx_t *", val)
     return {
         cvalue = function() return c_val end,
+        mp = function() return ffi.cast("ib_mpool_t *", c_val.mp) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
     }
 end
+
+-- ===============================================
+-- Status
+-- ===============================================
+IB_OK = ffi.cast("int", c.IB_OK)
+IB_DECLINED = ffi.cast("int", c.IB_DECLINED)
+IB_EUNKNOWN = ffi.cast("int", c.IB_EUNKNOWN)
+IB_ENOTIMPL = ffi.cast("int", c.IB_ENOTIMPL)
+IB_EINCOMPAT = ffi.cast("int", c.IB_EINCOMPAT)
+IB_EALLOC = ffi.cast("int", c.IB_EALLOC)
+IB_EINVAL = ffi.cast("int", c.IB_EINVAL)
+IB_ENOENT = ffi.cast("int", c.IB_ENOENT)
+IB_ETIMEDOUT = ffi.cast("int", c.IB_ETIMEDOUT)
 
 -- ===============================================
 -- Field Types
@@ -529,21 +587,84 @@ end
 
 -- ===============================================
 -- Get a data field by name.
+--
+-- dpi: Data Provider Interface (i.e. conn.dpi() or tx.dpi())
+-- name: Name of data field
 -- ===============================================
 function ib_data_get(dpi, name)
     local c_dpi = dpi.cvalue()
 --    local c_ib = c_dpi.pr.ib
     local c_pf = ffi.new("ib_field_t*[1]")
     local rc
-    local c_val
 
     -- Get the named data field.
     rc = c.ib_data_get_ex(c_dpi, name, string.len(name), c_pf)
-    if rc ~= 0 then
+    if rc ~= c.IB_OK then
         return nil
     end
 
     return newField(c_pf[0]);
+end
+
+-- ===============================================
+-- Known provider types
+-- ===============================================
+IB_PROVIDER_TYPE_LOGGER = "logger"
+IB_PROVIDER_TYPE_PARSER = "parser"
+IB_PROVIDER_TYPE_DATA = "data"
+IB_PROVIDER_TYPE_MATCHER = "matcher"
+IB_PROVIDER_TYPE_LOGEVENT = "logevent"
+
+-- ===============================================
+-- Lookup a provider by type and key.
+--
+-- ib: Engine
+-- type: Provider type
+-- key: Provider key
+-- ===============================================
+function ib_provider_lookup(ib, type, key)
+    local c_ib = ib.cvalue()
+    local c_ppr = ffi.new("ib_provider_t*[1]")
+    local rc
+
+    -- Get the named data field.
+    rc = c.ib_provider_lookup(c_ib, type, key, c_ppr)
+    if rc ~= c.IB_OK then
+        return nil
+    end
+
+    return newProvider(c_ppr[0]);
+end
+
+function ib_matcher_create(ib, pool, key)
+    local c_ib = ib.cvalue()
+    local c_pm = ffi.new("ib_matcher_t*[1]")
+    local rc
+
+    rc = c.ib_matcher_create(c_ib, pool, key, c_pm)
+    if rc ~= c.IB_OK then
+        return nil
+    end
+
+    -- TODO Probably should return a wrapper???
+    return c_pm[0]
+end
+
+function ib_matcher_match_field(m, patt, flags, f)
+    local cpatt
+    local c_f = f.cvalue()
+    local rc
+
+    if base.type(patt) == "string" then
+        -- TODO Do we need to GC these?
+        local errptr = ffi.new("const char *[1]")
+        local erroffset = ffi.new("int[1]")
+        cpatt = c.ib_matcher_compile(m, patt, errptr, erroffset)
+    else
+        cpatt = patt
+    end
+
+    return c.ib_matcher_match_field(m, cpatt, flags, c_f)
 end
 
 -- ===============================================
