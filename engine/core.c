@@ -943,7 +943,7 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
                                                int *erroffset)
 
 {
-    IB_FTRACE_INIT(matcher_api_);
+    IB_FTRACE_INIT(matcher_api_compile_pattern);
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
     ib_status_t rc;
 
@@ -966,7 +966,6 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
  * Match a compiled pattern against a buffer.
  *
  * @param mpr Matcher provider
- * @param pres Address which result structure is written
  * @param cpatt Compiled pattern
  * @param flags Flags
  * @param data Data buffer to perform match on
@@ -974,14 +973,13 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
  *
  * @returns Status code
  */
-static ib_status_t matcher_api_match_compiled_buf(ib_provider_t *mpr,
-                                                  ib_match_result_t **pres,
-                                                  void *cpatt,
-                                                  ib_flags_t flags,
-                                                  const uint8_t *data,
-                                                  size_t dlen)
+static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
+                                              void *cpatt,
+                                              ib_flags_t flags,
+                                              const uint8_t *data,
+                                              size_t dlen)
 {
-    IB_FTRACE_INIT(matcher_api_);
+    IB_FTRACE_INIT(matcher_api_match_compiled);
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
     ib_status_t rc;
 
@@ -995,66 +993,7 @@ static ib_status_t matcher_api_match_compiled_buf(ib_provider_t *mpr,
         IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
     }
 
-    rc = iface->match_compiled(mpr, pres, cpatt, flags, data, dlen);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * @internal
- * Match a compiled pattern against a data field.
- *
- * @param mpr Matcher provider
- * @param pres Address which result structure is written
- * @param cpatt Compiled pattern
- * @param flags Flags
- * @param f Field to perform match on
- *
- * @returns Status code
- */
-static ib_status_t matcher_api_match_compiled_field(ib_provider_t *mpr,
-                                                    ib_match_result_t **pres,
-                                                    void *cpatt,
-                                                    ib_flags_t flags,
-                                                    ib_field_t *f)
-{
-    IB_FTRACE_INIT(matcher_api_);
-    IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
-    ib_status_t rc;
-    ib_bytestr_t *bs;
-    char *cs;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_util_log_error(0, "Failed to fetch matcher interface");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    if (iface->match_compiled == NULL) {
-        IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
-    }
-
-    switch (f->type) {
-        case IB_FTYPE_BYTESTR:
-            bs = ib_field_value_bytestr(f);
-            rc = iface->match_compiled(mpr, pres, cpatt, flags,
-                                       ib_bytestr_ptr(bs),
-                                       ib_bytestr_length(bs));
-            break;
-        case IB_FTYPE_NULSTR:
-            cs = ib_field_value_nulstr(f);
-            rc = iface->match_compiled(mpr, pres, cpatt, flags,
-                                       (uint8_t *)cs,
-                                       strlen(cs));
-            break;
-        /// @todo How to handle numeric fields???
-        default:
-            *pres = NULL;
-            rc = IB_EINVAL;
-            ib_log_error(mpr->ib, 3, "Not matching against field type=%d",
-                         f->type);
-            break;
-    }
-
+    rc = iface->match_compiled(mpr, cpatt, flags, data, dlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1073,7 +1012,7 @@ static ib_status_t matcher_api_match_compiled_field(ib_provider_t *mpr,
 static ib_status_t matcher_api_add_pattern(ib_provider_inst_t *mpi,
                                            const char *patt)
 {
-    IB_FTRACE_INIT(matcher_api_);
+    IB_FTRACE_INIT(matcher_api_add_pattern);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -1084,18 +1023,19 @@ static ib_status_t matcher_api_add_pattern(ib_provider_inst_t *mpi,
  * @warning Not yet implemented
  *
  * @param mpi Matcher provider instance
- * @param pres Address which results structure is written
  * @param flags Flags
- * @param f Field
+ * @param data Data buffer
+ * @param dlen Data buffer length
  *
  * @returns Status code
  */
-static ib_status_t matcher_api_match_field(ib_provider_inst_t *mpi,
-                                           ib_match_result_t **pres,
-                                           ib_flags_t flags,
-                                           ib_field_t *f)
+static ib_status_t matcher_api_match(ib_provider_inst_t *mpi,
+                                     ib_flags_t flags,
+                                     const uint8_t *data,
+                                     size_t dlen)
+                                     
 {
-    IB_FTRACE_INIT(matcher_api_);
+    IB_FTRACE_INIT(matcher_api_match);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -1105,10 +1045,9 @@ static ib_status_t matcher_api_match_field(ib_provider_inst_t *mpi,
  */
 static IB_PROVIDER_API_TYPE(matcher) matcher_api = {
     matcher_api_compile_pattern,
-    matcher_api_match_compiled_buf,
-    matcher_api_match_compiled_field,
+    matcher_api_match_compiled,
     matcher_api_add_pattern,
-    matcher_api_match_field,
+    matcher_api_match,
 };
 
 /**

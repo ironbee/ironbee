@@ -110,7 +110,6 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
 }
 
 static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
-                                          ib_match_result_t **pres,
                                           void *cpatt,
                                           ib_flags_t flags,
                                           const uint8_t *data,
@@ -118,11 +117,12 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
 {
     IB_FTRACE_INIT(modpcre_match_compiled);
     modpcre_cpatt_t *pcre_cpatt = (modpcre_cpatt_t *)cpatt;
+    int ovector[30];
     int ec;
 
     ec = pcre_exec(pcre_cpatt->cpatt, NULL,
                    (const char *)data, dlen,
-                   0, 0, NULL, 0);
+                   0, 0, ovector, 30);
     if (ec >= 0) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -133,15 +133,14 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
-static ib_status_t modpcre_add(ib_provider_inst_t *pi,
-                               void *cpatt)
+static ib_status_t modpcre_add_pattern(ib_provider_inst_t *pi,
+                                       void *cpatt)
 {
     IB_FTRACE_INIT(modpcre_add);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
 static ib_status_t modpcre_match(ib_provider_inst_t *mpi,
-                                 ib_match_result_t **pres,
                                  ib_flags_t flags,
                                  const uint8_t *data,
                                  size_t dlen)
@@ -158,7 +157,7 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
     modpcre_match_compiled,
 
     /* Provider Instance Interface */
-    modpcre_add,
+    modpcre_add_pattern,
     modpcre_match
 };
 

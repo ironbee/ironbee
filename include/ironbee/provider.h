@@ -417,8 +417,6 @@ IB_PROVIDER_DECLARE_API(data) {
 #define IB_PROVIDER_TYPE_MATCHER     IB_XSTRINGIFY(matcher)
 #define IB_PROVIDER_VERSION_MATCHER  0
 
-typedef ib_list_t ib_match_result_t; /// TODO: for now
-
 /** Matcher Interface Definition. */
 IB_PROVIDER_DECLARE_IFACE(matcher) {
     IB_PROVIDER_IFACE_HEADER;
@@ -434,9 +432,10 @@ IB_PROVIDER_DECLARE_IFACE(matcher) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         match_compiled,
-        (ib_provider_t *mpr, ib_match_result_t **pres, void *cpatt,
+        (ib_provider_t *mpr, void *cpatt,
          ib_flags_t flags, const uint8_t *data, size_t dlen)
     );
+
 
     /* Provider instance Interface */
     IB_PROVIDER_FUNC(
@@ -447,7 +446,7 @@ IB_PROVIDER_DECLARE_IFACE(matcher) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         match,
-        (ib_provider_inst_t *mpi, ib_match_result_t **pres,
+        (ib_provider_inst_t *mpi,
          ib_flags_t flags, const uint8_t *data, size_t dlen)
     );
 };
@@ -464,18 +463,13 @@ IB_PROVIDER_DECLARE_API(matcher) {
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
-        match_compiled_buf,
-        (ib_provider_t *mpr, ib_match_result_t **pres, void *cpatt,
+        match_compiled,
+        (ib_provider_t *mpr, void *cpatt,
          ib_flags_t flags, const uint8_t *data, size_t dlen)
-    );
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        match_compiled_field,
-        (ib_provider_t *mpr, ib_match_result_t **pres, void *cpatt,
-         ib_flags_t flags, ib_field_t *f)
     );
 
     /* Provider Instance API */
+    /// @todo Need to add an _ex version with match/nomatch funcs and cbdata
     IB_PROVIDER_FUNC(
         ib_status_t,
         add_pattern,
@@ -483,11 +477,12 @@ IB_PROVIDER_DECLARE_API(matcher) {
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
-        match_fields,
-        (ib_provider_inst_t *mpi, ib_match_result_t **pres,
-         ib_flags_t flags, ib_field_t *f)
+        match,
+        (ib_provider_inst_t *mpi,
+         ib_flags_t flags, const uint8_t *data, size_t dlen)
     );
 };
+
 
 /* Log Event */
 #define IB_PROVIDER_TYPE_LOGEVENT     IB_XSTRINGIFY(logevent)
