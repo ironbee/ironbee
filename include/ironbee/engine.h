@@ -1217,6 +1217,52 @@ ib_status_t DLL_PUBLIC ib_data_get(ib_provider_inst_t *dpi,
  */
 
 /**
+ * @defgroup IronBeeEngineMatcher Matcher
+ * @{
+ */
+
+typedef struct ib_matcher_t ib_matcher_t;
+typedef void ib_matcher_result_t; /// @todo Not implemented yet
+
+ib_status_t DLL_PUBLIC ib_matcher_create(ib_engine_t *ib,
+                                         ib_mpool_t *pool,
+                                         const char *key,
+                                         ib_matcher_t **pm);
+
+void DLL_PUBLIC *ib_matcher_compile(ib_matcher_t *m,
+                                    const char *patt,
+                                    const char **errptr,
+                                    int *erroffset);
+
+ib_status_t DLL_PUBLIC ib_matcher_match_buf(ib_matcher_t *m,
+                                            void *cpatt,
+                                            ib_flags_t flags,
+                                            const uint8_t *data,
+                                            size_t dlen);
+
+ib_status_t DLL_PUBLIC ib_matcher_match_field(ib_matcher_t *m,
+                                              void *cpatt,
+                                              ib_flags_t flags,
+                                              ib_field_t *f);
+
+ib_status_t DLL_PUBLIC ib_matcher_add_pattern(ib_matcher_t *m,
+                                              const char *patt);
+
+ib_status_t DLL_PUBLIC ib_matcher_exec_buf(ib_matcher_t *m,
+                                           ib_flags_t flags,
+                                           const uint8_t *data,
+                                           size_t dlen);
+
+ib_status_t DLL_PUBLIC ib_matcher_exec_field(ib_matcher_t *m,
+                                             ib_flags_t flags,
+                                             ib_field_t *f);
+
+/**
+ * @} IronBeeEngineMatcher
+ */
+
+
+/**
  * @defgroup IronBeeEngineLog Logging
  * @{
  */
