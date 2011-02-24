@@ -25,6 +25,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <string.h>
 #include <apr_lib.h>
 #include <apr_pools.h>
 
@@ -79,6 +80,16 @@ void *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size)
 {
     IB_FTRACE_INIT(ib_mpool_calloc);
     void *ptr = apr_pcalloc(mp->pool, (apr_size_t)(nelem * size));
+    IB_FTRACE_RET_PTR(void, ptr);
+}
+
+void *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size)
+{
+    IB_FTRACE_INIT(ib_mpool_dup);
+    void *ptr = apr_palloc(mp->pool, (apr_size_t)size);
+    if (ptr != NULL) {
+        memcpy(ptr, src, size);
+    }
     IB_FTRACE_RET_PTR(void, ptr);
 }
 

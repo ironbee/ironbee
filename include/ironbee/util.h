@@ -238,6 +238,17 @@ void DLL_PUBLIC *ib_mpool_alloc(ib_mpool_t *mp, size_t size);
 void DLL_PUBLIC *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size);
 
 /**
+ * Duplicate a memory block.
+ *
+ * @param mp Memory pool
+ * @param src Memory addr
+ * @param size Size of memory
+ *
+ * @returns Address of duplicated memory
+ */
+void DLL_PUBLIC *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size);
+
+/**
  * Deallocate all memory allocated from the pool and any decendent pools.
  *
  * @param mp Memory pool
