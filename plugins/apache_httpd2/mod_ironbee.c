@@ -748,7 +748,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                      MODULE_NAME_STR ": Error registering log provider: %d", rc);
         return OK;
     }
-    lpr->data = (void *)s;
+    ib_provider_data_set(lpr, (void *)s);
 
     /* Default logger */
     ib_context_set_string(ib_context_engine(ironbee),
