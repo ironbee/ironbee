@@ -780,7 +780,6 @@ function ib_clog_events_get(ctx)
     local i = 1
     while c_node ~= nil do
         local c_e = ffi.cast("ib_logevent_t *", c.ib_list_node_data(c_node))
-        local l_id = ffi.string(c_e.id, c_f.nlen)
         l_vals[i] = newLogevent(c_e)
         i = i + 1
         c_node = c.ib_list_node_next(c_node)
