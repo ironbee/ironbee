@@ -154,7 +154,14 @@ ib_list_node_t *ib_list_node_prev(ib_list_node_t *node)
     IB_FTRACE_RET_PTR(ib_list_node_t, IB_LIST_NODE_PREV(node));
 }
 
-void * ib_list_node_data(ib_list_node_t *node)
+void ib_list_node_remove(ib_list_t *list, ib_list_node_t *node)
+{
+    IB_FTRACE_INIT(ib_list_node_remove);
+    IB_LIST_NODE_REMOVE(list, node);
+    IB_FTRACE_RET_VOID();
+}
+
+void *ib_list_node_data(ib_list_node_t *node)
 {
     IB_FTRACE_INIT(ib_list_node_data);
     IB_FTRACE_RET_PTR(void, IB_LIST_NODE_DATA(node));

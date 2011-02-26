@@ -455,6 +455,14 @@ ib_list_node_t DLL_PUBLIC *ib_list_node_next(ib_list_node_t *node);
 ib_list_node_t DLL_PUBLIC *ib_list_node_prev(ib_list_node_t *node);
 
 /**
+ * Remove a node from the list.
+ *
+ * @param list List
+ * @param node Node in a list
+ */
+void DLL_PUBLIC ib_list_node_remove(ib_list_t *list, ib_list_node_t *node);
+
+/**
  * Return data from the given node.
  *
  * @param node Node in a list
