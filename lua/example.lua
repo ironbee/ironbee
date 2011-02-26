@@ -213,6 +213,15 @@ function onEventHandleRequestHeaders(ib, tx)
         local rc = ironbee.ib_matcher_match_field(pcre, patt, 0, req_line)
         if rc == ironbee.IB_OK then
             ironbee.ib_log_debug(ib, 4, "Request Line matches: %s", patt)
+            -- Generate a test event (alert)
+            ironbee.ib_clog_event(
+                tx.ctx(), 
+                ironbee.ib_logevent_create(
+                    tx.mp(),
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    "Request Line matches: %s", patt
+                )
+            )
         else
             ironbee.ib_log_debug(ib, 4, "Request Line does not match: %s", patt)
         end

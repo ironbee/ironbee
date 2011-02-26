@@ -241,6 +241,28 @@ ffi.cdef[[
         void                      *data;
     };
 
+    struct ib_logevent_t {
+        uint64_t       id;
+        char          *publisher;
+        char          *source;
+        char          *source_ver;
+        char          *msg;
+        uint8_t       *data;
+        size_t         data_len;
+        uint8_t        type;
+        uint8_t        activity;
+        uint8_t        pri_cat;
+        uint8_t        sec_cat;
+        uint8_t        confidence;
+        uint8_t        severity;
+        uint8_t        sys_env;
+        uint8_t        rec_action;
+        ib_list_t     *tags;
+        ib_list_t     *fields;
+        ib_mpool_t    *mp;
+    };
+
+
 
 
     /* Context */
@@ -301,6 +323,28 @@ ffi.cdef[[
                                        void *cpatt,
                                        ib_flags_t flags,
                                        ib_field_t *f);
+
+
+    /* Logevent */
+    ib_status_t ib_logevent_create(ib_logevent_t **ple,
+                                   ib_mpool_t *pool,
+                                   uint8_t type,
+                                   uint8_t activity,
+                                   uint8_t pri_cat,
+                                   uint8_t sec_cat,
+                                   uint8_t confidence,
+                                   uint8_t severity,
+                                   uint8_t sys_env,
+                                   uint8_t rec_action,
+                                   const char *fmt,
+                                   ...);
+    ib_status_t ib_clog_event(ib_context_t *ctx,
+                              ib_logevent_t *e);
+    ib_status_t ib_clog_event_remove(ib_context_t *ctx,
+                                     uint64_t id);
+    ib_status_t ib_clog_events_get(ib_context_t *ctx,
+                                   ib_list_t **pevents);
+    void ib_clog_events_write(ib_context_t *ctx);
 
 
     /* Byte String */
@@ -374,6 +418,12 @@ end
 
 -- Lua OO Wrappers around IronBee raw C types
 -- TODO: Add metatable w/__tostring for each type
+local function newMpool(val)
+    local c_val = ffi.cast("ib_mpool_t *", val)
+    return {
+        cvalue = function() return c_val end,
+    }
+end
 local function newProvider(val)
     local c_val = ffi.cast("ib_provider_t *", val)
     return {
@@ -475,6 +525,13 @@ local function newField(val)
     return t
 end
 
+local function newLogevent(val)
+    local c_val = ffi.cast("ib_logevent_t *", val)
+    return {
+        cvalue = function() return c_val end,
+    }
+end
+
 local function newEngine(val)
     local c_val = ffi.cast("ib_engine_t *", val)
     return {
@@ -495,7 +552,8 @@ local function newConn(val)
     local c_val = ffi.cast("ib_conn_t *", val)
     return {
         cvalue = function() return c_val end,
-        mp = function() return ffi.cast("ib_mpool_t *", c_val.mp) end,
+        mp = function() return newMpool(c_val.mp) end,
+        ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
     }
 end
@@ -514,7 +572,8 @@ local function newTx(val)
     local c_val = ffi.cast("ib_tx_t *", val)
     return {
         cvalue = function() return c_val end,
-        mp = function() return ffi.cast("ib_mpool_t *", c_val.mp) end,
+        mp = function() return newMpool(c_val.mp) end,
+        ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
     }
 end
@@ -640,10 +699,11 @@ end
 
 function ib_matcher_create(ib, pool, key)
     local c_ib = ib.cvalue()
+    local c_pool = pool.cvalue()
     local c_pm = ffi.new("ib_matcher_t*[1]")
     local rc
 
-    rc = c.ib_matcher_create(c_ib, pool, key, c_pm)
+    rc = c.ib_matcher_create(c_ib, c_pool, key, c_pm)
     if rc ~= c.IB_OK then
         return nil
     end
@@ -667,6 +727,71 @@ function ib_matcher_match_field(m, patt, flags, f)
     end
 
     return c.ib_matcher_match_field(m, cpatt, flags, c_f)
+end
+
+function ib_logevent_create(pool, type, activity, pri_cat, sec_cat,
+                            confidence, severity, sys_env, rec_action,
+                            fmt, ...)
+    local c_pool = pool.cvalue()
+    local c_le = ffi.new("ib_logevent_t*[1]")
+    local rc
+
+    rc = c.ib_logevent_create(c_le, c_pool,
+                              ffi.cast("uint8_t", type),
+                              ffi.cast("uint8_t", activity),
+                              ffi.cast("uint8_t", pri_cat),
+                              ffi.cast("uint8_t", sec_cat),
+                              ffi.cast("uint8_t", confidence),
+                              ffi.cast("uint8_t", severity),
+                              ffi.cast("uint8_t", sys_env),
+                              ffi.cast("uint8_t", rec_action),
+                              fmt, ...)
+    if rc ~= c.IB_OK then
+        return nil
+    end
+
+    return newLogevent(c_le[0])
+end
+
+function ib_clog_event(ctx, e)
+    local c_ctx = ctx.cvalue()
+    local c_e = e.cvalue()
+
+    return c.ib_clog_event(c_ctx, c_e)
+end
+
+function ib_clog_event_remove(ctx, id)
+    local c_ctx = ctx.cvalue()
+    local c_id = ffi.cast("uint64_t", id)
+
+    return c.ib_clog_event_remove(c_ctx, c_id)
+end
+
+function ib_clog_events_get(ctx)
+    local c_ctx = ctx.cvalue()
+    local c_events = ffi.new("ib_list_t*[1]")
+    local rc
+
+    rc = c.ib_clog_event_get(c_ctx, c_events)
+
+    -- Loop through and create a list of logevents to return
+    local l_vals = {}
+    local c_node = c.ib_list_first(c_events)
+    local i = 1
+    while c_node ~= nil do
+        local c_e = ffi.cast("ib_logevent_t *", c.ib_list_node_data(c_node))
+        local l_id = ffi.string(c_e.id, c_f.nlen)
+        l_vals[i] = newLogevent(c_e)
+        i = i + 1
+        c_node = c.ib_list_node_next(c_node)
+    end
+    return l_vals
+end
+
+function ib_clog_events_write(ctx)
+    local c_ctx = ctx.cvalue()
+
+    return c.ib_clog_events_write(c_ctx)
 end
 
 -- ===============================================
