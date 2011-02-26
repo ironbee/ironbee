@@ -30,6 +30,14 @@
 #include <string.h>
 #include <strings.h>
 
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
+#define __STDC_FORMAT_MACROS
+#endif
+
+#include <inttypes.h>
+
 
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
@@ -112,6 +120,17 @@ static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
     (ib_log_logger_fn_t)core_logger
 };
 
+static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
+{
+    ib_log_alert(epi->pr->ib, 1, "Event [id %016" PRIxMAX "][type %d]: %s",
+                 e->id, e->type, e->msg);
+    return IB_OK;
+}
+
+static IB_PROVIDER_IFACE_TYPE(logevent) core_logevent_iface = {
+    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
+    core_logevent_write
+};
 
 /* -- Core Data Provider -- */
 
@@ -391,6 +410,194 @@ static IB_PROVIDER_API_TYPE(logger) logger_api = {
 };
 
 
+/* -- Logevent API Implementations -- */
+
+/**
+ * @internal
+ * Core logevent provider API implementation to add an event.
+ *
+ * @param epi Logevent provider instance
+ * @param e Event to add
+ *
+ * @returns Status code
+ */
+static ib_status_t logevent_api_add_event(ib_provider_inst_t *epi,
+                                          ib_logevent_t *e)
+{
+    IB_FTRACE_INIT(logevent_api_add_event);
+    ib_list_t *events = (ib_list_t *)epi->data;
+
+    ib_list_push(events, e);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Core logevent provider API implementation to remove an event.
+ *
+ * @param epi Logevent provider instance
+ * @param id Event ID to remove
+ *
+ * @returns Status code
+ */
+static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
+                                             uint64_t id)
+{
+    IB_FTRACE_INIT(logevent_api_remove_event);
+    ib_list_t *events;
+    ib_list_node_t *node;
+    ib_list_node_t *node_next;
+
+    events = (ib_list_t *)epi->data;
+    IB_LIST_LOOP_SAFE(events, node, node_next) {
+        ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(node);
+        if (e->id == id) {
+            ib_list_node_remove(events, node);
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+/**
+ * @internal
+ * Core logevent provider API implementation to fetch events.
+ *
+ * @param epi Logevent provider instance
+ * @param id Event ID to remove
+ *
+ * @returns Status code
+ */
+static ib_status_t logevent_api_fetch_events(ib_provider_inst_t *epi,
+                                             ib_list_t **pevents)
+{
+    IB_FTRACE_INIT(logevent_api_fetch_events);
+    *pevents = (ib_list_t *)epi->data;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Core logevent provider API implementation to write out (and remove)
+ * all the pending events.
+ *
+ * @param epi Logevent provider instance
+ *
+ * @returns Status code
+ */
+static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
+{
+    IB_FTRACE_INIT(logevent_api_write_events);
+    IB_PROVIDER_IFACE_TYPE(logevent) *iface;
+    ib_list_t *events;
+    ib_logevent_t *e;
+
+    events = (ib_list_t *)epi->data;
+    if (events == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    iface = (IB_PROVIDER_IFACE_TYPE(logevent) *)epi->pr->iface;
+    while (ib_list_pop(events, (void *)&e) == IB_OK) {
+        iface->write(epi, e);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Handle writing the logevents.
+ *
+ * @param ib Engine
+ * @param tx Transaction
+ * @param cbdata Callback data
+ *
+ * @returns Status code
+ */
+static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
+                                             ib_tx_t *tx,
+                                             void *cbdata)
+{
+    IB_FTRACE_INIT(logevent_hook_postprocess);
+    ib_clog_events_write(tx->ctx);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Logevent provider registration function.
+ *
+ * This just does a version and sanity check on a registered provider.
+ *
+ * @param ib Engine
+ * @param lpr Logevent provider
+ *
+ * @returns Status code
+ */
+static ib_status_t logevent_register(ib_engine_t *ib,
+                                     ib_provider_t *lpr)
+{
+    IB_FTRACE_INIT(logevent_register);
+    IB_PROVIDER_IFACE_TYPE(logevent) *iface = (IB_PROVIDER_IFACE_TYPE(logevent) *)lpr->iface;
+
+    /* Check that versions match. */
+    if (iface->version != IB_PROVIDER_VERSION_LOGEVENT) {
+        IB_FTRACE_RET_STATUS(IB_EINCOMPAT);
+    }
+
+    /* Verify that required interface functions are implemented. */
+    if (iface->write == NULL) {
+        ib_log_error(ib, 0, "The write function "
+                     "MUST be implemented by a logevent provider");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Logevent provider initialization function.
+ *
+ * @warning Not yet doing anything.
+ *
+ * @param epi Logevent provider intstance
+ * @param data User data
+ *
+ * @returns Status code
+ */
+static ib_status_t logevent_init(ib_provider_inst_t *epi,
+                                 void *data)
+{
+    IB_FTRACE_INIT(logevent_init);
+    ib_list_t *events;
+    ib_status_t rc;
+
+    rc = ib_list_create(&events, epi->mp);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    epi->data = events;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Logevent provider API mapping for core module.
+ */
+static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
+    logevent_api_add_event,
+    logevent_api_remove_event,
+    logevent_api_fetch_events,
+    logevent_api_write_events
+};
+
+
+
 /* -- Parser Implementation -- */
 
 /**
@@ -560,7 +767,7 @@ static ib_status_t parser_hook_data_out(ib_engine_t *ib,
  * Handle the request header.
  *
  * @param ib Engine
- * @param tc Transaction
+ * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
@@ -591,7 +798,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
  * Handle the response header.
  *
  * @param ib Engine
- * @param tc Transaction
+ * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
@@ -1603,7 +1810,7 @@ static ib_status_t core_init(ib_engine_t *ib)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the core logger. */
+    /* Register the core logger provider. */
     rc = ib_provider_register(ib, IB_PROVIDER_TYPE_LOGGER,
                               MODULE_NAME_STR, &core_log_provider,
                               &core_logger_iface,
@@ -1616,6 +1823,22 @@ static ib_status_t core_init(ib_engine_t *ib)
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger((ib_util_fn_logger_t)ib_vclog_ex, ib->ctx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Define the logevent provider API. */
+    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGEVENT,
+                            logevent_register, &logevent_api);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the core logevent provider. */
+    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_LOGEVENT,
+                              MODULE_NAME_STR, NULL,
+                              &core_logevent_iface,
+                              logevent_init);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1645,6 +1868,10 @@ static ib_status_t core_init(ib_engine_t *ib)
                      (ib_void_fn_t)parser_hook_req_header, NULL);
     ib_hook_register(ib, response_headers_event,
                      (ib_void_fn_t)parser_hook_resp_header, NULL);
+
+    /* Register logevent hooks. */
+    ib_hook_register(ib, handle_postprocess_event,
+                     (ib_void_fn_t)logevent_hook_postprocess, NULL);
 
     /* Define the data field provider API */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_DATA,
@@ -1702,6 +1929,7 @@ static ib_status_t core_config_init(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(core_config_init);
     ib_provider_inst_t *logger;
+    ib_provider_inst_t *logevent;
     ib_provider_inst_t *parser;
     ib_status_t rc;
 
@@ -1713,7 +1941,7 @@ static ib_status_t core_config_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Lookup/set log provider. */
+    /* Lookup/set logger provider. */
     rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGGER,
                                      ctx->core_cfg->logger, &logger,
                                      ib->mp, NULL);
@@ -1722,6 +1950,16 @@ static ib_status_t core_config_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_provider_set_instance(ctx, logger);
+
+    /* Lookup/set logevent provider. */
+    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGEVENT,
+                                     ctx->core_cfg->logevent, &logevent,
+                                     ib->mp, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_LOGGER, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_logevent_provider_set_instance(ctx, logevent);
 
     /* Lookup/set parser provider if not the "core" parser. */
     ib_log_debug(ib, 9, "PARSER: %s ctx=%p", ctx->core_cfg->parser, ctx);
@@ -1768,6 +2006,15 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         &core_global_cfg,
         log_uri,
         ""
+    ),
+
+    /* Logevent */
+    IB_CFGMAP_INIT_ENTRY(
+        IB_PROVIDER_TYPE_LOGEVENT,
+        IB_FTYPE_NULSTR,
+        &core_global_cfg,
+        logevent,
+        (const uintptr_t)MODULE_NAME_STR
     ),
 
     /* Parser */

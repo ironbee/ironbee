@@ -1288,6 +1288,8 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 #define ib_log(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),NULL,NULL,0,__VA_ARGS__)
 /** Error Logger. */
 #define ib_log_error(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
+/** Alert Logger. */
+#define ib_log_alert(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
 /** Abort Logger. */
 #define ib_log_abort(ib,...) do { ib_clog_ex(ib_context_main(ib),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
 /** Debug Logger. */
@@ -1297,6 +1299,8 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 #define ib_clog(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,NULL,0,__VA_ARGS__)
 /** Error Logger. */
 #define ib_clog_error(ctx,lvl,...) ib_clog_ex((ctx),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
+/** Alert Logger. */
+#define ib_clog_alert(ib,lvl,...) ib_clog_ex((ctx),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
 /** Abort Logger. */
 #define ib_clog_abort(ctx,...) do { ib_clog_ex((ctx),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
 /** Debug Logger. */
@@ -1351,6 +1355,48 @@ void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
                             const char *fmt, va_list ap);
 
 /**
+ * Add an event to be logged.
+ *
+ * @param ctx Config context
+ * @param e Event
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_clog_event(ib_context_t *ctx,
+                                     ib_logevent_t *e);
+
+/**
+ * Remove an event from the queue before it is logged.
+ *
+ * @param ctx Config context
+ * @param id Event id
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_clog_event_remove(ib_context_t *ctx,
+                                            uint64_t id);
+
+/**
+ * Get a list of pending events to be logged.
+ *
+ * @note The list can be modified directly.
+ *
+ * @param ctx Config context
+ * @param pevents Address where list of events is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_clog_events_get(ib_context_t *ctx,
+                                          ib_list_t **pevents);
+
+/**
+ * Write out any pending events to the log.
+ *
+ * @param ctx Config context
+ */
+void DLL_PUBLIC ib_clog_events_write(ib_context_t *ctx);
+
+/**
  * @} IronBeeEngineLog
  */
 
@@ -1360,6 +1406,7 @@ void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
  */
 
 struct ib_logevent_t {
+    /// @todo ID should be another type (structure?)
     uint64_t       id;           /**< Event ID */
     char          *publisher;    /**< Publisher name */
     char          *source;       /**< Source identifier */
@@ -1367,7 +1414,7 @@ struct ib_logevent_t {
     char          *msg;          /**< Event message */
     uint8_t       *data;         /**< Event data that matched */
     size_t         data_len;     /**< Event data size */
-    /// TODO: uint8_t types should be typedef
+    /// @todo uint8_t types should be typedef or enum?
     uint8_t        type;         /**< Event type */
     uint8_t        activity;     /**< Event activity (recon, attache, etc.) */
     uint8_t        pri_cat;      /**< Primary category (ex: injection) */
@@ -1380,6 +1427,36 @@ struct ib_logevent_t {
     ib_list_t     *fields;       /**< List of fields */
     ib_mpool_t    *mp;           /**< Memory pool */
 };
+
+/**
+ * Create a logevent.
+ *
+ * @param ple Address which new logevent is written
+ * @param pool Memory pool
+ * @param type Event type
+ * @param activity Event activity
+ * @param pri_cat Event primary category
+ * @param sec_cat Event secondary category
+ * @param confidence Event confidence
+ * @param severity Event severity
+ * @param sys_env Event system environment
+ * @param rec_action Event recommended action
+ * @param fmt Event message format string
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
+                                          ib_mpool_t *pool,
+                                          uint8_t type,
+                                          uint8_t activity,
+                                          uint8_t pri_cat,
+                                          uint8_t sec_cat,
+                                          uint8_t confidence,
+                                          uint8_t severity,
+                                          uint8_t sys_env,
+                                          uint8_t rec_action,
+                                          const char *fmt,
+                                          ...);
 
 /**
  * @} IronBeeEngineLogEvent

@@ -193,9 +193,10 @@ typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
     uint64_t      log_level;  /**< Log level */
     char         *log_uri;    /**< Log URI */
-    char         *logger;     /**< Active logger name */
-    char         *parser;     /**< Active parser name */
-    char         *data;       /**< Active data provider name */
+    char         *logger;     /**< Active logger provider key */
+    char         *logevent;   /**< Active logevent provider key */
+    char         *parser;     /**< Active parser provider key */
+    char         *data;       /**< Active data provider key */
 };
 
 /**
