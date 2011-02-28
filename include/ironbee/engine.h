@@ -595,8 +595,11 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  * states.
  *
  * - Connection event hook callbacks receive a @ref ib_conn_t parameter.
- * - Data event hook callbacks receive a @ref ib_conndata_t parameter.
+ * - Connection Data event hook callbacks receive a @ref ib_conndata_t
+ *   parameter.
  * - Transaction event hook callbacks receive a @ref ib_tx_t parameter.
+ * - Transaction Data event hook callbacks receive a @ref ib_txdata_t
+ *   parameter.
  *
  * @note Config contexts and some fields are populated during the plugin
  *       events and thus the following handler event is what should be used
