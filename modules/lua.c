@@ -195,8 +195,6 @@ static int modlua_writer(lua_State *L,
 {
     IB_FTRACE_INIT(modlua_writer);
     modlua_chunk_t *chunk = (modlua_chunk_t *)udata;
-    fprintf(stderr, "CHUNK: %p\n", (void *)chunk);
-    fflush(stderr);
     //ib_engine_t *ib = chunk->ib;
     modlua_cpart_t *cpart;
     ib_status_t rc;
