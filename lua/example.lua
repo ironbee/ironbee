@@ -167,7 +167,7 @@ end
 
 -- ===============================================
 -- This is called when the request headers are
--- avalable to inspect.
+-- available to inspect.
 --
 -- ib: IronBee engine handle
 -- tx: IronBee transaction handle
