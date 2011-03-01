@@ -43,7 +43,7 @@ extern "C" {
 
 /* Version definitions */
 #define IB_VERSION_MAJOR  0 /**< Major version */
-#define IB_VERSION_MINOR  1 /**< Minor version */
+#define IB_VERSION_MINOR  2 /**< Minor version */
 #define IB_VERSION_MAINT  0 /**< Maintenance version */
 
 /* Handle tacking on a build number */
@@ -90,7 +90,7 @@ extern "C" {
  *     DD: 2-digit day
  *      n: Revision number if changes more than once in a day (default=0)
  */
-#define IB_ABINUM    201102130
+#define IB_ABINUM    201103010
 
 /**
  * @} IronBeeRelease
