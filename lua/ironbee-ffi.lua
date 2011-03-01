@@ -581,24 +581,24 @@ end
 -- ===============================================
 -- Status
 -- ===============================================
-IB_OK = ffi.cast("int", c.IB_OK)
-IB_DECLINED = ffi.cast("int", c.IB_DECLINED)
-IB_EUNKNOWN = ffi.cast("int", c.IB_EUNKNOWN)
-IB_ENOTIMPL = ffi.cast("int", c.IB_ENOTIMPL)
-IB_EINCOMPAT = ffi.cast("int", c.IB_EINCOMPAT)
-IB_EALLOC = ffi.cast("int", c.IB_EALLOC)
-IB_EINVAL = ffi.cast("int", c.IB_EINVAL)
-IB_ENOENT = ffi.cast("int", c.IB_ENOENT)
-IB_ETIMEDOUT = ffi.cast("int", c.IB_ETIMEDOUT)
+IB_OK            = ffi.cast("int", c.IB_OK)
+IB_DECLINED      = ffi.cast("int", c.IB_DECLINED)
+IB_EUNKNOWN      = ffi.cast("int", c.IB_EUNKNOWN)
+IB_ENOTIMPL      = ffi.cast("int", c.IB_ENOTIMPL)
+IB_EINCOMPAT     = ffi.cast("int", c.IB_EINCOMPAT)
+IB_EALLOC        = ffi.cast("int", c.IB_EALLOC)
+IB_EINVAL        = ffi.cast("int", c.IB_EINVAL)
+IB_ENOENT        = ffi.cast("int", c.IB_ENOENT)
+IB_ETIMEDOUT     = ffi.cast("int", c.IB_ETIMEDOUT)
 
 -- ===============================================
 -- Field Types
 -- ===============================================
 IB_FTYPE_GENERIC = ffi.cast("int", c.IB_FTYPE_GENERIC)
-IB_FTYPE_NUM = ffi.cast("int", c.IB_FTYPE_NUM)
-IB_FTYPE_NULSTR = ffi.cast("int", c.IB_FTYPE_NULSTR)
+IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
+IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
 IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
-IB_FTYPE_LIST = ffi.cast("int", c.IB_FTYPE_LIST)
+IB_FTYPE_LIST    = ffi.cast("int", c.IB_FTYPE_LIST)
 
 -- ===============================================
 -- Cast a value as a C "ib_conn_t *".
@@ -670,11 +670,11 @@ end
 -- ===============================================
 -- Known provider types
 -- ===============================================
-IB_PROVIDER_TYPE_LOGGER = "logger"
-IB_PROVIDER_TYPE_PARSER = "parser"
-IB_PROVIDER_TYPE_DATA = "data"
-IB_PROVIDER_TYPE_MATCHER = "matcher"
-IB_PROVIDER_TYPE_LOGEVENT = "logevent"
+IB_PROVIDER_TYPE_LOGGER    = "logger"
+IB_PROVIDER_TYPE_PARSER    = "parser"
+IB_PROVIDER_TYPE_DATA      = "data"
+IB_PROVIDER_TYPE_MATCHER   = "matcher"
+IB_PROVIDER_TYPE_LOGEVENT  = "logevent"
 
 -- ===============================================
 -- Lookup a provider by type and key.
