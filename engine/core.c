@@ -192,7 +192,32 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
                                           intmax_t adjval)
 {
     IB_FTRACE_INIT(core_data_set_relative);
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    ib_field_t *f;
+    ib_status_t rc;
+
+    rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
+                        (void *)name, nlen,
+                        (void *)&f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+    }
+
+    switch (f->type) {
+        case IB_FTYPE_NUM:
+            /// @todo Make sure this is atomic
+            /// @todo Check for overflow
+            *(intmax_t **)((f)->pval) += adjval;
+            break;
+        case IB_FTYPE_UNUM:
+            /// @todo Make sure this is atomic
+            /// @todo Check for overflow
+            *(uintmax_t **)((f)->pval) += adjval;
+            break;
+        default:
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
