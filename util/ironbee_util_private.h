@@ -64,7 +64,8 @@ struct ib_hash_t {
  */
 struct ib_field_val_t {
     union {
-        uint64_t       num;           /**< Unsigned numeric value */
+        ib_num_t       num;           /**< Generic numeric value */
+        ib_unum_t      unum;          /**< Generic unsigned numeric value */
         ib_bytestr_t  *bytestr;       /**< Byte string value */
         char          *nulstr;        /**< NUL string value */
         ib_list_t     *list;          /**< List of fields */

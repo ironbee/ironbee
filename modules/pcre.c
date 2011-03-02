@@ -55,9 +55,9 @@ IB_MODULE_DECLARE();
  * Module Configuration Structure.
  */
 struct modpcre_cfg_t {
-    uint64_t       study;                 /**< Study compiled regexs */
-    uint64_t       match_limit;           /**< Match limit */
-    uint64_t       match_limit_recursion; /**< Match recursion depth limit */
+    ib_num_t       study;                 /**< Study compiled regexs */
+    ib_num_t       match_limit;           /**< Match limit */
+    ib_num_t       match_limit_recursion; /**< Match recursion depth limit */
 };
 
 /**

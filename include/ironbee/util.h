@@ -57,6 +57,8 @@ typedef struct ib_hash_t ib_hash_t;
 typedef uint32_t ib_ftype_t;
 typedef uint32_t ib_flags_t;
 typedef uint64_t ib_flags64_t;
+typedef intmax_t ib_num_t;
+typedef uintmax_t ib_unum_t;
 typedef struct ib_cfgmap_t ib_cfgmap_t;
 typedef struct ib_cfgmap_init_t ib_cfgmap_init_t;
 typedef struct ib_field_t ib_field_t;
@@ -711,9 +713,10 @@ ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
 /* Make sure to update ib_ftype_len[] if you update this */
 #define IB_FTYPE_GENERIC      0          /**< Generic pointer value */
 #define IB_FTYPE_NUM          1          /**< Numeric value */
-#define IB_FTYPE_NULSTR       2          /**< NUL terminated string value */
-#define IB_FTYPE_BYTESTR      3          /**< Binary data value */
-#define IB_FTYPE_LIST         4          /**< List of fields */
+#define IB_FTYPE_UNUM         2          /**< Unsigned numeric value */
+#define IB_FTYPE_NULSTR       3          /**< NUL terminated string value */
+#define IB_FTYPE_BYTESTR      4          /**< Binary data value */
+#define IB_FTYPE_LIST         5          /**< List of fields */
 
 /** Field Structure */
 struct ib_field_t {
@@ -725,11 +728,11 @@ struct ib_field_t {
     ib_field_val_t           *val;       /**< Private value store */
 };
 
-/** Return field value for a field as "uint64_t". */
-#define ib_field_value_uint64(f) (*(uint64_t **)((f)->pval))
+/** Return field value for a field as "ib_num_t". */
+#define ib_field_value_num(f) (*(ib_num_t **)((f)->pval))
 
-/** Return field value for a field as "int64_t". */
-#define ib_field_value_int64(f) (*(int64_t **)((f)->pval))
+/** Return field value for a field as "ib_unum_t". */
+#define ib_field_value_unum(f) (*(ib_unum_t **)((f)->pval))
 
 /** Return field value for a field as "ib_bytestr_t *". */
 #define ib_field_value_bytestr(f) (*(ib_bytestr_t **)((f)->pval))
