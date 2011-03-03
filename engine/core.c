@@ -1645,13 +1645,28 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_log_debug(ib, 4, "TODO: Handle Directive: %s \"%s\"", name, p1);
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
-        ib_log_debug(ib, 4, "TODO: Handle Directive: %s \"%s\"", name, p1);
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 4, "Setting: %s \"%s\"", name, p1);
+        if (strcasecmp("On", p1) == 0) {
+            ib_context_set_num(ctx, "audit_engine", 1);
+        }
+        else if (strcasecmp("Off", p1) == 0) {
+            ib_context_set_num(ctx, "audit_engine", 0);
+        }
+        else {
+            ib_log_error(ib, 1, "Failed to parse directive: %s \"%s\"", name, p1);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
     }
     else if (strcasecmp("AuditLog", name) == 0) {
-        ib_log_debug(ib, 4, "TODO: Handle Directive: %s \"%s\"", name, p1);
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 4, "Setting: %s \"%s\"", name, p1);
+        ib_context_set_string(ctx, "auditlog", p1);
     }
     else if (strcasecmp("AuditLogStorageDir", name) == 0) {
-        ib_log_debug(ib, 4, "TODO: Handle Directive: %s \"%s\"", name, p1);
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 4, "Setting: %s \"%s\"", name, p1);
+        ib_context_set_string(ctx, "auditlog_dir", p1);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
         char *absfile;
@@ -2049,6 +2064,32 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         &core_global_cfg,
         parser,
         MODULE_NAME_STR
+    ),
+
+    /* Audit Log */
+    IB_CFGMAP_INIT_ENTRY(
+        "audit_engine",
+        IB_FTYPE_NUM,
+        &core_global_cfg,
+        audit_engine,
+        /// @todo More appropriate default
+        0
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "auditlog",
+        IB_FTYPE_NULSTR,
+        &core_global_cfg,
+        auditlog,
+        /// @todo More appropriate default
+        "/tmp/ironbee-auditlog-index.log"
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "auditlog_dir",
+        IB_FTYPE_NULSTR,
+        &core_global_cfg,
+        auditlog_dir,
+        /// @todo More appropriate default
+        "/tmp/ironbee-auditlog-data"
     ),
 
     /* Data Aquisition */

@@ -191,12 +191,15 @@ ib_module_t *ib_core_module(void);
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
-    uint64_t      log_level;  /**< Log level */
-    char         *log_uri;    /**< Log URI */
-    char         *logger;     /**< Active logger provider key */
-    char         *logevent;   /**< Active logevent provider key */
-    char         *parser;     /**< Active parser provider key */
-    char         *data;       /**< Active data provider key */
+    ib_num_t      log_level;    /**< Log level */
+    char         *log_uri;      /**< Log URI */
+    char         *logger;       /**< Active logger provider key */
+    char         *logevent;     /**< Active logevent provider key */
+    ib_num_t      audit_engine; /**< Audit engine status */
+    char         *auditlog;     /**< Audit log filename */
+    char         *auditlog_dir; /**< Audit log data directory */
+    char         *parser;       /**< Active parser provider key */
+    char         *data;         /**< Active data provider key */
 };
 
 /**
