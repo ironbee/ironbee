@@ -55,7 +55,7 @@ typedef struct modhtp_nameval_t modhtp_nameval_t;
 /** Module Context Structure */
 struct modhtp_context_t {
     ib_engine_t    *ib;           /**< Engine handle */
-    ib_conn_t      *qconn;        /**< Connection structure */
+    ib_conn_t      *iconn;        /**< Connection structure */
     modhtp_cfg_t   *modcfg;       /**< Module config structure */
     htp_cfg_t      *htp_cfg;      /**< Parser config handle */
     htp_tx_t       *htp_tx;       /**< Current transaction */
@@ -195,15 +195,15 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_tx_start);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_tx_t *itx;
     ib_status_t rc;
     htp_tx_t *tx;
 
     /* Create the transaction structure. */
     ib_log_debug(ib, 9, "Creating transaction structure");
-    rc = ib_tx_create(ib, &qtx, qconn, NULL);
+    rc = ib_tx_create(ib, &itx, iconn, NULL);
     if (rc != IB_OK) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -223,10 +223,10 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     modctx->htp_tx = tx;
 
     /* Associate the ironbee transaction with the libhtp transaction. */
-    htp_tx_set_user_data(tx, qtx);
+    htp_tx_set_user_data(tx, itx);
 
     /* Tell the engine that the request started. */
-    ib_state_notify_request_started(ib, qtx);
+    ib_state_notify_request_started(ib, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -236,10 +236,10 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     IB_FTRACE_INIT(modhtp_htp_request_line);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = modctx->htp_tx;
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_txdata_t qtxdata;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_txdata_t itxdata;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -253,20 +253,20 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    qtxdata.ib = ib;
-    qtxdata.mp = qtx->mp;
-    qtxdata.tx = qtx;
-    qtxdata.dtype = IB_TXDATA_HTTP_LINE;
-    qtxdata.dalloc = bstr_size(tx->request_line);
-    qtxdata.dlen = bstr_len(tx->request_line);
-    qtxdata.data = (uint8_t *)bstr_ptr(tx->request_line);
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
+    itxdata.dtype = IB_TXDATA_HTTP_LINE;
+    itxdata.dalloc = bstr_size(tx->request_line);
+    itxdata.dlen = bstr_len(tx->request_line);
+    itxdata.data = (uint8_t *)bstr_ptr(tx->request_line);
 
-    ib_state_notify_tx_data_in(ib, &qtxdata);
+    ib_state_notify_tx_data_in(ib, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -277,10 +277,10 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = modctx->htp_tx;
     htp_header_line_t *hline;
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_txdata_t qtxdata;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_txdata_t itxdata;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -294,28 +294,28 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
     /* Fill in a temporary ib_txdata_t structure for each header line
      * and use it to notify the engine of transaction data.
      */
-    qtxdata.ib = ib;
-    qtxdata.mp = qtx->mp;
-    qtxdata.tx = qtx;
-    qtxdata.dtype = IB_TXDATA_HTTP_HEADER;
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
+    itxdata.dtype = IB_TXDATA_HTTP_HEADER;
     list_iterator_reset(tx->request_header_lines);
     while ((hline = list_iterator_next(tx->request_header_lines)) != NULL) {
-        qtxdata.dalloc = bstr_size(hline->line);
-        qtxdata.dlen = bstr_len(hline->line);
-        qtxdata.data = (uint8_t *)bstr_ptr(hline->line);
+        itxdata.dalloc = bstr_size(hline->line);
+        itxdata.dlen = bstr_len(hline->line);
+        itxdata.data = (uint8_t *)bstr_ptr(hline->line);
 
-        ib_state_notify_tx_data_in(ib, &qtxdata);
+        ib_state_notify_tx_data_in(ib, &itxdata);
     }
 
     /// @todo Here we should send the header/body separator,
     ///       but how to know???
 
-    ib_state_notify_request_headers(ib, qtx);
+    ib_state_notify_request_headers(ib, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -325,10 +325,10 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     IB_FTRACE_INIT(modhtp_htp_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_txdata_t qtxdata;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_txdata_t itxdata;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -342,31 +342,31 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
     /* Check for the "end-of-request" indicator. */
     if (txdata->data == NULL) {
         if (modctx->htp_tx->request_entity_len == 0) {
             /// @todo Need a way to determine if the request was supposed to
             ///       have body, not if it did have a body.
-            ib_tx_mark_nobody(qtx);
+            ib_tx_mark_nobody(itx);
         }
-        ib_state_notify_request_body(ib, qtx);
+        ib_state_notify_request_body(ib, itx);
         IB_FTRACE_RET_INT(HTP_OK);
     }
 
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    qtxdata.ib = ib;
-    qtxdata.mp = qtx->mp;
-    qtxdata.tx = qtx;
-    qtxdata.dtype = IB_TXDATA_HTTP_BODY;
-    qtxdata.dalloc = txdata->len;
-    qtxdata.dlen = txdata->len;
-    qtxdata.data = (uint8_t *)txdata->data;
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
+    itxdata.dtype = IB_TXDATA_HTTP_BODY;
+    itxdata.dalloc = txdata->len;
+    itxdata.dlen = txdata->len;
+    itxdata.data = (uint8_t *)txdata->data;
 
-    ib_state_notify_tx_data_in(ib, &qtxdata);
+    ib_state_notify_tx_data_in(ib, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -375,9 +375,9 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request_trailer);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -391,10 +391,10 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
     /// @todo Notify tx_datain_event w/request trailer
-    ib_log_debug(ib, 4, "TODO: tx_datain_event w/request trailer: tx=%p", qtx);
+    ib_log_debug(ib, 4, "TODO: tx_datain_event w/request trailer: tx=%p", itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -403,9 +403,9 @@ static int modhtp_htp_request(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -420,9 +420,9 @@ static int modhtp_htp_request(htp_connp_t *connp)
      * request and notify the engine that the request body is available
      * and is now finished.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
-    ib_state_notify_request_finished(ib, qtx);
+    ib_state_notify_request_finished(ib, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -432,10 +432,10 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     IB_FTRACE_INIT(modhtp_htp_response_line);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = modctx->htp_tx;
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_txdata_t qtxdata;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_txdata_t itxdata;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -449,22 +449,22 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
-    ib_state_notify_response_started(ib, qtx);
+    ib_state_notify_response_started(ib, itx);
 
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    qtxdata.ib = ib;
-    qtxdata.mp = qtx->mp;
-    qtxdata.tx = qtx;
-    qtxdata.dtype = IB_TXDATA_HTTP_LINE;
-    qtxdata.dalloc = bstr_size(tx->response_line);
-    qtxdata.dlen = bstr_len(tx->response_line);
-    qtxdata.data = (uint8_t *)bstr_ptr(tx->response_line);
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
+    itxdata.dtype = IB_TXDATA_HTTP_LINE;
+    itxdata.dalloc = bstr_size(tx->response_line);
+    itxdata.dlen = bstr_len(tx->response_line);
+    itxdata.data = (uint8_t *)bstr_ptr(tx->response_line);
 
-    ib_state_notify_tx_data_out(ib, &qtxdata);
+    ib_state_notify_tx_data_out(ib, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -475,10 +475,10 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = modctx->htp_tx;
     htp_header_line_t *hline;
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_txdata_t qtxdata;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_txdata_t itxdata;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -492,28 +492,28 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
     /* Fill in a temporary ib_txdata_t structure for each header line
      * and use it to notify the engine of transaction data.
      */
-    qtxdata.ib = ib;
-    qtxdata.mp = qtx->mp;
-    qtxdata.tx = qtx;
-    qtxdata.dtype = IB_TXDATA_HTTP_HEADER;
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
+    itxdata.dtype = IB_TXDATA_HTTP_HEADER;
     list_iterator_reset(tx->response_header_lines);
     while ((hline = list_iterator_next(tx->response_header_lines)) != NULL) {
-        qtxdata.dalloc = bstr_size(hline->line);
-        qtxdata.dlen = bstr_len(hline->line);
-        qtxdata.data = (uint8_t *)bstr_ptr(hline->line);
+        itxdata.dalloc = bstr_size(hline->line);
+        itxdata.dlen = bstr_len(hline->line);
+        itxdata.data = (uint8_t *)bstr_ptr(hline->line);
 
-        ib_state_notify_tx_data_out(ib, &qtxdata);
+        ib_state_notify_tx_data_out(ib, &itxdata);
     }
 
     /// @todo Here we should send the header/body separator,
     ///       but how to know???
 
-    ib_state_notify_response_headers(ib, qtx);
+    ib_state_notify_response_headers(ib, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -523,10 +523,10 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     IB_FTRACE_INIT(modhtp_htp_response_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_txdata_t qtxdata;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_txdata_t itxdata;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -540,26 +540,26 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
     /* Check for the "end-of-response" indicator. */
     if (txdata->data == NULL) {
-        ib_state_notify_response_body(ib, qtx);
+        ib_state_notify_response_body(ib, itx);
         IB_FTRACE_RET_INT(HTP_OK);
     }
 
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    qtxdata.ib = ib;
-    qtxdata.mp = qtx->mp;
-    qtxdata.tx = qtx;
-    qtxdata.dtype = IB_TXDATA_HTTP_BODY;
-    qtxdata.dalloc = txdata->len;
-    qtxdata.dlen = txdata->len;
-    qtxdata.data = (uint8_t *)txdata->data;
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
+    itxdata.dtype = IB_TXDATA_HTTP_BODY;
+    itxdata.dalloc = txdata->len;
+    itxdata.dlen = txdata->len;
+    itxdata.data = (uint8_t *)txdata->data;
 
-    ib_state_notify_tx_data_out(ib, &qtxdata);
+    ib_state_notify_tx_data_out(ib, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -568,9 +568,9 @@ static int modhtp_htp_response(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -585,14 +585,14 @@ static int modhtp_htp_response(htp_connp_t *connp)
      * that the response body is available, the response
      * is finished and logging has begun.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
-    ib_state_notify_response_finished(ib, qtx);
+    ib_state_notify_response_finished(ib, itx);
 
     /* Destroy the transaction. */
     /// @todo Perhaps the engine should do this instead via an event???
     ib_log_debug(ib, 9, "Destroying transaction structure");
-    ib_tx_destroy(qtx);
+    ib_tx_destroy(itx);
     htp_tx_destroy(modctx->htp_tx);
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -602,9 +602,9 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response_trailer);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    ib_conn_t *qconn = modctx->qconn;
-    ib_engine_t *ib = qconn->ib;
-    ib_tx_t *qtx;
+    ib_conn_t *iconn = modctx->iconn;
+    ib_engine_t *ib = iconn->ib;
+    ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
@@ -619,10 +619,10 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    qtx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(modctx->htp_tx);
 
     /// @todo Notify tx_dataout_event w/response trailer
-    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response trailer: tx=%p", qtx);
+    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response trailer: tx=%p", itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -630,11 +630,11 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 /* -- Provider Interface Implementation -- */
 
 static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
-                                     ib_conn_t *qconn)
+                                     ib_conn_t *iconn)
 {
     IB_FTRACE_INIT(modhtp_iface_init);
-    ib_engine_t *ib = qconn->ib;
-    ib_context_t *ctx = qconn->ctx;
+    ib_engine_t *ib = iconn->ib;
+    ib_context_t *ctx = iconn->ctx;
     modhtp_cfg_t *modcfg;
     modhtp_context_t *modctx;
     ib_status_t rc;
@@ -651,7 +651,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     ib_log_debug(ib, 9, "Creating LibHTP parser");
 
     /* Create a context. */
-    modctx = ib_mpool_calloc(qconn->mp, 1, sizeof(*modctx));
+    modctx = ib_mpool_calloc(iconn->mp, 1, sizeof(*modctx));
     if (modctx == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -679,7 +679,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
 
     /* Setup context and create the parser. */
     modctx->ib = ib;
-    modctx->qconn = qconn;
+    modctx->iconn = iconn;
     modctx->modcfg = modcfg;
     modctx->htp = htp_connp_create(modctx->htp_cfg);
     if (modctx->htp == NULL) {
@@ -687,7 +687,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     }
 
     /* Store the context. */
-    rc = ib_hash_set(qconn->data, "MODHTP_CTX", modctx);
+    rc = ib_hash_set(iconn->data, "MODHTP_CTX", modctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -721,16 +721,16 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
 }
 
 static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
-                                           ib_conn_t *qconn)
+                                           ib_conn_t *iconn)
 {
     IB_FTRACE_INIT(modhtp_iface_disconnect);
-    ib_engine_t *ib = qconn->ib;
+    ib_engine_t *ib = iconn->ib;
     modhtp_context_t *modctx;
     ib_status_t rc;
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(qconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -748,7 +748,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
 {
     IB_FTRACE_INIT(modhtp_iface_data_in);
     ib_engine_t *ib = qcdata->ib;
-    ib_conn_t *qconn = qcdata->conn;
+    ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
     ib_status_t rc;
@@ -756,7 +756,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(qconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -765,8 +765,8 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
     ib_log_debug(ib, 9, "LibHTP incoming data status=%d", htp->in_status);
     ib_log_debug(ib, 9,
                  "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
-                 qconn->remote_ipstr, qconn->remote_port,
-                 qconn->local_ipstr, qconn->local_port,
+                 iconn->remote_ipstr, iconn->remote_port,
+                 iconn->local_ipstr, iconn->local_port,
                  (int)qcdata->dlen,
                  IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
 
@@ -802,7 +802,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
 {
     IB_FTRACE_INIT(modhtp_iface_data_out);
     ib_engine_t *ib = qcdata->ib;
-    ib_conn_t *qconn = qcdata->conn;
+    ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
     ib_status_t rc;
@@ -810,7 +810,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(qconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -819,8 +819,8 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     ib_log_debug(ib, 9, "LibHTP outgoing data status=%d", htp->out_status);
     ib_log_debug(ib, 9,
                  "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
-                 qconn->local_ipstr, qconn->local_port,
-                 qconn->remote_ipstr, qconn->remote_port,
+                 iconn->local_ipstr, iconn->local_port,
+                 iconn->remote_ipstr, iconn->remote_port,
                  (int)qcdata->dlen,
                  IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
 
@@ -852,12 +852,12 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
 }
 
 static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi,
-                                                          ib_tx_t *qtx)
+                                                          ib_tx_t *itx)
 {
     IB_FTRACE_INIT(modhtp_iface_gen_request_header_fields);
-    ib_engine_t *ib = qtx->ib;
-    ib_context_t *ctx = qtx->ctx;
-    ib_conn_t *qconn = qtx->conn;
+    ib_engine_t *ib = itx->ib;
+    ib_context_t *ctx = itx->ctx;
+    ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
     modhtp_cfg_t *modcfg;
     modhtp_context_t *modctx;
@@ -874,7 +874,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(qconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -886,44 +886,44 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
     if (tx != NULL) {
         modctx->htp_tx = tx;
 
-        htp_tx_set_user_data(tx, qtx);
+        htp_tx_set_user_data(tx, itx);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_line",
                                  tx->request_line,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_method",
                                  tx->request_method,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri",
                                  tx->request_uri_normalized,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_raw",
                                  tx->request_uri,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_scheme",
                                  tx->parsed_uri->scheme,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_username",
                                  tx->parsed_uri->username,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri.password",
                                  tx->parsed_uri->password,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_hostname",
                                  tx->parsed_uri->hostname,
                                  NULL);
@@ -932,37 +932,37 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
          * or taken from the HTTP Host header.
          */
         if (tx->parsed_uri != NULL) {
-            qtx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
-            modhtp_field_gen_bytestr(qtx->dpi,
+            itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
+            modhtp_field_gen_bytestr(itx->dpi,
                                      "request_hostname",
                                      tx->parsed_uri->hostname,
                                      NULL);
         }
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_port",
                                  tx->parsed_uri->port,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_path",
                                  tx->parsed_uri->path,
                                  NULL);
         if (tx->parsed_uri->path) {
-            qtx->path = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->path);
+            itx->path = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->path);
         }
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_query",
                                  tx->parsed_uri->query,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_fragment",
                                  tx->parsed_uri->fragment,
                                  NULL);
 
-        rc = ib_data_add_list(qtx->dpi, "request_headers", &f);
+        rc = ib_data_add_list(itx->dpi, "request_headers", &f);
         if (rc == IB_OK) {
             bstr *key = NULL;
             htp_header_t *h = NULL;
@@ -976,11 +976,11 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 ib_field_t *lf;
 
                 /* Grab the hostname if not already there (it should be) */
-                if (   (qtx->hostname == NULL)
+                if (   (itx->hostname == NULL)
                     && (bstr_cmp_c_nocase(h->name, (char *)"host") == 0))
                 {
-                    qtx->hostname = (const char *)bstr_util_strdup_to_c(h->value);
-                    modhtp_field_gen_bytestr(qtx->dpi,
+                    itx->hostname = (const char *)bstr_util_strdup_to_c(h->value);
+                    modhtp_field_gen_bytestr(itx->dpi,
                                              "request_hostname",
                                              h->value,
                                              NULL);
@@ -988,7 +988,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
                 /* Create a list field as an alias into htp memory. */
                 rc = ib_field_alias_mem_ex(&lf,
-                                           qtx->mp,
+                                           itx->mp,
                                            bstr_ptr(h->name),
                                            bstr_len(h->name),
                                            (uint8_t *)bstr_ptr(h->value),
@@ -1008,7 +1008,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             ib_log_error(ib, 4, "Failed to create request headers list: %d", rc);
         }
 
-        rc = ib_data_add_list(qtx->dpi, "request_uri_params", &f);
+        rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
         if (tx->request_params_query && rc == IB_OK) {
             bstr *key = NULL;
             bstr *value = NULL;
@@ -1023,7 +1023,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
                 /* Create a list field as an alias into htp memory. */
                 rc = ib_field_alias_mem_ex(&lf,
-                                           qtx->mp,
+                                           itx->mp,
                                            bstr_ptr(key),
                                            bstr_len(key),
                                            (uint8_t *)bstr_ptr(value),
@@ -1048,12 +1048,12 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 }
 
 static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *pi,
-                                                           ib_tx_t *qtx)
+                                                           ib_tx_t *itx)
 {
     IB_FTRACE_INIT(modhtp_iface_gen_response_header_fields);
-    ib_engine_t *ib = qtx->ib;
-    ib_context_t *ctx = qtx->ctx;
-    ib_conn_t *qconn = qtx->conn;
+    ib_engine_t *ib = itx->ib;
+    ib_context_t *ctx = itx->ctx;
+    ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
     modhtp_cfg_t *modcfg;
     modhtp_context_t *modctx;
@@ -1070,7 +1070,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(qconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s context: %d",
                      MODULE_NAME_STR, rc);
@@ -1081,29 +1081,29 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     /// @todo Check htp state, etc.
     tx = modctx->htp_tx;
     if (tx != NULL) {
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "response_line",
                                  tx->response_line,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "response_protocol",
                                  tx->response_protocol,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "response_status",
                                  tx->response_status,
                                  NULL);
 
-        modhtp_field_gen_bytestr(qtx->dpi,
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "response_message",
                                  tx->response_message,
                                  NULL);
 
         /// @todo Need a table type that can have more than one
         ///       of the same header.
-        rc = ib_data_add_list(qtx->dpi, "response_headers", &f);
+        rc = ib_data_add_list(itx->dpi, "response_headers", &f);
         if (rc == IB_OK) {
             bstr *key = NULL;
             htp_header_t *h = NULL;
@@ -1117,7 +1117,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
 
                 /* Create a list field as an alias into htp memory. */
                 rc = ib_field_alias_mem_ex(&lf,
-                                           qtx->mp,
+                                           itx->mp,
                                            bstr_ptr(h->name),
                                            bstr_len(h->name),
                                            (uint8_t *)bstr_ptr(h->value),
