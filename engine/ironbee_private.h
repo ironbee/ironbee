@@ -49,17 +49,16 @@ struct ib_hook_t {
  */
 struct ib_engine_t {
     ib_mpool_t         *mp;               /**< Primary memory pool */
-    ib_plugin_t        *plugin;           /**< Info about the server plugin */
-
-    ib_provider_inst_t *dpi;              /**< Data provider instance */
-
-    /* Configuration */
-    ib_mpool_t         *temp_mp;          /**< Temp memory pool for config */
     ib_mpool_t         *config_mp;        /**< Config memory pool */
-    ib_array_t         *modules;          /**< Array tracking modules */
-    ib_array_t         *contexts;         /**< Configuration contexts */
+    ib_mpool_t         *temp_mp;          /**< Temp memory pool for config */
+    ib_provider_inst_t *dpi;              /**< Data provider instance */
     ib_context_t       *ectx;             /**< Engine configuration context */
     ib_context_t       *ctx;              /**< Main configuration context */
+
+    /// @todo Only these should be private
+    ib_plugin_t        *plugin;           /**< Info about the server plugin */
+    ib_array_t         *modules;          /**< Array tracking modules */
+    ib_array_t         *contexts;         /**< Configuration contexts */
     ib_hash_t          *dirmap;           /**< Hash tracking directive map */
     ib_hash_t          *apis;             /**< Hash tracking provider APIs */
     ib_hash_t          *providers;        /**< Hash tracking providers */
