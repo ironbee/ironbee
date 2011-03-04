@@ -77,6 +77,7 @@ ffi.cdef[[
     typedef enum {
         IB_FTYPE_GENERIC,
         IB_FTYPE_NUM,
+        IB_FTYPE_UNUM,
         IB_FTYPE_NULSTR,
         IB_FTYPE_BYTESTR,
         IB_FTYPE_LIST
@@ -128,6 +129,8 @@ ffi.cdef[[
     typedef struct ib_txdata_t ib_txdata_t;
     typedef struct ib_tfn_t ib_tfn_t;
     typedef struct ib_logevent_t ib_logevent_t;
+    typedef struct ib_timeval_t ib_timeval_t;
+    typedef struct ib_uuid_t ib_uuid_t;
     typedef struct ib_plugin_t ib_plugin_t;
     typedef struct ib_provider_def_t ib_provider_def_t;
     typedef struct ib_provider_t ib_provider_t;
@@ -142,6 +145,22 @@ ffi.cdef[[
     /** Function called when a provider instance is created. */
     typedef ib_status_t (*ib_provider_inst_init_fn_t)(ib_provider_inst_t *pi,
                                                       void *data);
+
+    /* Timeval Structure */
+    struct ib_timeval_t {
+        uint32_t tv_sec;
+        uint32_t tv_usec;
+    };
+
+    /* Universal Unique ID Structure */
+    struct ib_uuid_t {
+        uint32_t  time_low;
+        uint16_t  time_mid;
+        uint16_t  time_hi_and_ver;
+        uint8_t   clk_seq_hi_res;
+        uint8_t   clk_seq_low;
+        uint8_t   node[6];
+    };
 
     struct ib_plugin_t {
         int                      vernum;
@@ -159,16 +178,15 @@ ffi.cdef[[
         void               *pctx;
         ib_provider_inst_t *dpi;
         ib_hash_t          *data;
-
+        ib_timeval_t        started;
         const char         *remote_ipstr;
         int                 remote_port;
-
         const char         *local_ipstr;
         int                 local_port;
-
+        ib_uuid_t           base_uuid;
+        size_t              tx_count;
         ib_tx_t            *tx;
         ib_tx_t            *tx_last;
-
         ib_flags_t          flags;
     };
 
@@ -191,6 +209,8 @@ ffi.cdef[[
         void               *pctx;
         ib_provider_inst_t *dpi;
         ib_hash_t          *data;
+        ib_timeval_t        started;
+        const char          id[37];
         ib_tx_t            *next;
         const char         *hostname;
         const char         *path;
@@ -371,6 +391,10 @@ ffi.cdef[[
                     int line,
                     const char *fmt,
                     ...);
+    void ib_util_log_ex(int level, const char *prefix,
+                        const char *file, int line,
+                        const char *fmt, ...);
+
 ]]
 
 -- Cache lookup of ffi.C
@@ -416,8 +440,85 @@ function register_module(m)
     base["ironbee-module"] = m
 end
 
+-- ===============================================
+-- Status
+-- ===============================================
+IB_OK            = ffi.cast("int", c.IB_OK)
+IB_DECLINED      = ffi.cast("int", c.IB_DECLINED)
+IB_EUNKNOWN      = ffi.cast("int", c.IB_EUNKNOWN)
+IB_ENOTIMPL      = ffi.cast("int", c.IB_ENOTIMPL)
+IB_EINCOMPAT     = ffi.cast("int", c.IB_EINCOMPAT)
+IB_EALLOC        = ffi.cast("int", c.IB_EALLOC)
+IB_EINVAL        = ffi.cast("int", c.IB_EINVAL)
+IB_ENOENT        = ffi.cast("int", c.IB_ENOENT)
+IB_ETIMEDOUT     = ffi.cast("int", c.IB_ETIMEDOUT)
+
+-- ===============================================
+-- Field Types
+-- ===============================================
+IB_FTYPE_GENERIC = ffi.cast("int", c.IB_FTYPE_GENERIC)
+IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
+IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
+IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
+IB_FTYPE_LIST    = ffi.cast("int", c.IB_FTYPE_LIST)
+
+-- ===============================================
+-- Cast a value as a C "ib_conn_t *".
+-- ===============================================
+function cast_conn(val)
+    return ffi.cast("ib_conn_t *", val);
+end
+
+-- ===============================================
+-- Cast a value as a C "ib_conndata_t *".
+-- ===============================================
+function cast_conndata(val)
+    return ffi.cast("ib_conndata_t *", val);
+end
+
+-- ===============================================
+-- Cast a value as a C "ib_tx_t *".
+-- ===============================================
+function cast_tx(val)
+    return ffi.cast("ib_tx_t *", val);
+end
+
+-- ===============================================
+-- Cast a value as a C "ib_txdata_t *".
+-- ===============================================
+function cast_txdata(val)
+    return ffi.cast("ib_txdata_t *", val);
+end
+
+-- ===============================================
+-- Cast a value as a C "int".
+-- ===============================================
+function cast_int(val)
+    return ffi.cast("int", val);
+end
+
+-- ===============================================
+-- Debug Functions.
+-- ===============================================
+function ib_util_log_debug(lvl, fmt, ...)
+    local dinfo = debug.getinfo(2)
+
+    c.ib_util_log_ex(lvl, "LuaFFI - ",
+                     dinfo.source .. ".lua", dinfo.linedefined, fmt, ...)
+end
+
+function ib_log_debug(ib, lvl, fmt, ...)
+    local c_ctx = c.ib_context_main(ib.cvalue())
+    local dinfo = debug.getinfo(2)
+
+    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ",
+                 dinfo.source .. ".lua", dinfo.linedefined, fmt, ...)
+end
+
+-- ===============================================
 -- Lua OO Wrappers around IronBee raw C types
 -- TODO: Add metatable w/__tostring for each type
+-- ===============================================
 local function newMpool(val)
     local c_val = ffi.cast("ib_mpool_t *", val)
     return {
@@ -555,6 +656,7 @@ local function newConn(val)
         mp = function() return newMpool(c_val.mp) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
+        tx_count = function() return ffi.cast("size_t", c_val.tx_count) end,
     }
 end
 
@@ -575,75 +677,8 @@ local function newTx(val)
         mp = function() return newMpool(c_val.mp) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
+        id = function() return ffi.cast("const char *", c_val.id) end,
     }
-end
-
--- ===============================================
--- Status
--- ===============================================
-IB_OK            = ffi.cast("int", c.IB_OK)
-IB_DECLINED      = ffi.cast("int", c.IB_DECLINED)
-IB_EUNKNOWN      = ffi.cast("int", c.IB_EUNKNOWN)
-IB_ENOTIMPL      = ffi.cast("int", c.IB_ENOTIMPL)
-IB_EINCOMPAT     = ffi.cast("int", c.IB_EINCOMPAT)
-IB_EALLOC        = ffi.cast("int", c.IB_EALLOC)
-IB_EINVAL        = ffi.cast("int", c.IB_EINVAL)
-IB_ENOENT        = ffi.cast("int", c.IB_ENOENT)
-IB_ETIMEDOUT     = ffi.cast("int", c.IB_ETIMEDOUT)
-
--- ===============================================
--- Field Types
--- ===============================================
-IB_FTYPE_GENERIC = ffi.cast("int", c.IB_FTYPE_GENERIC)
-IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
-IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
-IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
-IB_FTYPE_LIST    = ffi.cast("int", c.IB_FTYPE_LIST)
-
--- ===============================================
--- Cast a value as a C "ib_conn_t *".
--- ===============================================
-function cast_conn(val)
-    return ffi.cast("ib_conn_t *", val);
-end
-
--- ===============================================
--- Cast a value as a C "ib_conndata_t *".
--- ===============================================
-function cast_conndata(val)
-    return ffi.cast("ib_conndata_t *", val);
-end
-
--- ===============================================
--- Cast a value as a C "ib_tx_t *".
--- ===============================================
-function cast_tx(val)
-    return ffi.cast("ib_tx_t *", val);
-end
-
--- ===============================================
--- Cast a value as a C "ib_txdata_t *".
--- ===============================================
-function cast_txdata(val)
-    return ffi.cast("ib_txdata_t *", val);
-end
-
--- ===============================================
--- Cast a value as a C "int".
--- ===============================================
-function cast_int(val)
-    return ffi.cast("int", val);
-end
-
--- ===============================================
--- Debug Functions.
--- ===============================================
-function ib_log_debug(ib, lvl, fmt, ...)
-    local c_ctx = c.ib_context_main(ib.cvalue())
-    local dinfo = debug.getinfo(2)
-
-    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ",
-                 dinfo.source .. ".lua", dinfo.linedefined, fmt, ...)
 end
 
 -- ===============================================

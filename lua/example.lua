@@ -122,8 +122,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventTxStarted(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventTxStarted ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxStarted ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -134,8 +134,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventRequestStarted(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestStarted ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestStarted ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -147,8 +147,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventRequestHeaders(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestHeaders ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestHeaders ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -160,8 +160,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandleContextTx(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleContextTx ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleContextTx ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -173,13 +173,14 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandleRequestHeaders(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequestHeaders ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequestHeaders ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
 
     -- Request line is a scalar value (a field object type)
     local req_line = ironbee.ib_data_get(tx.dpi(), "request_line")
     ironbee.ib_log_debug(ib, 4, "Request line is a field type: %d", req_line.type())
-    ironbee.ib_log_debug(ib, 4, "Request Line: %s", req_line.value())
+    ironbee.ib_log_debug(ib, 4, "Request Line: %p", req_line.cvalue())
+    --ironbee.ib_log_debug(ib, 4, "Request Line: %s", req_line.value())
 
     -- Request headers are a collection (table of field objects)
     local req_headers = ironbee.ib_data_get(tx.dpi(), "request_headers")
@@ -238,8 +239,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventRequestBody(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestBody ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestBody ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -251,8 +252,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandleRequest(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequest ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequest ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -263,8 +264,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventRequestFinished(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestFinished ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventRequestFinished ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -276,8 +277,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventTxProcess(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventTxProcess ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxProcess ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -288,8 +289,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventResponseStarted(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseStarted ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseStarted ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -301,8 +302,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventResponseHeaders(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseHeaders ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseHeaders ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -314,8 +315,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandleResponseHeaders(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleResponseHeaders ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleResponseHeaders ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -327,8 +328,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventResponseBody(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseBody ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseBody ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -340,8 +341,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandleResponse(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleResponse ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandleResponse ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -352,8 +353,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventResponseFinished(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseFinished ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventResponseFinished ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -365,8 +366,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventHandlePostprocess(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventHandlePostprocess ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventHandlePostprocess ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 
@@ -378,8 +379,8 @@ end
 -- tx: IronBee transaction handle
 -- ===============================================
 function onEventTxFinished(ib, tx)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventTxFinished ib=%p tx=%p",
-                       _NAME, ib.cvalue(), tx.cvalue())
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxFinished ib=%p tx=%s",
+                       _NAME, ib.cvalue(), tx.id())
     return 0
 end
 

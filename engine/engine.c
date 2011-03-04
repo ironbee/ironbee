@@ -29,6 +29,11 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include <sys/time.h> /* gettimeofday */
+#include <sys/types.h> /* getpid */
+#include <unistd.h>
+
+
 
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
@@ -290,6 +295,8 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_conn_create);
     ib_mpool_t *pool;
+    struct timeval tv;
+    uint16_t pid16 = (uint16_t)(getpid() & 0xffff);
     ib_status_t rc;
     
     /* Create a sub-pool for each connection and allocate from it */
@@ -310,6 +317,25 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->mp = pool;
     (*pconn)->ctx = ib->ctx;
     (*pconn)->pctx = pctx;
+
+    /// @todo Need to avoid gettimeofday and set from parser
+    gettimeofday(&tv, NULL);
+    (*pconn)->started.tv_sec = tv.tv_sec;
+    (*pconn)->started.tv_usec = tv.tv_usec;
+
+    /* Setup the base uuid structure which is used to generate
+     * transaction IDs.
+     */
+    (*pconn)->base_uuid.node[0] = (pid16 >> 8) & 0xff;
+    (*pconn)->base_uuid.node[1] = (pid16 & 0xff);
+    /// @todo Set to a real system unique id (default ipv4 address???)
+    (*pconn)->base_uuid.node[2] = 0x01; 
+    (*pconn)->base_uuid.node[3] = 0x23; 
+    (*pconn)->base_uuid.node[4] = 0x45; 
+    (*pconn)->base_uuid.node[5] = 0x67; 
+    /// @todo This needs set to thread ID or some other identifier
+    (*pconn)->base_uuid.clk_seq_hi_res = 0x8f;
+    (*pconn)->base_uuid.clk_seq_low = 0xff;
 
     /* Create the core data provider instance */
     rc = ib_provider_instance_create(ib,
@@ -394,6 +420,41 @@ void ib_conn_destroy(ib_conn_t *conn)
     ib_mpool_destroy(conn->mp);
 }
 
+/**
+ * @internal
+ * Merge the base_uuid with tx data and generate the tx id string.
+ */
+static void ib_tx_generate_id(ib_tx_t *tx)
+{
+    ib_uuid_t uuid;
+
+    /* Start with the base values. */
+    uuid.clk_seq_hi_res = tx->conn->base_uuid.clk_seq_hi_res;
+    uuid.clk_seq_low = tx->conn->base_uuid.clk_seq_low;
+    memcpy(uuid.node, tx->conn->base_uuid.node, sizeof(uuid.node));
+
+    /* Set the tx specific values */
+    uuid.time_low = tx->started.tv_sec;
+    uuid.time_mid = tx->conn->started.tv_usec + tx->conn->tx_count;
+    uuid.time_hi_and_ver = (uint16_t)tx->started.tv_usec & 0x0fff;
+    uuid.time_hi_and_ver |= (4 << 12);
+
+    /* Convert to a hex-string representation */
+    snprintf((char *)tx->id, IB_UUID_HEX_SIZE,
+            "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            uuid.time_low,
+            uuid.time_mid,
+            uuid.time_hi_and_ver,
+            uuid.clk_seq_hi_res,
+            uuid.clk_seq_low,
+            uuid.node[0],
+            uuid.node[1],
+            uuid.node[2],
+            uuid.node[3],
+            uuid.node[4],
+            uuid.node[5]);
+}
+
 ib_status_t ib_tx_create(ib_engine_t *ib,
                          ib_tx_t **ptx,
                          ib_conn_t *conn,
@@ -401,6 +462,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_tx_create);
     ib_mpool_t *pool;
+    struct timeval tv;
     ib_status_t rc;
     
     /* Create a sub-pool from the connection memory pool for each
@@ -424,6 +486,17 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     (*ptx)->ctx = ib->ctx;
     (*ptx)->pctx = pctx;
     (*ptx)->conn = conn;
+
+    /* Update transaction count. */
+    conn->tx_count++;
+
+    /// @todo Need to avoid gettimeofday and set from parser tx time, but
+    ///       it currently only has second accuracy.
+    gettimeofday(&tv, NULL);
+    (*ptx)->started.tv_sec = tv.tv_sec;
+    (*ptx)->started.tv_usec = tv.tv_usec;
+
+    ib_tx_generate_id(*ptx);
 
     /* Create the core data provider instance */
     rc = ib_provider_instance_create(ib,
@@ -1814,3 +1887,4 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
 
     IB_FTRACE_RET_STATUS(IB_ENOENT);
 }
+

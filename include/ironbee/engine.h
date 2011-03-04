@@ -68,6 +68,8 @@ typedef struct ib_txdata_t ib_txdata_t;
 typedef struct ib_tx_t ib_tx_t;
 typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
+typedef struct ib_timeval_t ib_timeval_t;
+typedef struct ib_uuid_t ib_uuid_t;
 
 typedef enum {
     IB_TXDATA_HTTP_LINE,
@@ -75,6 +77,8 @@ typedef enum {
     IB_TXDATA_HTTP_BODY,
     IB_TXDATA_HTTP_TRAILER
 } ib_txdata_type_t;
+
+#define IB_UUID_HEX_SIZE 37
 
 /* Connection Flags */
 /// @todo Do we need anymore???
@@ -130,6 +134,35 @@ typedef ib_status_t (*ib_context_fn_t)(ib_context_t *ctx,
                                        void *ctxdata,
                                        void *cbdata);
 
+/** Timeval Structure */
+struct ib_timeval_t {
+    uint32_t tv_sec;
+    uint32_t tv_usec;
+};
+
+/**
+ * @internal
+ * Universal Unique ID Structure.
+ *
+ * This is a modified UUIDv1 (RFC-4122) that uses fields as follows:
+ *
+ * time_low: 32-bit second accuracy time that tx started
+ * time_mid: 16-bit counter
+ * time_hi_and_ver: 4-bit version (0100) + 12-bit least sig usec
+ * clk_seq_hi_res: 2-bit reserved (10) + 6-bit reserved (111111)
+ * clk_seq_low: 8-bit reserved (11111111)
+ * node(0-1): 16-bit process ID
+ * node(2-5): 32-bit ID (system default IPv4 address by default)
+ */
+struct ib_uuid_t {
+    uint32_t  time_low;
+    uint16_t  time_mid;
+    uint16_t  time_hi_and_ver;
+    uint8_t   clk_seq_hi_res;
+    uint8_t   clk_seq_low;
+    uint8_t   node[6];
+};
+
 /** Connection Structure */
 struct ib_conn_t {
     ib_engine_t        *ib;              /**< Engine handle */
@@ -139,6 +172,8 @@ struct ib_conn_t {
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_hash_t          *data;            /**< Generic data store */
 
+    ib_timeval_t        started;         /**< Connection start time */
+
     const char         *remote_ipstr;    /**< Remote IP as string */
 //    struct sockaddr_storage remote_addr; /**< Remote address */
     int                 remote_port;     /**< Remote port */
@@ -146,6 +181,9 @@ struct ib_conn_t {
     const char         *local_ipstr;     /**< Local IP as string */
 //    struct sockaddr_storage local_addr;  /**< Local address */
     int                 local_port;      /**< Local port */
+
+    ib_uuid_t           base_uuid;       /**< UUID to base tx ID */
+    size_t              tx_count;        /**< Transaction count */
 
     ib_tx_t            *tx;              /**< Pending transaction(s) */
     ib_tx_t            *tx_last;         /**< Last transaction in the list */
@@ -183,10 +221,11 @@ struct ib_tx_t {
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_hash_t          *data;            /**< Generic data store */
+    ib_timeval_t        started;         /**< Transaction start time */
+    const char          id[IB_UUID_HEX_SIZE];/**< Transaction ID */
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */
     const char         *path;            /**< Path used in the request */
-
     ib_flags_t          flags;           /**< Transaction flags */
 };
 
