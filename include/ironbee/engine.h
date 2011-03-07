@@ -153,6 +153,9 @@ struct ib_timeval_t {
  * clk_seq_low: 8-bit reserved (11111111)
  * node(0-1): 16-bit process ID
  * node(2-5): 32-bit ID (system default IPv4 address by default)
+ *
+ * This is loosly based of of Apache mod_unique_id, but with
+ * future expansion in mind.
  */
 struct ib_uuid_t {
     uint32_t  time_low;
