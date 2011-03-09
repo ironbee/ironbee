@@ -152,6 +152,21 @@ void ib_logevent_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi
     IB_FTRACE_RET_VOID();
 }
 
+
+/* -- Audit Log Routines -- */
+
+ib_provider_inst_t *ib_audit_provider_get_instance(ib_context_t *ctx)
+{
+    return ctx->audit;
+}
+
+void ib_audit_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
+{
+    IB_FTRACE_INIT(ib_audit_provider_set_instance);
+    ctx->audit = pi;
+    IB_FTRACE_RET_VOID();
+}
+
 /* -- Exported Logging Routines -- */
 
 ib_provider_inst_t *ib_log_provider_get_instance(ib_context_t *ctx)
@@ -228,4 +243,12 @@ void ib_clog_events_write(ib_context_t *ctx)
 
     api = (IB_PROVIDER_API_TYPE(logevent) *)ctx->logevent->pr->api;
     api->write_events(ctx->logevent);
+}
+
+void ib_clog_auditlog_write(ib_context_t *ctx)
+{
+    IB_PROVIDER_API_TYPE(audit) *api;
+
+    api = (IB_PROVIDER_API_TYPE(audit) *)ctx->audit->pr->api;
+    api->write_log(ctx->audit);
 }

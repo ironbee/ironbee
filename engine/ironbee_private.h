@@ -133,6 +133,7 @@ struct ib_context_t {
     /// @todo Can we store these inside the core config structure instead???
     ib_core_cfg_t           *core_cfg;    /**< Core config */
     ib_provider_inst_t      *logger;      /**< Log provider instance */
+    ib_provider_inst_t      *audit;       /**< Audit Log provider instance */
     ib_provider_inst_t      *logevent;    /**< Logevent provider instance */
     ib_provider_inst_t      *parser;      /**< Parser provider instance */
 

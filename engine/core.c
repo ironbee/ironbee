@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <strings.h>
+#include <errno.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
@@ -120,6 +121,9 @@ static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
     (ib_log_logger_fn_t)core_logger
 };
 
+
+/* -- Core Log Event Provider -- */
+
 static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
 {
     ib_log_alert(epi->pr->ib, 1, "Event [id %016" PRIxMAX "][type %d]: %s",
@@ -130,6 +134,167 @@ static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e
 static IB_PROVIDER_IFACE_TYPE(logevent) core_logevent_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
     core_logevent_write
+};
+
+
+/* -- Audit Provider -- */
+
+typedef struct core_audit_cfg_t core_audit_cfg_t;
+struct core_audit_cfg_t {
+    FILE           *fp;
+    int             parts_written;
+    const char     *boundary;
+};
+
+/// @todo Make this public
+static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
+                                        const char *name,
+                                        const char *type,
+                                        void *data,
+                                        ib_auditlog_part_gen_fn_t generator,
+                                        void *gen_data)
+{
+    IB_FTRACE_INIT(ib_auditlog_part_add);
+    ib_status_t rc;
+
+    ib_auditlog_part_t *part =
+        (ib_auditlog_part_t *)ib_mpool_alloc(log->mp, sizeof(*part));
+
+    if (part == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    part->log = log;
+    part->name = name;
+    part->content_type = type;
+    part->part_data = data;
+    part->fn_gen = generator;
+    part->gen_data = gen_data;
+
+    rc = ib_list_push(log->parts, part);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
+                                   ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(core_audit_open);
+    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    /// @todo Use log->ctx to get filename, etc.
+    const char *fn = "/tmp/ironbee-audit.log";
+    int ec;
+
+    if (cfg == NULL) {
+        cfg = (core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
+
+        if (cfg == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        cfg->boundary = log->tx->id ? log->tx->id : "FixMe-No-Tx-on-Audit";
+        log->cfg_data = cfg;
+    }
+
+    if (cfg->fp == NULL) {
+        cfg->fp = fopen(fn, "wb");
+        if (cfg->fp == NULL) {
+            ec = errno;
+            ib_log_error(log->ib, 1, "Could not open audit log \"%s\": %s (%d)",
+                         fn, strerror(ec), ec);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
+                                           ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(core_audit_write_header);
+    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    const char *header = "\r\nThis is a multi-part message in MIME format.\r\n\r\n";
+    size_t hlen = strlen(header);
+
+    if (fwrite(header, hlen, 1, cfg->fp) != 1) {
+        ib_log_error(lpi->pr->ib, 1, "Failed to write audit log header");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+    fflush(cfg->fp);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
+                                         ib_auditlog_part_t *part)
+{
+    IB_FTRACE_INIT(core_audit_write_part);
+    ib_auditlog_t *log = part->log;
+    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    const uint8_t *chunk;
+    size_t chunk_size;
+
+    /* Write the MIME boundary and part header */
+    fprintf(cfg->fp,
+            "\r\n--%s"
+            "\r\nContent-Disposition: audit-log-part; name=\"%s\""
+            "\r\nContent-Transfer-Encoding: binary"
+            "\r\nContent-Type: %s"
+            "\r\n\r\n",
+            cfg->boundary,
+            part->name,
+            part->content_type);
+
+    /* Write the part data. */
+    while((chunk_size = part->fn_gen(part, &chunk)) != 0) {
+        if (fwrite(chunk, chunk_size, 1, cfg->fp) != 1) {
+            ib_log_error(lpi->pr->ib, 1, "Failed to write audit log part");
+            fflush(cfg->fp);
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+        cfg->parts_written++;
+    }
+
+    /* Finish the part. */
+    fflush(cfg->fp);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
+                                           ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(core_audit_write_footer);
+    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+
+    if (cfg->parts_written > 0) {
+        fprintf(cfg->fp, "\r\n--%s--\r\n", cfg->boundary);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
+                                    ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(core_audit_close);
+    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+
+    if (cfg->fp != NULL) {
+        fclose(cfg->fp);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
+    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
+    core_audit_open,
+    core_audit_write_header,
+    core_audit_write_part,
+    core_audit_write_footer,
+    core_audit_close
 };
 
 /* -- Core Data Provider -- */
@@ -435,6 +600,115 @@ static IB_PROVIDER_API_TYPE(logger) logger_api = {
 };
 
 
+/* -- Audit API Implementations -- */
+
+/**
+ * @internal
+ * Write an audit log.
+ *
+ * @param ib Engine
+ * @param lpr Audit provider
+ *
+ * @returns Status code
+ */
+static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
+{
+    IB_FTRACE_INIT(audit_api_write_log);
+    IB_PROVIDER_IFACE_TYPE(audit) *iface = (IB_PROVIDER_IFACE_TYPE(audit) *)lpi->pr->iface;
+    ib_auditlog_t *log = (ib_auditlog_t *)lpi->data;
+    ib_list_node_t *node;
+    ib_status_t rc;
+
+    if (ib_list_elements(log->parts) == 0) {
+        ib_log_debug(lpi->pr->ib, 4, "No parts to write to audit log");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Open the log if required. */
+    if (iface->open != NULL) {
+        rc = iface->open(lpi, log);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Write the header if required. */
+    if (iface->write_header != NULL) {
+        rc = iface->write_header(lpi, log);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Write the parts. */
+    IB_LIST_LOOP(log->parts, node) {
+        ib_auditlog_part_t *part = (ib_auditlog_part_t *)ib_list_node_data(node);
+        rc = iface->write_part(lpi, part);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Write the footer if required. */
+    if (iface->write_footer != NULL) {
+        rc = iface->write_footer(lpi, log);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Close the log if required. */
+    if (iface->close != NULL) {
+        rc = iface->close(lpi, log);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Audit provider registration function.
+ *
+ * This just does a version and sanity check on a registered provider.
+ *
+ * @param ib Engine
+ * @param lpr Audit provider
+ *
+ * @returns Status code
+ */
+static ib_status_t audit_register(ib_engine_t *ib,
+                                  ib_provider_t *lpr)
+{
+    IB_FTRACE_INIT(audit_register);
+    IB_PROVIDER_IFACE_TYPE(audit) *iface = (IB_PROVIDER_IFACE_TYPE(audit) *)lpr->iface;
+
+    /* Check that versions match. */
+    if (iface->version != IB_PROVIDER_VERSION_AUDIT) {
+        IB_FTRACE_RET_STATUS(IB_EINCOMPAT);
+    }
+
+    /* Verify that required interface functions are implemented. */
+    if (iface->write_part == NULL) {
+        ib_log_error(ib, 0, "The write_part function "
+                     "MUST be implemented by a audit provider");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Audit provider API mapping for core module.
+ */
+static IB_PROVIDER_API_TYPE(audit) audit_api = {
+    audit_api_write_log
+};
+
+
 /* -- Logevent API Implementations -- */
 
 /**
@@ -532,6 +806,30 @@ static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+#if 0
+static size_t ib_auditlog_gen_raw(ib_auditlog_part_t *part,
+                                  const uint8_t **chunk)
+{
+    /// @todo Testing
+    return 0;
+}
+#endif
+
+static size_t ib_auditlog_gen_json(ib_auditlog_part_t *part,
+                                   const uint8_t **chunk)
+{
+    //ib_list_t *list = (ib_list_t *)part->part_data;
+
+    if (part->gen_data == NULL) {
+        /// @todo Testing
+        *chunk = (uint8_t *)"{\r\n}";
+        part->gen_data = (void *)1;
+        return strlen(*(const char **)chunk);
+    }
+
+    return 0;
+}
+
 /**
  * @internal
  * Handle writing the logevents.
@@ -547,7 +845,51 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                                              void *cbdata)
 {
     IB_FTRACE_INIT(logevent_hook_postprocess);
+    ib_auditlog_t *auditlog;
+    ib_provider_inst_t *audit;
+    ib_status_t rc;
+
     ib_clog_events_write(tx->ctx);
+
+    /* Audit */
+    /// @todo Only create if needed
+    auditlog = (ib_auditlog_t *)ib_mpool_calloc(tx->mp, 1, sizeof(*auditlog));
+    if (auditlog == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    auditlog->ib = ib;
+    auditlog->mp = tx->mp;
+    auditlog->ctx = tx->ctx;
+    auditlog->tx = tx;
+
+    /// @todo Create real data
+    ib_list_t *test_list;
+    ib_list_create(&test_list, auditlog->mp);
+
+    rc = ib_list_create(&auditlog->parts, auditlog->mp);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_auditlog_part_add(auditlog,
+                         "header",
+                         "application/json",
+                         test_list,
+                         ib_auditlog_gen_json,
+                         NULL);
+
+    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
+                                     tx->ctx->core_cfg->audit, &audit,
+                                     ib->mp, auditlog);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_AUDIT, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_audit_provider_set_instance(tx->ctx, audit);
+
+    ib_clog_auditlog_write(tx->ctx);
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1840,6 +2182,7 @@ static ib_status_t core_init(ib_engine_t *ib)
 {
     IB_FTRACE_INIT(core_init);
     ib_provider_t *core_log_provider;
+    ib_provider_t *core_audit_provider;
     ib_provider_t *core_data_provider;
     ib_status_t rc;
 
@@ -1879,6 +2222,22 @@ static ib_status_t core_init(ib_engine_t *ib)
                               MODULE_NAME_STR, NULL,
                               &core_logevent_iface,
                               logevent_init);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Define the audit provider API. */
+    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_AUDIT,
+                            audit_register, &audit_api);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the core audit provider. */
+    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_AUDIT,
+                              MODULE_NAME_STR, &core_audit_provider,
+                              &core_audit_iface,
+                              NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1996,7 +2355,7 @@ static ib_status_t core_config_init(ib_engine_t *ib,
                                      ctx->core_cfg->logevent, &logevent,
                                      ib->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_LOGGER, rc);
+        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_LOGEVENT, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_logevent_provider_set_instance(ctx, logevent);
@@ -2090,6 +2449,13 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         auditlog_dir,
         /// @todo More appropriate default
         "/tmp/ironbee-auditlog-data"
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        IB_PROVIDER_TYPE_AUDIT,
+        IB_FTYPE_NULSTR,
+        &core_global_cfg,
+        audit,
+        MODULE_NAME_STR
     ),
 
     /* Data Aquisition */

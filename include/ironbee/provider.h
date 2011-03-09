@@ -265,6 +265,69 @@ void DLL_PUBLIC ib_log_provider_set_instance(ib_context_t *ctx,
                                              ib_provider_inst_t *lpi);
 
 
+/* Audit */
+#define IB_PROVIDER_TYPE_AUDIT     IB_XSTRINGIFY(audit)
+#define IB_PROVIDER_VERSION_AUDIT  0
+
+/** Audit Interface Definition. */
+IB_PROVIDER_DECLARE_IFACE(audit) {
+    IB_PROVIDER_IFACE_HEADER;
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        open,
+        (ib_provider_inst_t *pi, ib_auditlog_t *log)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        write_header,
+        (ib_provider_inst_t *pi, ib_auditlog_t *log)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        write_part,
+        (ib_provider_inst_t *pi, ib_auditlog_part_t *part)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        write_footer,
+        (ib_provider_inst_t *pi, ib_auditlog_t *log)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        close,
+        (ib_provider_inst_t *pi, ib_auditlog_t *log)
+    );
+};
+
+/** Audit API Definition. */
+IB_PROVIDER_DECLARE_API(audit) {
+    /* ib_status_t write_log(pi) */
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        write_log,
+        (ib_provider_inst_t *pi)
+    );
+};
+
+/**
+ * Get the audit provider instance within a configuration context.
+ *
+ * @param ctx Config context
+ *
+ * @returns The audit provider within the given context
+ */
+ib_provider_inst_t DLL_PUBLIC *ib_audit_provider_get_instance(ib_context_t *ctx);
+
+/**
+ * Set the audit provider instance within a configuration context.
+ *
+ * @param ctx Config context
+ * @param pr Audit provider
+ */
+void DLL_PUBLIC ib_audit_provider_set_instance(ib_context_t *ctx,
+                                               ib_provider_inst_t *lpi);
+
+
 /* Parser */
 #define IB_PROVIDER_TYPE_PARSER     IB_XSTRINGIFY(parser)
 #define IB_PROVIDER_VERSION_PARSER  0
