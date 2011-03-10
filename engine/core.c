@@ -822,7 +822,7 @@ static size_t ib_auditlog_gen_raw(ib_auditlog_part_t *part,
     return 0;
 }
 
-static size_t ib_auditlog_gen_json(ib_auditlog_part_t *part,
+static size_t ib_auditlog_gen_json_list(ib_auditlog_part_t *part,
                                    const uint8_t **chunk)
 {
     //ib_list_t *list = (ib_list_t *)part->part_data;
@@ -836,6 +836,153 @@ static size_t ib_auditlog_gen_json(ib_auditlog_part_t *part,
 
     return 0;
 }
+
+#if 0
+static size_t ib_auditlog_gen_json_ftree(ib_auditlog_part_t *part,
+                                         const uint8_t **chunk)
+{
+    //ib_field_t *f = (ib_field_t *)part->part_data;
+
+    if (part->gen_data == NULL) {
+        /// @todo Testing
+        *chunk = (uint8_t *)"{\r\n  \"name\": \"value\"\r\n}";
+        part->gen_data = (void *)1;
+        return strlen(*(const char **)chunk);
+    }
+
+    return 0;
+}
+#endif
+
+static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
+                                          const uint8_t **chunk)
+{
+    ib_engine_t *ib = part->log->ib;
+    ib_logevent_t *e;
+    uint8_t *rec;
+    size_t rlen;
+
+#define CORE_EVT_MAX_REC_LEN 1024
+    
+    /* The gen_data field is used to store the current state. NULL
+     * means the part has not started yet and a -1 value
+     * means it is done. Anything else is a node in the event list.
+     */
+    if (part->gen_data == NULL) {
+        ib_list_t *list;
+        ib_status_t rc;
+
+
+        rc = ib_clog_events_get(part->log->ctx, &list);
+
+        /* Error. */
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3, "Error fetching event list: %d", rc);
+            *chunk = (const uint8_t *)"{}";
+            part->gen_data = (void *)-1;
+            return 2;
+        }
+
+        /* No events. */
+        if (ib_list_elements(list) == 0) {
+            ib_log_debug(ib, 4, "No events in audit log");
+            *chunk = (const uint8_t *)"{}";
+            part->gen_data = (void *)-1;
+            return 2;
+        }
+
+        *chunk = (const uint8_t *)"{\r\n  \"events\": [\r\n";
+        part->gen_data = ib_list_first(list);
+        return strlen(*(const char **)chunk);
+    }
+    else if (part->gen_data == (void *)-1) {
+        part->gen_data = NULL;
+        return 0;
+    }
+
+    e = (ib_logevent_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
+    if (e != NULL) {
+        rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_EVT_MAX_REC_LEN);
+
+        /* Error. */
+        if (rec == NULL) {
+            *chunk = (const uint8_t *)"  ]\r\n}";
+            return strlen(*(const char **)chunk);
+        }
+
+        rlen = snprintf((char *)rec, CORE_EVT_MAX_REC_LEN,
+                        "    {\r\n"
+                        "      \"event-id\": %" PRIu32 ",\r\n"
+                        "      \"rule-id\": \"%s\",\r\n"
+                        "      \"publisher\": \"%s\",\r\n"
+                        "      \"source\": \"%s\",\r\n"
+                        "      \"source-version\": \"%s\",\r\n"
+                        "      \"type\": \"%s\",\r\n"
+                        "      \"activity\": \"%s\",\r\n"
+                        "      \"category\": \"%s/%s\",\r\n"
+                        "      \"confidence\": %u,\r\n"
+                        "      \"severity\": %u,\r\n"
+                        "      \"sys-env\": \"%s\",\r\n"
+                        "      \"rec-action\": \"%s\",\r\n"
+                        "      \"tags\": [],\r\n"
+                        "      \"fields\": [],\r\n"
+                        "      \"msg\": \"%s\",\r\n"
+                        "      \"data\": \"\"\r\n"
+                        "    }\r\n",
+                        e->event_id,
+                        e->rule_id ? e->rule_id : "-",
+                        e->publisher ? e->publisher : "-",
+                        e->source ? e->source : "-",
+                        e->source_ver ? e->source_ver : "-",
+                        e->type ? "TODO:LookupText" : "-",
+                        e->activity ? "TODO:LookupText" : "-",
+                        e->pri_cat ? "TODO:LookupText" : "-",
+                        e->sec_cat ? "TODO:LookupText" : "-",
+                        e->confidence,
+                        e->severity,
+                        e->sys_env ? "TODO:LookupText" : "-",
+                        e->rec_action ? "TODO:LookupText" : "-",
+                        e->msg ? e->msg : "-");
+
+        /* Verify size. */
+        if (rlen >= CORE_EVT_MAX_REC_LEN) {
+            ib_log_error(ib, 3, "Event too large to log: %" PRIuMAX, rlen);
+            *chunk = (const uint8_t *)"    {}";
+            part->gen_data = (void *)-1;
+            return 2;
+        }
+
+        *chunk = rec;
+    }
+    else {
+        ib_log_error(ib, 4, "NULL event");
+        *chunk = (const uint8_t *)"    {}";
+        part->gen_data = (void *)-1;
+        return 2;
+    }
+    part->gen_data = ib_list_node_next((ib_list_node_t *)part->gen_data);
+
+    /* Close the json structure. */
+    if (part->gen_data == NULL) {
+        size_t clen = strlen(*(const char **)chunk);
+
+        part->gen_data = (void *)-1;
+
+        if (clen+6 > CORE_EVT_MAX_REC_LEN) {
+            if (clen+2 > CORE_EVT_MAX_REC_LEN) {
+                ib_log_error(ib, 4, "Event too large to fit in buffer");
+                *chunk = (const uint8_t *)"    {}\r\n  ]\r\n}";
+            }
+            memcpy(*(uint8_t **)chunk + clen, "]}", 2);
+            return clen + 2;
+        }
+        memcpy(*(uint8_t **)chunk + clen, "  ]\r\n}", 6);
+        return clen + 8;
+    }
+
+    return strlen(*(const char **)chunk);
+}
+
 
 /**
  * @internal
@@ -856,9 +1003,6 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     ib_provider_inst_t *audit;
     ib_list_t *list;
     ib_status_t rc;
-
-    /* Events */
-    ib_clog_events_write(tx->ctx);
 
     /* Auditing */
     /// @todo Only create if needed
@@ -886,7 +1030,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                          "header",
                          "application/json",
                          list,
-                         ib_auditlog_gen_json,
+                         ib_auditlog_gen_json_list,
                          NULL);
 
     /* Part: events */
@@ -896,7 +1040,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                          "events",
                          "application/json",
                          list,
-                         ib_auditlog_gen_json,
+                         ib_auditlog_gen_json_events,
                          NULL);
 
     /* Part: http-request-metadata */
@@ -906,7 +1050,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                          "http-request-metadata",
                          "application/json",
                          list,
-                         ib_auditlog_gen_json,
+                         ib_auditlog_gen_json_list,
                          NULL);
 
     /* Part: http-request-headers */
@@ -946,7 +1090,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                          "http-response-metadata",
                          "application/json",
                          list,
-                         ib_auditlog_gen_json,
+                         ib_auditlog_gen_json_list,
                          NULL);
 
     /* Part: http-response-headers */
@@ -991,6 +1135,9 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     ib_audit_provider_set_instance(tx->ctx, audit);
 
     ib_clog_auditlog_write(tx->ctx);
+
+    /* Events */
+    ib_clog_events_write(tx->ctx);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
