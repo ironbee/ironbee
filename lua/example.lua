@@ -477,7 +477,7 @@ end
 -- txdata: IronBee transaction data handle
 -- ===============================================
 function onEventTxDataOut(ib, txdata)
-    ironbee.ib_log_debug(ib, 4, "%s.onEventTxDataOut[%d]: %.*s",
+    ironbee.ib_log_debug(ib, 4, "%s.onEventTxDataOut[type=%d]: %.*s",
                        _NAME,
                        txdata.dtype(),
                        txdata.dlen(), txdata.data())
