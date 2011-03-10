@@ -192,6 +192,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
+        /// @todo Add a random id to this
         cfg->boundary = log->tx->id ? log->tx->id : "FixMe-No-Tx-on-Audit";
         log->cfg_data = cfg;
     }
@@ -806,14 +807,20 @@ static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-#if 0
 static size_t ib_auditlog_gen_raw(ib_auditlog_part_t *part,
                                   const uint8_t **chunk)
 {
-    /// @todo Testing
+    //ib_list_t *list = (ib_list_t *)part->part_data;
+
+    if (part->gen_data == NULL) {
+        /// @todo Testing
+        *chunk = (uint8_t *)"TODO: Real data here";
+        part->gen_data = (void *)1;
+        return strlen(*(const char **)chunk);
+    }
+
     return 0;
 }
-#endif
 
 static size_t ib_auditlog_gen_json(ib_auditlog_part_t *part,
                                    const uint8_t **chunk)
@@ -822,7 +829,7 @@ static size_t ib_auditlog_gen_json(ib_auditlog_part_t *part,
 
     if (part->gen_data == NULL) {
         /// @todo Testing
-        *chunk = (uint8_t *)"{\r\n}";
+        *chunk = (uint8_t *)"{\r\n  \"name\": \"value\"\r\n}";
         part->gen_data = (void *)1;
         return strlen(*(const char **)chunk);
     }
@@ -847,11 +854,13 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     IB_FTRACE_INIT(logevent_hook_postprocess);
     ib_auditlog_t *auditlog;
     ib_provider_inst_t *audit;
+    ib_list_t *list;
     ib_status_t rc;
 
+    /* Events */
     ib_clog_events_write(tx->ctx);
 
-    /* Audit */
+    /* Auditing */
     /// @todo Only create if needed
     auditlog = (ib_auditlog_t *)ib_mpool_calloc(tx->mp, 1, sizeof(*auditlog));
     if (auditlog == NULL) {
@@ -863,22 +872,115 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     auditlog->ctx = tx->ctx;
     auditlog->tx = tx;
 
-    /// @todo Create real data
-    ib_list_t *test_list;
-    ib_list_create(&test_list, auditlog->mp);
-
     rc = ib_list_create(&auditlog->parts, auditlog->mp);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /// @todo Parts should be configurable
+
+    /* Part: header */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
     ib_auditlog_part_add(auditlog,
                          "header",
                          "application/json",
-                         test_list,
+                         list,
                          ib_auditlog_gen_json,
                          NULL);
 
+    /* Part: events */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "events",
+                         "application/json",
+                         list,
+                         ib_auditlog_gen_json,
+                         NULL);
+
+    /* Part: http-request-metadata */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-request-metadata",
+                         "application/json",
+                         list,
+                         ib_auditlog_gen_json,
+                         NULL);
+
+    /* Part: http-request-headers */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-request-headers",
+                         "application/octet-stream",
+                         list,
+                         ib_auditlog_gen_raw,
+                         NULL);
+
+    /* Part: http-request-trailers */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-request-trailers",
+                         "application/octet-stream",
+                         list,
+                         ib_auditlog_gen_raw,
+                         NULL);
+
+    /* Part: http-request-body */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-request-body",
+                         "application/octet-stream",
+                         list,
+                         ib_auditlog_gen_raw,
+                         NULL);
+
+    /* Part: http-response-metadata */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-response-metadata",
+                         "application/json",
+                         list,
+                         ib_auditlog_gen_json,
+                         NULL);
+
+    /* Part: http-response-headers */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-response-headers",
+                         "application/octet-stream",
+                         list,
+                         ib_auditlog_gen_raw,
+                         NULL);
+
+    /* Part: http-response-trailers */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-response-trailers",
+                         "application/octet-stream",
+                         list,
+                         ib_auditlog_gen_raw,
+                         NULL);
+
+    /* Part: http-response-body */
+    ib_list_create(&list, auditlog->mp);
+    /// @todo Create real data
+    ib_auditlog_part_add(auditlog,
+                         "http-response-body",
+                         "application/octet-stream",
+                         list,
+                         ib_auditlog_gen_raw,
+                         NULL);
+
+
+    /* Audit Provider */
     rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
                                      tx->ctx->core_cfg->audit, &audit,
                                      ib->mp, auditlog);
