@@ -832,66 +832,67 @@ end
 -- Wrapper function to call Lua event handler.
 -- ===============================================
 function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
-    local c_ib = ffi.cast("ib_engine_t *", ib);
+    local c_ib = ffi.cast("ib_engine_t *", ib)
+    local c_event = ffi.cast("int", event)
     local l_ib = newEngine(ib)
     local l_arg
     local m
 
-    if     event == c.conn_started_event then
+    if     c_event == c.conn_started_event then
         l_arg = newConn(arg)
-    elseif event == c.conn_finished_event then
+    elseif c_event == c.conn_finished_event then
         l_arg = newConn(arg)
-    elseif event == c.tx_started_event then
+    elseif c_event == c.tx_started_event then
         l_arg = newTx(arg)
-    elseif event == c.tx_process_event then
+    elseif c_event == c.tx_process_event then
         l_arg = newTx(arg)
-    elseif event == c.tx_finished_event then
+    elseif c_event == c.tx_finished_event then
         l_arg = newTx(arg)
-    elseif event == c.handle_context_conn_event then
+    elseif c_event == c.handle_context_conn_event then
         l_arg = newConn(arg)
-    elseif event == c.handle_connect_event then
+    elseif c_event == c.handle_connect_event then
         l_arg = newConn(arg)
-    elseif event == c.handle_context_tx_event then
+    elseif c_event == c.handle_context_tx_event then
         l_arg = newTx(arg)
-    elseif event == c.handle_request_headers_event then
+    elseif c_event == c.handle_request_headers_event then
         l_arg = newTx(arg)
-    elseif event == c.handle_request_event then
+    elseif c_event == c.handle_request_event then
         l_arg = newTx(arg)
-    elseif event == c.handle_response_headers_event then
+    elseif c_event == c.handle_response_headers_event then
         l_arg = newTx(arg)
-    elseif event == c.handle_response_event then
+    elseif c_event == c.handle_response_event then
         l_arg = newTx(arg)
-    elseif event == c.handle_disconnect_event then
+    elseif c_event == c.handle_disconnect_event then
         l_arg = newConn(arg)
-    elseif event == c.handle_postprocess_event then
+    elseif c_event == c.handle_postprocess_event then
+        l_arg = newTx(arg)
+    elseif c_event == c.conn_opened_event then
         l_arg = newConn(arg)
-    elseif event == c.conn_opened_event then
-        l_arg = newConn(arg)
-    elseif event == c.conn_data_in_event then
+    elseif c_event == c.conn_data_in_event then
         l_arg = newConnData(arg)
-    elseif event == c.conn_data_out_event then
+    elseif c_event == c.conn_data_out_event then
         l_arg = newConnData(arg)
-    elseif event == c.conn_closed_event then
+    elseif c_event == c.conn_closed_event then
         l_arg = newConn(arg)
-    elseif event == c.tx_data_in_event then
+    elseif c_event == c.tx_data_in_event then
         l_arg = newTxData(arg)
-    elseif event == c.tx_data_out_event then
+    elseif c_event == c.tx_data_out_event then
         l_arg = newTxData(arg)
-    elseif event == c.request_started_event then
+    elseif c_event == c.request_started_event then
         l_arg = newTx(arg)
-    elseif event == c.request_headers_event then
+    elseif c_event == c.request_headers_event then
         l_arg = newTx(arg)
-    elseif event == c.request_body_event then
+    elseif c_event == c.request_body_event then
         l_arg = newTx(arg)
-    elseif event == c.request_finished_event then
+    elseif c_event == c.request_finished_event then
         l_arg = newTx(arg)
-    elseif event == c.response_started_event then
+    elseif c_event == c.response_started_event then
         l_arg = newTx(arg)
-    elseif event == c.response_headers_event then
+    elseif c_event == c.response_headers_event then
         l_arg = newTx(arg)
-    elseif event == c.response_body_event then
+    elseif c_event == c.response_body_event then
         l_arg = newTx(arg)
-    elseif event == c.response_finished_event then
+    elseif c_event == c.response_finished_event then
         l_arg = newTx(arg)
     else
         ib_log_debug(l_ib, 4, "Unhandled event for module \"%s\": %d",
