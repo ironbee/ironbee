@@ -272,8 +272,8 @@ ffi.cdef[[
         size_t         data_len;
         uint8_t        type;
         uint8_t        activity;
-        uint8_t        pri_cat;
-        uint8_t        sec_cat;
+        uint8_t        pri_class;
+        uint8_t        sec_class;
         uint8_t        confidence;
         uint8_t        severity;
         uint8_t        sys_env;
@@ -352,8 +352,8 @@ ffi.cdef[[
                                    const char *rule_id,
                                    uint8_t type,
                                    uint8_t activity,
-                                   uint8_t pri_cat,
-                                   uint8_t sec_cat,
+                                   uint8_t pri_class,
+                                   uint8_t sec_class,
                                    uint8_t confidence,
                                    uint8_t severity,
                                    uint8_t sys_env,
@@ -766,6 +766,7 @@ function ib_matcher_match_field(m, patt, flags, f)
     return c.ib_matcher_match_field(m, cpatt, flags, c_f)
 end
 
+-- TODO: Make this accept a table (named parameters)???
 function ib_logevent_create(pool, rule_id, type, activity, pri_class, sec_class,
                             confidence, severity, sys_env, rec_action,
                             fmt, ...)
@@ -777,8 +778,8 @@ function ib_logevent_create(pool, rule_id, type, activity, pri_class, sec_class,
                               rule_id,
                               ffi.cast("uint8_t", type),
                               ffi.cast("uint8_t", activity),
-                              ffi.cast("uint8_t", pri_cat),
-                              ffi.cast("uint8_t", sec_cat),
+                              ffi.cast("uint8_t", pri_class),
+                              ffi.cast("uint8_t", sec_class),
                               ffi.cast("uint8_t", confidence),
                               ffi.cast("uint8_t", severity),
                               ffi.cast("uint8_t", sys_env),

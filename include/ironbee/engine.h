@@ -1506,8 +1506,8 @@ struct ib_logevent_t {
     /// @todo uint8_t types should be typedef or enum?
     uint8_t        type;         /**< Event type */
     uint8_t        activity;     /**< Event activity (recon, attache, etc.) */
-    uint8_t        pri_cat;      /**< Primary category (ex: injection) */
-    uint8_t        sec_cat;      /**< Secondary categoty (ex: SQL) */
+    uint8_t        pri_class;    /**< Primary class (ex: INJECTION) */
+    uint8_t        sec_class;    /**< Secondary class (ex: SQL) */
     uint8_t        confidence;   /**< Event confidence (percent) */
     uint8_t        severity;     /**< Event severity (0-100?) */
     uint8_t        sys_env;      /**< System environment (pub or priv)  */
@@ -1524,8 +1524,8 @@ struct ib_logevent_t {
  * @param pool Memory pool
  * @param type Event type
  * @param activity Event activity
- * @param pri_cat Event primary category
- * @param sec_cat Event secondary category
+ * @param pri_class Event primary class
+ * @param sec_class Event secondary class
  * @param confidence Event confidence
  * @param severity Event severity
  * @param sys_env Event system environment
@@ -1539,8 +1539,8 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
                                           const char *rule_id,
                                           uint8_t type,
                                           uint8_t activity,
-                                          uint8_t pri_cat,
-                                          uint8_t sec_cat,
+                                          uint8_t pri_class,
+                                          uint8_t sec_class,
                                           uint8_t confidence,
                                           uint8_t severity,
                                           uint8_t sys_env,

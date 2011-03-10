@@ -919,7 +919,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"source-version\": \"%s\",\r\n"
                         "      \"type\": \"%s\",\r\n"
                         "      \"activity\": \"%s\",\r\n"
-                        "      \"category\": \"%s/%s\",\r\n"
+                        "      \"class\": \"%s/%s\",\r\n"
                         "      \"confidence\": %u,\r\n"
                         "      \"severity\": %u,\r\n"
                         "      \"sys-env\": \"%s\",\r\n"
@@ -936,8 +936,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         e->source_ver ? e->source_ver : "-",
                         e->type ? "TODO:LookupText" : "-",
                         e->activity ? "TODO:LookupText" : "-",
-                        e->pri_cat ? "TODO:LookupText" : "-",
-                        e->sec_cat ? "TODO:LookupText" : "-",
+                        e->pri_class ? "TODO:LookupText" : "-",
+                        e->sec_class ? "TODO:LookupText" : "-",
                         e->confidence,
                         e->severity,
                         e->sys_env ? "TODO:LookupText" : "-",

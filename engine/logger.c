@@ -89,13 +89,15 @@ static void default_logger(FILE *fp, int level,
 
 /* -- Log Event Routines -- */
 
+/// @todo Change this to _ex function with all fields and only use
+///       the required fields here.
 ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                ib_mpool_t *pool,
                                const char *rule_id,
                                uint8_t type,
                                uint8_t activity,
-                               uint8_t pri_cat,
-                               uint8_t sec_cat,
+                               uint8_t pri_class,
+                               uint8_t sec_class,
                                uint8_t confidence,
                                uint8_t severity,
                                uint8_t sys_env,
@@ -123,8 +125,8 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
     (*ple)->rule_id = rule_id;
     (*ple)->type = type;
     (*ple)->activity = activity;
-    (*ple)->pri_cat = pri_cat;
-    (*ple)->sec_cat = sec_cat;
+    (*ple)->pri_class = pri_class;
+    (*ple)->sec_class = sec_class;
     (*ple)->confidence = confidence;
     (*ple)->severity = severity;
     (*ple)->sys_env = sys_env;
