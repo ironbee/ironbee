@@ -1456,7 +1456,7 @@ ib_status_t DLL_PUBLIC ib_clog_event(ib_context_t *ctx,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_clog_event_remove(ib_context_t *ctx,
-                                            uint64_t id);
+                                            uint32_t id);
 
 /**
  * Get a list of pending events to be logged.
@@ -1495,12 +1495,12 @@ void DLL_PUBLIC ib_clog_auditlog_write(ib_context_t *ctx);
  */
 
 struct ib_logevent_t {
-    /// @todo ID should be another type (structure?)
-    uint64_t       id;           /**< Event ID */
-    char          *publisher;    /**< Publisher name */
-    char          *source;       /**< Source identifier */
-    char          *source_ver;   /**< Source version string */
-    char          *msg;          /**< Event message */
+    uint32_t       event_id;     /**< Event ID */
+    const char    *rule_id;      /**< Rule ID (if any) */
+    const char    *publisher;    /**< Publisher name */
+    const char    *source;       /**< Source identifier */
+    const char    *source_ver;   /**< Source version string */
+    const char    *msg;          /**< Event message */
     uint8_t       *data;         /**< Event data that matched */
     size_t         data_len;     /**< Event data size */
     /// @todo uint8_t types should be typedef or enum?
@@ -1536,6 +1536,7 @@ struct ib_logevent_t {
  */
 ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
                                           ib_mpool_t *pool,
+                                          const char *rule_id,
                                           uint8_t type,
                                           uint8_t activity,
                                           uint8_t pri_cat,

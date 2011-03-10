@@ -262,11 +262,12 @@ ffi.cdef[[
     };
 
     struct ib_logevent_t {
-        uint64_t       id;
-        char          *publisher;
-        char          *source;
-        char          *source_ver;
-        char          *msg;
+        uint32_t       event_id;
+        const char    *rule_id;
+        const char    *publisher;
+        const char    *source;
+        const char    *source_ver;
+        const char    *msg;
         uint8_t       *data;
         size_t         data_len;
         uint8_t        type;
@@ -348,6 +349,7 @@ ffi.cdef[[
     /* Logevent */
     ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                    ib_mpool_t *pool,
+                                   const char *rule_id,
                                    uint8_t type,
                                    uint8_t activity,
                                    uint8_t pri_cat,
@@ -764,7 +766,7 @@ function ib_matcher_match_field(m, patt, flags, f)
     return c.ib_matcher_match_field(m, cpatt, flags, c_f)
 end
 
-function ib_logevent_create(pool, type, activity, pri_cat, sec_cat,
+function ib_logevent_create(pool, rule_id, type, activity, pri_class, sec_class,
                             confidence, severity, sys_env, rec_action,
                             fmt, ...)
     local c_pool = pool.cvalue()
@@ -772,6 +774,7 @@ function ib_logevent_create(pool, type, activity, pri_cat, sec_cat,
     local rc
 
     rc = c.ib_logevent_create(c_le, c_pool,
+                              rule_id,
                               ffi.cast("uint8_t", type),
                               ffi.cast("uint8_t", activity),
                               ffi.cast("uint8_t", pri_cat),

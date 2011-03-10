@@ -127,7 +127,7 @@ static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
 static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
 {
     ib_log_alert(epi->pr->ib, 1, "Event [id %016" PRIxMAX "][type %d]: %s",
-                 e->id, e->type, e->msg);
+                 e->event_id, e->type, e->msg);
     return IB_OK;
 }
 
@@ -742,7 +742,7 @@ static ib_status_t logevent_api_add_event(ib_provider_inst_t *epi,
  * @returns Status code
  */
 static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
-                                             uint64_t id)
+                                             uint32_t id)
 {
     IB_FTRACE_INIT(logevent_api_remove_event);
     ib_list_t *events;
@@ -752,7 +752,7 @@ static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
     events = (ib_list_t *)epi->data;
     IB_LIST_LOOP_SAFE(events, node, node_next) {
         ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(node);
-        if (e->id == id) {
+        if (e->event_id == id) {
             ib_list_node_remove(events, node);
             IB_FTRACE_RET_STATUS(IB_OK);
         }

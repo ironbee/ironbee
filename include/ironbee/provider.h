@@ -572,7 +572,7 @@ IB_PROVIDER_DECLARE_API(logevent) {
         ib_status_t,
         remove_event,
         /// @todo ID should be another type (structure?)
-        (ib_provider_inst_t *epi, uint64_t id)
+        (ib_provider_inst_t *epi, uint32_t id)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,

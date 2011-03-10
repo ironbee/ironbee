@@ -219,6 +219,7 @@ function onEventHandleRequestHeaders(ib, tx)
                 tx.ctx(), 
                 ironbee.ib_logevent_create(
                     tx.mp(),
+                    "-",
                     0, 0, 0, 0, 0, 0, 0, 0,
                     "Request Line matches: %s", patt
                 )

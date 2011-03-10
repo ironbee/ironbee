@@ -91,6 +91,7 @@ static void default_logger(FILE *fp, int level,
 
 ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                ib_mpool_t *pool,
+                               const char *rule_id,
                                uint8_t type,
                                uint8_t activity,
                                uint8_t pri_cat,
@@ -114,11 +115,12 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
 
     /// @todo Need a true unique id generator
     gettimeofday(&tv, NULL);
-    (*ple)->id = (tv.tv_sec << 32) + tv.tv_usec;
+    (*ple)->event_id = (tv.tv_sec << (32-8)) + tv.tv_usec;
 
     /// @todo Generate the remaining portions of the event
 
     (*ple)->mp = pool;
+    (*ple)->rule_id = rule_id;
     (*ple)->type = type;
     (*ple)->activity = activity;
     (*ple)->pri_cat = pri_cat;
@@ -220,7 +222,7 @@ ib_status_t ib_clog_event(ib_context_t *ctx,
 }
 
 ib_status_t ib_clog_event_remove(ib_context_t *ctx,
-                                 uint64_t id)
+                                 uint32_t id)
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
 
