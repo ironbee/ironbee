@@ -187,18 +187,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     const char *fn = "/tmp/ironbee-audit.log";
     int ec;
 
-    if (cfg == NULL) {
-        cfg = (core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
-
-        if (cfg == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-
-        /// @todo Add a random id to this
-        cfg->boundary = log->tx->id ? log->tx->id : "FixMe-No-Tx-on-Audit";
-        log->cfg_data = cfg;
-    }
-
     if (cfg->fp == NULL) {
         cfg->fp = fopen(fn, "wb");
         if (cfg->fp == NULL) {
@@ -1247,6 +1235,7 @@ static void ib_timestamp(char *buf, ib_timeval_t *tv)
 static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT(ib_auditlog_add_part_header);
+    core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
@@ -1286,6 +1275,12 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                        "log-format",
                        (uint8_t *)log_format,
                        strlen(log_format));
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "log-id",
+                       (uint8_t *)cfg->boundary,
+                       strlen(cfg->boundary));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
@@ -1612,9 +1607,12 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                                              void *cbdata)
 {
     IB_FTRACE_INIT(logevent_hook_postprocess);
-    ib_auditlog_t *auditlog;
+    ib_auditlog_t *log;
+    core_audit_cfg_t *cfg;
     ib_provider_inst_t *audit;
     struct timeval tv;
+    uint32_t boundary_rand = rand(); /// @todo better random num
+    char boundary[46];
     ib_status_t rc;
 
     /* Mark the audit log time. */
@@ -1622,36 +1620,50 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
 
     /* Auditing */
     /// @todo Only create if needed
-    auditlog = (ib_auditlog_t *)ib_mpool_calloc(tx->mp, 1, sizeof(*auditlog));
-    if (auditlog == NULL) {
+    log = (ib_auditlog_t *)ib_mpool_calloc(tx->mp, 1, sizeof(*log));
+    if (log == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    auditlog->logtime.tv_sec = tv.tv_sec;
-    auditlog->logtime.tv_usec = tv.tv_usec;
-    auditlog->ib = ib;
-    auditlog->mp = tx->mp;
-    auditlog->ctx = tx->ctx;
-    auditlog->tx = tx;
+    log->logtime.tv_sec = tv.tv_sec;
+    log->logtime.tv_usec = tv.tv_usec;
+    log->ib = ib;
+    log->mp = tx->mp;
+    log->ctx = tx->ctx;
+    log->tx = tx;
 
-    rc = ib_list_create(&auditlog->parts, auditlog->mp);
+    rc = ib_list_create(&log->parts, log->mp);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Create a unique MIME boundary. */
+    snprintf(boundary, sizeof(boundary), "%08x-%s",
+             boundary_rand, log->tx->id ? log->tx->id : "FixMe-No-Tx-on-Audit");
+
+    /* Create the core config. */
+    cfg = (core_audit_cfg_t *)ib_mpool_calloc(log->mp, 1, sizeof(*cfg));
+    if (cfg == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    cfg->boundary = boundary;
+    log->cfg_data = cfg;
+
+
     /* Add all the parts to the log. */
     /// @todo Parts should be configurable
-    ib_auditlog_add_part_header(auditlog);
-    ib_auditlog_add_part_events(auditlog);
-    ib_auditlog_add_part_http_request_meta(auditlog);
-    ib_auditlog_add_part_http_response_meta(auditlog);
-    ib_auditlog_add_part_http_request_head(auditlog);
-    ib_auditlog_add_part_http_response_head(auditlog);
+    ib_auditlog_add_part_header(log);
+    ib_auditlog_add_part_events(log);
+    ib_auditlog_add_part_http_request_meta(log);
+    ib_auditlog_add_part_http_response_meta(log);
+    ib_auditlog_add_part_http_request_head(log);
+    ib_auditlog_add_part_http_response_head(log);
 
     /* Audit Provider */
     rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
                                      tx->ctx->core_cfg->audit, &audit,
-                                     ib->mp, auditlog);
+                                     ib->mp, log);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_AUDIT, rc);
         IB_FTRACE_RET_STATUS(rc);
