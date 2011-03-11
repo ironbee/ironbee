@@ -109,6 +109,12 @@ typedef enum {
 #define IB_TX_FRES_SEENBODY     (1 <<11) /**< Response body seen */
 #define IB_TX_FRES_FINISHED     (1 <<12) /**< Response finished  */
 
+/** Timeval Structure */
+struct ib_timeval_t {
+    time_t tv_sec;
+    time_t tv_usec;
+};
+
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
 typedef enum {
@@ -169,12 +175,6 @@ struct ib_auditlog_part_t {
     void               *part_data;       /**< Arbitrary part data */
     void               *gen_data;        /**< Data for generator function */
     ib_auditlog_part_gen_fn_t fn_gen;    /**< Data generator function */
-};
-
-/** Timeval Structure */
-struct ib_timeval_t {
-    uint32_t tv_sec;
-    uint32_t tv_usec;
 };
 
 /**
