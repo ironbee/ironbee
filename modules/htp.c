@@ -899,6 +899,11 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  NULL);
 
         modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_protocol",
+                                 tx->request_protocol,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri",
                                  tx->request_uri_normalized,
                                  NULL);
