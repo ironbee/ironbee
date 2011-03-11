@@ -41,6 +41,9 @@ extern "C" {
 /** Turn a constant into a string constant */
 #define IB_STRINGIFY(s)   #s
 
+/* Name */
+#define IB_PRODUCT_NAME IB_STRINGIFY(IronBee)
+
 /* Version definitions */
 #define IB_VERSION_MAJOR  0 /**< Major version */
 #define IB_VERSION_MINOR  2 /**< Minor version */
