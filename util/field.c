@@ -132,9 +132,15 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
             break;
         case IB_FTYPE_NUM:
             (*pf)->val->u.num =
-                (pval != NULL) ? *(uint64_t *)pval : 0;
+                (pval != NULL) ? *(ib_num_t *)pval : 0;
             ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=%d", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (int)(*pf)->val->u.num);
             (*pf)->pval = (void *)&((*pf)->val->u.num);
+            break;
+        case IB_FTYPE_UNUM:
+            (*pf)->val->u.unum =
+                (pval != NULL) ? *(ib_num_t *)pval : 0;
+            ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=%d", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (unsigned int)(*pf)->val->u.unum);
+            (*pf)->pval = (void *)&((*pf)->val->u.unum);
             break;
         case IB_FTYPE_GENERIC:
         default:
@@ -205,6 +211,9 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
             break;
         case IB_FTYPE_NUM:
             ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), *(int **)((*pf)->pval), (*pf)->pval);
+            break;
+        case IB_FTYPE_UNUM:
+            ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%u (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), *(unsigned int **)((*pf)->pval), (*pf)->pval);
             break;
         case IB_FTYPE_GENERIC:
         default:
@@ -306,8 +315,12 @@ ib_status_t ib_field_setv(ib_field_t *f,
             ib_util_log_debug(9, "SETV FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)(f->pval), f->pval);
             break;
         case IB_FTYPE_NUM:
-            *(uint64_t *)(f->pval) = *(uint64_t *)pval;
+            *(ib_num_t *)(f->pval) = *(ib_num_t *)pval;
             ib_util_log_debug(9, "SETV FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)(f->pval), f->pval);
+            break;
+        case IB_FTYPE_UNUM:
+            *(ib_unum_t *)(f->pval) = *(ib_unum_t *)pval;
+            ib_util_log_debug(9, "SETV FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)(f->pval), f->pval);
             break;
         case IB_FTYPE_GENERIC:
         default:
