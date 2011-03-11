@@ -226,7 +226,8 @@ struct ib_tx_t {
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_hash_t          *data;            /**< Generic data store */
-    ib_timeval_t        started;         /**< Transaction start time */
+    ib_timeval_t        started;         /**< Tx (request) start time */
+    ib_timeval_t        tv_response;     /**< Response start time */
     const char          id[IB_UUID_HEX_SIZE];/**< Transaction ID */
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */

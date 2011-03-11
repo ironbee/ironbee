@@ -1174,7 +1174,13 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
     IB_FTRACE_INIT(ib_state_notify_response_started);
+    struct timeval tv;
     ib_status_t rc;
+
+    /// @todo Need to avoid gettimeofday and set from parser
+    gettimeofday(&tv, NULL);
+    tx->tv_response.tv_sec = tv.tv_sec;
+    tx->tv_response.tv_usec = tv.tv_usec;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
