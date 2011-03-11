@@ -29,6 +29,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/time.h> /* gettimeofday */
+#include <time.h>
 #include <errno.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
@@ -999,19 +1001,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
      * means it is done. Anything else is a node in the event list.
      */
     if (part->gen_data == NULL) {
-        ib_list_t *list;
-        ib_status_t rc;
-
-
-        rc = ib_clog_events_get(part->log->ctx, &list);
-
-        /* Error. */
-        if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Error fetching event list: %d", rc);
-            *chunk = (const uint8_t *)"{}";
-            part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
-        }
+        ib_list_t *list = (ib_list_t *)part->part_data;
 
         /* No events. */
         if (ib_list_elements(list) == 0) {
@@ -1107,10 +1097,244 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             return clen + 2;
         }
         memcpy(*(uint8_t **)chunk + clen, "  ]\r\n}", 6);
-        return clen + 8;
+        return clen + 6;
     }
 
     return strlen(*(const char **)chunk);
+}
+
+/**
+ * @internal
+ * Generate a timestamp formatted for the audit log.
+ *
+ * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
+ * Example: 2010-11-04T12:42:36.3874-0800
+ *
+ * @param buf Buffer at least 31 bytes in length
+ * @param sec Epoch time in seconds
+ * @param usec Optional microseconds
+ */
+static void ib_timestamp(char *buf, ib_timeval_t *tv)
+{
+    struct tm *tm = localtime((time_t *)&tv->tv_sec);
+    
+    strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
+    snprintf(buf + 19, 12, ".%04" PRIdMAX, tv->tv_usec);
+    strftime(buf + 24, 6, "%z", tm);
+}
+
+#define CORE_AUDITLOG_FORMAT "http-message/1"
+
+static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(ib_auditlog_add_part_header);
+    ib_engine_t *ib = log->ib;
+    ib_mpool_t *pool = log->mp;
+    ib_field_t *f;
+    ib_list_t *list;
+    char *tstamp;
+    char *log_format;
+    ib_status_t rc;
+
+    /* Timestamp */
+    tstamp = (char *)ib_mpool_alloc(pool, 30);
+    if (tstamp == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    ib_timestamp(tstamp, &log->logtime);
+    ib_log_debug(ib, 4, "TSTAMP: %s (%" PRIuMAX ")", tstamp, log->logtime.tv_sec);
+
+    /* Log Format */
+    log_format = (char *)ib_mpool_memdup(pool,
+                                         CORE_AUDITLOG_FORMAT,
+                                         strlen(CORE_AUDITLOG_FORMAT) + 1);
+    if (log_format == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Generate a list of fields in this part. */
+    rc = ib_list_create(&list, pool);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_field_alias_mem(&f, pool,
+                       "log-timestamp",
+                       (uint8_t *)tstamp,
+                       strlen(tstamp));
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "log-format",
+                       (uint8_t *)log_format,
+                       strlen(log_format));
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "sensor-id",
+                       (uint8_t *)ib->sensor_id,
+                       strlen(ib->sensor_id));
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "sensor-version",
+                       (uint8_t *)ib->sensor_version,
+                       strlen(ib->sensor_version));
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "sensor-hostname",
+                       (uint8_t *)ib->sensor_hostname,
+                       strlen(ib->sensor_hostname));
+    ib_list_push(list, f);
+
+    /* Add the part to the auditlog. */
+    rc = ib_auditlog_part_add(log,
+                              "header",
+                              "application/json",
+                              list,
+                              ib_auditlog_gen_json_flist,
+                              NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(ib_auditlog_add_part_events);
+    ib_list_t *list;
+    ib_status_t rc;
+
+    /* Get the list of events. */
+    rc = ib_clog_events_get(log->ctx, &list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Add the part to the auditlog. */
+    rc = ib_auditlog_part_add(log,
+                              "events",
+                              "application/json",
+                              list,
+                              ib_auditlog_gen_json_events,
+                              NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(ib_auditlog_add_part_http_request_meta);
+    ib_engine_t *ib = log->ib;
+    ib_tx_t *tx = log->tx;
+    ib_unum_t message_num = tx ? tx->conn->tx_count : 0;
+    ib_mpool_t *pool = log->mp;
+    ib_field_t *f;
+    ib_list_t *list;
+    char *tstamp;
+    char *log_format;
+    ib_status_t rc;
+
+    /* Timestamp */
+    tstamp = (char *)ib_mpool_alloc(pool, 30);
+    if (tstamp == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    ib_timestamp(tstamp, &tx->started);
+
+    /* Log Format */
+    log_format = (char *)ib_mpool_memdup(pool,
+                                         CORE_AUDITLOG_FORMAT,
+                                         strlen(CORE_AUDITLOG_FORMAT) + 1);
+    if (log_format == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Generate a list of fields in this part. */
+    rc = ib_list_create(&list, pool);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_field_alias_mem(&f, pool,
+                       "request-timestamp",
+                       (uint8_t *)tstamp,
+                       strlen(tstamp));
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "message-id",
+                       (uint8_t *)tx->id,
+                       strlen(tx->id));
+    ib_list_push(list, f);
+
+    ib_field_create(&f, pool,
+                    "message-num",
+                    IB_FTYPE_UNUM,
+                    &message_num);
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "remote-addr",
+                       (uint8_t *)tx->conn->remote_ipstr,
+                       strlen(tx->conn->remote_ipstr));
+    ib_list_push(list, f);
+
+    ib_field_create(&f, pool,
+                    "remote-port",
+                    IB_FTYPE_UNUM,
+                    &tx->conn->remote_port);
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "local-addr",
+                       (uint8_t *)tx->conn->local_ipstr,
+                       strlen(tx->conn->local_ipstr));
+    ib_list_push(list, f);
+
+    ib_field_create(&f, pool,
+                    "local-port",
+                    IB_FTYPE_UNUM,
+                    &tx->conn->local_port);
+    ib_list_push(list, f);
+
+    ib_field_alias_mem(&f, pool,
+                       "request-uri",
+                       (uint8_t *)tx->path,
+                       strlen(tx->path));
+    ib_list_push(list, f);
+
+    rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_protocol"), &f);
+    if (rc == IB_OK) {
+        ib_list_push(list, f);
+    }
+    else {
+        ib_log_error(ib, 4, "Failed to get request_protocol: %d", rc);
+    }
+
+    rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_method"), &f);
+    if (rc == IB_OK) {
+        ib_list_push(list, f);
+    }
+    else {
+        ib_log_error(ib, 4, "Failed to get request_method: %d", rc);
+    }
+
+    ib_field_alias_mem(&f, pool,
+                       "request-hostname",
+                       (uint8_t *)tx->hostname,
+                       strlen(tx->hostname));
+    ib_list_push(list, f);
+
+    /* Add the part to the auditlog. */
+    rc = ib_auditlog_part_add(log,
+                              "http-request-metadata",
+                              "application/json",
+                              list,
+                              ib_auditlog_gen_json_flist,
+                              NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 
@@ -1132,7 +1356,11 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     ib_auditlog_t *auditlog;
     ib_provider_inst_t *audit;
     ib_list_t *list;
+    struct timeval tv;
     ib_status_t rc;
+
+    /* Mark the audit log time. */
+    gettimeofday(&tv, NULL);
 
     /* Auditing */
     /// @todo Only create if needed
@@ -1141,6 +1369,8 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
+    auditlog->logtime.tv_sec = tv.tv_sec;
+    auditlog->logtime.tv_usec = tv.tv_usec;
     auditlog->ib = ib;
     auditlog->mp = tx->mp;
     auditlog->ctx = tx->ctx;
@@ -1151,37 +1381,13 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+
+    /* Add all the parts to the log. */
     /// @todo Parts should be configurable
+    ib_auditlog_add_part_header(auditlog);
+    ib_auditlog_add_part_events(auditlog);
+    ib_auditlog_add_part_http_request_meta(auditlog);
 
-    /* Part: header */
-    ib_list_create(&list, auditlog->mp);
-    /// @todo Create real data
-    ib_auditlog_part_add(auditlog,
-                         "header",
-                         "application/json",
-                         list,
-                         ib_auditlog_gen_json_list,
-                         NULL);
-
-    /* Part: events */
-    ib_list_create(&list, auditlog->mp);
-    /// @todo Create real data
-    ib_auditlog_part_add(auditlog,
-                         "events",
-                         "application/json",
-                         list,
-                         ib_auditlog_gen_json_events,
-                         NULL);
-
-    /* Part: http-request-metadata */
-    ib_list_create(&list, auditlog->mp);
-    /// @todo Create real data
-    ib_auditlog_part_add(auditlog,
-                         "http-request-metadata",
-                         "application/json",
-                         list,
-                         ib_auditlog_gen_json_flist,
-                         NULL);
 
     /* Part: http-request-headers */
     ib_list_create(&list, auditlog->mp);

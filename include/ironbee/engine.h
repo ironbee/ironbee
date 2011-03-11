@@ -143,41 +143,6 @@ typedef ib_status_t (*ib_context_fn_t)(ib_context_t *ctx,
                                        void *cbdata);
 
 /**
- * Audit log part generator function.
- *
- * This function is called repetitivly to generate the data logged
- * in an audit log part. The function should return zero when there
- * is no more data to log.
- *
- * @param part Audit log part
- * @param chunk Address in which chunk is written
- *
- * @returns Size of the chunk or zero to indicate completion
- */
-typedef size_t (*ib_auditlog_part_gen_fn_t)(ib_auditlog_part_t *part,
-                                            const uint8_t **chunk);
-
-/** Audit Log */
-struct ib_auditlog_t {
-    ib_engine_t        *ib;              /**< Engine handle */
-    ib_mpool_t         *mp;              /**< Connection memory pool */
-    ib_context_t       *ctx;             /**< Config context */
-    ib_tx_t            *tx;              /**< Transaction being logged */
-    void               *cfg_data;        /**< Implementation config data */
-    ib_list_t          *parts;           /**< List of parts */
-};
-
-/** Audit Log Part */
-struct ib_auditlog_part_t {
-    ib_auditlog_t      *log;             /**< Audit log */
-    const char         *name;            /**< Part name */
-    const char         *content_type;    /**< Part content type */
-    void               *part_data;       /**< Arbitrary part data */
-    void               *gen_data;        /**< Data for generator function */
-    ib_auditlog_part_gen_fn_t fn_gen;    /**< Data generator function */
-};
-
-/**
  * @internal
  * Universal Unique ID Structure.
  *
@@ -267,6 +232,42 @@ struct ib_tx_t {
     const char         *hostname;        /**< Hostname used in the request */
     const char         *path;            /**< Path used in the request */
     ib_flags_t          flags;           /**< Transaction flags */
+};
+
+/**
+ * Audit log part generator function.
+ *
+ * This function is called repetitivly to generate the data logged
+ * in an audit log part. The function should return zero when there
+ * is no more data to log.
+ *
+ * @param part Audit log part
+ * @param chunk Address in which chunk is written
+ *
+ * @returns Size of the chunk or zero to indicate completion
+ */
+typedef size_t (*ib_auditlog_part_gen_fn_t)(ib_auditlog_part_t *part,
+                                            const uint8_t **chunk);
+
+/** Audit Log */
+struct ib_auditlog_t {
+    ib_engine_t        *ib;              /**< Engine handle */
+    ib_mpool_t         *mp;              /**< Connection memory pool */
+    ib_timeval_t        logtime;         /**< Auditlog time */
+    ib_context_t       *ctx;             /**< Config context */
+    ib_tx_t            *tx;              /**< Transaction being logged */
+    void               *cfg_data;        /**< Implementation config data */
+    ib_list_t          *parts;           /**< List of parts */
+};
+
+/** Audit Log Part */
+struct ib_auditlog_part_t {
+    ib_auditlog_t      *log;             /**< Audit log */
+    const char         *name;            /**< Part name */
+    const char         *content_type;    /**< Part content type */
+    void               *part_data;       /**< Arbitrary part data */
+    void               *gen_data;        /**< Data for generator function */
+    ib_auditlog_part_gen_fn_t fn_gen;    /**< Data generator function */
 };
 
 /// @todo Maybe a ib_create_ex() that takes a config?
