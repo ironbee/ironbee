@@ -810,16 +810,53 @@ static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
 static size_t ib_auditlog_gen_raw(ib_auditlog_part_t *part,
                                   const uint8_t **chunk)
 {
-    //ib_list_t *list = (ib_list_t *)part->part_data;
+    ib_engine_t *ib = part->log->ib;
+    ib_list_node_t *node;
 
     if (part->gen_data == NULL) {
-        /// @todo Testing
-        *chunk = (uint8_t *)"TODO: Real data here";
-        part->gen_data = (void *)1;
+        ib_list_t *list = (ib_list_t *)part->part_data;
+
+        /* No data. */
+        if (ib_list_elements(list) == 0) {
+            ib_log_debug(ib, 4, "No data in audit log part: %s", part->name);
+            *chunk = NULL;
+            part->gen_data = (void *)-1;
+            return 0;
+        }
+
+        node = ib_list_first(list);
+        /// @todo Probably node data needs to be ib_bytestr_t instead
+        *chunk = (const uint8_t *)ib_list_node_data(node);
+
+        node = ib_list_node_next(node);
+        if (node != NULL) {
+            part->gen_data = node;
+        }
+        else {
+            part->gen_data = (void *)1;
+        }
+
+        /// @todo Need length
         return strlen(*(const char **)chunk);
     }
+    else if (part->gen_data == (void *)-1) {
+        part->gen_data = NULL;
+        return 0;
+    }
 
-    return 0;
+    node = (ib_list_node_t *)part->gen_data;
+    *chunk = (const uint8_t *)ib_list_node_data(node);
+
+    node = ib_list_node_next(node);
+    if (node != NULL) {
+        part->gen_data = node;
+    }
+    else {
+        part->gen_data = (void *)1;
+    }
+
+    /// @todo Need length
+    return strlen(*(const char **)chunk);
 }
 
 static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
