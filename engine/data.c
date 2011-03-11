@@ -43,7 +43,8 @@ ib_status_t ib_data_add(ib_provider_inst_t *dpi,
                         ib_field_t *f)
 {
     IB_FTRACE_INIT(ib_data_add);
-    IB_PROVIDER_API_TYPE(data) *api = dpi->pr->api;
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
 
     rc = api->add(dpi, f);
@@ -57,7 +58,8 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf)
 {
     IB_FTRACE_INIT(ib_data_add_num);
-    IB_PROVIDER_API_TYPE(data) *api = dpi->pr->api;
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -85,7 +87,8 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
                                   ib_field_t **pf)
 {
     IB_FTRACE_INIT(ib_data_add_nulstr);
-    IB_PROVIDER_API_TYPE(data) *api = dpi->pr->api;
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -114,7 +117,8 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
                                    ib_field_t **pf)
 {
     IB_FTRACE_INIT(ib_data_add_bytestr);
-    IB_PROVIDER_API_TYPE(data) *api = dpi->pr->api;
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -141,7 +145,8 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
                                 ib_field_t **pf)
 {
     IB_FTRACE_INIT(ib_data_add_list);
-    IB_PROVIDER_API_TYPE(data) *api = dpi->pr->api;
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -168,7 +173,8 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
                            ib_field_t **pf)
 {
     IB_FTRACE_INIT(ib_data_get);
-    IB_PROVIDER_API_TYPE(data) *api = dpi->pr->api;
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
 
     rc = api->get(dpi, name, nlen, pf);
