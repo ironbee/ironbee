@@ -710,7 +710,6 @@ ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
  * @{
  */
 
-/* Make sure to update ib_ftype_len[] if you update this */
 #define IB_FTYPE_GENERIC      0          /**< Generic pointer value */
 #define IB_FTYPE_NUM          1          /**< Numeric value */
 #define IB_FTYPE_UNUM         2          /**< Unsigned numeric value */
@@ -718,33 +717,55 @@ ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
 #define IB_FTYPE_BYTESTR      4          /**< Binary data value */
 #define IB_FTYPE_LIST         5          /**< List of fields */
 
+/**
+ * Dynamic field get function.
+ *
+ * @param f Field
+ * @param data Userdata
+ *
+ * @returns Value
+ */
+typedef void *(*ib_field_get_fn_t)(ib_field_t *f,
+                                   void *arg, size_t alen,
+                                   void *data);
+
+#if 0
+/**
+ * Dynamic field set function.
+ *
+ * @param f Field
+ * @param val Value to set
+ * @param data Userdata
+ *
+ * @returns Old value
+ */
+typedef void *(*ib_field_set_fn_t)(ib_field_t *f,
+                                   void *arg, size_t alen,
+                                   void *val, void *data);
+
+/**
+ * Dynamic field relative set function.
+ *
+ * @param f Field
+ * @param val Numeric incrementor value
+ * @param data Userdata
+ *
+ * @returns Old value
+ */
+typedef void *(*ib_field_rset_fn_t)(ib_field_t *f,
+                                    void *arg, size_t alen,
+                                    intmax_t val, void *data);
+#endif
+
+
 /** Field Structure */
 struct ib_field_t {
     ib_mpool_t               *mp;        /**< Memory pool */
     ib_ftype_t                type;      /**< Field type */
     const char               *name;      /**< Field name */
     size_t                    nlen;      /**< Field name length */
-    void                     *pval;      /**< Address where value is stored */
     ib_field_val_t           *val;       /**< Private value store */
 };
-
-/** Return field value for a field as "ib_num_t". */
-#define ib_field_value_num(f) (*(ib_num_t **)((f)->pval))
-
-/** Return field value for a field as "ib_unum_t". */
-#define ib_field_value_unum(f) (*(ib_unum_t **)((f)->pval))
-
-/** Return field value for a field as "ib_bytestr_t *". */
-#define ib_field_value_bytestr(f) (*(ib_bytestr_t **)((f)->pval))
-
-/** Return field value for a field as "void *". */
-#define ib_field_value_generic(f) (*(void **)((f)->pval))
-
-/** Return field value for a field as "char *". */
-#define ib_field_value_nulstr(f) (*(char **)((f)->pval))
-
-/** Return field value for a field as "ib_list_t *". */
-#define ib_field_value_list(f) (*(ib_list_t **)((f)->pval))
 
 /**
  * Create a field, copying name/data into the field.
@@ -884,6 +905,73 @@ ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
  */
 ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
                                      void *pval);
+
+
+/**
+ * Get the value stored in the field.
+ *
+ * @param f Field
+ *
+ * @returns Value stored in the field
+ */
+void DLL_PUBLIC *ib_field_value(ib_field_t *f);
+
+/** Return field value for a field as "ib_num_t *". */
+#define ib_field_value_num(f) (ib_num_t *)ib_field_value(f)
+
+/** Return field value for a field as "ib_unum_t *". */
+#define ib_field_value_unum(f) (ib_unum_t *)ib_field_value(f)
+
+/** Return field value for a field as "ib_bytestr_t *". */
+#define ib_field_value_bytestr(f) (ib_bytestr_t *)ib_field_value(f)
+
+/** Return field value for a field as "void *". */
+#define ib_field_value_generic(f) (void *)ib_field_value(f)
+
+/** Return field value for a field as "char *". */
+#define ib_field_value_nulstr(f) (char *)ib_field_value(f)
+
+/** Return field value for a field as "ib_list_t *". */
+#define ib_field_value_list(f) (ib_list_t *)ib_field_value(f)
+
+
+/**
+ * Set userdata for dynamic field access.
+ *
+ * @param f Field
+ * @param data Userdata
+ */
+void DLL_PUBLIC ib_field_dyn_set_data(ib_field_t *f,
+                                      void *data);
+
+/**
+ * Register dynamic get function.
+ *
+ * @param f Field
+ * @param fn_get Userdata
+ */
+void DLL_PUBLIC ib_field_dyn_register_get(ib_field_t *f,
+                                          ib_field_get_fn_t fn_get);
+
+#if 0
+/**
+ * Register dynamic set function.
+ *
+ * @param f Field
+ * @param fn_set Userdata
+ */
+void DLL_PUBLIC ib_field_dyn_register_set(ib_field_t *f,
+                                          ib_field_set_fn_t fn_set);
+
+/**
+ * Register dynamic rset function.
+ *
+ * @param f Field
+ * @param fn_rset Userdata
+ */
+void DLL_PUBLIC ib_field_dyn_register_rset(ib_field_t *f,
+                                           ib_field_rset_fn_t fn_rset);
+#endif
 
 /**
  * @} IronBeeUtilField

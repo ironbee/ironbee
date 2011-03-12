@@ -210,6 +210,7 @@ ffi.cdef[[
         ib_provider_inst_t *dpi;
         ib_hash_t          *data;
         ib_timeval_t        started;
+        ib_timeval_t        tv_request;
         const char          id[37];
         ib_tx_t            *next;
         const char         *hostname;
@@ -235,7 +236,6 @@ ffi.cdef[[
         ib_ftype_t          type;
         const char         *name;
         size_t              nlen;
-        void               *pval;
         ib_field_val_t     *val;
     };
 
@@ -285,6 +285,8 @@ ffi.cdef[[
 
 
 
+    /* Field */
+    void *ib_field_value(ib_field_t *f);
 
     /* Context */
     ib_context_t *ib_context_engine(ib_engine_t *ib);
@@ -556,16 +558,15 @@ local function newField(val)
         type = function() return ffi.cast("int", c_val.type) end,
         name = function() return ffi.string(c_val.name, c_val.nlen) end,
         nlen = function() return ffi.cast("size_t", c_val.nlen) end,
-        pval = function() return c_val.pval end,
     }
     -- TODO: Add metatable w/__tostring for each sub-type
     if c_val.type == c.IB_FTYPE_BYTESTR then
         t["value"] = function()
-            c_fval = ffi.cast("ib_bytestr_t **", c_val.pval)[0]
+            c_fval = ffi.cast("ib_bytestr_t **", c.ib_field_value(c_val))[0]
             return ffi.string(c.ib_bytestr_ptr(c_fval), c.ib_bytestr_length(c_fval))
         end
     elseif c_val.type == c.IB_FTYPE_LIST then
-        c_list = ffi.cast("ib_list_t **", c_val.pval)[0]
+        c_list = ffi.cast("ib_list_t **", c.ib_field_value(c_val))[0]
         t["value"] = function()
             -- Loop through and create a table of fields to return
             local l_vals = {}
@@ -615,12 +616,12 @@ local function newField(val)
 --         })
     elseif c_val.type == c.IB_FTYPE_NULSTR then
         t["value"] = function()
-            local c_fval = ffi.cast("const char **", c_val.pval)[0]
+            local c_fval = ffi.cast("const char **", c.ib_field_value(c_val))[0]
             return ffi.string(c_fval[0])
         end
     elseif c_val.type == c.IB_FTYPE_NUM then
         t["value"] = function()
-            local c_fval = ffi.cast("int64_t **", c_val.pval)[0]
+            local c_fval = ffi.cast("int64_t **", c.ib_field_value(c_val))[0]
             return base.tonumber(c_fval[0])
         end
     end

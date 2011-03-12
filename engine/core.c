@@ -362,12 +362,12 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
         case IB_FTYPE_NUM:
             /// @todo Make sure this is atomic
             /// @todo Check for overflow
-            *(intmax_t **)((f)->pval) += adjval;
+            *(ib_field_value_num(f)) += adjval;
             break;
         case IB_FTYPE_UNUM:
             /// @todo Make sure this is atomic
             /// @todo Check for overflow
-            *(uintmax_t **)((f)->pval) += adjval;
+            *(ib_field_value_unum(f)) += adjval;
             break;
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);

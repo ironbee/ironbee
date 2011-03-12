@@ -63,6 +63,13 @@ struct ib_hash_t {
  * This allows for multiple types of values to be stored within a field.
  */
 struct ib_field_val_t {
+    ib_field_get_fn_t  fn_get;        /**< Function to get a value. */
+#if 0
+    ib_field_set_fn_t  fn_set;        /**< Finction to set a value. */
+    ib_field_rset_fn_t fn_rset;       /**< Function to set a relative value. */
+#endif
+    void              *fndata;        /**< Data passed to function calls. */
+    void               *pval;         /**< Address where value is stored */
     union {
         ib_num_t       num;           /**< Generic numeric value */
         ib_unum_t      unum;          /**< Generic unsigned numeric value */

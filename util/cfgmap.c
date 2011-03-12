@@ -146,23 +146,27 @@ ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
 
     switch (f->type) {
         case IB_FTYPE_BYTESTR:
-            *(ib_bytestr_t **)pval = *(ib_bytestr_t **)f->pval;
-            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)(f->pval)), f->pval);
+            *(ib_bytestr_t **)pval = ib_field_value_bytestr(f);
+            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)pval), *(void **)pval);
             break;
         case IB_FTYPE_LIST:
-            *(ib_list_t **)pval = *(ib_list_t **)f->pval;
+            *(ib_list_t **)pval = ib_field_value_list(f);
             break;
         case IB_FTYPE_NULSTR:
-            *(char **)pval = *(char **)f->pval;
-            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)(f->pval), f->pval);
+            *(char **)pval = ib_field_value_nulstr(f);
+            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)pval, *(void **)pval);
             break;
         case IB_FTYPE_NUM:
-            *(uint64_t *)pval = *(uint64_t *)f->pval;
-            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)(f->pval), f->pval);
+            *(ib_num_t *)pval = *(ib_field_value_num(f));
+            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)pval, *(void **)pval);
+            break;
+        case IB_FTYPE_UNUM:
+            *(ib_unum_t *)pval = *(ib_field_value_unum(f));
+            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)pval, *(void **)pval);
             break;
         case IB_FTYPE_GENERIC:
         default:
-            *(void **)pval = *(void **)f->pval;
+            *(void **)pval = ib_field_value(f);
             break;
     }
 
