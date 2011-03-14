@@ -562,11 +562,11 @@ local function newField(val)
     -- TODO: Add metatable w/__tostring for each sub-type
     if c_val.type == c.IB_FTYPE_BYTESTR then
         t["value"] = function()
-            c_fval = ffi.cast("ib_bytestr_t **", c.ib_field_value(c_val))[0]
+            c_fval = ffi.cast("ib_bytestr_t *", c.ib_field_value(c_val))
             return ffi.string(c.ib_bytestr_ptr(c_fval), c.ib_bytestr_length(c_fval))
         end
     elseif c_val.type == c.IB_FTYPE_LIST then
-        c_list = ffi.cast("ib_list_t **", c.ib_field_value(c_val))[0]
+        c_list = ffi.cast("ib_list_t *", c.ib_field_value(c_val))
         t["value"] = function()
             -- Loop through and create a table of fields to return
             local l_vals = {}
@@ -616,12 +616,12 @@ local function newField(val)
 --         })
     elseif c_val.type == c.IB_FTYPE_NULSTR then
         t["value"] = function()
-            local c_fval = ffi.cast("const char **", c.ib_field_value(c_val))[0]
+            local c_fval = ffi.cast("const char *", c.ib_field_value(c_val))
             return ffi.string(c_fval[0])
         end
     elseif c_val.type == c.IB_FTYPE_NUM then
         t["value"] = function()
-            local c_fval = ffi.cast("int64_t **", c.ib_field_value(c_val))[0]
+            local c_fval = ffi.cast("ib_num_t *", c.ib_field_value(c_val))
             return base.tonumber(c_fval[0])
         end
     end
