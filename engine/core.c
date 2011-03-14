@@ -378,12 +378,12 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
 
 /**
  * @internal
- * Core data provider implementation to set a relative data field value.
+ * Core data provider implementation to get a data field.
  *
  * @param dpi Data provider instance
  * @param name Field name
  * @param nlen Field name length
- * @param adjval Value to adjust (add or subtract a numeric value)
+ * @param pf Address which field will be written
  *
  * @returns Status code
  */
@@ -401,12 +401,15 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 
 /**
  * @internal
- * Core data provider implementation to get a data field.
+ * Core data provider implementation to remove a data field.
+ *
+ * The data field which is removed is written to @ref pf if it
+ * is not NULL.
  *
  * @param dpi Data provider instance
  * @param name Field name
  * @param nlen Field name length
- * @param pf Address which field will be written
+ * @param pf Address which field will be written if not NULL
  *
  * @returns Status code
  */
