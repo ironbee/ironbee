@@ -179,21 +179,37 @@ function onEventHandleRequestHeaders(ib, tx)
     -- Request line is a scalar value (a field object type)
     local req_line = ironbee.ib_data_get(tx.dpi(), "request_line")
     ironbee.ib_log_debug(ib, 4, "Request line is a field type: %d", req_line.type())
-    ironbee.ib_log_debug(ib, 4, "Request Line: %p", req_line.cvalue())
-    --ironbee.ib_log_debug(ib, 4, "Request Line: %s", req_line.value())
+
+    -- The cvalue ("C" Value) is a pointer to the field structure, which is
+    -- not very useful in Lua, but shows that you do have a direct access
+    -- to the "C" inner workings:
+    ironbee.ib_log_debug(ib, 4, "Request Line cvalue: %p", req_line.cvalue())
+
+    -- The value is a Lua value (string) which can be used with other
+    -- Lua functions. Be aware, however, that calling value() makes a
+    -- copy of the underlying "C" representation to create the Lua version
+    -- and you may not want the overhead of doing thisi (see PCRE matcher
+    -- below for another option).
+    ironbee.ib_log_debug(ib, 4, "Request Line value: %s", req_line.value())
 
     -- Request headers are a collection (table of field objects)
     local req_headers = ironbee.ib_data_get(tx.dpi(), "request_headers")
-    ironbee.ib_log_debug(ib, 4, "Request headers is a field type: %d", req_headers.type())
+    ironbee.ib_log_debug(ib, 4, "Request Headers is a field type: %d", req_headers.type())
     if req_headers.type() == ironbee.IB_FTYPE_LIST then
         for k,f in base.pairs(req_headers.value()) do
             if f.type() == ironbee.IB_FTYPE_LIST then
-                ironbee.ib_log_debug(ib, 4, "Request Header: %s=<list>", k)
+                ironbee.ib_log_debug(ib, 4, "Request Header value: %s=<list>", k)
             else
-                ironbee.ib_log_debug(ib, 4, "Request Header: %s=%s", k, f.value())
+                ironbee.ib_log_debug(ib, 4, "Request Header value: %s=%s", k, f.value())
             end
         end
     end
+    -- Or you can access individual subfields within collections directly
+    -- via "name.subname" syntax:
+    local http_host_header = ironbee.ib_data_get(tx.dpi(), "request_headers.host")
+    ironbee.ib_log_debug(ib, 4, "HTTP Host Header is a field type: %d", http_host_header.type())
+    ironbee.ib_log_debug(ib, 4, "HTTP Host Header value: %s", http_host_header.value())
+
 
     -- Request URI params are a collection (table of field objects)
     local req_uri_params = ironbee.ib_data_get(tx.dpi(), "request_uri_params")
@@ -201,14 +217,23 @@ function onEventHandleRequestHeaders(ib, tx)
     if req_uri_params.type() == ironbee.IB_FTYPE_LIST then
         for k,f in base.pairs(req_uri_params.value()) do
             if f.type() == ironbee.IB_FTYPE_LIST then
-                ironbee.ib_log_debug(ib, 4, "Request URI Param: %s=<list>", k)
+                ironbee.ib_log_debug(ib, 4, "Request URI Param value: %s=<list>", k)
             else
-                ironbee.ib_log_debug(ib, 4, "Request URI Param: %s=%s", k, f.value())
+                ironbee.ib_log_debug(ib, 4, "Request URI Param value: %s=%s", k, f.value())
             end
         end
     end
 
-    -- Use the PCRE matcher
+    -- Use the IronBee PCRE matcher directly
+    --
+    -- A benefit of doing this over using any builtin Lua matchers is that
+    -- a Lua copy of the value is not required. Using the PCRE matcher passes
+    -- the field value by reference (the cvalue) without the overhead of
+    -- a copy. You should use this method for large values.
+    --
+    -- NOTE: The "pcre" variable used here was initialized in the
+    --       onEventHandleContextConn() handler so that it can be used
+    --       in any other handler following it.
     if pcre ~= nil then
         local patt = "(?i:foo)"
         local rc = ironbee.ib_matcher_match_field(pcre, patt, 0, req_line)
@@ -221,7 +246,7 @@ function onEventHandleRequestHeaders(ib, tx)
                     tx.mp(),
                     "-",
                     0, 0, 0, 0, 0, 0, 0, 0,
-                    "Request Line matches: %s", patt
+                    "[TEST Event] Request Line matches: %s", patt
                 )
             )
         else

@@ -393,7 +393,42 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                                  ib_field_t **pf)
 {
     IB_FTRACE_INIT(core_data_get);
-    ib_status_t rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
+    const char *subkey;
+    size_t klen;
+    size_t sklen;
+    ib_status_t rc;
+
+    /* Allow "key.subkey" syntax, but still fall through
+     * to a full key lookup if that fails.
+     */
+    if ((subkey = strchr(name, '.')) != NULL) {
+        subkey += 1; /* skip over "." */
+        klen = (subkey - name) - 1;
+        sklen = nlen - klen - 1;
+
+        rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
+                            (void *)name, klen,
+                            (void *)pf);
+        if (rc == IB_OK) {
+            if ((*pf)->type == IB_FTYPE_LIST) {
+                ib_list_node_t *node;
+
+                /* Lookup the subkey value in the field list. */
+                IB_LIST_LOOP(ib_field_value_list(*pf), node) {
+                    ib_field_t *sf = (ib_field_t *)ib_list_node_data(node);
+
+                    if (   (sf->nlen == sklen)
+                        && (strncasecmp(sf->name, subkey, sklen) == 0))
+                    {
+                        *pf = sf;
+                        IB_FTRACE_RET_STATUS(IB_OK);
+                    }
+                }
+            }
+        }
+    }
+
+    rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
                                     (void *)name, nlen,
                                     (void *)pf);
     IB_FTRACE_RET_STATUS(rc);
