@@ -382,6 +382,17 @@ ffi.cdef[[
                                size_t nlen,
                                ib_field_t **pf);
 
+    /* Transformations */
+    ib_status_t ib_tfn_lookup(ib_engine_t *ib,
+                              const char *name,
+                              ib_tfn_t **ptfn);
+    ib_status_t ib_tfn_transform(ib_tfn_t *tfn,
+                                 uint8_t *data_in,
+                                 size_t dlen_in,
+                                 uint8_t **data_out,
+                                 size_t *dlen_out,
+                                 ib_flags_t *pflags);
+
     /* Misc */
     ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin);
     ib_status_t ib_context_create_main(ib_context_t **pctx,
