@@ -30,6 +30,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h> /* gettimeofday */
+#include <ctype.h> /* tolower */
 #include <time.h>
 #include <errno.h>
 
@@ -959,7 +960,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                                 "  \"%" IB_BYTESTR_FMT "\": "
                                 "%" PRIdMAX "%s\r\n",
                                 IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                (intmax_t)ib_field_value_num(f),
+                                *(intmax_t *)ib_field_value_num(f),
                                 comma);
                 break;
             case IB_FTYPE_UNUM:
@@ -967,7 +968,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                                 "  \"%" IB_BYTESTR_FMT "\": "
                                 "%" PRIuMAX "%s\r\n",
                                 IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                (uintmax_t)ib_field_value_unum(f),
+                                *(uintmax_t *)ib_field_value_unum(f),
                                 comma);
                 break;
             case IB_FTYPE_LIST:
@@ -2476,6 +2477,137 @@ static ib_status_t matcher_register(ib_engine_t *ib,
 }
 
 
+/* -- Transformations -- */
+
+/**
+ * @internal
+ * Simple ASCII lowercase function.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ */
+static ib_status_t core_tfn_lowercase(void *fndata,
+                                      uint8_t *data_in,
+                                      size_t dlen_in,
+                                      uint8_t **data_out,
+                                      size_t *dlen_out,
+                                      ib_flags_t *pflags)
+{
+    size_t i = 0;
+    int modified = 0;
+
+    /* This is an in-place transformation which does not change
+     * the data length.
+     */
+    *data_out = data_in;
+    *dlen_out = dlen_in;
+    (*pflags) |= IB_TFN_FINPLACE;
+
+    while(i < dlen_in) {
+        int c = data_in[i];
+        (*data_out)[i] = tolower(c);
+        if (c != (*data_out)[i]) {
+            modified++;
+        }
+        i++;
+    }
+
+    if (modified != 0) {
+        (*pflags) |= IB_TFN_FMODIFIED;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * @internal
+ * Simple ASCII trimLeft function.
+ */
+static ib_status_t core_tfn_trimleft(void *fndata,
+                                     uint8_t *data_in,
+                                     size_t dlen_in,
+                                     uint8_t **data_out,
+                                     size_t *dlen_out,
+                                     ib_flags_t *pflags)
+{
+    size_t i = 0;
+
+    /* This is an in-place transformation which may change
+     * the data length.
+     */
+    (*pflags) |= IB_TFN_FINPLACE;
+
+    while(i < dlen_in) {
+        if (isspace(data_in[i]) == 0) {
+            *data_out = data_in + i;
+            *dlen_out = dlen_in - i;
+            (*pflags) |= IB_TFN_FMODIFIED;
+            return IB_OK;
+        }
+        i++;
+    }
+    *dlen_out = 0;
+    *data_out = data_in;
+
+    return IB_OK;
+}
+
+/**
+ * @internal
+ * Simple ASCII trimRight function.
+ */
+static ib_status_t core_tfn_trimright(void *fndata,
+                                      uint8_t *data_in,
+                                      size_t dlen_in,
+                                      uint8_t **data_out,
+                                      size_t *dlen_out,
+                                      ib_flags_t *pflags)
+{
+    size_t i = dlen_in - 1;
+
+    /* This is an in-place transformation which may change
+     * the data length.
+     */
+    *data_out = data_in;
+    (*pflags) |= IB_TFN_FINPLACE;
+
+    while(i > 0) {
+        if (isspace(data_in[i]) == 0) {
+            (*pflags) |= IB_TFN_FMODIFIED;
+            *dlen_out = i + 1;
+            return IB_OK;
+        }
+        i--;
+    }
+    *dlen_out = 0;
+
+    return IB_OK;
+}
+
+/**
+ * @internal
+ * Simple ASCII trim function.
+ */
+static ib_status_t core_tfn_trim(void *fndata,
+                                 uint8_t *data_in,
+                                 size_t dlen_in,
+                                 uint8_t **data_out,
+                                 size_t *dlen_out,
+                                 ib_flags_t *pflags)
+{
+    ib_status_t rc;
+
+    /* Just call the other trim functions. */
+    rc = core_tfn_trimleft(fndata, data_in, dlen_in, data_out, dlen_out,
+                           pflags);
+    if (IB_OK != IB_OK) {
+        return rc;
+    }
+    rc = core_tfn_trimleft(fndata, *data_out, *dlen_out, data_out, dlen_out,
+                           pflags);
+    return rc;
+}
+
+
 /* -- Directive Handlers -- */
 
 /**
@@ -3008,6 +3140,12 @@ static ib_status_t core_init(ib_engine_t *ib)
     ib_provider_t *core_audit_provider;
     ib_provider_t *core_data_provider;
     ib_status_t rc;
+
+    /* Define transformations. */
+    ib_tfn_create(ib, "lowercase", core_tfn_lowercase, NULL, NULL);
+    ib_tfn_create(ib, "trimLeft", core_tfn_trimleft, NULL, NULL);
+    ib_tfn_create(ib, "trimRight", core_tfn_trimright, NULL, NULL);
+    ib_tfn_create(ib, "trim", core_tfn_trim, NULL, NULL);
 
     /* Define the logger provider API. */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGGER,
