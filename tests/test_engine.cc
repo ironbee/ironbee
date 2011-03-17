@@ -77,6 +77,7 @@ TEST(TestIronBee, test_engine_create_and_destroy)
 }
 
 static ib_status_t foo2bar(void *fndata,
+                           ib_mpool_t *pool,
                            uint8_t *data_in, size_t dlen_in,
                            uint8_t **data_out, size_t *dlen_out,
                            ib_flags_t *pflags)
@@ -128,7 +129,7 @@ TEST(TestIronBee, test_tfn)
 
     memcpy(data_in, "foo", 4);
     dlen_in = 3;
-    rc = ib_tfn_transform(tfn, data_in, dlen_in, &data_out, &dlen_out, &flags);
+    rc = ib_tfn_transform(tfn, ib->mp, data_in, dlen_in, &data_out, &dlen_out, &flags);
     ASSERT_TRUE(tfn != (ib_tfn_t *)-1) << "ib_tfn_lookup() failed - unset";
     ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags)) << "ib_tfn_lookup() failed - not modified";
     ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags)) << "ib_tfn_lookup() failed - not inplace";

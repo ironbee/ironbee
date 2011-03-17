@@ -1126,6 +1126,21 @@ ib_status_t DLL_PUBLIC ib_data_add(ib_provider_inst_t *dpi,
                                    ib_field_t *f);
 
 /**
+ * Add a data field with a different name than the field name.
+ *
+ * @param dpi Data provider instance
+ * @param f Field
+ * @param name Name
+ * @param nlen Name length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_add_named(ib_provider_inst_t *dpi,
+                                         ib_field_t *f,
+                                         const char *name,
+                                         size_t nlen);
+
+/**
  * Create and add a numeric data field (extended version).
  *
  * @param dpi Data provider instance
@@ -1209,6 +1224,23 @@ ib_status_t DLL_PUBLIC ib_data_get_ex(ib_provider_inst_t *dpi,
                                       ib_field_t **pf);
 
 /**
+ * Get a data field with a transformation (extended version).
+ *
+ * @param dpi Data provider instance
+ * @param name Name as byte string
+ * @param nlen Name length
+ * @param pf Pointer where new field is written if non-NULL
+ * @param tfn Transformations (comma separated names)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
+                                          const char *name,
+                                          size_t nlen,
+                                          ib_field_t **pf,
+                                          const char *tfn);
+
+/**
  * Create and add a numeric data field.
  *
  * @param dpi Data provider instance
@@ -1284,7 +1316,7 @@ ib_status_t DLL_PUBLIC ib_data_add_list(ib_provider_inst_t *dpi,
  * Get a data field.
  *
  * @param dpi Data provider instance
- * @param name Name as byte string
+ * @param name Name as NUL terminated string
  * @param pf Pointer where new field is written if non-NULL
  *
  * @returns Status code
@@ -1295,6 +1327,24 @@ ib_status_t DLL_PUBLIC ib_data_get(ib_provider_inst_t *dpi,
 
 #define ib_data_get(dpi,name,pf) \
     ib_data_get_ex(dpi,name,strlen(name),pf)
+
+/**
+ * Get a data field with a transformation.
+ *
+ * @param dpi Data provider instance
+ * @param name Name as NUL terminated string
+ * @param pf Pointer where new field is written if non-NULL
+ * @param tfn Transformations (comma separated names)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_tfn_get(ib_provider_inst_t *dpi,
+                                       const char *name,
+                                       ib_field_t **pf,
+                                       const char *tfn);
+
+#define ib_data_tfn_get(dpi,name,pf,tfn) \
+    ib_data_tfn_get_ex(dpi,name,strlen(name),pf,tfn)
 
 /**
  * @} IronBeeEngineData
@@ -1597,6 +1647,7 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
  * @returns Status code
  */
 typedef ib_status_t (*ib_tfn_fn_t)(void *fndata,
+                                   ib_mpool_t *pool,
                                    uint8_t *data_in,
                                    size_t dlen_in,
                                    uint8_t **data_out,
@@ -1621,10 +1672,26 @@ ib_status_t DLL_PUBLIC ib_tfn_create(ib_engine_t *ib,
                                      ib_tfn_t **ptfn);
 
 /**
+ * Lookup a transformation by name (extended version).
+ *
+ * @param ib Engine
+ * @param name Transformation name
+ * @param nlen Transformation name length
+ * @param ptfn Address where new tfn will be written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tfn_lookup_ex(ib_engine_t *ib,
+                                        const char *name,
+                                        size_t nlen,
+                                        ib_tfn_t **ptfn);
+
+/**
  * Lookup a transformation by name.
  *
- * @param ptfn Address where new tfn will be written
+ * @param ib Engine
  * @param name Transformation name
+ * @param ptfn Address where new tfn will be written
  *
  * @returns Status code
  */
@@ -1632,12 +1699,16 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(ib_engine_t *ib,
                                      const char *name,
                                      ib_tfn_t **ptfn);
 
+#define ib_tfn_lookup(ib,name,ptfn) \
+    ib_tfn_lookup_ex(ib,name,strlen(name),ptfn)
+
 /**
  * Transform data.
  *
  * @note Some transformations may destroy/overwrite the original data.
  *
  * @param tfn Transformation
+ * @param pool Pool to use if memory needs to be allocated
  * @param data_in Input data
  * @param dlen_in Input data length
  * @param data_out Address of output data
@@ -1647,11 +1718,27 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(ib_engine_t *ib,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_tfn_transform(ib_tfn_t *tfn,
+                                        ib_mpool_t *pool,
                                         uint8_t *data_in,
                                         size_t dlen_in,
                                         uint8_t **data_out,
                                         size_t *dlen_out,
                                         ib_flags_t *pflags);
+
+/**
+ * Transform data field.
+ *
+ * This will transform a field value, potentially re-allocating the value.
+ *
+ * @param tfn Transformation
+ * @param f Field to transform
+ * @param flags Address of flags set by transformation
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tfn_transform_field(ib_tfn_t *tfn,
+                                              ib_field_t *f,
+                                              ib_flags_t *pflags);
 
 /**
  * @} IronBeeEngineTfn

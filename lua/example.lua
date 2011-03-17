@@ -192,6 +192,11 @@ function onEventHandleRequestHeaders(ib, tx)
     -- below for another option).
     ironbee.ib_log_debug(ib, 4, "Request Line value: %s", req_line.value())
 
+    -- You can also request a transformed value
+    local req_line_lower = ironbee.ib_data_tfn_get(tx.dpi(), "request_line", "lowercase")
+    ironbee.ib_log_debug(ib, 4, "Lower case request line is a field type: %d", req_line_lower.type())
+    ironbee.ib_log_debug(ib, 4, "Lower case Request Line value: %s", req_line_lower.value())
+
     -- Request headers are a collection (table of field objects)
     local req_headers = ironbee.ib_data_get(tx.dpi(), "request_headers")
     ironbee.ib_log_debug(ib, 4, "Request Headers is a field type: %d", req_headers.type())

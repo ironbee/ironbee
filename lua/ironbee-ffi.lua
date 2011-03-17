@@ -236,6 +236,7 @@ ffi.cdef[[
         ib_ftype_t          type;
         const char         *name;
         size_t              nlen;
+        const char         *tfn;
         ib_field_val_t     *val;
     };
 
@@ -284,8 +285,18 @@ ffi.cdef[[
     };
 
 
-
     /* Field */
+    ib_status_t ib_field_create_ex(ib_field_t **pf,
+                                   ib_mpool_t *mp,
+                                   const char *name,
+                                   size_t nlen,
+                                   ib_ftype_t type,
+                                   void *pval);
+    ib_status_t ib_field_copy_ex(ib_field_t **pf,
+                                 ib_mpool_t *mp,
+                                 const char *name,
+                                 size_t nlen,
+                                 ib_field_t *src);
     void *ib_field_value(ib_field_t *f);
 
     /* Context */
@@ -381,6 +392,12 @@ ffi.cdef[[
                                const char *name,
                                size_t nlen,
                                ib_field_t **pf);
+    ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
+                                   const char *name,
+                                   size_t nlen,
+                                   ib_field_t **pf,
+                                   const char *tfn);
+
 
     /* Transformations */
     ib_status_t ib_tfn_lookup(ib_engine_t *ib,
@@ -715,6 +732,29 @@ function ib_data_get(dpi, name)
 
     return newField(c_pf[0]);
 end
+
+-- ===============================================
+-- Get a data field by name with a transformation.
+--
+-- dpi: Data Provider Interface (i.e. conn.dpi() or tx.dpi())
+-- name: Name of data field
+-- tfn: Comma separated tfn name string
+-- ===============================================
+function ib_data_tfn_get(dpi, name, tfn)
+    local c_dpi = dpi.cvalue()
+--    local c_ib = c_dpi.pr.ib
+    local c_pf = ffi.new("ib_field_t*[1]")
+    local rc
+
+    -- Get the named data field.
+    rc = c.ib_data_tfn_get_ex(c_dpi, name, string.len(name), c_pf, tfn)
+    if rc ~= c.IB_OK then
+        return nil
+    end
+
+    return newField(c_pf[0]);
+end
+
 
 -- ===============================================
 -- Known provider types

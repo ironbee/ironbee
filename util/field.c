@@ -57,6 +57,7 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
     }
     (*pf)->mp = mp;
     (*pf)->type = type;
+    (*pf)->tfn = NULL;
 
     /* Copy the name. */
     (*pf)->nlen = nlen;
@@ -178,6 +179,7 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
     }
     (*pf)->mp = mp;
     (*pf)->type = type;
+    (*pf)->tfn = NULL;
 
     /* Copy the name. */
     (*pf)->nlen = nlen;
@@ -233,6 +235,23 @@ failed:
     *pf = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
+}
+
+
+ib_status_t ib_field_copy_ex(ib_field_t **pf,
+                             ib_mpool_t *mp,
+                             const char *name,
+                             size_t nlen,
+                             ib_field_t *src)
+{
+    IB_FTRACE_INIT(ib_field_copy_ex);
+    void *val = ib_field_value(src);
+
+    /// @todo Make this work for dynamic fields as well - copy the
+    ///       generator functions not the value.
+    ib_status_t rc = ib_field_create_ex(pf, mp, name, nlen, src->type, &val);
+    IB_FTRACE_RET_STATUS(rc);
+
 }
 
 ib_status_t ib_field_alias_mem_ex(ib_field_t **pf,

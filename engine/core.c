@@ -301,13 +301,15 @@ static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
  * @returns Status code
  */
 static ib_status_t core_data_add(ib_provider_inst_t *dpi,
-                                 ib_field_t *f)
+                                 ib_field_t *f,
+                                 const char *name,
+                                 size_t nlen)
 {
     IB_FTRACE_INIT(core_data_add);
     /// @todo Needs to be more field-aware (handle lists, etc)
     /// @todo Needs to not allow adding if already exists (except list items)
     ib_status_t rc = ib_hash_set_ex((ib_hash_t *)dpi->data,
-                                    (void *)f->name, f->nlen, f);
+                                    (void *)name, nlen, f);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -321,20 +323,20 @@ static ib_status_t core_data_add(ib_provider_inst_t *dpi,
  * @returns Status code
  */
 static ib_status_t core_data_set(ib_provider_inst_t *dpi,
-                                 ib_field_t *f)
+                                 ib_field_t *f,
+                                 const char *name,
+                                 size_t nlen)
 {
     IB_FTRACE_INIT(core_data_set);
     /// @todo Needs to be more field-aware (handle lists, etc)
     ib_status_t rc = ib_hash_set_ex((ib_hash_t *)dpi->data,
-                                    (void *)f->name, f->nlen, f);
+                                    (void *)name, nlen, f);
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
  * @internal
  * Core data provider implementation to set a relative data field value.
- *
- * @warning Not yet implemented.
  *
  * @param dpi Data provider instance
  * @param name Field name
@@ -2064,7 +2066,9 @@ static ib_status_t parser_register(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t data_api_add(ib_provider_inst_t *dpi,
-                                ib_field_t *f)
+                                ib_field_t *f,
+                                const char *name,
+                                size_t nlen)
 {
     IB_FTRACE_INIT(data_api_add);
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
@@ -2078,7 +2082,7 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
 
     /* This function is required, so no NULL check. */
 
-    rc = iface->add(dpi, f);
+    rc = iface->add(dpi, f, f->name, f->nlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2093,7 +2097,9 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
  * @returns Status code
  */
 static ib_status_t data_api_set(ib_provider_inst_t *dpi,
-                                ib_field_t *f)
+                                ib_field_t *f,
+                                const char *name,
+                                size_t nlen)
 {
     IB_FTRACE_INIT(data_api_set);
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
@@ -2107,7 +2113,7 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
 
     /* This function is required, so no NULL check. */
 
-    rc = iface->set(dpi, f);
+    rc = iface->set(dpi, f, f->name, f->nlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2486,6 +2492,7 @@ static ib_status_t matcher_register(ib_engine_t *ib,
  * @note For non-ASCII (utf8, etc) you should use case folding.
  */
 static ib_status_t core_tfn_lowercase(void *fndata,
+                                      ib_mpool_t *pool,
                                       uint8_t *data_in,
                                       size_t dlen_in,
                                       uint8_t **data_out,
@@ -2523,6 +2530,7 @@ static ib_status_t core_tfn_lowercase(void *fndata,
  * Simple ASCII trimLeft function.
  */
 static ib_status_t core_tfn_trimleft(void *fndata,
+                                     ib_mpool_t *pool,
                                      uint8_t *data_in,
                                      size_t dlen_in,
                                      uint8_t **data_out,
@@ -2556,6 +2564,7 @@ static ib_status_t core_tfn_trimleft(void *fndata,
  * Simple ASCII trimRight function.
  */
 static ib_status_t core_tfn_trimright(void *fndata,
+                                      ib_mpool_t *pool,
                                       uint8_t *data_in,
                                       size_t dlen_in,
                                       uint8_t **data_out,
@@ -2588,6 +2597,7 @@ static ib_status_t core_tfn_trimright(void *fndata,
  * Simple ASCII trim function.
  */
 static ib_status_t core_tfn_trim(void *fndata,
+                                 ib_mpool_t *pool,
                                  uint8_t *data_in,
                                  size_t dlen_in,
                                  uint8_t **data_out,
@@ -2597,12 +2607,12 @@ static ib_status_t core_tfn_trim(void *fndata,
     ib_status_t rc;
 
     /* Just call the other trim functions. */
-    rc = core_tfn_trimleft(fndata, data_in, dlen_in, data_out, dlen_out,
+    rc = core_tfn_trimleft(fndata, pool, data_in, dlen_in, data_out, dlen_out,
                            pflags);
     if (IB_OK != IB_OK) {
         return rc;
     }
-    rc = core_tfn_trimleft(fndata, *data_out, *dlen_out, data_out, dlen_out,
+    rc = core_tfn_trimleft(fndata, pool, *data_out, *dlen_out, data_out, dlen_out,
                            pflags);
     return rc;
 }

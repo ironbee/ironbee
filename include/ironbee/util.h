@@ -764,6 +764,7 @@ struct ib_field_t {
     ib_ftype_t                type;      /**< Field type */
     const char               *name;      /**< Field name */
     size_t                    nlen;      /**< Field name length */
+    const char               *tfn;       /**< Transformations performed */
     ib_field_val_t           *val;       /**< Private value store */
 };
 
@@ -804,6 +805,24 @@ ib_status_t DLL_PUBLIC ib_field_createn_ex(ib_field_t **pf,
                                            size_t nlen,
                                            ib_ftype_t type,
                                            void *pval);
+
+/**
+ * Make a copy of a field.
+ *
+ * @param pf Address which new field is written
+ * @param mp Memory pool
+ * @param name Field name as byte string
+ * @param nlen Field name length
+ * @param type Field type
+ * @param src Source field to copy
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_copy_ex(ib_field_t **pf,
+                                        ib_mpool_t *mp,
+                                        const char *name,
+                                        size_t nlen,
+                                        ib_field_t *src);
 
 /**
  * Create a bytestr field which directly aliases a value in memory.
@@ -863,6 +882,25 @@ ib_status_t DLL_PUBLIC ib_field_createn(ib_field_t **pf,
 
 #define ib_field_createn(pf,mp,name,type,pval) \
     ib_field_createn_ex(pf,mp,name,strlen(name),type,pval)
+
+/**
+ * Make a copy of a field.
+ *
+ * @param pf Address which new field is written
+ * @param mp Memory pool
+ * @param name Field name as byte string
+ * @param type Field type
+ * @param src Source field to copy
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_copy(ib_field_t **pf,
+                                     ib_mpool_t *mp,
+                                     const char *name,
+                                     ib_field_t *src);
+
+#define ib_field_copy(pf,mp,name,type,src) \
+    ib_field_copy(pf,mp,name,strlen(name),type,src)
 
 /**
  * Create a bytestr field which directly aliases a value in memory.
