@@ -159,7 +159,7 @@ ib_status_t ib_tfn_transform_field(ib_tfn_t *tfn,
             /* If it is modified and not done inplace, then the
              * field value needs to be updated.
              *
-             * NOTE: Anytime a transformation allocates data it
+             * NOTE: Anytime a transformation modifies data it
              *       MUST NUL terminate the data and it is a bug
              *       if this is not done.
              */
