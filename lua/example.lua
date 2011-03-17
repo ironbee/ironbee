@@ -38,9 +38,6 @@ _COPYRIGHT = "Copyright (C) 2010-2011 Qualys, Inc."
 _DESCRIPTION = "IronBee example Lua module"
 _VERSION = "0.1"
 
--- TODO: This needs to eventually go away
-ironbee.register_module(_M)
-
 
 -- ===============================================
 -- ===============================================

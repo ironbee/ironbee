@@ -34,9 +34,6 @@ module("ironbee-ffi")
 -- Mark this lib as preloaded
 base.package.preload["ironbee-ffi"] = _M
 
--- TODO: remove this need to register with engine
-base["ironbee-module"] = _M
-
 -- ===============================================
 -- Setup some module metadata.
 -- ===============================================
@@ -464,13 +461,6 @@ local c = ffi.C
 -- =========================================================================
 -- =========================================================================
 -- 
-
--- ===============================================
--- TODO: Figure out a way around this.
--- ===============================================
-function register_module(m)
-    base["ironbee-module"] = m
-end
 
 -- ===============================================
 -- Status

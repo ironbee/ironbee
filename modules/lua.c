@@ -706,14 +706,11 @@ static ib_status_t modlua_module_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Currently a module must set the global "ironbee-module" variable
-     * on load.
-     */
-    /// @todo Fix this.  Probably need to override the loader so that
-    ///       we can just "require" with a name?  Or maybe just have
-    ///       the module call a defined function (ironbee.register_module)???
-    ///       In any case, we just need the freaking name or table :(
-    lua_getglobal(L, "ironbee-module");
+    /* Initialize the loaded module. */
+    ib_log_debug(ib, 4, "Initializing lua module \"%s\"", m->name);
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "loaded");
+    lua_getfield(L, -1, m->name);
     ib_log_debug(ib, 9, "Module load returned type=%s",
                  lua_typename(L, lua_type(L, -1)));
     if (lua_istable(L, -1)) {
