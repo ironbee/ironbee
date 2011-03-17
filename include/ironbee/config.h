@@ -233,10 +233,32 @@ void DLL_PUBLIC ib_cfgparser_destroy(ib_cfgparser_t *cp);
  * @param ib Engine
  * @param dirmap Directive mapping
  *
- * returns Status code
+ * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_config_register_directives(ib_engine_t *ib,
                                                      const ib_dirmap_init_t *init);
+
+/**
+ * Register a directive with the engine.
+ *
+ * Primarily this is meant for non-C languages that cannot easily build
+ * the map structure for @ref ib_config_register_directives.
+ *
+ * @param ib Engine
+ * @param name Directive name
+ * @param type Directive type
+ * @param fn_config Callback function handling the config
+ * @param fn_blkend Callback function called at the end of a block (or NULL)
+ * @param cbdata Data passed to the callback functions
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_config_register_directive(ib_engine_t *ib,
+                                                    const char *name,
+                                                    ib_dirtype_t type,
+                                                    ib_void_fn_t fn_config,
+                                                    ib_config_cb_blkend_fn_t fn_blkend,
+                                                    void *cbdata);
 
 /**
  * Process a directive.

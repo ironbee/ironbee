@@ -286,7 +286,7 @@ void ib_cfgparser_destroy(ib_cfgparser_t *cp)
 ib_status_t ib_config_register_directives(ib_engine_t *ib,
                                           const ib_dirmap_init_t *init)
 {
-    IB_FTRACE_INIT(ib_conf_register_directive);
+    IB_FTRACE_INIT(ib_conf_register_directives);
     const ib_dirmap_init_t *rec = init;
     ib_status_t rc;
 
@@ -302,6 +302,32 @@ ib_status_t ib_config_register_directives(ib_engine_t *ib,
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_config_register_directive(ib_engine_t *ib,
+                                         const char *name,
+                                         ib_dirtype_t type,
+                                         ib_void_fn_t fn_config,
+                                         ib_config_cb_blkend_fn_t fn_blkend,
+                                         void *cbdata)
+{
+    IB_FTRACE_INIT(ib_conf_register_directive);
+    ib_dirmap_init_t *rec;
+    ib_status_t rc;
+
+    rec = (ib_dirmap_init_t *)ib_mpool_alloc(ib->config_mp, sizeof(*rec));
+    if (rec == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    rec->name = name;
+    rec->type = type;
+    rec->cb._init = fn_config;
+    rec->fn_blkend = fn_blkend;
+    rec->cbdata = cbdata;
+
+    rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
