@@ -373,7 +373,7 @@ void *ib_field_value(ib_field_t *f)
             return (void *)f->val->pval;
     }
 
-    return *(void **)f->val->pval;
+    return f->val->pval ? *(void **)f->val->pval : NULL;
 }
 
 void ib_field_dyn_set_data(ib_field_t *f,

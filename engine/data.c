@@ -271,8 +271,15 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                 rc = ib_tfn_lookup_ex(ib, tname, len, &t);
                 if (rc == IB_OK) {
                     rc = ib_tfn_transform_field(t, *pf, &flags);
+                    if (rc != IB_OK) {
+                        /// @todo What to do here?  Fail or ignore?
+                        ib_log_error(ib, 3,
+                                     "Transformation failed: %" IB_BYTESTR_FMT,
+                                     IB_BYTESTRSL_FMT_PARAM(tname, len));
+                    }
                 }
                 else {
+                    /// @todo What to do here?  Fail or ignore?
                     ib_log_error(ib, 4,
                                  "Unknown transformation: %" IB_BYTESTR_FMT,
                                  IB_BYTESTRSL_FMT_PARAM(tname, len));

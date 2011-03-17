@@ -263,7 +263,7 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
     if (ec != 0) {
         ib_log_error(ib, 1, "Failed to load ironbee lua module - %s (%d)",
                      lua_tostring(L, -1), ec);
-        rc = IB_EINVAL;
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     lua_pop(L, 2); /* cleanup stack */
 
