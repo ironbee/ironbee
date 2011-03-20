@@ -381,17 +381,6 @@ ib_status_t DLL_PUBLIC ib_context_create(ib_context_t **pctx,
                                          void *fn_ctx_data);
 
 /**
- * Create the main (default) configuration context.
- *
- * @param pctx Address which new context is written
- * @param ib Engine handle
- *
- * @returns Status code
- */
-ib_status_t ib_context_create_main(ib_context_t **pctx,
-                                   ib_engine_t *ib);
-
-/**
  * Initialize a configuration context.
  *
  * This causes ctx_init functions to be executed for each module
@@ -831,6 +820,8 @@ typedef enum {
     handle_postprocess_event,      /**< Handle transaction post processing */
 
     /* Plugin States */
+    cfg_started_event,             /**< Plugin notified config started */
+    cfg_finished_event,            /**< Plugin notified config finished */
     conn_opened_event,             /**< Plugin notified connection opened */
     conn_data_in_event,            /**< Plugin notified of incoming data */
     conn_data_out_event,           /**< Plugin notified of outgoing data */
@@ -871,6 +862,24 @@ typedef ib_status_t (*ib_state_hook_fn_t)(ib_engine_t *ib,
  * @returns Statically allocated event name
  */
 const char *ib_state_event_name(ib_state_event_type_t event);
+
+/**
+ * Notify the state machine that the configuration process has started.
+ *
+ * @param ib Engine handle
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_state_notify_cfg_started(ib_engine_t *ib);
+
+/**
+ * Notify the state machine that the configuration process has finished.
+ *
+ * @param ib Engine handle
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_state_notify_cfg_finished(ib_engine_t *ib);
 
 /**
  * Notify the state machine that a connection started.

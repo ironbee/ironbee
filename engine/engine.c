@@ -236,6 +236,23 @@ ib_status_t ib_engine_init(ib_engine_t *ib)
     IB_FTRACE_RET_STATUS(rc);
 }
 
+static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT(ib_engine_context_create_main);
+    ib_context_t *ctx;
+    ib_status_t rc;
+    
+    rc = ib_context_create(&ctx, ib, NULL, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib->ctx = ctx;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
 ib_status_t ib_engine_module_get(ib_engine_t *ib,
                                  const char * name,
                                  ib_module_t **pm)
@@ -608,6 +625,8 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(handle_postprocess_event),
 
     /* Plugin States */
+    IB_STRINGIFY(cfg_started_event),
+    IB_STRINGIFY(cfg_finished_event),
     IB_STRINGIFY(conn_opened_event),
     IB_STRINGIFY(conn_data_in_event),
     IB_STRINGIFY(conn_data_out_event),
@@ -845,6 +864,33 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
 
         hook = hook->next;
     }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT(ib_state_notify_cfg_started);
+    ib_status_t rc;
+
+    /* Create and configure the main configuration context. */
+    ib_engine_context_create_main(ib);
+
+    rc = ib_state_notify(ib, cfg_started_event, NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT(ib_state_notify_cfg_finished);
+    ib_status_t rc = ib_state_notify(ib, cfg_finished_event, NULL);
+
+    /* Initialize (and close) the main configuration context. */
+    rc = ib_context_init(ib->ctx);
+
+    /* Destroy the temporary memory pool. */
+    ib_engine_pool_temp_destroy(ib);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1656,22 +1702,6 @@ failed:
     *pctx = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
-}
-
-ib_status_t ib_context_create_main(ib_context_t **pctx,
-                                   ib_engine_t *ib)
-{
-    IB_FTRACE_INIT(ib_context_create_main);
-    ib_status_t rc;
-    
-    rc = ib_context_create(pctx, ib, NULL, NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    ib->ctx = *pctx;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_context_init(ib_context_t *ctx)

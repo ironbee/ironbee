@@ -778,11 +778,13 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     if (modcfg->config != NULL) {
         ib_context_t *ctx;
 
-        /* Create and configure the main configuration context. */
-        /// @todo This needs to go in the engine, not plugin
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     MODULE_NAME_STR ": Creating main context");
-        ib_context_create_main(&ctx, ironbee);
+        /* Notify the engine that the config process has started. This
+         * will also create a main configuration context.
+         */
+        ib_state_notify_cfg_started(ironbee);
+
+        /* Get the main configuration context. */
+        ctx = ib_context_main(ironbee);
 
         /* Set some defaults */
         ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, MODULE_NAME_STR);
@@ -800,23 +802,15 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
             ib_cfgparser_destroy(cp);
         }
 
-        /* Initialize (and close) the main configuration context. */
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     MODULE_NAME_STR ": Initializing main context");
-        rc = ib_context_init(ctx);
-        if (rc != IB_OK) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         MODULE_NAME_STR ": Error initializing main context");
-            return OK;
-        }
+        /* Notify the engine that the config process has finished. This
+         * will also close out the main configuration context.
+         */
+        ib_state_notify_cfg_finished(ironbee);
     }
     else {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                      MODULE_NAME_STR ": No config specified with IronBeeConfig directive");
     }
-
-    /* Destroy the temporary memory pool. */
-    ib_engine_pool_temp_destroy(ironbee);
 
     return OK;
 }

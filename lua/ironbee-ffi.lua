@@ -100,6 +100,8 @@ ffi.cdef[[
         handle_response_event,
         handle_disconnect_event,
         handle_postprocess_event,
+        cfg_started_event,
+        cfg_finished_event,
         conn_opened_event,
         conn_data_in_event,
         conn_data_out_event,
