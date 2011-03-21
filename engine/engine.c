@@ -1513,7 +1513,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     /* Init and register the module */
     if (m->fn_init != NULL) {
-        rc = m->fn_init(ib);
+        rc = m->fn_init(ib, m);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Failed to initialize module %s %d",
                          m->name, rc);
@@ -1728,7 +1728,7 @@ ib_status_t ib_context_init(ib_context_t *ctx)
 
         /* A NULL function is a default context, so use it */
         if (m->fn_ctx_init != NULL) {
-            rc = m->fn_ctx_init(ib, ctx);
+            rc = m->fn_ctx_init(ib, m, ctx);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, 4, "Failed to call context init: %d", rc);

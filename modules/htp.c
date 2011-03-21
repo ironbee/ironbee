@@ -1164,7 +1164,8 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 
 /* -- Module Routines -- */
 
-static ib_status_t modhtp_init(ib_engine_t *ib)
+static ib_status_t modhtp_init(ib_engine_t *ib,
+                               ib_module_t *m)
 {
     IB_FTRACE_INIT(modhtp_init);
     ib_status_t rc;
@@ -1184,7 +1185,8 @@ static ib_status_t modhtp_init(ib_engine_t *ib)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t modhtp_fini(ib_engine_t *ib)
+static ib_status_t modhtp_fini(ib_engine_t *ib,
+                               ib_module_t *m)
 {
     IB_FTRACE_INIT(modhtp_fini);
     /// @todo Nothing yet???
@@ -1193,6 +1195,7 @@ static ib_status_t modhtp_fini(ib_engine_t *ib)
 }
 
 static ib_status_t modhtp_context_init(ib_engine_t *ib,
+                                       ib_module_t *m,
                                        ib_context_t *ctx)
 {
     IB_FTRACE_INIT(modhtp_context_init);

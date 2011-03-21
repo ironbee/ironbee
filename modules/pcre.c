@@ -164,7 +164,8 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
 
 /* -- Module Routines -- */
 
-static ib_status_t modpcre_init(ib_engine_t *ib)
+static ib_status_t modpcre_init(ib_engine_t *ib,
+                                ib_module_t *m)
 {
     IB_FTRACE_INIT(modpcre_init);
     ib_status_t rc;

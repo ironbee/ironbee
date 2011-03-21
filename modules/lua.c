@@ -119,6 +119,7 @@ struct modlua_cfg_t {
 static modlua_cfg_t modlua_global_cfg;
 
 static ib_status_t modlua_context_init(ib_engine_t *ib,
+                                       ib_module_t *m,
                                        ib_context_t *ctx);
 
 /* -- Lua Routines -- */
@@ -1354,7 +1355,8 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
 
 /* -- Module Routines -- */
 
-static ib_status_t modlua_init(ib_engine_t *ib)
+static ib_status_t modlua_init(ib_engine_t *ib,
+                               ib_module_t *m)
 {
     IB_FTRACE_INIT(modlua_init);
 
@@ -1469,14 +1471,15 @@ static ib_status_t modlua_init(ib_engine_t *ib)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t modlua_fini(ib_engine_t *ib)
+static ib_status_t modlua_fini(ib_engine_t *ib,
+                               ib_module_t *m)
 {
     IB_FTRACE_INIT(modlua_fini);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-
 static ib_status_t modlua_context_init(ib_engine_t *ib,
+                                       ib_module_t *m,
                                        ib_context_t *ctx)
 {
     IB_FTRACE_INIT(modlua_context_init);

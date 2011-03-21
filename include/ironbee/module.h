@@ -128,7 +128,8 @@ extern "C" {
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_module_fn_init_t)(ib_engine_t *ib);
+typedef ib_status_t (*ib_module_fn_init_t)(ib_engine_t *ib,
+                                           ib_module_t *m);
 
 /**
  * Function to finish a module.
@@ -139,7 +140,8 @@ typedef ib_status_t (*ib_module_fn_init_t)(ib_engine_t *ib);
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_module_fn_fini_t)(ib_engine_t *ib);
+typedef ib_status_t (*ib_module_fn_fini_t)(ib_engine_t *ib,
+                                           ib_module_t *m);
 
 /**
  * Function to initialize a module configuration context.
@@ -154,6 +156,7 @@ typedef ib_status_t (*ib_module_fn_fini_t)(ib_engine_t *ib);
  * @returns Status code
  */
 typedef ib_status_t (*ib_module_fn_ctx_init_t)(ib_engine_t *ib,
+                                               ib_module_t *m,
                                                ib_context_t *ctx);
 
 struct ib_module_t {

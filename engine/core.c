@@ -3145,7 +3145,8 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
  *
  * @returns Status code
  */
-static ib_status_t core_init(ib_engine_t *ib)
+static ib_status_t core_init(ib_engine_t *ib,
+                             ib_module_t *m)
 {
     IB_FTRACE_INIT(core_init);
     ib_provider_t *core_log_provider;
@@ -3281,7 +3282,8 @@ static ib_status_t core_init(ib_engine_t *ib)
  *
  * @returns Status code
  */
-static ib_status_t core_fini(ib_engine_t *ib)
+static ib_status_t core_fini(ib_engine_t *ib,
+                             ib_module_t *m)
 {
     IB_FTRACE_INIT(core_fini);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -3297,6 +3299,7 @@ static ib_status_t core_fini(ib_engine_t *ib)
  * @returns Status code
  */
 static ib_status_t core_config_init(ib_engine_t *ib,
+                                    ib_module_t *m,
                                     ib_context_t *ctx)
 {
     IB_FTRACE_INIT(core_config_init);
@@ -3306,7 +3309,7 @@ static ib_status_t core_config_init(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Get the core module config. */
-    rc = ib_context_module_config(ctx, ib_core_module(),
+    rc = ib_context_module_config(ctx, m,
                                   (void *)&(ctx->core_cfg));
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch core module config: %d", rc);
