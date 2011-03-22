@@ -1511,6 +1511,12 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    if (ib->ctx != NULL) {
+        ib_log_debug(ib, 4, "Registering module \"%s\" with main context %p",
+                     m->name, ib->ctx);
+        ib_module_register_context(m, ib->ctx);
+    }
+
     /* Init and register the module */
     if (m->fn_init != NULL) {
         rc = m->fn_init(ib, m);

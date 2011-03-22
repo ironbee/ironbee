@@ -2979,7 +2979,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("LoadModule", name) == 0) {
         char *absfile;
-        ib_context_t *ctx = ib_context_main(ib);
         ib_module_t *m;
 
         if (*p1 == '/') {
@@ -2997,9 +2996,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, 2, "Failed to load module \"%s\": %d", p1, rc);
             IB_FTRACE_RET_STATUS(IB_ENOENT);
         }
-
-        ib_log_debug(ib, 4, "Registering module \"%s\" with main context", p1);
-        ib_module_register_context(m, ctx);
     }
     else {
         ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
