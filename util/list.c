@@ -72,11 +72,15 @@ ib_status_t ib_list_pop(ib_list_t *list, void *pdata)
 {
     IB_FTRACE_INIT(ib_list_pop);
     if (list->nelts == 0) {
-        *(void **)pdata = NULL;
+        if (pdata != NULL) {
+            *(void **)pdata = NULL;
+        }
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
 
-    *(void **)pdata = IB_LIST_NODE_DATA(list->tail);
+    if (pdata != NULL) {
+        *(void **)pdata = IB_LIST_NODE_DATA(list->tail);
+    }
     IB_LIST_NODE_REMOVE_LAST(list);
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -106,11 +110,15 @@ ib_status_t ib_list_shift(ib_list_t *list, void *pdata)
 {
     IB_FTRACE_INIT(ib_list_shift);
     if (list->nelts == 0) {
-        *(void **)pdata = NULL;
+        if (pdata != NULL) {
+            *(void **)pdata = NULL;
+        }
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
 
-    *(void **)pdata = IB_LIST_NODE_DATA(list->head);
+    if (pdata != NULL) {
+        *(void **)pdata = IB_LIST_NODE_DATA(list->head);
+    }
     IB_LIST_NODE_REMOVE_FIRST(list);
 
     IB_FTRACE_RET_STATUS(IB_OK);

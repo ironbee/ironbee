@@ -375,7 +375,7 @@ ib_status_t DLL_PUBLIC ib_list_push(ib_list_t *list, void *data);
  * Fetch and remove data from the end of a list.
  *
  * @param list List
- * @param pdata Address which data is stored
+ * @param pdata Address which data is stored (if non-NULL)
  *
  * @returns Status code
  */
@@ -395,7 +395,7 @@ ib_status_t DLL_PUBLIC ib_list_unshift(ib_list_t *list, void *data);
  * Fetch and remove data from the beginning of a list.
  *
  * @param list List
- * @param pdata Address which data is stored
+ * @param pdata Address which data is stored (if non-NULL)
  *
  * @returns Status code
  */
