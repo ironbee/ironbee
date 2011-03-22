@@ -44,7 +44,7 @@ static char *pval = NULL;
 static char *mark = NULL;
 
 
-#line 163 "config-parser.rl"
+#line 164 "config-parser.rl"
 
 
 
@@ -203,7 +203,7 @@ static const int ironbee_config_en_endblock = 32;
 static const int ironbee_config_en_main = 16;
 
 
-#line 166 "config-parser.rl"
+#line 167 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            uint8_t *buf,
@@ -243,7 +243,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	act = 0;
 	}
 
-#line 196 "config-parser.rl"
+#line 197 "config-parser.rl"
     
 #line 249 "config-parser.c"
 	{
@@ -410,6 +410,7 @@ _eof_trans:
 	case 7:
 #line 110 "config-parser.rl"
 	{
+        blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Failed to process block \"%s\": %d", blkname, rc);
@@ -417,7 +418,7 @@ _eof_trans:
         if (blkname != NULL) {
             free(blkname);
         }
-        blkname = NULL;
+        blkname = (char *)cp->cur_blkname;
     }
 	break;
 	case 11:
@@ -425,15 +426,15 @@ _eof_trans:
 	{te = p+1;}
 	break;
 	case 12:
-#line 136 "config-parser.rl"
+#line 137 "config-parser.rl"
 	{act = 1;}
 	break;
 	case 13:
-#line 137 "config-parser.rl"
+#line 138 "config-parser.rl"
 	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
 	break;
 	case 14:
-#line 136 "config-parser.rl"
+#line 137 "config-parser.rl"
 	{te = p;p--;}
 	break;
 	case 15:
@@ -449,15 +450,15 @@ _eof_trans:
 	}
 	break;
 	case 16:
-#line 141 "config-parser.rl"
+#line 142 "config-parser.rl"
 	{act = 3;}
 	break;
 	case 17:
-#line 142 "config-parser.rl"
+#line 143 "config-parser.rl"
 	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
 	break;
 	case 18:
-#line 141 "config-parser.rl"
+#line 142 "config-parser.rl"
 	{te = p;p--;}
 	break;
 	case 19:
@@ -473,15 +474,15 @@ _eof_trans:
 	}
 	break;
 	case 20:
-#line 146 "config-parser.rl"
+#line 147 "config-parser.rl"
 	{act = 5;}
 	break;
 	case 21:
-#line 147 "config-parser.rl"
+#line 148 "config-parser.rl"
 	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
 	break;
 	case 22:
-#line 146 "config-parser.rl"
+#line 147 "config-parser.rl"
 	{te = p;p--;{ {stack[top++] = cs; cs = 26; goto _again;} }}
 	break;
 	case 23:
@@ -497,15 +498,15 @@ _eof_trans:
 	}
 	break;
 	case 24:
-#line 151 "config-parser.rl"
+#line 152 "config-parser.rl"
 	{act = 7;}
 	break;
 	case 25:
-#line 152 "config-parser.rl"
+#line 153 "config-parser.rl"
 	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
 	break;
 	case 26:
-#line 151 "config-parser.rl"
+#line 152 "config-parser.rl"
 	{te = p;p--;}
 	break;
 	case 27:
@@ -521,35 +522,35 @@ _eof_trans:
 	}
 	break;
 	case 28:
-#line 157 "config-parser.rl"
+#line 158 "config-parser.rl"
 	{act = 10;}
 	break;
 	case 29:
-#line 160 "config-parser.rl"
+#line 161 "config-parser.rl"
 	{act = 13;}
 	break;
 	case 30:
-#line 158 "config-parser.rl"
+#line 159 "config-parser.rl"
 	{te = p+1;{ {stack[top++] = cs; cs = 32; goto _again;} }}
 	break;
 	case 31:
-#line 161 "config-parser.rl"
+#line 162 "config-parser.rl"
 	{te = p+1;}
 	break;
 	case 32:
-#line 156 "config-parser.rl"
+#line 157 "config-parser.rl"
 	{te = p;p--;}
 	break;
 	case 33:
-#line 157 "config-parser.rl"
+#line 158 "config-parser.rl"
 	{te = p;p--;{ {stack[top++] = cs; cs = 22; goto _again;} }}
 	break;
 	case 34:
-#line 159 "config-parser.rl"
+#line 160 "config-parser.rl"
 	{te = p;p--;{ {stack[top++] = cs; cs = 29; goto _again;} }}
 	break;
 	case 35:
-#line 160 "config-parser.rl"
+#line 161 "config-parser.rl"
 	{te = p;p--;}
 	break;
 	case 36:
@@ -567,7 +568,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 571 "config-parser.c"
+#line 572 "config-parser.c"
 		}
 	}
 
@@ -584,7 +585,7 @@ _again:
 #line 1 "NONE"
 	{act = 0;}
 	break;
-#line 588 "config-parser.c"
+#line 589 "config-parser.c"
 		}
 	}
 
@@ -604,7 +605,7 @@ _again:
 	_out: {}
 	}
 
-#line 197 "config-parser.rl"
+#line 198 "config-parser.rl"
 
     return IB_OK;
 }

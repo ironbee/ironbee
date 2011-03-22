@@ -108,6 +108,7 @@ static char *mark = NULL;
         }
     }
     action pop_block {
+        blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Failed to process block \"%s\": %d", blkname, rc);
@@ -115,7 +116,7 @@ static char *mark = NULL;
         if (blkname != NULL) {
             free(blkname);
         }
-        blkname = NULL;
+        blkname = (char *)cp->cur_blkname;
     }
 
     WS = [ \t];

@@ -100,6 +100,12 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     (*pcp)->cur_ctx = ib_context_main(ib);
     ib_list_push((*pcp)->stack, (*pcp)->cur_ctx);
 
+    /* Create the block tracking list */
+    rc = ib_list_create(&((*pcp)->block), pool);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Other fields are NULLed via calloc */
 
     ib_log_debug(ib, 4, "Stack: ctx=%p site=%p(%s) loc=%p",
@@ -215,7 +221,7 @@ static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
     IB_FTRACE_INIT(cfgp_set_current);
     cp->cur_ctx = ctx;
     cp->cur_loc = (ib_loc_t *)ctx->fn_ctx_data;
-    cp->cur_site = cp->cur_loc->site;
+    cp->cur_site = cp->cur_loc?cp->cur_loc->site:NULL;
     if (cp->cur_site != NULL) {
         if (cp->cur_site->locations != NULL) {
             cp->cur_loc = (ib_loc_t *)ib_list_node_data(ib_list_last(cp->cur_site->locations));
@@ -223,9 +229,6 @@ static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
         else {
             cp->cur_loc = cp->cur_site->default_loc;
         }
-    }
-    else {
-        cp->cur_loc = NULL;
     }
     IB_FTRACE_RET_VOID();
 }
@@ -259,16 +262,66 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
         *pctx = NULL;
     }
 
+    /* Remove the last item. */
     rc = ib_list_pop(cp->stack, &ctx);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4, "Failed to pop context: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    cfgp_set_current(cp, ctx);
 
     if (pctx != NULL) {
         *pctx = ctx;
     }
+
+    /* The last in the list is now the current. */
+    ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
+    cfgp_set_current(cp, ctx);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
+                                               const char *name)
+{
+    IB_FTRACE_INIT(ib_cfgparser_block_push);
+    ib_engine_t *ib = cp->ib;
+    ib_status_t rc;
+
+    rc = ib_list_push(cp->block, (void *)name);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 4, "Failed to push block %p: %d", name, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    cp->cur_blkname = name;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
+                                              const char **pname)
+{
+    IB_FTRACE_INIT(ib_cfgparser_block_pop);
+    ib_engine_t *ib = cp->ib;
+    const char *name;
+    ib_status_t rc;
+
+    if (pname != NULL) {
+        *pname = NULL;
+    }
+
+    rc = ib_list_pop(cp->block, &name);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 4, "Failed to pop block: %d", rc);
+        cp->cur_blkname = NULL;
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (pname != NULL) {
+        *pname = name;
+    }
+
+    /* The last in the list is now the current. */
+    cp->cur_blkname = (const char *)ib_list_node_data(ib_list_last(cp->block));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -407,6 +460,17 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
+                                  const char *name,
+                                  ib_list_t *args)
+{
+    ib_status_t rc = ib_cfgparser_block_push(cp, name);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    return ib_config_directive_process(cp, name, args);
+}
+
 ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
                                     const char *name)
 {
@@ -414,6 +478,12 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
     ib_status_t rc;
+
+    /* Finished with this block. */
+    rc = ib_cfgparser_block_pop(cp, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     rc = ib_hash_get(ib->dirmap, name, (void *)&rec);
     if (rc != IB_OK) {

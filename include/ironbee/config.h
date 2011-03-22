@@ -56,14 +56,16 @@ typedef struct ib_loc_t ib_loc_t;
 
 /// @todo Should probably be private structure
 struct ib_cfgparser_t {
-    ib_engine_t              *ib;        /**< Engine */
-    ib_mpool_t               *mp;        /**< Memory pool */
-    ib_list_t                *stack;     /**< Stack tracking current context */
+    ib_engine_t            *ib;          /**< Engine */
+    ib_mpool_t             *mp;          /**< Memory pool */
+    ib_list_t              *stack;       /**< Stack tracking contexts */
+    ib_list_t              *block;       /**< Stack tracking blocks */
 
     /* Parsing states */
-    ib_context_t             *cur_ctx;   /**< Current context */
-    ib_site_t                *cur_site;  /**< Current site */
-    ib_loc_t                 *cur_loc;   /**< Current location */
+    ib_context_t           *cur_ctx;     /**< Current context */
+    ib_site_t              *cur_site;    /**< Current site */
+    ib_loc_t               *cur_loc;     /**< Current location */
+    const char             *cur_blkname; /**< Current block name */
 };
 
 /**
@@ -220,6 +222,28 @@ ib_status_t DLL_PUBLIC ib_cfgparser_context_pop(ib_cfgparser_t *cp,
                                                 ib_context_t **pctx);
 
 /**
+ * Push a new block name onto the stack and make it the current.
+ *
+ * @param cp Parser
+ * @param name New block name
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
+                                               const char *name);
+
+/**
+ * Pop the current block name off the stack and make the previous the current.
+ *
+ * @param cp Parser
+ * @param pname Address which the removed name will be written (if non-NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
+                                              const char **pname);
+
+/**
  * Destroy the parser.
  *
  * @param cp Parser
@@ -287,9 +311,6 @@ ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
 ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
                                              const char *name,
                                              ib_list_t *args);
-
-#define ib_config_block_start(cp,name,args) \
-    ib_config_directive_process(cp,name,args)
 
 /**
  * Process a block.
