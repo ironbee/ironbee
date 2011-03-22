@@ -1732,7 +1732,6 @@ ib_status_t ib_context_init(ib_context_t *ctx)
         /// /* Set default values from module global values */
         /// memcpy(cfgdata->data, m->gcdata, m->gclen);
 
-        /* A NULL function is a default context, so use it */
         if (m->fn_ctx_init != NULL) {
             rc = m->fn_ctx_init(ib, m, ctx);
             if (rc != IB_OK) {
