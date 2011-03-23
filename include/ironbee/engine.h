@@ -221,6 +221,7 @@ struct ib_txdata_t {
 struct ib_tx_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Transaction memory pool */
+    const char         *id;              /**< Transaction ID */
     ib_conn_t          *conn;            /**< Connection */
     ib_context_t       *ctx;             /**< Config context */
     void               *pctx;            /**< Plugin context */
@@ -228,7 +229,6 @@ struct ib_tx_t {
     ib_hash_t          *data;            /**< Generic data store */
     ib_timeval_t        started;         /**< Tx (request) start time */
     ib_timeval_t        tv_response;     /**< Response start time */
-    const char          id[IB_UUID_HEX_SIZE];/**< Transaction ID */
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */
     const char         *path;            /**< Path used in the request */

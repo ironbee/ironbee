@@ -204,6 +204,7 @@ ffi.cdef[[
     struct ib_tx_t {
         ib_engine_t        *ib;
         ib_mpool_t         *mp;
+        const char         *id;
         ib_conn_t          *conn;
         ib_context_t       *ctx;
         void               *pctx;
@@ -211,7 +212,6 @@ ffi.cdef[[
         ib_hash_t          *data;
         ib_timeval_t        started;
         ib_timeval_t        tv_request;
-        const char          id[37];
         ib_tx_t            *next;
         const char         *hostname;
         const char         *path;

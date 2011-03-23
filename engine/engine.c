@@ -464,6 +464,11 @@ static void ib_tx_generate_id(ib_tx_t *tx)
     uuid.time_hi_and_ver |= (4 << 12);
 
     /* Convert to a hex-string representation */
+    tx->id = (const char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
+    if (tx->id == NULL) {
+        return;
+    }
+
     snprintf((char *)tx->id, IB_UUID_HEX_SIZE,
             "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
             uuid.time_low,
