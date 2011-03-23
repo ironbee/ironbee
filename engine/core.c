@@ -2702,7 +2702,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     ib_cfgparser_context_push(cp, ctx);
 
     /// @todo For now, register all modules with each context
-    ib_log_debug(ib, 4, "Registering modules with site \"%s:%s\" context", p1, loc->path);
+    ib_log_debug(ib, 4, "Registering modules with site \"%s:%s\" context %p", p1, loc->path, ctx);
     IB_ARRAY_LOOP(ib->modules, ne, i, m) {
         if (   (m != NULL) && (m->fn_ctx_init != NULL)
             && (strcmp("core", m->name) != 0))
@@ -2751,7 +2751,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 4, "Initializing context for \"%s\"", name);
+    ib_log_debug(ib, 4, "Initializing context %p for \"%s\"", ctx, name);
     rc = ib_context_init(ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
@@ -2809,7 +2809,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     ib_cfgparser_context_push(cp, ctx);
 
     /// @todo For now, register all modules with each context
-    ib_log_debug(ib, 4, "Registering modules with site \"%s:%s\" context", site->name, loc->path);
+    ib_log_debug(ib, 4, "Registering modules with site \"%s:%s\" context %p", site->name, loc->path, ctx);
     IB_ARRAY_LOOP(ib->modules, ne, i, m) {
         if (   (m != NULL) && (m->fn_ctx_init != NULL)
             && (strcmp("core", m->name) != 0))
@@ -2858,7 +2858,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 4, "Initializing context for \"%s\"", name);
+    ib_log_debug(ib, 4, "Initializing context %p for \"%s\"", ctx, name);
     rc = ib_context_init(ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
