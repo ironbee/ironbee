@@ -893,13 +893,14 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     IB_FTRACE_INIT(ib_state_notify_cfg_finished);
     ib_status_t rc;
 
-    rc = ib_state_notify(ib, cfg_finished_event, NULL);
+    /* Initialize (and close) the main configuration context. */
+    rc = ib_context_init(ib->ctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Initialize (and close) the main configuration context. */
-    rc = ib_context_init(ib->ctx);
+    /* Run the hooks. */
+    rc = ib_state_notify(ib, cfg_finished_event, NULL);
 
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);
