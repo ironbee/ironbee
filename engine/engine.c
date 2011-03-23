@@ -881,6 +881,8 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
     /* Create and configure the main configuration context. */
     ib_engine_context_create_main(ib);
 
+    /// @todo Create a temp mem pool???
+
     rc = ib_state_notify(ib, cfg_started_event, NULL);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -889,10 +891,14 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
 {
     IB_FTRACE_INIT(ib_state_notify_cfg_finished);
-    ib_status_t rc = ib_state_notify(ib, cfg_finished_event, NULL);
+    ib_status_t rc;
+
+    rc = ib_state_notify(ib, cfg_finished_event, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Initialize (and close) the main configuration context. */
-    ib_log_debug(ib, 4, "Closing main configuration context");
     rc = ib_context_init(ib->ctx);
 
     /* Destroy the temporary memory pool. */
