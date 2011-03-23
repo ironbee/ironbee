@@ -681,7 +681,7 @@ static ib_status_t ib_state_notify(ib_engine_t *ib,
 
     hook = ib->ectx->hook[event];
 
-    ib_log_debug(ib, 9, "EVENT: %s", ib_state_event_name(event));
+    ib_log_debug(ib, 4, "EVENT: %s", ib_state_event_name(event));
 
     while (hook != NULL) {
         ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
@@ -892,6 +892,7 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     ib_status_t rc = ib_state_notify(ib, cfg_finished_event, NULL);
 
     /* Initialize (and close) the main configuration context. */
+    ib_log_debug(ib, 4, "Closing main configuration context");
     rc = ib_context_init(ib->ctx);
 
     /* Destroy the temporary memory pool. */
