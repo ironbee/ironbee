@@ -1730,7 +1730,7 @@ ib_status_t ib_context_init(ib_context_t *ctx)
     ib_status_t rc;
     size_t ncfgdata, i;
 
-    ib_log_debug(ib, 4, "Initializing context ctx=%p", ctx);
+    ib_log_debug(ib, 9, "Initializing context ctx=%p", ctx);
 
     /* Run through the context modules to call any ctx_init functions. */
     /// @todo Not sure this is needed anymore

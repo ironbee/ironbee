@@ -197,15 +197,11 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
             chunk_end++;
         }
-        ib_log_debug(cp->ib, 4, "buf=%p buf_mark=%p buf_end=%p",
-                     buf, buf_mark, buf_end);
-        ib_log_debug(cp->ib, 4, "chunk_start=%p chunk_end=%p",
-                     chunk_start, chunk_end);
 
         /* Move remaining data to beginning of buf so that more can be read. */
         remaining = (buf_mark - chunk_start);
         if (remaining) {
-            ib_log_debug(cp->ib, 4, "Moving %d bytes", (int)remaining);
+            ib_log_debug(cp->ib, 9, "Moving %d bytes", (int)remaining);
             memmove(buf, chunk_end, remaining);
             buf_mark = buf + remaining;
         }

@@ -2707,7 +2707,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
         if (   (m != NULL) && (m->fn_ctx_init != NULL)
             && (strcmp("core", m->name) != 0))
         {
-            ib_log_debug(ib, 4, "Registering module: %s", m->name);
+            ib_log_debug(ib, 9, "Registering module: %s", m->name);
             ib_module_register_context(m, ctx);
         }
     }
@@ -2751,7 +2751,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 4, "Initializing context %p for \"%s\"", ctx, name);
+    ib_log_debug(ib, 9, "Initializing context %p for \"%s\"", ctx, name);
     rc = ib_context_init(ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
@@ -2759,7 +2759,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(ib, 4, "Stack: lastctx=%p ctx=%p site=%p(%s) loc=%p",
+    ib_log_debug(ib, 9, "Stack: lastctx=%p ctx=%p site=%p(%s) loc=%p",
                  ctx, cp->cur_ctx,
                  cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
                  cp->cur_loc);
@@ -2858,7 +2858,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 4, "Initializing context %p for \"%s\"", ctx, name);
+    ib_log_debug(ib, 9, "Initializing context %p for \"%s\"", ctx, name);
     rc = ib_context_init(ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
@@ -2866,7 +2866,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(ib, 4, "Stack: lastctx=%p ctx=%p site=%p(%s) loc=%p",
+    ib_log_debug(ib, 9, "Stack: lastctx=%p ctx=%p site=%p(%s) loc=%p",
                  ctx, cp->cur_ctx,
                  cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
                  cp->cur_loc);

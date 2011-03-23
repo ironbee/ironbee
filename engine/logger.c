@@ -62,6 +62,10 @@ static void default_logger(FILE *fp, int level,
     IB_FTRACE_INIT(default_logger);
     char fmt2[1024 + 1];
 
+    if (level > 4) {
+        IB_FTRACE_RET_VOID();
+    }
+
     if ((file != NULL) && (line > 0)) {
         int ec = snprintf(fmt2, 1024,
                           "%s[%d] (%s:%d) %s\n",
