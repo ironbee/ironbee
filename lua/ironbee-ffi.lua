@@ -46,6 +46,7 @@ _VERSION = "0.1"
 -- ===============================================
 ffi.cdef[[
     /* Util Types */
+    typedef void (*ib_void_fn_t)(void);
     typedef struct ib_mpool_t ib_mpool_t;
     typedef struct ib_dso_t ib_dso_t;
     typedef void ib_dso_sym_t;
@@ -408,6 +409,56 @@ ffi.cdef[[
                                  uint8_t **data_out,
                                  size_t *dlen_out,
                                  ib_flags_t *pflags);
+
+    /* Config */
+    typedef struct ib_cfgparser_t ib_cfgparser_t;
+    typedef struct ib_dirmap_init_t ib_dirmap_init_t;
+    typedef struct ib_site_t ib_site_t;
+    typedef struct ib_loc_t ib_loc_t;
+    typedef enum {
+        IB_DIRTYPE_ONOFF,                    /**< Boolean param directive */
+        IB_DIRTYPE_PARAM1,                   /**< One param directive */
+        IB_DIRTYPE_PARAM2,                   /**< Two param directive */
+        IB_DIRTYPE_LIST,                     /**< List param directive */
+        IB_DIRTYPE_SBLK1,                    /**< One param subblock directive */
+    } ib_dirtype_t;
+    typedef ib_status_t (*ib_config_cb_blkend_fn_t)(ib_cfgparser_t *cp,
+                                                    const char *name,
+                                                    void *cbdata);
+    typedef ib_status_t (*ib_config_cb_onoff_fn_t)(ib_cfgparser_t *cp,
+                                                   const char *name,
+                                                   int onoff,
+                                                   void *cbdata);
+    typedef ib_status_t (*ib_config_cb_param1_fn_t)(ib_cfgparser_t *cp,
+                                                    const char *name,
+                                                    const char *p1,
+                                                    void *cbdata);
+    typedef ib_status_t (*ib_config_cb_param2_fn_t)(ib_cfgparser_t *cp,
+                                                    const char *name,
+                                                    const char *p1,
+                                                    const char *p2,
+                                                    void * cbdata);
+    typedef ib_status_t (*ib_config_cb_list_fn_t)(ib_cfgparser_t *cp,
+                                                  const char *name,
+                                                  const ib_list_t *list,
+                                                  void *cbdata);
+    typedef ib_status_t (*ib_config_cb_sblk1_fn_t)(ib_cfgparser_t *cp,
+                                                   const char *name,
+                                                   const char *p1,
+                                                   void *cbdata);
+
+    ib_status_t ib_config_register_directive(ib_engine_t *ib,
+                                             const char *name,
+                                             ib_dirtype_t type,
+                                             ib_void_fn_t fn_config,
+                                             ib_config_cb_blkend_fn_t fn_blkend,
+                                             void *cbdata);
+
+    /* Lua Specific API */
+    ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
+                                       const char *name,
+                                       ib_list_t *args,
+                                       void *cbdata);
 
     /* Misc */
     ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin);
@@ -877,16 +928,32 @@ function ib_clog_events_write(ctx)
 end
 
 -- ===============================================
+-- Wrapper function to call Lua Module Functions
+-- ===============================================
+function _IRONBEE_CALL_MODULE_HANDLER(ib, modname, funcname, ...)
+    local c_ib = ffi.cast("ib_engine_t *", ib)
+    local l_ib = newEngine(ib)
+    local m
+
+    m = modules[modname]
+    if m == nil then
+        return c.IB_ENOENT
+    end
+
+    return m[funcname](l_ib, m, ...)
+end
+
+-- ===============================================
 -- Wrapper function to call Lua event handler.
 -- ===============================================
 function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
     local c_ib = ffi.cast("ib_engine_t *", ib)
-    local c_event = ffi.cast("int", event)
+    local c_event = ffi.cast("int", event);
     local l_ib = newEngine(ib)
     local l_arg
     local m
 
-    if     c_event == c.conn_started_event then
+    if c_event == c.conn_started_event then
         l_arg = newConn(arg)
     elseif c_event == c.conn_finished_event then
         l_arg = newConn(arg)
@@ -956,5 +1023,4 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
     end
 
     return m[funcname](l_ib, l_arg, ...)
-    -- return c.IB_OK
 end

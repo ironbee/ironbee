@@ -38,6 +38,17 @@ _COPYRIGHT = "Copyright (C) 2010-2011 Qualys, Inc."
 _DESCRIPTION = "IronBee example Lua module"
 _VERSION = "0.1"
 
+-- ===============================================
+-- This is called when the module loads
+--
+-- ib: IronBee engine handle
+-- ===============================================
+function onModuleLoad(ib)
+    ironbee.ib_log_debug(ib, 4, "%s.onModuleLoad ib=%p",
+                       _NAME, ib.cvalue())
+    -- ironbee.ib_config_register_directive( )
+    return 0
+end
 
 -- ===============================================
 -- ===============================================
