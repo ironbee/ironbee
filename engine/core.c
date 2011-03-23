@@ -3290,15 +3290,16 @@ static ib_status_t core_fini(ib_engine_t *ib,
  * Initialize the core module when it registered with a context.
  *
  * @param ib Engine
+ * @param m Module
  * @param ctx Context
  *
  * @returns Status code
  */
-static ib_status_t core_config_init(ib_engine_t *ib,
-                                    ib_module_t *m,
-                                    ib_context_t *ctx)
+static ib_status_t core_context_init(ib_engine_t *ib,
+                                     ib_module_t *m,
+                                     ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(core_config_init);
+    IB_FTRACE_INIT(core_context_init);
     ib_provider_inst_t *logger;
     ib_provider_inst_t *logevent;
     ib_provider_inst_t *parser;
@@ -3459,5 +3460,5 @@ IB_MODULE_INIT_STATIC(
     core_directive_map,                  /**< Config directive map */
     core_init,                           /**< Initialize function */
     core_fini,                           /**< Finish function */
-    core_config_init,                    /**< Context init function */
+    core_context_init,                   /**< Context init function */
 );
