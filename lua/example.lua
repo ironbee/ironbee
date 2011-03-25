@@ -39,6 +39,20 @@ _DESCRIPTION = "IronBee example Lua module"
 _VERSION = "0.1"
 
 -- ===============================================
+-- This is called to handle the
+-- LuaExampleDirective directive.
+--
+-- ib: IronBee engine handle
+-- cbdata: Callback data (from registration)
+-- ...: Any arguments
+-- ===============================================
+function onDirectiveLuaExampleDirective(ib, cbdata, ...)
+    ironbee.ib_log_debug(ib, 4, "%s.onDirectiveLuaExampleDirective ib=%p",
+                       _NAME, ib.cvalue())
+    return 0
+end
+
+-- ===============================================
 -- This is called when the module loads
 --
 -- ib: IronBee engine handle
@@ -46,7 +60,23 @@ _VERSION = "0.1"
 function onModuleLoad(ib)
     ironbee.ib_log_debug(ib, 4, "%s.onModuleLoad ib=%p",
                        _NAME, ib.cvalue())
-    -- ironbee.ib_config_register_directive( )
+
+    -- Register to handle a configuration directive
+    ironbee.ib_config_register_directive(
+        -- Engine handle
+        ib,
+        -- Directive
+        "LuaExampleDirective",
+        -- Directive Type (currently it MUST be 0 for directive or 1 for block)
+        0,
+        -- Full name of handler: modulename.funcname
+        _NAME .. ".onDirectiveLuaExampleDirective",
+        -- Block end function
+        nil,
+        -- Callback data (should be number, string or other C compat type)
+        nil
+    )
+
     return 0
 end
 

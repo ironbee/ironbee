@@ -455,10 +455,17 @@ ffi.cdef[[
                                              void *cbdata);
 
     /* Lua Specific API */
-    ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
-                                       const char *name,
-                                       ib_list_t *args,
-                                       void *cbdata);
+    typedef struct modlua_wrapper_cbdata_t modlua_wrapper_cbdata_t;
+    struct modlua_wrapper_cbdata_t {
+        const char         *fn_config_modname;
+        const char         *fn_config_name;
+        const char         *fn_blkend_modname;
+        const char         *fn_blkend_name;
+        const char         *cbdata_type;
+        void               *cbdata;
+    };
+    ib_void_fn_t modlua_config_wrapper(void);
+    ib_config_cb_blkend_fn_t modlua_blkend_wrapper(void);
 
     /* Misc */
     ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin);
@@ -536,6 +543,15 @@ IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
 IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
 IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
 IB_FTYPE_LIST    = ffi.cast("int", c.IB_FTYPE_LIST)
+
+-- ===============================================
+-- Directive Types
+-- ===============================================
+IB_DIRTYPE_ONOFF = ffi.cast("int", c.IB_DIRTYPE_ONOFF)
+IB_DIRTYPE_PARAM1 = ffi.cast("int", c.IB_DIRTYPE_PARAM1)
+IB_DIRTYPE_PARAM2 = ffi.cast("int", c.IB_DIRTYPE_PARAM2)
+IB_DIRTYPE_LIST = ffi.cast("int", c.IB_DIRTYPE_LIST)
+IB_DIRTYPE_SBLK1 = ffi.cast("int", c.IB_DIRTYPE_SBLK1)
 
 -- ===============================================
 -- Cast a value as a C "ib_conn_t *".
@@ -925,6 +941,68 @@ function ib_clog_events_write(ctx)
     local c_ctx = ctx.cvalue()
 
     return c.ib_clog_events_write(c_ctx)
+end
+
+function ib_config_register_directive(ib,
+                                      name, dirtype,
+                                      fn_config_name, fn_blkend_name,
+                                      cbdata)
+    local c_ib = ib.cvalue()
+    local c_cbdata = ffi.new("modlua_wrapper_cbdata_t")
+    local c_dirtype
+    local cbdata_type = base.type(cbdata);
+    local c_dirtype
+    local dot_idx
+
+    c_cbdata.cbdata = cbdata;
+    c_cbdata.cbdata_type = cbdata_type;
+
+    if dirtype == 1 then
+        c_dirtype = IB_DIRTYPE_SBLK;
+    else
+        c_dirtype = IB_DIRTYPE_LIST;
+    end
+
+    if fn_config_name ~= nil then
+        dot_idx = string.find(fn_config_name, ".", 1, true)
+        ib_log_debug(ib, 4, "DIRECTIVE_HANDLER: dot_idx=%d %s", ffi.cast("int", dot_idx), fn_config_name)
+        c_cbdata.fn_config_modname = string.sub(fn_config_name, 1, dot_idx - 1)
+        c_cbdata.fn_config_name = string.sub(fn_config_name, (string.len(fn_config_name) - dot_idx) * -1)
+    else
+        c_cbdata.fn_config_modname = nil;
+        c_cbdata.fn_config_name = nil;
+    end
+
+    if fn_blkend_name ~= nil then
+        dot_idx = string.find(fn_blkend_name, ".", 1, true)
+        c_cbdata.fn_blkend_modname = string.sub(fn_blkend_name, 1, dot_idx - 1)
+        c_cbdata.fn_blkend_name = string.sub(fn_blkend_name, (string.len(fn_blkend_name) - dot_idx) * -1)
+    else
+        c_cbdata.fn_blkend_modname = nil;
+        c_cbdata.fn_blkend_name = nil;
+    end
+
+    return c.ib_config_register_directive(c_ib,
+                                          name, c_dirtype,
+                                          c.modlua_config_wrapper(),
+                                          c.modlua_blkend_wrapper(),
+                                          c_cbdata)
+end
+
+-- ===============================================
+-- Wrapper function to call Lua Config Functions
+-- ===============================================
+function _IRONBEE_CALL_CONFIG_HANDLER(ib, modname, funcname, ...)
+    local c_ib = ffi.cast("ib_engine_t *", ib)
+    local l_ib = newEngine(ib)
+    local m
+
+    m = modules[modname]
+    if m == nil then
+        return c.IB_ENOENT
+    end
+
+    return m[funcname](l_ib, ...)
 end
 
 -- ===============================================

@@ -75,6 +75,7 @@ typedef struct modlua_cpart_t modlua_cpart_t;
 typedef struct modlua_reg_t modlua_reg_t;
 typedef struct modlua_runtime_t modlua_runtime_t;
 typedef struct modlua_cfg_t modlua_cfg_t;
+typedef struct modlua_wrapper_cbdata_t modlua_wrapper_cbdata_t;
 
 /** Lua Module Binary Data Chunk */
 struct modlua_chunk_t {
@@ -115,6 +116,20 @@ struct modlua_cfg_t {
     ib_list_t          *event_reg[IB_STATE_EVENT_NUM + 1];
     lua_State          *Lconfig;
 };
+
+/** Lua Wrapper Callback Data Structure */
+struct modlua_wrapper_cbdata_t {
+    const char         *fn_config_modname;
+    const char         *fn_config_name;
+    const char         *fn_blkend_modname;
+    const char         *fn_blkend_name;
+    const char         *cbdata_type;
+    void               *cbdata;
+};
+
+/** Config Directive Wrapper Fetch Functions */
+ib_void_fn_t modlua_config_wrapper(void);
+ib_config_cb_blkend_fn_t modlua_blkend_wrapper(void);
 
 /* Instantiate a module global configuration. */
 static modlua_cfg_t modlua_global_cfg;
@@ -239,6 +254,9 @@ static int modlua_load_lua_data(ib_engine_t *ib, lua_State *L, modlua_chunk_t *c
 
 #define IB_FFI_MODULE_WRAPPER     _IRONBEE_CALL_MODULE_HANDLER
 #define IB_FFI_MODULE_WRAPPER_STR IB_XSTRINGIFY(IB_FFI_MODULE_WRAPPER)
+
+#define IB_FFI_MODULE_CFG_WRAPPER     _IRONBEE_CALL_CONFIG_HANDLER
+#define IB_FFI_MODULE_CFG_WRAPPER_STR IB_XSTRINGIFY(IB_FFI_MODULE_CFG_WRAPPER)
 
 #define IB_FFI_MODULE_EVENT_WRAPPER     _IRONBEE_CALL_EVENT_HANDLER
 #define IB_FFI_MODULE_EVENT_WRAPPER_STR IB_XSTRINGIFY(IB_FFI_MODULE_EVENT_WRAPPER)
@@ -550,10 +568,11 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
                      "Lua module wrapper function not available - "
                      "could not execute \"%s.%s\" handler",
                      m->name, funcname);
+        rc = IB_EUNKNOWN;
     }
     lua_pop(L, 1); /* cleanup stack */
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /// @todo This should be triggered by directive.
@@ -820,6 +839,8 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
     lua_getfield(L, -1, IB_FFI_MODULE_STR);
     lua_getfield(L, -1, IB_FFI_MODULE_WRAPPER_STR);
     lua_setglobal(L, IB_FFI_MODULE_WRAPPER_STR);
+    lua_getfield(L, -1, IB_FFI_MODULE_CFG_WRAPPER_STR);
+    lua_setglobal(L, IB_FFI_MODULE_CFG_WRAPPER_STR);
     lua_getfield(L, -1, IB_FFI_MODULE_EVENT_WRAPPER_STR);
     lua_setglobal(L, IB_FFI_MODULE_EVENT_WRAPPER_STR);
     lua_pop(L, 3); /* cleanup stack */
@@ -1665,7 +1686,186 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
 };
 
 
+
+
 /* -- Configuration Directives -- */
+
+/* C config callback wrapper for all Lua implemented config directives. */
+static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
+                                          const char *name,
+                                          ib_list_t *args,
+                                          void *cbdata)
+{
+    IB_FTRACE_INIT(modlua_dir_lua_wrapper);
+    ib_engine_t *ib = cp->ib;
+    modlua_wrapper_cbdata_t *wcbdata = (modlua_wrapper_cbdata_t *)cbdata;
+    ib_list_node_t *node;
+    modlua_cfg_t *maincfg;
+    lua_State *L;
+    ib_status_t rc;
+    int ec;
+
+    ib_log_debug(ib, 4, "Handling Lua Directive: %s", name);
+    /* Get the main module config. */
+    rc = ib_context_module_config(ib_context_main(ib),
+                                  &IB_MODULE_SYM, (void *)&maincfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module main config: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Use the configuration lua state. */
+    L = maincfg->Lconfig;
+
+    lua_getglobal(L, IB_FFI_MODULE_WRAPPER_STR);
+    if (lua_isfunction(L, -1)) {
+        ib_log_debug(ib, 9,
+                     "Executing lua config handler \"%s.%s\" via wrapper",
+                     wcbdata->fn_config_modname,
+                     wcbdata->fn_config_name);
+        lua_pushlightuserdata(L, ib);
+        lua_pushstring(L, wcbdata->fn_config_modname);
+        lua_pushstring(L, wcbdata->fn_config_name);
+        if (strcmp("string", wcbdata->cbdata_type) == 0) {
+            lua_pushstring(L, (const char *)wcbdata->cbdata);
+        }
+        else if (strcmp("number", wcbdata->cbdata_type) == 0) {
+            lua_pushnumber(L, *(lua_Number *)wcbdata->cbdata);
+        }
+        else {
+            lua_pushlightuserdata(L, wcbdata->cbdata);
+        }
+        IB_LIST_LOOP(args, node) {
+            lua_pushstring(L, (const char *)ib_list_node_data(node));
+        }
+        /// @todo Use errfunc w/debug.traceback()
+        ec = lua_pcall(L, 4 + ib_list_elements(args), 1, 0);
+        if (ec != 0) {
+            ib_log_error(ib, 1,
+                         "Failed to exec lua directive wrapper for \"%s.%s\": "
+                         "%s (%d)",
+                         wcbdata->fn_config_modname,
+                         wcbdata->fn_config_name,
+                         lua_tostring(L, -1), ec);
+            rc = IB_EINVAL;
+        }
+        else if (lua_isnumber(L, -1)) {
+            rc = (ib_status_t)(int)lua_tointeger(L, -1);
+        }
+        else {
+            ib_log_error(ib, 1,
+                         "Expected %s returned from lua "
+                         "\"%s.%s\", but received %s",
+                         lua_typename(L, LUA_TNUMBER),
+                         wcbdata->fn_config_modname,
+                         wcbdata->fn_config_name,
+                         lua_typename(L, lua_type(L, -1)));
+            rc = IB_EINVAL;
+        }
+    }
+    else {
+        ib_log_error(ib, 3,
+                     "Lua config wrapper function not available - "
+                     "could not execute \"%s.%s\" handler",
+                     wcbdata->fn_config_modname,
+                     wcbdata->fn_config_name);
+        rc = IB_EUNKNOWN;
+    }
+    lua_pop(L, 1); /* cleanup stack */
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/* C blkend callback wrapper for all Lua implemented config directives. */
+static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
+                                             const char *name,
+                                             void *cbdata)
+{
+    IB_FTRACE_INIT(modlua_blkend_lua_wrapper);
+    ib_engine_t *ib = cp->ib;
+    modlua_wrapper_cbdata_t *wcbdata = (modlua_wrapper_cbdata_t *)cbdata;
+    modlua_cfg_t *maincfg;
+    lua_State *L;
+    ib_status_t rc;
+    int ec;
+
+    ib_log_debug(ib, 4, "Handling Lua Directive: %s", name);
+    /* Get the main module config. */
+    rc = ib_context_module_config(ib_context_main(ib),
+                                  &IB_MODULE_SYM, (void *)&maincfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module main config: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Use the configuration lua state. */
+    L = maincfg->Lconfig;
+
+    lua_getglobal(L, IB_FFI_MODULE_WRAPPER_STR);
+    if (lua_isfunction(L, -1)) {
+        ib_log_debug(ib, 9,
+                     "Executing lua config handler \"%s.%s\" via wrapper",
+                     wcbdata->fn_config_modname,
+                     wcbdata->fn_config_name);
+        lua_pushlightuserdata(L, ib);
+        lua_pushstring(L, wcbdata->fn_config_modname);
+        lua_pushstring(L, wcbdata->fn_config_name);
+        if (strcmp("string", wcbdata->cbdata_type) == 0) {
+            lua_pushstring(L, (const char *)wcbdata->cbdata);
+        }
+        else if (strcmp("number", wcbdata->cbdata_type) == 0) {
+            lua_pushnumber(L, *(lua_Number *)wcbdata->cbdata);
+        }
+        else {
+            lua_pushlightuserdata(L, wcbdata->cbdata);
+        }
+        /// @todo Use errfunc w/debug.traceback()
+        ec = lua_pcall(L, 4, 1, 0);
+        if (ec != 0) {
+            ib_log_error(ib, 1,
+                         "Failed to exec lua directive wrapper for \"%s.%s\": "
+                         "%s (%d)",
+                         wcbdata->fn_config_modname,
+                         wcbdata->fn_config_name,
+                         lua_tostring(L, -1), ec);
+            rc = IB_EINVAL;
+        }
+        else if (lua_isnumber(L, -1)) {
+            rc = (ib_status_t)(int)lua_tointeger(L, -1);
+        }
+        else {
+            ib_log_error(ib, 1,
+                         "Expected %s returned from lua "
+                         "\"%s.%s\", but received %s",
+                         lua_typename(L, LUA_TNUMBER),
+                         wcbdata->fn_config_modname,
+                         wcbdata->fn_config_name,
+                         lua_typename(L, lua_type(L, -1)));
+            rc = IB_EINVAL;
+        }
+    }
+    else {
+        ib_log_error(ib, 3,
+                     "Lua config wrapper function not available - "
+                     "could not execute \"%s.%s\" handler",
+                     wcbdata->fn_config_modname,
+                     wcbdata->fn_config_name);
+        rc = IB_EUNKNOWN;
+    }
+    lua_pop(L, 1); /* cleanup stack */
+
+    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+}
+
+ib_void_fn_t modlua_config_wrapper(void)
+{
+    return (ib_void_fn_t)modlua_dir_lua_wrapper;
+}
+
+ib_config_cb_blkend_fn_t modlua_blkend_wrapper(void)
+{
+    return modlua_blkend_lua_wrapper;
+}
 
 static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                      const char *name,
