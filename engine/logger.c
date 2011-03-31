@@ -93,6 +93,82 @@ static void default_logger(FILE *fp, int level,
 
 /* -- Log Event Routines -- */
 
+/* Log Event Types */
+const char *ib_logevent_type_str[] = {
+    "Unknown",
+    "Alert",
+    NULL
+};
+
+/** Log Event Activities */
+static const char *ib_logevent_activity_str[] = {
+    "Unknown",
+    "Recon",
+    "Attempted Atack",
+    "Successful Attack",
+    NULL
+};
+
+/** Log Event Primary Classification */
+static const char *ib_logevent_pri_class_str[] = {
+    "Unknown",
+    "Injection",
+    NULL
+};
+
+/** Log Event Secondary Classification */
+static const char *ib_logevent_sec_class_str[] = {
+    "Unknown",
+    "SQL",
+    NULL
+};
+
+/** Log Event System Environment */
+static const char *ib_logevent_sys_env_str[] = {
+    "Unknown",
+    "Public",
+    "Private",
+    NULL
+};
+
+/** Log Event Recommended Action */
+static const char *ib_logevent_action_str[] = {
+    "Unknown",
+    "Log",
+    "Block",
+    NULL
+};
+
+const char *ib_logevent_type_name(ib_logevent_type_t num)
+{
+    return ib_logevent_type_str[num];
+}
+
+const char *ib_logevent_activity_name(ib_logevent_activity_t num)
+{
+    return ib_logevent_activity_str[num];
+}
+
+const char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num)
+{
+    return ib_logevent_pri_class_str[num];
+}
+
+const char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num)
+{
+    return ib_logevent_sec_class_str[num];
+}
+
+const char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num)
+{
+    return ib_logevent_sys_env_str[num];
+}
+
+const char *ib_logevent_action_name(ib_logevent_action_t num)
+{
+    return ib_logevent_action_str[num];
+}
+
 /// @todo Change this to _ex function with all fields and only use
 ///       the required fields here.
 ib_status_t ib_logevent_create(ib_logevent_t **ple,

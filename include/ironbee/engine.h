@@ -1555,6 +1555,63 @@ void DLL_PUBLIC ib_clog_auditlog_write(ib_context_t *ctx);
  * @{
  */
 
+/* Log Event Types */
+typedef enum {
+    IB_LEVENT_TYPE_UNKNOWN,
+    IB_LEVENT_TYPE_ALERT,
+} ib_logevent_type_t;
+
+/** Log Event Activities */
+typedef enum {
+    IB_LEVENT_ACT_UNKNOWN,
+    IB_LEVENT_ACT_RECON,
+    IB_LEVENT_ACT_ATTEMPTED_ATTACK,
+    IB_LEVENT_ACT_SUCCESSFUL_ATTACK,
+} ib_logevent_activity_t;
+
+/** Log Event Primary Classification */
+typedef enum {
+    IB_LEVENT_PCLASS_UNKNOWN,
+    /// @todo These are just examples for now
+    IB_LEVENT_PCLASS_INJECTION,
+} ib_logevent_pri_class_t;
+
+/** Log Event Secondary Classification */
+typedef enum {
+    IB_LEVENT_SCLASS_UNKNOWN,
+    /// @todo These are just examples for now
+    IB_LEVENT_SCLASS_SQL,
+} ib_logevent_sec_class_t;
+
+/** Log Event System Environment */
+typedef enum {
+    IB_LEVENT_SYS_UNKNOWN,
+    IB_LEVENT_SYS_PUBLIC,
+    IB_LEVENT_SYS_PRIVATE,
+
+} ib_logevent_sys_env_t;
+
+/** Log Event Recommended Action */
+typedef enum {
+    IB_LEVENT_ACTION_UNKNOWN,
+    /// @todo These are just examples for now
+    IB_LEVENT_ACTION_LOG,
+    IB_LEVENT_ACTION_BLOCK,
+} ib_logevent_action_t;
+
+const DLL_PUBLIC char *ib_logevent_type_name(ib_logevent_type_t num);
+
+const DLL_PUBLIC char *ib_logevent_activity_name(ib_logevent_activity_t num);
+
+const DLL_PUBLIC char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num);
+
+const DLL_PUBLIC char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num);
+
+const DLL_PUBLIC char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num);
+
+const DLL_PUBLIC char *ib_logevent_action_name(ib_logevent_action_t num);
+
+/** Log Event Structure */
 struct ib_logevent_t {
     uint32_t       event_id;     /**< Event ID */
     const char    *rule_id;      /**< Rule ID (if any) */
@@ -1566,7 +1623,7 @@ struct ib_logevent_t {
     size_t         data_len;     /**< Event data size */
     /// @todo uint8_t types should be typedef or enum?
     uint8_t        type;         /**< Event type */
-    uint8_t        activity;     /**< Event activity (recon, attache, etc.) */
+    uint8_t        activity;     /**< Event activity (recon, attack, etc.) */
     uint8_t        pri_class;    /**< Primary class (ex: INJECTION) */
     uint8_t        sec_class;    /**< Secondary class (ex: SQL) */
     uint8_t        confidence;   /**< Event confidence (percent) */

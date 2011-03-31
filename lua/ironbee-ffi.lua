@@ -119,6 +119,34 @@ ffi.cdef[[
         response_finished_event
     } ib_state_event_type_t;
 
+    typedef enum {
+        IB_LEVENT_TYPE_UNKNOWN,
+        IB_LEVENT_TYPE_ALERT,
+    } ib_logevent_type_t;
+    typedef enum {
+        IB_LEVENT_ACT_UNKNOWN,
+        IB_LEVENT_ACT_RECON,
+        IB_LEVENT_ACT_ATTEMPTED_ATTACK,
+        IB_LEVENT_ACT_SUCCESSFUL_ATTACK,
+    } ib_logevent_activity_t;
+    typedef enum {
+        IB_LEVENT_PCLASS_UNKNOWN,
+        IB_LEVENT_PCLASS_INJECTION,
+    } ib_logevent_pri_class_t;
+    typedef enum {
+        IB_LEVENT_SCLASS_UNKNOWN,
+        IB_LEVENT_SCLASS_SQL,
+    } ib_logevent_sec_class_t;
+    typedef enum {
+        IB_LEVENT_SYS_UNKNOWN,
+        IB_LEVENT_SYS_PUBLIC,
+        IB_LEVENT_SYS_PRIVATE,
+    } ib_logevent_sys_env_t;
+    typedef enum {
+        IB_LEVENT_ACTION_UNKNOWN,
+        IB_LEVENT_ACTION_LOG,
+        IB_LEVENT_ACTION_BLOCK,
+    } ib_logevent_action_t;
 
     /* Engine Types */
     typedef struct ib_engine_t ib_engine_t;
@@ -283,7 +311,12 @@ ffi.cdef[[
         ib_list_t     *fields;
         ib_mpool_t    *mp;
     };
-
+    const char *ib_logevent_type_name(ib_logevent_type_t num);
+    const char *ib_logevent_activity_name(ib_logevent_activity_t num);
+    const char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num);
+    const char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num);
+    const char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num);
+    const char *ib_logevent_action_name(ib_logevent_action_t num);
 
     /* Field */
     ib_status_t ib_field_create_ex(ib_field_t **pf,
@@ -552,6 +585,26 @@ IB_DIRTYPE_PARAM1 = ffi.cast("int", c.IB_DIRTYPE_PARAM1)
 IB_DIRTYPE_PARAM2 = ffi.cast("int", c.IB_DIRTYPE_PARAM2)
 IB_DIRTYPE_LIST = ffi.cast("int", c.IB_DIRTYPE_LIST)
 IB_DIRTYPE_SBLK1 = ffi.cast("int", c.IB_DIRTYPE_SBLK1)
+
+-- ===============================================
+-- Log Event Definitions
+-- ===============================================
+IB_LEVENT_TYPE_UNKNOWN = ffi.cast("int", c.IB_LEVENT_TYPE_UNKNOWN)
+IB_LEVENT_TYPE_ALERT = ffi.cast("int", c.IB_LEVENT_TYPE_ALERT)
+IB_LEVENT_ACT_UNKNOWN = ffi.cast("int", c.IB_LEVENT_ACT_UNKNOWN)
+IB_LEVENT_ACT_RECON = ffi.cast("int", c.IB_LEVENT_ACT_RECON)
+IB_LEVENT_ACT_ATTEMPTED_ATTACK = ffi.cast("int", c.IB_LEVENT_ACT_ATTEMPTED_ATTACK)
+IB_LEVENT_ACT_SUCCESSFUL_ATTACK = ffi.cast("int", c.IB_LEVENT_ACT_SUCCESSFUL_ATTACK)
+IB_LEVENT_PCLASS_UNKNOWN = ffi.cast("int", c.IB_LEVENT_PCLASS_UNKNOWN)
+IB_LEVENT_PCLASS_INJECTION = ffi.cast("int", c.IB_LEVENT_PCLASS_INJECTION)
+IB_LEVENT_SCLASS_UNKNOWN = ffi.cast("int", c.IB_LEVENT_SCLASS_UNKNOWN)
+IB_LEVENT_SCLASS_SQL = ffi.cast("int", c.IB_LEVENT_SCLASS_SQL)
+IB_LEVENT_SYS_UNKNOWN = ffi.cast("int", c.IB_LEVENT_SYS_UNKNOWN)
+IB_LEVENT_SYS_PUBLIC = ffi.cast("int", c.IB_LEVENT_SYS_PUBLIC)
+IB_LEVENT_SYS_PRIVATE = ffi.cast("int", c.IB_LEVENT_SYS_PRIVATE)
+IB_LEVENT_ACTION_UNKNOWN = ffi.cast("int", c.IB_LEVENT_ACTION_UNKNOWN)
+IB_LEVENT_ACTION_LOG = ffi.cast("int", c.IB_LEVENT_ACTION_LOG)
+IB_LEVENT_ACTION_BLOCK = ffi.cast("int", c.IB_LEVENT_ACTION_BLOCK)
 
 -- ===============================================
 -- Cast a value as a C "ib_conn_t *".
@@ -875,6 +928,54 @@ function ib_matcher_match_field(m, patt, flags, f)
     end
 
     return c.ib_matcher_match_field(m, cpatt, flags, c_f)
+end
+
+function ib_logevent_type_name(num)
+    local name = c.ib_logevent_type_name(num)
+    if name ~= nil then
+        return ffi.string(name)
+    end
+    return nil
+end
+
+function ib_logevent_activity_name(num)
+    local name = c.ib_logevent_activity_name(num)
+    if name ~= nil then
+        return ffi.string(name)
+    end
+    return nil
+end
+
+function ib_logevent_pri_class_name(num)
+    local name = c.ib_logevent_pri_class_name(num)
+    if name ~= nil then
+        return ffi.string(name)
+    end
+    return nil
+end
+
+function ib_logevent_sec_class_name(num)
+    local name = c.ib_logevent_sec_class_name(num)
+    if name ~= nil then
+        return ffi.string(name)
+    end
+    return nil
+end
+
+function ib_logevent_sys_env_name(num)
+    local name = c.ib_logevent_sys_env_name(num)
+    if name ~= nil then
+        return ffi.string(name)
+    end
+    return nil
+end
+
+function ib_logevent_action_name(num)
+    local name = c.ib_logevent_action_name(num)
+    if name ~= nil then
+        return ffi.string(name)
+    end
+    return nil
 end
 
 -- TODO: Make this accept a table (named parameters)???
