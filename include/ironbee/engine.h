@@ -1597,42 +1597,84 @@ typedef enum {
     /// @todo These are just examples for now
     IB_LEVENT_ACTION_LOG,
     IB_LEVENT_ACTION_BLOCK,
+    IB_LEVENT_ACTION_IGNORE,
 } ib_logevent_action_t;
 
+/**
+ * Lookup log event type name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
 const DLL_PUBLIC char *ib_logevent_type_name(ib_logevent_type_t num);
 
+/**
+ * Lookup log event activity name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
 const DLL_PUBLIC char *ib_logevent_activity_name(ib_logevent_activity_t num);
 
+/**
+ * Lookup log event primary classification name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
 const DLL_PUBLIC char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num);
 
+/**
+ * Lookup log event secondary classification name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
 const DLL_PUBLIC char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num);
 
+/**
+ * Lookup log event system environment name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
 const DLL_PUBLIC char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num);
 
+/**
+ * Lookup log event action name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
 const DLL_PUBLIC char *ib_logevent_action_name(ib_logevent_action_t num);
 
 /** Log Event Structure */
 struct ib_logevent_t {
-    uint32_t       event_id;     /**< Event ID */
-    const char    *rule_id;      /**< Rule ID (if any) */
-    const char    *publisher;    /**< Publisher name */
-    const char    *source;       /**< Source identifier */
-    const char    *source_ver;   /**< Source version string */
-    const char    *msg;          /**< Event message */
-    uint8_t       *data;         /**< Event data that matched */
-    size_t         data_len;     /**< Event data size */
-    /// @todo uint8_t types should be typedef or enum?
-    uint8_t        type;         /**< Event type */
-    uint8_t        activity;     /**< Event activity (recon, attack, etc.) */
-    uint8_t        pri_class;    /**< Primary class (ex: INJECTION) */
-    uint8_t        sec_class;    /**< Secondary class (ex: SQL) */
-    uint8_t        confidence;   /**< Event confidence (percent) */
-    uint8_t        severity;     /**< Event severity (0-100?) */
-    uint8_t        sys_env;      /**< System environment (pub or priv)  */
-    uint8_t        rec_action;   /**< Recommended action */
-    ib_list_t     *tags;         /**< List of tags */
-    ib_list_t     *fields;       /**< List of fields */
-    ib_mpool_t    *mp;           /**< Memory pool */
+    uint32_t                 event_id;   /**< Event ID */
+    const char              *rule_id;    /**< Rule ID (if any) */
+    const char              *publisher;  /**< Publisher name */
+    const char              *source;     /**< Source identifier */
+    const char              *source_ver; /**< Source version string */
+    const char              *msg;        /**< Event message */
+    size_t                   data_len;   /**< Event data size */
+    ib_list_t               *tags;       /**< List of tags */
+    ib_list_t               *fields;     /**< List of fields */
+    ib_mpool_t              *mp;         /**< Memory pool */
+    uint8_t                  confidence; /**< Event confidence (percent) */
+    uint8_t                  severity;   /**< Event severity (0-100?) */
+    ib_logevent_type_t       type;       /**< Event type */
+    ib_logevent_activity_t   activity;   /**< Event activity (recon/attack) */
+    ib_logevent_pri_class_t  pri_class;  /**< Primary class (ex: INJECTION) */
+    ib_logevent_sec_class_t  sec_class;  /**< Secondary class (ex: SQL) */
+    ib_logevent_sys_env_t    sys_env;    /**< System environment (pub/priv) */
+    ib_logevent_action_t     rec_action; /**< Recommended action */
+    ib_logevent_action_t     action;     /**< Action taken */
 };
 
 /**
@@ -1644,10 +1686,11 @@ struct ib_logevent_t {
  * @param activity Event activity
  * @param pri_class Event primary class
  * @param sec_class Event secondary class
- * @param confidence Event confidence
- * @param severity Event severity
  * @param sys_env Event system environment
  * @param rec_action Event recommended action
+ * @param action Event action taken
+ * @param confidence Event confidence
+ * @param severity Event severity
  * @param fmt Event message format string
  *
  * @returns Status code
@@ -1655,14 +1698,15 @@ struct ib_logevent_t {
 ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
                                           ib_mpool_t *pool,
                                           const char *rule_id,
-                                          uint8_t type,
-                                          uint8_t activity,
-                                          uint8_t pri_class,
-                                          uint8_t sec_class,
+                                          ib_logevent_type_t type,
+                                          ib_logevent_activity_t activity,
+                                          ib_logevent_pri_class_t pri_class,
+                                          ib_logevent_sec_class_t sec_class,
+                                          ib_logevent_sys_env_t sys_env,
+                                          ib_logevent_action_t rec_action,
+                                          ib_logevent_action_t action,
                                           uint8_t confidence,
                                           uint8_t severity,
-                                          uint8_t sys_env,
-                                          uint8_t rec_action,
                                           const char *fmt,
                                           ...);
 

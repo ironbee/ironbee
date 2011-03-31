@@ -146,6 +146,7 @@ ffi.cdef[[
         IB_LEVENT_ACTION_UNKNOWN,
         IB_LEVENT_ACTION_LOG,
         IB_LEVENT_ACTION_BLOCK,
+        IB_LEVENT_ACTION_IGNORE,
     } ib_logevent_action_t;
 
     /* Engine Types */
@@ -291,25 +292,25 @@ ffi.cdef[[
     };
 
     struct ib_logevent_t {
-        uint32_t       event_id;
-        const char    *rule_id;
-        const char    *publisher;
-        const char    *source;
-        const char    *source_ver;
-        const char    *msg;
-        uint8_t       *data;
-        size_t         data_len;
-        uint8_t        type;
-        uint8_t        activity;
-        uint8_t        pri_class;
-        uint8_t        sec_class;
-        uint8_t        confidence;
-        uint8_t        severity;
-        uint8_t        sys_env;
-        uint8_t        rec_action;
-        ib_list_t     *tags;
-        ib_list_t     *fields;
-        ib_mpool_t    *mp;
+        uint32_t                 event_id;
+        const char              *rule_id;
+        const char              *publisher;
+        const char              *source;
+        const char              *source_ver;
+        const char              *msg;
+        size_t                   data_len;
+        ib_list_t               *tags;
+        ib_list_t               *fields;
+        ib_mpool_t              *mp;
+        uint8_t                  confidence;
+        uint8_t                  severity;
+        ib_logevent_type_t       type;
+        ib_logevent_activity_t   activity;
+        ib_logevent_pri_class_t  pri_class;
+        ib_logevent_sec_class_t  sec_class;
+        ib_logevent_sys_env_t    sys_env;
+        ib_logevent_action_t     rec_action;
+        ib_logevent_action_t     action;
     };
     const char *ib_logevent_type_name(ib_logevent_type_t num);
     const char *ib_logevent_activity_name(ib_logevent_activity_t num);
@@ -396,14 +397,15 @@ ffi.cdef[[
     ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                    ib_mpool_t *pool,
                                    const char *rule_id,
-                                   uint8_t type,
-                                   uint8_t activity,
-                                   uint8_t pri_class,
-                                   uint8_t sec_class,
+                                   ib_logevent_type_t type,
+                                   ib_logevent_activity_t activity,
+                                   ib_logevent_pri_class_t pri_class,
+                                   ib_logevent_sec_class_t sec_class,
+                                   ib_logevent_sys_env_t sys_env,
+                                   ib_logevent_action_t rec_action,
+                                   ib_logevent_action_t action,
                                    uint8_t confidence,
                                    uint8_t severity,
-                                   uint8_t sys_env,
-                                   uint8_t rec_action,
                                    const char *fmt,
                                    ...);
     ib_status_t ib_clog_event(ib_context_t *ctx,
@@ -605,6 +607,7 @@ IB_LEVENT_SYS_PRIVATE = ffi.cast("int", c.IB_LEVENT_SYS_PRIVATE)
 IB_LEVENT_ACTION_UNKNOWN = ffi.cast("int", c.IB_LEVENT_ACTION_UNKNOWN)
 IB_LEVENT_ACTION_LOG = ffi.cast("int", c.IB_LEVENT_ACTION_LOG)
 IB_LEVENT_ACTION_BLOCK = ffi.cast("int", c.IB_LEVENT_ACTION_BLOCK)
+IB_LEVENT_ACTION_IGNORE = ffi.cast("int", c.IB_LEVENT_ACTION_IGNORE)
 
 -- ===============================================
 -- Cast a value as a C "ib_conn_t *".
@@ -979,8 +982,10 @@ function ib_logevent_action_name(num)
 end
 
 -- TODO: Make this accept a table (named parameters)???
-function ib_logevent_create(pool, rule_id, type, activity, pri_class, sec_class,
-                            confidence, severity, sys_env, rec_action,
+function ib_logevent_create(pool, rule_id, type, activity,
+                            pri_class, sec_class,
+                            sys_env, rec_action, action,
+                            confidence, severity,
                             fmt, ...)
     local c_pool = pool.cvalue()
     local c_le = ffi.new("ib_logevent_t*[1]")
@@ -988,14 +993,15 @@ function ib_logevent_create(pool, rule_id, type, activity, pri_class, sec_class,
 
     rc = c.ib_logevent_create(c_le, c_pool,
                               rule_id,
-                              ffi.cast("uint8_t", type),
-                              ffi.cast("uint8_t", activity),
-                              ffi.cast("uint8_t", pri_class),
-                              ffi.cast("uint8_t", sec_class),
+                              ffi.cast("int", type),
+                              ffi.cast("int", activity),
+                              ffi.cast("int", pri_class),
+                              ffi.cast("int", sec_class),
+                              ffi.cast("int", sys_env),
+                              ffi.cast("int", rec_action),
+                              ffi.cast("int", action),
                               ffi.cast("uint8_t", confidence),
                               ffi.cast("uint8_t", severity),
-                              ffi.cast("uint8_t", sys_env),
-                              ffi.cast("uint8_t", rec_action),
                               fmt, ...)
     if rc ~= c.IB_OK then
         return nil

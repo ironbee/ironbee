@@ -1188,10 +1188,11 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"type\": \"%s\",\r\n"
                         "      \"activity\": \"%s\",\r\n"
                         "      \"class\": \"%s/%s\",\r\n"
-                        "      \"confidence\": %u,\r\n"
-                        "      \"severity\": %u,\r\n"
                         "      \"sys-env\": \"%s\",\r\n"
                         "      \"rec-action\": \"%s\",\r\n"
+                        "      \"action\": \"%s\",\r\n"
+                        "      \"confidence\": %u,\r\n"
+                        "      \"severity\": %u,\r\n"
                         "      \"tags\": [],\r\n"
                         "      \"fields\": [],\r\n"
                         "      \"msg\": \"%s\",\r\n"
@@ -1202,14 +1203,15 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         e->publisher ? e->publisher : "-",
                         e->source ? e->source : "-",
                         e->source_ver ? e->source_ver : "-",
-                        ib_logevent_type_name((ib_logevent_type_t)e->type),
-                        ib_logevent_activity_name((ib_logevent_activity_t)e->activity),
-                        ib_logevent_pri_class_name((ib_logevent_pri_class_t)e->pri_class),
-                        ib_logevent_sec_class_name((ib_logevent_sec_class_t)e->sec_class),
+                        ib_logevent_type_name(e->type),
+                        ib_logevent_activity_name(e->activity),
+                        ib_logevent_pri_class_name(e->pri_class),
+                        ib_logevent_sec_class_name(e->sec_class),
+                        ib_logevent_sys_env_name(e->sys_env),
+                        ib_logevent_action_name(e->rec_action),
+                        ib_logevent_action_name(e->action),
                         e->confidence,
                         e->severity,
-                        ib_logevent_sys_env_name((ib_logevent_sys_env_t)e->sys_env),
-                        ib_logevent_action_name((ib_logevent_action_t)e->rec_action),
                         e->msg ? e->msg : "-");
 
         /* Verify size. */

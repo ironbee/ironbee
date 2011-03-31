@@ -136,6 +136,7 @@ static const char *ib_logevent_action_str[] = {
     "Unknown",
     "Log",
     "Block",
+    "Ignore",
     NULL
 };
 
@@ -174,14 +175,15 @@ const char *ib_logevent_action_name(ib_logevent_action_t num)
 ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                ib_mpool_t *pool,
                                const char *rule_id,
-                               uint8_t type,
-                               uint8_t activity,
-                               uint8_t pri_class,
-                               uint8_t sec_class,
+                               ib_logevent_type_t type,
+                               ib_logevent_activity_t activity,
+                               ib_logevent_pri_class_t pri_class,
+                               ib_logevent_sec_class_t sec_class,
+                               ib_logevent_sys_env_t sys_env,
+                               ib_logevent_action_t rec_action,
+                               ib_logevent_action_t action,
                                uint8_t confidence,
                                uint8_t severity,
-                               uint8_t sys_env,
-                               uint8_t rec_action,
                                const char *fmt,
                                ...)
 {
@@ -207,10 +209,11 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
     (*ple)->activity = activity;
     (*ple)->pri_class = pri_class;
     (*ple)->sec_class = sec_class;
-    (*ple)->confidence = confidence;
-    (*ple)->severity = severity;
     (*ple)->sys_env = sys_env;
     (*ple)->rec_action = rec_action;
+    (*ple)->action = action;
+    (*ple)->confidence = confidence;
+    (*ple)->severity = severity;
 
     va_start(ap, fmt);
     if (vsnprintf(buf, sizeof(buf), fmt, ap) >= (int)sizeof(buf)) {
