@@ -1854,7 +1854,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
     }
     lua_pop(L, 1); /* cleanup stack */
 
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_void_fn_t modlua_config_wrapper(void)
