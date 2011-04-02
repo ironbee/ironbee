@@ -2680,9 +2680,6 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     ib_site_t *site;
     ib_loc_t *loc;
     ib_status_t rc;
-    ib_module_t *m;
-    size_t ne;
-    size_t i;
 
     ib_log_debug(ib, 4, "Creating site \"%s\"", p1);
     rc = ib_site_create(&site, ib, p1);
@@ -2697,27 +2694,12 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     }
 
     ib_log_debug(ib, 4, "Creating context for \"%s:%s\"", p1, loc->path);
-    rc = ib_context_create(&ctx, ib, ib_context_siteloc_chooser, loc);
+    rc = ib_context_create(&ctx, ib, cp->cur_ctx,
+                           ib_context_siteloc_chooser, loc);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4, "Failed to create context for \"%s:%s\": %d", p1, loc->path, rc);
     }
     ib_cfgparser_context_push(cp, ctx);
-
-    /// @todo For now, register all modules with each context
-    ib_log_debug(ib, 4, "Registering modules with site \"%s:%s\" context %p", p1, loc->path, ctx);
-    IB_ARRAY_LOOP(ib->modules, ne, i, m) {
-        if (   (m != NULL) && (m->fn_ctx_init != NULL)
-            && (strcmp("core", m->name) != 0))
-        {
-            ib_log_debug(ib, 9, "Registering module: %s", m->name);
-            ib_module_register_context(m, ctx);
-        }
-    }
-
-    ib_log_debug(ib, 4, "Stack: ctx=%p site=%p(%s) loc=%p",
-                 cp->cur_ctx,
-                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                 cp->cur_loc);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -2744,7 +2726,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
     ib_context_t *ctx;
     ib_status_t rc;
 
-    ib_log_debug(ib, 4, "Processing site block \"%s\"", name);
+    ib_log_debug(ib, 9, "Processing site block \"%s\"", name);
 
     /* Pop the current items off the stack */
     rc = ib_cfgparser_context_pop(cp, &ctx);
@@ -2760,11 +2742,6 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
                      name, rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-
-    ib_log_debug(ib, 9, "Stack: lastctx=%p ctx=%p site=%p(%s) loc=%p",
-                 ctx, cp->cur_ctx,
-                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                 cp->cur_loc);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -2793,9 +2770,6 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     ib_site_t *site = cp->cur_site;
     ib_loc_t *loc;
     ib_status_t rc;
-    ib_module_t *m;
-    size_t ne;
-    size_t i;
 
     ib_log_debug(ib, 4, "Creating location \"%s\" for site \"%s\"", p1, site->name);
     rc = ib_site_loc_create(site, &loc, p1);
@@ -2804,27 +2778,12 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     }
 
     ib_log_debug(ib, 4, "Creating context for \"%s:%s\"", site->name, loc->path);
-    rc = ib_context_create(&ctx, ib, ib_context_siteloc_chooser, loc);
+    rc = ib_context_create(&ctx, ib, cp->cur_ctx,
+                           ib_context_siteloc_chooser, loc);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4, "Failed to create context for \"%s:%s\": %d", site->name, loc->path, rc);
     }
     ib_cfgparser_context_push(cp, ctx);
-
-    /// @todo For now, register all modules with each context
-    ib_log_debug(ib, 4, "Registering modules with site \"%s:%s\" context %p", site->name, loc->path, ctx);
-    IB_ARRAY_LOOP(ib->modules, ne, i, m) {
-        if (   (m != NULL) && (m->fn_ctx_init != NULL)
-            && (strcmp("core", m->name) != 0))
-        {
-            ib_log_debug(ib, 4, "Registering module: %s", m->name);
-            ib_module_register_context(m, ctx);
-        }
-    }
-
-    ib_log_debug(ib, 4, "Stack: ctx=%p site=%p(%s) loc=%p",
-                 cp->cur_ctx,
-                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                 cp->cur_loc);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -2851,7 +2810,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
     ib_context_t *ctx;
     ib_status_t rc;
 
-    ib_log_debug(ib, 4, "Processing location block \"%s\"", name);
+    ib_log_debug(ib, 9, "Processing location block \"%s\"", name);
 
     /* Pop the current items off the stack */
     rc = ib_cfgparser_context_pop(cp, &ctx);
@@ -2867,11 +2826,6 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
                      name, rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-
-    ib_log_debug(ib, 9, "Stack: lastctx=%p ctx=%p site=%p(%s) loc=%p",
-                 ctx, cp->cur_ctx,
-                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                 cp->cur_loc);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

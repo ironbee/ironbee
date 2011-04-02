@@ -125,6 +125,23 @@ ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
     }
 
     rc = ib_field_setv(f, pval);
+
+    /// @todo Remove this extra debugging
+    switch (f->type) {
+        case IB_FTYPE_BYTESTR:
+            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)pval), *(void **)pval);
+            break;
+        case IB_FTYPE_NULSTR:
+            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)pval, *(void **)pval);
+            break;
+        case IB_FTYPE_NUM:
+            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)pval, *(void **)pval);
+            break;
+        case IB_FTYPE_UNUM:
+            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)pval, *(void **)pval);
+            break;
+    }
+
     IB_FTRACE_RET_STATUS(rc);
 }
 

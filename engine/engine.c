@@ -148,7 +148,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     /* Create an engine config context and use it as the
      * main context until the engine can be configured.
      */
-    rc = ib_context_create(&((*pib)->ectx), *pib, NULL, NULL);
+    rc = ib_context_create(&((*pib)->ectx), *pib, NULL, NULL, NULL);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -242,7 +242,8 @@ static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     ib_context_t *ctx;
     ib_status_t rc;
     
-    rc = ib_context_create(&ctx, ib, NULL, NULL);
+    //rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL);
+    rc = ib_context_create(&ctx, ib, NULL, NULL, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1497,6 +1498,7 @@ ib_status_t ib_hook_unregister_context(ib_context_t *ctx,
 
 /* -- Module Routines -- */
 
+/// @todo Probably need to load into a given context???
 ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 {
     IB_FTRACE_INIT(ib_module_init);
@@ -1508,6 +1510,11 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     ib_log_debug(ib, 4, "Initializing module %s (%d): %s",
                  m->name, m->idx, m->filename);
+
+    /* Zero the config structure if there is one. */
+    if (m->gclen > 0) {
+        memset((void *)m->gcdata, 0, m->gclen);
+    }
 
     /* Add global module config entries to global config context */
     /// @todo Need to make sure we do not init the same context >1 times
@@ -1528,6 +1535,10 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
         ib_log_debug(ib, 4, "Registering module \"%s\" with main context %p",
                      m->name, ib->ctx);
         ib_module_register_context(m, ib->ctx);
+    }
+    else {
+        ib_log_debug(ib, 4, "No main context to registering module \"%s\"",
+                     m->name);
     }
 
     /* Init and register the module */
@@ -1628,12 +1639,14 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     ib_status_t rc;
 
     /* Create a module context data structure. */
-    cfgdata = (ib_context_data_t *)ib_mpool_alloc(ctx->mp, sizeof(*cfgdata));
+    cfgdata = (ib_context_data_t *)ib_mpool_calloc(ctx->mp, 1, sizeof(*cfgdata));
     if (cfgdata == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     cfgdata->module = m;
     
+    /* Set default values from parent values. */
+
     /* Add module config entries to config context, first copying the
      * global values, then overriding using default values from the
      * configuration mapping.
@@ -1641,12 +1654,32 @@ ib_status_t ib_module_register_context(ib_module_t *m,
      * NOTE: Not all configuration data is required to be in the
      * mapping, which is why the initial memcpy is required.
      */
-    cfgdata->data = ib_mpool_alloc(ctx->mp, m->gclen);
-    if (cfgdata->data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
     if (m->gclen > 0) {
-        memcpy(cfgdata->data, m->gcdata, m->gclen);
+        ib_context_t *p_ctx = ctx->parent;
+        ib_context_data_t *p_cfgdata;
+
+        cfgdata->data = ib_mpool_alloc(ctx->mp, m->gclen);
+        if (cfgdata->data == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        /* Copy values from parent context if available, otherwise
+         * use the module global values as defaults.
+         */
+        if (p_ctx != NULL) {
+            rc = ib_array_get(p_ctx->cfgdata, m->idx, &p_cfgdata);
+            if (rc != IB_OK) {
+                ib_clog_error(ctx, 4,
+                              "Failed to fetch parent context config data "
+                              "for module \"%s\" idx=%d size=%d",
+                              m->name, m->idx, (int)ib_array_elements(p_ctx->cfgdata));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
+        }
+        else {
+            memcpy(cfgdata->data, m->gcdata, m->gclen);
+        }
     }
     ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
 
@@ -1662,6 +1695,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
 
 ib_status_t ib_context_create(ib_context_t **pctx,
                               ib_engine_t *ib,
+                              ib_context_t *parent,
                               ib_context_fn_t fn_ctx,
                               void *fn_ctx_data)
 {
@@ -1685,6 +1719,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     }
     (*pctx)->mp = pool;
     (*pctx)->ib = ib;
+    (*pctx)->parent = parent;
     (*pctx)->fn_ctx = fn_ctx;
     (*pctx)->fn_ctx_data = fn_ctx_data;
 
@@ -1705,10 +1740,27 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         goto failed;
     }
 
-    /* Register the core module by default. */
-    rc = ib_module_register_context(ib_core_module(), *pctx);
-    if (rc != IB_OK) {
-        goto failed;
+    /* Register the modules */
+    /// @todo Later on this needs to be triggered by ActivateModule or similar
+    if (ib->modules) {
+        ib_module_t *m;
+        size_t n;
+        size_t i;
+        IB_ARRAY_LOOP(ib->modules, n, i, m) {
+            ib_log_debug(ib, 9, "Registering module=\"%s\" idx=%d",
+                         m->name, m->idx);
+            rc = ib_module_register_context(m, *pctx);
+            if (rc != IB_OK) {
+                goto failed;
+            }
+        }
+    }
+    else {
+        /* Register the core module by default. */
+        rc = ib_module_register_context(ib_core_module(), *pctx);
+        if (rc != IB_OK) {
+            goto failed;
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1741,10 +1793,6 @@ ib_status_t ib_context_init(ib_context_t *ctx)
         }
         ib_module_t *m = cfgdata->module;
 
-        /// @todo Probably should set from parent context instead
-        /// /* Set default values from module global values */
-        /// memcpy(cfgdata->data, m->gcdata, m->gclen);
-
         if (m->fn_ctx_init != NULL) {
             rc = m->fn_ctx_init(ib, m, ctx);
             if (rc != IB_OK) {
@@ -1756,6 +1804,20 @@ ib_status_t ib_context_init(ib_context_t *ctx)
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_context_t *ib_context_parent_get(ib_context_t *ctx)
+{
+    IB_FTRACE_INIT(ib_context_parent_get);
+    IB_FTRACE_RET_PTR(ib_context_t, ctx->parent);
+}
+
+void ib_context_parent_set(ib_context_t *ctx,
+                           ib_context_t *parent)
+{
+    IB_FTRACE_INIT(ib_context_parent_set);
+    ctx->parent = parent;
+    IB_FTRACE_RET_VOID();
 }
 
 void ib_context_destroy(ib_context_t *ctx)

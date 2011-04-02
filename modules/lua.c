@@ -689,7 +689,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "Init lua module ctx=%p maincfg=%p Lconfig=%p: %s", ctx, maincfg, maincfg->Lconfig, name);
+    ib_log_debug(ib, 4, "Init lua module ctx=%p maincfg=%p Lconfig=%p: %s", ctx, maincfg, maincfg->Lconfig, name);
 
     /* Setup a fresh new Lua state to load each module. */
     L = maincfg->Lconfig;
@@ -711,7 +711,6 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
 
     /* Get the lua chunk for this module. */
     chunk = (modlua_chunk_t *)m->data;
-    ib_log_debug(ib, 9, "Lua module \"%s\" module=%p chunk=%p", name, m, chunk);
 
     /* Load the module lua code. */
     ec = modlua_load_lua_data(ib, L, chunk);
@@ -1233,8 +1232,8 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
 
     /* Get the module config. */
     /// @todo For now, context is in main, not conn
-    //rc = ib_context_module_config(conn->ctx,
-    rc = ib_context_module_config(ib_context_main(ib),
+    rc = ib_context_module_config(conn->ctx,
+    //rc = ib_context_module_config(ib_context_main(ib),
                                   &IB_MODULE_SYM, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
@@ -1310,8 +1309,8 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
 
     /* Get the module config. */
     /// @todo For now, context is in main, not tx
-    //rc = ib_context_module_config(tx->ctx,
-    rc = ib_context_module_config(ib_context_main(ib),
+    rc = ib_context_module_config(tx->ctx,
+    //rc = ib_context_module_config(ib_context_main(ib),
                                   &IB_MODULE_SYM, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
@@ -1386,8 +1385,8 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
 
     /* Get the module config. */
     /// @todo For now, context is in main, not conn
-    //rc = ib_context_module_config(conn->ctx,
-    rc = ib_context_module_config(ib_context_main(ib),
+    rc = ib_context_module_config(conn->ctx,
+    //rc = ib_context_module_config(ib_context_main(ib),
                                   &IB_MODULE_SYM, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
@@ -1461,8 +1460,8 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
 
     /* Get the module config. */
     /// @todo For now, context is in main, not tx
-    //rc = ib_context_module_config(tx->ctx,
-    rc = ib_context_module_config(ib_context_main(ib),
+    rc = ib_context_module_config(tx->ctx,
+    //rc = ib_context_module_config(ib_context_main(ib),
                                   &IB_MODULE_SYM, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
@@ -1519,9 +1518,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                                ib_module_t *m)
 {
     IB_FTRACE_INIT(modlua_init);
-
-    /* Zero the lua event registration lists. */
-    memset(modlua_global_cfg.event_reg, 0, sizeof(modlua_global_cfg.event_reg));
 
     /* Initialize the lua runtime for the configuration. */
     modlua_init_lua_runtime_cfg(ib, NULL, NULL);
@@ -1660,15 +1656,6 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
                      MODULE_NAME_STR, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-
-    /* For now, lua modules contexts are configured via main context
-     * and then copied into any sub-context.
-     */
-    /// @todo Need to copy from "main", not global module
-#if 0
-    /* Zero the lua event registration lists. */
-    memset(modcfg->event_reg, 0, sizeof(modcfg->event_reg));
-#endif
 
     /* Init the lua modules that were loaded */
     modlua_lua_module_init(ib, ctx, "example");

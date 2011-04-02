@@ -63,7 +63,7 @@ struct cfgp_blk_t {
 static void cfgp_dump(ib_cfgparser_t *cp)
 {
     /// @todo Implement
-    ib_log_debug(cp->ib, 4, "Config: %p (TODO)", cp);
+    ib_log_debug(cp->ib, 9, "Config Dump: %p (TODO)", cp);
 }
 
 
@@ -108,10 +108,10 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
 
     /* Other fields are NULLed via calloc */
 
-    ib_log_debug(ib, 4, "Stack: ctx=%p site=%p(%s) loc=%p",
+    ib_log_debug(ib, 9, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
                  (*pcp)->cur_ctx,
                  (*pcp)->cur_site, (*pcp)->cur_site?(*pcp)->cur_site->name:"NONE",
-                 (*pcp)->cur_loc);
+                 (*pcp)->cur_loc, (*pcp)->cur_loc?(*pcp)->cur_loc->path:"/");
 
     IB_FTRACE_RET_STATUS(rc);
 
@@ -206,7 +206,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
             buf_mark = buf + remaining;
         }
     }
-    ib_log_debug(cp->ib, 4, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
+    ib_log_debug(cp->ib, 9, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
 
     cfgp_dump(cp);
     IB_FTRACE_RET_STATUS(rc);
@@ -218,14 +218,6 @@ static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
     cp->cur_ctx = ctx;
     cp->cur_loc = (ib_loc_t *)ctx->fn_ctx_data;
     cp->cur_site = cp->cur_loc?cp->cur_loc->site:NULL;
-    if (cp->cur_site != NULL) {
-        if (cp->cur_site->locations != NULL) {
-            cp->cur_loc = (ib_loc_t *)ib_list_node_data(ib_list_last(cp->cur_site->locations));
-        }
-        else {
-            cp->cur_loc = cp->cur_site->default_loc;
-        }
-    }
     IB_FTRACE_RET_VOID();
 }
 
@@ -242,6 +234,11 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     cfgp_set_current(cp, ctx);
+
+    ib_log_debug(ib, 9, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
+                 cp->cur_ctx,
+                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
+                 cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -272,6 +269,11 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     /* The last in the list is now the current. */
     ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
     cfgp_set_current(cp, ctx);
+
+    ib_log_debug(ib, 9, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
+                 cp->cur_ctx,
+                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
+                 cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -340,8 +342,6 @@ ib_status_t ib_config_register_directives(ib_engine_t *ib,
     ib_status_t rc;
 
     while ((rec != NULL) && (rec->name != NULL)) {
-        ib_log_debug(ib, 4, "DIRECTIVE: %s type=%d", rec->name, rec->type);
-
         rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -501,8 +501,8 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
 }
 
 ib_status_t ib_site_create(ib_site_t **psite,
-                                      ib_engine_t *ib,
-                                      const char *name)
+                           ib_engine_t *ib,
+                           const char *name)
 {
     IB_FTRACE_INIT(ib_site_create);
     ib_mpool_t *pool = ib->config_mp;
@@ -516,7 +516,8 @@ ib_status_t ib_site_create(ib_site_t **psite,
     }
     (*psite)->ib = ib;
     (*psite)->mp = pool;
-    (*psite)->name = name; /// @todo Copy???
+    (*psite)->name = (const char *)ib_mpool_memdup(pool, name, strlen(name)+1);
+
 
     /* Remaining fields are NULL via calloc. */
 
@@ -603,6 +604,7 @@ ib_status_t ib_site_loc_create(ib_site_t *site,
     }
     loc->site = site;
     loc->path = path;
+    loc->path = (const char *)ib_mpool_memdup(site->mp, path, strlen(path)+1);
 
     if (ploc != NULL) {
         *ploc = loc;

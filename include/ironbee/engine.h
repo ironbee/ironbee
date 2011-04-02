@@ -370,6 +370,7 @@ void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
  *
  * @param pctx Address which new context is written
  * @param ib Engine handle
+ * @param parent Parent context (or NULL)
  * @param fn_ctx Context function
  * @param fn_ctx_data Context function data
  *
@@ -377,6 +378,7 @@ void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
  */
 ib_status_t DLL_PUBLIC ib_context_create(ib_context_t **pctx,
                                          ib_engine_t *ib,
+                                         ib_context_t *parent,
                                          ib_context_fn_t fn_ctx,
                                          void *fn_ctx_data);
 
@@ -392,6 +394,24 @@ ib_status_t DLL_PUBLIC ib_context_create(ib_context_t **pctx,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_context_init(ib_context_t *ctx);
+
+/**
+ * Get the parent context.
+ *
+ * @param ctx Context
+ *
+ * @returns Parent context
+ */
+ib_context_t DLL_PUBLIC *ib_context_parent_get(ib_context_t *ctx);
+
+/**
+ * Set the parent context.
+ *
+ * @param ctx Context
+ * @param parent Parent context
+ */
+void DLL_PUBLIC ib_context_parent_set(ib_context_t *ctx,
+                                      ib_context_t *parent);
 
 /**
  * Destroy a configuration context.
