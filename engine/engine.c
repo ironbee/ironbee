@@ -242,7 +242,6 @@ static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     ib_context_t *ctx;
     ib_status_t rc;
     
-    //rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL);
     rc = ib_context_create(&ctx, ib, NULL, NULL, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1515,10 +1514,6 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     if (m->gclen > 0) {
         memset((void *)m->gcdata, 0, m->gclen);
     }
-
-    /* Add global module config entries to global config context */
-    /// @todo Need to make sure we do not init the same context >1 times
-    /// ib_context_init_cfg(ib->ctx, m->gcdata, m->cm_init);
 
     /* Register directives */
     if (m->dm_init != NULL) {

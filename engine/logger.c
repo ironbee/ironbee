@@ -302,6 +302,10 @@ ib_status_t ib_clog_event(ib_context_t *ctx,
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
 
+    if (ctx == NULL) {
+        return IB_EINVAL;
+    }
+
     api = (IB_PROVIDER_API_TYPE(logevent) *)ctx->logevent->pr->api;
     return api->add_event(ctx->logevent, e);
 }
@@ -310,6 +314,10 @@ ib_status_t ib_clog_event_remove(ib_context_t *ctx,
                                  uint32_t id)
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
+
+    if (ctx == NULL) {
+        return IB_EINVAL;
+    }
 
     api = (IB_PROVIDER_API_TYPE(logevent) *)ctx->logevent->pr->api;
     return api->remove_event(ctx->logevent, id);
@@ -320,6 +328,10 @@ ib_status_t ib_clog_events_get(ib_context_t *ctx,
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
 
+    if (ctx == NULL) {
+        return IB_EINVAL;
+    }
+
     api = (IB_PROVIDER_API_TYPE(logevent) *)ctx->logevent->pr->api;
     return api->fetch_events(ctx->logevent, pevents);
 }
@@ -328,6 +340,10 @@ void ib_clog_events_write(ib_context_t *ctx)
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
 
+    if (ctx == NULL) {
+        return;
+    }
+
     api = (IB_PROVIDER_API_TYPE(logevent) *)ctx->logevent->pr->api;
     api->write_events(ctx->logevent);
 }
@@ -335,6 +351,10 @@ void ib_clog_events_write(ib_context_t *ctx)
 void ib_clog_auditlog_write(ib_context_t *ctx)
 {
     IB_PROVIDER_API_TYPE(audit) *api;
+
+    if (ctx == NULL) {
+        return;
+    }
 
     api = (IB_PROVIDER_API_TYPE(audit) *)ctx->audit->pr->api;
     api->write_log(ctx->audit);

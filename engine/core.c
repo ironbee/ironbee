@@ -1816,7 +1816,7 @@ static ib_status_t parser_hook_init(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface");
+        ib_log_error(ib, 0, "Failed to fetch parser interface on init");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1848,7 +1848,7 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
     ib_status_t rc;
 
     if (iface == NULL) {
-        ib_log_error(ib, 0, "Failed to fetch parser interface");
+        ib_log_error(ib, 0, "Failed to fetch parser interface on connect");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1881,7 +1881,7 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface");
+        ib_log_error(ib, 0, "Failed to fetch parser interface on disconnect");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1915,7 +1915,7 @@ static ib_status_t parser_hook_data_in(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface");
+        ib_log_error(ib, 0, "Failed to fetch parser interface on data in");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1947,7 +1947,7 @@ static ib_status_t parser_hook_data_out(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface");
+        ib_log_error(ib, 0, "Failed to fetch parser interface on data out");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1978,7 +1978,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface");
+        ib_log_error(ib, 0, "Failed to fetch parser interface on request header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -2009,7 +2009,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface");
+        ib_log_error(ib, 0, "Failed to fetch parser interface response header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3187,7 +3187,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                      (ib_void_fn_t)parser_hook_data_in, NULL);
     ib_hook_register(ib, conn_data_out_event,
                      (ib_void_fn_t)parser_hook_data_out, NULL);
-    /// @todo Need the parser to parser headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
+    /// @todo Need the parser to parse headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
     //ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
     ib_hook_register(ib, request_headers_event,
                      (ib_void_fn_t)parser_hook_req_header, NULL);
