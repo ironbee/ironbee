@@ -1634,7 +1634,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     ib_status_t rc;
 
     /* Create a module context data structure. */
-    cfgdata = (ib_context_data_t *)ib_mpool_calloc(ctx->mp, 1, sizeof(*cfgdata));
+    cfgdata = (ib_context_data_t *)ib_mpool_alloc(ctx->mp, sizeof(*cfgdata));
     if (cfgdata == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -1712,6 +1712,12 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         rc = IB_EALLOC;
         goto failed;
     }
+
+    /* Copy initial values from parent. */
+    if (parent != NULL) {
+        memcpy(*pctx, parent, sizeof(*pctx));
+    }
+
     (*pctx)->mp = pool;
     (*pctx)->ib = ib;
     (*pctx)->parent = parent;
