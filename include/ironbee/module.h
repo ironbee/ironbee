@@ -194,16 +194,24 @@ ib_module_t *ib_core_module(void);
  */
 typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
-    ib_num_t      log_level;    /**< Log level */
-    char         *log_uri;      /**< Log URI */
-    char         *logger;       /**< Active logger provider key */
-    char         *logevent;     /**< Active logevent provider key */
-    ib_num_t      audit_engine; /**< Audit engine status */
-    char         *auditlog;     /**< Audit log filename */
-    char         *auditlog_dir; /**< Audit log data directory */
-    char         *audit;        /**< Active audit provider key */
-    char         *parser;       /**< Active parser provider key */
-    char         *data;         /**< Active data provider key */
+    /** Provider instances */
+    struct {
+        ib_provider_inst_t *logger;  /**< Log provider instance */
+        ib_provider_inst_t *audit;   /**< Audit Log provider instance */
+        ib_provider_inst_t *logevent;/**< Logevent provider instance */
+        ib_provider_inst_t *parser;  /**< Parser provider instance */
+    } pi;
+
+    ib_num_t      log_level;         /**< Log level */
+    char         *log_uri;           /**< Log URI */
+    char         *logger;            /**< Active logger provider key */
+    char         *logevent;          /**< Active logevent provider key */
+    ib_num_t      audit_engine;      /**< Audit engine status */
+    char         *auditlog;          /**< Audit log filename */
+    char         *auditlog_dir;      /**< Audit log data directory */
+    char         *audit;             /**< Active audit provider key */
+    char         *parser;            /**< Active parser provider key */
+    char         *data;              /**< Active data provider key */
 };
 
 /**

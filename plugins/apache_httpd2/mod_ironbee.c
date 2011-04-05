@@ -54,7 +54,7 @@
 
 #include <apr_pools.h>
 
-#define MODULE_NAME                IRONBEE
+#define MODULE_NAME                mod_ironbee
 #define MODULE_NAME_STR            IB_XSTRINGIFY(MODULE_NAME)
 #define MODULE_RELEASE             IB_VERSION
 #define MODULE_NAME_FULL           (MODULE_NAME_STR " v" MODULE_RELEASE)
@@ -130,7 +130,7 @@ static void ironbee_logger(server_rec *s, int level,
     if (ec >= (int)sizeof(buf)) {
         /// @todo Do something about it
         ap_log_error(file, line, APLOG_ALERT, 0, s,
-                     MODULE_NAME_STR ": Log format exceeded limit (%d): %.*s",
+                     IB_PRODUCT_NAME ": Log format exceeded limit (%d): %.*s",
                      (int)ec, (int)sizeof(buf), buf);
         abort(); /// @todo Testing
         return;
@@ -167,7 +167,7 @@ static void ironbee_logger(server_rec *s, int level,
 
     /* Write it to the error log. */
     ap_log_error(file, line, ap_level, 0, s,
-                 MODULE_NAME_STR ": %s%s", prefix?prefix:"", buf);
+                 IB_PRODUCT_NAME ": %s%s", prefix?prefix:"", buf);
 }
 
 static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
@@ -213,7 +213,7 @@ static void handle_data(conn_rec *c, ironbee_conn_context *ctx)
             ib_tx_flags_set(qconn->tx, IB_TX_FERROR);
             /// @todo Add some flag???
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         MODULE_NAME_STR ": EXTRANEOUS DATA "
+                         IB_PRODUCT_NAME ": EXTRANEOUS DATA "
                          "remote=%pI local=%pI nbytes=%ld %"
                          IB_BYTESTR_FMT,
                          (void *)c->remote_addr, (void *)c->local_addr,
@@ -254,7 +254,7 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
     apr_size_t blen;
 
 //    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-//                 MODULE_NAME_STR ": bucket f=%s, b=%s len=%d rnum=%d",
+//                 IB_PRODUCT_NAME ": bucket f=%s, b=%s len=%d rnum=%d",
 //                 f->frec->name, b->type->name, (int)b->length, c->keepalives);
 
     /* Only interested in buckets with data, FLUSH, EOS and EOC. */
@@ -283,7 +283,7 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
         /* Need to manually split the bucket if too long. */
         if (blen > buf_remain) {
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         MODULE_NAME_STR ": split bucket %d/%d",
+                         IB_PRODUCT_NAME ": split bucket %d/%d",
                          (int)buf_remain, (int)(blen - buf_remain));
             apr_bucket_split(b, buf_remain);
         }
@@ -292,7 +292,7 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
             (apr_bucket_read(b, &bdata, &nbytes, APR_BLOCK_READ) != APR_SUCCESS))
         {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
-                         MODULE_NAME_STR ": %s (%s): error reading %s data",
+                         IB_PRODUCT_NAME ": %s (%s): error reading %s data",
                          f->frec->name, b->type->name,
                          ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
 
@@ -337,7 +337,7 @@ static apr_status_t ironbee_disconnection(void *data)
     }
     else if (ctx_in->qconndata->dlen) {
         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                     MODULE_NAME_STR ": Handling any request data on disconnect");
+                     IB_PRODUCT_NAME ": Handling any request data on disconnect");
         handle_data(c, ctx_in);
     }
 
@@ -350,7 +350,7 @@ static apr_status_t ironbee_disconnection(void *data)
     }
     if (ctx_out->qconndata->dlen) {
         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                     MODULE_NAME_STR ": Handling any response data on disconnect");
+                     IB_PRODUCT_NAME ": Handling any response data on disconnect");
         handle_data(c, ctx_out);
     }
 
@@ -394,7 +394,7 @@ static apr_status_t ironbee_child_exit(void *data)
     server_rec *s = (server_rec *)data;
 
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 MODULE_NAME_STR ": Child exit pid=%d",
+                 IB_PRODUCT_NAME ": Child exit pid=%d",
                  (int)getpid());
 
     return APR_SUCCESS;
@@ -416,7 +416,7 @@ static void ironbee_child_init(apr_pool_t *p, server_rec *s)
     }
 
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 MODULE_NAME_STR ": Child init pid=%d",
+                 IB_PRODUCT_NAME ": Child init pid=%d",
                  (int)getpid());
 
     /* Register callback when child exits. */
@@ -443,14 +443,14 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
     }
 
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                 MODULE_NAME_STR ": ironbee_pre_connection remote=%pI local=%pI",
+                 IB_PRODUCT_NAME ": ironbee_pre_connection remote=%pI local=%pI",
                  (void *)c->remote_addr, (void *)c->local_addr);
 
     /* Ignore backend connections. The backend connection does not have
      * a handle to the scoreboard. */
     if (c->sbh == NULL) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     MODULE_NAME_STR ": Skipping proxy connect");
+                     IB_PRODUCT_NAME ": Skipping proxy connect");
         return DECLINED;
     }
 
@@ -596,7 +596,7 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
     }
     else if (APR_STATUS_IS_TIMEUP(rc)) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     MODULE_NAME_STR ": %s server closed connection (%d)",
+                     IB_PRODUCT_NAME ": %s server closed connection (%d)",
                      f->frec->name, rc);
 
         /* Handle any data that is there and remove the filter. */
@@ -605,7 +605,7 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
     }
     else if (APR_STATUS_IS_EOF(rc) || apr_get_os_error() == ECONNRESET) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     MODULE_NAME_STR ": %s client closed connection (%d)",
+                     IB_PRODUCT_NAME ": %s client closed connection (%d)",
                      f->frec->name, rc);
 
         /* Handle any data that is there and remove the filter. */
@@ -614,7 +614,7 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
     }
     else {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     MODULE_NAME_STR ": %s returned %d (0x%08x) - %s",
+                     IB_PRODUCT_NAME ": %s returned %d (0x%08x) - %s",
                      f->frec->name, rc, rc, strerror(apr_get_os_error()));
 
         /* Handle any data that is there. */
@@ -711,7 +711,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     rc = ib_initialize();
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     MODULE_NAME_STR ": Error initializing ib library");
+                     IB_PRODUCT_NAME ": Error initializing ib library");
         return OK;
     }
 
@@ -734,7 +734,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     rc = ib_engine_create(&ironbee, &ibplugin);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     MODULE_NAME_STR ": Error creating engine: %d", rc);
+                     IB_PRODUCT_NAME ": Error creating engine: %d", rc);
         return OK;
     }
 
@@ -745,12 +745,13 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                               NULL);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     MODULE_NAME_STR ": Error registering log provider: %d", rc);
+                     IB_PRODUCT_NAME ": Error registering log provider: %d", rc);
         return OK;
     }
     ib_provider_data_set(lpr, (void *)s);
 
     /* Default logger */
+    /// @todo Need to add a post set hook in core for this to work correctly
     ib_context_set_string(ib_context_engine(ironbee),
                           IB_PROVIDER_TYPE_LOGGER,
                           MODULE_NAME_STR);
@@ -762,7 +763,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     MODULE_NAME_STR ": Error initializing engine: %d", rc);
+                     IB_PRODUCT_NAME ": Error initializing engine: %d", rc);
         return OK;
     }
 
@@ -794,11 +795,11 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
         rc = ib_cfgparser_create(&cp, ironbee);
         if ((rc == IB_OK) && (cp != NULL)) {
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         MODULE_NAME_STR ": Parsing config: %s",
+                         IB_PRODUCT_NAME ": Parsing config: %s",
                          modcfg->config);
             ib_cfgparser_parse(cp, modcfg->config);
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         MODULE_NAME_STR ": Destroying config parser");
+                         IB_PRODUCT_NAME ": Destroying config parser");
             ib_cfgparser_destroy(cp);
         }
 
@@ -809,7 +810,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     }
     else {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     MODULE_NAME_STR ": No config specified with IronBeeConfig directive");
+                     IB_PRODUCT_NAME ": No config specified with IronBeeConfig directive");
     }
 
     return OK;

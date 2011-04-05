@@ -133,14 +133,6 @@ struct ib_context_t {
     ib_context_fn_t          fn_ctx;      /**< Context decision function */
     void                    *fn_ctx_data; /**< Context function data */
 
-    /* Core */
-    /// @todo Can we store these inside the core config structure instead???
-    ib_core_cfg_t           *core_cfg;    /**< Core config */
-    ib_provider_inst_t      *logger;      /**< Log provider instance */
-    ib_provider_inst_t      *audit;       /**< Audit Log provider instance */
-    ib_provider_inst_t      *logevent;    /**< Logevent provider instance */
-    ib_provider_inst_t      *parser;      /**< Parser provider instance */
-
     /* Hooks */
     ib_hook_t   *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
 };

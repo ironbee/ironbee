@@ -41,11 +41,34 @@
 
 ib_provider_inst_t *ib_parser_provider_get_instance(ib_context_t *ctx)
 {
-    return ctx->parser;
+    IB_FTRACE_INIT(ib_parser_provider_get_instance);
+    ib_core_cfg_t *corecfg;
+    ib_status_t rc;
+
+    rc = ib_context_module_config(ctx, ib_core_module(),
+                                  (void *)&corecfg);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_PTR(ib_provider_inst_t, NULL);
+    }
+
+    IB_FTRACE_RET_PTR(ib_provider_inst_t, corecfg->pi.parser);
 }
 
 void ib_parser_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
 {
-    ctx->parser = pi;
+    IB_FTRACE_INIT(ib_parser_provider_set_instance);
+    ib_core_cfg_t *corecfg;
+    ib_status_t rc;
+
+    rc = ib_context_module_config(ctx, ib_core_module(),
+                                  (void *)&corecfg);
+    if (rc != IB_OK) {
+        /// @todo This func should return ib_status_t now
+        IB_FTRACE_RET_VOID();
+    }
+
+    corecfg->pi.parser = pi;
+
+    IB_FTRACE_RET_VOID();
 }
 

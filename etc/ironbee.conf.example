@@ -6,6 +6,8 @@ LoadModule "ibmod_lua.so"
 
 # Main Context (need separate directives for these)
 Set parser "htp"
+# TODO: Default is still stderr logging - this will go to Apache error_log
+Set logger "mod_ironbee"
 Set logger.log_level 4
 
 # TODO: ibmod_lua.so needs to add this directive
@@ -27,13 +29,8 @@ AuditLogStorageDir "/var/log/ironbee/auditlog/"
 # Site 1
 <Site site1>
     Hostname * ip=127.0.0.1
-    # TODO: Currently these need set in each context
-    Set parser "htp"
-    Set logger.log_level 4
 
     <Location /foo>
-        # TODO: Currently these need set in each context
-        Set parser "htp"
         Set logger.log_level 9
     </Location>
 </Site>
@@ -41,16 +38,10 @@ AuditLogStorageDir "/var/log/ironbee/auditlog/"
 # Site 2
 <Site site2>
     Hostname * ip=127.0.1.1
-    # TODO: Currently these need set in each context
-    Set parser "htp"
-    Set logger.log_level 4
 </Site>
 
 # Default
 <Site default>
     Hostname *
-    # TODO: Currently these need set in each context
-    Set parser "htp"
-    Set logger.log_level 4
 </Site>
 

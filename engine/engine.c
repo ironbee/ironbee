@@ -242,7 +242,7 @@ static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     ib_context_t *ctx;
     ib_status_t rc;
     
-    rc = ib_context_create(&ctx, ib, NULL, NULL, NULL);
+    rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1663,14 +1663,13 @@ ib_status_t ib_module_register_context(ib_module_t *m,
          */
         if (p_ctx != NULL) {
             rc = ib_array_get(p_ctx->cfgdata, m->idx, &p_cfgdata);
-            if (rc != IB_OK) {
-                ib_clog_error(ctx, 4,
-                              "Failed to fetch parent context config data "
-                              "for module \"%s\" idx=%d size=%d",
-                              m->name, m->idx, (int)ib_array_elements(p_ctx->cfgdata));
-                IB_FTRACE_RET_STATUS(rc);
+            if (rc == IB_OK) {
+                memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
             }
-            memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
+            else {
+                /* No parent context config, so use globals. */
+                memcpy(cfgdata->data, m->gcdata, m->gclen);
+            }
         }
         else {
             memcpy(cfgdata->data, m->gcdata, m->gclen);
