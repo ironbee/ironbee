@@ -930,6 +930,9 @@ struct htp_tx_t {
      */
     size_t request_headers_raw_lines;
 
+    /** Contains request header separator. */
+    bstr *request_headers_sep;
+
     /** Request transfer coding: IDENTITY or CHUNKED. Only available
      *  on requests that have bodies (-1 otherwise).
      */
@@ -1024,6 +1027,9 @@ struct htp_tx_t {
 
     /** Parsed response headers. */
     table_t *response_headers;
+
+    /** Contains response header separator. */
+    bstr *response_headers_sep;
 
     /** The actual message length (the length _after_ transformations
      *  have been applied). This field will change as a request body is being

@@ -467,6 +467,10 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->in_line, connp->in_line_len)) {
                 // Terminator line
+                connp->in_tx->request_headers_sep = bstr_dup_mem((char *)connp->in_line, connp->in_line_len);
+                if (connp->in_tx->request_headers_sep == NULL) {
+                    return HTP_ERROR;
+                }
 
                 // Parse previous header, if any
                 if (connp->in_header_line_index != -1) {

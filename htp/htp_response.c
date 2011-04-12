@@ -468,6 +468,10 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->out_line, connp->out_line_len)) {
                 // Terminator line
+                connp->out_tx->response_headers_sep = bstr_dup_mem((char *)connp->out_line, connp->out_line_len);
+                if (connp->out_tx->response_headers_sep == NULL) {
+                    return HTP_ERROR;
+                }
 
                 // Parse previous header, if any
                 if (connp->out_header_line_index != -1) {
