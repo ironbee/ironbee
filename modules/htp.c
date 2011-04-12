@@ -312,9 +312,13 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
         ib_state_notify_tx_data_in(ib, &itxdata);
     }
 
-    /// @todo Here we should send the header/body separator,
-    ///       but how to know???
+    /* Headers separator */
+    itxdata.dalloc = bstr_size(tx->request_headers_sep);
+    itxdata.dlen = bstr_len(tx->request_headers_sep);
+    itxdata.data = (uint8_t *)bstr_ptr(tx->request_headers_sep);
+    ib_state_notify_tx_data_in(ib, &itxdata);
 
+    /* The full headers are now available. */
     ib_state_notify_request_headers(ib, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -510,9 +514,13 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
         ib_state_notify_tx_data_out(ib, &itxdata);
     }
 
-    /// @todo Here we should send the header/body separator,
-    ///       but how to know???
+    /* Headers separator */
+    itxdata.dalloc = bstr_size(tx->response_headers_sep);
+    itxdata.dlen = bstr_len(tx->response_headers_sep);
+    itxdata.data = (uint8_t *)bstr_ptr(tx->response_headers_sep);
+    ib_state_notify_tx_data_out(ib, &itxdata);
 
+    /* The full headers are now available. */
     ib_state_notify_response_headers(ib, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
