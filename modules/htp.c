@@ -133,13 +133,13 @@ static int modhtp_callback_log(htp_log_t *log)
             level = 4;
             break;
         case HTP_LOG_NOTICE:
-            level = 5;
+            level = 4;
             break;
         case HTP_LOG_INFO:
-            level = 6;
+            level = 5;
             break;
         case HTP_LOG_DEBUG:
-            level = 7;
+            level = 6;
             break;
         default:
             level = 9;
@@ -151,7 +151,7 @@ static int modhtp_callback_log(htp_log_t *log)
                      log->code, log->msg);
     }
     else {
-        //ib_log_debug(modctx->ib, level, "LibHTP %s", log->msg);
+        ib_log_debug(modctx->ib, level, "LibHTP %s", log->msg);
     }
 
     IB_FTRACE_RET_INT(0);
