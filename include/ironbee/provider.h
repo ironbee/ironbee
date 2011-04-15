@@ -15,12 +15,12 @@
  * limitations under the License.
  *****************************************************************************/
 
-#ifndef _IB_PROVIDERS_H_
-#define _IB_PROVIDERS_H_
+#ifndef _IB_PROVIDER_H_
+#define _IB_PROVIDER_H_
 
 /**
  * @file
- * @brief IronBee - Providers
+ * @brief IronBee - Provider
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeProviders Providers
+ * @defgroup IronBeeProvider Provider
  * @ingroup IronBee
  * @{
  */
@@ -607,11 +607,11 @@ void DLL_PUBLIC ib_logevent_provider_set_instance(ib_context_t *ctx,
 
 
 /**
- * @} IronBeeProviders
+ * @} IronBeeProvider
  */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* IB_PROVIDERS_H_ */
+#endif /* IB_PROVIDER_H_ */
