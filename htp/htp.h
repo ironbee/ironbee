@@ -791,7 +791,7 @@ struct htp_header_line_t {
     /** The offset of the first NUL byte, or -1. */
     int first_nul_offset;
 
-    /** Parsing flags: HTP_FIELD_INVALID_NOT_FATAL, HTP_FIELD_INVALID_FATAL, HTP_FIELD_LONG */
+    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_LONG, HTP_FIELD_NUL_BYTE */
     unsigned int flags;
     
     /** Header that uses this line. */
@@ -805,7 +805,7 @@ struct htp_header_t {
     /** Header value. */
     bstr *value;   
 
-    /** Parsing flags: HTP_FIELD_INVALID_NOT_FATAL, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
+    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
     unsigned int flags;
 };
 
@@ -1054,7 +1054,7 @@ struct htp_tx_t {
     // Common
 
     /** Parsing flags: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
-     *  HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD.
+     *  HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD, HTP_FIELD_UNPARSEABLE.
      */
     unsigned int flags;
 
