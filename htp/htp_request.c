@@ -860,7 +860,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
  * @param timestamp
  * @param data
  * @param len
- * @return HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @return STREAM_STATE_DATA, STREAM_STATE_ERROR or STEAM_STATE_DATA_OTHER (see QUICK_START).  STREAM_STATE_CLOSED and STREAM_STATE_TUNNEL are also possible.
  */
 int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
     #ifdef HTP_DEBUG
