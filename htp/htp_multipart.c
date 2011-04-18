@@ -676,7 +676,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
     // The stored data pieces can contain up to one line. If we're in data mode and there
     // was no boundary match, things are straightforward -- we process everything as data.
     // If there was a match, we need to take care to not send the line ending as data, nor
-    // anything that follows (because it's going to be a part of the boundary). Similary,
+    // anything that follows (because it's going to be a part of the boundary). Similarly,
     // when we are in line mode, we need to split the first data chunk, processing the first
     // part as line and the second part as data.  
 

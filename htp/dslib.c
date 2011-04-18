@@ -40,7 +40,7 @@ static int list_linked_push(list_t *_q, void *element) {
     list_linked_element_t *qe = calloc(1, sizeof (list_linked_element_t));
     if (qe == NULL) return -1;
 
-    // Rememeber the element
+    // Remember the element
     qe->data = element;
 
     // If the queue is empty, make this element first
@@ -164,7 +164,7 @@ void list_linked_destroy(list_linked_t **_l) {
 /**
  * Create a new linked list.
  *
- * @return a pointer to the newly creted list (list_t), or NULL on memory allocation failure
+ * @return a pointer to the newly created list (list_t), or NULL on memory allocation failure
  */
 list_t *list_linked_create(void) {
     list_linked_t *q = calloc(1, sizeof (list_linked_t));

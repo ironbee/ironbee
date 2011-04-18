@@ -199,7 +199,7 @@ void *htp_connp_get_user_data(htp_connp_t *connp) {
 }
 
 /**
- * Returns the last error that occured with this connection parser. Do note, however,
+ * Returns the last error that occurred with this connection parser. Do note, however,
  * that the value in this field will only be valid immediately after an error condition,
  * but it is not guaranteed to remain valid if the parser is invoked again.
  *

@@ -27,7 +27,7 @@
  * 
  *     - Changed the name of the function from "decode" to "utf8_decode"
  *     - Created a separate header file
- *     - Copied the licence from the web page
+ *     - Copied the license from the web page
  *     - Created a copy of the data and function "utf8_decode_allow_overlong", which
  *       does not treat overlong characters as invalid.
  */

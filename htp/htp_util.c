@@ -658,7 +658,7 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
 
 /**
  * Decode a UTF-8 encoded path. Overlong characters will be decoded, invalid
- * chararacters will be left as-is. Best-fit mapping will be used to convert
+ * characters will be left as-is. Best-fit mapping will be used to convert
  * UTF-8 into a single-byte stream.
  *
  * @param cfg
@@ -1677,7 +1677,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
 
 /**
  * Normalize URL path. This function implements the remove dot segments algorithm
- * speficied in RFC 3986, section 5.2.4.
+ * specified in RFC 3986, section 5.2.4.
  *
  * @param s
  */

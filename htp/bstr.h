@@ -51,7 +51,7 @@ struct bstr_t {
     size_t size;
 
     /** Optional buffer pointer. If this pointer is NULL (as it currently is
-     *  in virtually all cases) the string buffer will immediatelly follow
+     *  in virtually all cases) the string buffer will immediately follow
      *  this structure. If the pointer is not NUL, it points to the actual
      *  buffer used, and there's no data following this structure.
      */

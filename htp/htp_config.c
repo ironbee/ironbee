@@ -555,7 +555,7 @@ void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8) {
  * Configures whether encoded path segment separators will be decoded. Apache does
  * not do this, but IIS does. If enabled, a path such as "/one%2ftwo" will be normalized
  * to "/one/two". If the backslash_separators option is also enabled, encoded backslash
- * characters will be converted too (and subseqently normalized to forward slashes).
+ * characters will be converted too (and subsequently normalized to forward slashes).
  *
  * @param cfg
  * @param decode_separators
@@ -566,7 +566,7 @@ void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_separators
 
 /**
  * Configures whether %u-encoded sequences in path will be decoded. Such sequences
- * will be treated as invalid URL encoding if decoding is not desireable. 
+ * will be treated as invalid URL encoding if decoding is not desirable. 
  *
  * @param cfg
  * @param decode_u_encoding
@@ -626,7 +626,7 @@ void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling) 
 }
 
 /**
- * Sets the replacement characater that will be used to in the lossy best-fit
+ * Sets the replacement character that will be used to in the lossy best-fit
  * mapping from Unicode characters into single-byte streams. The question mark
  * is the default replacement character.
  *

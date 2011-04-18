@@ -592,7 +592,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
 
             int chomp_result = htp_chomp(connp->out_line, &connp->out_line_len);
 
-            // Deallocate previous response line allocations, which we woud have on a 100 response
+            // Deallocate previous response line allocations, which we would have on a 100 response
             // TODO Consider moving elsewhere; no need to make these checks on every response
             if (connp->out_tx->response_line != NULL) {
                 bstr_free(&connp->out_tx->response_line);

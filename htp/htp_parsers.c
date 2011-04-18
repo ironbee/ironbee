@@ -29,7 +29,7 @@
  * not try to be flexible.
  * 
  * @param protocol
- * @return Protocol version or PROTOCOL_UKNOWN.
+ * @return Protocol version or PROTOCOL_UNKNOWN.
  */
 int htp_parse_protocol(bstr *protocol) {
     // TODO This function uses a very strict approach to parsing, whereas

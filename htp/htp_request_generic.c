@@ -85,7 +85,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         len = bstr_len(tempstr);
     }
 
-    // Now try to oparse the header
+    // Now try to parse the header
     if (htp_parse_request_header_generic(connp, h, data, len) != HTP_OK) {
         bstr_free(&tempstr);
         free(h);

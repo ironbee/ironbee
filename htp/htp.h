@@ -603,7 +603,7 @@ struct htp_connp_t {
     /** Size of the request line buffer. */
     size_t in_line_size;
 
-    /** Lenght of the current request line. */
+    /** Length of the current request line. */
     size_t in_line_len;    
 
     /** Ongoing inbound transaction. */
@@ -624,7 +624,7 @@ struct htp_connp_t {
     /**
      * The request body length declared in a valid request headers. The key here
      * is "valid". This field will not be populated if a request contains both
-     * a Transfer-Encoding header and a Content-Lenght header.
+     * a Transfer-Encoding header and a Content-Length header.
      */
     int64_t in_content_length;
 
@@ -674,7 +674,7 @@ struct htp_connp_t {
     /** Size of the response line buffer. */
     size_t out_line_size;
 
-    /** Lenght of the current response line. */
+    /** Length of the current response line. */
     size_t out_line_len;       
         
     /** Ongoing outbound transaction */
@@ -1008,7 +1008,7 @@ struct htp_tx_t {
     /** Response status code, as text. */
     bstr *response_status;
 
-    /** Reponse status code, available only if we were able to parse it. */
+    /** Response status code, available only if we were able to parse it. */
     int response_status_number;
 
     /** This field is set by the protocol decoder with it thinks that the
