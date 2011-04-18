@@ -37,7 +37,7 @@ extern "C" {
 
 // IMPORTANT This library is used internally by the parser and you should
 //           not rely on it in your code. The implementation may change at
-//           any time.s
+//           any time.
 
 // Lists
 
