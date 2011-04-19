@@ -178,11 +178,39 @@ VALUE rbhtp_config_initialize( VALUE self )
 {
 	rb_iv_set( self, "@response_proc", Qnil );
 	htp_cfg_t* cfg = htp_config_create();
+
 	rb_iv_set( self, "@cfg", 
 		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free, cfg ) 
 	);
 	
 	return Qnil;
+}
+
+VALUE rbhtp_config_copy( VALUE self )
+{
+	// We create one too many copies here.
+	VALUE new_config = rb_funcall( cConfig, rb_intern( "new" ), 0 );
+	htp_cfg_t* cfg = NULL;
+	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
+	htp_cfg_t* cfg_copy = htp_config_copy( cfg );
+
+	// Note that the existing new_config @cfg will be garbage collected as a 
+	// result of this set.
+	
+	rb_iv_set( new_config, "@cfg", 
+		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free, 
+			htp_config_copy( cfg ) ) );
+			
+	// Now copy over all our callbacks.
+	// Terminate list with "".
+	static char* const vars[] = {"@request_proc", "@request_proc", ""};
+	char* const* v = &vars[0];
+	while ( *v[0] != '\0' ) {
+		rb_iv_set( new_config, *v, rb_iv_get( self, *v ) );
+		++v;
+	}
+
+	return new_config;
 }
 
 int rbhtp_config_callback_response( htp_connp_t *connp )
@@ -582,6 +610,7 @@ void Init_htp( void )
 
 	cConfig = rb_define_class_under( mHTP, "Config", rb_cObject );
 	rb_define_method( cConfig, "initialize", rbhtp_config_initialize, 0 );
+	rb_define_method( cConfig, "copy", rbhtp_config_copy, 0 );
 	rb_define_method( cConfig, "register_response", rbhtp_config_register_response, 0 );
 	rb_define_method( cConfig, "register_request", rbhtp_config_register_request, 0 );
 	

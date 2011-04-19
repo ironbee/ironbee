@@ -19,6 +19,13 @@ module HTP
   # TODO: Lots to do.  Good inspect for all classes would be a good start.
   # As would an easier parsing interface that takes care of the return codes.
   
+  class Config
+    # Object.dup will just create a Config that points to the same underlying
+    # htp_cfg_t.  By using #copy which maps to htp_config_copy, we can do
+    # the expected dup behavior.
+    alias :dup :copy
+  end
+    
   class Header
     def invalid?
       flags & HTP_FIELD_INVALID != 0
