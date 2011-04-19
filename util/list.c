@@ -63,7 +63,7 @@ ib_status_t ib_list_push(ib_list_t *list, void *data)
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    IB_LIST_NODE_INSERT_LAST(list, node);
+    IB_LIST_NODE_INSERT_LAST(list, node, ib_list_node_t);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -101,7 +101,7 @@ ib_status_t ib_list_unshift(ib_list_t *list, void *data)
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    IB_LIST_NODE_INSERT_FIRST(list, node);
+    IB_LIST_NODE_INSERT_FIRST(list, node, ib_list_node_t);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

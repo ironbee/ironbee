@@ -291,6 +291,186 @@ typedef struct ib_list_t ib_list_t;
 typedef struct ib_list_node_t ib_list_node_t;
 
 /**
+ * Required fields for a list node structure.
+ *
+ * @param ntype Note type literal
+ */
+#define IB_LIST_NODE_REQ_FIELDS(ntype) \
+    ntype *next; /**< Next list node */ \
+    ntype *prev; /**< Previous list node */
+
+/**
+ * Required fields for a list structure.
+ *
+ * @param ntype Note type literal
+ */
+#define IB_LIST_REQ_FIELDS(ntype) \
+    size_t nelts; /**< Number of elements in list */ \
+    ntype *head; /**< First node in list */ \
+    ntype *tail; /**< Last node in list */
+
+/**
+ * First node of a list.
+ *
+ * @param list List
+ *
+ * @returns List node
+ */
+#define IB_LIST_FIRST(list) ((list)->head)
+
+/**
+ * Last node of a list.
+ *
+ * @param list List
+ *
+ * @returns List node
+ */
+#define IB_LIST_LAST(list) ((list)->tail)
+
+/**
+ * Next node in a list in relation to another node.
+ *
+ * @param node Node
+ *
+ * @returns List node
+ */
+#define IB_LIST_NODE_NEXT(node) ((node) == NULL ? NULL : (node)->next)
+
+/**
+ * Previous node in a list in relation to another node.
+ *
+ * @param node Node
+ *
+ * @returns List node
+ */
+#define IB_LIST_NODE_PREV(node) ((node) == NULL ? NULL : (node)->prev)
+
+/**
+ * List node data.
+ *
+ * @param node Node
+ *
+ * @returns List node data
+ */
+#define IB_LIST_NODE_DATA(node) ((node) == NULL ? NULL : (node)->data)
+
+/**
+ * Insert a node after another node in a list.
+ *
+ * @param list List
+ * @param at Node to insert after
+ * @param node Node to insert
+ * @param ntype Note type literal
+ */
+#define IB_LIST_NODE_INSERT_AFTER(list,at,node,ntype) \
+    do { \
+        ntype *__ib_list_node_ia_tmp = (at)->next; \
+        (at)->next = (node); \
+        (node)->prev = (at); \
+        (node)->next = __ib_list_node_ia_tmp; \
+        (list)->nelts++; \
+    } while(0)
+
+/**
+ * Insert a node before another node in a list.
+ *
+ * @param list List
+ * @param at Node to insert before
+ * @param node Node to insert
+ * @param ntype Note type literal
+ */
+#define IB_LIST_NODE_INSERT_BEFORE(list,at,node,ntype) \
+    do { \
+        ntype *__ib_list_node_ib_tmp = (at)->prev; \
+        (at)->prev = (node); \
+        (node)->prev = __ib_list_node_ib_tmp; \
+        (node)->next = (at); \
+        (list)->nelts++; \
+    } while(0)
+
+/**
+ * Insert a node at the end of a list.
+ *
+ * @param list List
+ * @param node Node to insert
+ * @param ntype Note type literal
+ */
+#define IB_LIST_NODE_INSERT_LAST(list,node,ntype) \
+    do { \
+        IB_LIST_NODE_INSERT_AFTER((list), (list)->tail, (node), ntype); \
+        (list)->tail = (node); \
+    } while(0)
+
+/**
+ * Insert a node at the beginning of a list.
+ *
+ * @param list List
+ * @param node Node to insert
+ * @param ntype Note type literal
+ */
+#define IB_LIST_NODE_INSERT_FIRST(list,node,ntype) \
+    do { \
+        IB_LIST_NODE_INSERT_BEFORE((list), (list)->head, (node), ntype); \
+        (list)->head = (node); \
+    } while(0)
+
+/**
+ * Insert the first node of a list.
+ *
+ * @param list List
+ * @param node Node to insert
+ */
+#define IB_LIST_NODE_INSERT_INITIAL(list,node) \
+    do { \
+        (list)->head = (list)->tail =(node); \
+        (node)->next = (node)->prev = NULL; \
+        (list)->nelts = 1; \
+    } while(0)
+
+/**
+ * Remove a node from a list.
+ *
+ * @param list List
+ * @param node Node to insert
+ */
+#define IB_LIST_NODE_REMOVE(list,node) \
+    do { \
+        if ((node)->prev != NULL) { \
+            (node)->prev->next = (node)->next; \
+        } \
+        if ((node)->next != NULL) { \
+            (node)->next->prev = (node)->prev; \
+        } \
+        (list)->nelts--; \
+    } while(0)
+
+/**
+ * Remove the last node from a list.
+ *
+ * @param list List
+ */
+#define IB_LIST_NODE_REMOVE_LAST(list) \
+    do { \
+        if ((list)->tail != NULL) { \
+            IB_LIST_NODE_REMOVE((list), (list)->tail); \
+            (list)->tail = (list)->tail->prev; \
+        } \
+    } while(0)
+
+/**
+ * Remove the first node from a list.
+ *
+ * @param list List
+ */
+#define IB_LIST_NODE_REMOVE_FIRST(list) \
+    do { \
+        if ((list)->head != NULL) { \
+            IB_LIST_NODE_REMOVE((list), (list)->head); \
+            (list)->head = (list)->head->next; \
+        } \
+    } while(0)
+
+/**
  * Loop through all elements in the list.
  *
  * @warning Do not use to delete an element in the list. Instead use
