@@ -174,6 +174,21 @@ VALUE rbhtp_get_version( VALUE self )
 }
 
 //---- Config ----
+
+// Terminate list with "".
+static char* const rbhtp_config_pvars[] = {
+	"@request_proc", 
+	"@request_proc",
+	"@transaction_start",
+	"@request_line",
+	"@request_headers",
+	"@request_trailer",
+	"@response_line",
+	"@response_headers",
+	"@response_trailers",
+	""
+};
+
 void rbhtp_config_free( void* p )
 {
 	htp_cfg_t* cfg = (htp_cfg_t*)p;
@@ -182,7 +197,12 @@ void rbhtp_config_free( void* p )
 
 VALUE rbhtp_config_initialize( VALUE self )
 {
-	rb_iv_set( self, "@response_proc", Qnil );
+	char* const* v = &rbhtp_config_pvars[0];
+	while ( *v[0] != '\0' ) {
+		rb_iv_set( self, *v, Qnil );
+		++v;
+	}
+	
 	htp_cfg_t* cfg = htp_config_create();
 
 	rb_iv_set( self, "@cfg", 
@@ -208,9 +228,7 @@ VALUE rbhtp_config_copy( VALUE self )
 			htp_config_copy( cfg ) ) );
 			
 	// Now copy over all our callbacks.
-	// Terminate list with "".
-	static char* const vars[] = {"@request_proc", "@request_proc", ""};
-	char* const* v = &vars[0];
+	char* const* v = &rbhtp_config_pvars[0];
 	while ( *v[0] != '\0' ) {
 		rb_iv_set( new_config, *v, rb_iv_get( self, *v ) );
 		++v;
@@ -219,75 +237,45 @@ VALUE rbhtp_config_copy( VALUE self )
 	return new_config;
 }
 
-int rbhtp_config_callback_response( htp_connp_t *connp )
-{
-	VALUE connp_r = (VALUE)htp_connp_get_user_data( connp );
-	VALUE config_r = rb_iv_get( connp_r, "@config" );
-	VALUE response_proc = rb_iv_get( config_r, "@response_proc" );
-	
-	if ( response_proc != Qnil ) {
-		return INT2FIX( 
-			rb_funcall( response_proc, rb_intern( "call" ), 1, connp_r ) 
-		);
+#define RBHTP_CONNP_CALLBACK( N ) \
+	int rbhtp_config_callback_ ## N( htp_connp_t* connp ) \
+	{ \
+		VALUE userdata = (VALUE)htp_connp_get_user_data( connp ); \
+		VALUE config = rb_iv_get( userdata, "@config" ); \
+		VALUE proc = rb_iv_get( config, "@" #N "_proc" ); \
+		if ( proc != Qnil ) { \
+			return INT2FIX( \
+				rb_funcall( proc, rb_intern( "call" ), 1, userdata )  \
+			); \
+		} \
+		return 1; \
+	} \
+	VALUE rbhtp_config_register_ ## N( VALUE self ) \
+	{ \
+		if ( ! rb_block_given_p() ) { \
+			rb_raise( rb_eArgError, "A block is required." ); \
+			return Qnil; \
+		} \
+		VALUE proc = rb_iv_get( self, "@" #N "_proc" ); \
+		if ( proc == Qnil ) { \
+			htp_cfg_t* cfg = NULL; \
+			Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg ); \
+			htp_config_register_request( cfg, rbhtp_config_callback_ ## N ); \
+		} \
+		rb_iv_set( self, "@" #N "_proc", rb_block_proc() ); \
+		return self; \
 	}
+		
+RBHTP_CONNP_CALLBACK( request )
+RBHTP_CONNP_CALLBACK( response )
+RBHTP_CONNP_CALLBACK( transaction_start )
+RBHTP_CONNP_CALLBACK( request_line )
+RBHTP_CONNP_CALLBACK( request_headers )
+RBHTP_CONNP_CALLBACK( request_trailer )
+RBHTP_CONNP_CALLBACK( response_line )
+RBHTP_CONNP_CALLBACK( response_headers )
+RBHTP_CONNP_CALLBACK( response_trailers )
 
-	return 1;
-}
-
-VALUE rbhtp_config_register_response( VALUE self )
-{
-	if ( ! rb_block_given_p() ) {
-		rb_raise( rb_eArgError, "A block is required." );
-		return Qnil;
-	}
-
-	VALUE response_proc = rb_iv_get( self, "@response_proc" );
-	
-	if ( response_proc == Qnil ) {
-		htp_cfg_t* cfg = NULL;
-		Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
-		htp_config_register_response( cfg, rbhtp_config_callback_response );
-	}
-	
-	rb_iv_set( self, "@response_proc", rb_block_proc() );
-	
-	return self;
-}
-
-int rbhtp_config_callback_request( htp_connp_t *connp )
-{
-	VALUE connp_r = (VALUE)htp_connp_get_user_data( connp );
-	VALUE config_r = rb_iv_get( connp_r, "@config" );
-	VALUE request_proc = rb_iv_get( config_r, "@request_proc" );
-	
-	if ( request_proc != Qnil ) {
-		return INT2FIX( 
-			rb_funcall( request_proc, rb_intern( "call" ), 1, connp_r ) 
-		);
-	}
-
-	return 1;
-}
-
-VALUE rbhtp_config_register_request( VALUE self )
-{
-	if ( ! rb_block_given_p() ) {
-		rb_raise( rb_eArgError, "A block is required." );
-		return Qnil;
-	}
-
-	VALUE request_proc = rb_iv_get( self, "@request_proc" );
-	
-	if ( request_proc == Qnil ) {
-		htp_cfg_t* cfg = NULL;
-		Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
-		htp_config_register_request( cfg, rbhtp_config_callback_request );
-	}
-
-	rb_iv_set( self, "@request_proc", rb_block_proc() );
-	
-	return self;
-}
 
 RBHTP_RW_INT( cfg, parse_request_cookies )
 
@@ -621,6 +609,13 @@ void Init_htp( void )
 	rb_define_method( cConfig, "copy", rbhtp_config_copy, 0 );
 	rb_define_method( cConfig, "register_response", rbhtp_config_register_response, 0 );
 	rb_define_method( cConfig, "register_request", rbhtp_config_register_request, 0 );
+	rb_define_method( cConfig, "register_transaction_start", rbhtp_config_register_transaction_start, 0 );
+	rb_define_method( cConfig, "register_request_line", rbhtp_config_register_request_line, 0 );
+	rb_define_method( cConfig, "register_request_headers", rbhtp_config_register_request_headers, 0 );
+	rb_define_method( cConfig, "register_request_trailer", rbhtp_config_register_request_trailer, 0 );
+	rb_define_method( cConfig, "register_response_line", rbhtp_config_register_response_line, 0 );
+	rb_define_method( cConfig, "register_response_headers", rbhtp_config_register_response_headers, 0 );
+	rb_define_method( cConfig, "register_response_trailers", rbhtp_config_register_response_trailers, 0 );
 	
 	rb_define_method( cConfig, "parse_request_cookies", rbhtp_cfg_parse_request_cookies, 0 );
 	rb_define_method( cConfig, "parse_request_cookies=", rbhtp_cfg_parse_request_cookies_set, 1 );
