@@ -214,6 +214,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
+    /// @todo Why not use connp->in_tx or connp->conn->transactions ???
     tx = list_get(modctx->htp->conn->transactions,
                   modctx->htp->out_next_tx_index);
     if (tx == NULL) {
