@@ -34,7 +34,6 @@ typedef struct htp_log_t htp_log_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
-typedef struct htp_urldecoder_t htp_urldecoder_t;
 
 #include <ctype.h>
 #include <iconv.h>
@@ -1095,7 +1094,7 @@ struct htp_uri_t {
     bstr *port;
 
     /** Port, as number, but only if the port is valid. */
-      int port_number;
+    int port_number;
 
     /** The path part of this URI */
     bstr *path;
