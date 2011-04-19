@@ -1786,4 +1786,4 @@ uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
 }
 #endif
 
-#endif /* IB_UTIL_H_ */
+#endif /* _IB_UTIL_H_ */

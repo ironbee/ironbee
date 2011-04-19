@@ -103,4 +103,4 @@ extern "C" {
 }
 #endif
 
-#endif /* IB_RELEASE_H_ */
+#endif /* _IB_RELEASE_H_ */

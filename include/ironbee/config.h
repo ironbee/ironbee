@@ -417,4 +417,4 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
 }
 #endif
 
-#endif /* IB_CONFIG_H_ */
+#endif /* _IB_CONFIG_H_ */

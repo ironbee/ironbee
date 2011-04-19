@@ -286,4 +286,4 @@ ib_status_t DLL_PUBLIC ib_module_register_context(ib_module_t *m,
 }
 #endif
 
-#endif /* IB_MODULES_H_ */
+#endif /* _IB_MODULES_H_ */

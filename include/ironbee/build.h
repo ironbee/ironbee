@@ -82,4 +82,4 @@ extern "C" {
 }
 #endif
 
-#endif /* IB_BUILD_H_ */
+#endif /* _IB_BUILD_H_ */

@@ -614,4 +614,4 @@ void DLL_PUBLIC ib_logevent_provider_set_instance(ib_context_t *ctx,
 }
 #endif
 
-#endif /* IB_PROVIDER_H_ */
+#endif /* _IB_PROVIDER_H_ */

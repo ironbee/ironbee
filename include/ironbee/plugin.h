@@ -64,4 +64,4 @@ struct ib_plugin_t {
 }
 #endif
 
-#endif /* IB_PLUGINS_H_ */
+#endif /* _IB_PLUGINS_H_ */
