@@ -33,7 +33,7 @@ config.register_request do |connp|
   request_headers = connp.in_tx.request_headers
   if request_headers
     puts "Request Headers: "
-    request_headers.each {|hline| puts "  " + hline.to_s}
+    request_headers.each {|h| puts "  " + h.to_s}
   end
   
   request_cookies = connp.in_tx.request_cookies

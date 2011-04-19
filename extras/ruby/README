@@ -47,6 +47,8 @@ consider caching the return value if you need to access it multiple times.
 * Conn, File, and FileData are completly missing.
 * Logging is completely missing.
 * Tx, Connp, and Config lack meaningful to_s or inspect.
+* Bool support.  As per C-interface, 0 and 1 are used instead of false and 
+  true.  Should add ...? accessors which latter values.
 * Automated unit tests.
 * API doc.
 * Version information.
