@@ -167,6 +167,12 @@ static VALUE rbhtp_r_header_line_list( list_t* list )
 		return rbhtp_r_header_line_list( x->N ); \
 	}
 
+//---- HTP ---
+VALUE rbhtp_get_version( VALUE self )
+{
+	return rb_str_new2( htp_get_version() );
+}
+
 //---- Config ----
 void rbhtp_config_free( void* p )
 {
@@ -477,6 +483,8 @@ RBHTP_R_URI( tx, parsed_uri_incomplete )
 void Init_htp( void )
 {
 	mHTP = rb_define_module( "HTP" );
+	
+	rb_define_singleton_method( mHTP, "get_version", rbhtp_get_version, 0 );
 
 	// All numeric constants from htp.h.
   rb_define_const( mHTP, "HTP_ERROR", INT2FIX( HTP_ERROR ) );
