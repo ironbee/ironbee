@@ -41,6 +41,7 @@ module HTP
     end
     
     alias :inspect :to_s
+    alias :to_str :to_s
   end
   
   class HeaderLine
@@ -61,6 +62,7 @@ module HTP
     end
     
     alias :inspect :to_s
+    alias :to_str :to_s
   end
   
   class URI
@@ -79,6 +81,7 @@ module HTP
     end
     
     alias :inspect :to_s
+    alias :to_str :to_s
   end
   
   class Tx

@@ -26,20 +26,20 @@ config.parse_request_cookies = 1
 
 config.register_request do |connp|
   puts "Parsed URI: "
-  puts "  " + connp.in_tx.parsed_uri.to_s
+  puts "  " + connp.in_tx.parsed_uri
   
   # Calling request_headers rubyizes it so we cache the value to avoid
   # paying the cost multiple times.  This repeats in subsequent examples.
   request_headers = connp.in_tx.request_headers
   if request_headers
     puts "Request Headers: "
-    request_headers.each {|h| puts "  " + h.to_s}
+    request_headers.each {|h| puts "  " + h}
   end
   
   request_cookies = connp.in_tx.request_cookies
   if request_cookies
     puts "Request Cookies: "
-    request_cookies.each {|k,v| puts "#{k} = #{v}"}
+    request_cookies.each {|k,v| puts "  #{k} = #{v}"}
   end
 end
 
