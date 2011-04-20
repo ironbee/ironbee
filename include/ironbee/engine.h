@@ -74,11 +74,12 @@ typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
 
 typedef enum {
-    IB_TXDATA_HTTP_LINE,
-    IB_TXDATA_HTTP_HEADER,
-    IB_TXDATA_HTTP_BODY,
-    IB_TXDATA_HTTP_TRAILER
-} ib_txdata_type_t;
+    IB_DTYPE_RAW,
+    IB_DTYPE_HTTP_LINE,
+    IB_DTYPE_HTTP_HEADER,
+    IB_DTYPE_HTTP_BODY,
+    IB_DTYPE_HTTP_TRAILER
+} ib_data_type_t;
 
 #define IB_UUID_HEX_SIZE 37
 
@@ -211,7 +212,7 @@ struct ib_txdata_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Data memory pool */
     ib_tx_t            *tx;              /**< Transaction */
-    ib_txdata_type_t    dtype;           /**< Transaction data type */
+    ib_data_type_t      dtype;           /**< Data type */
     size_t              dalloc;          /**< Data buffer allocated */
     size_t              dlen;            /**< Data buffer length */
     uint8_t            *data;            /**< Data buffer */

@@ -262,7 +262,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     itxdata.ib = ib;
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
-    itxdata.dtype = IB_TXDATA_HTTP_LINE;
+    itxdata.dtype = IB_DTYPE_HTTP_LINE;
     itxdata.dalloc = bstr_size(tx->request_line);
     itxdata.dlen = bstr_len(tx->request_line);
     itxdata.data = (uint8_t *)bstr_ptr(tx->request_line);
@@ -303,7 +303,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     itxdata.ib = ib;
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
-    itxdata.dtype = IB_TXDATA_HTTP_HEADER;
+    itxdata.dtype = IB_DTYPE_HTTP_HEADER;
     list_iterator_reset(tx->request_header_lines);
     while ((hline = list_iterator_next(tx->request_header_lines)) != NULL) {
         itxdata.dalloc = bstr_size(hline->line);
@@ -366,7 +366,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     itxdata.ib = ib;
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
-    itxdata.dtype = IB_TXDATA_HTTP_BODY;
+    itxdata.dtype = IB_DTYPE_HTTP_BODY;
     itxdata.dalloc = txdata->len;
     itxdata.dlen = txdata->len;
     itxdata.data = (uint8_t *)txdata->data;
@@ -464,7 +464,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     itxdata.ib = ib;
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
-    itxdata.dtype = IB_TXDATA_HTTP_LINE;
+    itxdata.dtype = IB_DTYPE_HTTP_LINE;
     itxdata.dalloc = bstr_size(tx->response_line);
     itxdata.dlen = bstr_len(tx->response_line);
     itxdata.data = (uint8_t *)bstr_ptr(tx->response_line);
@@ -505,7 +505,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     itxdata.ib = ib;
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
-    itxdata.dtype = IB_TXDATA_HTTP_HEADER;
+    itxdata.dtype = IB_DTYPE_HTTP_HEADER;
     list_iterator_reset(tx->response_header_lines);
     while ((hline = list_iterator_next(tx->response_header_lines)) != NULL) {
         itxdata.dalloc = bstr_size(hline->line);
@@ -563,7 +563,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     itxdata.ib = ib;
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
-    itxdata.dtype = IB_TXDATA_HTTP_BODY;
+    itxdata.dtype = IB_DTYPE_HTTP_BODY;
     itxdata.dalloc = txdata->len;
     itxdata.dlen = txdata->len;
     itxdata.data = (uint8_t *)txdata->data;

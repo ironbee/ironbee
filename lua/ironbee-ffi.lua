@@ -252,7 +252,7 @@ ffi.cdef[[
         ib_engine_t        *ib;
         ib_mpool_t         *mp;
         ib_tx_t            *tx;
-        ib_txdata_type_t    dtype;
+        ib_data_type_t      dtype;
         size_t              dalloc;
         size_t              dlen;
         const char         *data;
