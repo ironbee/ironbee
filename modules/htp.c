@@ -79,7 +79,7 @@ struct modhtp_nameval_t {
 };
 
 /* Text versions of personalities */
-static modhtp_nameval_t modhtp_personalities[] = {
+static const modhtp_nameval_t modhtp_personalities[] = {
     { "",           HTP_SERVER_IDS },
     { "minimal",    HTP_SERVER_MINIMAL },
     { "generic",    HTP_SERVER_GENERIC },
@@ -100,7 +100,7 @@ static modhtp_nameval_t modhtp_personalities[] = {
 static int modhtp_personality(const char *name)
 {
     IB_FTRACE_INIT(modhtp_personality);
-    struct modhtp_nameval_t *rec = modhtp_personalities;
+    const modhtp_nameval_t *rec = modhtp_personalities;
 
     if (name == NULL) {
         IB_FTRACE_RET_INT(-1);
