@@ -52,7 +52,6 @@ consider caching the return value if you need to access it multiple times.
   true.  Should add ...? accessors which latter values.
 * Automated unit tests.
 * API doc.
-* Version information.
 * libHTP version detection.
 * Iterator parsing interface: Takes iterator of chunks and handles the various 
   parsing return codes.  This allows the user to provide chunks as possible 
