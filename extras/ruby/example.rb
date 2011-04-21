@@ -22,6 +22,7 @@ require 'htp'
 config = HTP::Config.new
 
 # Comment out this line and notice that cookies vanish from output.
+config.server_personality = :apache
 config.parse_request_cookies = 1
 
 config.register_request do |connp|

@@ -24,6 +24,37 @@ module HTP
     # htp_cfg_t.  By using #copy which maps to htp_config_copy, we can do
     # the expected dup behavior.
     alias :dup :copy
+
+    SERVER_PERSONALITY_MAP = {
+      :minimal => HTP_SERVER_MINIMAL,
+      :generic => HTP_SERVER_GENERIC,
+      :ids => HTP_SERVER_IDS,
+      :iis_4_0 => HTP_SERVER_IIS_4_0,
+      :iis_5_0 => HTP_SERVER_IIS_5_0,
+      :iis_5_1 => HTP_SERVER_IIS_5_1,
+      :iis_6_0 => HTP_SERVER_IIS_6_0,
+      :iis_7_0 => HTP_SERVER_IIS_7_0,
+      :iis_7_5 => HTP_SERVER_IIS_7_5,
+      :tomcat_6_0 => HTP_SERVER_TOMCAT_6_0,
+      :apache => HTP_SERVER_APACHE,
+      :apache_2_2 => HTP_SERVER_APACHE_2_2
+    }.freeze
+    alias :server_personality :spersonality
+    def server_personality=( personality )
+      if personality.is_a?( String )
+        personality = personality.to_sym
+      end
+      if personality.is_a?( Symbol )
+        if SERVER_PERSONALITY_MAP[ personality ].nil?
+          raise TypeError.new( "Unknown personality: #{personality}" )
+        end
+        personality = SERVER_PERSONALITY_MAP[ personality ]
+      end
+      if ! personality.is_a?( Fixnum )
+        raise TypeError.new( "Can't understand personality." ) 
+      end
+      set_server_personality( personality )
+    end 
   end
     
   class Header

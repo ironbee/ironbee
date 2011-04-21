@@ -237,6 +237,18 @@ VALUE rbhtp_config_copy( VALUE self )
 	return new_config;
 }
 
+VALUE rbhtp_config_set_server_personality( VALUE self, VALUE personality )
+{
+	Check_Type( personality, T_FIXNUM );
+	
+	htp_cfg_t* cfg = NULL;
+	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
+
+	return INT2FIX( 
+		htp_config_set_server_personality( cfg, FIX2INT( personality ) ) 
+	);
+}
+
 #define RBHTP_CONNP_CALLBACK( N ) \
 	int rbhtp_config_callback_ ## N( htp_connp_t* connp ) \
 	{ \
@@ -276,7 +288,7 @@ RBHTP_CONNP_CALLBACK( response_line )
 RBHTP_CONNP_CALLBACK( response_headers )
 RBHTP_CONNP_CALLBACK( response_trailers )
 
-
+RBHTP_R_INT( cfg, spersonality )
 RBHTP_RW_INT( cfg, parse_request_cookies )
 
 //---- Connp ----
@@ -607,6 +619,7 @@ void Init_htp( void )
 	cConfig = rb_define_class_under( mHTP, "Config", rb_cObject );
 	rb_define_method( cConfig, "initialize", rbhtp_config_initialize, 0 );
 	rb_define_method( cConfig, "copy", rbhtp_config_copy, 0 );
+
 	rb_define_method( cConfig, "register_response", rbhtp_config_register_response, 0 );
 	rb_define_method( cConfig, "register_request", rbhtp_config_register_request, 0 );
 	rb_define_method( cConfig, "register_transaction_start", rbhtp_config_register_transaction_start, 0 );
@@ -616,6 +629,10 @@ void Init_htp( void )
 	rb_define_method( cConfig, "register_response_line", rbhtp_config_register_response_line, 0 );
 	rb_define_method( cConfig, "register_response_headers", rbhtp_config_register_response_headers, 0 );
 	rb_define_method( cConfig, "register_response_trailers", rbhtp_config_register_response_trailers, 0 );
+	
+	// server_personality= and server_personality are defined in htp_ruby.rb	
+	rb_define_method( cConfig, "set_server_personality", rbhtp_config_set_server_personality, 1 );
+	rb_define_method( cConfig, "spersonality", rbhtp_cfg_spersonality, 0 );
 	
 	rb_define_method( cConfig, "parse_request_cookies", rbhtp_cfg_parse_request_cookies, 0 );
 	rb_define_method( cConfig, "parse_request_cookies=", rbhtp_cfg_parse_request_cookies_set, 1 );
