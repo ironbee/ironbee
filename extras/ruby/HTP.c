@@ -328,8 +328,8 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	StringValue( data ); // try to make data a string.	
 	Check_Type( data, T_STRING );
 	
-	size_t len = RSTRING( data )->len;
-	unsigned char* data_c = RSTRING( data )->ptr;
+	size_t len = RSTRING_LEN( data );
+	unsigned char* data_c = RSTRING_PTR( data );
 
 	htp_time_t timestamp_c = 
 		FIX2INT( rb_funcall( timestamp, rb_intern( "to_i" ), 0 ) );
