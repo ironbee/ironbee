@@ -24,12 +24,12 @@
  * This is a dynamic array implemented as an array of arrays allocated
  * in chunks (size ninit) as needed.
  *
- * This is essentially a two dimentional array storing a pointer to arbitrary
+ * This is essentially a two dimensional array storing a pointer to arbitrary
  * data.  The first dimension, the extent index (row), is allocated
- * immediatly. The second dimension, the data index (column), is allocated
- * on demand (though the first set is allocated immediatly).
+ * immediately. The second dimension, the data index (column), is allocated
+ * on demand (though the first set is allocated immediately).
  *
- * When data is added, enough extents are allocated to accomodate for the 
+ * When data is added, enough extents are allocated to accommodate for the 
  * index. If the number of extents required exceeds what is available, then
  * a replacement extents array is allocated, double the size it was
  * previously, the data arrays are copied into the new extents array, and

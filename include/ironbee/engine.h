@@ -156,7 +156,7 @@ typedef ib_status_t (*ib_context_fn_t)(ib_context_t *ctx,
  * node(0-1): 16-bit process ID
  * node(2-5): 32-bit ID (system default IPv4 address by default)
  *
- * This is loosly based of of Apache mod_unique_id, but with
+ * This is loosely based of of Apache mod_unique_id, but with
  * future expansion in mind.
  */
 struct ib_uuid_t {
@@ -238,7 +238,7 @@ struct ib_tx_t {
 /**
  * Audit log part generator function.
  *
- * This function is called repetitivly to generate the data logged
+ * This function is called repetitively to generate the data logged
  * in an audit log part. The function should return zero when there
  * is no more data to log.
  *
@@ -678,7 +678,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *
  * Plugin states are triggered by the plugin and parser states by the
  * parser. These states cause the engine to trigger both the engine and
- * handler states. The engine states are meant to be syncronization
+ * handler states. The engine states are meant to be synchronization
  * points. The handler states are meant to be handled by modules to do
  * detection and take actions, while the plugin and parser states are
  * to be used to generate fields and anything else needed in the handler

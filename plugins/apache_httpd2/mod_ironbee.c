@@ -239,7 +239,7 @@ static void handle_data(conn_rec *c, ironbee_conn_context *ctx)
  * This is needed as Apache will use a line oriented filter when it can
  * (request headers and HTML output) and this generates too many small
  * fragments to handle.  Instead this makes sure that the fragments are
- * reasonablly sized to avoid having to deal with potentially small
+ * reasonably sized to avoid having to deal with potentially small
  * chunks of data.
  */
 static void process_bucket(ap_filter_t *f, apr_bucket *b)

@@ -83,7 +83,7 @@ extern "C" {
 /**
  * ABI version number.
  *
- * This number must be incremeted each time the ABI changes. If a
+ * This number must be incremented each time the ABI changes. If a
  * module/plugin tries to load that was built with a number greater than
  * this, then it is not compatible.
  *

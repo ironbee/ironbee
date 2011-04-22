@@ -104,7 +104,7 @@ const char *ib_logevent_type_str[] = {
 static const char *ib_logevent_activity_str[] = {
     "Unknown",
     "Recon",
-    "Attempted Atack",
+    "Attempted Attack",
     "Successful Attack",
     NULL
 };

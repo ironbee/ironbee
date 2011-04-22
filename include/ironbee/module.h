@@ -215,7 +215,7 @@ struct ib_core_cfg_t {
 };
 
 /**
- * Inititialize an engine module.
+ * Initialize an engine module.
  *
  * Use this to initialize a static module.
  *
@@ -240,7 +240,7 @@ ib_status_t DLL_PUBLIC ib_module_create(ib_module_t **pm,
                                         ib_engine_t *ib);
 
 /**
- * Load and intitialize an engine module.
+ * Load and initialize an engine module.
  *
  * This causes the module init() function to be called.
  *

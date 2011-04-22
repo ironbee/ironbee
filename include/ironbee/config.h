@@ -126,7 +126,7 @@ struct ib_dirmap_init_t {
          * @internal
          * C90/C++ always initializes the first member vs C99 which has
          * designated initializers, so in order to support initialization
-         * there must be a generic fuction as the first member.
+         * there must be a generic function as the first member.
          */
         ib_void_fn_t              _init;
         ib_config_cb_onoff_fn_t   fn_onoff;  /**< On|Off directive */

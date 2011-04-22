@@ -209,7 +209,7 @@ typedef ib_status_t (*ib_mpool_cleanup_fn_t)(void *);
  * Create a new memory pool.
  *
  * @note If a pool has a parent specified, then any call to clear/destroy
- * on the parent will propagate to all decendents.
+ * on the parent will propagate to all descendants.
  *
  * @param pmp Address which new pool is written
  * @param parent Optional parent memory pool (or NULL)
@@ -251,14 +251,14 @@ void DLL_PUBLIC *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size);
 void DLL_PUBLIC *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size);
 
 /**
- * Deallocate all memory allocated from the pool and any decendent pools.
+ * Deallocate all memory allocated from the pool and any descendant pools.
  *
  * @param mp Memory pool
  */
 void DLL_PUBLIC ib_mpool_clear(ib_mpool_t *mp);
 
 /**
- * Destroy pool and any decendent pools.
+ * Destroy pool and any descendant pools.
  *
  * @param mp Memory pool
  */

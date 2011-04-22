@@ -627,7 +627,7 @@ static ib_status_t logger_register(ib_engine_t *ib,
  *
  * @warning Not yet doing anything.
  *
- * @param lpi Logger provider intstance
+ * @param lpi Logger provider instance
  * @param data User data
  *
  * @returns Status code
@@ -1783,7 +1783,7 @@ static ib_status_t logevent_register(ib_engine_t *ib,
  *
  * @warning Not yet doing anything.
  *
- * @param epi Logevent provider intstance
+ * @param epi Logevent provider instance
  * @param data User data
  *
  * @returns Status code
@@ -2324,10 +2324,10 @@ static ib_status_t data_register(ib_engine_t *ib,
 
 /**
  * @internal
- * Inintialize the data access provider instance.
+ * Initialize the data access provider instance.
  *
  * @param dpi Data provider instance
- * @param data Initalization data
+ * @param data Initialization data
  *
  * @returns Status code
  */
@@ -2361,7 +2361,7 @@ static ib_status_t data_init(ib_provider_inst_t *dpi,
  * @param pcpatt Address which compiled pattern is written
  * @param patt Pattern
  * @param errptr Address which any error is written (if non-NULL)
- * @param erroffset Offset in pattern where the error occured (if non-NULL)
+ * @param erroffset Offset in pattern where the error occurred (if non-NULL)
  *
  * @returns Status code
  */
@@ -2774,7 +2774,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
  * @internal
  * Handle the start of a Location block.
  *
- * This function sets up the new locationand pushes it onto the parser stack.
+ * This function sets up the new location and pushes it onto the parser stack.
  *
  * @param cp Config parser
  * @param name Directive name
@@ -3369,7 +3369,7 @@ static ib_status_t core_init(ib_engine_t *ib,
 
 /**
  * @internal
- * Finialize the core module on unload.
+ * Finalize the core module on unload.
  *
  * @param ib Engine
  *
@@ -3479,7 +3479,7 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         MODULE_NAME_STR
     ),
 
-    /* Data Aquisition */
+    /* Data Acquisition */
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_DATA,
         IB_FTYPE_NULSTR,

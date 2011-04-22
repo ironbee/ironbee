@@ -661,7 +661,7 @@ const char *ib_state_event_name(ib_state_event_type_t event)
 
 /**
  * @internal
- * Notify the engine that an event has occured.
+ * Notify the engine that an event has occurred.
  *
  * This is a generic function that handles all types.
  *
@@ -701,7 +701,7 @@ static ib_status_t ib_state_notify(ib_engine_t *ib,
 
 /**
  * @internal
- * Notify the engine that a connection event has occured.
+ * Notify the engine that a connection event has occurred.
  *
  * @param ib Engine
  * @param event Event
@@ -744,7 +744,7 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 
 /**
  * @internal
- * Notify the engine that a connection data event has occured.
+ * Notify the engine that a connection data event has occurred.
  *
  * @param ib Engine
  * @param event Event
@@ -788,7 +788,7 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
 /**
  * @internal
- * Notify the engine that a transaction data event has occured.
+ * Notify the engine that a transaction data event has occurred.
  *
  * @param ib Engine
  * @param event Event
@@ -832,7 +832,7 @@ static ib_status_t ib_state_notify_tx_data(ib_engine_t *ib,
 
 /**
  * @internal
- * Notify the engine that a transaction event has occured.
+ * Notify the engine that a transaction event has occurred.
  *
  * @param ib Engine
  * @param event Event
@@ -909,15 +909,15 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
 }
 
 /**
- * Notify engine of additional events when notifcation of a
+ * Notify engine of additional events when notification of a
  * @ref conn_opened_event occurs.
  *
- * When the event is notified, additional events are notified immediatly
+ * When the event is notified, additional events are notified immediately
  * prior to it:
  *
  *  - @ref conn_started_event
  *
- * And immediatly following it:
+ * And immediately following it:
  *
  *  - @ref handle_context_conn_event
  *  - @ref handle_connect_event
@@ -990,7 +990,7 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
 /**
  * @ref conn_closed_event occurs.
  *
- * When the event is notified, additional events are notified immediatly
+ * When the event is notified, additional events are notified immediately
  * prior to it:
  *
  *  - @ref handle_disconnect_event
@@ -1028,7 +1028,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 /**
  * @ref tx_data_in_event occurs.
  *
- * When the event is notified, additional events are notified immediatly
+ * When the event is notified, additional events are notified immediately
  * prior to it:
  *
  *  - @ref tx_started_event
@@ -1087,12 +1087,12 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
 /**
  * @ref request_headers_event occurs.
  *
- * When the event is notified, additional events are notified immediatly
+ * When the event is notified, additional events are notified immediately
  * prior to it:
  *
  *  - @ref request_started_event (if not already notified)
  *
- * And immediatly following it:
+ * And immediately following it:
  *
  *  - @ref handle_context_tx_event
  *  - @ref handle_request_headers_event
@@ -1140,7 +1140,7 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
 /**
  * @ref request_body_event occurs.
  *
- * When the event is notified, additional events are notified immediatly
+ * When the event is notified, additional events are notified immediately
  * following it:
  *
  *  - @ref handle_request_event
@@ -1184,11 +1184,11 @@ ib_status_t ib_state_notify_request_body(ib_engine_t *ib,
  * @ref request_finished_event occurs.
  *
  * When the event is notified, additional events are notified
- * immediatly prior to it:
+ * immediately prior to it:
  *
  *  - @ref request_body_event (only if not already notified)
  *
- * And immediatly following it:
+ * And immediately following it:
  *
  *  - @ref tx_process_event
  */
@@ -1257,11 +1257,11 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
  * @ref response_headers_event occurs.
  *
  * When the event is notified, additional events are notified
- * immediatly prior to it:
+ * immediately prior to it:
  *
  *  - @ref response_started_event (only if not already notified)
  *
- * And immediatly following it:
+ * And immediately following it:
  *
  *  - @ref handle_response_headers_event
  */
@@ -1298,7 +1298,7 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
  * @ref response_body_event  occurs.
  *
  * When the event is notified, additional events are notified
- * immediatly following it:
+ * immediately following it:
  *
  *  - @ref handle_response_event
  */
