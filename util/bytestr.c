@@ -25,7 +25,7 @@
 
 #include <ironbee/util.h>
 
-#include <htp/bstr.h>
+#include <bstr.h>
 
 #include "ironbee_util_private.h"
 

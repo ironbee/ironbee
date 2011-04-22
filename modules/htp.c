@@ -37,8 +37,8 @@
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 
-#include <htp/htp.h>
-#include <htp/dslib.h>
+#include <htp.h>
+#include <dslib.h>
 
 
 /* Define the module name as well as a string version of it. */
