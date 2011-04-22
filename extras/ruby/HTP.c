@@ -249,6 +249,16 @@ VALUE rbhtp_config_set_server_personality( VALUE self, VALUE personality )
 	);
 }
 
+VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
+{
+	htp_cfg_t* cfg = NULL;
+	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
+
+	htp_config_register_urlencoded_parser( cfg );
+
+	return Qnil;
+}
+
 #define RBHTP_CONNP_CALLBACK( N ) \
 	int rbhtp_config_callback_ ## N( htp_connp_t* connp ) \
 	{ \
@@ -629,6 +639,8 @@ void Init_htp( void )
 	rb_define_method( cConfig, "register_response_line", rbhtp_config_register_response_line, 0 );
 	rb_define_method( cConfig, "register_response_headers", rbhtp_config_register_response_headers, 0 );
 	rb_define_method( cConfig, "register_response_trailers", rbhtp_config_register_response_trailers, 0 );
+	
+	rb_define_method( cConfig, "register_urlencoded_parser", rbhtp_config_register_urlencoded_parser, 0 );
 	
 	// server_personality= and server_personality are defined in htp_ruby.rb	
 	rb_define_method( cConfig, "set_server_personality", rbhtp_config_set_server_personality, 1 );

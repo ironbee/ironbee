@@ -21,26 +21,35 @@ require 'htp'
 
 config = HTP::Config.new
 
-# Comment out this line and notice that cookies vanish from output.
 config.server_personality = :apache
+config.register_urlencoded_parser
+# Comment out this line and notice that cookies vanish from output.
 config.parse_request_cookies = 1
 
 config.register_request do |connp|
+  tx = connp.in_tx
+  
   puts "Parsed URI: "
-  puts "  " + connp.in_tx.parsed_uri
+  puts "  " + tx.parsed_uri
   
   # Calling request_headers rubyizes it so we cache the value to avoid
   # paying the cost multiple times.  This repeats in subsequent examples.
-  request_headers = connp.in_tx.request_headers
+  request_headers = tx.request_headers
   if request_headers
     puts "Request Headers: "
     request_headers.each {|h| puts "  " + h}
   end
   
-  request_cookies = connp.in_tx.request_cookies
+  request_cookies = tx.request_cookies
   if request_cookies
     puts "Request Cookies: "
     request_cookies.each {|k,v| puts "  #{k} = #{v}"}
+  end
+  
+  request_params_query = tx.request_params_query
+  if request_params_query
+    puts "Request Params Query: "
+    request_params_query.each {|k,v| puts "  #{k} = #{v}"}
   end
 end
 
