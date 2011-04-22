@@ -23,6 +23,7 @@ config.log
 config.status
 config.guess
 config.sub
+config.cache
 configure.in
 configure
 libtool
