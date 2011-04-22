@@ -115,7 +115,8 @@ module HTP
         "http://" +
         ( username ? username : '' ) +
         ( password ? ":#{password}" : '' ) +
-        ( hostname ? "@#{hostname}:#{port}" : '' )
+        ( hostname && ( username || password ) ? '@' : '' ) +
+        ( hostname ? "#{hostname}:#{port}" : '' )
       else
         ''
       end + 
