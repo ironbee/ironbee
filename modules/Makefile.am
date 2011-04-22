@@ -16,6 +16,8 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
 
 ibmod_htp_la_SOURCES = htp.c
 ibmod_htp_la_LIBADD = -lhtp
+ibmod_htp_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS)
+ibmod_htp_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)
 
 ibmod_pcre_la_SOURCES = pcre.c
 ibmod_pcre_la_CPPFLAGS = @PCRE_CPPFLAGS@
