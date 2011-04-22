@@ -51,6 +51,12 @@ config.register_request do |connp|
     puts "Request Params Query: "
     request_params_query.each {|k,v| puts "  #{k} = #{v}"}
   end
+
+  request_params_body = tx.request_params_body
+  if request_params_body
+    puts "Request Body Query: "
+    request_params_body.each {|k,v| puts "  #{k} = #{v}"}
+  end
 end
 
 connp = HTP::Connp.new( config )
