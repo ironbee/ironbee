@@ -44,7 +44,7 @@ consider caching the return value if you need to access it multiple times.
 = Missing =
 
 * Cfg and Connp are only minimally implemented.
-* Conn is missing messages, open_timestamp, and close_timestamp.
+* Conn#messages is missing.
 * Logging is completely missing.
 * Connp, and Cfg lack meaningful to_s or inspect.
 * Bool support.  As per C-interface, 0 and 1 are used instead of false and 

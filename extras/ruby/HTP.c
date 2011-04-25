@@ -658,6 +658,8 @@ RBHTP_R_INT( conn, in_data_counter )
 RBHTP_R_INT( conn, out_data_counter )
 RBHTP_R_INT( conn, in_packet_counter )
 RBHTP_R_INT( conn, out_packet_counter )
+RBHTP_R_INT( conn, open_timestamp )
+RBHTP_R_INT( conn, close_timestamp )
 
 VALUE rbhtp_conn_transactions( VALUE self )
 {
@@ -683,17 +685,6 @@ VALUE rbhtp_conn_transactions( VALUE self )
 	}
 	return r;
 }
-
-#if 0
-    /** Log messages associated with this connection. */
-    list_t *messages;   
-
-    /** When was this connection opened? */
-    htp_time_t open_timestamp;
-
-    /** When was this connection closed? */
-    htp_time_t close_timestamp;
-#endif
 
 //---- Init ----
 void Init_htp( void )
@@ -981,6 +972,8 @@ void Init_htp( void )
 	rb_define_method( cConn, "in_packet_counter", rbhtp_conn_in_packet_counter, 0 );
 	rb_define_method( cConn, "out_packet_counter", rbhtp_conn_out_packet_counter, 0 );
 	rb_define_method( cConn, "transactions", rbhtp_conn_transactions, 0 );
+	rb_define_method( cConn, "open_timestamp", rbhtp_conn_open_timestamp, 0 );
+	rb_define_method( cConn, "close_timestamp", rbhtp_conn_close_timestamp, 0 );
 	
 	// Load ruby code.
 	rb_require( "htp_ruby" );
