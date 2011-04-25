@@ -318,6 +318,33 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 		return 1; \
 	} \
 	RBHTP_CALLBACK_SUB( N )
+	
+// Tx data is a tx and a data block.  For *_body_data callbacks we pass 
+// in the tx as first argument and the data as a string as the second argument.
+#define RBHTP_TXDATA_CALLBACK( N ) \
+	int rbhtp_config_callback_ ##N( htp_tx_data_t* txdata ) \
+	{ \
+		htp_connp_t* connp = txdata->tx->connp; \
+		VALUE userdata = (VALUE)htp_connp_get_user_data( connp ); \
+		VALUE config = rb_iv_get( userdata, "@config" ); \
+		VALUE proc = rb_iv_get( config, "@" #N "_proc" ); \
+		if ( proc != Qnil ) { \
+			VALUE data = Qnil; \
+			if ( txdata->data ) \
+				data = rb_str_new( (char*)txdata->data, txdata->len ); \
+			return INT2FIX( \
+				rb_funcall( proc, rb_intern( "call" ), 2, \
+					rb_funcall( cTx, rb_intern( "new" ), 1,  \
+						Data_Wrap_Struct( rb_cObject, 0, 0, txdata->tx ) \
+					), \
+					data \
+			  ) \
+			); \
+		} \
+		return 1; \
+	} \
+	RBHTP_CALLBACK_SUB( N )
+		
 		
 RBHTP_CONNP_CALLBACK( request )
 RBHTP_CONNP_CALLBACK( response )
@@ -328,6 +355,9 @@ RBHTP_CONNP_CALLBACK( request_trailer )
 RBHTP_CONNP_CALLBACK( response_line )
 RBHTP_CONNP_CALLBACK( response_headers )
 RBHTP_CONNP_CALLBACK( response_trailer )
+
+RBHTP_TXDATA_CALLBACK( request_body_data )
+RBHTP_TXDATA_CALLBACK( response_body_data )
 
 RBHTP_R_INT( cfg, spersonality )
 RBHTP_RW_INT( cfg, parse_request_cookies )
@@ -676,6 +706,8 @@ void Init_htp( void )
 	rb_define_method( cConfig, "register_response_trailer", rbhtp_config_register_response_trailer, 0 );
 	
 	rb_define_method( cConfig, "register_urlencoded_parser", rbhtp_config_register_urlencoded_parser, 0 );
+	rb_define_method( cConfig, "register_request_body_data", rbhtp_config_register_request_body_data, 0 );
+	rb_define_method( cConfig, "register_response_body_data", rbhtp_config_register_request_body_data, 0 );
 	
 	// server_personality= and server_personality are defined in htp_ruby.rb	
 	rb_define_method( cConfig, "set_server_personality", rbhtp_config_set_server_personality, 1 );

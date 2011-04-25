@@ -64,6 +64,14 @@ config.register_request do |connp|
     puts "Request Body Query: "
     request_params_body.each {|k,v| puts "  #{k} = #{v}"}
   end
+  
+  0
+end
+
+config.register_request_body_data do |tx,data|
+  puts "Body Data: #{data}"
+  
+  0
 end
 
 connp = HTP::Connp.new( config )
@@ -75,6 +83,9 @@ __END__
 POST http://user@password:host/a/b/c?foo=bar#hi HTTP/1.1
 User-Agent: Mozilla
 Cookie: foo=bar
+Content-Type: text/plain
+Content-Length: 9
 
+Body Text
 
 
