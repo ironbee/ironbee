@@ -163,4 +163,8 @@ module HTP
     alias :inspect :to_s
     alias :to_str :to_s
   end 
+  
+  class Conn
+    attr_reader :connp
+  end
 end

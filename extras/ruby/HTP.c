@@ -109,7 +109,6 @@ static VALUE cConn;
 	}
 
 #define RBHTP_R_URI( T, N ) RBHTP_R_HTP( T, N, cURI )
-#define RBHTP_R_CONN( T, N ) RBHTP_R_HTP( T, N, cConn )
 	
 static VALUE rbhtp_r_string_table( table_t* table )
 {
@@ -468,11 +467,21 @@ VALUE rbhtp_connp_in_tx( VALUE self )
 	return rb_funcall( cTx, rb_intern( "new" ), 3, 
 		Data_Wrap_Struct( rb_cObject, 0, 0, connp->in_tx ),
 		config, 
-		connp_r
+		self
 	);
 }
 
-RBHTP_R_CONN( connp, conn )
+VALUE rbhtp_connp_conn( VALUE self )
+{
+	htp_connp_t* connp = NULL;
+	Data_Get_Struct( rb_iv_get( self, "@connp" ), htp_connp_t, connp );
+	if ( connp->conn == NULL )
+		return Qnil;
+	return rb_funcall( cConn, rb_intern( "new" ), 2,
+		Data_Wrap_Struct( rb_cObject, 0, 0, connp->conn ),
+		self
+	);
+}
 
 // Unlike Connp and Cfg, these are just wrapper.  The lifetime of the
 // underlying objects are bound to the Connp.
@@ -606,8 +615,17 @@ RBHTP_R_HEADER_LINE_LIST( tx, response_header_lines );
 RBHTP_R_URI( tx, parsed_uri )
 RBHTP_R_URI( tx, parsed_uri_incomplete )
 
-RBHTP_R_CONN( tx, conn )
-
+VALUE rbhtp_tx_conn( VALUE self )
+{
+	htp_tx_t* tx = NULL;
+	Data_Get_Struct( rb_iv_get( self, "@tx" ), htp_tx_t, tx );
+	if ( tx->conn == NULL )
+		return Qnil;
+	return rb_funcall( cConn, rb_intern( "new" ), 2,
+		Data_Wrap_Struct( rb_cObject, 0, 0, tx->conn ),
+		rb_iv_get( self, "@connp" )
+	);
+}
 
 // ---- File ----
 VALUE rbhtp_file_initialize( VALUE self, VALUE raw_file )
@@ -623,9 +641,10 @@ RBHTP_R_CSTR( file, tmpname )
 RBHTP_R_INT( file, fd )
 
 // ---- Conn ----
-VALUE rbhtp_conn_initialize( VALUE self, VALUE raw_conn )
+VALUE rbhtp_conn_initialize( VALUE self, VALUE raw_conn, VALUE connp )
 {
 	rb_iv_set( self, "@conn", raw_conn );
+	rb_iv_set( self, "@connp", connp );
 	return Qnil;
 }
 
@@ -904,7 +923,7 @@ void Init_htp( void )
 	rb_define_method( cFile, "fd", rbhtp_file_fd, 0 );
 	
 	cConn = rb_define_class_under( mHTP, "Conn", rb_cObject );
-	rb_define_method( cConn, "initialize", rbhtp_conn_initialize, 1 );
+	rb_define_method( cConn, "initialize", rbhtp_conn_initialize, 2 );
 	
 	// Load ruby code.
 	rb_require( "htp_ruby" );
