@@ -1191,8 +1191,6 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
      void htp_tx_set_user_data(htp_tx_t *tx, void *user_data);
     void *htp_tx_get_user_data(htp_tx_t *tx);
 
-    bstr *htp_tx_get_request_uri_normalized(htp_tx_t *tx);
-
 // void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 // Parsing functions
