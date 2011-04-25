@@ -904,7 +904,7 @@ void Init_htp( void )
 	rb_define_method( cFile, "fd", rbhtp_file_fd, 0 );
 	
 	cConn = rb_define_class_under( mHTP, "Conn", rb_cObject );
-	rb_define_method( cFile, "initialize", rbhtp_conn_initialize, 1 );
+	rb_define_method( cConn, "initialize", rbhtp_conn_initialize, 1 );
 	
 	// Load ruby code.
 	rb_require( "htp_ruby" );
