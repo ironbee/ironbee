@@ -62,6 +62,7 @@ static VALUE cConn;
   { \
 		htp_ ## T ## _t* x = NULL; \
 		Data_Get_Struct( rb_iv_get( self, "@" #T ), htp_ ## T ## _t, x ); \
+		if ( x->N == NULL ) return Qnil; \
 		return rb_str_new2( x->N ); \
   }
 
