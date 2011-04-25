@@ -24,7 +24,7 @@
 
 /* Status
  * Complete: Tx, Header, HeaderLine, URI, all numeric constants.
- * Incomplete: Config, Connp
+ * Incomplete: Cfg, Connp
  * Missing completely: file, file_data, log, tx_data (probably not needed)
  */
 
@@ -37,7 +37,7 @@
 #endif
 
 static VALUE mHTP;
-static VALUE cConfig;
+static VALUE cCfg;
 static VALUE cConnp;
 static VALUE cTx;
 static VALUE cHeader;
@@ -214,7 +214,7 @@ VALUE rbhtp_parse_uri( VALUE self, VALUE input )
 	);
 }
 
-//---- Config ----
+//---- Cfg ----
 
 // Terminate list with "".
 static char* const rbhtp_config_pvars[] = {
@@ -256,7 +256,7 @@ VALUE rbhtp_config_initialize( VALUE self )
 VALUE rbhtp_config_copy( VALUE self )
 {
 	// We create one too many copies here.
-	VALUE new_config = rb_funcall( cConfig, rb_intern( "new" ), 0 );
+	VALUE new_config = rb_funcall( cCfg, rb_intern( "new" ), 0 );
 	htp_cfg_t* cfg = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
 
@@ -474,7 +474,7 @@ VALUE rbhtp_connp_in_tx( VALUE self )
 
 RBHTP_R_CONN( connp, conn )
 
-// Unlike Connp and Config, these are just wrapper.  The lifetime of the
+// Unlike Connp and Cfg, these are just wrapper.  The lifetime of the
 // underlying objects are bound to the Connp.
 
 //---- Header ----
@@ -768,31 +768,31 @@ void Init_htp( void )
   rb_define_const( mHTP, "CFG_NOT_SHARED", INT2FIX( CFG_NOT_SHARED ) );
   rb_define_const( mHTP, "CFG_SHARED", INT2FIX( CFG_SHARED ) );
 
-	cConfig = rb_define_class_under( mHTP, "Config", rb_cObject );
-	rb_define_method( cConfig, "initialize", rbhtp_config_initialize, 0 );
-	rb_define_method( cConfig, "copy", rbhtp_config_copy, 0 );
+	cCfg = rb_define_class_under( mHTP, "Cfg", rb_cObject );
+	rb_define_method( cCfg, "initialize", rbhtp_config_initialize, 0 );
+	rb_define_method( cCfg, "copy", rbhtp_config_copy, 0 );
 
-	rb_define_method( cConfig, "register_response", rbhtp_config_register_response, 0 );
-	rb_define_method( cConfig, "register_request", rbhtp_config_register_request, 0 );
-	rb_define_method( cConfig, "register_transaction_start", rbhtp_config_register_transaction_start, 0 );
-	rb_define_method( cConfig, "register_request_line", rbhtp_config_register_request_line, 0 );
-	rb_define_method( cConfig, "register_request_headers", rbhtp_config_register_request_headers, 0 );
-	rb_define_method( cConfig, "register_request_trailer", rbhtp_config_register_request_trailer, 0 );
-	rb_define_method( cConfig, "register_response_line", rbhtp_config_register_response_line, 0 );
-	rb_define_method( cConfig, "register_response_headers", rbhtp_config_register_response_headers, 0 );
-	rb_define_method( cConfig, "register_response_trailer", rbhtp_config_register_response_trailer, 0 );
+	rb_define_method( cCfg, "register_response", rbhtp_config_register_response, 0 );
+	rb_define_method( cCfg, "register_request", rbhtp_config_register_request, 0 );
+	rb_define_method( cCfg, "register_transaction_start", rbhtp_config_register_transaction_start, 0 );
+	rb_define_method( cCfg, "register_request_line", rbhtp_config_register_request_line, 0 );
+	rb_define_method( cCfg, "register_request_headers", rbhtp_config_register_request_headers, 0 );
+	rb_define_method( cCfg, "register_request_trailer", rbhtp_config_register_request_trailer, 0 );
+	rb_define_method( cCfg, "register_response_line", rbhtp_config_register_response_line, 0 );
+	rb_define_method( cCfg, "register_response_headers", rbhtp_config_register_response_headers, 0 );
+	rb_define_method( cCfg, "register_response_trailer", rbhtp_config_register_response_trailer, 0 );
 	
-	rb_define_method( cConfig, "register_urlencoded_parser", rbhtp_config_register_urlencoded_parser, 0 );
-	rb_define_method( cConfig, "register_request_body_data", rbhtp_config_register_request_body_data, 0 );
-	rb_define_method( cConfig, "register_response_body_data", rbhtp_config_register_request_body_data, 0 );
-	rb_define_method( cConfig, "register_request_file_data", rbhtp_config_register_request_file_data, 0 );
+	rb_define_method( cCfg, "register_urlencoded_parser", rbhtp_config_register_urlencoded_parser, 0 );
+	rb_define_method( cCfg, "register_request_body_data", rbhtp_config_register_request_body_data, 0 );
+	rb_define_method( cCfg, "register_response_body_data", rbhtp_config_register_request_body_data, 0 );
+	rb_define_method( cCfg, "register_request_file_data", rbhtp_config_register_request_file_data, 0 );
 	
 	// server_personality= and server_personality are defined in htp_ruby.rb	
-	rb_define_method( cConfig, "set_server_personality", rbhtp_config_set_server_personality, 1 );
-	rb_define_method( cConfig, "spersonality", rbhtp_cfg_spersonality, 0 );
+	rb_define_method( cCfg, "set_server_personality", rbhtp_config_set_server_personality, 1 );
+	rb_define_method( cCfg, "spersonality", rbhtp_cfg_spersonality, 0 );
 	
-	rb_define_method( cConfig, "parse_request_cookies", rbhtp_cfg_parse_request_cookies, 0 );
-	rb_define_method( cConfig, "parse_request_cookies=", rbhtp_cfg_parse_request_cookies_set, 1 );
+	rb_define_method( cCfg, "parse_request_cookies", rbhtp_cfg_parse_request_cookies, 0 );
+	rb_define_method( cCfg, "parse_request_cookies=", rbhtp_cfg_parse_request_cookies_set, 1 );
 	// TODO: Much more to add.
 		
 	cConnp = rb_define_class_under( mHTP, "Connp", rb_cObject );

@@ -26,14 +26,14 @@ puts uri
 puts "----"
 
 # Config and Connp example.
-config = HTP::Config.new
+cfg = HTP::Cfg.new
 
-config.server_personality = :apache
-config.register_urlencoded_parser
+cfg.server_personality = :apache
+cfg.register_urlencoded_parser
 # Comment out this line and notice that cookies vanish from output.
-config.parse_request_cookies = 1
+cfg.parse_request_cookies = 1
 
-config.register_request do |connp|
+cfg.register_request do |connp|
   tx = connp.in_tx
   
   puts "Parsed URI: "
@@ -68,19 +68,19 @@ config.register_request do |connp|
   0
 end
 
-config.register_request_body_data do |tx,data|
+cfg.register_request_body_data do |tx,data|
   puts "Body Data: #{data}"
   
   0
 end
 
-config.register_request_file_data do |tx,fileinfo,data|
+cfg.register_request_file_data do |tx,fileinfo,data|
   puts "File Data for #{fileinfo}: #{data}"
   
   0
 end
 
-connp = HTP::Connp.new( config )
+connp = HTP::Connp.new( cfg )
 input = DATA.read
 
 connp.req_data( Time.now, input )

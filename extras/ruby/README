@@ -5,9 +5,9 @@ prototyping (and as an exercise for learning libHTP) and is not intended for
 production use.
 
 The library provides a partial interface to libHTP which, where it exists,
-closely matches the C interface. The main classes are HTP::Config and
+closely matches the C interface. The main classes are HTP::Cfg and
 HTP::Connp which correspond to htp_config_t and htp_connp, respectively.
-Functions that begin htp_config_ and htp_connp_ are methods of HTP::Config and
+Functions that begin htp_config_ and htp_connp_ are methods of HTP::Cfg and
 HTP::Connp respectively.
 
 All callbacks are taken as blocks.  E.g.,
@@ -26,7 +26,7 @@ the various fields. In addition, some additional methods are provided for more
 Rubyish style, e.g., Header#invalid?. See htp_ruby.rb for a complete list of
 API additions.
 
-HTP::Config and HTP::Connp lifetimes are managed by the usual Ruby cycle,
+HTP::Cfg and HTP::Connp lifetimes are managed by the usual Ruby cycle,
 i.e., garbage collected when no longer references. All other classes are bound
 to the lifetimes of either of those classes. So, make sure you keep your
 config and connection parser around as long as you need any of the data from
@@ -43,11 +43,11 @@ consider caching the return value if you need to access it multiple times.
 
 = Missing =
 
-* Config and Connp are only minimally implemented.
+* Cfg and Connp are only minimally implemented.
 * Conn is completly missing.
 * As a result of the above, Connp#conn and Tx#conn are missing.
 * Logging is completely missing.
-* Tx, Connp, and Config lack meaningful to_s or inspect.
+* Tx, Connp, and Cfg lack meaningful to_s or inspect.
 * Bool support.  As per C-interface, 0 and 1 are used instead of false and 
   true.  Should add ...? accessors which latter values.
 * Automated unit tests.
