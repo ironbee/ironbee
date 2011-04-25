@@ -285,8 +285,25 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 	htp_config_register_urlencoded_parser( cfg );
 
 	return Qnil;
-}
+}	
 
+#define RBHTP_CALLBACK_SUB( N ) \
+	VALUE rbhtp_config_register_ ## N( VALUE self ) \
+	{ \
+		if ( ! rb_block_given_p() ) { \
+			rb_raise( rb_eArgError, "A block is required." ); \
+			return Qnil; \
+		} \
+		VALUE proc = rb_iv_get( self, "@" #N "_proc" ); \
+		if ( proc == Qnil ) { \
+			htp_cfg_t* cfg = NULL; \
+			Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg ); \
+			htp_config_register_## N( cfg, rbhtp_config_callback_ ## N ); \
+		} \
+		rb_iv_set( self, "@" #N "_proc", rb_block_proc() ); \
+		return self; \
+	}
+	
 #define RBHTP_CONNP_CALLBACK( N ) \
 	int rbhtp_config_callback_ ## N( htp_connp_t* connp ) \
 	{ \
@@ -300,21 +317,7 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 		} \
 		return 1; \
 	} \
-	VALUE rbhtp_config_register_ ## N( VALUE self ) \
-	{ \
-		if ( ! rb_block_given_p() ) { \
-			rb_raise( rb_eArgError, "A block is required." ); \
-			return Qnil; \
-		} \
-		VALUE proc = rb_iv_get( self, "@" #N "_proc" ); \
-		if ( proc == Qnil ) { \
-			htp_cfg_t* cfg = NULL; \
-			Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg ); \
-			htp_config_register_request( cfg, rbhtp_config_callback_ ## N ); \
-		} \
-		rb_iv_set( self, "@" #N "_proc", rb_block_proc() ); \
-		return self; \
-	}
+	RBHTP_CALLBACK_SUB( N )
 		
 RBHTP_CONNP_CALLBACK( request )
 RBHTP_CONNP_CALLBACK( response )
@@ -324,7 +327,7 @@ RBHTP_CONNP_CALLBACK( request_headers )
 RBHTP_CONNP_CALLBACK( request_trailer )
 RBHTP_CONNP_CALLBACK( response_line )
 RBHTP_CONNP_CALLBACK( response_headers )
-RBHTP_CONNP_CALLBACK( response_trailers )
+RBHTP_CONNP_CALLBACK( response_trailer )
 
 RBHTP_R_INT( cfg, spersonality )
 RBHTP_RW_INT( cfg, parse_request_cookies )
@@ -670,7 +673,7 @@ void Init_htp( void )
 	rb_define_method( cConfig, "register_request_trailer", rbhtp_config_register_request_trailer, 0 );
 	rb_define_method( cConfig, "register_response_line", rbhtp_config_register_response_line, 0 );
 	rb_define_method( cConfig, "register_response_headers", rbhtp_config_register_response_headers, 0 );
-	rb_define_method( cConfig, "register_response_trailers", rbhtp_config_register_response_trailers, 0 );
+	rb_define_method( cConfig, "register_response_trailer", rbhtp_config_register_response_trailer, 0 );
 	
 	rb_define_method( cConfig, "register_urlencoded_parser", rbhtp_config_register_urlencoded_parser, 0 );
 	
