@@ -346,8 +346,10 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 				data = rb_str_new( (char*)txdata->data, txdata->len ); \
 			return INT2FIX( \
 				rb_funcall( proc, rb_intern( "call" ), 2, \
-					rb_funcall( cTx, rb_intern( "new" ), 1,  \
-						Data_Wrap_Struct( rb_cObject, 0, 0, txdata->tx ) \
+					rb_funcall( cTx, rb_intern( "new" ), 3,  \
+						Data_Wrap_Struct( rb_cObject, 0, 0, txdata->tx ), \
+						config, \
+						userdata \
 					), \
 					data \
 			  ) \
@@ -404,8 +406,6 @@ RBHTP_CALLBACK_SUB( request_file_data )
 
 //---- Connp ----
 
-#define RBHTP_CONNP_LOAD( dst ) {Data_Get_Struct( rb_iv_get( self, "@connp" ), htp_connp_t, dst );}
-
 void rbhtp_connp_free( void* p )
 {
 	htp_connp_t* connp = (htp_connp_t*)p;
@@ -445,9 +445,10 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	htp_time_t timestamp_c = 
 		FIX2INT( rb_funcall( timestamp, rb_intern( "to_i" ), 0 ) );
 
+	VALUE connp_r = rb_iv_get( self, "@connp" );
 	htp_connp_t* connp = NULL;
-	RBHTP_CONNP_LOAD( connp );
-	
+	Data_Get_Struct( connp_r, htp_connp_t, connp );
+		
 	int result = 
 		htp_connp_req_data( connp, timestamp_c, (unsigned char*)data_c, len );
 	
@@ -456,14 +457,18 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 
 VALUE rbhtp_connp_in_tx( VALUE self )
 {
+	VALUE connp_r = rb_iv_get( self, "@connp" );
+	VALUE config = rb_iv_get( self, "@cfg" );
 	htp_connp_t* connp = NULL;
-	RBHTP_CONNP_LOAD( connp );
+	Data_Get_Struct( connp_r, htp_connp_t, connp );
 	
 	if ( connp->in_tx == NULL )
 		return Qnil;
 	
-	return rb_funcall( cTx, rb_intern( "new" ), 1, 
-		Data_Wrap_Struct( rb_cObject, 0, 0, connp->in_tx )
+	return rb_funcall( cTx, rb_intern( "new" ), 3, 
+		Data_Wrap_Struct( rb_cObject, 0, 0, connp->in_tx ),
+		config, 
+		connp_r
 	);
 }
 
@@ -531,9 +536,15 @@ RBHTP_R_STRING( uri, fragment );
 
 //---- Tx ----
 
-VALUE rbhtp_tx_initialize( VALUE self, VALUE raw_txn )
+VALUE rbhtp_tx_initialize( 
+	VALUE self, 
+	VALUE raw_txn, 
+	VALUE cfg,
+	VALUE connp )
 {
 	rb_iv_set( self, "@tx", raw_txn );
+	rb_iv_set( self, "@cfg", cfg );
+	rb_iv_set( self, "@connp", connp );
 	
 	return Qnil;
 }
@@ -823,7 +834,7 @@ void Init_htp( void )
 	rb_define_method( cURI, "fragment", rbhtp_uri_fragment, 0 );
 	
 	cTx = rb_define_class_under( mHTP, "Tx", rb_cObject );
-	rb_define_method( cTx, "initialize", rbhtp_tx_initialize, 1 );
+	rb_define_method( cTx, "initialize", rbhtp_tx_initialize, 3 );
 
 	rb_define_method( cTx, "request_ignored_lines", rbhtp_tx_request_ignored_lines, 0 );
 	rb_define_method( cTx, "request_line_nul", rbhtp_tx_request_line_nul, 0 );

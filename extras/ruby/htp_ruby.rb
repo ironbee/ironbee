@@ -130,6 +130,9 @@ module HTP
   end
   
   class Tx
+    attr_reader :connp
+    attr_reader :cfg
+    
     def invalid_chunking?
       flags & HTP_INVALID_CHUNKING != 0
     end
