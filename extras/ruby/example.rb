@@ -85,6 +85,15 @@ input = DATA.read
 
 connp.req_data( Time.now, input )
 
+# Non-Callback Interface.
+puts "----"
+
+connp.conn.transactions.each do |tx|
+  # Might be an empty transaction.
+  next if ! tx.request_line
+  puts tx
+end
+
 __END__
 POST http://user@password:host/%61/b/c?foo=bar#hi HTTP/1.1
 User-Agent: Mozilla

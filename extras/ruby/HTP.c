@@ -659,13 +659,32 @@ RBHTP_R_INT( conn, out_data_counter )
 RBHTP_R_INT( conn, in_packet_counter )
 RBHTP_R_INT( conn, out_packet_counter )
 
-#if 0
-    /** Transactions carried out on this connection. The list may contain
-     *  NULL elements when some of the transactions are deleted (and then
-     *  removed from a connection by calling htp_conn_remove_tx().
-     */
-    list_t *transactions;
+VALUE rbhtp_conn_transactions( VALUE self )
+{
+	htp_conn_t* conn = NULL;
+	Data_Get_Struct( rb_iv_get( self, "@conn" ), htp_conn_t, conn );
+	
+	if ( conn->transactions == NULL ) return Qnil;
+	
+	VALUE connp = rb_iv_get( self, "@connp" );
+	VALUE cfg = rb_iv_get( connp, "@cfg" );
+	
+	htp_tx_t* v;
+	VALUE r = rb_ary_new();
+	list_iterator_reset( conn->transactions );
+	while ( ( v = list_iterator_next( conn->transactions ) ) != NULL ) {
+		rb_ary_push( r,
+			rb_funcall( cTx, rb_intern( "new" ), 3,
+				Data_Wrap_Struct( rb_cObject, 0, 0, v ),
+				cfg,
+				connp
+			)
+		);
+	}
+	return r;
+}
 
+#if 0
     /** Log messages associated with this connection. */
     list_t *messages;   
 
@@ -961,6 +980,7 @@ void Init_htp( void )
 	rb_define_method( cConn, "out_data_counter", rbhtp_conn_out_data_counter, 0 );
 	rb_define_method( cConn, "in_packet_counter", rbhtp_conn_in_packet_counter, 0 );
 	rb_define_method( cConn, "out_packet_counter", rbhtp_conn_out_packet_counter, 0 );
+	rb_define_method( cConn, "transactions", rbhtp_conn_transactions, 0 );
 	
 	// Load ruby code.
 	rb_require( "htp_ruby" );

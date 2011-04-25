@@ -156,6 +156,10 @@ module HTP
     def field_unparseable?
       flags & HTP_FIELD_UNPARSABLE != 0
     end
+    
+    alias :to_s :request_line
+    alias :to_str :to_s
+    alias :inspect :to_s
   end
   
   class File
