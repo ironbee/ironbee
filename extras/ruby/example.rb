@@ -86,7 +86,7 @@ input = DATA.read
 connp.req_data( Time.now, input )
 
 __END__
-POST http://user@password:host/a/b/c?foo=bar#hi HTTP/1.1
+POST http://user@password:host/%61/b/c?foo=bar#hi HTTP/1.1
 User-Agent: Mozilla
 Cookie: foo=bar
 Content-Type: text/plain
