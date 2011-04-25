@@ -320,7 +320,7 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 	int rbhtp_config_callback_ ## N( htp_connp_t* connp ) \
 	{ \
 		VALUE userdata = (VALUE)htp_connp_get_user_data( connp ); \
-		VALUE config = rb_iv_get( userdata, "@config" ); \
+		VALUE config = rb_iv_get( userdata, "@cfg" ); \
 		VALUE proc = rb_iv_get( config, "@" #N "_proc" ); \
 		if ( proc != Qnil ) { \
 			return INT2FIX( \
@@ -338,7 +338,7 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 	{ \
 		htp_connp_t* connp = txdata->tx->connp; \
 		VALUE userdata = (VALUE)htp_connp_get_user_data( connp ); \
-		VALUE config = rb_iv_get( userdata, "@config" ); \
+		VALUE config = rb_iv_get( userdata, "@cfg" ); \
 		VALUE proc = rb_iv_get( config, "@" #N "_proc" ); \
 		if ( proc != Qnil ) { \
 			VALUE data = Qnil; \
@@ -382,7 +382,7 @@ int rbhtp_config_callback_request_file_data( htp_file_data_t* filedata )
 {
 	htp_connp_t* connp = filedata->tx->connp;
 	VALUE userdata = (VALUE)htp_connp_get_user_data( connp );
-	VALUE config = rb_iv_get( userdata, "@config" );
+	VALUE config = rb_iv_get( userdata, "@cfg" );
 	VALUE proc = rb_iv_get( config, "@request_file_data_proc" );
 	if ( proc != Qnil ) {
 		VALUE data = Qnil;
@@ -415,7 +415,7 @@ void rbhtp_connp_free( void* p )
 
 VALUE rbhtp_connp_initialize( VALUE self, VALUE config )
 {
-	rb_iv_set( self, "@config", config );
+	rb_iv_set( self, "@cfg", config );
 	
 	htp_cfg_t* cfg = NULL;
 	Data_Get_Struct( rb_iv_get( config, "@cfg" ), htp_cfg_t, cfg );
