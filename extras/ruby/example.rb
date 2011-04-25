@@ -19,6 +19,13 @@ $:.unshift( File.dirname( __FILE__ ) )
 
 require 'htp'
 
+# parse_uri example.
+uri = HTP::parse_uri( "http://host.com/hello/world" )
+puts uri
+
+puts "----"
+
+# Config and Connp example.
 config = HTP::Config.new
 
 config.server_personality = :apache

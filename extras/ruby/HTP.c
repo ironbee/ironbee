@@ -167,10 +167,39 @@ static VALUE rbhtp_r_header_line_list( list_t* list )
 		return rbhtp_r_header_line_list( x->N ); \
 	}
 
+// This function is only needed when we malloc the URI ourselves.
+void rbhtp_free_uri( void* p )
+{
+	htp_uri_t* uri = (htp_uri_t*)p;
+	free( uri );
+}
+
 //---- HTP ---
 VALUE rbhtp_get_version( VALUE self )
 {
 	return rb_str_new2( htp_get_version() );
+}
+
+// We return a HTP::URI and throw an exception on error.
+VALUE rbhtp_parse_uri( VALUE self, VALUE input )
+{
+	Check_Type( input, T_STRING );
+	bstr* input_b = bstr_dup_mem( RSTRING_PTR( input ), RSTRING_LEN( input ) );
+	htp_uri_t* uri = NULL; // htp_parse_uri will alloc.
+	
+	int result = htp_parse_uri( input_b, &uri );
+	if ( result != HTP_OK ) {
+		bstr_free( &input_b );
+		free( uri );
+		rb_raise( rb_eRuntimeError, "HTP error in htp_parse_uri: %d", result );
+		return Qnil; // Ignored?
+	}
+
+	bstr_free( &input_b ); // Okay, as htp_parse_uri dups the data it needs.
+
+	return rb_funcall( cURI, rb_intern( "new" ), 1,
+		Data_Wrap_Struct( rb_cObject, 0, rbhtp_free_uri, uri )
+	);
 }
 
 //---- Config ----
@@ -495,7 +524,8 @@ void Init_htp( void )
 	mHTP = rb_define_module( "HTP" );
 	
 	rb_define_singleton_method( mHTP, "get_version", rbhtp_get_version, 0 );
-
+	rb_define_singleton_method( mHTP, "parse_uri", rbhtp_parse_uri, 1 );
+	
 	// All numeric constants from htp.h.
   rb_define_const( mHTP, "HTP_ERROR", INT2FIX( HTP_ERROR ) );
   rb_define_const( mHTP, "HTP_OK", INT2FIX( HTP_OK ) );
