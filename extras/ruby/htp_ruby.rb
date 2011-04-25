@@ -63,6 +63,10 @@ module HTP
     end 
   end
     
+  class Connp
+    attr_reader :cfg
+  end
+  
   class Header
     def invalid?
       flags & HTP_FIELD_INVALID != 0
