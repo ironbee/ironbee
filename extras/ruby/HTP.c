@@ -247,7 +247,6 @@ VALUE rbhtp_config_copy( VALUE self )
 	VALUE new_config = rb_funcall( cConfig, rb_intern( "new" ), 0 );
 	htp_cfg_t* cfg = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
-	htp_cfg_t* cfg_copy = htp_config_copy( cfg );
 
 	// Note that the existing new_config @cfg will be garbage collected as a 
 	// result of this set.
@@ -368,7 +367,7 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	Check_Type( data, T_STRING );
 	
 	size_t len = RSTRING_LEN( data );
-	unsigned char* data_c = RSTRING_PTR( data );
+	char* data_c = RSTRING_PTR( data );
 
 	htp_time_t timestamp_c = 
 		FIX2INT( rb_funcall( timestamp, rb_intern( "to_i" ), 0 ) );
@@ -376,7 +375,8 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	htp_connp_t* connp = NULL;
 	RBHTP_CONNP_LOAD( connp );
 	
-	int result = htp_connp_req_data( connp, timestamp_c, data_c, len );
+	int result = 
+		htp_connp_req_data( connp, timestamp_c, (unsigned char*)data_c, len );
 	
 	return INT2FIX( result );
 }
@@ -459,6 +459,8 @@ RBHTP_R_STRING( uri, fragment );
 VALUE rbhtp_tx_initialize( VALUE self, VALUE raw_txn )
 {
 	rb_iv_set( self, "@tx", raw_txn );
+	
+	return Qnil;
 }
 
 RBHTP_R_INT( tx, request_ignored_lines )
