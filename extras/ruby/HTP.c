@@ -371,6 +371,34 @@ RBHTP_TXDATA_CALLBACK( response_body_data )
 RBHTP_R_INT( cfg, spersonality )
 RBHTP_RW_INT( cfg, parse_request_cookies )
 
+// File data is a tx, file information, and file data.  The callback thus
+// takes those three as arguments.
+int rbhtp_config_callback_request_file_data( htp_file_data_t* filedata )
+{
+	htp_connp_t* connp = filedata->tx->connp;
+	VALUE userdata = (VALUE)htp_connp_get_user_data( connp );
+	VALUE config = rb_iv_get( userdata, "@config" );
+	VALUE proc = rb_iv_get( config, "@request_file_data_proc" );
+	if ( proc != Qnil ) {
+		VALUE data = Qnil;
+		if ( filedata->data )
+			data = rb_str_new( (char*)filedata->data, filedata->len );
+		return INT2FIX(
+			rb_funcall( proc, rb_intern( "call" ), 2,
+				rb_funcall( cTx, rb_intern( "new" ), 1, 
+					Data_Wrap_Struct( rb_cObject, 0, 0, filedata->tx )
+				),
+				rb_funcall( cFile, rb_intern( "new" ), 1, 
+					Data_Wrap_Struct( rb_cObject, 0, 0, filedata->file )
+				),
+				data
+		  )
+		);
+	}
+	return 1;
+}
+RBHTP_CALLBACK_SUB( request_file_data )
+
 //---- Connp ----
 
 #define RBHTP_CONNP_LOAD( dst ) {Data_Get_Struct( rb_iv_get( self, "@connp" ), htp_connp_t, dst );}
@@ -731,6 +759,7 @@ void Init_htp( void )
 	rb_define_method( cConfig, "register_urlencoded_parser", rbhtp_config_register_urlencoded_parser, 0 );
 	rb_define_method( cConfig, "register_request_body_data", rbhtp_config_register_request_body_data, 0 );
 	rb_define_method( cConfig, "register_response_body_data", rbhtp_config_register_request_body_data, 0 );
+	rb_define_method( cConfig, "register_request_file_data", rbhtp_config_register_request_file_data, 0 );
 	
 	// server_personality= and server_personality are defined in htp_ruby.rb	
 	rb_define_method( cConfig, "set_server_personality", rbhtp_config_set_server_personality, 1 );

@@ -74,6 +74,12 @@ config.register_request_body_data do |tx,data|
   0
 end
 
+config.register_request_file_data do |tx,fileinfo,data|
+  puts "File Data for #{fileinfo}: #{data}"
+  
+  0
+end
+
 connp = HTP::Connp.new( config )
 input = DATA.read
 
