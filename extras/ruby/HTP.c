@@ -44,6 +44,7 @@ static VALUE cHeader;
 static VALUE cHeaderLine;
 static VALUE cURI;
 static VALUE cFile;
+static VALUE cConn;
 
 #define BSTR_TO_RSTR( B ) ( rb_str_new( bstr_ptr( B ), bstr_len( B ) ) )
 
@@ -96,17 +97,19 @@ static VALUE cFile;
 		return BSTR_TO_RSTR( x->N ); \
 	}
 	
-#define RBHTP_R_URI( T, N ) \
+#define RBHTP_R_HTP( T, N, H ) \
 	VALUE rbhtp_ ## T ## _ ## N( VALUE self ) \
 	{ \
 		htp_ ## T ## _t* x = NULL; \
 		Data_Get_Struct( rb_iv_get( self, "@" #T ), htp_ ## T ## _t, x ); \
 		if ( x->N == NULL ) \
 			return Qnil; \
-		return rb_funcall( cURI, rb_intern( "new" ), 1, \
+		return rb_funcall( H, rb_intern( "new" ), 1, \
 			Data_Wrap_Struct( rb_cObject, 0, 0, x->N ) ); \
 	}
-	
+
+#define RBHTP_R_URI( T, N ) RBHTP_R_HTP( T, N, cURI )
+#define RBHTP_R_CONN( T, N ) RBHTP_R_HTP( T, N, cConn )
 	
 static VALUE rbhtp_r_string_table( table_t* table )
 {
@@ -464,6 +467,8 @@ VALUE rbhtp_connp_in_tx( VALUE self )
 	);
 }
 
+RBHTP_R_CONN( connp, conn )
+
 // Unlike Connp and Config, these are just wrapper.  The lifetime of the
 // underlying objects are bound to the Connp.
 
@@ -590,6 +595,8 @@ RBHTP_R_HEADER_LINE_LIST( tx, response_header_lines );
 RBHTP_R_URI( tx, parsed_uri )
 RBHTP_R_URI( tx, parsed_uri_incomplete )
 
+RBHTP_R_CONN( tx, conn )
+
 
 // ---- File ----
 VALUE rbhtp_file_initialize( VALUE self, VALUE raw_file )
@@ -603,6 +610,14 @@ RBHTP_R_STRING( file, filename )
 RBHTP_R_INT( file, len )
 RBHTP_R_CSTR( file, tmpname )
 RBHTP_R_INT( file, fd )
+
+// ---- Conn ----
+VALUE rbhtp_conn_initialize( VALUE self, VALUE raw_conn )
+{
+	rb_iv_set( self, "@conn", raw_conn );
+	return Qnil;
+}
+
 
 //---- Init ----
 void Init_htp( void )
@@ -773,6 +788,7 @@ void Init_htp( void )
 	rb_define_method( cConnp, "initialize", rbhtp_connp_initialize, 1 );
 	rb_define_method( cConnp, "req_data", rbhtp_connp_req_data, 2 );	
 	rb_define_method( cConnp, "in_tx", rbhtp_connp_in_tx, 0 );	
+	rb_define_method( cConnp, "conn", rbhtp_connp_conn, 0 );
 	// TODO: Much more to Add.
 	
 	cHeader = rb_define_class_under( mHTP, "Header", rb_cObject );
@@ -865,6 +881,8 @@ void Init_htp( void )
 	rb_define_method( cTx, "parsed_uri", rbhtp_tx_parsed_uri, 0 );
 	rb_define_method( cTx, "parsed_uri_incomplete", rbhtp_tx_parsed_uri_incomplete, 0 );
 	
+	rb_define_method( cTx, "conn", rbhtp_tx_conn, 0 );
+	
 	cFile = rb_define_class_under( mHTP, "File", rb_cObject );
 	rb_define_method( cFile, "initialize", rbhtp_file_initialize, 1 );
 	
@@ -873,6 +891,9 @@ void Init_htp( void )
 	rb_define_method( cFile, "len", rbhtp_file_len, 0 );
 	rb_define_method( cFile, "tmpname", rbhtp_file_tmpname, 0 );
 	rb_define_method( cFile, "fd", rbhtp_file_fd, 0 );
+	
+	cConn = rb_define_class_under( mHTP, "Conn", rb_cObject );
+	rb_define_method( cFile, "initialize", rbhtp_conn_initialize, 1 );
 	
 	// Load ruby code.
 	rb_require( "htp_ruby" );
