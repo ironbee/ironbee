@@ -43,6 +43,7 @@ static VALUE cTx;
 static VALUE cHeader;
 static VALUE cHeaderLine;
 static VALUE cURI;
+static VALUE cFile;
 
 #define BSTR_TO_RSTR( B ) ( rb_str_new( bstr_ptr( B ), bstr_len( B ) ) )
 
@@ -53,6 +54,14 @@ static VALUE cURI;
 		htp_ ## T ## _t* x = NULL; \
 		Data_Get_Struct( rb_iv_get( self, "@" #T ), htp_ ## T ## _t, x ); \
 		return INT2FIX( x->N ); \
+  }
+
+#define RBHTP_R_CSTR( T, N ) \
+  VALUE rbhtp_ ## T ## _ ## N( VALUE self ) \
+  { \
+		htp_ ## T ## _t* x = NULL; \
+		Data_Get_Struct( rb_iv_get( self, "@" #T ), htp_ ## T ## _t, x ); \
+		return rb_str_new2( x->N ); \
   }
 
 #define RBHTP_W_INT( T, N ) \
@@ -553,6 +562,20 @@ RBHTP_R_HEADER_LINE_LIST( tx, response_header_lines );
 RBHTP_R_URI( tx, parsed_uri )
 RBHTP_R_URI( tx, parsed_uri_incomplete )
 
+
+// ---- File ----
+VALUE rbhtp_file_initialize( VALUE self, VALUE raw_file )
+{
+	rb_iv_set( self, "@file", raw_file );
+	return Qnil;
+}
+
+RBHTP_R_INT( file, source )
+RBHTP_R_STRING( file, filename )
+RBHTP_R_INT( file, len )
+RBHTP_R_CSTR( file, tmpname )
+RBHTP_R_INT( file, fd )
+
 //---- Init ----
 void Init_htp( void )
 {
@@ -812,6 +835,15 @@ void Init_htp( void )
 	
 	rb_define_method( cTx, "parsed_uri", rbhtp_tx_parsed_uri, 0 );
 	rb_define_method( cTx, "parsed_uri_incomplete", rbhtp_tx_parsed_uri_incomplete, 0 );
+	
+	cFile = rb_define_class_under( mHTP, "File", rb_cObject );
+	rb_define_method( cFile, "initialize", rbhtp_file_initialize, 1 );
+	
+	rb_define_method( cFile, "source", rbhtp_file_source, 0 );
+	rb_define_method( cFile, "filename", rbhtp_file_filename, 0 );
+	rb_define_method( cFile, "len", rbhtp_file_len, 0 );
+	rb_define_method( cFile, "tmpname", rbhtp_file_tmpname, 0 );
+	rb_define_method( cFile, "fd", rbhtp_file_fd, 0 );
 	
 	// Load ruby code.
 	rb_require( "htp_ruby" );

@@ -150,4 +150,10 @@ module HTP
       flags & HTP_FIELD_UNPARSABLE != 0
     end
   end
+  
+  class File
+    alias :to_s :filename
+    alias :inspect :to_s
+    alias :to_str :to_s
+  end 
 end
