@@ -649,6 +649,32 @@ VALUE rbhtp_conn_initialize( VALUE self, VALUE raw_conn, VALUE connp )
 	return Qnil;
 }
 
+RBHTP_R_CSTR( conn, remote_addr )
+RBHTP_R_INT( conn, remote_port )
+RBHTP_R_CSTR( conn, local_addr )
+RBHTP_R_INT( conn, local_port )
+RBHTP_R_INT( conn, flags )
+RBHTP_R_INT( conn, in_data_counter )
+RBHTP_R_INT( conn, out_data_counter )
+RBHTP_R_INT( conn, in_packet_counter )
+RBHTP_R_INT( conn, out_packet_counter )
+
+#if 0
+    /** Transactions carried out on this connection. The list may contain
+     *  NULL elements when some of the transactions are deleted (and then
+     *  removed from a connection by calling htp_conn_remove_tx().
+     */
+    list_t *transactions;
+
+    /** Log messages associated with this connection. */
+    list_t *messages;   
+
+    /** When was this connection opened? */
+    htp_time_t open_timestamp;
+
+    /** When was this connection closed? */
+    htp_time_t close_timestamp;
+#endif
 
 //---- Init ----
 void Init_htp( void )
@@ -925,6 +951,16 @@ void Init_htp( void )
 	
 	cConn = rb_define_class_under( mHTP, "Conn", rb_cObject );
 	rb_define_method( cConn, "initialize", rbhtp_conn_initialize, 2 );
+	
+	rb_define_method( cConn, "remote_addr", rbhtp_conn_remote_addr, 0 );
+	rb_define_method( cConn, "remote_port", rbhtp_conn_remote_port, 0 );
+	rb_define_method( cConn, "local_addr", rbhtp_conn_local_addr, 0 );
+	rb_define_method( cConn, "local_port", rbhtp_conn_local_port, 0 );
+	rb_define_method( cConn, "flags", rbhtp_conn_flags, 0 );
+	rb_define_method( cConn, "in_data_counter", rbhtp_conn_in_data_counter, 0 );
+	rb_define_method( cConn, "out_data_counter", rbhtp_conn_out_data_counter, 0 );
+	rb_define_method( cConn, "in_packet_counter", rbhtp_conn_in_packet_counter, 0 );
+	rb_define_method( cConn, "out_packet_counter", rbhtp_conn_out_packet_counter, 0 );
 	
 	// Load ruby code.
 	rb_require( "htp_ruby" );

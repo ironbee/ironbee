@@ -166,5 +166,17 @@ module HTP
   
   class Conn
     attr_reader :connp
+    
+    def pipelined_connection?
+      flags & PIPELINED_CONNECTION
+    end
+    
+    def to_s
+      ( local_addr || "???" ) + ":#{local_port} -> " +
+      ( remote_addr || "???" ) + ":#{remote_port}"
+    end
+    
+    alias :to_str :to_s
+    alias :inspect :to_s
   end
 end
