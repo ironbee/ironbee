@@ -303,7 +303,7 @@ if ((X)->out_line_len < (X)->out_line_size) { \
 extern "C" {
 #endif
 
-typedef uint32_t htp_time_t;
+typedef struct timeval htp_time_t;
 
 // -- Data structures -----------------------------------------------------------------------------
 
