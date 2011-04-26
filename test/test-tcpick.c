@@ -257,7 +257,7 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
         referer = bstr_util_strdup_to_c(h_referer->value);
     }
 
-    printf("%s - - [%s] \"%s\" %i %i \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
+    printf("%s - - [%s] \"%s\" %i %zu \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
         request_line, tx->response_status_number, tx->response_message_len,
         referer, user_agent);
 
@@ -286,7 +286,7 @@ static int run_file(char *filename, htp_cfg_t *cfg) {
             return -1;
         }
     } else {
-        printf(" -- %i transaction(s)\n", list_size(connp->conn->transactions));
+        printf(" -- %zu transaction(s)\n", list_size(connp->conn->transactions));
 
         htp_tx_t *tx = NULL;
         list_iterator_reset(connp->conn->transactions);
