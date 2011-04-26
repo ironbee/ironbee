@@ -834,6 +834,9 @@ struct htp_tx_t {
     /** The first line of this request. */
     bstr *request_line;
 
+    /** The first line of this request including ws+line terminator(s). */
+    bstr *request_line_raw;
+
     /** How many NUL bytes are there in the request line? */
     int request_line_nul;
 
@@ -996,6 +999,9 @@ struct htp_tx_t {
 
     /** Response line. */
     bstr *response_line;
+
+    /** Response line including ws+line terminator(s). */
+    bstr *response_line_raw;
 
     /** Response protocol, as text. */
     bstr *response_protocol;

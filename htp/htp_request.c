@@ -649,8 +649,14 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
             // Process request line
 
+            connp->in_tx->request_line_raw = bstr_dup_mem((char *) connp->in_line, connp->in_line_len);
+            if (connp->in_tx->request_line_raw == NULL) {
+                return HTP_ERROR;
+            }
+
+            /// @todo Would be nice to reference request_line_raw data
             htp_chomp(connp->in_line, &connp->in_line_len);
-            connp->in_tx->request_line = bstr_dup_mem((char *) connp->in_line, connp->in_line_len);
+            connp->in_tx->request_line = bstr_dup_ex(connp->in_tx->request_line_raw, 0, connp->in_line_len);
             if (connp->in_tx->request_line == NULL) {
                 return HTP_ERROR;
             }
