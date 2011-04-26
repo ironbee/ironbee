@@ -57,6 +57,14 @@ static VALUE cConn;
 		return INT2FIX( x->N ); \
   }
 
+#define RBHTP_R_TV( T, N ) \
+	VALUE rbhtp_ ## T ## _ ## N( VALUE self ) \
+	{ \
+		htp_ ## T ## _t* x = NULL; \
+		Data_Get_Struct( rb_iv_get( self, "@" #T ), htp_ ## T ## _t, x ); \
+		return rb_time_new( x->N.tv_sec, x->N.tv_usec ); \
+	}
+
 #define RBHTP_R_CSTR( T, N ) \
   VALUE rbhtp_ ## T ## _ ## N( VALUE self ) \
   { \
@@ -442,8 +450,11 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	size_t len = RSTRING_LEN( data );
 	char* data_c = RSTRING_PTR( data );
 
-	htp_time_t timestamp_c = 
-		FIX2INT( rb_funcall( timestamp, rb_intern( "to_i" ), 0 ) );
+	htp_time_t timestamp_c;
+	timestamp_c.tv_sec = 
+		FIX2INT( rb_funcall( timestamp, rb_intern( "tv_sec" ), 0 ) );
+	timestamp_c.tv_usec = 
+		FIX2INT( rb_funcall( timestamp, rb_intern( "tv_usec" ), 0 ) );
 
 	VALUE connp_r = rb_iv_get( self, "@connp" );
 	htp_connp_t* connp = NULL;
@@ -658,8 +669,8 @@ RBHTP_R_INT( conn, in_data_counter )
 RBHTP_R_INT( conn, out_data_counter )
 RBHTP_R_INT( conn, in_packet_counter )
 RBHTP_R_INT( conn, out_packet_counter )
-RBHTP_R_INT( conn, open_timestamp )
-RBHTP_R_INT( conn, close_timestamp )
+RBHTP_R_TV( conn, open_timestamp )
+RBHTP_R_TV( conn, close_timestamp )
 
 VALUE rbhtp_conn_transactions( VALUE self )
 {
