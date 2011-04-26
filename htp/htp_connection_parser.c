@@ -37,9 +37,9 @@ void htp_connp_clear_error(htp_connp_t *connp) {
  * @param connp
  * @param timestamp
  */
-void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp) {
+void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
     // Update internal information
-    connp->conn->close_timestamp = timestamp;
+    memcpy(&connp->conn->close_timestamp, timestamp, sizeof(*timestamp));
     connp->in_status = STREAM_STATE_CLOSED;
     connp->out_status = STREAM_STATE_CLOSED;
 
@@ -221,7 +221,7 @@ htp_log_t *htp_connp_get_last_error(htp_connp_t *connp) {
  * @param local_port Local port
  * @param timestamp
  */
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t timestamp) {
+void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp) {
     if ((connp->in_status != STREAM_STATE_NEW) || (connp->out_status != STREAM_STATE_NEW)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
         return;
@@ -245,7 +245,7 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
     }
 
     connp->conn->local_port = local_port;
-    connp->conn->open_timestamp = timestamp;
+    memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
     connp->in_status = STREAM_STATE_OPEN;
     connp->out_status = STREAM_STATE_OPEN;
 }

@@ -798,7 +798,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
  * @param len
  * @return HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed
  */
-int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
+int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_res_data(connp->out_status %x)\n", connp->out_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -830,7 +830,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     }
 
     // Store the current chunk information
-    connp->out_timestamp = timestamp;
+    memcpy(&connp->out_timestamp, timestamp, sizeof(*timestamp));
     connp->out_current_data = data;
     connp->out_current_len = len;
     connp->out_current_offset = 0;

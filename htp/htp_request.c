@@ -862,7 +862,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
  * @param len
  * @return STREAM_STATE_DATA, STREAM_STATE_ERROR or STEAM_STATE_DATA_OTHER (see QUICK_START).  STREAM_STATE_CLOSED and STREAM_STATE_TUNNEL are also possible.
  */
-int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len) {
+int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_req_data(connp->in_status %x)\n", connp->in_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -894,7 +894,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *
     }
 
     // Store the current chunk information
-    connp->in_timestamp = timestamp;
+    memcpy(&connp->in_timestamp, timestamp, sizeof(*timestamp));
     connp->in_current_data = data;
     connp->in_current_len = len;
     connp->in_current_offset = 0;

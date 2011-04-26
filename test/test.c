@@ -280,12 +280,12 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         int remote_port, local_port;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
-        htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, tv_start);
+        htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, &tv_start);
         free(remote_addr);
         free(local_addr);
     } else {
         // No connection metadata; provide some fake information instead
-        htp_connp_open(*connp, (const char *) "127.0.0.1", 10000, (const char *) "127.0.0.1", 80, tv_start);
+        htp_connp_open(*connp, (const char *) "127.0.0.1", 10000, (const char *) "127.0.0.1", 80, &tv_start);
     }
 
     // Find all chunks and feed them to the parser
@@ -311,7 +311,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 return -1;
             }
             
-            int rc = htp_connp_req_data(*connp, tv_start, test.chunk, test.chunk_len);
+            int rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
             if (rc == STREAM_STATE_ERROR) {
                 test_destroy(&test);
                 return -101;
@@ -326,7 +326,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
             }
         } else {
             if (out_data_other) {
-                int rc = htp_connp_res_data(*connp, tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+                int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
                 if (rc == STREAM_STATE_ERROR) {
                     test_destroy(&test);
                     return -104;
@@ -334,7 +334,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 out_data_other = 0;
             }
 
-            int rc = htp_connp_res_data(*connp, tv_start, test.chunk, test.chunk_len);
+            int rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
             if (rc == STREAM_STATE_ERROR) {
                 test_destroy(&test);
                 return -102;
@@ -350,7 +350,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
             }
 
             if (in_data_other) {
-                int rc = htp_connp_req_data(*connp, tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
+                int rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
                 if (rc == STREAM_STATE_ERROR) {
                     test_destroy(&test);
                     return -103;
@@ -361,7 +361,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     }
 
     if (out_data_other) {
-        int rc = htp_connp_res_data(*connp, tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+        int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
         if (rc == STREAM_STATE_ERROR) {
             test_destroy(&test);
             return -104;
@@ -372,9 +372,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     gettimeofday(&tv_end, NULL);
 
     // Close the connection
-    htp_connp_close(*connp, tv_end);
-
-    // printf("Parsing time: %i\n", tv_end.tv_usec - tv_start.tv_usec);
+    htp_connp_close(*connp, &tv_end);
 
     // Clean up
     test_destroy(&test);

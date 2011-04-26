@@ -43,6 +43,7 @@ typedef struct htp_uri_t htp_uri_t;
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "bstr.h"
 #include "dslib.h"
@@ -1159,8 +1160,8 @@ void htp_config_register_multipart_parser(htp_cfg_t *cfg);
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
 htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t timestamp);
-void htp_connp_close(htp_connp_t *connp, htp_time_t timestamp);
+void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp);
+void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
 void htp_connp_destroy(htp_connp_t *connp);
 void htp_connp_destroy_all(htp_connp_t *connp);
 
@@ -1171,9 +1172,9 @@ htp_conn_t *htp_conn_create(htp_connp_t *connp);
        void htp_conn_destroy(htp_conn_t *conn);
         int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx);
 
-   int htp_connp_req_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len);
+   int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
 size_t htp_connp_req_data_consumed(htp_connp_t *connp);
-   int htp_connp_res_data(htp_connp_t *connp, htp_time_t timestamp, unsigned char *data, size_t len);
+   int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
 size_t htp_connp_res_data_consumed(htp_connp_t *connp);
 
       void htp_connp_clear_error(htp_connp_t *connp);
