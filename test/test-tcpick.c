@@ -133,9 +133,9 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
             first = current;
 
             if (first == SERVER) {
-                htp_connp_open(*connp, local_addr, 80, remote_addr, 80, tv.tv_usec);
+                htp_connp_open(*connp, local_addr, 80, remote_addr, 80, tv);
             } else {
-                htp_connp_open(*connp, remote_addr, 80, local_addr, 80, tv.tv_usec);
+                htp_connp_open(*connp, remote_addr, 80, local_addr, 80, tv);
             }
         }
 
@@ -198,7 +198,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
         if (first == current) {
             if ((request_last_chunk == NULL) || (request_len != request_last_len) || (memcmp(data, request_last_chunk, request_len) != 0)) {
                 // printf("# Parse request data: %i byte(s)\n", len);
-                if (htp_connp_req_data(*connp, tv.tv_usec, data, len) == HTP_ERROR) {
+                if (htp_connp_req_data(*connp, tv, data, len) == HTP_ERROR) {
                     fclose(f);
                     return -1;
                 }
@@ -213,7 +213,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
         } else {
             if ((response_last_chunk == NULL) || (response_len != response_last_len) || (memcmp(data, response_last_chunk, response_len) != 0)) {
                 // printf("# Parse response data: %i byte(s)\n", len);
-                if (htp_connp_res_data(*connp, tv.tv_usec, data, len) == HTP_ERROR) {
+                if (htp_connp_res_data(*connp, tv, data, len) == HTP_ERROR) {
                     fclose(f);
                     return -1;
                 }
@@ -230,7 +230,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
 
     fclose(f);
 
-    htp_connp_close(*connp, tv.tv_usec);
+    htp_connp_close(*connp, tv);
 
     return 1;
 }
