@@ -138,7 +138,7 @@ int test_apache_header_parsing(htp_cfg_t *cfg) {
 
     // There must be 9 headers
     if (table_size(tx->request_headers) != 9) {
-        printf("Got %i headers, but expected 9\n", table_size(tx->request_headers));
+        printf("Got %zu headers, but expected 9\n", table_size(tx->request_headers));
         htp_connp_destroy(connp);
         return -1;
     }
@@ -304,7 +304,7 @@ int test_pipelined_connection(htp_cfg_t *cfg) {
     }
 
     if (list_size(connp->conn->transactions) != 2) {
-        printf("Expected 2 transactions but found %i.", list_size(connp->conn->transactions));
+        printf("Expected 2 transactions but found %zu.", list_size(connp->conn->transactions));
         return -1;
     }
 
@@ -331,7 +331,7 @@ int test_not_pipelined_connection(htp_cfg_t *cfg) {
     }
 
     if (list_size(connp->conn->transactions) != 2) {
-        printf("Expected 2 transactions but found %i.", list_size(connp->conn->transactions));
+        printf("Expected 2 transactions but found %zu.", list_size(connp->conn->transactions));
         return -1;
     }
 
@@ -365,7 +365,7 @@ int test_multi_packet_request_head(htp_cfg_t *cfg) {
     }
 
     if (list_size(connp->conn->transactions) != 1) {
-        printf("Expected 1 transaction but found %i.", list_size(connp->conn->transactions));
+        printf("Expected 1 transaction but found %zu.", list_size(connp->conn->transactions));
         return -1;
     }
 
@@ -418,7 +418,7 @@ int test_host_in_headers(htp_cfg_t *cfg) {
     }
 
     if (list_size(connp->conn->transactions) != 4) {
-        printf("Expected 4 transactions but found %i.", list_size(connp->conn->transactions));
+        printf("Expected 4 transactions but found %zu.", list_size(connp->conn->transactions));
         return -1;
     }
 
@@ -428,22 +428,22 @@ int test_host_in_headers(htp_cfg_t *cfg) {
     htp_tx_t *tx4 = list_get(connp->conn->transactions, 3);
 
     if ((tx1->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx1->parsed_uri->hostname, "www.example.com") != 0)) {
-        printf("1) Expected 'www.example.com' as hostname, but got: %s", tx1->parsed_uri->hostname);
+        printf("1) Expected 'www.example.com' as hostname, but got: %s", bstr_ptr(tx1->parsed_uri->hostname));
         return -1;
     }
 
     if ((tx2->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx2->parsed_uri->hostname, "www.example.com") != 0)) {
-        printf("2) Expected 'www.example.com' as hostname, but got: %s", tx2->parsed_uri->hostname);
+        printf("2) Expected 'www.example.com' as hostname, but got: %s", bstr_ptr(tx2->parsed_uri->hostname));
         return -1;
     }
 
     if ((tx3->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx3->parsed_uri->hostname, "www.example.com") != 0)) {
-        printf("3) Expected 'www.example.com' as hostname, but got: %s", tx3->parsed_uri->hostname);
+        printf("3) Expected 'www.example.com' as hostname, but got: %s", bstr_ptr(tx3->parsed_uri->hostname));
         return -1;
     }
 
     if ((tx4->parsed_uri->hostname == NULL) || (bstr_cmp_c(tx4->parsed_uri->hostname, "www.example.com") != 0)) {
-        printf("4) Expected 'www.example.com' as hostname, but got: %s", tx4->parsed_uri->hostname);
+        printf("4) Expected 'www.example.com' as hostname, but got: %s", bstr_ptr(tx4->parsed_uri->hostname));
         return -1;
     }
 
@@ -788,7 +788,7 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
         referer = bstr_util_strdup_to_c(h_referer->value);
     }
 
-    printf("%s - - [%s] \"%s\" %i %i \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
+    printf("%s - - [%s] \"%s\" %i %zu \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
         request_line, tx->response_status_number, tx->response_message_len,
         referer, user_agent);
 
@@ -826,7 +826,7 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
                     return -1;
                 }
             } else {
-                printf(" -- %i transaction(s)\n", list_size(connp->conn->transactions));
+                printf(" -- %zu transaction(s)\n", list_size(connp->conn->transactions));
 
                 htp_tx_t *tx = NULL;
                 list_iterator_reset(connp->conn->transactions);
