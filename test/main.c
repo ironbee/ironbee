@@ -882,35 +882,39 @@ int main(int argc, char** argv) {
 
     home = NULL;
 
-    // Try the current working directory first
-    int fd = open("./files/anchor.empty", 0, O_RDONLY);
-    if (fd != -1) {
-        close(fd);
-        home = "./files";
-    } else {
-        // Try the directory in which the executable resides
-        strncpy(buf, argv[0], 1024);
-        strncat(buf, "/../files/anchor.empty", 1024 - strlen(buf));
-        fd = open(buf, 0, O_RDONLY);
-        if (fd != -1) {
-            close(fd);
-            strncpy(buf, argv[0], 1024);
-            strncat(buf, "/../files", 1024 - strlen(buf));
-            home = buf;
-        } else {
-            // Try the directory in which the executable resides
-            strncpy(buf, argv[0], 1024);
-            strncat(buf, "/../../files/anchor.empty", 1024 - strlen(buf));
-            fd = open(buf, 0, O_RDONLY);
-            if (fd != -1) {
-                close(fd);
-                strncpy(buf, argv[0], 1024);
-                strncat(buf, "/../../files", 1024 - strlen(buf));
-                home = buf;
-            }
-        }
-    }
-
+		if ( argc == 2 ) {
+			home = argv[1];
+		} else {
+	    // Try the current working directory first
+	    int fd = open("./files/anchor.empty", 0, O_RDONLY);
+	    if (fd != -1) {
+	        close(fd);
+	        home = "./files";
+	    } else {
+	        // Try the directory in which the executable resides
+	        strncpy(buf, argv[0], 1024);
+	        strncat(buf, "/../files/anchor.empty", 1024 - strlen(buf));
+	        fd = open(buf, 0, O_RDONLY);
+	        if (fd != -1) {
+	            close(fd);
+	            strncpy(buf, argv[0], 1024);
+	            strncat(buf, "/../files", 1024 - strlen(buf));
+	            home = buf;
+	        } else {
+	            // Try the directory in which the executable resides
+	            strncpy(buf, argv[0], 1024);
+	            strncat(buf, "/../../files/anchor.empty", 1024 - strlen(buf));
+	            fd = open(buf, 0, O_RDONLY);
+	            if (fd != -1) {
+	                close(fd);
+	                strncpy(buf, argv[0], 1024);
+	                strncat(buf, "/../../files", 1024 - strlen(buf));
+	                home = buf;
+	            }
+	        }
+	    }
+		}
+		
     if (home == NULL) {
         printf("Failed to find test files.");
         exit(-1);
