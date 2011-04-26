@@ -26,6 +26,7 @@
  */
 
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <ironbee/build.h>
 #include <ironbee/release.h>
@@ -68,7 +69,7 @@ typedef struct ib_txdata_t ib_txdata_t;
 typedef struct ib_tx_t ib_tx_t;
 typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
-typedef struct ib_timeval_t ib_timeval_t;
+typedef struct timeval ib_timeval_t;
 typedef struct ib_uuid_t ib_uuid_t;
 typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
@@ -109,12 +110,6 @@ typedef enum {
 #define IB_TX_FRES_SEENHEADERS  (1 << 0) /**< Response headers seen */
 #define IB_TX_FRES_SEENBODY     (1 <<11) /**< Response body seen */
 #define IB_TX_FRES_FINISHED     (1 <<12) /**< Response finished  */
-
-/** Timeval Structure */
-struct ib_timeval_t {
-    time_t tv_sec;
-    time_t tv_usec;
-};
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???

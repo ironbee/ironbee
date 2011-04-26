@@ -761,7 +761,10 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
     modhtp_context_t *modctx;
     htp_connp_t *htp;
     ib_status_t rc;
+    struct timeval tv;
     int ec;
+
+    gettimeofday(&tv, NULL);
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
@@ -783,7 +786,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
         case STREAM_STATE_NEW:
         case STREAM_STATE_DATA:
             /* Let the parser see the data. */
-            ec = htp_connp_req_data(htp, 0, qcdata->data, qcdata->dlen);
+            ec = htp_connp_req_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
                 ib_log_error(ib, 4, "LibHTP parser blocked: %d", ec);
                 /// @todo Buffer it for next time?
@@ -815,7 +818,10 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     modhtp_context_t *modctx;
     htp_connp_t *htp;
     ib_status_t rc;
+    struct timeval tv;
     int ec;
+
+    gettimeofday(&tv, NULL);
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
@@ -837,7 +843,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
         case STREAM_STATE_NEW:
         case STREAM_STATE_DATA:
             /* Let the parser see the data. */
-            ec = htp_connp_res_data(htp, 0, qcdata->data, qcdata->dlen);
+            ec = htp_connp_res_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
                 ib_log_error(ib, 4, "LibHTP parser blocked: %d", ec);
                 /// @todo Buffer it for next time?
