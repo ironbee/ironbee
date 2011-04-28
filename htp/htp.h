@@ -387,6 +387,9 @@ struct htp_cfg_t {
     /** Request line hook, invoked after a request line has been parsed. */
     htp_hook_t *hook_request_line;
 
+    /** Request URI normalization hook, for overriding default normalization of URI. */
+    htp_hook_t *hook_request_uri_normalize;
+
     /** Request headers hook, invoked after all request headers are seen. */
     htp_hook_t *hook_request_headers;
 
@@ -967,6 +970,7 @@ htp_cfg_t *htp_config_create();
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
