@@ -81,11 +81,11 @@ ffi.cdef[[
         IB_FTYPE_LIST
     } ib_ftype_t;
     typedef enum {
-        IB_TXDATA_HTTP_LINE,
-        IB_TXDATA_HTTP_HEADER,
-        IB_TXDATA_HTTP_BODY,
-        IB_TXDATA_HTTP_TRAILER
-    } ib_txdata_type_t;
+        IB_DTYPE_HTTP_LINE,
+        IB_DTYPE_HTTP_HEADER,
+        IB_DTYPE_HTTP_BODY,
+        IB_DTYPE_HTTP_TRAILER
+    } ib_data_type_t;
     typedef enum {
         conn_started_event,
         conn_finished_event,
