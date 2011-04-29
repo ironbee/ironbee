@@ -263,9 +263,9 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_LINE;
-    itxdata.dalloc = bstr_size(tx->request_line);
-    itxdata.dlen = bstr_len(tx->request_line);
-    itxdata.data = (uint8_t *)bstr_ptr(tx->request_line);
+    itxdata.dalloc = bstr_size(tx->request_line_raw);
+    itxdata.dlen = bstr_len(tx->request_line_raw);
+    itxdata.data = (uint8_t *)bstr_ptr(tx->request_line_raw);
 
     ib_state_notify_tx_data_in(ib, &itxdata);
 
@@ -465,9 +465,9 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     itxdata.mp = itx->mp;
     itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_LINE;
-    itxdata.dalloc = bstr_size(tx->response_line);
-    itxdata.dlen = bstr_len(tx->response_line);
-    itxdata.data = (uint8_t *)bstr_ptr(tx->response_line);
+    itxdata.dalloc = bstr_size(tx->response_line_raw);
+    itxdata.dlen = bstr_len(tx->response_line_raw);
+    itxdata.data = (uint8_t *)bstr_ptr(tx->response_line_raw);
 
     ib_state_notify_tx_data_out(ib, &itxdata);
 
