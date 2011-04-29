@@ -183,13 +183,28 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                    ib_auditlog_t *log)
 {
     IB_FTRACE_INIT(core_audit_open);
+    ib_core_cfg_t *corecfg;
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
-    /// @todo Use log->ctx to get filename, etc.
-    const char *fn = "/tmp/ironbee-audit.log";
+    char fn[512];
+    ib_status_t rc;
     int ec;
 
+    ib_log_debug(log->ib, 4, "XXXXXXXXXXXXXXXXXXX");
+    rc = ib_context_module_config(log->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+
+    ec = snprintf(fn, sizeof(fn), "%s/%s", corecfg->auditlog_dir, corecfg->auditlog);
+    if (ec >= (int)sizeof(fn)) {
+        ib_log_error(log->ib, 1,
+                     "Could not create audit log filename \"%s/%s\": too long",
+                     corecfg->auditlog_dir, corecfg->auditlog);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ib_log_debug(log->ib, 4, "AUDIT");
+
     if (cfg->fp == NULL) {
-        cfg->fp = fopen(fn, "wb");
+        cfg->fp = fopen(fn, "ab");
         if (cfg->fp == NULL) {
             ec = errno;
             ib_log_error(log->ib, 1, "Could not open audit log \"%s\": %s (%d)",
@@ -3496,7 +3511,6 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NUM,
         &core_global_cfg,
         audit_engine,
-        /// @todo More appropriate default
         0
     ),
     IB_CFGMAP_INIT_ENTRY(
@@ -3504,16 +3518,14 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NULSTR,
         &core_global_cfg,
         auditlog,
-        /// @todo More appropriate default
-        "/tmp/ironbee-auditlog-index.log"
+        "ironbee-auditlog.log"
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dir",
         IB_FTYPE_NULSTR,
         &core_global_cfg,
         auditlog_dir,
-        /// @todo More appropriate default
-        "/tmp/ironbee-auditlog-data"
+        "/var/log/ironbee"
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_AUDIT,
