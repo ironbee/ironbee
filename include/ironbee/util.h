@@ -80,6 +80,7 @@ typedef enum ib_status_t {
     IB_EINVAL,                      /**< Invalid argument */
     IB_ENOENT,                      /**< Entity does not exist */
     IB_ETIMEDOUT,                   /**< Operation timed out */
+    IB_EAGAIN,                      /**< Not ready, try again later */
 } ib_status_t;
 
 /**
@@ -293,21 +294,25 @@ typedef struct ib_list_node_t ib_list_node_t;
 /**
  * Required fields for a list node structure.
  *
- * @param ntype Note type literal
+ * @todo Perhaps this should be a struct?
+ *
+ * @param ntype Node type literal
  */
 #define IB_LIST_NODE_REQ_FIELDS(ntype) \
     ntype *next; /**< Next list node */ \
-    ntype *prev; /**< Previous list node */
+    ntype *prev /**< Previous list node */
 
 /**
  * Required fields for a list structure.
  *
- * @param ntype Note type literal
+ * @todo Perhaps this should be a struct?
+ *
+ * @param ntype Node type literal
  */
 #define IB_LIST_REQ_FIELDS(ntype) \
     size_t nelts; /**< Number of elements in list */ \
     ntype *head; /**< First node in list */ \
-    ntype *tail; /**< Last node in list */
+    ntype *tail /**< Last node in list */
 
 /**
  * First node of a list.
@@ -360,7 +365,7 @@ typedef struct ib_list_node_t ib_list_node_t;
  * @param list List
  * @param at Node to insert after
  * @param node Node to insert
- * @param ntype Note type literal
+ * @param ntype Node type literal
  */
 #define IB_LIST_NODE_INSERT_AFTER(list,at,node,ntype) \
     do { \
@@ -377,7 +382,7 @@ typedef struct ib_list_node_t ib_list_node_t;
  * @param list List
  * @param at Node to insert before
  * @param node Node to insert
- * @param ntype Note type literal
+ * @param ntype Node type literal
  */
 #define IB_LIST_NODE_INSERT_BEFORE(list,at,node,ntype) \
     do { \
@@ -393,7 +398,7 @@ typedef struct ib_list_node_t ib_list_node_t;
  *
  * @param list List
  * @param node Node to insert
- * @param ntype Note type literal
+ * @param ntype Node type literal
  */
 #define IB_LIST_NODE_INSERT_LAST(list,node,ntype) \
     do { \
@@ -406,7 +411,7 @@ typedef struct ib_list_node_t ib_list_node_t;
  *
  * @param list List
  * @param node Node to insert
- * @param ntype Note type literal
+ * @param ntype Node type literal
  */
 #define IB_LIST_NODE_INSERT_FIRST(list,node,ntype) \
     do { \
@@ -473,6 +478,8 @@ typedef struct ib_list_node_t ib_list_node_t;
 /**
  * Loop through all elements in the list.
  *
+ * @todo Make this generic (non-ib_list__t specific)
+ *
  * @warning Do not use to delete an element in the list. Instead use
  *          the @ref IB_LIST_LOOP_SAFE loop.
  *
@@ -486,6 +493,8 @@ typedef struct ib_list_node_t ib_list_node_t;
 
 /**
  * Loop through all elements in the list, taking care to allow for deletions.
+ *
+ * @todo Make this generic (non-ib_list__t specific)
  *
  * This loop allows deleting elements. If this is not needed, then
  * use the @ref IB_LIST_LOOP loop.
@@ -503,8 +512,10 @@ typedef struct ib_list_node_t ib_list_node_t;
 /**
  * Loop through all elements in the list in reverse order.
  *
+ * @todo Make this generic (non-ib_list__t specific)
+ *
  * @warning Do not use to delete an element in the list. Instead use
- *          the @ref IB_LIST_LOOP_REVERS_SAFE loop.
+ *          the @ref IB_LIST_LOOP_REVERSE_SAFE loop.
  *
  * @param list List
  * @param node Symbol holding node
@@ -517,6 +528,8 @@ typedef struct ib_list_node_t ib_list_node_t;
 /**
  * Loop through all elements in the list in reverse order, taking care
  * to allow for deletions.
+ *
+ * @todo Make this generic (non-ib_list__t specific)
  *
  * This loop allows deleting elements. If this is not needed, then
  * use the @ref IB_LIST_REVERSE_LOOP loop.

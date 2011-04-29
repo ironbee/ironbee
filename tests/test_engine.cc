@@ -35,6 +35,7 @@
 #include "engine/config-parser.c"
 #include "engine/data.c"
 #include "engine/tfn.c"
+#include "engine/filter.c"
 #include "engine/core.c"
 #include "util/debug.c"
 

@@ -75,12 +75,34 @@ typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
 
 typedef enum {
+    IB_DTYPE_META,
     IB_DTYPE_RAW,
     IB_DTYPE_HTTP_LINE,
     IB_DTYPE_HTTP_HEADER,
     IB_DTYPE_HTTP_BODY,
     IB_DTYPE_HTTP_TRAILER
 } ib_data_type_t;
+
+typedef struct ib_filter_t ib_filter_t;
+typedef struct ib_fdata_t ib_fdata_t;
+typedef struct ib_fctl_t ib_fctl_t;
+
+typedef enum {
+    IB_FILTER_CONN,
+    IB_FILTER_TX,
+} ib_filter_type_t;
+
+typedef struct ib_stream_t ib_stream_t;
+typedef struct ib_sdata_t ib_sdata_t;
+
+typedef enum {
+    IB_STREAM_DATA,                      /**< Data is available */
+    IB_STREAM_FLUSH,                     /**< Data should be flushed */
+    IB_STREAM_EOH,                       /**< End of Headers */
+    IB_STREAM_EOB,                       /**< End of Body */
+    IB_STREAM_EOS,                       /**< End of Stream */
+    IB_STREAM_ERROR,                     /**< Error */
+} ib_sdata_type_t;
 
 #define IB_UUID_HEX_SIZE 37
 
@@ -172,6 +194,7 @@ struct ib_conn_t {
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_hash_t          *data;            /**< Generic data store */
+//    ib_filter_ctl_t    *fctl;            /**< Connection filter controller */
 
     ib_timeval_t        started;         /**< Connection start time */
 
@@ -223,6 +246,7 @@ struct ib_tx_t {
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_hash_t          *data;            /**< Generic data store */
+    ib_fctl_t          *fctl;            /**< Transaction filter controller */
     ib_timeval_t        started;         /**< Tx (request) start time */
     ib_timeval_t        tv_response;     /**< Response start time */
     ib_tx_t            *next;            /**< Next transaction */
@@ -705,7 +729,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   response [label="HTTP (parsed)\nResponse\nData",style=solid,shape=box]
  *
  *   context_conn_selected [label="At this point the connection context is\nselected. Events that follow will use the context\nselected here, which may impose a different\nconfiguration than previous events. Anything\nused in the context selection process must\nbe generated in a previous event handler.",style=bold,shape=note,URL="\ref handle_context_conn_event"]
- *   context_tx_selected [label="At this point the transaction context is\nselected. Events that follow will use the context\nselected here, which may impose a different\nconfiguration than previous events. Anything\nused in the context selection process must\nbe generated in a previous event handler.",style=filled,fillcolor="#e6e6e6",shape=note,URL="\ref handle_context_tx_event"]
+ *   context_tx_selected [label="At this point the transaction context is\nselected. Events that follow will use the context\nselected here, which may impose a different\nconfiguration than previous events. Anything\nused in the context selection process must\nbe generated in a previous event handler.\nAdditionally, any transaction data filters will\nnot be called until after this point so that\nfilters will be called with a single context.",style=filled,fillcolor="#e6e6e6",shape=note,URL="\ref handle_context_tx_event"]
  *
  *   conn_started_event [label="conn_started",style=bold,shape=diamond,URL="\ref conn_started_event"]
  *   conn_opened_event [label="conn_opened",style=bold,shape=octagon,URL="\ref conn_opened_event"]
@@ -1870,6 +1894,274 @@ ib_status_t DLL_PUBLIC ib_tfn_transform_field(ib_tfn_t *tfn,
  * @} IronBeeEngineTfn
  */
 
+
+/**
+ * @defgroup IronBeeFilter Filter
+ * @ingroup IronBee
+ * @{
+ */
+
+#define IB_FILTER_FNONE          0        /**< No filter flags were set */
+#define IB_FILTER_FMDATA        (1<<0)    /**< Filter modified the data */
+#define IB_FILTER_FMDLEN        (1<<1)    /**< Filter modified data length */
+#define IB_FILTER_FINPLACE      (1<<2)    /**< Filter action was in-place */
+
+#define IB_FILTER_ONONE          0        /**< No filter options set */
+#define IB_FILTER_OMDATA        (1<<0)    /**< Filter may modify data */
+#define IB_FILTER_OMDLEN        (1<<1)    /**< Filter may modify data length */
+#define IB_FILTER_OBUF          (1<<2)    /**< Filter may buffer data */
+
+/**
+ * Filter Function.
+ *
+ * This function is called with data that can be analyzed and then optionally
+ * modified.  Various flags can be set via @ref pflags.
+ *
+ * @param f Filter
+ * @param fdata Filter data
+ * @param ctx Config context
+ * @param pool Pool to use, should allocation be required
+ * @param pflags Address to write filter processing flags
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*ib_filter_fn_t)(ib_filter_t *f,
+                                      ib_fdata_t *fdata,
+                                      ib_context_t *ctx,
+                                      ib_mpool_t *pool,
+                                      ib_flags_t *pflags);
+
+/** IronBee Filter */
+struct ib_filter_t {
+    ib_engine_t             *ib;        /**< Engine */
+    const char              *name;      /**< Filter name */
+    ib_filter_type_t         type;      /**< Filter type */
+    ib_flags_t               options;   /**< Filter options */
+    size_t                   idx;       /**< Filter index */
+    ib_filter_fn_t           fn_filter; /**< Filter function */
+    void                    *cbdata;    /**< Filter callback data */
+};
+
+/** IronBee Filter Data */
+struct ib_fdata_t {
+    union {
+        void                *ptr;       /**< Generic pointer for set op */
+        ib_conn_t           *conn;      /**< Connection (conn filters) */
+        ib_tx_t             *tx;        /**< Transaction (tx filters) */
+    } udata;
+    ib_stream_t             *stream;    /**< Data stream */
+    void                    *state;     /**< Arbitrary state data */
+};
+
+/**
+ * IronBee Filter Controller.
+ *
+ * Data comes into the filter controller via the @ref source, gets
+ * pushed through the list of data @ref filters, into the buffer filter
+ * @ref fbuffer where the data may be held while it is being processed 
+ * and finally makes it to the @ref sink where it is ready to be sent.
+ */
+struct ib_fctl_t {
+    ib_fdata_t               fdata;     /**< Filter data */
+    ib_engine_t             *ib;        /**< Engine */
+    ib_mpool_t              *mp;        /**< Filter memory pool */
+    ib_list_t               *filters;   /**< Filter list */
+    ib_filter_t             *fbuffer;   /**< Buffering filter (flow control) */
+    ib_stream_t             *source;    /**< Data source (new data) */
+    ib_stream_t             *sink;      /**< Data sink (processed data) */
+};
+
+/**
+ * IronBee Stream.
+ *
+ * This is essentially a list of data chunks (ib_sdata_t) with some
+ * associated metadata.
+ */
+struct ib_stream_t {
+    /// @todo Need a list of recycled sdata
+    ib_mpool_t             *mp;         /**< Stream memory pool */
+    size_t                  slen;       /**< Stream length */
+    IB_LIST_REQ_FIELDS(ib_sdata_t); /* Required list fields */
+};
+
+/** IronBee Stream Data */
+struct ib_sdata_t {
+    ib_sdata_type_t         type;       /**< Stream data type */
+    ib_data_type_t          dtype;      /**< Data type */
+    size_t                  dlen;       /**< Data length */
+    void                   *data;       /**< Data */
+    IB_LIST_NODE_REQ_FIELDS(ib_sdata_t); /* Required list node fields */
+};
+
+
+/* -- Filter API -- */
+
+/**
+ * Register a filter.
+ *
+ * @param pf Address which filter handle is written
+ * @param type Filter type
+ * @param options Filter options
+ * @param fn_filter Filter callback function
+ * @param cbdata Filter callback data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_filter_register(ib_filter_t **pf,
+                                          ib_engine_t *ib,
+                                          const char *name,
+                                          ib_filter_type_t type,
+                                          ib_flags_t options,
+                                          ib_filter_fn_t fn_filter,
+                                          void *cbdata);
+
+/**
+ * Add a filter to a context.
+ *
+ * @param f Filter
+ * @param ctx Config context
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_filter_add(ib_filter_t *f,
+                                     ib_context_t *ctx);
+
+#if 0
+/**
+ * Create a filter controller for a connection in the given context.
+ *
+ * @param pfc Address which filter controller handle is written
+ * @param conn Connection
+ * @param ctx Config context
+ * @param pool Memory pool
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_fctl_conn_create(ib_fctl_t **pfc,
+                                           ib_conn_t *conn,
+                                           ib_context_t *ctx,
+                                           ib_mpool_t *pool);
+#endif
+
+/**
+ * Create a filter controller for a transaction.
+ *
+ * @param pfc Address which filter controller handle is written
+ * @param tx Transaction
+ * @param pool Memory pool
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_fctl_tx_create(ib_fctl_t **pfc,
+                                         ib_tx_t *tx,
+                                         ib_mpool_t *pool);
+
+/**
+ * Configure a filter controller for a given context.
+ *
+ * @param fc Filter controller
+ * @param ctx Config context
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_fctl_config(ib_fctl_t *fc,
+                                      ib_context_t *ctx);
+
+/**
+ * Process any pending data through the filters.
+ *
+ * @param fc Filter controller
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_fctl_process(ib_fctl_t *fc);
+
+/**
+ * Add data to the filter controller.
+ *
+ * This will pass through all the filters and then be fetched
+ * with calls to @ref ib_fctl_drain.
+ *
+ * @param fc Filter controller
+ * @param dtype Data type
+ * @param data Data
+ * @param dlen Data length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_fctl_data(ib_fctl_t *fc,
+                                    ib_data_type_t dtype,
+                                    void *data,
+                                    size_t dlen);
+
+/**
+ * Add meta data to the filter controller.
+ *
+ * This will pass through all the filters and then be fetched
+ * with calls to @ref ib_fctl_drain.
+ *
+ * @param fc Filter controller
+ * @param stype Stream data type
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_fctl_meta(ib_fctl_t *fc,
+                                    ib_sdata_type_t stype);
+
+/**
+ * Drain processed data from the filter controller.
+ *
+ * @param fc Filter controller
+ * @param pstream Address which output stream is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_fctl_drain(ib_fctl_t *fc,
+                                     ib_stream_t **pstream);
+
+                                               
+/**
+ * Push stream data into a stream.
+ *
+ * @param s Stream
+ * @param sdata Stream data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_stream_push_sdata(ib_stream_t *s,
+                                            ib_sdata_t *sdata);
+                           
+/**
+ * Push a chunk of data (or metadata) into a stream.
+ *
+ * @param s Stream
+ * @param type Stream data type
+ * @param dtype Data type
+ * @param data Data
+ * @param dlen Data length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_stream_push(ib_stream_t *s,
+                                      ib_sdata_type_t type,
+                                      ib_data_type_t dtype,
+                                      void *data,
+                                      size_t dlen);
+                           
+/**
+ * Pull a chunk of data (or metadata) from a stream.
+ *
+ * @param s Stream
+ * @param psdata Address which stream data is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_stream_pull(ib_stream_t *s,
+                                      ib_sdata_t **psdata);
+
+/**
+ * @} IronBeeFilter
+ */
 
 /**
  * @} IronBeeEngine

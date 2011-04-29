@@ -91,8 +91,8 @@ typedef struct ironbee_tx_context ironbee_tx_context;
  * Context used for connection buffering/inspecting data.
  */
 struct ironbee_conn_context {
-    int               direction;
-    ib_conndata_t    *qconndata;
+    int                      direction;
+    ib_conn_t               *iconn;
 };
 
 /**
@@ -101,7 +101,7 @@ struct ironbee_conn_context {
  * Context used for transaction processing.
  */
 struct ironbee_tx_context {
-    ib_tx_t          *qtx;
+    ib_tx_t                 *itx;
 };
 
 /* Plugin Structure */
@@ -181,135 +181,45 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 /**
  * @internal
  *
- * Handle the request/response data.
- *
- * This just notifies the engine of the data that is available.
- */
-static void handle_data(conn_rec *c, ironbee_conn_context *ctx)
-{
-    ib_conndata_t *qcdata = ctx->qconndata;
-    ib_conn_t *qconn = qcdata->conn;
-    
-    if (qcdata->dlen == 0) {
-        return;
-    }
-
-    if (ctx->direction == IRONBEE_REQUEST) {
-        /* Check if the current transaction is finished, but there is
-         * extraneous data to read. This is skipped in the case of pipelined
-         * requests where this extra data may be the next request.
-         */
-        if (   (qconn->tx != NULL)
-            && !ib_tx_flags_isset(qconn->tx, IB_TX_FPIPELINED)
-            &&  ib_tx_flags_isset(qconn->tx, IB_TX_FREQ_FINISHED))
-        {
-            /* Apache would not normally have parsed extraneous data.
-             *
-             * This can happen, for example, if a GET/HEAD request contained
-             * a body. When this happens, Apache ignores this data during the
-             * request processing, but the data is still seen by the
-             * connection filter.
-             */
-            ib_tx_flags_set(qconn->tx, IB_TX_FERROR);
-            /// @todo Add some flag???
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         IB_PRODUCT_NAME ": EXTRANEOUS DATA "
-                         "remote=%pI local=%pI nbytes=%ld %"
-                         IB_BYTESTR_FMT,
-                         (void *)c->remote_addr, (void *)c->local_addr,
-                         (long int)qcdata->dlen,
-                         IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
-        }
-        ib_state_notify_conn_data_in(ironbee, qcdata);
-    }
-    else {
-        ib_state_notify_conn_data_out(ironbee, qcdata);
-    }
-
-    /* Reset buffer. */
-    qcdata->dlen = 0;
-}
-
-/**
- * @internal
- *
- * Buffers up the buckets in a per-connection buffer, handling the buffer
- * when a high watermark is met or EOS.
- *
- * This is needed as Apache will use a line oriented filter when it can
- * (request headers and HTML output) and this generates too many small
- * fragments to handle.  Instead this makes sure that the fragments are
- * reasonably sized to avoid having to deal with potentially small
- * chunks of data.
+ * Sends bucket data to ironbee for processing.
  */
 static void process_bucket(ap_filter_t *f, apr_bucket *b)
 {
     conn_rec *c = f->c;
     ironbee_conn_context *ctx = f->ctx;
-    ib_conndata_t *qcdata = ctx->qconndata;
-    ironbee_config_t *modcfg =
-        (ironbee_config_t *)ap_get_module_config(c->base_server->module_config,
-                                               &ironbee_module);
+    ib_conndata_t icdata;
+    const char *bdata;
     apr_size_t nbytes;
-    apr_size_t blen;
+    apr_status_t rc;
 
-//    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-//                 IB_PRODUCT_NAME ": bucket f=%s, b=%s len=%d rnum=%d",
-//                 f->frec->name, b->type->name, (int)b->length, c->keepalives);
-
-    /* Only interested in buckets with data, FLUSH, EOS and EOC. */
-    if (APR_BUCKET_IS_EOS(b) || APR_BUCKET_IS_FLUSH(b)) {
-        handle_data(c, ctx);
-    }
-    else if (APR_BUCKET_IS_METADATA(b)) {
-        /* Detect an end of connection and process and pending data. */
-        if (strcmp("EOC", b->type->name) == 0) {
-            handle_data(c, ctx);
-        }
+    if (APR_BUCKET_IS_METADATA(b)) {
         return;
     }
 
-    /* 
-     * The read may not get all the data or may get too much data.  If too
-     * much data the bucket is split (b will become the new smaller bucket)
-     * and the rest of the data will be read next time.
-     */
-    do {
-        const char *bdata;
-        size_t buf_remain = qcdata->dalloc - qcdata->dlen;
-        nbytes = 0;
-        blen = b->length;
-
-        /* Need to manually split the bucket if too long. */
-        if (blen > buf_remain) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         IB_PRODUCT_NAME ": split bucket %d/%d",
-                         (int)buf_remain, (int)(blen - buf_remain));
-            apr_bucket_split(b, buf_remain);
-        }
-
-        if (blen &&
-            (apr_bucket_read(b, &bdata, &nbytes, APR_BLOCK_READ) != APR_SUCCESS))
-        {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
-                         IB_PRODUCT_NAME ": %s (%s): error reading %s data",
-                         f->frec->name, b->type->name,
-                         ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
-
+    /* Translate a bucket to a ib_conndata_t structure to be passed
+     * to IronBee. */
+    rc = apr_bucket_read(b, &bdata, &nbytes, APR_BLOCK_READ);
+    if (rc != APR_SUCCESS) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
+                     IB_PRODUCT_NAME ": %s (%s): error reading %s data",
+                     f->frec->name, b->type->name,
+                     ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
             return;
-        }
+    }
+    icdata.ib = ironbee;
+    icdata.mp = ctx->iconn->mp;
+    icdata.conn = ctx->iconn;
+    icdata.dalloc = nbytes;
+    icdata.dlen = nbytes;
+    icdata.data = (uint8_t *)bdata;
 
-        if (nbytes) {
-            /* Copy the data from the bucket to our buffer. */
-            memcpy(qcdata->data + qcdata->dlen, bdata, nbytes);
-            qcdata->dlen += nbytes;
-        }
 
-        /* Only handle the data if the buffer is full enough to flush. */
-        if (qcdata->dlen >= modcfg->flush_size) {
-            handle_data(c, ctx);
-        }
-    } while (blen < nbytes);
+    if (ctx->direction == IRONBEE_REQUEST) {
+        ib_state_notify_conn_data_in(ironbee, &icdata);
+    }
+    else {
+        ib_state_notify_conn_data_out(ironbee, &icdata);
+    }
 }
 
 /**
@@ -320,49 +230,14 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
 static apr_status_t ironbee_disconnection(void *data)
 {
     conn_rec *c= (conn_rec *)data;
-    server_rec *s = c->base_server;
     ironbee_conn_context *ctx_in;
-    ironbee_conn_context *ctx_out;
 
     if (data == NULL) {
         return OK;
     }
 
-    /* Make sure to handle any pending input. */
     ctx_in = (ironbee_conn_context *)apr_table_get(c->notes, "IRONBEE_CTX_IN");
-    if (ctx_in == NULL) {
-        /* Do not bother if not connected. */
-        abort(); /// @todo Testing
-        return OK;
-    }
-    else if (ctx_in->qconndata->dlen) {
-        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                     IB_PRODUCT_NAME ": Handling any request data on disconnect");
-        handle_data(c, ctx_in);
-    }
-
-    /* Make sure to handle any pending output. */
-    ctx_out = (ironbee_conn_context *)apr_table_get(c->notes, "IRONBEE_CTX_OUT");
-    if (ctx_out == NULL) {
-        /* Do not bother if not connected. */
-        abort(); /// @todo Testing
-        return OK;
-    }
-    if (ctx_out->qconndata->dlen) {
-        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                     IB_PRODUCT_NAME ": Handling any response data on disconnect");
-        handle_data(c, ctx_out);
-    }
-
-/// @todo Handle these differently in the future?  Conn structure flags?
-#if 0
-    if (c->aborted) {
-    }
-    else {
-    }
-#endif
-
-    ib_state_notify_conn_closed(ironbee, ctx_in->qconndata->conn);
+    ib_state_notify_conn_closed(ironbee, ctx_in->iconn);
 
     return OK;
 }
@@ -425,7 +300,7 @@ static void ironbee_child_init(apr_pool_t *p, server_rec *s)
  */
 static int ironbee_pre_connection(conn_rec *c, void *csd)
 {
-    ib_conn_t *qconn = NULL;
+    ib_conn_t *iconn = NULL;
     ib_status_t rc;
     ironbee_conn_context *ctx_in;
     ironbee_conn_context *ctx_out;
@@ -437,10 +312,6 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
         return DECLINED;
     }
 
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                 IB_PRODUCT_NAME ": ironbee_pre_connection remote=%pI local=%pI",
-                 (void *)c->remote_addr, (void *)c->local_addr);
-
     /* Ignore backend connections. The backend connection does not have
      * a handle to the scoreboard. */
     if (c->sbh == NULL) {
@@ -449,32 +320,30 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
         return DECLINED;
     }
 
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                 IB_PRODUCT_NAME ": ironbee_pre_connection remote=%pI local=%pI",
+                 (void *)c->remote_addr, (void *)c->local_addr);
+
     /* Create the connection structure. */
     /// @todo Perhaps the engine should do this instead via an event???
     ib_log_debug(ironbee, 9, "Creating connection structure");
-    rc = ib_conn_create(ironbee, &qconn, c);
+    rc = ib_conn_create(ironbee, &iconn, c);
     if (rc != IB_OK) {
         return DECLINED;
     }
 
     /* Tell the engine a connection has started. */
-    ib_state_notify_conn_opened(ironbee, qconn);
+    ib_state_notify_conn_opened(ironbee, iconn);
 
     /* Create the incoming context. */
     ctx_in = apr_pcalloc(c->pool, sizeof(*ctx_in));
-    rc = ib_conn_data_create(qconn, &ctx_in->qconndata, modcfg->buf_size);
-    if (rc != IB_OK) {
-        return DECLINED;
-    }
+    ctx_in->iconn = iconn;
     ctx_in->direction = IRONBEE_REQUEST;
     apr_table_setn(c->notes, "IRONBEE_CTX_IN", (void *)ctx_in);
 
     /* Create the outgoing context. */
     ctx_out = apr_pcalloc(c->pool, sizeof(*ctx_out));
-    rc = ib_conn_data_create(qconn, &ctx_out->qconndata, modcfg->buf_size);
-    if (rc != IB_OK) {
-        return DECLINED;
-    }
+    ctx_out->iconn = iconn;
     ctx_out->direction = IRONBEE_RESPONSE;
     apr_table_setn(c->notes, "IRONBEE_CTX_OUT", (void *)ctx_out);
 
@@ -484,6 +353,9 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
 
     /* Add the connection level filters which generate I/O events. */
     ap_add_input_filter("IRONBEE_IN", ctx_in, NULL, c);
+#ifdef IB_DEBUG
+    ap_add_input_filter("IRONBEE_DBG_IN", ctx_in, NULL, c);
+#endif
     ap_add_output_filter("IRONBEE_OUT", ctx_out, NULL, c);
 
     return OK;
@@ -498,13 +370,13 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
  * Called to initialize data in a new connection.
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                   ib_conn_t *qconn, void *cbdata)
+                                   ib_conn_t *iconn, void *cbdata)
 {
     //server_rec *s = cbdata;
-    conn_rec *c = (conn_rec *)qconn->pctx;
+    conn_rec *c = (conn_rec *)iconn->pctx;
     ib_status_t rc;
 
-    ib_clog_debug(qconn->ctx, 9, "Initializing connection remote=%s:%d local=%s:%d",
+    ib_clog_debug(iconn->ctx, 9, "Initializing connection remote=%s:%d local=%s:%d",
                   c->remote_ip, c->remote_addr->port,
                   c->local_ip, c->local_addr->port);
 
@@ -513,8 +385,8 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
      */
 
     /* remote_ip */
-    qconn->remote_ipstr = c->remote_ip;
-    rc = ib_data_add_bytestr(qconn->dpi,
+    iconn->remote_ipstr = c->remote_ip;
+    rc = ib_data_add_bytestr(iconn->dpi,
                              "remote_ip",
                              (uint8_t *)c->remote_ip,
                              strlen(c->remote_ip),
@@ -524,8 +396,8 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     }
 
     /* remote_port */
-    qconn->remote_port = c->remote_addr->port;
-    rc = ib_data_add_num(qconn->dpi,
+    iconn->remote_port = c->remote_addr->port;
+    rc = ib_data_add_num(iconn->dpi,
                          "remote_port",
                          c->remote_addr->port,
                          NULL);
@@ -534,8 +406,8 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     }
 
     /* local_ip */
-    qconn->local_ipstr = c->local_ip;
-    rc = ib_data_add_bytestr(qconn->dpi,
+    iconn->local_ipstr = c->local_ip;
+    rc = ib_data_add_bytestr(iconn->dpi,
                              "local_ip",
                              (uint8_t *)c->remote_ip,
                              strlen(c->remote_ip),
@@ -545,8 +417,8 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     }
 
     /* local_port */
-    qconn->local_port = c->local_addr->port;
-    rc = ib_data_add_num(qconn->dpi,
+    iconn->local_port = c->local_addr->port;
+    rc = ib_data_add_num(iconn->dpi,
                          "local_port",
                          c->local_addr->port,
                          NULL);
@@ -561,6 +433,45 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
 
 /* -- Filters -- */
 
+#ifdef IB_DEBUG
+/**
+ * @internal
+ *
+ * Just logs data that comes from the primary input filter.
+ *
+ * Anything this filter sees should be what Apache sees.
+ */
+static int ironbee_dbg_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
+                                ap_input_mode_t mode, apr_read_type_e block,
+                                apr_off_t readbytes)
+{
+    conn_rec *c = f->c;
+    apr_bucket *b;
+    apr_status_t rc;
+
+#if 0
+    ap_filter_t *xf = f;
+    do {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                     "DBGFILTER: type=%d mode=%d block=%d readbytes=%d %s", xf->frec->ftype, mode, block, (int)readbytes, xf->frec->name);
+    } while((xf = xf->next) != NULL);
+#endif
+    
+    rc = ap_get_brigade(f->next, bb, mode, block, readbytes);
+    if (rc == APR_SUCCESS) {
+
+        /* Process data. */
+        for (b = APR_BRIGADE_FIRST(bb); b != APR_BRIGADE_SENTINEL(bb); b = APR_BUCKET_NEXT(b)) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                         IB_PRODUCT_NAME ": DBG bucket f=%s, b=%s len=%d",
+                         f->frec->name, b->type->name, (int)b->length);
+        }
+    }
+
+    return APR_SUCCESS;
+}
+#endif
+
 /**
  * @internal
  *
@@ -573,52 +484,173 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
 {
     conn_rec *c = f->c;
     ironbee_conn_context *ctx = f->ctx;
+    ib_conn_t *iconn = ctx->iconn;
+    ib_stream_t *istream;
     apr_bucket *b;
     apr_status_t rc;
+    int buffering = 1; /// @todo make configurable
 
-    /// @todo Should we loop here to grab as much data as we can???
-    rc = ap_get_brigade(f->next, bb, mode, block, readbytes);
-    if (rc == APR_SUCCESS) {
-        for (b = APR_BRIGADE_FIRST(bb); b != APR_BRIGADE_SENTINEL(bb); b = APR_BUCKET_NEXT(b)) {
-            process_bucket(f, b);
+    /* Any mode not handled just gets passed through. */
+    if ((mode != AP_MODE_GETLINE) && (mode != AP_MODE_READBYTES)) {
+        return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    }
+
+    /* When buffering, data is removed from the brigade and handed
+     * to IronBee. The filter must not return an empty brigade in this
+     * case and keeps reading until there is processed data that comes
+     * back from IronBee.
+     */
+    do {
+        ib_tx_t *itx = iconn->tx;
+
+        /* If there is any processed data, then send it now. */
+        if (buffering && (itx != NULL)) {
+            ib_sdata_t *sdata;
+
+            /* Take any data from the drain (processed data) and
+             * inject it back into the filter brigade.
+             */
+            ib_fctl_drain(itx->fctl, &istream);
+            if ((istream != NULL) && (istream->nelts > 0)) {
+                int done = 0;
+
+                while (!done) {
+                    apr_bucket *ibucket = NULL;
+
+                    /// @todo Handle multi-bucket lines
+                    if (mode == AP_MODE_GETLINE) {
+                        done = 1;
+                    }
+
+                    ib_stream_pull(istream, &sdata);
+                    if (sdata == NULL) {
+                        /* No more data left. */
+                        break;
+                    }
+
+                    switch (sdata->type) {
+                        case IB_STREAM_DATA:
+#ifdef IB_DEBUG
+                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                                         IB_PRODUCT_NAME ": DATA[%d]: %.*s", (int)sdata->dlen, (int)sdata->dlen, (char *)sdata->data);
+#endif
+                            
+                            /// @todo Is this creating a copy?  Just need a reference.
+                            ibucket = apr_bucket_heap_create(sdata->data,
+                                                             sdata->dlen,
+                                                             NULL,
+                                                             bb->bucket_alloc);
+                            break;
+                        case IB_STREAM_FLUSH:
+#ifdef IB_DEBUG
+                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                                         IB_PRODUCT_NAME ": FLUSH");
+#endif
+                            ibucket = apr_bucket_flush_create(bb->bucket_alloc);
+                            break;
+                        case IB_STREAM_EOH:
+#ifdef IB_DEBUG
+                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                                         IB_PRODUCT_NAME ": EOH");
+#endif
+                            /// @todo Do something here???
+                            break;
+                        case IB_STREAM_EOB:
+#ifdef IB_DEBUG
+                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                                         IB_PRODUCT_NAME ": EOB");
+#endif
+                            /// @todo Do something here???
+                            break;
+                        case IB_STREAM_EOS:
+#ifdef IB_DEBUG
+                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                                         IB_PRODUCT_NAME ": EOS");
+#endif
+                            ibucket = apr_bucket_eos_create(bb->bucket_alloc);
+                            break;
+                        default:
+                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                                         IB_PRODUCT_NAME ": UNKNOWN stream data type %d", sdata->type);
+                    }
+
+                    if (ibucket != NULL) {
+                        APR_BRIGADE_INSERT_TAIL(bb, ibucket);
+                    }
+                }
+
+                /* Need to send any processed data to avoid deadlock. */
+                if (!APR_BRIGADE_EMPTY(bb)) {
+                    return APR_SUCCESS;
+                }
+            }
         }
-        /// @todo Configurable?  This is so that a large buffer does not
-        ///       make the connection filter processing delayed until after
-        ///       the transaction processing (the filter should see the
-        ///       headers before the request_headers_event hook(s).
 
-        handle_data(c, ctx);
-    }
-    else if (APR_STATUS_IS_TIMEUP(rc)) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     IB_PRODUCT_NAME ": %s server closed connection (%d)",
-                     f->frec->name, rc);
+        /* Fetch data from the next filter. */
+        if (buffering) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                         "FETCH BRIGADE (buffering)");
 
-        /* Handle any data that is there and remove the filter. */
-        handle_data(c, ctx);
-        ap_remove_input_filter(f);
-    }
-    else if (APR_STATUS_IS_EOF(rc) || apr_get_os_error() == ECONNRESET) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     IB_PRODUCT_NAME ": %s client closed connection (%d)",
-                     f->frec->name, rc);
+            /* Normally Apache will request the headers line-by-line, but
+             * IronBee does not require this.  So, here the request is
+             * fetched with READBYTES and IronBee will then break
+             * it back up into lines when it is injected back into
+             * the brigade after the data is processed.
+             */
+            rc = ap_get_brigade(f->next,
+                                bb,
+                                AP_MODE_READBYTES,
+                                block,
+                                HUGE_STRING_LEN);
+        }
+        else {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                         "FETCH BRIGADE (non-buffering)");
+            rc = ap_get_brigade(f->next, bb, mode, block, readbytes);
+        }
 
-        /* Handle any data that is there and remove the filter. */
-        handle_data(c, ctx);
-        ap_remove_input_filter(f);
-    }
-    else {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     IB_PRODUCT_NAME ": %s returned %d (0x%08x) - %s",
-                     f->frec->name, rc, rc, strerror(apr_get_os_error()));
+        /* Check for any timeouts/disconnects/errors. */
+        if (APR_STATUS_IS_TIMEUP(rc)) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                         IB_PRODUCT_NAME ": %s server closed connection (%d)",
+                         f->frec->name, rc);
 
-        /* Handle any data that is there. */
-        handle_data(c, ctx);
-    }
+            ap_remove_input_filter(f);
+            return rc;
+        }
+        else if (APR_STATUS_IS_EOF(rc) || apr_get_os_error() == ECONNRESET) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                         IB_PRODUCT_NAME ": %s client closed connection (%d)",
+                         f->frec->name, rc);
 
+            ap_remove_input_filter(f);
+            return rc;
+        }
+        else if (rc != APR_SUCCESS) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
+                         IB_PRODUCT_NAME ": %s returned %d (0x%08x) - %s",
+                         f->frec->name, rc, rc, strerror(apr_get_os_error()));
+
+            return rc;
+        }
+
+        /* Process data. */
+        for (b = APR_BRIGADE_FIRST(bb);
+             b != APR_BRIGADE_SENTINEL(bb);
+             b = APR_BUCKET_NEXT(b))
+        {
+            process_bucket(f, b);
+            if (buffering) {
+                /// @todo setaside into our own pool to destroy later???
+                apr_bucket_setaside(b, c->pool);
+                APR_BUCKET_REMOVE(b);
+            }
+        }
+    } while (buffering);
 
     return APR_SUCCESS;
 }
+
 
 /**
  * @internal
@@ -630,11 +662,14 @@ static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
     apr_bucket *b;
 
     for (b = APR_BRIGADE_FIRST(bb); b != APR_BRIGADE_SENTINEL(bb); b = APR_BUCKET_NEXT(b)) {
+#if 0
+        /// @todo Should this be done?  Maybe only for proxy?
         if (APR_BUCKET_IS_EOS(b)) {
             /// @todo Do we need to do this? Maybe only for proxy.
             apr_bucket *flush = apr_bucket_flush_create(f->c->bucket_alloc);
             APR_BUCKET_INSERT_BEFORE(b, flush);
         }
+#endif
 
         process_bucket(f, b);
     }
@@ -986,8 +1021,17 @@ static void ironbee_register_hooks(apr_pool_t *p)
         "IRONBEE_IN",
         ironbee_input_filter,
         NULL,
+        AP_FTYPE_CONNECTION + 1
+    );
+
+#ifdef IB_DEBUG
+    ap_register_input_filter(
+        "IRONBEE_DBG_IN",
+        ironbee_dbg_input_filter,
+        NULL,
         AP_FTYPE_CONNECTION
     );
+#endif
 
     ap_register_output_filter(
         "IRONBEE_OUT",

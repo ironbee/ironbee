@@ -61,6 +61,7 @@ ffi.cdef[[
     typedef struct ib_field_t ib_field_t;
     typedef struct ib_field_val_t ib_field_val_t;
     typedef struct ib_bytestr_t ib_bytestr_t;
+
     typedef enum {
         IB_OK,
         IB_DECLINED,
@@ -80,12 +81,6 @@ ffi.cdef[[
         IB_FTYPE_BYTESTR,
         IB_FTYPE_LIST
     } ib_ftype_t;
-    typedef enum {
-        IB_DTYPE_HTTP_LINE,
-        IB_DTYPE_HTTP_HEADER,
-        IB_DTYPE_HTTP_BODY,
-        IB_DTYPE_HTTP_TRAILER
-    } ib_data_type_t;
     typedef enum {
         conn_started_event,
         conn_finished_event,
@@ -165,7 +160,11 @@ ffi.cdef[[
     typedef struct ib_provider_t ib_provider_t;
     typedef struct ib_provider_inst_t ib_provider_inst_t;
     typedef struct ib_matcher_t ib_matcher_t;
-
+    typedef struct ib_filter_t ib_filter_t;
+    typedef struct ib_fdata_t ib_fdata_t;
+    typedef struct ib_fctl_t ib_fctl_t;
+    typedef struct ib_stream_t ib_stream_t;
+    typedef struct ib_sdata_t ib_sdata_t;
 
     /** Function called when a provider is registered. */
     typedef ib_status_t (*ib_provider_register_fn_t)(ib_engine_t *ib,
@@ -174,6 +173,22 @@ ffi.cdef[[
     /** Function called when a provider instance is created. */
     typedef ib_status_t (*ib_provider_inst_init_fn_t)(ib_provider_inst_t *pi,
                                                       void *data);
+    typedef enum {
+        IB_DTYPE_HTTP_LINE,
+        IB_DTYPE_HTTP_HEADER,
+        IB_DTYPE_HTTP_BODY,
+        IB_DTYPE_HTTP_TRAILER
+    } ib_data_type_t;
+    typedef enum {
+        IB_STREAM_DATA,
+        IB_STREAM_FLUSH,
+        IB_STREAM_EOS,
+        IB_STREAM_ERROR,
+    } ib_sdata_type_t;
+    typedef enum {
+        IB_FILTER_CONN,
+        IB_FILTER_TX,
+    } ib_filter_type_t;
 
     /* Timeval Structure */
     struct ib_timeval_t {
@@ -239,6 +254,7 @@ ffi.cdef[[
         void               *pctx;
         ib_provider_inst_t *dpi;
         ib_hash_t          *data;
+        ib_fctl_t          *fctl;
         ib_timeval_t        started;
         ib_timeval_t        tv_request;
         ib_tx_t            *next;

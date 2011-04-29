@@ -61,6 +61,7 @@ struct ib_engine_t {
     /// @todo Only these should be private
     ib_plugin_t        *plugin;           /**< Info about the server plugin */
     ib_array_t         *modules;          /**< Array tracking modules */
+    ib_array_t         *filters;          /**< Array tracking filters */
     ib_array_t         *contexts;         /**< Configuration contexts */
     ib_hash_t          *dirmap;           /**< Hash tracking directive map */
     ib_hash_t          *apis;             /**< Hash tracking provider APIs */
@@ -132,6 +133,9 @@ struct ib_context_t {
     /* Context Selection */
     ib_context_fn_t          fn_ctx;      /**< Context decision function */
     void                    *fn_ctx_data; /**< Context function data */
+
+    /* Filters */
+    ib_list_t               *filters;     /**< Context enabled filters */
 
     /* Hooks */
     ib_hook_t   *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */

@@ -185,6 +185,13 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
         goto failed;
     }
 
+    /* Create an array to hold filters */
+    /// @todo Need good defaults here
+    rc = ib_array_create(&((*pib)->filters), (*pib)->mp, 16, 8);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Create a hash to hold configuration directive mappings by name */
     rc = ib_hash_create(&((*pib)->dirmap), (*pib)->mp);
     if (rc != IB_OK) {
@@ -510,21 +517,19 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         goto failed;
     }
 
-    (*ptx)->ib = ib;
-    (*ptx)->mp = pool;
-    (*ptx)->ctx = ib->ctx;
-    (*ptx)->pctx = pctx;
-    (*ptx)->conn = conn;
-
-    /* Update transaction count. */
-    conn->tx_count++;
-
     /// @todo Need to avoid gettimeofday and set from parser tx time, but
     ///       it currently only has second accuracy.
     gettimeofday(&tv, NULL);
     (*ptx)->started.tv_sec = tv.tv_sec;
     (*ptx)->started.tv_usec = tv.tv_usec;
 
+    (*ptx)->ib = ib;
+    (*ptx)->mp = pool;
+    (*ptx)->ctx = ib->ctx;
+    (*ptx)->pctx = pctx;
+    (*ptx)->conn = conn;
+
+    conn->tx_count++;
     ib_tx_generate_id(*ptx);
 
     /* Create the core data provider instance */
@@ -539,10 +544,17 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     }
 
 
+    /* Create the generic data store. */
     rc = ib_hash_create(&((*ptx)->data), (*ptx)->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
+    }
+
+    /* Create a filter controller. */
+    rc = ib_fctl_tx_create(&((*ptx)->fctl), *ptx, (*ptx)->mp);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Add transaction to the connection list */
@@ -1079,6 +1091,14 @@ ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_tx_data(ib, tx_data_in_event, txdata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_fctl_data(txdata->tx->fctl,
+                      txdata->dtype,
+                      txdata->data,
+                      txdata->dlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1150,6 +1170,12 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
         ib_state_notify_request_started(ib, tx);
     }
 
+    /// @todo Seems this gets there too late.
+    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOH);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADERS);
 
     rc = ib_state_notify_tx(ib, request_headers_event, tx);
@@ -1184,7 +1210,14 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
                                                    ib_tx_t *tx)
 {
     IB_FTRACE_INIT(ib_state_notify_request_body_ex);
-    ib_status_t rc = ib_state_notify_tx(ib, request_body_event, tx);
+    ib_status_t rc;
+    
+    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOB);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_state_notify_tx(ib, request_body_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1237,6 +1270,11 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(request_finished_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOS);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
@@ -1766,6 +1804,12 @@ ib_status_t ib_context_create(ib_context_t **pctx,
 
     /* Create an array to hold the module config data */
     rc = ib_array_create(&((*pctx)->cfgdata), (*pctx)->mp, 16, 8);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
+    /* Create a list to hold the enabled filters */
+    rc = ib_list_create(&((*pctx)->filters), (*pctx)->mp);
     if (rc != IB_OK) {
         goto failed;
     }

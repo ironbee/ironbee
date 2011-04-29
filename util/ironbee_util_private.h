@@ -121,7 +121,7 @@ struct ib_array_t {
  * List node structure.
  */
 struct ib_list_node_t {
-    IB_LIST_NODE_REQ_FIELDS(ib_list_node_t)   /* Required fields */
+    IB_LIST_NODE_REQ_FIELDS(ib_list_node_t);  /* Required fields */
     void              *data;                  /**< Node data */
 };
 
@@ -131,7 +131,7 @@ struct ib_list_node_t {
  */
 struct ib_list_t {
     ib_mpool_t       *mp;
-    IB_LIST_REQ_FIELDS(ib_list_node_t)        /* Required fields */
+    IB_LIST_REQ_FIELDS(ib_list_node_t);       /* Required fields */
 };
 
 #endif /* IB_UTIL_PRIVATE_H_ */
