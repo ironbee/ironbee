@@ -364,11 +364,6 @@ static apr_status_t ironbee_disconnection(void *data)
 
     ib_state_notify_conn_closed(ironbee, ctx_in->qconndata->conn);
 
-    /* Done with the connection. */
-    /// @todo Perhaps the engine should do this instead via an event???
-    ib_log_debug(ironbee, 9, "Destroying connection structure");
-    ib_conn_destroy(ctx_in->qconndata->conn);
-
     return OK;
 }
 
