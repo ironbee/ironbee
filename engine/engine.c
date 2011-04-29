@@ -963,13 +963,29 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
                                          ib_conndata_t *conndata)
 {
     IB_FTRACE_INIT(ib_state_notify_conn_data_in);
+    ib_conn_t *conn = conndata->conn;
+    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     if ((conndata->conn->flags & IB_CONN_FSEENDATAIN) == 0) {
         ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAIN);
     }
 
+    /* Notify data handlers before the parser. */
     rc = ib_state_notify_conn_data(ib, conn_data_in_event, conndata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Run the data through the parser. */
+    if (iface == NULL) {
+        /// @todo Probably should not need this check
+        ib_log_error(ib, 0, "Failed to fetch parser interface on data in");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+    rc = iface->data_in(pi, conndata);
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -977,13 +993,29 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
                                           ib_conndata_t *conndata)
 {
     IB_FTRACE_INIT(ib_state_notify_conn_data_out);
+    ib_conn_t *conn = conndata->conn;
+    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     if ((conndata->conn->flags & IB_CONN_FSEENDATAOUT) == 0) {
         ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAOUT);
     }
 
+    /* Notify data handlers before the parser. */
     rc = ib_state_notify_conn_data(ib, conn_data_out_event, conndata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Run the data through the parser. */
+    if (iface == NULL) {
+        /// @todo Probably should not need this check
+        ib_log_error(ib, 0, "Failed to fetch parser interface on data out");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+    rc = iface->data_out(pi, conndata);
+
     IB_FTRACE_RET_STATUS(rc);
 }
 

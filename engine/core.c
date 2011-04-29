@@ -1919,70 +1919,6 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
 
 /**
  * @internal
- * Handle incoming data (request).
- *
- * @param ib Engine
- * @param cdata Connection data
- * @param cbdata Callback data
- *
- * @returns Status code
- */
-static ib_status_t parser_hook_data_in(ib_engine_t *ib,
-                                       ib_conndata_t *cdata,
-                                       void *cbdata)
-{
-    IB_FTRACE_INIT(parser_hook_data_in);
-    ib_conn_t *conn = cdata->conn;
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface on data in");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->data_in(pi, cdata);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * @internal
- * Handle outgoing data (response).
- *
- * @param ib Engine
- * @param cdata Connection data
- * @param cbdata Callback data
- *
- * @returns Status code
- */
-static ib_status_t parser_hook_data_out(ib_engine_t *ib,
-                                        ib_conndata_t *cdata,
-                                        void *cbdata)
-{
-    IB_FTRACE_INIT(parser_hook_data_out);
-    ib_conn_t *conn = cdata->conn;
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface on data out");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->data_out(pi, cdata);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * @internal
  * Handle the request header.
  *
  * @param ib Engine
@@ -3292,10 +3228,6 @@ static ib_status_t core_init(ib_engine_t *ib,
                      (ib_void_fn_t)parser_hook_connect, NULL);
     ib_hook_register(ib, handle_disconnect_event,
                      (ib_void_fn_t)parser_hook_disconnect, NULL);
-    ib_hook_register(ib, conn_data_in_event,
-                     (ib_void_fn_t)parser_hook_data_in, NULL);
-    ib_hook_register(ib, conn_data_out_event,
-                     (ib_void_fn_t)parser_hook_data_out, NULL);
     /// @todo Need the parser to parse headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
     //ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
     ib_hook_register(ib, request_headers_event,
