@@ -39,12 +39,12 @@ base.package.preload["ironbee-ffi"] = _M
 -- ===============================================
 _COPYRIGHT = "Copyright (C) 2010-2011 Qualys, Inc."
 _DESCRIPTION = "IronBee API via luajit FFI"
-_VERSION = "0.1"
+_VERSION = "0.2"
 
 -- ===============================================
 -- Setup the IronBee C definitions.
 -- ===============================================
-ffi.cdef[[
+ffi.cdef [[
     /* Util Types */
     typedef void (*ib_void_fn_t)(void);
     typedef struct ib_mpool_t ib_mpool_t;
@@ -53,7 +53,6 @@ ffi.cdef[[
     typedef struct ib_hash_t ib_hash_t;
     typedef struct ib_list_t ib_list_t;
     typedef struct ib_list_node_t ib_list_node_t;
-    typedef uint32_t ib_ftype_t;
     typedef uint32_t ib_flags_t;
     typedef uint64_t ib_flags64_t;
     typedef struct ib_cfgmap_t ib_cfgmap_t;
@@ -61,7 +60,6 @@ ffi.cdef[[
     typedef struct ib_field_t ib_field_t;
     typedef struct ib_field_val_t ib_field_val_t;
     typedef struct ib_bytestr_t ib_bytestr_t;
-
     typedef enum {
         IB_OK,
         IB_DECLINED,
@@ -72,6 +70,7 @@ ffi.cdef[[
         IB_EINVAL,
         IB_ENOENT,
         IB_ETIMEDOUT,
+        IB_EAGAIN
     } ib_status_t;
     typedef enum {
         IB_FTYPE_GENERIC,
@@ -111,37 +110,37 @@ ffi.cdef[[
         response_started_event,
         response_headers_event,
         response_body_event,
-        response_finished_event
+        response_finished_event,
+        IB_STATE_EVENT_NUM
     } ib_state_event_type_t;
-
     typedef enum {
         IB_LEVENT_TYPE_UNKNOWN,
-        IB_LEVENT_TYPE_ALERT,
+        IB_LEVENT_TYPE_ALERT
     } ib_logevent_type_t;
     typedef enum {
         IB_LEVENT_ACT_UNKNOWN,
         IB_LEVENT_ACT_RECON,
         IB_LEVENT_ACT_ATTEMPTED_ATTACK,
-        IB_LEVENT_ACT_SUCCESSFUL_ATTACK,
+        IB_LEVENT_ACT_SUCCESSFUL_ATTACK
     } ib_logevent_activity_t;
     typedef enum {
         IB_LEVENT_PCLASS_UNKNOWN,
-        IB_LEVENT_PCLASS_INJECTION,
+        IB_LEVENT_PCLASS_INJECTION
     } ib_logevent_pri_class_t;
     typedef enum {
         IB_LEVENT_SCLASS_UNKNOWN,
-        IB_LEVENT_SCLASS_SQL,
+        IB_LEVENT_SCLASS_SQL
     } ib_logevent_sec_class_t;
     typedef enum {
         IB_LEVENT_SYS_UNKNOWN,
         IB_LEVENT_SYS_PUBLIC,
-        IB_LEVENT_SYS_PRIVATE,
+        IB_LEVENT_SYS_PRIVATE
     } ib_logevent_sys_env_t;
     typedef enum {
         IB_LEVENT_ACTION_UNKNOWN,
         IB_LEVENT_ACTION_LOG,
         IB_LEVENT_ACTION_BLOCK,
-        IB_LEVENT_ACTION_IGNORE,
+        IB_LEVENT_ACTION_IGNORE
     } ib_logevent_action_t;
 
     /* Engine Types */
@@ -182,12 +181,14 @@ ffi.cdef[[
     typedef enum {
         IB_STREAM_DATA,
         IB_STREAM_FLUSH,
+        IB_STREAM_EOH,
+        IB_STREAM_EOB,
         IB_STREAM_EOS,
-        IB_STREAM_ERROR,
+        IB_STREAM_ERROR
     } ib_sdata_type_t;
     typedef enum {
         IB_FILTER_CONN,
-        IB_FILTER_TX,
+        IB_FILTER_TX
     } ib_filter_type_t;
 
     /* Timeval Structure */
@@ -244,6 +245,17 @@ ffi.cdef[[
         const char         *data;
     };
 
+    /* Transaction Data Structure */
+    struct ib_txdata_t {
+        ib_engine_t        *ib;
+        ib_mpool_t         *mp;
+        ib_tx_t            *tx;
+        ib_data_type_t      dtype;
+        size_t              dalloc;
+        size_t              dlen;
+        const char         *data;
+    };
+
     /* Transaction Structure */
     struct ib_tx_t {
         ib_engine_t        *ib;
@@ -261,17 +273,6 @@ ffi.cdef[[
         const char         *hostname;
         const char         *path;
         ib_flags_t          flags;
-    };
-
-    /* Transaction Data Structure */
-    struct ib_txdata_t {
-        ib_engine_t        *ib;
-        ib_mpool_t         *mp;
-        ib_tx_t            *tx;
-        ib_data_type_t      dtype;
-        size_t              dalloc;
-        size_t              dlen;
-        const char         *data;
     };
 
 

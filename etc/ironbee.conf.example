@@ -2,7 +2,10 @@
 # TODO Implement
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_htp.so"
+
+# Lua
 LoadModule "ibmod_lua.so"
+LoadModuleLua "example.lua"
 
 # Main Context (need separate directives for these)
 Set parser "htp"

@@ -575,7 +575,6 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/// @todo This should be triggered by directive.
 static ib_status_t modlua_module_load(ib_engine_t *ib,
                                       ib_module_t **pm,
                                       const char *file)
@@ -583,6 +582,7 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     IB_FTRACE_INIT(modlua_module_load);
     modlua_chunk_t *chunk;
     modlua_cfg_t *maincfg;
+    ib_list_t *mlist = (ib_list_t *)IB_MODULE_DATA;
     lua_State *L;
     ib_module_t *m;
     ib_status_t rc;
@@ -672,6 +672,12 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     ib_status_t rc;
     int ec;
 
+    /* Skip loading the built-in module. */
+    /// @todo Do not hard-code this
+    if (strcasecmp("ironbee-ffi", name) == 0) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     /* Get the main module config. */
     rc = ib_context_module_config(ib_context_main(ib),
                                   &IB_MODULE_SYM, (void *)&maincfg);
@@ -691,7 +697,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
 
     ib_log_debug(ib, 4, "Init lua module ctx=%p maincfg=%p Lconfig=%p: %s", ctx, maincfg, maincfg->Lconfig, name);
 
-    /* Setup a fresh new Lua state to load each module. */
+    /* Use the config lua state. */
     L = maincfg->Lconfig;
 
     /* Lookup the module. */
@@ -896,13 +902,15 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Setup a fresh Lua state for this connection. */
-    ib_log_debug(ib, 4, "Initializing lua runtime for configuration.");
-    modcfg->Lconfig = luaL_newstate();
-    luaL_openlibs(modcfg->Lconfig);
+    /* Setup a fresh Lua state for this configuration. */
+    if (modcfg->Lconfig == NULL) {
+        ib_log_debug(ib, 4, "Initializing lua runtime for configuration.");
+        modcfg->Lconfig = luaL_newstate();
+        luaL_openlibs(modcfg->Lconfig);
 
-    /* Preload ironbee module (static link). */
-    modlua_load_ironbee_module(ib, modcfg->Lconfig);
+        /* Preload ironbee module (static link). */
+        modlua_load_ironbee_module(ib, modcfg->Lconfig);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -995,24 +1003,26 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
     /* Run through each lua module to be used in this context and
      * load it into the lua runtime.
      */
-    IB_LIST_LOOP(modcfg->lua_modules, node) {
-        ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        modlua_chunk_t *chunk = (modlua_chunk_t *)m->data;
-        int ec;
+    if (modcfg->lua_modules != NULL) {
+        IB_LIST_LOOP(modcfg->lua_modules, node) {
+            ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
+            modlua_chunk_t *chunk = (modlua_chunk_t *)m->data;
+            int ec;
 
-        ib_log_debug(ib, 4, "Loading lua module \"%s\" into runtime for conn=%p", m->name, conn);
-        rc = modlua_load_lua_data(ib, L, chunk);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
+            ib_log_debug(ib, 4, "Loading lua module \"%s\" into runtime for conn=%p", m->name, conn);
+            rc = modlua_load_lua_data(ib, L, chunk);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
 
-        ib_log_debug(ib, 9, "Executing lua chunk=%p", chunk);
-        lua_pushstring(L, m->name);
-        ec = lua_pcall(L, 1, 0, 0);
-        if (ec != 0) {
-            ib_log_error(ib, 1, "Failed to execute lua module \"%s\" - %s (%d)",
-                         m->name, lua_tostring(L, -1), ec);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            ib_log_debug(ib, 9, "Executing lua chunk=%p", chunk);
+            lua_pushstring(L, m->name);
+            ec = lua_pcall(L, 1, 0, 0);
+            if (ec != 0) {
+                ib_log_error(ib, 1, "Failed to execute lua module \"%s\" - %s (%d)",
+                             m->name, lua_tostring(L, -1), ec);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
         }
     }
 
@@ -1332,7 +1342,7 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
      */
     luaevents = modcfg->event_reg[event];
     if (luaevents == NULL) {
-        ib_log_error(ib, 4, "No lua events found");
+        ib_log_error(ib, 9, "No lua events found");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -1518,13 +1528,19 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                                ib_module_t *m)
 {
     IB_FTRACE_INIT(modlua_init);
+    ib_list_t *mlist;
+    ib_status_t rc;
+
+    /* Setup a list to track loaded lua modules. */
+    rc = ib_list_create(&mlist, ib_engine_pool_config_get(ib));
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create lua module list: %d", rc);
+        return rc;
+    }
+    m->data = mlist;
 
     /* Initialize the lua runtime for the configuration. */
     modlua_init_lua_runtime_cfg(ib, NULL, NULL);
-
-    /* Load example lua modules */
-    /// @todo Remove this - testing only.
-    modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "example.lua");
 
     /* Hooks to initialize/destroy the lua runtime for configuration. */
     ib_hook_register(ib, cfg_finished_event,
@@ -1647,6 +1663,8 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(modlua_context_init);
     modlua_cfg_t *modcfg;
+    ib_list_t *mlist = (ib_list_t *)m->data;
+    ib_list_node_t *node;
     ib_status_t rc;
 
     /* Get the module config. */
@@ -1658,7 +1676,11 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
     }
 
     /* Init the lua modules that were loaded */
-    modlua_lua_module_init(ib, ctx, "example");
+    /// @todo Need a directive for this instead of loading all per context
+    IB_LIST_LOOP(mlist, node) {
+        ib_module_t *mlua = (ib_module_t *)ib_list_node_data(node);
+        modlua_lua_module_init(ib, ctx, mlua->name);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1865,6 +1887,23 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
 
     if (strcasecmp("LoadModuleLua", name) == 0) {
         ib_log_debug(ib, 4, "TODO: Handle Directive: %s %s", name, p1);
+        if (*p1 == '/') {
+            modlua_module_load(ib, NULL, p1);
+        }
+        else {
+            /// @todo Handle larger fn???
+            char fn[512];
+            size_t len = snprintf(fn, sizeof(fn), "%s/%s", 
+                                  X_MODULE_BASE_PATH,
+                                  p1);
+
+            if (len >= sizeof(fn)) {
+                ib_log_error(ib, 1, "Filename too long: %s %s", name, p1);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+
+            modlua_module_load(ib, NULL, fn);
+        }
     }
     else {
         ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);

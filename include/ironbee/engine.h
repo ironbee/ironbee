@@ -186,6 +186,27 @@ struct ib_uuid_t {
     uint8_t   node[6];
 };
 
+/** Connection Data Structure */
+struct ib_conndata_t {
+    ib_engine_t        *ib;              /**< Engine handle */
+    ib_mpool_t         *mp;              /**< Data memory pool */
+    ib_conn_t          *conn;            /**< Connection */
+    size_t              dalloc;          /**< Data buffer allocated */
+    size_t              dlen;            /**< Data buffer length */
+    uint8_t            *data;            /**< Data buffer */
+};
+
+/** Transaction Data Structure */
+struct ib_txdata_t {
+    ib_engine_t        *ib;              /**< Engine handle */
+    ib_mpool_t         *mp;              /**< Data memory pool */
+    ib_tx_t            *tx;              /**< Transaction */
+    ib_data_type_t      dtype;           /**< Data type */
+    size_t              dalloc;          /**< Data buffer allocated */
+    size_t              dlen;            /**< Data buffer length */
+    uint8_t            *data;            /**< Data buffer */
+};
+
 /** Connection Structure */
 struct ib_conn_t {
     ib_engine_t        *ib;              /**< Engine handle */
@@ -213,27 +234,6 @@ struct ib_conn_t {
     ib_tx_t            *tx_last;         /**< Last transaction in the list */
 
     ib_flags_t          flags;           /**< Connection flags */
-};
-
-/** Connection Data Structure */
-struct ib_conndata_t {
-    ib_engine_t        *ib;              /**< Engine handle */
-    ib_mpool_t         *mp;              /**< Data memory pool */
-    ib_conn_t          *conn;            /**< Connection */
-    size_t              dalloc;          /**< Data buffer allocated */
-    size_t              dlen;            /**< Data buffer length */
-    uint8_t            *data;            /**< Data buffer */
-};
-
-/** Transaction Data Structure */
-struct ib_txdata_t {
-    ib_engine_t        *ib;              /**< Engine handle */
-    ib_mpool_t         *mp;              /**< Data memory pool */
-    ib_tx_t            *tx;              /**< Transaction */
-    ib_data_type_t      dtype;           /**< Data type */
-    size_t              dalloc;          /**< Data buffer allocated */
-    size_t              dlen;            /**< Data buffer length */
-    uint8_t            *data;            /**< Data buffer */
 };
 
 /** Transaction Structure */
