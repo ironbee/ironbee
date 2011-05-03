@@ -646,6 +646,12 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
         NULL                            /**< Context init function */
     );
 
+    /* Track loaded lua modules. */
+    rc = ib_list_push(mlist, m);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Initialize and register the new lua module with the engine. */
     ib_log_debug(ib, 9, "Init lua module");
     rc = ib_module_init(m, ib);
