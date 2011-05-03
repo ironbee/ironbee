@@ -610,14 +610,14 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 bstr_free(&connp->out_tx->response_message);
             }
 
-            connp->out_tx->response_line_raw = bstr_dup_mem((char *) connp->in_line, connp->in_line_len);
+            connp->out_tx->response_line_raw = bstr_dup_mem((char *) connp->out_line, connp->out_line_len);
             if (connp->out_tx->response_line_raw == NULL) {
                 return HTP_ERROR;
             }
 
             /// @todo Would be nice to reference response_line_raw data
-            htp_chomp(connp->in_line, &connp->in_line_len);
-            connp->out_tx->response_line = bstr_dup_ex(connp->out_tx->response_line_raw, 0, connp->in_line_len);
+            htp_chomp(connp->out_line, &connp->out_line_len);
+            connp->out_tx->response_line = bstr_dup_ex(connp->out_tx->response_line_raw, 0, connp->out_line_len);
             if (connp->out_tx->response_line == NULL) {
                 return HTP_ERROR;
             }
