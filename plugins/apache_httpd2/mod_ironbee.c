@@ -674,7 +674,7 @@ static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
         process_bucket(f, b);
     }
 
-    return APR_SUCCESS;
+    return ap_pass_brigade(f->next, bb);
 }
 
 
