@@ -1290,12 +1290,14 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  * @param cm Configuration map
  * @param base Base address of the structure holding the values
  * @param init Configuration map initialization structure
+ * @param usedefaults If true, use the map default values as base
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_init(ib_cfgmap_t *cm,
                                       const void *base,
-                                      const ib_cfgmap_init_t *init);
+                                      const ib_cfgmap_init_t *initi,
+                                      int usedefaults);
 
 
 /**

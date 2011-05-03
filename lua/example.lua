@@ -235,6 +235,10 @@ function onEventHandleRequestHeaders(ib, tx)
     ironbee.ib_log_debug(ib, 4, "Lower case request line is a field type: %d", req_line_lower.type())
     ironbee.ib_log_debug(ib, 4, "Lower case Request Line value: %s", req_line_lower.value())
 
+    -- The original request line is NOT modified by transformations
+    req_line = ironbee.ib_data_get(tx.dpi(), "request_line")
+    ironbee.ib_log_debug(ib, 4, "Request Line value: %s", req_line.value())
+
     -- Request headers are a collection (table of field objects)
     local req_headers = ironbee.ib_data_get(tx.dpi(), "request_headers")
     ironbee.ib_log_debug(ib, 4, "Request Headers is a field type: %d", req_headers.type())

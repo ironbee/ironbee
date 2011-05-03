@@ -189,7 +189,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     ib_status_t rc;
     int ec;
 
-    ib_log_debug(log->ib, 4, "XXXXXXXXXXXXXXXXXXX");
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
 
@@ -200,8 +199,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                      corecfg->auditlog_dir, corecfg->auditlog);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-
-    ib_log_debug(log->ib, 4, "AUDIT");
 
     if (cfg->fp == NULL) {
         cfg->fp = fopen(fn, "ab");
@@ -2981,27 +2978,30 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "Setting: %s \"%s\"", name, p1);
+        ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
         if (strcasecmp("On", p1) == 0) {
-            ib_context_set_num(ctx, "audit_engine", 1);
+            rc = ib_context_set_num(ctx, "audit_engine", 1);
+            IB_FTRACE_RET_STATUS(rc);
         }
         else if (strcasecmp("Off", p1) == 0) {
-            ib_context_set_num(ctx, "audit_engine", 0);
+            rc = ib_context_set_num(ctx, "audit_engine", 0);
+            IB_FTRACE_RET_STATUS(rc);
         }
-        else {
-            ib_log_error(ib, 1, "Failed to parse directive: %s \"%s\"", name, p1);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+
+        ib_log_error(ib, 1, "Failed to parse directive: %s \"%s\"", name, p1);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     else if (strcasecmp("AuditLog", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "Setting: %s \"%s\"", name, p1);
-        ib_context_set_string(ctx, "auditlog", p1);
+        ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_string(ctx, "auditlog", p1);
+        IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogStorageDir", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "Setting: %s \"%s\"", name, p1);
-        ib_context_set_string(ctx, "auditlog_dir", p1);
+        ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_string(ctx, "auditlog_dir", p1);
+        IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
         char *absfile;
@@ -3020,15 +3020,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_module_load(&m, ib, absfile);
         if (rc != IB_OK) {
             ib_log_error(ib, 2, "Failed to load module \"%s\": %d", p1, rc);
-            IB_FTRACE_RET_STATUS(IB_ENOENT);
         }
-    }
-    else {
-        ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 /**

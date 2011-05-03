@@ -1707,7 +1707,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     ib_status_t rc;
 
     /* Create a module context data structure. */
-    cfgdata = (ib_context_data_t *)ib_mpool_alloc(ctx->mp, sizeof(*cfgdata));
+    cfgdata = (ib_context_data_t *)ib_mpool_calloc(ctx->mp, 1, sizeof(*cfgdata));
     if (cfgdata == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -1716,8 +1716,8 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     /* Set default values from parent values. */
 
     /* Add module config entries to config context, first copying the
-     * global values, then overriding using default values from the
-     * configuration mapping.
+     * parent/global values, then overriding using default values from
+     * the configuration mapping.
      *
      * NOTE: Not all configuration data is required to be in the
      * mapping, which is why the initial memcpy is required.
@@ -1738,17 +1738,20 @@ ib_status_t ib_module_register_context(ib_module_t *m,
             rc = ib_array_get(p_ctx->cfgdata, m->idx, &p_cfgdata);
             if (rc == IB_OK) {
                 memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
+                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init, 0);
             }
             else {
                 /* No parent context config, so use globals. */
                 memcpy(cfgdata->data, m->gcdata, m->gclen);
+                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init, 1);
             }
         }
         else {
             memcpy(cfgdata->data, m->gcdata, m->gclen);
+            ib_context_init_cfg(ctx, cfgdata->data, m->cm_init, 1);
         }
     }
-    ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
+
 
     /* Keep track of module specific context data using the
      * module index as the key so that the location is deterministic.
@@ -1918,7 +1921,8 @@ ib_context_t *ib_context_main(ib_engine_t *ib)
 
 ib_status_t ib_context_init_cfg(ib_context_t *ctx,
                                 const void *base,
-                                const ib_cfgmap_init_t *init)
+                                const ib_cfgmap_init_t *init,
+                                int usedefaults)
 {
     IB_FTRACE_INIT(ib_context_init_cfg);
     ib_status_t rc;
@@ -1929,7 +1933,7 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    rc = ib_cfgmap_init(ctx->cfg, base, init);
+    rc = ib_cfgmap_init(ctx->cfg, base, init, usedefaults);
 
     IB_FTRACE_RET_STATUS(rc);
 }

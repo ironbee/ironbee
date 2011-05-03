@@ -459,11 +459,19 @@ ib_context_t *ib_context_engine(ib_engine_t *ib);
 ib_context_t DLL_PUBLIC *ib_context_main(ib_engine_t *ib);
 
 /**
- * @todo Docs
+ * Initialize a configuration context.
+ *
+ * @param ctx Configuration context
+ * @param base Base address of the structure holding the values
+ * @param init Configuration map initialization structure
+ * @param usedefaults If true, use the map default values as base
+ *
+ * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_context_init_cfg(ib_context_t *ctx,
                                            const void *base,
-                                           const ib_cfgmap_init_t *init);
+                                           const ib_cfgmap_init_t *init,
+                                           int usedefaults);
 
 /**
  * Fetch the named module configuration data from the configuration context.
