@@ -1474,11 +1474,14 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                     &tx->conn->local_port);
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
-                       "request-uri",
-                       (uint8_t *)tx->path,
-                       strlen(tx->path));
-    ib_list_push(list, f);
+    /// @todo If this is NULL, parser failed - what to do???
+    if (tx->path != NULL) {
+        ib_field_alias_mem(&f, pool,
+                           "request-uri",
+                           (uint8_t *)tx->path,
+                           strlen(tx->path));
+        ib_list_push(list, f);
+    }
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_protocol"), &f);
     if (rc == IB_OK) {
@@ -1496,11 +1499,14 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_log_error(ib, 4, "Failed to get request_method: %d", rc);
     }
 
-    ib_field_alias_mem(&f, pool,
-                       "request-hostname",
-                       (uint8_t *)tx->hostname,
-                       strlen(tx->hostname));
-    ib_list_push(list, f);
+    /// @todo If this is NULL, parser failed - what to do???
+    if (tx->hostname != NULL) {
+        ib_field_alias_mem(&f, pool,
+                           "request-hostname",
+                           (uint8_t *)tx->hostname,
+                           strlen(tx->hostname));
+        ib_list_push(list, f);
+    }
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
