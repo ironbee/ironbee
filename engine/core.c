@@ -838,7 +838,8 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
         ib_auditlog_part_t *part = (ib_auditlog_part_t *)ib_list_node_data(node);
         rc = iface->write_part(lpi, part);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            ib_log_error(log->ib, 4, "Failed to write audit log part: %s",
+                         part->name);
         }
     }
 
@@ -1821,10 +1822,36 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     ib_core_cfg_t *corecfg;
     core_audit_cfg_t *cfg;
     ib_provider_inst_t *audit;
+    ib_list_t *events;
     struct timeval tv;
     uint32_t boundary_rand = rand(); /// @todo better random num
     char boundary[46];
     ib_status_t rc;
+
+    rc = ib_context_module_config(tx->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    switch (corecfg->audit_engine) {
+        /* Always On */
+        case 1:
+            break;
+        /* Only if events are present */
+        case 2:
+            rc = ib_clog_events_get(tx->ctx, &events);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            if (ib_list_elements(events) == 0) {
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
+            break;
+        /* Anything else is Off */
+        default:
+            IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
     /* Mark the audit log time. */
     gettimeofday(&tv, NULL);
@@ -1874,12 +1901,6 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     ib_auditlog_add_part_http_response_head(log);
 
     /* Audit Provider */
-    rc = ib_context_module_config(tx->ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
                                      corecfg->audit, &audit,
                                      ib->mp, log);
@@ -3119,7 +3140,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("AuditEngine", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
-        if (strcasecmp("On", p1) == 0) {
+        if (strcasecmp("RelevantOnly", p1) == 0) {
+            rc = ib_context_set_num(ctx, "audit_engine", 2);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else if (strcasecmp("On", p1) == 0) {
             rc = ib_context_set_num(ctx, "audit_engine", 1);
             IB_FTRACE_RET_STATUS(rc);
         }
