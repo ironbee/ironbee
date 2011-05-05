@@ -244,7 +244,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         /* Generate the audit log filename template. */
         /// @todo Make this template configurable
         ret = strftime(dtmp, sizeof(dtmp),
-                       "%Y/%m/%d/%H/%M/%S", tm);
+                       "%Y%m%d/%H%M", tm);
         if (ret == 0) {
             /// @todo Better error.
             ib_log_error(log->ib, 1,
