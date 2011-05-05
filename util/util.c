@@ -27,6 +27,10 @@
 #include <apr_lib.h>
 #include <apr_general.h>
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <libgen.h>
+
 #include <ironbee/util.h>
 
 #include "ironbee_util_private.h"
@@ -109,6 +113,59 @@ void ib_util_log_ex(int level,
     _ibutil_logger.callback(_ibutil_logger.cbdata, level,
                             prefix, file, line, fmt, ap);
     va_end(ap);
+}
+
+
+/* -- Misc -- */
+
+ib_status_t ib_util_mkpath(const char *path, mode_t mode)
+{
+    char *ppath = NULL;
+    ib_status_t rc;
+    int ec;
+
+    if (strcmp(path, ".") == 0 || strcmp(path, "/") == 0) {
+        return IB_OK;
+    }
+
+    /* Attempt to create the dir.  If it returns ENOENT, then 
+     * recursivly attempt to create the parent dir(s) until
+     * they are all created.
+     */
+    if ((mkdir(path, mode) == -1) && (errno == ENOENT)) {
+        if ((ppath = strdup(path)) == NULL) {
+            return IB_EALLOC;
+        }
+
+        if ((ppath = dirname(ppath)) == NULL) {
+            rc = IB_EINVAL;
+            goto cleanup;
+        }
+
+        rc = ib_util_mkpath(ppath, mode);
+        if (rc != IB_OK) {
+            goto cleanup;
+        }
+
+        /* Parent path was created, so try again. */
+        ec = mkdir(path, mode);
+        if (ec == -1) {
+            ec = errno;
+            ib_util_log_error(3, "Failed to create path \"%s\": %s (%d)",
+                              path, strerror(ec), ec);
+            rc = IB_EINVAL;
+            goto cleanup;
+        }
+    }
+
+    rc = IB_OK;
+
+cleanup:
+    if (ppath != NULL) {
+        free(ppath);
+    }
+
+    return rc;
 }
 
 

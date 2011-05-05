@@ -184,6 +184,17 @@ void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
                                const char *fmt, ...);
 
 /**
+ * Create a directory path recursivly.
+ *
+ * @param path Path to create
+ * @param mode Mode to create directories with
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
+
+
+/**
  * Initialize the IB lib.
  *
  * @returns Status code
