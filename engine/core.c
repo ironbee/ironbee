@@ -147,6 +147,7 @@ typedef struct core_audit_cfg_t core_audit_cfg_t;
 struct core_audit_cfg_t {
     FILE           *index_fp;
     FILE           *fp;
+    const char     *fn;
     int             parts_written;
     const char     *boundary;
     ib_tx_t        *tx;
@@ -190,16 +191,23 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
-    char fn[1024]; /// @todo Allocate size???
+    size_t fnsize;
+    char *fn;
     int ec;
 
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
 
     if (cfg->index_fp == NULL) {
-        ec = snprintf(fn, sizeof(fn), "%s/%s",
+        fnsize = strlen(corecfg->auditlog_dir) + strlen(corecfg->auditlog) + 2;
+        fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
+        if (fn == NULL) {
+            return IB_EALLOC;
+        }
+
+        ec = snprintf(fn, fnsize, "%s/%s",
                           corecfg->auditlog_dir, corecfg->auditlog);
-        if (ec >= (int)sizeof(fn)) {
+        if (ec >= (int)fnsize) {
             ib_log_error(log->ib, 1,
                          "Could not create audit log index filename \"%s/%s\":"
                          " too long",
@@ -215,6 +223,8 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                          fn, strerror(ec), ec);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
+
+        ib_log_debug(log->ib, 4, "AUDITLOG INDEX: %s", fn);
     }
 
     if (cfg->fp == NULL) {
@@ -254,8 +264,10 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         }
 
         /* Generate the full audit log filename. */
-        ec = snprintf(fn, sizeof(fn), "%s/%s.log", dn, cfg->tx->id);
-        if (ec >= (int)sizeof(fn)) {
+        fnsize = strlen(dn) + strlen(cfg->tx->id) + 6;
+        fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
+        ec = snprintf(fn, fnsize, "%s/%s.log", dn, cfg->tx->id);
+        if (ec >= (int)fnsize) {
             /// @todo Better error.
             ib_log_error(log->ib, 1,
                          "Could not create audit log filename: too long");
@@ -278,7 +290,10 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        ib_log_error(log->ib, 1, "Audit log \"%s\" opened", fn);
+        /* Track the relative audit log filename. */
+        cfg->fn = fn + (strlen(corecfg->auditlog_dir) + 1);
+
+        ib_log_debug(log->ib, 4, "AUDITLOG: %s", fn);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -355,9 +370,55 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 {
     IB_FTRACE_INIT(core_audit_close);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_tx_t *tx = log->tx;
+    ib_conn_t *conn = tx->conn;
 
+    /* Close the audit log. */
     if (cfg->fp != NULL) {
         fclose(cfg->fp);
+        cfg->fp = NULL;
+    }
+
+    /* Write to the index file:
+     *  hostname (or IP)
+     *  source IP
+     *  remote user
+     *  local user
+     *  timestamp
+     *  request line
+     *  response status
+     *  bytes sent
+     *  referrer
+     *  user agent
+     *  transaction id
+     *  session id
+     *  audit log filename (relative)
+     *  audit log offset
+     *  audit log size
+     *  audit log hash
+     */
+    if (cfg->parts_written > 0) {
+        fprintf(
+            cfg->index_fp,
+            "%s %s %s %s [%s] \"%s\" %d %d \"%s\" \"%s\" %s \"%s\" /%s %d %d %s\n",
+            tx->hostname,
+            conn->remote_ipstr,
+            "-",
+            "-",
+            "-",
+            "-",
+            0,
+            0,
+            "-",
+            "-",
+            tx->id,
+            "-",
+            cfg->fn,
+            0,
+            0,
+            "-"
+        );
+        fflush(cfg->index_fp);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
