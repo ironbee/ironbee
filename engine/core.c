@@ -30,6 +30,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h> /* gettimeofday */
+
 #include <ctype.h> /* tolower */
 #include <time.h>
 #include <errno.h>
@@ -144,9 +145,12 @@ static IB_PROVIDER_IFACE_TYPE(logevent) core_logevent_iface = {
 
 typedef struct core_audit_cfg_t core_audit_cfg_t;
 struct core_audit_cfg_t {
+    FILE           *index_fp;
     FILE           *fp;
     int             parts_written;
     const char     *boundary;
+    ib_tx_t        *tx;
+    ib_timeval_t   *logtime;
 };
 
 /// @todo Make this public
@@ -183,31 +187,98 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                    ib_auditlog_t *log)
 {
     IB_FTRACE_INIT(core_audit_open);
-    ib_core_cfg_t *corecfg;
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
-    char fn[512];
+    ib_core_cfg_t *corecfg;
     ib_status_t rc;
+    char fn[1024]; /// @todo Allocate size???
     int ec;
 
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
 
-    ec = snprintf(fn, sizeof(fn), "%s/%s", corecfg->auditlog_dir, corecfg->auditlog);
-    if (ec >= (int)sizeof(fn)) {
-        ib_log_error(log->ib, 1,
-                     "Could not create audit log filename \"%s/%s\": too long",
-                     corecfg->auditlog_dir, corecfg->auditlog);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    if (cfg->index_fp == NULL) {
+        ec = snprintf(fn, sizeof(fn), "%s/%s",
+                          corecfg->auditlog_dir, corecfg->auditlog);
+        if (ec >= (int)sizeof(fn)) {
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log index filename \"%s/%s\":"
+                         " too long",
+                         corecfg->auditlog_dir, corecfg->auditlog);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        cfg->index_fp = fopen(fn, "ab");
+        if (cfg->index_fp == NULL) {
+            ec = errno;
+            ib_log_error(log->ib, 1,
+                         "Could not open audit log index \"%s\": %s (%d)",
+                         fn, strerror(ec), ec);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
     }
 
     if (cfg->fp == NULL) {
+        char dtmp[32]; /// @todo Allocate size???
+        char dn[512]; /// @todo Allocate size???
+        struct tm *tm;
+        size_t ret;
+
+        tm = gmtime(&cfg->logtime->tv_sec);
+        if (tm == 0) {
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log filename template:"
+                         " too long");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        
+        /* Generate the audit log filename template. */
+        /// @todo Make this template configurable
+        ret = strftime(dtmp, sizeof(dtmp),
+                       "%Y/%m/%d/%H/%M/%S", tm);
+        if (ret == 0) {
+            /// @todo Better error.
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log filename template:"
+                         " too long");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        /* Generate the full audit log directory name. */
+        ec = snprintf(dn, sizeof(dn), "%s/%s", corecfg->auditlog_dir, dtmp);
+        if (ec >= (int)sizeof(dn)) {
+            /// @todo Better error.
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log directory: too long",
+                         corecfg->auditlog_dir, corecfg->auditlog);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        /* Generate the full audit log filename. */
+        ec = snprintf(fn, sizeof(fn), "%s/%s.log", dn, cfg->tx->id);
+        if (ec >= (int)sizeof(fn)) {
+            /// @todo Better error.
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log filename: too long");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        rc = ib_util_mkpath(dn, 0755);
+        if (rc != IB_OK) {
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log dir: %s", dn);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         cfg->fp = fopen(fn, "ab");
         if (cfg->fp == NULL) {
             ec = errno;
+            /// @todo Better error.
             ib_log_error(log->ib, 1, "Could not open audit log \"%s\": %s (%d)",
                          fn, strerror(ec), ec);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
+
+        ib_log_error(log->ib, 1, "Audit log \"%s\" opened", fn);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1726,6 +1797,8 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
+    cfg->logtime = &log->logtime;
+    cfg->tx = tx;
     cfg->boundary = boundary;
     log->cfg_data = cfg;
 
