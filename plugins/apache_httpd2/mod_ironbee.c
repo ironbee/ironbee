@@ -122,18 +122,20 @@ static void ironbee_logger(server_rec *s, int level,
                            const char *fmt, va_list ap)
 {
     char buf[8192 + 1];
+    int limit = 7000;
     int ap_level;
     int ec;
 
     /* Buffer the log line. */
     ec = vsnprintf(buf, sizeof(buf), fmt, ap);
-    if (ec >= (int)sizeof(buf)) {
+    if (ec >= limit) {
+        /* Mark as truncated, with a " ...". */
+        memcpy(buf + (limit - 5), " ...", 5);
+
         /// @todo Do something about it
-        ap_log_error(file, line, APLOG_ALERT, 0, s,
-                     IB_PRODUCT_NAME ": Log format exceeded limit (%d): %.*s",
-                     (int)ec, (int)sizeof(buf), buf);
-        abort(); /// @todo Testing
-        return;
+        ap_log_error(file, line, APLOG_WARNING, 0, s,
+                     IB_PRODUCT_NAME ": Log format truncated: limit (%d/%d)",
+                     (int)ec, limit);
     }
 
     /* Translate the log level. */
