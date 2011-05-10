@@ -54,7 +54,8 @@ struct ib_engine_t {
     ib_provider_inst_t *dpi;              /**< Data provider instance */
     ib_context_t       *ectx;             /**< Engine configuration context */
     ib_context_t       *ctx;              /**< Main configuration context */
-    const char         *sensor_id;        /**< Sensor ID */
+    uint32_t            sensor_id;        /**< Sensor ID */
+    const char         *sensor_name;      /**< Sensor name */
     const char         *sensor_version;   /**< Sensor version string */
     const char         *sensor_hostname;  /**< Sensor hostname */
 

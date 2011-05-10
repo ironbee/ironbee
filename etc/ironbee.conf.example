@@ -1,4 +1,12 @@
-# Load Modules
+### Sensor Info
+# 32-bit numeric value
+SensorId 0x98765432
+# Arbitrary name
+SensorName ExampleSensorName
+# Arbitrary hostname
+SensorHostname example.sensor.tld
+
+### Load Modules
 # TODO Implement
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_htp.so"
@@ -7,14 +15,11 @@ LoadModule "ibmod_htp.so"
 LoadModule "ibmod_lua.so"
 LoadModuleLua "example.lua"
 
-# Main Context (need separate directives for these)
+### Main Context (need separate directives for these)
 Set parser "htp"
 # TODO: Default is still stderr logging - this will go to Apache error_log
 Set logger "mod_ironbee"
 Set logger.log_level 4
-
-# TODO: ibmod_lua.so needs to add this directive
-#LoadLuaModule "example.lua"
 
 # Enable inspection engine
 # TODO: Implement

@@ -30,6 +30,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h> /* gettimeofday */
+#include <arpa/inet.h> /* htonl */
 
 #include <ctype.h> /* tolower */
 #include <time.h>
@@ -1490,9 +1491,9 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "sensor-id",
-                       (uint8_t *)ib->sensor_id,
-                       strlen(ib->sensor_id));
+                       "sensor-name",
+                       (uint8_t *)ib->sensor_name,
+                       strlen(ib->sensor_name));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
@@ -3189,6 +3190,25 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
         IB_FTRACE_RET_STATUS(rc);
     }
+    else if (strcasecmp("SensorId", name) == 0) {
+        ib->sensor_id = htonl(strtol(p1, NULL, 0));
+        ib_log_debug(ib, 4, "SensorID: %08x", ib->sensor_id);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (strcasecmp("SensorName", name) == 0) {
+        ib->sensor_name =
+            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
+                                          p1, strlen(p1));
+        ib_log_debug(ib, 4, "SensorName: %s", ib->sensor_name);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (strcasecmp("SensorHostname", name) == 0) {
+        ib->sensor_hostname =
+            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
+                                          p1, strlen(p1));
+        ib_log_debug(ib, 4, "SensorHostname: %s", ib->sensor_hostname);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
     ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -3336,6 +3356,26 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM2(
         "Set",
         core_dir_param2,
+        NULL,
+        NULL
+    ),
+
+    /* Sensor */
+    IB_DIRMAP_INIT_PARAM1(
+        "SensorId",
+        core_dir_param1,
+        NULL,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "SensorName",
+        core_dir_param1,
+        NULL,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "SensorHostname",
+        core_dir_param1,
         NULL,
         NULL
     ),

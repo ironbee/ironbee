@@ -31,6 +31,7 @@
 
 #include <sys/time.h> /* gettimeofday */
 #include <sys/types.h> /* getpid */
+#include <arpa/inet.h> /* htonl */
 #include <unistd.h>
 
 
@@ -173,7 +174,8 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 
     /* Sensor info. */
     /// @todo Fetch real values
-    (*pib)->sensor_id = "SensorId";
+    (*pib)->sensor_id = htonl(0x01234567);
+    (*pib)->sensor_name = "SensorId";
     (*pib)->sensor_version = IB_PRODUCT_NAME "/" IB_VERSION " "
                              "(embedded; PluginName/1.2.3)";
     (*pib)->sensor_hostname = "sensor.hostname.com";
@@ -359,11 +361,10 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
      */
     (*pconn)->base_uuid.node[0] = (pid16 >> 8) & 0xff;
     (*pconn)->base_uuid.node[1] = (pid16 & 0xff);
-    /// @todo Set to a real system unique id (default ipv4 address???)
-    (*pconn)->base_uuid.node[2] = 0x01; 
-    (*pconn)->base_uuid.node[3] = 0x23; 
-    (*pconn)->base_uuid.node[4] = 0x45; 
-    (*pconn)->base_uuid.node[5] = 0x67; 
+    (*pconn)->base_uuid.node[2] = ib->sensor_id & 0xff;
+    (*pconn)->base_uuid.node[3] = (ib->sensor_id >> 8) & 0xff;
+    (*pconn)->base_uuid.node[4] = (ib->sensor_id >> 16) & 0xff;
+    (*pconn)->base_uuid.node[5] = (ib->sensor_id >> 24) & 0xff;
     /// @todo This needs set to thread ID or some other identifier
     (*pconn)->base_uuid.clk_seq_hi_res = 0x8f;
     (*pconn)->base_uuid.clk_seq_low = 0xff;
