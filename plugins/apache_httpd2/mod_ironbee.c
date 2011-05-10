@@ -487,14 +487,21 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
     conn_rec *c = f->c;
     ironbee_conn_context *ctx = f->ctx;
     ib_conn_t *iconn = ctx->iconn;
+    ib_core_cfg_t *corecfg;
     ib_stream_t *istream;
     apr_bucket *b;
     apr_status_t rc;
-    int buffering = 1; /// @todo make configurable
+    int buffering = 0;
 
     /* Any mode not handled just gets passed through. */
     if ((mode != AP_MODE_GETLINE) && (mode != AP_MODE_READBYTES)) {
         return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    }
+
+    /* Configure. */
+    ib_context_module_config(iconn->ctx, ib_core_module(), (void *)&corecfg);
+    if (corecfg != NULL) {
+        buffering = (int)corecfg->buffer_req;
     }
 
     /* When buffering, data is removed from the brigade and handed

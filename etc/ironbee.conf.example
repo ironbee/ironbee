@@ -30,6 +30,12 @@ AuditEngine RelevantOnly
 AuditLogIndex auditlog.log
 AuditLogBaseDir /var/log/ironbee/auditlog
 
+### Buffering
+# Request
+RequestBuffering On
+# Response (TODO Implement)
+#ResponseBuffering Off
+
 # -- Sites --
 # TODO: Hostname - currently wildcard can only be on left
 

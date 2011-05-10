@@ -206,6 +206,8 @@ struct ib_core_cfg_t {
     char         *log_uri;           /**< Log URI */
     char         *logger;            /**< Active logger provider key */
     char         *logevent;          /**< Active logevent provider key */
+    ib_num_t      buffer_req;        /**< Request buffering options */
+    ib_num_t      buffer_res;        /**< Response buffering options */
     ib_num_t      audit_engine;      /**< Audit engine status */
     char         *auditlog_index;    /**< Audit log index filename */
     char         *auditlog_dir;      /**< Audit log base directory */

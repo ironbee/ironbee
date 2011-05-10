@@ -3190,6 +3190,30 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
         IB_FTRACE_RET_STATUS(rc);
     }
+    else if (strcasecmp("RequestBuffering", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+
+        ib_log_debug(ib, 4, "%s: %s", name, p1);
+        if (strcasecmp("On", p1) == 0) {
+            rc = ib_context_set_num(ctx, "buffer_req", 1);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = ib_context_set_num(ctx, "buffer_req", 0);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (strcasecmp("ResponseBuffering", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+
+        ib_log_debug(ib, 4, "%s: %s", name, p1);
+        if (strcasecmp("On", p1) == 0) {
+            rc = ib_context_set_num(ctx, "buffer_res", 1);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = ib_context_set_num(ctx, "buffer_res", 0);
+        IB_FTRACE_RET_STATUS(rc);
+    }
     else if (strcasecmp("SensorId", name) == 0) {
         ib->sensor_id = htonl(strtol(p1, NULL, 0));
         ib_log_debug(ib, 4, "SensorID: %08x", ib->sensor_id);
@@ -3375,6 +3399,20 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "SensorHostname",
+        core_dir_param1,
+        NULL,
+        NULL
+    ),
+
+    /* Buffering */
+    IB_DIRMAP_INIT_PARAM1(
+        "RequestBuffering",
+        core_dir_param1,
+        NULL,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "ResponseBuffering",
         core_dir_param1,
         NULL,
         NULL
@@ -3706,6 +3744,22 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         &core_global_cfg,
         parser,
         MODULE_NAME_STR
+    ),
+
+    /* Buffering */
+    IB_CFGMAP_INIT_ENTRY(
+        "buffer_req",
+        IB_FTYPE_NUM,
+        &core_global_cfg,
+        buffer_req,
+        0
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "buffer_res",
+        IB_FTYPE_NUM,
+        &core_global_cfg,
+        buffer_res,
+        0
     ),
 
     /* Audit Log */
