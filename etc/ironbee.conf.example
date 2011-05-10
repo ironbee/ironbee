@@ -6,8 +6,12 @@ SensorName ExampleSensorName
 # Arbitrary hostname
 SensorHostname example.sensor.tld
 
+### Logging
+LogLevel 4
+# TODO: Default is still stderr logging - this will go to Apache error_log
+Set logger "mod_ironbee"
+
 ### Load Modules
-# TODO Implement
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_htp.so"
 
@@ -17,13 +21,9 @@ LoadModuleLua "example.lua"
 
 ### Main Context (need separate directives for these)
 Set parser "htp"
-# TODO: Default is still stderr logging - this will go to Apache error_log
-Set logger "mod_ironbee"
-Set logger.log_level 4
 
-# Enable inspection engine
-# TODO: Implement
-InspectionEngine On
+# Enable inspection engine (TODO: Implement)
+#InspectionEngine On
 
 # Enable audit engine
 AuditEngine RelevantOnly
@@ -44,7 +44,7 @@ RequestBuffering On
     Hostname * ip=127.0.0.1
 
     <Location /foo>
-        Set logger.log_level 9
+        LogLevel 9
     </Location>
 </Site>
 

@@ -3170,6 +3170,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "auditlog_dir", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
+    else if (strcasecmp("LogLevel", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 4, "%s: %d", name, atol(p1));
+        rc = ib_context_set_num(ctx, "logger.log_level", atol(p1));
+        IB_FTRACE_RET_STATUS(rc);
+    }
     else if (strcasecmp("LoadModule", name) == 0) {
         char *absfile;
         ib_module_t *m;
@@ -3413,6 +3419,14 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "ResponseBuffering",
+        core_dir_param1,
+        NULL,
+        NULL
+    ),
+
+    /* Logging */
+    IB_DIRMAP_INIT_PARAM1(
+        "LogLevel",
         core_dir_param1,
         NULL,
         NULL
