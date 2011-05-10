@@ -211,12 +211,11 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 
     /* Store this as the current transaction. */
     /* Use the current parser transaction to generate fields. */
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    /// @todo Why not use connp->in_tx or connp->conn->transactions ???
-    tx = list_get(modctx->htp->conn->transactions,
-                  modctx->htp->out_next_tx_index);
+    tx = connp->in_tx;
     if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -243,12 +242,17 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
+    }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -284,13 +288,19 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
@@ -330,19 +340,26 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     IB_FTRACE_INIT(modhtp_htp_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_txdata_t itxdata;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
@@ -380,18 +397,25 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request_trailer);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
@@ -408,18 +432,25 @@ static int modhtp_htp_request(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction, determine if this is a no-body
      * request and notify the engine that the request body is available
@@ -443,13 +474,19 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    if (connp->in_status == STREAM_STATE_ERROR) {
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->out_status);
+    if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
@@ -486,13 +523,19 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    if (connp->in_status == STREAM_STATE_ERROR) {
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->out_status);
+    if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
@@ -532,19 +575,26 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     IB_FTRACE_INIT(modhtp_htp_response_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_txdata_t itxdata;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    if (connp->in_status == STREAM_STATE_ERROR) {
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->out_status);
+    if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
@@ -577,18 +627,25 @@ static int modhtp_htp_response(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    if (connp->in_status == STREAM_STATE_ERROR) {
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->out_status);
+    if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that the response body is available, the response
@@ -611,19 +668,26 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response_trailer);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
+    htp_tx_t *tx = modctx->htp_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
-    if (connp->in_status == STREAM_STATE_ERROR) {
+    ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->out_status);
+    if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, 3, "HTP Parser Error");
     }
-    if (modctx->htp_tx == NULL) {
+    if (tx == NULL) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
+        /// @todo Do something about it
+    }
+
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
