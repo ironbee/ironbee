@@ -21,10 +21,9 @@ Set logger.log_level 4
 InspectionEngine On
 
 # Enable audit engine
-# TODO: Implement
-AuditEngine On
-AuditLog "/var/log/ironbee/auditlog.log"
-AuditLogStorageDir "/var/log/ironbee/auditlog/"
+AuditEngine RelevantOnly
+AuditLogIndex auditlog.log
+AuditLogBaseDir /var/log/ironbee/auditlog
 
 # -- Sites --
 # TODO: Hostname - currently wildcard can only be on left

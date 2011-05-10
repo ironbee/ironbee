@@ -199,19 +199,20 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                   (void *)&corecfg);
 
     if (cfg->index_fp == NULL) {
-        fnsize = strlen(corecfg->auditlog_dir) + strlen(corecfg->auditlog) + 2;
+        fnsize = strlen(corecfg->auditlog_dir) +
+                 strlen(corecfg->auditlog_index) + 2;
         fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
         if (fn == NULL) {
             return IB_EALLOC;
         }
 
         ec = snprintf(fn, fnsize, "%s/%s",
-                          corecfg->auditlog_dir, corecfg->auditlog);
+                          corecfg->auditlog_dir, corecfg->auditlog_index);
         if (ec >= (int)fnsize) {
             ib_log_error(log->ib, 1,
                          "Could not create audit log index filename \"%s/%s\":"
                          " too long",
-                         corecfg->auditlog_dir, corecfg->auditlog);
+                         corecfg->auditlog_dir, corecfg->auditlog_index);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -259,7 +260,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             /// @todo Better error.
             ib_log_error(log->ib, 1,
                          "Could not create audit log directory: too long",
-                         corecfg->auditlog_dir, corecfg->auditlog);
+                         corecfg->auditlog_dir, corecfg->auditlog_index);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -3156,13 +3157,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_log_error(ib, 1, "Failed to parse directive: %s \"%s\"", name, p1);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    else if (strcasecmp("AuditLog", name) == 0) {
+    else if (strcasecmp("AuditLogIndex", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
-        rc = ib_context_set_string(ctx, "auditlog", p1);
+        rc = ib_context_set_string(ctx, "auditlog_index", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (strcasecmp("AuditLogStorageDir", name) == 0) {
+    else if (strcasecmp("AuditLogBaseDir", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
         rc = ib_context_set_string(ctx, "auditlog_dir", p1);
@@ -3375,13 +3376,13 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
-        "AuditLog",
+        "AuditLogIndex",
         core_dir_param1,
         NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
-        "AuditLogStorageDir",
+        "AuditLogBaseDir",
         core_dir_param1,
         NULL,
         NULL
@@ -3676,11 +3677,11 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         0
     ),
     IB_CFGMAP_INIT_ENTRY(
-        "auditlog",
+        "auditlog_index",
         IB_FTYPE_NULSTR,
         &core_global_cfg,
-        auditlog,
-        "ironbee-auditlog.log"
+        auditlog_index,
+        "ironbee-index.log"
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dir",
