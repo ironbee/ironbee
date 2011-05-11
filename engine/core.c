@@ -1227,6 +1227,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
             return 0;
         }
 
+        /* First should be a request/response line. */
         part->gen_data = ib_list_first(list);
         f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
         if ((f != NULL) && (f->type == IB_FTYPE_BYTESTR)) {
@@ -1253,68 +1254,68 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
 
             return strlen(*(const char **)chunk);
         }
-        part->gen_data = ib_list_first(list);
     }
     else if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
+        *chunk = (const uint8_t *)"";
         return 0;
     }
 
+    /* Header Lines */
     f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
-    if (f != NULL) {
-        rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_HEADER_MAX_FIELD_LEN);
-
-        /* Error. */
-        if (rec == NULL) {
-            *chunk = NULL;
-            return 0;
-        }
-
-        /// @todo Quote values
-        switch(f->type) {
-            case IB_FTYPE_NULSTR:
-                rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
-                                "%" IB_BYTESTR_FMT ": %s\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                ib_field_value_nulstr(f));
-                break;
-            case IB_FTYPE_BYTESTR:
-                rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
-                                "%" IB_BYTESTR_FMT ": "
-                                "%" IB_BYTESTR_FMT "\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                IB_BYTESTR_FMT_PARAM(ib_field_value_bytestr(f)));
-                break;
-            default:
-                rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
-                                "%" IB_BYTESTR_FMT ": IronBeeError - unhandled header type %d\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                f->type);
-                break;
-        }
-
-        /* Verify size. */
-        if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-            ib_log_error(ib, 3, "Item too large to log in part %s: %" PRIuMAX,
-                         part->name, rlen);
-            *chunk = (const uint8_t *)"\r\n";
-            part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
-        }
-
-        *chunk = rec;
-    }
-    else {
+    if (f == NULL) {
         ib_log_error(ib, 4, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
     }
+
+    rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_HEADER_MAX_FIELD_LEN);
+    if (rec == NULL) {
+        *chunk = NULL;
+        return 0;
+    }
+
+    /// @todo Quote values
+    switch(f->type) {
+        case IB_FTYPE_NULSTR:
+            rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
+                            "%" IB_BYTESTR_FMT ": %s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            ib_field_value_nulstr(f));
+            break;
+        case IB_FTYPE_BYTESTR:
+            rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
+                            "%" IB_BYTESTR_FMT ": "
+                            "%" IB_BYTESTR_FMT "\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            IB_BYTESTR_FMT_PARAM(ib_field_value_bytestr(f)));
+            break;
+        default:
+            rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
+                            "%" IB_BYTESTR_FMT ": IronBeeError - unhandled header type %d\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            f->type);
+            break;
+    }
+
+    /* Verify size. */
+    if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
+        ib_log_error(ib, 3, "Item too large to log in part %s: %" PRIuMAX,
+                     part->name, rlen);
+        *chunk = (const uint8_t *)"\r\n";
+        part->gen_data = (void *)-1;
+        return strlen(*(const char **)chunk);
+    }
+
+    *chunk = rec;
+
+    /* Stage the next chunk of data (header). */
     part->gen_data = ib_list_node_next((ib_list_node_t *)part->gen_data);
 
-    /* Close the structure. */
+    /* Close the structure if there is no more data. */
     if (part->gen_data == NULL) {
-        return 0;
+        part->gen_data = (void *)-1;
     }
 
     return strlen(*(const char **)chunk);
