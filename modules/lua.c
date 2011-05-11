@@ -53,7 +53,7 @@
 
 /// @todo Fix this:
 #ifndef X_MODULE_BASE_PATH
-#define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH) "/"
+#define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH)
 #endif
 
 /* -- Module Setup -- */
@@ -834,7 +834,7 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
     else if (rc == IB_ENOENT) {
         /* Load the ironbee FFI module. */
         /// @todo Do not hardcode this filename.
-        rc = modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "ironbee-ffi.lua");
+        rc = modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "/ironbee-ffi.lua");
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -1891,8 +1891,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     ib_engine_t *ib = cp->ib;
     //ib_status_t rc;
 
-    if (strcasecmp("LoadModuleLua", name) == 0) {
-        ib_log_debug(ib, 4, "TODO: Handle Directive: %s %s", name, p1);
+    if (strcasecmp("LuaLoadModule", name) == 0) {
         if (*p1 == '/') {
             modlua_module_load(ib, NULL, p1);
         }
@@ -1921,7 +1920,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
 
 static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
-        "LoadModuleLua",
+        "LuaLoadModule",
         modlua_dir_param1,
         NULL,
         NULL

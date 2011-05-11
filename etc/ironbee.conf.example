@@ -17,7 +17,7 @@ LoadModule "ibmod_htp.so"
 
 # Lua
 LoadModule "ibmod_lua.so"
-LoadModuleLua "example.lua"
+LuaLoadModule "example.lua"
 
 ### Main Context (need separate directives for these)
 Set parser "htp"
