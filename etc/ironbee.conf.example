@@ -7,7 +7,8 @@ SensorName ExampleSensorName
 SensorHostname example.sensor.tld
 
 ### Logging
-LogLevel 4
+#DebugLog /var/log/ironbee/debug.log
+DebugLogLevel 4
 # TODO: Default is still stderr logging - this will go to Apache error_log
 Set logger "mod_ironbee"
 
@@ -46,7 +47,7 @@ RequestBuffering On
     Hostname * ip=127.0.0.1
 
     <Location /foo>
-        LogLevel 9
+        DebugLogLevel 9
     </Location>
 </Site>
 
