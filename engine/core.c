@@ -3822,14 +3822,14 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NUM,
         &core_global_cfg,
         auditlog_dmode,
-        0600
+        0700
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_fmode",
         IB_FTYPE_NUM,
         &core_global_cfg,
         auditlog_fmode,
-        0700
+        0600
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dir",
