@@ -217,6 +217,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
+        /// @todo Use corecfg->auditlog_fmode as file mode for new file
         cfg->index_fp = fopen(fn, "ab");
         if (cfg->index_fp == NULL) {
             ec = errno;
@@ -276,13 +277,14 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        rc = ib_util_mkpath(dn, 0755);
+        rc = ib_util_mkpath(dn, corecfg->auditlog_dmode);
         if (rc != IB_OK) {
             ib_log_error(log->ib, 1,
                          "Could not create audit log dir: %s", dn);
             IB_FTRACE_RET_STATUS(rc);
         }
 
+        /// @todo Use corecfg->auditlog_fmode as file mode for new file
         cfg->fp = fopen(fn, "ab");
         if (cfg->fp == NULL) {
             ec = errno;
@@ -3164,6 +3166,30 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "auditlog_index", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
+    else if (strcasecmp("AuditLogDirMode", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        long lmode = strtol(p1, NULL, 0);
+
+        if ((lmode > 0777) || (lmode <= 0)) {
+            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_num(ctx, "auditlog_dmode", lmode);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (strcasecmp("AuditLogFileMode", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        long lmode = strtol(p1, NULL, 0);
+
+        if ((lmode > 0777) || (lmode <= 0)) {
+            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_num(ctx, "auditlog_fmode", lmode);
+        IB_FTRACE_RET_STATUS(rc);
+    }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
@@ -3790,6 +3816,20 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         &core_global_cfg,
         auditlog_index,
         "ironbee-index.log"
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "auditlog_dmode",
+        IB_FTYPE_NUM,
+        &core_global_cfg,
+        auditlog_dmode,
+        0600
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "auditlog_fmode",
+        IB_FTYPE_NUM,
+        &core_global_cfg,
+        auditlog_fmode,
+        0700
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dir",
