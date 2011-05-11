@@ -200,21 +200,41 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                   (void *)&corecfg);
 
     if (cfg->index_fp == NULL) {
-        fnsize = strlen(corecfg->auditlog_dir) +
-                 strlen(corecfg->auditlog_index) + 2;
-        fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
-        if (fn == NULL) {
-            return IB_EALLOC;
-        }
+        if (corecfg->auditlog_index[0] == '/') {
+            fnsize = strlen(corecfg->auditlog_index) + 1;
 
-        ec = snprintf(fn, fnsize, "%s/%s",
-                          corecfg->auditlog_dir, corecfg->auditlog_index);
-        if (ec >= (int)fnsize) {
-            ib_log_error(log->ib, 1,
-                         "Could not create audit log index filename \"%s/%s\":"
-                         " too long",
-                         corecfg->auditlog_dir, corecfg->auditlog_index);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
+            if (fn == NULL) {
+                return IB_EALLOC;
+            }
+        }
+        else {
+            fnsize = strlen(corecfg->auditlog_dir) +
+                     strlen(corecfg->auditlog_index) + 2;
+
+            rc = ib_util_mkpath(corecfg->auditlog_dir,
+                                corecfg->auditlog_dmode);
+            if (rc != IB_OK) {
+                ib_log_error(log->ib, 1,
+                             "Could not create audit log dir: %s",
+                             corecfg->auditlog_dir);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
+            if (fn == NULL) {
+                return IB_EALLOC;
+            }
+
+            ec = snprintf(fn, fnsize, "%s/%s",
+                              corecfg->auditlog_dir, corecfg->auditlog_index);
+            if (ec >= (int)fnsize) {
+                ib_log_error(log->ib, 1,
+                             "Could not create audit log index filename \"%s/%s\":"
+                             " too long",
+                             corecfg->auditlog_dir, corecfg->auditlog_index);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
         }
 
         /// @todo Use corecfg->auditlog_fmode as file mode for new file

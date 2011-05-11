@@ -29,9 +29,9 @@ Set parser "htp"
 # Enable audit engine
 AuditEngine RelevantOnly
 AuditLogIndex auditlog.log
-AuditLogBaseDir /var/log/ironbee/auditlog
-AuditLogDirMode 0750
-#AuditLogFileMode 0640
+AuditLogBaseDir /tmp/ironbee
+AuditLogDirMode 0755
+#AuditLogFileMode 0644
 
 ### Buffering
 # Request
