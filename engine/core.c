@@ -3525,6 +3525,18 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL,
         NULL
     ),
+    IB_DIRMAP_INIT_PARAM1(
+        "AuditLogDirMode",
+        core_dir_param1,
+        NULL,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "AuditLogFileMode",
+        core_dir_param1,
+        NULL,
+        NULL
+    ),
 
     /* End */
     IB_DIRMAP_INIT_LAST
