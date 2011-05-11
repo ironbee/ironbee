@@ -3162,7 +3162,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditLogIndex", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
         rc = ib_context_set_string(ctx, "auditlog_index", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -3192,7 +3192,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
         rc = ib_context_set_string(ctx, "auditlog_dir", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -3248,21 +3248,21 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("SensorId", name) == 0) {
         ib->sensor_id = htonl(strtol(p1, NULL, 0));
-        ib_log_debug(ib, 4, "SensorID: %08x", ib->sensor_id);
+        ib_log_debug(ib, 4, "%s: %08x", name, ib->sensor_id);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorName", name) == 0) {
         ib->sensor_name =
             (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
                                           p1, strlen(p1));
-        ib_log_debug(ib, 4, "SensorName: %s", ib->sensor_name);
+        ib_log_debug(ib, 4, "%s: %s", name, ib->sensor_name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
         ib->sensor_hostname =
             (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
                                           p1, strlen(p1));
-        ib_log_debug(ib, 4, "SensorHostname: %s", ib->sensor_hostname);
+        ib_log_debug(ib, 4, "%s: %s", name, ib->sensor_hostname);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
