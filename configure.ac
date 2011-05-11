@@ -4,7 +4,7 @@ dnl
 
 AC_PREREQ(2.59)
 
-AC_INIT([ironbee], [0.1], [brectanus@qualys.com])
+AC_INIT([ironbee], [0.2], [brectanus@qualys.com])
 
 AC_CONFIG_MACRO_DIR([acinclude])
 AC_CONFIG_SRCDIR([README])
