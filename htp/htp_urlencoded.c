@@ -160,11 +160,10 @@ void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
     bstr_builder_destroy(urlenp->_bb);   
 
     if (urlenp->params != NULL) {        
-        // Destroy parameters
-        bstr *name = NULL;
+        // Destroy parameters        
         bstr *value = NULL;
         table_iterator_reset(urlenp->params);
-        while ((name = table_iterator_next(urlenp->params, (void **) & value)) != NULL) {
+        while (table_iterator_next(urlenp->params, (void **) & value) != NULL) {
             bstr_free(&value);
         }       
         
