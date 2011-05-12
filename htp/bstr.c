@@ -501,8 +501,10 @@ bstr *bstr_dup_lower(bstr *b) {
  */
 int64_t bstr_util_mem_to_pint(char *data, size_t len, int base, size_t *lastlen) {
     int64_t rval = 0, tval = 0, tflag = 0;
-
-    size_t i = *lastlen = 0;
+    size_t i = 0;
+    
+    *lastlen = i;
+    
     for (i = 0; i < len; i++) {
         int d = data[i];
 
