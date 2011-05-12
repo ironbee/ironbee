@@ -194,7 +194,7 @@ ib_status_t ib_fctl_data(ib_fctl_t *fc,
     }
 
     rc = ib_fctl_process(fc);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_fctl_meta(ib_fctl_t *fc,
