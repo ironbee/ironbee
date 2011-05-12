@@ -177,10 +177,10 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsign
     }
 
     name_end = colon_pos;
-
+        
     // Ignore LWS after field-name
-    size_t prev = name_end - 1;
-    while ((prev > name_start) && (htp_is_lws(data[prev]))) {
+    size_t prev = name_end;    
+    while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
         prev--;
         name_end--;
 

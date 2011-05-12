@@ -198,8 +198,8 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
     name_end = colon_pos;
 
     // Ignore LWS after field-name
-    size_t prev = name_end - 1;
-    while ((prev > name_start) && (htp_is_lws(data[prev]))) {
+    size_t prev = name_end;
+    while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
         prev--;
         name_end--;
 
