@@ -1854,7 +1854,7 @@ void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, siz
 
         *p++ = '|';
         *p++ = '\n';
-        *p++ = '\0';
+        *p = '\0';
 
         fprintf(stream, "%s", buf);
         offset += 16;
