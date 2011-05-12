@@ -1635,7 +1635,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     /// @todo If this is NULL, parser failed - what to do???
     if (tx->path != NULL) {
         ib_field_alias_mem(&f, pool,
-                           "request-uri",
+                           "request-uri-path",
                            (uint8_t *)tx->path,
                            strlen(tx->path));
         ib_list_push(list, f);
