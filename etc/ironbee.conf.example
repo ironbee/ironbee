@@ -15,6 +15,7 @@ Set logger "mod_ironbee"
 ### Load Modules
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_htp.so"
+LoadModule "ibmod_poc_sig.so"
 
 # Lua
 LoadModule "ibmod_lua.so"
@@ -39,12 +40,16 @@ RequestBuffering On
 # Response (TODO Implement)
 #ResponseBuffering Off
 
+PocSigDebug On
+
 # -- Sites --
 # TODO: Hostname - currently wildcard can only be on left
 
 # Site 1
 <Site site1>
     Hostname * ip=127.0.0.1
+
+    PocSigReqHead request_line bar "TESTING: Matched bar in request line."
 
     <Location /foo>
         DebugLogLevel 9

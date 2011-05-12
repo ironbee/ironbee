@@ -12,7 +12,8 @@ endif
 
 pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
-                     ibmod_lua.la
+                     ibmod_lua.la \
+                     ibmod_poc_sig.la
 
 ibmod_htp_la_SOURCES = htp.c
 ibmod_htp_la_LIBADD = -lhtp
@@ -33,6 +34,10 @@ ibmod_lua_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
                       -lm
+
+ibmod_poc_sig_la_SOURCES = poc_sig.c 
+ibmod_poc_sig_la_LDFLAGS = $(AM_LDFLAGS)
+ibmod_poc_sig_la_CFLAGS = $(AM_CFLAGS)
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \

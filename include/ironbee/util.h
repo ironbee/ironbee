@@ -28,10 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 
 #include <sys/types.h>
 #include <unistd.h>
