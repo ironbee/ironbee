@@ -422,7 +422,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
     }
     memcpy(name, name_start, (name_end - name_start));
 
-    ib_log_debug(ib, 4, "Loading lua module \"%s\": %s",
+    ib_log_debug(ib, 6, "Loading lua module \"%s\": %s",
                  name, file);
 
     /* Save the Lua chunk. */
@@ -456,7 +456,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
     if (lua_istable(L, -1)) {
         modlua_chunk_fp_tracker_t tracker;
 
-        ib_log_debug(ib, 4, "Using luajit without precompilation.");
+        ib_log_debug(ib, 7, "Using luajit without precompilation.");
 
         /* Load (compile) the module, also saving the source for later use. */
         tracker.chunk = chunk;
@@ -476,7 +476,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
         fclose(tracker.fp);
     }
     else {
-        ib_log_debug(ib, 4, "Using precompilation via lua_dump.");
+        ib_log_debug(ib, 7, "Using precompilation via lua_dump.");
 
         /// @todo Should just warn/fail here as the FFI is required
 
@@ -701,7 +701,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 4, "Init lua module ctx=%p maincfg=%p Lconfig=%p: %s", ctx, maincfg, maincfg->Lconfig, name);
+    ib_log_debug(ib, 7, "Init lua module ctx=%p maincfg=%p Lconfig=%p: %s", ctx, maincfg, maincfg->Lconfig, name);
 
     /* Use the config lua state. */
     L = maincfg->Lconfig;
@@ -750,7 +750,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     }
 
     /* Initialize the loaded module. */
-    ib_log_debug(ib, 4, "Initializing lua module \"%s\"", m->name);
+    ib_log_debug(ib, 6, "Initializing lua module \"%s\"", m->name);
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "loaded");
     lua_getfield(L, -1, m->name);
@@ -844,7 +844,6 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
     }
 
     /* Cache wrapper functions to global for faster lookup. */
-    ib_log_debug(ib, 4, "Caching wrappers in global scope:");
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "preload");
     lua_getfield(L, -1, IB_FFI_MODULE_STR);
@@ -910,7 +909,7 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
 
     /* Setup a fresh Lua state for this configuration. */
     if (modcfg->Lconfig == NULL) {
-        ib_log_debug(ib, 4, "Initializing lua runtime for configuration.");
+        ib_log_debug(ib, 8, "Initializing lua runtime for configuration.");
         modcfg->Lconfig = luaL_newstate();
         luaL_openlibs(modcfg->Lconfig);
 
@@ -948,7 +947,7 @@ static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 4, "Destroying lua runtime for configuration.");
+    ib_log_debug(ib, 8, "Destroying lua runtime for configuration.");
     lua_close(modcfg->Lconfig);
     modcfg->Lconfig = NULL;
 
@@ -997,7 +996,7 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
     }
     lua->L = L;
     rc = ib_hash_set(conn->data, MODLUA_CONN_KEY, lua);
-    ib_log_debug(ib, 4, "Setting lua runtime for conn=%p lua=%p L=%p", conn, lua, L);
+    ib_log_debug(ib, 7, "Setting lua runtime for conn=%p lua=%p L=%p", conn, lua, L);
     if (rc != IB_OK) {
         ib_log_debug(ib, 3, "Failed to set lua runtime: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
@@ -1015,7 +1014,7 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
             modlua_chunk_t *chunk = (modlua_chunk_t *)m->data;
             int ec;
 
-            ib_log_debug(ib, 4, "Loading lua module \"%s\" into runtime for conn=%p", m->name, conn);
+            ib_log_debug(ib, 7, "Loading lua module \"%s\" into runtime for conn=%p", m->name, conn);
             rc = modlua_load_lua_data(ib, L, chunk);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
@@ -1720,7 +1719,7 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
     ib_status_t rc;
     int ec;
 
-    ib_log_debug(ib, 4, "Handling Lua Directive: %s", name);
+    ib_log_debug(ib, 6, "Handling Lua Directive: %s", name);
     /* Get the main module config. */
     rc = ib_context_module_config(ib_context_main(ib),
                                   &IB_MODULE_SYM, (void *)&maincfg);
@@ -1804,7 +1803,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
     ib_status_t rc;
     int ec;
 
-    ib_log_debug(ib, 4, "Handling Lua Directive: %s", name);
+    ib_log_debug(ib, 6, "Handling Lua Directive: %s", name);
     /* Get the main module config. */
     rc = ib_context_module_config(ib_context_main(ib),
                                   &IB_MODULE_SYM, (void *)&maincfg);

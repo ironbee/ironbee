@@ -837,7 +837,7 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     ib_status_t rc;
 
     if (ib_list_elements(log->parts) == 0) {
-        ib_log_debug(lpi->pr->ib, 4, "No parts to write to audit log");
+        ib_log_error(lpi->pr->ib, 4, "No parts to write to audit log");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1036,7 +1036,7 @@ static size_t ib_auditlog_gen_raw(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_debug(ib, 4, "No data in audit log part: %s", part->name);
+            ib_log_error(ib, 4, "No data in audit log part: %s", part->name);
             *chunk = NULL;
             part->gen_data = (void *)-1;
             return 0;
@@ -1097,7 +1097,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_debug(ib, 4, "No data in audit log part: %s", part->name);
+            ib_log_error(ib, 4, "No data in audit log part: %s", part->name);
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -1222,7 +1222,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_debug(ib, 4, "No data in audit log part: %s", part->name);
+            ib_log_error(ib, 4, "No data in audit log part: %s", part->name);
             part->gen_data = NULL;
             return 0;
         }
@@ -1340,7 +1340,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         /* No events. */
         if (ib_list_elements(list) == 0) {
-            ib_log_debug(ib, 4, "No events in audit log");
+            ib_log_error(ib, 4, "No events in audit log");
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -2934,23 +2934,23 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     ib_loc_t *loc;
     ib_status_t rc;
 
-    ib_log_debug(ib, 4, "Creating site \"%s\"", p1);
+    ib_log_debug(ib, 6, "Creating site \"%s\"", p1);
     rc = ib_site_create(&site, ib, p1);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to create site \"%s\": %d", rc);
+        ib_log_error(ib, 4, "Failed to create site \"%s\": %d", rc);
     }
 
-    ib_log_debug(ib, 4, "Creating default location for site \"%s\"", p1);
+    ib_log_debug(ib, 6, "Creating default location for site \"%s\"", p1);
     rc = ib_site_loc_create_default(site, &loc);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to create default location for site \"%s\": %d", p1, rc);
+        ib_log_error(ib, 4, "Failed to create default location for site \"%s\": %d", p1, rc);
     }
 
-    ib_log_debug(ib, 4, "Creating context for \"%s:%s\"", p1, loc->path);
+    ib_log_debug(ib, 6, "Creating context for \"%s:%s\"", p1, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            ib_context_siteloc_chooser, loc);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to create context for \"%s:%s\": %d", p1, loc->path, rc);
+        ib_log_error(ib, 4, "Failed to create context for \"%s:%s\": %d", p1, loc->path, rc);
     }
     ib_cfgparser_context_push(cp, ctx);
 
@@ -2979,16 +2979,16 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
     ib_context_t *ctx;
     ib_status_t rc;
 
-    ib_log_debug(ib, 9, "Processing site block \"%s\"", name);
+    ib_log_debug(ib, 8, "Processing site block \"%s\"", name);
 
     /* Pop the current items off the stack */
     rc = ib_cfgparser_context_pop(cp, &ctx);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to pop context for \"%s\": %d", name, rc);
+        ib_log_error(ib, 4, "Failed to pop context for \"%s\": %d", name, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "Initializing context %p for \"%s\"", ctx, name);
+    ib_log_debug(ib, 8, "Initializing context %p for \"%s\"", ctx, name);
     rc = ib_context_init(ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
@@ -3024,17 +3024,17 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     ib_loc_t *loc;
     ib_status_t rc;
 
-    ib_log_debug(ib, 4, "Creating location \"%s\" for site \"%s\"", p1, site->name);
+    ib_log_debug(ib, 6, "Creating location \"%s\" for site \"%s\"", p1, site->name);
     rc = ib_site_loc_create(site, &loc, p1);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to create location \"%s:%s\": %d", site->name, p1, rc);
+        ib_log_error(ib, 4, "Failed to create location \"%s:%s\": %d", site->name, p1, rc);
     }
 
-    ib_log_debug(ib, 4, "Creating context for \"%s:%s\"", site->name, loc->path);
+    ib_log_debug(ib, 6, "Creating context for \"%s:%s\"", site->name, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            ib_context_siteloc_chooser, loc);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to create context for \"%s:%s\": %d", site->name, loc->path, rc);
+        ib_log_debug(ib, 6, "Failed to create context for \"%s:%s\": %d", site->name, loc->path, rc);
     }
     ib_cfgparser_context_push(cp, ctx);
 
@@ -3063,16 +3063,16 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
     ib_context_t *ctx;
     ib_status_t rc;
 
-    ib_log_debug(ib, 9, "Processing location block \"%s\"", name);
+    ib_log_debug(ib, 8, "Processing location block \"%s\"", name);
 
     /* Pop the current items off the stack */
     rc = ib_cfgparser_context_pop(cp, &ctx);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to pop context for \"%s\": %d", name, rc);
+        ib_log_error(ib, 4, "Failed to pop context for \"%s\": %d", name, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "Initializing context %p for \"%s\"", ctx, name);
+    ib_log_debug(ib, 8, "Initializing context %p for \"%s\"", ctx, name);
     rc = ib_context_init(ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
@@ -3109,7 +3109,7 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
 
         if (strncasecmp("ip=", p, 3) == 0) {
             p += 3; /* Skip over ip= */
-            ib_log_debug(ib, 4, "Adding IP \"%s\" to site \"%s\"",
+            ib_log_debug(ib, 7, "Adding IP \"%s\" to site \"%s\"",
                          p, cp->cur_site->name);
             rc = ib_site_address_add(cp->cur_site, p);
         }
@@ -3130,7 +3130,7 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                  */
                 p++;
             }
-            ib_log_debug(ib, 4, "Adding host \"%s\" to site \"%s\"",
+            ib_log_debug(ib, 7, "Adding host \"%s\" to site \"%s\"",
                          p, cp->cur_site->name);
             rc = ib_site_hostname_add(cp->cur_site, p);
         }
@@ -3164,7 +3164,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "Setting: %s \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
         if (strcasecmp("RelevantOnly", p1) == 0) {
             rc = ib_context_set_num(ctx, "audit_engine", 2);
             IB_FTRACE_RET_STATUS(rc);
@@ -3183,7 +3183,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditLogIndex", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
         rc = ib_context_set_string(ctx, "auditlog_index", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -3195,7 +3195,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
         rc = ib_context_set_num(ctx, "auditlog_dmode", lmode);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -3207,19 +3207,19 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
         rc = ib_context_set_num(ctx, "auditlog_fmode", lmode);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
         rc = ib_context_set_string(ctx, "auditlog_dir", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("DebugLogLevel", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 4, "%s: %d", name, atol(p1));
+        ib_log_debug(ib, 7, "%s: %d", name, atol(p1));
         rc = ib_context_set_num(ctx, "logger.log_level", atol(p1));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -3246,7 +3246,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("RequestBuffering", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
 
-        ib_log_debug(ib, 4, "%s: %s", name, p1);
+        ib_log_debug(ib, 7, "%s: %s", name, p1);
         if (strcasecmp("On", p1) == 0) {
             rc = ib_context_set_num(ctx, "buffer_req", 1);
             IB_FTRACE_RET_STATUS(rc);
@@ -3258,7 +3258,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("ResponseBuffering", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
 
-        ib_log_debug(ib, 4, "%s: %s", name, p1);
+        ib_log_debug(ib, 7, "%s: %s", name, p1);
         if (strcasecmp("On", p1) == 0) {
             rc = ib_context_set_num(ctx, "buffer_res", 1);
             IB_FTRACE_RET_STATUS(rc);
@@ -3269,21 +3269,21 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("SensorId", name) == 0) {
         ib->sensor_id = htonl(strtol(p1, NULL, 0));
-        ib_log_debug(ib, 4, "%s: %08x", name, ib->sensor_id);
+        ib_log_debug(ib, 7, "%s: %08x", name, ib->sensor_id);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorName", name) == 0) {
         ib->sensor_name =
             (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
                                           p1, strlen(p1));
-        ib_log_debug(ib, 4, "%s: %s", name, ib->sensor_name);
+        ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
         ib->sensor_hostname =
             (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
                                           p1, strlen(p1));
-        ib_log_debug(ib, 4, "%s: %s", name, ib->sensor_hostname);
+        ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_hostname);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 

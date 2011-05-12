@@ -132,16 +132,16 @@ ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
     /// @todo Remove this extra debugging
     switch (f->type) {
         case IB_FTYPE_BYTESTR:
-            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)pval), *(void **)pval);
+            ib_util_log_debug(8, "SET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)pval), *(void **)pval);
             break;
         case IB_FTYPE_NULSTR:
-            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)pval, *(void **)pval);
+            ib_util_log_debug(8, "SET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)pval, *(void **)pval);
             break;
         case IB_FTYPE_NUM:
-            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)pval, *(void **)pval);
+            ib_util_log_debug(8, "SET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)pval, *(void **)pval);
             break;
         case IB_FTYPE_UNUM:
-            ib_util_log_debug(4, "SET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)pval, *(void **)pval);
+            ib_util_log_debug(8, "SET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)pval, *(void **)pval);
             break;
     }
 
@@ -167,22 +167,22 @@ ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
     switch (f->type) {
         case IB_FTYPE_BYTESTR:
             *(ib_bytestr_t **)pval = ib_field_value_bytestr(f);
-            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)pval), *(void **)pval);
+            ib_util_log_debug(8, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)pval), *(void **)pval);
             break;
         case IB_FTYPE_LIST:
             *(ib_list_t **)pval = ib_field_value_list(f);
             break;
         case IB_FTYPE_NULSTR:
             *(char **)pval = ib_field_value_nulstr(f);
-            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)pval, *(void **)pval);
+            ib_util_log_debug(8, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)pval, *(void **)pval);
             break;
         case IB_FTYPE_NUM:
             *(ib_num_t *)pval = *(ib_field_value_num(f));
-            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)pval, *(void **)pval);
+            ib_util_log_debug(8, "GET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)pval, *(void **)pval);
             break;
         case IB_FTYPE_UNUM:
             *(ib_unum_t *)pval = *(ib_field_value_unum(f));
-            ib_util_log_debug(4, "GET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)pval, *(void **)pval);
+            ib_util_log_debug(8, "GET FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)pval, *(void **)pval);
             break;
         case IB_FTYPE_GENERIC:
         default:

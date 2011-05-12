@@ -694,7 +694,7 @@ static ib_status_t ib_state_notify(ib_engine_t *ib,
 
     hook = ib->ectx->hook[event];
 
-    ib_log_debug(ib, 4, "EVENT: %s", ib_state_event_name(event));
+    ib_log_debug(ib, 5, "EVENT: %s", ib_state_event_name(event));
 
     while (hook != NULL) {
         ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
@@ -1503,7 +1503,7 @@ ib_status_t ib_hook_register_context(ib_context_t *ctx,
     ib_hook_t *last = ctx->hook[event];
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ctx->mp, sizeof(*hook));
 
-    ib_log_debug(ib, 4, "ib_hook_register_context(%p,%d,%p,%p)",
+    ib_log_debug(ib, 7, "ib_hook_register_context(%p,%d,%p,%p)",
                  ctx, event, (intptr_t)cb, cdata);
 
     if (hook == NULL) {
@@ -1581,7 +1581,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     m->idx = ib_array_elements(ib->modules);
     m->ib = ib;
 
-    ib_log_debug(ib, 4, "Initializing module %s (%d): %s",
+    ib_log_debug(ib, 7, "Initializing module %s (%d): %s",
                  m->name, m->idx, m->filename);
 
     /* Zero the config structure if there is one. */
@@ -1601,12 +1601,12 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     }
 
     if (ib->ctx != NULL) {
-        ib_log_debug(ib, 4, "Registering module \"%s\" with main context %p",
+        ib_log_debug(ib, 7, "Registering module \"%s\" with main context %p",
                      m->name, ib->ctx);
         ib_module_register_context(m, ib->ctx);
     }
     else {
-        ib_log_debug(ib, 4, "No main context to registering module \"%s\"",
+        ib_log_error(ib, 4, "No main context to registering module \"%s\"",
                      m->name);
     }
 
@@ -1651,7 +1651,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     }
 
     /* Load module and fetch the module structure */
-    ib_log_debug(ib, 4, "Loading module: %s", file);
+    ib_log_debug(ib, 7, "Loading module: %s", file);
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to load module %s: %d", file, rc);
@@ -2050,7 +2050,7 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
     ip = ipnode ? (const char *)ib_list_node_data(ipnode) : NULL;
     while (numips--) {
         /// @todo IP should be IP:Port combo
-        ib_log_debug(ib, 4, "Checking IP %s against context %s",
+        ib_log_debug(ib, 6, "Checking IP %s against context %s",
                      tx->conn->local_ipstr, ip?ip:"ANY");
         if ((ip == NULL) || (strcmp(ip, tx->conn->local_ipstr) == 0)) {
             numhosts = loc->site->hosts ? ib_list_elements(loc->site->hosts) : 1;
@@ -2062,22 +2062,22 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
                 off_t cmpoffset = txhostlen - hostlen;
                 const char *cmphost = (cmpoffset > 0)?txhost + cmpoffset:NULL;
                 if (cmphost != NULL) {
-                    ib_log_debug(ib, 4, "Checking Host \"%s\" (effective=\"%s\") against context %s",
+                    ib_log_debug(ib, 6, "Checking Host \"%s\" (effective=\"%s\") against context %s",
                                  txhost, cmphost, (host&&*host)?host:"ANY");
                     if ((host == NULL) || (strcmp(host, cmphost) == 0)) {
                         path = loc->path;
 
-                        ib_log_debug(ib, 4, "Checking Location %s against context %s",
+                        ib_log_debug(ib, 6, "Checking Location %s against context %s",
                                      txpath, path?path:"ANY");
                         if ((path == NULL) || (strncmp(path, txpath, strlen(path)) == 0)) {
-                            ib_log_debug(ib, 4, "Site \"%s:%s\" matched ctx=%p",
+                            ib_log_debug(ib, 5, "Site \"%s:%s\" matched ctx=%p",
                                          loc->site->name, loc->path, ctx);
                             IB_FTRACE_RET_STATUS(IB_OK);
                         }
                     }
                 }
                 else {
-                    ib_log_debug(ib, 4, "Skipping Host %s check against context %s",
+                    ib_log_debug(ib, 6, "Skipping Host %s check against context %s",
                                  txhost, host?host:"ANY");
                 }
                 if (numhosts > 0) {

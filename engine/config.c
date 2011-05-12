@@ -147,7 +147,6 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
 #define bufremain (sizeof(buf) - (buf_mark - buf) + 1)
 
-    ib_log_debug(cp->ib, 4, "Reading config \"%s\" via fd=%d", file, fd);
     while ((nbytes = read(fd, buf_mark, bufremain))) {
         int ec = errno;
         size_t remaining;
@@ -230,7 +229,7 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->stack, ctx);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to push context %p: %d", ctx, rc);
+        ib_log_error(ib, 4, "Failed to push context %p: %d", ctx, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     cfgp_set_current(cp, ctx);
@@ -258,7 +257,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     /* Remove the last item. */
     rc = ib_list_pop(cp->stack, &ctx);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to pop context: %d", rc);
+        ib_log_error(ib, 4, "Failed to pop context: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -287,7 +286,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->block, (void *)name);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to push block %p: %d", name, rc);
+        ib_log_error(ib, 4, "Failed to push block %p: %d", name, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     cp->cur_blkname = name;
@@ -309,7 +308,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
 
     rc = ib_list_pop(cp->block, &name);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to pop block: %d", rc);
+        ib_log_error(ib, 4, "Failed to pop block: %d", rc);
         cp->cur_blkname = NULL;
         IB_FTRACE_RET_STATUS(rc);
     }

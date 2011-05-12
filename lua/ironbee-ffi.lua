@@ -679,6 +679,12 @@ function ib_log_debug(ib, lvl, fmt, ...)
                  dinfo.source .. ".lua", dinfo.linedefined, fmt, ...)
 end
 
+function ib_log_error(ib, lvl, fmt, ...)
+    local c_ctx = c.ib_context_main(ib.cvalue())
+
+    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ", nil, 0, fmt, ...)
+end
+
 -- ===============================================
 -- Lua OO Wrappers around IronBee raw C types
 -- TODO: Add metatable w/__tostring for each type
@@ -1089,7 +1095,6 @@ function ib_config_register_directive(ib,
 
     if fn_config_name ~= nil then
         dot_idx = string.find(fn_config_name, ".", 1, true)
-        ib_log_debug(ib, 4, "DIRECTIVE_HANDLER: dot_idx=%d %s", ffi.cast("int", dot_idx), fn_config_name)
         c_cbdata.fn_config_modname = string.sub(fn_config_name, 1, dot_idx - 1)
         c_cbdata.fn_config_name = string.sub(fn_config_name, (string.len(fn_config_name) - dot_idx) * -1)
     else
@@ -1212,7 +1217,7 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
     elseif c_event == c.response_finished_event then
         l_arg = newTx(arg)
     else
-        ib_log_debug(l_ib, 4, "Unhandled event for module \"%s\": %d",
+        ib_log_error(l_ib, 4, "Unhandled event for module \"%s\": %d",
                      modname, ffi.cast("int", event))
         return nil
     end
