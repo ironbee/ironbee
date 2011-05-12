@@ -461,7 +461,7 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	Data_Get_Struct( connp_r, htp_connp_t, connp );
 		
 	int result = 
-		htp_connp_req_data( connp, timestamp_c, (unsigned char*)data_c, len );
+		htp_connp_req_data( connp, &timestamp_c, (unsigned char*)data_c, len );
 	
 	return INT2FIX( result );
 }
