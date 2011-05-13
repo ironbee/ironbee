@@ -30,3 +30,4 @@
 /test/.deps/
 /test/Makefile
 /test/Makefile.in
+extras/ruby/*.gem
