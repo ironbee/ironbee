@@ -40,7 +40,7 @@ RequestBuffering On
 # Response (TODO Implement)
 #ResponseBuffering Off
 
-PocSigDebug On
+PocSigTrace On
 
 # -- Sites --
 # TODO: Hostname - currently wildcard can only be on left

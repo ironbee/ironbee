@@ -26,10 +26,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <string.h>
 #include <strings.h>
-#include <time.h>
-#include <ctype.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
@@ -37,8 +34,8 @@
 #include <ironbee/provider.h>
 
 /* Define the module name as well as a string version of it. */
-#define MODULE_NAME        poc_sig
-#define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
+#define MODULE_NAME               pocsig
+#define MODULE_NAME_STR           IB_XSTRINGIFY(MODULE_NAME)
 
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
@@ -46,33 +43,35 @@ IB_MODULE_DECLARE();
 typedef struct pocsig_cfg_t pocsig_cfg_t;
 typedef struct pocsig_sig_t pocsig_sig_t;
 
+/** Signature Phases */
 typedef enum {
-    POCSIG_PRE,
-    POCSIG_REQHEAD,
-    POCSIG_REQ,
-    POCSIG_RESHEAD,
-    POCSIG_RES,
-    POCSIG_POST,
+    POCSIG_PRE,                   /**< Pre transaction phase */
+    POCSIG_REQHEAD,               /**< Request headers phase */
+    POCSIG_REQ,                   /**< Request phase */
+    POCSIG_RESHEAD,               /**< Response headers phase */
+    POCSIG_RES,                   /**< Response phase */
+    POCSIG_POST,                  /**< Post transaction phase */
 
+    /* Keep track of the number of defined phases. */
     POCSIG_PHASE_NUM
 } pocsig_phase_t;
+
+/** Signature Structure */
+struct pocsig_sig_t {
+    const char         *target;   /**< Target name */
+    const char         *patt;     /**< Pattern to match in target */
+    void               *cpatt;    /**< Compiled PCRE regex */
+    const char         *emsg;     /**< Event message */
+};
 
 /** Module Configuration Structure */
 struct pocsig_cfg_t {
     /* Exposed as configuration parameters. */
-    ib_num_t        debug;        /**< Log signature debugging */
+    ib_num_t            trace;    /**< Log signature tracing */
 
     /* Private. */
-    ib_list_t      *phase[POCSIG_PHASE_NUM]; /**< Phase signature lists */
-    ib_matcher_t   *pcre;         /**< PCRE matcher */
-};
-
-/** Signature */
-struct pocsig_sig_t {
-    const char         *target;   /**< Target name */
-    const char         *patt;     /**< Pattern to match in target */
-    void               *cpatt;  /**< Compiled PCRE regex */
-    const char         *emsg;     /**< Event message */
+    ib_list_t          *phase[POCSIG_PHASE_NUM]; /**< Phase signature lists */
+    ib_matcher_t       *pcre;     /**< PCRE matcher */
 };
 
 /* Instantiate a module global configuration. */
@@ -83,7 +82,7 @@ static pocsig_cfg_t pocsig_global_cfg;
 
 /**
  * @internal
- * Handle a PocSigDebug directive.
+ * Handle a PocSigTrace directive.
  *
  * @param cp Config parser
  * @param name Directive name
@@ -92,23 +91,23 @@ static pocsig_cfg_t pocsig_global_cfg;
  *
  * @returns Status code
  */
-static ib_status_t pocsig_dir_debug(ib_cfgparser_t *cp,
+static ib_status_t pocsig_dir_trace(ib_cfgparser_t *cp,
                                     const char *name,
                                     const char *p1,
                                     void *cbdata)
 {
-    IB_FTRACE_INIT(pocsig_dir_debug);
+    IB_FTRACE_INIT(pocsig_dir_trace);
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_status_t rc;
 
     ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
     if (strcasecmp("On", p1) == 0) {
-        rc = ib_context_set_num(ctx, MODULE_NAME_STR ".debug", 1);
+        rc = ib_context_set_num(ctx, MODULE_NAME_STR ".trace", 1);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("Off", p1) == 0) {
-        rc = ib_context_set_num(ctx, MODULE_NAME_STR ".debug", 0);
+        rc = ib_context_set_num(ctx, MODULE_NAME_STR ".trace", 0);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -337,6 +336,7 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
     pocsig_phase_t phase = (pocsig_phase_t)(uintptr_t)cbdata;
     ib_list_t *sigs;
     ib_list_node_t *node;
+    int dbglvl;
     ib_status_t rc;
 
     /* Get the pocsig configuration for this context. */
@@ -345,6 +345,9 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
         ib_log_error(ib, 1, "Failed to fetch %s config: %d",
                      MODULE_NAME_STR, rc);
     }
+
+    /* If debugging is enabled, lower the log level. */
+    dbglvl = cfg->trace ? 4 : 9;
 
     /* Get the list of sigs for this phase. */
     sigs = cfg->phase[phase];
@@ -451,12 +454,12 @@ static ib_status_t pocsig_context_init(ib_engine_t *ib,
 
 /* Configuration parameter initialization structure. */
 static IB_CFGMAP_INIT_STRUCTURE(pocsig_config_map) = {
-    /* debug */
+    /* trace */
     IB_CFGMAP_INIT_ENTRY(
-        MODULE_NAME_STR ".debug",
+        MODULE_NAME_STR ".trace",
         IB_FTYPE_NUM,
         &pocsig_global_cfg,
-        debug,
+        trace,
         0
     ),
 
@@ -466,10 +469,10 @@ static IB_CFGMAP_INIT_STRUCTURE(pocsig_config_map) = {
 
 /* Directive initialization structure. */
 static IB_DIRMAP_INIT_STRUCTURE(pocsig_directive_map) = {
-    /* PocSigDebug - Enable/Disable debugging */
+    /* PocSigTrace - Enable/Disable tracing */
     IB_DIRMAP_INIT_PARAM1(
-        "PocSigDebug",
-        pocsig_dir_debug,
+        "PocSigTrace",
+        pocsig_dir_trace,
         NULL,
         NULL
     ),
