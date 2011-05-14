@@ -152,8 +152,8 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
                      MODULE_NAME_STR, rc);
     }
 
+    /* Setup the PCRE matcher. */
     if (cfg->pcre == NULL) {
-        /* Setup the PCRE matcher. */
         rc = ib_matcher_create(ib, ib_engine_pool_config_get(ib),
                                "pcre", &cfg->pcre);
         if (rc != IB_OK) {
@@ -271,7 +271,6 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
         ib_log_error(ib, 2, "No PCRE matcher available (load the pcre module?)");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-
     sig->cpatt = ib_matcher_compile(cfg->pcre, sig->patt, &errptr, &erroff);
     if (sig->cpatt == NULL) {
         ib_log_error(ib, 2, "Error at offset=%d of PCRE patt=\"%s\": %s",
@@ -282,169 +281,12 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     ib_log_debug(ib, 4, "POCSIG: \"%s\" \"%s\" \"%s\" phase=%d ctx=%p",
                  target, op, action, phase, ctx);
 
+    /* Add the signature to the phase list. */
     rc = ib_list_push(cfg->phase[phase], sig);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to add signature");
         IB_FTRACE_RET_STATUS(rc);
     }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-
-/* -- Module Routines -- */
-
-static ib_status_t pocsig_init(ib_engine_t *ib,
-                               ib_module_t *m)
-{
-    IB_FTRACE_INIT(pocsig_init);
-
-    /* Initialize the global config items that are not mapped to config
-     * parameters.  These will not have default values.
-     */
-    memset(pocsig_global_cfg.phase, 0, sizeof(pocsig_global_cfg.phase));
-    pocsig_global_cfg.pcre = NULL;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t pocsig_fini(ib_engine_t *ib,
-                               ib_module_t *m)
-{
-    IB_FTRACE_INIT(pocsig_fini);
-    /// @todo Nothing yet???
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
- * Handle signature execution.
- *
- * @param ib Engine
- * @param tx Transaction
- * @param cbdata Phase passed as pointer value
- *
- * @return Status code
- */
-static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
-                                      ib_tx_t *tx,
-                                      void *cbdata)
-{
-    IB_FTRACE_INIT(pocsig_handle_post);
-    pocsig_cfg_t *cfg;
-    pocsig_phase_t phase = (pocsig_phase_t)(uintptr_t)cbdata;
-    ib_list_t *sigs;
-    ib_list_node_t *node;
-    int dbglvl;
-    ib_status_t rc;
-
-    /* Get the pocsig configuration for this context. */
-    rc = ib_context_module_config(tx->ctx, &IB_MODULE_SYM, (void *)&cfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to fetch %s config: %d",
-                     MODULE_NAME_STR, rc);
-    }
-
-    /* If debugging is enabled, lower the log level. */
-    dbglvl = cfg->trace ? 4 : 9;
-
-    /* Get the list of sigs for this phase. */
-    sigs = cfg->phase[phase];
-    if (sigs == NULL) {
-        ib_log_debug(ib, 4, "No signatures for phase=%d ctx=%p",
-                     phase, tx->ctx);
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-
-    ib_log_debug(ib, 4, "Executing %d signatures for phase=%d ctx=%p",
-                 ib_list_elements(sigs), phase, tx->ctx);
-
-    /* Run all the sigs for this phase. */
-    IB_LIST_LOOP(sigs, node) {
-        pocsig_sig_t *s = (pocsig_sig_t *)ib_list_node_data(node);
-        ib_field_t *f;
-
-        /* Fetch the field. */
-        rc = ib_data_get(tx->dpi, s->target, &f);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4, "PocSig: No field named \"%s\"", s->target);
-            continue;
-        }
-
-        /* Perform the match. */
-        ib_log_debug(ib, 4, "PocSig: Matching \"%s\" against field \"%s\"",
-                     s->patt, s->target);
-        rc = ib_matcher_match_field(cfg->pcre, s->cpatt, 0, f);
-        if (rc == IB_OK) {
-            ib_logevent_t *e;
-
-            ib_log_debug(ib, 4, "PocSig MATCH: %s at %s", s->patt, s->target);
-
-            /* Create the event. */
-            rc = ib_logevent_create(
-                &e,
-                tx->mp,
-                "-",
-                IB_LEVENT_TYPE_ALERT,
-                IB_LEVENT_ACT_UNKNOWN,
-                IB_LEVENT_PCLASS_UNKNOWN,
-                IB_LEVENT_SCLASS_UNKNOWN,
-                90,
-                80,
-                IB_LEVENT_SYS_UNKNOWN,
-                IB_LEVENT_ACTION_IGNORE,
-                IB_LEVENT_ACTION_IGNORE,
-                s->emsg
-            );
-            if (rc != IB_OK) {
-                ib_log_error(ib, 3, "PocSig: Error generating event: %d", rc);
-                continue;
-            }
-
-            /* Log the event. */
-            ib_clog_event(tx->ctx, e);
-        }
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t pocsig_context_init(ib_engine_t *ib,
-                                       ib_module_t *m,
-                                       ib_context_t *ctx)
-{
-    IB_FTRACE_INIT(pocsig_context_init);
-    pocsig_cfg_t *cfg;
-    ib_status_t rc;
-
-    rc = ib_context_module_config(ctx, m, (void *)&cfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to fetch %s config: %d",
-                     MODULE_NAME_STR, rc);
-    }
-
-    /// @todo Inherit signatures from parent context???
-
-    /* Register hooks to handle the phases. */
-    ib_hook_register_context(ctx, handle_context_tx_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_PRE);
-    ib_hook_register_context(ctx, handle_request_headers_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_REQHEAD);
-    ib_hook_register_context(ctx, handle_request_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_REQ);
-    ib_hook_register_context(ctx, handle_response_headers_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_RESHEAD);
-    ib_hook_register_context(ctx, handle_response_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_RES);
-    ib_hook_register_context(ctx, handle_postprocess_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_POST);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -519,6 +361,161 @@ static IB_DIRMAP_INIT_STRUCTURE(pocsig_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
+
+/* -- Hook Handlers -- */
+
+/**
+ * @internal
+ * Handle signature execution.
+ *
+ * @param ib Engine
+ * @param tx Transaction
+ * @param cbdata Phase passed as pointer value
+ *
+ * @return Status code
+ */
+static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
+                                      ib_tx_t *tx,
+                                      void *cbdata)
+{
+    IB_FTRACE_INIT(pocsig_handle_post);
+    pocsig_cfg_t *cfg;
+    pocsig_phase_t phase = (pocsig_phase_t)(uintptr_t)cbdata;
+    ib_list_t *sigs;
+    ib_list_node_t *node;
+    int dbglvl;
+    ib_status_t rc;
+
+    /* Get the pocsig configuration for this context. */
+    rc = ib_context_module_config(tx->ctx, &IB_MODULE_SYM, (void *)&cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to fetch %s config: %d",
+                     MODULE_NAME_STR, rc);
+    }
+
+    /* If tracing is enabled, lower the log level. */
+    dbglvl = cfg->trace ? 4 : 9;
+
+    /* Get the list of sigs for this phase. */
+    sigs = cfg->phase[phase];
+    if (sigs == NULL) {
+        ib_log_debug(ib, dbglvl, "No signatures for phase=%d ctx=%p",
+                     phase, tx->ctx);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug(ib, dbglvl, "Executing %d signatures for phase=%d ctx=%p",
+                 ib_list_elements(sigs), phase, tx->ctx);
+
+    /* Run all the sigs for this phase. */
+    IB_LIST_LOOP(sigs, node) {
+        pocsig_sig_t *s = (pocsig_sig_t *)ib_list_node_data(node);
+        ib_field_t *f;
+
+        /* Fetch the field. */
+        rc = ib_data_get(tx->dpi, s->target, &f);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "PocSig: No field named \"%s\"", s->target);
+            continue;
+        }
+
+        /* Perform the match. */
+        ib_log_debug(ib, dbglvl, "PocSig: Matching \"%s\" against field \"%s\"",
+                     s->patt, s->target);
+        rc = ib_matcher_match_field(cfg->pcre, s->cpatt, 0, f);
+        if (rc == IB_OK) {
+            ib_logevent_t *e;
+
+            ib_log_debug(ib, dbglvl, "PocSig MATCH: %s at %s", s->patt, s->target);
+
+            /* Create the event. */
+            rc = ib_logevent_create(
+                &e,
+                tx->mp,
+                "-",
+                IB_LEVENT_TYPE_ALERT,
+                IB_LEVENT_ACT_UNKNOWN,
+                IB_LEVENT_PCLASS_UNKNOWN,
+                IB_LEVENT_SCLASS_UNKNOWN,
+                90,
+                80,
+                IB_LEVENT_SYS_UNKNOWN,
+                IB_LEVENT_ACTION_IGNORE,
+                IB_LEVENT_ACTION_IGNORE,
+                s->emsg
+            );
+            if (rc != IB_OK) {
+                ib_log_error(ib, 3, "PocSig: Error generating event: %d", rc);
+                continue;
+            }
+
+            /* Log the event. */
+            ib_clog_event(tx->ctx, e);
+        }
+        else {
+            ib_log_debug(ib, dbglvl, "PocSig NOMATCH");
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+/* -- Module Routines -- */
+
+static ib_status_t pocsig_init(ib_engine_t *ib,
+                               ib_module_t *m)
+{
+    IB_FTRACE_INIT(pocsig_init);
+
+    /* Initialize the global config items that are not mapped to config
+     * parameters as these will not have default values.
+     */
+    memset(pocsig_global_cfg.phase, 0, sizeof(pocsig_global_cfg.phase));
+    pocsig_global_cfg.pcre = NULL;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t pocsig_context_init(ib_engine_t *ib,
+                                       ib_module_t *m,
+                                       ib_context_t *ctx)
+{
+    IB_FTRACE_INIT(pocsig_context_init);
+    pocsig_cfg_t *cfg;
+    ib_status_t rc;
+
+    rc = ib_context_module_config(ctx, m, (void *)&cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to fetch %s config: %d",
+                     MODULE_NAME_STR, rc);
+    }
+
+    /// @todo Inherit signatures from parent context???
+
+    /* Register hooks to handle the phases. */
+    ib_hook_register_context(ctx, handle_context_tx_event,
+                             (ib_void_fn_t)pocsig_handle_sigs,
+                             (void *)POCSIG_PRE);
+    ib_hook_register_context(ctx, handle_request_headers_event,
+                             (ib_void_fn_t)pocsig_handle_sigs,
+                             (void *)POCSIG_REQHEAD);
+    ib_hook_register_context(ctx, handle_request_event,
+                             (ib_void_fn_t)pocsig_handle_sigs,
+                             (void *)POCSIG_REQ);
+    ib_hook_register_context(ctx, handle_response_headers_event,
+                             (ib_void_fn_t)pocsig_handle_sigs,
+                             (void *)POCSIG_RESHEAD);
+    ib_hook_register_context(ctx, handle_response_event,
+                             (ib_void_fn_t)pocsig_handle_sigs,
+                             (void *)POCSIG_RES);
+    ib_hook_register_context(ctx, handle_postprocess_event,
+                             (ib_void_fn_t)pocsig_handle_sigs,
+                             (void *)POCSIG_POST);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /**
  * Module structure.
  *
@@ -531,7 +528,7 @@ IB_MODULE_INIT(
     pocsig_config_map,                   /**< Configuration field map */
     pocsig_directive_map,                /**< Config directive map */
     pocsig_init,                         /**< Initialize function */
-    pocsig_fini,                         /**< Finish function */
+    NULL,                                /**< Finish function */
     pocsig_context_init,                 /**< Context init function */
 );
 
