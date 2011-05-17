@@ -1472,6 +1472,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_list_t *list;
     char *tstamp;
     char *log_format;
+    ib_num_t sensorid = (ib_num_t)ib->sensor_id;
     ib_status_t rc;
 
     /* Timestamp */
@@ -1511,6 +1512,12 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                        "log-id",
                        (uint8_t *)cfg->boundary,
                        strlen(cfg->boundary));
+    ib_list_push(list, f);
+
+    ib_field_create(&f, pool,
+                    "sensor-id",
+                    IB_FTYPE_UNUM,
+                    &sensorid);
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
