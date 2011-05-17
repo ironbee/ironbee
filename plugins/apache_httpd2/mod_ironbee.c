@@ -648,11 +648,14 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
              b != APR_BRIGADE_SENTINEL(bb);
              b = APR_BUCKET_NEXT(b))
         {
-            process_bucket(f, b);
             if (buffering) {
                 /// @todo setaside into our own pool to destroy later???
                 apr_bucket_setaside(b, c->pool);
+                process_bucket(f, b);
                 APR_BUCKET_REMOVE(b);
+            }
+            else {
+                process_bucket(f, b);
             }
         }
     } while (buffering);
@@ -669,6 +672,20 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
 static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
 {
     apr_bucket *b;
+#if 0
+    conn_rec *c = f->c;
+    ironbee_conn_context *ctx = f->ctx;
+    ib_conn_t *iconn = ctx->iconn;
+    ib_core_cfg_t *corecfg;
+    int buffering = 0;
+
+    /* Configure. */
+    ib_context_module_config(iconn->ctx, ib_core_module(), (void *)&corecfg);
+    if (corecfg != NULL) {
+        buffering = (int)corecfg->buffer_res;
+    }
+#endif
+
 
     for (b = APR_BRIGADE_FIRST(bb); b != APR_BRIGADE_SENTINEL(bb); b = APR_BUCKET_NEXT(b)) {
 #if 0
@@ -678,9 +695,19 @@ static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
             apr_bucket *flush = apr_bucket_flush_create(f->c->bucket_alloc);
             APR_BUCKET_INSERT_BEFORE(b, flush);
         }
-#endif
 
-        process_bucket(f, b);
+        if (buffering) {
+            /// @todo setaside into our own pool to destroy later???
+            apr_bucket_setaside(b, c->pool);
+            process_bucket(f, b);
+            APR_BUCKET_REMOVE(b);
+        }
+        else {
+#endif
+            process_bucket(f, b);
+#if 0
+        }
+#endif
     }
 
     return ap_pass_brigade(f->next, bb);
