@@ -11,9 +11,10 @@ AM_LDFLAGS = -no-undefined -static-libtool-libs
 endif
 EXTRA_DIST = ironbee-ffi.lua \
              example.lua \
-             example-ffi.lua
+             qa.lua
 lua_DATA = ironbee-ffi.lua \
-           example.lua
+           example.lua \
+           qa.lua
 
 noinst_LTLIBRARIES = libironbee-lua.la
 libironbee_lua_la_SOURCES = ironbee.c ironbee.h 
