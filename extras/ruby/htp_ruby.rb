@@ -137,6 +137,26 @@ module HTP
     attr_reader :connp
     attr_reader :cfg
     
+    # Here we cache a variety of values that are built on demand.
+    [
+      :request_params_query,
+      :request_params_body,
+      :request_cookies,
+      :request_headers,
+      :response_headers,
+      :request_header_lines,
+      :response_header_lines
+    ].each do |name|
+      raw_name = ( "_" + name.to_s ).to_sym
+      alias_method( raw_name, name )
+      private( raw_name )
+      remove_method( name )
+      define_method name do
+        @cache ||= {}
+        @cache[name] ||= send( raw_name )
+      end
+    end
+
     def invalid_chunking?
       flags & HTP_INVALID_CHUNKING != 0
     end

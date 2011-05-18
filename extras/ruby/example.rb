@@ -39,30 +39,24 @@ cfg.register_request do |connp|
   puts "Parsed URI: "
   puts "  " + tx.parsed_uri
   
-  # Calling request_headers rubyizes it so we cache the value to avoid
-  # paying the cost multiple times.  This repeats in subsequent examples.
-  request_headers = tx.request_headers
-  if request_headers
+  if tx.request_headers
     puts "Request Headers: "
-    request_headers.each {|h| puts "  " + h}
+    tx.request_headers.each {|h| puts "  " + h}
   end
   
-  request_cookies = tx.request_cookies
-  if request_cookies
+  if tx.request_cookies
     puts "Request Cookies: "
-    request_cookies.each {|k,v| puts "  #{k} = #{v}"}
+    tx.request_cookies.each {|k,v| puts "  #{k} = #{v}"}
   end
   
-  request_params_query = tx.request_params_query
-  if request_params_query
+  if tx.request_params_query
     puts "Request Params Query: "
-    request_params_query.each {|k,v| puts "  #{k} = #{v}"}
+    tx.request_params_query.each {|k,v| puts "  #{k} = #{v}"}
   end
 
-  request_params_body = tx.request_params_body
-  if request_params_body
+  if tx.request_params_body
     puts "Request Body Query: "
-    request_params_body.each {|k,v| puts "  #{k} = #{v}"}
+    tx.request_params_body.each {|k,v| puts "  #{k} = #{v}"}
   end
   
   0
