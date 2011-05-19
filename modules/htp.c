@@ -1012,12 +1012,12 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  NULL);
 
         modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri.password",
+                                 "request_uri_password",
                                  tx->parsed_uri->password,
                                  NULL);
 
         modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_hostname",
+                                 "request_uri_host",
                                  tx->parsed_uri->hostname,
                                  NULL);
 
@@ -1027,7 +1027,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
         if (tx->parsed_uri != NULL) {
             itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
             modhtp_field_gen_bytestr(itx->dpi,
-                                     "request_hostname",
+                                     "request_host",
                                      tx->parsed_uri->hostname,
                                      NULL);
         }
@@ -1074,7 +1074,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 {
                     itx->hostname = (const char *)bstr_util_strdup_to_c(h->value);
                     modhtp_field_gen_bytestr(itx->dpi,
-                                             "request_hostname",
+                                             "request_host",
                                              h->value,
                                              NULL);
                 }

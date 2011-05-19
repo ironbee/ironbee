@@ -228,7 +228,7 @@ function onEventHandleRequestHeaders(ib, tx)
     -- copy of the underlying "C" representation to create the Lua version
     -- and you may not want the overhead of doing thisi (see PCRE matcher
     -- below for another option).
-    ironbee.ib_log_debug(ib, 4, "Request Line value: %s", req_line.value())
+    ironbee.ib_log_debug(ib, 4, "REQUEST_LINE=%s", req_line.value())
 
     -- You can also request a transformed value
     local req_line_lower = ironbee.ib_data_tfn_get(tx.dpi(), "request_line", "lowercase")
@@ -245,9 +245,9 @@ function onEventHandleRequestHeaders(ib, tx)
     if req_headers.type() == ironbee.IB_FTYPE_LIST then
         for k,f in base.pairs(req_headers.value()) do
             if f.type() == ironbee.IB_FTYPE_LIST then
-                ironbee.ib_log_debug(ib, 4, "Request Header value: %s=<list>", k)
+                ironbee.ib_log_debug(ib, 4, "REQUEST_HEADERS.%s=<list>", k)
             else
-                ironbee.ib_log_debug(ib, 4, "Request Header value: %s=%s", k, f.value())
+                ironbee.ib_log_debug(ib, 4, "REQUEST_HEADERS.%s=%s", k, f.value())
             end
         end
     end
@@ -255,18 +255,18 @@ function onEventHandleRequestHeaders(ib, tx)
     -- via "name.subname" syntax:
     local http_host_header = ironbee.ib_data_get(tx.dpi(), "request_headers.host")
     ironbee.ib_log_debug(ib, 4, "HTTP Host Header is a field type: %d", http_host_header.type())
-    ironbee.ib_log_debug(ib, 4, "HTTP Host Header value: %s", http_host_header.value())
+    ironbee.ib_log_debug(ib, 4, "HTTP REQUEST_HEADERS.HOST=%s", http_host_header.value())
 
 
-    -- Request URI params are a collection (table of field objects)
-    local req_uri_params = ironbee.ib_data_get(tx.dpi(), "request_uri_params")
-    ironbee.ib_log_debug(ib, 4, "Request URI Params is a field type: %d", req_uri_params.type())
-    if req_uri_params.type() == ironbee.IB_FTYPE_LIST then
-        for k,f in base.pairs(req_uri_params.value()) do
+    -- Request ARGS are a collection (table of field objects)
+    local req_args = ironbee.ib_data_get(tx.dpi(), "args")
+    ironbee.ib_log_debug(ib, 4, "Request ARGS is a field type: %d", req_args.type())
+    if req_args.type() == ironbee.IB_FTYPE_LIST then
+        for k,f in base.pairs(req_args.value()) do
             if f.type() == ironbee.IB_FTYPE_LIST then
-                ironbee.ib_log_debug(ib, 4, "Request URI Param value: %s=<list>", k)
+                ironbee.ib_log_debug(ib, 4, "ARGS.%s=<list>", k)
             else
-                ironbee.ib_log_debug(ib, 4, "Request URI Param value: %s=%s", k, f.value())
+                ironbee.ib_log_debug(ib, 4, "ARGS.%s=%s", k, f.value())
             end
         end
     end
