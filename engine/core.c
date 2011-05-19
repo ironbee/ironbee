@@ -2171,6 +2171,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     IB_FTRACE_INIT(parser_hook_req_header);
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    ib_field_t *f;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -2182,7 +2183,25 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     /* This function is required, so no NULL check. */
 
     rc = iface->gen_request_header_fields(pi, tx);
-    IB_FTRACE_RET_STATUS(rc);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+
+    /* Alias ARGS fields */
+    rc = ib_data_get(tx->dpi, "request_uri_params", &f);
+    if (rc == IB_OK) {
+        rc = ib_data_add_named(tx->dpi, f, "args", 4);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4, "Failed to alias ARGS: %d", rc);
+        }
+        rc = ib_data_add_named(tx->dpi, f, "args_get", 8);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4, "Failed to alias ARGS_GET: %d", rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
