@@ -1138,7 +1138,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             case IB_FTYPE_BYTESTR:
                 rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
                                 "  \"%" IB_BYTESTR_FMT "\": "
-                                " \"%" IB_BYTESTR_FMT "\"%s\r\n",
+                                "\"%" IB_BYTESTR_FMT "\"%s\r\n",
                                 IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
                                 IB_BYTESTR_FMT_PARAM(ib_field_value_bytestr(f)),
                                 comma);
