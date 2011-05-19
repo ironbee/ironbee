@@ -68,7 +68,7 @@ ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
 ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
                                const char *name,
                                size_t nlen,
-                               uint64_t val,
+                               ib_num_t val,
                                ib_field_t **pf)
 {
     IB_FTRACE_INIT(ib_data_add_num_ex);

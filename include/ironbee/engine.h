@@ -1211,7 +1211,7 @@ ib_status_t DLL_PUBLIC ib_data_add_named(ib_provider_inst_t *dpi,
 ib_status_t DLL_PUBLIC ib_data_add_num_ex(ib_provider_inst_t *dpi,
                                           const char *name,
                                           size_t nlen,
-                                          uint64_t val,
+                                          ib_num_t val,
                                           ib_field_t **pf);
 
 /**
@@ -1309,7 +1309,7 @@ ib_status_t DLL_PUBLIC ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
  */
 ib_status_t DLL_PUBLIC ib_data_add_num(ib_provider_inst_t *dpi,
                                        const char *name,
-                                       uint64_t val,
+                                       ib_num_t val,
                                        ib_field_t **pf);
 
 #define ib_data_add_num(dpi,name,val,pf) \
