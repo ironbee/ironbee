@@ -259,7 +259,7 @@ ib_provider_inst_t DLL_PUBLIC *ib_log_provider_get_instance(ib_context_t *ctx);
  * Set the log provider instance within a configuration context.
  *
  * @param ctx Config context
- * @param pr Log provider
+ * @param lpi Log provider instance
  */
 void DLL_PUBLIC ib_log_provider_set_instance(ib_context_t *ctx,
                                              ib_provider_inst_t *lpi);
@@ -322,7 +322,7 @@ ib_provider_inst_t DLL_PUBLIC *ib_audit_provider_get_instance(ib_context_t *ctx)
  * Set the audit provider instance within a configuration context.
  *
  * @param ctx Config context
- * @param pr Audit provider
+ * @param lpi Audit log provider instance
  */
 void DLL_PUBLIC ib_audit_provider_set_instance(ib_context_t *ctx,
                                                ib_provider_inst_t *lpi);
@@ -387,7 +387,7 @@ ib_provider_inst_t DLL_PUBLIC *ib_parser_provider_get_instance(ib_context_t *ctx
  * Set the parser provider within a configuration context.
  *
  * @param ctx Config context
- * @param pr Parser provider
+ * @param ppi Parser provider instance
  */
 void DLL_PUBLIC ib_parser_provider_set_instance(ib_context_t *ctx,
                                                 ib_provider_inst_t *ppi);
@@ -599,7 +599,7 @@ ib_provider_inst_t DLL_PUBLIC *ib_logevent_provider_get_instance(ib_context_t *c
  * Set the logevent provider instance within a configuration context.
  *
  * @param ctx Config context
- * @param pr Logevent provider
+ * @param lpi Logevent provider instance
  */
 void DLL_PUBLIC ib_logevent_provider_set_instance(ib_context_t *ctx,
                                                   ib_provider_inst_t *lpi);

@@ -509,6 +509,7 @@ typedef struct ib_list_node_t ib_list_node_t;
  *
  * @param list List
  * @param node Symbol holding node
+ * @param node_next Symbol holding next node
  */
 #define IB_LIST_LOOP_SAFE(list,node,node_next) \
     for ((node) = ib_list_first(list), \
@@ -540,10 +541,11 @@ typedef struct ib_list_node_t ib_list_node_t;
  * @todo Make this generic (non-ib_list__t specific)
  *
  * This loop allows deleting elements. If this is not needed, then
- * use the @ref IB_LIST_REVERSE_LOOP loop.
+ * use the @ref IB_LIST_LOOP_REVERSE loop.
  *
  * @param list List
  * @param node Symbol holding node
+ * @param node_next Symbol holding next node
  */
 #define IB_LIST_LOOP_REVERSE_SAFE(list,node,node_next) \
     for ((node) = ib_list_last(list), \
@@ -1014,7 +1016,6 @@ ib_status_t DLL_PUBLIC ib_field_createn_ex(ib_field_t **pf,
  * @param mp Memory pool
  * @param name Field name as byte string
  * @param nlen Field name length
- * @param type Field type
  * @param src Source field to copy
  *
  * @returns Status code
@@ -1090,7 +1091,6 @@ ib_status_t DLL_PUBLIC ib_field_createn(ib_field_t **pf,
  * @param pf Address which new field is written
  * @param mp Memory pool
  * @param name Field name as byte string
- * @param type Field type
  * @param src Source field to copy
  *
  * @returns Status code
@@ -1304,7 +1304,7 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_init(ib_cfgmap_t *cm,
                                       const void *base,
-                                      const ib_cfgmap_init_t *initi,
+                                      const ib_cfgmap_init_t *init,
                                       int usedefaults);
 
 
@@ -1340,7 +1340,7 @@ ib_status_t DLL_PUBLIC ib_cfgmap_set(ib_cfgmap_t *cm,
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_get(ib_cfgmap_t *cm,
                                      const char *name,
-                                     void *pval, ib_ftype_t *type);
+                                     void *pval, ib_ftype_t *ptype);
 
 /** @} IronBeeUtilCfgMap */
 

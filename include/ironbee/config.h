@@ -255,7 +255,7 @@ void DLL_PUBLIC ib_cfgparser_destroy(ib_cfgparser_t *cp);
  * Register directives with the engine.
  *
  * @param ib Engine
- * @param dirmap Directive mapping
+ * @param init Directive mapping
  *
  * @returns Status code
  */

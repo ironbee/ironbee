@@ -248,8 +248,8 @@ ib_status_t DLL_PUBLIC ib_module_create(ib_module_t **pm,
  *
  * This causes the module init() function to be called.
  *
+ * @param pm Address which module handle is written
  * @param ib Engine handle
- * @param name Module name defined by the module
  * @param file Filename of the module
  *
  * @returns Status code
@@ -261,8 +261,7 @@ ib_status_t DLL_PUBLIC ib_module_load(ib_module_t **pm,
 /**
  * Unload an engine module.
  *
- * @param ib Engine handle
- * @param name Module name defined by the module
+ * @param m Module
  *
  * @returns Status code
  */
@@ -272,8 +271,7 @@ ib_status_t DLL_PUBLIC ib_module_unload(ib_module_t *m);
 /**
  * Register a module with a configuration context.
  *
- * @param ib Engine handle
- * @param name Module name defined by the module
+ * @param m Module
  * @param ctx Configuration context
  *
  * @returns Status code

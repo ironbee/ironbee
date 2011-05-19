@@ -604,7 +604,6 @@ INPUT                  = ../include \
                          ../engine \
                          ../modules \
                          ../plugins \
-                         ../daemon \
                          ../tests \
 
 # This tag can be used to specify the character encoding of the source files 

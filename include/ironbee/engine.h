@@ -297,8 +297,8 @@ struct ib_auditlog_part_t {
  * Create an engine handle.
  *
  * After creating the engine, the caller must configure defaults, such as
- * initial logging parameters, and then call @ref ib_init() to initialize
- * the engine configuration context.
+ * initial logging parameters, and then call @ref ib_engine_init() to
+ * initialize the engine configuration context.
  *
  * @param pib Address which new handle is written
  * @param plugin Information on the server plugin instantiating the engine
@@ -311,7 +311,6 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib, void *plugin);
  * Initialize the engine configuration context.
  *
  * @param ib Engine handle
- * @param plugin Information on the server plugin instantiating the engine
  *
  * @returns Status code
  */
@@ -477,7 +476,7 @@ ib_status_t DLL_PUBLIC ib_context_init_cfg(ib_context_t *ctx,
  * Fetch the named module configuration data from the configuration context.
  *
  * @param ctx Configuration context
- * @param name Module name
+ * @param m Module
  * @param pcfg Address which module config data is written
  *
  * @returns Status code
@@ -590,6 +589,7 @@ ib_status_t DLL_PUBLIC ib_conn_create(ib_engine_t *ib,
  *
  * @param conn Connection structure
  * @param pconndata Address which new connection data is written
+ * @param dalloc Size of data to allocate
  *
  * @returns Status code
  */
@@ -1871,7 +1871,7 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(ib_engine_t *ib,
  * @param dlen_in Input data length
  * @param data_out Address of output data
  * @param dlen_out Address of output data length
- * @param flags Address of flags set by transformation
+ * @param pflags Address of flags set by transformation
  *
  * @returns Status code
  */
@@ -1890,7 +1890,7 @@ ib_status_t DLL_PUBLIC ib_tfn_transform(ib_tfn_t *tfn,
  *
  * @param tfn Transformation
  * @param f Field to transform
- * @param flags Address of flags set by transformation
+ * @param pflags Address of flags set by transformation
  *
  * @returns Status code
  */
@@ -1923,7 +1923,7 @@ ib_status_t DLL_PUBLIC ib_tfn_transform_field(ib_tfn_t *tfn,
  * Filter Function.
  *
  * This function is called with data that can be analyzed and then optionally
- * modified.  Various flags can be set via @ref pflags.
+ * modified.  Various flags can be set via pflags.
  *
  * @param f Filter
  * @param fdata Filter data
@@ -2008,6 +2008,8 @@ struct ib_sdata_t {
  * Register a filter.
  *
  * @param pf Address which filter handle is written
+ * @param ib Engine handle
+ * @param name Filter name
  * @param type Filter type
  * @param options Filter options
  * @param fn_filter Filter callback function
