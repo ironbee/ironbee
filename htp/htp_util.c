@@ -1597,9 +1597,9 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
         } else if ((port > 0) && (port < 65536)) {
             // Valid port
-            if (port != connp->conn->local_port) {
-                // Port is different from the TCP port
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port number differs from the actual TCP port");
+            if ((connp->conn->local_port != 0) && (port != connp->conn->local_port)) {
+                // Port was specified in connection and is different from the TCP port
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port=%d number differs from the actual TCP port=%d", port, connp->conn->local_port);
             } else {
                 if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
                 parsed_uri->hostname = new_hostname;
