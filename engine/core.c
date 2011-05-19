@@ -2076,6 +2076,38 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
+    /* Create connection fields. */
+    rc = ib_data_add_bytestr(conn->dpi,
+                             "server_addr",
+                             (uint8_t *)conn->local_ipstr,
+                             strlen(conn->local_ipstr),
+                             NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add_num(conn->dpi,
+                         "server_port",
+                         conn->local_port,
+                         NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add_bytestr(conn->dpi,
+                             "remote_addr",
+                             (uint8_t *)conn->remote_ipstr,
+                             strlen(conn->remote_ipstr),
+                             NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add_num(conn->dpi,
+                         "remote_port",
+                         conn->remote_port,
+                         NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     if (iface == NULL) {
         ib_log_error(ib, 0, "Failed to fetch parser interface on connect");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
