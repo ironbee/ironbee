@@ -2249,7 +2249,7 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
 
     /* This function is required, so no NULL check. */
 
-    rc = iface->add(dpi, f, f->name, f->nlen);
+    rc = iface->add(dpi, f, name, nlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2280,7 +2280,7 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
 
     /* This function is required, so no NULL check. */
 
-    rc = iface->set(dpi, f, f->name, f->nlen);
+    rc = iface->set(dpi, f, name, nlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
