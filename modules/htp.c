@@ -759,6 +759,13 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
+    /* Open the connection */
+    htp_connp_open(modctx->htp,
+                   iconn->remote_ipstr, iconn->remote_port,
+                   iconn->local_ipstr, iconn->local_port,
+                   (htp_time_t *)&iconn->started);
+
+
     /* Store the context. */
     rc = ib_hash_set(iconn->data, "MODHTP_CTX", modctx);
     if (rc != IB_OK) {
@@ -848,6 +855,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
 
     switch(htp->in_status) {
         case STREAM_STATE_NEW:
+        case STREAM_STATE_OPEN:
         case STREAM_STATE_DATA:
             /* Let the parser see the data. */
             ec = htp_connp_req_data(htp, &tv, qcdata->data, qcdata->dlen);
@@ -905,6 +913,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
 
     switch(htp->out_status) {
         case STREAM_STATE_NEW:
+        case STREAM_STATE_OPEN:
         case STREAM_STATE_DATA:
             /* Let the parser see the data. */
             ec = htp_connp_res_data(htp, &tv, qcdata->data, qcdata->dlen);
