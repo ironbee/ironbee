@@ -865,6 +865,11 @@ function ib_data_get(dpi, name)
     -- Get the named data field.
     rc = c.ib_data_get_ex(c_dpi, name, string.len(name), c_pf)
     if rc ~= c.IB_OK then
+        local c_ctx = c.ib_context_main(c_dpi.pr.ib)
+        local dinfo = debug.getinfo(2)
+
+        c.ib_clog_ex(c_ctx, 4, "LuaFFI - ",
+                     dinfo.source .. ".lua", dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
         return nil
     end
 
