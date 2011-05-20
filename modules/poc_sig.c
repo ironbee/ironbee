@@ -26,6 +26,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <string.h>
 #include <strings.h>
 
 #include <ironbee/engine.h>
