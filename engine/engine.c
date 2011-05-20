@@ -174,11 +174,10 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 
     /* Sensor info. */
     /// @todo Fetch real values
-    (*pib)->sensor_id = htonl(0x01234567);
-    (*pib)->sensor_name = "SensorId";
-    (*pib)->sensor_version = IB_PRODUCT_NAME "/" IB_VERSION " "
-                             "(embedded; PluginName/1.2.3)";
-    (*pib)->sensor_hostname = "sensor.hostname.com";
+    (*pib)->sensor_id = 0;
+    (*pib)->sensor_name = "unknown";
+    (*pib)->sensor_version = IB_PRODUCT_VERSION_NAME;
+    (*pib)->sensor_hostname = "unknown";
 
     /* Create an array to hold loaded modules */
     /// @todo Need good defaults here

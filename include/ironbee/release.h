@@ -35,22 +35,23 @@ extern "C" {
  * @{
  */
 
-/** Macro expand, then turn a constant into a string constant */
+/** Macro expand, then turn a literal into a string constant */
 #define IB_XSTRINGIFY(s)   IB_STRINGIFY(s)
 
-/** Turn a constant into a string constant */
+/** Turn a literal into a string constant */
 #define IB_STRINGIFY(s)   #s
 
 /* Name */
 #define IB_PRODUCT_NAME IB_STRINGIFY(IronBee)
 
 /* Version definitions */
-#define IB_VERSION_MAJOR  0 /**< Major version */
-#define IB_VERSION_MINOR  2 /**< Minor version */
-#define IB_VERSION_MAINT  0 /**< Maintenance version */
+#define IB_VERSION_MAJOR        0 /**< Major version */
+#define IB_VERSION_MINOR        2 /**< Minor version */
+#define IB_VERSION_MAINT        0 /**< Maintenance version */
+#define IB_VERSION_BUILD_EXTRA  0 /**< Extra build number (normally 0) */
 
 /* Handle tacking on a build number */
-#ifdef IB_VERSION_BUILD_EXTRA
+#if IB_VERSION_BUILD_EXTRA
 /** Build version string */
 #define IB_VERSION_EXTRA  "-" IB_VERSION_BUILD_EXTRA
 #else
@@ -67,14 +68,18 @@ extern "C" {
 /** Package email address */
 #define IB_EMAIL "ironbee-devel@lists.sourceforge.net"
 
+/** Product version name string */
+#define IB_PRODUCT_VERSION_NAME IB_PRODUCT_NAME "/" IB_VERSION
+
 /**
  * IronBee version number.
  *
- * Each version component represents Version 1.2.3 would have a
- * 1002003 decimal value (001 . 002 . 003).
- *
  * This records what version of the engine a module/plugin
  * was built against.
+ *
+ * Each version component represents 3 decimal digits in a 9 digit
+ * number. For example, Version 1.2.3 would have a 1002003 decimal
+ * value (001 . 002 . 003).
  */
 #define IB_VERNUM    (((IB_VERSION_MAJOR) * 1000000) + \
                       ((IB_VERSION_MAJOR) * 1000) + \
@@ -93,7 +98,7 @@ extern "C" {
  *     DD: 2-digit day
  *      n: Revision number if changes more than once in a day (default=0)
  */
-#define IB_ABINUM    201105100
+#define IB_ABINUM    201105200
 
 /**
  * @} IronBeeRelease
