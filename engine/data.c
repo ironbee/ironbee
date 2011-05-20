@@ -252,11 +252,11 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
 
 
         /* Copy the field, noting the tfn. */
-        rc = ib_field_copy_ex(pf, dpi->mp, name, nlen, *pf);
+        rc = ib_field_copy_ex(pf, dpi->mp, fullname, fnlen, *pf);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        (*pf)->tfn = (char *)ib_mpool_memdup(dpi->mp, tfn, tlen);
+        (*pf)->tfn = (char *)ib_mpool_memdup(dpi->mp, tfn, tlen + 1);
 
 
         /* Transform. */
@@ -270,6 +270,11 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                 len = (tfn + i) - tname;
                 rc = ib_tfn_lookup_ex(ib, tname, len, &t);
                 if (rc == IB_OK) {
+                    ib_log_debug(ib, 7,
+                                 "TFN: %" IB_BYTESTR_FMT ".%" IB_BYTESTR_FMT,
+                                 IB_BYTESTRSL_FMT_PARAM(name, nlen),
+                                 IB_BYTESTRSL_FMT_PARAM(tname, len));
+
                     rc = ib_tfn_transform_field(t, *pf, &flags);
                     if (rc != IB_OK) {
                         /// @todo What to do here?  Fail or ignore?
