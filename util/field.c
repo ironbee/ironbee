@@ -77,7 +77,7 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
      * externally (see createn version).
      */
     /// @todo Make this a function
-    (*pf)->val = ib_mpool_alloc(mp, sizeof(*((*pf)->val)));
+    (*pf)->val = ib_mpool_calloc(mp, 1, sizeof(*((*pf)->val)));
     if ((*pf)->val == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -117,12 +117,12 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
             if (pval != NULL) {
                 size_t len = strlen(*(char **)pval) + 1;
 
-                (*pf)->val->u.nulstr = (char *)ib_mpool_alloc(mp, len);
+                (*pf)->val->u.nulstr =
+                    (char *)ib_mpool_memdup(mp, *(char **)pval, len);
                 if ((*pf)->val->u.nulstr == NULL) {
                     rc = IB_EALLOC;
                     goto failed;
                 }
-                memcpy((*pf)->val->u.nulstr, *(char **)pval, len);
             }
             else {
                 /// @todo Or should this be ""???
@@ -246,10 +246,21 @@ ib_status_t ib_field_copy_ex(ib_field_t **pf,
 {
     IB_FTRACE_INIT(ib_field_copy_ex);
     void *val = ib_field_value(src);
+    ib_status_t rc;
 
-    /// @todo Make this work for dynamic fields as well - copy the
-    ///       generator functions not the value.
-    ib_status_t rc = ib_field_create_ex(pf, mp, name, nlen, src->type, &val);
+    rc = ib_field_create_ex(pf, mp, name, nlen, src->type, &val);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Copy over dynamic fields */
+    (*pf)->val->fn_get = src->val->fn_get;
+#if 0
+    (*pf)->val->fn_get = src->val->fn_set;
+    (*pf)->val->fn_get = src->val->fn_rset;
+#endif
+    (*pf)->val->fndata = src->val->fndata;
+
     IB_FTRACE_RET_STATUS(rc);
 
 }
