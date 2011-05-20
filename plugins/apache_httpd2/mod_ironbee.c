@@ -57,7 +57,9 @@
 #define MODULE_NAME                mod_ironbee
 #define MODULE_NAME_STR            IB_XSTRINGIFY(MODULE_NAME)
 #define MODULE_RELEASE             IB_VERSION
-#define MODULE_NAME_FULL           (MODULE_NAME_STR " v" MODULE_RELEASE)
+#define MODULE_NAME_FULL           MODULE_NAME_STR " " \
+                                   IB_PRODUCT_VERSION_NAME \
+                                   " (ABI " IB_XSTRINGIFY(IB_ABINUM) ")"
 
 /// @todo Fix this:
 #ifndef X_MODULE_BASE_PATH
@@ -786,6 +788,9 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     /* Detect first (validation) run vs real config run. */
     apr_pool_userdata_get(&init, "ironbee-init", s->process->pool);
     if (init == NULL) {
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                     MODULE_NAME_FULL " loading.");
+
         apr_pool_userdata_set((const void *)1, "ironbee-init",
                               apr_pool_cleanup_null, s->process->pool);
 
@@ -878,6 +883,9 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                      IB_PRODUCT_NAME ": No config specified with IronBeeConfig directive");
     }
+
+    ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s,
+                 MODULE_NAME_FULL " configured.");
 
     return OK;
 }
