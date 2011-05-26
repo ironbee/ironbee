@@ -306,6 +306,8 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     va_start(args, fmt);
 
     int r = vsnprintf(buf, 1023, fmt, args);
+    
+    va_end(args);
 
     if (r < 0) {
         // TODO Will vsnprintf ever return an error?
@@ -335,9 +337,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
         connp->last_error = log;
     }
 
-    hook_run_all(connp->cfg->hook_log, log);
-
-    va_end(args);
+    hook_run_all(connp->cfg->hook_log, log);   
 }
 
 /**
@@ -661,7 +661,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     size_t rpos = 0;
     size_t wpos = 0;
     size_t charpos = 0;
-    uint32_t codepoint;
+    uint32_t codepoint = 0;
     uint32_t state = UTF8_ACCEPT;
     uint32_t counter = 0;
     uint8_t seen_valid = 0;
@@ -771,7 +771,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
     size_t rpos = 0;
-    uint32_t codepoint;
+    uint32_t codepoint = 0;
     uint32_t state = UTF8_ACCEPT;
     uint32_t counter = 0;
     uint8_t seen_valid = 0;
