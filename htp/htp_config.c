@@ -376,7 +376,7 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * @param callback_fn 
  */
 void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_uri_normalize, callback_fn);
+    hook_register(&cfg->hook_request_uri_normalize, (htp_callback_fn_t)callback_fn);
 }
 
 /**

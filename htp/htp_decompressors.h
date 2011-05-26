@@ -26,7 +26,6 @@
 typedef struct htp_decompressor_gzip_t htp_decompressor_gzip_t;
 typedef struct htp_decompressor_t htp_decompressor_t;
 
-#include "htp.h"
 #include "zlib.h"
 
 #define GZIP_BUF_SIZE       8192
