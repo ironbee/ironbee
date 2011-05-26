@@ -751,12 +751,8 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     data[wpos++] = data[charpos++];
                 }
 
-                // If this is the first invalid byte we will
-                // want to skip over it. Otherwise we will want
-                // to attempt to interpret it.
-                if (counter == 1) {
-                    rpos++;
-                }
+                // Advance over the consumed byte
+                rpos++;
 
                 // Prepare for the next character
                 counter = 0;
@@ -850,12 +846,8 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
                 // we want to ignore invalid characters
                 state = HTP_UTF8_ACCEPT;
 
-                // If this is the first invalid byte we will
-                // want to skip over it. Otherwise we will want
-                // to attempt to interpret it.
-                if (counter == 1) {
-                    rpos++;
-                }
+                // Advance over the consumed byte
+                rpos++;
 
                 // Prepare for the next character
                 counter = 0;
