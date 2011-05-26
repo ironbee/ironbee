@@ -707,6 +707,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                             if (codepoint < 0x800) {
                                 tx->flags |= HTP_PATH_UTF8_OVERLONG;
                             }
+                            break;
                         case 4:
                             if (codepoint < 0x10000) {
                                 tx->flags |= HTP_PATH_UTF8_OVERLONG;
@@ -819,6 +820,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
                             if (codepoint < 0x800) {
                                 tx->flags |= HTP_PATH_UTF8_OVERLONG;
                             }
+                            break;
                         case 4:
                             if (codepoint < 0x10000) {
                                 tx->flags |= HTP_PATH_UTF8_OVERLONG;
