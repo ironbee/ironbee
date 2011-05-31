@@ -177,6 +177,23 @@ module HTP
       flags & HTP_FIELD_UNPARSABLE != 0
     end
     
+    def request_params
+      if ! @request_params
+        @request_params = {}
+        if request_params_query
+          request_params_query.each do |k,v|
+            @request_params[k] = v
+          end
+        end
+        if request_params_body
+          request_params_body.each do |k,v|
+            @request_params[k] = v
+          end
+        end
+      end
+      @request_params
+    end
+    
     alias :to_s :request_line
     alias :to_str :to_s
     alias :inspect :to_s
