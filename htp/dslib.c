@@ -195,7 +195,7 @@ static int list_array_push(list_t *_q, void *element) {
 
     // Check whether we're full
     if (q->current_size >= q->max_size) {
-        int new_size = q->max_size * 2;
+        size_t new_size = q->max_size * 2;
         void *newblock = NULL;
         
         if (q->first == 0) {
@@ -213,7 +213,7 @@ static int list_array_push(list_t *_q, void *element) {
             if (newblock == NULL) return -1;
 
             // Copy the beginning of the list to the beginning of the new memory block
-            memcpy(newblock, (char *)q->elements + q->first * sizeof (void *), (q->max_size - q->first) * sizeof (void *));
+            memcpy((char *)newblock, (char *)q->elements + q->first * sizeof (void *), (q->max_size - q->first) * sizeof (void *));
             // Append the second part of the list to the end
             memcpy((char *)newblock + (q->max_size - q->first) * sizeof (void *), q->elements, q->first * sizeof (void *));
             
