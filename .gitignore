@@ -19,6 +19,7 @@
 /htp/.libs/
 /htp/Makefile
 /htp/Makefile.in
+/INSTALL
 /install-sh
 /libtool
 /ltmain.sh
