@@ -71,6 +71,7 @@ struct ib_default_string_t {
     const char *root_path;
     const char *uri_root_path;
 };
+extern const ib_default_string_t ib_default_string;
 #define IB_DSTR_EMPTY ib_default_string.empty
 #define IB_DSTR_UNKNOWN ib_default_string.unknown
 #define IB_DSTR_CORE ib_default_string.core

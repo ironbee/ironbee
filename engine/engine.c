@@ -186,9 +186,9 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     /* Sensor info. */
     /// @todo Fetch real values
     (*pib)->sensor_id = 0;
-    (*pib)->sensor_name = "unknown";
+    (*pib)->sensor_name = IB_DSTR_UNKNOWN;
     (*pib)->sensor_version = IB_PRODUCT_VERSION_NAME;
-    (*pib)->sensor_hostname = "unknown";
+    (*pib)->sensor_hostname = IB_DSTR_UNKNOWN;
 
     /* Create an array to hold loaded modules */
     /// @todo Need good defaults here
@@ -382,7 +382,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     /* Create the core data provider instance */
     rc = ib_provider_instance_create(ib,
                                      IB_PROVIDER_TYPE_DATA,
-                                     "core",
+                                     IB_DSTR_CORE,
                                      &((*pconn)->dpi),
                                      (*pconn)->mp,
                                      NULL);
@@ -548,7 +548,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     /* Create the core data provider instance */
     rc = ib_provider_instance_create(ib,
                                      IB_PROVIDER_TYPE_DATA,
-                                     "core",
+                                     IB_DSTR_CORE,
                                      &((*ptx)->dpi),
                                      (*ptx)->mp,
                                      NULL);
@@ -2043,11 +2043,11 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
     }
 
     tx = (ib_tx_t *)ctxdata;
+    ib = tx->ib;
+    loc = (ib_loc_t *)cbdata;
     txhost = tx->hostname;
     txhostlen = strlen(txhost);
     txpath = tx->path;
-    ib = tx->ib;
-    loc = (ib_loc_t *)cbdata;
 
     ib_log_debug(ib, 9, "CHOOSER: ctx=%p tx=%p loc=%p", ctx, tx, loc);
 

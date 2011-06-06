@@ -631,7 +631,7 @@ ib_status_t ib_site_loc_create_default(ib_site_t *site,
         IB_FTRACE_RET_STATUS(rc);
     }
     loc->site = site;
-    loc->path = "/";
+    loc->path = IB_DSTR_URI_ROOT_PATH;
 
     if (ploc != NULL) {
         *ploc = loc;
