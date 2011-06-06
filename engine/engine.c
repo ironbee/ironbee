@@ -539,6 +539,8 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     (*ptx)->ctx = ib->ctx;
     (*ptx)->pctx = pctx;
     (*ptx)->conn = conn;
+    (*ptx)->hostname = IB_DSTR_EMPTY;
+    (*ptx)->path = IB_DSTR_URI_ROOT_PATH;
 
     conn->tx_count++;
     ib_tx_generate_id(*ptx);
