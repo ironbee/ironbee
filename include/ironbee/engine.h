@@ -62,6 +62,21 @@ typedef struct ib_provider_inst_t ib_provider_inst_t;
 /** Configuration Context. */
 typedef struct ib_context_t ib_context_t;
 
+/** Default String Values */
+typedef struct ib_default_string_t ib_default_string_t;
+struct ib_default_string_t {
+    const char *empty;
+    const char *unknown;
+    const char *core;
+    const char *root_path;
+    const char *uri_root_path;
+};
+#define IB_DSTR_EMPTY ib_default_string.empty
+#define IB_DSTR_UNKNOWN ib_default_string.unknown
+#define IB_DSTR_CORE ib_default_string.core
+#define IB_DSTR_ROOT_PATH ib_default_string.root_path
+#define IB_DSTR_URI_ROOT_PATH ib_default_string.uri_root_path
+
 /* Public type declarations */
 typedef struct ib_conn_t ib_conn_t;
 typedef struct ib_conndata_t ib_conndata_t;

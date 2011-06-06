@@ -43,6 +43,17 @@
 
 #include "ironbee_private.h"
 
+/* -- Constants -- */
+
+/** Constant String Values */
+const ib_default_string_t ib_default_string = {
+    "",          /* empty */
+    "unknown",   /* unknown */
+    "core",      /* core */
+    "/",         /* root_path */
+    "/",         /* uri_root_path */
+};
+
 
 /* -- Internal Structures -- */
 
