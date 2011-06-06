@@ -58,7 +58,6 @@ struct modhtp_context_t {
     ib_conn_t      *iconn;        /**< Connection structure */
     modhtp_cfg_t   *modcfg;       /**< Module config structure */
     htp_cfg_t      *htp_cfg;      /**< Parser config handle */
-    htp_tx_t       *htp_tx;       /**< Current transaction */
     htp_connp_t    *htp;          /**< Parser handle */
 };
 
@@ -220,7 +219,6 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    modctx->htp_tx = tx;
 
     /* Associate the ironbee transaction with the libhtp transaction. */
     htp_tx_set_user_data(tx, itx);
@@ -235,7 +233,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request_line);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_txdata_t itxdata;
@@ -258,7 +256,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
@@ -280,7 +278,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request_headers);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->in_tx;
     htp_header_line_t *hline;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
@@ -305,7 +303,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     /* Fill in a temporary ib_txdata_t structure for each header line
      * and use it to notify the engine of transaction data.
@@ -340,7 +338,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     IB_FTRACE_INIT(modhtp_htp_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_txdata_t itxdata;
@@ -364,11 +362,11 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     /* Check for the "end-of-request" indicator. */
     if (txdata->data == NULL) {
-        if (modctx->htp_tx->request_entity_len == 0) {
+        if (tx->request_entity_len == 0) {
             /// @todo Need a way to determine if the request was supposed to
             ///       have body, not if it did have a body.
             ib_tx_mark_nobody(itx);
@@ -397,7 +395,7 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request_trailer);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
@@ -420,7 +418,7 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     /// @todo Notify tx_datain_event w/request trailer
     ib_log_debug(ib, 4, "TODO: tx_datain_event w/request trailer: tx=%p", itx);
@@ -432,7 +430,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_request);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
@@ -456,7 +454,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
      * request and notify the engine that the request body is available
      * and is now finished.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     ib_state_notify_request_finished(ib, itx);
 
@@ -467,7 +465,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response_line);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_txdata_t itxdata;
@@ -491,7 +489,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     ib_state_notify_response_started(ib, itx);
 
@@ -515,7 +513,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response_headers);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->out_tx;
     htp_header_line_t *hline;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
@@ -540,7 +538,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     /* Fill in a temporary ib_txdata_t structure for each header line
      * and use it to notify the engine of transaction data.
@@ -575,7 +573,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     IB_FTRACE_INIT(modhtp_htp_response_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_txdata_t itxdata;
@@ -599,7 +597,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     /* Check for the "end-of-response" indicator. */
     if (txdata->data == NULL) {
@@ -627,7 +625,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
@@ -651,7 +649,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
      * that the response body is available, the response
      * is finished and logging has begun.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     ib_state_notify_response_finished(ib, itx);
 
@@ -659,7 +657,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
     /// @todo Perhaps the engine should do this instead via an event???
     ib_log_debug(ib, 9, "Destroying transaction structure");
     ib_tx_destroy(itx);
-    htp_tx_destroy(modctx->htp_tx);
+    htp_tx_destroy(tx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -668,7 +666,7 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 {
     IB_FTRACE_INIT(modhtp_htp_response_trailer);
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
-    htp_tx_t *tx = modctx->htp_tx;
+    htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
@@ -692,7 +690,7 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
-    itx = htp_tx_get_user_data(modctx->htp_tx);
+    itx = htp_tx_get_user_data(tx);
 
     /// @todo Notify tx_dataout_event w/response trailer
     ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response trailer: tx=%p", itx);
@@ -969,11 +967,8 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
-    tx = list_get(modctx->htp->conn->transactions,
-                  modctx->htp->out_next_tx_index);
+    tx = modctx->htp->in_tx;
     if (tx != NULL) {
-        modctx->htp_tx = tx;
-
         htp_tx_set_user_data(tx, itx);
 
         modhtp_field_gen_bytestr(itx->dpi,
@@ -1169,10 +1164,11 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                      MODULE_NAME_STR, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
+    
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
-    tx = modctx->htp_tx;
+    tx = modctx->htp->out_tx;
     if (tx != NULL) {
         modhtp_field_gen_bytestr(itx->dpi,
                                  "response_line",
