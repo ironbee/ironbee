@@ -180,13 +180,8 @@ module HTP
     def request_params
       if ! @request_params
         @request_params = Hash.new {|h,k| h[k] = []}
-        if request_params_query
-          request_params_query.each do |k,v|
-            @request_params[k] << v
-          end
-        end
-        if request_params_body
-          request_params_body.each do |k,v|
+        [ request_params_query, request_params_body ].compact.each do |result|
+          result.each do |k,v|
             @request_params[k] << v
           end
         end
