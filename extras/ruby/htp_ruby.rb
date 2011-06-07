@@ -177,7 +177,7 @@ module HTP
       flags & HTP_FIELD_UNPARSABLE != 0
     end
     
-    def request_params
+    def request_params_as_hash
       if ! @request_params
         @request_params = Hash.new {|h,k| h[k] = []}
         [ request_params_query, request_params_body ].compact.each do |result|
