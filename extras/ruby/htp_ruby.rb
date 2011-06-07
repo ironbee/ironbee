@@ -189,6 +189,19 @@ module HTP
       @request_params
     end
     
+    def request_cookies_as_hash
+      if ! @request_cookies
+        @request_cookies = Hash.new {|h,k| h[k] = []}
+        result = request_cookies
+        if result
+          result.each do |k,v|
+            @request_cookies[k] << v
+          end
+        end
+      end
+      @request_cookies
+    end
+    
     alias :to_s :request_line
     alias :to_str :to_s
     alias :inspect :to_s
