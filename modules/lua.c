@@ -115,6 +115,8 @@ struct modlua_cfg_t {
     ib_list_t          *lua_modules;
     ib_list_t          *event_reg[IB_STATE_EVENT_NUM + 1];
     lua_State          *Lconfig;
+    char               *pkg_path;
+    char               *pkg_cpath;
 };
 
 /** Lua Wrapper Callback Data Structure */
@@ -804,6 +806,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
 
 
 static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
+                                              modlua_cfg_t *modcfg,
                                               lua_State *L)
 {
     IB_FTRACE_INIT(modlua_load_ironbee_module);
@@ -843,8 +846,11 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Cache wrapper functions to global for faster lookup. */
+
+    /* Get the common global "package" field. */
     lua_getglobal(L, "package");
+
+    /* Cache wrapper functions to global for faster lookup. */
     lua_getfield(L, -1, "preload");
     lua_getfield(L, -1, IB_FFI_MODULE_STR);
     lua_getfield(L, -1, IB_FFI_MODULE_WRAPPER_STR);
@@ -853,7 +859,26 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
     lua_setglobal(L, IB_FFI_MODULE_CFG_WRAPPER_STR);
     lua_getfield(L, -1, IB_FFI_MODULE_EVENT_WRAPPER_STR);
     lua_setglobal(L, IB_FFI_MODULE_EVENT_WRAPPER_STR);
-    lua_pop(L, 3); /* cleanup stack */
+    lua_pop(L, 2); /* Cleanup stack. */
+
+    /* Set package paths if configured. */
+    if (modcfg->pkg_path != NULL) {
+        ib_log_debug(ib, 4, "Using lua package.path=\"%s\"",
+                     modcfg->pkg_path);
+        lua_getfield(L, -1, "path");
+        lua_pushstring(L, modcfg->pkg_path);
+        lua_setglobal(L, "path");
+    }
+    if (modcfg->pkg_cpath != NULL) {
+        ib_log_debug(ib, 4, "Using lua package.cpath=\"%s\"",
+                     modcfg->pkg_cpath);
+        lua_getfield(L, -1, "cpath");
+        lua_pushstring(L, modcfg->pkg_cpath);
+        lua_setglobal(L, "cpath");
+    }
+
+    /* Cleanup common "package" field off the stack. */
+    lua_pop(L, 1);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -914,7 +939,7 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
         luaL_openlibs(modcfg->Lconfig);
 
         /* Preload ironbee module (static link). */
-        modlua_load_ironbee_module(ib, modcfg->Lconfig);
+        modlua_load_ironbee_module(ib, modcfg, modcfg->Lconfig);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1003,7 +1028,7 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
     }
 
     /* Preload ironbee module for other modules to use. */
-    modlua_load_ironbee_module(ib, L);
+    modlua_load_ironbee_module(ib, modcfg, L);
 
     /* Run through each lua module to be used in this context and
      * load it into the lua runtime.
@@ -1694,7 +1719,20 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
 /* -- Module Configuration -- */
 
 static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
-    /* NOTE: event_reg is used internally only and not mapable. */
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".pkg_path",
+        IB_FTYPE_NULSTR,
+        &modlua_global_cfg,
+        pkg_path,
+        NULL
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".pkg_cpath",
+        IB_FTYPE_NULSTR,
+        &modlua_global_cfg,
+        pkg_cpath,
+        NULL
+    ),
 
     IB_CFGMAP_INIT_LAST
 };
@@ -1888,7 +1926,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT(core_dir_param1);
     ib_engine_t *ib = cp->ib;
-    //ib_status_t rc;
+    ib_status_t rc;
 
     if (strcasecmp("LuaLoadModule", name) == 0) {
         if (*p1 == '/') {
@@ -1909,6 +1947,18 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
             modlua_module_load(ib, NULL, fn);
         }
     }
+    else if (strcasecmp("LuaPackagePath", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_path", p1);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (strcasecmp("LuaPackageCPath", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_cpath", p1);
+        IB_FTRACE_RET_STATUS(rc);
+    }
     else {
         ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1920,6 +1970,19 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
 static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaLoadModule",
+        modlua_dir_param1,
+        NULL,
+        NULL
+    ),
+
+    IB_DIRMAP_INIT_PARAM1(
+        "LuaPackagePath",
+        modlua_dir_param1,
+        NULL,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "LuaPackageCPath",
         modlua_dir_param1,
         NULL,
         NULL
