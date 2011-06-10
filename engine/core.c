@@ -64,6 +64,43 @@
 /* Instantiate a module global configuration. */
 static ib_core_cfg_t core_global_cfg;
 
+#define IB_ALPART_HEADER                  (1<< 0)
+#define IB_ALPART_EVENTS                  (1<< 1)
+#define IB_ALPART_HTTP_REQUEST_METADATA   (1<< 2)
+#define IB_ALPART_HTTP_REQUEST_HEADERS    (1<< 3)
+#define IB_ALPART_HTTP_REQUEST_BODY       (1<< 4)
+#define IB_ALPART_HTTP_REQUEST_TRAILERS   (1<< 5)
+#define IB_ALPART_HTTP_RESPONSE_METADATA  (1<< 6)
+#define IB_ALPART_HTTP_RESPONSE_HEADERS   (1<< 7)
+#define IB_ALPART_HTTP_RESPONSE_BODY      (1<< 8)
+#define IB_ALPART_HTTP_RESPONSE_TRAILERS  (1<< 9)
+#define IB_ALPART_DEBUG_FIELDS            (1<<10)
+
+/* NOTE: Make sure to add new parts from above to any groups below. */
+
+#define IB_ALPARTS_ALL \
+    IB_ALPART_HEADER|IB_ALPART_EVENTS| \
+    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADERS|\
+    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILERS| \
+    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADERS| \
+    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILERS| \
+    IB_ALPART_DEBUG_FIELDS
+
+#define IB_ALPARTS_DEFAULT \
+    IB_ALPART_HEADER|IB_ALPART_EVENTS| \
+    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADERS|\
+    IB_ALPART_HTTP_REQUEST_TRAILERS| \
+    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADERS| \
+    IB_ALPART_HTTP_RESPONSE_TRAILERS
+
+#define IB_ALPARTS_REQUEST \
+    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADERS|\
+    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILERS
+
+#define IB_ALPARTS_RESPONSE \
+    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADERS| \
+    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILERS
+
 
 /* -- Core Logger Provider -- */
 
@@ -1924,13 +1961,24 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
 
 
     /* Add all the parts to the log. */
-    /// @todo Parts should be configurable
-    ib_auditlog_add_part_header(log);
-    ib_auditlog_add_part_events(log);
-    ib_auditlog_add_part_http_request_meta(log);
-    ib_auditlog_add_part_http_response_meta(log);
-    ib_auditlog_add_part_http_request_head(log);
-    ib_auditlog_add_part_http_response_head(log);
+    if (corecfg->auditlog_parts & IB_ALPART_HEADER) {
+        ib_auditlog_add_part_header(log);
+    }
+    if (corecfg->auditlog_parts & IB_ALPART_EVENTS) {
+        ib_auditlog_add_part_events(log);
+    }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_METADATA) {
+        ib_auditlog_add_part_http_request_meta(log);
+    }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_METADATA) {
+        ib_auditlog_add_part_http_response_meta(log);
+    }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADERS) {
+        ib_auditlog_add_part_http_request_head(log);
+    }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADERS) {
+        ib_auditlog_add_part_http_response_head(log);
+    }
 
     /* Audit Provider */
     rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
@@ -3351,6 +3399,44 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
 /**
  * @internal
+ * Handle single parameter directives.
+ *
+ * @param cp Config parser
+ * @param name Directive name
+ * @param flags Flags
+ * @param fmask Flags mask (which bits were actually set)
+ * @param cbdata Callback data (from directive registration)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
+                                          const char *name,
+                                          ib_flags_t flags,
+                                          ib_flags_t fmask,
+                                          void *cbdata)
+{
+    IB_FTRACE_INIT(core_dir_auditlogparts);
+    ib_engine_t *ib = cp->ib;
+    ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    ib_num_t parts;
+    ib_status_t rc;
+
+    rc = ib_context_get(ctx, "auditlog_parts", &parts, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Merge the set flags with the previous value. */
+    parts = (flags & fmask) | (parts & ~fmask);
+
+    ib_log_debug(ib, 4, "AUDITLOG PARTS: 0x%08x", (unsigned long)parts);
+
+    rc = ib_context_set_num(ctx, "auditlog_parts", parts);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
  * Perform any extra duties when certain config parameters are "Set".
  *
  * @param ctx Context
@@ -3474,6 +3560,37 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+
+/**
+ * @internal
+ * Mapping of valid audit log part names to flag values.
+ */
+static IB_STRVAL_MAP(core_parts_map) = {
+    /* Auditlog Part Groups */
+    IB_STRVAL_PAIR("none", 0),
+    IB_STRVAL_PAIR("all", IB_ALPARTS_ALL),
+    IB_STRVAL_PAIR("debug", IB_ALPART_DEBUG_FIELDS),
+    IB_STRVAL_PAIR("default", IB_ALPARTS_DEFAULT),
+    IB_STRVAL_PAIR("http-request", IB_ALPARTS_REQUEST),
+    IB_STRVAL_PAIR("http-response", IB_ALPARTS_RESPONSE),
+
+    /* AuditLog Individual Parts */
+    IB_STRVAL_PAIR("header", IB_ALPART_HEADER),
+    IB_STRVAL_PAIR("events", IB_ALPART_EVENTS),
+    IB_STRVAL_PAIR("http-request-metadata", IB_ALPART_HTTP_REQUEST_METADATA),
+    IB_STRVAL_PAIR("http-request-headers", IB_ALPART_HTTP_REQUEST_HEADERS),
+    IB_STRVAL_PAIR("http-request-body", IB_ALPART_HTTP_REQUEST_BODY),
+    IB_STRVAL_PAIR("http-request-trailers", IB_ALPART_HTTP_REQUEST_TRAILERS),
+    IB_STRVAL_PAIR("http-response-metadata", IB_ALPART_HTTP_RESPONSE_METADATA),
+    IB_STRVAL_PAIR("http-response-headers", IB_ALPART_HTTP_RESPONSE_HEADERS),
+    IB_STRVAL_PAIR("http-response-body", IB_ALPART_HTTP_RESPONSE_BODY),
+    IB_STRVAL_PAIR("http-response-trailers", IB_ALPART_HTTP_RESPONSE_TRAILERS),
+    IB_STRVAL_PAIR("debug-fields", IB_ALPART_DEBUG_FIELDS),
+
+    /* End */
+    IB_STRVAL_PAIR_LAST
+};
+
 /**
  * @internal
  * Directive initialization structure.
@@ -3580,6 +3697,12 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         "AuditLogFileMode",
         core_dir_param1,
         NULL
+    ),
+    IB_DIRMAP_INIT_OPFLAGS(
+        "AuditLogParts",
+        core_dir_auditlogparts,
+        NULL,
+        core_parts_map
     ),
 
     /* End */
@@ -3906,6 +4029,13 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         &core_global_cfg,
         auditlog_fmode,
         0600
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "auditlog_parts",
+        IB_FTYPE_NUM,
+        &core_global_cfg,
+        auditlog_parts,
+        IB_ALPARTS_DEFAULT
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dir",

@@ -211,6 +211,7 @@ struct ib_core_cfg_t {
     ib_num_t      audit_engine;      /**< Audit engine status */
     ib_num_t      auditlog_dmode;    /**< Audit log dir create mode */
     ib_num_t      auditlog_fmode;    /**< Audit log file create mode */
+    ib_num_t      auditlog_parts;    /**< Audit log parts */
     char         *auditlog_index;    /**< Audit log index filename */
     char         *auditlog_dir;      /**< Audit log base directory */
     char         *audit;             /**< Active audit provider key */
