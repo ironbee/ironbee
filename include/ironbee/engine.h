@@ -525,7 +525,7 @@ ib_status_t DLL_PUBLIC ib_context_set(ib_context_t *ctx,
  */
 ib_status_t DLL_PUBLIC ib_context_set_num(ib_context_t *ctx,
                                           const char *name,
-                                          uint64_t val);
+                                          ib_num_t val);
 
 /**
  * Set a string value in the config context.

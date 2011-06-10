@@ -1986,7 +1986,7 @@ ib_status_t ib_context_set(ib_context_t *ctx,
 
 ib_status_t ib_context_set_num(ib_context_t *ctx,
                            const char *name,
-                           uint64_t val)
+                           ib_num_t val)
 {
     IB_FTRACE_INIT(ib_context_set_num);
     ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, (void *)&val);

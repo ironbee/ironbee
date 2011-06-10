@@ -3483,7 +3483,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LoadModule",
         core_dir_param1,
-        NULL,
         NULL
     ),
 
@@ -3491,7 +3490,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM2(
         "Set",
         core_dir_param2,
-        NULL,
         NULL
     ),
 
@@ -3499,19 +3497,16 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "SensorId",
         core_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "SensorName",
         core_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "SensorHostname",
         core_dir_param1,
-        NULL,
         NULL
     ),
 
@@ -3519,13 +3514,11 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "RequestBuffering",
         core_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "ResponseBuffering",
         core_dir_param1,
-        NULL,
         NULL
     ),
 
@@ -3533,7 +3526,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "DebugLogLevel",
         core_dir_param1,
-        NULL,
         NULL
     ),
 
@@ -3553,7 +3545,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "Hostname",
         core_dir_hostname,
-        NULL,
         NULL
     ),
 
@@ -3561,7 +3552,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "InspectionEngine",
         core_dir_param1,
-        NULL,
         NULL
     ),
 
@@ -3569,31 +3559,26 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "AuditEngine",
         core_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "AuditLogIndex",
         core_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "AuditLogBaseDir",
         core_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "AuditLogDirMode",
         core_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "AuditLogFileMode",
         core_dir_param1,
-        NULL,
         NULL
     ),
 

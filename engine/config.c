@@ -66,6 +66,26 @@ static void cfgp_dump(ib_cfgparser_t *cp)
     ib_log_debug(cp->ib, 9, "Config Dump: %p (TODO)", cp);
 }
 
+/* Get an option value from a name/mapping. */
+static ib_status_t cfgp_opval(const char *opname, const ib_strval_t *map,
+                              ib_num_t *pval)
+{
+    ib_strval_t *rec = (ib_strval_t *)map;
+
+    while (rec->str != NULL) {
+        if (strcasecmp(opname, rec->str) == 0) {
+            *pval = rec->val;
+            return IB_OK;
+        }
+        rec++;
+    }
+
+    *pval = 0;
+
+    return IB_EINVAL;
+}
+
+
 
 /* -- Configuration Parser Routines -- */
 
@@ -385,10 +405,14 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     IB_FTRACE_INIT(ib_config_directive_process);
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
+    ib_list_node_t *node;
     size_t nargs = ib_list_elements(args);
     const char *p1;
     const char *p2;
+    ib_flags_t flags;
+    ib_flags_t fmask;
     ib_status_t rc;
+    int i;
 
     rc = ib_hash_get(ib->dirmap, name, (void *)&rec);
     if (rc != IB_OK) {
@@ -437,6 +461,55 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_LIST:
             rc = rec->cb.fn_list(cp, name, args, rec->cbdata);
+            break;
+        case IB_DIRTYPE_OPFLAGS:
+            i = 0;
+            flags = 0;
+            fmask = 0;
+
+            IB_LIST_LOOP(args, node) {
+                const char *opname = (const char *)ib_list_node_data(node);
+                int oper = (*opname == '-') ? -1 : ((*opname == '+') ? 1 : 0);
+                ib_num_t val;
+
+                /* If the first option does not use an operator, then
+                 * this is setting all flags so set all the mask bits.
+                 */
+                if ((i == 0) && (oper == 0)) {
+                    fmask = ~0;
+                }
+
+                ib_log_debug(ib, 9, "Processing %s option: %s", name, opname);
+
+                /* Remove the operator from the name if required.
+                 * and determine the numeric value of the option
+                 * by using the value map.
+                 */
+                if (oper != 0) {
+                    opname++;
+                }
+
+                rc = cfgp_opval(opname, rec->valmap, &val);
+                if (rc != IB_OK) {
+                    ib_log_error(ib, 3, "Invalid %s option: %s", name, opname);
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+
+                /* Mark which bit(s) we are setting. */
+                fmask |= val;
+
+                /* Set/Unset the appropriate bits. */
+                if (oper == -1) {
+                    flags = flags & ~val;
+                }
+                else {
+                    flags |= val;
+                }
+
+                i++;
+            }
+
+            rc = rec->cb.fn_opflags(cp, name, flags, fmask, rec->cbdata);
             break;
         case IB_DIRTYPE_SBLK1:
             if (nargs != 1) {

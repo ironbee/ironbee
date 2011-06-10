@@ -53,6 +53,7 @@ typedef struct ib_cfgparser_t ib_cfgparser_t;
 typedef struct ib_dirmap_init_t ib_dirmap_init_t;
 typedef struct ib_site_t ib_site_t;
 typedef struct ib_loc_t ib_loc_t;
+typedef struct ib_strval_t ib_strval_t;
 
 /// @todo Should probably be private structure
 struct ib_cfgparser_t {
@@ -76,8 +77,19 @@ typedef enum {
     IB_DIRTYPE_PARAM1,                   /**< One param directive */
     IB_DIRTYPE_PARAM2,                   /**< Two param directive */
     IB_DIRTYPE_LIST,                     /**< List param directive */
+    IB_DIRTYPE_OPFLAGS,                  /**< Option flags directive */
     IB_DIRTYPE_SBLK1,                    /**< One param subblock directive */
 } ib_dirtype_t;
+
+/** String key/numeric value pair */
+struct ib_strval_t {
+    const char             *str;         /**< String "key" */
+    ib_num_t                val;         /**< Numeric value */
+};
+
+#define IB_STRVAL_MAP(name) ib_strval_t name[]
+#define IB_STRVAL_PAIR(str,val) { str, val }
+#define IB_STRVAL_PAIR_LAST { NULL, 0 }
 
 /** Callback for ending (processing) a block */
 typedef ib_status_t (*ib_config_cb_blkend_fn_t)(ib_cfgparser_t *cp,
@@ -109,6 +121,13 @@ typedef ib_status_t (*ib_config_cb_list_fn_t)(ib_cfgparser_t *cp,
                                               const ib_list_t *list,
                                               void *cbdata);
 
+/** Callback for OPFLAGS directives */
+typedef ib_status_t (*ib_config_cb_opflags_fn_t)(ib_cfgparser_t *cp,
+                                                 const char *name,
+                                                 ib_flags_t val,
+                                                 ib_flags_t mask,
+                                                 void *cbdata);
+
 /** Callback for SBLK1 directives */
 typedef ib_status_t (*ib_config_cb_sblk1_fn_t)(ib_cfgparser_t *cp,
                                                const char *name,
@@ -133,10 +152,12 @@ struct ib_dirmap_init_t {
         ib_config_cb_param1_fn_t  fn_param1; /**< 1 param directive */
         ib_config_cb_param2_fn_t  fn_param2; /**< 2 param directive */
         ib_config_cb_list_fn_t    fn_list;   /**< List directive */
+        ib_config_cb_opflags_fn_t  fn_opflags;/**< Option flags directive */
         ib_config_cb_sblk1_fn_t   fn_sblk1;  /**< 1 param subblock directive */
     } cb;
     ib_config_cb_blkend_fn_t      fn_blkend; /**< Called when block ends */
     void                         *cbdata;    /**< Arbitrary callback data */
+    ib_strval_t                  *valmap;    /**< Value map */
     /// @todo Do we need help text or error messages???
 };
 
@@ -152,24 +173,28 @@ struct ib_dirmap_init_t {
 
 
 /** Directive with a single On/Off/True/False/Yes/No parameter */
-#define IB_DIRMAP_INIT_ONOFF(name,cb,blkend,cbdata) \
-    { (name), IB_DIRTYPE_ONOFF, { (ib_void_fn_t)(cb) }, (blkend), (cbdata) }
+#define IB_DIRMAP_INIT_ONOFF(name,cb,cbdata) \
+    { (name), IB_DIRTYPE_ONOFF, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
 
 /** Directive with a single string parameter */
-#define IB_DIRMAP_INIT_PARAM1(name,cb,blkend,cbdata) \
-    { (name), IB_DIRTYPE_PARAM1, { (ib_void_fn_t)(cb) }, (blkend), (cbdata) }
+#define IB_DIRMAP_INIT_PARAM1(name,cb,cbdata) \
+    { (name), IB_DIRTYPE_PARAM1, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
 
 /** Directive with two string parameters */
-#define IB_DIRMAP_INIT_PARAM2(name,cb,blkend,cbdata) \
-    { (name), IB_DIRTYPE_PARAM2, { (ib_void_fn_t)(cb) }, (blkend), (cbdata) }
+#define IB_DIRMAP_INIT_PARAM2(name,cb,cbdata) \
+    { (name), IB_DIRTYPE_PARAM2, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
 
 /** Directive with list of string parameters */
-#define IB_DIRMAP_INIT_LIST(name,cb,blkend,cbdata) \
-    { (name), IB_DIRTYPE_LIST, { (ib_void_fn_t)(cb) }, (blkend), (cbdata) }
+#define IB_DIRMAP_INIT_LIST(name,cb,cbdata) \
+    { (name), IB_DIRTYPE_LIST, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
+
+/** Directive with list of unique options string parameters */
+#define IB_DIRMAP_INIT_OPFLAGS(name,cb,cbdata,valmap) \
+    { (name), IB_DIRTYPE_OPFLAGS, { (ib_void_fn_t)(cb) }, NULL, (cbdata), (valmap) }
 
 /** Block with single parameter enclosing more directives */
 #define IB_DIRMAP_INIT_SBLK1(name,cb,blkend,cbdata) \
-    { (name), IB_DIRTYPE_SBLK1, { (ib_void_fn_t)(cb) }, (blkend), (cbdata) }
+    { (name), IB_DIRTYPE_SBLK1, { (ib_void_fn_t)(cb) }, (blkend), (cbdata), NULL }
 
 /** Required last entry. */
 #define IB_DIRMAP_INIT_LAST { NULL }

@@ -316,7 +316,6 @@ static IB_DIRMAP_INIT_STRUCTURE(pocsig_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "PocSigTrace",
         pocsig_dir_trace,
-        NULL,
         NULL
     ),
 
@@ -324,37 +323,31 @@ static IB_DIRMAP_INIT_STRUCTURE(pocsig_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "PocSigPreTx",
         pocsig_dir_signature,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_LIST(
         "PocSigReqHead",
         pocsig_dir_signature,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_LIST(
         "PocSigReq",
         pocsig_dir_signature,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_LIST(
         "PocSigResHead",
         pocsig_dir_signature,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_LIST(
         "PocSigRes",
         pocsig_dir_signature,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_LIST(
         "PocSigPostTx",
         pocsig_dir_signature,
-        NULL,
         NULL
     ),
 

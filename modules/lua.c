@@ -1971,20 +1971,17 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaLoadModule",
         modlua_dir_param1,
-        NULL,
         NULL
     ),
 
     IB_DIRMAP_INIT_PARAM1(
         "LuaPackagePath",
         modlua_dir_param1,
-        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
         "LuaPackageCPath",
         modlua_dir_param1,
-        NULL,
         NULL
     ),
 
