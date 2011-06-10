@@ -33,6 +33,7 @@ AuditLogIndex auditlog.log
 AuditLogBaseDir /tmp/ironbee
 AuditLogDirMode 0755
 #AuditLogFileMode 0644
+AuditLogParts minimal request -requestBody response -responseBody
 
 ### Buffering
 # Request
@@ -53,6 +54,7 @@ PocSigTrace On
 
     <Location /foo>
         DebugLogLevel 9
+        AuditLogParts +debug
     </Location>
 </Site>
 
