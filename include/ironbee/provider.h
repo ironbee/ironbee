@@ -418,13 +418,11 @@ IB_PROVIDER_DECLARE_IFACE(data) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         get,
-        /// @todo Use bstr for name
         (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
         remove,
-        /// @todo Use bstr for name
         (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
     );
     IB_PROVIDER_FUNC(
@@ -433,9 +431,6 @@ IB_PROVIDER_DECLARE_IFACE(data) {
         (ib_provider_inst_t *pi)
     );
     /// @todo init(table) add fields in bulk
-    /// @todo traverse(f,fn,fndata) if it can be done more efficiently
-    /// @todo children(f) returns list of children
-    /// @todo set_relative(name,rel-num-val) 
 };
 
 /** Data API Definition. */
@@ -458,7 +453,6 @@ IB_PROVIDER_DECLARE_API(data) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         get,
-        /// @todo Use bstr for name
         (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
     );
     IB_PROVIDER_FUNC(
