@@ -71,6 +71,46 @@ else
     AC_MSG_RESULT([no])
 fi
 
+    #enable suppot for PCRE-sljit http://sljit.sourceforge.net/pcre.html
+    AC_ARG_ENABLE(pcre-sljit,
+           AS_HELP_STRING([--enable-pcre-sljit], [Enable experimental support for PCRE SLJIT]),,[enable_pcre_sljit=no])
+    AS_IF([test "x$enable_pcre_sljit" = "xyes"], [
+        AC_MSG_CHECKING(for PCRE SLJIT)
+        save_CFLAGS=$CFLAGS
+        save_LDFLAGS=$LDFLAGS
+        CFLAGS="${PCRE_CFLAGS} ${CFLAGS}"
+        LDFLAGS="${PCRE_LDFLAGS} ${CFLAGS}"
+        AC_TRY_COMPILE([ #include <pcre.h> ],
+            [ const char* patt = "bar";
+              pcre *re;
+              const char *error;
+              pcre_extra *extra;
+              int err_offset;
+              re = pcre_compile(patt,0, &error, &err_offset,NULL);
+              extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error);
+              if (!(extra->flags & PCRE_EXTRA_EXECUTABLE_FUNC)) {
+                  printf("PCRE-SLJIT compiler does not support: %s\n", patt);
+              }
+              return 0;],
+            [ pcre_sljit_available=yes ], [:]
+            )
+
+           if test "x$pcre_sljit_available" = "xyes"; then
+               AC_MSG_RESULT(yes)
+               PCRE_CFLAGS="${PCRE_CFLAGS} -DPCRE_HAVE_SLJIT"
+           else
+               AC_MSG_RESULT(no)
+               echo
+               echo "   Error! --enable-pcre-sljit set but PCRE_STUDY_JIT_COMPILE not found"
+               echo "   Make sure you use pcre found here "
+               echo "   http://sljit.sourceforge.net/pcre.html"
+               echo
+               exit 1
+           fi
+        CFLAGS=$save_CFLAGS
+        LDFLAGS=$save_$LDFLAGS
+    ])
+
 AC_SUBST(PCRE_CONFIG)
 AC_SUBST(PCRE_VERSION)
 AC_SUBST(PCRE_CPPFLAGS)

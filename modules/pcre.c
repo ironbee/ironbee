@@ -65,7 +65,8 @@ struct modpcre_cfg_t {
  * Internal representation of PCRE compiled patterns.
  */
 struct modpcre_cpatt_t {
-    void          *cpatt;                 /**< Compiled pattern */
+    pcre          *cpatt;                 /**< Compiled pattern */
+    pcre_extra    *edata;                 /**< PCRE Study data */
     const char    *patt;                  /**< Regex pattern text */
 };
 
@@ -83,7 +84,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
                                    int *erroffset)
 {
     IB_FTRACE_INIT(modpcre_compile);
-    void *cpatt;
+    pcre *cpatt;
     modpcre_cpatt_t *pcre_cpatt;
 
     cpatt = pcre_compile(patt,
@@ -101,8 +102,25 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
         *(void **)pcpatt = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+
     pcre_cpatt->patt = patt; /// @todo Copy
     pcre_cpatt->cpatt = cpatt;
+
+#ifdef PCRE_HAVE_SLJIT
+    pcre_cpatt->edata = pcre_study(pcre_cpatt->cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
+    if(*errptr != NULL)  {
+        ib_util_log_error(4,"PCRE-SLJIT study failed : %s", *errptr);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (!(pcre_cpatt->edata->flags & PCRE_EXTRA_EXECUTABLE_FUNC)) {
+        ib_util_log_error(4,"PCRE-SLJIT compiler does not support: %s. It will fallback to the normal PCRE", pcre_cpatt->patt);
+    }
+#else
+    pcre_cpatt->edata = pcre_study(pcre_cpatt->cpatt, 0, errptr);
+    if(*errptr != NULL)  {
+        ib_util_log_error(4,"PCRE study failed : %s", *errptr);
+    }
+#endif /*PCRE_HAVE_SLJIT*/
 
     *(void **)pcpatt = (void *)pcre_cpatt;
 
@@ -120,7 +138,7 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
     int ovector[30];
     int ec;
 
-    ec = pcre_exec(pcre_cpatt->cpatt, NULL,
+    ec = pcre_exec(pcre_cpatt->cpatt, pcre_cpatt->edata,
                    (const char *)data, dlen,
                    0, 0, ovector, 30);
     if (ec >= 0) {
@@ -184,6 +202,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    ib_log_error(ib, 4,"PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"", PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
