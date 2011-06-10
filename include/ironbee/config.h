@@ -172,27 +172,73 @@ struct ib_dirmap_init_t {
 #define IB_DIRMAP_INIT_STRUCTURE(name) const ib_dirmap_init_t name[]
 
 
-/** Directive with a single On/Off/True/False/Yes/No parameter */
+/**
+ * Directive with a single On/Off/True/False/Yes/No parameter.
+ *
+ * @param name Directive name
+ * @param cb Callback
+ * @param cbdata Callback data
+ */
 #define IB_DIRMAP_INIT_ONOFF(name,cb,cbdata) \
     { (name), IB_DIRTYPE_ONOFF, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
 
-/** Directive with a single string parameter */
+/**
+ * Directive with a single string parameter.
+ *
+ * @param name Directive name
+ * @param cb Callback
+ * @param cbdata Callback data
+ */
 #define IB_DIRMAP_INIT_PARAM1(name,cb,cbdata) \
     { (name), IB_DIRTYPE_PARAM1, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
 
-/** Directive with two string parameters */
+/**
+ * Directive with two string parameters.
+ *
+ * @param name Directive name
+ * @param cb Callback
+ * @param cbdata Callback data
+ */
 #define IB_DIRMAP_INIT_PARAM2(name,cb,cbdata) \
     { (name), IB_DIRTYPE_PARAM2, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
 
-/** Directive with list of string parameters */
+/**
+ * Directive with list of string parameters.
+ *
+ * @param name Directive name
+ * @param cb Callback
+ * @param cbdata Callback data
+ */
 #define IB_DIRMAP_INIT_LIST(name,cb,cbdata) \
     { (name), IB_DIRTYPE_LIST, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
 
-/** Directive with list of unique options string parameters */
+/**
+ * Directive with list of unique options string parameters which are
+ * converted flags (bitmask) in a single @ref ib_num_t value.
+ *
+ * Options can be explicit, or can add/remove from current value (those
+ * prefixed with '-' are removed and '+' added).
+ *
+ * EX: DirectiveName [+|-]option ...
+ *
+ * @param name Directive name
+ * @param cb Callback
+ * @param cbdata Callback data
+ * @param valmap Array of @ref ib_strval_t structures mapping options to values
+ */
 #define IB_DIRMAP_INIT_OPFLAGS(name,cb,cbdata,valmap) \
     { (name), IB_DIRTYPE_OPFLAGS, { (ib_void_fn_t)(cb) }, NULL, (cbdata), (valmap) }
 
-/** Block with single parameter enclosing more directives */
+/**
+ * Block with single parameter enclosing more directives.
+ *
+ * @todo Should probably move blkend param to the end.
+ *
+ * @param name Directive name
+ * @param cb Callback
+ * @param blkend Block end callback
+ * @param cbdata Callback data
+ */
 #define IB_DIRMAP_INIT_SBLK1(name,cb,blkend,cbdata) \
     { (name), IB_DIRTYPE_SBLK1, { (ib_void_fn_t)(cb) }, (blkend), (cbdata), NULL }
 
