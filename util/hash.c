@@ -99,6 +99,22 @@ ib_status_t ib_hash_get(ib_hash_t *h,
     return ib_hash_get_ex(h, (void *)key, strlen(key), pdata);
 }
 
+static int _hash_list_store(ib_list_t *list, const void *key, apr_ssize_t klen,
+                            const void *value)
+{
+    ib_list_push(list, (void *)value);
+
+    return 1; /* continue */
+}
+
+ib_status_t ib_hash_get_all(ib_hash_t *h, ib_list_t *list)
+{
+    int ec = apr_hash_do((apr_hash_do_callback_fn_t *)_hash_list_store,
+                         list, h->data);
+
+    return ec ? IB_OK : IB_ENOENT;
+}
+
 ib_status_t ib_hash_set_ex(ib_hash_t *h,
                            void *key, size_t klen,
                            void *data)

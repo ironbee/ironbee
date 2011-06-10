@@ -195,6 +195,18 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_status_t ib_data_get_all(ib_provider_inst_t *dpi,
+                            ib_list_t *list)
+{
+    IB_FTRACE_INIT(ib_data_get_all);
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_status_t rc;
+
+    rc = api->get_all(dpi, list);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                                const char *name,
                                size_t nlen,

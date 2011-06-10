@@ -849,6 +849,16 @@ ib_status_t DLL_PUBLIC ib_hash_get(ib_hash_t *h,
                                    void *pdata);
 
 /**
+ * Get all data from a hash table and push onto the supplied list.
+ *
+ * @param h Hash table
+ * @param list List to push values
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_hash_get_all(ib_hash_t *h, ib_list_t *list);
+
+/**
  * Set data in a hash table for key and key length.
  *
  * @param h Hash table

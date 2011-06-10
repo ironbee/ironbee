@@ -644,6 +644,25 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 
 /**
  * @internal
+ * Core data provider implementation to get a data all data fields.
+ *
+ * @param dpi Data provider instance
+ * @param list List which fields will be pushed
+ *
+ * @returns Status code
+ */
+static ib_status_t core_data_get_all(ib_provider_inst_t *dpi,
+                                     ib_list_t *list)
+{
+    IB_FTRACE_INIT(core_data_get);
+    ib_status_t rc;
+
+    rc = ib_hash_get_all((ib_hash_t *)dpi->data, list);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
  * Core data provider implementation to remove a data field.
  *
  * The data field which is removed is written to @ref pf if it
@@ -693,6 +712,7 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
     core_data_set,
     core_data_set_relative,
     core_data_get,
+    core_data_get_all,
     core_data_remove,
     core_data_clear
 };
@@ -2453,6 +2473,35 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
 
 /**
  * @internal
+ * Calls a registered provider interface to get all data fields within a
+ * provider instance.
+ *
+ * @param dpi Data provider instance
+ * @param list List in which fields are pushed
+ * 
+ * @returns Status code
+ */
+static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
+                                    ib_list_t *list)
+{
+    IB_FTRACE_INIT(data_api_get);
+    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
+    ib_status_t rc;
+
+    if (iface == NULL) {
+        /// @todo Probably should not need this check
+        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* This function is required, so no NULL check. */
+
+    rc = iface->get_all(dpi, list);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
  * Calls a registered provider interface to remove a data field in a
  * provider instance.
  *
@@ -2520,6 +2569,7 @@ static IB_PROVIDER_API_TYPE(data) data_api = {
     data_api_set,
     data_api_set_relative,
     data_api_get,
+    data_api_get_all,
     data_api_remove,
     data_api_clear,
 };

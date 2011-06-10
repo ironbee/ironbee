@@ -422,6 +422,11 @@ IB_PROVIDER_DECLARE_IFACE(data) {
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
+        get_all,
+        (ib_provider_inst_t *pi, ib_list_t *list)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
         remove,
         (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
     );
@@ -457,8 +462,12 @@ IB_PROVIDER_DECLARE_API(data) {
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
+        get_all,
+        (ib_provider_inst_t *pi, ib_list_t *list)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
         remove,
-        /// @todo Use bstr for name
         (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
     );
     IB_PROVIDER_FUNC(

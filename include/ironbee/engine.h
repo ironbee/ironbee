@@ -1297,6 +1297,17 @@ ib_status_t DLL_PUBLIC ib_data_get_ex(ib_provider_inst_t *dpi,
                                       ib_field_t **pf);
 
 /**
+ * Get all data fields from a data provider instance.
+ *
+ * @param dpi Data provider instance
+ * @param list List which data fields will be pushed
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_get_all(ib_provider_inst_t *dpi,
+                                       ib_list_t *list);
+
+/**
  * Get a data field with a transformation (extended version).
  *
  * @param dpi Data provider instance
