@@ -3568,24 +3568,25 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
 static IB_STRVAL_MAP(core_parts_map) = {
     /* Auditlog Part Groups */
     IB_STRVAL_PAIR("none", 0),
+    IB_STRVAL_PAIR("minimal", IB_ALPART_HEADER|IB_ALPART_EVENTS),
     IB_STRVAL_PAIR("all", IB_ALPARTS_ALL),
     IB_STRVAL_PAIR("debug", IB_ALPART_DEBUG_FIELDS),
     IB_STRVAL_PAIR("default", IB_ALPARTS_DEFAULT),
-    IB_STRVAL_PAIR("http-request", IB_ALPARTS_REQUEST),
-    IB_STRVAL_PAIR("http-response", IB_ALPARTS_RESPONSE),
+    IB_STRVAL_PAIR("request", IB_ALPARTS_REQUEST),
+    IB_STRVAL_PAIR("response", IB_ALPARTS_RESPONSE),
 
     /* AuditLog Individual Parts */
     IB_STRVAL_PAIR("header", IB_ALPART_HEADER),
     IB_STRVAL_PAIR("events", IB_ALPART_EVENTS),
-    IB_STRVAL_PAIR("http-request-metadata", IB_ALPART_HTTP_REQUEST_METADATA),
-    IB_STRVAL_PAIR("http-request-headers", IB_ALPART_HTTP_REQUEST_HEADERS),
-    IB_STRVAL_PAIR("http-request-body", IB_ALPART_HTTP_REQUEST_BODY),
-    IB_STRVAL_PAIR("http-request-trailers", IB_ALPART_HTTP_REQUEST_TRAILERS),
-    IB_STRVAL_PAIR("http-response-metadata", IB_ALPART_HTTP_RESPONSE_METADATA),
-    IB_STRVAL_PAIR("http-response-headers", IB_ALPART_HTTP_RESPONSE_HEADERS),
-    IB_STRVAL_PAIR("http-response-body", IB_ALPART_HTTP_RESPONSE_BODY),
-    IB_STRVAL_PAIR("http-response-trailers", IB_ALPART_HTTP_RESPONSE_TRAILERS),
-    IB_STRVAL_PAIR("debug-fields", IB_ALPART_DEBUG_FIELDS),
+    IB_STRVAL_PAIR("requestmetadata", IB_ALPART_HTTP_REQUEST_METADATA),
+    IB_STRVAL_PAIR("requestheaders", IB_ALPART_HTTP_REQUEST_HEADERS),
+    IB_STRVAL_PAIR("requestbody", IB_ALPART_HTTP_REQUEST_BODY),
+    IB_STRVAL_PAIR("requesttrailers", IB_ALPART_HTTP_REQUEST_TRAILERS),
+    IB_STRVAL_PAIR("responsemetadata", IB_ALPART_HTTP_RESPONSE_METADATA),
+    IB_STRVAL_PAIR("responseheaders", IB_ALPART_HTTP_RESPONSE_HEADERS),
+    IB_STRVAL_PAIR("responsebody", IB_ALPART_HTTP_RESPONSE_BODY),
+    IB_STRVAL_PAIR("responsetrailers", IB_ALPART_HTTP_RESPONSE_TRAILERS),
+    IB_STRVAL_PAIR("debugfields", IB_ALPART_DEBUG_FIELDS),
 
     /* End */
     IB_STRVAL_PAIR_LAST
