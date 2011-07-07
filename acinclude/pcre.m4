@@ -18,13 +18,13 @@ AC_ARG_WITH(
     pcre,
     [AC_HELP_STRING([--with-pcre=PATH],[Path to pcre prefix or config script])],
     [test_paths="${with_pcre}"],
-    [test_paths="/usr/local/libpcre /usr/local/pcre /usr/local /opt/libpcre /opt/pcre /opt /usr"])
+    [test_paths="/usr/local/libpcre /usr/local/pcre /usr/local /opt/libpcre /opt/pcre /opt /usr /opt/local"])
 
 AC_MSG_CHECKING([for libpcre config script])
 
 dnl # Determine pcre lib directory
 if test -z "${with_pcre}"; then
-    test_paths="/usr/local/pcre /usr/local /usr"
+    test_paths="/usr/local/pcre /usr/local /usr /opt/local"
 else
     test_paths="${with_pcre}"
 fi

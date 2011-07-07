@@ -72,6 +72,13 @@ case "$OS" in
                     exit 1
                 fi
         ;;
+        Darwin*)
+                AC_MSG_RESULT(Darwin) 
+                OS_DARWIN="true"
+                CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/local/include/htp -I/opt/local/include"
+                LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/opt/local/lib"
+                AC_CHECK_LIB(iconv, libiconv_open, LIBS="$LIBS -liconv")
+        ;;
         Linux*)
                 AC_MSG_RESULT(Linux)
                 OS_LINUX="true"
@@ -81,6 +88,7 @@ case "$OS" in
         ;;
 esac
 AM_CONDITIONAL([FREEBSD], [test "$OS_FREEBSD" = "true"])
+AM_CONDITIONAL([DARWIN], [test "$OS_DARWIN" = "true"])
 
 dnl Checks for library functions.
 
