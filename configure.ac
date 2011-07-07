@@ -75,7 +75,7 @@ case "$OS" in
         Darwin*)
                 AC_MSG_RESULT(Darwin) 
                 OS_DARWIN="true"
-                CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/local/include/htp -I/opt/local/include"
+                CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/opt/local/lib"
                 AC_CHECK_LIB(iconv, libiconv_open, LIBS="$LIBS -liconv")
         ;;
