@@ -134,5 +134,116 @@ struct ib_list_t {
     IB_LIST_REQ_FIELDS(ib_list_node_t);       /* Required fields */
 };
 
+/**
+ * @internal
+ * Set to 1 the specified bit index of a byte array
+ * Warning: The bit offset/index starts from the HSB
+ *
+ * @param byte Array of byte (uint8_t*)
+ * @param bit index of bit
+ */
+#define IB_SET_BIT_ARRAY(byte, bit)      (byte[bit / 8] |= (0x01 << (7 - (bit % 8))));
+
+/**
+ * @internal
+ * Read a bit from the specified byte
+ * Warning: The bit offset/index starts from the HSB
+ *
+ * @param byte Byte to look at (uint8_t)
+ * @param bit index of bit
+ * @returns 0 or 1
+ */
+#define IB_READ_BIT(byte, bit)             ((byte >> (7 - ((bit) % 8)) ) & 0x01)
+
+/**
+ * @internal
+ * Calculate the size in bytes to hold a prefix of length bits
+ *
+ * @param bits The number of bits we want to store
+ * @returns size in bytes needed for that bits
+ */
+#define IB_BITS_TO_BYTES(bits)           (((bits) % 8 == 0) ? ((bits) / 8) : ((bits) / 8) + 1)
+
+/**
+ * @internal
+ * Set to 1 the specified bit index of a byte
+ * Warning: The bit offset/index starts from the HSB
+ *
+ * @param byte Byte to look at (uint8_t)
+ * @param bit index of bit
+ */
+#define IB_SET_BIT(byte, bit)            (byte |= (0x01 << (7 - (bit % 8))));
+
+/**
+ * @internal
+ * Read the HSB of a byte
+ *
+ * @param byte Byte to look at (uint8_t)
+ * @returns 0 or 1
+ */
+#define IB_GET_DIR(byte)                (((byte) >> 7) & 0x01)
+
+/**
+ * @internal
+ * Prefix for radix nodes
+ */
+struct ib_radix_prefix_t {
+    uint8_t *rawbits;
+    uint8_t prefixlen;
+};
+
+/**
+ * @internal
+ * Radix node structure
+ */
+struct ib_radix_node_t {
+    ib_radix_prefix_t *prefix;
+
+    struct ib_radix_node_t *zero;
+    struct ib_radix_node_t *one;
+
+    void *data;
+};
+
+/**
+ * @internal
+ * Radix tree structure
+ */
+struct ib_radix_t {
+    ib_radix_node_t *start;
+
+    ib_radix_update_fn_t update_data;
+    ib_radix_print_fn_t print_data;
+    ib_radix_free_fn_t free_data;
+
+    size_t data_cnt;
+
+    ib_mpool_t *mp;
+};
+
+/** Matching functions type helper */
+enum {
+    IB_RADIX_PREFIX,
+    IB_RADIX_CLOSEST,
+};
+
+
+/**
+ * return if the given prefix is IPV4
+ *
+ * @param cidr const char * with format ip/mask where mask is optional
+ * @returns 1 if true, 0 if false
+ */
+#define IB_RADIX_IS_IPV4(cidr) ((strchr(cidr, ':') == NULL) ? 1 : 0)
+
+/**
+ * return if the given prefix is IPV6
+ *
+ * @param cidr const char * with format ip/mask where mask is optional
+ * @returns 1 if true, 0 if false
+ */
+#define IB_RADIX_IS_IPV6(cidr) ((strchr(cidr, ':') != NULL) ? 1 : 0)
+
 #endif /* IB_UTIL_PRIVATE_H_ */
+
 
