@@ -1150,7 +1150,7 @@ ib_status_t ib_radix_match_all_data(ib_radix_t *radix,
  * Create a binary representation (in_addr) of IP, allocating mem from mp
  *
  * @param ip ascii representation
- * @param mp pool where we should allocate the list
+ * @param mp pool where we should allocate the in_addr
  *
  * @returns struct in_addr*
  */
@@ -1179,7 +1179,7 @@ static inline struct in_addr *ib_radix_get_IPV4_addr(const char *ip,
  * Create a binary representation (in6_addr) of IP, allocating mem from mp
  *
  * @param ip ascii representation
- * @param mp pool where we should allocate the list
+ * @param mp pool where we should allocate in6_addr
  *
  * @returns struct in6_addr*
  */
@@ -1211,7 +1211,7 @@ static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
  *  formats, with regex, or functions, thought
  *
  * @param cidr ascii representation
- * @param mp pool where we should allocate the list
+ * @param mp pool where we should allocate the prefix
  *
  * @returns struct in6_addr*
  */
@@ -1220,6 +1220,12 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                                   ib_mpool_t *mp)
 {
     IB_FTRACE_INIT(ib_radix_ip_to_prefix);
+
+    /* If we got a mask, we will need to copy the IP to separate it from
+     the mask, and the max length should be the length of a IPv6 in ascii,
+     so 39 plus \0 */
+    char ip_tmp[40];
+
     char *mask = NULL;
     uint64_t nmask = 0;
 
@@ -1233,7 +1239,11 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
-            *mask = '\0';
+            /* Don't modify the orign cidr, instead of that, create a local copy
+             in stack memory to avoid allocations */
+            memcpy(ip_tmp, cidr, mask - cidr);
+            ip_tmp[mask - cidr] = '\0';
+            cidr = ip_tmp;
         }
         else {
             nmask = 32;
@@ -1259,7 +1269,11 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
-            *mask = '\0';
+            /* Don't modify the orign cidr, instead of that, create a local copy
+             in stack memory to avoid allocations */
+            memcpy(ip_tmp, cidr, mask - cidr);
+            ip_tmp[mask - cidr] = '\0';
+            cidr = ip_tmp;
         }
         else {
             nmask = 128;
