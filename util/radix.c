@@ -1226,7 +1226,7 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
      so 39 plus \0 */
     char ip_tmp[40];
 
-    char *mask = NULL;
+    const char *mask = NULL;
     uint64_t nmask = 0;
 
     if (IB_RADIX_IS_IPV4(cidr)) {
