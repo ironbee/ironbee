@@ -288,7 +288,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     }
 
     if (cfg->fp == NULL) {
-        char dtmp[32]; /// @todo Allocate size???
+        char dtmp[64]; /// @todo Allocate size???
         char dn[512]; /// @todo Allocate size???
         struct tm *tm;
         size_t ret;
@@ -303,18 +303,29 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         
         /* Generate the audit log filename template. */
         /// @todo Make this template configurable
-        ret = strftime(dtmp, sizeof(dtmp),
-                       "%Y%m%d/%H%M", tm);
-        if (ret == 0) {
-            /// @todo Better error.
-            ib_log_error(log->ib, 1,
-                         "Could not create audit log filename template:"
-                         " too long");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        /*
+        if (   (corecfg->auditlog_sdir_fmt != NULL)
+            && (*(corecfg->auditlog_sdir_fmt) != 0))
+            */
+        if (*(corecfg->auditlog_sdir_fmt) != 0) {
+            ret = strftime(dtmp, sizeof(dtmp),
+                           corecfg->auditlog_sdir_fmt, tm);
+            if (ret == 0) {
+                /// @todo Better error - probably should validate at cfg time
+                ib_log_error(log->ib, 1,
+                             "Could not create audit log filename template, "
+                             "using default:"
+                             " too long");
+                *dtmp = 0;
+            }
+        }
+        else {
+            *dtmp = 0;
         }
 
         /* Generate the full audit log directory name. */
-        ec = snprintf(dn, sizeof(dn), "%s/%s", corecfg->auditlog_dir, dtmp);
+        ec = snprintf(dn, sizeof(dn), "%s%s%s",
+                      corecfg->auditlog_dir, (*dtmp)?"/":"", dtmp);
         if (ec >= (int)sizeof(dn)) {
             /// @todo Better error.
             ib_log_error(log->ib, 1,
@@ -3373,6 +3384,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "auditlog_dir", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
+    else if (strcasecmp("AuditLogSubDirFormat", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1);
+        IB_FTRACE_RET_STATUS(rc);
+    }
     else if (strcasecmp("DebugLogLevel", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug(ib, 7, "%s: %d", name, atol(p1));
@@ -3740,6 +3757,11 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
+        "AuditLogSubDirFormat",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
         "AuditLogDirMode",
         core_dir_param1,
         NULL
@@ -4094,6 +4116,13 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         &core_global_cfg,
         auditlog_dir,
         "/var/log/ironbee"
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "auditlog_sdir_fmt",
+        IB_FTYPE_NULSTR,
+        &core_global_cfg,
+        auditlog_sdir_fmt,
+        ""
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_AUDIT,

@@ -31,6 +31,7 @@ Set parser "htp"
 AuditEngine RelevantOnly
 AuditLogIndex auditlog.log
 AuditLogBaseDir /tmp/ironbee
+AuditLogSubDirFormat "%Y%m%d-%H%M"
 AuditLogDirMode 0755
 #AuditLogFileMode 0644
 AuditLogParts minimal request -requestBody response -responseBody

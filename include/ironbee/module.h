@@ -214,6 +214,7 @@ struct ib_core_cfg_t {
     ib_num_t      auditlog_parts;    /**< Audit log parts */
     char         *auditlog_index;    /**< Audit log index filename */
     char         *auditlog_dir;      /**< Audit log base directory */
+    char         *auditlog_sdir_fmt; /**< Audit log sub-directory format */
     char         *audit;             /**< Active audit provider key */
     char         *parser;            /**< Active parser provider key */
     char         *data;              /**< Active data provider key */
