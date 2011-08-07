@@ -29,6 +29,9 @@ Set parser "htp"
 
 # Enable audit engine
 AuditEngine RelevantOnly
+# Set AuditLogIndex to the special value "/dev/null" or "NUL" to suppress
+# the index file entirely.
+# Default: ironbee-index.log
 AuditLogIndex auditlog.log
 AuditLogBaseDir /tmp/ironbee
 AuditLogSubDirFormat "%Y%m%d-%H%M"
