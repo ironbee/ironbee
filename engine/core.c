@@ -183,7 +183,7 @@ static IB_PROVIDER_IFACE_TYPE(logevent) core_logevent_iface = {
 
 typedef struct core_audit_cfg_t core_audit_cfg_t;
 struct core_audit_cfg_t {
-    FILE           *index_fp;
+    FILE           *index_fp;      /* kept NULL if no index is wanted */
     FILE           *fp;
     const char     *fn;
     int             parts_written;
@@ -236,7 +236,15 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
 
-    if (cfg->index_fp == NULL) {
+    if (   (strcmp(corecfg->auditlog_index, "/dev/null") != 0)
+        && (strcmp(corecfg->auditlog_index, "NUL")       != 0))
+    {
+        /// @todo fclose(cfg->index_fp) if open?
+        //        should this be done on any call to core_audit_open(),
+        //        on the assumption we're re-initializing logging?
+        ib_log_debug(log->ib, 4, "Skipping open of AuditLogIndex");
+    }
+    else if (cfg->index_fp == NULL) {
         if (corecfg->auditlog_index[0] == '/') {
             fnsize = strlen(corecfg->auditlog_index) + 1;
 
@@ -300,7 +308,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                          " too long");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        
+
         /* Generate the audit log filename template. */
         /// @todo Make this template configurable
         /*
@@ -469,7 +477,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
      *  audit log size
      *  audit log hash
      */
-    if (cfg->parts_written > 0) {
+    if (cfg->index_fp && cfg->parts_written > 0) {
         fprintf(
             cfg->index_fp,
             "%s %s %s %s [%s] \"%s\" %d %d \"%s\" \"%s\" %s \"%s\" /%s %d %d %s\n",
