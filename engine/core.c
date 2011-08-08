@@ -302,11 +302,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         }
         
         /* Generate the audit log filename template. */
-        /// @todo Make this template configurable
-        /*
-        if (   (corecfg->auditlog_sdir_fmt != NULL)
-            && (*(corecfg->auditlog_sdir_fmt) != 0))
-            */
         if (*(corecfg->auditlog_sdir_fmt) != 0) {
             ret = strftime(dtmp, sizeof(dtmp),
                            corecfg->auditlog_sdir_fmt, tm);
