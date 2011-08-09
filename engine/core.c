@@ -236,7 +236,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
 
-    if (cfg->index_fp == NULL) {
+    if ((corecfg->auditlog_index != NULL) && (cfg->index_fp == NULL)) {
         if (corecfg->auditlog_index[0] == '/') {
             fnsize = strlen(corecfg->auditlog_index) + 1;
 
@@ -446,7 +446,10 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
         cfg->fp = NULL;
     }
 
-    /* Write to the index file:
+    /** Write to the index file if using one:
+     *
+     *  @todo Implement fully and use only relevent metadata
+     *
      *  hostname (or IP)
      *  source IP
      *  remote user
@@ -464,7 +467,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
      *  audit log size
      *  audit log hash
      */
-    if (cfg->parts_written > 0) {
+    if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
         fprintf(
             cfg->index_fp,
             "%s %s %s %s [%s] \"%s\" %d %d \"%s\" \"%s\" %s \"%s\" /%s %d %d %s\n",
@@ -3346,6 +3349,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("AuditLogIndex", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+
+        /* "None" means do not use the index file at all. */
+        if (strcasecmp("None", p1) == 0) {
+            rc = ib_context_set_string(ctx, "auditlog_index", NULL);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         rc = ib_context_set_string(ctx, "auditlog_index", p1);
         IB_FTRACE_RET_STATUS(rc);
     }
