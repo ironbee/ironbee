@@ -72,55 +72,55 @@ bstr *bstr_alloc(size_t newsize);
  void bstr_free(bstr **s);
 bstr *bstr_expand(bstr *s, size_t newsize);
 
-bstr *bstr_dup(bstr *b);
-bstr *bstr_dup_ex(bstr *b, size_t offset, size_t len);
-bstr *bstr_dup_c(char *);
-bstr *bstr_dup_mem(char *data, size_t len);
+bstr *bstr_dup(const bstr *b);
+bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len);
+bstr *bstr_dup_c(const char *);
+bstr *bstr_dup_mem(const char *data, size_t len);
 
-bstr *bstr_dup_lower(bstr *);
+bstr *bstr_dup_lower(const bstr *);
 
-  int bstr_chr(bstr *, int);
-  int bstr_rchr(bstr *, int);
+  int bstr_chr(const bstr *, int);
+  int bstr_rchr(const bstr *, int);
 
-  int bstr_cmp(bstr *, bstr *);
-  int bstr_cmp_nocase(bstr *, bstr *);
-  int bstr_cmp_c(bstr *, char *);
-  int bstr_cmp_c_nocase(bstr *, char *);
-  int bstr_cmp_ex(char *, size_t, char *, size_t);
-  int bstr_cmp_nocase_ex(char *, size_t, char *, size_t);
+  int bstr_cmp(const bstr *, const bstr *);
+  int bstr_cmp_nocase(const bstr *, const bstr *);
+  int bstr_cmp_c(const bstr *, const char *);
+  int bstr_cmp_c_nocase(const bstr *, const char *);
+  int bstr_cmp_ex(const char *, size_t, const char *, size_t);
+  int bstr_cmp_nocase_ex(const char *, size_t, const char *, size_t);
 
 
 bstr *bstr_to_lowercase(bstr *);
 
-bstr *bstr_add(bstr *, bstr *);
-bstr *bstr_add_c(bstr *, char *);
-bstr *bstr_add_mem(bstr *, char *, size_t);
+bstr *bstr_add(bstr *, const bstr *);
+bstr *bstr_add_c(bstr *, const char *);
+bstr *bstr_add_mem(bstr *, const char *, size_t);
 
-bstr *bstr_add_noex(bstr *, bstr *);
-bstr *bstr_add_c_noex(bstr *, char *);
-bstr *bstr_add_mem_noex(bstr *, char *, size_t);
+bstr *bstr_add_noex(bstr *, const bstr *);
+bstr *bstr_add_c_noex(bstr *, const char *);
+bstr *bstr_add_mem_noex(bstr *, const char *, size_t);
 
-  int bstr_index_of(bstr *haystack, bstr *needle);
-  int bstr_index_of_nocase(bstr *haystack, bstr *needle);
-  int bstr_index_of_c(bstr *haystack, char *needle);
-  int bstr_index_of_c_nocase(bstr *haystack, char *needle);
-  int bstr_index_of_mem(bstr *haystack, char *data, size_t len);
-  int bstr_index_of_mem_nocase(bstr *haystack, char *data, size_t len);
+  int bstr_index_of(const bstr *haystack, const bstr *needle);
+  int bstr_index_of_nocase(const bstr *haystack, const bstr *needle);
+  int bstr_index_of_c(const bstr *haystack, const char *needle);
+  int bstr_index_of_c_nocase(const bstr *haystack, const char *needle);
+  int bstr_index_of_mem(const bstr *haystack, const char *data, size_t len);
+  int bstr_index_of_mem_nocase(const bstr *haystack, const char *data, size_t len);
 
-  int bstr_begins_with_mem(bstr *haystack, char *data, size_t len);
-  int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len);
-  int bstr_begins_with(bstr *haystack, bstr *needle);
-  int bstr_begins_with_c(bstr *haystack, char *needle);
-  int bstr_begins_with_nocase(bstr *haystack, bstr *needle);
-  int bstr_begins_withc_nocase(bstr *haystack, char *needle);
+  int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len);
+  int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t len);
+  int bstr_begins_with(const bstr *haystack, const bstr *needle);
+  int bstr_begins_with_c(const bstr *haystack, const char *needle);
+  int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle);
+  int bstr_begins_withc_nocase(const bstr *haystack, const char *needle);
 
-unsigned char bstr_char_at(bstr *s, size_t pos);
+unsigned char bstr_char_at(const bstr *s, size_t pos);
 
    void bstr_chop(bstr *b);
    void bstr_util_adjust_len(bstr *s, size_t newlen);
-int64_t bstr_util_mem_to_pint(char *data, size_t len, int base, size_t *lastlen);
-  char *bstr_util_memdup_to_c(char *data, size_t len);
-  char *bstr_util_strdup_to_c(bstr *);
+int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen);
+  char *bstr_util_memdup_to_c(const char *data, size_t len);
+  char *bstr_util_strdup_to_c(const bstr *);
 
 #ifdef __cplusplus
 }

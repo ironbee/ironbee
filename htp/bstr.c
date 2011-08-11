@@ -64,7 +64,7 @@ void bstr_free(bstr **b) {
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add(bstr *destination, bstr *source) {
+bstr *bstr_add(bstr *destination, const bstr *source) {
     return bstr_add_mem(destination, bstr_ptr(source), bstr_len(source));
 }
 
@@ -80,7 +80,7 @@ bstr *bstr_add(bstr *destination, bstr *source) {
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_c(bstr *destination, char *source) {
+bstr *bstr_add_c(bstr *destination, const char *source) {
     return bstr_add_mem(destination, source, strlen(source));
 }
 
@@ -96,7 +96,7 @@ bstr *bstr_add_c(bstr *destination, char *source) {
  * @param len
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {
+bstr *bstr_add_mem(bstr *destination, const char *data, size_t len) {
     // Expand the destination if necessary
     if (bstr_size(destination) < bstr_len(destination) + len) {
         destination = bstr_expand(destination, bstr_len(destination) + len);
@@ -122,7 +122,7 @@ bstr *bstr_add_mem(bstr *destination, char *data, size_t len) {
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_noex(bstr *destination, bstr *source) {
+bstr *bstr_add_noex(bstr *destination, const bstr *source) {
     return bstr_add_mem_noex(destination, bstr_ptr(source), bstr_len(source));
 }
 
@@ -137,7 +137,7 @@ bstr *bstr_add_noex(bstr *destination, bstr *source) {
  * @param source
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_c_noex(bstr *destination, char *source) {
+bstr *bstr_add_c_noex(bstr *destination, const char *source) {
     return bstr_add_mem_noex(destination, source, strlen(source));
 }
 
@@ -151,7 +151,7 @@ bstr *bstr_add_c_noex(bstr *destination, char *source) {
  * @param len
  * @return destination, at a potentially different memory location
  */
-bstr *bstr_add_mem_noex(bstr *destination, char *data, size_t len) {
+bstr *bstr_add_mem_noex(bstr *destination, const char *data, size_t len) {
     size_t copylen = len;
 
     // Is there enough room in the destination?
@@ -207,7 +207,7 @@ bstr *bstr_expand(bstr *s, size_t newsize) {
  * @param data
  * @return new bstring
  */
-bstr *bstr_dup_c(char *data) {
+bstr *bstr_dup_c(const char *data) {
     return bstr_dup_mem(data, strlen(data));
 }
 
@@ -218,7 +218,7 @@ bstr *bstr_dup_c(char *data) {
  * @param len
  * @return new bstring
  */
-bstr *bstr_dup_mem(char *data, size_t len) {
+bstr *bstr_dup_mem(const char *data, size_t len) {
     bstr *b = bstr_alloc(len);
     if (b == NULL) return NULL;
     memcpy(bstr_ptr(b), data, len);
@@ -232,7 +232,7 @@ bstr *bstr_dup_mem(char *data, size_t len) {
  * @param b
  * @return new bstring
  */
-bstr *bstr_dup(bstr *b) {
+bstr *bstr_dup(const bstr *b) {
     return bstr_dup_ex(b, 0, bstr_len(b));
 }
 
@@ -245,7 +245,7 @@ bstr *bstr_dup(bstr *b) {
  * @param len
  * @return new bstring
  */
-bstr *bstr_dup_ex(bstr *b, size_t offset, size_t len) {
+bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len) {
     bstr *bnew = bstr_alloc(len);
     if (bnew == NULL) return NULL;
     memcpy(bstr_ptr(bnew), bstr_ptr(b) + offset, len);
@@ -261,7 +261,7 @@ bstr *bstr_dup_ex(bstr *b, size_t offset, size_t len) {
  * @param len
  * @return new NUL-terminated string
  */
-char *bstr_util_memdup_to_c(char *data, size_t len) {
+char *bstr_util_memdup_to_c(const char *data, size_t len) {
     // Count how many NUL bytes we have in the string.
     size_t i, nulls = 0;
     for (i = 0; i < len; i++) {
@@ -299,7 +299,7 @@ char *bstr_util_memdup_to_c(char *data, size_t len) {
  * @param b
  * @return new NUL-terminated string
  */
-char *bstr_util_strdup_to_c(bstr *b) {
+char *bstr_util_strdup_to_c(const bstr *b) {
     if (b == NULL) return NULL;
     return bstr_util_memdup_to_c(bstr_ptr(b), bstr_len(b));
 }
@@ -311,7 +311,7 @@ char *bstr_util_strdup_to_c(bstr *b) {
  * @param c
  * @return the first position of the character, or -1 if it could not be found
  */
-int bstr_chr(bstr *b, int c) {
+int bstr_chr(const bstr *b, int c) {
     char *data = bstr_ptr(b);
     size_t len = bstr_len(b);
 
@@ -334,7 +334,7 @@ int bstr_chr(bstr *b, int c) {
  * @param c
  * @return the last position of the character, or -1 if it could not be found
  */
-int bstr_rchr(bstr *b, int c) {
+int bstr_rchr(const bstr *b, int c) {
     char *data = bstr_ptr(b);
     size_t len = bstr_len(b);
 
@@ -359,7 +359,7 @@ int bstr_rchr(bstr *b, int c) {
  * @param l2
  * @return 0 if the memory regions are identical, -1 or +1 if they're not
  */
-int bstr_cmp_ex(char *s1, size_t l1, char *s2, size_t l2) {
+int bstr_cmp_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
     size_t p1 = 0, p2 = 0;
 
     while ((p1 < l1) && (p2 < l2)) {
@@ -391,7 +391,7 @@ int bstr_cmp_ex(char *s1, size_t l1, char *s2, size_t l2) {
  * @param l2
  * @return 0 if the memory regions are identical, -1 or +1 if they're not
  */
-int bstr_cmp_nocase_ex(char *s1, size_t l1, char *s2, size_t l2) {
+int bstr_cmp_nocase_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
     size_t p1 = 0, p2 = 0;
 
     while ((p1 < l1) && (p2 < l2)) {
@@ -421,7 +421,7 @@ int bstr_cmp_nocase_ex(char *s1, size_t l1, char *s2, size_t l2) {
  * @param c
  * @return 0, -1 or +1
  */
-int bstr_cmp_c(bstr *b, char *c) {
+int bstr_cmp_c(const bstr *b, const char *c) {
     return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
@@ -432,7 +432,7 @@ int bstr_cmp_c(bstr *b, char *c) {
  * @param c
  * @return 0, -1 or +1
  */
-int bstr_cmp_c_nocase(bstr *b, char *c) {
+int bstr_cmp_c_nocase(const bstr *b, const char *c) {
     return bstr_cmp_nocase_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
@@ -443,7 +443,7 @@ int bstr_cmp_c_nocase(bstr *b, char *c) {
  * @param b2
  * @return 0, -1 or +1
  */
-int bstr_cmp(bstr *b1, bstr *b2) {
+int bstr_cmp(const bstr *b1, const bstr *b2) {
     return bstr_cmp_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
 
@@ -454,7 +454,7 @@ int bstr_cmp(bstr *b1, bstr *b2) {
  * @param b2
  * @return 0, -1 or +1
  */
-int bstr_cmp_nocase(bstr *b1, bstr *b2) {
+int bstr_cmp_nocase(const bstr *b1, const bstr *b2) {
     return bstr_cmp_nocase_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
 
@@ -485,7 +485,7 @@ bstr *bstr_to_lowercase(bstr *b) {
  * @param b
  * @return bstring copy
  */
-bstr *bstr_dup_lower(bstr *b) {
+bstr *bstr_dup_lower(const bstr *b) {
     return bstr_to_lowercase(bstr_dup(b));
 }
 
@@ -499,7 +499,7 @@ bstr *bstr_dup_lower(bstr *b) {
  * @return the number, or -1 if there wasn't a single valid digit, -2
  *         if there was an overflow
  */
-int64_t bstr_util_mem_to_pint(char *data, size_t len, int base, size_t *lastlen) {
+int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen) {
     int64_t rval = 0, tval = 0, tflag = 0;
     size_t i = 0;
     
@@ -568,7 +568,7 @@ int64_t bstr_util_mem_to_pint(char *data, size_t len, int base, size_t *lastlen)
  * @param needle
  * @return position of the match, or -1 if there is no match
  */
-int bstr_index_of(bstr *haystack, bstr *needle) {
+int bstr_index_of(const bstr *haystack, const bstr *needle) {
     return bstr_index_of_mem(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
@@ -579,7 +579,7 @@ int bstr_index_of(bstr *haystack, bstr *needle) {
  * @param needle
  * @return position of the match, or -1 if there is no match
  */
-int bstr_index_of_c(bstr *haystack, char *needle) {
+int bstr_index_of_c(const bstr *haystack, const char *needle) {
     return bstr_index_of_mem(haystack, needle, strlen(needle));
 }
 
@@ -590,7 +590,7 @@ int bstr_index_of_c(bstr *haystack, char *needle) {
  * @param needle
  * @return position of the match, or -1 if there is no match
  */
-int bstr_index_of_nocase(bstr *haystack, bstr *needle) {
+int bstr_index_of_nocase(const bstr *haystack, const bstr *needle) {
     return bstr_index_of_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
@@ -602,7 +602,7 @@ int bstr_index_of_nocase(bstr *haystack, bstr *needle) {
  * @param needle
  * @return position of the match, or -1 if there is no match
  */
-int bstr_index_of_c_nocase(bstr *haystack, char *needle) {
+int bstr_index_of_c_nocase(const bstr *haystack, const char *needle) {
     return bstr_index_of_mem_nocase(haystack, needle, strlen(needle));
 }
 
@@ -614,7 +614,7 @@ int bstr_index_of_c_nocase(bstr *haystack, char *needle) {
  * @param len2
  * @return position of the match, or -1 if there is no match
  */
-int bstr_index_of_mem(bstr *haystack, char *data2, size_t len2) {
+int bstr_index_of_mem(const bstr *haystack, const char *data2, size_t len2) {
     unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
@@ -646,7 +646,7 @@ int bstr_index_of_mem(bstr *haystack, char *data2, size_t len2) {
  * @param len2
  * @return position of the match, or -1 if there is no match
  */
-int bstr_index_of_mem_nocase(bstr *haystack, char *data2, size_t len2) {
+int bstr_index_of_mem_nocase(const bstr *haystack, const char *data2, size_t len2) {
     unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
@@ -700,7 +700,7 @@ void bstr_util_adjust_len(bstr *s, size_t newlen) {
  * @param pos
  * @return the character, or -1 if the bstring is too short
  */
-unsigned char bstr_char_at(bstr *s, size_t pos) {
+unsigned char bstr_char_at(const bstr *s, size_t pos) {
     unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -715,7 +715,7 @@ unsigned char bstr_char_at(bstr *s, size_t pos) {
  * @param needle
  * @return 1 if true, otherwise
  */
-int bstr_begins_with_mem(bstr *haystack, char *data, size_t len) {
+int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len) {
     char *hdata = bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
     size_t pos = 0;
@@ -742,7 +742,7 @@ int bstr_begins_with_mem(bstr *haystack, char *data, size_t len) {
  * @param needle
  * @return 1 if true, otherwise
  */
-int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len) {
+int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t len) {
     char *hdata = bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
     size_t pos = 0;   
@@ -769,7 +769,7 @@ int bstr_begins_with_mem_nocase(bstr *haystack, char *data, size_t len) {
  * @param needle
  * @return 1 if true, otherwise
  */
-int bstr_begins_with(bstr *haystack, bstr *needle) {
+int bstr_begins_with(const bstr *haystack, const bstr *needle) {
     return bstr_begins_with_mem(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
@@ -780,7 +780,7 @@ int bstr_begins_with(bstr *haystack, bstr *needle) {
  * @param needle
  * @return
  */
-int bstr_begins_with_c(bstr *haystack, char *needle) {
+int bstr_begins_with_c(const bstr *haystack, const char *needle) {
     return bstr_begins_with_mem(haystack, needle, strlen(needle));
 }
 
@@ -791,7 +791,7 @@ int bstr_begins_with_c(bstr *haystack, char *needle) {
  * @param needle
  * @return 1 if true, 0 otherwise
  */
-int bstr_begins_with_nocase(bstr *haystack, bstr *needle) {
+int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle) {
     return bstr_begins_with_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
@@ -802,6 +802,6 @@ int bstr_begins_with_nocase(bstr *haystack, bstr *needle) {
  * @param needle
  * @return 1 if true, 0 otherwise
  */
-int bstr_begins_withc_nocase(bstr *haystack, char *needle) {
+int bstr_begins_withc_nocase(const bstr *haystack, const char *needle) {
     return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
 }
