@@ -24,7 +24,7 @@
 #define	_BSTR_H
 
 typedef struct bstr_t bstr_t;
-typedef void * bstr;
+typedef bstr_t bstr;
 
 #include <stdio.h>
 #include <stdlib.h>
