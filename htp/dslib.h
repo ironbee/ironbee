@@ -56,10 +56,10 @@ extern "C" {
 #define LIST_COMMON \
     int (*push)(list_t *, void *); \
     void *(*pop)(list_t *); \
-    int (*empty)(list_t *); \
-    void *(*get)(list_t *, size_t index); \
+    int (*empty)(const list_t *); \
+    void *(*get)(const list_t *, size_t index); \
     int (*replace)(list_t *, size_t index, void *); \
-    size_t (*size)(list_t *); \
+    size_t (*size)(const list_t *); \
     void (*iterator_reset)(list_t *); \
     void *(*iterator_next)(list_t *); \
     void (*destroy)(list_t **); \
@@ -112,11 +112,11 @@ table_t *table_create(size_t size);
      int table_add(table_t *, bstr *, void *);
      int table_addn(table_t *, bstr *, void *);
     void table_set(table_t *, bstr *, void *);     
-   void *table_get(table_t *, bstr *);
-   void *table_get_c(table_t *, char *);
+   void *table_get(const table_t *, const bstr *);
+   void *table_get_c(const table_t *, const char *);
     void table_iterator_reset(table_t *);
    bstr *table_iterator_next(table_t *, void **);         
-  size_t table_size(table_t *t);
+  size_t table_size(const table_t *t);
     void table_destroy(table_t **);
     void table_clear(table_t *);
 

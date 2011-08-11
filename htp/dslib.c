@@ -126,8 +126,8 @@ static void *list_linked_shift(list_t *_q) {
  * @param list
  * @return 1 if the list is empty, 0 if it is not
  */
-static int list_linked_empty(list_t *_q) {
-    list_linked_t *q = (list_linked_t *) _q;
+static int list_linked_empty(const list_t *_q) {
+    const list_linked_t *q = (const list_linked_t *) _q;
 
     if (!q->first) {
         return 1;
@@ -292,8 +292,8 @@ static void *list_array_shift(list_t *_q) {
  *
  * @param list
  */
-static size_t list_array_size(list_t *_l) {
-    return ((list_array_t *) _l)->current_size;
+static size_t list_array_size(const list_t *_l) {
+    return ((const list_array_t *) _l)->current_size;
 }
 
 /**
@@ -304,8 +304,8 @@ static size_t list_array_size(list_t *_l) {
  * @return the desired element, or NULL if the list is too small, or
  *         if the element at that position carries a NULL
  */
-static void *list_array_get(list_t *_l, size_t idx) {
-    list_array_t *l = (list_array_t *) _l;
+static void *list_array_get(const list_t *_l, size_t idx) {
+    const list_array_t *l = (const list_array_t *) _l;
     void *r = NULL;
 
     if (idx + 1 > l->current_size) return NULL;
@@ -547,7 +547,7 @@ static void *table_get_internal(table_t *table, bstr *key) {
  * @param cstr
  * @return table element, or NULL if not found
  */
-void *table_get_c(table_t *table, char *cstr) {
+void *table_get_c(const table_t *table, const char *cstr) {
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
     bstr *ts = NULL;
@@ -569,7 +569,7 @@ void *table_get_c(table_t *table, char *cstr) {
  * @param key
  * @return table element, or NULL if not found
  */
-void *table_get(table_t *table, bstr *key) {
+void *table_get(const table_t *table, const bstr *key) {
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
     bstr *ts = NULL;
@@ -615,7 +615,7 @@ bstr *table_iterator_next(table_t *t, void **data) {
  * @param table
  * @return table size
  */
-size_t table_size(table_t *table) {
+size_t table_size(const table_t *table) {
     return list_size(table->list) / 2;
 }
 
