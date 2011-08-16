@@ -159,7 +159,6 @@ dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
 
-CFLAGS="${CFLAGS} -Werror"
 AC_PREFIX_DEFAULT(/usr/local)
 
 AC_OUTPUT(Makefile \
