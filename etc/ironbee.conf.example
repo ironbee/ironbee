@@ -29,6 +29,7 @@ Set parser "htp"
 
 # Enable audit engine
 AuditEngine RelevantOnly
+#AuditLogIndex "|/usr/bin/logger"
 AuditLogIndex auditlog.log
 AuditLogBaseDir /tmp/ironbee
 AuditLogSubDirFormat "%Y%m%d-%H%M"

@@ -24,6 +24,10 @@
 
 #include "ironbee_config_auto.h"
 
+#ifndef _POSIX_SOURCE
+#define _POSIX_SOURCE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -182,14 +186,19 @@ static IB_PROVIDER_IFACE_TYPE(logevent) core_logevent_iface = {
 /* -- Audit Provider -- */
 
 typedef struct core_audit_cfg_t core_audit_cfg_t;
+/**
+ * @internal
+ * Core audit configuration structure
+ */
 struct core_audit_cfg_t {
-    FILE           *index_fp;
-    FILE           *fp;
-    const char     *fn;
-    int             parts_written;
-    const char     *boundary;
-    ib_tx_t        *tx;
-    ib_timeval_t   *logtime;
+    FILE           *index_fp;       /**< Index file pointer */
+    int             index_pipe;     /**< Index is a pipe? */
+    FILE           *fp;             /**< Audit log file pointer */
+    const char     *fn;             /**< Audit log file name */
+    int             parts_written;  /**< Parts written so far */
+    const char     *boundary;       /**< Audit log boundary */
+    ib_tx_t        *tx;             /**< Transaction being logged */
+    ib_timeval_t   *logtime;        /**< Audit log time */
 };
 
 /// @todo Make this public
@@ -244,6 +253,20 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             if (fn == NULL) {
                 return IB_EALLOC;
             }
+
+            memcpy(fn, corecfg->auditlog_index, fnsize);
+        }
+        else if (corecfg->auditlog_index[0] == '|') {
+            /// @todo Probably should skip whitespace???
+            cfg->index_pipe = 1;
+            fnsize = strlen(corecfg->auditlog_index + 1) + 1;
+
+            fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
+            if (fn == NULL) {
+                return IB_EALLOC;
+            }
+
+            memcpy(fn, corecfg->auditlog_index + 1, fnsize);
         }
         else {
             fnsize = strlen(corecfg->auditlog_dir) +
@@ -274,17 +297,84 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             }
         }
 
-        /// @todo Use corecfg->auditlog_fmode as file mode for new file
-        cfg->index_fp = fopen(fn, "ab");
-        if (cfg->index_fp == NULL) {
-            ec = errno;
-            ib_log_error(log->ib, 1,
-                         "Could not open audit log index \"%s\": %s (%d)",
-                         fn, strerror(ec), ec);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        if (cfg->index_pipe == 0) {
+            /// @todo Use corecfg->auditlog_fmode as file mode for new file
+            cfg->index_fp = fopen(fn, "ab");
+            if (cfg->index_fp == NULL) {
+                ec = errno;
+                ib_log_error(log->ib, 1,
+                             "Could not open audit log index \"%s\": %s (%d)",
+                             fn, strerror(ec), ec);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+        }
+        else {
+            int p[2];
+            pid_t pipe_pid;
+
+            /// @todo Handle exit of pipe_pid???
+
+            ec = pipe(p);
+            if (ec != 0) {
+                ib_log_error(log->ib, 1,
+                             "Could not create piped audit log index: %s (%d)",
+                             strerror(ec), ec);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            
+            /* Create a new process for executing the piped command. */
+            pipe_pid = fork();
+            if (pipe_pid == 0) {
+                /* Child - piped audit log index process */
+                char *parg[4];
+
+                /// @todo Reset SIGCHLD in child???
+
+                /* Setup the filehandles to read from pipe. */
+                close(3); /// @todo stderr
+                close(p[1]);
+                dup2(p[0], 0);
+
+                /* Execute piped command. */
+                parg[0] = fn;
+                parg[1] = (char *)"-c";
+                parg[2] = fn;
+                parg[3] = NULL;
+                ib_log_debug(log->ib, 4,
+                             "Executing piped audit log index: /bin/sh %s \"%s\" (%s)",
+                             parg[1], parg[2], parg[0]);
+                execvp("/bin/sh", (char * const *)parg); /// @todo define shell
+                ec = errno;
+                ib_log_error(log->ib, 1,
+                             "Could not execute piped audit log index \"%s\": %s (%d)",
+                             fn, strerror(ec), ec);
+                exit(1);
+            }
+            else if (pipe_pid == -1) {
+                /* Error - no process created */
+                ec = errno;
+                ib_log_error(log->ib, 1,
+                             "Could not create piped audit log index process: %s (%d)",
+                             strerror(ec), ec);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+
+            /* Parent - IronBee process */
+
+            /* Setup the filehandles to write to the pipe. */
+            close(p[0]);
+            cfg->index_fp = fdopen(p[1], "w");
+            if (cfg->index_fp == NULL) {
+                ec = errno;
+                ib_log_error(log->ib, 1,
+                             "Could not open piped audit log index: %s (%d)",
+                             strerror(ec), ec);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
         }
 
-        ib_log_debug(log->ib, 4, "AUDITLOG INDEX: %s", fn);
+        ib_log_debug(log->ib, 3, "AUDITLOG INDEX%s: %s",
+                     (cfg->index_pipe?" (piped)":""), fn);
     }
 
     if (cfg->fp == NULL) {
@@ -439,6 +529,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_tx_t *tx = log->tx;
     ib_conn_t *conn = tx->conn;
+    int ec;
 
     /* Close the audit log. */
     if (cfg->fp != NULL) {
@@ -449,6 +540,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     /** Write to the index file if using one:
      *
      *  @todo Implement fully and use only relevent metadata
+     *  @todo Allow specifying fields that are used here w/template
      *
      *  hostname (or IP)
      *  source IP
@@ -468,7 +560,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
      *  audit log hash
      */
     if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
-        fprintf(
+        ec = fprintf(
             cfg->index_fp,
             "%s %s %s %s [%s] \"%s\" %d %d \"%s\" \"%s\" %s \"%s\" /%s %d %d %s\n",
             tx->hostname,
@@ -488,6 +580,13 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
             0,
             "-"
         );
+        if (ec < 0) {
+            /// @todo Should retry (a piped logger may have died)
+            fclose(cfg->index_fp);
+            cfg->index_fp = NULL;
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+
         fflush(cfg->index_fp);
     }
 
