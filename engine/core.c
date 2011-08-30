@@ -59,6 +59,9 @@
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
+/* The default shell to use for piped commands. */
+static const char * const ib_pipe_shell = "/bin/sh";
+
 /// @todo Fix this:
 #ifndef X_MODULE_BASE_PATH
 #define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH) "/"
@@ -326,14 +329,14 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                 dup2(p[0], 0);
 
                 /* Execute piped command. */
-                parg[0] = fn;
+                parg[0] = (char *)ib_pipe_shell;
                 parg[1] = (char *)"-c";
                 parg[2] = fn;
                 parg[3] = NULL;
                 ib_log_debug(log->ib, 4,
-                             "Executing piped audit log index: /bin/sh %s \"%s\" (%s)",
-                             parg[1], parg[2], parg[0]);
-                execvp("/bin/sh", (char * const *)parg); /// @todo define shell
+                             "Executing piped audit log index: %s %s \"%s\"",
+                             parg[0], parg[1], parg[2]);
+                execvp(ib_pipe_shell, (char * const *)parg); /// @todo define shell
                 ec = errno;
                 ib_log_error(log->ib, 1,
                              "Could not execute piped audit log index \"%s\": %s (%d)",
