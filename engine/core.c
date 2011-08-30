@@ -192,7 +192,6 @@ typedef struct core_audit_cfg_t core_audit_cfg_t;
  */
 struct core_audit_cfg_t {
     FILE           *index_fp;       /**< Index file pointer */
-    int             index_pipe;     /**< Index is a pipe? */
     FILE           *fp;             /**< Audit log file pointer */
     const char     *fn;             /**< Audit log file name */
     int             parts_written;  /**< Parts written so far */
@@ -245,7 +244,10 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
 
-    if ((corecfg->auditlog_index != NULL) && (cfg->index_fp == NULL)) {
+    if (corecfg->auditlog_index_fp != NULL) {
+        cfg->index_fp = corecfg->auditlog_index_fp;
+    }
+    else if ((corecfg->auditlog_index != NULL) && (cfg->index_fp == NULL)) {
         if (corecfg->auditlog_index[0] == '/') {
             fnsize = strlen(corecfg->auditlog_index) + 1;
 
@@ -258,7 +260,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         }
         else if (corecfg->auditlog_index[0] == '|') {
             /// @todo Probably should skip whitespace???
-            cfg->index_pipe = 1;
             fnsize = strlen(corecfg->auditlog_index + 1) + 1;
 
             fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
@@ -297,18 +298,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             }
         }
 
-        if (cfg->index_pipe == 0) {
-            /// @todo Use corecfg->auditlog_fmode as file mode for new file
-            cfg->index_fp = fopen(fn, "ab");
-            if (cfg->index_fp == NULL) {
-                ec = errno;
-                ib_log_error(log->ib, 1,
-                             "Could not open audit log index \"%s\": %s (%d)",
-                             fn, strerror(ec), ec);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-        }
-        else {
+        if (corecfg->auditlog_index[0] == '|') {
             int p[2];
             pid_t pipe_pid;
 
@@ -372,9 +362,24 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
+        else {
+            /// @todo Use corecfg->auditlog_fmode as file mode for new file
+            cfg->index_fp = fopen(fn, "ab");
+            if (cfg->index_fp == NULL) {
+                ec = errno;
+                ib_log_error(log->ib, 1,
+                             "Could not open audit log index \"%s\": %s (%d)",
+                             fn, strerror(ec), ec);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+        }
+
+        /// @todo Need to lock around this as the corecfg is a
+        ///       shared structure.
+        corecfg->auditlog_index_fp = cfg->index_fp;
 
         ib_log_debug(log->ib, 3, "AUDITLOG INDEX%s: %s",
-                     (cfg->index_pipe?" (piped)":""), fn);
+                     (corecfg->auditlog_index[0] == '|'?" (piped)":""), fn);
     }
 
     if (cfg->fp == NULL) {
@@ -527,6 +532,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 {
     IB_FTRACE_INIT(core_audit_close);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_core_cfg_t *corecfg;
     ib_tx_t *tx = log->tx;
     ib_conn_t *conn = tx->conn;
     int ec;
@@ -580,10 +586,26 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
             0,
             "-"
         );
+        /// @todo Will this detect write w/no reader (SIGPIPE)???
         if (ec < 0) {
+            ib_status_t rc;
+
+            ec = errno;
+            ib_log_error(log->ib, 1,
+                         "Could not write to audit log index: %s (%d)",
+                         strerror(ec), ec);
+
             /// @todo Should retry (a piped logger may have died)
             fclose(cfg->index_fp);
             cfg->index_fp = NULL;
+
+            rc = ib_context_module_config(log->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+
+            /// @todo Need to lock around this as the corecfg is a
+            ///       shared structure.
+            corecfg->auditlog_index_fp = cfg->index_fp;
+
             IB_FTRACE_RET_STATUS(IB_OK);
         }
 
