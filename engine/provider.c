@@ -165,24 +165,14 @@ ib_status_t ib_provider_lookup(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_provider_instance_create(ib_engine_t *ib,
-                                        const char *type,
-                                        const char *key,
-                                        ib_provider_inst_t **ppi,
-                                        ib_mpool_t *pool,
-                                        void *data)
+ib_status_t ib_provider_instance_create_ex(ib_engine_t *ib,
+                                           ib_provider_t *pr,
+                                           ib_provider_inst_t **ppi,
+                                           ib_mpool_t *pool,
+                                           void *data)
 {
     IB_FTRACE_INIT(ib_provider_instance_create);
     ib_status_t rc;
-    ib_provider_t *pr;
-
-    /* Get the provider */
-    rc = ib_provider_lookup(ib, type, key, &pr);
-    if (rc != IB_OK) {
-        /// @todo no provider registered
-        *ppi = NULL;
-        IB_FTRACE_RET_STATUS(rc);
-    }
 
     /* Create the provider instance. */
     *ppi = (ib_provider_inst_t *)ib_mpool_calloc(pool, 1, sizeof(**ppi));
@@ -205,6 +195,30 @@ ib_status_t ib_provider_instance_create(ib_engine_t *ib,
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_provider_instance_create(ib_engine_t *ib,
+                                        const char *type,
+                                        const char *key,
+                                        ib_provider_inst_t **ppi,
+                                        ib_mpool_t *pool,
+                                        void *data)
+{
+    IB_FTRACE_INIT(ib_provider_instance_create);
+    ib_status_t rc;
+    ib_provider_t *pr;
+
+    /* Get the provider */
+    rc = ib_provider_lookup(ib, type, key, &pr);
+    if (rc != IB_OK) {
+        /// @todo no provider registered
+        *ppi = NULL;
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_provider_instance_create_ex(ib, pr, ppi, pool, data);
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 void *ib_provider_data_get(ib_provider_t *pr)

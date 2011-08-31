@@ -1447,6 +1447,11 @@ ib_status_t DLL_PUBLIC ib_matcher_create(ib_engine_t *ib,
                                          const char *key,
                                          ib_matcher_t **pm);
 
+ib_status_t DLL_PUBLIC ib_matcher_instance_create(ib_engine_t *ib,
+                                                  ib_mpool_t *pool,
+                                                  const char *key,
+                                                  ib_matcher_t **pm);
+
 void DLL_PUBLIC *ib_matcher_compile(ib_matcher_t *m,
                                     const char *patt,
                                     const char **errptr,
@@ -1456,24 +1461,35 @@ ib_status_t DLL_PUBLIC ib_matcher_match_buf(ib_matcher_t *m,
                                             void *cpatt,
                                             ib_flags_t flags,
                                             const uint8_t *data,
-                                            size_t dlen);
+                                            size_t dlen,
+                                            void *ctx);
 
 ib_status_t DLL_PUBLIC ib_matcher_match_field(ib_matcher_t *m,
                                               void *cpatt,
                                               ib_flags_t flags,
-                                              ib_field_t *f);
+                                              ib_field_t *f,
+                                              void *ctx);
 
 ib_status_t DLL_PUBLIC ib_matcher_add_pattern(ib_matcher_t *m,
                                               const char *patt);
 
+ib_status_t DLL_PUBLIC ib_matcher_add_pattern_ex(ib_matcher_t *m,
+                                                 const char *patt,
+                                                 ib_void_fn_t callback,
+                                                 void *arg,
+                                                 const char **errptr,
+                                                 int *erroffset);
+
 ib_status_t DLL_PUBLIC ib_matcher_exec_buf(ib_matcher_t *m,
                                            ib_flags_t flags,
                                            const uint8_t *data,
-                                           size_t dlen);
+                                           size_t dlen,
+                                           void *ctx);
 
 ib_status_t DLL_PUBLIC ib_matcher_exec_field(ib_matcher_t *m,
                                              ib_flags_t flags,
-                                             ib_field_t *f);
+                                             ib_field_t *f,
+                                             void *ctx);
 
 /**
  * @} IronBeeEngineMatcher

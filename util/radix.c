@@ -102,6 +102,7 @@ ib_status_t ib_radix_clone_prefix(ib_radix_prefix_t *orig,
                                   ib_radix_prefix_t **new_prefix,
                                   ib_mpool_t *mp)
 {
+    IB_FTRACE_INIT(ib_radix_clone_prefix);
     ib_status_t ret = ib_radix_prefix_new(new_prefix, mp);
     if (ret != IB_OK) {
         IB_FTRACE_RET_STATUS(ret);
@@ -183,9 +184,10 @@ ib_status_t ib_radix_node_new(ib_radix_node_t **node,
  * @returns Status code
  */
 ib_status_t ib_radix_clone_node(ib_radix_node_t *orig,
-                                              ib_radix_node_t **new_node,
-                                              ib_mpool_t *mp)
+                                ib_radix_node_t **new_node,
+                                ib_mpool_t *mp)
 {
+    IB_FTRACE_INIT(ib_radix_clone_node);
     if (orig == NULL) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
@@ -310,9 +312,10 @@ ib_status_t ib_radix_new(ib_radix_t **radix,
  * @returns Status code
  */
 ib_status_t ib_radix_clone_radix(ib_radix_t *orig,
-                                                ib_radix_t **new_radix,
-                                                ib_mpool_t *mp)
+                                 ib_radix_t **new_radix,
+                                 ib_mpool_t *mp)
 {
+    IB_FTRACE_INIT(ib_radix_clone_radix);
     ib_status_t ret = ib_radix_new(new_radix, orig->free_data,
                                    orig->print_data, orig->update_data, mp);
     if (ret != IB_OK) {
@@ -1178,14 +1181,14 @@ static inline struct in_addr *ib_radix_get_IPV4_addr(const char *ip,
     if ((rawbytes = (struct in_addr *) ib_mpool_calloc(mp, 1,
                                                sizeof(struct in_addr))) == NULL)
     {
-        IB_FTRACE_RET_PTR(struct in_addr *, NULL);
+        IB_FTRACE_RET_PTR(struct in_addr, NULL);
     }
 
     if (inet_pton(AF_INET, ip, rawbytes) <= 0) {
-        IB_FTRACE_RET_PTR(struct in_addr *, NULL);
+        IB_FTRACE_RET_PTR(struct in_addr, NULL);
     }
 
-    IB_FTRACE_RET_PTR(struct in_addr *, rawbytes);
+    IB_FTRACE_RET_PTR(struct in_addr, rawbytes);
 }
 
 /*
@@ -1207,14 +1210,14 @@ static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
     if ((rawbytes = (struct in6_addr *) ib_mpool_calloc(mp, 1,
                                               sizeof(struct in6_addr))) == NULL)
     {
-        IB_FTRACE_RET_PTR(struct in6_addr *, NULL);
+        IB_FTRACE_RET_PTR(struct in6_addr, NULL);
     }
 
     if (inet_pton(AF_INET6, ip, rawbytes) <= 0) {
-        IB_FTRACE_RET_PTR(struct in6_addr *, NULL);
+        IB_FTRACE_RET_PTR(struct in6_addr, NULL);
     }
 
-    IB_FTRACE_RET_PTR(struct in6_addr *, rawbytes);
+    IB_FTRACE_RET_PTR(struct in6_addr, rawbytes);
 }
 
 /*

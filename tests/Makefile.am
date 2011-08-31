@@ -14,6 +14,7 @@ check_PROGRAMS = test_gtest \
                  test_util_array \
                  test_util_list \
                  test_util_radix \
+                 test_util_ahocorasick \
                  test_engine
 
 # TODO: Get libhtp working w/C++
@@ -79,6 +80,20 @@ test_util_radix_LDADD = gtest/libgtest.la \
                     -lhtp
 endif
 
+test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc
+test_util_ahocorasick_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
+test_util_ahocorasick_CPPFLAGS = @APR_CPPFLAGS@
+test_util_ahocorasick_LDFLAGS = @APR_LDFLAGS@
+if FREEBSD
+test_util_ahocorasick_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/util/libibutil.la \
+                    -lhtp \
+                    -liconv
+else
+test_util_ahocorasick_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/util/libibutil.la \
+                    -lhtp
+endif
 
 test_engine_SOURCES = test_engine.cc
 test_engine_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@

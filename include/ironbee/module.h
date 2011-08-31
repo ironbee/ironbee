@@ -58,7 +58,7 @@ extern "C" {
         __VA_ARGS__ \
     }
 
-/** Data associated with the module */
+/** Data associated with the module. */
 #define IB_MODULE_DATA \
     IB_MODULE_SYM.data
 
@@ -116,8 +116,10 @@ extern "C" {
                                       0
 
 /** Module config structure and size */
-#define IB_MODULE_CONFIG(ptr)         (ptr), \
-                                      ((ptr!=NULL)?sizeof(*(ptr)):0)
+#define IB_MODULE_CONFIG(ptr)         (ptr), (sizeof(*(ptr)))
+
+/** Used to signify that there is no config structure for the module. */
+#define IB_MODULE_CONFIG_NULL         NULL, 0
 
 /**
  * Function to initialize a module.

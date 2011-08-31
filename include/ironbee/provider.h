@@ -176,7 +176,26 @@ ib_status_t DLL_PUBLIC ib_provider_lookup(ib_engine_t *ib,
                                           ib_provider_t **ppr);
 
 /**
- * Create an instance of a registered provider.
+ * Create an instance of a provider
+ *
+ * @param ib Engine
+ * @param type Type of provider being interfaced
+ * @param key Unique key for interface lookup
+ * @param ppi Location where provider instance is written
+ * @param pool Pool to allocate instance
+ * @param data Arbitrary data passed to init function or stored with instance
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_provider_instance_create_ex(ib_engine_t *ib,
+                                                   ib_provider_t *pr,
+                                                   ib_provider_inst_t **ppi,
+                                                   ib_mpool_t *pool,
+                                                   void *data);
+
+/**
+ * Create an instance of a registered provider by looking up with 
+ * the given type/key
  *
  * @param ib Engine
  * @param type Type of provider being interfaced
@@ -499,9 +518,8 @@ IB_PROVIDER_DECLARE_IFACE(matcher) {
         ib_status_t,
         match_compiled,
         (ib_provider_t *mpr, void *cpatt,
-         ib_flags_t flags, const uint8_t *data, size_t dlen)
+         ib_flags_t flags, const uint8_t *data, size_t dlen, void *ctx)
     );
-
 
     /* Provider instance Interface */
     IB_PROVIDER_FUNC(
@@ -509,11 +527,19 @@ IB_PROVIDER_DECLARE_IFACE(matcher) {
         add,
         (ib_provider_inst_t *pi, void *cpatt)
     );
+
+    IB_PROVIDER_FUNC(
+       ib_status_t,
+       add_ex,
+       (ib_provider_inst_t *mpi, void *patterns,
+        const char *patt, ib_void_fn_t callback, void *arg,
+        const char **errptr, int *erroffset)
+    );
     IB_PROVIDER_FUNC(
         ib_status_t,
         match,
         (ib_provider_inst_t *mpi,
-         ib_flags_t flags, const uint8_t *data, size_t dlen)
+         ib_flags_t flags, const uint8_t *data, size_t dlen, void *ctx)
     );
 };
 
@@ -531,7 +557,7 @@ IB_PROVIDER_DECLARE_API(matcher) {
         ib_status_t,
         match_compiled,
         (ib_provider_t *mpr, void *cpatt,
-         ib_flags_t flags, const uint8_t *data, size_t dlen)
+         ib_flags_t flags, const uint8_t *data, size_t dlen, void *ctx)
     );
 
     /* Provider Instance API */
@@ -543,9 +569,16 @@ IB_PROVIDER_DECLARE_API(matcher) {
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
+        add_pattern_ex,
+        (ib_provider_inst_t *mpi, void *patterns, const char *patt,
+         ib_void_fn_t callback, void *arg,
+         const char **errptr, int *erroffset)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
         match,
         (ib_provider_inst_t *mpi,
-         ib_flags_t flags, const uint8_t *data, size_t dlen)
+         ib_flags_t flags, const uint8_t *data, size_t dlen, void *ctx)
     );
 };
 

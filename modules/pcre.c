@@ -131,7 +131,7 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
                                           void *cpatt,
                                           ib_flags_t flags,
                                           const uint8_t *data,
-                                          size_t dlen)
+                                          size_t dlen, void *ctx)
 {
     IB_FTRACE_INIT(modpcre_match_compiled);
     modpcre_cpatt_t *pcre_cpatt = (modpcre_cpatt_t *)cpatt;
@@ -158,10 +158,22 @@ static ib_status_t modpcre_add_pattern(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
+static ib_status_t modpcre_add_pattern_ex(ib_provider_inst_t *mpi,
+                                          void *patterns,
+                                          const char *patt,
+                                          ib_void_fn_t callback,
+                                          void *arg,
+                                          const char **errptr,
+                                          int *erroffset)
+{
+    IB_FTRACE_INIT(modpcre_add);
+    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+}
+
 static ib_status_t modpcre_match(ib_provider_inst_t *mpi,
                                  ib_flags_t flags,
                                  const uint8_t *data,
-                                 size_t dlen)
+                                 size_t dlen, void *ctx)
 {
     IB_FTRACE_INIT(modpcre_match);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
@@ -176,6 +188,7 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
 
     /* Provider Instance Interface */
     modpcre_add_pattern,
+    modpcre_add_pattern_ex,
     modpcre_match
 };
 

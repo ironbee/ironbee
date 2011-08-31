@@ -1646,7 +1646,7 @@ static void ib_timestamp(char *buf, ib_timeval_t *tv)
     struct tm *tm = localtime((time_t *)&tv->tv_sec);
     
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
-    snprintf(buf + 19, 12, ".%04" PRIdMAX, tv->tv_usec);
+    snprintf(buf + 19, 12, ".%04ld", tv->tv_usec);
     strftime(buf + 24, 6, "%z", tm);
 }
 
@@ -2830,7 +2830,7 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
                                               void *cpatt,
                                               ib_flags_t flags,
                                               const uint8_t *data,
-                                              size_t dlen)
+                                              size_t dlen, void *ctx)
 {
     IB_FTRACE_INIT(matcher_api_match_compiled);
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
@@ -2846,9 +2846,48 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
         IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
     }
 
-    rc = iface->match_compiled(mpr, cpatt, flags, data, dlen);
+    rc = iface->match_compiled(mpr, cpatt, flags, data, dlen, ctx);
     IB_FTRACE_RET_STATUS(rc);
 }
+
+/**
+ * @internal
+ * Add a pattern to a matcher provider instance.
+ *
+ * Multiple patterns can be added to a provider instance and all used
+ * to perform a match later on.
+ *
+ * @param mpi Matcher provider instance
+ * @param patt Pattern
+ *
+ * @returns Status code
+ */
+static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
+                                              void *patterns,
+                                              const char *patt,
+                                              ib_void_fn_t callback,
+                                              void *arg,
+                                              const char **errptr,
+                                              int *erroffset)
+{
+    IB_FTRACE_INIT(matcher_api_add_pattern);
+
+    IB_PROVIDER_IFACE_TYPE(matcher) *iface = NULL;
+
+    ib_status_t rc; 
+    iface = mpi->pr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpi->pr->iface:NULL;
+    
+    rc = iface->add_ex(mpi, patterns, patt, callback, arg,
+                               errptr, erroffset);
+    if (rc != IB_OK) {
+        ib_log_debug(mpi->pr->ib, 4, "Failed to add pattern %s patt: (%d) %s at"
+                               " offset %d", patt, rc, errptr, erroffset);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 
 /**
  * @internal
@@ -2885,7 +2924,8 @@ static ib_status_t matcher_api_add_pattern(ib_provider_inst_t *mpi,
 static ib_status_t matcher_api_match(ib_provider_inst_t *mpi,
                                      ib_flags_t flags,
                                      const uint8_t *data,
-                                     size_t dlen)
+                                     size_t dlen,
+                                     void *ctx)
                                      
 {
     IB_FTRACE_INIT(matcher_api_match);
@@ -2900,6 +2940,7 @@ static IB_PROVIDER_API_TYPE(matcher) matcher_api = {
     matcher_api_compile_pattern,
     matcher_api_match_compiled,
     matcher_api_add_pattern,
+    matcher_api_add_pattern_ex,
     matcher_api_match,
 };
 
