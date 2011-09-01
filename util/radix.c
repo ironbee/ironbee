@@ -913,10 +913,15 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
         if (*rlist == NULL) {
             ret = ib_list_create(rlist, mp);
             if (ret != IB_OK) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                IB_FTRACE_RET_STATUS(ret);
             }
         }
+
         ret = ib_list_push(*rlist, node->data);
+        if (ret != IB_OK) {
+            IB_FTRACE_RET_STATUS(ret);
+        }
+
         inserted = 1;
     }
     else {
@@ -933,10 +938,15 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
                 if (*rlist == NULL) {
                     ret = ib_list_create(rlist, mp);
                     if (ret != IB_OK) {
-                        IB_FTRACE_RET_STATUS(IB_EALLOC);
+                        IB_FTRACE_RET_STATUS(ret);
                     }
                 }
+
                 ret = ib_list_push(*rlist, node->data);
+                if (ret != IB_OK) {
+                    IB_FTRACE_RET_STATUS(ret);
+                }
+
                 inserted = 1;
                 break;
             }
@@ -947,11 +957,13 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
         if (*rlist == NULL) {
             ret = ib_list_create(rlist, mp);
             if (ret != IB_OK) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                IB_FTRACE_RET_STATUS(ret);
             }
         }
         ret = ib_list_push(*rlist, node->data);
-        inserted = 1;
+        if (ret != IB_OK) {
+            IB_FTRACE_RET_STATUS(ret);
+        }
     }
 
     if (offset >= prefix->prefixlen) {
@@ -1105,10 +1117,13 @@ ib_status_t ib_radix_match_all_data(ib_radix_t *radix,
         if (*rlist == NULL) {
             ret = ib_list_create(rlist, mp);
             if (ret != IB_OK) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                IB_FTRACE_RET_STATUS(ret);
             }
         }
         ret = ib_list_push(*rlist, radix->start->data);
+        if (ret != IB_OK) {
+            IB_FTRACE_RET_STATUS(ret);
+        }
     }
 
     if (prefix->prefixlen == 0) {
