@@ -553,7 +553,8 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
             rc = IB_EINVAL;
         }
         else if (lua_isnumber(L, -1)) {
-            rc = (ib_status_t)(int)lua_tointeger(L, -1);
+            lua_Integer li = lua_tointeger(L, -1);
+            rc = (ib_status_t)(int)li;
         }
         else {
             ib_log_error(ib, 1,
@@ -1223,7 +1224,8 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
             rc = IB_EINVAL;
         }
         else if (lua_isnumber(L, -1)) {
-            rc = (ib_status_t)(int)lua_tointeger(L, -1);
+            lua_Integer li = lua_tointeger(L, -1);
+            rc = (ib_status_t)(int)li;
         }
         else {
             ib_log_error(ib, 1,
@@ -1802,7 +1804,8 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
             rc = IB_EINVAL;
         }
         else if (lua_isnumber(L, -1)) {
-            rc = (ib_status_t)(int)lua_tointeger(L, -1);
+            lua_Integer li = lua_tointeger(L, -1);
+            rc = (ib_status_t)(int)li;
         }
         else {
             ib_log_error(ib, 1,
@@ -1883,7 +1886,8 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
             rc = IB_EINVAL;
         }
         else if (lua_isnumber(L, -1)) {
-            rc = (ib_status_t)(int)lua_tointeger(L, -1);
+            lua_Integer li = lua_tointeger(L, -1);
+            rc = (ib_status_t)(int)li;
         }
         else {
             ib_log_error(ib, 1,
