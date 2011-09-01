@@ -214,18 +214,19 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     ib_status_t rc;
     ib_list_t *plist;
     /// @todo Which should be in cp???
-    int cs;
-    int top;
-    int act;
+    int cs = 0;
+    int top = 0;
+    int act = 0;
     int stack[1024];
-    char *ts;
-    char *te;
+    char *ts = NULL;
+    char *te = NULL;
     char *data = (char *)buf;
     char *p = data;
     char *pe = p + blen;
     char *eof = 0;
 
     mark = p;
+    memset(stack, 0, sizeof(stack));
 
     /* Create a temporary list for storing parameter values. */
     ib_list_create(&plist, mptmp);
@@ -234,7 +235,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     }
 
     
-#line 238 "config-parser.c"
+#line 239 "config-parser.c"
 	{
 	cs = ironbee_config_start;
 	top = 0;
@@ -243,9 +244,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	act = 0;
 	}
 
-#line 197 "config-parser.rl"
+#line 198 "config-parser.rl"
     
-#line 249 "config-parser.c"
+#line 250 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -266,7 +267,7 @@ _resume:
 #line 1 "NONE"
 	{ts = p;}
 	break;
-#line 270 "config-parser.c"
+#line 271 "config-parser.c"
 		}
 	}
 
@@ -568,7 +569,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 572 "config-parser.c"
+#line 573 "config-parser.c"
 		}
 	}
 
@@ -585,7 +586,7 @@ _again:
 #line 1 "NONE"
 	{act = 0;}
 	break;
-#line 589 "config-parser.c"
+#line 590 "config-parser.c"
 		}
 	}
 
@@ -605,7 +606,7 @@ _again:
 	_out: {}
 	}
 
-#line 198 "config-parser.rl"
+#line 199 "config-parser.rl"
 
     return IB_OK;
 }

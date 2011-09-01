@@ -174,18 +174,19 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     ib_status_t rc;
     ib_list_t *plist;
     /// @todo Which should be in cp???
-    int cs;
-    int top;
-    int act;
+    int cs = 0;
+    int top = 0;
+    int act = 0;
     int stack[1024];
-    char *ts;
-    char *te;
+    char *ts = NULL;
+    char *te = NULL;
     char *data = (char *)buf;
     char *p = data;
     char *pe = p + blen;
     char *eof = 0;
 
     mark = p;
+    memset(stack, 0, sizeof(stack));
 
     /* Create a temporary list for storing parameter values. */
     ib_list_create(&plist, mptmp);
