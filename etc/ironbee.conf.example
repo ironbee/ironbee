@@ -57,14 +57,14 @@ PocSigTrace On
     Hostname * ip=127.0.0.1
 
     # This signature is handled by modules/poc_sig.c
-    # sigphase field pcre_pattern title
+    # syntax: sigphase field pcre_pattern title
     PocSigReqHead request_line bar "TESTING: Matched bar in request line."
 
     # This signature is handled by modules/poc_ac_sig.c
     # and it's basically like poc_sig but adds a prequalifier content processed
     # by an AhoCorasick Matcher. "foo" is the prequalifier. (bar)+ is a pcre
     # expression that will be inspected if AhoCorasick has match of foo
-    # sigphase field prequalifier pcre_pattern title
+    # syntax: sigphase field prequalifier pcre_pattern title
     PocACSigReqHead request_line foo (bar)+ "TESTING: Matched foo and (bar)+ in request line."
 
     <Location /foo>

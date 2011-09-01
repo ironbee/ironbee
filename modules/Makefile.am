@@ -13,6 +13,8 @@ endif
 pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
                      ibmod_ac.la \
+                     ibmod_radix.la \
+                     ibmod_binradix.la \
                      ibmod_poc_ac_sig.la \
                      ibmod_lua.la \
                      ibmod_poc_sig.la
@@ -32,6 +34,14 @@ ibmod_pcre_la_LIBADD = @PCRE_LDADD@
 ibmod_ac_la_SOURCES = ac.c
 ibmod_ac_la_CFLAGS = ${AM_CFLAGS}
 ibmod_ac_la_LDFLAGS = $(AM_LDFLAGS)
+
+ibmod_radix_la_SOURCES = radix.c
+ibmod_radix_la_CFLAGS = ${AM_CFLAGS}
+ibmod_radix_la_LDFLAGS = $(AM_LDFLAGS)
+
+ibmod_binradix_la_SOURCES = binradix.c
+ibmod_binradix_la_CFLAGS = ${AM_CFLAGS}
+ibmod_binradix_la_LDFLAGS = $(AM_LDFLAGS)
 
 ibmod_lua_la_SOURCES = lua.c 
 ibmod_lua_la_CPPFLAGS = $(CPPFLAGS) \
