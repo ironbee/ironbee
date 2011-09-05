@@ -135,7 +135,7 @@ static void ironbee_logger(server_rec *s, int level,
         memcpy(buf + (limit - 5), " ...", 5);
 
         /// @todo Do something about it
-        ap_log_error(file, line, APLOG_WARNING, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
                      IB_PRODUCT_NAME ": Log format truncated: limit (%d/%d)",
                      (int)ec, limit);
     }
@@ -170,7 +170,7 @@ static void ironbee_logger(server_rec *s, int level,
     }
 
     /* Write it to the error log. */
-    ap_log_error(file, line, ap_level, 0, s,
+    ap_log_error(APLOG_MARK, ap_level, 0, s,
                  IB_PRODUCT_NAME ": %s%s", prefix?prefix:"", buf);
 }
 
@@ -899,21 +899,11 @@ static const char *ironbee_cmd_ibenable(cmd_parms *cmd,
                                         void *dummy,
                                         int flag)
 {
-    ironbee_config_t *modcfg;
-
     if (cmd->server->is_virtual) {
         return MODULE_NAME_STR ": IronBeeEnable not allowed in VirtualHost";
     }
-
-    modcfg = (ironbee_config_t *)ap_get_module_config(cmd->server->module_config,
-                                                      &ironbee_module);
-    if (modcfg == NULL) {
-        return NULL;
-    }
-
-    modcfg->enabled = flag;
-
-    return NULL;
+    dummy = ap_get_module_config(cmd->server->module_config, &ironbee_module);
+    return ap_set_flag_slot(cmd, dummy, flag);
 }
 
 /**
@@ -925,85 +915,25 @@ static const char *ironbee_cmd_ibconfig(cmd_parms *cmd,
                                         void *dummy,
                                         const char *p1)
 {
-    ironbee_config_t *modcfg;
-
     if (cmd->server->is_virtual) {
         return MODULE_NAME_STR ": IronBeeConfig not allowed in VirtualHost";
     }
-
-    modcfg = (ironbee_config_t *)ap_get_module_config(cmd->server->module_config,
-                                                      &ironbee_module);
-    if (modcfg == NULL) {
-        return NULL;
-    }
-
-    modcfg->config = p1;
-
-    return NULL;
+    dummy = ap_get_module_config(cmd->server->module_config, &ironbee_module);
+    return ap_set_file_slot(cmd, dummy, p1);
 }
 
 /**
  * @internal
  *
- * Called to handle the "IronBeeBufferSize" configuration directive.
+ * "IronBeeBufferSize" and "IronBeeBufferFlushSize" configuration directives.
  */
-static const char *ironbee_cmd_ibbuffersize(cmd_parms *cmd,
-                                            void *dummy,
-                                            const char *p1)
+static const char *ironbee_cmd_sz(cmd_parms *cmd, void *dummy, const char *p1)
 {
-    ironbee_config_t *modcfg;
-    long longval;
-
     if (cmd->server->is_virtual) {
-        return MODULE_NAME_STR ": IronBeeBufferSize not allowed in VirtualHost";
+        return MODULE_NAME_STR ": IronBee directive not allowed in VirtualHost";
     }
-
-    modcfg = (ironbee_config_t *)ap_get_module_config(cmd->server->module_config,
-                                                      &ironbee_module);
-    if (modcfg == NULL) {
-        return NULL;
-    }
-
-    longval = atol(p1);
-    if (longval <= 0) {
-        longval = IRONBEE_DEFAULT_BUFLEN;
-    }
-
-    modcfg->buf_size = (size_t)longval;
-
-    return NULL;
-}
-
-/**
- * @internal
- *
- * Called to handle the "IronBeeBufferFlushSize" configuration directive.
- */
-static const char *ironbee_cmd_ibbufferflushsize(cmd_parms *cmd,
-                                                 void *dummy,
-                                                 const char *p1)
-{
-    ironbee_config_t *modcfg;
-    long longval;
-
-    if (cmd->server->is_virtual) {
-        return MODULE_NAME_STR ": IronBeeBufferFlushSize not allowed in VirtualHost";
-    }
-
-    modcfg = (ironbee_config_t *)ap_get_module_config(cmd->server->module_config,
-                                                      &ironbee_module);
-    if (modcfg == NULL) {
-        return NULL;
-    }
-
-    longval = atol(p1);
-    if (longval <= 0) {
-        longval = IRONBEE_DEFAULT_FLUSHLEN;
-    }
-
-    modcfg->flush_size = (size_t)longval;
-
-    return NULL;
+    dummy = ap_get_module_config(cmd->server->module_config, &ironbee_module);
+    return ap_set_int_slot(cmd, dummy, p1);
 }
 
 /**
@@ -1015,28 +945,28 @@ static const command_rec ironbee_cmds[] = {
     AP_INIT_FLAG(
       "IronBeeEnable",
       ironbee_cmd_ibenable,
-      NULL,
+      (void*)APR_OFFSETOF(ironbee_config_t, enabled),
       RSRC_CONF,
       "enable ironbee module"
     ),
     AP_INIT_TAKE1(
       "IronBeeConfig",
       ironbee_cmd_ibconfig,
-      NULL,
+      (void*)APR_OFFSETOF(ironbee_config_t, config),
       RSRC_CONF,
       "specify ironbee configuration file"
     ),
     AP_INIT_TAKE1(
       "IronBeeBufferSize",
-      ironbee_cmd_ibbuffersize,
-      NULL,
+      ironbee_cmd_sz,
+      (void*)APR_OFFSETOF(ironbee_config_t, buf_size),
       RSRC_CONF,
       "specify buffer size (bytes)"
     ),
     AP_INIT_TAKE1(
       "IronBeeBufferFlushSize",
-      ironbee_cmd_ibbufferflushsize,
-      NULL,
+      ironbee_cmd_sz,
+      (void*)APR_OFFSETOF(ironbee_config_t, flush_size),
       RSRC_CONF,
       "specify buffer size (bytes) to trigger a flush"
     ),
