@@ -4,7 +4,7 @@ include $(top_srcdir)/build/common.mk
 
 lib_LTLIBRARIES = libibutil.la
 libibutil_la_SOURCES = util.c \
-                       debug.c mpool.c dso.c \
+                       debug.c mpool.c dso.c uuid.c \
                        array.c list.c hash.c bytestr.c field.c \
                        cfgmap.c radix.c ahocorasick.c \
                        ironbee_util_private.h

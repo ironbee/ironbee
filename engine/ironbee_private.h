@@ -54,7 +54,9 @@ struct ib_engine_t {
     ib_provider_inst_t *dpi;              /**< Data provider instance */
     ib_context_t       *ectx;             /**< Engine configuration context */
     ib_context_t       *ctx;              /**< Main configuration context */
-    uint32_t            sensor_id;        /**< Sensor ID */
+    ib_uuid_t           sensor_id;        /**< Sensor UUID */
+    uint32_t            sensor_id_hash;   /**< Sensor UUID hash (4 bytes) */
+    const char         *sensor_id_str;    /**< ascii format, for logging */
     const char         *sensor_name;      /**< Sensor name */
     const char         *sensor_version;   /**< Sensor version string */
     const char         *sensor_hostname;  /**< Sensor hostname */
@@ -76,6 +78,8 @@ struct ib_engine_t {
  * Site.
  */
 struct ib_site_t {
+    ib_uuid_t               site_id;      /**< Site UUID */
+    const char              *site_id_str; /**< ascii format, for logging */
     ib_engine_t             *ib;          /**< Engine */
     ib_mpool_t              *mp;          /**< Memory pool */
     const char              *name;        /**< Site name */

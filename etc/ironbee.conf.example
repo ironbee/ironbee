@@ -1,6 +1,6 @@
 ### Sensor Info
-# 32-bit numeric value
-SensorId 0x98765432
+# Sensor ID, must follow UUID format
+SensorId AAAABBBB-1111-2222-3333-FFFF00000023
 # Arbitrary name
 SensorName ExampleSensorName
 # Arbitrary hostname
@@ -52,6 +52,8 @@ PocSigTrace On
 
 # Site 1
 <Site site1>
+    # Site ID, must follow UUID format
+    SiteId AAAABBBB-1111-2222-4444-000000000001
     Hostname * ip=127.0.0.1
 
     # This signature is handled by modules/poc_sig.c
@@ -73,11 +75,15 @@ PocSigTrace On
 
 # Site 2
 <Site site2>
+    # Site ID, must follow UUID format
+    SiteId AAAABBBB-1111-2222-4444-000000000002
     Hostname * ip=127.0.1.1
 </Site>
 
 # Default
 <Site default>
+    # Site ID, must follow UUID format
+    SiteId AAAABBBB-1111-2222-4444-000000000000
     Hostname *
 </Site>
 

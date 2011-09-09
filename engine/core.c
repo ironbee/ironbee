@@ -1662,7 +1662,6 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_list_t *list;
     char *tstamp;
     char *log_format;
-    ib_num_t sensorid = (ib_num_t)ib->sensor_id;
     ib_status_t rc;
 
     /* Timestamp */
@@ -1704,10 +1703,10 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                        strlen(cfg->boundary));
     ib_list_push(list, f);
 
-    ib_field_create(&f, pool,
-                    "sensor-id",
-                    IB_FTYPE_UNUM,
-                    &sensorid);
+    ib_field_alias_mem(&f, pool,
+                       "sensor-id",
+                       (uint8_t *)ib->sensor_id_str,
+                       strlen(ib->sensor_id_str));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
@@ -3415,6 +3414,56 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
 
 /**
  * @internal
+ * Handle a SiteId directive.
+ *
+ * @param cp Config parser
+ * @param name Directive name
+ * @param args List of directive arguments
+ * @param cbdata Callback data (from directive registration)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_dir_siteid(ib_cfgparser_t *cp,
+                                   const char *name,
+                                   ib_list_t *args,
+                                   void *cbdata)
+{
+    IB_FTRACE_INIT(core_dir_siteid);
+    ib_engine_t *ib = cp->ib;
+    ib_list_node_t *node;
+    ib_status_t rc = IB_EINVAL;
+
+    IB_LIST_LOOP(args, node) {
+        char *uuid = (char *)ib_list_node_data(node);
+        ib_site_t *site; 
+        site = cp->cur_site;
+        rc = ib_uuid_ascii_to_bin(&site->site_id, (const char *)uuid);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
+                            "UUID format "
+                            "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
+                            " hexa values)",
+                            name, uuid);
+
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Store the ASCII version for logging */
+        site->site_id_str =
+            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
+                                          uuid, strlen(uuid));
+        ib_log_debug(ib, 7, "%s: %08x", name, site->site_id_str);
+
+        IB_FTRACE_RET_STATUS(IB_OK);
+        /* We just need the first param */
+        break;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
  * Handle a Hostname directive.
  *
  * @param cp Config parser
@@ -3611,8 +3660,39 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("SensorId", name) == 0) {
-        ib->sensor_id = htonl(strtol(p1, NULL, 0));
-        ib_log_debug(ib, 7, "%s: %08x", name, ib->sensor_id);
+        rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
+                            "UUID format "
+                            "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
+                            " hexa values)",
+                            name, p1);
+
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Store the ASCII version for logging */
+        ib->sensor_id_str =
+            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
+                                          p1, strlen(p1));
+        ib_log_debug(ib, 7, "%s: %08x", name, ib->sensor_id_str);
+
+        /* Generate a 4byte hash id to use it for transaction id generations */
+        uint64_t first_reduce = 0;
+        uint8_t *ptr = (uint8_t *)&ib->sensor_id;
+        uint8_t *result = (uint8_t *)&first_reduce;
+        
+        int i = 0;
+        for (i = 0; i < 8; i++) {
+            result[i] = ptr[i] ^ ptr[i + 8];
+        }
+
+        ptr = (uint8_t *)&first_reduce;
+        result = (uint8_t *)&ib->sensor_id_hash;
+        for (i = 0; i < 4; i++) {
+            result[i] = ptr[i] ^ ptr[i + 8];
+        }
+
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorName", name) == 0) {
@@ -3900,6 +3980,11 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "Hostname",
         core_dir_hostname,
+        NULL
+    ),
+    IB_DIRMAP_INIT_LIST(
+        "SiteId",
+        core_dir_siteid,
         NULL
     ),
 

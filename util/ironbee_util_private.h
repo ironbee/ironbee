@@ -289,6 +289,5 @@ struct ib_ac_bintree_t {
     ib_ac_bintree_t *left;      /**< chars lower than current */
     ib_ac_bintree_t *right;     /**< chars greater than current */
 };
-
 #endif /* IB_UTIL_PRIVATE_H_ */
 

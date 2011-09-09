@@ -185,7 +185,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 
     /* Sensor info. */
     /// @todo Fetch real values
-    (*pib)->sensor_id = 0;
+    memset(&(*pib)->sensor_id, 0, sizeof(ib_uuid_t));
     (*pib)->sensor_name = IB_DSTR_UNKNOWN;
     (*pib)->sensor_version = IB_PRODUCT_VERSION_NAME;
     (*pib)->sensor_hostname = IB_DSTR_UNKNOWN;
@@ -371,10 +371,10 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
      */
     (*pconn)->base_uuid.node[0] = (pid16 >> 8) & 0xff;
     (*pconn)->base_uuid.node[1] = (pid16 & 0xff);
-    (*pconn)->base_uuid.node[2] = ib->sensor_id & 0xff;
-    (*pconn)->base_uuid.node[3] = (ib->sensor_id >> 8) & 0xff;
-    (*pconn)->base_uuid.node[4] = (ib->sensor_id >> 16) & 0xff;
-    (*pconn)->base_uuid.node[5] = (ib->sensor_id >> 24) & 0xff;
+    (*pconn)->base_uuid.node[2] = ib->sensor_id_hash & 0xff;
+    (*pconn)->base_uuid.node[3] = (ib->sensor_id_hash >> 8) & 0xff;
+    (*pconn)->base_uuid.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
+    (*pconn)->base_uuid.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
     /// @todo This needs set to thread ID or some other identifier
     (*pconn)->base_uuid.clk_seq_hi_res = 0x8f;
     (*pconn)->base_uuid.clk_seq_low = 0xff;
