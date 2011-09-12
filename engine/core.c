@@ -62,6 +62,9 @@
 /* The default shell to use for piped commands. */
 static const char * const ib_pipe_shell = "/bin/sh";
 
+/* The default UUID value */
+static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-000000000000";
+
 /// @todo Fix this:
 #ifndef X_MODULE_BASE_PATH
 #define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH) "/"
@@ -3414,56 +3417,6 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
 
 /**
  * @internal
- * Handle a SiteId directive.
- *
- * @param cp Config parser
- * @param name Directive name
- * @param args List of directive arguments
- * @param cbdata Callback data (from directive registration)
- *
- * @returns Status code
- */
-static ib_status_t core_dir_siteid(ib_cfgparser_t *cp,
-                                   const char *name,
-                                   ib_list_t *args,
-                                   void *cbdata)
-{
-    IB_FTRACE_INIT(core_dir_siteid);
-    ib_engine_t *ib = cp->ib;
-    ib_list_node_t *node;
-    ib_status_t rc = IB_EINVAL;
-
-    IB_LIST_LOOP(args, node) {
-        char *uuid = (char *)ib_list_node_data(node);
-        ib_site_t *site; 
-        site = cp->cur_site;
-        rc = ib_uuid_ascii_to_bin(&site->site_id, (const char *)uuid);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
-                            "UUID format "
-                            "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
-                            " hexa values)",
-                            name, uuid);
-
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Store the ASCII version for logging */
-        site->site_id_str =
-            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                          uuid, strlen(uuid));
-        ib_log_debug(ib, 7, "%s: %08x", name, site->site_id_str);
-
-        IB_FTRACE_RET_STATUS(IB_OK);
-        /* We just need the first param */
-        break;
-    }
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * @internal
  * Handle a Hostname directive.
  *
  * @param cp Config parser
@@ -3660,6 +3613,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("SensorId", name) == 0) {
+        /* Store the ASCII version for logging */
+        ib->sensor_id_str =
+            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
+                                          p1, strlen(p1));
+
+        /* Calculate the binary version. */
         rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
@@ -3668,14 +3627,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                             " hexa values)",
                             name, p1);
 
+            /* Use the default id. */
+            ib->sensor_id_str = (const char *)ib_uuid_default_str;
+            rc = ib_uuid_ascii_to_bin(&ib->sensor_id, ib_uuid_default_str);
+
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Store the ASCII version for logging */
-        ib->sensor_id_str =
-            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                          p1, strlen(p1));
-        ib_log_debug(ib, 7, "%s: %08x", name, ib->sensor_id_str);
+        ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_id_str);
 
         /* Generate a 4byte hash id to use it for transaction id generations */
         uint64_t first_reduce = 0;
@@ -3707,6 +3666,33 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
                                           p1, strlen(p1));
         ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_hostname);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (strcasecmp("SiteId", name) == 0) {
+        ib_site_t *site = cp->cur_site;
+
+        /* Store the ASCII version for logging */
+        site->id_str =
+            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
+                                          p1, strlen(p1));
+
+        /* Calculate the binary version. */
+        rc = ib_uuid_ascii_to_bin(&site->id, (const char *)p1);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
+                            "UUID format "
+                            "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
+                            " hexa values)",
+                            name, p1);
+
+            /* Use the default id. */
+            site->id_str = (const char *)ib_uuid_default_str;
+            rc = ib_uuid_ascii_to_bin(&site->id, ib_uuid_default_str);
+
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        ib_log_debug(ib, 7, "%s: %s", name, site->id_str);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -3971,6 +3957,11 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_dir_site_end,
         NULL
     ),
+    IB_DIRMAP_INIT_PARAM1(
+        "SiteId",
+        core_dir_param1,
+        NULL
+    ),
     IB_DIRMAP_INIT_SBLK1(
         "Location",
         core_dir_loc_start,
@@ -3980,11 +3971,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "Hostname",
         core_dir_hostname,
-        NULL
-    ),
-    IB_DIRMAP_INIT_LIST(
-        "SiteId",
-        core_dir_siteid,
         NULL
     ),
 
