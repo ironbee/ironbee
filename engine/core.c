@@ -1660,6 +1660,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     IB_FTRACE_INIT(ib_auditlog_add_part_header);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
+    ib_site_t *site;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
     ib_list_t *list;
@@ -1729,6 +1730,21 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                        (uint8_t *)ib->sensor_hostname,
                        strlen(ib->sensor_hostname));
     ib_list_push(list, f);
+
+    site = ib_context_site_get(log->ctx);
+    if (site != NULL) {
+        ib_field_alias_mem(&f, pool,
+                           "site-id",
+                           (uint8_t *)site->id_str,
+                           strlen(site->id_str));
+        ib_list_push(list, f);
+
+        ib_field_alias_mem(&f, pool,
+                           "site-name",
+                           (uint8_t *)site->name,
+                           strlen(site->name));
+        ib_list_push(list, f);
+    }
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
