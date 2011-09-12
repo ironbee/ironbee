@@ -83,6 +83,8 @@ typedef struct ib_conn_t ib_conn_t;
 typedef struct ib_conndata_t ib_conndata_t;
 typedef struct ib_txdata_t ib_txdata_t;
 typedef struct ib_tx_t ib_tx_t;
+typedef struct ib_site_t ib_site_t;
+typedef struct ib_loc_t ib_loc_t;
 typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
 typedef struct timeval ib_timeval_t;
@@ -242,6 +244,27 @@ struct ib_tx_t {
     const char         *hostname;        /**< Hostname used in the request */
     const char         *path;            /**< Path used in the request */
     ib_flags_t          flags;           /**< Transaction flags */
+};
+
+/** Site Structure */
+struct ib_site_t {
+    ib_uuid_t               id;           /**< Site UUID */
+    const char              *id_str;      /**< ascii format, for logging */
+    ib_engine_t             *ib;          /**< Engine */
+    ib_mpool_t              *mp;          /**< Memory pool */
+    const char              *name;        /**< Site name */
+    /// @todo IPs needs to be IP:Port and be associated with a host
+    ib_list_t               *ips;         /**< IP addresses */
+    ib_list_t               *hosts;       /**< Hostnames */
+    ib_list_t               *locations;   /**< List of locations */
+    ib_loc_t                *default_loc; /**< Default location */
+};
+
+/** Location Structure */
+struct ib_loc_t {
+    ib_site_t               *site;        /**< Site */
+    /// @todo: use regex
+    const char              *path;        /**< Location path */
 };
 
 /**

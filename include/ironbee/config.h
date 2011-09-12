@@ -51,8 +51,6 @@ extern "C" {
 
 typedef struct ib_cfgparser_t ib_cfgparser_t;
 typedef struct ib_dirmap_init_t ib_dirmap_init_t;
-typedef struct ib_site_t ib_site_t;
-typedef struct ib_loc_t ib_loc_t;
 typedef struct ib_strval_t ib_strval_t;
 
 /// @todo Should probably be private structure

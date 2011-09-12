@@ -75,35 +75,6 @@ struct ib_engine_t {
 /**
  * @internal
  *
- * Site.
- */
-struct ib_site_t {
-    ib_uuid_t               site_id;      /**< Site UUID */
-    const char              *site_id_str; /**< ascii format, for logging */
-    ib_engine_t             *ib;          /**< Engine */
-    ib_mpool_t              *mp;          /**< Memory pool */
-    const char              *name;        /**< Site name */
-    /// @todo IPs needs to be IP:Port and be associated with a host
-    ib_list_t               *ips;         /**< IP addresses */
-    ib_list_t               *hosts;       /**< Hostnames */
-    ib_list_t               *locations;   /**< List of locations */
-    ib_loc_t                *default_loc; /**< Default location */
-};
-
-/**
- * @internal
- *
- * Location.
- */
-struct ib_loc_t {
-    ib_site_t               *site;        /**< Site */
-    /// @todo: use regex
-    const char              *path;        /**< Location path */
-};
-
-/**
- * @internal
- *
  * Transformation.
  */
 struct ib_tfn_t {
