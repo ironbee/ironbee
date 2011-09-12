@@ -3280,7 +3280,9 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
 
     ib_log_debug(ib, 6, "Creating context for \"%s:%s\"", p1, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
-                           ib_context_siteloc_chooser, loc);
+                           ib_context_siteloc_chooser,
+                           ib_context_site_lookup,
+                           loc);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Failed to create context for \"%s:%s\": %d", p1, loc->path, rc);
     }
@@ -3364,7 +3366,9 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
 
     ib_log_debug(ib, 6, "Creating context for \"%s:%s\"", site->name, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
-                           ib_context_siteloc_chooser, loc);
+                           ib_context_siteloc_chooser,
+                           ib_context_site_lookup,
+                           loc);
     if (rc != IB_OK) {
         ib_log_debug(ib, 6, "Failed to create context for \"%s:%s\": %d", site->name, loc->path, rc);
     }

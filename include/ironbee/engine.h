@@ -177,6 +177,22 @@ typedef ib_status_t (*ib_context_fn_t)(ib_context_t *ctx,
                                        void *ctxdata,
                                        void *cbdata);
 
+/**
+ * Configuration Context Site Function.
+ *
+ * This function returns IB_OK if there is a site associated with
+ * the context.
+ *
+ * @param ctx Configuration context
+ * @param psite Address which site is written if non-NULL
+ * @param cbdata Callback data (fn_ctx_data from context)
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*ib_context_site_fn_t)(ib_context_t *ctx,
+                                            ib_site_t **psite,
+                                            void *cbdata);
+
 /** Connection Data Structure */
 struct ib_conndata_t {
     ib_engine_t        *ib;              /**< Engine handle */
@@ -403,6 +419,7 @@ void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
  * @param ib Engine handle
  * @param parent Parent context (or NULL)
  * @param fn_ctx Context function
+ * @param fn_ctx_site Context site lookup function
  * @param fn_ctx_data Context function data
  *
  * @returns Status code
@@ -411,6 +428,7 @@ ib_status_t DLL_PUBLIC ib_context_create(ib_context_t **pctx,
                                          ib_engine_t *ib,
                                          ib_context_t *parent,
                                          ib_context_fn_t fn_ctx,
+                                         ib_context_site_fn_t fn_ctx_site,
                                          void *fn_ctx_data);
 
 /**
@@ -443,6 +461,15 @@ ib_context_t DLL_PUBLIC *ib_context_parent_get(ib_context_t *ctx);
  */
 void DLL_PUBLIC ib_context_parent_set(ib_context_t *ctx,
                                       ib_context_t *parent);
+
+/**
+ * Get the site associated with the context.
+ *
+ * @param ctx Configuration context
+ *
+ * @returns Site or NULL if none is associated
+ */
+ib_site_t DLL_PUBLIC *ib_context_site_get(ib_context_t *ctx);
 
 /**
  * Destroy a configuration context.
@@ -565,6 +592,20 @@ ib_status_t DLL_PUBLIC ib_context_siteloc_chooser(ib_context_t *ctx,
                                                   void *ctxdata,
                                                   void *cbdata);
                                                   
+
+/**
+ * Default Site/Location context chooser.
+ *
+ * @param ctx Configuration context
+ * @param psite Address which site is written
+ * @param cbdata Chooser callback data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_context_site_lookup(ib_context_t *ctx,
+                                              ib_site_t **psite,
+                                              void *cbdata);
+
 /**
  * Create a connection structure.
  *

@@ -108,6 +108,7 @@ struct ib_context_t {
 
     /* Context Selection */
     ib_context_fn_t          fn_ctx;      /**< Context decision function */
+    ib_context_site_fn_t     fn_ctx_site; /**< Context site function */
     void                    *fn_ctx_data; /**< Context function data */
 
     /* Filters */

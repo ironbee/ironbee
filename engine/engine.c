@@ -97,7 +97,10 @@ static ib_status_t _ib_context_get(ib_engine_t *ib,
 
         rc = ctx->fn_ctx(ctx, type, data, ctx->fn_ctx_data);
         if (rc == IB_OK) {
-            ib_log_debug(ib, 9, "Selected context %d=%p", (int)i, ctx);
+            ib_site_t *site = ib_context_site_get(ctx);
+            ib_log_debug(ib, 7, "Selected context %d=%p site=%s(%s)",
+                    (int)i, ctx,
+                    (site?site->id_str:"none"), (site?site->name:"none"));
             *pctx = ctx;
             break;
         }
@@ -160,7 +163,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     /* Create an engine config context and use it as the
      * main context until the engine can be configured.
      */
-    rc = ib_context_create(&((*pib)->ectx), *pib, NULL, NULL, NULL);
+    rc = ib_context_create(&((*pib)->ectx), *pib, NULL, NULL, NULL, NULL);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -261,7 +264,7 @@ static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     ib_context_t *ctx;
     ib_status_t rc;
     
-    rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL);
+    rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1780,6 +1783,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
                               ib_engine_t *ib,
                               ib_context_t *parent,
                               ib_context_fn_t fn_ctx,
+                              ib_context_site_fn_t fn_ctx_site,
                               void *fn_ctx_data)
 {
     IB_FTRACE_INIT(ib_context_create);
@@ -1810,6 +1814,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     (*pctx)->ib = ib;
     (*pctx)->parent = parent;
     (*pctx)->fn_ctx = fn_ctx;
+    (*pctx)->fn_ctx_site = fn_ctx_site;
     (*pctx)->fn_ctx_data = fn_ctx_data;
 
     /* Create a cfgmap to hold the configuration */
@@ -1913,6 +1918,27 @@ void ib_context_parent_set(ib_context_t *ctx,
     IB_FTRACE_INIT(ib_context_parent_set);
     ctx->parent = parent;
     IB_FTRACE_RET_VOID();
+}
+
+ib_site_t *ib_context_site_get(ib_context_t *ctx)
+{
+    IB_FTRACE_INIT(ib_context_site);
+    ib_status_t rc;
+    ib_site_t *site;
+
+    ib_clog_debug(ctx, 7, "ctx=%p; fn_ctx_site=%p", ctx, ctx->fn_ctx_site);
+
+    if (ctx->fn_ctx_site == NULL) {
+        IB_FTRACE_RET_PTR(ib_site_t, NULL);
+    }
+
+    /* Call the registered site lookup function. */
+    rc = ctx->fn_ctx_site(ctx, &site, ctx->fn_ctx_data);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_PTR(ib_site_t, NULL);
+    }
+
+    IB_FTRACE_RET_PTR(ib_site_t, site);
 }
 
 void ib_context_destroy(ib_context_t *ctx)
@@ -2106,4 +2132,29 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
 
     IB_FTRACE_RET_STATUS(IB_ENOENT);
 }
+
+ib_status_t ib_context_site_lookup(ib_context_t *ctx,
+                                   ib_site_t **psite,
+                                   void *cbdata)
+{
+    IB_FTRACE_INIT(ib_context_site);
+    ib_loc_t *loc;
+
+    if (cbdata == NULL) {
+        /// @todo No site/location associated with this context
+        IB_FTRACE_RET_STATUS(IB_DECLINED);
+    }
+
+    loc = (ib_loc_t *)cbdata;
+    if (psite != NULL) {
+        *psite = loc->site;
+    }
+
+    if (loc->site != NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
 
