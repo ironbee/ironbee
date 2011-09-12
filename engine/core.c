@@ -1785,7 +1785,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     IB_FTRACE_INIT(ib_auditlog_add_part_http_request_meta);
     ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
-    ib_unum_t message_num = tx ? tx->conn->tx_count : 0;
+    ib_unum_t tx_num = tx ? tx->conn->tx_count : 0;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
     ib_list_t *list;
@@ -1812,15 +1812,15 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "message-id",
+                       "tx-id",
                        (uint8_t *)tx->id,
                        strlen(tx->id));
     ib_list_push(list, f);
 
     ib_field_create(&f, pool,
-                    "message-num",
+                    "tx-num",
                     IB_FTYPE_UNUM,
-                    &message_num);
+                    &tx_num);
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
