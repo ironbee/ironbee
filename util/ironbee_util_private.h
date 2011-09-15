@@ -35,7 +35,7 @@
  * Memory pool structure.
  */
 struct ib_mpool_t {
-    apr_pool_t        *pool;          /**< The real pool handle */
+    apr_pool_t         *pool;          /**< The real pool handle */
 };
 
 /**
@@ -43,17 +43,38 @@ struct ib_mpool_t {
  * Dynamic Shared Object (DSO) structure.
  */
 struct ib_dso_t {
-    ib_mpool_t        *mp;            /**< Memory pool */
-    void              *handle;        /**< Real DSO handle */
+    ib_mpool_t          *mp;            /**< Memory pool */
+    void                *handle;        /**< Real DSO handle */
+};
+
+struct ib_hash_entry_t {
+    const void          *key;
+    size_t               len;
+    const void          *data;
+    unsigned int         hash;
+    ib_hash_entry_t     *next;
+};
+
+struct ib_hash_iter_t {
+    ib_hash_t           *cur_ht;
+    ib_hash_entry_t     *cur_entry;
+    ib_hash_entry_t     *next;
+    unsigned int         index;
 };
 
 /**
  * @internal
- * Hashtable structure.
+ * Hash Table structure.
  */
 struct ib_hash_t {
-    ib_mpool_t        *mp;            /**< Memory pool */
-    apr_hash_t        *data;          /**< The real hash table */
+    uint8_t            flags;
+    ib_hashfunc_t      hash_fn;
+    ib_hash_entry_t    **slots;
+    unsigned int       size;
+    ib_hash_iter_t     iterator;  /* For ib_internalhash_first(NULL, ...) */
+    ib_mpool_t         *mp;       /**< Mem pool */
+    ib_hash_entry_t    *free;
+    unsigned int       cnt;
 };
 
 /**

@@ -87,7 +87,8 @@ ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
                              ib_tfn_t **ptfn)
 {
     IB_FTRACE_INIT(ib_tfn_lookup);
-    ib_status_t rc = ib_hash_get_ex(ib->tfns, (void *)name, nlen, (void *)ptfn);
+    ib_status_t rc = ib_hash_get_ex(ib->tfns, (void *)name, nlen, (void *)ptfn,
+                                    IB_HASH_FLAG_NOCASE);
     IB_FTRACE_RET_STATUS(rc);
 }
 

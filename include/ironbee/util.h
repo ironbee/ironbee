@@ -838,6 +838,18 @@ size_t DLL_PUBLIC ib_array_size(ib_array_t *arr);
  * @{
  */
 
+typedef unsigned int (*ib_hashfunc_t)(const void *key, size_t len,
+                                      uint8_t flags);
+
+#define IB_HASH_INITIAL_SIZE   15
+
+/* Options */
+#define IB_HASH_FLAG_CASE      0x00 /**< Case sensitive lookup */
+#define IB_HASH_FLAG_NOCASE    0x01 /**< Ignore case lookup */
+
+typedef struct ib_hash_entry_t ib_hash_entry_t;
+typedef struct ib_hash_iter_t ib_hash_iter_t;
+
 /**
  * Create a hash table.
  *
@@ -847,6 +859,54 @@ size_t DLL_PUBLIC ib_array_size(ib_array_t *arr);
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_hash_create(ib_hash_t **ph, ib_mpool_t *pool);
+
+/**
+ * Default hash function
+ *
+ * @param key buffer holding the key to hash
+ * @param len size of the key to hash in bytes
+ * @param flags bit flag options for the key
+ *              (currently IB_HASH_FLAG_NOCASE)
+ *
+ * @returns Status code
+ */
+unsigned int DLL_PUBLIC ib_hashfunc_default(const void *char_key,
+                                            size_t len,
+                                            uint8_t flags);
+
+/**
+ * Create a hash table with nocase option by default.
+ * If you dont need it, use ib_hash_create_ex
+ *
+ * @param ph Address which new hash table is written
+ * @param pool Memory pool to use
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_hash_create_ex(ib_hash_t **ht,
+                                         ib_mpool_t *pool,
+                                         int slots,
+                                         uint8_t flags);
+
+/**
+ * @internal
+ * Seach an entry for the given key and key length
+ * The hash used to search the key will be also returned via param
+ *
+ * @param ib_ht the hash table to search in
+ * @param key buffer holding the key
+ * @param len number of bytes key length
+ * @param hte pointer reference used to store the entry if found
+ * @param hash reference to store the calculated hash
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_hash_find_entry(ib_hash_t *ib_ht,
+                                          const void *key,
+                                          size_t len,
+                                          ib_hash_entry_t **hte,
+                                          unsigned int *hash,
+                                          uint8_t lookup_flags);
 
 /**
  * Clear a hash table.
@@ -860,17 +920,20 @@ void DLL_PUBLIC ib_hash_clear(ib_hash_t *h);
  *
  * @param h Hash table
  * @param key Key to lookup
- * @param klen Length of key
+ * @param len Length of key
  * @param pdata Address which data is written
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_hash_get_ex(ib_hash_t *h,
-                                      void *key, size_t klen,
-                                      void *pdata);
+                                      void *key, size_t len,
+                                      void *pdata,
+                                      uint8_t lookup_flags);
 
 /**
- * Get data from a hash table via key (string).
+ * Get data from a hash table via key
+ * (warning! must be NULL terminated string! Use ib_hash_get_ex to
+ * specify custom flags)
  *
  * @param h Hash table
  * @param key Key to lookup
@@ -879,6 +942,21 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(ib_hash_t *h,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_hash_get(ib_hash_t *h,
+                                   const char *key,
+                                   void *pdata);
+
+/**
+ * Get data from a hash table via key with ignore case option set
+ * (warning! must be NULL terminated string! Use ib_hash_get_ex to
+ * specify custom flags)
+ *
+ * @param h Hash table
+ * @param key Key to lookup
+ * @param pdata Address which data is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_hash_get_nocase(ib_hash_t *h,
                                    const char *key,
                                    void *pdata);
 
@@ -897,14 +975,15 @@ ib_status_t DLL_PUBLIC ib_hash_get_all(ib_hash_t *h, ib_list_t *list);
  *
  * @param h Hash table
  * @param key Key to lookup
- * @param klen Length of key
+ * @param len Length of key
  * @param data Data
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_hash_set_ex(ib_hash_t *h,
-                                      void *key, size_t klen,
-                                      void *data);
+                                      const void *key,
+                                      size_t len,
+                                      const void *data);
 
 /**
  * Set data in a hash table via key (string).
@@ -924,13 +1003,13 @@ ib_status_t DLL_PUBLIC ib_hash_set(ib_hash_t *h,
  *
  * @param h Hash table
  * @param key Key to lookup
- * @param klen Length of key
+ * @param len Length of key
  * @param pdata Address which data is written (or NULL if not required)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_hash_remove_ex(ib_hash_t *h,
-                                         void *key, size_t klen,
+                                         void *key, size_t len,
                                          void *pdata);
 
 /**
@@ -945,6 +1024,26 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(ib_hash_t *h,
 ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
                                       const char *key,
                                       void *pdata);
+
+/**
+ * Creates an initialized iterator for the hash table entries
+ *
+ * @param mp Memory pool for the iterator allocation
+ * @param ib_ht hash table to iterate
+ *
+ * @returns Status code
+ */
+ib_hash_iter_t DLL_PUBLIC *ib_hash_first(ib_mpool_t *p,
+                                         ib_hash_t *ib_ht);
+
+/**
+ * move the iterator to the next entry
+ *
+ * @param hi hash table iterator
+ *
+ * @returns Status code
+ */
+ib_hash_iter_t DLL_PUBLIC *ib_hash_next(ib_hash_iter_t *hti);
 
 /** @} IronBeeUtilHash */
 

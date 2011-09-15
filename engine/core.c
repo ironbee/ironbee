@@ -697,7 +697,7 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
 
     rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
                         (void *)name, nlen,
-                        (void *)&f);
+                        (void *)&f, IB_HASH_FLAG_NOCASE);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
@@ -752,7 +752,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 
         rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
                             (void *)name, klen,
-                            (void *)pf);
+                            (void *)pf, IB_HASH_FLAG_NOCASE);
         if (rc == IB_OK) {
             if ((*pf)->type == IB_FTYPE_LIST) {
                 ib_list_node_t *node;
@@ -774,7 +774,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 
     rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
                                     (void *)name, nlen,
-                                    (void *)pf);
+                                    (void *)pf, IB_HASH_FLAG_NOCASE);
     IB_FTRACE_RET_STATUS(rc);
 }
 
