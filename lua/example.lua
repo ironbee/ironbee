@@ -137,6 +137,18 @@ function onEventHandleContextConn(ib, conn)
         ironbee.ib_log_debug(ib, 4, "Created PCRE matcher=%p", pcre)
     end
 
+    -- Create a radix matcher for later use
+    if radix == nil then
+        radix = ironbee.ib_matcher_create(ib, conn.mp(), "radix")
+        ironbee.ib_log_debug(ib, 4, "Created radix matcher=%p", radix)
+    end
+
+    -- Create a ac matcher for later use
+    if ac == nil then
+        ac = ironbee.ib_matcher_create(ib, conn.mp(), "ac")
+        ironbee.ib_log_debug(ib, 4, "Created ac matcher=%p", ac)
+    end
+
     return 0
 end
 
@@ -213,6 +225,9 @@ end
 function onEventHandleRequestHeaders(ib, tx)
     ironbee.ib_log_debug(ib, 4, "%s.onEventHandleRequestHeaders ib=%p tx=%s",
                        _NAME, ib.cvalue(), tx.id())
+
+    -- The connection object
+    local conn = tx.conn()
 
     -- Request line is a scalar value (a field object type)
     local req_line = ironbee.ib_data_get(tx.dpi(), "request_line")

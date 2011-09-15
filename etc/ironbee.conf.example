@@ -14,9 +14,11 @@ SensorHostname example.sensor.tld
 
 ### Load Modules
 LoadModule "ibmod_pcre.so"
+LoadModule "ibmod_radix.so"
+LoadModule "ibmod_binradix.so"
+LoadModule "ibmod_ac.so"
 LoadModule "ibmod_htp.so"
 LoadModule "ibmod_poc_sig.so"
-LoadModule "ibmod_ac.so"
 LoadModule "ibmod_poc_ac_sig.so"
 
 # Lua

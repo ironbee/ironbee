@@ -846,6 +846,7 @@ local function newTx(val)
         mp = function() return newMpool(c_val.mp) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
+        conn = function() return newConn(c_val.conn) end,
         id = function() return ffi.cast("const char *", c_val.id) end,
     }
 end
@@ -956,6 +957,10 @@ function ib_matcher_match_field(m, patt, flags, f)
         cpatt = c.ib_matcher_compile(m, patt, errptr, erroffset)
     else
         cpatt = patt
+    end
+
+    if cpatt == nil then
+        return c.IB_EINVAL
     end
 
     return c.ib_matcher_match_field(m, cpatt, flags, c_f)
