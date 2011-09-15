@@ -851,7 +851,9 @@ typedef struct ib_hash_entry_t ib_hash_entry_t;
 typedef struct ib_hash_iter_t ib_hash_iter_t;
 
 /**
- * Create a hash table.
+ * Create a hash table with nocase option by default.
+ *
+ * If you do not need key case insensitivity, use @ref ib_hash_create_ex()
  *
  * @param ph Address which new hash table is written
  * @param pool Memory pool to use
@@ -859,6 +861,9 @@ typedef struct ib_hash_iter_t ib_hash_iter_t;
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_hash_create(ib_hash_t **ph, ib_mpool_t *pool);
+
+#define ib_hash_create(ph,pool) \
+    ib_hash_create_ex(ph, pool, IB_HASH_INITIAL_SIZE, IB_HASH_FLAG_NOCASE)
 
 /**
  * Default hash function
@@ -1025,8 +1030,12 @@ ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
                                       const char *key,
                                       void *pdata);
 
+#define ib_hash_remove(h,key,pdata) \
+    ib_hash_remove_ex((h),(void *)(key),strlen(key),(pdata))
+
+
 /**
- * Creates an initialized iterator for the hash table entries
+ * Creates an initialized iterator for the hash table entries.
  *
  * @param mp Memory pool for the iterator allocation
  * @param ib_ht hash table to iterate
@@ -1037,9 +1046,9 @@ ib_hash_iter_t DLL_PUBLIC *ib_hash_first(ib_mpool_t *p,
                                          ib_hash_t *ib_ht);
 
 /**
- * move the iterator to the next entry
+ * Move the iterator to the next entry.
  *
- * @param hi hash table iterator
+ * @param hti hash table iterator
  *
  * @returns Status code
  */

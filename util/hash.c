@@ -28,16 +28,6 @@
 
 #include "ironbee_util_private.h"
 
-/**
- * Default hash function
- *
- * @param key buffer holding the key to hash
- * @param len size of the key to hash in bytes
- * @param flags bit flag options for the key
- *              (currently IB_HASH_FLAG_NOCASE)
- *
- * @returns Status code
- */
 unsigned int ib_hashfunc_default(const void *ckey,
                                  size_t len,
                                  uint8_t flags)
@@ -68,18 +58,6 @@ unsigned int ib_hashfunc_default(const void *ckey,
     IB_FTRACE_RET_UINT(hash);
 }
 
-/**
- * Create a hash table with custom options.
- * The size must be always equal to (2^n - 1) Ex: 7, 15, 31, 63 and so on
- * IB_HASH_INITIAL_SIZE is 15 by default
- *
- * @param ht Address which new hash table is written
- * @param pool Memory pool to use
- * @param slots number of initial slots at the array (size of the array)
- * @param flags custom bit flags (IB_HASH_FLAG_STRLEN, IB_HASH_FLAG_NOCASE)
- *
- * @returns Status code
- */
 ib_status_t ib_hash_create_ex(ib_hash_t **hp,
                               ib_mpool_t *pool,
                               int size,
@@ -117,30 +95,6 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
     IB_FTRACE_RET_STATUS(IB_OK); 
 }
 
-/**
- * Create a hash table with nocase option by default.
- * If you dont need it, use ib_hash_create_ex
- *
- * @param ph Address which new hash table is written
- * @param pool Memory pool to use
- *
- * @returns Status code
- */
-ib_status_t ib_hash_create(ib_hash_t **hp,
-                           ib_mpool_t *pool)
-{
-    IB_FTRACE_INIT(ib_hash_create);
-    IB_FTRACE_RET_STATUS(ib_hash_create_ex(hp, pool, IB_HASH_INITIAL_SIZE,
-                             IB_HASH_FLAG_NOCASE));
-}
-
-/**
- * move the iterator to the next entry
- *
- * @param hi hash table iterator
- *
- * @returns Status code
- */
 ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
 {
     IB_FTRACE_INIT(ib_hash_next);
@@ -155,14 +109,6 @@ ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
     IB_FTRACE_RET_PTR(ib_hash_iter_t *, hti);
 }
 
-/**
- * Creates an initialized iterator for the hash table entries
- *
- * @param mp Memory pool for the iterator allocation
- * @param ib_ht hash table to iterate
- *
- * @returns Status code
- */
 ib_hash_iter_t *ib_hash_first(ib_mpool_t *p, ib_hash_t *ib_ht)
 {
     IB_FTRACE_INIT(ib_hash_first);
@@ -291,11 +237,6 @@ static void ib_hash_resize_slots(ib_hash_t *ib_ht)
     IB_FTRACE_RET_VOID();
 }
 
-/**
- * Clear a hash table.
- *
- * @param h Hash table
- */
 void ib_hash_clear(ib_hash_t *h)
 {
     IB_FTRACE_INIT(ib_hash_clear);
@@ -309,17 +250,6 @@ void ib_hash_clear(ib_hash_t *h)
     IB_FTRACE_RET_VOID();
 }
 
-/**
- * Get data from a hash table via key
- * (warning! must be NULL terminated string! Use ib_hash_get_ex to
- * specify custom flags)
- *
- * @param h Hash table
- * @param key Key to lookup
- * @param pdata Address which data is written
- *
- * @returns Status code
- */
 ib_status_t ib_hash_get(ib_hash_t *h,
                         const char *key,
                         void *pdata)
@@ -334,17 +264,6 @@ ib_status_t ib_hash_get(ib_hash_t *h,
                                         IB_HASH_FLAG_CASE));
 }
 
-/**
- * Get data from a hash table via key with ignore case option set
- * (warning! must be NULL terminated string! Use ib_hash_get_ex to
- * specify custom flags)
- *
- * @param h Hash table
- * @param key Key to lookup
- * @param pdata Address which data is written
- *
- * @returns Status code
- */
 ib_status_t ib_hash_get_nocase(ib_hash_t *h,
                                const char *key,
                                void *pdata)
@@ -360,16 +279,6 @@ ib_status_t ib_hash_get_nocase(ib_hash_t *h,
 }
 
 
-/**
- * Get data from a hash table via key and key length.
- *
- * @param h Hash table
- * @param key Key to lookup
- * @param len Length of key
- * @param pdata Address which data is written
- *
- * @returns Status code
- */
 ib_status_t ib_hash_get_ex(ib_hash_t *ib_ht,
                            void *key, size_t len,
                            void *pdata,
@@ -396,14 +305,6 @@ ib_status_t ib_hash_get_ex(ib_hash_t *ib_ht,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Get all data from a hash table and push onto the supplied list.
- *
- * @param h Hash table
- * @param list List to push values
- *
- * @returns Status code
- */
 ib_status_t ib_hash_get_all(ib_hash_t *h, ib_list_t *list)
 {
     IB_FTRACE_INIT(ib_hash_get_all);
@@ -423,16 +324,6 @@ ib_status_t ib_hash_get_all(ib_hash_t *h, ib_list_t *list)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Set data in a hash table for key and key length.
- *
- * @param h Hash table
- * @param key Key to lookup
- * @param len Length of key
- * @param data Data
- *
- * @returns Status code
- */
 ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
                            const void *key,
                            size_t len,
@@ -522,15 +413,6 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Set data in a hash table via key (string).
- *
- * @param h Hash table
- * @param key Key to lookup
- * @param data Data
- *
- * @returns Status code
- */
 ib_status_t ib_hash_set(ib_hash_t *h,
                         const char *key,
                         void *data)
@@ -543,16 +425,6 @@ ib_status_t ib_hash_set(ib_hash_t *h,
     IB_FTRACE_RET_STATUS(ib_hash_set_ex(h, (void *)key, strlen(key), data));
 }
 
-/**
- * Remove data from a hash table via key and key length.
- *
- * @param h Hash table
- * @param key Key to lookup
- * @param len Length of key
- * @param pdata Address which data is written (or NULL if not required)
- *
- * @returns Status code
- */
 ib_status_t ib_hash_remove_ex(ib_hash_t *h,
                               void *key, size_t len,
                               void *pdata)
@@ -573,23 +445,3 @@ ib_status_t ib_hash_remove_ex(ib_hash_t *h,
 
     IB_FTRACE_RET_STATUS(rc);
 }
-
-/**
- * Remove data from a hash table via key (string).
- *
- * @param h Hash table
- * @param key Key to lookup
- * @param pdata Address which data is written (or NULL if not required)
- *
- * @returns Status code
- */
-ib_status_t ib_hash_remove(ib_hash_t *h,
-                           const char *key,
-                           void *pdata)
-{
-    IB_FTRACE_INIT(ib_hash_remove);
-    IB_FTRACE_RET_STATUS(ib_hash_remove_ex(h, (void *)key, strlen(key), pdata));
-}
-
-
-
