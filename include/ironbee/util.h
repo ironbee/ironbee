@@ -844,7 +844,6 @@ typedef unsigned int (*ib_hashfunc_t)(const void *key, size_t len,
 #define IB_HASH_INITIAL_SIZE   15
 
 /* Options */
-#define IB_HASH_FLAG_CASE      0x00 /**< Case sensitive lookup */
 #define IB_HASH_FLAG_NOCASE    0x01 /**< Ignore case lookup */
 
 typedef struct ib_hash_entry_t ib_hash_entry_t;
