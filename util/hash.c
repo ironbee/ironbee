@@ -449,11 +449,11 @@ ib_status_t ib_hash_remove_ex(ib_hash_t *h,
     void *data = NULL;
 
     rc = ib_hash_get_ex(h, key, (size_t)len, &data, h->flags);
-    if (rc == IB_ENOENT) {
+    if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    if (data != NULL) {
+    if ((pdata != NULL) && (data != NULL)) {
         *(void **)pdata = data;
     }
     rc = ib_hash_set_ex(h, key, (size_t)len, NULL);
