@@ -67,14 +67,14 @@ struct ib_hash_iter_t {
  * Hash Table structure.
  */
 struct ib_hash_t {
-    uint8_t            flags;
-    ib_hashfunc_t      hash_fn;
+    uint8_t              flags;
+    ib_hashfunc_t        hash_fn;
     ib_hash_entry_t    **slots;
-    unsigned int       size;
-    ib_hash_iter_t     iterator;  /* For ib_internalhash_first(NULL, ...) */
-    ib_mpool_t         *mp;       /**< Mem pool */
-    ib_hash_entry_t    *free;
-    unsigned int       cnt;
+    unsigned int         size;
+    ib_hash_iter_t       iterator;  /* For ib_internalhash_first(NULL, ...) */
+    ib_mpool_t          *mp;        /**< Mem pool */
+    ib_hash_entry_t     *free;
+    unsigned int         cnt;
 };
 
 /**
@@ -234,22 +234,26 @@ struct ib_radix_t {
     ib_radix_node_t *start;
 
     ib_radix_update_fn_t update_data;
-    ib_radix_print_fn_t print_data;
-    ib_radix_free_fn_t free_data;
+    ib_radix_print_fn_t  print_data;
+    ib_radix_free_fn_t   free_data;
 
     size_t data_cnt;
 
     ib_mpool_t *mp;
 };
 
-/** Matching functions type helper */
+/**
+ * @internal
+ * Matching functions type helper
+ */
 enum {
     IB_RADIX_PREFIX,
     IB_RADIX_CLOSEST,
 };
 
 /**
- * return if the given prefix is IPV4
+ * @internal
+ * Return if the given prefix is IPV4
  *
  * @param cidr const char * with format ip/mask where mask is optional
  * @returns 1 if true, 0 if false
@@ -257,7 +261,8 @@ enum {
 #define IB_RADIX_IS_IPV4(cidr) ((strchr(cidr, ':') == NULL) ? 1 : 0)
 
 /**
- * return if the given prefix is IPV6
+ * @internal
+ * Return if the given prefix is IPV6
  *
  * @param cidr const char * with format ip/mask where mask is optional
  * @returns 1 if true, 0 if false
@@ -272,29 +277,30 @@ enum {
 typedef struct ib_ac_bintree_t ib_ac_bintree_t;
 
 /**
+ * @internal
  * Aho Corasick state state, used to represent a state
  */
 struct ib_ac_state_t {
-    ib_ac_char_t letter;        /**< the char to go to this state */
+    ib_ac_char_t       letter;    /**< the char to go to this state */
 
-    uint8_t flags;              /**< flags for this state */
-    size_t level;               /**< level in the tree (depth/length) */
+    uint8_t            flags;     /**< flags for this state */
+    size_t             level;     /**< level in the tree (depth/length) */
 
-    ib_ac_state_t *fail;        /**< state to go to if goto() fail */
-    ib_ac_state_t *outputs;     /**< pointer to other matching states */
+    ib_ac_state_t     *fail;      /**< state to go to if goto() fail */
+    ib_ac_state_t     *outputs;   /**< pointer to other matching states */
 
-    ib_ac_state_t *child;       /**< next state to goto() of next level */
-    ib_ac_state_t *sibling;     /**< sibling state (linked list) */
-    ib_ac_state_t *parent;      /**< parent state */
+    ib_ac_state_t     *child;     /**< next state to goto() of next level */
+    ib_ac_state_t     *sibling;   /**< sibling state (linked list) */
+    ib_ac_state_t     *parent;    /**< parent state */
 
-    ib_ac_bintree_t *bintree;   /**< bintree to speed up the goto() search*/
+    ib_ac_bintree_t   *bintree;   /**< bintree to speed up the goto() search*/
 
-    uint32_t match_cnt;         /**< match count of this state */
+    uint32_t           match_cnt; /**< match count of this state */
 
-    ib_ac_char_t *pattern;      /**< (sub) pattern path to this state */
+    ib_ac_char_t      *pattern;   /**< (sub) pattern path to this state */
 
-    ib_ac_callback_t callback;  /**< callback function for matches */
-    void *data;                 /**< callback (or match entry) extra params */
+    ib_ac_callback_t   callback;  /**< callback function for matches */
+    void              *data;      /**< callback (or match entry) extra params */
 
 };
 
@@ -304,11 +310,11 @@ struct ib_ac_state_t {
  * state and letter
  */
 struct ib_ac_bintree_t {
-    ib_ac_char_t letter;        /**< the current char */
-    ib_ac_state_t *state;       /**< the goto() state for letter */
+    ib_ac_char_t       letter;    /**< the current char */
+    ib_ac_state_t     *state;     /**< the goto() state for letter */
 
-    ib_ac_bintree_t *left;      /**< chars lower than current */
-    ib_ac_bintree_t *right;     /**< chars greater than current */
+    ib_ac_bintree_t   *left;      /**< chars lower than current */
+    ib_ac_bintree_t   *right;     /**< chars greater than current */
 };
 #endif /* IB_UTIL_PRIVATE_H_ */
 

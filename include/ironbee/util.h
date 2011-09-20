@@ -935,9 +935,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(ib_hash_t *h,
                                       uint8_t lookup_flags);
 
 /**
- * Get data from a hash table via key
- * (warning! must be NULL terminated string! Use ib_hash_get_ex to
- * specify custom flags)
+ * Get data from a hash table via NUL terminated key.
  *
  * @param h Hash table
  * @param key Key to lookup
@@ -950,9 +948,8 @@ ib_status_t DLL_PUBLIC ib_hash_get(ib_hash_t *h,
                                    void *pdata);
 
 /**
- * Get data from a hash table via key with ignore case option set
- * (warning! must be NULL terminated string! Use ib_hash_get_ex to
- * specify custom flags)
+ * Get data from a hash table via NUL terminated key with ignore
+ * case option set.
  *
  * @param h Hash table
  * @param key Key to lookup
@@ -1013,7 +1010,8 @@ ib_status_t DLL_PUBLIC ib_hash_set(ib_hash_t *h,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_hash_remove_ex(ib_hash_t *h,
-                                         void *key, size_t len,
+                                         void *key,
+                                         size_t len,
                                          void *pdata);
 
 /**

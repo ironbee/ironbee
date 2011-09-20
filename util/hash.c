@@ -109,14 +109,6 @@ ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
     IB_FTRACE_RET_PTR(ib_hash_iter_t *, hti);
 }
 
-/**
- * Creates an initialized iterator for the hash table entries
- *
- * @param mp Memory pool for the iterator allocation
- * @param ib_ht hash table to iterate
- *
- * @returns Status code
- */
 ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
                               ib_hash_t *ib_ht)
 {
