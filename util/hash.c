@@ -28,14 +28,13 @@
 
 #include "ironbee_util_private.h"
 
-unsigned int ib_hashfunc_default(const void *ckey,
-                                 size_t len,
-                                 uint8_t flags)
+unsigned int ib_hashfunc_djb2(const void *ckey,
+                              size_t len,
+                              uint8_t flags)
 {
-    IB_FTRACE_INIT(ib_hashfunc_default);
+    IB_FTRACE_INIT(ib_hashfunc_djb2);
     unsigned int hash = 0;
     const unsigned char *key = (const unsigned char *)ckey;
-    const unsigned char *p = NULL; 
     size_t i = 0;
 
     /* This is stored at ib_hash_t flags, however,
@@ -45,13 +44,12 @@ unsigned int ib_hashfunc_default(const void *ckey,
      * See lookup_flags to choose with or without case sensitive */
     if ( (flags & IB_HASH_FLAG_NOCASE)) {
         for (i = 0; i < len ; i++) {
-            hash = hash * 33 + tolower(key[i]);
+            hash = (hash << 5) + tolower(key[i]);
         }
-        len = p - key;
     }
     else {
         for (i = 0; i < len; i++) {
-            hash = hash * 33 + key[i];
+            hash = (hash << 5) + key[i];
         }
     }
 
@@ -84,7 +82,7 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_ht->hash_fn = ib_hashfunc_default;
+    ib_ht->hash_fn = ib_hashfunc_djb2;
     ib_ht->cnt = 0;
     ib_ht->flags = flags;
     ib_ht->free = NULL;

@@ -269,8 +269,8 @@ TEST(TestIBUtilHash, test_hash_get_ex_nocase)
     ib_mpool_destroy(mp);
 }
 
-/// @test Test util hash library - ib_hash_default with flags
-TEST(TestIBUtilHash, test_hashfunc_default)
+/// @test Test util hash library - ib_hash_djb2 with flags
+TEST(TestIBUtilHash, test_hashfunc_djb2)
 {
     unsigned int hash1 = 0;
     unsigned int hash2 = 0;
@@ -280,20 +280,20 @@ TEST(TestIBUtilHash, test_hashfunc_default)
     rc = ib_initialize();
 
     // Test with no case sensitive
-    hash1 = ib_hashfunc_default("Key", 3,
-                                IB_HASH_FLAG_NOCASE);
-    hash2 = ib_hashfunc_default("kEY", 3,
-                                IB_HASH_FLAG_NOCASE);
-    ASSERT_TRUE(hash1 == hash2) << "ib_hashfunc_default() failed - hash1:"
-                                    << hash1 << " != Hash2:" << hash2
-                                    << " but should be equal";
+    hash1 = ib_hashfunc_djb2("Key", 3,
+                             IB_HASH_FLAG_NOCASE);
+    hash2 = ib_hashfunc_djb2("kEY", 3,
+                             IB_HASH_FLAG_NOCASE);
+    ASSERT_TRUE(hash1 == hash2) << "ib_hashfunc_djb2() failed - hash1:"
+                                << hash1 << " != Hash2:" << hash2
+                                << " but should be equal";
     // Test with case sensitive
     hash1 = hash2 = 0;
-    hash1 = ib_hashfunc_default("Key", 3, 0);
-    hash2 = ib_hashfunc_default("kEY", 3, 0);
-    ASSERT_TRUE(hash1 != hash2) << "ib_hashfunc_default() failed - hash1:"
-                                    << hash1 << " == Hash2:" << hash2
-                                    << " but should not be equal";
+    hash1 = ib_hashfunc_djb2("Key", 3, 0);
+    hash2 = ib_hashfunc_djb2("kEY", 3, 0);
+    ASSERT_TRUE(hash1 != hash2) << "ib_hashfunc_djb2() failed - hash1:"
+                                << hash1 << " == Hash2:" << hash2
+                                << " but should not be equal";
 }
 
 /// @test Test util hash library - Check multiple keys and resizing

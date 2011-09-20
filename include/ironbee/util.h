@@ -865,7 +865,9 @@ ib_status_t DLL_PUBLIC ib_hash_create(ib_hash_t **ph, ib_mpool_t *pool);
     ib_hash_create_ex(ph, pool, IB_HASH_INITIAL_SIZE, IB_HASH_FLAG_NOCASE)
 
 /**
- * Default hash function
+ * DJB2 Hash Function (Dan Bernstein).
+ *
+ * This is the default hash function.
  *
  * @param key buffer holding the key to hash
  * @param len size of the key to hash in bytes
@@ -874,9 +876,9 @@ ib_status_t DLL_PUBLIC ib_hash_create(ib_hash_t **ph, ib_mpool_t *pool);
  *
  * @returns Status code
  */
-unsigned int DLL_PUBLIC ib_hashfunc_default(const void *char_key,
-                                            size_t len,
-                                            uint8_t flags);
+unsigned int DLL_PUBLIC ib_hashfunc_djb2(const void *char_key,
+                                         size_t len,
+                                         uint8_t flags);
 
 /**
  * Create a hash table with nocase option by default.
