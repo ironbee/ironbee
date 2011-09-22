@@ -80,6 +80,7 @@ typedef enum ib_status_t {
     IB_EALLOC,                      /**< Could not allocate resources */
     IB_EINVAL,                      /**< Invalid argument */
     IB_ENOENT,                      /**< Entity does not exist */
+    IB_ETRUNC,                      /**< Buffer truncated, size limit reached */
     IB_ETIMEDOUT,                   /**< Operation timed out */
     IB_EAGAIN,                      /**< Not ready, try again later */
 } ib_status_t;
@@ -2453,6 +2454,65 @@ struct ib_uuid_t {
 ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *ibuuid,
                                 const char *uuid);
 /** @} IronBeeUtilUUID */
+
+/**
+ * @defgroup IronBeeUtilLogformat
+ * @{
+ */
+#define IB_LOGFORMAT_MAXFIELDS 128
+#define IB_LOGFORMAT_MAXLINELEN 8192
+#define IB_LOGFORMAT_DEFAULT ((char*)"%T %h %a %S %s %t %f")
+
+typedef struct ib_logformat_t ib_logformat_t;
+
+/* fields */
+#define IB_LOG_FIELD_REMOTE_ADDR        'a'
+#define IB_LOG_FIELD_LOCAL_ADDR         'A'
+#define IB_LOG_FIELD_HOSTNAME           'h'
+#define IB_LOG_FIELD_SITE_ID            's'
+#define IB_LOG_FIELD_SENSOR_ID          'S'
+#define IB_LOG_FIELD_TRANSACTION_ID     't'
+#define IB_LOG_FIELD_TIMESTAMP          'T'
+#define IB_LOG_FIELD_LOG_FILE           'f'
+
+struct ib_logformat_t {
+    ib_mpool_t *mp;
+    char *orig_format;
+    uint8_t literal_starts;
+
+    /* We could use here an ib_list, but this will is faster */
+    char fields[IB_LOGFORMAT_MAXFIELDS];     /**< Used to hold the field list */
+    char *literals[IB_LOGFORMAT_MAXFIELDS + 2]; /**< Used to hold the list of
+                                                   literal strings at the start,
+                                                 end, and between fields */
+    int literals_len[IB_LOGFORMAT_MAXFIELDS + 2]; /**< Used to hold the sizes of
+                                                       literal strings */
+    uint8_t field_cnt;   /**< Fields count */
+    uint8_t literal_cnt; /**< Literals count */
+};
+
+/**
+ * Creates a logformat helper
+ *
+ * @param mp memory pool to use
+ * @param lf reference pointer where the new instance will be stored
+ *
+ * @returns Status code
+ */
+ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf);
+
+/**
+ * Used to parse and store the specified format
+ *
+ * @param mp memory pool to use
+ * @param lf pointer to the logformat helper
+ * @param format string with the format to process
+ *
+ * @returns Status code
+ */
+ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format);
+/** @} IronBeeUtilLogformat */
+
 
 /**
  * @} IronBeeUtil

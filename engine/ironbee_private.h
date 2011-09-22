@@ -105,6 +105,7 @@ struct ib_context_t {
     ib_cfgmap_t             *cfg;         /**< Config map */
     ib_array_t              *cfgdata;     /**< Config data */
     ib_context_t            *parent;      /**< Parent context */
+    ib_logformat_t          *index_fmt;   /**< Used to specify the logformat */
 
     /* Context Selection */
     ib_context_fn_t          fn_ctx;      /**< Context decision function */

@@ -15,6 +15,7 @@ check_PROGRAMS = test_gtest \
                  test_util_hash \
                  test_util_list \
                  test_util_radix \
+                 test_util_logformat \
                  test_util_ahocorasick \
                  test_engine
 
@@ -42,6 +43,18 @@ test_util_array_LDADD =  gtest/libgtest.la \
                     @APR_LDADD@
 else
 test_util_array_LDADD =  gtest/libgtest.la \
+                    -ldl \
+                    @APR_LDADD@
+endif
+test_util_logformat_SOURCES = test_util_logformat.cc
+test_util_logformat_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
+test_util_logformat_CPPFLAGS = @APR_CPPFLAGS@
+test_util_logformat_LDFLAGS = @APR_LDFLAGS@
+if FREEBSD
+test_util_logformat_LDADD =  gtest/libgtest.la \
+                    @APR_LDADD@
+else
+test_util_logformat_LDADD =  gtest/libgtest.la \
                     -ldl \
                     @APR_LDADD@
 endif
