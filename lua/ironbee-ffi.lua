@@ -668,7 +668,7 @@ function ib_util_log_debug(lvl, fmt, ...)
     local dinfo = debug.getinfo(2)
 
     c.ib_util_log_ex(lvl, "LuaFFI - ",
-                     dinfo.source .. ".lua", dinfo.linedefined, fmt, ...)
+                     dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
 function ib_log_debug(ib, lvl, fmt, ...)
@@ -676,7 +676,7 @@ function ib_log_debug(ib, lvl, fmt, ...)
     local dinfo = debug.getinfo(2)
 
     c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ",
-                 dinfo.source .. ".lua", dinfo.linedefined, fmt, ...)
+                 dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
 function ib_log_error(ib, lvl, fmt, ...)
@@ -870,7 +870,7 @@ function ib_data_get(dpi, name)
         local dinfo = debug.getinfo(2)
 
         c.ib_clog_ex(c_ctx, 4, "LuaFFI - ",
-                     dinfo.source .. ".lua", dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
+                     dinfo.source, dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
         return nil
     end
 
