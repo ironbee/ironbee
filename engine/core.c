@@ -538,9 +538,9 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 {
     IB_FTRACE_INIT(core_audit_close);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
+    ib_site_t *site = ib_context_site_get(log->ctx);
     ib_core_cfg_t *corecfg;
     ib_tx_t *tx = log->tx;
-    ib_conn_t *conn = tx->conn;
     int ec;
 
     /* Close the audit log. */
@@ -549,6 +549,8 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
         cfg->fp = NULL;
     }
 
+#ifdef USE_MODSEC_AUDITLOG_INDEX_FORMAT
+    ib_conn_t *conn = tx->conn;
     /** Write to the index file if using one:
      *
      *  @todo Implement fully and use only relevent metadata
@@ -592,7 +594,44 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
             0,
             "-"
         );
-        /// @todo Will this detect write w/no reader (SIGPIPE)???
+#else
+    /** Write to the index file if using one:
+     *
+     *  @todo Implement fully and use only relevent metadata
+     *  @todo Allow specifying fields that are used here w/template
+     *
+     *  hostname (or IP)
+     *  source IP
+     *  remote user
+     *  local user
+     *  timestamp
+     *  request line
+     *  response status
+     *  bytes sent
+     *  referrer
+     *  user agent
+     *  transaction id
+     *  session id
+     *  audit log filename (relative)
+     *  audit log offset
+     *  audit log size
+     *  audit log hash
+     */
+    if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
+        ec = fprintf(
+            cfg->index_fp,
+            "{"
+            " \"timestamp\"=\"%s\","
+            " \"uuid\"=\"%s\","
+            " \"site_id\"=\"%s\","
+            " \"file\"=\"%s\" "
+            "}\n",
+            "-",
+            tx->id,
+            (site?site->id_str:"-"),
+            cfg->fn
+        );
+#endif
         if (ec < 0) {
             ib_status_t rc;
 
