@@ -52,6 +52,8 @@ extern "C" {
 
 /* Type definitions. */
 typedef struct ib_mpool_t ib_mpool_t;
+typedef struct ib_mpool_buffer_t ib_mpool_buffer_t;
+
 typedef struct ib_dso_t ib_dso_t;
 typedef void ib_dso_sym_t;
 typedef struct ib_hash_t ib_hash_t;
@@ -230,7 +232,26 @@ typedef ib_status_t (*ib_mpool_cleanup_fn_t)(void *);
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_mpool_create(ib_mpool_t **pmp, ib_mpool_t *parent);
+ib_status_t DLL_PUBLIC ib_mpool_create(ib_mpool_t **pmp,
+                                       ib_mpool_t *parent);
+
+/**
+ * Create a new memory pool with predefined page size.
+ * Minimum size is IB_MPOOL_MIN_PAGE_SIZE (currently 512)
+ *
+ * @note If a pool has a parent specified, then any call to clear/destroy
+ * on the parent will propagate to all descendants.
+ *
+ * @param pmp Address which new pool is written
+ * @param parent Optional parent memory pool (or NULL)
+ * @param size Custom page size (to be used by default in pmp)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_mpool_create_ex(ib_mpool_t **pmp,
+                               ib_mpool_t *parent,
+                               size_t size);
+
 
 /**
  * Allocate memory from a memory pool.
