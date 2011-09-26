@@ -700,72 +700,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
         cfg->fp = NULL;
     }
 
-#ifdef USE_MODSEC_AUDITLOG_INDEX_FORMAT
-    ib_conn_t *conn = tx->conn;
-    ib_tx_t *tx = log->tx;
-    /** Write to the index file if using one:
-     *
-     *  @todo Implement fully and use only relevent metadata
-     *  @todo Allow specifying fields that are used here w/template
-     *
-     *  remote user
-     *  local user
-     *  request line
-     *  response status
-     *  bytes sent
-     *  referrer
-     *  user agent
-     *  audit log offset
-     *  audit log size
-     *  audit log hash
-     */
-    if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        ec = fprintf(
-            cfg->index_fp,
-            "%s %s %s %s [%s] \"%s\" %d %d \"%s\" \"%s\" %s \"%s\" /%s %d %d %s\n",
-            tx->hostname,
-            conn->remote_ipstr,
-            "-",
-            "-",
-            "-",
-            "-",
-            0,
-            0,
-            "-",
-            "-",
-            tx->id,
-            "-",
-            cfg->fn,
-            0,
-            0,
-            "-"
-        );
-#else
-    /** Write to the index file if using one:
-     *
-     *  @todo Implement fully and use only relevent metadata
-     *  @todo Allow specifying fields that are used here w/template
-     *
-     *  hostname (or IP)
-     *  source IP
-     *  remote user
-     *  local user
-     *  timestamp
-     *  request line
-     *  response status
-     *  bytes sent
-     *  referrer
-     *  user agent
-     *  transaction id
-     *  session id
-     *  audit log filename (relative)
-     *  audit log offset
-     *  audit log size
-     *  audit log hash
-     */
+    /* Write to the index file if using one. */
     if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
         rc = core_audit_get_index_line(lpi, log, line, &line_size);
         /* @todo: What to do if line is truncated? */
@@ -773,7 +708,6 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
             IB_FTRACE_RET_STATUS(rc);
         }
         ec = fwrite(line, line_size, 1, cfg->index_fp);
-#endif
         if (ec < 0) {
             ec = errno;
             ib_log_error(log->ib, 1,
