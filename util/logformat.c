@@ -58,12 +58,12 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf) {
 ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
     IB_FTRACE_INIT(ib_logformat_set);
     ib_mpool_t *mp = lf->mp;
+    char literal[IB_LOGFORMAT_MAXLINELEN + 1];
+    int literal_tot = 0;
+    uint8_t status = 0;
     int i = 0;
     int j = 0;
     int l = 0;
-
-    char literal[IB_LOGFORMAT_MAXLINELEN + 1];
-    int literal_tot = 0;
 
     memset(lf, 0, sizeof(ib_logformat_t) + 1);
     lf->mp = mp;
@@ -76,11 +76,9 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    uint8_t status = 0;
-
-    for (i = 0; lf->orig_format[i] != '\0' &&
-           lf->field_cnt < IB_LOGFORMAT_MAXFIELDS &&
-           j < IB_LOGFORMAT_MAXLINELEN; i++)
+    for (; lf->orig_format[i] != '\0' &&
+         lf->field_cnt < IB_LOGFORMAT_MAXFIELDS &&
+         j < IB_LOGFORMAT_MAXLINELEN; i++)
     {
         if (i == 0 && lf->orig_format[i] != '%') {
             lf->literal_starts = 1;
@@ -88,42 +86,41 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
         switch (status) {
             case IB_LOGFORMAT_ST_PR:
                 /* Which field? */
-                switch(lf->orig_format[i]) {
-                  case IB_LOG_FIELD_REMOTE_ADDR:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_REMOTE_ADDR;
-                  break;
-                  case IB_LOG_FIELD_LOCAL_ADDR:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_LOCAL_ADDR;
-                  break;
-                  case IB_LOG_FIELD_HOSTNAME:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_HOSTNAME;
-                  break;
-                  case IB_LOG_FIELD_SITE_ID:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_SITE_ID;
-                  break;
-                  case IB_LOG_FIELD_SENSOR_ID:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_SENSOR_ID;
-                  break;
-                  case IB_LOG_FIELD_TRANSACTION_ID:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_TRANSACTION_ID;
-                  break;
-                  case IB_LOG_FIELD_TIMESTAMP:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_TIMESTAMP;
-                  break;
-                  case IB_LOG_FIELD_LOG_FILE:
-                    lf->fields[lf->field_cnt++] = IB_LOG_FIELD_LOG_FILE;
-                  break;
-                  case '%':
-                    if (i == 1) {
-                        lf->literal_starts = 1;
-                    }
-                    literal[j++] = '%';
-                    /* just allow it */
-                  break;
-                  default:
-                    /* Not understood */
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
-                  break;
+                switch (lf->orig_format[i]) {
+                    case IB_LOG_FIELD_REMOTE_ADDR:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_REMOTE_ADDR;
+                        break;
+                    case IB_LOG_FIELD_LOCAL_ADDR:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_LOCAL_ADDR;
+                        break;
+                    case IB_LOG_FIELD_HOSTNAME:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_HOSTNAME;
+                        break;
+                    case IB_LOG_FIELD_SITE_ID:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_SITE_ID;
+                        break;
+                    case IB_LOG_FIELD_SENSOR_ID:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_SENSOR_ID;
+                        break;
+                    case IB_LOG_FIELD_TRANSACTION_ID:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_TRANSACTION_ID;
+                        break;
+                    case IB_LOG_FIELD_TIMESTAMP:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_TIMESTAMP;
+                        break;
+                    case IB_LOG_FIELD_LOG_FILE:
+                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_LOG_FILE;
+                        break;
+                    case '%':
+                        if (i == 1) {
+                            lf->literal_starts = 1;
+                        }
+                        /* just allow it */
+                        literal[j++] = '%';
+                        break;
+                    default:
+                        /* Not understood - ignore it */
+                        break;
                 }
 
                 if (literal[0] != '\0') {
@@ -143,50 +140,47 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
                     }
                     else {
                         lf->literals_len[l] = j;
-                        l++;
+                        ++l;
                     }
                     literal[0] = '\0';
                     j = 0;
                 }
                 status = IB_LOGFORMAT_ST_NONE;
-            break;
+                break;
             case IB_LOGFORMAT_ST_BS:
-                /* Avoid '\b', '\n' and '\%' */
+                /* Avoid '\b', '\n' */
                 switch (lf->orig_format[i]) {
                     case 't':
-                      literal[j++] = '\t';
-                    break;
-                    case '\\':
-                      literal[j++] = '\\';
-                    break;
-                    /* @todo more to add? */
+                        literal[j++] = '\t';
+                        break;
                     case 'n':
                     case 'b':
-                    case '%':
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
-                    break;
+                        /* Just add a space */
+                        /// @todo more to add?
+                        literal[j++] = ' ';
+                        break;
+                    default:
+                        /* Just use the character directly */
+                        literal[j++] = lf->orig_format[i];
                 }
                 status = IB_LOGFORMAT_ST_NONE;
-            break;
-            default:
+                break;
             case IB_LOGFORMAT_ST_NONE:
-                //bs_seen = (bs_seen) ? 0 : 1;
+            default:
                 switch (lf->orig_format[i]) {
-                    /* @todo Do we need to check certain escape chars?
-                        Will we allow for example '\n' in the log index file?
-                    */
+                    /** @todo Do we need to check certain escape chars?
+                     *  Will we allow for example '\n' in the log index file?
+                     */
                     case '\\':
                         status = IB_LOGFORMAT_ST_BS;
-                    break;
+                        break;
                     case '%':
-                      status = IB_LOGFORMAT_ST_PR;
-                    break;
+                        status = IB_LOGFORMAT_ST_PR;
+                        break;
                     default:
                         /* literal string */
                         literal[j++] = lf->orig_format[i];
-                    break;
                 }
-            break;
         }        
     }
 

@@ -475,7 +475,8 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         if (corecfg->auditlog_index_fmt != NULL) {
             rc = ib_logformat_set(corecfg->auditlog_index_hp,
                                   corecfg->auditlog_index_fmt);
-        } else {
+        }
+        else {
             rc = ib_logformat_set(corecfg->auditlog_index_hp,
                                   IB_LOGFORMAT_DEFAULT);
         }
@@ -566,9 +567,9 @@ static ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
  * @returns Status code
  */
 static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
-                                               ib_auditlog_t *log,
-                                               char *line,
-                                               int *line_size)
+                                             ib_auditlog_t *log,
+                                             char *line,
+                                             int *line_size)
 {
     IB_FTRACE_INIT(core_audit_get_index_fields);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
@@ -576,9 +577,15 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     ib_tx_t *tx = log->tx;
     ib_conn_t *conn = tx->conn;
     ib_site_t *site = ib_context_site_get(log->ctx);
+    ib_logformat_t *lf;
     ib_status_t rc;
     char *ptr = line;
     char *tstamp = NULL;
+    uint8_t which;
+    int i = 0;
+    int l = 0;
+    int used = 0;
+    const char *aux = NULL;
 
     /* Retrieve corecfg to get the AuditLogIndexFormat */
     rc = ib_context_module_config(log->ctx, ib_core_module(),
@@ -588,31 +595,25 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_logformat_t *lf = corecfg->auditlog_index_hp;
+    lf = corecfg->auditlog_index_hp;
+    which = lf->literal_starts ? 1 : 0;
 
-    uint8_t which = 0;
-    if (lf->literal_starts) {
-        which = 1;
-    } 
-
-    int i = 0;
-    int l = 0;
-    int used = 0;
-    const char *aux = NULL;
     for (; (i < lf->field_cnt || l < lf->literal_cnt) &&
             used < IB_LOGFORMAT_MAXLINELEN;)
     {
         if (which++ % 2 == 0) {
+            int aux_i = 0;
+
             switch (lf->fields[i]) {
                 case IB_LOG_FIELD_REMOTE_ADDR:
                     aux = conn->remote_ipstr;
-                break;
+                    break;
                 case IB_LOG_FIELD_LOCAL_ADDR:
                     aux = conn->local_ipstr;
-                break;
+                    break;
                 case IB_LOG_FIELD_HOSTNAME:
                      aux = tx->hostname;
-                break;
+                    break;
                 case IB_LOG_FIELD_SITE_ID:
                     if (site == NULL) {
                          aux = (char *)"-";
@@ -620,13 +621,13 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                     else {
                          aux = site->id_str;
                     }
-                break;
+                    break;
                 case IB_LOG_FIELD_SENSOR_ID:
                      aux = log->ib->sensor_id_str;
-                break;
+                    break;
                 case IB_LOG_FIELD_TRANSACTION_ID:
                      aux = tx->id;
-                break;
+                    break;
                 case IB_LOG_FIELD_TIMESTAMP:
                     /* Prepare timestamp (only if needed) */
                     tstamp = (char *)ib_mpool_alloc(log->mp, 31);
@@ -636,21 +637,18 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                 
                     ib_timestamp(tstamp, &tx->started);
                      aux = tstamp;
-                break;
+                    break;
                 case IB_LOG_FIELD_LOG_FILE:
                      aux = cfg->fn;
-                break;
+                    break;
                 default:
                     ptr[used++] = '\n';
                     /* Not understood */
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
-                break;
+                    break;
             }
 
-            int aux_i = 0;
-            for (; aux != NULL && aux[aux_i] != '\0';)
-                   
-            {
+            for (; aux != NULL && aux[aux_i] != '\0';) {
                 if (used < IB_LOGFORMAT_MAXLINELEN) {
                     ptr[used++] = aux[aux_i++];
                 }
@@ -659,14 +657,14 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                     IB_FTRACE_RET_STATUS(IB_ETRUNC);
                 }
             }
-            i++;
+            ++i;
         }
         else {
             /* Use literals */
             if (used + lf->literals_len[l] < IB_LOGFORMAT_MAXLINELEN) { 
                 memcpy(&ptr[used], lf->literals[l], lf->literals_len[l]);
                 used += lf->literals_len[l];
-                l++;
+                ++l;
             }
             else {
                 /* Truncated.. */
@@ -686,16 +684,11 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 {
     IB_FTRACE_INIT(core_audit_close);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
-    ib_site_t *site = ib_context_site_get(log->ctx);
     ib_core_cfg_t *corecfg;
     int ec;
     ib_status_t rc;
     char line[IB_LOGFORMAT_MAXLINELEN + 2]; 
     int line_size = 0;
-
-    /* Retrieve corecfg to get the AuditLogIndexFormat */
-    rc = ib_context_module_config(log->ctx, ib_core_module(),
-                                  &corecfg);
 
     /* Retrieve corecfg to get the AuditLogIndexFormat */
     rc = ib_context_module_config(log->ctx, ib_core_module(),
@@ -710,7 +703,6 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 #ifdef USE_MODSEC_AUDITLOG_INDEX_FORMAT
     ib_conn_t *conn = tx->conn;
     ib_tx_t *tx = log->tx;
-    ib_site_t *site = ib_context_site_get(log->ctx);
     /** Write to the index file if using one:
      *
      *  @todo Implement fully and use only relevent metadata
