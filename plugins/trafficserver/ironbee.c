@@ -364,6 +364,7 @@ static void process_hdr(ib_ctx *data, ironbee_direction *ibd)
 static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 {
   TSVConn connp;
+  TSCont ssncont;
   TSHttpTxn txnp = (TSHttpTxn) edata;
   TSHttpSsn ssnp = (TSHttpSsn) edata;
   ib_ctx *data;
@@ -379,9 +380,14 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     /* But we can't initialise conn stuff here, because there's
      * no API to get the connection stuff required by ironbee
      * at this point.  So instead, intercept the first TXN
+     *
+     * what we can and must do: create a new contp whose
+     * lifetime is our ssn
      */
-    TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, contp);
-    TSContDataSet(contp, NULL);
+    ssncont = TSContCreate(ironbee_plugin, NULL);
+    TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, ssncont);
+    TSContDataSet(ssncont, NULL);
+
     TSHttpSsnReenable (ssnp, TS_EVENT_HTTP_CONTINUE);
     break;
   case TS_EVENT_HTTP_TXN_START:
@@ -401,6 +407,17 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
       TSContDataSet(contp, data);
       ib_state_notify_conn_opened(ironbee, iconn);
     }
+    /* With both of these, SSN_CLOSE gets called first.
+     * I must be misunderstanding SSN
+     * So hook it all to TXN
+     */
+    TSHttpTxnHookAdd(txnp, TS_HTTP_TXN_CLOSE_HOOK, contp);
+
+    /* Hook to process responses */
+    TSHttpTxnHookAdd(txnp, TS_HTTP_READ_RESPONSE_HDR_HOOK, contp);
+
+    /* Hook to process requests */
+    TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, contp);
 
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
     break;
@@ -461,9 +478,11 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
   /* CLEANUP EVENTS */
   case TS_EVENT_HTTP_TXN_CLOSE:
-  case TS_EVENT_HTTP_SSN_CLOSE:
+//  case TS_EVENT_HTTP_SSN_CLOSE:
     ib_ctx_destroy(TSContDataGet(contp), event);
     TSContDataSet(contp, NULL);
+    TSContDestroy(contp);
+    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
     break;
 
   /* if we get here we've got a bug */
@@ -706,18 +725,6 @@ TSPluginInit(int argc, const char *argv[])
   /* connection initialisation & cleanup */
   TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
 
-  /* With both of these, SSN_CLOSE gets called first.
-   * I must be misunderstanding SSN
-   * So hook it all to TXN
-   */
-  //TSHttpHookAdd(TS_HTTP_SSN_CLOSE_HOOK, cont);
-  TSHttpHookAdd(TS_HTTP_TXN_CLOSE_HOOK, cont);
-
-  /* Hook to process responses */
-  TSHttpHookAdd(TS_HTTP_READ_RESPONSE_HDR_HOOK, cont);
-
-  /* Hook to process requests */
-  TSHttpHookAdd(TS_HTTP_READ_REQUEST_HDR_HOOK, cont);
 
   if (argc != 2) {
     TSError("[ironbee] requires one argument: configuration file name\n");
