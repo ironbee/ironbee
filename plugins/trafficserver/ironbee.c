@@ -33,20 +33,22 @@ ib_plugin_t DLL_LOCAL ibplugin = {
 };
 
 typedef struct {
-  unsigned int init;  /* use as bitfield with fields to be initialised ? */
   ib_conn_t *iconn;
 
   /* store the IPs here so we can clean them up and not leak memory */
   char *remote_ip;
   char *local_ip;
+  TSHttpTxn txnp;	/* hack: conn data requires txnp to access */
+} ib_ssn_ctx;
 
-  TSHttpTxn txnp;
+typedef struct {
+  ib_ssn_ctx *ssn;
 
   /* data filtering stuff */
   TSVIO output_vio;
   TSIOBuffer output_buffer;
   TSIOBufferReader output_reader;
-} ib_ctx;
+} ib_txn_ctx;
 
 /* mod_ironbee uses ib_state_notify_conn_data_[in|out]
  * for both headers and data
@@ -65,21 +67,26 @@ static ironbee_direction ironbee_direction_resp = {
 
 
 
-static void ib_ctx_destroy(ib_ctx * data, TSEvent event)
+static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
   if (data) {
     if (data->output_buffer) {
       TSIOBufferDestroy(data->output_buffer);
       data->output_buffer = NULL;
     }
-      data->init = 0;
-      if (data->remote_ip)
-        TSfree(data->remote_ip);
-      if (data->local_ip)
-        TSfree(data->local_ip);
-      if (data->iconn)
-        ib_state_notify_conn_closed(ironbee, data->iconn);
-      TSfree(data);
+    TSfree(data);
+  }
+}
+static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
+{
+  if (data) {
+    if (data->remote_ip)
+      TSfree(data->remote_ip);
+    if (data->local_ip)
+      TSfree(data->local_ip);
+    if (data->iconn)
+      ib_state_notify_conn_closed(ironbee, data->iconn);
+    TSfree(data);
   }
 }
 
@@ -88,7 +95,7 @@ static void process_data(TSCont contp)
   TSVConn output_conn;
   TSIOBuffer buf_test;
   TSVIO input_vio;
-  ib_ctx *data;
+  ib_txn_ctx *data;
   int64_t towrite;
   int64_t avail;
 
@@ -106,8 +113,7 @@ static void process_data(TSCont contp)
   input_vio = TSVConnWriteVIOGet(contp);
 
   data = TSContDataGet(contp);
-  if (!data->init) {
-    data->init = 1;
+  if (!data->output_buffer) {
     data->output_buffer = TSIOBufferCreate();
     data->output_reader = TSIOBufferReaderAlloc(data->output_buffer);
     TSDebug("ironbee", "\tWriting %d bytes on VConn", TSVIONBytesGet(input_vio));
@@ -122,7 +128,6 @@ static void process_data(TSCont contp)
     TSVIONBytesSet(data->output_vio, TSVIONDoneGet(input_vio));
     TSVIOReenable(data->output_vio);
     /* FIXME - is this right here - can conn data be kept across reqs? */
-    data->init = 0;
     data->output_buffer = NULL;
     data->output_reader = NULL;
     data->output_vio = NULL;
@@ -161,8 +166,8 @@ static void process_data(TSCont contp)
 
         /* feed it to ironbee */
         icdata.ib = ironbee;
-        icdata.mp = data->iconn->mp;
-        icdata.conn = data->iconn;
+        icdata.mp = data->ssn->iconn->mp;
+        icdata.conn = data->ssn->iconn;
         icdata.dalloc = ilength;
         icdata.dlen = ilength;
         icdata.data = (uint8_t *)ibuf;
@@ -315,7 +320,8 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
 }
 
 
-static void process_hdr(ib_ctx *data, ironbee_direction *ibd)
+static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
+                        ironbee_direction *ibd)
 {
   ib_conndata_t icdata;
   int i, nhdr, len, rv;
@@ -326,15 +332,15 @@ static void process_hdr(ib_ctx *data, ironbee_direction *ibd)
 
   TSDebug("ironbee", "process %s headers\n", ibd->word);
 
-  rv = (*ibd->hdr_get) (data->txnp, &bufp, &hdr_loc);
+  rv = (*ibd->hdr_get) (txnp, &bufp, &hdr_loc);
   if (rv) {
     TSError ("couldn't retrieve client %s header: %d\n", ibd->word, rv);
     return;
   }
 
   icdata.ib = ironbee;
-  icdata.mp = data->iconn->mp;
-  icdata.conn = data->iconn;
+  icdata.mp = data->ssn->iconn->mp;
+  icdata.conn = data->ssn->iconn;
 
   nhdr = TSMimeHdrFieldsCount(bufp, hdr_loc);
 
@@ -364,12 +370,11 @@ static void process_hdr(ib_ctx *data, ironbee_direction *ibd)
 static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 {
   TSVConn connp;
-  TSCont ssncont;
+  TSCont mycont;
   TSHttpTxn txnp = (TSHttpTxn) edata;
   TSHttpSsn ssnp = (TSHttpSsn) edata;
-  ib_ctx *data;
-  ib_conn_t *iconn = NULL;
-  ib_status_t rc;
+  ib_txn_ctx *txndata;
+  ib_ssn_ctx *ssndata;
 
   TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
   switch (event) {
@@ -384,47 +389,59 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
      * what we can and must do: create a new contp whose
      * lifetime is our ssn
      */
-    ssncont = TSContCreate(ironbee_plugin, NULL);
-    TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, ssncont);
-    TSContDataSet(ssncont, NULL);
+    mycont = TSContCreate(ironbee_plugin, NULL);
+    TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, mycont);
+    TSContDataSet(mycont, NULL);
+
+    TSHttpSsnHookAdd (ssnp, TS_HTTP_SSN_CLOSE_HOOK, mycont);
 
     TSHttpSsnReenable (ssnp, TS_EVENT_HTTP_CONTINUE);
     break;
   case TS_EVENT_HTTP_TXN_START:
     /* start of Request */
     /* First req on a connection, we set up conn stuff */
-    data = TSContDataGet(contp);
-    if (data == NULL) {
+    ssndata = TSContDataGet(contp);
+    if (ssndata == NULL) {
+      ib_conn_t *iconn = NULL;
+      ib_status_t rc;
       rc = ib_conn_create(ironbee, &iconn, contp);
       if (rc != IB_OK) {
         TSError("ironbee", "ib_conn_create: %d\n", rc);
         return rc; // FIXME - figure out what to do
       }
-      data = TSmalloc(sizeof(ib_ctx));
-      memset(data, 0, sizeof(ib_ctx));
-      data->iconn = iconn;
-      data->txnp = txnp;
-      TSContDataSet(contp, data);
+      ssndata = TSmalloc(sizeof(ib_ssn_ctx));
+      memset(ssndata, 0, sizeof(ib_ssn_ctx));
+      ssndata->iconn = iconn;
+      ssndata->txnp = txnp;
+      TSContDataSet(contp, ssndata);
       ib_state_notify_conn_opened(ironbee, iconn);
     }
+
+    /* create a txn cont (request ctx) */
+    mycont = TSContCreate(ironbee_plugin, NULL);
+    txndata = TSmalloc(sizeof(ib_txn_ctx));
+    memset(txndata, 0, sizeof(ib_txn_ctx));
+    txndata->ssn = ssndata;
+    TSContDataSet(mycont, txndata);
+
     /* With both of these, SSN_CLOSE gets called first.
      * I must be misunderstanding SSN
      * So hook it all to TXN
      */
-    TSHttpTxnHookAdd(txnp, TS_HTTP_TXN_CLOSE_HOOK, contp);
+    TSHttpTxnHookAdd(txnp, TS_HTTP_TXN_CLOSE_HOOK, mycont);
 
     /* Hook to process responses */
-    TSHttpTxnHookAdd(txnp, TS_HTTP_READ_RESPONSE_HDR_HOOK, contp);
+    TSHttpTxnHookAdd(txnp, TS_HTTP_READ_RESPONSE_HDR_HOOK, mycont);
 
     /* Hook to process requests */
-    TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, contp);
+    TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
     break;
 
   /* HTTP RESPONSE */
   case TS_EVENT_HTTP_READ_RESPONSE_HDR:
-    data = TSContDataGet(contp);
+    txndata = TSContDataGet(contp);
 
     /* hook to examine output headers */
     /* Not sure why we can't do it right now, but it seems headers
@@ -435,7 +452,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
     /* hook an output filter to watch data */
     connp = TSTransformCreate(out_data_event, txnp);
-    TSContDataSet(connp, data);
+    TSContDataSet(connp, txndata);
     TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK, connp);
 
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
@@ -443,14 +460,14 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
   /* hook for processing response headers */
   case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
-    data = TSContDataGet(contp);
-    process_hdr(data, &ironbee_direction_resp);
+    txndata = TSContDataGet(contp);
+    process_hdr(txndata, txnp, &ironbee_direction_resp);
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
     break;
 
   /* HTTP REQUEST */
   case TS_EVENT_HTTP_READ_REQUEST_HDR:
-    data = TSContDataGet(contp);
+    txndata = TSContDataGet(contp);
 
     /* hook to examine output headers */
     /* Not sure why we can't do it right now, but it seems headers
@@ -461,7 +478,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
     /* hook an input filter to watch data */
     connp = TSTransformCreate(in_data_event, txnp);
-    TSContDataSet(connp, data);
+    TSContDataSet(connp, txndata);
     TSHttpTxnHookAdd(txnp, TS_HTTP_REQUEST_TRANSFORM_HOOK, connp);
 
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
@@ -470,19 +487,26 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
   /* hook for processing request headers */
   /* No idea why it's called OS_DNS, but it figures in sample plugins */
   case TS_EVENT_HTTP_OS_DNS:
-    data = TSContDataGet(contp);
-    process_hdr(data, &ironbee_direction_req);
+    txndata = TSContDataGet(contp);
+    process_hdr(txndata, txnp, &ironbee_direction_req);
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
     break;
 
 
   /* CLEANUP EVENTS */
   case TS_EVENT_HTTP_TXN_CLOSE:
-//  case TS_EVENT_HTTP_SSN_CLOSE:
-    ib_ctx_destroy(TSContDataGet(contp), event);
+    TSDebug("ironbee", "TXN Close: %x\n", contp);
+    ib_txn_ctx_destroy(TSContDataGet(contp));
     TSContDataSet(contp, NULL);
     TSContDestroy(contp);
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+    break;
+
+  case TS_EVENT_HTTP_SSN_CLOSE:
+    TSDebug("ironbee", "SSN Close: %x\n", contp);
+    ib_ssn_ctx_destroy(TSContDataGet(contp));
+    TSContDestroy(contp);
+    TSHttpSsnReenable(ssnp, TS_EVENT_HTTP_CONTINUE);
     break;
 
   /* if we get here we've got a bug */
@@ -565,7 +589,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
   int port;
 
   TSCont contp = iconn->pctx;
-  ib_ctx* data = TSContDataGet(contp);
+  ib_ssn_ctx* data = TSContDataGet(contp);
 //  ib_clog_debug(....);
 
   /* remote ip */
