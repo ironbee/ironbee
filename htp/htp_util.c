@@ -1798,12 +1798,12 @@ void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, siz
     char buf[160];
     size_t len = offset + printlen;
 
-    fprintf(stream, "\n%s: ptr %p offset %" PRIdMAX " len %" PRIdMAX "\n", name, data, offset, len);
+    fprintf(stream, "\n%s: ptr %p offset %" PRIu64 " len %" PRIu64"\n", name, data, (uint64_t)offset, (uint64_t)len);
 
     while (offset < len) {
         size_t i;
 
-        sprintf(buf, "%08" PRIxMAX, offset);
+        sprintf(buf, "%08" PRIx64, (uint64_t)offset);
         strcat(buf + strlen(buf), "  ");
 
         i = 0;
