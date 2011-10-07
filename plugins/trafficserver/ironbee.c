@@ -59,12 +59,19 @@ typedef struct {
 } ib_ssn_ctx;
 
 typedef struct {
-  ib_ssn_ctx *ssn;
-
   /* data filtering stuff */
   TSVIO output_vio;
   TSIOBuffer output_buffer;
   TSIOBufferReader output_reader;
+  char *buf;
+  unsigned int buflen;
+} ib_filter_ctx;
+
+typedef struct {
+  ib_ssn_ctx *ssn;
+  TSHttpTxn txnp;
+  ib_filter_ctx in;
+  ib_filter_ctx out;
 } ib_txn_ctx;
 
 /* mod_ironbee uses ib_state_notify_conn_data_[in|out]
@@ -82,14 +89,22 @@ static ironbee_direction ironbee_direction_resp = {
   "response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
 };
 
+typedef struct {
+  ironbee_direction *ibd;
+  ib_filter_ctx *data;
+} ibd_ctx;
 
 
 static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
   if (data) {
-    if (data->output_buffer) {
-      TSIOBufferDestroy(data->output_buffer);
-      data->output_buffer = NULL;
+    if (data->out.output_buffer) {
+      TSIOBufferDestroy(data->out.output_buffer);
+      data->out.output_buffer = NULL;
+    }
+    if (data->in.output_buffer) {
+      TSIOBufferDestroy(data->in.output_buffer);
+      data->in.output_buffer = NULL;
     }
     TSfree(data);
   }
@@ -107,7 +122,7 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
   }
 }
 
-static void process_data(TSCont contp)
+static void process_data(TSCont contp, ibd_ctx* ibd)
 {
   TSVConn output_conn;
   TSIOBuffer buf_test;
@@ -115,6 +130,8 @@ static void process_data(TSCont contp)
   ib_txn_ctx *data;
   int64_t towrite;
   int64_t avail;
+  int first_time = 0;
+  char *bufp;
 
   TSDebug("ironbee", "Entering process_data()");
   /* Get the output (downstream) vconnection where we'll write data to. */
@@ -130,11 +147,29 @@ static void process_data(TSCont contp)
   input_vio = TSVConnWriteVIOGet(contp);
 
   data = TSContDataGet(contp);
-  if (!data->output_buffer) {
-    data->output_buffer = TSIOBufferCreate();
-    data->output_reader = TSIOBufferReaderAlloc(data->output_buffer);
+  if (!ibd->data->output_buffer) {
+    first_time = 1;
+
+    ibd->data->output_buffer = TSIOBufferCreate();
+    ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
     TSDebug("ironbee", "\tWriting %d bytes on VConn", TSVIONBytesGet(input_vio));
-    data->output_vio = TSVConnWrite(output_conn, contp, data->output_reader, INT64_MAX);
+    ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
+  }
+  if (ibd->data->buf) {
+    /* this is the second call to us, and we have data buffered.
+     * Feed buffered data to ironbee
+     */
+        ib_conndata_t icdata;
+          icdata.ib = ironbee;
+          icdata.mp = data->ssn->iconn->mp;
+          icdata.conn = data->ssn->iconn;
+          icdata.dalloc = ibd->data->buflen;
+          icdata.dlen = ibd->data->buflen;
+          icdata.data = (uint8_t *)ibd->data->buf;
+          (*ibd->ibd->ib_notify)(ironbee, &icdata);
+    TSfree(ibd->data->buf);
+    ibd->data->buf = NULL;
+    ibd->data->buflen = 0;
   }
 
   /* test for input data */
@@ -142,12 +177,12 @@ static void process_data(TSCont contp)
 
   if (!buf_test) {
     TSDebug("ironbee", "No more data, finishing");
-    TSVIONBytesSet(data->output_vio, TSVIONDoneGet(input_vio));
-    TSVIOReenable(data->output_vio);
+    TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
+    TSVIOReenable(ibd->data->output_vio);
     /* FIXME - is this right here - can conn data be kept across reqs? */
-    data->output_buffer = NULL;
-    data->output_reader = NULL;
-    data->output_vio = NULL;
+    ibd->data->output_buffer = NULL;
+    ibd->data->output_reader = NULL;
+    ibd->data->output_vio = NULL;
     return;
   }
 
@@ -162,6 +197,15 @@ static void process_data(TSCont contp)
     /* The amount of data left to read needs to be truncated by
      * the amount of data actually in the read buffer.
      */
+
+    /* first time through, we have to buffer the data until
+     * after the headers have been sent.  Ugh!
+     */
+    if (first_time) {
+      bufp = ibd->data->buf = TSmalloc(towrite);
+      ibd->data->buflen = towrite;
+    }
+    
     avail = TSIOBufferReaderAvail(TSVIOReaderGet(input_vio));
     TSDebug("ironbee", "\tavail is %" PRId64 "", avail);
     if (towrite > avail) {
@@ -171,7 +215,7 @@ static void process_data(TSCont contp)
     if (towrite > 0) {
       int btowrite = towrite;
       /* Copy the data from the read buffer to the output buffer. */
-      TSIOBufferCopy(TSVIOBufferGet(data->output_vio), TSVIOReaderGet(input_vio), towrite, 0);
+      TSIOBufferCopy(TSVIOBufferGet(ibd->data->output_vio), TSVIOReaderGet(input_vio), towrite, 0);
 
       /* feed the data to ironbee, and consume them */
       while (btowrite > 0) {
@@ -181,14 +225,22 @@ static void process_data(TSCont contp)
         TSIOBufferBlock blkp = TSIOBufferReaderStart(input_reader);
         const char *ibuf = TSIOBufferBlockReadStart(blkp, input_reader, &ilength);
 
-        /* feed it to ironbee */
-        icdata.ib = ironbee;
-        icdata.mp = data->ssn->iconn->mp;
-        icdata.conn = data->ssn->iconn;
-        icdata.dalloc = ilength;
-        icdata.dlen = ilength;
-        icdata.data = (uint8_t *)ibuf;
-        ib_state_notify_conn_data_out(ironbee, &icdata);
+        /* feed it to ironbee or to buffer */
+        if (first_time) {
+          memcpy(bufp, ibuf, ilength);
+          bufp += ilength;
+        }
+        else {
+          icdata.ib = ironbee;
+          icdata.mp = data->ssn->iconn->mp;
+          icdata.conn = data->ssn->iconn;
+          icdata.dalloc = ilength;
+          icdata.dlen = ilength;
+          icdata.data = (uint8_t *)ibuf;
+          (*ibd->ibd->ib_notify)(ironbee, &icdata);
+        }
+  //"response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
+  //      ib_state_notify_conn_data_out(ironbee, &icdata);
 
         /* and mark it as all consumed */
         btowrite -= ilength;
@@ -208,7 +260,7 @@ static void process_data(TSCont contp)
        * the output connection and allow it to consume data from the
        * output buffer.
        */
-      TSVIOReenable(data->output_vio);
+      TSVIOReenable(ibd->data->output_vio);
 
       /* Call back the input VIO continuation to let it know that we
        * are ready for more data.
@@ -222,8 +274,8 @@ static void process_data(TSCont contp)
      * is done reading. We then reenable the output connection so
      * that it can consume the data we just gave it.
      */
-    TSVIONBytesSet(data->output_vio, TSVIONDoneGet(input_vio));
-    TSVIOReenable(data->output_vio);
+    TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
+    TSVIOReenable(ibd->data->output_vio);
 
     /* Call back the input VIO continuation to let it know that we
      * have completed the write operation.
@@ -232,6 +284,7 @@ static void process_data(TSCont contp)
   }
 }
 
+#if 0
 /* THIS IS A CLONE OF OUT_DATA_EVENT AND IS UNLIKELY TO WORK - YET */
 static int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
@@ -273,21 +326,21 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
        * event (sent, perhaps, because we were reenabled) then
        * we'll attempt to transform more data.
        */
-      process_data(contp);
+      process_data(contp, NULL);
       break;
   }
   return 0;
 }
-static int out_data_event(TSCont contp, TSEvent event, void *edata)
+#endif
+static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 {
   /* Check to see if the transformation has been closed by a call to
    * TSVConnClose.
    */
-  TSDebug("ironbee", "Entering out_data_event()");
+  TSDebug("ironbee", "Entering out_data for %s\n", ibd->ibd->word);
 
   if (TSVConnClosedGet(contp)) {
     TSDebug("ironbee", "\tVConn is closed");
-//    ib_ctx_destroy(TSContDataGet(contp));
     TSContDestroy(contp);	/* from null-transform, ???? */
 
 
@@ -329,11 +382,27 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
        * event (sent, perhaps, because we were reenabled) then
        * we'll attempt to transform more data.
        */
-      process_data(contp);
+      process_data(contp, ibd);
       break;
     }
 
   return 0;
+}
+static int out_data_event(TSCont contp, TSEvent event, void *edata)
+{
+  ib_txn_ctx *data = TSContDataGet(contp);
+  ibd_ctx direction;
+  direction.ibd = &ironbee_direction_resp;
+  direction.data = &data->out;
+  return data_event(contp, event, &direction);
+}
+static int in_data_event(TSCont contp, TSEvent event, void *edata)
+{
+  ib_txn_ctx *data = TSContDataGet(contp);
+  ibd_ctx direction;
+  direction.ibd = &ironbee_direction_req;
+  direction.data = &data->in;
+  return data_event(contp, event, &direction);
 }
 
 
@@ -341,11 +410,13 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                         ironbee_direction *ibd)
 {
   ib_conndata_t icdata;
-  int i, nhdr, len, rv;
+  int i, nhdr, klen, vlen, rv;
   TSMBuffer bufp;
   TSMLoc hdr_loc;
   TSMLoc field_loc;
+  const char *key;
   const char *val;
+  unsigned char *ptr;
 
   TSDebug("ironbee", "process %s headers\n", ibd->word);
 
@@ -359,29 +430,53 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
   icdata.mp = data->ssn->iconn->mp;
   icdata.conn = data->ssn->iconn;
 
+  icdata.dalloc = 4096;
+  icdata.data = TSmalloc(icdata.dalloc);
+
   nhdr = TSMimeHdrFieldsCount(bufp, hdr_loc);
 
   for (i = 0; i < nhdr; i++) {
     field_loc = TSMimeHdrFieldGet(bufp, hdr_loc, i);
 
-    val = TSMimeHdrFieldNameGet (bufp, hdr_loc, field_loc, &len);
-    icdata.data = (void*)val;
-    icdata.dalloc = icdata.dlen = len;
-    (*ibd->ib_notify)(ironbee, &icdata);
+    key = TSMimeHdrFieldNameGet (bufp, hdr_loc, field_loc, &klen);
+    val = TSMimeHdrFieldValueStringGet (bufp, hdr_loc, field_loc, 0, &vlen);
+    icdata.dlen = klen + strlen(": ") + vlen + strlen("\r\n");
 
-    icdata.data = (void*)": ";
-    icdata.dalloc = icdata.dlen = strlen(": ");
-    (*ibd->ib_notify)(ironbee, &icdata);
-
-    val = TSMimeHdrFieldValueStringGet (bufp, hdr_loc, field_loc, 0, &len);
-    icdata.data = (void*)val;
-    icdata.dalloc = icdata.dlen = len;
+    /* FIXME - this logic looks vulnerable to DoS attack
+     * Split the data instead if headers are absurdly long
+     */
+    if (icdata.dlen > icdata.dalloc) {
+      icdata.dalloc = icdata.dlen;
+      TSfree(icdata.data);
+      icdata.data = TSmalloc(icdata.dalloc);
+    }
+    ptr = icdata.data;
+    memcpy(ptr, key, klen);
+    ptr += klen;
+    memcpy(ptr, ": ", strlen(": "));
+    ptr += strlen(": ");
+    memcpy(ptr, val, vlen);
+    ptr += vlen;
+    memcpy(ptr, "\r\n", strlen("\r\n"));
+    ptr += strlen("\r\n");
     (*ibd->ib_notify)(ironbee, &icdata);
 
     TSHandleMLocRelease(bufp, hdr_loc, field_loc);
   }
 
+  /* recreate blank line at end of headers, which is implicit
+   * in TS having parsed the headers in the first place
+   */
+  /* FIXME: we can't do this, because it causes a crash in
+   * ironbee.  Looks like a bug in modhtp_htp_request_headers
+   * https://github.com/ironbee/ironbee/issues/11
+   */
+  //memcpy(icdata.data, "\r\n", strlen("\r\n"));
+  //icdata.dlen = strlen("\r\n");
+  //(*ibd->ib_notify)(ironbee, &icdata);
+
   TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+  TSfree(icdata.data);
 }
 
 static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
@@ -439,6 +534,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     txndata = TSmalloc(sizeof(ib_txn_ctx));
     memset(txndata, 0, sizeof(ib_txn_ctx));
     txndata->ssn = ssndata;
+    txndata->txnp = txnp;
     TSContDataSet(mycont, txndata);
 
     /* With both of these, SSN_CLOSE gets called first.
