@@ -71,37 +71,42 @@ else
     AC_MSG_RESULT([no])
 fi
 
-    #enable suppot for PCRE-sljit http://sljit.sourceforge.net/pcre.html
-    AC_ARG_ENABLE(pcre-sljit,
-           AS_HELP_STRING([--enable-pcre-sljit], [Enable experimental support for PCRE SLJIT]),,[enable_pcre_sljit=no])
-    AS_IF([test "x$enable_pcre_sljit" = "xyes"], [
-        AC_MSG_CHECKING(for PCRE SLJIT)
+    #enable support for PCRE JIT  
+    AC_ARG_ENABLE(pcre-jit,
+           AS_HELP_STRING([--enable-pcre-jit], [Enable experimental support for PCRE JIT]),,[enable_pcre_jit=no])
+    AS_IF([test "x$enable_pcre_jit" = "xyes"], [
+        AC_MSG_CHECKING(for PCRE JIT)
         save_CFLAGS=$CFLAGS
         save_LDFLAGS=$LDFLAGS
         CFLAGS="${PCRE_CFLAGS} ${CFLAGS}"
-        LDFLAGS="${PCRE_LDFLAGS} ${CFLAGS}"
+        LDFLAGS="${LDFLAGS} ${PCRE_LDADD}"
         AC_TRY_COMPILE([ #include <pcre.h> ],
             [ const char* patt = "bar";
               pcre *re;
               const char *error;
               pcre_extra *extra;
               int err_offset;
-              re = pcre_compile(patt,0, &error, &err_offset,NULL);
+              int pcre_fullinfo_ret;
+              int is_jit;
+              re = pcre_compile(patt, 0, &error, &err_offset, NULL);
               extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error);
-              if (!(extra->flags & PCRE_EXTRA_EXECUTABLE_FUNC)) {
-                  printf("PCRE-SLJIT compiler does not support: %s\n", patt);
-              }
+              pcre_fullinfo_ret = pcre_fullinfo(re, extra, PCRE_INFO_JIT, &is_jit);
+              if (pcre_fullinfo_ret != 0) { 
+                  printf("PCRE-JIT pcre_fullinfo failed\n");
+              } else if (is_jit != 1) {
+                  printf("PCRE-JIT compile failed for pattern: %s\n", patt);
+              } 
               return 0;],
-            [ pcre_sljit_available=yes ], [:]
+            [ pcre_jit_available=yes ], [:]
             )
 
-           if test "x$pcre_sljit_available" = "xyes"; then
+           if test "x$pcre_jit_available" = "xyes"; then
                AC_MSG_RESULT(yes)
-               PCRE_CFLAGS="${PCRE_CFLAGS} -DPCRE_HAVE_SLJIT"
+               PCRE_CFLAGS="${PCRE_CFLAGS} -DPCRE_HAVE_JIT"
            else
                AC_MSG_RESULT(no)
                echo
-               echo "   Error! --enable-pcre-sljit set but PCRE_STUDY_JIT_COMPILE not found"
+               echo "   Error! --enable-pcre-jit set but PCRE_STUDY_JIT_COMPILE not found"
                echo "   Make sure you use pcre found here "
                echo "   http://sljit.sourceforge.net/pcre.html"
                echo

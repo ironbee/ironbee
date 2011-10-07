@@ -348,17 +348,17 @@ AC_ARG_ENABLE(gcc_warn_unused_parameter,
 dnl -----------------------------------------------
 dnl Check for GCC -Wformat-nonliteral 
 dnl -----------------------------------------------
-AC_ARG_ENABLE(gcc_warn_non_literal,
-              AS_HELP_STRING([--disable-gcc-warn-format-literal], [Disable GCC warnings if the format string is not a string literal and so cannot be checked]))
+AC_ARG_ENABLE(gcc_warn_format_nonliteral,
+              AS_HELP_STRING([--disable-gcc-warn-format-nonliteral], [Disable GCC warnings if the format string is not a string literal and so cannot be checked]))
 
-    if test "$enable_gcc_warn_non_literal" != "no"; then
+    if test "$enable_gcc_warn_format_nonliteral" != "no"; then
         save_CFLAGS="${CFLAGS}"
         save_CXXFLAGS="${CXXFLAGS}"
 
         AC_MSG_CHECKING(gcc C -Wformat -Wformat-nonliteral support)
         CFLAGS="${CFLAGS} ${GCC_CHARACTERISTICS_CFLAGS} -Wformat -Wformat-nonliteral"
-        AC_TRY_COMPILE(,,[gcc_have_c_warn_non_literal=yes],[gcc_have_c_warn_non_literal=no])
-        if test "$gcc_have_c_warn_non_literal" = "yes"; then
+        AC_TRY_COMPILE(,,[gcc_have_c_warn_format_nonliteral=yes],[gcc_have_c_warn_format_nonliteral=no])
+        if test "$gcc_have_c_warn_format_nonliteral" = "yes"; then
             AC_MSG_RESULT(yes)
             GCC_CHARACTERISTICS_CFLAGS="${GCC_CHARACTERISTICS_CFLAGS} -Wformat -Wformat-nonliteral"
         else
@@ -373,8 +373,8 @@ AC_ARG_ENABLE(gcc_warn_non_literal,
         CXXFLAGS="${CXXFLAGS} ${GCC_CHARACTERISTICS_CXXFLAGS} -Wformat -Wformat-nonliteral"
         AC_LANG_SAVE
         AC_LANG_CPLUSPLUS
-        AC_TRY_COMPILE(,,[gcc_have_cpp_warn_non_literal=yes],[gcc_have_cpp_warn_non_literal=no])
-        if test "$gcc_have_cpp_warn_non_literal" = "yes"; then
+        AC_TRY_COMPILE(,,[gcc_have_cpp_warn_format_nonliteral=yes],[gcc_have_cpp_warn_format_nonliteral=no])
+        if test "$gcc_have_cpp_warn_format_nonliteral" = "yes"; then
             AC_MSG_RESULT(yes)
             GCC_CHARACTERISTICS_CXXFLAGS="${GCC_CHARACTERISTICS_CXXFLAGS} -Wformat -Wformat-nonliteral"
         else
