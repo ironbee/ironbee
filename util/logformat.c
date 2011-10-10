@@ -29,6 +29,8 @@
 
 #include "ironbee_config_auto.h"
 
+#include <string.h>
+
 #include <ironbee/util.h>
 
 #include "ironbee_util_private.h"
@@ -133,7 +135,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
                     /* Add string end for later usage with *printf() functions*/
                     literal[j] = '\0';
                     lf->literals[l] = (char *)ib_mpool_memdup(lf->mp,
-                                                              literal, j);
+                                                              literal, j + 1);
                     if (lf->literals[l] == NULL) {
                         /* Uops.. */
                         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -197,7 +199,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
         }
         literal[j] = '\0';
         lf->literals_len[l] = j;
-        lf->literals[l++] = (char *)ib_mpool_memdup(lf->mp, literal, j);
+        lf->literals[l++] = (char *)ib_mpool_memdup(lf->mp, literal, j + 1);
     }
     lf->literal_cnt = l;
 
