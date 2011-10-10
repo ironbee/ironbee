@@ -78,15 +78,16 @@ typedef struct {
  * for both headers and data
  */
 typedef struct {
+  enum { IBD_REQ, IBD_RESP } dir;
   const char *word;
   int (*hdr_get)(TSHttpTxn, TSMBuffer*, TSMLoc*);
   ib_status_t (*ib_notify)(ib_engine_t*, ib_conndata_t*);
 } ironbee_direction;
 static ironbee_direction ironbee_direction_req = {
-  "request", TSHttpTxnClientReqGet, ib_state_notify_conn_data_in
+  IBD_REQ, "request", TSHttpTxnClientReqGet, ib_state_notify_conn_data_in
 };
 static ironbee_direction ironbee_direction_resp = {
-  "response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
+  IBD_RESP, "response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
 };
 
 typedef struct {
@@ -410,73 +411,57 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                         ironbee_direction *ibd)
 {
   ib_conndata_t icdata;
-  int i, nhdr, klen, vlen, rv;
+  int rv;
   TSMBuffer bufp;
   TSMLoc hdr_loc;
-  TSMLoc field_loc;
-  const char *key;
-  const char *val;
-  unsigned char *ptr;
+  TSIOBuffer iobufp;
+  TSIOBufferReader readerp;
+  TSIOBufferBlock blockp;
+  int64_t len;
 
   TSDebug("ironbee", "process %s headers\n", ibd->word);
-
-  rv = (*ibd->hdr_get) (txnp, &bufp, &hdr_loc);
-  if (rv) {
-    TSError ("couldn't retrieve client %s header: %d\n", ibd->word, rv);
-    return;
-  }
 
   icdata.ib = ironbee;
   icdata.mp = data->ssn->iconn->mp;
   icdata.conn = data->ssn->iconn;
 
-  icdata.dalloc = 4096;
-  icdata.data = TSmalloc(icdata.dalloc);
-
-  nhdr = TSMimeHdrFieldsCount(bufp, hdr_loc);
-
-  for (i = 0; i < nhdr; i++) {
-    field_loc = TSMimeHdrFieldGet(bufp, hdr_loc, i);
-
-    key = TSMimeHdrFieldNameGet (bufp, hdr_loc, field_loc, &klen);
-    val = TSMimeHdrFieldValueStringGet (bufp, hdr_loc, field_loc, 0, &vlen);
-    icdata.dlen = klen + strlen(": ") + vlen + strlen("\r\n");
-
-    /* FIXME - this logic looks vulnerable to DoS attack
-     * Split the data instead if headers are absurdly long
-     */
-    if (icdata.dlen > icdata.dalloc) {
-      icdata.dalloc = icdata.dlen;
-      TSfree(icdata.data);
-      icdata.data = TSmalloc(icdata.dalloc);
-    }
-    ptr = icdata.data;
-    memcpy(ptr, key, klen);
-    ptr += klen;
-    memcpy(ptr, ": ", strlen(": "));
-    ptr += strlen(": ");
-    memcpy(ptr, val, vlen);
-    ptr += vlen;
-    memcpy(ptr, "\r\n", strlen("\r\n"));
-    ptr += strlen("\r\n");
-    (*ibd->ib_notify)(ironbee, &icdata);
-
-    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+  /* before the HTTP headers comes the request line / response code */
+#if 0
+  /* The BytesGet functions don't correspond with actual byte counts
+   * for a Request, so we can't use them to set a buf size!
+   */
+  if (ibd->dir == IBD_RESP) {
+    //icdata.dlen = TSHttpTxnServerRespHdrBytesGet(txnp);
+    rv = TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc);
+  }
+  else {
+    //icdata.dlen = TSHttpTxnClientReqHdrBytesGet(txnp);
+    rv = TSHttpTxnClientReqGet(txnp, &bufp, &hdr_loc);
+  }
+#else
+  rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
+#endif
+  if (rv) {
+    TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
+    return;
   }
 
-  /* recreate blank line at end of headers, which is implicit
-   * in TS having parsed the headers in the first place
-   */
-  /* FIXME: we can't do this, because it causes a crash in
-   * ironbee.  Looks like a bug in modhtp_htp_request_headers
-   * https://github.com/ironbee/ironbee/issues/11
-   */
-  //memcpy(icdata.data, "\r\n", strlen("\r\n"));
-  //icdata.dlen = strlen("\r\n");
-  //(*ibd->ib_notify)(ironbee, &icdata);
+  /* Get the data into an IOBuffer so we can access them! */
+  //iobufp = TSIOBufferSizedCreate(...);
+  iobufp = TSIOBufferCreate();
+  TSHttpHdrPrint(bufp, hdr_loc, iobufp);
 
+  readerp = TSIOBufferReaderAlloc(iobufp);
+  blockp = TSIOBufferReaderStart(readerp);
+
+  len = TSIOBufferBlockReadAvail(blockp, readerp);
+  icdata.data = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+  icdata.dlen = icdata.dalloc = len;
+
+  (*ibd->ib_notify)(ironbee, &icdata);
+
+  TSIOBufferDestroy(iobufp);
   TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
-  TSfree(icdata.data);
 }
 
 static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
