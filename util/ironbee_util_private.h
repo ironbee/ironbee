@@ -55,6 +55,10 @@
 #define IB_MPOOL_MIN_SIZE_BITS      4
 
 /**
+ * IB_MPOOL_NUM_SLOTS defines the number of slots in \a indexed */
+#define IB_MPOOL_NUM_SLOTS          8
+
+/**
  * IB_MPOOL_REMAINING_LIMIT is the limit of available mem of a buffer.
  * Less mem than IB_MPOOL_MIN_SIZE_BITS makes the buffer to be considered as
  * full, so it will be moved to busy_buffers list */

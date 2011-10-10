@@ -132,7 +132,7 @@ void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
     /* First search at indexed */
     size_t cur_slot = 0;
     IB_MPOOL_GET_REQ_INDEX(size, cur_slot);
-    for (; cur_slot < 8; cur_slot++) {
+    for (; cur_slot < IB_MPOOL_NUM_SLOTS; cur_slot++) {
         iter = mp->indexed[cur_slot];
         /* Should not be neccesary to check if mem is available, since buf
            should have at least 2^(IB_MPOOL_MIN_SIZE_BITS+cur_slot) */
