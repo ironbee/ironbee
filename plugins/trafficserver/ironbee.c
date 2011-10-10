@@ -53,8 +53,8 @@ typedef struct {
   ib_conn_t *iconn;
 
   /* store the IPs here so we can clean them up and not leak memory */
-  char *remote_ip;
-  char *local_ip;
+  char remote_ip[ADDRSIZE];
+  char local_ip[ADDRSIZE];
   TSHttpTxn txnp;	/* hack: conn data requires txnp to access */
 } ib_ssn_ctx;
 
@@ -113,10 +113,6 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
 {
   if (data) {
-    if (data->remote_ip)
-      TSfree(data->remote_ip);
-    if (data->local_ip)
-      TSfree(data->local_ip);
     if (data->iconn)
       ib_state_notify_conn_closed(ironbee, data->iconn);
     TSfree(data);
@@ -683,7 +679,6 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
   /* when does this happen? */
   ib_status_t rc;
   const struct sockaddr *addr;
-  char chip[ADDRSIZE];
   int port;
 
   TSCont contp = iconn->pctx;
@@ -693,13 +688,13 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
   /* remote ip */
   addr = TSHttpTxnClientAddrGet(data->txnp);
 
-  addr2str(addr, chip, &port);
+  addr2str(addr, data->remote_ip, &port);
 
-  iconn->remote_ipstr = data->remote_ip = TSstrdup(chip);
+  iconn->remote_ipstr = data->remote_ip;
   rc = ib_data_add_bytestr(iconn->dpi,
                              "remote_ip",
                              (uint8_t *)iconn->remote_ipstr,
-                             strlen(chip),
+                             strlen(data->remote_ip),
                              NULL);
     if (rc != IB_OK) {
         return rc;
@@ -715,13 +710,13 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
   /* local end */
   addr = TSHttpTxnIncomingAddrGet(data->txnp);
 
-  addr2str(addr, chip, &port);
+  addr2str(addr, data->local_ip, &port);
 
-    iconn->local_ipstr = data->local_ip = TSstrdup(chip);
+    iconn->local_ipstr = data->local_ip;
     rc = ib_data_add_bytestr(iconn->dpi,
                              "local_ip",
                              (uint8_t *)iconn->local_ipstr,
-                             strlen(chip),
+                             strlen(data->local_ip),
                              NULL);
     if (rc != IB_OK) {
         return rc;
