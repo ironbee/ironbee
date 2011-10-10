@@ -24,8 +24,11 @@
 
 #include "ironbee_config_auto.h"
 
+#include <string.h>
+
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
+
 #include "ironbee_util_private.h"
 
 /**

@@ -27,11 +27,13 @@
  */
 #include "ironbee_config_auto.h"
 
+#include <string.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <ironbee/util.h>
 
 #include "ironbee_util_private.h"
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 /**
  * Creates a new prefix instance

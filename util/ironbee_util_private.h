@@ -26,9 +26,6 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
-#include <apr_lib.h>
-#include <apr_hash.h>
-
 #include <ironbee/util.h>
 
 
