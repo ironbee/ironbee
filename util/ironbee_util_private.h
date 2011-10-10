@@ -31,27 +31,31 @@
 
 /* Memory pool definitions */
 
-/* Default page size. Buffers will be of size N * IB_MPOOL_DEFAULT_PAGE_SIZE */
+/** Default page size. Buffers will be of size N * IB_MPOOL_DEFAULT_PAGE_SIZE */
 #define IB_MPOOL_DEFAULT_PAGE_SIZE ((size_t)1024)
 
-/* The page size can be set to other with ib_mpool_create_ex()
+/**
+ * The page size can be set to other with ib_mpool_create_ex()
  * but it must be greater than IB_MPOOL_MIN_PAGE_SIZE, otherwise it will be
  * overwriten by IB_MPOOL_MIN_PAGE_SIZE
  */
 #define IB_MPOOL_MIN_PAGE_SIZE     ((size_t)512)
 
-/* IB_MPOOL_INCREASE_FACTOR -> Min 2, 4, 8, .. when a new var needs to be
+/**
+ * IB_MPOOL_INCREASE_FACTOR -> Min 2, 4, 8, .. when a new var needs to be
  * allocated and size is greater than the default pagesize, it will create a
  * buffer of size page_size * num_pages_needed * IB_MPOOL_INCREASE_FACTOR.
  * Keep in mind that a high value might misuse mem of the system */
 #define IB_MPOOL_INCREASE_FACTOR    2
 
-/* IB_MPOOL_MIN_SIZE_BITS defines the minimum size guaranteed by indexed[0]
+/**
+ * IB_MPOOL_MIN_SIZE_BITS defines the minimum size guaranteed by indexed[0]
  * as a exponent of 2, so IB_MPOOL_MIN_SIZE_BITS 4 implies that 16 bytes can
  * be allocated in buffers linked from indexed[0] */
 #define IB_MPOOL_MIN_SIZE_BITS      4
 
-/* IB_MPOOL_REMAINING_LIMIT is the limit of available mem of a buffer.
+/**
+ * IB_MPOOL_REMAINING_LIMIT is the limit of available mem of a buffer.
  * Less mem than IB_MPOOL_MIN_SIZE_BITS makes the buffer to be considered as
  * full, so it will be moved to busy_buffers list */
 #define IB_MPOOL_REMAINING_LIMIT    (1 << IB_MPOOL_MIN_SIZE_BITS)
@@ -76,7 +80,6 @@ struct ib_mpool_buffer_t {
 
 /**
  * @internal
-
  * Memory pool structure.
  *     The behavior of ib_mpool_t can be changed by tuning sizes and definitions
  *     but right now, this is how empty memory (not allocated) of buffers
@@ -122,7 +125,8 @@ struct ib_mpool_t {
 
 /* Helper Macros for ib_mpool_t / ib_mpool_buffer_t */
 
-/* @internal
+/**
+ * @internal
  * Allocates mem for a var in a buffer. The addres is pointed by ptr.
  *
  * @param buf Pointer to the buffer
@@ -135,7 +139,8 @@ struct ib_mpool_t {
          (buf)->used += (rsize); \
         } while (0)
 
-/* @internal
+/**
+ * @internal
  * Reset the allocations of vars inside a buffer
  *
  * @param buf Pointer to the buffer
@@ -145,7 +150,8 @@ struct ib_mpool_t {
          (buf)->used = 0; \
         } while (0)
 
-/* @internal
+/**
+ * @internal
  * Returns the available mem (free mem) of a buffer
  *
  * @param buf Pointer to the buffer
@@ -153,7 +159,8 @@ struct ib_mpool_t {
 #define IB_MPOOL_BUFFER_AVAILABLE(buf) \
         ((int)((int)(buf)->size - (int)(buf)->used))
 
-/* @internal
+/**
+ * @internal
  * Determines if certain size can be allocated in a buffer
  *
  * @param buf Pointer to the buffer
@@ -162,7 +169,8 @@ struct ib_mpool_t {
 #define IB_MPOOL_BUFFER_IS_AVAILABLE(buf,rsize) \
         (( (int)((int)(buf)->size - (int)(buf)->used) > (int)(rsize)))
 
-/* @internal
+/**
+ * @internal
  * Creates a new buffer of size rsize
  *
  * @param buf Pointer to the buffer
@@ -184,8 +192,9 @@ struct ib_mpool_t {
      } \
     } while(0)
 
-/* @internal
- * Adds a buffer to the idexed[] lists
+/**
+ * @internal
+ * Adds a buffer to the indexed[] lists
  *
  * @param pool Pointer to the pool
  * @param rbuf Pointer to the buffer
@@ -204,7 +213,8 @@ struct ib_mpool_t {
      (pool)->current = (rbuf); \
     } while (0) 
 
-/* @internal
+/**
+ * @internal
  * Get the index that should be used for a buffer with 'size' available
  *
  * @param size Size of empty mem at the buffer to index
@@ -222,7 +232,8 @@ struct ib_mpool_t {
      } \
     }while(0)
 
-/* @internal
+/**
+ * @internal
  * Get the starting index where a buffer ready to allocate 'size' can be found
  *
  * @param size Size of the var to be allocated
