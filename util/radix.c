@@ -32,6 +32,7 @@
 #include <arpa/inet.h>
 
 #include <ironbee/util.h>
+#include <ironbee/engine.h>
 
 #include "ironbee_util_private.h"
 
