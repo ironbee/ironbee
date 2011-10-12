@@ -349,9 +349,9 @@ dnl -----------------------------------------------
 dnl Check for GCC -Wformat-nonliteral 
 dnl -----------------------------------------------
 AC_ARG_ENABLE(gcc_warn_format_nonliteral,
-              AS_HELP_STRING([--disable-gcc-warn-format-nonliteral], [Disable GCC warnings if the format string is not a string literal and so cannot be checked]))
+              AS_HELP_STRING([--enable-gcc-warn-format-nonliteral], [Disable GCC warnings if the format string is not a string literal and so cannot be checked]))
 
-    if test "$enable_gcc_warn_format_nonliteral" != "no"; then
+    if test "$enable_gcc_warn_format_nonliteral" = "yes"; then
         save_CFLAGS="${CFLAGS}"
         save_CXXFLAGS="${CXXFLAGS}"
 

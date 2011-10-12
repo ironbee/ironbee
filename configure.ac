@@ -198,7 +198,7 @@ sinclude(acinclude/xml2.m4)
 sinclude(acinclude/apxs.m4)
 sinclude(acinclude/apr.m4)
 sinclude(acinclude/apu.m4)
-
+sinclude(acinclude/ats.m4)
 # Required libs
 CHECK_HTP()
 CHECK_PCRE()
@@ -207,6 +207,7 @@ dnl TODO: These need to be optional (only if building apache httpd plugin)
 CHECK_APXS()
 CHECK_APR()
 CHECK_APU()
+CHECK_ATS()
 
 dnl Optional build modules
 dnl
