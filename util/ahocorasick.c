@@ -532,10 +532,17 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
     {
         child->fail = ac_tree->root;
         rc = ib_list_enqueue(iter_queue, (void *) child);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     while (ib_list_elements(iter_queue) > 0) {
         rc = ib_list_dequeue(iter_queue, (void *) &state);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         state->fail = ac_tree->root;
 
         if (state->parent != ac_tree->root) {
@@ -551,6 +558,9 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
              child = child->sibling)
         {
             rc = ib_list_enqueue(iter_queue, (void *) child);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
         }
     }
 
