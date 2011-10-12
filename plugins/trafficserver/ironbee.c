@@ -15,6 +15,7 @@
  * limitations under the License.
  *****************************************************************************/
 
+#define _POSIX_SOURCE 1
 #include <sys/socket.h>
 #include <netdb.h>
 
@@ -128,7 +129,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
   int64_t towrite;
   int64_t avail;
   int first_time = 0;
-  char *bufp;
+  char *bufp = NULL;
 
   TSDebug("ironbee", "Entering process_data()");
   /* Get the output (downstream) vconnection where we'll write data to. */
@@ -612,8 +613,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
   return 0;
 }
 
-int
-check_ts_version()
+static int
+check_ts_version(void)
 {
 
   const char *ts_version = TSTrafficServerVersionGet();
@@ -745,7 +746,7 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 //#define TRACEFILE "/tmp/ironbee-trace"
 #define TRACEFILE NULL
 
-static void ibexit()
+static void ibexit(void)
 {
   ib_engine_destroy(ironbee);
 }
@@ -823,9 +824,9 @@ TSPluginInit(int argc, const char *argv[])
   TSPluginRegistrationInfo info;
   TSCont cont;
 
-  info.plugin_name = "ironbee";
-  info.vendor_name = "Qualys, Inc";
-  info.support_email = "ironbee-users@lists.sourceforge.com";
+  info.plugin_name = (char *)"ironbee";
+  info.vendor_name = (char *)"Qualys, Inc";
+  info.support_email = (char *)"ironbee-users@lists.sourceforge.com";
 
   if (TSPluginRegister(TS_SDK_VERSION_3_0, &info) != TS_SUCCESS) {
     TSError("[ironbee] Plugin registration failed.\n");

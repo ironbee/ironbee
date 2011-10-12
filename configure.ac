@@ -214,7 +214,7 @@ dnl TODO: Make these configure opts
 dnl
 TOPLEVEL_SUBDIRS="libs util engine plugins lua modules etc docs tests"
 LIBS_SUBDIRS=""
-PLUGINS_SUBDIRS="apache_httpd2"
+PLUGINS_SUBDIRS="apache_httpd2 trafficserver"
 
 dnl Make sure abs_top_builddir is available
 AC_MSG_CHECKING([abs_top_builddir is available])
@@ -259,6 +259,7 @@ AC_CONFIG_FILES([engine/Makefile])
 
 AC_CONFIG_FILES([plugins/Makefile])
 AC_CONFIG_FILES([plugins/apache_httpd2/Makefile])
+AC_CONFIG_FILES([plugins/trafficserver/Makefile])
 
 AC_CONFIG_FILES([lua/Makefile])
 AC_CONFIG_FILES([modules/Makefile])

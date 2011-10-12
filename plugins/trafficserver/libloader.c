@@ -36,7 +36,7 @@ typedef struct {
 
 static link_handle *libs = NULL;
 
-static void unloadlibs()
+static void unloadlibs(void)
 {
   link_handle *p = libs;
   while (p != NULL) {
@@ -53,9 +53,9 @@ void TSPluginInit(int argc, const char *argv[])
   int i;
   TSPluginRegistrationInfo info;
 
-  info.plugin_name = "libloader";
-  info.vendor_name = "Qualys, Inc";
-  info.support_email = "ironbee-users@lists.sourceforge.com";
+  info.plugin_name = (char *)"libloader";
+  info.vendor_name = (char *)"Qualys, Inc";
+  info.support_email = (char *)"ironbee-users@lists.sourceforge.com";
 
   if (TSPluginRegister(TS_SDK_VERSION_3_0, &info) != TS_SUCCESS) {
     TSError("[libloader] Plugin registration failed.\n");
