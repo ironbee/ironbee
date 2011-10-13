@@ -1601,7 +1601,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     /* Zero the config structure if there is one. */
     if (m->gclen > 0) {
-        memset((void *)m->gcdata, 0, m->gclen);
+        memset(m->gcdata, 0, m->gclen);
     }
 
     /* Register directives */

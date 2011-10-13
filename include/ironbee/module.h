@@ -174,7 +174,7 @@ struct ib_module_t {
 
     /* Module Config */
     const char             *name;             /**< Module name */
-    const void             *gcdata;           /**< Global config data */
+    void                   *gcdata;           /**< Global config data */
     size_t                  gclen;            /**< Global config data length */
     const ib_cfgmap_init_t *cm_init;          /**< Module config mapping */
     const ib_dirmap_init_t *dm_init;          /**< Module directive mapping */
