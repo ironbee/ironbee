@@ -18,7 +18,6 @@ AC_DEFUN([CHECK_ATS],
             [  --with-ats-includes=DIR  apache traffic server include directory],
             [with_ats_includes="$withval"],[with_ats_includes=no])
     SAVE_CPPFLAGS="${CPPFLAGS}"
-    SAVE_CFLAGS="${CFLAGS}"
 
     if test "$with_ats_includes" != "no"; then
     CPPFLAGS="${CPPFLAGS} -I${with_ats_includes}"
@@ -28,7 +27,6 @@ AC_DEFUN([CHECK_ATS],
     AM_CONDITIONAL([BUILD_ATS_PLUGIN], [test "$HAVE_ATS" != "no"])
 
     if test "$HAVE_ATS" != "no"; then
-    ATS_CFLAGS="${CFLAGS} -DHAVE_ATS"
     ATS_CPPFLAGS="${CPPFLAGS}"
     fi
 
@@ -40,7 +38,6 @@ AC_DEFUN([CHECK_ATS],
     fi
 
     CPPFLAGS="${SAVE_CPPCFLAGS}"
-    CFLAGS="${SAVE_CFLAGS}"
 
 AC_SUBST(ATS_CFLAGS)
 AC_SUBST(ATS_CPPFLAGS)

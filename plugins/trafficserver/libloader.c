@@ -23,7 +23,6 @@
  * May be useful for other plugins with non-trivial
  * library dependencies.
  */
-#ifdef HAVE_ATS
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,4 +79,3 @@ void TSPluginInit(int argc, const char *argv[])
   return;
 
 }
-#endif /* HAVE_ATS */

@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *****************************************************************************/
-#ifdef HAVE_ATS
 #define _POSIX_SOURCE 1
 #include <sys/socket.h>
 #include <netdb.h>
@@ -857,4 +856,3 @@ TSPluginInit(int argc, const char *argv[])
 Lerror:
   TSError("[ironbee] Unable to initialize plugin (disabled).\n");
 }
-#endif /* HAVE_ATS */
