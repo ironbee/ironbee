@@ -4,6 +4,9 @@ SUBDIRS = @TOPLEVEL_SUBDIRS@
 include $(top_srcdir)/build/common.mk
 EXTRA_DIST = include
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = ironbee.pc
+
 doxygen doxygen-pdf:
 	@(cd docs && $(MAKE) $@)
 

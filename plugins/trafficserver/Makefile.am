@@ -4,6 +4,7 @@ include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/plugins.mk
 
 pkglibdir = $(prefix)/lib
+if BUILD_ATS_PLUGIN
 pkglib_LTLIBRARIES = libloader.la ironbee.la
 
 libloader_la_SOURCES = libloader.c
@@ -30,3 +31,4 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  base=`echo $$m | sed 's/\..*//'`; \
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
+endif

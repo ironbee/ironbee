@@ -25,6 +25,7 @@ AC_DEFUN([CHECK_ATS],
     fi
 
     AC_CHECK_HEADER(ts/ts.h,,HAVE_ATS="no")
+    AM_CONDITIONAL([BUILD_ATS_PLUGIN], [test "$HAVE_ATS" != "no"])
 
     if test "$HAVE_ATS" != "no"; then
     ATS_CFLAGS="${CFLAGS} -DHAVE_ATS"
