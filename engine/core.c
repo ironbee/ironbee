@@ -1786,9 +1786,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_timestamp(tstamp, &log->logtime);
 
     /* Log Format */
-    log_format = (char *)ib_mpool_memdup(pool,
-                                         CORE_AUDITLOG_FORMAT,
-                                         strlen(CORE_AUDITLOG_FORMAT) + 1);
+    log_format = ib_mpool_strdup(pool, CORE_AUDITLOG_FORMAT);
     if (log_format == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -3750,9 +3748,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("SensorId", name) == 0) {
         /* Store the ASCII version for logging */
-        ib->sensor_id_str =
-            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                          p1, strlen(p1));
+        ib->sensor_id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
 
         /* Calculate the binary version. */
         rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1);
@@ -3791,16 +3787,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorName", name) == 0) {
-        ib->sensor_name =
-            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                          p1, strlen(p1));
+        ib->sensor_name = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
         ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
         ib->sensor_hostname =
-            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                          p1, strlen(p1));
+            ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
         ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_hostname);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -3808,9 +3801,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_site_t *site = cp->cur_site;
 
         /* Store the ASCII version for logging */
-        site->id_str =
-            (const char *)ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                          p1, strlen(p1));
+        site->id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
 
         /* Calculate the binary version. */
         rc = ib_uuid_ascii_to_bin(&site->id, (const char *)p1);

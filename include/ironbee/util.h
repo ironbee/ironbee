@@ -275,6 +275,16 @@ void DLL_PUBLIC *ib_mpool_alloc(ib_mpool_t *mp, size_t size);
 void DLL_PUBLIC *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size);
 
 /**
+ * Duplicate a string.
+ *
+ * @param mp Memory pool
+ * @param src String to copy
+ *
+ * @returns Address of the duplicated string
+ */
+char DLL_PUBLIC *ib_mpool_strdup(ib_mpool_t *mp, const char *src);
+
+/**
  * Duplicate a memory block.
  *
  * @param mp Memory pool

@@ -260,12 +260,9 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    sig->target = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                  target, strlen(target));
-    sig->patt = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                 op, strlen(op));
-    sig->emsg = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                action, strlen(action));
+    sig->target = ib_mpool_strdup(ib_engine_pool_config_get(ib), target);
+    sig->patt = ib_mpool_strdup(ib_engine_pool_config_get(ib), op);
+    sig->emsg = ib_mpool_strdup(ib_engine_pool_config_get(ib), action);
 
     /* Compile the PCRE patt. */
     if (cfg->pcre == NULL) {

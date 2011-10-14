@@ -255,6 +255,7 @@ void *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size)
 {
     IB_FTRACE_INIT(ib_mpool_calloc);
     void *ptr = ib_mpool_alloc(mp, nelem * size);
+
     if (ptr == NULL) {
         IB_FTRACE_RET_PTR(void, NULL);
     }
@@ -262,10 +263,23 @@ void *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size)
     IB_FTRACE_RET_PTR(void, ptr);
 }
 
+char *ib_mpool_strdup(ib_mpool_t *mp, const char *src)
+{
+    IB_FTRACE_INIT(ib_mpool_strdup);
+    size_t size = strlen(src)+1;
+    void *ptr = ib_mpool_alloc(mp, size);
+
+    if (ptr != NULL) {
+        memcpy(ptr, src, size);
+    }
+    IB_FTRACE_RET_PTR(char, ptr);
+}
+
 void *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size)
 {
     IB_FTRACE_INIT(ib_mpool_memdup);
     void *ptr = ib_mpool_alloc(mp, size);
+
     if (ptr != NULL) {
         memcpy(ptr, src, size);
     }

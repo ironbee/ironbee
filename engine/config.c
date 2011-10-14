@@ -588,7 +588,7 @@ ib_status_t ib_site_create(ib_site_t **psite,
     }
     (*psite)->ib = ib;
     (*psite)->mp = pool;
-    (*psite)->name = (const char *)ib_mpool_memdup(pool, name, strlen(name)+1);
+    (*psite)->name = ib_mpool_strdup(pool, name);
 
 
     /* Remaining fields are NULL via calloc. */
@@ -676,7 +676,7 @@ ib_status_t ib_site_loc_create(ib_site_t *site,
     }
     loc->site = site;
     loc->path = path;
-    loc->path = (const char *)ib_mpool_memdup(site->mp, path, strlen(path)+1);
+    loc->path = ib_mpool_strdup(site->mp, path);
 
     if (ploc != NULL) {
         *ploc = loc;

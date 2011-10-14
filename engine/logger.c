@@ -240,7 +240,7 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
     va_end(ap);
 
     /* Copy the formatted message. */
-    (*ple)->msg = (char *)ib_mpool_memdup(pool, buf, strlen(buf) + 1);
+    (*ple)->msg = ib_mpool_strdup(pool, buf);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

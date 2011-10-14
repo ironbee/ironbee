@@ -281,14 +281,10 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    sig->target = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                  target, strlen(target));
-    sig->prequal = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                 prequal, strlen(prequal));
-    sig->patt = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                 op, strlen(op));
-    sig->emsg = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                action, strlen(action));
+    sig->target = ib_mpool_strdup(ib_engine_pool_config_get(ib), target);
+    sig->prequal = ib_mpool_strdup(ib_engine_pool_config_get(ib), prequal);
+    sig->patt = ib_mpool_strdup(ib_engine_pool_config_get(ib), op);
+    sig->emsg = ib_mpool_strdup(ib_engine_pool_config_get(ib), action);
 
     /* Compile the PCRE patt. */
     if (cfg->pcre == NULL) {
@@ -340,8 +336,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         }
 
         /** Copy the target field name */
-        pfe->target = ib_mpool_memdup(ib_engine_pool_config_get(ib),
-                                      target, strlen(target));
+        pfe->target = ib_mpool_strdup(ib_engine_pool_config_get(ib), target);
 
         /** Append it to the phase list */
         rc = ib_list_push(sigs, pfe);

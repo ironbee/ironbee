@@ -306,7 +306,7 @@ ib_status_t ib_filter_register(ib_filter_t **pf,
     }
 
     (*pf)->ib = ib;
-    (*pf)->name = (const char *)ib_mpool_memdup(ib->mp, name, strlen(name) + 1);
+    (*pf)->name = ib_mpool_strdup(ib->mp, name);
     (*pf)->type = type;
     (*pf)->options = options;
     (*pf)->idx = ib_array_elements(ib->filters);
