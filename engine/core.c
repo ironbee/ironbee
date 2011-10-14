@@ -235,7 +235,7 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
 
     rc = ib_list_push(log->parts, part);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
