@@ -38,17 +38,29 @@
 #include "config-parser.h"
 #include "ironbee_private.h"
 
+typedef struct {
+    char    *p;
+    char    *pe;
+    char    *eof;
+    char    *ts;
+    char    *te;
+    int      cs;
+    int      top;
+    int      act;
+    int      stack[1024];
+} fsm_t;
+
 static char *dirname = NULL;
 static char *blkname = NULL;
 static char *pval = NULL;
 static char *mark = NULL;
 
 
-#line 164 "config-parser.rl"
+#line 176 "config-parser.rl"
 
 
 
-#line 52 "config-parser.c"
+#line 64 "config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 10, 1, 15, 1, 
 	19, 1, 21, 1, 23, 1, 25, 1, 
@@ -203,7 +215,7 @@ static const int ironbee_config_en_endblock = 32;
 static const int ironbee_config_en_main = 16;
 
 
-#line 167 "config-parser.rl"
+#line 179 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            uint8_t *buf,
@@ -215,19 +227,15 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     ib_list_t *plist;
     /// @todo Which should be in cp???
     char *data = (char *)buf;
-    char *p = data;
-    char *pe = p + blen;
-    char *eof = 0;
-    char *ts;
-    char *te;
-    int cs;
-    int top;
-    int act;
-    int stack[1024];
+    fsm_t fsm;
+
+    fsm.p = data;
+    fsm.pe = fsm.p + blen;
+    fsm.eof = 0;
 
     /* Init */
-    mark = p;
-    memset(stack, 0, sizeof(stack));
+    mark = fsm.p;
+    memset(fsm.stack, 0, sizeof(fsm.stack));
 
     /* Create a temporary list for storing parameter values. */
     ib_list_create(&plist, mptmp);
@@ -235,19 +243,29 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
         return IB_EALLOC;
     }
 
+    /* Access all ragel state variables via structure. */
     
-#line 240 "config-parser.c"
+#line 208 "config-parser.rl"
+    
+#line 209 "config-parser.rl"
+    
+#line 210 "config-parser.rl"
+    
+#line 211 "config-parser.rl"
+
+    
+#line 258 "config-parser.c"
 	{
-	cs = ironbee_config_start;
-	top = 0;
-	ts = 0;
-	te = 0;
-	act = 0;
+	 fsm.cs = ironbee_config_start;
+	 fsm.top = 0;
+	 fsm.ts = 0;
+	 fsm.te = 0;
+	 fsm.act = 0;
 	}
 
-#line 199 "config-parser.rl"
+#line 213 "config-parser.rl"
     
-#line 251 "config-parser.c"
+#line 269 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -255,27 +273,27 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	unsigned int _nacts;
 	const char *_keys;
 
-	if ( p == pe )
+	if ( ( fsm.p) == ( fsm.pe) )
 		goto _test_eof;
-	if ( cs == 0 )
+	if (  fsm.cs == 0 )
 		goto _out;
 _resume:
-	_acts = _ironbee_config_actions + _ironbee_config_from_state_actions[cs];
+	_acts = _ironbee_config_actions + _ironbee_config_from_state_actions[ fsm.cs];
 	_nacts = (unsigned int) *_acts++;
 	while ( _nacts-- > 0 ) {
 		switch ( *_acts++ ) {
 	case 10:
 #line 1 "NONE"
-	{ts = p;}
+	{ fsm.ts = ( fsm.p);}
 	break;
-#line 272 "config-parser.c"
+#line 290 "config-parser.c"
 		}
 	}
 
-	_keys = _ironbee_config_trans_keys + _ironbee_config_key_offsets[cs];
-	_trans = _ironbee_config_index_offsets[cs];
+	_keys = _ironbee_config_trans_keys + _ironbee_config_key_offsets[ fsm.cs];
+	_trans = _ironbee_config_index_offsets[ fsm.cs];
 
-	_klen = _ironbee_config_single_lengths[cs];
+	_klen = _ironbee_config_single_lengths[ fsm.cs];
 	if ( _klen > 0 ) {
 		const char *_lower = _keys;
 		const char *_mid;
@@ -285,9 +303,9 @@ _resume:
 				break;
 
 			_mid = _lower + ((_upper-_lower) >> 1);
-			if ( (*p) < *_mid )
+			if ( (*( fsm.p)) < *_mid )
 				_upper = _mid - 1;
-			else if ( (*p) > *_mid )
+			else if ( (*( fsm.p)) > *_mid )
 				_lower = _mid + 1;
 			else {
 				_trans += (_mid - _keys);
@@ -298,7 +316,7 @@ _resume:
 		_trans += _klen;
 	}
 
-	_klen = _ironbee_config_range_lengths[cs];
+	_klen = _ironbee_config_range_lengths[ fsm.cs];
 	if ( _klen > 0 ) {
 		const char *_lower = _keys;
 		const char *_mid;
@@ -308,9 +326,9 @@ _resume:
 				break;
 
 			_mid = _lower + (((_upper-_lower) >> 1) & ~1);
-			if ( (*p) < _mid[0] )
+			if ( (*( fsm.p)) < _mid[0] )
 				_upper = _mid - 2;
-			else if ( (*p) > _mid[1] )
+			else if ( (*( fsm.p)) > _mid[1] )
 				_lower = _mid + 2;
 			else {
 				_trans += ((_mid - _keys)>>1);
@@ -323,7 +341,7 @@ _resume:
 _match:
 	_trans = _ironbee_config_indicies[_trans];
 _eof_trans:
-	cs = _ironbee_config_trans_targs[_trans];
+	 fsm.cs = _ironbee_config_trans_targs[_trans];
 
 	if ( _ironbee_config_trans_actions[_trans] == 0 )
 		goto _again;
@@ -335,13 +353,13 @@ _eof_trans:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 47 "config-parser.rl"
-	{ mark = p; }
+#line 59 "config-parser.rl"
+	{ mark = ( fsm.p); }
 	break;
 	case 1:
-#line 53 "config-parser.rl"
+#line 65 "config-parser.rl"
 	{
-        char *afpc = p;
+        char *afpc = ( fsm.p);
         size_t pvallen;
         /* Adjust for quoted value. */
         if ((*mark == '"') && (*(afpc-1) == '"') && (mark+1 < afpc-2)) {
@@ -355,9 +373,9 @@ _eof_trans:
     }
 	break;
 	case 2:
-#line 66 "config-parser.rl"
+#line 78 "config-parser.rl"
 	{
-        char *afpc = p;
+        char *afpc = ( fsm.p);
         size_t pvallen;
         /* Adjust for quoted value. */
         if ((*mark == '"') && (*(afpc-1) == '"') && (mark+1 < afpc-2)) {
@@ -371,16 +389,16 @@ _eof_trans:
     }
 	break;
 	case 3:
-#line 81 "config-parser.rl"
+#line 93 "config-parser.rl"
 	{
-        size_t namelen = (size_t)(p - mark);
+        size_t namelen = (size_t)(( fsm.p) - mark);
         dirname = (char *)calloc(namelen + 1, sizeof(*dirname));
         memcpy(dirname, mark, namelen);
         ib_list_clear(plist);
     }
 	break;
 	case 4:
-#line 87 "config-parser.rl"
+#line 99 "config-parser.rl"
 	{
         rc = ib_config_directive_process(cp, dirname, plist);
         if (rc != IB_OK) {
@@ -392,16 +410,16 @@ _eof_trans:
     }
 	break;
 	case 5:
-#line 98 "config-parser.rl"
+#line 110 "config-parser.rl"
 	{
-        size_t namelen = (size_t)(p - mark);
+        size_t namelen = (size_t)(( fsm.p) - mark);
         blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
         memcpy(blkname, mark, namelen);
         ib_list_clear(plist);
     }
 	break;
 	case 6:
-#line 104 "config-parser.rl"
+#line 116 "config-parser.rl"
 	{
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
@@ -410,7 +428,7 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 110 "config-parser.rl"
+#line 122 "config-parser.rl"
 	{
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
@@ -425,181 +443,181 @@ _eof_trans:
 	break;
 	case 11:
 #line 1 "NONE"
-	{te = p+1;}
+	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 12:
-#line 137 "config-parser.rl"
-	{act = 1;}
+#line 149 "config-parser.rl"
+	{ fsm.act = 1;}
 	break;
 	case 13:
-#line 138 "config-parser.rl"
-	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
+#line 150 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 14:
-#line 137 "config-parser.rl"
-	{te = p;p--;}
+#line 149 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 15:
 #line 1 "NONE"
-	{	switch( act ) {
+	{	switch(  fsm.act ) {
 	case 0:
-	{{cs = 0; goto _again;}}
+	{{ fsm.cs = 0; goto _again;}}
 	break;
 	default:
-	{{p = ((te))-1;}}
+	{{( fsm.p) = (( fsm.te))-1;}}
 	break;
 	}
 	}
 	break;
 	case 16:
-#line 142 "config-parser.rl"
-	{act = 3;}
+#line 154 "config-parser.rl"
+	{ fsm.act = 3;}
 	break;
 	case 17:
-#line 143 "config-parser.rl"
-	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
+#line 155 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 18:
-#line 142 "config-parser.rl"
-	{te = p;p--;}
+#line 154 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 19:
 #line 1 "NONE"
-	{	switch( act ) {
+	{	switch(  fsm.act ) {
 	case 0:
-	{{cs = 0; goto _again;}}
+	{{ fsm.cs = 0; goto _again;}}
 	break;
 	default:
-	{{p = ((te))-1;}}
+	{{( fsm.p) = (( fsm.te))-1;}}
 	break;
 	}
 	}
 	break;
 	case 20:
-#line 147 "config-parser.rl"
-	{act = 5;}
+#line 159 "config-parser.rl"
+	{ fsm.act = 5;}
 	break;
 	case 21:
-#line 148 "config-parser.rl"
-	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
+#line 160 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 22:
-#line 147 "config-parser.rl"
-	{te = p;p--;{ {stack[top++] = cs; cs = 26; goto _again;} }}
+#line 159 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 26; goto _again;} }}
 	break;
 	case 23:
 #line 1 "NONE"
-	{	switch( act ) {
+	{	switch(  fsm.act ) {
 	case 0:
-	{{cs = 0; goto _again;}}
+	{{ fsm.cs = 0; goto _again;}}
 	break;
 	case 5:
-	{{p = ((te))-1;} {stack[top++] = cs; cs = 26; goto _again;} }
+	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 26; goto _again;} }
 	break;
 	}
 	}
 	break;
 	case 24:
-#line 152 "config-parser.rl"
-	{act = 7;}
+#line 164 "config-parser.rl"
+	{ fsm.act = 7;}
 	break;
 	case 25:
-#line 153 "config-parser.rl"
-	{te = p+1;{ {cs = stack[--top]; goto _again;} }}
+#line 165 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 26:
-#line 152 "config-parser.rl"
-	{te = p;p--;}
+#line 164 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 27:
 #line 1 "NONE"
-	{	switch( act ) {
+	{	switch(  fsm.act ) {
 	case 0:
-	{{cs = 0; goto _again;}}
+	{{ fsm.cs = 0; goto _again;}}
 	break;
 	default:
-	{{p = ((te))-1;}}
+	{{( fsm.p) = (( fsm.te))-1;}}
 	break;
 	}
 	}
 	break;
 	case 28:
-#line 158 "config-parser.rl"
-	{act = 10;}
+#line 170 "config-parser.rl"
+	{ fsm.act = 10;}
 	break;
 	case 29:
-#line 161 "config-parser.rl"
-	{act = 13;}
+#line 173 "config-parser.rl"
+	{ fsm.act = 13;}
 	break;
 	case 30:
-#line 159 "config-parser.rl"
-	{te = p+1;{ {stack[top++] = cs; cs = 32; goto _again;} }}
+#line 171 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 32; goto _again;} }}
 	break;
 	case 31:
-#line 162 "config-parser.rl"
-	{te = p+1;}
+#line 174 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 32:
-#line 157 "config-parser.rl"
-	{te = p;p--;}
+#line 169 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 33:
-#line 158 "config-parser.rl"
-	{te = p;p--;{ {stack[top++] = cs; cs = 22; goto _again;} }}
+#line 170 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 22; goto _again;} }}
 	break;
 	case 34:
-#line 160 "config-parser.rl"
-	{te = p;p--;{ {stack[top++] = cs; cs = 29; goto _again;} }}
+#line 172 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 29; goto _again;} }}
 	break;
 	case 35:
-#line 161 "config-parser.rl"
-	{te = p;p--;}
+#line 173 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 36:
 #line 1 "NONE"
-	{	switch( act ) {
+	{	switch(  fsm.act ) {
 	case 0:
-	{{cs = 0; goto _again;}}
+	{{ fsm.cs = 0; goto _again;}}
 	break;
 	case 10:
-	{{p = ((te))-1;} {stack[top++] = cs; cs = 22; goto _again;} }
+	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 22; goto _again;} }
 	break;
 	default:
-	{{p = ((te))-1;}}
+	{{( fsm.p) = (( fsm.te))-1;}}
 	break;
 	}
 	}
 	break;
-#line 574 "config-parser.c"
+#line 592 "config-parser.c"
 		}
 	}
 
 _again:
-	_acts = _ironbee_config_actions + _ironbee_config_to_state_actions[cs];
+	_acts = _ironbee_config_actions + _ironbee_config_to_state_actions[ fsm.cs];
 	_nacts = (unsigned int) *_acts++;
 	while ( _nacts-- > 0 ) {
 		switch ( *_acts++ ) {
 	case 8:
 #line 1 "NONE"
-	{ts = 0;}
+	{ fsm.ts = 0;}
 	break;
 	case 9:
 #line 1 "NONE"
-	{act = 0;}
+	{ fsm.act = 0;}
 	break;
-#line 591 "config-parser.c"
+#line 609 "config-parser.c"
 		}
 	}
 
-	if ( cs == 0 )
+	if (  fsm.cs == 0 )
 		goto _out;
-	if ( ++p != pe )
+	if ( ++( fsm.p) != ( fsm.pe) )
 		goto _resume;
 	_test_eof: {}
-	if ( p == eof )
+	if ( ( fsm.p) == ( fsm.eof) )
 	{
-	if ( _ironbee_config_eof_trans[cs] > 0 ) {
-		_trans = _ironbee_config_eof_trans[cs] - 1;
+	if ( _ironbee_config_eof_trans[ fsm.cs] > 0 ) {
+		_trans = _ironbee_config_eof_trans[ fsm.cs] - 1;
 		goto _eof_trans;
 	}
 	}
@@ -607,7 +625,7 @@ _again:
 	_out: {}
 	}
 
-#line 200 "config-parser.rl"
+#line 214 "config-parser.rl"
 
     return IB_OK;
 }

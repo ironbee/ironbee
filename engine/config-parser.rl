@@ -36,6 +36,18 @@
 #include "config-parser.h"
 #include "ironbee_private.h"
 
+typedef struct {
+    char    *p;
+    char    *pe;
+    char    *eof;
+    char    *ts;
+    char    *te;
+    int      cs;
+    int      top;
+    int      act;
+    int      stack[1024];
+} fsm_t;
+
 static char *dirname = NULL;
 static char *blkname = NULL;
 static char *pval = NULL;
@@ -175,25 +187,27 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     ib_list_t *plist;
     /// @todo Which should be in cp???
     char *data = (char *)buf;
-    char *p = data;
-    char *pe = p + blen;
-    char *eof = 0;
-    char *ts;
-    char *te;
-    int cs;
-    int top;
-    int act;
-    int stack[1024];
+    fsm_t fsm;
+
+    fsm.p = data;
+    fsm.pe = fsm.p + blen;
+    fsm.eof = 0;
 
     /* Init */
-    mark = p;
-    memset(stack, 0, sizeof(stack));
+    mark = fsm.p;
+    memset(fsm.stack, 0, sizeof(fsm.stack));
 
     /* Create a temporary list for storing parameter values. */
     ib_list_create(&plist, mptmp);
     if (plist == NULL) {
         return IB_EALLOC;
     }
+
+    /* Access all ragel state variables via structure. */
+    %% access fsm.;
+    %% variable p fsm.p;
+    %% variable pe fsm.pe;
+    %% variable eof fsm.eof;
 
     %% write init;
     %% write exec;
