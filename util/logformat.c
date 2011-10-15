@@ -73,7 +73,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
     literal[0] = '\0';
 
     /* Store the original format (right now its just for debugging purposses) */
-    lf->orig_format = (char *)ib_mpool_memdup(lf->mp, format, strlen(format) + 1);
+    lf->orig_format = ib_mpool_strdup(lf->mp, format);
     if (lf->orig_format == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -134,8 +134,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
 
                     /* Add string end for later usage with *printf() functions*/
                     literal[j] = '\0';
-                    lf->literals[l] = (char *)ib_mpool_memdup(lf->mp,
-                                                              literal, j + 1);
+                    lf->literals[l] = ib_mpool_strdup(lf->mp, literal);
                     if (lf->literals[l] == NULL) {
                         /* Uops.. */
                         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -199,7 +198,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
         }
         literal[j] = '\0';
         lf->literals_len[l] = j;
-        lf->literals[l++] = (char *)ib_mpool_memdup(lf->mp, literal, j + 1);
+        lf->literals[l++] = ib_mpool_strdup(lf->mp, literal);
     }
     lf->literal_cnt = l;
 

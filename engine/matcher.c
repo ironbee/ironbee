@@ -57,7 +57,7 @@ ib_status_t ib_matcher_create(ib_engine_t *ib,
     (*pm)->mp = pool;
     (*pm)->mpr = mpr;
     (*pm)->mpi = NULL;
-    (*pm)->key = ib_mpool_memdup(pool, key, strlen(key) + 1);
+    (*pm)->key = ib_mpool_strdup(pool, key);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -86,7 +86,7 @@ ib_status_t ib_matcher_instance_create(ib_engine_t *ib,
     (*pm)->mp = pool;
     (*pm)->mpr = mpr;
 
-    (*pm)->key = ib_mpool_memdup(pool, key, strlen(key) + 1);
+    (*pm)->key = ib_mpool_strdup(pool, key);
 
     rc = ib_provider_instance_create_ex(ib, mpr, &((*pm)->mpi), pool,
                                         NULL);
