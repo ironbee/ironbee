@@ -267,7 +267,7 @@ char *ib_mpool_strdup(ib_mpool_t *mp, const char *src)
 {
     IB_FTRACE_INIT(ib_mpool_strdup);
     size_t size = strlen(src)+1;
-    void *ptr = ib_mpool_alloc(mp, size);
+    char *ptr = (char *)ib_mpool_alloc(mp, size);
 
     if (ptr != NULL) {
         memcpy(ptr, src, size);
