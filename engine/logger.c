@@ -369,6 +369,13 @@ void ib_vclog_ex(ib_context_t *ctx, int level,
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
+    char prefix_with_pid[1024];
+
+    if (prefix) {
+      snprintf(prefix_with_pid, 1024, "[%d] %s", getpid(), prefix);
+    } else {
+      snprintf(prefix_with_pid, 1024, "[%d] ", getpid());
+    }
 
     if (ctx != NULL) {
         rc = ib_context_module_config(ctx, ib_core_module(),
@@ -380,13 +387,13 @@ void ib_vclog_ex(ib_context_t *ctx, int level,
         if (pi != NULL) {
             api = (IB_PROVIDER_API_TYPE(logger) *)pi->pr->api;
 
-            api->vlogmsg(pi, ctx, level, prefix, file, line, fmt, ap);
+            api->vlogmsg(pi, ctx, level, prefix_with_pid, file, line, fmt, ap);
 
             IB_FTRACE_RET_VOID();
         }
     }
 
-    default_logger(stderr, level, prefix, file, line, fmt, ap);
+    default_logger(stderr, level, prefix_with_pid, file, line, fmt, ap);
 }
 
 ib_status_t ib_clog_event(ib_context_t *ctx,
