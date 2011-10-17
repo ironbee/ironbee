@@ -65,6 +65,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(&tx->request_uri);
     bstr_free(&tx->request_uri_normalized);
     bstr_free(&tx->request_protocol);
+    bstr_free(&tx->request_headers_sep);
 
     if (tx->parsed_uri != NULL) {
         bstr_free(&tx->parsed_uri->scheme);
@@ -122,6 +123,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(&tx->response_protocol);
     bstr_free(&tx->response_status);
     bstr_free(&tx->response_message);
+    bstr_free(&tx->response_headers_sep);
 
     // Destroy response_header_lines
     hl = NULL;
