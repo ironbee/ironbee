@@ -263,10 +263,21 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
         itx->path = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->path);
     }
+    if (itx->path == NULL) {
+        ib_log_debug(ib, 4, "Unknown URI path - using /");
+        /// @todo Probably should set a flag here
+        itx->path = (const char *)ib_mpool_strdup(itx->mp, "/");
+    }
 
     /* Store the hostname if it was parsed with the URI. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
         itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
+    }
+    if (itx->hostname == NULL) {
+        ib_log_debug(ib, 4, "Unknown hostname - using ip: ", iconn->local_ipstr);
+        /// @todo Probably should set a flag here
+        itx->hostname = (const char *)ib_mpool_strdup(itx->mp,
+                                                      iconn->local_ipstr);
     }
 
     /* Fill in a temporary ib_txdata_t structure and use it
@@ -316,9 +327,15 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
 
-    /* Update the hostname. */
-    if (tx->parsed_uri != NULL) {
+    /* Update the hostname that may have changed with headers. */
+    if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
         itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
+    }
+    if (itx->hostname == NULL) {
+        ib_log_debug(ib, 4, "Unknown hostname - using ip: ", iconn->local_ipstr);
+        /// @todo Probably should set a flag here
+        itx->hostname = (const char *)ib_mpool_strdup(itx->mp,
+                                                      iconn->local_ipstr);
     }
 
     /* Fill in a temporary ib_txdata_t structure for each header line
