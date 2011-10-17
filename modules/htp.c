@@ -274,7 +274,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
     }
     if (itx->hostname == NULL) {
-        ib_log_debug(ib, 4, "Unknown hostname - using ip: ", iconn->local_ipstr);
+        ib_log_debug(ib, 4, "Unknown hostname - using ip: %s", iconn->local_ipstr);
         /// @todo Probably should set a flag here
         itx->hostname = (const char *)ib_mpool_strdup(itx->mp,
                                                       iconn->local_ipstr);
@@ -332,7 +332,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
         itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
     }
     if (itx->hostname == NULL) {
-        ib_log_debug(ib, 4, "Unknown hostname - using ip: ", iconn->local_ipstr);
+        ib_log_debug(ib, 4, "Unknown hostname - using ip: %s", iconn->local_ipstr);
         /// @todo Probably should set a flag here
         itx->hostname = (const char *)ib_mpool_strdup(itx->mp,
                                                       iconn->local_ipstr);
