@@ -213,7 +213,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="libs util engine plugins lua modules etc docs tests"
+TOPLEVEL_SUBDIRS="libs util engine plugins lua modules etc docs tests cli"
 LIBS_SUBDIRS=""
 PLUGINS_SUBDIRS="apache_httpd2 trafficserver"
 
@@ -261,6 +261,8 @@ AC_CONFIG_FILES([engine/Makefile])
 AC_CONFIG_FILES([plugins/Makefile])
 AC_CONFIG_FILES([plugins/apache_httpd2/Makefile])
 AC_CONFIG_FILES([plugins/trafficserver/Makefile])
+
+AC_CONFIG_FILES([cli/Makefile])
 
 AC_CONFIG_FILES([lua/Makefile])
 AC_CONFIG_FILES([modules/Makefile])
