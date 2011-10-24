@@ -568,7 +568,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
      * are not yet available.
      * Can we use another case switch in this function?
      */
-    TSHttpTxnHookAdd(txnp, TS_HTTP_OS_DNS_HOOK, contp);
+    //TSHttpTxnHookAdd(txnp, TS_HTTP_OS_DNS_HOOK, contp);
+    TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
 
     /* hook an input filter to watch data */
     connp = TSTransformCreate(in_data_event, txnp);
@@ -578,9 +579,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
     break;
 
-  /* hook for processing request headers */
-  /* No idea why it's called OS_DNS, but it figures in sample plugins */
-  case TS_EVENT_HTTP_OS_DNS:
+  /* hook for processing incoming request/headers */
+  case TS_EVENT_HTTP_PRE_REMAP:
     txndata = TSContDataGet(contp);
     process_hdr(txndata, txnp, &ironbee_direction_req);
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
