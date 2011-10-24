@@ -283,54 +283,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
   }
 }
 
-#if 0
-/* THIS IS A CLONE OF OUT_DATA_EVENT AND IS UNLIKELY TO WORK - YET */
-static int in_data_event(TSCont contp, TSEvent event, void *edata)
-{
-  TSDebug("ironbee", "Entering in_data_event()");
-  if (TSVConnClosedGet(contp)) {
-    TSDebug("ironbee", "\tVConn is closed");
-    TSContDestroy(contp);	/* from null-transform, ???? */
-
-
-    return 0;
-  }
-  switch (event) {
-    case TS_EVENT_ERROR:
-      {
-        TSVIO input_vio;
-
-        TSDebug("ironbee", "\tEvent is TS_EVENT_ERROR");
-        /* Get the write VIO for the write operation that was
-         * performed on ourself. This VIO contains the continuation of
-         * our parent transformation. This is the input VIO.
-         */
-        input_vio = TSVConnWriteVIOGet(contp);
-
-        /* Call back the write VIO continuation to let it know that we
-         * have completed the write operation.
-         */
-        TSContCall(TSVIOContGet(input_vio), TS_EVENT_ERROR, input_vio);
-      }
-      break;
-  case TS_EVENT_VCONN_WRITE_COMPLETE:
-    TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
-    break;
-    case TS_EVENT_VCONN_WRITE_READY:
-      TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_READY");
-      /* fallthrough */
-    default:
-      TSDebug("ironbee", "\t(event is %d)", event);
-      /* If we get a WRITE_READY event or any other type of
-       * event (sent, perhaps, because we were reenabled) then
-       * we'll attempt to transform more data.
-       */
-      process_data(contp, NULL);
-      break;
-  }
-  return 0;
-}
-#endif
 static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 {
   /* Check to see if the transformation has been closed by a call to
@@ -424,21 +376,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
   icdata.conn = data->ssn->iconn;
 
   /* before the HTTP headers comes the request line / response code */
-#if 0
-  /* The BytesGet functions don't correspond with actual byte counts
-   * for a Request, so we can't use them to set a buf size!
-   */
-  if (ibd->dir == IBD_RESP) {
-    //icdata.dlen = TSHttpTxnServerRespHdrBytesGet(txnp);
-    rv = TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc);
-  }
-  else {
-    //icdata.dlen = TSHttpTxnClientReqHdrBytesGet(txnp);
-    rv = TSHttpTxnClientReqGet(txnp, &bufp, &hdr_loc);
-  }
-#else
   rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
-#endif
   if (rv) {
     TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
     return;
