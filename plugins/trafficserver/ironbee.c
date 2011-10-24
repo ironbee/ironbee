@@ -42,6 +42,8 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 #define ADDRSIZE 48	/* what's the longest IPV6 addr ? */
 
 ib_engine_t DLL_LOCAL *ironbee = NULL;
+TSTextLogObject ironbee_log;
+#define DEFAULT_LOG "ts-ironbee"
 
 /* Plugin Structure */
 ib_plugin_t DLL_LOCAL ibplugin = {
@@ -650,18 +652,25 @@ static void ironbee_logger(void *dummy, int level,
     char buf[8192 + 1];
     int limit = 7000;
     int ec;
+    TSReturnCode rc;
+    char *errmsg = NULL;
 
     /* Buffer the log line. */
     ec = vsnprintf(buf, sizeof(buf), fmt, ap);
     if (ec >= limit) {
         /* Mark as truncated, with a " ...". */
         memcpy(buf + (limit - 5), " ...", 5);
-
-        /// @todo Do something about it
+        errmsg = "Data truncated in log";
     }
 
-    /* Write it to the error log. */
-    TSError("[ts-ironbee] %s: %s\n", prefix?prefix:"", buf);
+    /* Write it to the ironbee log. */
+    rc = prefix ? TSTextLogObjectWrite(ironbee_log, "%s: %s\n", prefix, buf)
+                : TSTextLogObjectWrite(ironbee_log, "%s\n", buf);
+    if (rc != TS_SUCCESS) {
+        errmsg = "Data logging failed!";
+    }
+    if (errmsg != NULL)
+        TSError("[ts-ironbee] %s\n", errmsg);
 }
 static void addr2str(const struct sockaddr *addr, char *str, int *port)
 {
@@ -737,9 +746,6 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 };
 
 
-
-
-
 /* this can presumably be global since it's only setup on init */
 //static ironbee_config_t ibconfig;
 //#define TRACEFILE "/tmp/ironbee-trace"
@@ -747,13 +753,14 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 
 static void ibexit()
 {
+  TSTextLogObjectDestroy(ironbee_log);
   ib_engine_destroy(ironbee);
 }
-static int ironbee_init(const char *configfile)
+static int ironbee_init(const char *configfile, const char *logfile)
 {
   /* grab from httpd module's post-config */
   ib_status_t rc;
-  ib_provider_t *lpr;
+//  ib_provider_t *lpr;
   ib_cfgparser_t *cp;
   ib_context_t *ctx;
 
@@ -772,7 +779,7 @@ static int ironbee_init(const char *configfile)
   }
 
   rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, "ironbee-ts",
-                            &lpr, &ironbee_logger_iface, NULL);
+                            NULL, &ironbee_logger_iface, NULL);
   if (rc != IB_OK) {
     return rc;
   }
@@ -785,6 +792,14 @@ static int ironbee_init(const char *configfile)
   rc = ib_engine_init(ironbee);
   if (rc != IB_OK) {
     return rc;
+  }
+
+  /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
+   * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
+   */
+  rc = TSTextLogObjectCreate(logfile, TS_LOG_MODE_ADD_TIMESTAMP, &ironbee_log);
+  if (rc != TS_SUCCESS) {
+    return IB_OK + rc;
   }
    
   rc = atexit(ibexit);
@@ -843,11 +858,11 @@ TSPluginInit(int argc, const char *argv[])
   TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
 
 
-  if (argc != 2) {
-    TSError("[ironbee] requires one argument: configuration file name\n");
+  if (argc < 2) {
+    TSError("[ironbee] configuration file name required\n");
     goto Lerror;
   }
-  rv = ironbee_init(argv[1]);
+  rv = ironbee_init(argv[1], argc >= 3 ? argv[2] : DEFAULT_LOG);
   if (rv != IB_OK) {
     TSError("[ironbee] initialisation failed with %d\n", rv);
   }
