@@ -371,9 +371,10 @@ void ib_vclog_ex(ib_context_t *ctx, int level,
     ib_status_t rc;
     char prefix_with_pid[1024];
 
-    if (prefix) {
+    if (prefix != NULL) {
       snprintf(prefix_with_pid, 1024, "[%d] %s", getpid(), prefix);
-    } else {
+    }
+    else {
       snprintf(prefix_with_pid, 1024, "[%d] ", getpid());
     }
 
