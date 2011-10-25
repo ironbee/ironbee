@@ -7,11 +7,10 @@ rm -rf autom4te.cache
 set -x
 aclocal
 # TODO: detect glibtoolize
-if [ x"$OSTYPE" = x"darwin10.0" ]; then
-    glibtoolize --automake --force --copy
-else
-    libtoolize --automake --force --copy
-fi
+case x"$OSTYPE" in
+    xdarwin*) glibtoolize --automake --force --copy ;;
+    *) libtoolize --automake --force --copy ;;
+esac
 autoconf
 autoheader
 automake --add-missing --force --copy --foreign
