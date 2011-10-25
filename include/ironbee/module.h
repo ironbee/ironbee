@@ -116,7 +116,7 @@ extern "C" {
                                       0
 
 /** Module config structure and size */
-#define IB_MODULE_CONFIG(ptr)         (ptr), (ptr ? sizeof(*(ptr)) : 0)
+#define IB_MODULE_CONFIG(ptr)         (ptr), (sizeof(*(ptr)))
 
 /** Used to signify that there is no config structure for the module. */
 #define IB_MODULE_CONFIG_NULL         NULL, 0
