@@ -34,8 +34,6 @@
 #include <arpa/inet.h> /* htonl */
 #include <unistd.h>
 
-
-
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/module.h>
