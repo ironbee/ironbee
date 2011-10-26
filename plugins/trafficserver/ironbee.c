@@ -15,6 +15,7 @@
  * limitations under the License.
  *****************************************************************************/
 #define _POSIX_SOURCE 1
+
 #include <sys/socket.h>
 #include <netdb.h>
 
@@ -42,6 +43,8 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 #define ADDRSIZE 48	/* what's the longest IPV6 addr ? */
 
 ib_engine_t DLL_LOCAL *ironbee = NULL;
+TSTextLogObject ironbee_log;
+#define DEFAULT_LOG "ts-ironbee"
 
 /* Plugin Structure */
 ib_plugin_t DLL_LOCAL ibplugin = {
@@ -281,54 +284,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
   }
 }
 
-#if 0
-/* THIS IS A CLONE OF OUT_DATA_EVENT AND IS UNLIKELY TO WORK - YET */
-static int in_data_event(TSCont contp, TSEvent event, void *edata)
-{
-  TSDebug("ironbee", "Entering in_data_event()");
-  if (TSVConnClosedGet(contp)) {
-    TSDebug("ironbee", "\tVConn is closed");
-    TSContDestroy(contp);	/* from null-transform, ???? */
-
-
-    return 0;
-  }
-  switch (event) {
-    case TS_EVENT_ERROR:
-      {
-        TSVIO input_vio;
-
-        TSDebug("ironbee", "\tEvent is TS_EVENT_ERROR");
-        /* Get the write VIO for the write operation that was
-         * performed on ourself. This VIO contains the continuation of
-         * our parent transformation. This is the input VIO.
-         */
-        input_vio = TSVConnWriteVIOGet(contp);
-
-        /* Call back the write VIO continuation to let it know that we
-         * have completed the write operation.
-         */
-        TSContCall(TSVIOContGet(input_vio), TS_EVENT_ERROR, input_vio);
-      }
-      break;
-  case TS_EVENT_VCONN_WRITE_COMPLETE:
-    TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
-    break;
-    case TS_EVENT_VCONN_WRITE_READY:
-      TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_READY");
-      /* fallthrough */
-    default:
-      TSDebug("ironbee", "\t(event is %d)", event);
-      /* If we get a WRITE_READY event or any other type of
-       * event (sent, perhaps, because we were reenabled) then
-       * we'll attempt to transform more data.
-       */
-      process_data(contp, NULL);
-      break;
-  }
-  return 0;
-}
-#endif
 static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 {
   /* Check to see if the transformation has been closed by a call to
@@ -422,21 +377,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
   icdata.conn = data->ssn->iconn;
 
   /* before the HTTP headers comes the request line / response code */
-#if 0
-  /* The BytesGet functions don't correspond with actual byte counts
-   * for a Request, so we can't use them to set a buf size!
-   */
-  if (ibd->dir == IBD_RESP) {
-    //icdata.dlen = TSHttpTxnServerRespHdrBytesGet(txnp);
-    rv = TSHttpTxnServerRespGet(txnp, &bufp, &hdr_loc);
-  }
-  else {
-    //icdata.dlen = TSHttpTxnClientReqHdrBytesGet(txnp);
-    rv = TSHttpTxnClientReqGet(txnp, &bufp, &hdr_loc);
-  }
-#else
   rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
-#endif
   if (rv) {
     TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
     return;
@@ -568,7 +509,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
      * are not yet available.
      * Can we use another case switch in this function?
      */
-    TSHttpTxnHookAdd(txnp, TS_HTTP_OS_DNS_HOOK, contp);
+    //TSHttpTxnHookAdd(txnp, TS_HTTP_OS_DNS_HOOK, contp);
+    TSHttpTxnHookAdd(txnp, TS_HTTP_PRE_REMAP_HOOK, contp);
 
     /* hook an input filter to watch data */
     connp = TSTransformCreate(in_data_event, txnp);
@@ -578,9 +520,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
     break;
 
-  /* hook for processing request headers */
-  /* No idea why it's called OS_DNS, but it figures in sample plugins */
-  case TS_EVENT_HTTP_OS_DNS:
+  /* hook for processing incoming request/headers */
+  case TS_EVENT_HTTP_PRE_REMAP:
     txndata = TSContDataGet(contp);
     process_hdr(txndata, txnp, &ironbee_direction_req);
     TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
@@ -612,8 +553,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
   return 0;
 }
 
-static int
-check_ts_version(void)
+static int check_ts_version(void)
 {
 
   const char *ts_version = TSTrafficServerVersionGet();
@@ -650,18 +590,25 @@ static void ironbee_logger(void *dummy, int level,
     char buf[8192 + 1];
     int limit = 7000;
     int ec;
+    TSReturnCode rc;
+    const char *errmsg = NULL;
 
     /* Buffer the log line. */
     ec = vsnprintf(buf, sizeof(buf), fmt, ap);
     if (ec >= limit) {
         /* Mark as truncated, with a " ...". */
         memcpy(buf + (limit - 5), " ...", 5);
-
-        /// @todo Do something about it
+        errmsg = "Data truncated in log";
     }
 
-    /* Write it to the error log. */
-    TSError("[ts-ironbee] %s: %s\n", prefix?prefix:"", buf);
+    /* Write it to the ironbee log. */
+    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char *)"%s: %s\n", prefix, buf)
+                : TSTextLogObjectWrite(ironbee_log, (char *)"%s\n", buf);
+    if (rc != TS_SUCCESS) {
+        errmsg = "Data logging failed!";
+    }
+    if (errmsg != NULL)
+        TSError("[ts-ironbee] %s\n", errmsg);
 }
 static void addr2str(const struct sockaddr *addr, char *str, int *port)
 {
@@ -737,9 +684,6 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 };
 
 
-
-
-
 /* this can presumably be global since it's only setup on init */
 //static ironbee_config_t ibconfig;
 //#define TRACEFILE "/tmp/ironbee-trace"
@@ -747,15 +691,17 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 
 static void ibexit(void)
 {
+  TSTextLogObjectDestroy(ironbee_log);
   ib_engine_destroy(ironbee);
 }
-static int ironbee_init(const char *configfile)
+static int ironbee_init(const char *configfile, const char *logfile)
 {
   /* grab from httpd module's post-config */
   ib_status_t rc;
-  ib_provider_t *lpr;
+//  ib_provider_t *lpr;
   ib_cfgparser_t *cp;
   ib_context_t *ctx;
+  int rv;
 
   rc = ib_initialize();
   if (rc != IB_OK) {
@@ -772,7 +718,7 @@ static int ironbee_init(const char *configfile)
   }
 
   rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, "ironbee-ts",
-                            &lpr, &ironbee_logger_iface, NULL);
+                            NULL, &ironbee_logger_iface, NULL);
   if (rc != IB_OK) {
     return rc;
   }
@@ -786,10 +732,18 @@ static int ironbee_init(const char *configfile)
   if (rc != IB_OK) {
     return rc;
   }
+
+  /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
+   * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
+   */
+  rv = TSTextLogObjectCreate(logfile, TS_LOG_MODE_ADD_TIMESTAMP, &ironbee_log);
+  if (rv != TS_SUCCESS) {
+    return IB_OK + rv;
+  }
    
   rc = atexit(ibexit);
   if (rc != 0) {
-    return IB_OK + rc;
+    return IB_OK + rv;
   }
 
   ib_hook_register(ironbee, conn_opened_event,
@@ -843,11 +797,11 @@ TSPluginInit(int argc, const char *argv[])
   TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
 
 
-  if (argc != 2) {
-    TSError("[ironbee] requires one argument: configuration file name\n");
+  if (argc < 2) {
+    TSError("[ironbee] configuration file name required\n");
     goto Lerror;
   }
-  rv = ironbee_init(argv[1]);
+  rv = ironbee_init(argv[1], argc >= 3 ? argv[2] : DEFAULT_LOG);
   if (rv != IB_OK) {
     TSError("[ironbee] initialisation failed with %d\n", rv);
   }
