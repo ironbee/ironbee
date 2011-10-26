@@ -51,7 +51,7 @@ ib_plugin_t ibplugin = {
     "ibcli"
 };
 
-static void usage()
+static void usage(void)
 {
     fprintf(stderr, "Usage: ibcli <options>\n");
     exit(1);
