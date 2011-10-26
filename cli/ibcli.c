@@ -126,13 +126,14 @@ static void runConnection(ib_engine_t* ib,
     if (respfd != -1) {
         // read the response and pass it to ironbee
         while ((nbytes = read(respfd, buf, 8192)) > 0) {
-            buf[nbytes]='\0';
-	    icdata.dalloc = nbytes+1;
-            icdata.dlen = nbytes+1;
+	        icdata.dalloc = nbytes;
+            icdata.dlen = nbytes;
             icdata.data = (uint8_t *)buf;
             ib_state_notify_conn_data_out(ib, &icdata);
         }
     }
+
+    ib_state_notify_conn_closed(ib, iconn);
 }
 
 int
@@ -193,6 +194,9 @@ main(int argc, char* argv[])
     ib_hook_register(ironbee, conn_opened_event,
                      (ib_void_fn_t)ironbee_conn_init, NULL);
 
+    /* Notify the engine that the config process has started. */
+    ib_state_notify_cfg_started(ironbee);
+
     /* Parse the config file. */
     rc = ib_cfgparser_create(&cp, ironbee);
     if ((rc == IB_OK) && (cp != NULL)) {
@@ -200,9 +204,10 @@ main(int argc, char* argv[])
         ib_cfgparser_destroy(cp);
     }
 
+    /* Notify the engine that the config process is finished. */
     ib_state_notify_cfg_finished(ironbee);
-
     
+    /* Pass connection data to the engine. */
     runConnection(ironbee, settings.requestfile, settings.responsefile);
 
     ib_engine_destroy(ironbee);
