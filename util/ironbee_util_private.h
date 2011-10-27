@@ -354,24 +354,6 @@ struct ib_array_t {
 
 /**
  * @internal
- * List node structure.
- */
-struct ib_list_node_t {
-    IB_LIST_NODE_REQ_FIELDS(ib_list_node_t);  /* Required fields */
-    void              *data;                  /**< Node data */
-};
-
-/**
- * @internal
- * List structure.
- */
-struct ib_list_t {
-    ib_mpool_t       *mp;
-    IB_LIST_REQ_FIELDS(ib_list_node_t);       /* Required fields */
-};
-
-/**
- * @internal
  * Set to 1 the specified bit index of a byte array
  * Warning: The bit offset/index starts from the HSB
  *

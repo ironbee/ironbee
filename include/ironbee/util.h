@@ -359,6 +359,24 @@ typedef struct ib_list_node_t ib_list_node_t;
     ntype *tail /**< Last node in list */
 
 /**
+ * @internal
+ * List node structure.
+ */
+struct ib_list_node_t {
+    IB_LIST_NODE_REQ_FIELDS(ib_list_node_t);  /* Required fields */
+    void              *data;                  /**< Node data */
+};
+
+/**
+ * @internal
+ * List structure.
+ */
+struct ib_list_t {
+    ib_mpool_t       *mp;
+    IB_LIST_REQ_FIELDS(ib_list_node_t);       /* Required fields */
+};
+
+/**
  * First node of a list.
  *
  * @param list List
