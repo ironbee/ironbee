@@ -59,6 +59,8 @@
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
+IB_MODULE_DECLARE();
+
 /* The default shell to use for piped commands. */
 static const char * const ib_pipe_shell = "/bin/sh";
 
@@ -4525,15 +4527,16 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_LAST
 };
 
+ib_module_t *ib_core_module(void)
+{
+    return IB_MODULE_STRUCT_PTR;
+}
+
 /**
  * @internal
  * Static core module structure.
- *
- * This is a bit of a hack so that the core module can be compiled in (static)
- * but still appear as if it was loaded dynamically.
  */
-IB_MODULE_INIT_STATIC(
-    ib_core_module,                      /**< Static module name */
+IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /**< Default metadata */
     MODULE_NAME_STR,                     /**< Module name */
     IB_MODULE_CONFIG(&core_global_cfg),  /**< Global config data */

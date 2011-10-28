@@ -161,7 +161,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
     ib_status_t rc;
 
     /* Get the pocacsig configuration for this context. */
-    rc = ib_context_module_config(ctx, &IB_MODULE_SYM, (void *)&cfg);
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to fetch %s config: %d",
                      MODULE_NAME_STR, rc);
@@ -444,7 +444,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Get the pocacsig configuration for this context. */
-    rc = ib_context_module_config(tx->ctx, &IB_MODULE_SYM, (void *)&cfg);
+    rc = ib_context_module_config(tx->ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to fetch %s config: %d",
                      MODULE_NAME_STR, rc);
@@ -611,13 +611,13 @@ static ib_status_t pocacsig_context_init(ib_engine_t *ib,
  * This structure defines some metadata, config data and various functions.
  */
 IB_MODULE_INIT(
-    IB_MODULE_HEADER_DEFAULTS,           /**< Default metadata */
-    MODULE_NAME_STR,                     /**< Module name */
+    IB_MODULE_HEADER_DEFAULTS,             /**< Default metadata */
+    MODULE_NAME_STR,                       /**< Module name */
     IB_MODULE_CONFIG(&pocacsig_global_cfg),/**< Global config data */
     pocacsig_config_map,                   /**< Configuration field map */
     pocacsig_directive_map,                /**< Config directive map */
     pocacsig_init,                         /**< Initialize function */
-    NULL,                                /**< Finish function */
+    NULL,                                  /**< Finish function */
     pocacsig_context_init,                 /**< Context init function */
 );
 

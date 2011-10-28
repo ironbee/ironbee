@@ -147,7 +147,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     ib_status_t rc;
 
     /* Get the pocsig configuration for this context. */
-    rc = ib_context_module_config(ctx, &IB_MODULE_SYM, (void *)&cfg);
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to fetch %s config: %d",
                      MODULE_NAME_STR, rc);
@@ -378,7 +378,7 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Get the pocsig configuration for this context. */
-    rc = ib_context_module_config(tx->ctx, &IB_MODULE_SYM, (void *)&cfg);
+    rc = ib_context_module_config(tx->ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to fetch %s config: %d",
                      MODULE_NAME_STR, rc);

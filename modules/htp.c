@@ -745,7 +745,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     int personality;
 
     /* Get the module config. */
-    rc = ib_context_module_config(ctx, &IB_MODULE_SYM, (void *)&modcfg);
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
                      MODULE_NAME_STR, rc);
@@ -984,7 +984,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
     ib_status_t rc;
 
     /* Get the module config. */
-    rc = ib_context_module_config(ctx, &IB_MODULE_SYM, (void *)&modcfg);
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
                      MODULE_NAME_STR, rc);
@@ -1162,7 +1162,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     ib_status_t rc;
 
     /* Get the module config. */
-    rc = ib_context_module_config(ctx, &IB_MODULE_SYM, (void *)&modcfg);
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
                      MODULE_NAME_STR, rc);

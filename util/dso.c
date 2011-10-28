@@ -77,12 +77,18 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(ib_dso_t *dso,
                                        ib_dso_sym_t **sym)
 {
     IB_FTRACE_INIT(ib_dso_sym_find);
+    char *err;
+
     if (dso == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    dlerror(); /* Clear any errors */
+
     *sym = dlsym(dso->handle, name);
-    if (*sym == NULL) {
+    err = dlerror();
+    if (err != NULL) {
+        ib_util_log_error(1, "%s", err);
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
 

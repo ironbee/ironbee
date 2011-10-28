@@ -44,32 +44,28 @@ extern "C" {
  * @{
  */
 
-/** Module structure symbol name. */
-#define IB_MODULE_SYM                 ibmodule
+/** Module symbol name. */
+#define IB_MODULE_SYM                 ironbee_module
 #define IB_MODULE_SYM_NAME            IB_XSTRINGIFY(IB_MODULE_SYM)
+
+/** Module structure. */
+#define IB_MODULE_STRUCT              ibsym__module
+
+/** Address of module structure. */
+#define IB_MODULE_STRUCT_PTR          &IB_MODULE_STRUCT
 
 /** Module declaration. */
 #define IB_MODULE_DECLARE() \
-    ib_module_t DLL_PUBLIC IB_MODULE_SYM
+    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(void); \
+    static ib_module_t IB_MODULE_STRUCT
 
 /** Module symbol initialization. */
 #define IB_MODULE_INIT(...) \
-    ib_module_t IB_MODULE_SYM = { \
-        __VA_ARGS__ \
-    }
-
-/** Data associated with the module. */
-#define IB_MODULE_DATA \
-    IB_MODULE_SYM.data
-
-/** Module initialization. */
-/// @todo Need a batter way
-#define IB_MODULE_INIT_STATIC(name, ...) \
-    ib_module_t real_##name = { \
+    static ib_module_t IB_MODULE_STRUCT = { \
         __VA_ARGS__ \
     }; \
-    ib_module_t *name(void) { return &real_##name; } \
-    typedef int ib_require_semicolon_hack_##name
+    ib_module_t *IB_MODULE_SYM(void) { return IB_MODULE_STRUCT_PTR; } \
+    typedef int ib_require_semicolon_hack_
 
 /**
  * Initialize values for dynamic modules created with ib_module_create().

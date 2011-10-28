@@ -1658,12 +1658,14 @@ ib_status_t ib_module_load(ib_module_t **pm,
     IB_FTRACE_INIT(ib_module_load);
     ib_status_t rc;
     ib_dso_t *dso;
+    ib_dso_sym_t *modsym;
+    ib_module_t *(*modload)(void);
 
     if (ib == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Load module and fetch the module structure */
+    /* Load module and fetch the module symbol. */
     ib_log_debug(ib, 7, "Loading module: %s", file);
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
@@ -1671,11 +1673,20 @@ ib_status_t ib_module_load(ib_module_t **pm,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, (ib_dso_sym_t **)pm);
+    rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &modsym);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to load module %s: no symbol named %s", 
                      file, IB_MODULE_SYM_NAME);
         IB_FTRACE_RET_STATUS(rc);
+    }
+    *(void **)(&modload) = modsym;
+
+    /* Fetch the module structure. */
+    *pm = modload();
+    if (*pm == NULL) {
+        ib_log_error(ib, 1, "Failed to load module %s: no module structure", 
+                     file);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     /* Check module for ABI compatibility with this engine */

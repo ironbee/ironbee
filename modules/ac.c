@@ -305,10 +305,10 @@ static IB_CFGMAP_INIT_STRUCTURE(modac_config_map) = {
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,            /**< Default metadata */
     MODULE_NAME_STR,                      /**< Module name */
-    IB_MODULE_CONFIG(&modac_global_cfg),/**< Global config data */
-    modac_config_map,                   /**< Configuration field map */
+    IB_MODULE_CONFIG(&modac_global_cfg),  /**< Global config data */
+    modac_config_map,                     /**< Configuration field map */
     NULL,                                 /**< Config directive map */
-    modac_init,                         /**< Initialize function */
+    modac_init,                           /**< Initialize function */
     NULL,                                 /**< Finish function */
     NULL,                                 /**< Context init function */
 );
