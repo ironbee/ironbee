@@ -15,8 +15,19 @@
  * limitations under the License.
  *****************************************************************************/
 
-#include <sys/socket.h>
-#include <netdb.h>
+/* These are required for getnameinfo */
+
+/* Ironbee sets compile flags that cause these to fail.
+ * The manpage for getnameinfo tells us:
+   Feature Test Macro Requirements for glibc (see feature_test_macros(7)):
+
+       getnameinfo(): _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
+ * I don't know why Ironbee wants these unset, so let's say POSIX
+ */
+
+#ifndef _POSIX_SOURCE
+#define _POSIX_SOURCE 1
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -24,6 +35,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ts/ts.h>
+
+#include <sys/socket.h>
+#include <netdb.h>
 
 // This gets the PRI*64 types
 # define __STDC_FORMAT_MACROS 1
@@ -552,8 +566,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
   return 0;
 }
 
-int
-check_ts_version()
+static int
+check_ts_version(void)
 {
 
   const char *ts_version = TSTrafficServerVersionGet();
@@ -591,7 +605,7 @@ static void ironbee_logger(void *dummy, int level,
     int limit = 7000;
     int ec;
     TSReturnCode rc;
-    char *errmsg = NULL;
+    const char *errmsg = NULL;
 
     /* Buffer the log line. */
     ec = vsnprintf(buf, sizeof(buf), fmt, ap);
@@ -602,8 +616,9 @@ static void ironbee_logger(void *dummy, int level,
     }
 
     /* Write it to the ironbee log. */
-    rc = prefix ? TSTextLogObjectWrite(ironbee_log, "%s: %s\n", prefix, buf)
-                : TSTextLogObjectWrite(ironbee_log, "%s\n", buf);
+    /* FIXME: why is the format arg's prototype not const char* ? */
+    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char*)"%s: %s\n", prefix, buf)
+                : TSTextLogObjectWrite(ironbee_log, (char*)"%s\n", buf);
     if (rc != TS_SUCCESS) {
         errmsg = "Data logging failed!";
     }
@@ -689,7 +704,7 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 //#define TRACEFILE "/tmp/ironbee-trace"
 #define TRACEFILE NULL
 
-static void ibexit()
+static void ibexit(void)
 {
   TSTextLogObjectDestroy(ironbee_log);
   ib_engine_destroy(ironbee);
@@ -776,9 +791,10 @@ TSPluginInit(int argc, const char *argv[])
   TSPluginRegistrationInfo info;
   TSCont cont;
 
-  info.plugin_name = "ironbee";
-  info.vendor_name = "Qualys, Inc";
-  info.support_email = "ironbee-users@lists.sourceforge.com";
+  /* FIXME - check why these are char*, not const char* */
+  info.plugin_name = (char*)"ironbee";
+  info.vendor_name = (char*)"Qualys, Inc";
+  info.support_email = (char*)"ironbee-users@lists.sourceforge.com";
 
   if (TSPluginRegister(TS_SDK_VERSION_3_0, &info) != TS_SUCCESS) {
     TSError("[ironbee] Plugin registration failed.\n");
