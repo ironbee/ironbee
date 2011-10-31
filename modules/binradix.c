@@ -326,5 +326,6 @@ IB_MODULE_INIT(
     modbinradix_init,                       /**< Initialize function */
     NULL,                                   /**< Finish function */
     NULL,                                   /**< Context init function */
+    NULL                                  /**< Context fini function */
 );
 

@@ -521,5 +521,6 @@ IB_MODULE_INIT(
     pocsig_init,                         /**< Initialize function */
     NULL,                                /**< Finish function */
     pocsig_context_init,                 /**< Context init function */
+    NULL                                 /**< Context fini function */
 );
 

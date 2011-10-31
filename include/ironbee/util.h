@@ -879,6 +879,31 @@ size_t DLL_PUBLIC ib_array_size(ib_array_t *arr);
          ib_array_get((arr),(idx),(void *)&(val))==IB_OK && (idx)<(ne); \
          (idx)++)
 
+/**
+ * Dynamic array loop in reverse.
+ *
+ * This just loops over the indexes in a dynamic array in reverse order.
+ *
+ * @code
+ * // Where data stored in "arr" is "int *", this will print all int values.
+ * size_t ne;
+ * size_t idx;
+ * int *val;
+ * IB_ARRAY_LOOP_REVERSE(arr, ne, idx, val) {
+ *     printf("%4d: item[%p]=%d\n", i++, val, *val);
+ * }
+ * @endcode
+ *
+ * @param arr Array
+ * @param ne Symbol holding the number of elements
+ * @param idx Symbol holding the index, set for each iteration
+ * @param val Symbol holding the value at the index, set for each iteration
+ */
+#define IB_ARRAY_LOOP_REVERSE(arr,ne,idx,val) \
+    for ((ne)=ib_array_elements(arr), (idx)=(ne)>0?(ne)-1:0; \
+         ib_array_get((arr),(idx),(void *)&(val))==IB_OK && (idx)>0; \
+         (idx)--)
+
 /** @} IronBeeUtilArray */
 
 

@@ -575,7 +575,8 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
         NULL,                           /**< Config directive map */
         (use_onload?modlua_init_lua_wrapper:NULL),/**< Initialize function */
         NULL,                           /**< Finish function */
-        NULL                            /**< Context init function */
+        NULL,                           /**< Context init function */
+        NULL                            /**< Context fini function */
     );
 
     /* Track loaded lua modules. */
@@ -1939,5 +1940,6 @@ IB_MODULE_INIT(
     modlua_init,                         /**< Initialize function */
     modlua_fini,                         /**< Finish function */
     modlua_context_init,                 /**< Context init function */
+    NULL                                 /**< Context fini function */
 );
 

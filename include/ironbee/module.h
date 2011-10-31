@@ -82,8 +82,9 @@ extern "C" {
  * @param xfn_init Initialize function
  * @param xfn_fini Finish function
  * @param xfn_ctx_init Context init function
+ * @param xfn_ctx_fini Context fini function
  */
-#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xfn_fini,xfn_ctx_init) \
+#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xfn_fini,xfn_ctx_init,xfn_ctx_fini) \
     do { \
         (m)->vernum = IB_VERNUM; \
         (m)->abinum = IB_ABINUM; \
@@ -100,6 +101,7 @@ extern "C" {
         (m)->fn_init = xfn_init; \
         (m)->fn_fini = xfn_fini; \
         (m)->fn_ctx_init = xfn_ctx_init; \
+        (m)->fn_ctx_fini = xfn_ctx_fini; \
     } while (0)
 
 /** Defaults for all module structure headers */
@@ -157,6 +159,22 @@ typedef ib_status_t (*ib_module_fn_ctx_init_t)(ib_engine_t *ib,
                                                ib_module_t *m,
                                                ib_context_t *ctx);
 
+/**
+ * Function to finish a module configuration context.
+ *
+ * This is called when @ref ib_context_destroy() is called to finish
+ * a configuration context. This should be used to destroy
+ * any per-config-context resources.
+ *
+ * @param ib Engine handle
+ * @param ctx Config context
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*ib_module_fn_ctx_fini_t)(ib_engine_t *ib,
+                                               ib_module_t *m,
+                                               ib_context_t *ctx);
+
 struct ib_module_t {
     /* Header */
     uint32_t                vernum;           /**< Engine version number */
@@ -179,6 +197,7 @@ struct ib_module_t {
     ib_module_fn_init_t     fn_init;          /**< Module init */
     ib_module_fn_fini_t     fn_fini;          /**< Module finish */
     ib_module_fn_ctx_init_t fn_ctx_init;      /**< Module context init */
+    ib_module_fn_ctx_fini_t fn_ctx_fini;      /**< Module context finish */
 };
 
 #define CORE_MODULE_NAME         core

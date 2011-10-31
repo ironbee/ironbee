@@ -311,5 +311,6 @@ IB_MODULE_INIT(
     modac_init,                           /**< Initialize function */
     NULL,                                 /**< Finish function */
     NULL,                                 /**< Context init function */
+    NULL                                  /**< Context fini function */
 );
 

@@ -325,6 +325,27 @@ void ib_engine_destroy(ib_engine_t *ib)
 {
     IB_FTRACE_INIT(ib_destroy);
     if (ib) {
+        size_t ne;
+        size_t idx;
+        ib_context_t *ctx;
+        ib_module_t *cm = ib_core_module();
+        ib_module_t *m;
+
+        ib_log(ib, 9, "Destroying configuration contexts...");
+        IB_ARRAY_LOOP_REVERSE(ib->contexts, ne, idx, ctx) {
+            if (   (ctx != ib->ctx)
+                && (ctx != ib->ectx) )
+            {
+                ib_context_destroy(ctx);
+            }
+        }
+        if (ib->ctx != ib->ectx) {
+            ib_log(ib, 9, "Destroying main configuration context...");
+            ib_context_destroy(ib->ctx);
+        }
+        ib_log(ib, 9, "Destroying engine configuration context...");
+        ib_context_destroy(ib->ectx);
+
         ib_log(ib, 9, "Destroy IB handle (%d,%d,%s,%s): %p",
                ib->plugin->vernum, ib->plugin->abinum,
                ib->plugin->filename, ib->plugin->name, ib);
@@ -1953,7 +1974,41 @@ ib_site_t *ib_context_site_get(ib_context_t *ctx)
 void ib_context_destroy(ib_context_t *ctx)
 {
     IB_FTRACE_INIT(ib_context_destroy);
+    ib_engine_t *ib;
+    ib_context_data_t *cfgdata;
+    ib_status_t rc;
+    size_t ncfgdata, i;
+
+    if (ctx == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    ib = ctx->ib;
+
+    ib_log_debug(ib, 9, "Destroying context ctx=%p", ctx);
+
+    /* Run through the context modules to call any ctx_fini functions. */
+    /// @todo Not sure this is needed anymore
+    IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
+        if (cfgdata == NULL) {
+            continue;
+        }
+        ib_module_t *m = cfgdata->module;
+
+        if (m->fn_ctx_fini != NULL) {
+            ib_log_debug(ib, 9, "Finishing context ctx=%p for module=%s (%p)",
+                         ctx, m->name, m);
+            rc = m->fn_ctx_fini(ib, m, ctx);
+            if (rc != IB_OK) {
+                /// @todo Log the error???  Fail???
+                ib_log_error(ib, 4, "Failed to call context fini: %d", rc);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+    }
+
     ib_mpool_destroy(ctx->mp);
+
     IB_FTRACE_RET_VOID();
 }
 

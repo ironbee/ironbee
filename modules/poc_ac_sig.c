@@ -619,5 +619,6 @@ IB_MODULE_INIT(
     pocacsig_init,                         /**< Initialize function */
     NULL,                                  /**< Finish function */
     pocacsig_context_init,                 /**< Context init function */
+    NULL                                   /**< Context fini function */
 );
 
