@@ -4,7 +4,7 @@ dnl Sets:
 dnl  TS
 dnl  TS_CFLAGS
 
-HAVE_TS=""
+HAVE_TS="no"
 TS_CFLAGS=""
 TS_CPPFLAGS=""
 TS_LDFLAGS=""
@@ -23,27 +23,30 @@ AC_MSG_CHECKING([for trafficserver])
 
 SAVE_CPPFLAGS="${CPPFLAGS}"
 
-ts_path=""
-for x in ${test_paths}; do
-    CPPFLAGS="${CPPFLAGS} -I${x}/include"
+if test "${test_paths}" != "no"; then
+    ts_path=""
+    for x in ${test_paths}; do
+        CPPFLAGS="${CPPFLAGS} -I${x}/include"
 
-    AC_CHECK_HEADER(ts/ts.h,,HAVE_TS="no")
-    AM_CONDITIONAL([BUILD_TS_PLUGIN], [test "$HAVE_TS" != "no"])
+        AC_CHECK_HEADER(ts/ts.h,HAVE_TS="yes",HAVE_TS="no")
 
-    if test "$HAVE_TS" != "no"; then
-        ts_path="${x}"
-        break
-    fi
-done
+        if test "$HAVE_TS" != "no"; then
+            ts_path="${x}"
+            break
+        fi
+    done
 
-if test -n "${ts_path}"; then
-    if test "${x}" != "no"; then
+    if test -n "${ts_path}"; then
         AC_MSG_NOTICE([Building trafficserver plugin for ${ts_path}])
-        TS_CPPFLAGS=" -I${ts_path}/include "
+        TS_CPPFLAGS="-I${ts_path}/include"
+    else
+        AC_MSG_ERROR([No trafficserver found!  Either specify it or configure without it])
     fi
 else
-    AC_MSG_ERROR([No trafficserver found!  Either specify it or configure without it])
+    AC_MSG_NOTICE([Not building trafficserver plugin.])
 fi
+
+AM_CONDITIONAL([BUILD_TS_PLUGIN], [test "$HAVE_TS" != "no"])
 
 CPPFLAGS="${SAVE_CPPCFLAGS}"
 
