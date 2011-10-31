@@ -1688,8 +1688,11 @@ ib_status_t ib_module_load(ib_module_t **pm,
     IB_FTRACE_INIT(ib_module_load);
     ib_status_t rc;
     ib_dso_t *dso;
-    ib_dso_sym_t *modsym;
-    ib_module_t *(*modload)(void);
+    union {
+        void              *sym;
+        ib_dso_sym_t      *dso;
+        ib_module_sym_fn   fn_sym;
+    } sym;
 
     if (ib == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1703,16 +1706,15 @@ ib_status_t ib_module_load(ib_module_t **pm,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &modsym);
+    rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &sym.dso);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to load module %s: no symbol named %s", 
                      file, IB_MODULE_SYM_NAME);
         IB_FTRACE_RET_STATUS(rc);
     }
-    *(void **)(&modload) = modsym;
 
     /* Fetch the module structure. */
-    *pm = modload();
+    *pm = sym.fn_sym();
     if (*pm == NULL) {
         ib_log_error(ib, 1, "Failed to load module %s: no module structure", 
                      file);

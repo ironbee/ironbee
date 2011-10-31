@@ -46,6 +46,8 @@ extern "C" {
 
 /** Module symbol name. */
 #define IB_MODULE_SYM                 ironbee_module
+
+/** Module symbol name as a string. */
 #define IB_MODULE_SYM_NAME            IB_XSTRINGIFY(IB_MODULE_SYM)
 
 /** Module structure. */
@@ -54,7 +56,14 @@ extern "C" {
 /** Address of module structure. */
 #define IB_MODULE_STRUCT_PTR          &IB_MODULE_STRUCT
 
-/** Module declaration. */
+/**
+ * Module declaration.
+ *
+ * This macro needs to be called towards the beginning of a module if
+ * the module needs to refer to @ref IB_MODULE_STRUCT or
+ * @ref IB_MODULE_STRUCT_PTR before the module structure is initialized
+ * with @ref IB_MODULE_INIT.
+ */
 #ifdef __cplusplus
 /* C++ cannot do forward declarations for IB_MODULE_STRUCT. */
 #define IB_MODULE_DECLARE() \
@@ -66,7 +75,14 @@ extern "C" {
     static ib_module_t IB_MODULE_STRUCT
 #endif
 
-/** Module symbol initialization. */
+/**
+ * Module structure initialization.
+ *
+ * This is typically the last macro called in a module. It initializes
+ * the module structure (@ref IB_MODULE_STRUCT), which allows a module
+ * to be registered with the engine. The macro takes a list of all
+ * @ref ib_module_t field values.
+ */
 #ifdef __cplusplus
 /* C++ cannot do forward declarations for IB_MODULE_STRUCT. */
 #define IB_MODULE_INIT(...) \
@@ -135,6 +151,19 @@ extern "C" {
 
 /** Used to signify that there is no config structure for the module. */
 #define IB_MODULE_CONFIG_NULL         NULL, 0
+
+/**
+ * Function which is exported in an IronBee module to return the address
+ * to the module structure used to load the module.
+ *
+ * This module function is declared by @ref IB_MODULE_DECLARE and defined
+ * by @ref IB_MODULE_INIT. The address of this function is looked up by
+ * name (@ref IB_MODULE_SYM) when the module is loaded and called to fetch
+ * the address of the module structure built with @ref IB_MODULE_INIT.
+ *
+ * @returns Address of the module structure
+ */
+typedef ib_module_t *(*ib_module_sym_fn)(void);
 
 /**
  * Function to initialize a module.
