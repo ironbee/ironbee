@@ -198,6 +198,7 @@ sinclude(acinclude/xml2.m4)
 sinclude(acinclude/apxs.m4)
 sinclude(acinclude/apr.m4)
 sinclude(acinclude/apu.m4)
+sinclude(acinclude/trafficserver.m4)
 
 # Required libs
 CHECK_HTP()
@@ -207,6 +208,8 @@ dnl TODO: These need to be optional (only if building apache httpd plugin)
 CHECK_APXS()
 CHECK_APR()
 CHECK_APU()
+dnl TODO: trafficserver plugin
+CHECK_TS()
 
 dnl Optional build modules
 dnl
@@ -214,7 +217,7 @@ dnl TODO: Make these configure opts
 dnl
 TOPLEVEL_SUBDIRS="libs util engine plugins lua modules etc docs tests"
 LIBS_SUBDIRS=""
-PLUGINS_SUBDIRS="apache_httpd2"
+PLUGINS_SUBDIRS="apache_httpd2 trafficserver"
 
 dnl Make sure abs_top_builddir is available
 AC_MSG_CHECKING([abs_top_builddir is available])
@@ -259,6 +262,7 @@ AC_CONFIG_FILES([engine/Makefile])
 
 AC_CONFIG_FILES([plugins/Makefile])
 AC_CONFIG_FILES([plugins/apache_httpd2/Makefile])
+AC_CONFIG_FILES([plugins/trafficserver/Makefile])
 
 AC_CONFIG_FILES([lua/Makefile])
 AC_CONFIG_FILES([modules/Makefile])
