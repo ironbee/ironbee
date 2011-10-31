@@ -331,6 +331,8 @@ void ib_engine_destroy(ib_engine_t *ib)
         ib_module_t *cm = ib_core_module();
         ib_module_t *m;
 
+        /// @todo Destroy filters
+
         ib_log(ib, 9, "Destroying configuration contexts...");
         IB_ARRAY_LOOP_REVERSE(ib->contexts, ne, idx, ctx) {
             if (   (ctx != ib->ctx)
@@ -345,6 +347,13 @@ void ib_engine_destroy(ib_engine_t *ib)
         }
         ib_log(ib, 9, "Destroying engine configuration context...");
         ib_context_destroy(ib->ectx);
+
+        ib_log(ib, 9, "Unloading modules...");
+        IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
+            if (m != cm) {
+                ib_module_unload(m);
+            }
+        }
 
         ib_log(ib, 9, "Destroy IB handle (%d,%d,%s,%s): %p",
                ib->plugin->vernum, ib->plugin->abinum,
@@ -1734,8 +1743,29 @@ ib_status_t ib_module_load(ib_module_t **pm,
 ib_status_t ib_module_unload(ib_module_t *m)
 {
     IB_FTRACE_INIT(ib_module_unload);
+    ib_engine_t *ib;
+    ib_status_t rc;
+
     if (m == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ib = m->ib;
+
+    ib_log_debug(ib, 9,
+                 "Unloading module %s: "
+                 "vernum=%d abinum=%d version=%s index=%d filename=%s",
+                 m->name,
+                 m->vernum, m->abinum, m->version,
+                 m->idx, m->filename);
+
+    /* Finish the module */
+    if (m->fn_fini != NULL) {
+        rc = m->fn_fini(ib, m);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 1, "Failed to finish module %s %d",
+                         m->name, rc);
+        }
     }
 
     /// @todo Implement
