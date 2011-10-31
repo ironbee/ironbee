@@ -59,7 +59,7 @@ if test -n "${apr_path}"; then
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apr CFLAGS: $APR_CFLAGS); fi
     APR_CPPFLAGS="`${APR_CONFIG} --cppflags`"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apr CPPFLAGS: $APR_CPPFLAGS); fi
-    APR_LDFLAGS="`${APR_CONFIG} --libs`"
+    APR_LDFLAGS="`${APR_CONFIG} --link-ld --libs`"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apr LDFLAGS: $APR_LDFLAGS); fi
     APR_LDADD="`${APR_CONFIG} --link-libtool`"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apr LDADD: $APR_LDADD); fi
