@@ -40,7 +40,11 @@ if test "${test_paths}" != "no"; then
         AC_MSG_NOTICE([Building trafficserver plugin for ${ts_path}])
         TS_CPPFLAGS="-I${ts_path}/include"
     else
-        AC_MSG_ERROR([No trafficserver found!  Either specify it or configure without it])
+        if test -z "${with_trafficserver}"; then
+            AC_MSG_NOTICE([Not building trafficserver plugin.])
+        else 
+            AC_MSG_ERROR([No trafficserver found!  Either specify it or configure without it])
+        fi
     fi
 else
     AC_MSG_NOTICE([Not building trafficserver plugin.])
