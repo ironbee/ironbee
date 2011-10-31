@@ -16,8 +16,19 @@
  *****************************************************************************/
 #define _POSIX_SOURCE 1
 
-#include <sys/socket.h>
-#include <netdb.h>
+/* These are required for getnameinfo */
+
+/* Ironbee sets compile flags that cause these to fail.
+ * The manpage for getnameinfo tells us:
+   Feature Test Macro Requirements for glibc (see feature_test_macros(7)):
+
+       getnameinfo(): _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
+ * I don't know why Ironbee wants these unset, so let's say POSIX
+ */
+
+#ifndef _POSIX_SOURCE
+#define _POSIX_SOURCE 1
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +36,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ts/ts.h>
+
+#include <sys/socket.h>
+#include <netdb.h>
 
 // This gets the PRI*64 types
 # define __STDC_FORMAT_MACROS 1
@@ -602,8 +616,8 @@ static void ironbee_logger(void *dummy, int level,
     }
 
     /* Write it to the ironbee log. */
-    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char *)"%s: %s", prefix, buf)
-                : TSTextLogObjectWrite(ironbee_log, (char *)"%s", buf);
+    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char*)"%s: %s\n", prefix, buf)
+                : TSTextLogObjectWrite(ironbee_log, (char*)"%s\n", buf);
     if (rc != TS_SUCCESS) {
         errmsg = "Data logging failed!";
     }
@@ -777,6 +791,7 @@ TSPluginInit(int argc, const char *argv[])
   TSPluginRegistrationInfo info;
   TSCont cont;
 
+  /* FIXME - check why these are char*, not const char* */
   info.plugin_name = (char *)"ironbee";
   info.vendor_name = (char *)"Qualys, Inc";
   info.support_email = (char *)"ironbee-users@lists.sourceforge.com";

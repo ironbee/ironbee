@@ -4,15 +4,15 @@ include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/plugins.mk
 
 pkglibdir = $(prefix)/lib
-if BUILD_ATS_PLUGIN
+if BUILD_TS_PLUGIN
 pkglib_LTLIBRARIES = libloader.la ironbee.la
 
 libloader_la_SOURCES = libloader.c
-libloader_la_CPPFLAGS = @ATS_CPPFLAGS@
+libloader_la_CPPFLAGS = @TS_CPPFLAGS@
 libloader_la_LDFLAGS = -module -avoid-version
 
 ironbee_la_SOURCES = ironbee.c
-ironbee_la_CPPFLAGS = @ATS_CPPFLAGS@ 
+ironbee_la_CPPFLAGS = @TS_CPPFLAGS@ 
 ironbee_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
