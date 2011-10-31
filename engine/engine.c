@@ -2032,7 +2032,6 @@ void ib_context_destroy(ib_context_t *ctx)
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, 4, "Failed to call context fini: %d", rc);
-                IB_FTRACE_RET_STATUS(rc);
             }
         }
     }

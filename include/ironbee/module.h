@@ -55,17 +55,34 @@ extern "C" {
 #define IB_MODULE_STRUCT_PTR          &IB_MODULE_STRUCT
 
 /** Module declaration. */
+#ifdef __cplusplus
+/* C++ cannot do forward declarations for IB_MODULE_STRUCT. */
+#define IB_MODULE_DECLARE() \
+    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(void); \
+    extern ib_module_t IB_MODULE_STRUCT
+#else
 #define IB_MODULE_DECLARE() \
     ib_module_t DLL_PUBLIC *IB_MODULE_SYM(void); \
     static ib_module_t IB_MODULE_STRUCT
+#endif
 
 /** Module symbol initialization. */
+#ifdef __cplusplus
+/* C++ cannot do forward declarations for IB_MODULE_STRUCT. */
+#define IB_MODULE_INIT(...) \
+    ib_module_t IB_MODULE_STRUCT = { \
+        __VA_ARGS__ \
+    }; \
+    ib_module_t *IB_MODULE_SYM(void) { return IB_MODULE_STRUCT_PTR; } \
+    typedef int ib_require_semicolon_hack_
+#else
 #define IB_MODULE_INIT(...) \
     static ib_module_t IB_MODULE_STRUCT = { \
         __VA_ARGS__ \
     }; \
     ib_module_t *IB_MODULE_SYM(void) { return IB_MODULE_STRUCT_PTR; } \
     typedef int ib_require_semicolon_hack_
+#endif
 
 /**
  * Initialize values for dynamic modules created with ib_module_create().
