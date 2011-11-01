@@ -4356,39 +4356,6 @@ static ib_status_t core_init(ib_engine_t *ib,
 
 /**
  * @internal
- * Finalize the core module on unload.
- *
- * @param ib Engine
- *
- * @returns Status code
- */
-static ib_status_t core_fini(ib_engine_t *ib,
-                             ib_module_t *m)
-{
-    IB_FTRACE_INIT(core_fini);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
- * Initialize the core module when it registered with a context.
- *
- * @param ib Engine
- * @param m Module
- * @param ctx Context
- *
- * @returns Status code
- */
-static ib_status_t core_context_init(ib_engine_t *ib,
-                                     ib_module_t *m,
-                                     ib_context_t *ctx)
-{
-    IB_FTRACE_INIT(core_context_init);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
  * Core module configuration parameter initialization structure.
  */
 static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
@@ -4543,6 +4510,7 @@ IB_MODULE_INIT(
     core_config_map,                     /**< Configuration field map */
     core_directive_map,                  /**< Config directive map */
     core_init,                           /**< Initialize function */
-    core_fini,                           /**< Finish function */
-    core_context_init,                   /**< Context init function */
+    NULL,                                /**< Finish function */
+    NULL,                                /**< Context init function */
+    NULL                                 /**< Context fini function */
 );

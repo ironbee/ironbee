@@ -1612,13 +1612,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t modlua_fini(ib_engine_t *ib,
-                               ib_module_t *m)
-{
-    IB_FTRACE_INIT(modlua_fini);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 static ib_status_t modlua_context_init(ib_engine_t *ib,
                                        ib_module_t *m,
                                        ib_context_t *ctx)
@@ -1938,7 +1931,7 @@ IB_MODULE_INIT(
     modlua_config_map,                   /**< Configuration field map */
     modlua_directive_map,                /**< Config directive map */
     modlua_init,                         /**< Initialize function */
-    modlua_fini,                         /**< Finish function */
+    NULL,                                /**< Finish function */
     modlua_context_init,                 /**< Context init function */
     NULL                                 /**< Context fini function */
 );

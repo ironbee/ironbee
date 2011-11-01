@@ -1346,31 +1346,6 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t modhtp_fini(ib_engine_t *ib,
-                               ib_module_t *m)
-{
-    IB_FTRACE_INIT(modhtp_fini);
-    /// @todo Nothing yet???
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t modhtp_context_init(ib_engine_t *ib,
-                                       ib_module_t *m,
-                                       ib_context_t *ctx)
-{
-    IB_FTRACE_INIT(modhtp_context_init);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t modhtp_context_fini(ib_engine_t *ib,
-                                       ib_module_t *m,
-                                       ib_context_t *ctx)
-{
-    IB_FTRACE_INIT(modhtp_context_fini);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".personality",
@@ -1394,8 +1369,8 @@ IB_MODULE_INIT(
     modhtp_config_map,                   /**< Configuration field map */
     NULL,                                /**< Config directive map */
     modhtp_init,                         /**< Initialize function */
-    modhtp_fini,                         /**< Finish function */
-    modhtp_context_init,                 /**< Context init function */
-    modhtp_context_fini                  /**< Context fini function */
+    NULL,                                /**< Finish function */
+    NULL,                                /**< Context init function */
+    NULL                                 /**< Context fini function */
 );
 
