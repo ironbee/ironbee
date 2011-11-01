@@ -272,6 +272,18 @@ function onEventHandleRequestHeaders(ib, tx)
     ironbee.ib_log_debug(ib, 4, "HTTP Host Header is a field type: %d", http_host_header.type())
     ironbee.ib_log_debug(ib, 4, "HTTP REQUEST_HEADERS.HOST=%s", http_host_header.value())
 
+    -- Request cookies are a collection (table of field objects)
+    local req_cookies = ironbee.ib_data_get(tx.dpi(), "request_cookies")
+    ironbee.ib_log_debug(ib, 4, "Request cookies is a field type: %d", req_cookies.type())
+    if req_cookies.type() == ironbee.IB_FTYPE_LIST then
+        for k,f in base.pairs(req_cookies.value()) do
+            if f.type() == ironbee.IB_FTYPE_LIST then
+                ironbee.ib_log_debug(ib, 4, "REQUEST_COOKIES.%s=<list>", k)
+            else
+                ironbee.ib_log_debug(ib, 4, "REQUEST_COOKIES.%s=%s", k, f.value())
+            end
+        end
+    end
 
     -- Request ARGS are a collection (table of field objects)
     local req_args = ironbee.ib_data_get(tx.dpi(), "args")

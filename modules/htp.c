@@ -781,6 +781,9 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     htp_config_register_multipart_parser(modctx->htp_cfg);
     htp_config_register_log(modctx->htp_cfg, modhtp_callback_log);
 
+    /* Cookies */
+    modctx->htp_cfg->parse_request_cookies = 1;
+
     /* Setup context and create the parser. */
     modctx->ib = ib;
     modctx->iconn = iconn;
@@ -1114,6 +1117,47 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
         }
         else {
             ib_log_error(ib, 4, "Failed to create request headers list: %d", rc);
+        }
+
+        rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
+        if (   (tx->request_cookies != NULL)
+            && table_size(tx->request_cookies)
+            && (rc == IB_OK))
+        {
+            bstr *key = NULL;
+            bstr *value = NULL;
+
+            /// @todo Make this a function
+            table_iterator_reset(tx->request_cookies);
+            ib_log_debug(ib, 4, "Adding request_cookies fields");
+            while ((key = table_iterator_next(tx->request_cookies,
+                                              (void *)&value)) != NULL)
+            {
+                ib_field_t *lf;
+
+                /* Create a list field as an alias into htp memory. */
+                rc = ib_field_alias_mem_ex(&lf,
+                                           itx->mp,
+                                           bstr_ptr(key),
+                                           bstr_len(key),
+                                           bstr_ptr(value),
+                                           bstr_len(value));
+                if (rc != IB_OK) {
+                    ib_log_debug(ib, 9, "Failed to create field: %d", rc);
+                }
+
+                /* Add the field to the field list. */
+                rc = ib_field_list_add(f, lf);
+                if (rc != IB_OK) {
+                    ib_log_debug(ib, 9, "Failed to add field: %d", rc);
+                }
+            }
+        }
+        else if (rc == IB_OK) {
+            ib_log_debug(ib, 9, "No request cookies");
+        }
+        else {
+            ib_log_error(ib, 4, "Failed to create request cookies list: %d", rc);
         }
 
         rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
