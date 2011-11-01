@@ -1075,7 +1075,10 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  NULL);
 
         rc = ib_data_add_list(itx->dpi, "request_headers", &f);
-        if (rc == IB_OK) {
+        if (   (tx->request_headers != NULL)
+            && table_size(tx->request_headers)
+            && (rc == IB_OK))
+        {
             bstr *key = NULL;
             htp_header_t *h = NULL;
 
@@ -1105,12 +1108,19 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 }
             }
         }
+        else if (rc == IB_ENOENT) {
+            /// @todo May be an error depending on HTTP protocol version
+            ib_log_debug(ib, 9, "No request headers");
+        }
         else {
             ib_log_error(ib, 4, "Failed to create request headers list: %d", rc);
         }
 
         rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
-        if (tx->request_params_query && rc == IB_OK) {
+        if (   (tx->request_params_query != NULL)
+            && table_size(tx->request_params_query)
+            && (rc == IB_OK))
+        {
             bstr *key = NULL;
             bstr *value = NULL;
 
@@ -1140,8 +1150,11 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 }
             }
         }
+        else if (rc == IB_OK) {
+            ib_log_debug(ib, 9, "No request URI parameters");
+        }
         else {
-            ib_log_error(ib, 4, "Failed to create request uri parameters: %d", rc);
+            ib_log_error(ib, 4, "Failed to create request URI parameters: %d", rc);
         }
     }
 
@@ -1206,7 +1219,10 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
         /// @todo Need a table type that can have more than one
         ///       of the same header.
         rc = ib_data_add_list(itx->dpi, "response_headers", &f);
-        if (rc == IB_OK) {
+        if (   (tx->response_headers != NULL)
+            && table_size(tx->response_headers)
+            && (rc == IB_OK))
+        {
             bstr *key = NULL;
             htp_header_t *h = NULL;
 
@@ -1234,6 +1250,10 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                     ib_log_debug(ib, 9, "Failed to add field: %d", rc);
                 }
             }
+        }
+        else if (rc == IB_ENOENT) {
+            /// @todo May be an error depending on HTTP protocol version
+            ib_log_debug(ib, 9, "No response headers");
         }
         else {
             ib_log_error(ib, 4, "Failed to create response headers list: %d", rc);
