@@ -165,11 +165,23 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
 
 /**
  * Set the logger level.
+ *
+ * @param level Log level
+ *
+ * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_util_log_level(int level);
 
 /**
  * Set the logger.
+ *
+ * Sets a callback which will be called to perform the logging. Any value
+ * set in @a cbdata is passed as a parameter to the callback function.
+ *
+ * @param callback Logger callback
+ * @param cbdata Data passed to callback
+ *
+ * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
                                           void *cbdata);
