@@ -1761,7 +1761,7 @@ static void ib_timestamp(char *buf, ib_timeval_t *tv)
     struct tm *tm = localtime((time_t *)&tv->tv_sec);
     
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
-    snprintf(buf + 19, 12, ".%04ld", tv->tv_usec);
+    snprintf(buf + 19, 12, ".%04lu", (unsigned long)tv->tv_usec);
     strftime(buf + 24, 6, "%z", tm);
 }
 
