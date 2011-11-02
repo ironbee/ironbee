@@ -3336,7 +3336,7 @@ static ib_status_t core_tfn_trim(void *fndata,
 /* -- Core Hook Handlers -- */
 
 /* Placeholder for as-of-yet-initialized bytestring fields. */
-static const uint8_t const core_placeholder_value[] = {
+static const uint8_t core_placeholder_value[] = {
     '_', '_', 'c', 'o', 'r', 'e', '_', '_',
     'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
     'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
