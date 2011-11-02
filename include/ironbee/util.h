@@ -1961,6 +1961,19 @@ ib_status_t DLL_PUBLIC ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
                                                const char *data);
 
 /**
+ * Set the value of the bytestring.
+ *
+ * @param dst Bytestring which will have data appended
+ * @param data New data
+ * @param dlen New data length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_bytestr_setv(ib_bytestr_t *dst,
+                                       const uint8_t *data,
+                                       size_t dlen);
+
+/**
  * Extend a bytestring by appending the data from another bytestring.
  *
  * @param dst Bytestring which will have data appended

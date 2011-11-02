@@ -200,6 +200,22 @@ ib_status_t ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
     IB_FTRACE_RET_STATUS(ib_bytestr_alias_mem(pdst, pool, (uint8_t *)data, strlen(data)));
 }
 
+ib_status_t ib_bytestr_setv(ib_bytestr_t *dst,
+                            const uint8_t *data,
+                            size_t dlen)
+{
+    IB_FTRACE_INIT(ib_bytestr_setv);
+    if (dst == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    (*(bstr_t *)(dst->data)).ptr = (char *)data;
+    (*(bstr_t *)(dst->data)).len = dlen;
+    (*(bstr_t *)(dst->data)).size = dlen;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_bytestr_append(ib_bytestr_t *dst,
                               const ib_bytestr_t *src)
 {

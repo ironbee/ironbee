@@ -165,6 +165,8 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
                                             bstr *bs,
                                             ib_field_t **pf)
 {
+    ib_field_t *f;
+    ib_bytestr_t *ibs;
     ib_status_t rc;
 
     if (bs == NULL) {
@@ -174,11 +176,26 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
         return IB_EINVAL;
     }
 
+    /* First lookup the field to see if there is already one
+     * that needs the value set.
+     */
+    rc = ib_data_get(dpi, name, &f);
+    if (rc == IB_OK) {
+        ib_log_debug(dpi->pr->ib, 9,
+                     "Setting bytestr value for \"%s\" field", name);
+        bs = ib_field_value_bytestr(f);
+        rc = ib_bytestr_setv(bs, (const uint8_t *)bstr_ptr(bs), bstr_len(bs));
+
+        return rc;
+    }
+
+    /* If no field exists, then create one. */
     rc = ib_data_add_bytestr_ex(dpi, name, strlen(name),
                                 (uint8_t *)bstr_ptr(bs),
                                 bstr_len(bs), pf);
     if (rc != IB_OK) {
-        ib_log_error(dpi->pr->ib, 4, "Failed to generate \"%s\" field: %d", name, rc);
+        ib_log_error(dpi->pr->ib, 4,
+                     "Failed to generate \"%s\" field: %d", name, rc);
     }
 
     return rc;

@@ -3333,6 +3333,175 @@ static ib_status_t core_tfn_trim(void *fndata,
 }
 
 
+/* -- Core Hook Handlers -- */
+
+/* Placeholder for as-of-yet-initialized bytestring fields. */
+static const uint8_t const core_placeholder_value[] = {
+    '_', '_', 'c', 'o', 'r', 'e', '_', '_',
+    'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
+    'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
+    'u', 'e', '_', '_',  0,   0,   0,   0
+};
+
+static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
+                                                  const char *name)
+{
+    IB_FTRACE_INIT(core_field_gen_bytestr);
+    ib_status_t rc = ib_data_add_bytestr_ex(dpi,
+                                            (const char *)name,
+                                            strlen(name),
+                                            (uint8_t *)core_placeholder_value,
+                                            0,
+                                            NULL);
+    if (rc != IB_OK) {
+        ib_log_error(dpi->pr->ib, 3,
+                     "Failed to generate \"%s\" placeholder field: %d",
+                     name, rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
+ * Handle the transaction starting.
+ *
+ * Setup placeholders for all of the core fields. This
+ * allows other modules to refer to the field prior to it
+ * it being initialized.
+ *
+ * @param ib Engine
+ * @param tx Transaction
+ * @param cbdata Callback data
+ *
+ * @returns Status code
+ */
+static ib_status_t core_hook_tx_started(ib_engine_t *ib,
+                                        ib_tx_t *tx,
+                                        void *cbdata)
+{
+    IB_FTRACE_INIT(core_hook_tx_started);
+    ib_status_t rc;
+
+    /* Core Request Fields */
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_line");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_method");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_protocol");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_raw");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_scheme");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_username");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_password");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_host");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_host");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_port");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_path");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_query");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_fragment");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Core Request Collections */
+    rc = ib_data_add_list(tx->dpi, "request_headers", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_list(tx->dpi, "request_cookies", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_list(tx->dpi, "request_uri_params", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Core Response Fields */
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_line");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_protocol");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_status");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_message");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Core Response Collections */
+    rc = ib_data_add_list(tx->dpi, "response_headers", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+
 /* -- Directive Handlers -- */
 
 /**
@@ -4283,6 +4452,8 @@ static ib_status_t core_init(ib_engine_t *ib,
                      (ib_void_fn_t)parser_hook_connect, NULL);
     ib_hook_register(ib, handle_disconnect_event,
                      (ib_void_fn_t)parser_hook_disconnect, NULL);
+    ib_hook_register(ib, tx_started_event,
+                     (ib_void_fn_t)core_hook_tx_started, NULL);
     /// @todo Need the parser to parse headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
     //ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
     ib_hook_register(ib, request_headers_event,
