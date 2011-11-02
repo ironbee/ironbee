@@ -1140,7 +1140,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            itx->mp,
                                            bstr_ptr(key),
                                            bstr_len(key),
-                                           bstr_ptr(value),
+                                           (uint8_t *)bstr_ptr(value),
                                            bstr_len(value));
                 if (rc != IB_OK) {
                     ib_log_debug(ib, 9, "Failed to create field: %d", rc);
