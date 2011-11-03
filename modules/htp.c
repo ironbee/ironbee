@@ -183,8 +183,8 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
     if (rc == IB_OK) {
         ib_log_debug(dpi->pr->ib, 9,
                      "Setting bytestr value for \"%s\" field", name);
-        bs = ib_field_value_bytestr(f);
-        rc = ib_bytestr_setv(bs, (const uint8_t *)bstr_ptr(bs), bstr_len(bs));
+        ibs = ib_field_value_bytestr(f);
+        rc = ib_bytestr_setv(ibs, (const uint8_t *)bstr_ptr(bs), bstr_len(bs));
 
         return rc;
     }
