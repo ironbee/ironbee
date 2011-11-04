@@ -205,6 +205,8 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
     if ((h->name == NULL)||(h->value == NULL)) {
+        bstr_free(&h->name);
+        bstr_free(&h->value);
         return HTP_ERROR;
     }
 
