@@ -91,7 +91,6 @@ static void ib_radix_node_print_ud(ib_radix_t *radix,
                                    uint8_t ud)
 {
 
-  int i = 0;
   printf("\n");
 
   padding(level);
@@ -129,7 +128,6 @@ static void ib_radix_print(ib_radix_t *radix,
                     uint8_t ud)
 {
   int level = 1;
-  int i = 0;
 
   if (radix == NULL || radix->start == NULL) {
     printf("Empty\n");
@@ -871,8 +869,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     ib_mpool_t *mp = NULL;
     ib_radix_t *radix = NULL;
     ib_status_t rc;
-    ib_list_t *results = NULL;
-    char *result = NULL;
+    char *result;
 
     ib_radix_prefix_t *prefix1 = NULL;
     ib_radix_prefix_t *prefix2 = NULL;
@@ -892,9 +889,6 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
 
     char *cidr1 = NULL;
 
-    ib_list_node_t *node;
-    ib_list_node_t *node_next;
-    
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
@@ -1067,8 +1061,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     ib_mpool_t *mp = NULL;
     ib_radix_t *radix = NULL;
     ib_status_t rc;
-    ib_list_t *results = NULL;
-    char *result = NULL;
+    char *result;
 
     ib_radix_prefix_t *prefix1 = NULL;
     ib_radix_prefix_t *prefix2 = NULL;
@@ -1088,9 +1081,6 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
 
     char *cidr1 = NULL;
 
-    ib_list_node_t *node;
-    ib_list_node_t *node_next;
-    
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";

@@ -41,7 +41,6 @@
 TEST(TestIBUtilLogformat, test_logformat_create_and_set)
 {
     ib_mpool_t *mp;
-    ib_logformat_t *logformat;
     ib_status_t rc;
     
     atexit(ib_shutdown);
@@ -100,7 +99,6 @@ TEST(TestIBUtilLogformat, test_logformat_create_and_set)
 TEST(TestIBUtilLogformat, test_logformat_set)
 {
     ib_mpool_t *mp;
-    ib_logformat_t *logformat;
     ib_status_t rc;
     
     atexit(ib_shutdown);

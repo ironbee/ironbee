@@ -135,5 +135,6 @@ void ib_trace_str(const char *file,
             str);
     fflush(ib_trace_fh);
 }
+
 #endif /* IB_DEBUG */
 

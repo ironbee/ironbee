@@ -53,7 +53,7 @@ ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
     ib_status_t rc;
 
     /* Validate. */
-    if ((ninit <= 0) || (nextents <= 0)) {
+    if ((ninit == 0) || (nextents == 0)) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 

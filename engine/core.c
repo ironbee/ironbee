@@ -396,7 +396,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         char dtmp[64]; /// @todo Allocate size???
         char dn[512]; /// @todo Allocate size???
         struct tm *tm;
-        size_t ret;
 
         tm = gmtime(&cfg->logtime->tv_sec);
         if (tm == 0) {
@@ -408,7 +407,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         
         /* Generate the audit log filename template. */
         if (*(corecfg->auditlog_sdir_fmt) != 0) {
-            ret = strftime(dtmp, sizeof(dtmp),
+            size_t ret = strftime(dtmp, sizeof(dtmp),
                            corecfg->auditlog_sdir_fmt, tm);
             if (ret == 0) {
                 /// @todo Better error - probably should validate at cfg time
@@ -687,7 +686,6 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     IB_FTRACE_INIT(core_audit_close);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
-    int ec;
     ib_status_t rc;
     char line[IB_LOGFORMAT_MAXLINELEN + 2]; 
     int line_size = 0;
@@ -704,6 +702,8 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 
     /* Write to the index file if using one. */
     if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
+        int ec;
+
         rc = core_audit_get_index_line(lpi, log, line, &line_size);
         /* @todo: What to do if line is truncated? */
         if (rc != IB_OK) {
@@ -850,14 +850,15 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 {
     IB_FTRACE_INIT(core_data_get);
     const char *subkey;
-    size_t klen;
-    size_t sklen;
     ib_status_t rc;
 
     /* Allow "key.subkey" syntax, but still fall through
      * to a full key lookup if that fails.
      */
     if ((subkey = strchr(name, '.')) != NULL) {
+        size_t klen;
+        size_t sklen;
+
         subkey += 1; /* skip over "." */
         klen = (subkey - name) - 1;
         sklen = nlen - klen - 1;
@@ -1389,7 +1390,6 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     ib_engine_t *ib = part->log->ib;
     ib_field_t *f;
     uint8_t *rec;
-    size_t rlen;
 
 #define CORE_JSON_MAX_FIELD_LEN 256
     
@@ -1420,6 +1420,8 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
     if (f != NULL) {
         const char *comma;
+        size_t rlen;
+
         rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_FIELD_LEN);
 
         /* Error. */
@@ -1632,7 +1634,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     ib_engine_t *ib = part->log->ib;
     ib_logevent_t *e;
     uint8_t *rec;
-    size_t rlen;
 
 #define CORE_JSON_MAX_REC_LEN 1024
     
@@ -1662,6 +1663,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
     e = (ib_logevent_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
     if (e != NULL) {
+        size_t rlen;
+
         rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_REC_LEN);
 
         /* Error. */
@@ -3324,7 +3327,7 @@ static ib_status_t core_tfn_trim(void *fndata,
     /* Just call the other trim functions. */
     rc = core_tfn_trimleft(fndata, pool, data_in, dlen_in, data_out, dlen_out,
                            pflags);
-    if (IB_OK != IB_OK) {
+    if (rc != IB_OK) {
         return rc;
     }
     rc = core_tfn_trimleft(fndata, pool, *data_out, *dlen_out, data_out, dlen_out,

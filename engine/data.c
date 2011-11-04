@@ -220,7 +220,6 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
     char *fullname;
     size_t fnlen;
     size_t tlen;
-    size_t i;
     ib_status_t rc;
 
     /* No tfn just means a normal get. */
@@ -244,6 +243,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
     rc = api->get(dpi, fullname, fnlen, pf);
     if (rc == IB_ENOENT) {
         const char *tname;
+        size_t i;
 
         /* Get the non-tfn field. */
         rc = api->get(dpi, name, nlen, pf);
@@ -276,10 +276,10 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
         for (i = 0; i <= tlen; i++) {
             ib_tfn_t *t;
             ib_flags_t flags;
-            size_t len;
 
             if ((tfn[i] == ',') || (i == tlen)) {
-                len = (tfn + i) - tname;
+                size_t len = (tfn + i) - tname;
+
                 rc = ib_tfn_lookup_ex(ib, tname, len, &t);
                 if (rc == IB_OK) {
                     ib_log_debug(ib, 7,

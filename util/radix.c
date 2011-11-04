@@ -907,7 +907,6 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
                                                 ib_mpool_t *mp)
 {
     IB_FTRACE_INIT(ib_radix_match_all);
-    int i = 0;
     ib_status_t ret = IB_OK;
     uint8_t inserted = 0;
 
@@ -931,6 +930,8 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
         inserted = 1;
     }
     else {
+        int i = 0;
+
         for (; i < node->prefix->prefixlen && offset < prefix->prefixlen;
               i++, offset++)
         {

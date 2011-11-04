@@ -41,8 +41,8 @@ void callback(ib_ac_t *ac_tree,
               size_t offset,
               size_t relative_offset)
 {
-    char *d = (char *) data;
 #if 0
+    char *d = (char *) data;
     printf("Call: Matched '%s', len:%d offset:%d rel_offset:%d data %x\n",
            pattern, pattern_len, offset, relative_offset, data);
 #endif
@@ -65,7 +65,6 @@ TEST(TestIBUtilAhoCorasick, generic_ac_test)
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "shershis";
-    const char *match = NULL;
 
     ib_ac_t *ac_tree = NULL;
 
@@ -222,7 +221,6 @@ TEST(TestIBUtilAhoCorasick, test_ib_ac_consume)
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "shershis";
-    const char *match = NULL;
 
     ib_ac_t *ac_tree = NULL;
 
@@ -248,7 +246,6 @@ TEST(TestIBUtilAhoCorasick, test_ib_ac_consume)
 
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
-    int i = 0;
     while (ac_mctx.processed < strlen(text)) {
         /* Call consume with length == 1 byte each (like 1byte chunks) */
         rc = ib_ac_consume(&ac_mctx,
@@ -270,7 +267,6 @@ TEST(TestIBUtilAhoCorasick, test_ib_ac_consume)
                 << "ib_ac_consume() failed - The number of elements should"
                    " be reset to 0";
 
-    i = 0;
     while (ac_mctx.processed < strlen(text)) {
         /* Call consume with length == 2 byte each (like 1byte chunks) */
         rc = ib_ac_consume(&ac_mctx,
@@ -291,7 +287,6 @@ TEST(TestIBUtilAhoCorasick, test_ib_ac_consume)
                 << "ib_ac_consume() failed - The number of elements matched"
                    " should be reset to 0";
 
-    i = 0;
     while (ac_mctx.processed < strlen(text)) {
         /* Call consume with length == 3 byte each (like 1byte chunks) */
         rc = ib_ac_consume(&ac_mctx,
@@ -325,7 +320,6 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_case_sensitive)
 
     /* Change some letters to capital */
     const char *text = "sHeRsHiS";
-    const char *match = NULL;
 
     ib_ac_t *ac_tree = NULL;
 
@@ -388,7 +382,6 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_nocase)
 
     /* Change some letters to capital */
     const char *text = "sHeRsHiS";
-    const char *match = NULL;
 
     ib_ac_t *ac_tree = NULL;
 
@@ -548,7 +541,6 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_multiple_common_prefix)
     /* Change some letters to capital */
     const char *text = "Aho Corasick is not too expensive for multiple "
                        "pattern matching!";
-    const char *match = NULL;
 
     ib_ac_t *ac_tree = NULL;
 
@@ -611,7 +603,6 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_check_list)
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "shershis";
-    const char *match = NULL;
 
     ib_ac_t *ac_tree = NULL;
 
@@ -740,7 +731,6 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_contained_patterns)
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "abcabcabcabc";
-    const char *match = NULL;
 
     ib_ac_t *ac_tree = NULL;
 

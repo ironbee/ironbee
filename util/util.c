@@ -121,8 +121,8 @@ void ib_util_log_ex(int level,
 ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 {
     char *ppath = NULL;
+    char *cpath = NULL;
     ib_status_t rc;
-    int ec;
 
     if (strcmp(path, ".") == 0 || strcmp(path, "/") == 0) {
         return IB_OK;
@@ -133,11 +133,15 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
      * they are all created.
      */
     if ((mkdir(path, mode) == -1) && (errno == ENOENT)) {
-        if ((ppath = strdup(path)) == NULL) {
+        int ec;
+
+        /* Some implementations may modify the path argument,
+         * so make a copy first. */
+        if ((cpath = strdup(path)) == NULL) {
             return IB_EALLOC;
         }
 
-        if ((ppath = dirname(ppath)) == NULL) {
+        if ((ppath = dirname(cpath)) == NULL) {
             rc = IB_EINVAL;
             goto cleanup;
         }
@@ -161,8 +165,8 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
     rc = IB_OK;
 
 cleanup:
-    if (ppath != NULL) {
-        free(ppath);
+    if (cpath != NULL) {
+        free(cpath);
     }
 
     return rc;

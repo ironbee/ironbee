@@ -708,6 +708,7 @@ static void ibexit(void)
   TSTextLogObjectDestroy(ironbee_log);
   ib_engine_destroy(ironbee);
 }
+
 static int ironbee_init(const char *configfile, const char *logfile)
 {
   /* grab from httpd module's post-config */
@@ -784,8 +785,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
   return IB_OK;
 }
 
-void
-TSPluginInit(int argc, const char *argv[])
+void TSPluginInit(int argc, const char *argv[])
 {
   int rv;
   TSPluginRegistrationInfo info;

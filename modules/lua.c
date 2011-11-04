@@ -89,7 +89,6 @@ struct modlua_chunk_t {
 struct modlua_chunk_fp_tracker_t {
     modlua_chunk_t     *chunk;        /**< The chunk that is being loaded */
     FILE               *fp;           /**< File pointer */
-    char                buf[BUFSIZ];  /**< The read buffer */
 };
 
 /** Structure to track chunk parts while reading */
@@ -744,10 +743,11 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
     modlua_chunk_t *chunk;
     ib_module_t *m;
-    int ec;
 
     rc = ib_engine_module_get(ib, IB_FFI_MODULE_STR, &m);
     if (rc == IB_OK) {
+        int ec;
+
         chunk = (modlua_chunk_t *)m->data;
         ib_log_debug(ib, 9, "Lua %p module \"%s\" module=%p chunk=%p",
                      L, IB_FFI_MODULE_STR, m, chunk);
@@ -1030,7 +1030,6 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
     lua_State *L = lua->L;
     const char *funcname = NULL;
     ib_status_t rc = IB_OK;
-    int ec;
 
     /* Order here is by most common use. */
     /// @todo No longer needed.
@@ -1137,6 +1136,8 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
     /* Call event handler via a wrapper. */
     lua_getglobal(L, IB_FFI_MODULE_EVENT_WRAPPER_STR);
     if (lua_isfunction(L, -1)) {
+        int ec;
+
         ib_log_debug(ib, 9,
                      "Executing lua handler \"%s.%s\" via wrapper",
                      modname, funcname);
@@ -1680,7 +1681,6 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
     modlua_cfg_t *maincfg;
     lua_State *L;
     ib_status_t rc;
-    int ec;
 
     ib_log_debug(ib, 6, "Handling Lua Directive: %s", name);
     /* Get the main module config. */
@@ -1696,6 +1696,8 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
 
     lua_getglobal(L, IB_FFI_MODULE_WRAPPER_STR);
     if (lua_isfunction(L, -1)) {
+        int ec;
+
         ib_log_debug(ib, 9,
                      "Executing lua config handler \"%s.%s\" via wrapper",
                      wcbdata->fn_config_modname,
@@ -1765,7 +1767,6 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
     modlua_cfg_t *maincfg;
     lua_State *L;
     ib_status_t rc;
-    int ec;
 
     ib_log_debug(ib, 6, "Handling Lua Directive: %s", name);
     /* Get the main module config. */
@@ -1781,6 +1782,8 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
 
     lua_getglobal(L, IB_FFI_MODULE_WRAPPER_STR);
     if (lua_isfunction(L, -1)) {
+        int ec;
+
         ib_log_debug(ib, 9,
                      "Executing lua config handler \"%s.%s\" via wrapper",
                      wcbdata->fn_config_modname,
