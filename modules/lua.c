@@ -534,6 +534,13 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
 
     /* Uses the configuration lua state. */
     L = maincfg->Lconfig;
+    if (L == NULL) {
+        ib_log_error(ib, 3,
+                     "Cannot load lua module \"%s\": "
+                     "Lua support not available.",
+                     file);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
     /* Load the lua file. */
     rc = modlua_load_lua_file(ib, L, file, &chunk);
@@ -867,6 +874,11 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
     if (modcfg->Lconfig == NULL) {
         ib_log_debug(ib, 8, "Initializing lua runtime for configuration.");
         modcfg->Lconfig = luaL_newstate();
+        if (modcfg->Lconfig == NULL) {
+            ib_log_error(ib, 1, "Failed to initialize lua module.");
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+
         luaL_openlibs(modcfg->Lconfig);
 
         /* Preload ironbee module (static link). */
@@ -1503,7 +1515,10 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     m->data = mlist;
 
     /* Initialize the lua runtime for the configuration. */
-    modlua_init_lua_runtime_cfg(ib, NULL, NULL);
+    rc = modlua_init_lua_runtime_cfg(ib, NULL, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Hooks to initialize/destroy the lua runtime for configuration. */
     ib_hook_register(ib, cfg_finished_event,
@@ -1629,6 +1644,12 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
         ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
                      MODULE_NAME_STR, rc);
         IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Check for a valid lua state. */
+    if (modcfg->Lconfig == NULL) {
+        ib_log_error(ib, 4, "Lua support not available");
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Init the lua modules that were loaded */
