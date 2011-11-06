@@ -15,12 +15,12 @@
  * limitations under the License.
  *****************************************************************************/
 
-#ifndef _IB_MODULES_H_
-#define _IB_MODULES_H_
+#ifndef _IB_MODULE_H_
+#define _IB_MODULE_H_
 
 /**
  * @file
- * @brief IronBee - Modules
+ * @brief IronBee - Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -39,7 +39,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeModules Modules
+ * @defgroup IronBeeModule Module
  * @ingroup IronBee
  * @{
  */
@@ -349,11 +349,11 @@ ib_status_t DLL_PUBLIC ib_module_register_context(ib_module_t *m,
 
 
 /**
- * @} IronBeeModules
+ * @} IronBeeModule
  */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _IB_MODULES_H_ */
+#endif /* _IB_MODULE_H_ */
