@@ -12,6 +12,9 @@ AC_CONFIG_HEADERS([ironbee_config_auto.h])
 AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
 
+dnl Define Feature Test Macros
+AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
+
 AM_INIT_AUTOMAKE([foreign])
 
 dnl Checks for programs.

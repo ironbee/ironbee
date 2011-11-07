@@ -14,21 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *****************************************************************************/
-#define _POSIX_SOURCE 1
 
-/* These are required for getnameinfo */
-
-/* Ironbee sets compile flags that cause these to fail.
- * The manpage for getnameinfo tells us:
-   Feature Test Macro Requirements for glibc (see feature_test_macros(7)):
-
-       getnameinfo(): _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
- * I don't know why Ironbee wants these unset, so let's say POSIX
+/**
+ * @file
+ * @brief IronBee - Apache Traffic Server Plugin
+ *
+ * @author Nick Kew <nick@webthing.com>
  */
 
-#ifndef _POSIX_SOURCE
-#define _POSIX_SOURCE 1
-#endif
+#include "ironbee_config_auto.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -616,6 +610,7 @@ static void ironbee_logger(void *dummy, int level,
     }
 
     /* Write it to the ironbee log. */
+    /* FIXME: why is the format arg's prototype not const char* ? */
     rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char*)"%s: %s\n", prefix, buf)
                 : TSTextLogObjectWrite(ironbee_log, (char*)"%s\n", buf);
     if (rc != TS_SUCCESS) {
@@ -624,6 +619,7 @@ static void ironbee_logger(void *dummy, int level,
     if (errmsg != NULL)
         TSError("[ts-ironbee] %s\n", errmsg);
 }
+
 static void addr2str(const struct sockaddr *addr, char *str, int *port)
 {
   char serv[8]; /* port num */
