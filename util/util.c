@@ -24,6 +24,7 @@
 #include "ironbee_config_auto.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <apr_lib.h>
 #include <apr_general.h>
 
