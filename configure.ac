@@ -8,7 +8,7 @@ AC_INIT([ironbee], [0.2], [brectanus@qualys.com])
 
 AC_CONFIG_MACRO_DIR([acinclude])
 AC_CONFIG_SRCDIR([README])
-AC_CONFIG_HEADERS([ironbee_config_auto.h])
+AC_CONFIG_HEADERS([ironbee_config_auto_gen.h])
 AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
 

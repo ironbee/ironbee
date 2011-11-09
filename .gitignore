@@ -16,8 +16,8 @@ core
 *.patch
 
 # Autotools generated files:
-*_config_auto.h
-*_config_auto.h.in
+*_config_auto_gen.h
+*_config_auto_gen.h.in
 aclocal.m4
 config.log
 config.status
