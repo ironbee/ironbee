@@ -12,9 +12,6 @@ AC_CONFIG_HEADERS([ironbee_config_auto_gen.h])
 AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
 
-dnl Define Feature Test Macros
-AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
-
 AM_INIT_AUTOMAKE([foreign])
 
 dnl Checks for programs.
@@ -78,16 +75,20 @@ case "$OS" in
         Darwin*)
                 AC_MSG_RESULT(Darwin) 
                 OS_DARWIN="true"
+                AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
+                AC_DEFINE(_DARWIN_C_SOURCE, [1], [Enable full C features on OSX])
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/opt/local/lib"
                 AC_CHECK_LIB(iconv, libiconv_open, LIBS="$LIBS -liconv")
         ;;
         Linux*)
                 AC_MSG_RESULT(Linux)
+                AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
                 OS_LINUX="true"
         ;;
         *)
                 AC_MSG_RESULT(no)
+                AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
         ;;
 esac
 AM_CONDITIONAL([FREEBSD], [test "$OS_FREEBSD" = "true"])
