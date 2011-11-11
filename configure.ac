@@ -83,7 +83,7 @@ case "$OS" in
         ;;
         Linux*)
                 AC_MSG_RESULT(Linux)
-                AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
+                AC_DEFINE(_GNU_SOURCE, [1], [Enable GNU C source feature test macro])
                 OS_LINUX="true"
         ;;
         *)
