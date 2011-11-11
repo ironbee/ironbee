@@ -31,7 +31,7 @@
 
 #include <iostream>
 
-#include <ironbee/util.h>
+#include <ironbee/debug.h>
 
 // Common main() to reset tracing and execute all tests
 int main(int argc, char **argv)
