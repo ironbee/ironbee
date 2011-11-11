@@ -26,6 +26,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <ironbee/types.h>
+#include <ironbee/string.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/field.h>
+#include <ironbee/debug.h>
 #include <ironbee/util.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)

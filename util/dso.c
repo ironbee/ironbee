@@ -27,7 +27,10 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+#include <ironbee/types.h>
 #include <ironbee/util.h>
+#include <ironbee/dso.h>
+#include <ironbee/debug.h>
 
 #include "ironbee_util_private.h"
 

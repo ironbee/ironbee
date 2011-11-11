@@ -29,7 +29,9 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/util.h>
+#include <ironbee/types.h>
+#include <ironbee/list.h>
+#include <ironbee/debug.h>
 
 #include "ironbee_util_private.h"
 

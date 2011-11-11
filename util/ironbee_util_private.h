@@ -26,7 +26,13 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
-#include <ironbee/util.h>
+#include <ironbee/types.h>
+#include <ironbee/mpool.h>
+#include <ironbee/list.h>
+#include <ironbee/hash.h>
+#include <ironbee/field.h>
+#include <ironbee/radix.h>
+#include <ironbee/ahocorasick.h>
 
 
 /* Memory pool definitions */
@@ -338,7 +344,8 @@ struct ib_array_t {
  *
  * @returns Extent index where data resides
  */
-#define IB_ARRAY_EXTENT_INDEX(arr,idx) ((idx) / (arr)->ninit)
+#define IB_ARRAY_EXTENT_INDEX(arr,idx) \
+    ((idx) / (arr)->ninit)
 
 /**
  * @internal
@@ -350,7 +357,8 @@ struct ib_array_t {
  *
  * @returns Data index where data resides within the given extent
  */
-#define IB_ARRAY_DATA_INDEX(arr,idx,extent_idx) ((idx) - ((extent_idx) * (arr)->ninit))
+#define IB_ARRAY_DATA_INDEX(arr,idx,extent_idx) \
+    ((idx) - ((extent_idx) * (arr)->ninit))
 
 /**
  * @internal
@@ -360,7 +368,8 @@ struct ib_array_t {
  * @param byte Array of byte (uint8_t*)
  * @param bit index of bit
  */
-#define IB_SET_BIT_ARRAY(byte, bit)      (byte[bit / 8] |= (0x01 << (7 - (bit % 8))));
+#define IB_SET_BIT_ARRAY(byte, bit) \
+    (byte[bit / 8] |= (0x01 << (7 - (bit % 8))));
 
 /**
  * @internal
@@ -371,7 +380,8 @@ struct ib_array_t {
  * @param bit index of bit
  * @returns 0 or 1
  */
-#define IB_READ_BIT(byte, bit)             ((byte >> (7 - ((bit) % 8)) ) & 0x01)
+#define IB_READ_BIT(byte, bit) \
+    ((byte >> (7 - ((bit) % 8)) ) & 0x01)
 
 /**
  * @internal
@@ -380,7 +390,8 @@ struct ib_array_t {
  * @param bits The number of bits we want to store
  * @returns size in bytes needed for that bits
  */
-#define IB_BITS_TO_BYTES(bits)           (((bits) % 8 == 0) ? ((bits) / 8) : ((bits) / 8) + 1)
+#define IB_BITS_TO_BYTES(bits) \
+    (((bits) % 8 == 0) ? ((bits) / 8) : ((bits) / 8) + 1)
 
 /**
  * @internal
@@ -390,7 +401,8 @@ struct ib_array_t {
  * @param byte Byte to look at (uint8_t)
  * @param bit index of bit
  */
-#define IB_SET_BIT(byte, bit)            (byte |= (0x01 << (7 - (bit % 8))));
+#define IB_SET_BIT(byte, bit) \
+    (byte |= (0x01 << (7 - (bit % 8))));
 
 /**
  * @internal
@@ -399,7 +411,8 @@ struct ib_array_t {
  * @param byte Byte to look at (uint8_t)
  * @returns 0 or 1
  */
-#define IB_GET_DIR(byte)                (((byte) >> 7) & 0x01)
+#define IB_GET_DIR(byte) \
+    (((byte) >> 7) & 0x01)
 
 /**
  * @internal

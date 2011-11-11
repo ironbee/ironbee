@@ -27,7 +27,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <ironbee/util.h>
+#include <ironbee/types.h>
+#include <ironbee/debug.h>
+#include <ironbee/hash.h>
 
 #include "ironbee_util_private.h"
 

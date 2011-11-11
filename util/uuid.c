@@ -27,7 +27,9 @@
 #include <string.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
+#include <ironbee/types.h>
+#include <ironbee/uuid.h>
+#include <ironbee/debug.h>
 
 #include "ironbee_util_private.h"
 

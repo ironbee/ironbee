@@ -28,7 +28,9 @@
 
 #include <string.h>
 
-#include <ironbee/util.h>
+#include <ironbee/types.h>
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
 
 #include "ironbee_util_private.h"
 

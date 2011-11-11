@@ -30,7 +30,9 @@
 
 #include <ironbee/build.h>
 #include <ironbee/release.h>
-#include <ironbee/util.h>
+#include <ironbee/types.h>
+#include <ironbee/list.h>
+#include <ironbee/uuid.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -25,7 +25,7 @@
 
 #include <stdio.h>
 
-#include <ironbee/util.h>
+#include <ironbee/debug.h>
 
 #ifdef IB_DEBUG
 

@@ -23,7 +23,9 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/util.h>
+#include <ironbee/types.h>
+#include <ironbee/debug.h>
+#include <ironbee/bytestr.h>
 
 #include <bstr.h>
 
