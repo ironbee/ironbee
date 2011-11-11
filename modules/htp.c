@@ -33,7 +33,13 @@
 #include <ctype.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
+#include <ironbee/debug.h>
+#include <ironbee/field.h>
+#include <ironbee/string.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/mpool.h>
+#include <ironbee/hash.h>
+#include <ironbee/cfgmap.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 

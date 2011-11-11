@@ -27,6 +27,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
+#include <ironbee/debug.h>
 #include <ironbee/plugin.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>

@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
+#include <ironbee/mpool.h>
 
 #include "ironbee_private.h"
 

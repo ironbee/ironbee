@@ -27,6 +27,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
+#include <ironbee/debug.h>
 
 #ifdef __cplusplus
 extern "C" {

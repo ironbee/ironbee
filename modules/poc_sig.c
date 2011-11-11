@@ -30,7 +30,9 @@
 #include <strings.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
+#include <ironbee/cfgmap.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 

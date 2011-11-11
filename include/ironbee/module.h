@@ -32,7 +32,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/config.h>
-#include <ironbee/util.h>
+#include <ironbee/logformat.h>
 
 #ifdef __cplusplus
 extern "C" {

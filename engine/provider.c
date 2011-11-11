@@ -31,7 +31,8 @@
 
 
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
+#include <ironbee/mpool.h>
+#include <ironbee/hash.h>
 #include <ironbee/provider.h>
 
 #include "ironbee_private.h"

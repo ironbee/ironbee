@@ -38,7 +38,8 @@
 
 
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
+#include <ironbee/mpool.h>
+#include <ironbee/hash.h>
 #include <ironbee/config.h>
 
 #include "config-parser.h"

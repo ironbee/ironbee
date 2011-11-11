@@ -35,7 +35,11 @@
 #include <unistd.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
+#include <ironbee/mpool.h>
+#include <ironbee/hash.h>
+#include <ironbee/dso.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/debug.h>
 #include <ironbee/module.h>
 #include <ironbee/plugin.h>
 
