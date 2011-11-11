@@ -774,12 +774,3 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_contained_patterns)
 
     ib_mpool_destroy(pool);
 }
-
-
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    ib_trace_init(NULL);
-    return RUN_ALL_TESTS();
-}
-

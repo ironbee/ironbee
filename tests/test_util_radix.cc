@@ -1445,11 +1445,3 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
 
     ib_mpool_destroy(mp);
 }
-
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    ib_trace_init(NULL);
-    return RUN_ALL_TESTS();
-}
-

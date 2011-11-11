@@ -232,10 +232,3 @@ TEST(TestIBUtilByteStr, test_bytestr_append)
 
     ib_mpool_destroy(mp);
 }
-
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    ib_trace_init(NULL);
-    return RUN_ALL_TESTS();
-}

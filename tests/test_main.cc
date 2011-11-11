@@ -17,30 +17,27 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee - Test Framework Test Functions
+/// @brief IronBee - Test Framework Main Function
+///
+/// This file should be compiled in with all unit tests to server as
+/// a common main().
 /// 
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
+#include "ironbee_config_auto.h"
+
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
-#include "util/util.c"
-#include "util/debug.c"
+#include <iostream>
 
-// Allow testing a test-failure
-static void TestFailure()
+#include <ironbee/util.h>
+
+// Common main() to reset tracing and execute all tests
+int main(int argc, char **argv)
 {
-    EXPECT_EQ(5, 2 + 2) << "This should fail";
-}
-
-/// @test Basic tests to make sure the framework is working.
-TEST(Test, TestFrameworkWorking)
-{
-    EXPECT_EQ(2, 1 + 1) << "Basic addition failed!";
-    EXPECT_NONFATAL_FAILURE(
-        TestFailure(),
-        "This should fail"
-    );
-    EXPECT_STRCASEEQ("foo", "FOO") << "\"foo\" != \"FOO\"";
+    std::cout << "\n" << argv[0] << ":\n";
+    ::testing::InitGoogleTest(&argc, argv);
+    ib_trace_init(NULL);
+    return RUN_ALL_TESTS();
 }

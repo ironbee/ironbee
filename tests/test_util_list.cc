@@ -367,10 +367,3 @@ TEST(TestIBUtilList, test_list_loop_reverse_safe)
 
     ib_mpool_destroy(mp);
 }
-
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    ib_trace_init(NULL);
-    return RUN_ALL_TESTS();
-}
