@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/plugin.h>
@@ -42,7 +43,14 @@ struct runtime_settings {
     char *configfile;
     char *requestfile;
     char *responsefile;
+    const char *localip;
+    int localport;
+    const char *remoteip;
+    int remoteport;
 };
+
+static struct runtime_settings settings = 
+    {NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424};
 
 
 /* Plugin Structure */
@@ -71,10 +79,10 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
                                      void *cbdata)
 {
     // @todo These should be configurable
-    iconn->local_port=8080;
-    iconn->local_ipstr="127.0.0.1";
-    iconn->remote_port=23424;
-    iconn->remote_ipstr="10.10.10.10";
+    iconn->local_port=settings.localport;
+    iconn->local_ipstr=settings.localip;
+    iconn->remote_port=settings.remoteport;
+    iconn->remote_ipstr=settings.remoteip;
 
     return IB_OK;
 }
@@ -142,12 +150,15 @@ main(int argc, char* argv[])
     ib_status_t rc;
     ib_engine_t *ironbee = NULL;
     ib_cfgparser_t *cp;
-    struct runtime_settings settings = {NULL,NULL,NULL};
     struct option longopts[] = 
         {
             { "config", required_argument, 0, 0 },
             { "requestfile", required_argument, 0, 0 },
             { "responsefile", required_argument, 0, 0 },
+	    { "local-ip", required_argument, 0, 0 },
+	    { "local-port", required_argument, 0, 0 },
+	    { "remote-ip", required_argument, 0, 0 },
+	    { "remote-port", required_argument, 0, 0 },
             { 0, 0, 0, 0}
         };
 
@@ -165,6 +176,28 @@ main(int argc, char* argv[])
         }
         else if (! strcmp("responsefile", longopts[option_index].name)) {
             settings.responsefile = optarg;
+        }
+        else if (! strcmp("local-ip", longopts[option_index].name)) {
+            settings.localip = optarg;
+        }
+        else if (! strcmp("local-port", longopts[option_index].name)) {
+            settings.localport = (int) strtol(optarg, NULL, 10);
+            if ( ( settings.localport == 0 ) && ( errno == EINVAL ) ) {
+                fprintf(stderr,
+                        "--local-port: invalid port number '%s'", optarg );
+                usage();
+            }
+        }
+        else if (! strcmp("remote-ip", longopts[option_index].name)) {
+            settings.remoteip = optarg;
+        }
+        else if (! strcmp("remote-port", longopts[option_index].name)) {
+            settings.remoteport = (int) strtol(optarg, NULL, 10);
+            if ( ( settings.remoteport == 0 ) && ( errno == EINVAL ) ) {
+                fprintf(stderr,
+                        "--remote-port: invalid port number '%s'", optarg );
+                usage();
+            }
         }
     }
 
