@@ -62,7 +62,40 @@ ib_plugin_t ibplugin = {
 static void usage(void)
 {
     fprintf(stderr, "Usage: ibcli <options>\n");
+    fprintf(stderr, "  Use --help for help\n");
     exit(1);
+}
+
+static void print_option(const char *opt, const char *param,
+                         const char *desc, int required)
+{
+    char buf[64];
+    const char *req = "";
+    if ( param == NULL ) {
+        snprintf( buf, sizeof(buf), "--%s", opt );
+    }
+    else { 
+        snprintf( buf, sizeof(buf), "--%s <%s>", opt, param );
+   }
+    if ( required ) {
+        req = "[Required]";
+    }
+    printf( "  %-24s: %s %s\n", buf, desc, req );
+}
+
+static void help(void)
+{
+    printf("Usage: ibcli <options>\n");
+    printf("Options:\n");
+    print_option("config", "path", "Specify configuration file", 1 );
+    print_option("requestfile", "path", "Specify request file", 1 );
+    print_option("responsefile", "path", "Specify response file", 1 );
+    print_option("local-ip", "x.x.x.x", "Specify local IP address", 0 );
+    print_option("local-port", "num", "Specify local port", 0 );
+    print_option("remote-ip", "x.x.x.x", "Specify remote IP address", 0 );
+    print_option("remote-port", "num", "Specify remote port", 0 );
+    print_option("help", "NULL", "Print this help", 0 );
+    exit(0);
 }
 
 static void fatal_error(const char *fmt, ...)
@@ -159,6 +192,7 @@ main(int argc, char* argv[])
 	    { "local-port", required_argument, 0, 0 },
 	    { "remote-ip", required_argument, 0, 0 },
 	    { "remote-port", required_argument, 0, 0 },
+            { "help", no_argument, 0, 0 },
             { 0, 0, 0, 0}
         };
 
@@ -166,7 +200,12 @@ main(int argc, char* argv[])
         int option_index = 0;
         int c = getopt_long(argc, argv, "", longopts, &option_index);
         if (c != 0) {
-            break;
+            if ( c == 'h' ) {
+                help( );
+            }
+            else {
+                break;
+            }
         }
         if (! strcmp("config", longopts[option_index].name)) {
             settings.configfile = optarg;
@@ -198,6 +237,12 @@ main(int argc, char* argv[])
                         "--remote-port: invalid port number '%s'", optarg );
                 usage();
             }
+        }
+        else if (! strcmp("help", longopts[option_index].name)) {
+            help( );
+        }
+        else {
+            usage( );
         }
     }
 
