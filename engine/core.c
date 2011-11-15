@@ -326,7 +326,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                              strerror(ec), ec);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
-            
+
             /* Create a new process for executing the piped command. */
             pipe_pid = fork();
             if (pipe_pid == 0) {
@@ -409,7 +409,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                          " too long");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        
+
         /* Generate the audit log filename template. */
         if (*(corecfg->auditlog_sdir_fmt) != 0) {
             size_t ret = strftime(dtmp, sizeof(dtmp),
@@ -563,7 +563,7 @@ static ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
 
 /**
  * @internal
- * Render the log index line. Line must have a size of 
+ * Render the log index line. Line must have a size of
  * IB_LOGFORMAT_MAX_INDEX_LENGTH + 1
  *
  * @param lpi provider instance
@@ -640,7 +640,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                     if (tstamp == NULL) {
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
-                
+
                     ib_timestamp(tstamp, &tx->started);
                      aux = tstamp;
                     break;
@@ -667,7 +667,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
         }
         else {
             /* Use literals */
-            if (used + lf->literals_len[l] < IB_LOGFORMAT_MAXLINELEN) { 
+            if (used + lf->literals_len[l] < IB_LOGFORMAT_MAXLINELEN) {
                 memcpy(&ptr[used], lf->literals[l], lf->literals_len[l]);
                 used += lf->literals_len[l];
                 ++l;
@@ -692,7 +692,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
-    char line[IB_LOGFORMAT_MAXLINELEN + 2]; 
+    char line[IB_LOGFORMAT_MAXLINELEN + 2];
     int line_size = 0;
 
     /* Retrieve corecfg to get the AuditLogIndexFormat */
@@ -1397,7 +1397,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     uint8_t *rec;
 
 #define CORE_JSON_MAX_FIELD_LEN 256
-    
+
     /* The gen_data field is used to store the current state. NULL
      * means the part has not started yet and a -1 value
      * means it is done. Anything else is a node in the event list.
@@ -1524,7 +1524,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
     size_t rlen;
 
 #define CORE_HEADER_MAX_FIELD_LEN 8192
-    
+
     /* The gen_data field is used to store the current state. NULL
      * means the part has not started yet and a -1 value
      * means it is done. Anything else is a node in the event list.
@@ -1641,7 +1641,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     uint8_t *rec;
 
 #define CORE_JSON_MAX_REC_LEN 1024
-    
+
     /* The gen_data field is used to store the current state. NULL
      * means the part has not started yet and a -1 value
      * means it is done. Anything else is a node in the event list.
@@ -1767,7 +1767,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 static void ib_timestamp(char *buf, ib_timeval_t *tv)
 {
     struct tm *tm = localtime((time_t *)&tv->tv_sec);
-    
+
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
     snprintf(buf + 19, 12, ".%04lu", (unsigned long)tv->tv_usec);
     strftime(buf + 24, 6, "%z", tm);
@@ -2617,7 +2617,7 @@ static ib_status_t parser_register(ib_engine_t *ib,
  *
  * @param dpi Data provider instance
  * @param f Field to add
- * 
+ *
  * @returns Status code
  */
 static ib_status_t data_api_add(ib_provider_inst_t *dpi,
@@ -2648,7 +2648,7 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
  *
  * @param dpi Data provider instance
  * @param f Field to add
- * 
+ *
  * @returns Status code
  */
 static ib_status_t data_api_set(ib_provider_inst_t *dpi,
@@ -2683,7 +2683,7 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
  * @param name Field name
  * @param nlen Field name length
  * @param adjval Relative value adjustment
- * 
+ *
  * @returns Status code
  */
 static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
@@ -2716,7 +2716,7 @@ static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
  * @param name Field name
  * @param nlen Field name length
  * @param pf Address which field is written
- * 
+ *
  * @returns Status code
  */
 static ib_status_t data_api_get(ib_provider_inst_t *dpi,
@@ -2747,7 +2747,7 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
  *
  * @param dpi Data provider instance
  * @param list List in which fields are pushed
- * 
+ *
  * @returns Status code
  */
 static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
@@ -2778,7 +2778,7 @@ static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
  * @param name Field name
  * @param nlen Field name length
  * @param pf Address which removed field is written (if non-NULL)
- * 
+ *
  * @returns Status code
  */
 static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
@@ -2808,7 +2808,7 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
  * provider instance.
  *
  * @param dpi Data provider instance
- * 
+ *
  * @returns Status code
  */
 static ib_status_t data_api_clear(ib_provider_inst_t *dpi)
@@ -3010,9 +3010,9 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
 
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = NULL;
 
-    ib_status_t rc; 
+    ib_status_t rc;
     iface = mpi->pr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpi->pr->iface:NULL;
-    
+
     rc = iface->add_ex(mpi, patterns, patt, callback, arg,
                                errptr, erroffset);
     if (rc != IB_OK) {
@@ -3062,7 +3062,6 @@ static ib_status_t matcher_api_match(ib_provider_inst_t *mpi,
                                      const uint8_t *data,
                                      size_t dlen,
                                      void *ctx)
-                                     
 {
     IB_FTRACE_INIT(matcher_api_match);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
@@ -3517,7 +3516,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
  * Make an absolute filename out of a base directory and relative filename.
  *
  * @todo Needs to not assume the trailing slash will be there.
- * 
+ *
  * @param ib Engine
  * @param basedir Base directory
  * @param file Relative filename
@@ -3532,7 +3531,7 @@ static ib_status_t core_abs_module_path(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(core_abs_module_path);
     ib_mpool_t *pool = ib_engine_pool_config_get(ib);
-    
+
     *pabsfile = (char *)ib_mpool_alloc(pool, strlen(basedir) + 1 + strlen(file) + 1);
     if (*pabsfile == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -3951,7 +3950,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         uint64_t first_reduce = 0;
         uint8_t *ptr = (uint8_t *)&ib->sensor_id;
         uint8_t *result = (uint8_t *)&first_reduce;
-        
+
         int i = 0;
         for (i = 0; i < 8; i++) {
             result[i] = ptr[i] ^ ptr[i + 8];
