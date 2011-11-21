@@ -154,7 +154,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     IB_FTRACE_INIT(ib_cfgparser_parse);
     int fd = open(file, O_RDONLY);
     uint8_t buf[8192];
-    uint8_t *buf_end = buf + sizeof(buf);
+    uint8_t *buf_end = buf + sizeof(buf) - 1;
     uint8_t *buf_mark = buf;
     ssize_t nbytes;
     ib_status_t rc = IB_OK;
@@ -166,7 +166,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-#define bufremain (sizeof(buf) - (buf_mark - buf) + 1)
+#define bufremain (sizeof(buf) - (buf_mark - buf))
 
     while ((nbytes = read(fd, buf_mark, bufremain))) {
         int ec = errno;
@@ -184,15 +184,15 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
             }
         }
 
-        /* Move the buf_mark to where the data ends in buf. */
+        /* Move the buf_mark to next write point. */
         buf_mark += nbytes;
 
         /* Process all lines of data in buf. */
         chunk_start = buf;
         chunk_end = buf;
-        while (chunk_end < buf_mark) {
+        while (chunk_end < (buf_mark - 1)) {
             /* Do not go too far. */
-            if (chunk_end >= buf_end) {
+            if (chunk_end > buf_end) {
                 ib_log_error(cp->ib, 1, "Error parsing \"%s\": Line >%d bytes",
                              file, (int)sizeof(buf));
                 IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
@@ -214,15 +214,17 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                 chunk_end++;
                 chunk_start = chunk_end;
             }
-
-            chunk_end++;
+            else {
+                chunk_end++;
+            }
         }
 
         /* Move remaining data to beginning of buf so that more can be read. */
-        remaining = (buf_mark - chunk_start);
-        if (remaining) {
-            ib_log_debug(cp->ib, 9, "Moving %d bytes", (int)remaining);
-            memmove(buf, chunk_end, remaining);
+        remaining = buf_mark - chunk_end - 1;
+        if (remaining != 0) {
+            ib_log_debug(cp->ib, 9, "Moving %d bytes (%p -> %p)",
+                         (int)remaining, chunk_end + 1, buf);
+            memmove(buf, chunk_end + 1, remaining);
             buf_mark = buf + remaining;
         }
     }
