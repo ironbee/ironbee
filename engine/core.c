@@ -4071,19 +4071,7 @@ static void core_set_value(ib_context_t *ctx,
         corecfg = &core_global_cfg;
     }
 
-    if (strcasecmp("logger", name) == 0) {
-        /* Lookup/set logger provider. */
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGGER,
-                                         val, &pi,
-                                         ib->mp, NULL);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %d",
-                         IB_PROVIDER_TYPE_LOGGER, rc);
-            return;
-        }
-        ib_log_provider_set_instance(ctx, pi);
-    }
-    else if (strcasecmp("parser", name) == 0) {
+    if (strcasecmp("parser", name) == 0) {
         if (strcmp(MODULE_NAME_STR, corecfg->parser) == 0) {
             return;
         }
@@ -4387,8 +4375,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    /// @todo Move to using provider instance
-    ib_provider_data_set(core_log_provider, stderr);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger((ib_util_fn_logger_t)ib_vclog_ex, ib->ctx);
@@ -4499,10 +4485,11 @@ static ib_status_t core_init(ib_engine_t *ib,
 
     /* Lookup/set default logger provider. */
     rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGGER,
-                                     corecfg->logger, &logger,
+                                     corecfg->log_handler, &logger,
                                      ib->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_LOGGER, rc);
+        ib_log_error(ib, 0, "Failed to create %s provider instance '%s': %d",
+                     IB_PROVIDER_TYPE_LOGGER, corecfg->log_handler, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_provider_set_instance(ib->ctx, logger);
@@ -4542,7 +4529,7 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_PROVIDER_TYPE_LOGGER,
         IB_FTYPE_NULSTR,
         &core_global_cfg,
-        logger,
+        log_handler,
         (const uintptr_t)MODULE_NAME_STR
     ),
     IB_CFGMAP_INIT_ENTRY(
@@ -4558,6 +4545,13 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         &core_global_cfg,
         log_uri,
         ""
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        IB_PROVIDER_TYPE_LOGGER ".log_handler",
+        IB_FTYPE_NUM,
+        &core_global_cfg,
+        log_handler,
+        (const uintptr_t)MODULE_NAME_STR
     ),
 
     /* Logevent */

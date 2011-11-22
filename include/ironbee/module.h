@@ -267,7 +267,7 @@ struct ib_core_cfg_t {
 
     ib_num_t         log_level;         /**< Log level */
     char            *log_uri;           /**< Log URI */
-    char            *logger;            /**< Active logger provider key */
+    char            *log_handler;       /**< Active logger provider key */
     char            *logevent;          /**< Active logevent provider key */
     ib_num_t         buffer_req;        /**< Request buffering options */
     ib_num_t         buffer_res;        /**< Response buffering options */
