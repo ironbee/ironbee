@@ -121,6 +121,50 @@ static ib_core_cfg_t core_global_cfg;
     IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILERS
 
 
+/* -- Utilities -- */
+
+/**
+ * @internal
+ * Duplicate a file handle
+ *
+ * This is a simple function which basically does fdopen(dup(fileno(fp)))
+ * with some error checking.  This code takes care to make sure that
+ * a file handle isn't leaked in the process.
+ *
+ * @param[in] fh File handle
+ *
+ * @returns New file handle (or NULL).
+ */
+static FILE *fdup( FILE *fh )
+{
+    int      fd;
+    int      new_fd = -1;
+    FILE    *new_fh = NULL;
+
+    // Step 1: Get the file descriptor of the file handle
+    fd = fileno(fh);
+    if ( fd < 0 ) {
+        return NULL;
+    }
+
+    // Step 2: Get a new file descriptor (via dup(2) )
+    new_fd = dup(fd);
+    if ( new_fd < 0 ) {
+        return NULL;
+    }
+
+    // Step 3: Create a new file handle from the new file descriptor
+    new_fh = fdopen(new_fd, "a");
+    if ( new_fh == NULL ) {
+        // Close the file descriptor if fdopen() fails!!
+        close( new_fd );
+    }
+
+    // Done
+    return new_fh;
+}
+
+
 /* -- Core Logger Provider -- */
 
 /**
@@ -996,30 +1040,74 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                                const char *fmt, va_list ap)
 {
     IB_PROVIDER_IFACE_TYPE(logger) *iface;
-    ib_core_cfg_t *corecfg;
+    ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
+    const char *uri = NULL;
+    FILE *fp = NULL;            // The file pointer to write to
 
+    // Get the module context core configuration
     rc = ib_context_module_config(ctx, ib_core_module(),
                                   (void *)&corecfg);
+
+    // If not available, fall back to the core global configuration
     if (rc != IB_OK) {
         corecfg = &core_global_cfg;
     }
 
+    // Check the log level, return if we're not interested
     if (level > (int)corecfg->log_level) {
         return;
     }
 
+    // Get the current 'logger' provider interface
     iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
+
+    // If no interface, do *something*
+    //  Note that this should be the same as the default case
+    if (iface == NULL) {
+        core_logger(stderr, level, prefix, file, line, fmt, ap);
+        return;
+    }
+
+    // Get the current file pointer
+    fp = (FILE *) lpi->data;
+
+    // Pull the log URI from the core config
+    if (fp == NULL) {
+        if (corecfg != NULL) {
+            uri = corecfg->log_uri;
+        }
+
+        // If the URI looks like a file, try to open it
+        if ((uri != NULL) && (strncmp(uri, "file://", 7) == 0)) {
+            const char *path = uri+7;
+            fp = fopen( path, "a" );
+            if (fp == NULL) {
+                fprintf(stderr,
+                        "Failed to open log file '%s' for writing: %s\n",
+                        path, strerror(errno));
+            }
+        }
+        else if (uri != NULL) {
+            // Should *never* get here.
+            fprintf(stderr, "Invalid log URI: '%s'\n", uri );
+        }
+    }
+
+    // Finally, use stderr as a fallback
+    if (fp == NULL) {
+        fp = fdup(stderr);
+    }
+
+    // Copy the file pointer to the interface data.  We do this to
+    // cache the file handle so we don't open it each time.
+    lpi->data = fp;
 
     /* Just calls the interface logger with the provider instance data as
      * the first parameter (if the interface is implemented and not
      * just abstract).
      */
-    /// @todo Probably should not need this check
-    if (iface != NULL) {
-        iface->logger((lpi->pr->data?lpi->pr->data:lpi->data),
-                      level, prefix, file, line, fmt, ap);
-    }
+    iface->logger(fp, level, prefix, file, line, fmt, ap);
 }
 
 /**
@@ -3880,6 +3968,40 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_num(ctx, "logger.log_level", atol(p1));
         IB_FTRACE_RET_STATUS(rc);
     }
+    else if (strcasecmp("DebugLog", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
+        const char   *uri = NULL;
+
+        ib_log_debug(ib, 7, "%s: \"%s\"", name, p1);
+
+        // Create a file URI from the file path, using memory
+        // from the context's mem pool.
+        if ( strstr(p1, "://") == NULL )  {
+            char *buf = (char *)ib_mpool_alloc( mp, 8+strlen(p1) );
+            strcpy( buf, "file://" );
+            strcat( buf, p1 );
+            uri = buf;
+        }
+        else if ( strncmp(p1, "file://", 7) != 0 ) {
+            ib_log_error(ib, 3,
+                         "Unsupport URI in %s: \"%s\"",
+                         name, p1);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        else {
+            uri = p1;
+        }
+        ib_log_debug(ib, 7, "%s: URI=\"%s\"", name, uri);
+        rc = ib_context_set_string(ctx, "logger.log_uri", uri);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (strcasecmp("DebugLogHandler", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        rc = ib_context_set_string(ctx, "logger.log_handler", p1);
+        IB_FTRACE_RET_STATUS(rc);
+    }
     else if (strcasecmp("LoadModule", name) == 0) {
         char *absfile;
         ib_module_t *m;
@@ -4239,6 +4361,16 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     /* Logging */
     IB_DIRMAP_INIT_PARAM1(
         "DebugLogLevel",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "DebugLog",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "DebugLogHandler",
         core_dir_param1,
         NULL
     ),
@@ -4673,6 +4805,164 @@ ib_module_t *ib_core_module(void)
 
 /**
  * @internal
+ * Initialize the core module context
+ *
+ * @param ib Engine
+ * @param mod Module
+ * @param ctx Context
+ *
+ * @returns Status code
+ */
+static ib_status_t core_ctx_init(ib_engine_t *ib,
+                                 ib_module_t *mod,
+                                 ib_context_t *ctx)
+{
+    IB_FTRACE_INIT(core_ctx_init);
+    ib_core_cfg_t *corecfg;
+    ib_provider_t *lp;
+    ib_provider_inst_t *lpi;
+    const char *handler;
+    ib_status_t rc;
+    ib_context_t *main_ctx;
+    ib_core_cfg_t *main_core_config;
+    ib_provider_t *main_lp;
+    FILE *orig_fp;
+
+    // Get the main context config, it's config, and it's logger
+    main_ctx = ib_context_main(ib);
+    rc = ib_context_module_config(main_ctx, ib_core_module(),
+                                  (void *)&main_core_config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0,
+                     "Failed to fetch main core module context config: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    main_lp = main_core_config->pi.logger->pr;
+
+
+    // Get the current context config.
+    rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0,
+                     "Failed to fetch core module context config: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Lookup/set logger provider. */
+    handler = corecfg->log_handler;
+    rc = ib_provider_instance_create(ib,
+                                     IB_PROVIDER_TYPE_LOGGER,
+                                     handler,
+                                     &lpi,
+                                     ib->mp,
+                                     NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create %s provider instance '%s': %d",
+                     IB_PROVIDER_TYPE_LOGGER, handler, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_log_provider_set_instance(ctx, lpi);
+
+    // Get the log provider
+    lp  = lpi->pr;
+
+    // If it's not the core log provider, we're done: we know nothing
+    // about it's data, so don't try to treat it as a file handle!
+    if ( main_lp != lp ) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Now, copy the parent's file handle (which was copied in for us
+       when the context was created) */
+    orig_fp = (FILE *) lpi->data;
+    if ( orig_fp != NULL ) {
+        FILE *new_fp = fdup( orig_fp );
+        if ( new_fp != NULL ) {
+            lpi->data = new_fp;
+        }
+        else {
+            fprintf(stderr,
+                    "core_ctx_init: failed to duplicate file handle: %s\n",
+                    strerror(errno));
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Close the core module context
+ *
+ * @param ib Engine
+ * @param mod Module
+ * @param ctx Context
+ *
+ * @returns Status code
+ */
+static ib_status_t core_ctx_finish(ib_engine_t *ib,
+                                   ib_module_t *mod,
+                                   ib_context_t *ctx)
+{
+    IB_FTRACE_INIT(core_ctx_finish);
+    ib_core_cfg_t *corecfg;
+    ib_provider_t *lp;
+    ib_provider_inst_t *lpi;
+    ib_status_t rc;
+    ib_context_t *main_ctx;
+    ib_core_cfg_t *main_core_config;
+    ib_provider_t *main_lp;
+    FILE *fp;
+
+    // Get the main context config, it's config, and it's logger
+    main_ctx = ib_context_main(ib);
+    rc = ib_context_module_config(main_ctx, ib_core_module(),
+                                  (void *)&main_core_config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0,
+                     "Failed to fetch main core module context config: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    main_lp = main_core_config->pi.logger->pr;
+
+
+    // Get the current context config.
+    rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0,
+                     "Failed to fetch core module context config: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    // Get the current logger
+    lpi = corecfg->pi.logger;
+    lp  = lpi->pr;
+
+    // If it's not the core log provider, we're done: we know nothing
+    // about it's data, so don't try to treat it as a file handle!
+    if ( main_lp != lp ) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (  (main_ctx == ctx) && (ib_context_engine(ib) == ctx)  ) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Close our file handle */
+    fp = (FILE *) lpi->data;
+    if (fp != NULL) {
+        if (fclose( fp ) < 0) {
+            fprintf( stderr,
+                     "core_ctx_finish: Failed closing our fp %p: %s\n",
+                     (void*)fp, strerror(errno) );
+        }
+        lpi->data = NULL;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
  * Static core module structure.
  */
 IB_MODULE_INIT(
@@ -4683,6 +4973,6 @@ IB_MODULE_INIT(
     core_directive_map,                  /**< Config directive map */
     core_init,                           /**< Initialize function */
     NULL,                                /**< Finish function */
-    NULL,                                /**< Context init function */
-    NULL                                 /**< Context fini function */
+    core_ctx_init,                       /**< Context init function */
+    core_ctx_finish                      /**< Context fini function */
 );

@@ -36,7 +36,15 @@
 #include <ironbee/engine.h>
 #include <ironbee/plugin.h>
 #include <ironbee/provider.h>
+#include <ironbee/module.h>
 #include <ironbee/config.h>
+#include <ironbee_private.h>
+
+// Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line
+// handling.  It's currently disabled because DebugLog and DebugLogLevel
+// directives in the configuration will overwrite the command-line version,
+// which can cause the CLI to log back and forth between the two files.
+#define DEBUG_ARGS_ENABLE 0
 
 
 struct runtime_settings {
@@ -47,11 +55,12 @@ struct runtime_settings {
     int localport;
     const char *remoteip;
     int remoteport;
+    const char *debuguri;
+    int debuglevel;
 };
 
-static struct runtime_settings settings = 
-    {NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424};
-
+static struct runtime_settings settings =
+{NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424,NULL,-1};
 
 /* Plugin Structure */
 ib_plugin_t ibplugin = {
@@ -74,7 +83,7 @@ static void print_option(const char *opt, const char *param,
     if ( param == NULL ) {
         snprintf( buf, sizeof(buf), "--%s", opt );
     }
-    else { 
+    else {
         snprintf( buf, sizeof(buf), "--%s <%s>", opt, param );
    }
     if ( required ) {
@@ -94,9 +103,29 @@ static void help(void)
     print_option("local-port", "num", "Specify local port", 0 );
     print_option("remote-ip", "x.x.x.x", "Specify remote IP address", 0 );
     print_option("remote-port", "num", "Specify remote port", 0 );
+#if DEBUG_ARGS_ENABLE
+    print_option("debug-level", "path", "Specify debug log level", 0 );
+    print_option("debug-log", "path", "Specify debug log file / URI", 0 );
+#endif
     print_option("help", "NULL", "Print this help", 0 );
     exit(0);
 }
+
+#if DEBUG_ARGS_ENABLE
+static void set_debug( ib_context_t *ctx )
+{
+    if (settings.debuglevel >= 0 ) {
+        ib_context_set_num( ctx,
+                            IB_PROVIDER_TYPE_LOGGER ".log_level",
+                            settings.debuglevel);
+    }
+    if (settings.debuguri != NULL ) {
+        ib_context_set_string( ctx,
+                               IB_PROVIDER_TYPE_LOGGER ".log_uri",
+                               settings.debuguri);
+    }
+}
+#endif
 
 static void fatal_error(const char *fmt, ...)
 {
@@ -111,7 +140,6 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
                                      ib_conn_t *iconn,
                                      void *cbdata)
 {
-    // @todo These should be configurable
     iconn->local_port=settings.localport;
     iconn->local_ipstr=settings.localip;
     iconn->remote_port=settings.remoteport;
@@ -131,7 +159,7 @@ static void runConnection(ib_engine_t* ib,
     ib_conndata_t icdata;
     char buf[8192];
     ssize_t nbytes;
-    
+
     if (! strcmp("-", requestfile)) {
         reqfd = STDIN_FILENO;
     }
@@ -183,7 +211,8 @@ main(int argc, char* argv[])
     ib_status_t rc;
     ib_engine_t *ironbee = NULL;
     ib_cfgparser_t *cp;
-    struct option longopts[] = 
+
+    struct option longopts[] =
         {
             { "config", required_argument, 0, 0 },
             { "requestfile", required_argument, 0, 0 },
@@ -192,6 +221,10 @@ main(int argc, char* argv[])
 	    { "local-port", required_argument, 0, 0 },
 	    { "remote-ip", required_argument, 0, 0 },
 	    { "remote-port", required_argument, 0, 0 },
+#if DEBUG_ARGS_ENABLE
+	    { "debug-level", required_argument, 0, 0 },
+	    { "debug-log", required_argument, 0, 0 },
+#endif
             { "help", no_argument, 0, 0 },
             { 0, 0, 0, 0}
         };
@@ -216,6 +249,39 @@ main(int argc, char* argv[])
         else if (! strcmp("responsefile", longopts[option_index].name)) {
             settings.responsefile = optarg;
         }
+#if DEBUG_ARGS_ENABLE
+        else if (! strcmp("debug-level", longopts[option_index].name)) {
+            int level =  (int) strtol(optarg, NULL, 10);
+            if ( ( level == 0 ) && ( errno == EINVAL ) ) {
+                fprintf(stderr,
+                        "--debug-level: invalid level number '%s'", optarg );
+                usage();
+            }
+            else if ( (level < 0) || (level < 9) ) {
+                fprintf(stderr,
+                        "--debug-level: Level %d out of range (0-9)", level );
+                usage();
+            }
+            settings.debuglevel = level;
+        }
+        else if (! strcmp("debug-log", longopts[option_index].name)) {
+            static char  buf[256];
+            const char  *s = optarg;
+
+            // Create a file URI from the file path
+            if ( strstr(s, "://") == NULL )  {
+                snprintf( buf, sizeof(buf), "file://%s", s );
+            }
+            else if ( strncmp(s, "file://", 7) != 0 ) {
+                fprintf( stderr, "--debug-log: Unsupport URI \"%s\"", s );
+                usage( );
+            }
+            else {
+                strncpy(buf, s, sizeof(buf));
+            }
+            settings.debuguri = buf;
+        }
+#endif
         else if (! strcmp("local-ip", longopts[option_index].name)) {
             settings.localip = optarg;
         }
@@ -272,8 +338,18 @@ main(int argc, char* argv[])
     ib_hook_register(ironbee, conn_opened_event,
                      (ib_void_fn_t)ironbee_conn_init, NULL);
 
+    // Set the engine's debug flags from the command line args
+#if DEBUG_ARGS_ENABLE
+    set_debug( ib_context_engine(ironbee) );
+#endif
+
     /* Notify the engine that the config process has started. */
     ib_state_notify_cfg_started(ironbee);
+
+    // Set the main context's debug flags from the command line args
+#if DEBUG_ARGS_ENABLE
+    set_debug( ib_context_main(ironbee) );
+#endif
 
     /* Parse the config file. */
     rc = ib_cfgparser_create(&cp, ironbee);
@@ -282,9 +358,23 @@ main(int argc, char* argv[])
         ib_cfgparser_destroy(cp);
     }
 
+    // Set all contexts' debug flags from the command line args
+    // We do this because they may have been overwritten by DebugLog
+    // directives.
+#if DEBUG_ARGS_ENABLE
+    if ( (settings.debuglevel >= 0) || (settings.debuguri != NULL) ) {
+        ib_context_t *ctx = NULL;
+        size_t nctx;
+        size_t i;
+        IB_ARRAY_LOOP( ironbee->contexts, nctx, i, ctx ) {
+            set_debug( ctx );
+        }
+    }
+#endif
+
     /* Notify the engine that the config process is finished. */
     ib_state_notify_cfg_finished(ironbee);
-    
+
     /* Pass connection data to the engine. */
     runConnection(ironbee, settings.requestfile, settings.responsefile);
 
