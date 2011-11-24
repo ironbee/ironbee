@@ -398,7 +398,9 @@ int test_misc(htp_cfg_t *cfg) {
 
     htp_tx_t *tx = list_get(connp->conn->transactions, 0);
 
-    printf("Parsed URI: %s\n", bstr_util_strdup_to_c(tx->parsed_uri_incomplete->path));
+    char *str = bstr_util_strdup_to_c(tx->parsed_uri_incomplete->path);
+    printf("Parsed URI: %s\n", str);
+    free(str);
 
     htp_connp_destroy_all(connp);
 
@@ -985,25 +987,35 @@ int main(int argc, char** argv) {
 int main_path_decoding_tests(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
-
+    char *str;
     bstr *path = NULL;
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
 
-    printf("Before: %s\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("Before: %s\n", str);
+    free(str);
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("After: %s\n\n", str);
+    free(str);
+    bstr_free(&path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
 
-    printf("Before: %s\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("Before: %s\n", str);
+    free(str);
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("After: %s\n\n", str);
+    free(str);
+    bstr_free(&path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
@@ -1011,9 +1023,14 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
 
-    printf("Before: %s\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("Before: %s\n", str);
+    free(str);
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("After: %s\n\n", str);
+    free(str);
+    bstr_free(&path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
@@ -1022,9 +1039,14 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_backslash_separators = 1;
     cfg->path_decode_separators = 1;
 
-    printf("Before: %s\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("Before: %s\n", str);
+    free(str);
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("After: %s\n\n", str);
+    free(str);
+    bstr_free(&path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
@@ -1034,9 +1056,14 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_decode_separators = 1;
     cfg->path_invalid_encoding_handling = URL_DECODER_REMOVE_PERCENT;
 
-    printf("Before: %s\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("Before: %s\n", str);
+    free(str);
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("After: %s\n\n", str);
+    free(str);
+    bstr_free(&path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074");
@@ -1046,9 +1073,14 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_decode_separators = 1;
     cfg->path_invalid_encoding_handling = URL_DECODER_DECODE_INVALID;
 
-    printf("Before: %s\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("Before: %s\n", str);
+    free(str);
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("After: %s\n\n", str);
+    free(str);
+    bstr_free(&path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074%u0100");
@@ -1059,9 +1091,14 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->path_decode_u_encoding = 1;
 
-    printf("Before: %s\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("Before: %s\n", str);
+    free(str);
     htp_decode_path_inplace(cfg, tx, path);
-    printf("After: %s\n\n", bstr_util_strdup_to_c(path));
+    str = bstr_util_strdup_to_c(path);
+    printf("After: %s\n\n", str);
+    free(str);
+    bstr_free(&path);
 }
 
 void encode_utf8_2(uint8_t *data, uint32_t i) {
@@ -1131,6 +1168,8 @@ int main_utf8_decoder_tests(int argc, char** argv) {
             }
         }
     }
+
+    bstr_free(&path);
 }
 
 #define PATH_DECODE_TEST_BEFORE(NAME) \
