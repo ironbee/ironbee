@@ -611,8 +611,8 @@ static void ironbee_logger(void *dummy, int level,
 
     /* Write it to the ironbee log. */
     /* FIXME: why is the format arg's prototype not const char* ? */
-    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char*)"%s: %s\n", prefix, buf)
-                : TSTextLogObjectWrite(ironbee_log, (char*)"%s\n", buf);
+    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char*)"%s: %s", prefix, buf)
+                : TSTextLogObjectWrite(ironbee_log, (char*)"%s", buf);
     if (rc != TS_SUCCESS) {
         errmsg = "Data logging failed!";
     }
