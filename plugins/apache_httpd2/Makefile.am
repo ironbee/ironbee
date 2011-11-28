@@ -4,6 +4,7 @@ include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/plugins.mk
 
 pkglibdir = $(prefix)/lib
+if BUILD_HTTPD_PLUGIN
 pkglib_LTLIBRARIES = mod_ironbee.la
 
 mod_ironbee_la_SOURCES = mod_ironbee.c apache_httpd2.h
@@ -29,4 +30,4 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  base=`echo $$m | sed 's/\..*//'`; \
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
-
+endif

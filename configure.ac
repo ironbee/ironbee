@@ -217,6 +217,7 @@ sinclude(acinclude/xml2.m4)
 sinclude(acinclude/apxs.m4)
 sinclude(acinclude/apr.m4)
 sinclude(acinclude/apu.m4)
+sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
 
 # Required libs
@@ -227,8 +228,14 @@ dnl TODO: These need to be optional (only if building apache httpd plugin)
 CHECK_APXS()
 CHECK_APR()
 CHECK_APU()
+CHECK_HTTPD()
 CHECK_TS()
 
+#If we are not building plugins bail
+if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
+    AC_MSG_ERROR("No plugins enabled exiting")
+fi
+  
 dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts

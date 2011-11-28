@@ -72,7 +72,7 @@ AC_SUBST(APU_LDADD)
 
 if test -z "${APU_VERSION}"; then
     AC_MSG_NOTICE([*** apu library not found.])
-    ifelse([$2], , AC_MSG_ERROR([apu library is required]), $2)
+    ifelse([$2], , AC_MSG_NOTICE([apu library is required to build HTTPD plug-in]), $2)
 else
     AC_MSG_NOTICE([using apu v${APU_VERSION}])
     ifelse([$1], , , $1) 

@@ -80,7 +80,7 @@ AC_SUBST(APXS_MODULES)
 
 if test -z "${APXS}"; then
     AC_MSG_NOTICE([*** apxs utility not found.])
-    ifelse([$2], , AC_MSG_ERROR([apxs library is required]), $2)
+    ifelse([$2], , AC_MSG_NOTICE([apxs library is required to build HTTPD plug-in]), $2)
 else
     AC_MSG_NOTICE([using apxs ${APXS}])
     ifelse([$1], , , $1) 

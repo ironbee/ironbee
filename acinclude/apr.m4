@@ -76,7 +76,7 @@ AC_SUBST(APR_LDADD)
 
 if test -z "${APR_VERSION}"; then
     AC_MSG_NOTICE([*** apr library not found.])
-    ifelse([$2], , AC_MSG_ERROR([apr library is required]), $2)
+    ifelse([$2], , AC_MSG_NOTICE([apr library is required to build HTTPD plug-in]), $2)
 else
     AC_MSG_NOTICE([using apr v${APR_VERSION}])
     ifelse([$1], , , $1) 
