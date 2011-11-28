@@ -1,8 +1,7 @@
 ### Logging
 #DebugLog /var/log/ironbee/debug.log
 DebugLogLevel 4
-# TODO: Default is still stderr logging - this will go to Apache error_log
-Set logger "mod_ironbee"
+DebugLogHandler mod_ironbee
 
 ### Sensor Info
 # Sensor ID, must follow UUID format
