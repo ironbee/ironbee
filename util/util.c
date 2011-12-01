@@ -25,8 +25,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <apr_lib.h>
-#include <apr_general.h>
+#include <errno.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -180,10 +179,6 @@ ib_status_t ib_initialize(void)
 {
     ib_status_t rc;
 
-    if (apr_initialize() != APR_SUCCESS) {
-        return IB_EUNKNOWN;
-    }
-
     rc = ib_util_log_logger((ib_util_fn_logger_t)_builtin_logger, stderr);
     if (rc != IB_OK) {
         rc = ib_util_log_logger(NULL, NULL);
@@ -197,6 +192,6 @@ ib_status_t ib_initialize(void)
 
 void ib_shutdown(void)
 {
-    apr_terminate();
+    /// @todo Nothing yet
 }
 

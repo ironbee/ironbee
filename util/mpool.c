@@ -21,7 +21,6 @@
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
- *   - Custom memory pool implementation (removing APR pools dependency)
  */
 
 #include "ironbee_config_auto.h"
