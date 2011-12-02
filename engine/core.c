@@ -1040,6 +1040,9 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                                const char *fmt, va_list ap)
 {
     IB_PROVIDER_IFACE_TYPE(logger) *iface;
+    ib_core_cfg_t *main_core_config = NULL;
+    ib_context_t  *main_ctx;
+    ib_provider_t *main_lp;
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
     const char *uri = NULL;
@@ -1061,6 +1064,18 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
 
     // Get the current 'logger' provider interface
     iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
+
+    // If it's not the core log provider, we're done: we know nothing
+    // about it's data, so don't try to treat it as a file handle!
+    main_ctx = ib_context_main(ctx->ib);
+    rc = ib_context_module_config(
+        main_ctx, ib_core_module(), (void *)&main_core_config);
+    main_lp = main_core_config->pi.logger->pr;
+    if ( (main_lp != lpi->pr)
+         || (iface->logger != (ib_log_logger_fn_t)core_logger) ) {
+        iface->logger(lpi->data, level, prefix, file, line, fmt, ap);
+        return;
+    }
 
     // If no interface, do *something*
     //  Note that this should be the same as the default case
