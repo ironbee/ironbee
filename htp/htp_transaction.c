@@ -184,7 +184,14 @@ void htp_tx_destroy(htp_tx_t *tx) {
         table_destroy(&tx->request_params_body);
     }
 
-    table_destroy(&tx->request_cookies);
+    if (tx->request_cookies != NULL) {
+        bstr *val = NULL;
+        table_iterator_reset(tx->request_cookies);
+        while(table_iterator_next(tx->request_cookies, (void **) &val) != NULL) {
+            bstr_free(&val);
+        }
+        table_destroy(&tx->request_cookies);
+    }
 
     hook_destroy(tx->hook_request_body_data);
 
