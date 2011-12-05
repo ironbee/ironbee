@@ -61,6 +61,7 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
  */
 void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(&tx->request_line);
+    bstr_free(&tx->request_line_raw);
     bstr_free(&tx->request_method);
     bstr_free(&tx->request_uri);
     bstr_free(&tx->request_uri_normalized);
