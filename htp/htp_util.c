@@ -263,15 +263,17 @@ int htp_parse_chunked_length(unsigned char *data, size_t len) {
  * @return The parsed number, or -1 on error.
  */
 int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
+    size_t last_pos;
     size_t pos = 0;
 
     // Ignore LWS before
     while ((pos < len) && (htp_is_lws(data[pos]))) pos++;
     if (pos == len) return -1001;
 
-    int r = bstr_util_mem_to_pint((char *) data + pos, len - pos, base, &pos);
+    int r = bstr_util_mem_to_pint((char *) data + pos, len - pos, base, &last_pos);
     if (r < 0) return r;
 
+    pos += last_pos;
     // Ignore LWS after
     while (pos < len) {
         if (!htp_is_lws(data[pos])) {
