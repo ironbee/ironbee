@@ -10,8 +10,7 @@ else
 AM_LDFLAGS = -module -avoid-version
 endif
 
-pkglib_LTLIBRARIES = ibmod_geoip.la \
-                     ibmod_htp.la \
+pkglib_LTLIBRARIES =  ibmod_htp.la \
                      ibmod_pcre.la \
                      ibmod_ac.la \
                      ibmod_radix.la \
@@ -20,10 +19,14 @@ pkglib_LTLIBRARIES = ibmod_geoip.la \
                      ibmod_lua.la \
                      ibmod_poc_sig.la
 
+if BUILD_GEOIP
+pkglib_LTLIBRARIES += ibmod_geoip.la 
 ibmod_geoip_la_SOURCES = geoip.c
 ibmod_geoip_la_LIBADD = -lGeoIP -lm
-ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS)
-ibmod_geoip_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)
+ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(GEOIP_LDFLAGS)
+ibmod_geoip_la_CFLAGS = $(AM_CFLAGS) $(GEOIP_CFLAGS)
+ibmod_geoip_la_CPPFLAGS = $(AM_CFLAGS) $(GEOIP_CPPFLAGS)
+endif
 
 ibmod_htp_la_SOURCES = htp.c
 ibmod_htp_la_LIBADD = -lhtp
