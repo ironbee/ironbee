@@ -219,6 +219,7 @@ sinclude(acinclude/apr.m4)
 sinclude(acinclude/apu.m4)
 sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
+sinclude(acinclude/geoip.m4)
 
 # Required libs
 CHECK_HTP()
@@ -230,6 +231,7 @@ CHECK_APR()
 CHECK_APU()
 CHECK_HTTPD()
 CHECK_TS()
+CHECK_GEOIP()
 
 #If we are not building plugins bail
 if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
