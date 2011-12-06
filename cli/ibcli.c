@@ -55,12 +55,18 @@ struct runtime_settings {
     int localport;
     const char *remoteip;
     int remoteport;
+#if DEBUG_ARGS_ENABLE
     const char *debuguri;
     int debuglevel;
+#endif
 };
 
 static struct runtime_settings settings =
-{NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424,NULL,-1};
+{NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424
+#if DEBUG_ARGS_ENABLE
+,NULL,-1
+#endif
+};
 
 /* Plugin Structure */
 ib_plugin_t ibplugin = {
