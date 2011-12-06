@@ -332,8 +332,6 @@ ib_status_t ib_field_list_add(ib_field_t *f,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_util_log_debug(9, "Adding field %" IB_BYTESTR_FMT ":%" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTRSL_FMT_PARAM(fval->name,fval->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)(fval->val->pval)), fval->val->pval);
-
     rc = ib_list_push(*(ib_list_t **)(f->val->pval), (void *)fval);
     IB_FTRACE_RET_STATUS(rc);
 }
