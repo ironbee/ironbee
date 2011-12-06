@@ -24,6 +24,9 @@ LuaLoadModule "example.lua"
 ### Main Context (need separate directives for these)
 Set parser "htp"
 
+# Extract the effective remote address (from X-Forwarded-For)
+#LoadModule "ibmod_remote_address.so"
+
 # Enable inspection engine (TODO: Implement)
 #InspectionEngine On
 
