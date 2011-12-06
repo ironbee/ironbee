@@ -29,6 +29,9 @@
 /nbproject/private/
 /stamp-h1
 /test/.deps/
+/test/.libs/
 /test/Makefile
 /test/Makefile.in
 extras/ruby/*.gem
+/docs/Makefile
+/docs/Makefile.in

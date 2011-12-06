@@ -1,2 +1,2 @@
 #!/bin/sh
-./${check_PROGRAMS} ${srcdir}/files
+./main ${srcdir}/files
