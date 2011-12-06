@@ -10,6 +10,7 @@ HAVE_GEOIP_LIB="no"
 HAVE_GEOIP_DEPS="no"
 GEOIP_CPPFLAGS=""
 GEOIP_LDFLAGS=""
+GEOIP_CFLAGS=""
 
 AC_DEFUN([CHECK_GEOIP],
 [dnl
@@ -44,6 +45,8 @@ if test "${test_paths}" != "no"; then
         AC_MSG_NOTICE([Building GeoIP support])
         GEOIP_CPPFLAGS=" -I${geoip_path}/include"
         GEOIP_LDFLAGS=" -L${geoip_path}/lib"
+        dnl on some platfroms without the following compilation fails with ‘GeoIPRecord’ has no member named ‘metro_code’
+        GEOIP_CFLAGS=" -fms-extensions"
     else
         if test -z "${with_geoip}"; then
             AC_MSG_NOTICE([Not building with Maxmind GeoIP support.])
@@ -62,4 +65,5 @@ LDFLAGS="${SAVE_LDFLAGS}"
 
 AC_SUBST(GEOIP_CPPFLAGS)
 AC_SUBST(GEOIP_LDFLAGS)
+AC_SUBST(GEOIP_CFLAGS)
 ])
