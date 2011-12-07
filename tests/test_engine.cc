@@ -37,7 +37,6 @@
 #include "engine/tfn.c"
 #include "engine/filter.c"
 #include "engine/core.c"
-#include "util/debug.c"
 
 static ib_plugin_t ibplugin = {
     IB_PLUGIN_HEADER_DEFAULTS,
@@ -134,6 +133,96 @@ TEST(TestIronBee, test_tfn)
     ASSERT_TRUE(tfn != (ib_tfn_t *)-1) << "ib_tfn_lookup() failed - unset";
     ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags)) << "ib_tfn_lookup() failed - not modified";
     ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags)) << "ib_tfn_lookup() failed - not inplace";
+
+    ib_engine_destroy(ib);
+}
+
+static ib_field_t *dyn_get(ib_field_t *f,
+                           const char *arg,
+                           size_t alen,
+                           void *data)
+{
+    ib_mpool_t *mp = (ib_mpool_t *)data;
+    ib_num_t numval = 5;
+    ib_field_t *newf;
+    ib_status_t rc;
+
+    rc = ib_field_create_ex(&newf, mp, arg, alen, IB_FTYPE_NUM, &numval);
+    if (rc != IB_OK) {
+        return NULL;
+    }
+
+    return newf;
+}
+
+/// @test Test ironbee library - data provider
+TEST(TestIronBee, test_dpi)
+{
+    ib_engine_t *ib;
+    ib_provider_inst_t *dpi;
+    ib_field_t *dynf;
+    ib_field_t *f;
+    ib_num_t *pnumval;
+    ib_status_t rc;
+
+    atexit(ib_shutdown);
+    rc = ib_initialize();
+    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+
+    rc = ib_engine_create(&ib, &ibplugin);
+    ASSERT_TRUE(rc == IB_OK) << "ib_engine_create() failed - rc != IB_OK";
+    ASSERT_TRUE(ib != NULL) << "ib_engine_create() failed - NULL";
+    ASSERT_TRUE(ib->mp != NULL) << "ib_engine_create() - NULL mp";
+
+    rc = ib_provider_instance_create(ib,
+                                     IB_PROVIDER_TYPE_DATA,
+                                     IB_DSTR_CORE,
+                                     &dpi,
+                                     ib_engine_pool_main_get(ib),
+                                     NULL);
+    ASSERT_TRUE(rc == IB_OK) << "ib_provider_instance_create() failed - rc != IB_OK";
+    ASSERT_TRUE(dpi != NULL) << "ib_provider_instance_create() failed - NULL";
+
+    /* Create a field with no initial value. */
+    rc = ib_field_create(&dynf, ib_engine_pool_main_get(ib), "test_dynf", IB_FTYPE_GENERIC, NULL);
+    ASSERT_TRUE(rc == IB_OK) << "ib_field_create() NULSTR failed - rc != IB_OK";
+    ASSERT_TRUE(dynf != NULL) << "ib_field_create() NULSTR failed - NULL value";
+    ASSERT_TRUE(dynf->nlen == 9) << "ib_field_create() NULSTR failed - incorrect nlen";
+    ASSERT_TRUE(memcmp("test_dynf", dynf->name, 9) == 0) << "ib_field_create() NULSTR failed - wrong name";
+
+    /* Make it a dynamic field which calls dyn_get() with "dynf" as the data. */
+    ib_field_dyn_register_get(dynf, (ib_field_get_fn_t)dyn_get);
+    ib_field_dyn_set_data(dynf, (void *)ib_engine_pool_main_get(ib));
+
+    /* Add the field to the data store. */
+    rc = ib_data_add(dpi, dynf);
+    ASSERT_TRUE(rc == IB_OK) << "ib_data_add() failed - rc != IB_OK";
+
+    /* Fetch the field from the data store */
+    rc = ib_data_get(dpi, "test_dynf", &f);
+    ASSERT_TRUE(rc == IB_OK) << "ib_data_get() failed - rc != IB_OK";
+    ASSERT_TRUE(f != NULL) << "ib_data_get() failed - NULL value";
+    ASSERT_TRUE(f == dynf) << "ib_data_get() failed - wrong field";
+
+    /* Fetch a dynamic field from the data store */
+    rc = ib_data_get(dpi, "test_dynf.dyn_subkey", &f);
+    ASSERT_TRUE(rc == IB_OK) << "ib_data_get() dynamic failed - rc != IB_OK (" << rc << ")";
+    ASSERT_TRUE(f != NULL) << "ib_data_get() dynamic failed - NULL value";
+    ASSERT_TRUE((f->nlen == 10) && (memcmp("dyn_subkey", f->name, 10) == 0)) << "ib_data_get() dynamic failed - wrong field name";
+
+    /* Get the value from the dynamic field. */
+    pnumval = ib_field_value_num(f);
+    ASSERT_TRUE(*pnumval == 5) << "bad dynamic field value: " << *pnumval;
+
+    /* Fetch another dynamic field from the data store */
+    rc = ib_data_get(dpi, "test_dynf.dyn_subkey2", &f);
+    ASSERT_TRUE(rc == IB_OK) << "ib_data_get() dynamic2 failed - rc != IB_OK";
+    ASSERT_TRUE(f != NULL) << "ib_data_get() dynamic2 failed - NULL value";
+    ASSERT_TRUE((f->nlen == 11) && (memcmp("dyn_subkey2", f->name, 11) == 0)) << "ib_data_get() dynamic2 failed - wrong field name";
+
+    /* Get the value from the dynamic field. */
+    pnumval = ib_field_value_num(f);
+    ASSERT_TRUE(*pnumval == 5) << "bad dynamic field value: " << *pnumval;
 
     ib_engine_destroy(ib);
 }

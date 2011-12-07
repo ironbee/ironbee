@@ -943,11 +943,19 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                             (void *)name, klen,
                             (void *)pf, IB_HASH_FLAG_NOCASE);
         if (rc == IB_OK) {
+            /* Try dynamic lookup. */
+            if(ib_field_is_dynamic(*pf)) {
+                *pf = (ib_field_t *)ib_field_value_ex(*pf, (void *)subkey, sklen);
+                if (*pf != NULL) {
+                    IB_FTRACE_RET_STATUS(IB_OK);
+                }
+
+            }
             if ((*pf)->type == IB_FTYPE_LIST) {
                 ib_list_node_t *node;
 
                 /* Lookup the subkey value in the field list. */
-                IB_LIST_LOOP(ib_field_value_list(*pf), node) {
+                IB_LIST_LOOP(ib_field_value_list_ex(*pf, (void *)subkey, sklen), node) {
                     ib_field_t *sf = (ib_field_t *)ib_list_node_data(node);
 
                     if (   (sf->nlen == sklen)
@@ -969,7 +977,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 
 /**
  * @internal
- * Core data provider implementation to get a data all data fields.
+ * Core data provider implementation to get all data fields.
  *
  * @param dpi Data provider instance
  * @param list List which fields will be pushed
