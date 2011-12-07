@@ -15,6 +15,7 @@ check_PROGRAMS = test_gtest \
                  test_util_hash \
                  test_util_list \
                  test_util_radix \
+                 test_util_field \
                  test_util_logformat \
                  test_util_ahocorasick \
                  test_engine
@@ -23,78 +24,50 @@ check_PROGRAMS = test_gtest \
 #                 test_util_bytestr
 
 test_gtest_SOURCES = test_gtest.cc test_main.cc
-test_gtest_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_gtest_CPPFLAGS = @APR_CPPFLAGS@
-test_gtest_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
-test_gtest_LDADD =  gtest/libgtest.la \
-                    @APR_LDADD@
+test_gtest_LDADD =  gtest/libgtest.la
 else
 test_gtest_LDADD =  gtest/libgtest.la \
-                    -ldl \
-                    @APR_LDADD@
+                    -ldl
 endif
+
 test_util_array_SOURCES = test_util_array.cc test_main.cc
-test_util_array_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_util_array_CPPFLAGS = @APR_CPPFLAGS@
-test_util_array_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
-test_util_array_LDADD =  gtest/libgtest.la \
-                    @APR_LDADD@
+test_util_array_LDADD =  gtest/libgtest.la
 else
 test_util_array_LDADD =  gtest/libgtest.la \
-                    -ldl \
-                    @APR_LDADD@
+                    -ldl
 endif
+
 test_util_logformat_SOURCES = test_util_logformat.cc test_main.cc
-test_util_logformat_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_util_logformat_CPPFLAGS = @APR_CPPFLAGS@
-test_util_logformat_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
-test_util_logformat_LDADD =  gtest/libgtest.la \
-                    @APR_LDADD@
+test_util_logformat_LDADD =  gtest/libgtest.la
 else
 test_util_logformat_LDADD =  gtest/libgtest.la \
-                    -ldl \
-                    @APR_LDADD@
+                    -ldl
 endif
+
 test_util_hash_SOURCES = test_util_hash.cc test_main.cc
-test_util_hash_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_util_hash_CPPFLAGS = @APR_CPPFLAGS@
-test_util_hash_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
-test_util_hash_LDADD =  gtest/libgtest.la \
-                    @APR_LDADD@
+test_util_hash_LDADD =  gtest/libgtest.la
 else
 test_util_hash_LDADD =  gtest/libgtest.la \
-                    -ldl \
-                    @APR_LDADD@
+                    -ldl
 endif
+
 test_util_list_SOURCES = test_util_list.cc test_main.cc
-test_util_list_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_util_list_CPPFLAGS = @APR_CPPFLAGS@
-test_util_list_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
-test_util_list_LDADD =  gtest/libgtest.la \
-                    @APR_LDADD@
+test_util_list_LDADD =  gtest/libgtest.la
 else
 test_util_list_LDADD =  gtest/libgtest.la \
-                    -ldl \
-                    @APR_LDADD@
+                    -ldl
 endif
 
 #test_util_bytestr_SOURCES = test_util_bytestr.cc test_main.cc
-#test_util_bytestr_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-#test_util_bytestr_CPPFLAGS = @APR_CPPFLAGS@
-#test_util_bytestr_LDFLAGS = @APR_LDFLAGS@
 #test_util_bytestr_LDADD =  gtest/libgtest.la \
-#                          -ldl -lhtp \
-#                          @APR_LDADD@
+#                          -ldl -lhtp
 
 test_util_radix_SOURCES = test_util_radix.cc test_main.cc
-test_util_radix_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_util_radix_CPPFLAGS = @APR_CPPFLAGS@
-test_util_radix_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
 test_util_radix_LDADD = gtest/libgtest.la \
                     $(top_builddir)/util/libibutil.la \
@@ -106,10 +79,21 @@ test_util_radix_LDADD = gtest/libgtest.la \
                     -lhtp
 endif
 
+test_util_field_SOURCES = test_util_field.cc test_main.cc
+test_util_field_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS)
+test_util_field_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)
+if FREEBSD
+test_util_field_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/util/libibutil.la \
+                    -lhtp \
+                    -liconv
+else
+test_util_field_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/util/libibutil.la \
+                    -lhtp
+endif
+
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
-test_util_ahocorasick_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_util_ahocorasick_CPPFLAGS = @APR_CPPFLAGS@
-test_util_ahocorasick_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
 test_util_ahocorasick_LDADD = gtest/libgtest.la \
                     $(top_builddir)/util/libibutil.la \
@@ -122,9 +106,6 @@ test_util_ahocorasick_LDADD = gtest/libgtest.la \
 endif
 
 test_engine_SOURCES = test_engine.cc test_main.cc
-test_engine_CXXFLAGS = $(AM_CXXFLAGS) @APR_CFLAGS@
-test_engine_CPPFLAGS = @APR_CPPFLAGS@
-test_engine_LDFLAGS = @APR_LDFLAGS@
 if FREEBSD
 test_engine_LDADD = gtest/libgtest.la \
                     $(top_builddir)/util/libibutil.la \

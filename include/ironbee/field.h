@@ -71,7 +71,7 @@ extern "C" {
  * @returns Value
  */
 typedef void *(*ib_field_get_fn_t)(ib_field_t *f,
-                                   void *arg, size_t alen,
+                                   const void *arg, size_t alen,
                                    void *data);
 
 #if 0
@@ -316,6 +316,38 @@ int DLL_PUBLIC ib_field_namecmp(const ib_field_t *_field, const char *_name );
     strncmp(_field->name, _name, _field->nlen)
 
 /**
+ * Get the value stored in the field, passing the argument on to dynamic fields.
+ *
+ * @param f Field
+ * @param arg Arbitrary argument
+ * @param alen Argument length
+ *
+ * @returns Value stored in the field
+ */
+void DLL_PUBLIC *ib_field_value_ex(ib_field_t *f,
+                                   const void *arg,
+                                   size_t alen);
+
+/** Return field value for a field as "ib_num_t *" with argument. */
+#define ib_field_value_num_ex(f,arg,alen) (ib_num_t *)ib_field_value_ex((f),(arg),(alen))
+
+/** Return field value for a field as "ib_unum_t * with argument". */
+#define ib_field_value_unum_ex(f,arg,alen) (ib_unum_t *)ib_field_value_ex((f),(arg),(alen))
+
+/** Return field value for a field as "ib_bytestr_t * with argument". */
+#define ib_field_value_bytestr_ex(f,arg,alen) (ib_bytestr_t *)ib_field_value_ex((f),(arg),(alen))
+
+/** Return field value for a field as "void * with argument". */
+#define ib_field_value_generic_ex(f,arg,alen) (void *)ib_field_value_ex((f),(arg),(alen))
+
+/** Return field value for a field as "char * with argument". */
+#define ib_field_value_nulstr_ex(f,arg,alen) (char *)ib_field_value_ex((f),(arg),(alen))
+
+/** Return field value for a field as "ib_list_t * with argument". */
+#define ib_field_value_list_ex(f,arg,alen) (ib_list_t *)ib_field_value_ex((f),(arg),(alen))
+
+
+/**
  * Get the value stored in the field.
  *
  * @param[in] f Field
@@ -361,6 +393,14 @@ void DLL_PUBLIC *ib_field_value_type(ib_field_t *f, ib_ftype_t t);
 /** Return field value for a field as "ib_stream_t *". */
 #define ib_field_value_stream(f) (ib_stream_t *)ib_field_value(f)
 
+/**
+ * Determine if a field is dynamic.
+ *
+ * @param f Field
+ *
+ * @return true if field is dynamic
+ */
+int ib_field_is_dynamic(ib_field_t *f);
 
 /**
  * Set userdata for dynamic field access.
