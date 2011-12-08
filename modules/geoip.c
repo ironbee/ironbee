@@ -48,13 +48,16 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
     IB_FTRACE_INIT(geoip_lookup);
     
     const char *ip = tx->conn->remote_ipstr;
-    
+
+#ifdef GEOIP_HAVE_VERSION    
     /**
      * Some configurations exist as single characters and must be converted to
      * a string. This is simply a place to assemble that string before
      * it is passed into ip_data_add_nulstr.
+     * This is only needed if we have support confidence items. WAM
      */
     char one_char_str[2] = { '\0', '\0' };
+#endif /* GEOIP_HAVE_VERSION */
 
     ib_status_t rc;
     
