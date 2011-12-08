@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/types.h>
@@ -47,10 +48,9 @@ ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *ibuuid,
                                 const char *uuid)
 {
     IB_FTRACE_INIT(ib_uuid_ascii_to_bin);
-    uint8_t *u = (uint8_t *)ibuuid;
-    
+
     // Some format checks
-    if (u == NULL ||
+    if (ibuuid == NULL ||
         strlen(uuid) != 36 ||
         uuid[8] != '-' ||
         uuid[13] != '-' ||
@@ -64,6 +64,9 @@ ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *ibuuid,
     uint8_t i = 0;
     uint8_t j = 0;
     for (i = 0; i < 36; i += 2) {
+        char hexstr[3] = { 0, 0, 0 };
+        long tmphex;
+
         /* Skip the following positions ('-') */
         if (i == 8 || i == 13 || i == 18 || i == 23) {
             i++;
@@ -78,9 +81,12 @@ ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *ibuuid,
         {
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        unsigned int tmphex = 0;
-        sscanf(&uuid[i], "%02x", &tmphex);
-        *(u + j++) = (uint8_t) tmphex & 0xff;
+
+        /// @todo Use a faster method
+        hexstr[0] = uuid[i];
+        hexstr[1] = uuid[i + 1];
+        tmphex = strtol(hexstr, NULL, 16);
+        *(((uint8_t *)ibuuid) + j++) = (uint8_t)(tmphex & 0xff);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

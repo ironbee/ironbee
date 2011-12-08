@@ -123,7 +123,7 @@ static ib_status_t _ib_context_get(ib_engine_t *ib,
 
 ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 {
-    IB_FTRACE_INIT(ib_create);
+    IB_FTRACE_INIT(ib_engine_create);
     ib_mpool_t *pool;
     ib_plugin_t *p = (ib_plugin_t *)plugin;
     ib_status_t rc;
@@ -189,8 +189,6 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     (*pib)->plugin = p;
 
     /* Sensor info. */
-    /// @todo Fetch real values
-    memset(&(*pib)->sensor_id, 0, sizeof(ib_uuid_t));
     (*pib)->sensor_name = IB_DSTR_UNKNOWN;
     (*pib)->sensor_version = IB_PRODUCT_VERSION_NAME;
     (*pib)->sensor_hostname = IB_DSTR_UNKNOWN;

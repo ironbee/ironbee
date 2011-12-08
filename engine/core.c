@@ -4245,6 +4245,8 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("SensorId", name) == 0) {
+        uint64_t reduce;
+
         /* Store the ASCII version for logging */
         ib->sensor_id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
 
@@ -4267,20 +4269,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_id_str);
 
         /* Generate a 4byte hash id to use it for transaction id generations */
-        uint64_t first_reduce = 0;
-        uint8_t *ptr = (uint8_t *)&ib->sensor_id;
-        uint8_t *result = (uint8_t *)&first_reduce;
+        reduce = ((uint64_t *)&ib->sensor_id)[0] ^
+                 ((uint64_t *)&ib->sensor_id)[1];
 
-        int i = 0;
-        for (i = 0; i < 8; i++) {
-            result[i] = ptr[i] ^ ptr[i + 8];
-        }
-
-        ptr = (uint8_t *)&first_reduce;
-        result = (uint8_t *)&ib->sensor_id_hash;
-        for (i = 0; i < 4; i++) {
-            result[i] = ptr[i] ^ ptr[i + 8];
-        }
+        ib->sensor_id_hash = ((uint32_t *)&reduce)[0] ^
+                             ((uint32_t *)&reduce)[1];
 
         IB_FTRACE_RET_STATUS(IB_OK);
     }
