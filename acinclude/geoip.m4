@@ -8,6 +8,8 @@ HAVE_GEOIP_H="no"
 HAVE_GEOIP_CITY_H="no"
 HAVE_GEOIP_LIB="no"
 HAVE_GEOIP_DEPS="no"
+HAVE_GEOIP_LIB_VERSION="no"
+
 GEOIP_CPPFLAGS=""
 GEOIP_LDFLAGS=""
 GEOIP_CFLAGS=""
@@ -32,6 +34,7 @@ if test "${test_paths}" != "no"; then
         CPPFLAGS="${CPPFLAGS} -I${x}/include"
         LDFLAGS="${LDFLAGS} -L${x}/lib"
         AC_CHECK_LIB(GeoIP,GeoIP_record_by_addr,HAVE_GEOIP_LIB="yes",HAVE_GEOIP_LIB="no")
+        AC_CHECK_LIB(GeoIP,GeoIP_lib_version,HAVE_GEOIP_LIB_VERSION="yes",HAVE_GEOIP_LIB_VERSION="no")
         AC_CHECK_HEADERS(GeoIP.h,HAVE_GEOIP_H="yes",HAVE_GEOIP_H="no")
         AC_CHECK_HEADERS(GeoIPCity.h,HAVE_GEOIP_CITY_H="yes",HAVE_GEOIP_CITY_H="no")
         if test "$HAVE_GEOIP_H" != "no" && test "$HAVE_GEOIP_LIB" != "no" && test "$HAVE_GEOIP_CITY_H" != "no"; then
@@ -45,8 +48,14 @@ if test "${test_paths}" != "no"; then
         AC_MSG_NOTICE([Building GeoIP support])
         GEOIP_CPPFLAGS=" -I${geoip_path}/include"
         GEOIP_LDFLAGS=" -L${geoip_path}/lib"
+
         dnl on some platfroms without the following compilation fails with ‘GeoIPRecord’ has no member named ‘metro_code’
         GEOIP_CFLAGS=" -fms-extensions"
+
+        dnl we need this check as confidence factor items were added in 1.4.7 
+        if test "$HAVE_GEOIP_LIB_VERSION" != "no"; then
+            AC_DEFINE([GEOIP_HAVE_VERSION], [1], [Have the GeoIP_lib_version function included in GeoIP >= 1.4.7])
+        fi
     else
         if test -z "${with_geoip}"; then
             AC_MSG_NOTICE([Not building with Maxmind GeoIP support.])

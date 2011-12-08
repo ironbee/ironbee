@@ -111,12 +111,7 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
                         
         /* Add integers. */
         tmp_field = NULL;
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        "accuracy_radius",
-                        IB_FTYPE_NUM,
-                        &geoip_rec->accuracy_radius);
-        ib_field_list_add(geoip_lst, tmp_field);
+
         ib_field_create(&tmp_field,
                         tx->mp,
                         "area_code",
@@ -128,12 +123,6 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
                         "charset",
                         IB_FTYPE_NUM,
                         &geoip_rec->charset);
-        ib_field_list_add(geoip_lst, tmp_field);
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        "metro_code",
-                        IB_FTYPE_NUM,
-                        &geoip_rec->metro_code);
         ib_field_list_add(geoip_lst, tmp_field);
 
         /* Add strings. */
@@ -206,6 +195,21 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
                             &geoip_rec->continent_code);
             ib_field_list_add(geoip_lst, tmp_field);
         }
+        /* If we have GeoIP_lib_version() we are using GeoIP > 1.4.6 which means we also support confidence items */ 
+#ifdef GEOIP_HAVE_VERSION 
+        ib_field_create(&tmp_field,
+                        tx->mp,
+                        "accuracy_radius",
+                        IB_FTYPE_NUM,
+                        &geoip_rec->accuracy_radius);
+        ib_field_list_add(geoip_lst, tmp_field);
+
+        ib_field_create(&tmp_field,
+                        tx->mp,
+                        "metro_code",
+                        IB_FTYPE_NUM,
+                        &geoip_rec->metro_code);
+        ib_field_list_add(geoip_lst, tmp_field);
                            
         /* Wrap single character arguments into a 2-character string and add. */
         one_char_str[0] = geoip_rec->country_conf;
@@ -239,7 +243,8 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
                         IB_FTYPE_NULSTR,
                         &one_char_str);
         ib_field_list_add(geoip_lst, tmp_field);
-        
+#endif /* GEOIP_HAVE_VERSION */
+     
         GeoIPRecord_delete(geoip_rec);
     }
     else
