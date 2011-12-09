@@ -80,7 +80,7 @@ static void modskel_handle_conn_data(ib_engine_t *ib,
             len = cd->dlen;
         }
         memcpy(buf, cd->data, len);
-        buf[len+1] = '\0';
+        buf[len] = '\0';
         ib_log_debug( ib, 4, "%s: data=%s", eventp->name, buf );
     }
 }
@@ -142,7 +142,7 @@ static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
 
         /* Copy the value into a buffer */
         memset (valuebuf, 0, sizeof(valuebuf));
-        len = sizeof(namebuf) - 1;
+        len = sizeof(valuebuf) - 1;
         if (len > ib_bytestr_length(bs) ) {
             len = ib_bytestr_length(bs);
         }
