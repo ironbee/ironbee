@@ -202,7 +202,7 @@ static ib_status_t modskel_init(ib_engine_t *ib, ib_module_t *m)
 static ib_status_t modskel_finish(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(modskel_finish);
-    ib_log_debug(ib, 4, "Remote Address module unloaded.");
+    ib_log_debug(ib, 4, "Skeleton module unloaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -216,7 +216,7 @@ static ib_status_t modskel_context_init(ib_engine_t *ib,
 
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
-    "remote address",               /* Module name */
+    "skeleton",                     /* Module name */
     NULL,                           /* Global config data */
     0,                              /* Global config data length*/
     NULL,                           /* Module config map */
