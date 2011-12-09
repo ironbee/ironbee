@@ -81,12 +81,13 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
-    /* Loop through the list, take the first X-Forwarded-For */
+    /* Loop through the list; we're looking for X-Forwarded-For */
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         ib_bytestr_t *bs;
         unsigned len;
         char *addr;
+        char *comma;
         char namebuf[32];
 
         /* Copy the name into a buffer */
@@ -117,7 +118,14 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
 
         /* Copy the string out */
         memcpy(addr, ib_bytestr_ptr(bs), len);
-        ib_log_debug(ib, 4, "%s = '%s'", namebuf, addr);
+
+        /* Look for a comma, replace with a '\0' */
+        comma = strchr (addr, ',');
+        if (comma != NULL) {
+            *comma = '\0';
+        }
+
+        ib_log_debug(ib, 4, "Remote address => '%s'", addr);
 
         /* This will lose the pointer to the original address
          * buffer, but it should be cleaned up with the rest
