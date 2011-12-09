@@ -235,6 +235,7 @@ main(int argc, char* argv[])
             { 0, 0, 0, 0}
         };
 
+    ib_trace_init(NULL);
     while (1) {
         int option_index = 0;
         int c = getopt_long(argc, argv, "", longopts, &option_index);
