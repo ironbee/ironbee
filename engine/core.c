@@ -164,6 +164,33 @@ static FILE *fdup( FILE *fh )
     return new_fh;
 }
 
+/* Placeholder for as-of-yet-initialized bytestring fields. */
+static const uint8_t core_placeholder_value[] = {
+    '_', '_', 'c', 'o', 'r', 'e', '_', '_',
+    'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
+    'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
+    'u', 'e', '_', '_',  0,   0,   0,   0
+};
+
+static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
+                                                  const char *name)
+{
+    IB_FTRACE_INIT(core_field_gen_bytestr);
+    ib_status_t rc = ib_data_add_bytestr_ex(dpi,
+                                            (const char *)name,
+                                            strlen(name),
+                                            (uint8_t *)core_placeholder_value,
+                                            0,
+                                            NULL);
+    if (rc != IB_OK) {
+        ib_log_error(dpi->pr->ib, 3,
+                     "Failed to generate \"%s\" placeholder field: %d",
+                     name, rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 
 /* -- Core Logger Provider -- */
 
@@ -1438,59 +1465,56 @@ static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-#if 0
-static size_t ib_auditlog_gen_raw(ib_auditlog_part_t *part,
-                                  const uint8_t **chunk)
+static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
+                                         const uint8_t **chunk)
 {
-    ib_engine_t *ib = part->log->ib;
-    ib_list_node_t *node;
+    //ib_engine_t *ib = part->log->ib;
+    ib_sdata_t *sdata;
+    size_t dlen;
 
     if (part->gen_data == NULL) {
-        ib_list_t *list = (ib_list_t *)part->part_data;
+        ib_stream_t *stream = (ib_stream_t *)part->part_data;
 
         /* No data. */
-        if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, 4, "No data in audit log part: %s", part->name);
+        if (stream->slen == 0) {
             *chunk = NULL;
             part->gen_data = (void *)-1;
             return 0;
         }
 
-        node = ib_list_first(list);
-        /// @todo Probably node data needs to be ib_bytestr_t instead
-        *chunk = (const uint8_t *)ib_list_node_data(node);
+        sdata = (ib_sdata_t *)IB_LIST_FIRST(stream);
+        dlen = sdata->dlen;
+        *chunk = (const uint8_t *)sdata->data;
 
-        node = ib_list_node_next(node);
-        if (node != NULL) {
-            part->gen_data = node;
+        sdata = IB_LIST_NODE_NEXT(sdata);
+        if (sdata != NULL) {
+            part->gen_data = sdata;
         }
         else {
-            part->gen_data = (void *)1;
+            part->gen_data = (void *)-1;
         }
 
-        /// @todo Need length
-        return strlen(*(const char **)chunk);
+        return dlen;
     }
     else if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
         return 0;
     }
 
-    node = (ib_list_node_t *)part->gen_data;
-    *chunk = (const uint8_t *)ib_list_node_data(node);
+    sdata = (ib_sdata_t *)part->gen_data;
+    dlen = sdata->dlen;
+    *chunk = (const uint8_t *)sdata->data;
 
-    node = ib_list_node_next(node);
-    if (node != NULL) {
-        part->gen_data = node;
+    sdata = IB_LIST_NODE_NEXT(sdata);
+    if (sdata != NULL) {
+        part->gen_data = sdata;
     }
     else {
         part->gen_data = (void *)1;
     }
 
-    /// @todo Need length
-    return strlen(*(const char **)chunk);
+    return dlen;
 }
-#endif
 
 static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
@@ -2217,6 +2241,30 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     IB_FTRACE_RET_STATUS(rc);
 }
 
+static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(ib_auditlog_add_part_http_request_body);
+    ib_tx_t *tx = log->tx;
+    ib_field_t *f;
+    ib_status_t rc;
+
+    /* Get the field storing the raw body via stream buffer. */
+    rc = ib_data_get(tx->dpi, "request_body", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Add the part to the auditlog. */
+    rc = ib_auditlog_part_add(log,
+                              "http-request-body",
+                              "application/octet-stream",
+                              ib_field_value_stream(f),
+                              ib_auditlog_gen_raw_stream,
+                              NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT(ib_auditlog_add_part_http_response_head);
@@ -2259,6 +2307,30 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
                               "application/octet-stream",
                               list,
                               ib_auditlog_gen_headers_flist,
+                              NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(ib_auditlog_add_part_http_response_body);
+    ib_tx_t *tx = log->tx;
+    ib_field_t *f;
+    ib_status_t rc;
+
+    /* Get the field storing the raw body via stream buffer. */
+    rc = ib_data_get(tx->dpi, "response_body", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Add the part to the auditlog. */
+    rc = ib_auditlog_part_add(log,
+                              "http-response-body",
+                              "application/octet-stream",
+                              ib_field_value_stream(f),
+                              ib_auditlog_gen_raw_stream,
                               NULL);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -2368,8 +2440,14 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADERS) {
         ib_auditlog_add_part_http_request_head(log);
     }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
+        ib_auditlog_add_part_http_request_body(log);
+    }
     if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADERS) {
         ib_auditlog_add_part_http_response_head(log);
+    }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
+        ib_auditlog_add_part_http_response_body(log);
     }
 
     /* Audit Provider */
@@ -3443,34 +3521,121 @@ static ib_status_t core_tfn_trim(void *fndata,
 }
 
 
-/* -- Core Hook Handlers -- */
+/* -- Core Data Processors -- */
 
-/* Placeholder for as-of-yet-initialized bytestring fields. */
-static const uint8_t core_placeholder_value[] = {
-    '_', '_', 'c', 'o', 'r', 'e', '_', '_',
-    'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
-    'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
-    'u', 'e', '_', '_',  0,   0,   0,   0
-};
-
-static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
-                                                  const char *name)
+/**
+ * @internal
+ * Process the transaction data.
+ *
+ * This is currently used to build the request body
+ * stream buffer field.
+ *
+ * @param ib Engine
+ * @param txdata Transaction data
+ * @param cbdata Unused
+ *
+ * @return Status code
+ */
+static ib_status_t process_txdata_in(ib_engine_t *ib,
+                                     ib_txdata_t *txdata,
+                                     void *cbdata)
 {
-    IB_FTRACE_INIT(core_field_gen_bytestr);
-    ib_status_t rc = ib_data_add_bytestr_ex(dpi,
-                                            (const char *)name,
-                                            strlen(name),
-                                            (uint8_t *)core_placeholder_value,
-                                            0,
-                                            NULL);
-    if (rc != IB_OK) {
-        ib_log_error(dpi->pr->ib, 3,
-                     "Failed to generate \"%s\" placeholder field: %d",
-                     name, rc);
+    IB_FTRACE_INIT(process_txdata_in);
+    ib_tx_t *tx;
+    ib_core_cfg_t *modcfg;
+    ib_field_t *reqbody;
+    uint8_t *buf;
+    ib_status_t rc;
+
+    /* Only interested in the body. */
+    if (txdata->dtype != IB_DTYPE_HTTP_BODY) {
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+    tx = txdata->tx;
+
+    /* Get the module config. */
+    rc = ib_context_module_config(tx->ctx,
+                                  IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
+                     MODULE_NAME_STR, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_get(tx->dpi, "request_body", &reqbody);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    buf = (uint8_t *)ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+    if (buf == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_field_buf_add(reqbody, txdata->dtype, buf, txdata->dlen);
 
     IB_FTRACE_RET_STATUS(rc);
 }
+
+/**
+ * @internal
+ * Process the transaction data.
+ *
+ * This is currently used to build the response body
+ * stream buffer field.
+ *
+ * @param ib Engine
+ * @param txdata Transaction data
+ * @param cbdata Unused
+ *
+ * @return Status code
+ */
+static ib_status_t process_txdata_out(ib_engine_t *ib,
+                                      ib_txdata_t *txdata,
+                                      void *cbdata)
+{
+    IB_FTRACE_INIT(process_txdata_out);
+    ib_tx_t *tx;
+    ib_core_cfg_t *modcfg;
+    ib_field_t *resbody;
+    uint8_t *buf;
+    ib_status_t rc;
+
+    /* Only interested in the body. */
+    if (   (txdata->dtype != IB_DTYPE_HTTP_BODY)
+        && (txdata->dlen > 0)    ) {
+        ib_log_debug(ib, 9, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    tx = txdata->tx;
+
+    /* Get the module config. */
+    rc = ib_context_module_config(tx->ctx,
+                                  IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
+                     MODULE_NAME_STR, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_get(tx->dpi, "response_body", &resbody);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    buf = (uint8_t *)ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+    if (buf == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_field_buf_add(resbody, txdata->dtype, buf, txdata->dlen);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/* -- Core Hook Handlers -- */
 
 /**
  * @internal
@@ -3494,6 +3659,11 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Core Request Fields */
+    rc = ib_data_add_stream(tx->dpi, "request_body", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = core_field_placeholder_bytestr(tx->dpi, "request_line");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -3581,6 +3751,11 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     }
 
     /* Core Response Fields */
+    rc = ib_data_add_stream(tx->dpi, "response_body", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = core_field_placeholder_bytestr(tx->dpi, "response_line");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -4584,6 +4759,14 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_hook_register(ib, handle_context_tx_event,
                      (ib_void_fn_t)filter_ctl_config, fbuffer);
 
+
+    /* Register data event handlers. */
+    ib_hook_register(ib, tx_data_in_event,
+                     (ib_void_fn_t)process_txdata_in,
+                     NULL);
+    ib_hook_register(ib, tx_data_out_event,
+                     (ib_void_fn_t)process_txdata_out,
+                     NULL);
 
     /* Register parser hooks. */
     ib_hook_register(ib, conn_started_event,
