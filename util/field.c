@@ -390,6 +390,21 @@ void *ib_field_value(ib_field_t *f)
     return f->val->pval ? *(void **)f->val->pval : NULL;
 }
 
+void *ib_field_value_type(ib_field_t *f, ib_ftype_t t)
+{
+    /* Compare the types */
+    if ( f->type != t ) {
+#if 0
+        fprintf( stderr, "Incorrect field type: %u != %u",
+                 (unsigned) f->type, (unsigned) t);
+#endif
+        return NULL;
+    }
+
+    /* Return the value as normal. */
+    return ib_field_value(f);
+}
+
 void ib_field_dyn_set_data(ib_field_t *f,
                            void *data)
 {

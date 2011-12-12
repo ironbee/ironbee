@@ -112,12 +112,12 @@ typedef void *(*ib_field_rset_fn_t)(ib_field_t *f,
 
 /** Field Structure */
 struct ib_field_t {
-    ib_mpool_t               *mp;        /**< Memory pool */
-    ib_ftype_t                type;      /**< Field type */
-    const char               *name;      /**< Field name */
-    size_t                    nlen;      /**< Field name length */
-    const char               *tfn;       /**< Transformations performed */
-    ib_field_val_t           *val;       /**< Private value store */
+    ib_mpool_t      *mp;        /**< Memory pool */
+    ib_ftype_t       type;      /**< Field type */
+    const char      *name;      /**< Field name; not '\0' terminated! */
+    size_t           nlen;      /**< Field name length */
+    const char      *tfn;       /**< Transformations performed */
+    ib_field_val_t  *val;       /**< Private value store */
 };
 
 /**
@@ -298,29 +298,45 @@ ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
 /**
  * Get the value stored in the field.
  *
- * @param f Field
+ * @param[in] f Field
  *
  * @returns Value stored in the field
  */
 void DLL_PUBLIC *ib_field_value(ib_field_t *f);
 
+/**
+ * Get the value stored in the field, with type checking.
+ *
+ * @param[in] f Field
+ * @param[in] t Expected type
+ *
+ * @returns Value stored in the field
+ */
+void DLL_PUBLIC *ib_field_value_type(ib_field_t *f, ib_ftype_t t);
+
 /** Return field value for a field as "ib_num_t *". */
-#define ib_field_value_num(f) (ib_num_t *)ib_field_value(f)
+#define ib_field_value_num(f) \
+    (ib_num_t *)ib_field_value_type(f, IB_FTYPE_NUM)
 
 /** Return field value for a field as "ib_unum_t *". */
-#define ib_field_value_unum(f) (ib_unum_t *)ib_field_value(f)
+#define ib_field_value_unum(f) \
+    (ib_unum_t *)ib_field_value_type(f, IB_FTYPE_UNUM)
 
 /** Return field value for a field as "ib_bytestr_t *". */
-#define ib_field_value_bytestr(f) (ib_bytestr_t *)ib_field_value(f)
+#define ib_field_value_bytestr(f) \
+    (ib_bytestr_t *)ib_field_value_type(f, IB_FTYPE_BYTESTR)
 
 /** Return field value for a field as "void *". */
-#define ib_field_value_generic(f) (void *)ib_field_value(f)
+#define ib_field_value_generic(f) \
+    (void *)ib_field_value_type(f, IB_FTYPE_GENERIC)
 
 /** Return field value for a field as "char *". */
-#define ib_field_value_nulstr(f) (char *)ib_field_value(f)
+#define ib_field_value_nulstr(f) \
+    (char *)ib_field_value_type(f, IB_FTYPE_NULSTR)
 
 /** Return field value for a field as "ib_list_t *". */
-#define ib_field_value_list(f) (ib_list_t *)ib_field_value(f)
+#define ib_field_value_list(f) \
+    (ib_list_t *)ib_field_value_type(f, IB_FTYPE_LIST)
 
 
 /**
