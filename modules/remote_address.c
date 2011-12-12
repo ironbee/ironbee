@@ -72,14 +72,18 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, 4, "modra_handle_tx: no request headers");
+        ib_log_debug(ib, 4,
+                     "request_headers_event: "
+                     "Field list missing / incorrect type" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     /* The field value *should* be a list, extract it as such */
     lst = ib_field_value_list(req);
     if (lst == NULL) {
-        ib_log_debug(ib, 4, "modra_handle_tx: no list in request_headers");
+        ib_log_debug(ib, 4,
+                     "request_headers_event: "
+                     "Field list missing / incorrect type" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -91,8 +95,9 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         char *buf;
         uint8_t *comma;
 
-        /* Check the field name */
-        if (strcmp(field->name, "X-Forwarded-For") != 0) {
+        /* Check the field name
+         * Note: field->name is not always a null ('\0') terminated string */
+        if (ib_field_namecmp(field, "X-Forwarded-For") != 0) {
             continue;
         }
 
