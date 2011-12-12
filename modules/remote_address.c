@@ -32,7 +32,8 @@
 #include <ironbee/debug.h>
 #include <ironbee/hash.h>
 #include <ironbee/bytestr.h>
-#include "../util/ironbee_util_private.h"
+#include <ironbee/mpool.h>
+/* #include "../util/ironbee_util_private.h" */
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        remote_ip
@@ -46,9 +47,10 @@ IB_MODULE_DECLARE();
  * Handle request_header events
  *
  * Extract the "request_headers" field (a list) from the transactions's
- * data provider instance, then loop through the list, looking for
- * "X-Forwarded-For"  fields.  If found, the first one is replaces the local
- * ip address string in the connection object.
+ * data provider instance, then loop through the list, looking for the
+ * "X-Forwarded-For"  field.  If found, the first value in the (comma
+ * separated) list replaces the local ip address string in the connection
+ * object.
  *
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction object
@@ -86,20 +88,11 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         ib_bytestr_t *bs;
         unsigned len;
-        char *addr;
-        char *comma;
-        char namebuf[32];
-
-        /* Copy the name into a buffer */
-        memset (namebuf, 0, sizeof(namebuf));
-        len = sizeof(namebuf) - 1;
-        if (len > field->nlen) {
-            len = field->nlen;
-        }
-        memcpy (namebuf, field->name, len);
+        char *buf;
+        uint8_t *comma;
 
         /* Check the field name */
-        if (strcmp (namebuf, "X-Forwarded-For") != 0) {
+        if (strcmp(field->name, "X-Forwarded-For") != 0) {
             continue;
         }
 
@@ -107,9 +100,15 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         bs = ib_field_value_bytestr(field);
         len = ib_bytestr_length(bs);
 
+        /* Search for a comma in the buffer */
+        comma = memchr(ib_bytestr_ptr(bs), ',', len);
+        if (comma != NULL) {
+            len = comma - ib_bytestr_ptr(bs);
+        }
+
         /* Allocate the memory */
-        addr = (char *)ib_mpool_calloc (conn->mp, 1, len+1);
-        if (addr == NULL) {
+        buf = (char *)ib_mpool_calloc(conn->mp, 1, len+1);
+        if (buf == NULL) {
             ib_log_error( ib, 4,
                           "Failed to allocate %d bytes for local address",
                           len+1 );
@@ -117,20 +116,15 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         }
 
         /* Copy the string out */
-        memcpy(addr, ib_bytestr_ptr(bs), len);
+        memcpy(buf, ib_bytestr_ptr(bs), len);
+        buf[len] = '\0';
 
-        /* Look for a comma, replace with a '\0' */
-        comma = strchr (addr, ',');
-        if (comma != NULL) {
-            *comma = '\0';
-        }
-
-        ib_log_debug(ib, 4, "Remote address => '%s'", addr);
+        ib_log_debug(ib, 4, "Remote address => '%s'", buf);
 
         /* This will lose the pointer to the original address
          * buffer, but it should be cleaned up with the rest
          * of the memory pool. */
-        tx->conn->local_ipstr = addr;
+        tx->conn->local_ipstr = buf;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
