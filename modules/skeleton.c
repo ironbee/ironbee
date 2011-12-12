@@ -157,7 +157,8 @@ static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
     /* The field value *should* be a list, extract it as such */
     lst = ib_field_value_list(req);
     if (lst == NULL) {
-        ib_log_debug(ib, 4, "modskel_handle_tx: no list in request_headers");
+        ib_log_debug(ib, 4, "%s: Field list missing / incorrect type",
+                     eventp->name );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -179,8 +180,10 @@ static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
         }
         memcpy(buf, ib_bytestr_ptr(bs), len);
 
-        /* And, log it */
-        ib_log_debug(ib, 4, "%s = '%s'", field->name, buf);
+        /* And, log it
+         * Note: field->name is not always a null ('\0') terminated string,
+         *       so you must use field->nlen as it's length. */
+        ib_log_debug(ib, 4, "%.*s = '%s'", field->nlen, field->name, buf);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
