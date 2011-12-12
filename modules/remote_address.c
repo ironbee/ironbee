@@ -33,7 +33,6 @@
 #include <ironbee/hash.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/mpool.h>
-/* #include "../util/ironbee_util_private.h" */
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        remote_ip
