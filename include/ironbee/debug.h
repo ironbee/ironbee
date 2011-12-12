@@ -209,6 +209,18 @@ void DLL_PUBLIC ib_trace_str(const char *file,
     } while(0)
 
 /**
+ * Return wrapper for functions which return an unsigned int value.
+ *
+ * @param rv Return value
+ */
+#define IB_FTRACE_RET_UINT(rv) \
+    do { \
+        unsigned int __ib_ft_rv = rv; \
+        ib_trace_num(__FILE__, __LINE__, __ib_fname__, "returned", (uintmax_t)__ib_ft_rv); \
+        return __ib_ft_rv; \
+    } while(0)
+
+/**
  * Return wrapper for functions which return a size_t value.
  *
  * @param rv Return value
