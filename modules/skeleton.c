@@ -49,9 +49,14 @@ typedef struct {
 
 /**
  * @internal
- * Generic event handler
+ * Skeleton generic event handler
  *
- * Handle any generic event, 
+ * Handles a generic event, dumping some info on the event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in,out] tx Transaction object
+ * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * event.
  */
 static ib_status_t event_callback(ib_engine_t *ib,
                                   void *param,
@@ -63,7 +68,22 @@ static ib_status_t event_callback(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/* */
+/**
+ * @internal
+ * Skeleton connection data event handler
+ *
+ * Handles handle_connect_event and conn_data_in_event, dumping some info on
+ * the event.
+ *
+ * This function creates a 1024 byte buffer on the stack.  A real
+ * (i.e. non-skeleton) module should probably do something different; perhaps
+ * allocate the buffer from the connection's mpool, etc.
+ *
+ * @param[in] ib IronBee object
+ * @param[in,out] tx Transaction object
+ * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * event.
+ */
 static void modskel_handle_conn_data(ib_engine_t *ib,
                                      ib_conndata_t *cd,
                                      void *cbdata)
@@ -85,7 +105,17 @@ static void modskel_handle_conn_data(ib_engine_t *ib,
     }
 }
 
-/* */
+/**
+ * @internal
+ * Skeleton tx_data_in_event event handler
+ *
+ * Handles a tx_data_in_event, dumping some info on the event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in,out] tx Transaction object
+ * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * event.
+ */
 static void modskel_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
 {
     IB_FTRACE_INIT(modskel_handle_tx);
@@ -95,7 +125,17 @@ static void modskel_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
                  eventp->name, (void*)tx->data);
 }
 
-/* */
+/**
+ * @internal
+ * Skeleton request_headers_event event handler
+ *
+ * Handles a request_headers_event, dumping some info on the event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in,out] tx Transaction object
+ * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * event.
+ */
 static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               void *cbdata)
@@ -126,35 +166,35 @@ static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         ib_bytestr_t *bs;
         unsigned len;
-        char namebuf[32];
-        char valuebuf[128];
+        char buf[128];
 
-        /* Copy the name into a buffer */
-        memset (namebuf, 0, sizeof(namebuf));
-        len = sizeof(namebuf) - 1;
-        if (len > field->nlen) {
-            len = field->nlen;
-        }
-        memcpy (namebuf, field->name, len);
-
-        /* Found it; get the bytestr that's the field value */
+        /* Get the bytestr that's the field value */
         bs = ib_field_value_bytestr(field);
 
         /* Copy the value into a buffer */
-        memset (valuebuf, 0, sizeof(valuebuf));
-        len = sizeof(valuebuf) - 1;
+        memset(buf, 0, sizeof(buf));
+        len = sizeof(buf) - 1;
         if (len > ib_bytestr_length(bs) ) {
             len = ib_bytestr_length(bs);
         }
-        memcpy (valuebuf, ib_bytestr_ptr(bs), len);
+        memcpy(buf, ib_bytestr_ptr(bs), len);
 
         /* And, log it */
-        ib_log_debug(ib, 4, "%s = '%s'", namebuf, valuebuf);
+        ib_log_debug(ib, 4, "%s = '%s'", field->name, buf);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/* Called when module is loaded. */
+/**
+ * @internal
+ * Initialize the skeleton module
+ *
+ * Called when module is loaded.
+ * Registers handlers for all IronBee events.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in,out] m Module object
+ */
 static ib_status_t modskel_init(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(modskel_context_init);
@@ -198,7 +238,15 @@ static ib_status_t modskel_init(ib_engine_t *ib, ib_module_t *m)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/* Called when module is unloaded. */
+/**
+ * @internal
+ * Uninitialize the skeleton module
+ *
+ * Called when module is unloaded.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in,out] m Module object
+ */
 static ib_status_t modskel_finish(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(modskel_finish);
@@ -206,9 +254,19 @@ static ib_status_t modskel_finish(ib_engine_t *ib, ib_module_t *m)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * @internal
+ * Initialize a context for the skeleton module
+ *
+ * Called when the context is available
+ *
+ * @param[in] ib IronBee object
+ * @param[in] m Module object
+ * @param[in] ctx Context object
+ */
 static ib_status_t modskel_context_init(ib_engine_t *ib,
-                                      ib_module_t *m,
-                                      ib_context_t *ctx)
+                                        ib_module_t *m,
+                                        ib_context_t *ctx)
 {
     IB_FTRACE_INIT(modskel_context_init);
     IB_FTRACE_RET_STATUS(IB_OK);
