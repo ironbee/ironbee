@@ -294,6 +294,18 @@ ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
 ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
                                      void *pval);
 
+/**
+ * Compare the field's name to a c-style string
+ *
+ * @param[in] field Field structure
+ * @param[in] name Name to compare to
+ *
+ * @returns 0:Name matches; != 0:Name doesn't match
+ */
+int DLL_PUBLIC ib_field_namecmp(const ib_field_t *_field, const char *_name );
+
+#define ib_field_namecmp(_field, _name) \
+    strncmp(_field->name, _name, _field->nlen)
 
 /**
  * Get the value stored in the field.
