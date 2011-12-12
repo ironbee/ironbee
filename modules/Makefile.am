@@ -19,7 +19,9 @@ pkglib_LTLIBRARIES =  ibmod_htp.la \
                      ibmod_lua.la \
                      ibmod_poc_sig.la \
                      ibmod_remote_address.la \
+                     ibmod_user_agent.la \
                      ibmod_trace.la
+noinst_PROGRAMS = user_agent
 
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la 
@@ -78,6 +80,10 @@ ibmod_trace_la_SOURCES = trace.c
 ibmod_trace_la_CFLAGS = ${AM_CFLAGS}
 ibmod_trace_la_LDFLAGS = $(AM_LDFLAGS)
 
+ibmod_user_agent_la_SOURCES = user_agent.c
+ibmod_user_agent_la_CFLAGS = ${AM_CFLAGS}
+ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS)
+
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
 	for m in $(pkglib_LTLIBRARIES); do \
@@ -92,3 +98,6 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
 
+
+user_agent_SOURCES = user_agent.c
+user_agent_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) -DTESTING

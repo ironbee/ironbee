@@ -38,6 +38,7 @@
 #include <ironbee/provider.h>
 #include <ironbee/module.h>
 #include <ironbee/config.h>
+#include <ironbee/bytestr.h>
 #include <ironbee_private.h>
 
 // Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line
@@ -47,7 +48,7 @@
 #define DEBUG_ARGS_ENABLE 0
 
 
-struct runtime_settings {
+typedef struct {
     char *configfile;
     char *requestfile;
     char *responsefile;
@@ -55,18 +56,22 @@ struct runtime_settings {
     int localport;
     const char *remoteip;
     int remoteport;
+    const char *user_agent;
 #if DEBUG_ARGS_ENABLE
     const char *debuguri;
     int debuglevel;
 #endif
-};
+} runtime_settings_t;
 
-static struct runtime_settings settings =
-{NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424
+static runtime_settings_t settings =
+{NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424,NULL,
 #if DEBUG_ARGS_ENABLE
 ,NULL,-1
 #endif
 };
+
+#define MAX_BUF      (64*1024)
+#define MAX_LINE_BUF (16*1024)
 
 /* Plugin Structure */
 ib_plugin_t ibplugin = {
@@ -109,6 +114,7 @@ static void help(void)
     print_option("local-port", "num", "Specify local port", 0 );
     print_option("remote-ip", "x.x.x.x", "Specify remote IP address", 0 );
     print_option("remote-port", "num", "Specify remote port", 0 );
+    print_option("user-agent", "string", "Specify user agent string", 0 );
 #if DEBUG_ARGS_ENABLE
     print_option("debug-level", "path", "Specify debug log level", 0 );
     print_option("debug-log", "path", "Specify debug log file / URI", 0 );
@@ -154,32 +160,100 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     return IB_OK;
 }
 
-static void runConnection(ib_engine_t* ib,
-                          const char * requestfile,
-                          const char * responsefile)
+/**
+ * @internal
+ * Handle request_header events.
+ *
+ * Extract the "request_headers" field (a list) from the transactions's
+ * data provider instance, then loop through the list, looking for the
+ * "User-Agent"  field.  If found, the value is parsed and used to update the
+ * connection object fields.
+ *
+ * @param[in] ib IronBee object
+ * @param[in,out] tx Transaction object
+ * @param[in] data Callback data (not used)
+ *
+ * @returns Status code
+ */
+static ib_status_t print_user_agent(ib_engine_t *ib,
+                                    ib_tx_t *tx,
+                                    void *data)
+{
+    IB_FTRACE_INIT(modua_handle_req_headers);
+    ib_field_t *req = NULL;
+    ib_status_t rc = IB_OK;
+    ib_list_t *lst = NULL;
+    ib_list_node_t *node = NULL;
+
+    /* Extract the request headers field from the provider instance */
+    rc = ib_data_get(tx->dpi, "User-Agent", &req);
+    if ( (req == NULL) || (rc != IB_OK) ) {
+        ib_log_debug(ib, 4,
+                     "print_user_agent: No user agent info available" );
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* The field value *should* be a list, extract it as such */
+    lst = ib_field_value_list(req);
+    if (lst == NULL) {
+        ib_log_debug(ib, 4,
+                     "request_headers_event: "
+                     "Field list missing / incorrect type" );
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    fputs(settings.user_agent, stdout);
+
+    /* Loop through the list; we're looking for User-Agent */
+    IB_LIST_LOOP(lst, node) {
+        ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
+
+        /* Check the field name
+         * Note: field->name is not always a null ('\0') terminated string */
+        fprintf(stdout,
+                "  User Agent %.*s = '%s'\n",
+                (int)field->nlen, field->name, ib_field_value_nulstr(field) );
+    }
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static void runConnection(ib_engine_t* ib )
 {
 
-    int reqfd = -1;
+    FILE *reqfp = NULL;
     int respfd = -1;
     ib_conn_t *iconn = NULL;
     ib_conndata_t icdata;
-    char buf[8192];
-    ssize_t nbytes;
+    char buf[MAX_BUF];
+    char *bufp = NULL;
+    char linebuf[MAX_LINE_BUF];
+    const char *linep;
+    size_t nbytes = 0;
 
-    if (! strcmp("-", requestfile)) {
-        reqfd = STDIN_FILENO;
+    /* Register the request headers event late */
+    if (settings.user_agent != NULL) {
+        ib_hook_register(ib, request_headers_event,
+                         (ib_void_fn_t)print_user_agent, NULL);
+    }
+
+    if (! strcmp("-", settings.requestfile)) {
+        reqfp = stdin;
     }
     else {
-        reqfd = open(requestfile, O_RDONLY);
-        if (reqfd == -1) {
-            fatal_error("Error opening request file '%s'", requestfile);
+        reqfp = fopen(settings.requestfile, "rb");
+        if (reqfp == NULL) {
+            fatal_error("Error opening request file '%s'",
+                        settings.requestfile);
         }
     }
 
-    if (responsefile) {
-        respfd = open(responsefile, O_RDONLY);
+    if (settings.responsefile) {
+        respfd = open(settings.responsefile, O_RDONLY);
         if (respfd == -1) {
-            fatal_error("Error opening response file '%s'", responsefile);
+            fatal_error("Error opening response file '%s'",
+                        settings.responsefile);
         }
     }
 
@@ -190,8 +264,35 @@ static void runConnection(ib_engine_t* ib,
     icdata.mp = iconn->mp;
     icdata.conn = iconn;
 
-    // read the request and pass it to ironbee
-    while ((nbytes = read(reqfd, buf, 8192)) > 0) {
+    /* Read the request file, assemble a buffer, pass it to IB */
+    while ((linep = fgets(linebuf, sizeof(linebuf), reqfp)) != NULL) {
+        size_t linelen;
+        if (bufp == NULL) {
+            bufp = buf;
+            *bufp = '\0';
+            nbytes = 0;
+        }
+        if (strncmp(linebuf, "User-Agent:", 10) == 0) {
+            if (settings.user_agent != NULL) {
+                linep = settings.user_agent;
+            }
+        }
+        linelen = strlen(linep);
+        if ((nbytes + linelen) >= sizeof(buf)) {
+            icdata.dalloc = nbytes;
+            icdata.dlen = nbytes;
+            icdata.data = (uint8_t *)buf;
+            ib_state_notify_conn_data_in(ib, &icdata);
+            bufp = NULL;
+        }
+        else {
+            strncat(buf, linep, sizeof(buf)-nbytes);
+            nbytes += linelen;
+        }
+    }
+
+    /* Send the last chunk (if there is one) */
+    if ( (nbytes != 0) && (bufp != NULL) ) {
         icdata.dalloc = nbytes;
         icdata.dlen = nbytes;
         icdata.data = (uint8_t *)buf;
@@ -200,13 +301,14 @@ static void runConnection(ib_engine_t* ib,
 
     if (respfd != -1) {
         // read the response and pass it to ironbee
-        while ((nbytes = read(respfd, buf, 8192)) > 0) {
+        while ((nbytes = read(respfd, buf, sizeof(buf))) > 0) {
 	        icdata.dalloc = nbytes;
             icdata.dlen = nbytes;
             icdata.data = (uint8_t *)buf;
             ib_state_notify_conn_data_out(ib, &icdata);
         }
     }
+
 
     ib_state_notify_conn_closed(ib, iconn);
 }
@@ -227,6 +329,7 @@ main(int argc, char* argv[])
 	    { "local-port", required_argument, 0, 0 },
 	    { "remote-ip", required_argument, 0, 0 },
 	    { "remote-port", required_argument, 0, 0 },
+	    { "user-agent", required_argument, 0, 0 },
 #if DEBUG_ARGS_ENABLE
 	    { "debug-level", required_argument, 0, 0 },
 	    { "debug-log", required_argument, 0, 0 },
@@ -255,6 +358,13 @@ main(int argc, char* argv[])
         }
         else if (! strcmp("responsefile", longopts[option_index].name)) {
             settings.responsefile = optarg;
+        }
+        else if (! strcmp("user-agent", longopts[option_index].name)) {
+            static char buf[MAX_LINE_BUF];
+            strcpy(buf, "User-Agent: ");
+            strncat(buf, optarg, sizeof(buf)-(1+strlen(buf)));
+            strncat(buf, "\r\n", sizeof(buf)-(1+strlen(buf)));
+            settings.user_agent = buf;
         }
 #if DEBUG_ARGS_ENABLE
         else if (! strcmp("debug-level", longopts[option_index].name)) {
@@ -383,7 +493,7 @@ main(int argc, char* argv[])
     ib_state_notify_cfg_finished(ironbee);
 
     /* Pass connection data to the engine. */
-    runConnection(ironbee, settings.requestfile, settings.responsefile);
+    runConnection(ironbee);
 
     ib_engine_destroy(ironbee);
 }

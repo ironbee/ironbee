@@ -120,8 +120,8 @@ static void modtrace_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
     IB_FTRACE_INIT(modtrace_handle_tx);
     event_info_t *eventp = (event_info_t *)cbdata;
 
-    ib_log_debug(ib, 4, "handle_tx [%s]: data=%p",
-                 eventp->name, (void*)tx->data);
+    ib_log_debug(ib, 4, "handle_tx [%s]: data=%p tx->dpi=%p",
+                 eventp->name, (void*)tx->data, (void*)tx->dpi);
 }
 
 /**

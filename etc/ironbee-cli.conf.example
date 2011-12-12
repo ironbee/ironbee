@@ -30,6 +30,13 @@ Set parser "htp"
 # Extract the effective remote address (from X-Forwarded-For)
 #LoadModule "ibmod_remote_address.so"
 
+# GeoIP lookup
+#LoadModule "ibmod_geoip.so"
+#GeoIPDatabaseFile /var/lib/GeoIP/GeoLiteCity.dat
+
+# Extract the user agent
+#LoadModule "ibmod_user_agent.so"
+
 # Enable inspection engine (TODO: Implement)
 #InspectionEngine On
 
