@@ -48,12 +48,12 @@ typedef struct {
 
 /**
  * @internal
- * Skeleton generic event handler
+ * Skeleton generic event handler.
  *
  * Handles a generic event, dumping some info on the event.
  *
  * @param[in] ib IronBee object
- * @param[in,out] tx Transaction object
+ * @param[in] tx Transaction object
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
@@ -69,7 +69,7 @@ static ib_status_t event_callback(ib_engine_t *ib,
 
 /**
  * @internal
- * Skeleton connection data event handler
+ * Skeleton connection data event handler.
  *
  * Handles handle_connect_event and conn_data_in_event, dumping some info on
  * the event.
@@ -79,7 +79,7 @@ static ib_status_t event_callback(ib_engine_t *ib,
  * allocate the buffer from the connection's mpool, etc.
  *
  * @param[in] ib IronBee object
- * @param[in,out] tx Transaction object
+ * @param[in] tx Transaction object
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
@@ -106,12 +106,12 @@ static void modskel_handle_conn_data(ib_engine_t *ib,
 
 /**
  * @internal
- * Skeleton tx_data_in_event event handler
+ * Skeleton tx_data_in_event event handler.
  *
  * Handles a tx_data_in_event, dumping some info on the event.
  *
  * @param[in] ib IronBee object
- * @param[in,out] tx Transaction object
+ * @param[in] tx Transaction object
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
@@ -126,12 +126,12 @@ static void modskel_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
 
 /**
  * @internal
- * Skeleton request_headers_event event handler
+ * Skeleton request_headers_event event handler.
  *
  * Handles a request_headers_event, dumping some info on the event.
  *
  * @param[in] ib IronBee object
- * @param[in,out] tx Transaction object
+ * @param[in] tx Transaction object
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
@@ -189,7 +189,7 @@ static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
 
 /**
  * @internal
- * Initialize the skeleton module
+ * Initialize the skeleton module.
  *
  * Called when module is loaded.
  * Registers handlers for all IronBee events.
@@ -242,7 +242,7 @@ static ib_status_t modskel_init(ib_engine_t *ib, ib_module_t *m)
 
 /**
  * @internal
- * Uninitialize the skeleton module
+ * Uninitialize the skeleton module.
  *
  * Called when module is unloaded.
  *
@@ -258,7 +258,7 @@ static ib_status_t modskel_finish(ib_engine_t *ib, ib_module_t *m)
 
 /**
  * @internal
- * Initialize a context for the skeleton module
+ * Initialize a context for the skeleton module.
  *
  * Called when the context is available
  *

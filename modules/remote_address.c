@@ -43,7 +43,7 @@ IB_MODULE_DECLARE();
 
 /**
  * @internal
- * Handle request_header events
+ * Handle request_header events.
  *
  * Extract the "request_headers" field (a list) from the transactions's
  * data provider instance, then loop through the list, looking for the
