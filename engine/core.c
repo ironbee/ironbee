@@ -3300,7 +3300,7 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
     /// @todo Need an API for this.
     tx->fctl->filters = tx->ctx->filters;
     tx->fctl->fbuffer = (ib_filter_t *)cbdata;
-    ib_fctl_meta(tx->fctl, IB_STREAM_FLUSH);
+    ib_fctl_meta_add(tx->fctl, IB_STREAM_FLUSH);
 
     IB_FTRACE_RET_STATUS(rc);
 }

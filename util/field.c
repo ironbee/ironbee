@@ -30,6 +30,7 @@
 #include <ironbee/string.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/field.h>
+#include <ironbee/stream.h>
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
 
@@ -117,6 +118,19 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
                 }
             }
             (*pf)->val->pval = (void *)&((*pf)->val->u.list);
+            break;
+        case IB_FTYPE_SBUFFER:
+            if (pval != NULL) {
+                /// @todo Should do shallow copy
+                (*pf)->val->u.stream = *(ib_stream_t **)pval;
+            }
+            else {
+                rc = ib_stream_create(&(*pf)->val->u.stream, mp);
+                if (rc != IB_OK) {
+                    goto failed;
+                }
+            }
+            (*pf)->val->pval = (void *)&((*pf)->val->u.stream);
             break;
         case IB_FTYPE_NULSTR:
             if (pval != NULL) {
@@ -218,6 +232,7 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
             ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)((*pf)->val->pval)), (*pf)->val->pval);
             break;
         case IB_FTYPE_LIST:
+        case IB_FTYPE_SBUFFER:
             break;
         case IB_FTYPE_NULSTR:
             ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), *(char **)((*pf)->val->pval), (*pf)->val->pval);
@@ -336,6 +351,22 @@ ib_status_t ib_field_list_add(ib_field_t *f,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
+                                        int dtype,
+                                        uint8_t *buf,
+                                        size_t blen)
+{
+    IB_FTRACE_INIT(ib_field_buf_add);
+    ib_status_t rc;
+
+    if (f->type != IB_FTYPE_SBUFFER) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rc = ib_stream_push(*(ib_stream_t **)(f->val->pval), IB_STREAM_DATA, dtype, buf, blen);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t ib_field_setv(ib_field_t *f,
                           void *pval)
 {
@@ -348,6 +379,9 @@ ib_status_t ib_field_setv(ib_field_t *f,
             break;
         case IB_FTYPE_LIST:
             *(ib_list_t **)(f->val->pval) = *(ib_list_t **)pval;
+            break;
+        case IB_FTYPE_SBUFFER:
+            *(ib_stream_t **)(f->val->pval) = *(ib_stream_t **)pval;
             break;
         case IB_FTYPE_NULSTR:
             *(char **)(f->val->pval) = *(char **)pval;

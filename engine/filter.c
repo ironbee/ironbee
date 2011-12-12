@@ -134,7 +134,6 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
         IB_LIST_LOOP(fc->filters, node) {
             ib_filter_t *f = (ib_filter_t *)ib_list_node_data(node);
 
-
             rc = _filter_exec(f, &fc->fdata);
             if (rc != IB_OK) {
                 /// @todo Handle errors
@@ -174,10 +173,10 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_fctl_data(ib_fctl_t *fc,
-                         ib_data_type_t dtype,
-                         void *data,
-                         size_t dlen)
+ib_status_t ib_fctl_data_add(ib_fctl_t *fc,
+                             ib_data_type_t dtype,
+                             void *data,
+                             size_t dlen)
 {
     IB_FTRACE_INIT(ib_fctl_data);
 //    ib_engine_t *ib = fc->ib;
@@ -192,8 +191,8 @@ ib_status_t ib_fctl_data(ib_fctl_t *fc,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_fctl_meta(ib_fctl_t *fc,
-                         ib_sdata_type_t stype)
+ib_status_t ib_fctl_meta_add(ib_fctl_t *fc,
+                             ib_sdata_type_t stype)
 {
     IB_FTRACE_INIT(ib_fctl_meta);
 //    ib_engine_t *ib = fc->ib;

@@ -318,6 +318,7 @@ struct ib_field_val_t {
         ib_bytestr_t  *bytestr;       /**< Byte string value */
         char          *nulstr;        /**< NUL string value */
         ib_list_t     *list;          /**< List of fields */
+        ib_stream_t   *stream;        /**< Stream buffer */
         void          *ptr;           /**< Pointer value */
     } u;
 };

@@ -1143,10 +1143,10 @@ ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_fctl_data(txdata->tx->fctl,
-                      txdata->dtype,
-                      txdata->data,
-                      txdata->dlen);
+    rc = ib_fctl_data_add(txdata->tx->fctl,
+                          txdata->dtype,
+                          txdata->data,
+                          txdata->dlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1219,7 +1219,7 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
     }
 
     /// @todo Seems this gets there too late.
-    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOH);
+    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOH);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1260,7 +1260,7 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
     IB_FTRACE_INIT(ib_state_notify_request_body_ex);
     ib_status_t rc;
     
-    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOB);
+    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOB);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1320,7 +1320,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOS);
+    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOS);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

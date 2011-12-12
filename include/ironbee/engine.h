@@ -1310,6 +1310,21 @@ ib_status_t DLL_PUBLIC ib_data_add_list_ex(ib_provider_inst_t *dpi,
                                            ib_field_t **pf);
 
 /**
+ * Create and add a stream buffer data field (extended version).
+ *
+ * @param dpi Data provider instance
+ * @param name Name as byte string
+ * @param nlen Name length
+ * @param pf Pointer where new field is written if non-NULL
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_add_stream_ex(ib_provider_inst_t *dpi,
+                                             const char *name,
+                                             size_t nlen,
+                                             ib_field_t **pf);
+
+/**
  * Get a data field (extended version).
  *
  * @param dpi Data provider instance
@@ -1423,6 +1438,22 @@ ib_status_t DLL_PUBLIC ib_data_add_list(ib_provider_inst_t *dpi,
 
 #define ib_data_add_list(dpi,name,pf) \
     ib_data_add_list_ex(dpi,name,strlen(name),pf)
+
+/**
+ * Create and add a stream buffer data field.
+ *
+ * @param dpi Data provider instance
+ * @param name Name as byte string
+ * @param pf Pointer where new field is written if non-NULL
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_add_stream(ib_provider_inst_t *dpi,
+                                          const char *name,
+                                          ib_field_t **pf);
+
+#define ib_data_add_stream(dpi,name,pf) \
+    ib_data_add_stream_ex(dpi,name,strlen(name),pf)
 
 /**
  * Get a data field.
@@ -2148,10 +2179,10 @@ ib_status_t DLL_PUBLIC ib_fctl_process(ib_fctl_t *fc);
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_fctl_data(ib_fctl_t *fc,
-                                    ib_data_type_t dtype,
-                                    void *data,
-                                    size_t dlen);
+ib_status_t DLL_PUBLIC ib_fctl_data_add(ib_fctl_t *fc,
+                                        ib_data_type_t dtype,
+                                        void *data,
+                                        size_t dlen);
 
 /**
  * Add meta data to the filter controller.
@@ -2164,8 +2195,8 @@ ib_status_t DLL_PUBLIC ib_fctl_data(ib_fctl_t *fc,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_fctl_meta(ib_fctl_t *fc,
-                                    ib_sdata_type_t stype);
+ib_status_t DLL_PUBLIC ib_fctl_meta_add(ib_fctl_t *fc,
+                                        ib_sdata_type_t stype);
 
 /**
  * Drain processed data from the filter controller.

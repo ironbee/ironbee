@@ -102,6 +102,15 @@ struct ib_list_t {
 };
 
 /**
+ * Number of list elements
+ *
+ * @param list List
+ *
+ * @returns Number of list elements
+ */
+#define IB_LIST_ELEMENTS(list) ((list)->nelts)
+
+/**
  * First node of a list.
  *
  * @param list List

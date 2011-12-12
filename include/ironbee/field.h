@@ -37,21 +37,13 @@
 #include <arpa/inet.h>
 
 
-#include <ironbee/build.h>
-#include <ironbee/release.h>
 #include <ironbee/types.h>
 #include <ironbee/array.h>
+#include <ironbee/list.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @defgroup IronBeeUtilField Field Utility
- * @ingroup IronBeeUtil
- * @{
- */
-
 
 /**
  * @defgroup IronBeeUtilField Field
@@ -68,6 +60,7 @@ extern "C" {
 #define IB_FTYPE_NULSTR       3          /**< NUL terminated string value */
 #define IB_FTYPE_BYTESTR      4          /**< Binary data value */
 #define IB_FTYPE_LIST         5          /**< List of fields */
+#define IB_FTYPE_SBUFFER      6          /**< Stream buffer */
 
 /**
  * Dynamic field get function.
@@ -284,6 +277,21 @@ ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
                                          ib_field_t *val);
 
 /**
+ * Add a buffer to a @ref IB_FTYPE_SBUFFER type field.
+ * 
+ * @param f Field list
+ * @param dtype Data type
+ * @param buf Buffer
+ * @param blen Buffer length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
+                                        int dtype,
+                                        uint8_t *buf,
+                                        size_t blen);
+
+/**
  * Set a field value.
  * 
  * @param f Field to add
@@ -349,6 +357,9 @@ void DLL_PUBLIC *ib_field_value_type(ib_field_t *f, ib_ftype_t t);
 /** Return field value for a field as "ib_list_t *". */
 #define ib_field_value_list(f) \
     (ib_list_t *)ib_field_value_type(f, IB_FTYPE_LIST)
+
+/** Return field value for a field as "ib_stream_t *". */
+#define ib_field_value_stream(f) (ib_stream_t *)ib_field_value(f)
 
 
 /**
