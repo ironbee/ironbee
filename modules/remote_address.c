@@ -72,7 +72,7 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4,
                      "request_headers_event: "
-                     "Field list missing / incorrect type" );
+                     "No request headers provided" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
