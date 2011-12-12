@@ -31,6 +31,7 @@
 #include <ironbee/build.h>
 #include <ironbee/release.h>
 #include <ironbee/types.h>
+#include <ironbee/stream.h>
 #include <ironbee/list.h>
 #include <ironbee/uuid.h>
 
@@ -110,18 +111,6 @@ typedef enum {
     IB_FILTER_CONN,
     IB_FILTER_TX,
 } ib_filter_type_t;
-
-typedef struct ib_stream_t ib_stream_t;
-typedef struct ib_sdata_t ib_sdata_t;
-
-typedef enum {
-    IB_STREAM_DATA,                      /**< Data is available */
-    IB_STREAM_FLUSH,                     /**< Data should be flushed */
-    IB_STREAM_EOH,                       /**< End of Headers */
-    IB_STREAM_EOB,                       /**< End of Body */
-    IB_STREAM_EOS,                       /**< End of Stream */
-    IB_STREAM_ERROR,                     /**< Error */
-} ib_sdata_type_t;
 
 #define IB_UUID_HEX_SIZE 37
 
@@ -2061,28 +2050,6 @@ struct ib_fctl_t {
     ib_stream_t             *sink;      /**< Data sink (processed data) */
 };
 
-/**
- * IronBee Stream.
- *
- * This is essentially a list of data chunks (ib_sdata_t) with some
- * associated metadata.
- */
-struct ib_stream_t {
-    /// @todo Need a list of recycled sdata
-    ib_mpool_t             *mp;         /**< Stream memory pool */
-    size_t                  slen;       /**< Stream length */
-    IB_LIST_REQ_FIELDS(ib_sdata_t); /* Required list fields */
-};
-
-/** IronBee Stream Data */
-struct ib_sdata_t {
-    ib_sdata_type_t         type;       /**< Stream data type */
-    ib_data_type_t          dtype;      /**< Data type */
-    size_t                  dlen;       /**< Data length */
-    void                   *data;       /**< Data */
-    IB_LIST_NODE_REQ_FIELDS(ib_sdata_t); /* Required list node fields */
-};
-
 
 /* -- Filter API -- */
 
@@ -2212,45 +2179,6 @@ ib_status_t DLL_PUBLIC ib_fctl_drain(ib_fctl_t *fc,
                                      ib_stream_t **pstream);
 
                                                
-/**
- * Push stream data into a stream.
- *
- * @param s Stream
- * @param sdata Stream data
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_stream_push_sdata(ib_stream_t *s,
-                                            ib_sdata_t *sdata);
-                           
-/**
- * Push a chunk of data (or metadata) into a stream.
- *
- * @param s Stream
- * @param type Stream data type
- * @param dtype Data type
- * @param data Data
- * @param dlen Data length
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_stream_push(ib_stream_t *s,
-                                      ib_sdata_type_t type,
-                                      ib_data_type_t dtype,
-                                      void *data,
-                                      size_t dlen);
-                           
-/**
- * Pull a chunk of data (or metadata) from a stream.
- *
- * @param s Stream
- * @param psdata Address which stream data is written
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_stream_pull(ib_stream_t *s,
-                                      ib_sdata_t **psdata);
-
 /**
  * @} IronBeeFilter
  */

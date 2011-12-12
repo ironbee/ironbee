@@ -64,6 +64,8 @@ typedef struct ib_cfgmap_init_t ib_cfgmap_init_t;
 typedef struct ib_field_t ib_field_t;
 typedef struct ib_field_val_t ib_field_val_t;
 typedef struct ib_bytestr_t ib_bytestr_t;
+typedef struct ib_stream_t ib_stream_t;
+typedef struct ib_sdata_t ib_sdata_t;
 
 /** Generic function pointer type. */
 typedef void (*ib_void_fn_t)(void);
