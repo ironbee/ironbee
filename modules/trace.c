@@ -17,9 +17,9 @@
 
 /**
  * @file
- * @brief IronBee - Skeleton Module
+ * @brief IronBee - Trace Module
  *
- * This is a skeleton module
+ * This is a trace module
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
@@ -34,7 +34,7 @@
 #include <ironbee/bytestr.h>
 
 /* Define the module name as well as a string version of it. */
-#define MODULE_NAME        skeleton
+#define MODULE_NAME        trace
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Declare the public module symbol. */
@@ -48,7 +48,7 @@ typedef struct {
 
 /**
  * @internal
- * Skeleton generic event handler.
+ * Trace generic event handler.
  *
  * Handles a generic event, dumping some info on the event.
  *
@@ -57,9 +57,9 @@ typedef struct {
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
-static ib_status_t event_callback(ib_engine_t *ib,
-                                  void *param,
-                                  void *cbdata)
+static ib_status_t modtrace_event_callback(ib_engine_t *ib,
+                                           void *param,
+                                           void *cbdata)
 {
     IB_FTRACE_INIT(event_callback);
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -69,13 +69,13 @@ static ib_status_t event_callback(ib_engine_t *ib,
 
 /**
  * @internal
- * Skeleton connection data event handler.
+ * Trace connection data event handler.
  *
  * Handles handle_connect_event and conn_data_in_event, dumping some info on
  * the event.
  *
  * This function creates a 1024 byte buffer on the stack.  A real
- * (i.e. non-skeleton) module should probably do something different; perhaps
+ * (i.e. non-trace) module should probably do something different; perhaps
  * allocate the buffer from the connection's mpool, etc.
  *
  * @param[in] ib IronBee object
@@ -83,11 +83,11 @@ static ib_status_t event_callback(ib_engine_t *ib,
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
-static void modskel_handle_conn_data(ib_engine_t *ib,
+static void modtrace_handle_conn_data(ib_engine_t *ib,
                                      ib_conndata_t *cd,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(modskel_handle_conn_data);
+    IB_FTRACE_INIT(modtrace_handle_conn_data);
     event_info_t *eventp = (event_info_t *)cbdata;
 
     ib_log_debug( ib, 4, "handle_conn_data [%s]: data=%p dlen=%u",
@@ -106,7 +106,7 @@ static void modskel_handle_conn_data(ib_engine_t *ib,
 
 /**
  * @internal
- * Skeleton tx_data_in_event event handler.
+ * Trace tx_data_in_event event handler.
  *
  * Handles a tx_data_in_event, dumping some info on the event.
  *
@@ -115,9 +115,9 @@ static void modskel_handle_conn_data(ib_engine_t *ib,
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
-static void modskel_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
+static void modtrace_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
 {
-    IB_FTRACE_INIT(modskel_handle_tx);
+    IB_FTRACE_INIT(modtrace_handle_tx);
     event_info_t *eventp = (event_info_t *)cbdata;
 
     ib_log_debug(ib, 4, "handle_tx [%s]: data=%p",
@@ -126,7 +126,7 @@ static void modskel_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
 
 /**
  * @internal
- * Skeleton request_headers_event event handler.
+ * Trace request_headers_event event handler.
  *
  * Handles a request_headers_event, dumping some info on the event.
  *
@@ -135,11 +135,11 @@ static void modskel_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
-static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
+static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               void *cbdata)
 {
-    IB_FTRACE_INIT(modskel_handle_tx);
+    IB_FTRACE_INIT(modtrace_handle_tx);
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
@@ -189,7 +189,7 @@ static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
 
 /**
  * @internal
- * Initialize the skeleton module.
+ * Initialize the trace module.
  *
  * Called when module is loaded.
  * Registers handlers for all IronBee events.
@@ -197,9 +197,9 @@ static ib_status_t modskel_handle_req_headers(ib_engine_t *ib,
  * @param[in,out] ib IronBee object
  * @param[in,out] m Module object
  */
-static ib_status_t modskel_init(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(modskel_context_init);
+    IB_FTRACE_INIT(modtrace_context_init);
     static event_info_t event_info[IB_STATE_EVENT_NUM];
     ib_status_t rc;
     int event;
@@ -215,20 +215,25 @@ static ib_status_t modskel_init(ib_engine_t *ib, ib_module_t *m)
         eventp->name   = ib_state_event_name(event);
 
         /* For these specific ones, use more spefic handlers */
-        if (event == conn_data_in_event) {
-            handler = (ib_void_fn_t)modskel_handle_conn_data;
-        }
-        else if (event == handle_connect_event) {
-            handler = (ib_void_fn_t)modskel_handle_conn_data;
-        }
-        else if (event == tx_data_in_event) {
-            handler = (ib_void_fn_t)modskel_handle_tx;
-        }
-        else if (event == request_headers_event) {
-            handler = (ib_void_fn_t)modskel_handle_req_headers;
-        }
-        else {
-            handler = (ib_void_fn_t)event_callback;
+        switch( event ) {
+            case conn_data_in_event:
+                handler = (ib_void_fn_t)modtrace_handle_conn_data;
+                break;
+
+            case handle_connect_event:
+                handler = (ib_void_fn_t)modtrace_handle_conn_data;
+                break;
+
+            case tx_data_in_event:
+            handler = (ib_void_fn_t)modtrace_handle_tx;
+                break;
+
+            case request_headers_event:
+                handler = (ib_void_fn_t)modtrace_handle_req_headers;
+                break;
+
+            default:
+                handler = (ib_void_fn_t)modtrace_event_callback;
         }
         rc = ib_hook_register(ib, event, handler, (void*)eventp);
         if (rc != IB_OK) {
@@ -242,23 +247,23 @@ static ib_status_t modskel_init(ib_engine_t *ib, ib_module_t *m)
 
 /**
  * @internal
- * Uninitialize the skeleton module.
+ * Uninitialize the trace module.
  *
  * Called when module is unloaded.
  *
  * @param[in,out] ib IronBee object
  * @param[in,out] m Module object
  */
-static ib_status_t modskel_finish(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t modtrace_finish(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(modskel_finish);
-    ib_log_debug(ib, 4, "Skeleton module unloaded.");
+    IB_FTRACE_INIT(modtrace_finish);
+    ib_log_debug(ib, 4, "Trace module unloaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
  * @internal
- * Initialize a context for the skeleton module.
+ * Initialize a context for the trace module.
  *
  * Called when the context is available
  *
@@ -266,23 +271,23 @@ static ib_status_t modskel_finish(ib_engine_t *ib, ib_module_t *m)
  * @param[in] m Module object
  * @param[in] ctx Context object
  */
-static ib_status_t modskel_context_init(ib_engine_t *ib,
+static ib_status_t modtrace_context_init(ib_engine_t *ib,
                                         ib_module_t *m,
                                         ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(modskel_context_init);
+    IB_FTRACE_INIT(modtrace_context_init);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
-    "skeleton",                     /* Module name */
+    "trace",                        /* Module name */
     NULL,                           /* Global config data */
     0,                              /* Global config data length*/
     NULL,                           /* Module config map */
     NULL,                           /* Module directive map */
 
-    modskel_init,                     /* Initialize function */
-    modskel_finish,                   /* Finish function */
-    modskel_context_init              /* Context init function */
+    modtrace_init,                  /* Initialize function */
+    modtrace_finish,                /* Finish function */
+    modtrace_context_init           /* Context init function */
 );

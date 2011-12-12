@@ -24,8 +24,8 @@ LuaLoadModule "example.lua"
 ### Main Context (need separate directives for these)
 Set parser "htp"
 
-# Example 'skeleton' module
-#LoadModule "ibmod_skeleton.so"
+# Trace / example module
+#LoadModule "ibmod_trace.so"
 
 # Extract the effective remote address (from X-Forwarded-For)
 #LoadModule "ibmod_remote_address.so"

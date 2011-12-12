@@ -19,7 +19,7 @@ pkglib_LTLIBRARIES =  ibmod_htp.la \
                      ibmod_lua.la \
                      ibmod_poc_sig.la \
                      ibmod_remote_address.la \
-                     ibmod_skeleton.la
+                     ibmod_trace.la
 
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la 
@@ -74,9 +74,9 @@ ibmod_remote_address_la_SOURCES = remote_address.c
 ibmod_remote_address_la_CFLAGS = ${AM_CFLAGS}
 ibmod_remote_address_la_LDFLAGS = $(AM_LDFLAGS)
 
-ibmod_skeleton_la_SOURCES = skeleton.c
-ibmod_skeleton_la_CFLAGS = ${AM_CFLAGS}
-ibmod_skeleton_la_LDFLAGS = $(AM_LDFLAGS)
+ibmod_trace_la_SOURCES = trace.c
+ibmod_trace_la_CFLAGS = ${AM_CFLAGS}
+ibmod_trace_la_LDFLAGS = $(AM_LDFLAGS)
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
