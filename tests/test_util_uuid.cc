@@ -82,7 +82,9 @@ TEST(TestIBUtilUUID, test_field_create)
         rc = ib_uuid_ascii_to_bin(&uuid, rec->str);
         ASSERT_TRUE(rc == rec->ret) << "ib_uuid_ascii_to_bin() failed - bad return code: " << rec->str;
         if (rc == IB_OK) {
-            ASSERT_TRUE(memcmp(&rec->val, &uuid, 16) == 0) << "ib_uuid_ascii_to_bin() failed: " << rec->str << " (" << (int)uuid.byte[0] << ", " << (int)uuid.byte[1] << ", " << (int)uuid.byte[2] << ", " << (int)uuid.byte[3] << ", " << (int)uuid.byte[4] << ", " << (int)uuid.byte[5] << ", " << (int)uuid.byte[6] << ", " << (int)uuid.byte[7] << ", " << (int)uuid.byte[8] << ", " << (int)uuid.byte[9] << ", " << (int)uuid.byte[10] << ", " << (int)uuid.byte[11] << ", " << (int)uuid.byte[12] << ", " << (int)uuid.byte[13] << ", " << (int)uuid.byte[14] << ", " << (int)uuid.byte[15] << ")";
+            ASSERT_TRUE(memcmp(&rec->val, &uuid, 16) == 0) <<
+                "ib_uuid_ascii_to_bin() failed: " <<
+                rec->str << " - wrong binary value";
         }
     }
 }

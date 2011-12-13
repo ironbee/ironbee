@@ -37,7 +37,6 @@ ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool)
     /* Create the structure. */
     *pstream = (ib_stream_t *)ib_mpool_calloc(pool, 1, sizeof(**pstream));
     if (*pstream == NULL) {
-        *pstream = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     (*pstream)->mp = pool;
@@ -105,7 +104,6 @@ ib_status_t ib_stream_pull(ib_stream_t *s,
     }
 
     IB_LIST_NODE_REMOVE_FIRST(s);
-
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

@@ -3612,7 +3612,7 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
 
     /* Only interested in the body. */
     if (   (txdata->dtype != IB_DTYPE_HTTP_BODY)
-        && (txdata->dlen > 0)    ) {
+        && (txdata->dlen > 0)) {
         ib_log_debug(ib, 9, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
         IB_FTRACE_RET_STATUS(IB_OK);
     }

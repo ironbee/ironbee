@@ -87,22 +87,28 @@ TEST(TestIBUtilField, test_field_create)
     ib_mpool_destroy(mp);
 }
 
-static int dyn_call_count;
-static char dyn_call_val[1024];
+// Globals used to test if dyn_get caching is working
+static int g_dyn_call_count;
+static char g_dyn_call_val[1024];
 
+// Dynamic get function which increments a global counter and modifies
+// a global buffer so that the number of calls can be tracked.  One of the
+// tests is to determine if the function was called only once (result
+// cached).
 static void *dyn_get(ib_field_t *f,
                      const void *arg,
                      size_t alen,
                      void *data)
 {
     /* Keep track of how many times this was called */
-    ++dyn_call_count;
+    ++g_dyn_call_count;
 
-    snprintf(dyn_call_val, sizeof(dyn_call_val), "testval_%s_%.*s_call%02d", (const char *)data, (int)alen, (const char *)arg, dyn_call_count);
+    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_call%02d", (const char *)data, (int)alen, (const char *)arg, g_dyn_call_count);
 
-    return (void *)dyn_call_val;
+    return (void *)g_dyn_call_val;
 }
 
+// Cached version of the above dyn_get function.
 static void *dyn_get_cached(ib_field_t *f,
                             const void *arg,
                             size_t alen,
@@ -124,7 +130,6 @@ TEST(TestIBUtilField, test_dyn_field)
     ib_field_t *dynf;
     ib_field_t *cdynf;
     ib_status_t rc;
-    const char *nulstrval = "TestValue";
     const char *fval;
 
     atexit(ib_shutdown);
@@ -153,7 +158,7 @@ TEST(TestIBUtilField, test_dyn_field)
     ASSERT_TRUE((fval != NULL) && (strcmp("testval_dynf_fetch2_call02", fval) == 0)) << "bad dynamic field value - not incremented: " << fval;
 
     /* Reset call counter. */
-    dyn_call_count = 0;
+    g_dyn_call_count = 0;
 
     /* Create another field with no initial value. */
     rc = ib_field_create(&cdynf, mp, "test_cdynf", IB_FTYPE_NULSTR, NULL);

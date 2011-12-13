@@ -47,11 +47,13 @@ extern "C" {
  * @defgroup IronBeeUtilStream Stream Buffer
  * @ingroup IronBeeUtil
  *
- * A stream buffer is just a list of buffers (data and length) which
+ * A stream buffer is a list of buffers (data and length) which
  * can also act as a FIFO.
  *
- * In addition to the provided methods, the IB_LIST_* macros
- * can also be used as this implements the required list fields.
+ * @note In addition to the provided methods, the IB_LIST_* macros
+ * can also be used as @ref ib_stream_t and @ref ib_sdata_t implement
+ * the required list fields (@ref IB_LIST_REQ_FIELDS and
+ * @ref IB_LIST_NODE_REQ_FIELDS, respectivly).
  *
  * @{
  */
