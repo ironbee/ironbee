@@ -1,6 +1,6 @@
 LDADD = ../htp/.libs/libhtp.a -lz @LIBICONV@ 
 AM_CFLAGS = -g -O2
-EXTRA_DIST = run-tests.sh gtest
+EXTRA_DIST = run-tests.sh
 
 check_PROGRAMS = main test_bstr test_utils
 
@@ -14,7 +14,7 @@ test_bstr_LDADD = libgtest.la -lpthread $(LDADD)
 test_utils_SOURCES = test_utils.cc
 test_utils_LDADD = libgtest.la -lpthread $(LDADD)
 
-libgtest_la_SOURCES=$(srcdir)/gtest/gtest-all.cc $(srcdir)/gtest/gtest_main.cc
+libgtest_la_SOURCES=$(srcdir)/gtest/gtest-all.cc $(srcdir)/gtest/gtest_main.cc $(srcdir)/gtest/gtest.h 
 
 TESTS_ENVIRONMENT= srcdir=$(srcdir)
 TESTS = run-tests.sh test_bstr test_utils
