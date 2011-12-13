@@ -95,8 +95,9 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         uint8_t *comma;
 
         /* Check the field name
-         * Note: field->name is not always a null ('\0') terminated string */
-        if (ib_field_namecmp(field, "X-Forwarded-For") != 0) {
+         * Note: field->name is not always a null ('\0') terminated string.
+         * We should create a field function for doing this. */
+        if (strncmp(field->name, "X-Forwarded-For", field->nlen) != 0) {
             continue;
         }
 

@@ -447,6 +447,18 @@ void *ib_field_value_ex(ib_field_t *f, const void *arg, size_t alen)
     return f->val->pval ? *(void **)f->val->pval : NULL;
 }
 
+void *ib_field_value_type_ex(ib_field_t *f, ib_ftype_t t,
+                             const void *arg, size_t alen)
+{
+    /* Compare the types */
+    if (f->type != t) {
+        return NULL;
+    }
+
+    /* Return the value as normal. */
+    return ib_field_value_ex(f, arg, alen);
+}
+
 void *ib_field_value(ib_field_t *f)
 {
     return ib_field_value_ex(f, NULL, 0);
@@ -455,7 +467,7 @@ void *ib_field_value(ib_field_t *f)
 void *ib_field_value_type(ib_field_t *f, ib_ftype_t t)
 {
     /* Compare the types */
-    if ( f->type != t ) {
+    if (f->type != t) {
         return NULL;
     }
 
