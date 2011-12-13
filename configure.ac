@@ -70,7 +70,6 @@ AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_LIBTOOL
 AM_SANITY_CHECK
-AM_ICONV
 
 dnl -----------------------------------------------
 dnl Checks for libs.
@@ -103,6 +102,7 @@ case "$OS" in
                 AC_MSG_RESULT(no)
         ;;
 esac
+AM_ICONV
 
 dnl -----------------------------------------------
 dnl Check and enable the GCC opts we want to use.
