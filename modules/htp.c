@@ -251,7 +251,7 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
 {
     IB_FTRACE_INIT(modhtp_set_parser_flag);
     ib_engine_t *ib = itx->ib;
-    ib_status_t rc;
+    ib_status_t rc = IB_OK;
 
     if (flags & HTP_AMBIGUOUS_HOST) {
         flags ^= HTP_AMBIGUOUS_HOST;
@@ -347,6 +347,7 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
     /* If flags is not 0 we did not handle one of the bits. */
     if (flags != 0) {
         ib_log_error(ib, 4, "HTP parser unknown flag: 0x%08x", flags);
+        rc = IB_EUNKNOWN;
     }
 
     IB_FTRACE_RET_STATUS(rc);
