@@ -16,6 +16,7 @@ check_PROGRAMS = test_gtest \
                  test_util_list \
                  test_util_radix \
                  test_util_field \
+                 test_util_uuid \
                  test_util_logformat \
                  test_util_ahocorasick \
                  test_engine
@@ -91,6 +92,14 @@ else
 test_util_field_LDADD = gtest/libgtest.la \
                     $(top_builddir)/util/libibutil.la \
                     -lhtp
+endif
+
+test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
+if FREEBSD
+test_util_uuid_LDADD =  gtest/libgtest.la
+else
+test_util_uuid_LDADD =  gtest/libgtest.la \
+                    -ldl
 endif
 
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc

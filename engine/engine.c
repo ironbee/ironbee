@@ -402,15 +402,15 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     /* Setup the base uuid structure which is used to generate
      * transaction IDs.
      */
-    (*pconn)->base_uuid.node[0] = (pid16 >> 8) & 0xff;
-    (*pconn)->base_uuid.node[1] = (pid16 & 0xff);
-    (*pconn)->base_uuid.node[2] = ib->sensor_id_hash & 0xff;
-    (*pconn)->base_uuid.node[3] = (ib->sensor_id_hash >> 8) & 0xff;
-    (*pconn)->base_uuid.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
-    (*pconn)->base_uuid.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
+    (*pconn)->base_uuid.st.node[0] = (pid16 >> 8) & 0xff;
+    (*pconn)->base_uuid.st.node[1] = (pid16 & 0xff);
+    (*pconn)->base_uuid.st.node[2] = ib->sensor_id_hash & 0xff;
+    (*pconn)->base_uuid.st.node[3] = (ib->sensor_id_hash >> 8) & 0xff;
+    (*pconn)->base_uuid.st.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
+    (*pconn)->base_uuid.st.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
     /// @todo This needs set to thread ID or some other identifier
-    (*pconn)->base_uuid.clk_seq_hi_res = 0x8f;
-    (*pconn)->base_uuid.clk_seq_low = 0xff;
+    (*pconn)->base_uuid.st.clk_seq_hi_res = 0x8f;
+    (*pconn)->base_uuid.st.clk_seq_low = 0xff;
 
     /* Create the core data provider instance */
     rc = ib_provider_instance_create(ib,
@@ -504,15 +504,15 @@ static void ib_tx_generate_id(ib_tx_t *tx)
     ib_uuid_t uuid;
 
     /* Start with the base values. */
-    uuid.clk_seq_hi_res = tx->conn->base_uuid.clk_seq_hi_res;
-    uuid.clk_seq_low = tx->conn->base_uuid.clk_seq_low;
-    memcpy(uuid.node, tx->conn->base_uuid.node, sizeof(uuid.node));
+    uuid.st.clk_seq_hi_res = tx->conn->base_uuid.st.clk_seq_hi_res;
+    uuid.st.clk_seq_low = tx->conn->base_uuid.st.clk_seq_low;
+    memcpy(uuid.st.node, tx->conn->base_uuid.st.node, sizeof(uuid.st.node));
 
     /* Set the tx specific values */
-    uuid.time_low = tx->started.tv_sec;
-    uuid.time_mid = tx->conn->started.tv_usec + tx->conn->tx_count;
-    uuid.time_hi_and_ver = (uint16_t)tx->started.tv_usec & 0x0fff;
-    uuid.time_hi_and_ver |= (4 << 12);
+    uuid.st.time_low = tx->started.tv_sec;
+    uuid.st.time_mid = tx->conn->started.tv_usec + tx->conn->tx_count;
+    uuid.st.time_hi_and_ver = (uint16_t)tx->started.tv_usec & 0x0fff;
+    uuid.st.time_hi_and_ver |= (4 << 12);
 
     /* Convert to a hex-string representation */
     tx->id = (const char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
@@ -522,17 +522,17 @@ static void ib_tx_generate_id(ib_tx_t *tx)
 
     snprintf((char *)tx->id, IB_UUID_HEX_SIZE,
             "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-            uuid.time_low,
-            uuid.time_mid,
-            uuid.time_hi_and_ver,
-            uuid.clk_seq_hi_res,
-            uuid.clk_seq_low,
-            uuid.node[0],
-            uuid.node[1],
-            uuid.node[2],
-            uuid.node[3],
-            uuid.node[4],
-            uuid.node[5]);
+            uuid.st.time_low,
+            uuid.st.time_mid,
+            uuid.st.time_hi_and_ver,
+            uuid.st.clk_seq_hi_res,
+            uuid.st.clk_seq_low,
+            uuid.st.node[0],
+            uuid.st.node[1],
+            uuid.st.node[2],
+            uuid.st.node[3],
+            uuid.st.node[4],
+            uuid.st.node[5]);
 }
 
 ib_status_t ib_tx_create(ib_engine_t *ib,

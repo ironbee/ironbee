@@ -25,68 +25,79 @@
 #include "ironbee_config_auto.h"
 
 #include <string.h>
-#include <stdlib.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/types.h>
 #include <ironbee/uuid.h>
 #include <ironbee/debug.h>
 
-#include "ironbee_util_private.h"
-
 /**
  * Parses an ASCII UUID (with the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
- * where x are hexa chars) into a ib_uuid_t
+ * where x are hex chars) into a @ref ib_uuid_t.
  *
- * @param ibuuid pointer to an already allocated ib_uuid_t buffer
- * @param uuid pointer to the ascii string of the uuid (no blank spaces allowed)
+ * @param uuid Address of an already allocated ib_uuid_t buffer
+ * @param uuid ASCII string uuid (no blank spaces allowed)
  * @param ib pointer to the engine (to log format errors)
  *
  * @returns Status code
  */
-ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *ibuuid,
-                                const char *uuid)
+ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *uuid,
+                                 const char *str)
 {
     IB_FTRACE_INIT(ib_uuid_ascii_to_bin);
+    int i;
+    int j;
 
     // Some format checks
-    if (ibuuid == NULL ||
-        strlen(uuid) != 36 ||
-        uuid[8] != '-' ||
-        uuid[13] != '-' ||
-        uuid[18] != '-' ||
-        uuid[23] != '-' ) 
+    if (uuid == NULL ||
+        strlen(str) != 36 ||
+        str[8] != '-' ||
+        str[13] != '-' ||
+        str[18] != '-' ||
+        str[23] != '-' ) 
     {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Store the sensor id as ib_uuid_t */
-    uint8_t i = 0;
-    uint8_t j = 0;
-    for (i = 0; i < 36; i += 2) {
-        char hexstr[3] = { 0, 0, 0 };
-        long tmphex;
+    for (i = 0, j = 0; i < 36; ++i) {
+        int byteval;
 
-        /* Skip the following positions ('-') */
+        /* Skip the following positions ('-'). */
         if (i == 8 || i == 13 || i == 18 || i == 23) {
             i++;
         }
-        if ( !((uuid[i] >= '0' && uuid[i] <= '9') ||
-               (uuid[i] >= 'A' && uuid[i] <= 'F') ||
-               (uuid[i] >= 'a' && uuid[i] <= 'f')) ||
-             !((uuid[i + 1] >= '0' && uuid[i + 1] <= '9') ||
-               (uuid[i + 1] >= 'A' && uuid[i + 1] <= 'F') ||
-               (uuid[i + 1] >= 'a' && uuid[i + 1] <= 'f'))
-               )
-        {
+
+        /* First hex char in the two digit byte. */
+        if (str[i] >= '0' && str[i] <= '9') {
+            byteval = (str[i] - '0') << 4;
+        }
+        else if (str[i] >= 'A' && str[i] <= 'F') {
+            byteval = (str[i] - 'A' + 10) << 4;
+        }
+        else if (str[i] >= 'a' && str[i] <= 'f') {
+            byteval = (str[i] - 'a' + 10) << 4;
+        }
+        else {
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        /// @todo Use a faster method
-        hexstr[0] = uuid[i];
-        hexstr[1] = uuid[i + 1];
-        tmphex = strtol(hexstr, NULL, 16);
-        *(((uint8_t *)ibuuid) + j++) = (uint8_t)(tmphex & 0xff);
+        /* Second hex char in the two digit byte. */
+        ++i;
+        if (str[i] >= '0' && str[i] <= '9') {
+            byteval += str[i] - '0';
+        }
+        else if (str[i] >= 'A' && str[i] <= 'F') {
+            byteval += str[i] - 'A' + 10;
+        }
+        else if (str[i] >= 'a' && str[i] <= 'f') {
+            byteval += str[i] - 'a' + 10;
+        }
+        else {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        uuid->byte[j++] = byteval & 0xff;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
