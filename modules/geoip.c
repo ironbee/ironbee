@@ -49,6 +49,11 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
 
     const char *ip = tx->er_ipstr;
 
+    if (ip == NULL) {
+        ib_log_error(ib, 0, "Trying to lookup NULL IP in GEOIP");
+        IB_FTRACE_RET_VOID();
+    }
+
 #ifdef GEOIP_HAVE_VERSION
     /**
      * Some configurations exist as single characters and must be converted to
