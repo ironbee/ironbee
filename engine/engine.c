@@ -572,6 +572,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     (*ptx)->ctx = ib->ctx;
     (*ptx)->pctx = pctx;
     (*ptx)->conn = conn;
+    (*ptx)->er_ipstr = conn->remote_ipstr;
     (*ptx)->hostname = IB_DSTR_EMPTY;
     (*ptx)->path = IB_DSTR_URI_ROOT_PATH;
 

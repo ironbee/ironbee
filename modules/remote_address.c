@@ -62,7 +62,6 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
                                             void *data)
 {
     IB_FTRACE_INIT(modra_handle_tx);
-    ib_conn_t *conn = tx->conn;
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
     ib_list_t *lst = NULL;
@@ -112,7 +111,7 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         }
 
         /* Allocate the memory */
-        buf = (char *)ib_mpool_calloc(conn->mp, 1, len+1);
+        buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
         if (buf == NULL) {
             ib_log_error( ib, 4,
                           "Failed to allocate %d bytes for local address",
@@ -129,7 +128,7 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
         /* This will lose the pointer to the original address
          * buffer, but it should be cleaned up with the rest
          * of the memory pool. */
-        tx->conn->local_ipstr = buf;
+        tx->er_ipstr = buf;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     IB_FTRACE_RET_STATUS(IB_OK);

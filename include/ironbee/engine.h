@@ -240,6 +240,8 @@ struct ib_tx_t {
     ib_mpool_t         *mp;              /**< Transaction memory pool */
     const char         *id;              /**< Transaction ID */
     ib_conn_t          *conn;            /**< Connection */
+    const char         *er_ipstr;        /**< Effective remote IP as string */
+    //struct sockaddr_storage er_addr;   /**< Effectvie remote address */
     ib_context_t       *ctx;             /**< Config context */
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
