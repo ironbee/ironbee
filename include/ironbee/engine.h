@@ -240,8 +240,6 @@ struct ib_tx_t {
     ib_mpool_t         *mp;              /**< Transaction memory pool */
     const char         *id;              /**< Transaction ID */
     ib_conn_t          *conn;            /**< Connection */
-    const char         *er_ipstr;        /**< Effective remote IP as string */
-    //struct sockaddr_storage er_addr;   /**< Effectvie remote address */
     ib_context_t       *ctx;             /**< Config context */
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
@@ -251,7 +249,9 @@ struct ib_tx_t {
     ib_timeval_t        tv_response;     /**< Response start time */
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */
+    const char         *er_ipstr;        /**< Effective remote IP as string */
     const char         *path;            /**< Path used in the request */
+    //struct sockaddr_storage er_addr;   /**< Effectvie remote address */
     ib_flags_t          flags;           /**< Transaction flags */
 };
 

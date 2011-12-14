@@ -271,8 +271,8 @@ ffi.cdef [[
         ib_timeval_t        tv_request;
         ib_tx_t            *next;
         const char         *hostname;
-	const char         *er_ipstr;
         const char         *path;
+	const char         *er_ipstr;
         ib_flags_t          flags;
     };
 
