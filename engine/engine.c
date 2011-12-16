@@ -144,13 +144,15 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     (*pib)->mp = pool;
 
     /* Create temporary memory pool */
-    rc = ib_mpool_create(&((*pib)->temp_mp), pool);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&((*pib)->temp_mp), (*pib)->mp, 8192);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the config memory pool */
-    rc = ib_mpool_create(&((*pib)->config_mp), (*pib)->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&((*pib)->config_mp), (*pib)->mp, 8192);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -376,7 +378,8 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     ib_status_t rc;
     
     /* Create a sub-pool for each connection and allocate from it */
-    rc = ib_mpool_create(&pool, ib->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&pool, ib->mp, 2048);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create connection memory pool: %d", rc);
         rc = IB_EALLOC;
@@ -451,7 +454,8 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     ib_status_t rc;
     
     /* Create a sub-pool for data buffers */
-    rc = ib_mpool_create(&pool, conn->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&pool, conn->mp, 8192);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create connection data memory pool: %d", rc);
         rc = IB_EALLOC;
@@ -548,7 +552,8 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
      */
-    rc = ib_mpool_create(&pool, conn->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&pool, conn->mp, 8192);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create transaction memory pool: %d", rc);
         rc = IB_EALLOC;

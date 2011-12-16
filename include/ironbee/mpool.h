@@ -146,14 +146,17 @@ void DLL_PUBLIC ib_mpool_clear(ib_mpool_t *mp);
 void DLL_PUBLIC ib_mpool_destroy(ib_mpool_t *mp);
 
 /**
- * Register a function to be called after a memory pool is destroyed.
+ * Register a function to be called when a memory pool is destroyed.
  *
  * @param mp Memory pool
- * @param data Data
  * @param cleanup Cleanup function
+ * @param data Data passed to cleanup function
+ *
+ * @returns Status code
  */
-void DLL_PUBLIC ib_mpool_cleanup_register(ib_mpool_t *mp, void *data,
-                                          ib_mpool_cleanup_fn_t cleanup);
+ib_status_t ib_mpool_cleanup_register(ib_mpool_t *mp,
+                                      ib_mpool_cleanup_fn_t cleanup,
+                                      void *data);
 
 /** @} IronBeeUtilMemPool */
 
