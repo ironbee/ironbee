@@ -38,10 +38,7 @@
 #include "engine/filter.c"
 #include "engine/core.c"
 
-static ib_plugin_t ibplugin = {
-    IB_PLUGIN_HEADER_DEFAULTS,
-    "unit_tests"
-};
+#include "util_engine.c"
 
 /// @test Test ironbee library - ib_engine_create()
 TEST(TestIronBee, test_engine_create_null_plugin)
@@ -54,26 +51,17 @@ TEST(TestIronBee, test_engine_create_null_plugin)
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
     rc = ib_engine_create(&ib, NULL);
-    ASSERT_TRUE(rc == IB_EINVAL) << "ib_engine_create() did not fail with IB_EINVAL";
-    ASSERT_TRUE(ib == NULL) << "ib_engine_create() succeeded with NULL plugin handle";
+    ASSERT_EQ(IB_EINVAL, ib_engine_create(&ib, NULL));
+    ASSERT_FALSE(ib);
 }
 
 /// @test Test ironbee library - ib_engine_create() and ib_engine_destroy()
 TEST(TestIronBee, test_engine_create_and_destroy)
 {
     ib_engine_t *ib;
-    ib_status_t rc;
 
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-
-    rc = ib_engine_create(&ib, &ibplugin);
-    ASSERT_TRUE(rc == IB_OK) << "ib_engine_create() failed - rc != IB_OK";
-    ASSERT_TRUE(ib != NULL) << "ib_engine_create() failed - NULL";
-    ASSERT_TRUE(ib->mp != NULL) << "ib_engine_create() - NULL mp";
-
-    ib_engine_destroy(ib);
+    ibtest_engine_create(&ib);
+    ibtest_engine_destroy(ib);
 }
 
 static ib_status_t foo2bar(void *fndata,
@@ -106,35 +94,33 @@ TEST(TestIronBee, test_tfn)
     ib_flags_t flags;
     ib_status_t rc;
 
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ibtest_engine_create(&ib);
 
     data_in = (uint8_t *)malloc(128);
-    ASSERT_TRUE(data_in != NULL) << "data_in alloc failed - NULL";
+    ASSERT_TRUE(data_in);
     data_out = (uint8_t *)malloc(128);
-    ASSERT_TRUE(data_out != NULL) << "data_out alloc failed - NULL";
+    ASSERT_TRUE(data_out);
 
-    rc = ib_engine_create(&ib, &ibplugin);
-    ASSERT_TRUE(rc == IB_OK) << "ib_engine_create() failed - rc != IB_OK";
-    ASSERT_TRUE(ib != NULL) << "ib_engine_create() failed - NULL";
-    ASSERT_TRUE(ib->mp != NULL) << "ib_engine_create() - NULL mp";
+    ibtest_engine_create(&ib);
 
-    rc = ib_tfn_create(ib, "foo2bar", foo2bar, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_tfn_create() failed - rc != IB_OK";
-
-    rc = ib_tfn_lookup(ib, "foo2bar", &tfn);
-    ASSERT_TRUE(tfn != (ib_tfn_t *)-1) << "ib_tfn_lookup() failed - unset";
-    ASSERT_TRUE(tfn != NULL) << "ib_tfn_lookup() failed - NULL";
+    ASSERT_EQ(IB_OK, ib_tfn_create(ib, "foo2bar", foo2bar, NULL, NULL));
+    ASSERT_EQ(IB_OK, ib_tfn_lookup(ib, "foo2bar", &tfn));
+    ASSERT_NE((ib_tfn_t *)-1, tfn);
+    ASSERT_TRUE(tfn);
 
     memcpy(data_in, "foo", 4);
     dlen_in = 3;
-    rc = ib_tfn_transform(tfn, ib->mp, data_in, dlen_in, &data_out, &dlen_out, &flags);
-    ASSERT_TRUE(tfn != (ib_tfn_t *)-1) << "ib_tfn_lookup() failed - unset";
-    ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags)) << "ib_tfn_lookup() failed - not modified";
-    ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags)) << "ib_tfn_lookup() failed - not inplace";
 
-    ib_engine_destroy(ib);
+    ASSERT_EQ(
+        IB_OK,
+        ib_tfn_transform(tfn, ib->mp, data_in, dlen_in,
+                         &data_out, &dlen_out, &flags)
+    );
+    ASSERT_NE((ib_tfn_t *)-1, tfn);
+    ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
+    ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags));
+
+    ibtest_engine_destroy(ib);
 }
 
 static ib_field_t *dyn_get(ib_field_t *f,
@@ -165,64 +151,57 @@ TEST(TestIronBee, test_dpi)
     ib_num_t *pnumval;
     ib_status_t rc;
 
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ibtest_engine_create(&ib);
 
-    rc = ib_engine_create(&ib, &ibplugin);
-    ASSERT_TRUE(rc == IB_OK) << "ib_engine_create() failed - rc != IB_OK";
-    ASSERT_TRUE(ib != NULL) << "ib_engine_create() failed - NULL";
-    ASSERT_TRUE(ib->mp != NULL) << "ib_engine_create() - NULL mp";
-
-    rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_TYPE_DATA,
-                                     IB_DSTR_CORE,
-                                     &dpi,
-                                     ib_engine_pool_main_get(ib),
-                                     NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_provider_instance_create() failed - rc != IB_OK";
-    ASSERT_TRUE(dpi != NULL) << "ib_provider_instance_create() failed - NULL";
+    ASSERT_EQ(
+        IB_OK,
+        ib_provider_instance_create(ib,
+                                    IB_PROVIDER_TYPE_DATA,
+                                    IB_DSTR_CORE,
+                                    &dpi,
+                                    ib_engine_pool_main_get(ib),
+                                    NULL)
+    );
+    ASSERT_TRUE(dpi);
 
     /* Create a field with no initial value. */
-    rc = ib_field_create(&dynf, ib_engine_pool_main_get(ib), "test_dynf", IB_FTYPE_GENERIC, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_field_create() NULSTR failed - rc != IB_OK";
-    ASSERT_TRUE(dynf != NULL) << "ib_field_create() NULSTR failed - NULL value";
-    ASSERT_TRUE(dynf->nlen == 9) << "ib_field_create() NULSTR failed - incorrect nlen";
-    ASSERT_TRUE(memcmp("test_dynf", dynf->name, 9) == 0) << "ib_field_create() NULSTR failed - wrong name";
+    ASSERT_EQ(
+        IB_OK,
+        ib_field_create(&dynf, ib_engine_pool_main_get(ib),
+                        "test_dynf", IB_FTYPE_GENERIC, NULL)
+    );
+    ASSERT_TRUE(dynf);
+    ASSERT_EQ(9, dynf->nlen);
+    ASSERT_MEMEQ("test_dynf", dynf->name, 9);
 
     /* Make it a dynamic field which calls dyn_get() with "dynf" as the data. */
     ib_field_dyn_register_get(dynf, (ib_field_get_fn_t)dyn_get);
     ib_field_dyn_set_data(dynf, (void *)ib_engine_pool_main_get(ib));
 
     /* Add the field to the data store. */
-    rc = ib_data_add(dpi, dynf);
-    ASSERT_TRUE(rc == IB_OK) << "ib_data_add() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, ib_data_add(dpi, dynf));
 
     /* Fetch the field from the data store */
-    rc = ib_data_get(dpi, "test_dynf", &f);
-    ASSERT_TRUE(rc == IB_OK) << "ib_data_get() failed - rc != IB_OK";
-    ASSERT_TRUE(f != NULL) << "ib_data_get() failed - NULL value";
-    ASSERT_TRUE(f == dynf) << "ib_data_get() failed - wrong field";
+    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf", &f));
+    ASSERT_TRUE(f);
+    ASSERT_EQ(dynf, f);
 
     /* Fetch a dynamic field from the data store */
-    rc = ib_data_get(dpi, "test_dynf.dyn_subkey", &f);
-    ASSERT_TRUE(rc == IB_OK) << "ib_data_get() dynamic failed - rc != IB_OK (" << rc << ")";
-    ASSERT_TRUE(f != NULL) << "ib_data_get() dynamic failed - NULL value";
-    ASSERT_TRUE((f->nlen == 10) && (memcmp("dyn_subkey", f->name, 10) == 0)) << "ib_data_get() dynamic failed - wrong field name";
+    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf.dyn_subkey", &f));
+    ASSERT_TRUE(f);
+    ASSERT_EQ(10, f->nlen);
 
     /* Get the value from the dynamic field. */
-    pnumval = ib_field_value_num(f);
-    ASSERT_TRUE(*pnumval == 5) << "bad dynamic field value: " << *pnumval;
+    ASSERT_EQ(5, *ib_field_value_num(f));
 
     /* Fetch another dynamic field from the data store */
-    rc = ib_data_get(dpi, "test_dynf.dyn_subkey2", &f);
-    ASSERT_TRUE(rc == IB_OK) << "ib_data_get() dynamic2 failed - rc != IB_OK";
-    ASSERT_TRUE(f != NULL) << "ib_data_get() dynamic2 failed - NULL value";
-    ASSERT_TRUE((f->nlen == 11) && (memcmp("dyn_subkey2", f->name, 11) == 0)) << "ib_data_get() dynamic2 failed - wrong field name";
+    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf.dyn_subkey2", &f));
+    ASSERT_TRUE(f);
+    ASSERT_EQ(11, f->nlen);
+    ASSERT_MEMEQ("dyn_subkey2", f->name, 11);
 
     /* Get the value from the dynamic field. */
-    pnumval = ib_field_value_num(f);
-    ASSERT_TRUE(*pnumval == 5) << "bad dynamic field value: " << *pnumval;
+    ASSERT_EQ(5, *ib_field_value_num(f));
 
-    ib_engine_destroy(ib);
+    ibtest_engine_destroy(ib);
 }
