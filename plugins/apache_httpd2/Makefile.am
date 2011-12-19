@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 include $(top_srcdir)/build/plugins.mk
 
-pkglibdir = $(prefix)/lib
+pkglibdir = $(libdir)
 if BUILD_HTTPD_PLUGIN
 pkglib_LTLIBRARIES = mod_ironbee.la
 

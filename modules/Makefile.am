@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
 
-pkglibdir = $(prefix)/lib
+pkglibdir = $(libdir)
 
 if FREEBSD
 AM_LDFLAGS = -L/usr/local/lib -module -avoid-version -lssp_nonshared

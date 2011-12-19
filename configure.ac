@@ -135,17 +135,8 @@ fi
 ### CLI
 AC_ARG_ENABLE(cli,
               AS_HELP_STRING([--enable-cli],
-                             [Enable the cli utility.]),
-[
-  if test "$enableval" != "no"; then
-    util_cli=1
-  else
-    util_cli=0
-  fi
-],
-[
-  util_cli=0
-])
+                             [Enable the cli utility.]),,[enable_cli_utility=yes])
+AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
 
 ### Ragel
 AC_ARG_WITH([ragel],
@@ -235,7 +226,10 @@ CHECK_GEOIP()
 
 #If we are not building plugins bail
 if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
-    AC_MSG_ERROR("No plugins enabled exiting")
+    echo "**********************************************"
+    echo "* Warning! No plugins enabled!               *"
+    echo "* We will only be building the cli test tool.*"
+    echo "**********************************************"
 fi
   
 dnl Optional build modules

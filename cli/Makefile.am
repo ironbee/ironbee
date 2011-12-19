@@ -1,6 +1,6 @@
 include $(top_srcdir)/build/common.mk
 
-noinst_PROGRAMS = ibcli
+bin_PROGRAMS = ibcli
 
 if DARWIN
 AM_LDFLAGS = -pagezero_size 10000 -image_base 100000000
