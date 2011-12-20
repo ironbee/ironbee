@@ -121,6 +121,7 @@ if test "$gcc_have_strict_overflow" != "yes"; then
     CFLAGS="${TMPCFLAGS}"
 fi
 
+if test "$OS_FREEBSD" != "true"; then
 dnl -----------------------------------------------
 dnl Check for GCC stack smashing protection
 dnl -----------------------------------------------
@@ -132,6 +133,8 @@ AC_MSG_RESULT($gcc_have_fstack_protector)
 if test "$gcc_have_fstack_protector" != "yes"; then
     CFLAGS="${TMPCFLAGS}"
 fi
+fi
+
 dnl -----------------------------------------------
 dnl Check for GCC -D_FORTIFY_SOURCE support
 dnl -----------------------------------------------
