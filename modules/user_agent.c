@@ -24,13 +24,16 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
+#include <user_agent_private.h>
+#include <stdint.h>
+#include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
 #ifdef TESTING
-# include <stdlib.h>
-# include <stddef.h>
-# include <errno.h>
-# include <stdio.h>
+#  include <stdlib.h>
+#  include <stddef.h>
+#  include <errno.h>
+#  include <stdio.h>
 #endif
 
 #include <ironbee/types.h>
@@ -43,17 +46,27 @@
 #include <ironbee/mpool.h>
 
 #ifdef TESTING
-# define MAX_LINE_BUF (16*1024)
+#  define MAX_LINE_BUF (16*1024)
 
 #else
-/* Define the module name as well as a string version of it. */
-#define MODULE_NAME        remote_ip
-#define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
+  /* Define the module name as well as a string version of it. */
+#  define MODULE_NAME        remote_ip
+#  define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
-/* Declare the public module symbol. */
-IB_MODULE_DECLARE();
+  /* Declare the public module symbol. */
+  IB_MODULE_DECLARE();
 #endif
 
+/* Module data */
+#if 0
+typedef struct {
+    modua_match_rule_t *rules;       /* List of rules */
+} modua_data_t;
+
+static modua_data_t modua_data = { modua_rules };
+#endif
+
+static const modua_match_ruleset_t *modua_rules = NULL;
 
 /**
  * @internal
@@ -92,6 +105,7 @@ static ib_status_t modua_parse_uastring( char *str,
                                          char **p_platform,
                                          char **p_extra )
 {
+    IB_FTRACE_INIT(modua_parse_uastring);
     char *lp = NULL;            /* lp: Left parent */
     char *extra = NULL;
 
@@ -106,7 +120,7 @@ static ib_status_t modua_parse_uastring( char *str,
     if ( (str == NULL) || (isalnum(*str) == 0) ) {
         *p_product = NULL;
         *p_extra = str;
-        return (str == NULL) ? IB_EUNKNOWN : IB_OK;
+        IB_FTRACE_RET_STATUS( (str == NULL) ? IB_EUNKNOWN : IB_OK );
     }
 
     /* The product is the first field. */
@@ -168,7 +182,137 @@ static ib_status_t modua_parse_uastring( char *str,
      * Note: p_product is filled in above. */
     *p_platform = lp;
     *p_extra = extra;
-    return IB_OK;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+#define RESULT_EQ(v,c)  ( ((v) == (c)) ? YES : NO )
+#define RESULT_NEQ(v,c) ( ((v) != (c)) ? YES : NO )
+/**
+ * @internal
+ * Match a field against the specified match rule.
+ *
+ * Attempts to match the field string (or NULL) against the field match rule.
+ * NULL)
+ *
+ * @param[in] str User agent string to match
+ * @param[in] rule Field match rule to match the string against
+ *
+ * @returns 1 if the string matches, 0 if not.
+ */
+static modua_matchresult_t modua_frule_match(const char *str,
+                                             const modua_field_rule_t *rule)
+{
+    IB_FTRACE_INIT(modua_rule_match);
+
+    /* First, handle the simple NULL string case */
+    if (str == NULL) {
+        return NO;
+    }
+
+    /* Match based on the match type */
+    switch (rule->match_type) {
+        case EXISTS:         /* Note: NULL/NO handled above */
+            return YES;
+        case MATCHES:
+            return RESULT_EQ(strcmp(str, rule->string), 0);
+        case STARTSWITH:
+            return RESULT_EQ(strncmp(str, rule->string, rule->slen), 0);
+        case CONTAINS:
+            return RESULT_NEQ(strstr(str, rule->string), NULL);
+        case ENDSWITH: {
+            size_t slen = strlen(str);
+            size_t offset;
+            if (slen < rule->slen) {
+                IB_FTRACE_RET_INT(0);
+            }
+            offset = (slen - rule->slen);
+            IB_FTRACE_RET_INT(RESULT_EQ(strcmp(str+offset, rule->string), 0));
+        }
+    }
+
+    /* Should never get here! */
+    IB_FTRACE_RET_INT(NO);
+}
+
+/**
+ * @internal
+ * Apply the user agent category rules.
+ *
+ * Walks through the internal static category rules, attempts to apply each of
+ * them to the passed in agent info, and returns the category string of the
+ * first rule that matches, or NULL if no rules match.
+ *
+ * @param[in] product UA product component
+ * @param[in] platform UA platform component
+ * @param[in] extra UA extra component
+ *
+ * @returns Category string or NULL
+ */
+static const char *modua_mrule_match(const char *fields[],
+                                     const modua_match_rule_t *rule)
+{
+    IB_FTRACE_INIT(modua_mrule_match);
+    const modua_field_rule_t *fr;
+    unsigned ruleno;
+        
+    for (ruleno = 0, fr = rule->rules;
+         ruleno < rule->num_rules;
+         ++ruleno, ++fr) {
+
+        /* Apply the rule */
+        modua_matchresult_t result = 
+            modua_frule_match(fields[fr->match_field], fr);
+
+        /* If it doesn't match the expect results, we're done */
+        if (result != fr->match_result) {
+            IB_FTRACE_RET_CONSTSTR( (const char *)NULL );
+        }
+    }
+
+    /* If we've applied all rules, and have had not negative results,
+       it matches */
+    IB_FTRACE_RET_CONSTSTR( rule->category );
+}
+
+/**
+ * @internal
+ * Apply the user agent category rules.
+ *
+ * Walks through the internal static category rules, attempts to apply each of
+ * them to the passed in agent info, and returns the category string of the
+ * first rule that matches, or NULL if no rules match.
+ *
+ * @param[in] product UA product component
+ * @param[in] platform UA platform component
+ * @param[in] extra UA extra component
+ *
+ * @returns Category string or NULL
+ */
+static const char *modua_match_cat_rules(const char *product,
+                                         const char *platform,
+                                         const char *extra)
+{
+    IB_FTRACE_INIT(modua_match_cat_rules);
+    const char *fields[3] = { product, platform, extra };
+    const modua_match_rule_t *rule;
+    unsigned ruleno;
+
+    for (ruleno = 0, rule = modua_rules->rules;
+         ruleno < modua_rules->num_rules;
+         ++ruleno, ++rule ) {
+        const char *result;
+
+        /* Apply the field rules */
+        result = modua_mrule_match(fields, rule);
+
+        /* If the entire rule set matches, return the category string */
+        if (result != (const char *)NULL) {
+            IB_FTRACE_RET_CONSTSTR( result );
+        }
+    }
+
+    /* If we've applied all rules, and have had success, return NULL */
+    IB_FTRACE_RET_CONSTSTR( (const char *)NULL );
 }
 
 #ifndef TESTING
@@ -237,21 +381,25 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
  */
 static ib_status_t modua_agent_fields(ib_engine_t *ib,
                                       ib_tx_t *tx,
-                                      char *str)
+                                      char *agent)
 {
     IB_FTRACE_INIT(modua_handle_tx);
     ib_field_t *agent_list = NULL;
     char *product = NULL;
     char *platform = NULL;
     char *extra = NULL;
+    const char *category = NULL;
     ib_status_t rc;
 
     /* Parse the user agent string */
-    rc = modua_parse_uastring(str, &product, &platform, &extra);
+    rc = modua_parse_uastring(agent, &product, &platform, &extra);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to parse User Agent string '%s'", str);
+        ib_log_debug(ib, 4, "Failed to parse User Agent string '%s'", agent);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+    /* Categorize the parsed string */
+    category = modua_match_cat_rules(product, platform, extra);
 
     /* Build a new list. */
     rc = ib_data_add_list(tx->dpi, "User-Agent", &agent_list);
@@ -275,6 +423,12 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
 
     /* Extra */
     rc = modua_store_field(ib, tx->mp, agent_list, "extra", extra);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Extra */
+    rc = modua_store_field(ib, tx->mp, agent_list, "category", category);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -382,6 +536,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(modua_context_init);
     ib_status_t rc;
+    unsigned    failed_rule_num;
 
     /* Register our callback */
     rc = ib_hook_register(ib, request_headers_event,
@@ -389,6 +544,20 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
                           (void*)request_headers_event);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Hook register returned %d", rc);
+    }
+
+    /* Initializations */
+    rc = modua_rules_init( &failed_rule_num );
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "User agent rule initialization failed on rule #%d: %d",
+                     failed_rule_num, rc);
+    }
+
+    /* Get the rules */
+    modua_rules = modua_rules_get( );
+    if (modua_rules == NULL) {
+        ib_log_error(ib, 4, "Failed to get user agent rule list: %d", rc);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -428,7 +597,6 @@ static ib_status_t modua_context_init(ib_engine_t *ib,
                                       ib_context_t *ctx)
 {
     IB_FTRACE_INIT(modua_context_init);
-
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -461,10 +629,26 @@ IB_MODULE_INIT(
  */
 int main( int argc, const char *argv[] )
 {
-    char    buf[MAX_LINE_BUF];
-    char   *p;
-    char   *product, *platform, *extra;
-    FILE   *fp;
+    char         buf[MAX_LINE_BUF];
+    char        *p;
+    FILE        *fp;
+    ib_status_t  rc;
+    unsigned     failed_rule_num;
+
+
+    /* Rule Initializations */
+    rc = modua_rules_init( &failed_rule_num );
+    if (rc != IB_OK) {
+        fprintf(stderr,
+                "User agent rule initialization failed on rule #%d: %d",
+                failed_rule_num, rc);
+    }
+
+    /* Get the rules */
+    modua_rules = modua_rules_get( );
+    if (modua_rules == NULL) {
+        fprintf(stderr, "Failed to get user agent rule list: %d", rc);
+    }
 
     /* Parse command line. */
     if (argc != 2) {
@@ -482,6 +666,10 @@ int main( int argc, const char *argv[] )
 
     /* Read each line of the file, try to parse it as a user agent string. */
     while ( (p = fgets(buf, sizeof(buf), fp)) != NULL) {
+        char       *product;
+        char       *platform;
+        char       *extra;
+        const char *category;
 
         /* Strip off the trailing whitespace */
         int len = strlen(buf);
@@ -492,6 +680,7 @@ int main( int argc, const char *argv[] )
 
         /* Parse it */
         modua_parse_uastring(buf, &product, &platform, &extra);
+        category = modua_match_cat_rules(product, platform, extra);
 
         /* Print the results */
         if (product != NULL) {
@@ -502,6 +691,9 @@ int main( int argc, const char *argv[] )
         }
         if (extra != NULL) {
             printf( "  EXTRA    = '%s'\n", extra );
+        }
+        if (category != NULL) {
+            printf( "  CATEGORY = '%s'\n", category );
         }
     }
 
