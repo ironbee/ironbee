@@ -84,8 +84,8 @@ static ib_status_t modtrace_event_callback(ib_engine_t *ib,
  * event.
  */
 static void modtrace_handle_conn_data(ib_engine_t *ib,
-                                     ib_conndata_t *cd,
-                                     void *cbdata)
+                                      ib_conndata_t *cd,
+                                      void *cbdata)
 {
     IB_FTRACE_INIT(modtrace_handle_conn_data);
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -115,7 +115,9 @@ static void modtrace_handle_conn_data(ib_engine_t *ib,
  * @param[in] cbdata Callback data: acutally an event_info_t describing the
  * event.
  */
-static void modtrace_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
+static void modtrace_handle_tx(ib_engine_t *ib,
+                               ib_tx_t *tx,
+                               void *cbdata)
 {
     IB_FTRACE_INIT(modtrace_handle_tx);
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -136,8 +138,8 @@ static void modtrace_handle_tx(ib_engine_t *ib, ib_tx_t *tx, void *cbdata)
  * event.
  */
 static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
-                                              ib_tx_t *tx,
-                                              void *cbdata)
+                                               ib_tx_t *tx,
+                                               void *cbdata)
 {
     IB_FTRACE_INIT(modtrace_handle_tx);
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -194,8 +196,8 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
  * Called when module is loaded.
  * Registers handlers for all IronBee events.
  *
- * @param[in,out] ib IronBee object
- * @param[in,out] m Module object
+ * @param[in] ib IronBee object
+ * @param[in] m Module object
  */
 static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 {
@@ -251,8 +253,8 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
  *
  * Called when module is unloaded.
  *
- * @param[in,out] ib IronBee object
- * @param[in,out] m Module object
+ * @param[in] ib IronBee object
+ * @param[in] m Module object
  */
 static ib_status_t modtrace_finish(ib_engine_t *ib, ib_module_t *m)
 {
@@ -276,18 +278,37 @@ static ib_status_t modtrace_context_init(ib_engine_t *ib,
                                         ib_context_t *ctx)
 {
     IB_FTRACE_INIT(modtrace_context_init);
+    ib_log_debug(ib, 4, "Trace module initializing context=%p.", ctx);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Finish a context for the trace module.
+ *
+ * Called when the context is available
+ *
+ * @param[in] ib IronBee object
+ * @param[in] m Module object
+ * @param[in] ctx Context object
+ */
+static ib_status_t modtrace_context_finish(ib_engine_t *ib,
+                                           ib_module_t *m,
+                                           ib_context_t *ctx)
+{
+    IB_FTRACE_INIT(modtrace_context_finish);
+    ib_log_debug(ib, 4, "Trace module finishing context=%p.", ctx);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
     "trace",                        /* Module name */
-    NULL,                           /* Global config data */
-    0,                              /* Global config data length*/
+    IB_MODULE_CONFIG_NULL,          /* Global config data */
     NULL,                           /* Module config map */
     NULL,                           /* Module directive map */
-
     modtrace_init,                  /* Initialize function */
     modtrace_finish,                /* Finish function */
-    modtrace_context_init           /* Context init function */
+    modtrace_context_init,          /* Context init function */
+    modtrace_context_finish         /* Context finish function */
 );
