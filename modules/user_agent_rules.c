@@ -42,65 +42,55 @@ static modua_match_ruleset_t modua_rules =
 {
     0,
     {
+    {
+        "googlebot",
         {
-            "bot",
-            {
-                { PRODUCT, CONTAINS, "bot", YES },
-            },
+            { PRODUCT,  MATCHES, "Googlebot/2.1", YES },
+            { PLATFORM, MATCHES, "(+http://www.google.com/bot.html)", YES },
+            { EXTRA,    EXISTS, "", NO }
         },
+    },
+    {
+        "apple iPad",
         {
-            "Firefox 8.0",
-            {
-                { PRODUCT, STARTSWITH, "Mozilla", YES },
-                { PLATFORM, CONTAINS, "compatible", YES },
-                { EXTRA, ENDSWITH, "Firefox/8.0", YES },
-            },
+            { PRODUCT,  MATCHES,    "Mozilla/5.0",     YES },
+            { PLATFORM, STARTSWITH, "(iPad; U; CPU OS", YES },
+            { EXTRA,    STARTSWITH, "AppleWebKit",     YES },
         },
+    },
+    {
+        "curl",
         {
-            "Pure Mozilla",
-            {
-                { PRODUCT, STARTSWITH, "Mozilla", YES },
-                { PLATFORM, CONTAINS, "compatible", NO },
-                { EXTRA, EXISTS, "", NO },
-            },
+            { PRODUCT, STARTSWITH, "curl", YES },
+            { EXTRA, STARTSWITH, "libcurl", YES },
         },
+    },
+    {
+        "IE9",
         {
-            "Mozilla",
-            {
-                { PRODUCT, STARTSWITH, "Mozilla", YES },
-                { PLATFORM, CONTAINS, "compatible", NO },
-            },
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
+            { PLATFORM, STARTSWITH,
+              "(compatible; MSIE 9.0; Windows NT 6.1;", YES },
+            { EXTRA, EXISTS, "", NO },
         },
+    },
+    {
+        "Win8 IE10",
         {
-            "browser",
-            {
-                { PRODUCT, STARTSWITH, "Mozilla", YES },
-            },
-        },
-        {
-            "PDA",
-            {
-                { PRODUCT, STARTSWITH, "BlackBerry", YES },
-            },
-        },
-        {
-            "curl",
-            {
-                { PRODUCT, CONTAINS, "curl", YES },
-            },
-        },
-        {
-            "curl",
-            {
-                { PRODUCT, STARTSWITH, "Wget", YES },
-            },
-        },
-        {
-            NULL,
-            {
-                { INVALID, EXISTS, "", NO },
-            },
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
+            { PLATFORM, STARTSWITH,
+              "(compatible; MSIE 10.0; Windows NT 6.2;", YES },
+            { EXTRA, EXISTS, "", NO },
         }
+    },
+    {
+        "unknown",
+        {
+            { PRODUCT, STARTSWITH, "Mozilla", YES },
+            { PLATFORM, STARTSWITH, "(Linux; Unix OS 2; en-Us; rv:2.1.3", YES },
+            { EXTRA, STARTSWITH, "Gecko", YES },
+        },
+    }
     }
 };
 

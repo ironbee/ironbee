@@ -57,6 +57,8 @@ typedef struct {
     const char *remoteip;
     int remoteport;
     const char *user_agent;
+    int geoip;
+    int effective_ip;
 #if DEBUG_ARGS_ENABLE
     const char *debuguri;
     int debuglevel;
@@ -64,9 +66,9 @@ typedef struct {
 } runtime_settings_t;
 
 static runtime_settings_t settings =
-{NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424,NULL,
+{NULL,NULL,NULL,"192.168.1.1",8080,"10.10.10.10",23424,NULL,0,
 #if DEBUG_ARGS_ENABLE
-,NULL,-1
+NULL,-1
 #endif
 };
 
@@ -115,11 +117,13 @@ static void help(void)
     print_option("remote-ip", "x.x.x.x", "Specify remote IP address", 0 );
     print_option("remote-port", "num", "Specify remote port", 0 );
     print_option("user-agent", "string", "Specify user agent string", 0 );
+    print_option("geoip", NULL, "Enable GeoIP printing", 0 );
+    print_option("effective-ip", NULL, "Print effective remote IP", 0 );
 #if DEBUG_ARGS_ENABLE
     print_option("debug-level", "path", "Specify debug log level", 0 );
     print_option("debug-log", "path", "Specify debug log file / URI", 0 );
 #endif
-    print_option("help", "NULL", "Print this help", 0 );
+    print_option("help", NULL, "Print this help", 0 );
     exit(0);
 }
 
@@ -162,15 +166,80 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
 
 /**
  * @internal
- * Handle request_header events.
+ * Print a field.
  *
- * Extract the "request_headers" field (a list) from the transactions's
- * data provider instance, then loop through the list, looking for the
- * "User-Agent"  field.  If found, the value is parsed and used to update the
- * connection object fields.
+ * Prints a field name and value, handles various field types.
+ *
+ * @param[in] label Label string
+ * @param[in] field Field to print
+ *
+ * @returns void
+ */
+static void print_field(const char *label,
+                        ib_field_t *field)
+{
+    ib_bytestr_t *bs = NULL;
+
+    /* Check the field name
+     * Note: field->name is not always a null ('\0') terminated string */
+    switch (field->type) {
+        case IB_FTYPE_NUM :          /**< Numeric value */
+            printf( "  %s %.*s = %jd\n",
+                    label, (int)field->nlen, field->name,
+                    (intmax_t)ib_field_value_num(field) );
+            break;
+        case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
+            printf( "  %s %.*s = %ju\n",
+                    label, (int)field->nlen, field->name,
+                    (uintmax_t)ib_field_value_unum(field) );
+            break;
+        case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
+            printf( "  %s %.*s = '%s'\n",
+                    label, (int)field->nlen, field->name,
+                    ib_field_value_nulstr(field) );
+            break;
+        case IB_FTYPE_BYTESTR :      /**< Binary data value */
+            bs = ib_field_value_bytestr(field);
+            printf( "  %s %.*s = '%.*s'\n",
+                    label, (int)field->nlen, field->name,
+                    (int)ib_bytestr_length(bs), ib_bytestr_ptr(bs) );
+            break;
+    }
+}
+
+/**
+ * @internal
+ * Print effective IP address.
+ *
+ * Extract the effective IP address from the transaction structure.
  *
  * @param[in] ib IronBee object
- * @param[in,out] tx Transaction object
+ * @param[in] tx Transaction object
+ * @param[in] data Callback data (not used)
+ *
+ * @returns Status code
+ */
+static ib_status_t print_effective_ip(ib_engine_t *ib,
+                                      ib_tx_t *tx,
+                                      void *data)
+{
+    IB_FTRACE_INIT(modua_handle_req_headers);
+
+    printf( "Effective IP address: %s", tx->er_ipstr );
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Print user agent fields
+ *
+ * Extract the user agent fields from the data provider instance, and print
+ * fields.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object
  * @param[in] data Callback data (not used)
  *
  * @returns Status code
@@ -197,22 +266,66 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
     lst = ib_field_value_list(req);
     if (lst == NULL) {
         ib_log_debug(ib, 4,
-                     "request_headers_event: "
+                     "print_user_agent: "
                      "Field list missing / incorrect type" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     fputs(settings.user_agent, stdout);
 
-    /* Loop through the list; we're looking for User-Agent */
+    /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
+        print_field("User Agent", field);
+    }
 
-        /* Check the field name
-         * Note: field->name is not always a null ('\0') terminated string */
-        fprintf(stdout,
-                "  User Agent %.*s = '%s'\n",
-                (int)field->nlen, field->name, ib_field_value_nulstr(field) );
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Print GeoIP fields
+ *
+ * Extract the GeoIP fields from the data provider instance, and print
+ * fields.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object
+ * @param[in] data Callback data (not used)
+ *
+ * @returns Status code
+ */
+static ib_status_t print_geoip(ib_engine_t *ib,
+                               ib_tx_t *tx,
+                               void *data)
+{
+    IB_FTRACE_INIT(modua_handle_req_headers);
+    ib_field_t *req = NULL;
+    ib_status_t rc = IB_OK;
+    ib_list_t *lst = NULL;
+    ib_list_node_t *node = NULL;
+
+    /* Extract the request headers field from the provider instance */
+    rc = ib_data_get(tx->dpi, "GEOIP", &req);
+    if ( (req == NULL) || (rc != IB_OK) ) {
+        ib_log_debug(ib, 4, "print_geoip: No GeoIP info available" );
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* The field value *should* be a list, extract it as such */
+    lst = ib_field_value_list(req);
+    if (lst == NULL) {
+        ib_log_debug(ib, 4,
+                     "print_geoip: Field list missing / incorrect type" );
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* Loop through the list & print everything */
+    printf("GeoIP data:\n");
+    IB_LIST_LOOP(lst, node) {
+        ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
+        print_field("GeoIP", field);
     }
 
     /* Done */
@@ -232,10 +345,19 @@ static void runConnection(ib_engine_t* ib )
     const char *linep;
     size_t nbytes = 0;
 
-    /* Register the request headers event late */
+    /* Register the event handlers late so they run after the relevant
+     * module's event handler */
     if (settings.user_agent != NULL) {
         ib_hook_register(ib, request_headers_event,
                          (ib_void_fn_t)print_user_agent, NULL);
+    }
+    if (settings.geoip != 0) {
+        ib_hook_register(ib, handle_context_tx_event,
+                         (ib_void_fn_t)print_geoip, NULL);
+    }
+    if (settings.effective_ip != 0) {
+        ib_hook_register(ib, handle_context_tx_event,
+                         (ib_void_fn_t)print_effective_ip, NULL);
     }
 
     if (! strcmp("-", settings.requestfile)) {
@@ -330,6 +452,8 @@ main(int argc, char* argv[])
 	    { "remote-ip", required_argument, 0, 0 },
 	    { "remote-port", required_argument, 0, 0 },
 	    { "user-agent", required_argument, 0, 0 },
+	    { "geoip", no_argument, 0, 0 },
+	    { "effective-ip", no_argument, 0, 0 },
 #if DEBUG_ARGS_ENABLE
 	    { "debug-level", required_argument, 0, 0 },
 	    { "debug-log", required_argument, 0, 0 },
@@ -350,6 +474,7 @@ main(int argc, char* argv[])
                 break;
             }
         }
+
         if (! strcmp("config", longopts[option_index].name)) {
             settings.configfile = optarg;
         }
@@ -358,6 +483,12 @@ main(int argc, char* argv[])
         }
         else if (! strcmp("responsefile", longopts[option_index].name)) {
             settings.responsefile = optarg;
+        }
+        else if (! strcmp("geoip", longopts[option_index].name)) {
+            settings.geoip = 1;
+        }
+        else if (! strcmp("effective-ip", longopts[option_index].name)) {
+            settings.effective_ip = 1;
         }
         else if (! strcmp("user-agent", longopts[option_index].name)) {
             static char buf[MAX_LINE_BUF];

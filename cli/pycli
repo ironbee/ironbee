@@ -1,0 +1,145 @@
+#! /usr/bin/env python
+import sys
+import os
+import re
+import socket
+from subprocess import *
+from optparse import OptionParser
+
+class Main( object ) :
+    def __init__( self ) :
+        self._parser = OptionParser(
+            usage="usage: %prog <config> <req> <resp> [options]",
+            version="%prog 0.1" )
+
+    def Setup( self ) :
+
+        self._parser.set_defaults( agent_file = None )
+        self._parser.add_option( "-a", "--agent-file",
+                                 action="store", dest="agent_file",
+                                 help="Specify file of user agent strings" )
+        self._parser.set_defaults( rip_file = None )
+        self._parser.add_option( "-r", "--remote-ip-file",
+                                 action="store", dest="rip_file",
+                                 help="Specify remote IP address file" )
+
+        self._parser.set_defaults( cli_options = [] )
+        self._parser.add_option( "-c", "--cli",
+                                 action="append", dest="cli_options",
+                                 help="Specify CLI options" )
+
+        self._parser.set_defaults( out = None )
+        self._parser.add_option( "-o", "--output",
+                                 action="store", dest="out",
+                                 help="Specify output file" )
+
+        self._parser.set_defaults( execute = True )
+        self._parser.add_option( "--execute",
+                                 action="store_true", dest="execute",
+                                 help="Enable execution <default>" )
+        self._parser.add_option( "-n", "--no-execute",
+                                 action="store_false", dest="execute",
+                                 help="Disable execution (for test/debug)" )
+        self._parser.set_defaults( verbose = 0 )
+        self._parser.add_option( "-v", "--verbose",
+                                 action="count", dest="verbose",
+                                 help="Increment verbosity level" )
+        self._parser.set_defaults( quiet=False )
+        self._parser.add_option( "-q", "--quiet",
+                                 action="store_true", dest="quiet",
+                                 help="be vewwy quiet (I'm hunting wabbits)" )
+
+    def Parse( self ) :
+        (self._opt, self._args) = self._parser.parse_args()
+        if len(self._args) != 3 :
+            self._parser.error( "Missing args" )
+        if ( self._opt.agent_file is not None and
+             self._opt.rip_file is not None ) :
+            self._parser.error(
+                "Both user agent file and remote address file specified")
+        self._config = self._args[0]
+        self._req = self._args[1]
+        self._resp = self._args[2]
+        
+    def Main( self ) :
+        self.Setup( )
+        self.Parse( )
+        self.InitCommand( )
+        self.MainLoop( )
+
+    def InitCommand( self ) :
+        cli = os.path.join( os.path.dirname(sys.argv[0]), "ibcli" )
+        self._cmd = [ cli,
+                      "--config", self._config,
+                      "--requestfile", self._req,
+                      "--responsefile", self._resp,
+                      ]
+        self._cmd += self._opt.cli_options
+
+
+    def MainLoop( self ) :
+        if self._opt.out is not None :
+            self._ofile = open( self._opt.out, "w" )
+        else :
+            self._ofile = sys.stdout
+        if self._opt.agent_file is not None :
+            self.RunLoop( self._opt.agent_file, "--user-agent",
+                          lambda s:s.strip() )
+        elif self._opt.rip_file is not None :
+            self.RunLoop( self._opt.rip_file, "--remote-ip",
+                          self.HostLookup )
+        else :
+            self.Run( )
+
+    def RunLoop( self, path, arg, fn ) :
+        try :
+            fh = open( path, "r" )
+            for line in fh :
+                args = [ arg ]
+                value = fn(line)
+                if value is None :
+                    continue
+                if type(value) == list or type(value) == tuple:
+                    args += value
+                else :
+                    args.append(value)
+                self.Run( args )
+        except IOError as e :
+            print >>sys.stderr, e
+            sys.exit(1)
+
+    def HostLookup( self, host ) :
+        host = host.strip()
+        if re.match( r'\d+\.', host ) :
+            return [host]
+        try :
+            return socket.gethostbyname(host)
+        except Exception as e:
+            print >>sys.stderr, "Failed to lookup host", host, e
+            return None
+
+    def Run( self, args=None ) :
+        cmd = [ ]
+        cmd += self._cmd
+        if args is not None :
+            cmd += args
+        if not self._opt.execute :
+            print "Not executing:", cmd
+            return
+        if not self._opt.quiet :
+            print "Executing:", cmd
+        p = Popen( cmd, stdout=PIPE )
+        for i in p.stdout :
+            print >>self._ofile, i.rstrip( )
+        p.wait( )
+
+
+main = Main( )
+main.Main( )
+
+### Local Variables: ***
+### py-indent-offset:4 ***
+### python-indent:4 ***
+### python-continuation-offset:4 ***
+### tab-width:4  ***
+### End: ***

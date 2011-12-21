@@ -28,8 +28,9 @@
 #include <ironbee/types.h>
 
 
-/* Category rule: If all of the non-NULL expressions match, set the
- * transactions's user agent category to the rule's category
+/* Category rules
+ * If all of the expressions in the 'match rule' match, set the
+ * transactions's user agent category to the rule's category.
  */
 #define MODUA_MAX_RULES	        32
 #define MODUA_MAX_FIELD_RULES	8
@@ -89,7 +90,7 @@ typedef struct modua_match_ruleset_s {
  *
  * @returns status
  */
-ib_status_t modua_rules_init( unsigned *failed );
+ib_status_t modua_rules_init(unsigned *failed);
 
 /**
  * @internal
@@ -102,6 +103,6 @@ ib_status_t modua_rules_init( unsigned *failed );
  *
  * @returns Pointer to the rule array
  */
-const modua_match_ruleset_t *modua_rules_get( void );
+const modua_match_ruleset_t *modua_rules_get(void);
 
 #endif /* _IB_MODULE_USER_AGENT_PRIVATE_H_ */
