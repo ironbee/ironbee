@@ -102,6 +102,11 @@ case "$OS" in
                 AC_MSG_RESULT(no)
         ;;
 esac
+#We need to call the iconv macro after OS detection for FreeBSD to work properly
+sinclude(m4/iconv.m4)
+sinclude(m4/lib-ld.m4)
+sinclude(m4/lib-link.m4)
+sinclude(m4/lib-prefix.m4)
 AM_ICONV
 
 dnl -----------------------------------------------
