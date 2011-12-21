@@ -80,7 +80,9 @@ ibmod_trace_la_SOURCES = trace.c
 ibmod_trace_la_CFLAGS = ${AM_CFLAGS}
 ibmod_trace_la_LDFLAGS = $(AM_LDFLAGS)
 
-ibmod_user_agent_la_SOURCES = user_agent.c user_agent_rules.c
+ibmod_user_agent_la_SOURCES = user_agent.c \
+                              user_agent_rules.c \
+                              user_agent_private.h 
 ibmod_user_agent_la_CFLAGS = ${AM_CFLAGS}
 ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS)
 
@@ -99,5 +101,7 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	done
 
 
-user_agent_SOURCES = user_agent.c user_agent_rules.c
+user_agent_SOURCES = user_agent.c \
+                     user_agent_rules.c \
+                     user_agent_private.h
 user_agent_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) -DTESTING
