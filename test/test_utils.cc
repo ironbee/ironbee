@@ -15,7 +15,7 @@
  ***************************************************************************/
 
 /**
- * @file test_utils.cc
+ * @file
  * @brief Tests for various utility functions.
  *
  * @author Craig Forbes <cforbes@qualys.com>
@@ -52,8 +52,8 @@ TEST(Base64, Single) {
 }
 
 TEST(Base64, Decode) {
-    char* input ="dGhpcyBpcyBhIHRlc3QuLg==";
-    bstr* out = htp_base64_decode_mem(input, strlen(input));
+    char *input ="dGhpcyBpcyBhIHRlc3QuLg==";
+    bstr *out = htp_base64_decode_mem(input, strlen(input));
     EXPECT_EQ(0, bstr_cmp_c(out, "this is a test.."));
     bstr_free(&out);
 }
@@ -125,7 +125,7 @@ TEST(UtilTest, Space) {
 }
 
 TEST(UtilTest, Method) {
-    bstr* method = bstr_dup_c("GET");
+    bstr *method = bstr_dup_c("GET");
 
     EXPECT_EQ(M_GET, htp_convert_method_to_number(method));
 
@@ -181,7 +181,7 @@ TEST(UtilTest, ParsePositiveIntegerWhitespace) {
 }
 
 TEST(UtilTest, ParseContentLength) {
-    bstr* str = bstr_dup_c("134");
+    bstr *str = bstr_dup_c("134");
 
     EXPECT_EQ(134, htp_parse_content_length(str));
 

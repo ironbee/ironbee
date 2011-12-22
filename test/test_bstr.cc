@@ -15,7 +15,7 @@
  ***************************************************************************/
 
 /**
- * @file test_bstr.cc
+ * @file
  * @brief Test for the bstr code.
  *
  * @author Craig Forbes <cforbes@qualys.com>
@@ -29,7 +29,7 @@
 #include<htp/bstr_builder.h>
 
 TEST(BstrTest, Alloc) {
-    bstr* p1;
+    bstr *p1;
     p1 = bstr_alloc(10);
     EXPECT_EQ(10, bstr_size(p1));
     EXPECT_EQ(0, bstr_len(p1));
@@ -38,11 +38,12 @@ TEST(BstrTest, Alloc) {
 }
 
 TEST(BstrTest, ExpandLocal) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
 
     p1 = bstr_alloc(10);
     p2 = bstr_expand(p1, 100);
+    ASSERT_NE(reinterpret_cast<bstr*>(NULL), p2);
     EXPECT_EQ(100, bstr_size(p2));
     EXPECT_EQ(0, bstr_len(p2));
 
@@ -50,7 +51,7 @@ TEST(BstrTest, ExpandLocal) {
 }
 
 TEST(BstrTest, ExpandPtr) {
-    bstr* b;
+    bstr *b;
     b = (bstr*) malloc(sizeof(bstr));
     ASSERT_NE((bstr*)NULL, b);
     b->ptr = (char*) malloc(10);
@@ -58,7 +59,7 @@ TEST(BstrTest, ExpandPtr) {
     b->size = 10;
     ASSERT_NE((char*)NULL, bstr_ptr(b));
 
-    bstr* p2;
+    bstr *p2;
     p2 = bstr_expand(b, 100);
     EXPECT_EQ(100, bstr_size(p2));
     EXPECT_EQ(0, bstr_len(p2));
@@ -68,7 +69,7 @@ TEST(BstrTest, ExpandPtr) {
 }
 
 TEST(BstrTest, DupC) {
-    bstr* p1;
+    bstr *p1;
     p1 = bstr_dup_c("arfarf");
 
     EXPECT_EQ(6, bstr_size(p1));
@@ -79,8 +80,8 @@ TEST(BstrTest, DupC) {
 }
 
 TEST(BstrTest, DupStr) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_dup_c("s0123456789abcdefghijklmnopqrstuvwxyz");
     p2 = bstr_dup(p1);
 
@@ -92,8 +93,8 @@ TEST(BstrTest, DupStr) {
 }
 
 TEST(BstrTest, DupBin) {
-    bstr* src = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
-    bstr* dst;
+    bstr *src = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
+    bstr *dst;
     dst = bstr_dup(src);
 
     EXPECT_EQ(bstr_len(src), bstr_len(dst));
@@ -104,8 +105,8 @@ TEST(BstrTest, DupBin) {
 }
 
 TEST(BstrTest, DupEx) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_dup_c("0123456789abcdefghijkl");
     p2 = bstr_dup_ex(p1, 4, 10);
 
@@ -118,7 +119,7 @@ TEST(BstrTest, DupEx) {
 }
 
 TEST(BstrTest, DupMem) {
-    bstr* dst;
+    bstr *dst;
     dst = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 18);
     EXPECT_EQ(0, memcmp("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", bstr_ptr(dst), 18));
 
@@ -126,8 +127,8 @@ TEST(BstrTest, DupMem) {
 }
 
 TEST(BstrTest, DupLower) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_dup_c("0123456789ABCDEFGhIJKL");
     p2 = bstr_dup_lower(p1);
 
@@ -137,9 +138,8 @@ TEST(BstrTest, DupLower) {
     bstr_free(&p2);
 }
 
-
 TEST(BstrTest, ChrRchr) {
-    bstr* p1 = bstr_dup_c("0123456789abcdefghijklmnopqrstuvwxyz");
+    bstr *p1 = bstr_dup_c("0123456789abcdefghijklmnopqrstuvwxyz");
     EXPECT_EQ(13, bstr_chr(p1, 'd'));
     EXPECT_EQ(-1, bstr_chr(p1, '?'));
     EXPECT_EQ(13, bstr_chr(p1, 'd'));
@@ -149,10 +149,10 @@ TEST(BstrTest, ChrRchr) {
 }
 
 TEST(BstrTest, Cmp) {
-    bstr* p1;
-    bstr* p2;
-    bstr* p3;
-    bstr* p4;
+    bstr *p1;
+    bstr *p2;
+    bstr *p3;
+    bstr *p4;
     p1 = bstr_dup_c("arfarf");
     p2 = bstr_dup_c("arfarf");
     p3 = bstr_dup_c("arfArf");
@@ -166,7 +166,6 @@ TEST(BstrTest, Cmp) {
     EXPECT_EQ(-1, bstr_cmp(p1,p4));
     EXPECT_EQ(1, bstr_cmp(p4,p1));
 
-
     bstr_free(&p1);
     bstr_free(&p2);
     bstr_free(&p3);
@@ -174,9 +173,9 @@ TEST(BstrTest, Cmp) {
 }
 
 TEST(BstrTest, CmpNocase) {
-    bstr* p1;
-    bstr* p2;
-    bstr* p3;
+    bstr *p1;
+    bstr *p2;
+    bstr *p3;
     p1 = bstr_dup_c("arfarf");
     p2 = bstr_dup_c("arfarf");
     p3 = bstr_dup_c("arfArf");
@@ -193,7 +192,7 @@ TEST(BstrTest, CmpNocase) {
 }
 
 TEST(BstrTest, CmpC) {
-    bstr* p1;
+    bstr *p1;
     p1 = bstr_dup_c("arfarf");
     EXPECT_EQ(0, bstr_cmp_c(p1, "arfarf"));
     EXPECT_EQ(-1, bstr_cmp_c(p1, "arfarf2"));
@@ -204,7 +203,7 @@ TEST(BstrTest, CmpC) {
 }
 
 TEST(BstrTest, CmpCNocase) {
-    bstr* p1;
+    bstr *p1;
     p1 = bstr_dup_c("arfarf");
     EXPECT_EQ(0, bstr_cmp_c_nocase(p1, "arfarf"));
     EXPECT_EQ(0, bstr_cmp_c_nocase(p1, "arfARF"));
@@ -215,8 +214,8 @@ TEST(BstrTest, CmpCNocase) {
 }
 
 TEST(BstrTest, CmpEx) {
-    const char* s1 = "arfarf12345";
-    const char* s2 = "arfarF2345";
+    const char *s1 = "arfarf12345";
+    const char *s2 = "arfarF2345";
 
     EXPECT_EQ(0, bstr_cmp_ex(s1, 5, s2, 5));
     EXPECT_EQ(1, bstr_cmp_ex(s1, 6, s2, 6));
@@ -225,8 +224,8 @@ TEST(BstrTest, CmpEx) {
 }
 
 TEST(BstrTest, CmpNocaseEx) {
-    const char* s1 = "arfarf12345";
-    const char* s2 = "arfarF2345";
+    const char *s1 = "arfarf12345";
+    const char *s2 = "arfarF2345";
 
     EXPECT_EQ(0, bstr_cmp_nocase_ex(s1, 6, s2, 6));
     EXPECT_EQ(1, bstr_cmp_nocase_ex(s1, 6, s2, 5));
@@ -234,8 +233,8 @@ TEST(BstrTest, CmpNocaseEx) {
 }
 
 TEST(BstrTest, ToLowercase) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_dup_c("aRf3ArF");
     p2 = bstr_to_lowercase(p1);
 
@@ -247,9 +246,9 @@ TEST(BstrTest, ToLowercase) {
 }
 
 TEST(BstrTest, Add) {
-    bstr* src1;
-    bstr* src2;
-    bstr* dest;
+    bstr *src1;
+    bstr *src2;
+    bstr *dest;
 
     src1 = bstr_dup_c("testtest");
     src2 = bstr_dup_c("0123456789abcdefghijklmnopqrstuvwxyz");
@@ -263,8 +262,8 @@ TEST(BstrTest, Add) {
 }
 
 TEST(BstrTest, AddC) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_dup_c("testtest");
     p2 = bstr_add_c(p1, "1234");
 
@@ -274,8 +273,8 @@ TEST(BstrTest, AddC) {
 }
 
 TEST(BstrTest, AddMem) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_dup_c("testtest");
     p2 = bstr_add_mem(p1, "12345678", 4);
 
@@ -285,9 +284,9 @@ TEST(BstrTest, AddMem) {
 }
 
 TEST(BstrTest, AddNoex) {
-    bstr* p1;
-    bstr* p2;
-    bstr* p3;
+    bstr *p1;
+    bstr *p2;
+    bstr *p3;
     p1 = bstr_alloc(10);
     p1 = bstr_add_c(p1, "12345");
     p2 = bstr_dup_c("abcdef");
@@ -300,8 +299,8 @@ TEST(BstrTest, AddNoex) {
 }
 
 TEST(BstrTest, AddCNoex) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_alloc(10);
     p1 = bstr_add_c(p1, "12345");
     p2 = bstr_add_c_noex(p1,"abcdefghijk");
@@ -313,8 +312,8 @@ TEST(BstrTest, AddCNoex) {
 }
 
 TEST(BstrTest, AddMemNoex) {
-    bstr* p1;
-    bstr* p2;
+    bstr *p1;
+    bstr *p2;
     p1 = bstr_alloc(10);
     p1 = bstr_add_c(p1, "12345");
     p2 = bstr_add_mem_noex(p1,"abcdefghijklmnop",6);
@@ -326,11 +325,11 @@ TEST(BstrTest, AddMemNoex) {
 }
 
 TEST(BstrTest, IndexOf) {
-    bstr* haystack = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
-    bstr* p1 = bstr_dup_c("NOPQ");
-    bstr* p2 = bstr_dup_c("siej");
-    bstr* p3 = bstr_dup_c("TUVWXYZ");
-    bstr* p4 = bstr_dup_c("nopq");
+    bstr *haystack = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
+    bstr *p1 = bstr_dup_c("NOPQ");
+    bstr *p2 = bstr_dup_c("siej");
+    bstr *p3 = bstr_dup_c("TUVWXYZ");
+    bstr *p4 = bstr_dup_c("nopq");
     EXPECT_EQ(13, bstr_index_of(haystack, p1));
     EXPECT_EQ(-1, bstr_index_of(haystack, p2));
     EXPECT_EQ(-1, bstr_index_of(haystack, p3));
@@ -354,9 +353,9 @@ TEST(BstrTest, IndexOf) {
 }
 
 TEST(BstrTest, BeginsWith) {
-    bstr* haystack = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
-    bstr* p1 = bstr_dup_c("ABCD");
-    bstr* p2 = bstr_dup_c("aBcD");
+    bstr *haystack = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
+    bstr *p1 = bstr_dup_c("ABCD");
+    bstr *p2 = bstr_dup_c("aBcD");
 
     EXPECT_EQ(1, bstr_begins_with(haystack,p1));
     EXPECT_NE(1, bstr_begins_with(haystack,p2));
@@ -376,7 +375,7 @@ TEST(BstrTest, BeginsWith) {
 }
 
 TEST(BstrTest, CharAt) {
-    bstr* str = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
+    bstr *str = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
     EXPECT_EQ('\000', bstr_char_at(str, 12));
     EXPECT_EQ((unsigned char)-1, bstr_char_at(str, 45));
 
@@ -384,8 +383,8 @@ TEST(BstrTest, CharAt) {
 }
 
 TEST(BstrTest, Chop) {
-    bstr* p1 = bstr_dup_c("abcdef");
-    bstr* p2 = bstr_alloc(10);
+    bstr *p1 = bstr_dup_c("abcdef");
+    bstr *p2 = bstr_alloc(10);
     bstr_chop(p1);
     EXPECT_EQ(0, bstr_cmp_c(p1,"abcde"));
 
@@ -397,7 +396,7 @@ TEST(BstrTest, Chop) {
 }
 
 TEST(BstrTest, AdjustLen) {
-    bstr* p1 = bstr_dup_c("abcdef");
+    bstr *p1 = bstr_dup_c("abcdef");
 
     bstr_util_adjust_len(p1, 3);
     EXPECT_EQ(3, bstr_len(p1));
@@ -426,7 +425,7 @@ TEST(BstrTest, ToPint) {
 
 TEST(BstrTest, DupToC) {
     char *c;
-    bstr* str = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
+    bstr *str = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
 
     c = bstr_util_memdup_to_c("1234\0006789", 9);
     EXPECT_STREQ("1234\\06789", c);
@@ -446,11 +445,10 @@ TEST(BstrBuilder, CreateDestroy) {
     bstr_builder_destroy(bb);
 }
 
-
 TEST(BstrBuilder, Append) {
     bstr_builder_t *bb = bstr_builder_create();
-    bstr* str1 = bstr_dup_c("0123456789");
-    bstr* str2 = bstr_dup_c("abcdefghijklmnopqrstuvwxyz");
+    bstr *str1 = bstr_dup_c("0123456789");
+    bstr *str2 = bstr_dup_c("abcdefghijklmnopqrstuvwxyz");
 
     EXPECT_EQ(0, bstr_builder_size(bb));
 
@@ -462,7 +460,7 @@ TEST(BstrBuilder, Append) {
 
     EXPECT_EQ(5, bstr_builder_size(bb));
 
-    bstr* result = bstr_builder_to_str(bb);
+    bstr *result = bstr_builder_to_str(bb);
     EXPECT_EQ(42, bstr_len(result));
 
     EXPECT_EQ(0, memcmp("0123456789#abcdefghijklmnopqrstuvwxyz#!@#$",
