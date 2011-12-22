@@ -10,6 +10,9 @@ if FREEBSD
   LDFLAGS+=-fstack-protector
 endif 
 
+# Point the module base path to the modules build dir
+CPPFLAGS+=-DMODULE_BASE_PATH=$(top_builddir)/modules/.libs
+
 check_PROGRAMS = test_gtest \
                  test_util_array \
                  test_util_hash \
@@ -19,7 +22,9 @@ check_PROGRAMS = test_gtest \
                  test_util_uuid \
                  test_util_logformat \
                  test_util_ahocorasick \
-                 test_engine
+                 test_engine \
+                 test_module_trace \
+                 test_module_poc_sig
 
 # TODO: Get libhtp working w/C++
 #                 test_util_bytestr
@@ -124,6 +129,34 @@ else
 test_engine_LDADD = gtest/libgtest.la \
                     $(top_builddir)/util/libibutil.la \
                     -lhtp
+endif
+
+test_module_trace_SOURCES = test_module_trace.cc test_main.cc
+if FREEBSD
+test_module_trace_LDADD = gtest/libgtest.la \
+                          $(top_builddir)/engine/libironbee.la \
+                          $(top_builddir)/util/libibutil.la \
+                          -lhtp \
+                          -liconv
+else
+test_module_trace_LDADD = gtest/libgtest.la \
+                          $(top_builddir)/engine/libironbee.la \
+                          $(top_builddir)/util/libibutil.la \
+                          -lhtp
+endif
+
+test_module_poc_sig_SOURCES = test_module_poc_sig.cc test_main.cc
+if FREEBSD
+test_module_poc_sig_LDADD = gtest/libgtest.la \
+                            $(top_builddir)/engine/libironbee.la \
+                            $(top_builddir)/util/libibutil.la \
+                            -lhtp \
+                            -liconv
+else
+test_module_poc_sig_LDADD = gtest/libgtest.la \
+                            $(top_builddir)/engine/libironbee.la \
+                            $(top_builddir)/util/libibutil.la \
+                            -lhtp
 endif
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml

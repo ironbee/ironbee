@@ -214,7 +214,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 
         /* Record event info */
         eventp->number = event;
-        eventp->name   = ib_state_event_name(event);
+        eventp->name   = ib_state_event_name((ib_state_event_type_t)event);
 
         /* For these specific ones, use more spefic handlers */
         switch( event ) {
@@ -237,7 +237,8 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
             default:
                 handler = (ib_void_fn_t)modtrace_event_callback;
         }
-        rc = ib_hook_register(ib, event, handler, (void*)eventp);
+        rc = ib_hook_register(ib, (ib_state_event_type_t)event,
+                              handler, (void*)eventp);
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Hook register for %d/%s returned %d",
                          rc, eventp->number, eventp->name);
