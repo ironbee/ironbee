@@ -29,7 +29,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef TESTING
+
+/* Include files required to build this as a stand-alone program */
+#ifdef USER_AGENT_MAIN
 #  include <stdlib.h>
 #  include <stddef.h>
 #  include <errno.h>
@@ -45,25 +47,18 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/mpool.h>
 
-#ifdef TESTING
+/* Max line buffer for the stand alone program */
+#ifdef USER_AGENT_MAIN
 #  define MAX_LINE_BUF (16*1024)
-
-#else
-  /* Define the module name as well as a string version of it. */
-#  define MODULE_NAME        remote_ip
-#  define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
-
-  /* Declare the public module symbol. */
-  IB_MODULE_DECLARE();
 #endif
 
-/* Module data */
-#if 0
-typedef struct {
-    modua_match_rule_t *rules;       /* List of rules */
-} modua_data_t;
+#ifndef USER_AGENT_MAIN
+/* Define the module name as well as a string version of it. */
+#define MODULE_NAME        remote_ip
+#define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
-static modua_data_t modua_data = { modua_rules };
+/* Declare the public module symbol. */
+IB_MODULE_DECLARE();
 #endif
 
 static const modua_match_ruleset_t *modua_rules = NULL;
@@ -78,7 +73,7 @@ static const modua_match_ruleset_t *modua_rules = NULL;
  *
  * @returns Pointer to first non-space character in the string.
  */
-static char *skip_space( char *str )
+static char *skip_space(char *str)
 {
     while (*str == ' ') {
         ++str;
@@ -100,10 +95,10 @@ static char *skip_space( char *str )
  *
  * @returns Status code
  */
-static ib_status_t modua_parse_uastring( char *str,
-                                         char **p_product,
-                                         char **p_platform,
-                                         char **p_extra )
+static ib_status_t modua_parse_uastring(char *str,
+                                        char **p_product,
+                                        char **p_platform,
+                                        char **p_extra)
 {
     IB_FTRACE_INIT(modua_parse_uastring);
     char *lp = NULL;            /* lp: Left parent */
@@ -185,8 +180,14 @@ static ib_status_t modua_parse_uastring( char *str,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-#define RESULT_EQ(v,c)  ( ((v) == (c)) ? YES : NO )
-#define RESULT_NEQ(v,c) ( ((v) != (c)) ? YES : NO )
+/* Macros used to return the correct value based on a value and an 
+ * match value.
+ * av: Actual value
+ * mv: Match value
+ */
+#define RESULT_EQ(av,mv)  ( ((av) == (mv)) ? YES : NO )
+#define RESULT_NEQ(av,mv) ( ((av) != (mv)) ? YES : NO )
+
 /**
  * @internal
  * Match a field against the specified match rule.
@@ -209,7 +210,7 @@ static modua_matchresult_t modua_frule_match(const char *str,
         return NO;
     }
 
-    /* Match based on the match type */
+    /* Match using the rule's match type */
     switch (rule->match_type) {
         case EXISTS:         /* Note: NULL/NO handled above */
             return YES;
@@ -228,6 +229,10 @@ static modua_matchresult_t modua_frule_match(const char *str,
             offset = (slen - rule->slen);
             IB_FTRACE_RET_INT(RESULT_EQ(strcmp(str+offset, rule->string), 0));
         }
+        default :
+            fprintf(stderr,
+                    "modua_frule_match: invalid match type %d",
+                    rule->match_type);
     }
 
     /* Should never get here! */
@@ -254,7 +259,8 @@ static const char *modua_mrule_match(const char *fields[],
     IB_FTRACE_INIT(modua_mrule_match);
     const modua_field_rule_t *fr;
     unsigned ruleno;
-        
+
+    /* Walk through the rules; if any fail, return NULL */
     for (ruleno = 0, fr = rule->rules;
          ruleno < rule->num_rules;
          ++ruleno, ++fr) {
@@ -269,8 +275,8 @@ static const char *modua_mrule_match(const char *fields[],
         }
     }
 
-    /* If we've applied all rules, and have had not negative results,
-       it matches */
+    /* If we've applied all rules, and all have passed, return the category
+     * string name */
     IB_FTRACE_RET_CONSTSTR( rule->category );
 }
 
@@ -297,6 +303,7 @@ static const char *modua_match_cat_rules(const char *product,
     const modua_match_rule_t *rule;
     unsigned ruleno;
 
+    /* Walk through the rules; the first to match "wins" */
     for (ruleno = 0, rule = modua_rules->rules;
          ruleno < modua_rules->num_rules;
          ++ruleno, ++rule ) {
@@ -315,7 +322,7 @@ static const char *modua_match_cat_rules(const char *product,
     IB_FTRACE_RET_CONSTSTR( (const char *)NULL );
 }
 
-#ifndef TESTING
+#ifndef USER_AGENT_MAIN
 /**
  * @internal
  * Parse the user agent header, splitting into component fields.
@@ -627,7 +634,7 @@ IB_MODULE_INIT(
  *
  * @returns Status code
  */
-int main( int argc, const char *argv[] )
+int main(int argc, const char *argv[])
 {
     char         buf[MAX_LINE_BUF];
     char        *p;
@@ -672,10 +679,12 @@ int main( int argc, const char *argv[] )
         const char *category;
 
         /* Strip off the trailing whitespace */
-        int len = strlen(buf);
-        while( isspace(buf[len-1]) ) {
-            buf[--len] = '\0';
+        char       *end = buf+strlen(buf)-1;
+        while( (end > buf) && (isspace(*end) != 0) ) {
+            --end;
         }
+        *end = '\0';
+        
         printf( "%s:\n", buf );
 
         /* Parse it */

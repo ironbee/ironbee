@@ -47,7 +47,8 @@ static modua_match_ruleset_t modua_rules =
         {
             { PRODUCT,  MATCHES, "Googlebot/2.1", YES },
             { PLATFORM, MATCHES, "(+http://www.google.com/bot.html)", YES },
-            { EXTRA,    EXISTS, "", NO }
+            { EXTRA,    EXISTS, NULL, NO },
+            { NONE,     TERMINATE, NULL, NO },
         },
     },
     {
@@ -56,39 +57,44 @@ static modua_match_ruleset_t modua_rules =
             { PRODUCT,  MATCHES,    "Mozilla/5.0",     YES },
             { PLATFORM, STARTSWITH, "(iPad; U; CPU OS", YES },
             { EXTRA,    STARTSWITH, "AppleWebKit",     YES },
+            { NONE,     TERMINATE, NULL, NO },
         },
     },
     {
         "curl",
         {
             { PRODUCT, STARTSWITH, "curl", YES },
-            { EXTRA, STARTSWITH, "libcurl", YES },
+            { EXTRA,   STARTSWITH, "libcurl", YES },
+            { NONE,    TERMINATE, NULL, NO },
         },
     },
     {
         "IE9",
         {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
+            { PRODUCT,  MATCHES, "Mozilla/5.0", YES },
             { PLATFORM, STARTSWITH,
               "(compatible; MSIE 9.0; Windows NT 6.1;", YES },
-            { EXTRA, EXISTS, "", NO },
+            { EXTRA,    EXISTS, NULL, NO },
+            { NONE,     TERMINATE, NULL, NO },
         },
     },
     {
         "Win8 IE10",
         {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
+            { PRODUCT,  MATCHES, "Mozilla/5.0", YES },
             { PLATFORM, STARTSWITH,
               "(compatible; MSIE 10.0; Windows NT 6.2;", YES },
-            { EXTRA, EXISTS, "", NO },
+            { EXTRA,    EXISTS, NULL, NO },
+            { NONE,     TERMINATE, NULL, NO },
         }
     },
     {
         "unknown",
         {
-            { PRODUCT, STARTSWITH, "Mozilla", YES },
+            { PRODUCT,  STARTSWITH, "Mozilla", YES },
             { PLATFORM, STARTSWITH, "(Linux; Unix OS 2; en-Us; rv:2.1.3", YES },
-            { EXTRA, STARTSWITH, "Gecko", YES },
+            { EXTRA,    STARTSWITH, "Gecko", YES },
+            { NONE,     TERMINATE, NULL, NO },
         },
     }
     }
@@ -96,7 +102,7 @@ static modua_match_ruleset_t modua_rules =
 
 /**
  * @internal
- * Initialize the specified rule.
+ * Initialize the specified match rule.
  *
  * Initialize a field match rule by storing of the length of it's string.
  *
@@ -121,20 +127,27 @@ ib_status_t modua_rules_init(unsigned *failed)
     ib_status_t          rc;
     modua_field_rule_t  *field_rule;
 
+    /* For each of the rules, */
     for (rule = modua_rules.rules; rule->category != NULL; rule++) {
         unsigned ruleno;
         for (ruleno = 0, field_rule = rule->rules;
-             field_rule->string != NULL;
+             field_rule->match_type != TERMINATE;
              ++ruleno, ++field_rule) {
+
+            /* Initialize the field rules for the match rule */
             rc = modua_field_rule_init(field_rule);
             if (rc != IB_OK) {
                 *failed = ruleno;
                 IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
             }
-            ++rule->num_rules;
+            if (++rule->num_rules > MODUA_MAX_FIELD_RULES) {
+                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            }
         }
         ++modua_rules.num_rules;
     }
+
+    /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

@@ -32,12 +32,12 @@
  * If all of the expressions in the 'match rule' match, set the
  * transactions's user agent category to the rule's category.
  */
-#define MODUA_MAX_RULES	        32
-#define MODUA_MAX_FIELD_RULES	8
+#define MODUA_MAX_MATCH_RULES   32  /* Max # of match rules */
+#define MODUA_MAX_FIELD_RULES    8  /* Max # of field rules / match rule */
 
 /* Match against what field? */
 typedef enum {
-    INVALID  = -1,         /**< Invalid match */
+    NONE  = -1,            /**< Invalid match, used to terminate rule list */
     PRODUCT  = 0,          /**< Match against product field */
     PLATFORM = 1,          /**< Match against platform field */
     EXTRA    = 2,          /**< Match against extra field */
@@ -45,6 +45,7 @@ typedef enum {
 
 /* Type of match */
 typedef enum {
+    TERMINATE = -1,        /**< Invalid field */
     EXISTS,                /**< Field exists in user agent */
     MATCHES,               /**< Field exactly matches string */
     STARTSWITH,            /**< Field starts with string */
@@ -76,8 +77,8 @@ typedef struct modua_match_rule_s {
 
 /* Match category rule set */
 typedef struct modua_match_ruleset_s {
-    unsigned           num_rules;     /**< Number of actual rules */
-    modua_match_rule_t rules[MODUA_MAX_RULES]; /**< Category match rules */
+    unsigned           num_rules;     /**< Actual number of match rules */
+    modua_match_rule_t rules[MODUA_MAX_MATCH_RULES]; /**< The match rules */
 } modua_match_ruleset_t;
 
 /**

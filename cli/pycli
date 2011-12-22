@@ -12,8 +12,8 @@ class Main( object ) :
             usage="usage: %prog <config> <req> <resp> [options]",
             version="%prog 0.1" )
 
-    def Setup( self ) :
-
+    def InitParser( self ) :
+        """ Initialize the command line parser. """
         self._parser.set_defaults( agent_file = None )
         self._parser.add_option( "-a", "--agent-file",
                                  action="store", dest="agent_file",
@@ -50,6 +50,7 @@ class Main( object ) :
                                  help="be vewwy quiet (I'm hunting wabbits)" )
 
     def Parse( self ) :
+        """ Parse the command line. """
         (self._opt, self._args) = self._parser.parse_args()
         if len(self._args) != 3 :
             self._parser.error( "Missing args" )
@@ -60,14 +61,9 @@ class Main( object ) :
         self._config = self._args[0]
         self._req = self._args[1]
         self._resp = self._args[2]
-        
-    def Main( self ) :
-        self.Setup( )
-        self.Parse( )
-        self.InitCommand( )
-        self.MainLoop( )
 
     def InitCommand( self ) :
+        """ Initialize the base cli command. """
         cli = os.path.join( os.path.dirname(sys.argv[0]), "ibcli" )
         self._cmd = [ cli,
                       "--config", self._config,
@@ -76,49 +72,9 @@ class Main( object ) :
                       ]
         self._cmd += self._opt.cli_options
 
-
-    def MainLoop( self ) :
-        if self._opt.out is not None :
-            self._ofile = open( self._opt.out, "w" )
-        else :
-            self._ofile = sys.stdout
-        if self._opt.agent_file is not None :
-            self.RunLoop( self._opt.agent_file, "--user-agent",
-                          lambda s:s.strip() )
-        elif self._opt.rip_file is not None :
-            self.RunLoop( self._opt.rip_file, "--remote-ip",
-                          self.HostLookup )
-        else :
-            self.Run( )
-
-    def RunLoop( self, path, arg, fn ) :
-        try :
-            fh = open( path, "r" )
-            for line in fh :
-                args = [ arg ]
-                value = fn(line)
-                if value is None :
-                    continue
-                if type(value) == list or type(value) == tuple:
-                    args += value
-                else :
-                    args.append(value)
-                self.Run( args )
-        except IOError as e :
-            print >>sys.stderr, e
-            sys.exit(1)
-
-    def HostLookup( self, host ) :
-        host = host.strip()
-        if re.match( r'\d+\.', host ) :
-            return [host]
-        try :
-            return socket.gethostbyname(host)
-        except Exception as e:
-            print >>sys.stderr, "Failed to lookup host", host, e
-            return None
-
-    def Run( self, args=None ) :
+    def RunCli( self, args=None ) :
+        """ Run the cli, using self._cmd as the base, and then
+        appending args to it. """
         cmd = [ ]
         cmd += self._cmd
         if args is not None :
@@ -133,8 +89,67 @@ class Main( object ) :
             print >>self._ofile, i.rstrip( )
         p.wait( )
 
+    def RunLoop( self, path, arg, fn ) :
+        """ Run a the cli multiple times.  For the passed in path, this
+        function reads the file; for each line in the file, it invokes the cli
+        with the text from that line a command line argument, after passing
+        the text through the passed in function (which returns the actual text
+        / list of arguments to append to the command line). """
+        try :
+            fh = open( path, "r" )
+            for line in fh :
+                args = [ arg ]
+                value = fn(line)
+                if value is None :
+                    continue
+                if type(value) == list or type(value) == tuple:
+                    args += value
+                else :
+                    args.append(value)
+                self.RunCli( args )
+        except IOError as e :
+            print >>sys.stderr, e
+            sys.exit(1)
+
+    def HostLookup( self, host ) :
+        """ Lookup a host.  If the passed in host looks like an IP address,
+        return that string.  If not, attempts to lookup the string as a host
+        name, and the matching IP address.  If the lookup fails, returns
+        None. """
+        host = host.strip()
+        if re.match( r'\d+\.', host ) :
+            return host
+        try :
+            return socket.gethostbyname(host)
+        except Exception as e:
+            print >>sys.stderr, "Failed to lookup host", host, e
+            return None
+        
+    def Init( self ) :
+        """ Initialize everything """
+        self.InitParser( )
+        self.Parse( )
+        self.InitCommand( )
+
+    def Main( self ) :
+        """ Main execution """
+        if self._opt.out is not None :
+            self._ofile = open( self._opt.out, "w" )
+        else :
+            self._ofile = sys.stdout
+
+        if self._opt.agent_file is not None :
+            self.RunLoop( self._opt.agent_file, "--user-agent",
+                          lambda s:s.strip() )
+        elif self._opt.rip_file is not None :
+            self.RunLoop( self._opt.rip_file, "--remote-ip",
+                          self.HostLookup )
+        else :
+            self.Run( )
+
 
 main = Main( )
+main.Init( )
 main.Main( )
 
 ### Local Variables: ***

@@ -225,7 +225,7 @@ static ib_status_t print_effective_ip(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(modua_handle_req_headers);
 
-    printf( "Effective IP address: %s", tx->er_ipstr );
+    printf( "Effective IP address: %s\n", tx->er_ipstr );
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -305,6 +305,7 @@ static ib_status_t print_geoip(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
     ib_list_t *lst = NULL;
     ib_list_node_t *node = NULL;
+    int count = 0;
 
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "GEOIP", &req);
@@ -322,10 +323,15 @@ static ib_status_t print_geoip(ib_engine_t *ib,
     }
 
     /* Loop through the list & print everything */
-    printf("GeoIP data:\n");
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        print_field("GeoIP", field);
+        if (count++ == 0) {
+            printf("GeoIP data:\n");
+        }
+        print_field("", field);
+    }
+    if (count == 0) {
+        printf("No GeoIP data found\n");
     }
 
     /* Done */
@@ -351,13 +357,13 @@ static void runConnection(ib_engine_t* ib )
         ib_hook_register(ib, request_headers_event,
                          (ib_void_fn_t)print_user_agent, NULL);
     }
-    if (settings.geoip != 0) {
-        ib_hook_register(ib, handle_context_tx_event,
-                         (ib_void_fn_t)print_geoip, NULL);
-    }
     if (settings.effective_ip != 0) {
         ib_hook_register(ib, handle_context_tx_event,
                          (ib_void_fn_t)print_effective_ip, NULL);
+    }
+    if (settings.geoip != 0) {
+        ib_hook_register(ib, handle_context_tx_event,
+                         (ib_void_fn_t)print_geoip, NULL);
     }
 
     if (! strcmp("-", settings.requestfile)) {
