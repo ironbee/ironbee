@@ -27,7 +27,8 @@
  */
 
 /**
- * @ingroup IronBeeModule
+ * @defgroup IronBeeModule Module
+ * @ingroup IronBee
  * @{
  */
 
