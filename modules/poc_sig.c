@@ -430,11 +430,11 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
                 IB_LEVENT_ACT_UNKNOWN,
                 IB_LEVENT_PCLASS_UNKNOWN,
                 IB_LEVENT_SCLASS_UNKNOWN,
-                90,
-                80,
                 IB_LEVENT_SYS_UNKNOWN,
                 IB_LEVENT_ACTION_IGNORE,
                 IB_LEVENT_ACTION_IGNORE,
+                90,
+                80,
                 s->emsg
             );
             if (rc != IB_OK) {

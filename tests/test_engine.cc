@@ -38,7 +38,7 @@
 #include "engine/filter.c"
 #include "engine/core.c"
 
-#include "util_engine.c"
+#include "ibtest_util.c"
 
 /// @test Test ironbee library - ib_engine_create()
 TEST(TestIronBee, test_engine_create_null_plugin)
@@ -61,6 +61,26 @@ TEST(TestIronBee, test_engine_create_and_destroy)
     ib_engine_t *ib;
 
     ibtest_engine_create(&ib);
+    ibtest_engine_destroy(ib);
+}
+
+/// @test Test ironbee library - test configuration
+TEST(TestIronBee, test_engine_config_basic)
+{
+    ib_engine_t *ib;
+    const char *cfgbuf =
+        "#DebugLog /tmp/ironbee-debug.log\n"
+        "DebugLogLevel 9\n"
+        "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+        "SensorName UnitTesting\n"
+        "SensorHostname unit-testing.sensor.tld\n"
+        "LoadModule ibmod_htp.so\n"
+        "<Site *>\n"
+        "  Hostname *\n"
+        "</Site>\n";
+
+    ibtest_engine_create(&ib);
+    ibtest_engine_config_buf(ib, (uint8_t *)cfgbuf, strlen(cfgbuf));
     ibtest_engine_destroy(ib);
 }
 
@@ -87,19 +107,14 @@ TEST(TestIronBee, test_tfn)
 {
     ib_engine_t *ib;
     ib_tfn_t *tfn = (ib_tfn_t *)-1;
-    uint8_t *data_in;
     size_t dlen_in;
-    uint8_t *data_out;
     size_t dlen_out;
     ib_flags_t flags;
+    uint8_t data_in[128];
+    uint8_t data_out[128];
     ib_status_t rc;
 
     ibtest_engine_create(&ib);
-
-    data_in = (uint8_t *)malloc(128);
-    ASSERT_TRUE(data_in);
-    data_out = (uint8_t *)malloc(128);
-    ASSERT_TRUE(data_out);
 
     ibtest_engine_create(&ib);
 
@@ -114,7 +129,7 @@ TEST(TestIronBee, test_tfn)
     ASSERT_EQ(
         IB_OK,
         ib_tfn_transform(tfn, ib->mp, data_in, dlen_in,
-                         &data_out, &dlen_out, &flags)
+                         (uint8_t **)&data_out, &dlen_out, &flags)
     );
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));

@@ -15,6 +15,9 @@
  * limitations under the License.
  *****************************************************************************/
 
+/* This is always re-included to allow for prefixing the symbol names. */
+#include <ironbee/module_sym.h>
+
 #ifndef _IB_MODULE_H_
 #define _IB_MODULE_H_
 
@@ -43,62 +46,6 @@ extern "C" {
  * @ingroup IronBee
  * @{
  */
-
-/** Module symbol name. */
-#define IB_MODULE_SYM                 ironbee_module
-
-/** Module symbol name as a string. */
-#define IB_MODULE_SYM_NAME            IB_XSTRINGIFY(IB_MODULE_SYM)
-
-/** Module structure. */
-#define IB_MODULE_STRUCT              ibsym__module
-
-/** Address of module structure. */
-#define IB_MODULE_STRUCT_PTR          &IB_MODULE_STRUCT
-
-/**
- * Module declaration.
- *
- * This macro needs to be called towards the beginning of a module if
- * the module needs to refer to @ref IB_MODULE_STRUCT or
- * @ref IB_MODULE_STRUCT_PTR before the module structure is initialized
- * with @ref IB_MODULE_INIT.
- */
-#ifdef __cplusplus
-/* C++ cannot do forward declarations for IB_MODULE_STRUCT. */
-#define IB_MODULE_DECLARE() \
-    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(void); \
-    extern ib_module_t IB_MODULE_STRUCT
-#else
-#define IB_MODULE_DECLARE() \
-    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(void); \
-    static ib_module_t IB_MODULE_STRUCT
-#endif
-
-/**
- * Module structure initialization.
- *
- * This is typically the last macro called in a module. It initializes
- * the module structure (@ref IB_MODULE_STRUCT), which allows a module
- * to be registered with the engine. The macro takes a list of all
- * @ref ib_module_t field values.
- */
-#ifdef __cplusplus
-/* C++ cannot do forward declarations for IB_MODULE_STRUCT. */
-#define IB_MODULE_INIT(...) \
-    ib_module_t IB_MODULE_STRUCT = { \
-        __VA_ARGS__ \
-    }; \
-    ib_module_t *IB_MODULE_SYM(void) { return IB_MODULE_STRUCT_PTR; } \
-    typedef int ib_require_semicolon_hack_
-#else
-#define IB_MODULE_INIT(...) \
-    static ib_module_t IB_MODULE_STRUCT = { \
-        __VA_ARGS__ \
-    }; \
-    ib_module_t *IB_MODULE_SYM(void) { return IB_MODULE_STRUCT_PTR; } \
-    typedef int ib_require_semicolon_hack_
-#endif
 
 /**
  * Initialize values for dynamic modules created with ib_module_create().
