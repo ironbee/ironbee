@@ -497,7 +497,7 @@ static ib_status_t modua_handle_req_headers(ib_engine_t *ib,
 
         /* Check the field name
          * Note: field->name is not always a null ('\0') terminated string */
-        if (strncmp(field->name, "User-Agent", field->nlen) != 0) {
+        if (ib_field_namecmp(field, "User-Agent") != 0) {
             continue;
         }
 

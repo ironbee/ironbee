@@ -301,6 +301,24 @@ ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
  */
 ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
                                      void *pval);
+/**
+ * Compare the field's name to a c-style string.
+ *
+ * This relies on sizeof(namestr) to be the size of the the C-style string,
+ * not the size of the pointer, so you *must* pass in a string literal
+ * (i.e. "Abc-Def") not a char *.
+ *
+ * @param[in] field Field structure
+ * @param[in] namestr C-Style string literal to compare to (i.e. "Abc-Def")
+ *
+ * @returns 0:Name matches; else:Name doesn't match
+ */
+int DLL_PUBLIC ib_field_namecmp(const ib_field_t *field, const char *namestr);
+
+#define ib_field_namecmp(field,namestr) \
+    (  ((sizeof(namestr)-1) != (field)->nlen)                       \
+       || (strncmp((field)->name, (namestr), (field)->nlen) != 0) )
+ 
 
 /**
  * Get the value stored in the field, passing the argument on to dynamic fields.
