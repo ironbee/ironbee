@@ -35,12 +35,14 @@
 #define MODUA_MAX_MATCH_RULES   32  /* Max # of match rules */
 #define MODUA_MAX_FIELD_RULES    8  /* Max # of field rules / match rule */
 
-/* Match against what field? */
+/* Match against what field?.
+ * These values are used as an array offset, used in modua_match_cat_rules()
+ * in the 'fields' array. */
 typedef enum {
-    NONE  = -1,            /**< Invalid match, used to terminate rule list */
-    PRODUCT  = 0,          /**< Match against product field */
-    PLATFORM = 1,          /**< Match against platform field */
-    EXTRA    = 2,          /**< Match against extra field */
+    NONE     = -1,         /**< Invalid match, used to terminate rule list */
+    PRODUCT  =  0,         /**< Match against product field */
+    PLATFORM =  1,         /**< Match against platform field */
+    EXTRA    =  2,         /**< Match against extra field */
 } modua_matchfield_t;
 
 /* Type of match */
@@ -72,12 +74,12 @@ typedef struct modua_field_rule_s {
 typedef struct modua_match_rule_s {
     const char        *category;      /**< Category string */
     modua_field_rule_t rules[MODUA_MAX_FIELD_RULES]; /**< Field match rules*/
-    unsigned           num_rules;     /**< Number of actual rules */
+    unsigned int       num_rules;     /**< Number of actual rules */
 } modua_match_rule_t;
 
 /* Match category rule set */
 typedef struct modua_match_ruleset_s {
-    unsigned           num_rules;     /**< Actual number of match rules */
+    unsigned int       num_rules;     /**< Actual number of match rules */
     modua_match_rule_t rules[MODUA_MAX_MATCH_RULES]; /**< The match rules */
 } modua_match_ruleset_t;
 
@@ -91,7 +93,7 @@ typedef struct modua_match_ruleset_s {
  *
  * @returns status
  */
-ib_status_t modua_rules_init(unsigned *failed);
+ib_status_t modua_rules_init(unsigned int *failed);
 
 /**
  * @internal
@@ -99,8 +101,6 @@ ib_status_t modua_rules_init(unsigned *failed);
  *
  * Returns the match rules.  Rules must be previously initialized via
  * modua_rules_init( ).
- *
- * @param[out] count Total number of rules
  *
  * @returns Pointer to the rule array
  */

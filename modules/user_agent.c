@@ -186,7 +186,7 @@ static ib_status_t modua_parse_uastring(char *str,
  * mv: Match value
  */
 #define RESULT_EQ(av,mv)  ( ((av) == (mv)) ? YES : NO )
-#define RESULT_NEQ(av,mv) ( ((av) != (mv)) ? YES : NO )
+#define RESULT_NE(av,mv) ( ((av) != (mv)) ? YES : NO )
 
 /**
  * @internal
@@ -203,7 +203,7 @@ static ib_status_t modua_parse_uastring(char *str,
 static modua_matchresult_t modua_frule_match(const char *str,
                                              const modua_field_rule_t *rule)
 {
-    IB_FTRACE_INIT(modua_rule_match);
+    IB_FTRACE_INIT(modua_frule_match);
 
     /* First, handle the simple NULL string case */
     if (str == NULL) {
@@ -219,7 +219,7 @@ static modua_matchresult_t modua_frule_match(const char *str,
         case STARTSWITH:
             return RESULT_EQ(strncmp(str, rule->string, rule->slen), 0);
         case CONTAINS:
-            return RESULT_NEQ(strstr(str, rule->string), NULL);
+            return RESULT_NE(strstr(str, rule->string), NULL);
         case ENDSWITH: {
             size_t slen = strlen(str);
             size_t offset;
@@ -247,9 +247,8 @@ static modua_matchresult_t modua_frule_match(const char *str,
  * them to the passed in agent info, and returns the category string of the
  * first rule that matches, or NULL if no rules match.
  *
- * @param[in] product UA product component
- * @param[in] platform UA platform component
- * @param[in] extra UA extra component
+ * @param[in] fields Array of fields to match (0=product,1=platform,2=extra)
+ * @param[in] rule Match rule to match against
  *
  * @returns Category string or NULL
  */
@@ -258,7 +257,7 @@ static const char *modua_mrule_match(const char *fields[],
 {
     IB_FTRACE_INIT(modua_mrule_match);
     const modua_field_rule_t *fr;
-    unsigned ruleno;
+    unsigned int ruleno;
 
     /* Walk through the rules; if any fail, return NULL */
     for (ruleno = 0, fr = rule->rules;
@@ -288,6 +287,9 @@ static const char *modua_mrule_match(const char *fields[],
  * them to the passed in agent info, and returns the category string of the
  * first rule that matches, or NULL if no rules match.
  *
+ * Note that the fields array (filled in below) uses values from the
+ * modua_matchfield_t enum (PRODUCT, PLATFORM, EXTRA). 
+ *
  * @param[in] product UA product component
  * @param[in] platform UA platform component
  * @param[in] extra UA extra component
@@ -301,7 +303,7 @@ static const char *modua_match_cat_rules(const char *product,
     IB_FTRACE_INIT(modua_match_cat_rules);
     const char *fields[3] = { product, platform, extra };
     const modua_match_rule_t *rule;
-    unsigned ruleno;
+    unsigned int ruleno;
 
     /* Walk through the rules; the first to match "wins" */
     for (ruleno = 0, rule = modua_rules->rules;
@@ -325,14 +327,15 @@ static const char *modua_match_cat_rules(const char *product,
 #ifndef USER_AGENT_MAIN
 /**
  * @internal
- * Parse the user agent header, splitting into component fields.
+ * Store a field in the agent list
  *
- * Attempt to tokenize the user agent string passed in, storing the
- * result in the DPI associated with the transaction.
+ * Creates a new field and adds it to the agent list field list.
  *
  * @param[in] ib IronBee object
- * @param[in,out] tx Transaction object
- * @param[in] data Callback data (not used)
+ * @param[in,out] mp Memory pool to allocate from
+ * @param[in] agent_list Field to add the field to
+ * @param[in] name Field name
+ * @param[in] value Field value
  *
  * @returns Status code
  */
@@ -382,24 +385,51 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction object
- * @param[in] data Callback data (not used)
+ * @param[in] bs Byte string containing the agent string
  *
  * @returns Status code
  */
 static ib_status_t modua_agent_fields(ib_engine_t *ib,
                                       ib_tx_t *tx,
-                                      char *agent)
+                                      ib_bytestr_t *bs)
 {
-    IB_FTRACE_INIT(modua_handle_tx);
+    IB_FTRACE_INIT(modua_agent_fields);
     ib_field_t *agent_list = NULL;
-    char *product = NULL;
-    char *platform = NULL;
-    char *extra = NULL;
+    char       *product = NULL;
+    char       *platform = NULL;
+    char       *extra = NULL;
     const char *category = NULL;
+    char       *agent;
+    char       *buf;
+    size_t      len;
     ib_status_t rc;
 
+    /* Get the length of the byte string */
+    len = ib_bytestr_length(bs);
+
+    /* Allocate memory for a copy of the string to split up below. */
+    buf = (char *)ib_mpool_calloc(tx->conn->mp, 1, len+1);
+    if (buf == NULL) {
+        ib_log_error(ib, 4,
+                      "Failed to allocate %d bytes for agent string",
+                      len+1);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Copy the string out */
+    memcpy(buf, ib_bytestr_ptr(bs), len);
+    buf[len] = '\0';
+    ib_log_debug(ib, 4, "Found user agent: '%s'", buf);
+
+    /* Copy the agent string */
+    agent = (char *)ib_mpool_strdup(tx->conn->mp, buf);
+    if (buf == NULL) {
+        ib_log_error(ib, 4, "Failed to allocate copy of agent string");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
     /* Parse the user agent string */
-    rc = modua_parse_uastring(agent, &product, &platform, &extra);
+    rc = modua_parse_uastring(buf, &product, &platform, &extra);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4, "Failed to parse User Agent string '%s'", agent);
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -416,25 +446,31 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Handle product */
+    /* Store Agent */
+    rc = modua_store_field(ib, tx->mp, agent_list, "agent", agent);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Store product */
     rc = modua_store_field(ib, tx->mp, agent_list, "product", product);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Platform */
+    /* Store Platform */
     rc = modua_store_field(ib, tx->mp, agent_list, "platform", platform);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Extra */
+    /* Store Extra */
     rc = modua_store_field(ib, tx->mp, agent_list, "extra", extra);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Extra */
+    /* Store Extra */
     rc = modua_store_field(ib, tx->mp, agent_list, "category", category);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -464,10 +500,9 @@ static ib_status_t modua_handle_req_headers(ib_engine_t *ib,
                                             void *data)
 {
     IB_FTRACE_INIT(modua_handle_req_headers);
-    ib_conn_t *conn = tx->conn;
-    ib_field_t *req = NULL;
-    ib_status_t rc = IB_OK;
-    ib_list_t *lst = NULL;
+    ib_field_t     *req = NULL;
+    ib_status_t     rc = IB_OK;
+    ib_list_t      *lst = NULL;
     ib_list_node_t *node = NULL;
 
     /* Extract the request headers field from the provider instance */
@@ -492,8 +527,6 @@ static ib_status_t modua_handle_req_headers(ib_engine_t *ib,
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         ib_bytestr_t *bs;
-        unsigned len;
-        char *buf;
 
         /* Check the field name
          * Note: field->name is not always a null ('\0') terminated string */
@@ -503,24 +536,9 @@ static ib_status_t modua_handle_req_headers(ib_engine_t *ib,
 
         /* Found it: copy the data into a newly allocated string buffer */
         bs = ib_field_value_bytestr(field);
-        len = ib_bytestr_length(bs);
-
-        /* Allocate the memory */
-        buf = (char *)ib_mpool_calloc(conn->mp, 1, len+1);
-        if (buf == NULL) {
-            ib_log_error( ib, 4,
-                          "Failed to allocate %d bytes for local address",
-                          len+1 );
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-
-        /* Copy the string out */
-        memcpy(buf, ib_bytestr_ptr(bs), len);
-        buf[len] = '\0';
-        ib_log_debug(ib, 4, "user agent => '%s'", buf);
 
         /* Finally, split it up & store the components */
-        rc = modua_agent_fields(ib, tx, buf);
+        rc = modua_agent_fields(ib, tx, bs);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -541,9 +559,9 @@ static ib_status_t modua_handle_req_headers(ib_engine_t *ib,
  */
 static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(modua_context_init);
-    ib_status_t rc;
-    unsigned    failed_rule_num;
+    IB_FTRACE_INIT(modua_init);
+    ib_status_t  rc;
+    unsigned int failed_rule_num;
 
     /* Register our callback */
     rc = ib_hook_register(ib, request_headers_event,
@@ -640,7 +658,7 @@ int main(int argc, const char *argv[])
     char        *p;
     FILE        *fp;
     ib_status_t  rc;
-    unsigned     failed_rule_num;
+    unsigned int failed_rule_num;
 
 
     /* Rule Initializations */

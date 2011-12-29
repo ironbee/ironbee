@@ -67,8 +67,8 @@ class Main( object ) :
         cli = os.path.join( os.path.dirname(sys.argv[0]), "ibcli" )
         self._cmd = [ cli,
                       "--config", self._config,
-                      "--requestfile", self._req,
-                      "--responsefile", self._resp,
+                      "--request-file", self._req,
+                      "--response-file", self._resp,
                       ]
         self._cmd += self._opt.cli_options
 
