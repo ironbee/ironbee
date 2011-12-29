@@ -60,10 +60,10 @@ typedef enum {
 
 /* Header / value pairs */
 typedef struct {
-    const char *name;           /* Name of the header field */
-    int         nlen;           /* Name length */
-    const char *value;          /* Value of the header field */
-    int         vlen;           /* Value length */
+    const char *name;           /* Field name buffer */
+    size_t      name_len;       /* Name length */
+    const char *buf;            /* Field string buffer; NULL means remove */
+    int         buf_len;        /* Total buffer length */
     int         used;           /* Has this field been used */
 } request_header_t;
 
@@ -116,6 +116,12 @@ static runtime_settings_t settings =
 #endif
 };
 
+typedef struct {
+    char     *buf;         /* Acutal buffer */
+    size_t    len;         /* Length of data in the buffer */
+    size_t    size;        /* Current size of buffer */
+} reqhdr_buf_t;
+
 #define MAX_BUF      (64*1024)
 #define MAX_LINE_BUF (16*1024)
 
@@ -150,7 +156,7 @@ static void usage(void)
  * @param[in] param Parameter value or NULL
  * @param[in] desc Option description
  * @param[in] required 1:Required, 0:Not required
- * @param[in] values Array of possible option values or NULL
+ * @param[in] values String of possible option values or NULL
  *
  * @returns void
  */
@@ -199,14 +205,258 @@ static void help(void)
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
                  "tx, user-agent, geop");
-    print_option("request-header", "name=value",
+    print_option("request-header", "name: value",
                  "Specify request field & value", 0, NULL );
+    print_option("request-header", "-name:",
+                 "Specify request field to delete", 0, NULL );
 #if DEBUG_ARGS_ENABLE
     print_option("debug-level", "path", "Specify debug log level", 0, NULL );
     print_option("debug-log", "path", "Specify debug log file / URI", 0, NULL );
 #endif
     print_option("help", NULL, "Print this help", 0, NULL );
     exit(0);
+}
+
+/**
+ * @internal
+ * Add a request header field / value.
+ *
+ * Attempts to add the specified request header name and value to the list
+ * of header fields.
+ *
+ * @param[in] str Header string from the command line
+ * @param[in] len Length of the string
+ * @param[in] name_len Length of the name portion of the string
+ * @param[in] delete 1:Delete the header field; 0:Don't delete
+ *
+ * @returns status
+ */
+static ib_status_t add_request_header(const char *str,
+                                      size_t str_len,
+                                      size_t name_len,
+                                      int delete)
+{
+    int     num;
+    char   *buf;
+    size_t  buf_len;
+
+    if (settings.request_headers.num_headers >= MAX_REQUEST_HEADERS) {
+        fprintf(stderr,
+                "Unable to add request header field %-*s: no space in array",
+                (int)name_len, buf);
+        return IB_EALLOC;
+    }
+
+    /* Allocate space and copy to the buffer */
+    buf_len = (delete != 0) ? str_len : str_len + 2;  /* '\r' and '\n' */
+    buf = (char *) malloc(buf_len+1);  /* Extra byte for '\0' */
+    if (buf == NULL) {
+        fprintf(stderr,
+                "Failed to allocate buffer for request header field %-*s",
+                (int)name_len, buf);
+        return IB_EALLOC;
+    }
+
+    /* Account for it */
+    num = settings.request_headers.num_headers++;
+
+    /* Add it in */
+    strcpy(buf, str);
+    if (delete == 0) {
+        strcat(buf, "\r\n");
+        settings.request_headers.headers[num].buf     = buf;
+        settings.request_headers.headers[num].buf_len = buf_len;
+    }
+    else {
+        settings.request_headers.headers[num].buf     = NULL;
+        settings.request_headers.headers[num].buf_len = 0;
+    }
+
+    settings.request_headers.headers[num].name     = buf;
+    settings.request_headers.headers[num].name_len = name_len;
+    settings.request_headers.headers[num].used     = 0;
+
+    return IB_OK;
+}
+
+/**
+ * @internal
+ * Command line processing.
+ *
+ * Command line processing for the IronBee CLI
+ *
+ * @param[in] argc Command line argument count
+ * @param[in] argv Command line argument array
+ *
+ * @returns status
+ */
+static ib_status_t command_line(int argc, char *argv[])
+{
+    ib_status_t rc;
+    static struct option longopts[] = {
+        { "config", required_argument, 0, 0 },
+        { "request-file", required_argument, 0, 0 },
+        { "response-file", required_argument, 0, 0 },
+        { "local-ip", required_argument, 0, 0 },
+        { "local-port", required_argument, 0, 0 },
+        { "remote-ip", required_argument, 0, 0 },
+        { "remote-port", required_argument, 0, 0 },
+
+        { "request-header", required_argument, 0, 0 },
+        { "dump", required_argument, 0, 0 },
+
+#if DEBUG_ARGS_ENABLE
+        { "debug-level", required_argument, 0, 0 },
+        { "debug-log", required_argument, 0, 0 },
+#endif
+        { "help", no_argument, 0, 0 },
+        { 0, 0, 0, 0}
+    };
+
+    /* Loop through the command line args */
+    while (1) {
+        int option_index = 0;
+        int c = getopt_long(argc, argv, "", longopts, &option_index);
+        if (c != 0) {
+            if ( c == 'h' ) {
+                help( );
+            }
+            else {
+                break;
+            }
+        }
+
+        if (! strcmp("config", longopts[option_index].name)) {
+            settings.config_file = optarg;
+        }
+        else if (! strcmp("request-file", longopts[option_index].name)) {
+            settings.request_file = optarg;
+        }
+        else if (! strcmp("response-file", longopts[option_index].name)) {
+            settings.response_file = optarg;
+        }
+        else if (! strcmp("dump", longopts[option_index].name)) {
+            if (strcasecmp(optarg, "geoip") == 0) {
+                settings.dump_geoip = 1;
+            }
+            else if (strcasecmp(optarg, "user-agent") == 0) {
+                settings.dump_user_agent = 1;
+            }
+            else if (strcasecmp(optarg, "tx") == 0) {
+                settings.dump_tx = 1;
+            }
+            else {
+                fprintf(stderr, "Unknown dump: %s", optarg);
+                usage();
+            }
+        }
+        else if (! strcmp("request-header", longopts[option_index].name)) {
+            size_t nlen = 0;       /* Name length */
+            size_t vlen = 0;       /* Value length */
+            int    delete = 0;     /* Delete the field? */
+            char *colon;
+
+            /* Delete? */
+            if (*optarg == '-') {
+                delete = 1;
+                optarg++;
+            }
+
+            /* Get a pointer to the first colon, count the number of
+             * characters following it */
+            colon = strchr(optarg, ':');
+            if (colon != NULL) {
+                vlen = strlen(colon+1);
+                nlen = colon - optarg;
+            }
+
+            /* Simple checks */
+            if (nlen == 0) {
+                fprintf(stderr,
+                        "Mal-formed request-header parameter '%s'",
+                        optarg);
+                usage();
+            }
+
+            /* Add it to the header */
+            rc = add_request_header(optarg, nlen+1+vlen, nlen, delete);
+            if (rc != IB_OK) {
+                usage( );
+            }
+        }
+
+#if DEBUG_ARGS_ENABLE
+        else if (! strcmp("debug-level", longopts[option_index].name)) {
+            int level =  (int) strtol(optarg, NULL, 10);
+            if ( ( level == 0 ) && ( errno == EINVAL ) ) {
+                fprintf(stderr,
+                        "--debug-level: invalid level number '%s'", optarg );
+                usage();
+            }
+            else if ( (level < 0) || (level < 9) ) {
+                fprintf(stderr,
+                        "--debug-level: Level %d out of range (0-9)", level );
+                usage();
+            }
+            settings.debug_level = level;
+        }
+        else if (! strcmp("debug-log", longopts[option_index].name)) {
+            static char  buf[256];
+            const char  *s = optarg;
+
+            // Create a file URI from the file path
+            if ( strstr(s, "://") == NULL )  {
+                snprintf( buf, sizeof(buf), "file://%s", s );
+            }
+            else if ( strncmp(s, "file://", 7) != 0 ) {
+                fprintf( stderr, "--debug-log: Unsupport URI \"%s\"", s );
+                usage( );
+            }
+            else {
+                strncpy(buf, s, sizeof(buf));
+            }
+            settings.debug_uri = buf;
+        }
+#endif
+        else if (! strcmp("local-ip", longopts[option_index].name)) {
+            settings.local_ip = optarg;
+        }
+        else if (! strcmp("local-port", longopts[option_index].name)) {
+            settings.local_port = (int) strtol(optarg, NULL, 10);
+            if ( ( settings.local_port == 0 ) && ( errno == EINVAL ) ) {
+                fprintf(stderr,
+                        "--local-port: invalid port number '%s'", optarg );
+                usage();
+            }
+        }
+        else if (! strcmp("remote-ip", longopts[option_index].name)) {
+            settings.remote_ip = optarg;
+        }
+        else if (! strcmp("remote-port", longopts[option_index].name)) {
+            settings.remote_port = (int) strtol(optarg, NULL, 10);
+            if ( ( settings.remote_port == 0 ) && ( errno == EINVAL ) ) {
+                fprintf(stderr,
+                        "--remote-port: invalid port number '%s'", optarg );
+                usage();
+            }
+        }
+        else if (! strcmp("help", longopts[option_index].name)) {
+            help( );
+        }
+        else {
+            usage( );
+        }
+    }
+
+    if (settings.config_file == NULL) {
+        fprintf(stderr, "--config <file> is required\n");
+        usage();
+    }
+    if (settings.request_file == NULL) {
+        fprintf(stderr, "--request_file <file> is required\n");
+        usage();
+    }
+    return IB_OK;
 }
 
 #if DEBUG_ARGS_ENABLE
@@ -370,6 +620,7 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
     ib_list_t *lst = NULL;
     ib_list_node_t *node = NULL;
 
+    printf("print_user_agent\n");
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "User-Agent", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
@@ -386,8 +637,6 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
                      "Field list missing / incorrect type" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
-
-    /* fputs(settings.user_agent, stdout); */
 
     /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
@@ -454,6 +703,51 @@ static ib_status_t print_geoip(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+
+/**
+ * @internal
+ * Add a line to the request header buffer.
+ *
+ * This function adds a line to header.  This function uses malloc() &
+ * realloc() instead of the IronBee memory pool because the memory pool
+ * currently doesn't provide a realloc() equivilent.
+ *
+ * @param[in] buf Request header buffer
+ * @param[in] linebuf Line to copy in
+ * @param[in] linelen Length of line
+ *
+ * @returns status
+ */
+static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
+                                      const char *linebuf,
+                                      size_t linelen)
+{
+
+    /* Allocate a buffer or increase our allocation as required */
+    if (buf->buf == NULL) {
+        buf->buf  = malloc(MAX_LINE_BUF);
+        buf->size = MAX_LINE_BUF;
+        buf->len  = 0;
+    }
+    else if ((buf->len + linelen) > buf->size) {
+        buf->size *= 2;
+        buf->buf   = realloc(buf, buf->size);
+    }
+
+    /* Allocation failed? */
+    if (buf->buf == NULL) {
+        fprintf(stderr,
+                "Failed to allocate request buffer of size %zd", buf->size);
+        return IB_EALLOC;
+    }
+
+    /* Copy the line into the buffer */
+    memcpy(buf->buf+buf->len, linebuf, linelen);
+    buf->len += linelen;
+
+    return IB_OK;
+}
+
 /**
  * @internal
  * Simulate the reception of request header.
@@ -474,91 +768,103 @@ static ib_status_t send_header(ib_engine_t* ib,
                                FILE *fp)
 {
     IB_FTRACE_INIT(send_header);
-    ib_status_t rc;
-    char *buf = NULL;     /* I/O buffer */
-    size_t bufsize = 0;   /* Size of buffer */
-    size_t buflen  = 0;   /* Actual size of data in the buffer */
-    static char linebuf[MAX_LINE_BUF];
+    ib_status_t  rc;
+    reqhdr_buf_t rbuf;            /* Request header buffer for I/O */
+    int          fnum;            /* Request header field number */
+    static char  linebuf[MAX_LINE_BUF];
+    const char  *lineptr;
+
+    /* Initialize our buffer to zero */
+    rbuf.buf = NULL;
 
     /* Read the request header from the file, assembled the header, pass
      * it to IronBee */
     while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
         size_t linelen = strlen(linebuf);
-        int    fnum;       /* Request header field number */
+
+        /* By default, lineptr points at the line buffer */
+        lineptr = linebuf;
 
         /* Is this a header that we need to replace? */
         if( (*linebuf == '\0') || (isspace(*linebuf) != 0) ) {
             break;
         }
 
+        /* Walk through the header fields, see if we have a replacement */
         for (fnum = 0; fnum < settings.request_headers.num_headers; ++fnum) {
-            request_header_t *rh = &settings.request_headers.headers[fnum];
+            request_header_t *rhf = &settings.request_headers.headers[fnum];
 
             /* Already used? */
-            if (rh->used != 0) {
+            if (rhf->used != 0) {
                 continue;
             }
 
             /* Matching header field? */
-            if (strncmp(linebuf, rh->name, rh->nlen) != 0) {
+            if (strncmp(linebuf, rhf->name, rhf->name_len) != 0) {
                 continue;
             }
 
             /* Consume the request header field */
-            ++(rh->used);
+            ++(rhf->used);
 
-            /* Make sure that the name + value is not too big for the line
-             * buffer (should realistically never happen) */
-            linelen = rh->nlen + rh->vlen + 2;
-            if (linelen > sizeof(linebuf)) {
-                fprintf(stderr,
-                        "WARNING: Clipping request header line '%s'\n",
-                        rh->name);
-                linelen = sizeof(linebuf);
+            /* Point at the request header field buffer */
+            lineptr = rhf->buf;
+            linelen = rhf->buf_len;
+        }
+
+        /* Add the line to the request header */
+        if (lineptr != NULL) {
+            rc = append_req_hdr_buf(&rbuf, lineptr, linelen);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
             }
-            linebuf[rh->nlen]   = ' ';
-            linebuf[rh->nlen+1] = '\0';
-            strncat(linebuf, rh->value, sizeof(linebuf)-(rh->nlen+2));
+        }
+    }
+
+    /* Walk through the unused header fields, add them to the buffer */
+    for (fnum = 0; fnum < settings.request_headers.num_headers; ++fnum) {
+        request_header_t *rhf = &settings.request_headers.headers[fnum];
+
+        /* Already used? */
+        if (rhf->used != 0) {
+            continue;
         }
 
-        /* Allocate a buffer or increase our allocation as required */
-        if (buf == NULL) {
-            bufsize = MAX_LINE_BUF;
-            buf     = malloc(bufsize);
-            buflen  = 0;
-        }
-        else if ((buflen + linelen) > bufsize) {
-            bufsize *= 2;
-            buf      = realloc(buf, bufsize);
-        }
-        if (buf == NULL) {
-            fprintf(stderr,
-                    "Failed to allocate request buffer of size %zd", bufsize);
-            exit(1);
-        }
+        /* Consume the request header field */
+        ++(rhf->used);
 
-        /* Finally, copy the line into the buffer */
-        memcpy(buf+buflen, linebuf, linelen);
-        buflen += linelen;
+        /* Add it */
+        if (rhf->buf != NULL) {
+            rc = append_req_hdr_buf(&rbuf, rhf->buf, rhf->buf_len);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
     }
 
     /* No buffer means no header => bad */
-    if (buf == NULL) {
+    if (rbuf.buf == NULL) {
         fprintf(stderr, "WARNING: No request header found in file\n");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Add a empty line */
+    rc = append_req_hdr_buf(&rbuf, "\r\n", 2);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Send it */
-    icdata->dalloc = bufsize;
-    icdata->dlen   = buflen;
-    icdata->data   = (uint8_t *)buf;
+    icdata->dalloc = rbuf.size;
+    icdata->dlen   = rbuf.len;
+    icdata->data   = (uint8_t *)rbuf.buf;
     rc = ib_state_notify_conn_data_in(ib, icdata);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to send header: %d\n", rc);
     }
 
     /* Free the buffer */
-    free(buf);
+    free(rbuf.buf);
 
     /* Done */
     IB_FTRACE_RET_STATUS(rc);
@@ -576,6 +882,7 @@ static ib_status_t send_header(ib_engine_t* ib,
  * @param[in] buf Buffer to use for I/O
  * @param[in] bufsize Size of buf
  * @param[in] fp File pointer to read from
+ * @param[in] direction Data direction: Input (DATA_IN) or output (DATA_OUT)
  *
  * @returns status
  */
@@ -584,19 +891,20 @@ static ib_status_t send_file(ib_engine_t* ib,
                              void *buf,
                              size_t bufsize,
                              FILE *fp,
-                             data_direction_t io)
+                             data_direction_t direction)
 {
     IB_FTRACE_INIT(send_file);
     size_t      nbytes = 0;     /* # bytes currently in the buffer */
     ib_status_t rc;
-    const char *dname = (io == DATA_IN) ? "input" : "output";
+    const char *ioname = (direction == DATA_IN) ? "input" : "output";
 
     /* Read a chunk & send it */
-    if ( (nbytes = fread(buf, bufsize, 1, fp)) > 0) {
+    if ( (nbytes = fread(buf, 1, bufsize, fp)) > 0) {
         icdata->dalloc = bufsize;
         icdata->dlen = nbytes;
         icdata->data = (uint8_t *)buf;
-        if (io == DATA_IN) {
+
+        if (direction == DATA_IN) {
             rc = ib_state_notify_conn_data_in(ib, icdata);
         }
         else {
@@ -604,11 +912,58 @@ static ib_status_t send_file(ib_engine_t* ib,
         }
         if (rc != IB_OK) {
             fprintf(stderr,
-                    "Failed to send %s data to IronBee: %d\n", dname, rc);
+                    "Failed to send %s data to IronBee: %d\n", ioname, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
+
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Register event handlers.
+ *
+ * Register event handlers to print specific pieces of data; which ones are
+ * registered is controlled via command line arguments.
+ *
+ * @param[in] ib IronBee object
+ *
+ * @returns status
+ */
+static ib_status_t register_handlers(ib_engine_t* ib)
+{
+    IB_FTRACE_INIT(register_handlers);
+    ib_status_t rc;
+    ib_status_t status = IB_OK;
+
+    /* Register the event handlers late so they run after the relevant
+     * module's event handler */
+    if (settings.dump_tx != 0) {
+        rc = ib_hook_register(ib, handle_context_tx_event,
+                              (ib_void_fn_t)print_tx, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register tx handler: %d\n", rc);
+            status = rc;
+        }
+    }
+    if (settings.dump_user_agent != 0) {
+        rc = ib_hook_register(ib, request_headers_event,
+                              (ib_void_fn_t)print_user_agent, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register user_agent handler: %d\n", rc);
+            status = rc;
+        }
+    }
+    if (settings.dump_geoip != 0) {
+        rc = ib_hook_register(ib, handle_context_tx_event,
+                              (ib_void_fn_t)print_geoip, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register geoip handler: %d\n", rc);
+            status = rc;
+        }
+    }
+    IB_FTRACE_RET_STATUS(status);
 }
 
 /**
@@ -631,28 +986,9 @@ static void run_connection(ib_engine_t* ib)
     ib_status_t    rc;
     char          *buf = NULL;     /* I/O buffer */
 
-    /* Register the event handlers late so they run after the relevant
-     * module's event handler */
-    if (settings.dump_tx != 0) {
-        rc = ib_hook_register(ib, handle_context_tx_event,
-                              (ib_void_fn_t)print_tx, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register tx handler: %d\n", rc);
-        }
-    }
-    if (settings.dump_user_agent != 0) {
-        rc = ib_hook_register(ib, request_headers_event,
-                              (ib_void_fn_t)print_user_agent, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register user_agent handler: %d\n", rc);
-        }
-    }
-    if (settings.dump_geoip != 0) {
-        rc = ib_hook_register(ib, handle_context_tx_event,
-                              (ib_void_fn_t)print_geoip, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register geoip handler: %d\n", rc);
-        }
+    rc = register_handlers(ib);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to register one or more handlers\n");
     }
 
     /* Open the files that we'll use for I/O */
@@ -685,6 +1021,9 @@ static void run_connection(ib_engine_t* ib)
     /* Read the request header from the file, assembled the header, pass
      * it to IronBee */
     rc = send_header(ib, &conn_data, reqfp);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to read/send header data: %d\n", rc);
+    }
 
     /* Allocate a buffer for the remainder of the I/O */
     buf = ib_mpool_alloc(conn->mp, MAX_BUF);
@@ -715,37 +1054,6 @@ static void run_connection(ib_engine_t* ib)
 
 /**
  * @internal
- * Add a request header field / value.
- *
- * Attempts to add the specified request header name and value to the list
- * of header fields.
- *
- * @param[in] name Request header field name
- * @param[in] value Request header field value
- *
- * @returns status
- */
-static ib_status_t add_request_header(const char *name, const char *value)
-{
-    int  num;
-    if (settings.request_headers.num_headers >= MAX_REQUEST_HEADERS) {
-        fprintf(stderr,
-                "Unable to add request header %s: no space in array",
-                name);
-        return IB_EALLOC;
-    }
-    num = ++settings.request_headers.num_headers;
-    settings.request_headers.headers[num].name  = name;
-    settings.request_headers.headers[num].nlen  = strlen(name);
-    settings.request_headers.headers[num].value = value;
-    settings.request_headers.headers[num].vlen  = strlen(value);
-    settings.request_headers.headers[num].used  = 0;
-
-    return IB_OK;
-}
-
-/**
- * @internal
  * Main.
  *
  * Main program for the IronBee command line client.
@@ -761,201 +1069,37 @@ int main(int argc, char* argv[])
     ib_engine_t *ironbee = NULL;
     ib_cfgparser_t *cp;
 
-    struct option longopts[] =
-        {
-            { "config", required_argument, 0, 0 },
-            { "request-file", required_argument, 0, 0 },
-            { "response-file", required_argument, 0, 0 },
-	    { "local-ip", required_argument, 0, 0 },
-	    { "local-port", required_argument, 0, 0 },
-	    { "remote-ip", required_argument, 0, 0 },
-	    { "remote-port", required_argument, 0, 0 },
-
-	    { "request-header", required_argument, 0, 0 },
-	    { "dump", required_argument, 0, 0 },
-
-#if DEBUG_ARGS_ENABLE
-	    { "debug-level", required_argument, 0, 0 },
-	    { "debug-log", required_argument, 0, 0 },
-#endif
-            { "help", no_argument, 0, 0 },
-            { 0, 0, 0, 0}
-        };
-
     ib_trace_init(NULL);
-    while (1) {
-        int option_index = 0;
-        int c = getopt_long(argc, argv, "", longopts, &option_index);
-        if (c != 0) {
-            if ( c == 'h' ) {
-                help( );
-            }
-            else {
-                break;
-            }
-        }
 
-        if (! strcmp("config", longopts[option_index].name)) {
-            settings.config_file = optarg;
-        }
-        else if (! strcmp("request-file", longopts[option_index].name)) {
-            settings.request_file = optarg;
-        }
-        else if (! strcmp("response-file", longopts[option_index].name)) {
-            settings.response_file = optarg;
-        }
-        else if (! strcmp("dump", longopts[option_index].name)) {
-            if (strcasecmp(optarg, "geoip") == 0) {
-                settings.dump_geoip = 1;
-            }
-            else if (strcasecmp(optarg, "user-agent") == 0) {
-                settings.dump_user_agent = 1;
-            }
-            else if (strcasecmp(optarg, "tx") == 0) {
-                settings.dump_tx = 1;
-            }
-            else {
-                fprintf(stderr, "Unknown dump: %s", optarg);
-                usage();
-            }
-        }
-#if 0
-        else if (! strcmp("user-agent", longopts[option_index].name)) {
-            static char buf[MAX_LINE_BUF];
-            strcpy(buf, "User-Agent: ");
-            strncat(buf, optarg, sizeof(buf)-(1+strlen(buf)));
-            strncat(buf, "\r\n", sizeof(buf)-(1+strlen(buf)));
-            settings.user_agent = buf;
-        }
-#endif
-        else if (! strcmp("request-header", longopts[option_index].name)) {
-            size_t vlen = 0;       /* Value length */
-            char *name;
-            char *value;
-            char *colon;
-
-            /* Get a pointer to the first colon, count the number of
-             * characters following it */
-            colon = strchr(optarg, ':');
-            if (colon != NULL) {
-                vlen = strlen(colon+1);
-            }
-
-            /* Simple checks */
-            if ( (colon == NULL) || (colon == optarg) || (vlen == 0) ) {
-                fprintf(stderr,
-                        "No value in request-header parameter '%s'",
-                        optarg);
-                usage();
-            }
-
-            /* Allocate space for and copy the name & value */
-            name  = strndup(optarg, (size_t)(1+colon-optarg));
-            value = (char *)malloc(vlen+3);
-            if ( (name == NULL) || (value == NULL) ) {
-                fprintf(stderr,
-                        "Failed to allocate buffer for request header '%s'",
-                        optarg);
-                exit(1);
-            }
-            strcpy(value, colon+1);
-            strcat(value, "\r\n");
-            rc = add_request_header(name, value);
-            if (rc != IB_OK) {
-                usage( );
-            }
-        }
-
-#if DEBUG_ARGS_ENABLE
-        else if (! strcmp("debug-level", longopts[option_index].name)) {
-            int level =  (int) strtol(optarg, NULL, 10);
-            if ( ( level == 0 ) && ( errno == EINVAL ) ) {
-                fprintf(stderr,
-                        "--debug-level: invalid level number '%s'", optarg );
-                usage();
-            }
-            else if ( (level < 0) || (level < 9) ) {
-                fprintf(stderr,
-                        "--debug-level: Level %d out of range (0-9)", level );
-                usage();
-            }
-            settings.debug_level = level;
-        }
-        else if (! strcmp("debug-log", longopts[option_index].name)) {
-            static char  buf[256];
-            const char  *s = optarg;
-
-            // Create a file URI from the file path
-            if ( strstr(s, "://") == NULL )  {
-                snprintf( buf, sizeof(buf), "file://%s", s );
-            }
-            else if ( strncmp(s, "file://", 7) != 0 ) {
-                fprintf( stderr, "--debug-log: Unsupport URI \"%s\"", s );
-                usage( );
-            }
-            else {
-                strncpy(buf, s, sizeof(buf));
-            }
-            settings.debug_uri = buf;
-        }
-#endif
-        else if (! strcmp("local-ip", longopts[option_index].name)) {
-            settings.local_ip = optarg;
-        }
-        else if (! strcmp("local-port", longopts[option_index].name)) {
-            settings.local_port = (int) strtol(optarg, NULL, 10);
-            if ( ( settings.local_port == 0 ) && ( errno == EINVAL ) ) {
-                fprintf(stderr,
-                        "--local-port: invalid port number '%s'", optarg );
-                usage();
-            }
-        }
-        else if (! strcmp("remote-ip", longopts[option_index].name)) {
-            settings.remote_ip = optarg;
-        }
-        else if (! strcmp("remote-port", longopts[option_index].name)) {
-            settings.remote_port = (int) strtol(optarg, NULL, 10);
-            if ( ( settings.remote_port == 0 ) && ( errno == EINVAL ) ) {
-                fprintf(stderr,
-                        "--remote-port: invalid port number '%s'", optarg );
-                usage();
-            }
-        }
-        else if (! strcmp("help", longopts[option_index].name)) {
-            help( );
-        }
-        else {
-            usage( );
-        }
+    /* Process the command line */
+    rc = command_line(argc, argv);
+    if (rc != IB_OK) {
+        fatal_error("Error processing command line");
     }
 
-    if (settings.config_file == NULL) {
-        fprintf(stderr, "--config <file> is required\n");
-        usage();
-    }
-    if (settings.request_file == NULL) {
-        fprintf(stderr, "--request_file <file> is required\n");
-        usage();
-    }
-
+    /* Initialize IronBee */
     rc = ib_initialize();
     if (rc != IB_OK) {
         fatal_error("Error initializing ironbee library");
     }
 
+    /* Create an IronBee engine */
     rc = ib_engine_create(&ironbee, &ibplugin);
     if (rc != IB_OK) {
         fatal_error("Error creating engine: %d\n", rc);
     }
 
+    /* Initialize the engine */
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK) {
         fatal_error("Error initializing engine: %d\n", rc);
     }
+
+    /* Register a connection open event handler */
     ib_hook_register(ironbee, conn_opened_event,
                      (ib_void_fn_t)ironbee_conn_init, NULL);
 
-    // Set the engine's debug flags from the command line args
+    /* Set the engine's debug flags from the command line args */
 #if DEBUG_ARGS_ENABLE
     set_debug( ib_context_engine(ironbee) );
 #endif
@@ -963,7 +1107,7 @@ int main(int argc, char* argv[])
     /* Notify the engine that the config process has started. */
     ib_state_notify_cfg_started(ironbee);
 
-    // Set the main context's debug flags from the command line args
+    /* Set the main context's debug flags from the command line args */
 #if DEBUG_ARGS_ENABLE
     set_debug( ib_context_main(ironbee) );
 #endif
@@ -975,9 +1119,9 @@ int main(int argc, char* argv[])
         ib_cfgparser_destroy(cp);
     }
 
-    // Set all contexts' debug flags from the command line args
-    // We do this because they may have been overwritten by DebugLog
-    // directives.
+    /* Set all contexts' debug flags from the command line args
+     * We do this because they may have been overwritten by DebugLog
+     * directives. */ 
 #if DEBUG_ARGS_ENABLE
     if ( (settings.debug_level >= 0) || (settings.debug_uri != NULL) ) {
         ib_context_t *ctx = NULL;
@@ -995,5 +1139,7 @@ int main(int argc, char* argv[])
     /* Pass connection data to the engine. */
     run_connection(ironbee);
 
+    /* Done */
     ib_engine_destroy(ironbee);
+    return 0;
 }
