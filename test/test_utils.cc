@@ -217,3 +217,141 @@ static void free_htp_uri_t(htp_uri_t **urip) {
     free(uri);
     *urip = NULL;
 }
+
+struct uri_expected {
+    const char *scheme;
+    const char *username;
+    const char *password;
+    const char *hostname;
+    const char *port;
+    const char *path;
+    const char *query;
+    const char *fragment;
+};
+struct uri_test {
+    const char *uri;
+    uri_expected expected;
+};
+
+bool bstr_equal_c(const bstr *b, const char *c) {
+    if ((c == NULL) || (b == NULL)) {
+        return (c == NULL) && (b == NULL);
+    } else {
+        return (0 == bstr_cmp_c(b, c));
+    }
+}
+
+void append_message(std::ostream & o,
+                    const char *label, const char *expected, bstr *actual) {
+    o << label << " missmatch: ";
+    if (expected != NULL) {
+        o << "'" << expected << "'";
+    } else {
+        o << "<NULL>";
+    }
+    o << " != ";
+    if (actual != NULL) {
+        o << "'";
+        o.write(bstr_ptr(actual), bstr_len(actual));
+        o << "'";
+    } else {
+        o << "<NULL>";
+    }
+    o << std:: endl;
+}
+
+
+static ::testing::AssertionResult UriIsExpected(const char *expected_var,
+                                                const char *actual_var,
+                                                const uri_expected &expected,
+                                                const htp_uri_t *actual) {
+    std::stringstream msg;
+    bool equal=true;
+
+    if (! bstr_equal_c(actual->scheme, expected.scheme)) {
+        equal = false;
+        append_message(msg, "scheme", expected.scheme, actual->scheme);
+    }
+
+    if (! bstr_equal_c(actual->username, expected.username)) {
+        equal = false;
+        append_message(msg, "username", expected.username, actual->username);
+    }
+
+    if (! bstr_equal_c(actual->password, expected.password)) {
+        equal = false;
+        append_message(msg, "password", expected.password, actual->password);
+    }
+
+    if (! bstr_equal_c(actual->hostname, expected.hostname)) {
+        equal = false;
+        append_message(msg, "hostname", expected.hostname, actual->hostname);
+    }
+
+    if (! bstr_equal_c(actual->port, expected.port)) {
+        equal = false;
+        append_message(msg, "port", expected.port, actual->port);
+    }
+
+    if (! bstr_equal_c(actual->path, expected.path)) {
+        equal = false;
+        append_message(msg, "path", expected.path, actual->path);
+    }
+
+    if (! bstr_equal_c(actual->query, expected.query)) {
+        equal = false;
+        append_message(msg, "query", expected.query, actual->query);
+    }
+
+    if (! bstr_equal_c(actual->fragment, expected.fragment)) {
+        equal = false;
+        append_message(msg, "fragment", expected.fragment, actual->fragment);
+    }
+
+    if (equal) {
+        return ::testing::AssertionSuccess();
+    } else {
+        return ::testing::AssertionFailure() << msg.str();
+    }
+}
+
+struct uri_test uri_tests[] = {
+    {"http://user:pass@www.example.com:1234/path1/path2?a=b&c=d#frag",
+     {"http", "user", "pass", "www.example.com", "1234", "/path1/path2", "a=b&c=d","frag"}},
+    {"http://host.com/path",
+     {"http", NULL, NULL, "host.com", NULL, "/path", NULL, NULL}},
+    {"http://",
+     {"http", NULL, NULL, NULL, NULL, "//", NULL,NULL}},
+    {"/path",
+     {NULL, NULL, NULL, NULL, NULL, "/path", NULL, NULL}},
+    {"://",
+     {"", NULL, NULL, NULL, NULL, "//", NULL,NULL}},
+    {"",
+     {NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL}},
+    {"http://user@host.com",
+     {"http", "user", NULL, "host.com", NULL, "", NULL, NULL}},
+    {NULL,{}}
+};
+
+TEST(UtilTest, HtpParseUri) {
+    bstr *input = NULL;
+    htp_uri_t *uri = NULL;
+    uri_test *test;
+
+    input = bstr_dup_c("");
+    EXPECT_EQ(HTP_OK, htp_parse_uri(input, &uri));
+    bstr_free(&input);
+    free_htp_uri_t(&uri);
+
+    test = uri_tests;
+    while (test->uri != NULL) {
+        input = bstr_dup_c(test->uri);
+        EXPECT_EQ(HTP_OK, htp_parse_uri(input, &uri));
+        EXPECT_PRED_FORMAT2(UriIsExpected, test->expected, uri)
+            << "Failed URI = " << test->uri << std::endl;
+
+        bstr_free(&input);
+        free_htp_uri_t(&uri);
+        ++test;
+    }
+}
