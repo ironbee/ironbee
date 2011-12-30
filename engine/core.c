@@ -57,6 +57,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/logformat.h>
 #include <ironbee/module.h>
+#include <ironbee/core.h>
 #include <ironbee/provider.h>
 
 #include "ironbee_private.h"

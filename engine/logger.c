@@ -33,6 +33,7 @@
 
 
 #include <ironbee/engine.h>
+#include <ironbee/core.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
 

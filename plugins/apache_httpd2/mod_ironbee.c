@@ -45,6 +45,7 @@
 #include <ironbee/plugin.h>
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
+#include <ironbee/core.h>   /* Only needed while config is in here. */
 #include <ironbee/provider.h>
 #include <apache_httpd2.h>
 

@@ -41,6 +41,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/module.h>
+#include <ironbee/core.h>
 #include <ironbee/plugin.h>
 
 #include "ironbee_private.h"
