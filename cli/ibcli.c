@@ -786,7 +786,7 @@ static ib_status_t send_header(ib_engine_t* ib,
         lineptr = linebuf;
 
         /* Is this a header that we need to replace? */
-        if( (*linebuf == '\0') || (isspace(*linebuf) != 0) ) {
+        if ( (*linebuf == '\0') || (isspace(*linebuf) != 0) ) {
             break;
         }
 
@@ -937,8 +937,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     ib_status_t rc;
     ib_status_t status = IB_OK;
 
-    /* Register the event handlers late so they run after the relevant
-     * module's event handler */
+    /* Register the tx handler */
     if (settings.dump_tx != 0) {
         rc = ib_hook_register(ib, handle_context_tx_event,
                               (ib_void_fn_t)print_tx, NULL);
@@ -947,6 +946,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
             status = rc;
         }
     }
+    /* Register the user agent handler */
     if (settings.dump_user_agent != 0) {
         rc = ib_hook_register(ib, request_headers_event,
                               (ib_void_fn_t)print_user_agent, NULL);
@@ -955,6 +955,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
             status = rc;
         }
     }
+    /* Register the GeoIP handler */
     if (settings.dump_geoip != 0) {
         rc = ib_hook_register(ib, handle_context_tx_event,
                               (ib_void_fn_t)print_geoip, NULL);
@@ -986,6 +987,8 @@ static void run_connection(ib_engine_t* ib)
     ib_status_t    rc;
     char          *buf = NULL;     /* I/O buffer */
 
+    /* Register the event handlers late so they run after the relevant
+     * module's event handler */
     rc = register_handlers(ib);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register one or more handlers\n");
