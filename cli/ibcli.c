@@ -682,7 +682,6 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
     ib_list_t *lst = NULL;
     ib_list_node_t *node = NULL;
 
-    printf("print_user_agent\n");
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "User-Agent", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
@@ -701,6 +700,7 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
     }
 
     /* Loop through the list & print everything */
+    printf("User Agent information:\n");
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         print_field("User Agent", field);
