@@ -162,7 +162,7 @@ static ib_status_t modua_parse_uastring(char *str,
     /* Otherwise, clean up around the parens */
     else {
         char *cur = lp++;
-        while( (cur > str) && (*cur == ' ') ) {
+        while ( (cur > str) && (*cur == ' ') ) {
             *cur = '\0';
             --cur;
         }
@@ -572,7 +572,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
     }
 
     /* Initializations */
-    rc = modua_rules_init( &failed_rule_num );
+    rc = modua_rules_init(&failed_rule_num);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "User agent rule initialization failed on rule #%d: %d",
@@ -662,7 +662,7 @@ int main(int argc, const char *argv[])
 
 
     /* Rule Initializations */
-    rc = modua_rules_init( &failed_rule_num );
+    rc = modua_rules_init(&failed_rule_num);
     if (rc != IB_OK) {
         fprintf(stderr,
                 "User agent rule initialization failed on rule #%d: %d",
@@ -698,7 +698,7 @@ int main(int argc, const char *argv[])
 
         /* Strip off the trailing whitespace */
         char       *end = buf+strlen(buf)-1;
-        while( (end > buf) && (isspace(*end) != 0) ) {
+        while ( (end > buf) && (isspace(*end) != 0) ) {
             --end;
         }
         *end = '\0';
