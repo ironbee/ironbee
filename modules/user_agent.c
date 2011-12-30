@@ -54,7 +54,7 @@
 
 #ifndef USER_AGENT_MAIN
 /* Define the module name as well as a string version of it. */
-#define MODULE_NAME        remote_ip
+#define MODULE_NAME        user_agent
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Declare the public module symbol. */
@@ -588,54 +588,16 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * @internal
- * Called to close the user agent module (when the module is unloaded).
- *
- * Does nothing
- *
- * @param[in,out] ib IronBee object (unused)
- * @param[in] m Module object (unused)
- *
- * @returns Status code
- */
-static ib_status_t modua_finish(ib_engine_t *ib, ib_module_t *m)
-{
-    IB_FTRACE_INIT(modua_finish);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
- * Called when the module's context is initialized. 
- *
- * Does nothing
- *
- * @param[in,out] ib IronBee object (unused)
- * @param[in] m Module object (unused)
- * @param[in] ctx Configuration context (unused)
- *
- * @returns Status code
- */
-static ib_status_t modua_context_init(ib_engine_t *ib,
-                                      ib_module_t *m,
-                                      ib_context_t *ctx)
-{
-    IB_FTRACE_INIT(modua_context_init);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
-    "user agent",                   /* Module name */
-    NULL,                           /* Global config data */
-    0,                              /* Global config data length*/
+    MODULE_NAME_STR,                /* Module name */
+    IB_MODULE_CONFIG_NULL,          /* Global config data */
     NULL,                           /* Module config map */
     NULL,                           /* Module directive map */
-
     modua_init,                     /* Initialize function */
-    modua_finish,                   /* Finish function */
-    modua_context_init              /* Context init function */
+    NULL,                           /* Finish function */
+    NULL,                           /* Context init function */
+    NULL                            /* Context fini function */
 );
 #else
 
