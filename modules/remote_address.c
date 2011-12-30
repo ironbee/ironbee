@@ -35,7 +35,7 @@
 #include <ironbee/mpool.h>
 
 /* Define the module name as well as a string version of it. */
-#define MODULE_NAME        remote_ip
+#define MODULE_NAME        remote_address
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Declare the public module symbol. */
@@ -161,52 +161,14 @@ static ib_status_t modra_init(ib_engine_t *ib, ib_module_t *m)
    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * @internal
- * Called to close the remote address module (when the module is unloaded).
- *
- * Does nothing
- *
- * @param[in,out] ib IronBee object (unused)
- * @param[in] m Module object (unused)
- *
- * @returns Status code
- */
-static ib_status_t modra_finish(ib_engine_t *ib, ib_module_t *m)
-{
-   IB_FTRACE_INIT(modra_finish);
-   IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
- * Called when the module's context is initialized. 
- *
- * Does nothing
- *
- * @param[in,out] ib IronBee object (unused)
- * @param[in] m Module object (unused)
- * @param[in] ctx Configuration context (unused)
- *
- * @returns Status code
- */
-static ib_status_t modra_context_init(ib_engine_t *ib,
-                                      ib_module_t *m,
-                                      ib_context_t *ctx)
-{
-   IB_FTRACE_INIT(modra_context_init);
-   IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 IB_MODULE_INIT(
-   IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
-   "remote address",               /* Module name */
-   NULL,                           /* Global config data */
-   0,                              /* Global config data length*/
-   NULL,                           /* Module config map */
-   NULL,                           /* Module directive map */
-
-   modra_init,                     /* Initialize function */
-   modra_finish,                   /* Finish function */
-   modra_context_init              /* Context init function */
+    IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
+    MODULE_NAME_STR,                /* Module name */
+    IB_MODULE_CONFIG_NULL,          /* Global config data */
+    NULL,                           /* Module config map */
+    NULL,                           /* Module directive map */
+    modra_init,                     /* Initialize function */
+    NULL,                           /* Finish function */
+    NULL,                           /* Context init function */
+    NULL                            /* Context fini function */
 );

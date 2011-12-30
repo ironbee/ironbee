@@ -302,9 +302,12 @@ static ib_status_t modtrace_context_finish(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/*
+ * Module initialization data, used by IB when it loads the module
+ */
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
-    "trace",                        /* Module name */
+    MODULE_NAME_STR,                /* Module name */
     IB_MODULE_CONFIG_NULL,          /* Global config data */
     NULL,                           /* Module config map */
     NULL,                           /* Module directive map */
