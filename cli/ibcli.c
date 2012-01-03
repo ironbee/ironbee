@@ -524,9 +524,11 @@ static void fatal_error(const char *fmt, ...)
  *
  * Sets the connection local/remote address/port
  *
- * @param[in] ib IronBee object
+ * @param[in] ib IronBee object (not used)
  * @param[in] tx Transaction object
  * @param[in] cbdata Callback data (not used)
+ *
+ * @note The ib and cbdata parameters are unused
  *
  * @returns void
  */
@@ -670,6 +672,8 @@ static ib_status_t print_tx(ib_engine_t *ib,
  * @param[in] tx Transaction object
  * @param[in] data Callback data (not used)
  *
+ * @note The data parameter is unused
+ *
  * @returns Status code
  */
 static ib_status_t print_user_agent(ib_engine_t *ib,
@@ -720,6 +724,8 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
  * @param[in] data Callback data (not used)
+ *
+ * @note The data parameter is unused
  *
  * @returns Status code
  */
