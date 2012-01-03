@@ -32,7 +32,7 @@
  * If all of the expressions in the 'match rule' match, set the
  * transactions's user agent category to the rule's category.
  */
-#define MODUA_MAX_MATCH_RULES   32  /* Max # of match rules */
+#define MODUA_MAX_MATCH_RULES  128  /* Max # of match rules */
 #define MODUA_MAX_FIELD_RULES    8  /* Max # of field rules / match rule */
 
 /* Match against what field?.
@@ -73,7 +73,9 @@ typedef struct modua_field_rule_s {
 /* Match category rule list */
 typedef struct modua_match_rule_s {
     const char        *category;      /**< Category string */
+    unsigned int       line_num;      /**< Line number of rule definition */
     modua_field_rule_t rules[MODUA_MAX_FIELD_RULES]; /**< Field match rules*/
+    unsigned int       rule_num;      /**< Rule number */
     unsigned int       num_rules;     /**< Number of actual rules */
 } modua_match_rule_t;
 
@@ -89,21 +91,24 @@ typedef struct modua_match_ruleset_s {
  *
  * Initializes the rules used to categorize user agent strings.
  *
- * @param[out] failed Number of rule that failed to initialize
+ * @param[out] failed_rule_num Number of rule that failed to initialize
+ * @param[out] failed_frule_num Number of field rule that caused the error
  *
  * @returns status
  */
-ib_status_t modua_rules_init(unsigned int *failed);
+ib_status_t modua_ruleset_init(unsigned int *failed_rule_num,
+                               unsigned int *failed_frule_num,
+                               unsigned int *failed_line_num );
 
 /**
  * @internal
- * Get the match rules.
+ * Get the match rule set.
  *
- * Returns the match rules.  Rules must be previously initialized via
- * modua_rules_init( ).
+ * Returns the set of match rules.  Rules must be previously initialized via
+ * modua_ruleset_init( ).
  *
  * @returns Pointer to the rule array
  */
-const modua_match_ruleset_t *modua_rules_get(void);
+const modua_match_ruleset_t *modua_ruleset_get(void);
 
 #endif /* _IB_MODULE_USER_AGENT_PRIVATE_H_ */
