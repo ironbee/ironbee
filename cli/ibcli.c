@@ -242,8 +242,8 @@ static ib_status_t add_request_header(const char *str,
 
     if (settings.request_headers.num_headers >= MAX_REQUEST_HEADERS) {
         fprintf(stderr,
-                "Unable to add request header field %-*s: no space in array",
-                (int)name_len, buf);
+                "Unable to add request header field we have reached max of %i: ",
+                 MAX_REQUEST_HEADERS);
         return IB_EALLOC;
     }
 
@@ -550,12 +550,12 @@ static void print_field(const char *label,
         case IB_FTYPE_NUM :          /**< Numeric value */
             printf( "  %s %.*s = %jd\n",
                     label, (int)field->nlen, field->name,
-                    (intmax_t)ib_field_value_num(field) );
+                    *(intmax_t *)ib_field_value_num(field) );
             break;
         case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
             printf( "  %s %.*s = %ju\n",
                     label, (int)field->nlen, field->name,
-                    (uintmax_t)ib_field_value_unum(field) );
+                    *(uintmax_t *)ib_field_value_unum(field) );
             break;
         case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
             printf( "  %s %.*s = '%s'\n",
@@ -1032,8 +1032,7 @@ static void run_connection(ib_engine_t* ib)
     buf = ib_mpool_alloc(conn->mp, MAX_BUF);
     if (buf == NULL) {
         fprintf(stderr, "Failed to allocate I/O buffer (%d bytes)\n", MAX_BUF);
-        ib_state_notify_conn_closed(ib, conn);
-        IB_FTRACE_RET_VOID();
+        goto end;
     }
 
     /* Read and send the rest of the file (if any) */
@@ -1048,10 +1047,12 @@ static void run_connection(ib_engine_t* ib)
         fprintf(stderr, "Failed to read/send output data: %d\n", rc);
     }
 
+end:
     /* Close the connection */
     ib_state_notify_conn_closed(ib, conn);
-
     /* Done */
+    fclose(reqfp);
+    fclose(respfp);
     IB_FTRACE_RET_VOID();
 }
 
