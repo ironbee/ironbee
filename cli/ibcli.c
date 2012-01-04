@@ -543,16 +543,19 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in] txdata Transaction data object
+ * @param[in] cbdata Callback data
+ *
+ * @returns Status code
  */
-static void trace_tx_request(ib_engine_t *ib,
-                             ib_txdata_t *txdata,
-                             void *data)
+static ib_status_t trace_tx_request(ib_engine_t *ib,
+                                    ib_txdata_t *txdata,
+                                    void *cbdata)
 {
     IB_FTRACE_INIT(trace_tx_request);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         fprintf(stderr, "REQUEST: %.*s\n", (int)txdata->dlen, txdata->data);
     }
-    IB_FTRACE_RET_VOID();
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -561,16 +564,19 @@ static void trace_tx_request(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in] txdata Transaction data object
+ * @param[in] cbdata Callback data
+ *
+ * @returns Status code
  */
-static void trace_tx_response(ib_engine_t *ib,
-                              ib_txdata_t *txdata,
-                              void *data)
+static ib_status_t trace_tx_response(ib_engine_t *ib,
+                                     ib_txdata_t *txdata,
+                                     void *cbdata)
 {
     IB_FTRACE_INIT(trace_tx_response);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         fprintf(stderr, "RESPONSE: %.*s\n", (int)txdata->dlen, txdata->data);
     }
-    IB_FTRACE_RET_VOID();
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
