@@ -79,6 +79,9 @@ typedef struct {
     const char *remote_ip;
     int remote_port;
 
+    /* Trace */
+    int trace;
+
     /* Dump output */
     int dump_tx;
     int dump_user_agent;
@@ -106,6 +109,7 @@ static runtime_settings_t settings =
     8080,                  /* local_port */
     "10.10.10.10",         /* remote_ip */
     23424,                 /* remote_port */
+    0,                     /* trace */
     0,                     /* dump_user_agent */
     0,                     /* dump_effective_ip */
     0,                     /* dump_geoip */
@@ -203,6 +207,7 @@ static void help(void)
     print_option("local-port", "num", "Specify local port", 0, NULL );
     print_option("remote-ip", "x.x.x.x", "Specify remote IP address", 0, NULL );
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
+    print_option("trace", NULL, "Enable tracing", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
                  "tx, user-agent, geop");
     print_option("request-header", "name: value",
@@ -303,6 +308,7 @@ static ib_status_t command_line(int argc, char *argv[])
         { "remote-port", required_argument, 0, 0 },
 
         { "request-header", required_argument, 0, 0 },
+        { "trace", no_argument, 0, 0 },
         { "dump", required_argument, 0, 0 },
 
 #if DEBUG_ARGS_ENABLE
@@ -334,6 +340,9 @@ static ib_status_t command_line(int argc, char *argv[])
         }
         else if (! strcmp("response-file", longopts[option_index].name)) {
             settings.response_file = optarg;
+        }
+        else if (! strcmp("trace", longopts[option_index].name)) {
+            settings.trace = 1;
         }
         else if (! strcmp("dump", longopts[option_index].name)) {
             if (strcasecmp(optarg, "geoip") == 0) {
@@ -526,6 +535,42 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     iconn->remote_ipstr=settings.remote_ip;
 
     return IB_OK;
+}
+
+/**
+ * @internal
+ * Trace request processing.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] txdata Transaction data object
+ */
+static void trace_tx_request(ib_engine_t *ib,
+                             ib_txdata_t *txdata,
+                             void *data)
+{
+    IB_FTRACE_INIT(trace_tx_request);
+    if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
+        fprintf(stderr, "REQUEST: %.*s\n", (int)txdata->dlen, txdata->data);
+    }
+    IB_FTRACE_RET_VOID();
+}
+
+/**
+ * @internal
+ * Trace request processing.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] txdata Transaction data object
+ */
+static void trace_tx_response(ib_engine_t *ib,
+                              ib_txdata_t *txdata,
+                              void *data)
+{
+    IB_FTRACE_INIT(trace_tx_response);
+    if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
+        fprintf(stderr, "RESPONSE: %.*s\n", (int)txdata->dlen, txdata->data);
+    }
+    IB_FTRACE_RET_VOID();
 }
 
 /**
@@ -936,6 +981,24 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     IB_FTRACE_INIT(register_handlers);
     ib_status_t rc;
     ib_status_t status = IB_OK;
+
+    if (settings.trace) {
+        /* Register the request trace handler. */
+        rc = ib_hook_register(ib, tx_data_in_event,
+                              (ib_void_fn_t)trace_tx_request, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register tx request handler: %d\n", rc);
+            status = rc;
+        }
+
+        /* Register the response trace handler. */
+        rc = ib_hook_register(ib, tx_data_out_event,
+                              (ib_void_fn_t)trace_tx_response, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register tx response handler: %d\n", rc);
+            status = rc;
+        }
+    }
 
     /* Register the tx handler */
     if (settings.dump_tx != 0) {
