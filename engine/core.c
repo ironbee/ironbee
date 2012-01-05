@@ -2017,7 +2017,7 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Get the list of events. */
-    rc = ib_clog_events_get(log->ctx, &list);
+    rc = ib_event_get_all(log->tx->epi, &list);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2381,7 +2381,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
             break;
         /* Only if events are present */
         case 2:
-            rc = ib_clog_events_get(tx->ctx, &events);
+            rc = ib_event_get_all(tx->epi, &events);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -2458,20 +2458,19 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
         ib_auditlog_add_part_http_response_body(log);
     }
 
-    /* Audit Provider */
-    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
-                                     corecfg->audit, &audit,
-                                     ib->mp, log);
+    /* Audit Log Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.audit, &audit,
+                                        tx->mp, log);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_AUDIT, rc);
+        ib_log_error(ib, 0, "Failed to create audit log provider instance: %d",
+                     rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_audit_provider_set_instance(tx->ctx, audit);
 
-    ib_clog_auditlog_write(tx->ctx);
+    ib_auditlog_write(audit);
 
     /* Events */
-    ib_clog_events_write(tx->ctx);
+    ib_event_write_all(tx->epi);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -2552,7 +2551,9 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
 
 /**
  * @internal
- * Initialize the parser.
+ * Handle the connection starting.
+ *
+ * Create the data provider instance and initialize the parser.
  *
  * @param ib Engine
  * @param conn Connection
@@ -2560,14 +2561,28 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
  *
  * @returns Status code
  */
-static ib_status_t parser_hook_init(ib_engine_t *ib,
-                                    ib_conn_t *conn,
-                                    void *cbdata)
+static ib_status_t core_hook_conn_started(ib_engine_t *ib,
+                                          ib_conn_t *conn,
+                                          void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_init);
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    ib_core_cfg_t *corecfg;
     ib_status_t rc;
+
+    rc = ib_context_module_config(conn->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+
+    /* Data Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &conn->dpi,
+                                        conn->mp, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create conn data provider instance: %d",
+                     rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
@@ -3649,9 +3664,9 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
  * @internal
  * Handle the transaction starting.
  *
- * Setup placeholders for all of the core fields. This
- * allows other modules to refer to the field prior to it
- * it being initialized.
+ * Create the transaction provider instances.  And setup placeholders
+ * for all of the core fields. This allows other modules to refer to
+ * the field prior to it it being initialized.
  *
  * @param ib Engine
  * @param tx Transaction
@@ -3664,7 +3679,28 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
                                         void *cbdata)
 {
     IB_FTRACE_INIT(core_hook_tx_started);
+    ib_core_cfg_t *corecfg;
     ib_status_t rc;
+
+    rc = ib_context_module_config(tx->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+
+    /* Data Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &tx->dpi,
+                                        tx->mp, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create tx data provider instance: %d",
+                     rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Logevent Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.logevent, &tx->epi,
+                                        tx->mp, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create logevent provider instance: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Core Request Fields */
     rc = ib_data_add_stream(tx->dpi, "request_body", NULL);
@@ -4370,10 +4406,10 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-static void core_set_value(ib_context_t *ctx,
-                           ib_ftype_t type,
-                           const char *name,
-                           const char *val)
+static ib_status_t core_set_value(ib_context_t *ctx,
+                                  ib_ftype_t type,
+                                  const char *name,
+                                  const char *val)
 {
     ib_engine_t *ib = ctx->ib;
     ib_core_cfg_t *corecfg;
@@ -4389,32 +4425,58 @@ static void core_set_value(ib_context_t *ctx,
 
     if (strcasecmp("parser", name) == 0) {
         if (strcmp(MODULE_NAME_STR, corecfg->parser) == 0) {
-            return;
+            IB_FTRACE_RET_STATUS(IB_OK);
         }
-        /* Lookup/set parser provider. */
+        /* Lookup/set parser provider instance. */
         rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
                                          val, &pi,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
             ib_log_error(ib, 0, "Failed to create %s provider instance: %d",
                          IB_PROVIDER_TYPE_PARSER, rc);
-            return;
+            IB_FTRACE_RET_STATUS(rc);
         }
         ib_parser_provider_set_instance(ctx, pi);
         pi = ib_parser_provider_get_instance(ctx);
     }
     else if (strcasecmp("audit", name) == 0) {
-        /* Lookup/set audit provider. */
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
-                                         val, &pi,
-                                         ib->mp, NULL);
+        /* Lookup the audit log provider. */
+        rc = ib_provider_lookup(ib,
+                                IB_PROVIDER_TYPE_AUDIT,
+                                val,
+                                &corecfg->pr.audit);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %d",
-                         IB_PROVIDER_TYPE_AUDIT, rc);
-            return;
+            ib_log_error(ib, 0, "Failed to lookup %s audit log provider: %d",
+                         val, rc);
+            IB_FTRACE_RET_STATUS(rc);
         }
-        ib_audit_provider_set_instance(ctx, pi);
     }
+    else if (strcasecmp("data", name) == 0) {
+        /* Lookup the data provider. */
+        rc = ib_provider_lookup(ib,
+                                IB_PROVIDER_TYPE_DATA,
+                                val,
+                                &corecfg->pr.data);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 0, "Failed to lookup %s data provider: %d",
+                         val, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (strcasecmp("logevent", name) == 0) {
+        /* Lookup the logevent provider. */
+        rc = ib_provider_lookup(ib,
+                                IB_PROVIDER_TYPE_LOGEVENT,
+                                val,
+                                &corecfg->pr.logevent);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 0, "Failed to lookup %s logevent provider: %d",
+                         val, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 
@@ -4438,7 +4500,7 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT(core_dir_param2);
     ib_engine_t *ib = cp->ib;
-    //ib_status_t rc;
+    ib_status_t rc;
 
     if (strcasecmp("Set", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
@@ -4462,7 +4524,8 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        core_set_value(ctx, type, p1, p2);
+        rc = core_set_value(ctx, type, p1, p2);
+        IB_FTRACE_RET_STATUS(rc);
     }
     else {
         ib_log_error(ib, 1, "Unhandled directive: %s %s %s", name, p1, p2);
@@ -4667,7 +4730,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_provider_t *core_audit_provider;
     ib_provider_t *core_data_provider;
     ib_provider_inst_t *logger;
-    ib_provider_inst_t *logevent;
     ib_provider_inst_t *parser;
     ib_filter_t *fbuffer;
     ib_status_t rc;
@@ -4774,7 +4836,7 @@ static ib_status_t core_init(ib_engine_t *ib,
 
     /* Register parser hooks. */
     ib_hook_register(ib, conn_started_event,
-                     (ib_void_fn_t)parser_hook_init, NULL);
+                     (ib_void_fn_t)core_hook_conn_started, NULL);
     ib_hook_register(ib, handle_connect_event,
                      (ib_void_fn_t)parser_hook_connect, NULL);
     ib_hook_register(ib, handle_disconnect_event,
@@ -4828,15 +4890,38 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
     ib_log_provider_set_instance(ib->ctx, logger);
 
-    /* Lookup/set default logevent provider. */
-    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGEVENT,
-                                     corecfg->logevent, &logevent,
-                                     ib->mp, NULL);
+    /* Lookup the core data provider. */
+    rc = ib_provider_lookup(ib,
+                            IB_PROVIDER_TYPE_DATA,
+                            IB_DSTR_CORE,
+                            &corecfg->pr.data);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_LOGEVENT, rc);
+        ib_log_error(ib, 0, "Failed to lookup %s data provider: %d",
+                     IB_DSTR_CORE, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_logevent_provider_set_instance(ib->ctx, logevent);
+
+    /* Lookup the core audit log provider. */
+    rc = ib_provider_lookup(ib,
+                            IB_PROVIDER_TYPE_AUDIT,
+                            IB_DSTR_CORE,
+                            &corecfg->pr.audit);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to lookup %s audit log provider: %d",
+                     IB_DSTR_CORE, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Lookup the core logevent provider. */
+    rc = ib_provider_lookup(ib,
+                            IB_PROVIDER_TYPE_LOGEVENT,
+                            IB_DSTR_CORE,
+                            &corecfg->pr.logevent);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to lookup %s logevent provider: %d",
+                     IB_DSTR_CORE, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Lookup/set default parser provider if not the "core" parser. */
     if (strcmp(MODULE_NAME_STR, corecfg->parser) != 0) {
@@ -4844,7 +4929,8 @@ static ib_status_t core_init(ib_engine_t *ib,
                                          corecfg->parser, &parser,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_PARSER, rc);
+            ib_log_error(ib, 0, "Failed to create %s provider instance: %d",
+                         IB_DSTR_CORE, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_parser_provider_set_instance(ib->ctx, parser);

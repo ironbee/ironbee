@@ -415,17 +415,6 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->base_uuid.st.clk_seq_hi_res = 0x8f;
     (*pconn)->base_uuid.st.clk_seq_low = 0xff;
 
-    /* Create the core data provider instance */
-    rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_TYPE_DATA,
-                                     IB_DSTR_CORE,
-                                     &((*pconn)->dpi),
-                                     (*pconn)->mp,
-                                     NULL);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
     rc = ib_hash_create(&((*pconn)->data), (*pconn)->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
@@ -548,7 +537,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     ib_mpool_t *pool;
     struct timeval tv;
     ib_status_t rc;
-    
+
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
      */
@@ -583,18 +572,6 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
 
     conn->tx_count++;
     ib_tx_generate_id(*ptx);
-
-    /* Create the core data provider instance */
-    rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_TYPE_DATA,
-                                     IB_DSTR_CORE,
-                                     &((*ptx)->dpi),
-                                     (*ptx)->mp,
-                                     NULL);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
 
     /* Create the generic data store. */
     rc = ib_hash_create(&((*ptx)->data), (*ptx)->mp);

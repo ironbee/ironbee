@@ -314,8 +314,8 @@ function onEventHandleRequestHeaders(ib, tx)
         if rc == ironbee.IB_OK then
             ironbee.ib_log_debug(ib, 4, "Request Line matches: %s", patt)
             -- Generate a test event (alert)
-            ironbee.ib_clog_event(
-                tx.ctx(), 
+            ironbee.ib_event_add(
+                tx.lpi(), 
                 ironbee.ib_logevent_create(
                     tx.mp(),
                     "-",

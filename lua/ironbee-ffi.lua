@@ -265,6 +265,7 @@ ffi.cdef [[
         ib_context_t       *ctx;
         void               *pctx;
         ib_provider_inst_t *dpi;
+        ib_provider_inst_t *epi;
         ib_hash_t          *data;
         ib_fctl_t          *fctl;
         ib_timeval_t        started;
@@ -426,13 +427,13 @@ ffi.cdef [[
                                    uint8_t severity,
                                    const char *fmt,
                                    ...);
-    ib_status_t ib_clog_event(ib_context_t *ctx,
-                              ib_logevent_t *e);
-    ib_status_t ib_clog_event_remove(ib_context_t *ctx,
-                                     uint64_t id);
-    ib_status_t ib_clog_events_get(ib_context_t *ctx,
-                                   ib_list_t **pevents);
-    void ib_clog_events_write(ib_context_t *ctx);
+    ib_status_t ib_event_add(ib_provider_inst_t *pi,
+                             ib_logevent_t *e);
+    ib_status_t ib_event_remove(ib_provider_inst_t *pi,
+                                uint64_t id);
+    ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
+                                 ib_list_t **pevents);
+    ib_status_t ib_event_write_all(ib_provider_inst_t *pi);
 
 
     /* Byte String */
@@ -847,6 +848,7 @@ local function newTx(val)
         mp = function() return newMpool(c_val.mp) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
+        epi = function() return newProviderInst(c_val.epi) end,
         conn = function() return newConn(c_val.conn) end,
         id = function() return ffi.cast("const char *", c_val.id) end,
     }

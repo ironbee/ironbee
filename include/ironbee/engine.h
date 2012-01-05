@@ -244,6 +244,7 @@ struct ib_tx_t {
     ib_context_t       *ctx;             /**< Config context */
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
+    ib_provider_inst_t *epi;             /**< Log event provider instance */
     ib_hash_t          *data;            /**< Generic data store */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
     ib_timeval_t        started;         /**< Tx (request) start time */
@@ -1653,51 +1654,55 @@ void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
 /**
  * Add an event to be logged.
  *
- * @param ctx Config context
+ * @param pi Provider instance
  * @param e Event
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_clog_event(ib_context_t *ctx,
-                                     ib_logevent_t *e);
+ib_status_t DLL_PUBLIC ib_event_add(ib_provider_inst_t *pi,
+                                    ib_logevent_t *e);
 
 /**
  * Remove an event from the queue before it is logged.
  *
- * @param ctx Config context
+ * @param pi Provider instance
  * @param id Event id
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_clog_event_remove(ib_context_t *ctx,
-                                            uint32_t id);
+ib_status_t DLL_PUBLIC ib_event_remove(ib_provider_inst_t *pi,
+                                       uint32_t id);
 
 /**
  * Get a list of pending events to be logged.
  *
  * @note The list can be modified directly.
  *
- * @param ctx Config context
+ * @param pi Provider instance
  * @param pevents Address where list of events is written
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_clog_events_get(ib_context_t *ctx,
-                                          ib_list_t **pevents);
+ib_status_t DLL_PUBLIC ib_event_get_all(ib_provider_inst_t *pi,
+                                        ib_list_t **pevents);
 
 /**
  * Write out any pending events to the log.
  *
- * @param ctx Config context
+ * @param pi Provider instance
+ *
+ * @returns Status code
  */
-void DLL_PUBLIC ib_clog_events_write(ib_context_t *ctx);
+ib_status_t DLL_PUBLIC ib_event_write_all(ib_provider_inst_t *pi);
 
 /**
  * Write out audit log.
  *
- * @param ctx Config context
+ * @param pi Provider instance
+ *
+ * @returns Status code
  */
-void DLL_PUBLIC ib_clog_auditlog_write(ib_context_t *ctx);
+ib_status_t DLL_PUBLIC ib_auditlog_write(ib_provider_inst_t *pi);
 
 /**
  * @} IronBeeEngineLog

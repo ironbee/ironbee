@@ -206,11 +206,16 @@ typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
     /** Provider instances */
     struct {
-        ib_provider_inst_t *logger;  /**< Log provider instance */
-        ib_provider_inst_t *audit;   /**< Audit Log provider instance */
-        ib_provider_inst_t *logevent;/**< Logevent provider instance */
-        ib_provider_inst_t *parser;  /**< Parser provider instance */
+        ib_provider_inst_t *logger;     /**< Log provider instance */
+        ib_provider_inst_t *parser;     /**< Parser provider instance */
     } pi;
+
+    /** Providers (instance is per-transaction) */
+    struct {
+        ib_provider_t   *data;          /**< Core data provider */
+        ib_provider_t   *audit;         /**< Audit log provider */
+        ib_provider_t   *logevent;      /**< Logevent provider */
+    } pr;
 
     ib_num_t         log_level;         /**< Log level */
     char            *log_uri;           /**< Log URI */

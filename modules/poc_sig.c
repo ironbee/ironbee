@@ -443,7 +443,7 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
             }
 
             /* Log the event. */
-            ib_clog_event(tx->ctx, e);
+            ib_event_add(tx->epi, e);
         }
         else {
             ib_log_debug(ib, dbglvl, "PocSig NOMATCH");
