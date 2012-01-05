@@ -230,6 +230,7 @@ ffi.cdef [[
         int                 local_port;
         ib_uuid_t           base_uuid;
         size_t              tx_count;
+        ib_tx_t            *tx_first;
         ib_tx_t            *tx;
         ib_tx_t            *tx_last;
         ib_flags_t          flags;
@@ -272,8 +273,8 @@ ffi.cdef [[
         ib_timeval_t        tv_request;
         ib_tx_t            *next;
         const char         *hostname;
+        const char         *er_ipstr;
         const char         *path;
-	const char         *er_ipstr;
         ib_flags_t          flags;
     };
 
