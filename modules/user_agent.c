@@ -422,7 +422,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
 
     /* Copy the agent string */
     agent = (char *)ib_mpool_strdup(tx->conn->mp, buf);
-    if (buf == NULL) {
+    if (agent == NULL) {
         ib_log_error(ib, 4, "Failed to allocate copy of agent string");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -634,7 +634,6 @@ IB_MODULE_INIT(
 int main(int argc, const char *argv[])
 {
     char         buf[MAX_LINE_BUF];
-    char        *p;
     FILE        *fp;
     ib_status_t  rc;
     modua_match_rule_t *failed_rule;
@@ -673,7 +672,7 @@ int main(int argc, const char *argv[])
     }
 
     /* Read each line of the file, try to parse it as a user agent string. */
-    while ( (p = fgets(buf, sizeof(buf), fp)) != NULL) {
+    while (fgets(buf, sizeof(buf), fp) != NULL) {
         const modua_match_rule_t *match;
         char                     *product;
         char                     *platform;
