@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <glob.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/plugin.h>
@@ -57,7 +58,8 @@ typedef enum {
 } data_direction_t;
 
 /* Max number of request headers that can be specified on the command line */
-#define MAX_REQUEST_HEADERS  8
+#define MAX_REQUEST_HEADERS     8
+#define MAX_FILES            1024
 
 /* Header / value pairs */
 typedef struct {
@@ -71,8 +73,11 @@ typedef struct {
 /* Runtime settings */
 typedef struct {
     char *config_file;
-    char *request_file;
-    char *response_file;
+    glob_t req_files;
+    glob_t rsp_files;
+
+    /* Verbose */
+    int verbose;
 
     /* Local and remote IP address / port */
     const char *local_ip;
@@ -106,8 +111,9 @@ typedef struct {
 static runtime_settings_t settings =
 {
     NULL,                  /* config_file */
-    NULL,                  /* request_file */
-    NULL,                  /* response_file */
+    { 0 },                 /* req_files */
+    { 0 },                 /* rsp_files */
+    0,                     /* Verbose level */
     "192.168.1.1",         /* local_ip */
     8080,                  /* local_port */
     "10.10.10.10",         /* remote_ip */
@@ -208,6 +214,7 @@ static void help(void)
     print_option("config", "path", "Specify configuration file", 1, NULL );
     print_option("request-file", "path", "Specify request file", 1, NULL );
     print_option("response-file", "path", "Specify response file", 1, NULL );
+    print_option("verbose", "num", "Specify verbose level", 1, NULL );
     print_option("local-ip", "x.x.x.x", "Specify local IP address", 0, NULL );
     print_option("local-port", "num", "Specify local port", 0, NULL );
     print_option("remote-ip", "x.x.x.x", "Specify remote IP address", 0, NULL );
@@ -252,7 +259,7 @@ static ib_status_t add_request_header(const char *str,
 
     if (settings.request_headers.num_headers >= MAX_REQUEST_HEADERS) {
         fprintf(stderr,
-                "Unable to add request header field we have reached max of %i: ",
+                "Unable to add request header field: max # is %i: ",
                  MAX_REQUEST_HEADERS);
         return IB_EALLOC;
     }
@@ -291,6 +298,25 @@ static ib_status_t add_request_header(const char *str,
 
 /**
  * @internal
+ * Handle a fatal error.
+ *
+ * Print a meaningful message and exit.
+ *
+ * @param[in] fmt printf format
+ *
+ * @returns void
+ */
+static void fatal_error(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    exit(1);
+}
+
+/**
+ * @internal
  * Command line processing.
  *
  * Command line processing for the IronBee CLI
@@ -307,6 +333,7 @@ static ib_status_t command_line(int argc, char *argv[])
         { "config", required_argument, 0, 0 },
         { "request-file", required_argument, 0, 0 },
         { "response-file", required_argument, 0, 0 },
+        { "verbose", required_argument, 0, 0 },
         { "local-ip", required_argument, 0, 0 },
         { "local-port", required_argument, 0, 0 },
         { "remote-ip", required_argument, 0, 0 },
@@ -323,6 +350,8 @@ static ib_status_t command_line(int argc, char *argv[])
         { "help", no_argument, 0, 0 },
         { 0, 0, 0, 0}
     };
+    size_t num_req = 0;
+    size_t num_rsp = 0;
 
     /* Loop through the command line args */
     while (1) {
@@ -337,14 +366,31 @@ static ib_status_t command_line(int argc, char *argv[])
             }
         }
 
-        if (! strcmp("config", longopts[option_index].name)) {
+        if (! strcmp("verbose", longopts[option_index].name)) {
+            settings.verbose = atoi(optarg);
+        }
+        else if (! strcmp("config", longopts[option_index].name)) {
             settings.config_file = optarg;
         }
         else if (! strcmp("request-file", longopts[option_index].name)) {
-            settings.request_file = optarg;
+            if (glob(optarg, GLOB_APPEND, NULL, &settings.req_files) != 0) {
+                fatal_error("glob() failed: %d", errno);
+            }
+            else if (settings.req_files.gl_pathc == 0) {
+                fprintf(stderr, "No files match glob pattern %s", optarg);
+                usage();
+            }
+            num_req = settings.req_files.gl_pathc;
         }
         else if (! strcmp("response-file", longopts[option_index].name)) {
-            settings.response_file = optarg;
+            if (glob(optarg, GLOB_APPEND, NULL, &settings.rsp_files) != 0) {
+                fatal_error("glob() failed: %d", errno);
+            }
+            else if (settings.rsp_files.gl_pathc == 0) {
+                fprintf(stderr, "No files match glob pattern %s", optarg);
+                usage();
+            }
+            num_rsp = settings.rsp_files.gl_pathc;
         }
         else if (! strcmp("trace", longopts[option_index].name)) {
             settings.trace = 1;
@@ -466,8 +512,18 @@ static ib_status_t command_line(int argc, char *argv[])
         fprintf(stderr, "--config <file> is required\n");
         usage();
     }
-    if (settings.request_file == NULL) {
-        fprintf(stderr, "--request_file <file> is required\n");
+    else if (num_req == 0) {
+        fprintf(stderr, "At least one request file is required\n");
+        usage();
+    }
+    else if (num_rsp == 0) {
+        fprintf(stderr, "At least one response file is required\n");
+        usage();
+    }
+    else if ( (num_req != num_rsp) && ( (num_req != 1) && (num_rsp != 1) ) ) {
+        fprintf(stderr,
+                "# request files (%zd) and response files (%zd) mismatch\n",
+                num_req, num_rsp);
         usage();
     }
     return IB_OK;
@@ -498,25 +554,6 @@ static void set_debug( ib_context_t *ctx )
     }
 }
 #endif
-
-/**
- * @internal
- * Handle a fatal error.
- *
- * Print a meaningful message and exit.
- *
- * @param[in] fmt printf format
- *
- * @returns void
- */
-static void fatal_error(const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    exit(1);
-}
 
 /**
  * @internal
@@ -561,7 +598,8 @@ static ib_status_t trace_tx_request(ib_engine_t *ib,
     IB_FTRACE_INIT(trace_tx_request);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         fprintf(stderr, "REQUEST: %.*s\n",
-                (int)(txdata->data[txdata->dlen] == '\n' ? txdata->dlen : txdata->dlen - 1),
+                (int)(txdata->data[txdata->dlen] == '\n' ?
+                      txdata->dlen : txdata->dlen - 1),
                 txdata->data);
         settings.trace_request_cnt++;
     }
@@ -585,7 +623,8 @@ static ib_status_t trace_tx_response(ib_engine_t *ib,
     IB_FTRACE_INIT(trace_tx_response);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         fprintf(stderr, "RESPONSE: %.*s\n",
-                (int)(txdata->data[txdata->dlen] == '\n' ? txdata->dlen : txdata->dlen - 1),
+                (int)(txdata->data[txdata->dlen] == '\n' ?
+                      txdata->dlen : txdata->dlen - 1),
                 txdata->data);
         settings.trace_response_cnt++;
     }
@@ -818,6 +857,72 @@ static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
 
 /**
  * @internal
+ * Register event handlers.
+ *
+ * Register event handlers to print specific pieces of data; which ones are
+ * registered is controlled via command line arguments.
+ *
+ * @param[in] ib IronBee object
+ *
+ * @returns status
+ */
+static ib_status_t register_handlers(ib_engine_t* ib)
+{
+    IB_FTRACE_INIT(register_handlers);
+    ib_status_t rc;
+    ib_status_t status = IB_OK;
+
+    /* Register the trace handlers */
+    if (settings.trace) {
+        /* Register the request trace handler. */
+        rc = ib_hook_register(ib, tx_data_in_event,
+                              (ib_void_fn_t)trace_tx_request, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register tx request handler: %d\n", rc);
+            status = rc;
+        }
+
+        /* Register the response trace handler. */
+        rc = ib_hook_register(ib, tx_data_out_event,
+                              (ib_void_fn_t)trace_tx_response, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register tx response handler: %d\n", rc);
+            status = rc;
+        }
+    }
+
+    /* Register the tx handler */
+    if (settings.dump_tx != 0) {
+        rc = ib_hook_register(ib, handle_context_tx_event,
+                              (ib_void_fn_t)print_tx, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register tx handler: %d\n", rc);
+            status = rc;
+        }
+    }
+    /* Register the user agent handler */
+    if (settings.dump_user_agent != 0) {
+        rc = ib_hook_register(ib, request_headers_event,
+                              (ib_void_fn_t)print_user_agent, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register user_agent handler: %d\n", rc);
+            status = rc;
+        }
+    }
+    /* Register the GeoIP handler */
+    if (settings.dump_geoip != 0) {
+        rc = ib_hook_register(ib, handle_context_tx_event,
+                              (ib_void_fn_t)print_geoip, NULL);
+        if (rc != IB_OK) {
+            fprintf(stderr, "Failed to register geoip handler: %d\n", rc);
+            status = rc;
+        }
+    }
+    IB_FTRACE_RET_STATUS(status);
+}
+
+/**
+ * @internal
  * Simulate the reception of request header.
  *
  * Do the work to simulate the recieving of the header, replacing / adding
@@ -990,67 +1095,74 @@ static ib_status_t send_file(ib_engine_t* ib,
 
 /**
  * @internal
- * Register event handlers.
+ * Run connection.
  *
- * Register event handlers to print specific pieces of data; which ones are
- * registered is controlled via command line arguments.
+ * Do the work to simulate a transaction on a connection
  *
  * @param[in] ib IronBee object
  *
- * @returns status
+ * @returns void
  */
-static ib_status_t register_handlers(ib_engine_t* ib)
+static ib_status_t run_transaction(ib_engine_t* ib,
+                                   ib_conn_t *conn,
+                                   void *buf,
+                                   size_t bufsize,
+                                   size_t trans_num,
+                                   const char *req_file,
+                                   const char *rsp_file)
 {
-    IB_FTRACE_INIT(register_handlers);
-    ib_status_t rc;
-    ib_status_t status = IB_OK;
+    IB_FTRACE_INIT(run_connection);
+    FILE          *reqfp  = NULL;
+    FILE          *rspfp = NULL;
+    ib_conndata_t  conn_data;
+    ib_status_t    rc;
 
-    if (settings.trace) {
-        /* Register the request trace handler. */
-        rc = ib_hook_register(ib, tx_data_in_event,
-                              (ib_void_fn_t)trace_tx_request, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register tx request handler: %d\n", rc);
-            status = rc;
-        }
-
-        /* Register the response trace handler. */
-        rc = ib_hook_register(ib, tx_data_out_event,
-                              (ib_void_fn_t)trace_tx_response, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register tx response handler: %d\n", rc);
-            status = rc;
-        }
+    /* Open the request and response files that we'll use for this 
+     * transaction */
+    if (settings.verbose >= 1) {
+        printf("Transaction #%zd with req=%s rsp=%s\n",
+               trans_num, req_file, rsp_file);
+    }
+    reqfp = fopen(req_file, "rb");
+    if (reqfp == NULL) {
+        fprintf(stderr, "Error opening request file '%s'\n", req_file);
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+    rspfp = fopen(rsp_file, "rb");
+    if (rspfp == NULL) {
+        fprintf(stderr, "Error opening response file '%s'\n", rsp_file);
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
-    /* Register the tx handler */
-    if (settings.dump_tx != 0) {
-        rc = ib_hook_register(ib, handle_context_tx_event,
-                              (ib_void_fn_t)print_tx, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register tx handler: %d\n", rc);
-            status = rc;
-        }
+    // Fill in the connection data object
+    conn_data.ib   = ib;
+    conn_data.mp   = conn->mp;
+    conn_data.conn = conn;
+
+    /* Read the request header from the file, assembled the header, pass
+     * it to IronBee */
+    rc = send_header(ib, &conn_data, reqfp);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to read/send header data: %d\n", rc);
+        IB_FTRACE_RET_STATUS(rc);
     }
-    /* Register the user agent handler */
-    if (settings.dump_user_agent != 0) {
-        rc = ib_hook_register(ib, request_headers_event,
-                              (ib_void_fn_t)print_user_agent, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register user_agent handler: %d\n", rc);
-            status = rc;
-        }
+
+    /* Read and send the rest of the file (if any) */
+    rc = send_file(ib, &conn_data, buf, MAX_BUF, reqfp, DATA_IN);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to read/send input data: %d\n", rc);
+        IB_FTRACE_RET_STATUS(rc);
     }
-    /* Register the GeoIP handler */
-    if (settings.dump_geoip != 0) {
-        rc = ib_hook_register(ib, handle_context_tx_event,
-                              (ib_void_fn_t)print_geoip, NULL);
-        if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register geoip handler: %d\n", rc);
-            status = rc;
-        }
+
+    /* Read and send the rest of the file (if any) */
+    rc = send_file(ib, &conn_data, buf, MAX_BUF, rspfp, DATA_OUT);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to read/send output data: %d\n", rc);
+        IB_FTRACE_RET_STATUS(rc);
     }
-    IB_FTRACE_RET_STATUS(status);
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -1066,12 +1178,14 @@ static ib_status_t register_handlers(ib_engine_t* ib)
 static void run_connection(ib_engine_t* ib)
 {
     IB_FTRACE_INIT(run_connection);
-    FILE          *reqfp  = NULL;
-    FILE          *respfp = NULL;
-    ib_conn_t     *conn = NULL;
-    ib_conndata_t  conn_data;
     ib_status_t    rc;
-    char          *buf = NULL;     /* I/O buffer */
+    ib_conn_t     *conn = NULL;
+    char          *buf = NULL;      /* I/O buffer */
+    size_t         trans_num;       /* Transaction number */
+    size_t         max_files;       /* Max # of files (between req & resp) */
+    size_t         nreq = settings.req_files.gl_pathc;
+    size_t         nrsp = settings.rsp_files.gl_pathc;
+
 
     /* Register the event handlers late so they run after the relevant
      * module's event handler */
@@ -1080,39 +1194,9 @@ static void run_connection(ib_engine_t* ib)
         fprintf(stderr, "Failed to register one or more handlers\n");
     }
 
-    /* Open the files that we'll use for I/O */
-    if (! strcmp("-", settings.request_file)) {
-        reqfp = stdin;
-    }
-    else {
-        reqfp = fopen(settings.request_file, "rb");
-        if (reqfp == NULL) {
-            fatal_error("Error opening request file '%s'",
-                        settings.request_file);
-        }
-    }
-
-    if (settings.response_file) {
-        respfp = fopen(settings.response_file, "rb");
-        if (respfp == NULL) {
-            fatal_error("Error opening response file '%s'",
-                        settings.response_file);
-        }
-    }
-
     // Create a connection
     ib_conn_create(ib, &conn, NULL);
     ib_state_notify_conn_opened(ib, conn);
-    conn_data.ib   = ib;
-    conn_data.mp   = conn->mp;
-    conn_data.conn = conn;
-
-    /* Read the request header from the file, assembled the header, pass
-     * it to IronBee */
-    rc = send_header(ib, &conn_data, reqfp);
-    if (rc != IB_OK) {
-        fprintf(stderr, "Failed to read/send header data: %d\n", rc);
-    }
 
     /* Allocate a buffer for the remainder of the I/O */
     buf = ib_mpool_alloc(conn->mp, MAX_BUF);
@@ -1121,28 +1205,34 @@ static void run_connection(ib_engine_t* ib)
         goto end;
     }
 
-    /* Read and send the rest of the file (if any) */
-    rc = send_file(ib, &conn_data, buf, MAX_BUF, reqfp, DATA_IN);
-    if (rc != IB_OK) {
-        fprintf(stderr, "Failed to read/send input data: %d\n", rc);
-    }
+    /* Loop through our files, send them */
+    max_files = (nreq > nrsp) ? nreq : nrsp;
+    for (trans_num = 0;  trans_num < max_files;  trans_num++) {
+        size_t req_num = (nreq == 1) ? 0 : trans_num;
+        size_t rsp_num = (nrsp == 1) ? 0 : trans_num;
 
-    /* Read and send the rest of the file (if any) */
-    rc = send_file(ib, &conn_data, buf, MAX_BUF, respfp, DATA_OUT);
-    if (rc != IB_OK) {
-        fprintf(stderr, "Failed to read/send output data: %d\n", rc);
+        /* Run the transaction */
+        rc = run_transaction(ib,
+                             conn,
+                             buf,
+                             MAX_BUF,
+                             trans_num+1,
+                             settings.req_files.gl_pathv[req_num],
+                             settings.rsp_files.gl_pathv[rsp_num]);
+        if (rc != IB_OK) {
+            fprintf(stderr, "run_transaction failed: %d\n", rc);
+            break;
+        }
     }
 
 end:
     /* Close the connection */
     ib_state_notify_conn_closed(ib, conn);
-    /* Done */
-    fclose(reqfp);
-    fclose(respfp);
 
     /* Print trace request/response count */
     if (settings.trace) {
-        fprintf(stderr, "Trace Request Count: %" PRIu64 " Trace Response Count : %" PRIu64 "\n",
+        fprintf(stderr, "Trace Request Count: %" PRIu64 
+                " Trace Response Count : %" PRIu64 "\n",
                 settings.trace_request_cnt, settings.trace_response_cnt);
     }
 
@@ -1225,6 +1315,7 @@ int main(int argc, char* argv[])
         size_t nctx;
         size_t i;
         IB_ARRAY_LOOP( ironbee->contexts, nctx, i, ctx ) {
+
             set_debug( ctx );
         }
     }
