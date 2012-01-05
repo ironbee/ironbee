@@ -30,6 +30,7 @@
 #include <getopt.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <inttypes.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -81,6 +82,8 @@ typedef struct {
 
     /* Trace */
     int trace;
+    uint64_t trace_request_cnt;
+    uint64_t trace_response_cnt;
 
     /* Dump output */
     int dump_tx;
@@ -110,6 +113,8 @@ static runtime_settings_t settings =
     "10.10.10.10",         /* remote_ip */
     23424,                 /* remote_port */
     0,                     /* trace */
+    0,                     /* trace_request_count */
+    0,                     /* trace_response_count */
     0,                     /* dump_user_agent */
     0,                     /* dump_effective_ip */
     0,                     /* dump_geoip */
@@ -556,6 +561,7 @@ static ib_status_t trace_tx_request(ib_engine_t *ib,
         fprintf(stderr, "REQUEST: %.*s\n",
                 (int)(txdata->data[txdata->dlen] == '\n' ? txdata->dlen : txdata->dlen - 1),
                 txdata->data);
+        settings.trace_request_cnt++;
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -579,6 +585,7 @@ static ib_status_t trace_tx_response(ib_engine_t *ib,
         fprintf(stderr, "RESPONSE: %.*s\n",
                 (int)(txdata->data[txdata->dlen] == '\n' ? txdata->dlen : txdata->dlen - 1),
                 txdata->data);
+        settings.trace_response_cnt++;
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1126,6 +1133,13 @@ end:
     /* Done */
     fclose(reqfp);
     fclose(respfp);
+
+    /* Print trace request/response count */
+    if (settings.trace) {
+        fprintf(stderr, "Trace Request Count: %" PRIu64 " Trace Response Count : %" PRIu64 "\n",
+                settings.trace_request_cnt, settings.trace_response_cnt);
+    }
+
     IB_FTRACE_RET_VOID();
 }
 

@@ -142,7 +142,7 @@ fi
 ### CLI
 AC_ARG_ENABLE(cli,
               AS_HELP_STRING([--disable-cli],
-                             [Disable the cli utility (enabled by default).]),,[enable_cli_utility=yes])
+                             [Disable the cli utility (enabled by default).]),[enable_cli_utility="$enableval"],[enable_cli_utility=yes])
 AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
 
 ### Ragel
