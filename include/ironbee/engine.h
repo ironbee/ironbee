@@ -228,6 +228,7 @@ struct ib_conn_t {
     ib_uuid_t           base_uuid;       /**< UUID to base tx ID */
     size_t              tx_count;        /**< Transaction count */
 
+    ib_tx_t            *tx_first;        /**< First transaction in the list */
     ib_tx_t            *tx;              /**< Pending transaction(s) */
     ib_tx_t            *tx_last;         /**< Last transaction in the list */
 

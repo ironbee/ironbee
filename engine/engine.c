@@ -610,21 +610,26 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     }
 
     /* Add transaction to the connection list */
-    if (conn->tx == NULL) {
+    if (conn->tx_first == NULL) {
+        conn->tx_first = *ptx;
         conn->tx = *ptx;
         conn->tx_last = *ptx;
+        ib_log_debug(ib, 9, "First transaction: %p", *ptx);
     }
     else {
+        conn->tx = *ptx;
         conn->tx_last->next = *ptx;
         conn->tx_last = *ptx;
 
         /* If there are more than one transactions, then this is a pipeline
          * request and needs to be marked as such.
          */
-        ib_tx_flags_set(conn->tx, IB_TX_FPIPELINED);
+        if (conn->tx_first->next == *ptx) {
+            ib_tx_flags_set(conn->tx_first, IB_TX_FPIPELINED);
+        }
         ib_tx_flags_set(*ptx, IB_TX_FPIPELINED);
 
-        ib_log_debug(ib, 9, "Found a pipelined transaction.");
+        ib_log_debug(ib, 9, "Found a pipelined transaction: %p", *ptx);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -641,26 +646,31 @@ failed:
 
 void ib_tx_destroy(ib_tx_t *tx)
 {
-    ib_tx_t *conn_tx = tx->conn->tx;
+    ib_tx_t *prev = NULL;
+    ib_tx_t *curr;
 
-    /* Remove transaction from the connection list */
-    if (conn_tx == tx) {
-        tx->conn->tx = tx->conn->tx->next;
+    /// @todo It should always be the first one in the list, 
+    ///       so this should not be needed and should cause an error
+    ///       or maybe for us to throw a flag???
+    if (tx->conn->tx_first != tx) {
+        abort(); /// @todo Testing - should never happen
     }
-    else {
-        /// @todo It should always be the first one in the list, 
-        ///       so this should not be needed and should cause an error
-        ///       or maybe for us to throw a flag???
-        while (conn_tx->next != NULL) {
-            if (conn_tx->next == tx) {
-                conn_tx->next = conn_tx->next->next;
-                break;
-            }
-            conn_tx = conn_tx->next;
+
+    /* Keep track of the first/current tx. */
+    tx->conn->tx_first = tx->next;
+    tx->conn->tx = tx->next;
+
+    for (curr = tx->conn->tx_first; curr != NULL; curr = curr->next) {
+        if (curr == tx) {
+            curr->next = curr->next ? curr->next->next : NULL;
+            break;
         }
-        if (conn_tx == NULL) {
-            abort(); /// @todo Testing - should never happen
-        }
+        prev = curr;
+    }
+
+    /* Keep track of the last tx. */
+    if (tx->conn->tx_last == tx) {
+        tx->conn->tx_last = NULL;
     }
 
     /// @todo Probably need to update state???
@@ -868,7 +878,10 @@ static ib_status_t ib_state_notify_tx_data(ib_engine_t *ib,
     ib_tx_t *tx = txdata->tx;
     ib_hook_t *hook = NULL;
     ib_status_t rc = IB_OK;
-    
+
+    /* This transaction is now the current (for pipelined). */
+    tx->conn->tx = tx;
+
     rc = ib_state_notify(ib, event, txdata);
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
@@ -912,6 +925,9 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     ib_hook_t *hook = NULL;
     ib_status_t rc = IB_OK;
     
+    /* This transaction is now the current (for pipelined). */
+    tx->conn->tx = tx;
+
     rc = ib_state_notify(ib, event, tx);
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
