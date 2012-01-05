@@ -323,10 +323,10 @@ function onEventHandleRequestHeaders(ib, tx)
                     IB_LEVENT_ACT_ATTEMPTED_ATTACK,
                     IB_LEVENT_PCLASS_INJECTION,
                     IB_LEVENT_SCLASS_SQL,
-                    90, 80,
                     IB_LEVENT_SYS_PUBLIC,
                     IB_LEVENT_ACTION_BLOCK,
                     IB_LEVENT_ACTION_IGNORED,
+                    90, 80,
                     "[TEST Event] Request Line matches: %s", patt
                 )
             )
