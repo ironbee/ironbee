@@ -1047,26 +1047,26 @@ function ib_logevent_create(pool, rule_id, type, activity,
     return newLogevent(c_le[0])
 end
 
-function ib_clog_event(ctx, e)
-    local c_ctx = ctx.cvalue()
+function ib_event_add(pi, e)
+    local c_pi = pi.cvalue()
     local c_e = e.cvalue()
 
-    return c.ib_clog_event(c_ctx, c_e)
+    return c.ib_event_add(c_pi, c_e)
 end
 
-function ib_clog_event_remove(ctx, id)
-    local c_ctx = ctx.cvalue()
+function ib_event_remove(pi, id)
+    local c_pi = pi.cvalue()
     local c_id = ffi.cast("uint64_t", id)
 
-    return c.ib_clog_event_remove(c_ctx, c_id)
+    return c.ib_event_remove(c_pi, c_id)
 end
 
-function ib_clog_events_get(ctx)
-    local c_ctx = ctx.cvalue()
+function ib_events_get_all(pi)
+    local c_pi = pi.cvalue()
     local c_events = ffi.new("ib_list_t*[1]")
     local rc
 
-    rc = c.ib_clog_event_get(c_ctx, c_events)
+    rc = c.ib_event_get_all(c_pi, c_events)
 
     -- Loop through and create a list of logevents to return
     local l_vals = {}
@@ -1081,10 +1081,10 @@ function ib_clog_events_get(ctx)
     return l_vals
 end
 
-function ib_clog_events_write(ctx)
-    local c_ctx = ctx.cvalue()
+function ib_events_write_all(pi)
+    local c_pi = pi.cvalue()
 
-    return c.ib_clog_events_write(c_ctx)
+    return c.ib_event_write_all(c_pi)
 end
 
 function ib_config_register_directive(ib,
