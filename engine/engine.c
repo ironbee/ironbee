@@ -646,7 +646,6 @@ failed:
 
 void ib_tx_destroy(ib_tx_t *tx)
 {
-    ib_tx_t *prev = NULL;
     ib_tx_t *curr;
 
     /// @todo It should always be the first one in the list, 
@@ -665,7 +664,6 @@ void ib_tx_destroy(ib_tx_t *tx)
             curr->next = curr->next ? curr->next->next : NULL;
             break;
         }
-        prev = curr;
     }
 
     /* Keep track of the last tx. */
