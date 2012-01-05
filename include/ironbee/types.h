@@ -84,6 +84,7 @@ typedef enum ib_status_t {
     IB_ETRUNC,                  /**<  8: Buffer truncated, size limit reached */
     IB_ETIMEDOUT,               /**<  9: Operation timed out */
     IB_EAGAIN,                  /**< 10: Not ready, try again later */
+    IB_EOTHER,                  /**< 11: Other error */
 } ib_status_t;
 
 /**
