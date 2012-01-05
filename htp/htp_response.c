@@ -590,8 +590,6 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
 
             // Process response line
 
-            int chomp_result = htp_chomp(connp->out_line, &connp->out_line_len);
-
             // Deallocate previous response line allocations, which we would have on a 100 response
             // TODO Consider moving elsewhere; no need to make these checks on every response
             if (connp->out_tx->response_line != NULL) {
@@ -616,7 +614,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             }
 
             /// @todo Would be nice to reference response_line_raw data
-            htp_chomp(connp->out_line, &connp->out_line_len);
+            int chomp_result = htp_chomp(connp->out_line, &connp->out_line_len);
             connp->out_tx->response_line = bstr_dup_ex(connp->out_tx->response_line_raw, 0, connp->out_line_len);
             if (connp->out_tx->response_line == NULL) {
                 return HTP_ERROR;
