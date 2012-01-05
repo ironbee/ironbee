@@ -573,9 +573,8 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(modua_init);
     ib_status_t  rc;
-    unsigned int failed_rule_num;
+    modua_match_rule_t *failed_rule;
     unsigned int failed_frule_num;
-    unsigned int failed_line_num;
 
     /* Register our callback */
     rc = ib_hook_register(ib, request_headers_event,
@@ -586,14 +585,12 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
     }
 
     /* Initializations */
-    rc = modua_ruleset_init(&failed_rule_num,
-                                  &failed_frule_num,
-                                  &failed_line_num);
+    rc = modua_ruleset_init(&failed_rule, &failed_frule_num);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "User agent rule initialization failed"
-                     " on rule #%d/%d (line %d): %d",
-                     failed_rule_num, failed_frule_num, failed_line_num, rc);
+                     " on rule %s field rule #%d: %d",
+                     failed_rule->label, failed_frule_num, rc);
     }
 
     /* Get the rules */
@@ -640,20 +637,18 @@ int main(int argc, const char *argv[])
     char        *p;
     FILE        *fp;
     ib_status_t  rc;
-    unsigned int failed_rule_num;
+    modua_match_rule_t *failed_rule;
     unsigned int failed_frule_num;
-    unsigned int failed_line_num;
+
 
 
     /* Rule Initializations */
-    rc = modua_ruleset_init(&failed_rule_num,
-                            &failed_frule_num,
-                            &failed_line_num);
+    rc = modua_ruleset_init(&failed_rule, &failed_frule_num);
     if (rc != IB_OK) {
         fprintf(stderr,
                 "User agent rule initialization failed"
-                " on rule #%d/%d (line %d): %d",
-                failed_rule_num, failed_frule_num, failed_line_num, rc);
+                " on rule %s field rule #%d: %d",
+                failed_rule->label, failed_frule_num, rc);
     }
 
     /* Get the rules */
@@ -709,6 +704,7 @@ int main(int argc, const char *argv[])
         }
         if (match != NULL) {
             printf("  RULENUM  = %d\n",   match->rule_num);
+            printf("  LABEL    = %s\n",   match->label);
             printf("  CATEGORY = '%s'\n", match->category);
         }
     }

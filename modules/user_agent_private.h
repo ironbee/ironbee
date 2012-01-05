@@ -72,10 +72,10 @@ typedef struct modua_field_rule_s {
 
 /* Match category rule list */
 typedef struct modua_match_rule_s {
+    const char        *label;         /**< Label, used for testing purposes */
     const char        *category;      /**< Category string */
-    unsigned int       line_num;      /**< Line number of rule definition */
-    modua_field_rule_t rules[MODUA_MAX_FIELD_RULES]; /**< Field match rules*/
-    unsigned int       rule_num;      /**< Rule number */
+    modua_field_rule_t rules[MODUA_MAX_FIELD_RULES]; /**< Field match rules */
+    unsigned int       rule_num;      /**< Rule number; for testing purposes */
     unsigned int       num_rules;     /**< Number of actual rules */
 } modua_match_rule_t;
 
@@ -91,14 +91,13 @@ typedef struct modua_match_ruleset_s {
  *
  * Initializes the rules used to categorize user agent strings.
  *
- * @param[out] failed_rule_num Number of rule that failed to initialize
- * @param[out] failed_frule_num Number of field rule that caused the error
+ * @param[out] failed_rule Pointer to the match rule that failed
+ * @param[out] failed_field_rule_num Number of field rule that caused the error
  *
  * @returns status
  */
-ib_status_t modua_ruleset_init(unsigned int *failed_rule_num,
-                               unsigned int *failed_frule_num,
-                               unsigned int *failed_line_num );
+ib_status_t modua_ruleset_init(modua_match_rule_t **failed_rule,
+                               unsigned int *failed_field_rule_num);
 
 /**
  * @internal
