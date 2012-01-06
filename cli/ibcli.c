@@ -874,6 +874,10 @@ static ib_status_t register_handlers(ib_engine_t* ib)
 
     /* Register the trace handlers */
     if (settings.trace) {
+        if (settings.verbose > 2) {
+            printf("Registering trace handlers\n");
+        }
+
         /* Register the request trace handler. */
         rc = ib_hook_register(ib, tx_data_in_event,
                               (ib_void_fn_t)trace_tx_request, NULL);
@@ -893,6 +897,9 @@ static ib_status_t register_handlers(ib_engine_t* ib)
 
     /* Register the tx handler */
     if (settings.dump_tx != 0) {
+        if (settings.verbose > 2) {
+            printf("Registering tx handlers\n");
+        }
         rc = ib_hook_register(ib, handle_context_tx_event,
                               (ib_void_fn_t)print_tx, NULL);
         if (rc != IB_OK) {
@@ -902,6 +909,9 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     }
     /* Register the user agent handler */
     if (settings.dump_user_agent != 0) {
+        if (settings.verbose > 2) {
+            printf("Registering user agent handlers\n");
+        }
         rc = ib_hook_register(ib, request_headers_event,
                               (ib_void_fn_t)print_user_agent, NULL);
         if (rc != IB_OK) {
@@ -911,6 +921,9 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     }
     /* Register the GeoIP handler */
     if (settings.dump_geoip != 0) {
+        if (settings.verbose > 2) {
+            printf("Registering GeoIP handlers\n");
+        }
         rc = ib_hook_register(ib, handle_context_tx_event,
                               (ib_void_fn_t)print_geoip, NULL);
         if (rc != IB_OK) {
