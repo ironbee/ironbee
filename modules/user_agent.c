@@ -512,50 +512,24 @@ static ib_status_t modua_handle_req_headers(ib_engine_t *ib,
                                             void *data)
 {
     IB_FTRACE_INIT(modua_handle_req_headers);
-    ib_field_t     *req = NULL;
-    ib_status_t     rc = IB_OK;
-    ib_list_t      *lst = NULL;
-    ib_list_node_t *node = NULL;
+    ib_field_t   *req_agent = NULL;
+    ib_status_t   rc = IB_OK;
+    ib_bytestr_t *bs;
 
     /* Extract the request headers field from the provider instance */
-    rc = ib_data_get(tx->dpi, "request_headers", &req);
-    if ( (req == NULL) || (rc != IB_OK) ) {
+    rc = ib_data_get(tx->dpi, "request_headers.User-Agent", &req_agent);
+    if ( (req_agent == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4,
-                     "request_headers_event: "
-                     "No request headers provided" );
+                     "request_headers_event: No user agent" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
-    /* The field value *should* be a list, extract it as such */
-    lst = ib_field_value_list(req);
-    if (lst == NULL) {
-        ib_log_debug(ib, 4,
-                     "request_headers_event: "
-                     "Field list missing / incorrect type" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    /* Found it: copy the data into a newly allocated string buffer */
+    bs = ib_field_value_bytestr(req_agent);
 
-    /* Loop through the list; we're looking for User-Agent */
-    IB_LIST_LOOP(lst, node) {
-        ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        ib_bytestr_t *bs;
-
-        /* Check the field name
-         * Note: field->name is not always a null ('\0') terminated string */
-        if (ib_field_namecmp(field, "User-Agent") != 0) {
-            continue;
-        }
-
-        /* Found it: copy the data into a newly allocated string buffer */
-        bs = ib_field_value_bytestr(field);
-
-        /* Finally, split it up & store the components */
-        rc = modua_agent_fields(ib, tx, bs);
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    /* Finally, split it up & store the components */
+    rc = modua_agent_fields(ib, tx, bs);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**

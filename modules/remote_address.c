@@ -62,75 +62,51 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
                                             void *data)
 {
     IB_FTRACE_INIT(modra_handle_tx);
-    ib_field_t *req = NULL;
-    ib_status_t rc = IB_OK;
-    ib_list_t *lst = NULL;
-    ib_list_node_t *node = NULL;
+    ib_field_t    *req_fwd = NULL;
+    ib_status_t    rc = IB_OK;
+    ib_bytestr_t  *bs;
+    unsigned       len;
+    char          *buf;
+    uint8_t       *comma;
 
     /* Extract the request headers field from the provider instance */
-    rc = ib_data_get(tx->dpi, "request_headers", &req);
-    if ( (req == NULL) || (rc != IB_OK) ) {
+    rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &req_fwd);
+    if ( (req_fwd == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4,
-                     "request_headers_event: "
-                     "No request headers provided" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    /* The field value *should* be a list, extract it as such */
-    lst = ib_field_value_list(req);
-    if (lst == NULL) {
-        ib_log_debug(ib, 4,
-                     "request_headers_event: "
-                     "Field list missing / incorrect type" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    /* Loop through the list; we're looking for X-Forwarded-For */
-    IB_LIST_LOOP(lst, node) {
-        ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        ib_bytestr_t *bs;
-        unsigned len;
-        char *buf;
-        uint8_t *comma;
-
-        /* Check the field name
-         * Note: field->name is not always a null ('\0') terminated string.
-         * We should create a field function for doing this. */
-        if (ib_field_namecmp(field, "X-Forwarded-For") != 0) {
-            continue;
-        }
-
-        /* Found it: copy the data into a newly allocated string buffer */
-        bs = ib_field_value_bytestr(field);
-        len = ib_bytestr_length(bs);
-
-        /* Search for a comma in the buffer */
-        comma = memchr(ib_bytestr_ptr(bs), ',', len);
-        if (comma != NULL) {
-            len = comma - ib_bytestr_ptr(bs);
-        }
-
-        /* Allocate the memory */
-        buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
-        if (buf == NULL) {
-            ib_log_error( ib, 4,
-                          "Failed to allocate %d bytes for local address",
-                          len+1 );
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-
-        /* Copy the string out */
-        memcpy(buf, ib_bytestr_ptr(bs), len);
-        buf[len] = '\0';
-
-        ib_log_debug(ib, 4, "Remote address => '%s'", buf);
-
-        /* This will lose the pointer to the original address
-         * buffer, but it should be cleaned up with the rest
-         * of the memory pool. */
-        tx->er_ipstr = buf;
+                     "request_headers_event: No forward header" );
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+
+    /* Found it: copy the data into a newly allocated string buffer */
+    bs = ib_field_value_bytestr(req_fwd);
+    len = ib_bytestr_length(bs);
+
+    /* Search for a comma in the buffer */
+    comma = memchr(ib_bytestr_ptr(bs), ',', len);
+    if (comma != NULL) {
+        len = comma - ib_bytestr_ptr(bs);
+    }
+
+    /* Allocate the memory */
+    buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
+    if (buf == NULL) {
+        ib_log_error( ib, 4,
+                      "Failed to allocate %d bytes for local address",
+                      len+1 );
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Copy the string out */
+    memcpy(buf, ib_bytestr_ptr(bs), len);
+    buf[len] = '\0';
+
+    ib_log_debug(ib, 4, "Remote address => '%s'", buf);
+
+    /* This will lose the pointer to the original address
+     * buffer, but it should be cleaned up with the rest
+     * of the memory pool. */
+    tx->er_ipstr = buf;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
