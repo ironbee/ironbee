@@ -1174,6 +1174,10 @@ static ib_status_t run_transaction(ib_engine_t* ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Close files. */
+    fclose(reqfp);
+    fclose(rspfp);
+
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
 }
