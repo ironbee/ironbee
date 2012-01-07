@@ -1124,7 +1124,7 @@ static ib_status_t run_transaction(ib_engine_t* ib,
                                    const char *req_file,
                                    const char *rsp_file)
 {
-    IB_FTRACE_INIT(run_connection);
+    IB_FTRACE_INIT(run_transaction);
     FILE          *reqfp  = NULL;
     FILE          *rspfp = NULL;
     ib_conndata_t  conn_data;
