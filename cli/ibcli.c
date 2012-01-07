@@ -597,11 +597,12 @@ static ib_status_t trace_tx_request(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(trace_tx_request);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
-        fprintf(stderr, "REQUEST: %.*s\n",
+        settings.trace_request_cnt++;
+        fprintf(stderr, "REQUEST[%d]: %.*s\n",
+                (int)settings.trace_request_cnt,
                 (int)(txdata->data[txdata->dlen] == '\n' ?
                       txdata->dlen : txdata->dlen - 1),
                 txdata->data);
-        settings.trace_request_cnt++;
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -622,11 +623,12 @@ static ib_status_t trace_tx_response(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(trace_tx_response);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
-        fprintf(stderr, "RESPONSE: %.*s\n",
+        settings.trace_response_cnt++;
+        fprintf(stderr, "RESPONSE[%d]: %.*s\n",
+                (int)settings.trace_response_cnt,
                 (int)(txdata->data[txdata->dlen] == '\n' ?
                       txdata->dlen : txdata->dlen - 1),
                 txdata->data);
-        settings.trace_response_cnt++;
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
