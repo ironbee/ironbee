@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <glob.h>
+#include <libgen.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/plugin.h>
@@ -373,8 +374,10 @@ static ib_status_t command_line(int argc, char *argv[])
             settings.config_file = optarg;
         }
         else if (! strcmp("request-file", longopts[option_index].name)) {
-            if (glob(optarg, GLOB_APPEND, NULL, &settings.req_files) != 0) {
-                fatal_error("glob() failed: %d", errno);
+            int grc = glob(optarg, GLOB_APPEND, NULL, &settings.req_files);
+            if (grc != 0) {
+                fatal_error("Failed to glob on requests: %d (errno %d)\n",
+                            grc, errno);
             }
             else if (settings.req_files.gl_pathc == 0) {
                 fprintf(stderr, "No files match glob pattern %s", optarg);
@@ -383,8 +386,10 @@ static ib_status_t command_line(int argc, char *argv[])
             num_req = settings.req_files.gl_pathc;
         }
         else if (! strcmp("response-file", longopts[option_index].name)) {
-            if (glob(optarg, GLOB_APPEND, NULL, &settings.rsp_files) != 0) {
-                fatal_error("glob() failed: %d", errno);
+            int grc = glob(optarg, GLOB_APPEND, NULL, &settings.rsp_files);
+            if (grc != 0) {
+                fatal_error("Failed to glob on responses: %d (errno %d)\n",
+                            grc, errno);
             }
             else if (settings.rsp_files.gl_pathc == 0) {
                 fprintf(stderr, "No files match glob pattern %s", optarg);
@@ -1134,9 +1139,17 @@ static ib_status_t run_transaction(ib_engine_t* ib,
 
     /* Open the request and response files that we'll use for this 
      * transaction */
-    if (settings.verbose >= 1) {
-        printf("Transaction #%zd with req=%s rsp=%s\n",
+    if (settings.verbose >= 2) {
+        printf("Transaction #%zd:\n"
+               "  req=%s\n"
+               "  rsp=%s\n",
                trans_num, req_file, rsp_file);
+    }
+    else if (settings.verbose >= 1) {
+        char *req = strdup(req_file);
+        char *rsp = strdup(rsp_file);
+        printf("Transaction #%zd: req=%s rsp=%s\n",
+               trans_num, basename(req), basename(rsp) );
     }
     reqfp = fopen(req_file, "rb");
     if (reqfp == NULL) {
