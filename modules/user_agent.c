@@ -407,7 +407,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     len = ib_bytestr_length(bs);
 
     /* Allocate memory for a copy of the string to split up below. */
-    buf = (char *)ib_mpool_calloc(tx->conn->mp, 1, len+1);
+    buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
         ib_log_error(ib, 4,
                       "Failed to allocate %d bytes for agent string",
@@ -421,7 +421,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     ib_log_debug(ib, 4, "Found user agent: '%s'", buf);
 
     /* Copy the agent string */
-    agent = (char *)ib_mpool_strdup(tx->conn->mp, buf);
+    agent = (char *)ib_mpool_strdup(tx->mp, buf);
     if (agent == NULL) {
         ib_log_error(ib, 4, "Failed to allocate copy of agent string");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
