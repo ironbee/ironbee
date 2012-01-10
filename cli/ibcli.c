@@ -1177,12 +1177,14 @@ static ib_status_t run_transaction(ib_engine_t* ib,
     reqfp = fopen(req_file, "rb");
     if (reqfp == NULL) {
         fprintf(stderr, "Error opening request file '%s'\n", req_file);
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        rc = IB_EOTHER;
+        goto end;
     }
     rspfp = fopen(rsp_file, "rb");
     if (rspfp == NULL) {
         fprintf(stderr, "Error opening response file '%s'\n", rsp_file);
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        rc = IB_EOTHER;
+        goto end;
     }
 
     // Fill in the connection data object
@@ -1217,8 +1219,10 @@ static ib_status_t run_transaction(ib_engine_t* ib,
 
 end:
     /* Close files. */
-    fclose(reqfp);
-    fclose(rspfp);
+    if (reqfp != NULL)
+        fclose(reqfp);
+    if (rspfp != NULL)
+        fclose(rspfp);
 
     /* Done */
     IB_FTRACE_RET_STATUS(rc);
