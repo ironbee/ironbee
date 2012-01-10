@@ -988,6 +988,11 @@ static ib_status_t send_header(ib_engine_t* ib,
     /* Initialize our buffer to zero */
     rbuf.buf = NULL;
 
+    /* Reset the request header used flags */
+    for (fnum = 0; fnum < settings.request_headers.num_headers; ++fnum) {
+        settings.request_headers.headers[fnum].used = 0;
+    }
+
     /* Read the request header from the file, assembled the header, pass
      * it to IronBee */
     while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
