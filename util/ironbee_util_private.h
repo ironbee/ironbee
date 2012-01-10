@@ -120,6 +120,7 @@ struct ib_mpool_cleanup_t {
  * increase it by just changing the sizes / limits.
  */
 struct ib_mpool_t {
+    const char             *name;         /**< Memory pool name */
     ib_mpool_buffer_t      *busy_buffers; /**< List of reserved buffers */
     ib_mpool_buffer_t      *current;      /**< Points to the last buffer used */
     size_t                  size;         /**< Sum of all buffer sizes */

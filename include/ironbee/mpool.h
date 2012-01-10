@@ -64,11 +64,13 @@ typedef ib_status_t (*ib_mpool_cleanup_fn_t)(void *);
  * on the parent will propagate to all descendants.
  *
  * @param pmp Address which new pool is written
+ * @param name Logical name of the pool (for debugging purposes)
  * @param parent Optional parent memory pool (or NULL)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_mpool_create(ib_mpool_t **pmp,
+                                       const char *name,
                                        ib_mpool_t *parent);
 
 /**
@@ -79,15 +81,25 @@ ib_status_t DLL_PUBLIC ib_mpool_create(ib_mpool_t **pmp,
  * on the parent will propagate to all descendants.
  *
  * @param pmp Address which new pool is written
+ * @param name Logical name of the pool (for debugging purposes)
  * @param parent Optional parent memory pool (or NULL)
  * @param size Custom page size (to be used by default in pmp)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_mpool_create_ex(ib_mpool_t **pmp,
-                               ib_mpool_t *parent,
-                               size_t size);
+                                          const char *name,
+                                          ib_mpool_t *parent,
+                                          size_t size);
 
+
+/**
+ * Set the name of a memory pool.
+ *
+ * @param mp Memory pool
+ * @param name New name
+ */
+void DLL_PUBLIC ib_mpool_setname(ib_mpool_t *mp, const char *name);
 
 /**
  * Allocate memory from a memory pool.

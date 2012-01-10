@@ -29,9 +29,12 @@
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/module.h>
+#include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/hash.h>
 #include <ironbee/bytestr.h>
+#include <../util/ironbee_util_private.h>
+#include <../engine/ironbee_private.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        trace
@@ -40,11 +43,26 @@
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
+/* Trace module configuration */
+typedef struct {
+    const char *trace_mpools;   /**< Enable trace of memory pool usage yes/no */
+} modtrace_config_t;
+
 /* Event info structure */
 typedef struct {
     int          number;
     const char  *name;	
 } event_info_t;
+
+/* Memory pool usage data */
+typedef struct {
+    size_t      size;
+    size_t      inuse;
+    size_t      count;
+} mpool_usage_t;
+
+/* Allocate our global configuration */
+static modtrace_config_t modtrace_global_config;
 
 /**
  * @internal
@@ -90,8 +108,8 @@ static void modtrace_handle_conn_data(ib_engine_t *ib,
     IB_FTRACE_INIT(modtrace_handle_conn_data);
     event_info_t *eventp = (event_info_t *)cbdata;
 
-    ib_log_debug( ib, 4, "handle_conn_data [%s]: data=%p dlen=%u",
-                  eventp->name, cd->data, cd->dlen );
+    ib_log_debug(ib, 4, "handle_conn_data [%s]: data=%p dlen=%u",
+                 eventp->name, cd->data, cd->dlen);
     if (eventp->number == conn_data_in_event) {
         char buf[1024];
         unsigned len = sizeof(buf)-1;
@@ -100,7 +118,7 @@ static void modtrace_handle_conn_data(ib_engine_t *ib,
         }
         memcpy(buf, cd->data, len);
         buf[len] = '\0';
-        ib_log_debug( ib, 4, "%s: data=%s", eventp->name, buf );
+        ib_log_debug(ib, 4, "%s: data=%s", eventp->name, buf);
     }
 }
 
@@ -120,10 +138,129 @@ static void modtrace_handle_tx(ib_engine_t *ib,
                                void *cbdata)
 {
     IB_FTRACE_INIT(modtrace_handle_tx);
-    event_info_t *eventp = (event_info_t *)cbdata;
+    const event_info_t *eventp = (const event_info_t *)cbdata;
 
     ib_log_debug(ib, 4, "handle_tx [%s]: data=%p tx->dpi=%p",
                  eventp->name, (void*)tx->data, (void*)tx->dpi);
+
+    IB_FTRACE_RET_VOID();
+}
+
+/**
+ * @internal
+ * Add usage of the current memory pool to the usage data
+ *
+ * @param[in] mp The memory pool to look at
+ * @param[in,out] usage The usage data to add the pool's summary to
+ */
+static void mempool_add_usage(const ib_mpool_t *mp,
+                              mpool_usage_t *usage)
+{
+    usage->size += mp->size;
+    usage->inuse += mp->inuse;
+    ++(usage->count);
+}
+
+/**
+ * @internal
+ * Walk through the memory pools, calculating total allocations.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] first First memory pool to examine
+ * @param[in,out] anon Total of anonymous memory usage
+ * @param[in,out] total Total memory usage
+ */
+static void mempool_walk(ib_engine_t *ib,
+                         const ib_mpool_t *first,
+                         mpool_usage_t *anon,
+                         mpool_usage_t *total)
+{
+    const ib_mpool_t *mp;
+
+    /* Loop through all of the memory pools, print out memory usage */
+    for (mp = first;  mp != NULL;  mp = mp->next ) {
+        if (mp->name != NULL) {
+            const char *parent;
+            if (mp->parent == NULL) {
+                parent = "None";
+            }
+            else if (mp->parent->name == NULL) {
+                parent = "Anonymous";
+            }
+            else {
+                parent = mp->parent->name;
+            }
+            ib_log_debug(ib, 9,
+                         "Memory pool '%s': parent='%s' size=%zd inuse=%zd",
+                         mp->name, parent, mp->size, mp->inuse);
+        }
+        else {
+            mempool_add_usage(mp, anon);
+        }
+        mempool_add_usage(mp, total);
+
+        /* Walk through my children */
+        if (mp->child != NULL) {
+            mempool_walk(ib, mp->child, anon, total);
+        }
+    }
+}
+
+/**
+ * @internal
+ * Trace tx_{started,finished}_event event handler.
+ *
+ * Handles tx started and finsihed events, dumping some memory info on the
+ * event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object
+ * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * event.
+ */
+static void modtrace_handle_tx_mem(ib_engine_t *ib,
+                                   ib_tx_t *tx,
+                                   void *cbdata)
+{
+    IB_FTRACE_INIT(modtrace_handle_tx_mem);
+    const event_info_t *eventp = (const event_info_t *)cbdata;
+    mpool_usage_t anon  = {0,0,0};
+    mpool_usage_t total = {0,0,0};
+    modtrace_config_t *config;
+    ib_status_t rc;
+
+    modtrace_handle_tx(ib, tx, cbdata);
+
+    /* Get our current configuration */
+    rc = ib_context_module_config(tx->ctx,
+                                  IB_MODULE_STRUCT_PTR,
+                                  (void *)&config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
+                     MODULE_NAME_STR, rc);
+        IB_FTRACE_RET_VOID();
+    }
+
+    /* If mpool tracing is turned off, we're done */
+    if (strcmp(config->trace_mpools, "yes") != 0) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    ib_log_debug(ib, 9, "=== Start Memory Pool Dump (%s) ===", eventp->name);
+
+    /* Walk through all of the memory pools */
+    mempool_walk(ib, ib->mp, &anon, &total);
+
+    /* Dump totals */
+    ib_log_debug(ib, 9,
+                 "Anonymous memory pools: num=%zd size=%zd inuse=%zd",
+                 anon.count, anon.size, anon.inuse);
+    ib_log_debug(ib, 9,
+                 "Memory pool totals: num=%zd size=%zd inuse=%zd",
+                 total.count, total.size, total.inuse);
+    ib_log_debug(ib, 9, "=== End Memory Pool Dump (%s) ===", eventp->name);
+
+    IB_FTRACE_RET_VOID();
 }
 
 /**
@@ -227,7 +364,12 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                 break;
 
             case tx_data_in_event:
-            handler = (ib_void_fn_t)modtrace_handle_tx;
+                handler = (ib_void_fn_t)modtrace_handle_tx;
+                break;
+
+            case tx_started_event:
+            case tx_finished_event:
+                handler = (ib_void_fn_t)modtrace_handle_tx_mem;
                 break;
 
             case request_headers_event:
@@ -302,14 +444,25 @@ static ib_status_t modtrace_context_finish(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static IB_CFGMAP_INIT_STRUCTURE(modtrace_config_map) = {
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".trace_mpools",
+        IB_FTYPE_NULSTR,
+        &modtrace_global_config,
+        trace_mpools,
+        "no"
+    ),
+    IB_CFGMAP_INIT_LAST
+};
+
 /*
  * Module initialization data, used by IB when it loads the module
  */
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
     MODULE_NAME_STR,                /* Module name */
-    IB_MODULE_CONFIG_NULL,          /* Global config data */
-    NULL,                           /* Module config map */
+    IB_MODULE_CONFIG(&modtrace_global_config),/**< Global config data */
+    modtrace_config_map,            /* Module config map */
     NULL,                           /* Module directive map */
     modtrace_init,                  /* Initialize function */
     modtrace_finish,                /* Finish function */

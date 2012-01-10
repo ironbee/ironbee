@@ -41,7 +41,9 @@
 #endif
 
 
-ib_status_t ib_mpool_create(ib_mpool_t **pmp, ib_mpool_t *parent)
+ib_status_t ib_mpool_create(ib_mpool_t **pmp,
+                            const char *name,
+                            ib_mpool_t *parent)
 {
     IB_FTRACE_INIT(ib_mpool_create);
     ib_status_t rc;
@@ -50,13 +52,14 @@ ib_status_t ib_mpool_create(ib_mpool_t **pmp, ib_mpool_t *parent)
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_mpool_create_ex(pmp, parent,
+    rc = ib_mpool_create_ex(pmp, name, parent,
                             IB_MPOOL_DEFAULT_PAGE_SIZE);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
+                               const char *name,
                                ib_mpool_t *parent,
                                size_t size)
 {
@@ -76,6 +79,14 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
     *pmp = (ib_mpool_t *)calloc(1, sizeof(ib_mpool_t));
     if (*pmp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Store the name */
+    if (name == NULL) {
+        (*pmp)->name = NULL;
+    }
+    else {
+        (*pmp)->name = strdup(name);
     }
 
     /* Add just one page */
@@ -107,6 +118,19 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+void ib_mpool_setname(ib_mpool_t *mp, const char *name)
+{
+    /* Free the current name */
+    if (mp->name != NULL) {
+        free((void*)(mp->name));
+        mp->name = NULL;
+    }
+    /* Store the new name */
+    if (name != NULL) {
+        mp->name = strdup(name);
+    }
 }
 
 void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
@@ -366,6 +390,12 @@ void ib_mpool_destroy(ib_mpool_t *mp)
 
     if (mp == NULL) {
         IB_FTRACE_RET_VOID();
+    }
+
+    /* Free the name */
+    if (mp->name != NULL) {
+        free((void*)(mp->name));
+        mp->name = NULL;
     }
 
     /* Destroy child pools. */

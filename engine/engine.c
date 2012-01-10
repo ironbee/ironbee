@@ -130,7 +130,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     ib_status_t rc;
 
     /* Create primary memory pool */
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, "Engine", NULL);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -146,14 +146,20 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 
     /* Create temporary memory pool */
     /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&((*pib)->temp_mp), (*pib)->mp, 8192);
+    rc = ib_mpool_create_ex(&((*pib)->temp_mp),
+                            "Engine/Temp",
+                            (*pib)->mp,
+                            8192);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the config memory pool */
     /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&((*pib)->config_mp), (*pib)->mp, 8192);
+    rc = ib_mpool_create_ex(&((*pib)->config_mp),
+                            "Engine/Config",
+                            (*pib)->mp,
+                            8192);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -377,10 +383,11 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     struct timeval tv;
     uint16_t pid16 = (uint16_t)(getpid() & 0xffff);
     ib_status_t rc;
+    char namebuf[64];
     
     /* Create a sub-pool for each connection and allocate from it */
     /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&pool, ib->mp, 2048);
+    rc = ib_mpool_create_ex(&pool, "Connection", ib->mp, 2048);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create connection memory pool: %d", rc);
         rc = IB_EALLOC;
@@ -392,6 +399,10 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
         rc = IB_EALLOC;
         goto failed;
     }
+
+    /* Name the connection pool */
+    snprintf(namebuf, sizeof(namebuf), "Connection/%p", (void*)(*pconn));
+    ib_mpool_setname(pool, namebuf);
 
     (*pconn)->ib = ib;
     (*pconn)->mp = pool;
@@ -445,9 +456,10 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     
     /* Create a sub-pool for data buffers */
     /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&pool, conn->mp, 8192);
+    rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create connection data memory pool: %d", rc);
+        ib_log_error(ib, 0,
+                     "Failed to create connection data memory pool: %d", rc);
         rc = IB_EALLOC;
         goto failed;
     }
@@ -538,12 +550,13 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     ib_mpool_t *pool;
     struct timeval tv;
     ib_status_t rc;
+    char namebuf[64];
 
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
      */
     /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&pool, conn->mp, 8192);
+    rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create transaction memory pool: %d", rc);
         rc = IB_EALLOC;
@@ -555,6 +568,10 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         rc = IB_EALLOC;
         goto failed;
     }
+
+    /* Name the transaction pool */
+    snprintf(namebuf, sizeof(namebuf), "TX/%p", (void*)(*ptx));
+    ib_mpool_setname(pool, namebuf);
 
     /// @todo Need to avoid gettimeofday and set from parser tx time, but
     ///       it currently only has second accuracy.
@@ -1854,7 +1871,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
 
     /* Create memory subpool */
     /// @todo Should we be doing this???
-    rc = ib_mpool_create(&pool, ib->mp);
+    rc = ib_mpool_create(&pool, NULL, ib->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
