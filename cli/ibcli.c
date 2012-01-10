@@ -381,27 +381,35 @@ static ib_status_t command_line(int argc, char *argv[])
             settings.config_file = optarg;
         }
         else if (! strcmp("request-file", longopts[option_index].name)) {
-            int grc = glob(optarg, GLOB_APPEND, NULL, &settings.req_files);
-            if (grc != 0) {
+            static int glob_flags = 0;
+            int globrc = glob(optarg, glob_flags, NULL, &settings.req_files);
+            if (globrc != 0) {
                 fatal_error("Failed to glob on requests: %d (errno %d)\n",
-                            grc, errno);
+                            globrc, errno);
             }
             else if (settings.req_files.gl_pathc == 0) {
-                fprintf(stderr, "No files match glob pattern %s", optarg);
+                fprintf(stderr,
+                        "No files match request glob pattern %s\n",
+                        optarg);
                 usage();
             }
+            glob_flags |= GLOB_APPEND; /* Append on 2nd+ runs */
             num_req = settings.req_files.gl_pathc;
         }
         else if (! strcmp("response-file", longopts[option_index].name)) {
-            int grc = glob(optarg, GLOB_APPEND, NULL, &settings.rsp_files);
-            if (grc != 0) {
+            static int glob_flags = 0;
+            int globrc = glob(optarg, glob_flags, NULL, &settings.rsp_files);
+            if (globrc != 0) {
                 fatal_error("Failed to glob on responses: %d (errno %d)\n",
-                            grc, errno);
+                            globrc, errno);
             }
             else if (settings.rsp_files.gl_pathc == 0) {
-                fprintf(stderr, "No files match glob pattern %s", optarg);
+                fprintf(stderr,
+                        "No files response match glob pattern %s\n",
+                        optarg);
                 usage();
             }
+            glob_flags |= GLOB_APPEND; /* Append 2nd+ runs */
             num_rsp = settings.rsp_files.gl_pathc;
         }
         else if (! strcmp("max-transactions", longopts[option_index].name)) {
