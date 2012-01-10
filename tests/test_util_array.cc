@@ -47,7 +47,7 @@ TEST(TestIBUtilArray, test_array_create_and_destroy)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_array_create(&arr, mp, 10, 10);
@@ -77,7 +77,7 @@ TEST(TestIBUtilArray, test_array_set_and_get)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_array_create(&arr, mp, 10, 10);
@@ -190,7 +190,7 @@ TEST(TestIBUtilArray, test_array_loop)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_array_create(&arr, mp, 16, 8);

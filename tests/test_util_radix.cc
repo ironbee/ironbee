@@ -168,7 +168,7 @@ TEST(TestIBUtilRadix, test_radix_prefix_new)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_prefix_new(&prefix, mp);
@@ -193,7 +193,7 @@ TEST(TestIBUtilRadix, test_radix_prefix_create_and_destroy)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     uint8_t *prefix_data = (uint8_t *) ib_mpool_calloc(mp, 1, 5);
@@ -227,7 +227,7 @@ TEST(TestIBUtilRadix, test_radix_node_new)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_node_new(&node, mp);
@@ -256,7 +256,7 @@ TEST(TestIBUtilRadix, test_radix_create_and_destroy)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
@@ -282,7 +282,7 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
@@ -378,7 +378,7 @@ TEST(TestIBUtilRadix, test_radix_insert_null_data)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
@@ -438,7 +438,7 @@ TEST(TestIBUtilRadix, test_radix_ip_to_prefix)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     /* IPV4 prefix */
@@ -529,7 +529,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
@@ -711,7 +711,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
@@ -893,7 +893,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
@@ -1085,7 +1085,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
@@ -1282,10 +1282,10 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp_tmp, NULL);
+    rc = ib_mpool_create(&mp_tmp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp_tmp);

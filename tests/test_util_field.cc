@@ -47,7 +47,7 @@ TEST(TestIBUtilField, test_field_create)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_field_create(&f, mp, "test_nulstr", IB_FTYPE_NULSTR, &nulstrval);
@@ -135,7 +135,7 @@ TEST(TestIBUtilField, test_dyn_field)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     /* Create a field with no initial value. */
