@@ -1172,29 +1172,33 @@ static ib_status_t run_transaction(ib_engine_t* ib,
     rc = send_header(ib, &conn_data, reqfp);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to read/send header data: %d\n", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        goto end;
     }
 
     /* Read and send the rest of the file (if any) */
     rc = send_file(ib, &conn_data, buf, MAX_BUF, reqfp, DATA_IN);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to read/send input data: %d\n", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        goto end;
     }
 
     /* Read and send the rest of the file (if any) */
     rc = send_file(ib, &conn_data, buf, MAX_BUF, rspfp, DATA_OUT);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to read/send output data: %d\n", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        goto end;
     }
+ 
+    /* If we have mde it this far everything is okay */
+    rc = IB_OK;
 
+end:
     /* Close files. */
     fclose(reqfp);
     fclose(rspfp);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
