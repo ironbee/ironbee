@@ -70,7 +70,8 @@ ffi.cdef [[
         IB_EINVAL,
         IB_ENOENT,
         IB_ETIMEDOUT,
-        IB_EAGAIN
+        IB_EAGAIN,
+        IB_EOTHER
     } ib_status_t;
     typedef enum {
         IB_FTYPE_GENERIC,
@@ -78,7 +79,8 @@ ffi.cdef [[
         IB_FTYPE_UNUM,
         IB_FTYPE_NULSTR,
         IB_FTYPE_BYTESTR,
-        IB_FTYPE_LIST
+        IB_FTYPE_LIST,
+        IB_FTYPE_SBUFFER
     } ib_ftype_t;
     typedef enum {
         conn_started_event,
@@ -589,6 +591,8 @@ IB_EALLOC        = ffi.cast("int", c.IB_EALLOC)
 IB_EINVAL        = ffi.cast("int", c.IB_EINVAL)
 IB_ENOENT        = ffi.cast("int", c.IB_ENOENT)
 IB_ETIMEDOUT     = ffi.cast("int", c.IB_ETIMEDOUT)
+IB_EAGAIN        = ffi.cast("int", c.IB_EAGAIN)
+IB_EOTHER        = ffi.cast("int", c.IB_EOTHER)
 
 -- ===============================================
 -- Field Types
@@ -598,6 +602,7 @@ IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
 IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
 IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
 IB_FTYPE_LIST    = ffi.cast("int", c.IB_FTYPE_LIST)
+IB_FTYPE_SBUFFER = ffi.cast("int", c.IB_FTYPE_SBUFFER)
 
 -- ===============================================
 -- Directive Types
