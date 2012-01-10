@@ -77,9 +77,6 @@ typedef struct {
     glob_t req_files;
     glob_t rsp_files;
 
-    /* Verbose */
-    int verbose;
-
     /* Local and remote IP address / port */
     const char *local_ip;
     int local_port;
@@ -102,6 +99,12 @@ typedef struct {
         request_header_t headers[MAX_REQUEST_HEADERS];
     } request_headers;
 
+    /* Max # of transactions */
+    int max_transactions;
+
+    /* Verbose */
+    int verbose;
+
     /* Debug arguments */
 #if DEBUG_ARGS_ENABLE
     const char *debug_uri;
@@ -114,7 +117,6 @@ static runtime_settings_t settings =
     NULL,                  /* config_file */
     { 0 },                 /* req_files */
     { 0 },                 /* rsp_files */
-    0,                     /* Verbose level */
     "192.168.1.1",         /* local_ip */
     8080,                  /* local_port */
     "10.10.10.10",         /* remote_ip */
@@ -126,6 +128,8 @@ static runtime_settings_t settings =
     0,                     /* dump_effective_ip */
     0,                     /* dump_geoip */
     { 0 },                 /* request_headers */
+    -1,                    /* Max # of transactions to run */
+    0,                     /* Verbose level */
 #if DEBUG_ARGS_ENABLE
     NULL,                  /* debug_uri */
     -1                     /* debug_level */
@@ -215,6 +219,8 @@ static void help(void)
     print_option("config", "path", "Specify configuration file", 1, NULL );
     print_option("request-file", "path", "Specify request file", 1, NULL );
     print_option("response-file", "path", "Specify response file", 1, NULL );
+    print_option("max-transactions", "num",
+                 "Specify max # of transactions to run", 1, NULL );
     print_option("verbose", "num", "Specify verbose level", 1, NULL );
     print_option("local-ip", "x.x.x.x", "Specify local IP address", 0, NULL );
     print_option("local-port", "num", "Specify local port", 0, NULL );
@@ -334,6 +340,7 @@ static ib_status_t command_line(int argc, char *argv[])
         { "config", required_argument, 0, 0 },
         { "request-file", required_argument, 0, 0 },
         { "response-file", required_argument, 0, 0 },
+        { "max-transactions", required_argument, 0, 0 },
         { "verbose", required_argument, 0, 0 },
         { "local-ip", required_argument, 0, 0 },
         { "local-port", required_argument, 0, 0 },
@@ -396,6 +403,9 @@ static ib_status_t command_line(int argc, char *argv[])
                 usage();
             }
             num_rsp = settings.rsp_files.gl_pathc;
+        }
+        else if (! strcmp("max-transactions", longopts[option_index].name)) {
+            settings.max_transactions = atoi(optarg);
         }
         else if (! strcmp("trace", longopts[option_index].name)) {
             settings.trace = 1;
@@ -1218,7 +1228,7 @@ static void run_connection(ib_engine_t* ib)
     ib_conn_t     *conn = NULL;
     char          *buf = NULL;      /* I/O buffer */
     size_t         trans_num;       /* Transaction number */
-    size_t         max_files;       /* Max # of files (between req & resp) */
+    size_t         max_trans;       /* Max # of transactions */
     size_t         nreq = settings.req_files.gl_pathc;
     size_t         nrsp = settings.rsp_files.gl_pathc;
 
@@ -1242,8 +1252,12 @@ static void run_connection(ib_engine_t* ib)
     }
 
     /* Loop through our files, send them */
-    max_files = (nreq > nrsp) ? nreq : nrsp;
-    for (trans_num = 0;  trans_num < max_files;  trans_num++) {
+    max_trans = (nreq > nrsp) ? nreq : nrsp;
+    if ( (settings.max_transactions > 0)
+         && (max_trans > (size_t)settings.max_transactions) ) {
+        max_trans = (size_t)settings.max_transactions;
+    }
+    for (trans_num = 0;  trans_num < max_trans;  trans_num++) {
         size_t req_num = (nreq == 1) ? 0 : trans_num;
         size_t rsp_num = (nrsp == 1) ? 0 : trans_num;
 
