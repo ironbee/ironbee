@@ -1302,6 +1302,30 @@ end:
     IB_FTRACE_RET_VOID();
 }
 
+
+/**
+ * @internal
+ * Perform clean up operations.
+ *
+ * Clean up, free memory, etc.
+ *
+ * @returns void
+ */
+static void clean_up( void )
+{
+    int num;
+
+    globfree(&settings.req_files);
+    globfree(&settings.rsp_files);
+
+    /* Free request header buffers */
+    for (num = 0; num < settings.request_headers.num_headers; ++num) {
+        free((void*)settings.request_headers.headers[num].buf);
+        settings.request_headers.headers[num].buf = NULL;
+    }
+}
+
+
 /**
  * @internal
  * Main.
@@ -1392,5 +1416,9 @@ int main(int argc, char* argv[])
 
     /* Done */
     ib_engine_destroy(ironbee);
+
+    /* Free up memory, etc. */
+    clean_up( );
+
     return 0;
 }
