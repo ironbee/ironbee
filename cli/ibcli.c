@@ -1345,6 +1345,7 @@ int main(int argc, char* argv[])
 {
     ib_status_t rc;
     ib_engine_t *ironbee = NULL;
+    ib_context_t *ctx;
     ib_cfgparser_t *cp;
 
     ib_trace_init(NULL);
@@ -1411,6 +1412,15 @@ int main(int argc, char* argv[])
         }
     }
 #endif
+
+    /* Sanity checks */
+    ctx = ib_context_main(ironbee);
+    if ( ctx == NULL ) {
+        fatal_error("Failed to get main context\n");
+    }
+    if ( ib_context_get_engine(ctx) != ironbee ) {
+        fatal_error("ib_context_get_engine returned invalid engine pointer\n");
+    }
 
     /* Notify the engine that the config process is finished. */
     ib_state_notify_cfg_finished(ironbee);

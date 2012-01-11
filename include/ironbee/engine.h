@@ -474,6 +474,18 @@ ib_site_t DLL_PUBLIC *ib_context_site_get(ib_context_t *ctx);
 void DLL_PUBLIC ib_context_destroy(ib_context_t *ctx);
 
 /**
+ * Get the IronBee engine object.
+ *
+ * This returns a pointer to the IronBee engine associated with
+ * the given context.
+ *
+ * @param ctx Config context
+ *
+ * @returns Pointer to the engine.
+ */
+ib_engine_t DLL_PUBLIC *ib_context_get_engine(ib_context_t *ctx);
+
+/**
  * Get the engine (startup) configuration context.
  *
  * @param ib Engine handle
