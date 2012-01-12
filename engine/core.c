@@ -3445,7 +3445,6 @@ static ib_status_t core_tfn_lowercase(void *fndata,
 
     if (modified != 0) {
         (*pflags) |= IB_TFN_FMODIFIED;
-        (*data_out)[*dlen_out] = '\0';
     }
 
     return IB_OK;
