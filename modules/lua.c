@@ -365,6 +365,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
     char *name;
     char *name_start;
     char *name_end;
+    int name_len;
     ib_status_t rc;
     int ec;
 
@@ -381,11 +382,13 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
     if (name_end == NULL) {
         name_end = index(name_start, 0);
     }
-    name = ib_mpool_alloc(pool, (name_end - name_start) + 1);
+    name_len = (name_end-name_start);
+    name = ib_mpool_alloc(pool, name_len + 1);
     if (name == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    memcpy(name, name_start, (name_end - name_start));
+    memcpy(name, name_start, name_len);
+    name[name_len] = '\0';
 
     ib_log_debug(ib, 6, "Loading lua module \"%s\": %s",
                  name, file);
