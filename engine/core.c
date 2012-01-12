@@ -1903,7 +1903,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
  */
 static void ib_timestamp(char *buf, ib_timeval_t *tv)
 {
-    struct tm *tm = localtime((time_t *)&tv->tv_sec);
+    time_t t = (time_t)tv->tv_sec;
+    struct tm *tm = localtime(&t);
 
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
     snprintf(buf + 19, 12, ".%04lu", (unsigned long)tv->tv_usec);

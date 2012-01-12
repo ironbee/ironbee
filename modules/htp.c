@@ -906,6 +906,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     ib_context_t *ctx = iconn->ctx;
     modhtp_cfg_t *modcfg;
     modhtp_context_t *modctx;
+    htp_time_t htv;
     ib_status_t rc;
     int personality;
 
@@ -962,8 +963,11 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     htp_connp_open(modctx->htp,
                    iconn->remote_ipstr, iconn->remote_port,
                    iconn->local_ipstr, iconn->local_port,
-                   (htp_time_t *)&iconn->started);
+                   &htv);
 
+    /* Record the connection time. */
+    iconn->started.tv_sec = (uint32_t)htv.tv_sec;
+    iconn->started.tv_usec = (uint32_t)htv.tv_usec;
 
     /* Store the context. */
     rc = ib_hash_set(iconn->data, "MODHTP_CTX", modctx);
