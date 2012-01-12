@@ -69,6 +69,7 @@ ffi.cdef [[
         IB_EALLOC,
         IB_EINVAL,
         IB_ENOENT,
+        IB_ETRUNC,
         IB_ETIMEDOUT,
         IB_EAGAIN,
         IB_EOTHER
@@ -210,8 +211,8 @@ ffi.cdef [[
     };
 
     struct ib_plugin_t {
-        int                      vernum;
-        int                      abinum;
+        uint32_t                 vernum;
+        uint32_t                 abinum;
         const char              *version;
         const char              *filename;
         const char              *name;
@@ -227,9 +228,9 @@ ffi.cdef [[
         ib_hash_t          *data;
         ib_timeval_t        started;
         const char         *remote_ipstr;
-        int                 remote_port;
+        uint16_t            remote_port;
         const char         *local_ipstr;
-        int                 local_port;
+        uint16_t            local_port;
         ib_uuid_t           base_uuid;
         size_t              tx_count;
         ib_tx_t            *tx_first;

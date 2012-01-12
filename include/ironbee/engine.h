@@ -219,11 +219,11 @@ struct ib_conn_t {
 
     const char         *remote_ipstr;    /**< Remote IP as string */
 //    struct sockaddr_storage remote_addr; /**< Remote address */
-    int                 remote_port;     /**< Remote port */
+    uint16_t            remote_port;     /**< Remote port */
 
     const char         *local_ipstr;     /**< Local IP as string */
 //    struct sockaddr_storage local_addr;  /**< Local address */
-    int                 local_port;      /**< Local port */
+    uint16_t            local_port;      /**< Local port */
 
     ib_uuid_t           base_uuid;       /**< UUID to base tx ID */
     size_t              tx_count;        /**< Transaction count */

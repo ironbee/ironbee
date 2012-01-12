@@ -81,7 +81,7 @@ extern "C" {
  * number. For example, Version 1.2.3 would have a 1002003 decimal
  * value (001 . 002 . 003).
  */
-#define IB_VERNUM    (((IB_VERSION_MAJOR) * 1000000) + \
+#define IB_VERNUM    (uint32_t)(((IB_VERSION_MAJOR) * 1000000) + \
                       ((IB_VERSION_MAJOR) * 1000) + \
                       (IB_VERSION_MAINT))
 
@@ -98,7 +98,7 @@ extern "C" {
  *     DD: 2-digit day
  *      n: Revision number if changes more than once in a day (default=0)
  */
-#define IB_ABINUM    201201050
+#define IB_ABINUM    (uint32_t)201201120
 
 /**
  * @} IronBeeRelease
