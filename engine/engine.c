@@ -411,8 +411,8 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 
     /// @todo Need to avoid gettimeofday and set from parser
     gettimeofday(&tv, NULL);
-    (*pconn)->started.tv_sec = tv.tv_sec;
-    (*pconn)->started.tv_usec = tv.tv_usec;
+    (*pconn)->started.tv_sec = (uint32_t)tv.tv_sec;
+    (*pconn)->started.tv_usec = (uint32_t)tv.tv_usec;
 
     /* Setup the base uuid structure which is used to generate
      * transaction IDs.
@@ -576,8 +576,8 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     /// @todo Need to avoid gettimeofday and set from parser tx time, but
     ///       it currently only has second accuracy.
     gettimeofday(&tv, NULL);
-    (*ptx)->started.tv_sec = tv.tv_sec;
-    (*ptx)->started.tv_usec = tv.tv_usec;
+    (*ptx)->started.tv_sec = (uint32_t)tv.tv_sec;
+    (*ptx)->started.tv_usec = (uint32_t)tv.tv_usec;
 
     (*ptx)->ib = ib;
     (*ptx)->mp = pool;
@@ -1372,8 +1372,8 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     /// @todo Need to avoid gettimeofday and set from parser
     gettimeofday(&tv, NULL);
-    tx->tv_response.tv_sec = tv.tv_sec;
-    tx->tv_response.tv_usec = tv.tv_usec;
+    tx->tv_response.tv_sec = (uint32_t)tv.tv_sec;
+    tx->tv_response.tv_usec = (uint32_t)tv.tv_usec;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",

@@ -473,8 +473,9 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         char dtmp[64]; /// @todo Allocate size???
         char dn[512]; /// @todo Allocate size???
         struct tm *tm;
+        time_t t = (time_t)cfg->logtime->tv_sec;
 
-        tm = gmtime(&cfg->logtime->tv_sec);
+        tm = gmtime(&t);
         if (tm == 0) {
             ib_log_error(log->ib, 1,
                          "Could not create audit log filename template:"

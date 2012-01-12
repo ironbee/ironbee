@@ -90,9 +90,14 @@ typedef struct ib_site_t ib_site_t;
 typedef struct ib_loc_t ib_loc_t;
 typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
-typedef struct timeval ib_timeval_t;
+typedef struct ib_timeval_t ib_timeval_t;
 typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
+
+struct ib_timeval_t {
+    uint32_t   tv_sec;
+    uint32_t   tv_usec;
+};
 
 typedef enum {
     IB_DTYPE_META,
