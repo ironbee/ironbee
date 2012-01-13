@@ -201,6 +201,11 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
   towrite = TSVIONTodoGet(input_vio);
   TSDebug("ironbee", "\ttoWrite is %" PRId64 "", towrite);
 
+  /* https://issues.apache.org/jira/browse/TS-922 */
+  if (towrite >= 0xffffffff) {
+	  towrite = -1;
+  }
+  
   if (towrite > 0) {
     /* The amount of data left to read needs to be truncated by
      * the amount of data actually in the read buffer.
@@ -210,6 +215,8 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
      * after the headers have been sent.  Ugh!
      */
     if (first_time) {
+      ib_log_debug(ironbee, 9,
+				   "ts/ironbee: allocating %u bytes", towrite );
       bufp = ibd->data->buf = TSmalloc(towrite);
       ibd->data->buflen = towrite;
     }
@@ -351,6 +358,12 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 static int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
   ib_txn_ctx *data = TSContDataGet(contp);
+  if (data->out.buflen == (unsigned int)-1) {
+	TSDebug("ironbee", "\tout_data_event: buflen = -1");
+	ib_log_debug(ironbee, 9,
+				 "ironbee/out_data_event(): buflen = -1");
+	return 0;
+  }
   ibd_ctx direction;
   direction.ibd = &ironbee_direction_resp;
   direction.data = &data->out;
@@ -359,6 +372,12 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
 static int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
   ib_txn_ctx *data = TSContDataGet(contp);
+  if (data->out.buflen == (unsigned int)-1) {
+	TSDebug("ironbee", "\tin_data_event: buflen = -1");
+	ib_log_debug(ironbee, 9,
+				 "ironbee/in_data_event(): buflen = -1");
+	return 0;
+  }
   ibd_ctx direction;
   direction.ibd = &ironbee_direction_req;
   direction.data = &data->in;
@@ -400,6 +419,8 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
   blockp = TSIOBufferReaderStart(readerp);
 
   len = TSIOBufferBlockReadAvail(blockp, readerp);
+  ib_log_debug(ironbee, 9,
+			   "ts/ironbee/process_header: len=%ld", len );
   icdata.data = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
   icdata.dlen = icdata.dalloc = len;
 
