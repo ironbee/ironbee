@@ -19,6 +19,7 @@ check_PROGRAMS = test_gtest \
                  test_util_list \
                  test_util_radix \
                  test_util_field \
+                 test_util_unescape_string \
                  test_util_uuid \
                  test_util_logformat \
                  test_util_ahocorasick \
@@ -28,6 +29,15 @@ check_PROGRAMS = test_gtest \
 
 # TODO: Get libhtp working w/C++
 #                 test_util_bytestr
+test_util_unescape_string_SOURCES = test_util_unescape_string.cc \
+                                    test_gtest.cc \
+                                    test_main.cc
+if FREEBSD
+test_util_unescape_string_LDADD =  gtest/libgtest.la
+else
+test_util_unescape_string_LDADD =  gtest/libgtest.la \
+                                  -ldl
+endif
 
 test_gtest_SOURCES = test_gtest.cc test_main.cc
 if FREEBSD

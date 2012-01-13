@@ -131,6 +131,27 @@ void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
  */
 ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 
+/**
+ * @brief Unescape a Javascript-escaped string into the dst string buffer.
+ * @details The end of the dst buffer is marked with \0.
+ *          Because src may be a segment in a larger character buffer, src
+ *          is not considered a string (being terminated with \0) but an
+ *          array of characters of length \code src_len. The 
+ *          \code dst buffer must be \code src_len + 1 in length so
+ *          that if no escaping substitutions occur the last character
+ *          in the \code dst buffer may still be set to \0.
+ * @param[out] dst string buffer that should be at least as long as src_len+1.
+ * @param[out] dst_len the length of the decoded string. This will be
+ *             equal or shorter than src_len.
+ * @param[in] src source string that is encoded.
+ * @param[in] src_len the length of src.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst, 
+                                               size_t* dst_len,
+                                               const char* src,
+                                               size_t src_len);
 
 /**
  * Initialize the IB lib.
