@@ -51,8 +51,6 @@ typedef struct {
 static char *dirname = NULL;
 static char *blkname = NULL;
 static char *pval = NULL;
-static char *unescaped_token = NULL;
-static size_t  unescaped_token_len = 0;
 
 /* Store the start of a string to act on.
    fpc - mark is the string length when processing after
