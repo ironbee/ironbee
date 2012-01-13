@@ -64,15 +64,15 @@ static char *mark = NULL;
  * @param[out] len the length of the buffer returned.
  * @return a calloc'ed and realloc'ed buffer containing a string.
  */
-char* calloc_cpy_marked_string(char *mark, char *fpc) {
+char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
   char *afpc = fpc;
   size_t pvallen;
   /* Adjust for quoted value. */
-  if ((*mark == '"') && (*(afpc-1) == '"') && (mark+1 < afpc-2)) {
-      mark++;
+  if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc-2)) {
+      fpc_mark++;
       afpc--;
   }
-  pvallen = (size_t)(afpc - mark);
+  pvallen = (size_t)(afpc - fpc_mark);
   pval = (char *)calloc(pvallen + 1, sizeof(*pval));
   
   ib_util_unescape_string(pval, &pvallen, fpc, pvallen);
