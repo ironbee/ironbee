@@ -53,14 +53,44 @@ typedef struct {
 static char *dirname = NULL;
 static char *blkname = NULL;
 static char *pval = NULL;
+
+/* Store the start of a string to act on.
+   fpc - mark is the string length when processing after
+   a mark action. */
 static char *mark = NULL;
 
+/**
+ * @brief Calloc and unescpe into that buffer the marked string.
+ * @param[in] mark the start of the string.
+ * @param[in] fpc the current character from regal.
+ * @param[out] len the length of the buffer returned.
+ * @return a calloc'ed and realloc'ed buffer containing a string.
+ */
+static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
+  char *afpc = fpc;
+  size_t pvallen;
+  /* Adjust for quoted value. */
+  if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc-2)) {
+      fpc_mark++;
+      afpc--;
+  }
+  pvallen = (size_t)(afpc - fpc_mark);
+  pval = (char *)calloc(pvallen + 1, sizeof(*pval));
+  
+  ib_util_unescape_string(pval, &pvallen, fpc, pvallen);
+  
+  /* Shrink the buffer appropriately. */
+  pval = (char*)realloc(pval, pvallen+1);
+  
+  return pval;
+}
 
-#line 176 "config-parser.rl"
+
+#line 189 "config-parser.rl"
 
 
 
-#line 64 "config-parser.c"
+#line 94 "config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 10, 1, 15, 1, 
 	19, 1, 21, 1, 23, 1, 25, 1, 
@@ -215,7 +245,7 @@ static const int ironbee_config_en_endblock = 32;
 static const int ironbee_config_en_main = 16;
 
 
-#line 179 "config-parser.rl"
+#line 192 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            uint8_t *buf,
@@ -245,16 +275,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
     
-#line 208 "config-parser.rl"
+#line 221 "config-parser.rl"
     
-#line 209 "config-parser.rl"
+#line 222 "config-parser.rl"
     
-#line 210 "config-parser.rl"
+#line 223 "config-parser.rl"
     
-#line 211 "config-parser.rl"
+#line 224 "config-parser.rl"
 
     
-#line 258 "config-parser.c"
+#line 288 "config-parser.c"
 	{
 	 fsm.cs = ironbee_config_start;
 	 fsm.top = 0;
@@ -263,9 +293,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 fsm.act = 0;
 	}
 
-#line 213 "config-parser.rl"
+#line 226 "config-parser.rl"
     
-#line 269 "config-parser.c"
+#line 299 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -286,7 +316,7 @@ _resume:
 #line 1 "NONE"
 	{ fsm.ts = ( fsm.p);}
 	break;
-#line 290 "config-parser.c"
+#line 320 "config-parser.c"
 		}
 	}
 
@@ -353,43 +383,25 @@ _eof_trans:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 59 "config-parser.rl"
+#line 90 "config-parser.rl"
 	{ mark = ( fsm.p); }
 	break;
 	case 1:
-#line 65 "config-parser.rl"
+#line 96 "config-parser.rl"
 	{
-        char *afpc = ( fsm.p);
-        size_t pvallen;
-        /* Adjust for quoted value. */
-        if ((*mark == '"') && (*(afpc-1) == '"') && (mark+1 < afpc-2)) {
-            mark++;
-            afpc--;
-        }
-        pvallen = (size_t)(afpc - mark);
-        pval = (char *)calloc(pvallen + 1, sizeof(*pval));
-        memcpy(pval, mark, pvallen);
+        pval = calloc_cpy_marked_string(mark, ( fsm.p));
         ib_list_push(plist, pval);
     }
 	break;
 	case 2:
-#line 78 "config-parser.rl"
+#line 100 "config-parser.rl"
 	{
-        char *afpc = ( fsm.p);
-        size_t pvallen;
-        /* Adjust for quoted value. */
-        if ((*mark == '"') && (*(afpc-1) == '"') && (mark+1 < afpc-2)) {
-            mark++;
-            afpc--;
-        }
-        pvallen = (size_t)(afpc - mark);
-        pval = (char *)calloc(pvallen + 1, sizeof(*pval));
-        memcpy(pval, mark, pvallen);
+        pval = calloc_cpy_marked_string(mark, ( fsm.p));
         ib_list_push(plist, pval);
     }
 	break;
 	case 3:
-#line 93 "config-parser.rl"
+#line 106 "config-parser.rl"
 	{
         size_t namelen = (size_t)(( fsm.p) - mark);
         dirname = (char *)calloc(namelen + 1, sizeof(*dirname));
@@ -398,7 +410,7 @@ _eof_trans:
     }
 	break;
 	case 4:
-#line 99 "config-parser.rl"
+#line 112 "config-parser.rl"
 	{
         rc = ib_config_directive_process(cp, dirname, plist);
         if (rc != IB_OK) {
@@ -410,7 +422,7 @@ _eof_trans:
     }
 	break;
 	case 5:
-#line 110 "config-parser.rl"
+#line 123 "config-parser.rl"
 	{
         size_t namelen = (size_t)(( fsm.p) - mark);
         blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
@@ -419,7 +431,7 @@ _eof_trans:
     }
 	break;
 	case 6:
-#line 116 "config-parser.rl"
+#line 129 "config-parser.rl"
 	{
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
@@ -428,7 +440,7 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 122 "config-parser.rl"
+#line 135 "config-parser.rl"
 	{
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
@@ -446,15 +458,15 @@ _eof_trans:
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 12:
-#line 149 "config-parser.rl"
+#line 162 "config-parser.rl"
 	{ fsm.act = 1;}
 	break;
 	case 13:
-#line 150 "config-parser.rl"
+#line 163 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 14:
-#line 149 "config-parser.rl"
+#line 162 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 15:
@@ -470,15 +482,15 @@ _eof_trans:
 	}
 	break;
 	case 16:
-#line 154 "config-parser.rl"
+#line 167 "config-parser.rl"
 	{ fsm.act = 3;}
 	break;
 	case 17:
-#line 155 "config-parser.rl"
+#line 168 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 18:
-#line 154 "config-parser.rl"
+#line 167 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 19:
@@ -494,15 +506,15 @@ _eof_trans:
 	}
 	break;
 	case 20:
-#line 159 "config-parser.rl"
+#line 172 "config-parser.rl"
 	{ fsm.act = 5;}
 	break;
 	case 21:
-#line 160 "config-parser.rl"
+#line 173 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 22:
-#line 159 "config-parser.rl"
+#line 172 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 26; goto _again;} }}
 	break;
 	case 23:
@@ -518,15 +530,15 @@ _eof_trans:
 	}
 	break;
 	case 24:
-#line 164 "config-parser.rl"
+#line 177 "config-parser.rl"
 	{ fsm.act = 7;}
 	break;
 	case 25:
-#line 165 "config-parser.rl"
+#line 178 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 26:
-#line 164 "config-parser.rl"
+#line 177 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 27:
@@ -542,35 +554,35 @@ _eof_trans:
 	}
 	break;
 	case 28:
-#line 170 "config-parser.rl"
+#line 183 "config-parser.rl"
 	{ fsm.act = 10;}
 	break;
 	case 29:
-#line 173 "config-parser.rl"
+#line 186 "config-parser.rl"
 	{ fsm.act = 13;}
 	break;
 	case 30:
-#line 171 "config-parser.rl"
+#line 184 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 32; goto _again;} }}
 	break;
 	case 31:
-#line 174 "config-parser.rl"
+#line 187 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 32:
-#line 169 "config-parser.rl"
+#line 182 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 33:
-#line 170 "config-parser.rl"
+#line 183 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 22; goto _again;} }}
 	break;
 	case 34:
-#line 172 "config-parser.rl"
+#line 185 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 29; goto _again;} }}
 	break;
 	case 35:
-#line 173 "config-parser.rl"
+#line 186 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 36:
@@ -588,7 +600,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 592 "config-parser.c"
+#line 604 "config-parser.c"
 		}
 	}
 
@@ -605,7 +617,7 @@ _again:
 #line 1 "NONE"
 	{ fsm.act = 0;}
 	break;
-#line 609 "config-parser.c"
+#line 621 "config-parser.c"
 		}
 	}
 
@@ -625,7 +637,7 @@ _again:
 	_out: {}
 	}
 
-#line 214 "config-parser.rl"
+#line 227 "config-parser.rl"
 
     return IB_OK;
 }
