@@ -78,7 +78,7 @@ char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
   ib_util_unescape_string(pval, &pvallen, fpc, pvallen);
   
   /* Shrink the buffer appropriately. */
-  pval = (char*)realloc(pval, pvallen);
+  pval = (char*)realloc(pval, pvallen+1);
   
   return pval;
 }

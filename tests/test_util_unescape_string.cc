@@ -37,6 +37,7 @@ TEST(TestIBUtilUnescapeString, singleCharacter) {
   EXPECT_EQ('\r', str2[0]);
   EXPECT_EQ('\n', str2[1]);
   EXPECT_EQ('\t', str2[2]);
+  EXPECT_EQ('\0', str2[3]);
   ASSERT_EQ(3, len);
 }
 
@@ -49,6 +50,7 @@ TEST(TestIBUtilUnescapeString, singleBytes) {
   
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
+  EXPECT_EQ('\0', str2[2]);
   EXPECT_EQ(2, len);
 }
 
@@ -63,6 +65,7 @@ TEST(TestIBUtilUnescapeString, longBytes) {
   EXPECT_EQ(chk[1], str2[1]);
   EXPECT_EQ(chk[2], str2[2]);
   EXPECT_EQ(chk[3], str2[3]);
+  EXPECT_EQ('\0', str2[4]);
   EXPECT_EQ(4, len);
 }
 

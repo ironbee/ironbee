@@ -132,14 +132,15 @@ void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
 ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 
 /**
- * @brief Unescape a Javascript-escaped string into the dst string buffer.
+ * @brief Unescape a Javascript-escaped string into the @code dst string buffer.
  * @details The end of the dst buffer is marked with \0.
- *          Because src may be a segment in a larger character buffer, src
- *          is not considered a string (being terminated with \0) but an
- *          array of characters of length \code src_len. The 
- *          \code dst buffer must be \code src_len + 1 in length so
- *          that if no escaping substitutions occur the last character
- *          in the \code dst buffer may still be set to \0.
+ *          Because src may be a segment in a larger character buffer,
+ *          @code src is not treated as a \0 terminated string, but is
+ *          processed using the given @code src_len.
+ *          An unescaped string will always be shorter than or equal to
+ *          the original string. For this reason @code dst_len
+ *          is populated with the resulting string's length not including the
+ *          \0 termination.
  * @param[out] dst string buffer that should be at least as long as src_len+1.
  * @param[out] dst_len the length of the decoded string. This will be
  *             equal or shorter than src_len.
@@ -148,9 +149,9 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst, 
-                                               size_t* dst_len,
-                                               const char* src,
+ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst, 
+                                               size_t *dst_len,
+                                               const char *src,
                                                size_t src_len);
 
 /**
