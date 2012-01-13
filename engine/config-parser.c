@@ -66,7 +66,7 @@ static char *mark = NULL;
  * @param[out] len the length of the buffer returned.
  * @return a calloc'ed and realloc'ed buffer containing a string.
  */
-char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
+static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
   char *afpc = fpc;
   size_t pvallen;
   /* Adjust for quoted value. */
@@ -80,7 +80,7 @@ char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
   ib_util_unescape_string(pval, &pvallen, fpc, pvallen);
   
   /* Shrink the buffer appropriately. */
-  pval = (char*)realloc(pval, pvallen);
+  pval = (char*)realloc(pval, pvallen+1);
   
   return pval;
 }
