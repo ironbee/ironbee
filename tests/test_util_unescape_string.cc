@@ -96,3 +96,12 @@ TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
   size_t len;
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2, &len, str, strlen(str)));
 }
+
+TEST(TestIBUtilUnescapeString, nochange01) {
+  char* str = "LoadModule";
+  char str2[100];
+  size_t len;
+  ASSERT_EQ(IB_OK, ib_util_unescape_string(str2, &len, str, strlen(str)));
+
+  ASSERT_EQ(0, strcmp(str, str2));
+}
