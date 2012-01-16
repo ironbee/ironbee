@@ -58,10 +58,9 @@ static char *pval = NULL;
 static char *mark = NULL;
 
 /**
- * @brief Calloc and unescpe into that buffer the marked string.
- * @param[in] mark the start of the string.
- * @param[in] fpc the current character from regal.
- * @param[out] len the length of the buffer returned.
+ * @brief Malloc and unescpe into that buffer the marked string.
+ * @param[in] fpc_mark the start of the string.
+ * @param[in] fpc the current character from ragel.
  * @return a calloc'ed and realloc'ed buffer containing a string.
  */
 static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
@@ -73,9 +72,9 @@ static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
       afpc--;
   }
   pvallen = (size_t)(afpc - fpc_mark);
-  pval = (char *)calloc(pvallen + 1, sizeof(*pval));
+  pval = (char *)malloc(pvallen + 1 * sizeof(*pval));
   
-  ib_util_unescape_string(pval, &pvallen, fpc, pvallen);
+  ib_util_unescape_string(pval, &pvallen, fpc_mark, pvallen);
   
   /* Shrink the buffer appropriately. */
   pval = (char*)realloc(pval, pvallen+1);
