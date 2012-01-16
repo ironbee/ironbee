@@ -224,8 +224,11 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                                                size_t* dst_len,
                                                const char* src,
                                                size_t src_len) {
-  size_t dst_i = 0,
-         src_i = 0;
+  size_t dst_i = 0;
+  size_t src_i = 0;
+
+  /* For loop variables. */
+  int i;
 
   for (src_i=0; src_i<src_len; ++src_i) {
     switch (src[src_i]) {
@@ -270,7 +273,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
             }
 
             /* Ensure that the next 2 characters are hex digits. */
-            for (int i=1; i <= 2; i++) {
+            for (i=1; i <= 2; i++) {
               if ( ! isxdigit(src[src_i + i]) ) {
                 return IB_EINVAL;
               }
@@ -288,7 +291,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
             }
 
             /* Ensure that the next 4 characters are hex digits. */
-            for (int i=1; i <= 4; i++) {
+            for (i=1; i <= 4; i++) {
               if ( ! isxdigit(src[src_i + i]) ) {
                 return IB_EINVAL;
               }
