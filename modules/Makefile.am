@@ -19,6 +19,7 @@ pkglib_LTLIBRARIES =  ibmod_htp.la \
                      ibmod_lua.la \
                      ibmod_poc_sig.la \
                      ibmod_remote_address.la \
+                     ibmod_rules.la \
                      ibmod_user_agent.la \
                      ibmod_trace.la
 noinst_PROGRAMS = user_agent
@@ -75,6 +76,14 @@ ibmod_poc_ac_sig_la_CFLAGS = $(AM_CFLAGS)
 ibmod_remote_address_la_SOURCES = remote_address.c
 ibmod_remote_address_la_CFLAGS = ${AM_CFLAGS}
 ibmod_remote_address_la_LDFLAGS = $(AM_LDFLAGS)
+
+ibmod_rules_la_SOURCES = rules.c
+ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
+                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
+ibmod_rules_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
+                      -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+                      -lluajit-ironbee \
+                      -lm
 
 ibmod_trace_la_SOURCES = trace.c
 ibmod_trace_la_CFLAGS = ${AM_CFLAGS}
