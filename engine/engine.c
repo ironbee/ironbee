@@ -277,6 +277,13 @@ static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+#if 0
+    ib_log_debug(ib,1,"Registering main context with core module %p",(void*)ctx);
+    rc = ib_module_register_context(ib_core_module(), ctx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+#endif
 
     ib->ctx = ctx;
 
@@ -1936,6 +1943,10 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     }
     else {
         /* Register the core module by default. */
+#if 0
+        ib_log_debug(ib, 9, "Registering module=\"%s\" idx=%d",
+                     ib_core_module()->name, ib_core_module()->idx);
+#endif
         rc = ib_module_register_context(ib_core_module(), *pctx);
         if (rc != IB_OK) {
             goto failed;

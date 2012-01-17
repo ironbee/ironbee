@@ -21,7 +21,10 @@
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 #include <ironbee/util.h>
+#include <ironbee/list.h>
 #include <ironbee/config.h>
+#include <ironbee/rule_engine.h>
+#include <ironbee/rule_parser.h>
 
 #include "lua/ironbee.h"
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
@@ -150,7 +153,6 @@ static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L) {
       IB_FTRACE_RET_STATUS(IB_EINVAL);
   }
 }
-
 
 /**
  * @brief Call a named lua function (IronBee rule) in the given lua_State.
@@ -494,25 +496,74 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
                                      ib_list_t *vars,
                                      void *cbdata)
 {
-  IB_FTRACE_INIT(rules_rule_params);
+    IB_FTRACE_INIT(rules_rule_params);
+    ib_status_t     rc;
+    ib_list_node_t *inputs;
+    ib_list_node_t *op;
+    ib_list_node_t *mod;
+    ib_rule_t      *rule;
 
-  ib_log_debug(cp->ib, 1, "Name: %s", name);
+    ib_log_debug(cp->ib, 1, "Name: %s", name);
 
-  ib_list_node_t *var = ib_list_first(vars);
+    if (cbdata != NULL) {
+        IB_FTRACE_MSG("Callback data is not null.");
+    }
 
-  var = ib_list_node_next(var);
+    /* Get the inputs string */
+    inputs = ib_list_first(vars);
+    if ( (inputs == NULL) || (inputs->data == NULL) ) {
+        ib_log_error(cp->ib, 1, "No inputs for rule");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
-  if (cbdata!=NULL) {
-    IB_FTRACE_MSG("Callback data is not null.");
-  }
+    /* Get the operator string */
+    op = ib_list_node_next(inputs);
+    if ( (op == NULL) || (op->data == NULL) ) {
+        ib_log_error(cp->ib, 1, "No operator for rule");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
-  IB_FTRACE_RET_STATUS(IB_OK);
+    /* Allocate a rule */
+    rc = ib_rule_create(cp->ib, cp->cur_ctx, &rule);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, 1, "Failed to allocate rule: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    
+    /* Parse the inputs */
+    rc = ib_rule_parse_inputs(cp, rule, inputs->data);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, 1,
+                     "Error parsing rule inputs: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    
+    /* Parse the operator */
+    rc = ib_rule_parse_operator(cp, rule, op->data);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, 1,
+                     "Error parsing rule inputs: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Parse all of the modifiers */
+    mod = op;
+    while( (mod = ib_list_node_next(mod)) != NULL) {
+        rc = ib_rule_parse_modifier(cp, rule, mod->data);
+        if (rc != IB_OK) {
+        }
+    }
+
+    /* Finally, register the rule */
+    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, PHASE_REQUEST_HEADER);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 
 static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 
-    /* Give the config parser a callback for the directive GeoIPDatabaseFile */
+    /* Give the config parser a callback for the Rule and RuleExt directive */
     IB_DIRMAP_INIT_LIST(
         "Rule",
         rules_rule_params,
