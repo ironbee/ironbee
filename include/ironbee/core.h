@@ -39,6 +39,12 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup IronBeeCore Core
+ * @ingroup IronBee
+ * @{
+ */
+
 #define CORE_MODULE_NAME         core
 #define CORE_MODULE_NAME_STR     IB_XSTRINGIFY(CORE_MODULE_NAME)
 
