@@ -43,14 +43,6 @@
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
-
-/* FIXME - remove when complete. */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-
 /**
  * Ironbee's root rule state.
  */
@@ -83,7 +75,7 @@ static ib_status_t add_lua_rule(ib_engine_t *ib,
   IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/* FIXME - add stack after this is used. */
+/* FIXME - add static after this is used. */
 ib_status_t call_lua_rule(ib_engine_t *ib,
                                  lua_State* L,
                                  const char* func_name)
@@ -168,6 +160,12 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
   char* file = NULL;
   char* phase = NULL;
   char rule_name[20];
+
+  ib_log_debug(cp->ib, 1, "Processing directive %s", name);
+
+  if (cbdata!=NULL) {
+    IB_FTRACE_MSG("Callback data is not null.");
+  }
   
   if (var==NULL) {
     ib_log_error(cp->ib, 1, "RuleExt file.");
@@ -181,6 +179,8 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
   
   file = var->data;
   
+  ib_log_debug(cp->ib, 1, "File %s", phase);
+
   var = ib_list_node_next(var);
   
   if (var==NULL) {
@@ -195,6 +195,8 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
   
   phase = var->data;
   
+  ib_log_debug(cp->ib, 1, "Phase %s", phase);
+
   if (strncasecmp(file, "lua:", 4)) {
     /* Lua rule. */
     
@@ -221,10 +223,21 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
  */
 static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
                                      const char *name,
-                                     const ib_list_t *vars,
+                                     ib_list_t *vars,
                                      void *cbdata)
 {
   IB_FTRACE_INIT(rules_rule_params);
+
+  ib_log_debug(cp->ib, 1, "Name: %s", name);
+
+  ib_list_node_t* var = ib_list_first(vars);
+
+  var = ib_list_node_next(var);
+
+  if (cbdata!=NULL) {
+    IB_FTRACE_MSG("Callback data is not null.");
+  }
+
   IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -251,24 +264,36 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 {
   IB_FTRACE_INIT(rules_init);
+
+  ib_log_debug(ib, 1, "Initializing rules module.");
+
+  if (m==NULL) {
+    IB_FTRACE_MSG("Module is null.");
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+  }
   
   ironbee_loaded_rule_count = 0;
   ironbee_rules_lua = luaL_newstate();
   luaL_openlibs(ironbee_rules_lua);
-  
+   
   IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(rules_fini);
-    ib_log_debug(ib, 4, "Rules module loaded.");
+  IB_FTRACE_INIT(rules_fini);
+  ib_log_debug(ib, 4, "Rules module loaded.");
     
-    if (ironbee_rules_lua != NULL) {
-      lua_close(ironbee_rules_lua);
-    }
+  if (m==NULL) {
+    IB_FTRACE_MSG("Module is null.");
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+  }
+
+  if (ironbee_rules_lua != NULL) {
+    lua_close(ironbee_rules_lua);
+  }
     
-    IB_FTRACE_RET_STATUS(IB_OK);
+  IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /* Initialize the module structure. */
@@ -284,5 +309,3 @@ IB_MODULE_INIT(
     NULL                                 /* Context fini function */
 );
 
-/* FIXME - remove when complete. */
-#pragma GCC diagnostic pop
