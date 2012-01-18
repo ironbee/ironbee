@@ -43,6 +43,14 @@
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
+
+/* FIXME - remove when complete. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+
 /**
  * Ironbee's root rule state.
  */
@@ -75,7 +83,8 @@ static ib_status_t add_lua_rule(ib_engine_t *ib,
   IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t call_lua_rule(ib_engine_t *ib,
+/* FIXME - add stack after this is used. */
+ib_status_t call_lua_rule(ib_engine_t *ib,
                                  lua_State* L,
                                  const char* func_name)
 {
@@ -149,7 +158,7 @@ static ib_status_t call_lua_rule(ib_engine_t *ib,
  */
 static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                                         const char *name,
-                                        const ib_list_t *vars,
+                                        ib_list_t *vars,
                                         void *cbdata)
 {
   IB_FTRACE_INIT(rules_ruleext_params);
@@ -172,7 +181,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
   
   file = var->data;
   
-  var = ib_list_first(var);
+  var = ib_list_node_next(var);
   
   if (var==NULL) {
     ib_log_error(cp->ib, 1, "RuleExt rule phase.");
@@ -274,3 +283,6 @@ IB_MODULE_INIT(
     NULL,                                /* Context init function */
     NULL                                 /* Context fini function */
 );
+
+/* FIXME - remove when complete. */
+#pragma GCC diagnostic pop
