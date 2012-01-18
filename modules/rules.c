@@ -76,6 +76,7 @@ static ib_status_t add_lua_rule(ib_engine_t *ib,
 }
 
 /* FIXME - add static after this is used. */
+ib_status_t call_lua_rule(ib_engine_t *, lua_State*, const char*);
 ib_status_t call_lua_rule(ib_engine_t *ib,
                                  lua_State* L,
                                  const char* func_name)
