@@ -302,9 +302,6 @@ static ib_status_t call_in_critical_section(ib_engine_t* ib,
   /* Error code from Iron Bee calls. */
   ib_status_t ec;
 
-  char *error_buf;
-  const int error_buf_len = 1024;
-
   struct sembuf lock_sops[2];
   struct sembuf unlock_sop;
 
@@ -327,25 +324,8 @@ static ib_status_t call_in_critical_section(ib_engine_t* ib,
 
   /* Report semop error and return. */
   if (rc==-1) {
-    error_buf = (char*) malloc(error_buf_len);
-
-    if (error_buf==NULL) {
-      ib_log_error(ib, 1, "Cannot allocate memory.");
-      IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    rc = strerror_r(errno, error_buf, error_buf_len);
-
-    if (rc==-1) {
-      ib_log_error(ib, 1, "Failed to lock Lua context - Unknown error.");
-      free(error_buf);
-      IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-    else {
-      ib_log_error(ib, 1, "Failed to lock Lua context - %s.", error_buf);
-      free(error_buf);
-      IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    ib_log_error(ib, 1, "Failed to lock Lua context - %s.", strerror(errno));
+    IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
   }
 
   /* Execute lua call in critical section. */
@@ -355,25 +335,9 @@ static ib_status_t call_in_critical_section(ib_engine_t* ib,
 
   /* Report semop error and return. */
   if (rc==-1) {
-    error_buf = (char*) malloc(error_buf_len);
-
-    if (error_buf==NULL) {
-      ib_log_error(ib, 1, "Cannot allocate memory.");
-      IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    rc = strerror_r(errno, error_buf, error_buf_len);
-
-    if (rc==-1) {
-      ib_log_error(ib, 1, "Failed to unlock Lua context - Unknown error.");
-      free(error_buf);
-      IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-    else {
-      ib_log_error(ib, 1, "Failed to unlock Lua context - %s.", error_buf);
-      free(error_buf);
-      IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    ib_log_error(ib, 1, 
+      "Failed to unlock Lua context - %s.", strerror(errno));
+    IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
   }
 
   IB_FTRACE_RET_STATUS(IB_OK);
