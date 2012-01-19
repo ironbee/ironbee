@@ -36,7 +36,7 @@ extern "C" {
 typedef ib_status_t (* ib_operator_create_fn_t)(void *data);
 
 /** Operator instance destruction callback type */
-typedef ib_status_t (* ib_operator_destroy_fn_t)();
+typedef ib_status_t (* ib_operator_destroy_fn_t)(void);
 
 /** Operator instance execution callback type */
 typedef ib_status_t (* ib_operator_execute_fn_t)(void *data,

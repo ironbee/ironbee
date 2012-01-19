@@ -390,6 +390,7 @@ static ib_status_t call_in_critical_section(ib_engine_t* ib,
  * FIXME - add static after this function is wired into the engine.
  *
  */
+ib_status_t call_lua_rule_r(ib_engine_t*, ib_tx_t* , const char* );
 ib_status_t call_lua_rule_r(ib_engine_t* ib,
                             ib_tx_t* tx,
                             const char* func_name)
