@@ -15,8 +15,9 @@
  * limitations under the License.
  *****************************************************************************/
 
-        #include <errno.h>
+#include <errno.h>
 #include <math.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -558,7 +559,12 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
   /* Error code from Iron Bee calls. */
   ib_status_t ec;
 
-  union semun sem_val;
+  union semun {
+    int              val;    /* Value for SETVAL */
+    struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
+    unsigned short  *array;  /* Array for GETALL, SETALL */
+    struct seminfo  *__buf;  /* Buffer for IPC_INFO (Linux-specific) */
+  } sem_val;
 
   /* Initialize semaphore */
   sem_val.val=1;
