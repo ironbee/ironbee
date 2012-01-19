@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/stat.h>
 
 #include <lua.h>
 
@@ -546,7 +547,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
   /* Initialize semaphore */
   sem_val.val=1;
-  g_lua_lock = semget(IPC_PRIVATE, 1, SEM_R|SEM_A);
+  g_lua_lock = semget(IPC_PRIVATE, 1, S_IRUSR|S_IWUSR);
 
   if (g_lua_lock==-1) {
     ib_log_error(ib, 1,
