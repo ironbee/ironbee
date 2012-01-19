@@ -79,7 +79,9 @@ ibmod_remote_address_la_LDFLAGS = $(AM_LDFLAGS)
 
 ibmod_rules_la_SOURCES = rules.c
 ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
-                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
+                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+                        -I$(top_srcdir) \
+                        -D_XOPEN_SOURCE=1
 ibmod_rules_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
