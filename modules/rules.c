@@ -90,7 +90,6 @@ static ib_status_t add_lua_rule(ib_engine_t *ib,
       IB_FTRACE_RET_STATUS(IB_EINVAL);
   }
   
-  /* lua_isfunction(L, -1 ); */
   lua_setglobal(L, func_name);
 
   IB_FTRACE_RET_STATUS(IB_OK);
@@ -138,7 +137,7 @@ static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L) {
       ib_log_error(ib, 1,
         "Error fetching error message during FFI evaluation.");
       IB_FTRACE_RET_STATUS(IB_EINVAL);
-#ifdef LUA_ERRGCMM
+#if LUA_VERSION_NUM > 501
     /* If LUA_ERRGCMM is defined, include a custom error for it as well. 
        This was introduced in Lua 5.2. */
     case LUA_ERRGCMM:
@@ -203,7 +202,7 @@ static ib_status_t call_lua_rule(ib_engine_t *ib,
   /* Pop the table and set it as the local env. */
   lua_setfenv(L, -1);
   
-  /* Call the function on the stack wit 1 input, 0 outputs, and errmsg=0. */
+  /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
   lua_rc = lua_pcall(L, 1, 0, 0);
   
   /* Only check errors if ec is not 0 (LUA_OK). */
@@ -222,7 +221,7 @@ static ib_status_t call_lua_rule(ib_engine_t *ib,
       case LUA_ERRERR:
         ib_log_error(ib, 1, "Error fetching error message during Lua rule.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
-#ifdef LUA_ERRGCMM
+#if LUA_VERSION_NUM > 501
       /* If LUA_ERRGCMM is defined, include a custom error for it as well. 
          This was introduced in Lua 5.2. */
       case LUA_ERRGCMM:
@@ -230,7 +229,7 @@ static ib_status_t call_lua_rule(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
 #endif
       default:
-        ib_log_error(ib, 1, "Unexpected error(%d) during Lua rule.", lua_rc);
+        ib_log_error(ib, 1, "Unexpected error (%d) during Lua rule.", lua_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
   }
@@ -256,7 +255,7 @@ static inline void sprint_threadname(char *thread_name, lua_State *L) {
  */
 static ib_status_t spawn_thread(ib_engine_t *ib, lua_State **L) {
   IB_FTRACE_INIT(spawn_thread);
-  char Lname[20];
+  char *Lname = (char*)malloc(20);
 
   *L = lua_newthread(g_ironbee_rules_lua);
 
@@ -264,6 +263,7 @@ static ib_status_t spawn_thread(ib_engine_t *ib, lua_State **L) {
 
   if (L==NULL) {
     ib_log_error(ib, 1, "Failed to allocate new Lua execution stack.");
+    free(Lname);
     IB_FTRACE_RET_STATUS(IB_EALLOC);
   }
 
@@ -274,6 +274,7 @@ static ib_status_t spawn_thread(ib_engine_t *ib, lua_State **L) {
   /* Store the thread at the global variable referenced. */
   lua_setglobal(g_ironbee_rules_lua, Lname);
 
+  free(Lname);
   IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -283,7 +284,7 @@ static ib_status_t spawn_thread(ib_engine_t *ib, lua_State **L) {
  */
 static ib_status_t join_thread(ib_engine_t *ib, lua_State **L) {
   IB_FTRACE_INIT(join_thread);
-  char Lname[20];
+  char *Lname = (char*)malloc(20);
   sprint_threadname(Lname, *L);
 
   ib_log_debug(ib, 1, "Tearing down Lua thread %s.", Lname);
@@ -294,6 +295,7 @@ static ib_status_t join_thread(ib_engine_t *ib, lua_State **L) {
   /* Erase the referenced to the stack to allow GC. */
   lua_setglobal(g_ironbee_rules_lua, Lname);
 
+  free(Lname);
   IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -405,11 +407,11 @@ ib_status_t call_lua_rule_r(ib_engine_t *ib,
 
 /**
  * @brief Parse a RuleExt directive.
- * @details Register lua function. RuleExt file:/path/to/rule.lua phase:REQUEST
+ * @details Register lua function. RuleExt lua:/path/to/rule.lua phase:REQUEST
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
- * @param[in] vars The list of variables passed to @code name.
+ * @param[in] vars The list of variables passed to @c name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
@@ -484,7 +486,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
- * @param[in] vars The list of variables passed to @code name.
+ * @param[in] vars The list of variables passed to @c name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
