@@ -76,14 +76,14 @@ static ib_status_t add_lua_rule(ib_engine_t *ib,
                                 const char* file)
 {
   IB_FTRACE_INIT(add_lua_rule);
-  ib_status_t ec;
+  ib_status_t ib_rc;
 
   /* Load (compile) the lua module. */
-  ec = luaL_loadfile(L, file);
+  ib_rc = luaL_loadfile(L, file);
   
-  if (ec != 0) {
+  if (ib_rc != 0) {
       ib_log_error(ib, 1, "Failed to load file module \"%s\" - %s (%d)",
-                   file, lua_tostring(L, -1), ec);
+                   file, lua_tostring(L, -1), ib_rc);
 
       /* Get error string off the stack. */
       lua_pop(L, 1);
@@ -103,25 +103,25 @@ static ib_status_t add_lua_rule(ib_engine_t *ib,
 static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L) {
   IB_FTRACE_INIT(load_inrbee_ffi);
 
-  int ec;
+  int lua_rc;
   const char* ffi_file = X_MODULE_BASE_PATH "/ironbee-ffi.lua";
 
-  ec = luaL_loadfile(L, ffi_file);
+  lua_rc = luaL_loadfile(L, ffi_file);
 
-  if (ec != 0) {
+  if (lua_rc != 0) {
     ib_log_error(ib, 1, "Failed to load %s - %s (%d)", 
                  ffi_file,
                  lua_tostring(L, -1),
-                 ec);
+                 lua_rc);
     lua_pop(L, -1);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
   }
 
   /* Evaluate the loaded ffi file. */
-  ec = lua_pcall(L, 0, 0, 0);
+  lua_rc = lua_pcall(L, 0, 0, 0);
   
   /* Only check errors if ec is not 0 (LUA_OK). */
-  switch(ec) {
+  switch(lua_rc) {
     case 0:
       IB_FTRACE_RET_STATUS(IB_OK);
     case LUA_ERRRUN:
@@ -146,7 +146,8 @@ static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L) {
       IB_FTRACE_RET_STATUS(IB_EINVAL);
 #endif
     default:
-      ib_log_error(ib, 1, "Unexpected error(%d) during FFI evaluation.", ec);
+      ib_log_error(ib, 1,
+        "Unexpected error(%d) during FFI evaluation.", lua_rc);
       IB_FTRACE_RET_STATUS(IB_EINVAL);
   }
 }
@@ -167,7 +168,7 @@ static ib_status_t call_lua_rule(ib_engine_t *ib,
 {
   IB_FTRACE_INIT(call_lua_rule);
   
-  int ec;
+  int lua_rc;
   
   if (!lua_checkstack(L, 5)) {
     ib_log_error(ib, 1, 
@@ -203,11 +204,11 @@ static ib_status_t call_lua_rule(ib_engine_t *ib,
   lua_setfenv(L, -1);
   
   /* Call the function on the stack wit 1 input, 0 outputs, and errmsg=0. */
-  ec = lua_pcall(L, 1, 0, 0);
+  lua_rc = lua_pcall(L, 1, 0, 0);
   
   /* Only check errors if ec is not 0 (LUA_OK). */
-  if (ec!=0) {
-    switch(ec) {
+  if (lua_rc != 0) {
+    switch(lua_rc) {
       case LUA_ERRRUN:
         ib_log_error(ib, 1, "Error running Lua Rule %s - %s",
                      func_name, lua_tostring(L, -1));
@@ -229,7 +230,7 @@ static ib_status_t call_lua_rule(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
 #endif
       default:
-        ib_log_error(ib, 1, "Unexpected error(%d) during Lua rule.", ec);
+        ib_log_error(ib, 1, "Unexpected error(%d) during Lua rule.", lua_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
   }
@@ -309,10 +310,10 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
   IB_FTRACE_INIT(call_in_critical_section);
 
   /* Return code from system calls. */
-  int rc;
+  int sys_rc;
 
   /* Error code from Iron Bee calls. */
-  ib_status_t ec;
+  ib_status_t ib_rc;
 
   struct sembuf lock_sops[2];
   struct sembuf unlock_sop;
@@ -332,27 +333,27 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
   lock_sops[1].sem_op = 0;
   lock_sops[1].sem_flg = 0;
 
-  rc = semop(g_lua_lock, lock_sops, 2);
+  sys_rc = semop(g_lua_lock, lock_sops, 2);
 
   /* Report semop error and return. */
-  if (rc==-1) {
+  if (sys_rc == -1) {
     ib_log_error(ib, 1, "Failed to lock Lua context - %s.", strerror(errno));
     IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
   }
 
   /* Execute lua call in critical section. */
-  ec = fn(ib, L);
+  ib_rc = fn(ib, L);
 
-  rc = semop(g_lua_lock, &unlock_sop, 1);
+  sys_rc = semop(g_lua_lock, &unlock_sop, 1);
 
   /* Report semop error and return. */
-  if (rc==-1) {
+  if (sys_rc==-1) {
     ib_log_error(ib, 1, 
       "Failed to unlock Lua context - %s.", strerror(errno));
     IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
   }
 
-  IB_FTRACE_RET_STATUS(ec);
+  IB_FTRACE_RET_STATUS(ib_rc);
 } /* End call_critical_section */
 
 /**
@@ -374,33 +375,32 @@ ib_status_t call_lua_rule_r(ib_engine_t *ib,
 {
   IB_FTRACE_INIT(call_lua_rule_r);
 
-  /* Return code from system calls. */
-  ib_status_t ec;
+  ib_status_t ib_rc;
 
   size_t thread_name_sz = 1024;
   char *thread_name = (char*) malloc(thread_name_sz);
   lua_State *L;
 
-  ec = call_in_critical_section(ib, &spawn_thread, &L);
+  ib_rc = call_in_critical_section(ib, &spawn_thread, &L);
 
-  if (ec!=IB_OK) {
+  if (ib_rc != IB_OK) {
     free(thread_name);
-    IB_FTRACE_RET_STATUS(ec);
+    IB_FTRACE_RET_STATUS(ib_rc);
   }
     
   /* Call the rule in isolation. */
-  ec = call_lua_rule(ib, tx, L, func_name);
+  ib_rc = call_lua_rule(ib, tx, L, func_name);
 
-  if (ec!=IB_OK) {
+  if (ib_rc != IB_OK) {
     free(thread_name);
-    IB_FTRACE_RET_STATUS(ec);
+    IB_FTRACE_RET_STATUS(ib_rc);
   }
 
-  ec = call_in_critical_section(ib, &join_thread, &L);
+  ib_rc = call_in_critical_section(ib, &join_thread, &L);
 
   free(thread_name);
 
-  IB_FTRACE_RET_STATUS(ec);
+  IB_FTRACE_RET_STATUS(ib_rc);
 }
 
 /**
@@ -532,10 +532,10 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
   IB_FTRACE_INIT(rules_init);
 
   /* Return code from system calls. */
-  int rc;
+  int sys_rc;
 
   /* Error code from Iron Bee calls. */
-  ib_status_t ec;
+  ib_status_t ib_rc;
 
   /* Snipped from the Linux man page semctl(2). */
   union semun {
@@ -549,15 +549,15 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
   sem_val.val=1;
   g_lua_lock = semget(IPC_PRIVATE, 1, S_IRUSR|S_IWUSR);
 
-  if (g_lua_lock==-1) {
+  if (g_lua_lock == -1) {
     ib_log_error(ib, 1,
       "Failed to initialize Lua runtime lock - %s", strerror(errno));
     IB_FTRACE_RET_STATUS(IB_EALLOC);
   }
 
-  rc = semctl(g_lua_lock, 0, SETVAL, sem_val);
+  sys_rc = semctl(g_lua_lock, 0, SETVAL, sem_val);
 
-  if (rc==-1) {
+  if (sys_rc == -1) {
     ib_log_error(ib, 1,
       "Failed to initialize Lua runtime lock - %s", strerror(errno));
     semctl(g_lua_lock, IPC_RMID, 0);
@@ -567,7 +567,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
   ib_log_debug(ib, 1, "Initializing rules module.");
 
-  if (m==NULL) {
+  if (m == NULL) {
     IB_FTRACE_MSG("Module is null.");
     semctl(g_lua_lock, IPC_RMID, 0);
     g_lua_lock = -1;
@@ -578,13 +578,13 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
   g_ironbee_rules_lua = luaL_newstate();
   luaL_openlibs(g_ironbee_rules_lua);
 
-  ec = load_ironbee_ffi(ib, g_ironbee_rules_lua);
+  ib_rc = load_ironbee_ffi(ib, g_ironbee_rules_lua);
 
-  if (ec!=IB_OK) {
+  if (ib_rc != IB_OK) {
     ib_log_error(ib, 1, "Failed to load FFI file for Lua rule execution.");
     semctl(g_lua_lock, IPC_RMID, 0);
     g_lua_lock = -1;
-    IB_FTRACE_RET_STATUS(ec);
+    IB_FTRACE_RET_STATUS(ib_rc);
   }
    
   IB_FTRACE_RET_STATUS(IB_OK);
@@ -595,11 +595,11 @@ static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m)
   IB_FTRACE_INIT(rules_fini);
   ib_log_debug(ib, 4, "Rules module unloading.");
     
-  if (g_lua_lock>=0) {
+  if (g_lua_lock >= 0) {
     semctl(g_lua_lock, IPC_RMID, 0);
   }
 
-  if (m==NULL) {
+  if (m == NULL) {
     IB_FTRACE_MSG("Module is null.");
     IB_FTRACE_RET_STATUS(IB_EINVAL);
   }
