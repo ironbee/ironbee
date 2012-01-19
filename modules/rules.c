@@ -15,14 +15,6 @@
  * limitations under the License.
  *****************************************************************************/
 
-#include <errno.h>
-#include <math.h>
-#include <string.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
@@ -37,7 +29,14 @@
  *  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
+#include <errno.h>
 #include <inttypes.h>
+#include <math.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 
 #include <lua.h>
 
@@ -66,7 +65,7 @@ static int g_lua_lock;
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
  */
-typedef ib_status_t(*critical_section_fn_t)(lua_State**);
+typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State**);
 
 static int ironbee_loaded_rule_count;
 
@@ -105,6 +104,7 @@ static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L) {
 
   int ec;
   const char* ffi_file = X_MODULE_BASE_PATH "/ironbee-ffi.lua";
+
   ec = luaL_loadfile(L, ffi_file);
 
   if (ec != 0) {
@@ -159,10 +159,10 @@ static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L) {
  * @param[in] L the Lua execution state/stack to use to call the rule.
  * @param[in] func_name the name of the Lua function to call.
  */
-static ib_status_t call_lua_rule(ib_engine_t* ib,
-                                 ib_tx_t* tx,
-                                 lua_State* L,
-                                 const char* func_name)
+static ib_status_t call_lua_rule(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 lua_State *L,
+                                 const char *func_name)
 {
   IB_FTRACE_INIT(call_lua_rule);
   
@@ -252,13 +252,22 @@ static inline void sprint_threadname(char *thread_name, lua_State *L) {
  * @details Do not call this outside of a locked semaphore.
  * @param[out] Copy the thread name into this buffer.
  */
-static ib_status_t spawn_thread(lua_State **L) {
+static ib_status_t spawn_thread(ib_engine_t *ib, lua_State **L) {
   IB_FTRACE_INIT(spawn_thread);
   char Lname[20];
 
   *L = lua_newthread(g_ironbee_rules_lua);
 
+  ib_log_debug(ib, 1, "Setting up new Lua thread.");
+
+  if (L==NULL) {
+    ib_log_error(ib, 1, "Failed to allocate new Lua execution stack.");
+    IB_FTRACE_RET_STATUS(IB_EALLOC);
+  }
+
   sprint_threadname(Lname, *L);
+
+  ib_log_debug(ib, 1, "Created Lua thread %s.", Lname);
 
   /* Store the thread at the global variable referenced. */
   lua_setglobal(g_ironbee_rules_lua, Lname);
@@ -270,10 +279,12 @@ static ib_status_t spawn_thread(lua_State **L) {
  * @brief Thread joining critical section.
  * @details Do not call this outside of a locked semaphore.
  */
-static ib_status_t join_thread(lua_State** L) {
+static ib_status_t join_thread(ib_engine_t *ib, lua_State **L) {
   IB_FTRACE_INIT(join_thread);
   char Lname[20];
   sprint_threadname(Lname, *L);
+
+  ib_log_debug(ib, 1, "Tearing down Lua thread %s.", Lname);
 
   /* Put nil on the stack. */
   lua_pushnil(g_ironbee_rules_lua);
@@ -290,9 +301,9 @@ static ib_status_t join_thread(lua_State** L) {
  * @param[in] fn The call back to execute. This will operate on a lua_State**.
  * @param[in] L the Lua State to create or destroy.
  */
-static ib_status_t call_in_critical_section(ib_engine_t* ib,
+static ib_status_t call_in_critical_section(ib_engine_t *ib,
                                             critical_section_fn_t fn,
-                                            lua_State** L)
+                                            lua_State **L)
 {
   IB_FTRACE_INIT(call_in_critical_section);
 
@@ -329,7 +340,7 @@ static ib_status_t call_in_critical_section(ib_engine_t* ib,
   }
 
   /* Execute lua call in critical section. */
-  ec = fn(L);
+  ec = fn(ib, L);
 
   rc = semop(g_lua_lock, &unlock_sop, 1);
 
@@ -356,9 +367,9 @@ static ib_status_t call_in_critical_section(ib_engine_t* ib,
  *
  */
 ib_status_t call_lua_rule_r(ib_engine_t*, ib_tx_t* , const char* );
-ib_status_t call_lua_rule_r(ib_engine_t* ib,
-                            ib_tx_t* tx,
-                            const char* func_name)
+ib_status_t call_lua_rule_r(ib_engine_t *ib,
+                            ib_tx_t *tx,
+                            const char *func_name)
 {
   IB_FTRACE_INIT(call_lua_rule_r);
 
@@ -366,8 +377,8 @@ ib_status_t call_lua_rule_r(ib_engine_t* ib,
   ib_status_t ec;
 
   size_t thread_name_sz = 1024;
-  char* thread_name = (char*) malloc(thread_name_sz);
-  lua_State* L;
+  char *thread_name = (char*) malloc(thread_name_sz);
+  lua_State *L;
 
   ec = call_in_critical_section(ib, &spawn_thread, &L);
 
@@ -407,10 +418,10 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
 {
   IB_FTRACE_INIT(rules_ruleext_params);
   
-  ib_list_node_t* var = ib_list_first(vars);
+  ib_list_node_t *var = ib_list_first(vars);
   
-  char* file = NULL;
-  char* phase = NULL;
+  char *file = NULL;
+  char *phase = NULL;
   char rule_name[20];
 
   ib_log_debug(cp->ib, 1, "Processing directive %s", name);
@@ -451,12 +462,14 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
 
   if (strncasecmp(file, "lua:", 4)) {
     /* Lua rule. */
-    
     ironbee_loaded_rule_count+=1;
     sprintf(rule_name, "lua:%010d", ironbee_loaded_rule_count);
     add_lua_rule(cp->ib, g_ironbee_rules_lua, file+4, rule_name);
-    
-  } else {
+
+    /* FIXME - insert here registering with ib engine the lua rule. */
+  }
+  else {
+    /* Some unidentified rule. */
     ib_log_error(cp->ib, 1, "RuleExt does not support rule type %s.", file);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
   }
@@ -482,7 +495,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
 
   ib_log_debug(cp->ib, 1, "Name: %s", name);
 
-  ib_list_node_t* var = ib_list_first(vars);
+  ib_list_node_t *var = ib_list_first(vars);
 
   var = ib_list_node_next(var);
 
@@ -523,6 +536,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
   /* Error code from Iron Bee calls. */
   ib_status_t ec;
 
+  /* Snipped from the Linux man page semctl(2). */
   union semun {
     int              val;    /* Value for SETVAL */
     struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
