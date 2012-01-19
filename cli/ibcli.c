@@ -220,8 +220,8 @@ static void help(void)
     print_option("request-file", "path", "Specify request file", 1, NULL );
     print_option("response-file", "path", "Specify response file", 1, NULL );
     print_option("max-transactions", "num",
-                 "Specify max # of transactions to run", 1, NULL );
-    print_option("verbose", "num", "Specify verbose level", 1, NULL );
+                 "Specify max # of transactions to run", 0, NULL );
+    print_option("verbose", "num", "Specify verbose level", 0, NULL );
     print_option("local-ip", "x.x.x.x", "Specify local IP address", 0, NULL );
     print_option("local-port", "num", "Specify local port", 0, NULL );
     print_option("remote-ip", "x.x.x.x", "Specify remote IP address", 0, NULL );
