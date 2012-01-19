@@ -117,7 +117,7 @@ static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L) {
   }
 
   /* Evaluate the loaded ffi file. */
-  ec = lua_pcall(L, 1, 0, 0);
+  ec = lua_pcall(L, 0, 0, 0);
   
   /* Only check errors if ec is not 0 (LUA_OK). */
   switch(ec) {
@@ -546,7 +546,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
   /* Initialize semaphore */
   sem_val.val=1;
-  g_lua_lock = semget(IPC_PRIVATE, 1, 0);
+  g_lua_lock = semget(IPC_PRIVATE, 1, SEM_R|SEM_A);
 
   if (g_lua_lock==-1) {
     ib_log_error(ib, 1,
