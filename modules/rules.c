@@ -340,7 +340,7 @@ static ib_status_t call_in_critical_section(ib_engine_t* ib,
     IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
   }
 
-  IB_FTRACE_RET_STATUS(IB_OK);
+  IB_FTRACE_RET_STATUS(ec);
 } /* End call_critical_section */
 
 /**
