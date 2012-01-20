@@ -77,7 +77,9 @@ ibmod_remote_address_la_SOURCES = remote_address.c
 ibmod_remote_address_la_CFLAGS = ${AM_CFLAGS}
 ibmod_remote_address_la_LDFLAGS = $(AM_LDFLAGS)
 
-ibmod_rules_la_SOURCES = rules.c
+ibmod_rules_la_SOURCES = rules.c \
+                         rule_parser.c \
+                         rule_parser.h 
 ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                         -I$(top_srcdir) \

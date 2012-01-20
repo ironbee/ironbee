@@ -24,7 +24,7 @@
 #include <ironbee/list.h>
 #include <ironbee/config.h>
 #include <ironbee/rule_engine.h>
-#include <ironbee/rule_parser.h>
+#include <rule_parser.h>
 
 #include "lua/ironbee.h"
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)

@@ -31,33 +31,7 @@
 #include <ironbee/config.h>
 #include <ironbee/debug.h>
 #include <ironbee/rule_engine.h>
-#include <ironbee/rule_parser.h>
-
-#if 0
-/* @todo: replace with Craig's code.  This just fills in placeholder
- * inst.
- */
-static ib_status_t ib_create_operator_inst(ib_engine_t *ib,
-                                           const char *op,
-                                           const char *args,
-                                           ib_operator_inst_t **pinst)
-{
-    IB_FTRACE_INIT(ib_create_operator_inst);
-    ib_operator_inst_t *inst;
-
-    inst = ib_mpool_alloc(ib_rule_mpool(ib), sizeof(ib_operator_inst_t) );
-    if (inst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    inst->op = ib_mpool_alloc(ib_rule_mpool(ib), sizeof(ib_operator_t) );
-    if (inst->op == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    inst->op->name = (char*)op;
-    *pinst = inst;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-#endif
+#include <rule_parser.h>
 
 /* Parse rule operator */
 ib_status_t ib_rule_parse_operator(ib_cfgparser_t *cp,
