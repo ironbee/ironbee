@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Utility Functions
+ * @brief IronBee - Rule parsing logic for the rules module.
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

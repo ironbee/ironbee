@@ -37,6 +37,7 @@
 #include "engine/tfn.c"
 #include "engine/filter.c"
 #include "engine/core.c"
+#include "engine/rule_engine.c"
 
 #include "ibtest_util.c"
 

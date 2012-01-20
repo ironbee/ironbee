@@ -29,39 +29,13 @@
 #include <ironbee/release.h>
 
 #include <ironbee/types.h>
-#include <ironbee/operator.h>
-#include <ironbee/mpool.h>
 #include <ironbee/engine.h>
+#include <ironbee/operator.h>
+#include <ironbee/rule_defs.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @defgroup IronBeeRuleEngine Rule Engine
- * @ingroup IronBee
- * @{
- */
-
-/**
- * Rule phase number.
- */
-typedef enum {
-    PHASE_INVALID = -1,             /**< Invalid; used to terminate list */
-    PHASE_NONE,                     /**< No phase */
-    PHASE_REQUEST_HEADER,           /**< Request header available. */
-    PHASE_REQUEST_BODY,             /**< Request body available. */
-    PHASE_RESPONSE_HEADER,          /**< Response header available. */
-    PHASE_RESPONSE_BODY,            /**< Response body available. */
-    PHASE_POSTPROCESS,              /**< Post-processing phase. */
-    PHASE_MAX = PHASE_POSTPROCESS,  /**< Max phase number. */
-    IB_RULE_PHASE_COUNT,
-} ib_rule_phase_type_t;
-
-/**
- * Rule engine: Rule
- */
-typedef struct ib_rule_t ib_rule_t;
 
 /**
  * Create a rule.
@@ -83,14 +57,14 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
  *
  * @param ib IronBee engine
  * @param rule Rule to operate on
- * @param op Operator instance
+ * @param opinst Operator instance
  * @param invert Invert operation?
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
                                             ib_rule_t *rule,
-                                            ib_operator_inst_t *op,
+                                            ib_operator_inst_t *opinst,
                                             ib_num_t invert);
 
 /**

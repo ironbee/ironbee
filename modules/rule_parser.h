@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Rule parser utility functions
+ * @brief IronBee - Rule parser private defintions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

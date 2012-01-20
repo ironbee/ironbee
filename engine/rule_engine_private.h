@@ -29,10 +29,10 @@
 #include <ironbee/release.h>
 
 #include <ironbee/types.h>
-#include <ironbee/engine.h>
-#include <ironbee/operator.h>
 #include <ironbee/list.h>
-#include <ironbee/rule_engine.h>
+#include <ironbee/operator.h>
+#include <ironbee/engine.h>
+#include <ironbee/rule_defs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,10 +43,6 @@ extern "C" {
  * @ingroup IronBee
  * @{
  */
-
-/* TODO: in Craig's code */
-typedef struct ib_action_t ib_action_t;
-typedef struct ib_action_inst_t ib_action_inst_t;
 
 /**
  * Rule engine: Rule meta data
@@ -61,7 +57,7 @@ typedef struct {
  * Rule engine: condition data
  */
 typedef struct {
-    ib_operator_inst_t     *operator;   /**< Condition operator */
+    ib_operator_inst_t     *opinst;     /**< Condition operator instance */
     ib_num_t                invert;     /**< Invert? */
     ib_list_t              *args;       /**< Arguments to the operator */
 } ib_rule_condition_t;
@@ -141,4 +137,4 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
 }
 #endif
 
-#endif /* _IB_RULE_ENGINE_H_ */
+#endif /* _IB_RULE_ENGINE_PRIVATE_H_ */

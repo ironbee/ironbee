@@ -131,8 +131,8 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                                     ib_context_t *ctx)
 {
     IB_FTRACE_INIT(ib_rule_engine_ctx_init);
-    ib_rule_phase_type_t  phase;
-    ib_status_t           rc;
+    ib_num_t     phase;
+    ib_status_t  rc;
 
     /* If the rules are already initialized, do nothing */
     if ( (ctx->ctx_rules != NULL) && (ctx->ruleset != NULL) ) {
@@ -154,9 +154,9 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
         ib_log_error(ib, 4, "Rule engine failed to allocate context rule set");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    for (phase = PHASE_NONE;  phase < IB_RULE_PHASE_COUNT;  ++phase) {
+    for (phase = (ib_num_t)PHASE_NONE; phase <= (ib_num_t)PHASE_MAX; ++phase) {
         ib_rule_phase_t *p = &(ctx->ruleset->phases[phase]);
-        p->phase = phase;
+        p->phase = (ib_rule_phase_type_t)phase;
         rc = ib_list_create(&(p->rules.rule_list), ctx->mp);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
@@ -184,7 +184,8 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     ib_rule_t   *rule;
 
     /* Allocate the rule */
-    rule = ib_mpool_calloc(ib_rule_mpool(ib), sizeof(ib_rule_t), 1);
+    rule = (ib_rule_t *)ib_mpool_calloc(ib_rule_mpool(ib),
+                                        sizeof(ib_rule_t), 1);
     if (rule == NULL) {
         ib_log_error(ib, 1, "Failed to allocate rule: %d");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -222,7 +223,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, 4, "Can't register rule: Rule is NULL");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (rule->condition.operator == NULL) {
+    if (rule->condition.opinst == NULL) {
         ib_log_error(ib, 4, "Can't register rule: No operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -255,17 +256,17 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 
 ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
                                             ib_rule_t *rule,
-                                            ib_operator_inst_t *op,
+                                            ib_operator_inst_t *opinst,
                                             ib_num_t invert)
 {
     IB_FTRACE_INIT(ib_rule_set_operator);
 
-    if ( (rule == NULL) || (op == NULL) ) {
+    if ( (rule == NULL) || (opinst == NULL) ) {
         ib_log_error(ib, 4,
                      "Can't set rule operator: Invalid rule or operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    rule->condition.operator = op;
+    rule->condition.opinst = opinst;
     rule->condition.invert = invert;
 
     IB_FTRACE_RET_STATUS(IB_OK);
