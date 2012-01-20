@@ -171,9 +171,16 @@ test_module_poc_sig_LDADD = gtest/libgtest.la \
 endif
 
 test_operator_SOURCES = test_operator.cc test_main.cc
+if FREEBSD
+test_operator_LDADD = gtest/libgtest.la \
+                      $(top_builddir)/engine/libironbee.la \
+                      -lhtp \
+                      -liconv
+else
 test_operator_LDADD = gtest/libgtest.la \
                       $(top_builddir)/engine/libironbee.la \
                       -lhtp
+endif
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 
