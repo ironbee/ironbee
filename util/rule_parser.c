@@ -33,6 +33,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/rule_parser.h>
 
+#if 0
 /* @todo: replace with Craig's code.  This just fills in placeholder
  * inst.
  */
@@ -56,6 +57,7 @@ static ib_status_t ib_create_operator_inst(ib_engine_t *ib,
     *pinst = inst;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+#endif
 
 /* Parse rule operator */
 ib_status_t ib_rule_parse_operator(ib_cfgparser_t *cp,
@@ -122,7 +124,7 @@ ib_status_t ib_rule_parse_operator(ib_cfgparser_t *cp,
     }
 
     /* Create the operator instance */
-    rc = ib_create_operator_inst(cp->ib, op, args, &operator);
+    rc = ib_operator_inst_create(cp->ib, op, args, &operator);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 4,
                      "Failed to create operator instance '%s': %d", op, rc);

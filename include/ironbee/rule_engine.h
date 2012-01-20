@@ -58,9 +58,6 @@ typedef enum {
     IB_RULE_PHASE_COUNT,
 } ib_rule_phase_type_t;
 
-/* @todo */
-typedef struct ib_operator_instance_t ib_operator_inst_t;
-
 /**
  * Rule engine: Rule
  */
