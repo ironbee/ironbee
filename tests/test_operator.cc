@@ -45,7 +45,7 @@ ib_status_t test_create_fn(ib_mpool_t *pool,
     return IB_OK;
 }
 
-ib_status_t test_destroy_fn(ib_operator_inst_t **op_inst) {
+ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst) {
     return IB_OK;
 }
 

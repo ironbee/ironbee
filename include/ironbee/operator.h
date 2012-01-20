@@ -42,7 +42,7 @@ typedef ib_status_t (* ib_operator_create_fn_t)(ib_mpool_t *pool,
                                                 ib_operator_inst_t *op_inst);
 
 /** Operator instance destruction callback type */
-typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t **op_inst);
+typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
 
 /** Operator instance execution callback type */
 typedef ib_status_t (* ib_operator_execute_fn_t)(void *data,
