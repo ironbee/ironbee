@@ -174,11 +174,13 @@ test_operator_SOURCES = test_operator.cc test_main.cc
 if FREEBSD
 test_operator_LDADD = gtest/libgtest.la \
                       $(top_builddir)/engine/libironbee.la \
+                      $(top_builddir)/util/libibutil.la \
                       -lhtp \
                       -liconv
 else
 test_operator_LDADD = gtest/libgtest.la \
                       $(top_builddir)/engine/libironbee.la \
+                      $(top_builddir)/util/libibutil.la \
                       -lhtp
 endif
 
