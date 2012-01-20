@@ -27,16 +27,22 @@
 
 #include <ironbee/types.h>
 #include <ironbee/field.h>
+#include <ironbee/engine.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/** Operator Instance Structure */
+typedef struct ib_operator_inst_t ib_operator_inst_t;
+
 /** Operator instance creation callback type */
-typedef ib_status_t (* ib_operator_create_fn_t)(void *data);
+typedef ib_status_t (* ib_operator_create_fn_t)(ib_mpool_t *pool,
+                                                const char *data,
+                                                ib_operator_inst_t *op_inst);
 
 /** Operator instance destruction callback type */
-typedef ib_status_t (* ib_operator_destroy_fn_t)(void);
+typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t **op_inst);
 
 /** Operator instance execution callback type */
 typedef ib_status_t (* ib_operator_execute_fn_t)(void *data,
@@ -47,27 +53,25 @@ typedef ib_status_t (* ib_operator_execute_fn_t)(void *data,
 typedef struct ib_operator_t ib_operator_t;
 
 struct ib_operator_t {
-    char *name; /**< Name of the operator */
-    ib_operator_create_fn_t fn_create; /**< Instance creation function. */
+    char                    *name;       /**< Name of the operator. */
+    ib_operator_create_fn_t  fn_create;  /**< Instance creation function. */
     ib_operator_destroy_fn_t fn_destroy; /**< Instance destroy function. */
     ib_operator_execute_fn_t fn_execute; /**< Instance executtion function. */
 };
 
-/** Operator Instance Structure */
-typedef struct ib_operator_instance_t ib_operator_instance_t;
-
-struct ib_operator_instance_t {
-    struct ib_operator_t *op; /**< Pointer to this instance's operator type */
-    void *data; /**< Data passed to the execute function */
+struct ib_operator_inst_t {
+    struct ib_operator_t *op;   /**< Pointer to the operator type */
+    void                 *data; /**< Data passed to the execute function */
 };
 
 /**
- * Register a operator.
+ * Register an operator.
  * This registers the name and the callbacks used to create, destroy and
  * execute an operator instance.
  *
  * If the name is not unique an error status will be returned.
  *
+ * @param[in] ib ironbee engine
  * @param[in] name The name of the operator.
  * @param[in] fn_create A pointer to the instance creation function.
  * @param[in] fn_destroy A pointer to the instance destruction function.
@@ -75,27 +79,40 @@ struct ib_operator_instance_t {
  *
  * @returns IB_OK on success, IB_EINVAL if the name is not unique.
  */
-ib_status_t register_operator(const char *name,
-                              ib_operator_create_fn_t fn_create,
-                              ib_operator_destroy_fn_t fn_destroy,
-                              ib_operator_execute_fn_t fn_execute);
+ib_status_t ib_register_operator(ib_engine_t *ib,
+                                 const char *name,
+                                 ib_operator_create_fn_t fn_create,
+                                 ib_operator_destroy_fn_t fn_destroy,
+                                 ib_operator_execute_fn_t fn_execute);
 
 /**
- * Create a operator instance.
+ * Create an operator instance.
  * Looks up the operator by name and executes the operator creation callback.
  *
+ * @param[in] ib ironbee engine
  * @param[in] name The name of the operator to create.
- * @param[in] unparsed_data Instance data passed to the create function.
+ * @param[in] parameters Parameters used to create the instance.
  * @param[out] instance The resulting instance.
  *
  * @returns IB_OK on success, IB_EINVAL if the named operator does not exist.
  */
-ib_status_t create_operator_instance(const char *name,
-                                     const char *unparsed_data,
-                                     ib_operator_instance_t *instance);
+ib_status_t ib_operator_inst_create(ib_engine_t *ib,
+                                    const char *name,
+                                    const char *parameters,
+                                    ib_operator_inst_t **op_inst);
 
 /**
- * Call the execute function for a operator instance.
+ * Destroy an operator instance.
+ * Destroys any resources held by the operator instance.
+ *
+ * @param[in] op_inst The instance to destroy
+ *
+ * @returns IB_OK on success.
+ */
+ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst);
+
+/**
+ * Call the execute function for an operator instance.
  *
  * @param[in] op Operator instance to use.
  * @param[in] field Field to operate on.
@@ -103,7 +120,7 @@ ib_status_t create_operator_instance(const char *name,
  *
  * @returns IB_OK on success
  */
-ib_status_t call_operator_instance(const ib_operator_instance_t *op,
+ib_status_t ib_operator_execute(const ib_operator_inst_t *op_inst,
                                 ib_field_t *field,
                                 ib_num_t *result);
 

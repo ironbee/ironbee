@@ -8,7 +8,7 @@ LDADD = gtest/libgtest.la
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
   LDFLAGS+=-fstack-protector
-endif 
+endif
 
 # Point the module base path to the modules build dir
 CPPFLAGS+=-DMODULE_BASE_PATH=$(top_builddir)/modules/.libs
@@ -25,7 +25,8 @@ check_PROGRAMS = test_gtest \
                  test_util_ahocorasick \
                  test_engine \
                  test_module_trace \
-                 test_module_poc_sig
+                 test_module_poc_sig \
+                 test_operator
 
 # TODO: Get libhtp working w/C++
 #                 test_util_bytestr
@@ -168,6 +169,11 @@ test_module_poc_sig_LDADD = gtest/libgtest.la \
                             $(top_builddir)/util/libibutil.la \
                             -lhtp
 endif
+
+test_operator_SOURCES = test_operator.cc test_main.cc
+test_operator_LDADD = gtest/libgtest.la \
+                      $(top_builddir)/engine/libironbee.la \
+                      -lhtp
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 

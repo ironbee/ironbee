@@ -240,6 +240,12 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
         goto failed;
     }
 
+    /* Create a hash to hold operators by name */
+    rc = ib_hash_create(&((*pib)->operators), (*pib)->mp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Initialize the core static module. */
     /// @todo Probably want to do this in a less hard-coded manner.
     rc = ib_module_init(ib_core_module(), *pib);

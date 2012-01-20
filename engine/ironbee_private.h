@@ -71,6 +71,7 @@ struct ib_engine_t {
     ib_hash_t          *apis;             /**< Hash tracking provider APIs */
     ib_hash_t          *providers;        /**< Hash tracking providers */
     ib_hash_t          *tfns;             /**< Hash tracking transformations */
+    ib_hash_t          *operators;        /**< Hash tracking operators */
 };
 
 /**
