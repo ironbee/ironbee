@@ -25,6 +25,7 @@
 #include <ironbee/config.h>
 #include <ironbee/rule_engine.h>
 #include <rule_parser.h>
+#include <rules_lua.h>
 
 #include "lua/ironbee.h"
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
@@ -59,8 +60,6 @@
  */
 static const char* c_ffi_file = X_MODULE_BASE_PATH "/ironbee-ffi.lua";
 
-#define THREAD_NAME_BUFFER_SZ 20
-
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
@@ -77,10 +76,11 @@ static int g_lua_lock;
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
  * @details This callback should take a @c ib_engine_t* which is used
- *          for logging and a @c lua_State** which will be assigned a
+ *          for logging, @c a lua_State* which is used to create the 
+ *          new thread, and a @c lua_State** which will be assigned a
  *          new @c lua_State*.
  */
-typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State**);
+typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State*, lua_State**);
 
 /**
  * @brief Counter used to generate internal rule IDs.
@@ -88,269 +88,10 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State**);
 static int ironbee_loaded_rule_count;
 
 /**
- * @brief Add a lua rule stored in a file to the Ironbee engine.
- * @param[in,out] ib Used for logging and adding the Lua rule to.
- * @param[in,out] L The Lua state used to load @a file and store the rule.
- * @param[in] func_name The name the contents of the file will be stored under.
- * @param[in] file The file that holds the Lua script that makes up the rule.
- * @returns The IronBee status. IB_OK on success.
- */
-static ib_status_t add_lua_rule(ib_engine_t *ib,
-                                lua_State* L,
-                                const char* func_name,
-                                const char* file)
-{
-    IB_FTRACE_INIT(add_lua_rule);
-    ib_status_t ib_rc;
-
-    /* Load (compile) the lua module. */
-    ib_rc = luaL_loadfile(L, file);
-  
-    if (ib_rc != 0) {
-        ib_log_error(ib, 1, "Failed to load file module \"%s\" - %s (%d)",
-                     file, lua_tostring(L, -1), ib_rc);
-
-        /* Get error string off the stack. */
-        lua_pop(L, 1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
-    lua_setglobal(L, func_name);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @brief Load the ironbee-ffi.lua file into the given Lua state.
- * @param[in] ib IronBee engine used to log.
- * @param[out] L The Lua state to load the file into.
- * @returns The IronBee status.
- */
-static ib_status_t load_ironbee_ffi(ib_engine_t* ib, lua_State* L)
-{
-    IB_FTRACE_INIT(load_inrbee_ffi);
-
-    int lua_rc;
-
-    lua_rc = luaL_loadfile(L, c_ffi_file);
-
-    if (lua_rc != 0) {
-        ib_log_error(ib, 1, "Failed to load %s - %s (%d)", 
-                     c_ffi_file,
-                     lua_tostring(L, -1),
-                     lua_rc);
-        lua_pop(L, -1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Evaluate the loaded ffi file. */
-    lua_rc = lua_pcall(L, 0, 0, 0);
-  
-    /* Only check errors if ec is not 0 (LUA_OK). */
-    switch(lua_rc) {
-        case 0:
-            IB_FTRACE_RET_STATUS(IB_OK);
-        case LUA_ERRRUN:
-            ib_log_error(ib, 1, "Error evaluating ffi %s - %s",
-                         c_ffi_file,
-                         lua_tostring(L, -1));
-            /* Get error string off of the stack. */
-            lua_pop(L, 1);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        case LUA_ERRMEM:
-            ib_log_error(ib, 1,
-                "Failed to allocate memory during FFI evaluation.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        case LUA_ERRERR:
-            ib_log_error(ib, 1,
-                "Error fetching error message during FFI evaluation.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-#if LUA_VERSION_NUM > 501
-        /* If LUA_ERRGCMM is defined, include a custom error for it as well. 
-          This was introduced in Lua 5.2. */
-        case LUA_ERRGCMM:
-            ib_log_error(ib, 1,
-                "Garbage collection error during FFI evaluation.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-#endif
-        default:
-            ib_log_error(ib, 1, "Unexpected error(%d) during FFI evaluation.",
-                         lua_rc);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-}
-
-/**
- * @brief Call the Lua function \a func_name in the @c lua_State @a L and treat it as an IronBee rule.
- * @param[in] ib The IronBee context. Used for logging.
- * @param[in,out] tx The transaction object. This is passed to the rule
- *                as the local variable @c tx.
- * @param[in] L The Lua execution state/stack to use to call the rule.
- * @param[in] func_name The name of the Lua function to call.
- * @returns IronBee status.
- */
-static ib_status_t call_lua_rule(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 lua_State *L,
-                                 const char *func_name)
-{
-    IB_FTRACE_INIT(call_lua_rule);
-  
-    int lua_rc;
-  
-    if (!lua_checkstack(L, 5)) {
-        ib_log_error(ib, 1, 
-            "Not enough stack space to call Lua rule %s.", func_name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
-    /* Push the function on the stack. Preparation to call. */
-    lua_getglobal(L, func_name);
-  
-    if (!lua_isfunction(L, -1)) {
-        ib_log_error(ib, 1, "Variable \"%s\" is not a LUA function - %s",
-                     func_name);
-
-        /* Remove wrong parameter from stack. */
-        lua_pop(L, 1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
-    /* Create a table for the coming function call. */
-    lua_newtable(L);
-
-    /* Push key. */
-    lua_pushstring(L, "tx");
-
-    /* Push value. */
-    lua_pushlightuserdata(L, tx);
-
-    /* Take key -2 and value -1 and assign it into -3. */
-    lua_settable(L, -3);
-
-    /* Pop the table and set it as the local env. */
-    lua_setfenv(L, -1);
-  
-    /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
-    lua_rc = lua_pcall(L, 1, 0, 0);
-  
-    /* Only check errors if ec is not 0 (LUA_OK). */
-    if (lua_rc != 0) {
-        switch(lua_rc) {
-            case LUA_ERRRUN:
-                ib_log_error(ib, 1,
-                    "Error running Lua Rule %s - %s",
-                    func_name,
-                    lua_tostring(L, -1));
-
-                /* Get error string off of the stack. */
-                lua_pop(L, 1);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            case LUA_ERRMEM:
-                ib_log_error(ib, 1,
-                    "Failed to allocate memory during Lua rule.");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            case LUA_ERRERR:
-                ib_log_error(ib, 1,
-                    "Error fetching error message during Lua rule.");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-#if LUA_VERSION_NUM > 501
-            /* If LUA_ERRGCMM is defined, include a custom error for it as
-               well. This was introduced in Lua 5.2. */
-            case LUA_ERRGCMM:
-                ib_log_error(ib, 1,
-                    "Garbage collection error during Lua rule.");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-#endif
-            default:
-                ib_log_error(ib, 1,
-                    "Unexpected error (%d) during Lua rule.", lua_rc);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-    }
-  
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @brief Print a thread name of @a L into the character buffer @a thread_name.
- * @details @a thread_name should be about 20 characters long
- *          to store a %p formatted pointer of @a L prefixed with @c t_.
- * @param[out] thread_name The buffer the thread name is printed into.
- * @param[in] L The lua_State* whose pointer we will use as the thread name.
- */
-static inline void sprint_threadname(char *thread_name, lua_State *L)
-{
-    sprintf(thread_name, "t_%p", (void*)L);
-}
-
-/**
- * @brief Spawn a new Lua thread and place a pointer to it in @a L.
- * @details This is intended to be called by
- * call_in_critical_section(ib_engine_t*, critical_section_fn_t, lua_State**)
- * only.
- * @param[out] ib The IronBee engine used to log errors.
- * @param[out] L The pointer to the newly created Lua state.
- * @returns IB_OK on success.
- */
-static ib_status_t spawn_thread(ib_engine_t *ib, lua_State **L)
-{
-    IB_FTRACE_INIT(spawn_thread);
-    char *Lname = (char*)malloc(THREAD_NAME_BUFFER_SZ);
-
-    ib_log_debug(ib, 1, "Setting up new Lua thread.");
-
-    *L = lua_newthread(g_ironbee_rules_lua);
-
-    if (L == NULL) {
-        ib_log_error(ib, 1, "Failed to allocate new Lua execution stack.");
-        free(Lname);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    sprint_threadname(Lname, *L);
-
-    ib_log_debug(ib, 1, "Created Lua thread %s.", Lname);
-
-    /* Store the thread at the global variable referenced. */
-    lua_setglobal(g_ironbee_rules_lua, Lname);
-
-    free(Lname);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @brief Destroy a new Lua thread pointed to by @a L.
- * @details This is intended to be called by
- * call_in_critical_section(ib_engine_t*, critical_section_fn_t, lua_State**)
- * only.
- * @param[out] ib The IronBee engine used to log errors.
- * @param[out] L The pointer to the Lua state to be destroyed.
- * @returns IB_OK on success.
- */
-static ib_status_t join_thread(ib_engine_t *ib, lua_State **L)
-{
-    IB_FTRACE_INIT(join_thread);
-    char *Lname = (char*)malloc(THREAD_NAME_BUFFER_SZ);
-    sprint_threadname(Lname, *L);
-
-    ib_log_debug(ib, 1, "Tearing down Lua thread %s.", Lname);
-
-    /* Put nil on the stack. */
-    lua_pushnil(g_ironbee_rules_lua);
-
-    /* Erase the reference to the stack to allow GC. */
-    lua_setglobal(g_ironbee_rules_lua, Lname);
-
-    free(Lname);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
  * @brief This will use @c g_lua_lock to atomically call @a fn.
  * @details The argument @fn will be either
- *          spawn_thread(ib_engine_t*, lua_State**) or
- *          join_thread(ib_engine_t*, lua_State**) which will be called
+ *          ib_lua_new_thread(ib_engine_t*, lua_State**) or
+ *          ib_lua_join_thread(ib_engine_t*, lua_State**) which will be called
  *          only if @c g_lua_lock can be locked using @c semop.
  * @param[in] ib IronBee context. Used for logging.
  * @param[in] fn The function to execute. This is passed @a ib and @a fn.
@@ -399,7 +140,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
     }
 
     /* Execute lua call in critical section. */
-    ib_rc = fn(ib, L);
+    ib_rc = fn(ib, g_ironbee_rules_lua, L);
 
     sys_rc = semop(g_lua_lock, &unlock_sop, 1);
 
@@ -417,7 +158,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
  * @brief Call the rule named @a func_name on a new Lua stack.
  * @details This will atomically create and destroy a lua_State*
  *          allowing for concurrent execution of @a func_name
- *          by a call_lua_rule(ib_engine_t*, ib_txt_t*, const char*).
+ *          by a ib_lua_func_eval(ib_engine_t*, ib_txt_t*, const char*).
  * @param[in] ib IronBee context.
  * @param[in,out] tx The transaction. The Rule may color this with data.
  * @param[in] func_name the Lua function name to call.
@@ -427,33 +168,32 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
  * FIXME - add static after this function is wired into the engine.
  *
  */
-ib_status_t call_lua_rule_r(ib_engine_t*, ib_tx_t* , const char* );
-ib_status_t call_lua_rule_r(ib_engine_t *ib,
-                            ib_tx_t *tx,
-                            const char *func_name)
+ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
+                               ib_tx_t *tx,
+                               const char *func_name)
 {
-    IB_FTRACE_INIT(call_lua_rule_r);
+    IB_FTRACE_INIT(ib_lua_func_eval_r);
 
     ib_status_t ib_rc;
 
     lua_State *L;
 
     /* Atomically create a new Lua stack */
-    ib_rc = call_in_critical_section(ib, &spawn_thread, &L);
+    ib_rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
 
     if (ib_rc != IB_OK) {
         IB_FTRACE_RET_STATUS(ib_rc);
     }
     
     /* Call the rule in isolation. */
-    ib_rc = call_lua_rule(ib, tx, L, func_name);
+    ib_rc = ib_lua_func_eval(ib, tx, L, func_name);
 
     if (ib_rc != IB_OK) {
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
     /* Atomically destroy the Lua stack */
-    ib_rc = call_in_critical_section(ib, &join_thread, &L);
+    ib_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
 
     IB_FTRACE_RET_STATUS(ib_rc);
 }
@@ -523,7 +263,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         /* 4 (lua:) + 10 (%010d) + '\n' = 15 characters. */
         rule_name = (char*)malloc(15);
         sprintf(rule_name, "lua:%010d", ironbee_loaded_rule_count);
-        add_lua_rule(cp->ib, g_ironbee_rules_lua, file+4, rule_name);
+        ib_lua_load_func(cp->ib, g_ironbee_rules_lua, file+4, rule_name);
 
         /* FIXME - insert here registering with ib engine the lua rule. */
 
@@ -693,7 +433,8 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     g_ironbee_rules_lua = luaL_newstate();
     luaL_openlibs(g_ironbee_rules_lua);
 
-    ib_rc = load_ironbee_ffi(ib, g_ironbee_rules_lua);
+    /* Load and evaluate the ffi file. */
+    ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, c_ffi_file);
 
     if (ib_rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to load FFI file for Lua rule execution.");

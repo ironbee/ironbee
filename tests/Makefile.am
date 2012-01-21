@@ -26,6 +26,7 @@ check_PROGRAMS = test_gtest \
                  test_engine \
                  test_module_trace \
                  test_module_poc_sig \
+                 test_module_rules_lua \
                  test_operator
 
 # TODO: Get libhtp working w/C++
@@ -154,6 +155,27 @@ test_module_trace_LDADD = gtest/libgtest.la \
                           $(top_builddir)/engine/libironbee.la \
                           $(top_builddir)/util/libibutil.la \
                           -lhtp
+endif
+
+test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
+                                test_main.cc
+test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
+                        -I$(top_srcdir)/modules \
+                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+                        -I$(top_srcdir) \
+                        -D_XOPEN_SOURCE=1 \
+                        -DTEST_LUA_FILE=\"$(top_srcdir)/test_module_rules/lua.lua\"
+test_module_rules_lua_LDADD = gtest/libgtest.la \
+                            $(top_builddir)/engine/libironbee.la \
+                            $(top_builddir)/util/libibutil.la \
+                            $(top_builddir)/lua/libironbee-lua.la \
+                            $(top_builddir)/modules/ibmod_rules_la-rules_lua.o \
+                           -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+                           -lhtp \
+                           -lluajit-ironbee \
+                           -lm
+if FREEBSD
+test_module_rules_lua_LDADD += -liconv
 endif
 
 test_module_poc_sig_SOURCES = test_module_poc_sig.cc test_main.cc
