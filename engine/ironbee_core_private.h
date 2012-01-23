@@ -15,12 +15,12 @@
  * limitations under the License.
  *****************************************************************************/
 
-#ifndef _IB_RULE_ENGINE_PRIVATE_H_
-#define _IB_RULE_ENGINE_PRIVATE_H_
+#ifndef _IB_CORE_PRIVATE_H_
+#define _IB_CORE_PRIVATE_H_
 
 /**
  * @file
- * @brief IronBee - Private rule engine definitions
+ * @brief IronBee - Definitions private to the IronBee core module
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
@@ -39,7 +39,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeRuleEngine Rule Engine
+ * @defgroup IronBeeCore IronBee Core 
  * @ingroup IronBee
  * @{
  */
@@ -132,9 +132,21 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                                     ib_module_t *mod,
                                     ib_context_t *ctx);
 
+/**
+ * @internal
+ * Initialize the core operators.
+ *
+ * Called when the rule engine is loaded, registers the core operators.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ */
+ib_status_t ib_core_operators_init(ib_engine_t *ib,
+                                   ib_module_t *mod);
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _IB_RULE_ENGINE_PRIVATE_H_ */
+#endif /* _IB_CORE_PRIVATE_H_ */
