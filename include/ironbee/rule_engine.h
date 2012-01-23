@@ -68,6 +68,19 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
                                             ib_num_t invert);
 
 /**
+ * Set a rule's ID.
+ *
+ * @param ib IronBee engine
+ * @param rule Rule to operate on
+ * @param id Rule ID
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
+                                      ib_rule_t *rule,
+                                      const char *id);
+
+/**
  * Add an input field to a rule.
  *
  * @param ib IronBee engine

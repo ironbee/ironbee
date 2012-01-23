@@ -53,7 +53,7 @@ extern "C" {
  *
  * Parsers the rule's operator string, stores the results in the rule object.
  *
- * @param ib IronBee engine
+ * @param cp IronBee configuaration parser
  * @param rule Rule object to update
  * @param str Operator string
  *
@@ -69,7 +69,7 @@ ib_status_t DLL_PUBLIC ib_rule_parse_operator(ib_cfgparser_t *cp,
  * Parsers the rule's input field list string, stores the results in the rule
  * object.
  *
- * @param ib IronBee engine
+ * @param cp IronBee configuration parser
  * @param rule Rule to operate on
  * @param input_str Input field name.
  *
@@ -85,7 +85,7 @@ ib_status_t DLL_PUBLIC ib_rule_parse_inputs(ib_cfgparser_t *cp,
  * Parsers the rule's modifier string, stores the results in the rule
  * object.
  *
- * @param ib IronBee engine
+ * @param cp IronBee configuration parser
  * @param rule Rule to operate on
  * @param modifier_str Input field name.
  *
@@ -93,7 +93,7 @@ ib_status_t DLL_PUBLIC ib_rule_parse_inputs(ib_cfgparser_t *cp,
  */
 ib_status_t DLL_PUBLIC ib_rule_parse_modifier(ib_cfgparser_t *cp,
                                               ib_rule_t *rule,
-                                              const char *input_str);
+                                              const char *modifier_str);
 
 
 #ifdef __cplusplus
