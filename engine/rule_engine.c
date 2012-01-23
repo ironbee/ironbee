@@ -75,7 +75,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     /* Loop through all of the fields */
     IB_LIST_LOOP(rule->input_fields, fnode) {
         ib_status_t   rc;
-        const char   *fname = fnode->data;
+        const char   *fname = (const char *)fnode->data;
         ib_field_t   *value = 0;
         ib_num_t      result = 0;
 

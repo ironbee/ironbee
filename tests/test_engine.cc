@@ -38,6 +38,7 @@
 #include "engine/filter.c"
 #include "engine/core.c"
 #include "engine/rule_engine.c"
+#include "engine/operator.c"
 #include "engine/core_operators.c"
 
 #include "ibtest_util.c"
