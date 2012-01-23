@@ -36,44 +36,54 @@ extern "C" {
 
 namespace {
     const char* luafile = TEST_LUA_FILE;
+    const char* ffifile = TEST_FFI_FILE;
 }
 
-TEST(TestIronBeeModuleRulesLua, DISABLED_load_eval)
+TEST(TestIronBeeModuleRulesLua, load_eval)
 {
     ib_engine_t *ib;
     ibtest_engine_create(&ib);
     ib_tx_t tx;
 
     lua_State *L = luaL_newstate();
+    
+    luaL_openlibs(L);
 
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
 
+    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
     ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, luafile));
 
     ibtest_engine_destroy(ib);
 }
 
-TEST(TestIronBeeModuleRulesLua, DISABLED_load_func_eval)
+TEST(TestIronBeeModuleRulesLua, load_func_eval)
 {
     ib_engine_t *ib;
     ibtest_engine_create(&ib);
     ib_tx_t tx;
+    tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
 
     lua_State *L = luaL_newstate();
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
-    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, luafile));
+    luaL_openlibs(L);
+    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
+
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib, L, luafile, "f1"));
     ASSERT_EQ(IB_OK, ib_lua_func_eval(ib, &tx, L, "f1"));
 
     ibtest_engine_destroy(ib);
 }
 
-TEST(TestIronBeeModuleRulesLua, DISABLED_new_state)
+TEST(TestIronBeeModuleRulesLua, new_state)
 {
     ib_engine_t *ib;
     ibtest_engine_create(&ib);
     ib_tx_t tx;
+    tx.id = "tx_id.TestIronBeeModuleRulesLua.new_state";
     lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
+    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
     lua_State *L2;
 

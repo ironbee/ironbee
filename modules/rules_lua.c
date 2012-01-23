@@ -140,9 +140,6 @@ ib_status_t ib_lua_func_eval(ib_engine_t *ib,
     /* Take key -2 and value -1 and assign it into -3. */
     lua_settable(L, -3);
 
-    /* Pop the table and set it as the local env. */
-    lua_setfenv(L, -1);
-  
     /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
     lua_rc = lua_pcall(L, 1, 0, 0);
   
