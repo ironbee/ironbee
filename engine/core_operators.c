@@ -75,7 +75,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     IB_FTRACE_INIT(ib_core_operators_init);
     ib_status_t rc;
 
-    rc = ib_register_operator(ib, "@streq",
+    rc = ib_operator_register(ib, "@streq",
                               op_streq_create,
                               op_streq_destroy,
                               op_streq_execute);
