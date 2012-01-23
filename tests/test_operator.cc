@@ -58,7 +58,8 @@ ib_status_t test_execute_fn(void *data, ib_field_t *field, ib_num_t *result) {
 
     if (strstr(ib_field_value_nulstr(field), searchstr) == NULL) {
         *result = 0;
-    } else {
+    }
+    else {
         *result = 1;
     }
 
