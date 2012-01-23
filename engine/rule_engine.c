@@ -24,13 +24,13 @@
 
 #include "ironbee_config_auto.h"
 
-#include <rule_engine_private.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>
 #include <ironbee/rule_engine.h>
 
 #include "ironbee_private.h"
+#include "ironbee_core_private.h"
 
 /* Callback data */
 typedef struct {

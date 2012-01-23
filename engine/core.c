@@ -61,6 +61,7 @@
 #include <ironbee/provider.h>
 
 #include "ironbee_private.h"
+#include "ironbee_core_private.h"
 
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
@@ -4942,6 +4943,13 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_rule_engine_init(ib, m);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to initialize rule engine: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the core operators */
+    rc = ib_core_operators_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize core operators: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
