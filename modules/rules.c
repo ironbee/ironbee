@@ -170,6 +170,9 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
  */
 ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
                                ib_tx_t *tx,
+                               const char *func_name);
+ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
+                               ib_tx_t *tx,
                                const char *func_name)
 {
     IB_FTRACE_INIT(ib_lua_func_eval_r);
