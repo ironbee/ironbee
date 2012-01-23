@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <string.h>
+#include <ctype.h>
 
 #include <ironbee/types.h>
 #include <ironbee/util.h>
@@ -141,6 +142,10 @@ ib_status_t ib_rule_parse_inputs(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), start);
+    if (copy == NULL) {
+        ib_log_error(cp->ib, 4, "Failed to copy rule inputs");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
     /* Split it up */
     ib_log_debug(cp->ib, 9, "Splitting rule input string '%s'", copy);
@@ -152,9 +157,10 @@ ib_status_t ib_rule_parse_inputs(ib_cfgparser_t *cp,
             ib_log_error(cp->ib, 4, "Failed to add rule input '%s'", cur);
             IB_FTRACE_RET_STATUS(rc);
         }
-        ib_log_debug(cp->ib, 4, "Added rule input '%s'", cur);
+        ib_log_debug(cp->ib, 4,
+                     "Added rule input '%s' to rule %p", cur, (void*)rule);
     }
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -165,9 +171,46 @@ ib_status_t ib_rule_parse_modifier(ib_cfgparser_t *cp,
                                    
 {
     IB_FTRACE_INIT(ib_rule_parse_modifier);
-    ib_status_t rc = IB_OK;
+    ib_status_t  rc = IB_OK;
+    const char  *name;
+    char        *colon;
+    char        *copy;
+    const char  *value = NULL;
 
-    /* @todo */
+    /* Copy the string */
+    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), modifier_str);
+    if (copy == NULL) {
+        ib_log_error(cp->ib, 4,
+                     "Failed to copy rule modifier '%s'", modifier_str);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Modifier name */
+    name = copy;
+    colon = strchr(copy, ':');
+    if ( (colon != NULL) && ( *(colon+1) != '\0' ) ) {
+        *colon = '\0';
+        value = colon + 1;
+        while( isspace(*value) ) {
+            value++;
+        }
+        if (*value == '\0') {
+            value = NULL;
+        }
+    }
+
+    /* ID modifier */
+    if (strcasecmp(name, "id") == 0) {
+        if (value == NULL) {
+            ib_log_error(cp->ib, 4, "Modifier ID with no value");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        ib_rule_set_id(cp->ib, rule, value);
+    }
+    else {
+        ib_log_error(cp->ib, 4, "Unknown modifier %s", name);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
     IB_FTRACE_RET_STATUS(rc);
 }
