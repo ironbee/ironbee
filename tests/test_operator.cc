@@ -92,7 +92,7 @@ ib_plugin_t OperatorTest::ibt_ibplugin = {
 TEST_F(OperatorTest, call_operator) {
     ib_status_t status;
     ib_num_t call_result;
-    status = ib_register_operator(ib_engine,
+    status = ib_operator_register(ib_engine,
                                   "test_op",
                                   test_create_fn,
                                   test_destroy_fn,
