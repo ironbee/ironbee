@@ -134,11 +134,13 @@ endif
 test_engine_SOURCES = test_engine.cc test_main.cc
 if FREEBSD
 test_engine_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/engine/libironbee.la \
                     $(top_builddir)/util/libibutil.la \
                     -lhtp \
                     -liconv
 else
 test_engine_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/engine/libironbee.la \
                     $(top_builddir)/util/libibutil.la \
                     -lhtp
 endif

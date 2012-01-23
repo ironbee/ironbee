@@ -27,6 +27,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 
+#include "ironbee_private.h"
+
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
@@ -124,3 +126,31 @@ TEST_F(OperatorTest, call_operator) {
 }
 
 
+class CoreOperatorsTest : public OperatorTest {
+};
+
+TEST_F(CoreOperatorsTest, test_contains_operator) {
+    ib_status_t status;
+    ib_num_t call_result;
+    ib_operator_inst_t *op;
+
+    status = ib_operator_inst_create(ib_engine, "@contains", "needle", &op);
+    ASSERT_EQ(IB_OK, status);
+
+    // call contains
+    ib_field_t *field;
+    const char *matching = "data with needle in it";
+    const char *nonmatching = "non matching string";
+    ib_field_create(&field, ib_engine_pool_main_get(ib_engine),
+                    "testfield", IB_FTYPE_NULSTR, NULL);
+
+    ib_field_setv(field, &matching);
+    status = ib_operator_execute(op, field, &call_result);
+    ASSERT_EQ(IB_OK, status);
+    EXPECT_EQ(1, call_result);
+    
+    ib_field_setv(field, &nonmatching);
+    status = ib_operator_execute(op, field, &call_result);
+    ASSERT_EQ(IB_OK, status);
+    EXPECT_EQ(0, call_result);
+}
