@@ -34,6 +34,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/rule_defs.h>
 
+#include "ironbee_private.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,18 +50,16 @@ extern "C" {
  * Rule engine: Rule meta data
  */
 typedef struct {
-    const char           *id;           /**< Rule ID */
-    ib_rule_phase_type_t  phase;        /**< Phase to execute rule */
-    void                 *data;         /**< Generic data */
+    const char            *id;            /**< Rule ID */
+    ib_rule_phase_t        phase;         /**< Phase to execute rule */
 } ib_rule_meta_t;
 
 /**
  * Rule engine: condition data
  */
 typedef struct {
-    ib_operator_inst_t     *opinst;     /**< Condition operator instance */
-    ib_num_t                invert;     /**< Invert? */
-    ib_list_t              *args;       /**< Arguments to the operator */
+    ib_operator_inst_t    *opinst;        /**< Condition operator instance */
+    ib_num_t               invert;        /**< Invert? */
 } ib_rule_condition_t;
 
 /**
@@ -67,7 +67,6 @@ typedef struct {
  */
 typedef struct {
     ib_action_inst_t      *action;        /**< Action */
-    ib_list_t             *args;          /**< Args to the action function */
 } ib_rule_rule_action_t;
 
 /**
@@ -95,16 +94,24 @@ struct ib_rule_t {
  * Rule engine: List of rules to execute during a phase
  */
 typedef struct {
-    ib_rule_phase_type_t   phase;        /**< Phase type */
-    ib_rulelist_t          rules;        /**< Rules to exececute in a phase */
-} ib_rule_phase_t;
+    ib_rule_phase_t        phase;         /**< Phase number */
+    ib_rulelist_t          rules;         /**< Rules to exececute in phase */
+} ib_rule_phase_data_t;
 
 /**
  * Rule engine: Set of rules for all phases
  */
 typedef struct {
-    ib_rule_phase_t        phases[IB_RULE_PHASE_COUNT];
+    ib_rule_phase_data_t  phases[IB_RULE_PHASE_COUNT];
 } ib_ruleset_t;
+
+/**
+ * Rule engine data; typedef in ironbee_private.h
+ */
+struct ib_rules_t {
+    ib_ruleset_t       ruleset;      /**< Rules to exec */
+    ib_rulelist_t      rule_list;    /**< All rules owned by this context */
+};
 
 
 /**

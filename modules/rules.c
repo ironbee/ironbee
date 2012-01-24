@@ -23,8 +23,9 @@
 #include <ironbee/util.h>
 #include <ironbee/list.h>
 #include <ironbee/config.h>
+#include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
-#include <rule_parser.h>
+
 #include <rules_lua.h>
 
 #include "lua/ironbee.h"
@@ -42,6 +43,7 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 #include <lua.h>
 
@@ -86,6 +88,249 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State*, lua_State*
  * @brief Counter used to generate internal rule IDs.
  */
 static int ironbee_loaded_rule_count;
+
+
+/**
+ * @internal
+ * Parse rule's operator.
+ *
+ * Parsers the rule's operator string, stores the results in the rule object.
+ *
+ * @param cp IronBee configuaration parser
+ * @param rule Rule object to update
+ * @param str Operator string
+ *
+ * @returns Status code
+ */
+static ib_status_t parse_operator(ib_cfgparser_t *cp,
+                                  ib_rule_t *rule,
+                                  const char *str)
+{
+    IB_FTRACE_INIT(parse_operator);
+    ib_status_t         rc = IB_OK;
+    const char         *at;
+    const char         *bang;
+    const char         *op;
+    ib_num_t            invert = 0;
+    char               *copy;
+    char               *space;
+    char               *args = NULL;
+    ib_operator_inst_t *operator;
+    
+
+    /* Find the '@' that starts an operator */
+    at = strchr(str, '@');
+    if (at == NULL) {
+        ib_log_error(cp->ib, 4, "No operator in rule '%s'", str);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Do we have a leading '!'? */
+    bang = strchr(str, '!');
+    if ( (bang != NULL) && (bang < at) ) {
+        invert = 1;
+    }
+
+    /* Make a copy of the string to operate on */
+    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), at);
+    if (copy == NULL) {
+        ib_log_error(cp->ib, 4, "Failed to copy rule operator string '%s'", at);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    op = copy;
+
+    /* Find first space */
+    space = strchr(copy, ' ');
+    if (space != NULL) {
+        size_t  oplen = strspn(space, " ");
+        char   *end;
+        size_t  alen;
+
+        *space = '\0';
+        args = space + oplen;
+
+        /* Strip off trailing whitespace from args */
+        alen = strlen(args);
+        if (alen > 0) {
+            end = args+alen-1;
+            while( (end > args) && ( *end == ' ') ) {
+                *end = '\0';
+                --end;
+            }
+        }
+
+        /* Is args an empty string? */
+        if (*args == '\0') {
+            args = NULL;
+        }
+    }
+
+    /* Create the operator instance */
+    rc = ib_operator_inst_create(cp->ib, op, args, &operator);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, 4,
+                     "Failed to create operator instance '%s': %d", op, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Set the operator */
+    rc = ib_rule_set_operator(cp->ib, rule, operator, invert);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, 4,
+                     "Failed to set operator for rule: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_log_debug(cp->ib, 9,
+                 "Rule: op='%s'; invert=%d args='%s'",
+                 op, invert, args);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+
+/**
+ * @internal
+ * Parse a rule's input string.
+ *
+ * Parsers the rule's input field list string, stores the results in the rule
+ * object.
+ *
+ * @param cp IronBee configuration parser
+ * @param rule Rule to operate on
+ * @param input_str Input field name.
+ *
+ * @returns Status code
+ */
+static ib_status_t parse_inputs(ib_cfgparser_t *cp,
+                                ib_rule_t *rule,
+                                const char *input_str)
+                                 
+{
+    IB_FTRACE_INIT(parse_inputs);
+    ib_status_t  rc = IB_OK;
+    size_t       len;
+    const char  *start;
+    const char  *cur;
+    char        *copy;
+    char        *save;
+    
+    /* Copy the input string */
+    len = strspn(input_str, " ");
+    start = input_str+len;
+    if (*start == '\0') {
+        ib_log_error(cp->ib, 4, "Rule inputs is empty");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), start);
+    if (copy == NULL) {
+        ib_log_error(cp->ib, 4, "Failed to copy rule inputs");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Split it up */
+    for (cur = strtok_r(copy, "|,", &save);
+         cur != NULL;
+         cur = strtok_r(NULL, "|,", &save) ) {
+        rc = ib_rule_add_input(cp->ib, rule, cur);
+        if (rc != IB_OK) {
+            ib_log_error(cp->ib, 4, "Failed to add rule input '%s'", cur);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        ib_log_debug(cp->ib, 4,
+                     "Added rule input '%s' to rule %p", cur, (void*)rule);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+
+/**
+ * @internal
+ * Parse a rule's modifier string.
+ *
+ * Parsers the rule's modifier string, stores the results in the rule
+ * object.
+ *
+ * @param cp IronBee configuration parser
+ * @param rule Rule to operate on
+ * @param modifier_str Input field name.
+ *
+ * @returns Status code
+ */
+static ib_status_t parse_modifier(ib_cfgparser_t *cp,
+                                  ib_rule_t *rule,
+                                  ib_rule_phase_t *phase,
+                                  const char *modifier_str)
+{
+    IB_FTRACE_INIT(parse_modifier);
+    ib_status_t  rc = IB_OK;
+    const char  *name;
+    char        *colon;
+    char        *copy;
+    const char  *value = NULL;
+
+    /* Copy the string */
+    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), modifier_str);
+    if (copy == NULL) {
+        ib_log_error(cp->ib, 4,
+                     "Failed to copy rule modifier '%s'", modifier_str);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Modifier name */
+    name = copy;
+    colon = strchr(copy, ':');
+    if ( (colon != NULL) && ( *(colon+1) != '\0' ) ) {
+        *colon = '\0';
+        value = colon + 1;
+        while( isspace(*value) ) {
+            value++;
+        }
+        if (*value == '\0') {
+            value = NULL;
+        }
+    }
+
+    /* ID modifier */
+    if (strcasecmp(name, "id") == 0) {
+        if (value == NULL) {
+            ib_log_error(cp->ib, 4, "Modifier ID with no value");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        ib_rule_set_id(cp->ib, rule, value);
+    }
+    else if (strcasecmp(name, "phase") == 0) {
+        if (value == NULL) {
+            ib_log_error(cp->ib, 4, "Modifier PHASE with no value");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        else if (strcasecmp(value,"REQUEST_HEADER") == 0) {
+            *phase = PHASE_REQUEST_HEADER;
+        }
+        else if (strcasecmp(value,"REQUEST") == 0) {
+            *phase = PHASE_REQUEST_BODY;
+        }
+        else if (strcasecmp(value,"RESPONSE_HEADER") == 0) {
+            *phase = PHASE_RESPONSE_HEADER;
+        }
+        else if (strcasecmp(value,"RESPONSE") == 0) {
+            *phase = PHASE_RESPONSE_BODY;
+        }
+        else if (strcasecmp(value,"POSTPROCESS") == 0) {
+            *phase = PHASE_POSTPROCESS;
+        }
+        else {
+            ib_log_error(cp->ib, 4, "Invalid PHASE modifier '%s'", value);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+    else {
+        ib_log_error(cp->ib, 4, "Unknown modifier %s", name);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
 
 /**
  * @brief This will use @c g_lua_lock to atomically call @a fn.
@@ -297,13 +542,12 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
                                      void *cbdata)
 {
     IB_FTRACE_INIT(rules_rule_params);
-    ib_status_t     rc;
-    ib_list_node_t *inputs;
-    ib_list_node_t *op;
-    ib_list_node_t *mod;
-    ib_rule_t      *rule;
-
-    ib_log_debug(cp->ib, 1, "Name: %s", name);
+    ib_status_t      rc;
+    ib_list_node_t  *inputs;
+    ib_list_node_t  *op;
+    ib_list_node_t  *mod;
+    ib_rule_phase_t  phase = PHASE_NONE;
+    ib_rule_t       *rule;
 
     if (cbdata != NULL) {
         IB_FTRACE_MSG("Callback data is not null.");
@@ -331,7 +575,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     }
     
     /* Parse the inputs */
-    rc = ib_rule_parse_inputs(cp, rule, inputs->data);
+    rc = parse_inputs(cp, rule, inputs->data);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1,
                      "Error parsing rule inputs: %d", rc);
@@ -339,7 +583,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     }
     
     /* Parse the operator */
-    rc = ib_rule_parse_operator(cp, rule, op->data);
+    rc = parse_operator(cp, rule, op->data);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1,
                      "Error parsing rule inputs: %d", rc);
@@ -349,13 +593,16 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Parse all of the modifiers */
     mod = op;
     while( (mod = ib_list_node_next(mod)) != NULL) {
-        rc = ib_rule_parse_modifier(cp, rule, mod->data);
+        rc = parse_modifier(cp, rule, &phase, mod->data);
         if (rc != IB_OK) {
+            ib_log_error(cp->ib, 1,
+                         "Error parsing rule modifiers: %d", rc);
+            IB_FTRACE_RET_STATUS(rc);
         }
     }
 
     /* Finally, register the rule */
-    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, PHASE_REQUEST_HEADER);
+    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, phase);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1, "Error registering rule: %d", rc);
         IB_FTRACE_RET_STATUS(rc);

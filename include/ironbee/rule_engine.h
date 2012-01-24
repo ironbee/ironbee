@@ -121,7 +121,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_modifier(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
                                         ib_context_t *ctx,
                                         ib_rule_t *rule,
-                                        ib_rule_phase_type_t phase);
+                                        ib_rule_phase_t phase);
 
 /**
  * Get the memory pool to use for rule allocations.

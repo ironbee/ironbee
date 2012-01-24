@@ -51,7 +51,7 @@ typedef enum {
     PHASE_POSTPROCESS,              /**< Post-processing phase. */
     PHASE_MAX = PHASE_POSTPROCESS,  /**< Max phase number. */
     IB_RULE_PHASE_COUNT,
-} ib_rule_phase_type_t;
+} ib_rule_phase_t;
 
 /**
  * Rule engine: Rule

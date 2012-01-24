@@ -34,7 +34,7 @@
 
 /* Callback data */
 typedef struct {
-    ib_rule_phase_type_t    phase;
+    ib_rule_phase_t         phase;
     const char             *name;
     ib_state_event_type_t   event;
 } rule_cbdata_t;
@@ -47,6 +47,10 @@ static rule_cbdata_t rule_cbdata[] = {
     {PHASE_POSTPROCESS,     "Post Process",    handle_postprocess_event},
     {PHASE_INVALID,         NULL,              (ib_state_event_type_t) -1}
 };
+
+/* Init rule flags */
+#define IB_RULES_INIT_RULESET     0x01
+#define IB_RULES_INIT_CALLBACKS   0x02
 
 /**
  * @internal
@@ -125,12 +129,12 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(ib_rule_engine_execute);
-    const rule_cbdata_t *rdata = (const rule_cbdata_t *) cbdata;
-    ib_context_t        *ctx = tx->ctx;
-    ib_context_t        *pctx = ctx->parent;
-    ib_rule_phase_t     *phase = &(pctx->ruleset->phases[rdata->phase]);
-    ib_list_t           *rules = phase->rules.rule_list;
-    ib_list_node_t      *node = NULL;
+    const rule_cbdata_t  *rdata = (const rule_cbdata_t *) cbdata;
+    ib_context_t         *ctx = tx->ctx;
+    ib_context_t         *pctx = ctx->parent;
+    ib_rule_phase_data_t *phase = &(pctx->rules->ruleset.phases[rdata->phase]);
+    ib_list_t            *rules = phase->rules.rule_list;
+    ib_list_node_t       *node = NULL;
 
     /* Sanity check */
     if (phase->phase != rdata->phase) {
@@ -166,39 +170,92 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_rule_engine_init(ib_engine_t *ib, ib_module_t *mod)
+/**
+ * @internal
+ * Initialize a rule engine object.
+ *
+ * @param ib Engine
+ * @param mp Memory pool to use for allocations
+ * @param flags Initialization flags (IB_RULES_INIT_*)
+ * @param prules Pointer to new rules object
+ *
+ * @returns Status code
+ */
+static ib_status_t ib_rules_init(ib_engine_t *ib,
+                                 ib_mpool_t *mp,
+                                 ib_num_t flags,
+                                 ib_rules_t **prules)
 {
     IB_FTRACE_INIT(ib_rule_engine_init);
-    rule_cbdata_t *cbdata;
-    ib_status_t    rc;
+    rule_cbdata_t  *cbdata;
+    ib_rules_t     *rules;
+    ib_status_t     rc;
+
+    /* Create the rule object */
+    rules = (ib_rules_t *)ib_mpool_calloc(mp, 1, sizeof(ib_rules_t));
+    if (rules == NULL) {
+        ib_log_error(ib, 4, "Rule engine failed to allocate rules object");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
     /* Create the rule list */
-    ib->rules = (ib_rulelist_t *)
-        ib_mpool_calloc(ib->mp, 1, sizeof(ib_rulelist_t) );
-    if (ib->rules == NULL) {
-        ib_log_error(ib, 4, "Rule engine failed to allocate rule list");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    rc = ib_list_create(&(rules->rule_list.rule_list), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Rule engine failed to initialize rule list: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the rule set */
+    if (flags & IB_RULES_INIT_RULESET) {
+        ib_num_t phase;
+        for (phase = (ib_num_t)PHASE_NONE;
+             phase <= (ib_num_t)PHASE_MAX;
+             ++phase) {
+            ib_rule_phase_data_t *p = &(rules->ruleset.phases[phase]);
+            p->phase = (ib_rule_phase_t)phase;
+            rc = ib_list_create(&(p->rules.rule_list), mp);
+            if (rc != IB_OK) {
+                ib_log_error(ib, 4,
+                             "Rule engine failed to create ruleset list: %d",
+                             rc);
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+        }
     }
 
     /* Register specific handlers for specific events, and a
      * generic handler for the rest */
-    for (cbdata = rule_cbdata; cbdata->phase != PHASE_INVALID; ++cbdata) {
-        rc = ib_hook_register(ib,
-                              cbdata->event,
-                              (ib_void_fn_t)ib_rule_engine_execute,
-                              (void*)cbdata);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Hook register for %d/%d/%s returned %d",
-                         cbdata->phase, cbdata->event, cbdata->name, rc);
-        }
-        rc = ib_list_create(&(ib->rules->rule_list), ib->mp);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4,
-                         "Rule engine failed to create rule list: %d", rc);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+    if (flags & IB_RULES_INIT_CALLBACKS) {
+        for (cbdata = rule_cbdata; cbdata->phase != PHASE_INVALID; ++cbdata) {
+            rc = ib_hook_register(ib,
+                                  cbdata->event,
+                                  (ib_void_fn_t)ib_rule_engine_execute,
+                                  (void*)cbdata);
+            if (rc != IB_OK) {
+                ib_log_error(ib, 4, "Hook register for %d/%d/%s returned %d",
+                             cbdata->phase, cbdata->event, cbdata->name, rc);
+                IB_FTRACE_RET_STATUS(rc);
+            }
         }
     }
 
+    *prules = rules;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+ib_status_t ib_rule_engine_init(ib_engine_t *ib,
+                                ib_module_t *mod)
+{
+    IB_FTRACE_INIT(ib_rule_engine_init);
+    ib_status_t rc;
+
+    rc = ib_rules_init(ib, ib->mp, IB_RULES_INIT_CALLBACKS, &(ib->rules) );
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, "Failed to initialize rule engine: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -207,39 +264,18 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                                     ib_context_t *ctx)
 {
     IB_FTRACE_INIT(ib_rule_engine_ctx_init);
-    ib_num_t     phase;
     ib_status_t  rc;
 
     /* If the rules are already initialized, do nothing */
-    if ( (ctx->ctx_rules != NULL) && (ctx->ruleset != NULL) ) {
+    if (ctx->rules != NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* Create the rule list */
-    ctx->ctx_rules = (ib_rulelist_t *)
-        ib_mpool_calloc(ctx->mp, 1, sizeof(ib_rulelist_t) );
-    if (ib->rules == NULL) {
-        ib_log_error(ib, 4, "Rule engine failed to allocate context rule list");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Create the rule set */
-    ctx->ruleset = (ib_ruleset_t *)
-        ib_mpool_calloc(ctx->mp, 1, sizeof(ib_ruleset_t) );
-    if (ib->rules == NULL) {
-        ib_log_error(ib, 4, "Rule engine failed to allocate context rule set");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    for (phase = (ib_num_t)PHASE_NONE; phase <= (ib_num_t)PHASE_MAX; ++phase) {
-        ib_rule_phase_t *p = &(ctx->ruleset->phases[phase]);
-        p->phase = (ib_rule_phase_type_t)phase;
-        rc = ib_list_create(&(p->rules.rule_list), ctx->mp);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4,
-                         "Rule engine failed to create context rule list: %d",
-                         rc);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
+    /* Call the init function */
+    rc = ib_rules_init(ib, ctx->mp, IB_RULES_INIT_RULESET, &(ctx->rules));
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, "Failed to initialize context rules: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -293,7 +329,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     rule->false_actions = lst;
 
     /* Good */
-    rule->parent_rlist = ctx->ctx_rules;
+    rule->parent_rlist = &(ctx->rules->rule_list);
     *prule = rule;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -301,12 +337,12 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
 ib_status_t ib_rule_register(ib_engine_t *ib,
                              ib_context_t *ctx,
                              ib_rule_t *rule,
-                             ib_rule_phase_type_t phase)
+                             ib_rule_phase_t phase)
 {
     IB_FTRACE_INIT(ib_rule_register);
-    ib_status_t          rc;
-    ib_rule_phase_t     *phasep;
-    ib_list_t           *rules;
+    ib_status_t           rc;
+    ib_rule_phase_data_t *phasep;
+    ib_list_t            *rules;
 
     /* Sanity checks */
     if ( (phase <= PHASE_NONE) || (phase > PHASE_MAX) ) {
@@ -333,8 +369,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, 4, "Can't register rule: No ID");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if ( (ctx->ctx_rules == NULL) || (ctx->ruleset == NULL) ) {
-        rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
+    if (ctx->rules == NULL){
+        rc = ib_rules_init(ib, ctx->mp, IB_RULES_INIT_RULESET, &ctx->rules);
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Failed to initialize rules for context %p",
                          (void*)ctx);
@@ -342,7 +378,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
     }
 
-    phasep = &(ctx->ruleset->phases[phase]);
+    phasep = &(ctx->rules->ruleset.phases[phase]);
     rules = phasep->rules.rule_list;
 
     /* Add it to the list */

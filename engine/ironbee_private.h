@@ -33,8 +33,6 @@
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 
-#include "ironbee_core_private.h"
-
 /**
  * @internal
  *
@@ -45,6 +43,13 @@ struct ib_hook_t {
     void               *cdata;            /**< Data passed to the callback */
     ib_hook_t          *next;             /**< The next callback in the list */
 };
+
+/**
+ * @internal
+ *
+ * Rule engine per-context data
+ */
+typedef struct ib_rules_t ib_rules_t;
 
 /**
  * @internal
@@ -75,7 +80,7 @@ struct ib_engine_t {
     ib_hash_t          *providers;        /**< Hash tracking providers */
     ib_hash_t          *tfns;             /**< Hash tracking transformations */
     ib_hash_t          *operators;        /**< Hash tracking operators */
-    ib_rulelist_t      *rules;            /**< Global rules */
+    ib_rules_t         *rules;            /**< Rule engine data */
 };
 
 /**
@@ -124,11 +129,8 @@ struct ib_context_t {
     /* Hooks */
     ib_hook_t   *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
 
-    /* Rules to execute / phase: One rule set per "phase" */
-    ib_ruleset_t            *ruleset;     /**< Rules to exec */
-
-    /* Context rules */
-    ib_rulelist_t           *ctx_rules;   /**< Context specific rules */
+    /* Rules associated with this context */
+    ib_rules_t              *rules;       /**< Rule engine data */
 };
 
 /**
