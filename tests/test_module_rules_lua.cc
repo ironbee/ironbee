@@ -52,6 +52,8 @@ TEST(TestIronBeeModuleRulesLua, load_eval)
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
 
     ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ironbee", "ironbee-ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ffi", "ffi"));
     ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, luafile));
 
     ibtest_engine_destroy(ib);
@@ -68,7 +70,8 @@ TEST(TestIronBeeModuleRulesLua, load_func_eval)
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
     luaL_openlibs(L);
     ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
-
+    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ironbee", "ironbee-ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ffi", "ffi"));
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib, L, luafile, "f1"));
     ASSERT_EQ(IB_OK, ib_lua_func_eval(ib, &tx, L, "f1"));
 
@@ -84,12 +87,14 @@ TEST(TestIronBeeModuleRulesLua, new_state)
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
     ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ironbee", "ironbee-ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ffi", "ffi"));
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
+
     lua_State *L2;
 
     ASSERT_EQ(IB_OK, ib_lua_new_thread(ib, L, &L2));
     ASSERT_NE(static_cast<lua_State*>(NULL), L2);
-    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L2, luafile));
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib, L2, luafile, "f1"));
     ASSERT_EQ(IB_OK, ib_lua_func_eval(ib, &tx, L2, "f1"));
     ASSERT_EQ(IB_OK, ib_lua_join_thread(ib, L, &L2));

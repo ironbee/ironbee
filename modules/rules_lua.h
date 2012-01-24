@@ -89,7 +89,22 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
  * @returns IB_OK on success.
  */
 ib_status_t ib_lua_join_thread(ib_engine_t *ib,
-                               lua_State* L,
+                               lua_State *L,
                                lua_State **thread);
 
+
+/**
+ * @brief Load a Lua module into the @a module_name variable.
+ * @details This is equivalent to module_name = require(required_name)
+ *          in Lua.
+ * @param[out] ib The IronBee engine used to log errors.
+ * @param[in,out] L The Lua state that evaluates and holds the result.
+ * @param[in] module_name The name of the module after it has been required.
+ * @param[in] required_name The argument to the @c require function in Lua.
+ *            Typically a file in Lua's search path.
+ */
+ib_status_t ib_lua_require(ib_engine_t *ib,
+                           lua_State *L,
+                           const char* module_name,
+                           const char* required_name);
 #endif // __MODULES__RULES_LUA_H

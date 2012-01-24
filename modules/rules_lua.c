@@ -204,7 +204,7 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
 
     *thread = lua_newthread(L);
 
-    if (thread == NULL) {
+    if (*thread == NULL) {
         ib_log_error(ib, 1, "Failed to allocate new Lua execution stack.");
         free(thread_name);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -241,3 +241,32 @@ ib_status_t ib_lua_join_thread(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+ib_status_t ib_lua_require(ib_engine_t *ib,
+                           lua_State *L,
+                           const char* module_name,
+                           const char* required_name)
+{
+    IB_FTRACE_INIT(ib_lua_require);
+
+    int lua_rc;
+
+    lua_getglobal(L, "require");
+
+    lua_pushstring(L, required_name);
+
+    lua_rc = lua_pcall(L, 1, 1, 0);
+
+    if (lua_rc != 0) {
+        ib_log_error(ib, 1, "Require failed %s - %s (%d)", 
+                     required_name,
+                     lua_tostring(L, -1),
+                     lua_rc);
+        lua_pop(L, -1);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Take the result of require(required_name) on the stack and assign it. */
+    lua_setglobal(L, module_name);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
