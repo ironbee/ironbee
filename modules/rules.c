@@ -447,6 +447,14 @@ ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
 }
 
 /**
+ * FIXME - dummy function until the rules engine is finalized.
+ */
+static const char* ib_rule_get_id(const ib_engine_t *ib, const ib_rule_t *r)
+{
+    return "ironbee rule id dummy string in file " __FILE__;
+}
+
+/**
  * @brief Parse a RuleExt directive.
  * @details Register lua function. RuleExt lua:/path/to/rule.lua phase:REQUEST
  * @param[in,out] cp Configuration parser that contains the engine being
@@ -461,7 +469,61 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                                         void *cbdata)
 {
     IB_FTRACE_INIT(rules_ruleext_params);
-  
+
+    ib_status_t rc;
+    ib_list_node_t *inputs;
+    ib_list_node_t *mod;
+    ib_rule_t *rule;
+    char *file_name;
+
+    /* Get the inputs string */
+    inputs = ib_list_first(vars);
+    if ( (inputs == NULL) || (inputs->data == NULL) ) {
+        ib_log_error(cp->ib, 1, "No inputs for rule");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Allocate a rule */
+    rc = ib_rule_create(cp->ib, cp->cur_ctx, &rule);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, 1, "Failed to allocate rule: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    file_name = inputs->data;
+
+    /* Parse all of the modifiers */
+    mod = inputs;
+    while( (mod = ib_list_node_next(mod)) != NULL) {
+        rc = ib_rule_parse_modifier(cp, rule, mod->data);
+        if (rc != IB_OK) {
+        }
+    }
+
+    /* Using the rule->meta and file_name, load and stage the ext rule. */
+    if (strncasecmp(file_name, "lua:", 4)) {
+        ib_lua_load_func(cp->ib,
+                         g_ironbee_rules_lua,
+                         file_name+4,
+                         ib_rule_get_id(cp->ib, rule));
+    }
+    else {
+        ib_log_error(cp->ib, 1, "RuleExt does not support rule type %s.",
+            file_name);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Finally, register the rule */
+    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, PHASE_REQUEST_HEADER);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, 1, "Error registering rule: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+
+    //---
     ib_list_node_t *var = ib_list_first(vars);
   
     char *file = NULL;
@@ -685,9 +747,30 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
     /* Load and evaluate the ffi file. */
     ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, c_ffi_file);
-
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load FFI file for Lua rule execution.");
+        ib_log_error(ib, 1, 
+            "Failed to eval \"%s\" for Lua rule execution.",
+            c_ffi_file);
+        semctl(g_lua_lock, IPC_RMID, 0);
+        g_lua_lock = -1;
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
+
+    /* Require the ironbee module we just evaled. */
+    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ironbee", "ironbee-ffi");
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, 1,
+            "Failed to require \"%s\" for Lua rule execution.",
+            c_ffi_file);
+        semctl(g_lua_lock, IPC_RMID, 0);
+        g_lua_lock = -1;
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
+
+    /* Require the ffi module. */
+    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ffi", "ffi");
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to load FFI for Lua rule execution.");
         semctl(g_lua_lock, IPC_RMID, 0);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
