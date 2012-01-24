@@ -1,7 +1,7 @@
-LDADD = ../htp/.libs/libhtp.a -lz @LIBICONV@ 
+LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@ 
 AM_CFLAGS = -g -O2
-EXTRA_DIST = run-tests.sh
-
+AM_CPPFLAGS = -I$(top_srcdir)
+EXTRA_DIST = run-tests.sh files
 check_PROGRAMS = main test_bstr test_utils
 
 noinst_LTLIBRARIES=libgtest.la
