@@ -54,6 +54,40 @@ static rule_cbdata_t rule_cbdata[] = {
 
 /**
  * @internal
+ * Execute a single rule on a single field
+ *
+ * @param ib Engine
+ * @param opinst Operator instance
+ * @param field Field argument to operator
+ * @param fname Name of the field
+ * @param result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_operator(ib_engine_t *ib,
+                                    ib_operator_inst_t *opinst,
+                                    ib_field_t *field,
+                                    const char *fname,
+                                    ib_num_t *result)
+{
+    ib_status_t   rc;
+
+    /* Run it, check the results */
+    rc = opinst->op->fn_execute(opinst->data, field, result);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 4,
+                     "Operator %s returned an error for field %s",
+                     opinst->op->name, fname);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_log_debug(ib, 9,
+                 "Operator %s, field %s => %d",
+                 opinst->op->name, fname, *result);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
  * Execute a single rule
  *
  * @param ib Engine
@@ -68,7 +102,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
                                 ib_tx_t *tx,
                                 ib_num_t *rule_result)
 {
-    ib_list_node_t      *fnode = NULL;
+    ib_list_node_t      *node = NULL;
     ib_operator_inst_t  *opinst = rule->condition.opinst;
 
     /* Initialize the rule result */
@@ -77,9 +111,9 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
 
     /* Loop through all of the fields */
-    IB_LIST_LOOP(rule->input_fields, fnode) {
+    IB_LIST_LOOP(rule->input_fields, node) {
         ib_status_t   rc;
-        const char   *fname = (const char *)fnode->data;
+        const char   *fname = (const char *)node->data;
         ib_field_t   *value = 0;
         ib_num_t      result = 0;
 
@@ -93,17 +127,14 @@ static ib_status_t execute_rule(ib_engine_t *ib,
             ib_log_debug(ib, 4, "Error getting field %s: %d\n", fname, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
-        rc = opinst->op->fn_execute(opinst->data, value, &result);
+
+        /* Execute the operator */
+        rc = execute_operator(ib, opinst, value, fname, &result);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4,
-                         "Operator %s returned an error for field %s",
-                         opinst->op->name, fname);
+            ib_log_debug(ib, 4, "Operator %s returned an error: %d",
+                         opinst->op->name, rc);
             continue;
         }
-        ib_log_debug(ib, 9,
-                     "Operator %s, field %s => %d",
-                     opinst->op->name, fname, result);
-
         if (result != 0) {
             *rule_result = result;
         }
