@@ -474,6 +474,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     ib_list_node_t *inputs;
     ib_list_node_t *mod;
     ib_rule_t *rule;
+    ib_rule_phase_t rule_phase = PHASE_NONE;
     char *file_name;
 
     /* Get the inputs string */
@@ -495,7 +496,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     /* Parse all of the modifiers */
     mod = inputs;
     while( (mod = ib_list_node_next(mod)) != NULL) {
-        rc = ib_rule_parse_modifier(cp, rule, mod->data);
+        rc = parse_modifier(cp, rule, &rule_phase, mod->data);
         if (rc != IB_OK) {
         }
     }
@@ -514,7 +515,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     }
 
     /* Finally, register the rule */
-    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, PHASE_REQUEST_HEADER);
+    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, rule_phase);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1, "Error registering rule: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
