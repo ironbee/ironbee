@@ -79,7 +79,9 @@ static ib_status_t op_streq_execute(void *data,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
-    // @todo
+    IB_FTRACE_INIT(op_streq_fn);
+
+    /* This works on C-style (NUL terminated) and byte strings */
     const char *cstr = (const char *)data;
     if (field->type==IB_FTYPE_NULSTR) {
         const char *fval = ib_field_value_nulstr( field );
@@ -97,10 +99,10 @@ static ib_status_t op_streq_execute(void *data,
         }
     }
     else {
-        return IB_EINVAL;
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    return IB_OK;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -146,6 +148,48 @@ static ib_status_t contains_execute_fn(void *data,
 }
 
 /**
+ * @internal
+ * Create function for the "@exists" operator
+ *
+ * @param mp Memory pool to use for allocation
+ * @param parameters Constant parameters
+ * @param op_inst Instance operator
+ *
+ * @returns Status code
+ */
+static ib_status_t op_exists_create(ib_mpool_t *mp,
+                                    const char *parameters,
+                                    ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(op_exists_create);
+
+    if (parameters != NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    op_inst->data = NULL;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "@exists" operator
+ *
+ * @param data C-style string to compare to
+ * @param field Field value
+ * @param result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_exists_execute(void *data,
+                                     ib_field_t *field,
+                                     ib_num_t *result)
+{
+    /* Return true of field is not NULL */
+    *result = (field != NULL);
+    return IB_OK;
+}
+
+/**
  * Initialize the core operators
  */
 ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
@@ -153,7 +197,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     IB_FTRACE_INIT(ib_core_operators_init);
     ib_status_t rc;
 
-    rc = ib_operator_register(ib, "@streq",
+    rc = ib_operator_register(ib,
+                              "@streq",
+                              IB_OPERATOR_FLAG_NONE,
                               strop_create,
                               NULL, /* no destroy function */
                               op_streq_execute);
@@ -163,9 +209,20 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 
     rc = ib_operator_register(ib,
                               "@contains",
+                              IB_OPERATOR_FLAG_NONE,
                               strop_create,
                               NULL, /* no destroy function */
                               contains_execute_fn);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_operator_register(ib,
+                              "@exists",
+                              IB_OPERATOR_FLAG_NULL_FIELDS,
+                              op_exists_create,
+                              NULL, /* no destroy function */
+                              op_exists_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
