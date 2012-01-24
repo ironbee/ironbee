@@ -228,26 +228,11 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
     towrite = TSVIONTodoGet(input_vio);
     TSDebug("ironbee", "\ttoWrite is %" PRId64 "", towrite);
 
-    /* https://issues.apache.org/jira/browse/TS-922 */
-    if (towrite >= 0xffffffff) {
-        towrite = -1;
-    }
-  
     if (towrite > 0) {
         /* The amount of data left to read needs to be truncated by
          * the amount of data actually in the read buffer.
          */
 
-        /* first time through, we have to buffer the data until
-         * after the headers have been sent.  Ugh!
-         */
-        if (first_time) {
-            ib_log_debug(ironbee, 9,
-                         "ts/ironbee: allocating %u bytes", towrite );
-            bufp = ibd->data->buf = TSmalloc(towrite);
-            ibd->data->buflen = towrite;
-        }
-    
         avail = TSIOBufferReaderAvail(TSVIOReaderGet(input_vio));
         TSDebug("ironbee", "\tavail is %" PRId64 "", avail);
         if (towrite > avail) {
@@ -258,6 +243,15 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
             int btowrite = towrite;
             /* Copy the data from the read buffer to the output buffer. */
             TSIOBufferCopy(TSVIOBufferGet(ibd->data->output_vio), TSVIOReaderGet(input_vio), towrite, 0);
+
+            /* first time through, we have to buffer the data until
+             * after the headers have been sent.  Ugh!
+             * At this point, we know the size to alloc.
+             */
+            if (first_time) {
+                bufp = ibd->data->buf = TSmalloc(towrite);
+                ibd->data->buflen = towrite;
+            }
 
             /* feed the data to ironbee, and consume them */
             while (btowrite > 0) {
