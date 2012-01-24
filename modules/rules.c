@@ -474,7 +474,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     ib_list_node_t *inputs;
     ib_list_node_t *mod;
     ib_rule_t *rule;
-    ib_rule_phase_t rule_phase = PHASE_NONE;
+    ib_rule_phase_t phase = PHASE_NONE;
     char *file_name;
 
     /* Get the inputs string */
@@ -496,8 +496,12 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     /* Parse all of the modifiers */
     mod = inputs;
     while( (mod = ib_list_node_next(mod)) != NULL) {
-        rc = parse_modifier(cp, rule, &rule_phase, mod->data);
+        rc = parse_modifier(cp, rule, &phase, mod->data);
         if (rc != IB_OK) {
+            ib_log_error(cp->ib, 1,
+               "Error parsing rule modifier - \"%s\".",
+                mod->data);
+            IB_FTRACE_RET_STATUS(rc);
         }
     }
 
@@ -515,78 +519,13 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     }
 
     /* Finally, register the rule */
-    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, rule_phase);
+    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, phase);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1, "Error registering rule: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
-
-    //---
-    ib_list_node_t *var = ib_list_first(vars);
-  
-    char *file = NULL;
-    char *phase = NULL;
-    char *rule_name;
-
-    ib_log_debug(cp->ib, 1, "Processing directive %s", name);
-
-    if (cbdata!=NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
-  
-    if (var==NULL) {
-        ib_log_error(cp->ib, 1, "RuleExt file.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
-    if (var->data==NULL) {
-        ib_log_error(cp->ib, 1, "RuleExt file value missing.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
-    file = var->data;
-  
-    ib_log_debug(cp->ib, 1, "File %s", phase);
-
-    var = ib_list_node_next(var);
-  
-    if (var==NULL) {
-        ib_log_error(cp->ib, 1, "RuleExt rule phase.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
-    if (var->data==NULL) {
-        ib_log_error(cp->ib, 1, "RuleExt rule phase value missing.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
-    phase = var->data;
-  
-    ib_log_debug(cp->ib, 1, "Phase %s", phase);
-
-    if (strncasecmp(file, "lua:", 4)) {
-        /* Lua rule. */
-        ironbee_loaded_rule_count+=1;
-
-        /* 4 (lua:) + 10 (%010d) + '\n' = 15 characters. */
-        rule_name = (char*)malloc(15);
-        sprintf(rule_name, "lua:%010d", ironbee_loaded_rule_count);
-        ib_lua_load_func(cp->ib, g_ironbee_rules_lua, file+4, rule_name);
-
-        /* FIXME - insert here registering with ib engine the lua rule. */
-
-        free(rule_name);
-        rule_name = NULL;
-    }
-    else {
-        /* Some unidentified rule. */
-        ib_log_error(cp->ib, 1, "RuleExt does not support rule type %s.", file);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-  
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -659,7 +598,8 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
         rc = parse_modifier(cp, rule, &phase, mod->data);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 1,
-                         "Error parsing rule modifiers: %d", rc);
+               "Error parsing rule modifier - \"%s\".",
+                mod->data);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
