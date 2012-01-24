@@ -88,8 +88,8 @@ struct ib_operator_t {
 };
 
 /** Operator flags */
-#define IB_OPERATOR_FLAG_NONE        0x0000 /**< Operator accepts NULL fields */
-#define IB_OPERATOR_FLAG_NULL_FIELDS 0x0001 /**< Operator accepts NULL fields */
+#define IB_OPERATOR_FLAG_NONE        0x0000 /**< No flags */
+#define IB_OPERATOR_FLAG_ALLOW_NULL  0x0001 /**< Op. accepts NULL fields */
 
 struct ib_operator_inst_t {
     struct ib_operator_t *op;   /**< Pointer to the operator type */

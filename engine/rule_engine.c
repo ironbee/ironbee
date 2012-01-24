@@ -121,7 +121,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         rc = ib_data_get(tx->dpi, fname, &value);
         if (rc == IB_ENOENT) {
             ib_log_debug(ib, 4, "Field %s not found", fname );
-            if ( (opinst->op->flags & IB_OPERATOR_FLAG_NULL_FIELDS) == 0) {
+            if ( (opinst->op->flags & IB_OPERATOR_FLAG_ALLOW_NULL) == 0) {
                 continue;
             }
         }

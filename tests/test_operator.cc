@@ -96,6 +96,7 @@ TEST_F(OperatorTest, call_operator) {
     ib_num_t call_result;
     status = ib_operator_register(ib_engine,
                                   "test_op",
+                                  IB_OPERATOR_FLAG_NONE,
                                   test_create_fn,
                                   test_destroy_fn,
                                   test_execute_fn);
