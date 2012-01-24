@@ -34,19 +34,47 @@
 #include "ironbee_private.h"
 #include "ironbee_core_private.h"
 
-static ib_status_t op_streq_create(ib_mpool_t *mp,
-                                   const char *data,
-                                   ib_operator_inst_t *op_inst)
+
+/**
+ * @internal
+ * Create function for the "@str" operators
+ *
+ * @param mp Memory pool to use for allocation
+ * @param parameters Constant parameters
+ * @param op_inst Instance operator
+ *
+ * @returns Status code
+ */
+static ib_status_t strop_create(ib_mpool_t *mp,
+                                const char *parameters,
+                                ib_operator_inst_t *op_inst)
 {
-    // @todo
-    op_inst->data = strdup(data);
-    return IB_OK;
+    IB_FTRACE_INIT(strop_create_fn);
+    char *str;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    str = ib_mpool_strdup(mp, parameters);
+    if (str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    op_inst->data = str;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
-static ib_status_t op_streq_destroy(ib_operator_inst_t *inst)
-{
-    // @todo
-    return IB_OK;
-}
+
+/**
+ * @internal
+ * Execute function for the "@streq" operator
+ *
+ * @param data C-style string to compare to
+ * @param field Field value
+ * @param result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
 static ib_status_t op_streq_execute(void *data,
                                     ib_field_t *field,
                                     ib_num_t *result)
@@ -58,11 +86,15 @@ static ib_status_t op_streq_execute(void *data,
         *result = (strcmp(fval,cstr) == 0);
     }
     else if (field->type==IB_FTYPE_BYTESTR) {
-        char buf[256];
         ib_bytestr_t *value = ib_field_value_bytestr(field);
-        strncpy(buf, (const char*)ib_bytestr_ptr(value), sizeof(buf) );
-        buf[sizeof(buf)-1] = '\0';
-        *result = (strcmp(buf,cstr) == 0);
+        size_t        len = ib_bytestr_length(value);
+
+        if (len == strlen(cstr)) {
+            *result = (memcmp(ib_bytestr_ptr(value), cstr, len) == 0);
+        }
+        else {
+            *result = 0;
+        }
     }
     else {
         return IB_EINVAL;
@@ -71,28 +103,18 @@ static ib_status_t op_streq_execute(void *data,
     return IB_OK;
 }
 
-static ib_status_t contains_create_fn(ib_mpool_t *pool,
-                                      const char *parameters,
-                                      ib_operator_inst_t *op_inst)
-{
-    IB_FTRACE_INIT(contains_create_fn);
-    char *str;
-
-    if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    str = ib_mpool_strdup(pool, parameters);
-    if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    op_inst->data = str;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t contains_execute_fn(void *data, ib_field_t *field,
+/**
+ * @internal
+ * Execute function for the "@contains" operator
+ *
+ * @param data C-style string to compare to
+ * @param field Field value
+ * @param result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t contains_execute_fn(void *data,
+                                       ib_field_t *field,
                                        ib_num_t *result)
 {
     IB_FTRACE_INIT(contains_execute_fn);
@@ -123,14 +145,17 @@ static ib_status_t contains_execute_fn(void *data, ib_field_t *field,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Initialize the core operators
+ */
 ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT(ib_core_operators_init);
     ib_status_t rc;
 
     rc = ib_operator_register(ib, "@streq",
-                              op_streq_create,
-                              op_streq_destroy,
+                              strop_create,
+                              NULL, /* no destroy function */
                               op_streq_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -138,7 +163,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 
     rc = ib_operator_register(ib,
                               "@contains",
-                              contains_create_fn,
+                              strop_create,
                               NULL, /* no destroy function */
                               contains_execute_fn);
     if (rc != IB_OK) {
