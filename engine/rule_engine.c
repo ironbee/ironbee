@@ -50,10 +50,73 @@ static rule_cbdata_t rule_cbdata[] = {
 
 /**
  * @internal
+ * Execute a single rule
+ *
+ * @param ib Engine
+ * @param rule Rule to execute
+ * @param tx Transaction
+ * @param result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_rule(ib_engine_t *ib,
+                                ib_rule_t *rule,
+                                ib_tx_t *tx,
+                                ib_num_t *rule_result)
+{
+    ib_list_node_t      *fnode = NULL;
+    ib_operator_inst_t  *opinst = rule->condition.opinst;
+
+    /* Initialize the rule result */
+    *rule_result = 0;
+
+    ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
+
+    /* Loop through all of the fields */
+    IB_LIST_LOOP(rule->input_fields, fnode) {
+        ib_status_t   rc;
+        const char   *fname = (const char *)fnode->data;
+        ib_field_t   *value = 0;
+        ib_num_t      result = 0;
+
+        /* Get the field value */
+        rc = ib_data_get(tx->dpi, fname, &value);
+        if (rc == IB_ENOENT) {
+            ib_log_debug(ib, 4, "Field %s not found", fname );
+            continue;
+        }
+        else if (rc != IB_OK) {
+            ib_log_debug(ib, 4, "Error getting field %s: %d\n", fname, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = opinst->op->fn_execute(opinst->data, value, &result);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4,
+                         "Operator %s returned an error for field %s",
+                         opinst->op->name, fname);
+            continue;
+        }
+        ib_log_debug(ib, 9,
+                     "Operator %s, field %s => %d",
+                     opinst->op->name, fname, result);
+
+        if (result != 0) {
+            *rule_result = result;
+        }
+    }
+    ib_log_debug(ib, 9, "Rule %s Operator %s => %d",
+                 rule->meta.id, opinst->op->name, *rule_result);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
  * Run a set of rules.
  *
  * @param ib Engine
  * @param tx Transaction
+ * @param cbdata Callback data (unused)
  *
  * @returns Status code
  */
@@ -64,8 +127,10 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     IB_FTRACE_INIT(ib_rule_engine_execute);
     const rule_cbdata_t *rdata = (const rule_cbdata_t *) cbdata;
     ib_context_t        *ctx = tx->ctx;
-    ib_rule_phase_t     *phase = &(ctx->ruleset->phases[rdata->phase]);
+    ib_context_t        *pctx = ctx->parent;
+    ib_rule_phase_t     *phase = &(pctx->ruleset->phases[rdata->phase]);
     ib_list_t           *rules = phase->rules.rule_list;
+    ib_list_node_t      *node = NULL;
 
     /* Sanity check */
     if (phase->phase != rdata->phase) {
@@ -77,15 +142,26 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     /* Walk through the rules & execute them */
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug(ib, 4,
-                     "No rules rules for phase %d/%s in context %p",
-                     rdata->phase, rdata->name, (void*)ctx);
+                     "No rules rules for phase %d/%s in context p=%p",
+                     rdata->phase, rdata->name, (void*)pctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug(ib, 4,
                  "Executing %d rules for phase %d/%s in context %p",
                  IB_LIST_ELEMENTS(rules),
-                 rdata->phase, rdata->name, (void*)ctx);
+                 rdata->phase, rdata->name, (void*)pctx);
+
     /* @todo */
+    IB_LIST_LOOP(rules, node) {
+        ib_rule_t   *rule = (ib_rule_t*)node->data;
+        ib_num_t     rule_result = 0;
+        ib_status_t  rc;
+
+        rc = execute_rule(ib, rule, tx, &rule_result);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Error executing rule %s", rule->meta.id);
+        }
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -182,21 +258,39 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     IB_FTRACE_INIT(ib_rule_create);
     ib_status_t  rc;
     ib_rule_t   *rule;
+    ib_list_t   *lst;
+    ib_mpool_t  *mp = ib_rule_mpool(ib);
 
     /* Allocate the rule */
-    rule = (ib_rule_t *)ib_mpool_calloc(ib_rule_mpool(ib),
-                                        sizeof(ib_rule_t), 1);
+    rule = (ib_rule_t *)ib_mpool_calloc(mp, sizeof(ib_rule_t), 1);
     if (rule == NULL) {
         ib_log_error(ib, 1, "Failed to allocate rule: %d");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Input list */
-    rc = ib_list_create(&(rule->input_fields), ib_rule_mpool(ib));
+    rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to create rule input field list: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
+    rule->input_fields = lst;
+
+    /* True Action list */
+    rc = ib_list_create(&lst, mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to create rule true action list: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rule->true_actions = lst;
+
+    /* False Action list */
+    rc = ib_list_create(&lst, mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to create rule false action list: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rule->false_actions = lst;
 
     /* Good */
     rule->parent_rlist = ctx->ctx_rules;
@@ -224,7 +318,19 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     if (rule->condition.opinst == NULL) {
+        ib_log_error(ib, 4, "Can't register rule: No operator instance");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (rule->condition.opinst->op == NULL) {
         ib_log_error(ib, 4, "Can't register rule: No operator");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (rule->condition.opinst->op->fn_execute == NULL) {
+        ib_log_error(ib, 4, "Can't register rule: No operator function");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (rule->meta.id == NULL) {
+        ib_log_error(ib, 4, "Can't register rule: No ID");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     if ( (ctx->ctx_rules == NULL) || (ctx->ruleset == NULL) ) {
@@ -268,6 +374,22 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
     }
     rule->condition.opinst = opinst;
     rule->condition.invert = invert;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
+                                      ib_rule_t *rule,
+                                      const char *id)
+{
+    IB_FTRACE_INIT(ib_rule_set_id);
+
+    if ( (rule == NULL) || (id == NULL) ) {
+        ib_log_error(ib, 4, "Can't set rule id: Invalid rule or id");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rule->meta.id = id;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

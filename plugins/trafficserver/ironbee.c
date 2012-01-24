@@ -19,7 +19,7 @@
  * @file
  * @brief IronBee - Apache Traffic Server Plugin
  *
- * @author Nick Kew <nick@webthing.com>
+ * @author Nick Kew <nkew@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -228,26 +228,11 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
     towrite = TSVIONTodoGet(input_vio);
     TSDebug("ironbee", "\ttoWrite is %" PRId64 "", towrite);
 
-    /* https://issues.apache.org/jira/browse/TS-922 */
-    if (towrite >= 0xffffffff) {
-        towrite = -1;
-    }
-  
     if (towrite > 0) {
         /* The amount of data left to read needs to be truncated by
          * the amount of data actually in the read buffer.
          */
 
-        /* first time through, we have to buffer the data until
-         * after the headers have been sent.  Ugh!
-         */
-        if (first_time) {
-            ib_log_debug(ironbee, 9,
-                         "ts/ironbee: allocating %u bytes", towrite );
-            bufp = ibd->data->buf = TSmalloc(towrite);
-            ibd->data->buflen = towrite;
-        }
-    
         avail = TSIOBufferReaderAvail(TSVIOReaderGet(input_vio));
         TSDebug("ironbee", "\tavail is %" PRId64 "", avail);
         if (towrite > avail) {
@@ -258,6 +243,15 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
             int btowrite = towrite;
             /* Copy the data from the read buffer to the output buffer. */
             TSIOBufferCopy(TSVIOBufferGet(ibd->data->output_vio), TSVIOReaderGet(input_vio), towrite, 0);
+
+            /* first time through, we have to buffer the data until
+             * after the headers have been sent.  Ugh!
+             * At this point, we know the size to alloc.
+             */
+            if (first_time) {
+                bufp = ibd->data->buf = TSmalloc(towrite);
+                ibd->data->buflen = towrite;
+            }
 
             /* feed the data to ironbee, and consume them */
             while (btowrite > 0) {
@@ -480,6 +474,50 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     icdata.mp = data->ssn->iconn->mp;
     icdata.conn = data->ssn->iconn;
 
+    /* Use alternative simpler path to get the un-doctored request
+     * if we have the fix for TS-998
+     *
+     * This check will want expanding/fine-tuning according to what released
+     * versions incorporate the fix
+     */
+#if (TS_VERSION_MAJOR >= 3) &&  ( \
+    ((TS_VERSION_MINOR >= 1) && (TS_VERSION_MICRO >= 2)) ||  \
+    (TS_VERSION_MINOR >= 2))
+    if (ibd->dir == IBD_RESP) {
+        /* before the HTTP headers comes the request line / response code */
+        rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
+        if (rv) {
+            TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
+            return;
+        }
+
+        /* Get the data into an IOBuffer so we can access them! */
+        //iobufp = TSIOBufferSizedCreate(...);
+        iobufp = TSIOBufferCreate();
+        TSHttpHdrPrint(bufp, hdr_loc, iobufp);
+
+        readerp = TSIOBufferReaderAlloc(iobufp);
+        blockp = TSIOBufferReaderStart(readerp);
+
+        len = TSIOBufferBlockReadAvail(blockp, readerp);
+        icdata.data = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+        icdata.dlen = icdata.dalloc = len;
+
+        (*ibd->ib_notify)(ironbee, &icdata);
+
+        TSIOBufferDestroy(iobufp);
+        TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+    } else {
+        rv = TSHttpTxnClientDataGet(txnp, &icdata.data, &icdata.dlen);
+        if (rv) {
+            TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
+            return;
+        }
+        (*ibd->ib_notify)(ironbee, &icdata);
+    }
+#else
+    /* We'll get a bogus URL from TS-998 */
+
     /* before the HTTP headers comes the request line / response code */
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv) {
@@ -505,6 +543,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     TSIOBufferDestroy(iobufp);
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+#endif
 }
 
 /**

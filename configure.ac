@@ -55,22 +55,43 @@ fi
 # Determine the OS 
 AC_MSG_CHECKING([OS])
 OS=`uname -s`
+RELEASE=`uname -r`
 case "$OS" in
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD) 
                 OS_FREEBSD="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/local/include/htp"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+                AC_PATH_PROG([GCC46BIN], [gcc46],[yes],[no])
+                AC_PATH_PROG([GCC47BIN], [gcc47],[yes],[no])
                 AC_PATH_PROG([GCC45BIN], [gcc45],[yes],[no])
-                if test "$GCC45BIN" = "yes"; then
-                    CC="gcc45"
-                    CPP="cpp45"
-                else
-                    echo
-                    echo "   You must have gcc45 to compile on FreeBSD 7/8"
-                    echo
-                    exit 1
-                fi
+                case "$RELEASE" in
+                    9*)
+                        if test "$GCC46BIN" = "yes"; then
+                            CC="gcc46"
+                            CPP="cpp46"
+                        elif test $GCC47BIN = "yes"; then
+                            CC="gcc47"
+                            CPP="cpp47"
+                        else
+                            echo
+                            echo "   You must have gcc46 or gcc47 to compile on FreeBSD 9"
+                            echo
+                            exit 1
+                        fi
+                   ;;
+                   *)
+                        if test "$GCC45BIN" = "yes"; then
+                            CC="gcc45"
+                            CPP="cpp45"
+                        else
+                            echo
+                            echo "   You must have gcc45 to compile on FreeBSD 7/8"
+                            echo
+                            exit 1
+                        fi
+                   ;;
+               esac
         ;;
         Darwin*)
                 AC_MSG_RESULT(Darwin) 
