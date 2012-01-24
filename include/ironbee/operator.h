@@ -81,10 +81,15 @@ typedef struct ib_operator_t ib_operator_t;
 
 struct ib_operator_t {
     char                    *name;       /**< Name of the operator. */
+    ib_flags_t               flags;      /**< Operator flags */
     ib_operator_create_fn_t  fn_create;  /**< Instance creation function. */
     ib_operator_destroy_fn_t fn_destroy; /**< Instance destroy function. */
     ib_operator_execute_fn_t fn_execute; /**< Instance execution function. */
 };
+
+/** Operator flags */
+#define IB_OPERATOR_FLAG_NONE        0x0000 /**< Operator accepts NULL fields */
+#define IB_OPERATOR_FLAG_NULL_FIELDS 0x0001 /**< Operator accepts NULL fields */
 
 struct ib_operator_inst_t {
     struct ib_operator_t *op;   /**< Pointer to the operator type */
@@ -101,6 +106,7 @@ struct ib_operator_inst_t {
  *
  * @param[in] ib Ironbee engine
  * @param[in] name The name of the operator.
+ * @param[in] flags Operator flags.
  * @param[in] fn_create A pointer to the instance creation function.
  * @param[in] fn_destroy A pointer to the instance destruction function.
  * @param[in] fn_execute A pointer to the operator function.
@@ -109,6 +115,7 @@ struct ib_operator_inst_t {
  */
 ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
                                             const char *name,
+                                            ib_flags_t flags,
                                             ib_operator_create_fn_t fn_create,
                                             ib_operator_destroy_fn_t fn_destroy,
                                             ib_operator_execute_fn_t fn_execute);

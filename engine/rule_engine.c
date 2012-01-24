@@ -121,7 +121,9 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         rc = ib_data_get(tx->dpi, fname, &value);
         if (rc == IB_ENOENT) {
             ib_log_debug(ib, 4, "Field %s not found", fname );
-            continue;
+            if ( (opinst->op->flags & IB_OPERATOR_FLAG_NULL_FIELDS) == 0) {
+                continue;
+            }
         }
         else if (rc != IB_OK) {
             ib_log_debug(ib, 4, "Error getting field %s: %d\n", fname, rc);
@@ -214,7 +216,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
  */
 static ib_status_t ib_rules_init(ib_engine_t *ib,
                                  ib_mpool_t *mp,
-                                 ib_num_t flags,
+                                 ib_flags_t flags,
                                  ib_rules_t **prules)
 {
     IB_FTRACE_INIT(ib_rule_engine_init);

@@ -33,6 +33,7 @@
 
 ib_status_t ib_operator_register(ib_engine_t *ib,
                                  const char *name,
+                                 ib_flags_t flags,
                                  ib_operator_create_fn_t fn_create,
                                  ib_operator_destroy_fn_t fn_destroy,
                                  ib_operator_execute_fn_t fn_execute)
@@ -60,6 +61,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     op->name = name_copy;
+    op->flags = flags;
     op->fn_create = fn_create;
     op->fn_destroy = fn_destroy;
     op->fn_execute = fn_execute;
