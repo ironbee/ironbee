@@ -202,6 +202,14 @@ ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
 }
 
 /**
+ * FIXME - dummy function until the rules engine is finalized.
+ */
+static const char* ib_rule_get_id(const ib_engine_t *ib, const ib_rule_t *r)
+{
+    return "ironbee rule id dummy string in file " __FILE__;
+}
+
+/**
  * @brief Parse a RuleExt directive.
  * @details Register lua function. RuleExt lua:/path/to/rule.lua phase:REQUEST
  * @param[in,out] cp Configuration parser that contains the engine being
@@ -217,12 +225,11 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT(rules_ruleext_params);
 
-    //---
     ib_status_t rc;
     ib_list_node_t *inputs;
     ib_list_node_t *mod;
     ib_rule_t *rule;
-    char* file_name;
+    char *file_name;
 
     /* Get the inputs string */
     inputs = ib_list_first(vars);
@@ -249,19 +256,17 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     }
 
     /* Using the rule->meta and file_name, load and stage the ext rule. */
-    /* FIXME
     if (strncasecmp(file_name, "lua:", 4)) {
         ib_lua_load_func(cp->ib,
                          g_ironbee_rules_lua,
                          file_name+4,
-                         rule->meta.id);
+                         ib_rule_get_id(cp->ib, rule));
     }
     else {
         ib_log_error(cp->ib, 1, "RuleExt does not support rule type %s.",
             file_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    */
 
     /* Finally, register the rule */
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, PHASE_REQUEST_HEADER);
