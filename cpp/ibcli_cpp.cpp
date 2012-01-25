@@ -1,4 +1,5 @@
 #include "input.hpp"
+#include "audit_log_generator.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -16,6 +17,8 @@ using input_factory_map_t = map<string,input_factory_t>;
 
 input_generator_t init_audit_input( const string& arg );
 input_generator_t init_raw_input(   const string& arg );
+
+bool on_error( const string& message );
 
 int main( int argc, char** argv )
 {
@@ -88,15 +91,19 @@ int main( int argc, char** argv )
     return 1;
   }
 
-  // XXX Do something.
-  
+  input_t input;
+  for ( const auto& input_generator : inputs ) {
+    while ( input_generator( input ) ) {
+      cout << "Found input: " << input << endl;
+    }
+  }
+
   return 0;
 }
 
-input_generator_t init_audit_input( const string& )
+input_generator_t init_audit_input( const string& str )
 {
-  // XXX
-  return input_generator_t();
+  return AuditLogGenerator( str, on_error );
 }
 
 input_generator_t init_raw_input( const string& arg )
@@ -108,4 +115,10 @@ input_generator_t init_raw_input( const string& arg )
 
   // XXX
   return input_generator_t();
+}
+
+bool on_error( const string& message )
+{
+  cerr << "ERROR: " << message << endl;
+  return true;
 }
