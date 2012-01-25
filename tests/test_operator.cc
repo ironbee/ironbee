@@ -96,14 +96,18 @@ TEST_F(OperatorTest, call_operator) {
     ib_num_t call_result;
     status = ib_operator_register(ib_engine,
                                   "test_op",
-                                  IB_OPERATOR_FLAG_NONE,
+                                  IB_OP_FLAG_NONE,
                                   test_create_fn,
                                   test_destroy_fn,
                                   test_execute_fn);
     ASSERT_EQ(IB_OK, status);
 
     ib_operator_inst_t *op;
-    status = ib_operator_inst_create(ib_engine, "test_op", "data", &op);
+    status = ib_operator_inst_create(ib_engine,
+                                     "test_op",
+                                     "data",
+                                     IB_OPINST_FLAG_NONE,
+                                     &op);
     ASSERT_EQ(IB_OK, status);
 
     ib_field_t *field;
@@ -135,7 +139,11 @@ TEST_F(CoreOperatorsTest, test_contains_operator) {
     ib_num_t call_result;
     ib_operator_inst_t *op;
 
-    status = ib_operator_inst_create(ib_engine, "@contains", "needle", &op);
+    status = ib_operator_inst_create(ib_engine,
+                                     "@contains",
+                                     "needle",
+                                     IB_OPINST_FLAG_NONE,
+                                     &op);
     ASSERT_EQ(IB_OK, status);
 
     // call contains

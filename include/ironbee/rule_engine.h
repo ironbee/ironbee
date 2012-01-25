@@ -109,7 +109,7 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
  *
  * @returns The rule's flags
  */
-ib_status_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule);
+ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule);
 
 /**
  * Add an input field to a rule.
