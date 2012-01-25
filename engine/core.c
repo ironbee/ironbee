@@ -4953,6 +4953,13 @@ static ib_status_t core_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Initialize the core operators */
+    rc = ib_core_actions_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize core actions: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
