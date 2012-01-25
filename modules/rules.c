@@ -111,7 +111,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     const char         *at;
     const char         *bang;
     const char         *op;
-    ib_num_t            invert = 0;
+    ib_flags_t          flags = IB_OPINST_FLAG_NONE;
     char               *copy;
     char               *space;
     char               *args = NULL;
@@ -128,7 +128,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     /* Do we have a leading '!'? */
     bang = strchr(str, '!');
     if ( (bang != NULL) && (bang < at) ) {
-        invert = 1;
+        flags |= IB_OPINST_FLAG_INVERT;
     }
 
     /* Make a copy of the string to operate on */
@@ -166,7 +166,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     }
 
     /* Create the operator instance */
-    rc = ib_operator_inst_create(cp->ib, op, args, &operator);
+    rc = ib_operator_inst_create(cp->ib, op, args, flags, &operator);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 4,
                      "Failed to create operator instance '%s': %d", op, rc);
@@ -174,15 +174,15 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     }
 
     /* Set the operator */
-    rc = ib_rule_set_operator(cp->ib, rule, operator, invert);
+    rc = ib_rule_set_operator(cp->ib, rule, operator);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 4,
                      "Failed to set operator for rule: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_debug(cp->ib, 9,
-                 "Rule: op='%s'; invert=%d args='%s'",
-                 op, invert, args);
+                 "Rule: op='%s'; flags=0x%04x args='%s'",
+                 op, flags, ( (args == NULL) ? "" : args) );
 
     IB_FTRACE_RET_STATUS(rc);
 }

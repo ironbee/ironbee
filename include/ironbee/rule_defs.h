@@ -54,6 +54,11 @@ typedef enum {
 } ib_rule_phase_t;
 
 /**
+ * Rule flags
+ */
+#define IB_RULE_FLAG_NONE   0x00000000    /**< No flags */
+
+/**
  * Rule engine: Rule
  */
 typedef struct ib_rule_t ib_rule_t;

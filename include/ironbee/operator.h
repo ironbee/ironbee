@@ -88,13 +88,18 @@ struct ib_operator_t {
 };
 
 /** Operator flags */
-#define IB_OPERATOR_FLAG_NONE        0x0000 /**< No flags */
-#define IB_OPERATOR_FLAG_ALLOW_NULL  0x0001 /**< Op. accepts NULL fields */
+#define IB_OP_FLAG_NONE        0x00000000 /**< No flags */
+#define IB_OP_FLAG_ALLOW_NULL  0x00000001 /**< Op. accepts NULL fields */
 
 struct ib_operator_inst_t {
-    struct ib_operator_t *op;   /**< Pointer to the operator type */
-    void                 *data; /**< Data passed to the execute function */
+    struct ib_operator_t *op;    /**< Pointer to the operator type */
+    ib_flags_t            flags; /**< Operator instance flags */
+    void                 *data;  /**< Data passed to the execute function */
 };
+
+/** Operator instance flags */
+#define IB_OPINST_FLAG_NONE        0x00000000 /**< No flags */
+#define IB_OPINST_FLAG_INVERT      0x00000001 /**< Invert the operator */
 
 /**
  * Register an operator.
@@ -128,6 +133,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  * @param[in] ib Ironbee engine
  * @param[in] name The name of the operator to create.
  * @param[in] parameters Parameters used to create the instance.
+ * @param[in] flags Operator instance flags (i.e. IB_OPINST_FLAG_INVERT)
  * @param[out] instance The resulting instance.
  *
  * @returns IB_OK on success, IB_EINVAL if the named operator does not exist.
@@ -135,6 +141,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_operator_inst_create(ib_engine_t *ib,
                                                const char *name,
                                                const char *parameters,
+                                               ib_flags_t flags,
                                                ib_operator_inst_t **op_inst);
 
 /**

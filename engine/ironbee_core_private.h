@@ -59,7 +59,7 @@ typedef struct {
  */
 typedef struct {
     ib_operator_inst_t    *opinst;        /**< Condition operator instance */
-    ib_num_t               invert;        /**< Invert? */
+    ib_flags_t             flags;         /**< Invert, etc. */
 } ib_rule_condition_t;
 
 /**
