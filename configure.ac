@@ -16,6 +16,32 @@ AM_INIT_AUTOMAKE([foreign])
 
 dnl Checks for programs.
 dnl If CFLAGS and CXXFLAGS are blank these macro's fill in defaults we don't want that
+OS=`uname -s`
+
+#We need to set/detect CC and CPP piror to calling these macros as AC_PROG_LIBTOOL etc depend on them.
+case "$OS" in
+        FreeBSD*)
+                AC_PATH_PROG(GCC46BIN,gcc46,no)
+                AC_PATH_PROG(GCC47BIN,gcc47,no)
+                AC_PATH_PROG(GCC45BIN,gcc45,no)
+                if test "$GCC45BIN" != "no"; then
+                    CC="gcc45"
+                    CPP="cpp45"
+                elif test "$GCC46BIN" != "no"; then
+                    CC="gcc46"
+                    CPP="cpp46"
+                elif test "$GCC47BIN" != "no"; then
+                    CC="gcc47"
+                    CPP="cpp47"
+                else
+                    echo
+                    echo "   You must have gcc45/gcc46/gcc47 to compile on FreeBSD 7/8/9"
+                    echo
+                    exit 1
+                fi
+        ;;
+esac
+
 save_CFLAGS="${CFLAGS}"
 save_CXXFLAGS="${CXXFLAGS}"
 AC_PROG_CC
@@ -52,46 +78,13 @@ if test "$GCC" = "yes"; then
     GCC_CHARACTERISTICS()
 fi
 
-# Determine the OS 
 AC_MSG_CHECKING([OS])
-OS=`uname -s`
-RELEASE=`uname -r`
 case "$OS" in
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD) 
                 OS_FREEBSD="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/local/include/htp"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
-                AC_PATH_PROG([GCC46BIN], [gcc46],[yes],[no])
-                AC_PATH_PROG([GCC47BIN], [gcc47],[yes],[no])
-                AC_PATH_PROG([GCC45BIN], [gcc45],[yes],[no])
-                case "$RELEASE" in
-                    9*)
-                        if test "$GCC46BIN" = "yes"; then
-                            CC="gcc46"
-                            CPP="cpp46"
-                        elif test $GCC47BIN = "yes"; then
-                            CC="gcc47"
-                            CPP="cpp47"
-                        else
-                            echo
-                            echo "   You must have gcc46 or gcc47 to compile on FreeBSD 9"
-                            echo
-                            exit 1
-                        fi
-                   ;;
-                   *)
-                        if test "$GCC45BIN" = "yes"; then
-                            CC="gcc45"
-                            CPP="cpp45"
-                        else
-                            echo
-                            echo "   You must have gcc45 to compile on FreeBSD 7/8"
-                            echo
-                            exit 1
-                        fi
-                   ;;
-               esac
         ;;
         Darwin*)
                 AC_MSG_RESULT(Darwin) 
