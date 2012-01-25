@@ -416,7 +416,10 @@ static ib_status_t pcre_operator_execute(void *data,
 
     free(ovector);
     free(regex);
-    free(regex_extra);
+
+    if (regex_extra != NULL ) {
+        free(regex_extra);
+    }
 
     IB_FTRACE_RET_STATUS(ib_rc);
 }
