@@ -396,22 +396,20 @@ static ib_status_t pcre_operator_execute(void *data,
                         ovector,
                         ovecsize);
 
-    switch(pcre_rc) {
-        case 0:
-            /* Match! Return true to the caller (*result = 1). */
-            ib_rc = IB_OK;
-            *result = 1;
-            break;
-        case PCRE_ERROR_NOMATCH:
-            /* No match. Return false to the caller (*result = 0). */
-            ib_rc = IB_OK;
-            *result = 0;
-            break;
-        default:
-            /* Some other error occurred. Set the status to false and 
-               report the error. */
-            ib_rc = IB_EUNKNOWN;
-            *result = 0;
+    if (pcre_rc > 0) {
+        ib_rc = IB_OK;
+        *result = 1;
+    }
+    else if (pcre_rc == PCRE_ERROR_NOMATCH) {
+        /* No match. Return false to the caller (*result = 0). */
+        ib_rc = IB_OK;
+        *result = 0;
+    }
+    else {
+        /* Some other error occurred. Set the status to false and 
+        report the error. */
+        ib_rc = IB_EUNKNOWN;
+        *result = 0;
     }
 
     free(ovector);
