@@ -27,7 +27,8 @@ check_PROGRAMS = test_gtest \
                  test_module_trace \
                  test_module_poc_sig \
                  test_module_rules_lua \
-                 test_operator
+                 test_operator \
+                 test_action
 
 # TODO: Get libhtp working w/C++
 #                 test_util_bytestr
@@ -207,6 +208,20 @@ test_operator_LDADD = gtest/libgtest.la \
                       $(top_builddir)/engine/libironbee.la \
                       $(top_builddir)/util/libibutil.la \
                       -lhtp
+endif
+
+test_action_SOURCES = test_action.cc test_main.cc
+if FREEBSD
+test_action_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/engine/libironbee.la \
+                    $(top_builddir)/util/libibutil.la \
+                    -lhtp \
+                    -liconv
+else
+test_action_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/engine/libironbee.la \
+                    $(top_builddir)/util/libibutil.la \
+                    -lhtp
 endif
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml

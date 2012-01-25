@@ -8,7 +8,7 @@ lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c tfn.c \
                         config.c config-parser.c config-parser.h core.c \
                         matcher.c filter.c \
-                        operator.c \
+                        operator.c action.c \
                         core_operators.c \
                         rule_engine.c \
                         config-parser.h \

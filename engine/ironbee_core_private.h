@@ -31,6 +31,7 @@
 #include <ironbee/types.h>
 #include <ironbee/list.h>
 #include <ironbee/operator.h>
+#include <ironbee/action.h>
 #include <ironbee/engine.h>
 #include <ironbee/rule_defs.h>
 
