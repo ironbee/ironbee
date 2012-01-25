@@ -62,16 +62,16 @@ int main( int argc, char** argv )
   input_factory_map["audit"] = &init_audit_input;
   input_factory_map["raw"]   = &init_raw_input;
 
-  // Set up inputs.
-  using input_generator_vec_t = vector<input_generator_t>;
-  input_generator_vec_t inputs;
-  bool                  have_errors = false;
-
+  // We loop through the options, generating and processing input generators
+  // as needed to limit the scope of each input generator.  As input
+  // generators can make use of significant memory, it is good to only have
+  // one around at a time.
   for ( const auto& option : options.options ) {
+    input_generator_t generator;
     try {
       auto i = input_factory_map.find( option.string_key );
       if ( i != input_factory_map.end() ) {
-        inputs.push_back( i->second( option.value[0] ) );
+        generator = i->second( option.value[0] );
       }
     }
     catch ( const exception& e ) {
@@ -79,22 +79,12 @@ int main( int argc, char** argv )
            << option.string_key << " " << option.value[0] << ".  "
            << "Message = " << e.what()
            << endl;
-      have_errors = true;
+      return 1;
     }
-  }
-  if ( have_errors ) {
-    return 1;
-  }
 
-  if ( inputs.empty() ) {
-    cerr << "Need at least one input." << endl;
-    cerr << desc << endl;
-    return 1;
-  }
-
-  input_t input;
-  for ( const auto& input_generator : inputs ) {
-    while ( input_generator( input ) ) {
+    // Process inputs.
+    input_t input;
+    while ( generator( input ) ) {
       cout << "Found input: " << input << endl;
     }
   }
