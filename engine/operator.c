@@ -74,6 +74,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
 ib_status_t ib_operator_inst_create(ib_engine_t *ib,
                                     const char *name,
                                     const char *parameters,
+                                    ib_flags_t flags,
                                     ib_operator_inst_t **op_inst)
 {
     IB_FTRACE_INIT(ib_operator_inst_create);
@@ -94,6 +95,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     (*op_inst)->op = op;
+    (*op_inst)->flags = flags;
 
     if (op->fn_create != NULL) {
         rc = op->fn_create(pool, parameters, *op_inst);

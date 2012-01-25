@@ -38,6 +38,15 @@ extern "C" {
 #endif
 
 /**
+ * Rule flag update operations.
+ */
+typedef enum {
+    FLAG_OP_SET,                    /**< Set the flags */
+    FLAG_OP_OR,                     /**< Or in the specified flags */
+    FLAG_OP_CLEAR,                  /**< Clear the specified flags */
+} ib_rule_flagop_t;
+
+/**
  * Create a rule.
  *
  * Allocates a rule for the rule engine, initializes it.
@@ -58,14 +67,13 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
  * @param ib IronBee engine
  * @param rule Rule to operate on
  * @param opinst Operator instance
- * @param invert Invert operation?
+ * @param flags Operator flags
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
                                             ib_rule_t *rule,
-                                            ib_operator_inst_t *opinst,
-                                            ib_num_t invert);
+                                            ib_operator_inst_t *opinst);
 
 /**
  * Set a rule's ID.
@@ -79,6 +87,29 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
                                       ib_rule_t *rule,
                                       const char *id);
+
+/**
+ * Update a rule's flags.
+ *
+ * @param ib IronBee engine
+ * @param rule Rule to operate on
+ * @param id Rule ID
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
+                                            ib_rule_t *rule,
+                                            ib_rule_flagop_t op,
+                                            ib_flags_t flags);
+
+/**
+ * Get a rule's flags.
+ *
+ * @param rule The rule
+ *
+ * @returns The rule's flags
+ */
+ib_status_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule);
 
 /**
  * Add an input field to a rule.

@@ -49,8 +49,8 @@ static rule_cbdata_t rule_cbdata[] = {
 };
 
 /* Init rule flags */
-#define IB_RULES_INIT_RULESET     0x01
-#define IB_RULES_INIT_CALLBACKS   0x02
+#define IB_RULES_INIT_RULESET     0x0001
+#define IB_RULES_INIT_CALLBACKS   0x0002
 
 /**
  * @internal
@@ -121,7 +121,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         rc = ib_data_get(tx->dpi, fname, &value);
         if (rc == IB_ENOENT) {
             ib_log_debug(ib, 4, "Field %s not found", fname );
-            if ( (opinst->op->flags & IB_OPERATOR_FLAG_ALLOW_NULL) == 0) {
+            if ( (opinst->op->flags & IB_OP_FLAG_ALLOW_NULL) == 0) {
                 continue;
             }
         }
@@ -137,10 +137,18 @@ static ib_status_t execute_rule(ib_engine_t *ib,
                          opinst->op->name, rc);
             continue;
         }
+
+        /* Store the result */
         if (result != 0) {
             *rule_result = result;
         }
     }
+
+    /* Invert? */
+    if (opinst->flags & IB_OPINST_FLAG_INVERT) {
+        *rule_result = ( (*rule_result) == 0);
+    }
+
     ib_log_debug(ib, 9, "Rule %s Operator %s => %d",
                  rule->meta.id, opinst->op->name, *rule_result);
 
@@ -337,6 +345,9 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
+    /* Init flags */
+    rule->condition.flags = IB_RULE_FLAG_NONE;
+
     /* Input list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
@@ -431,8 +442,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 
 ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
                                             ib_rule_t *rule,
-                                            ib_operator_inst_t *opinst,
-                                            ib_num_t invert)
+                                            ib_operator_inst_t *opinst)
 {
     IB_FTRACE_INIT(ib_rule_set_operator);
 
@@ -442,7 +452,6 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     rule->condition.opinst = opinst;
-    rule->condition.invert = invert;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -461,6 +470,43 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
     rule->meta.id = id;
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
+                                            ib_rule_t *rule,
+                                            ib_rule_flagop_t op,
+                                            ib_flags_t flags)
+{
+    IB_FTRACE_INIT(ib_rule_update_flags);
+
+    if (rule == NULL) {
+        ib_log_error(ib, 4, "Can't update rule flags: Invalid rule");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    switch(op) {
+        case FLAG_OP_SET:
+            rule->condition.flags = flags;
+            break;
+        case FLAG_OP_OR:
+            rule->condition.flags |= flags;
+            break;
+        case FLAG_OP_CLEAR:
+            rule->condition.flags &= (~flags);
+            break;
+        default:
+            ib_log_error(ib, 4,
+                         "Can't update rule flags: Invalid operation %d\n",
+                         (int)op);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule)
+{
+    return rule->condition.flags;
 }
 
 ib_status_t DLL_PUBLIC ib_rule_add_input(ib_engine_t *ib,

@@ -199,7 +199,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 
     rc = ib_operator_register(ib,
                               "@streq",
-                              IB_OPERATOR_FLAG_NONE,
+                              IB_OP_FLAG_NONE,
                               strop_create,
                               NULL, /* no destroy function */
                               op_streq_execute);
@@ -209,7 +209,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 
     rc = ib_operator_register(ib,
                               "@contains",
-                              IB_OPERATOR_FLAG_NONE,
+                              IB_OP_FLAG_NONE,
                               strop_create,
                               NULL, /* no destroy function */
                               contains_execute_fn);
@@ -219,7 +219,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 
     rc = ib_operator_register(ib,
                               "@exists",
-                              IB_OPERATOR_FLAG_ALLOW_NULL,
+                              IB_OP_FLAG_ALLOW_NULL,
                               op_exists_create,
                               NULL, /* no destroy function */
                               op_exists_execute);
