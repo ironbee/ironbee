@@ -27,13 +27,14 @@ int main( int argc, char** argv )
     "All input options can be repeated.  Inputs will be processed in the"
     "order listed."
   );
-  po::options_description general( "General:" );
-  general.add_options()
+
+  po::options_description general_desc( "General:" );
+  general_desc.add_options()
     ( "help", po::bool_switch( &show_help ), "Output help message." )
     ;
-  
-  po::options_description input( "Input Options:" );
-  input.add_options()
+
+  po::options_description input_desc( "Input Options:" );
+  input_desc.add_options()
     ( "audit,A", po::value<string>(),
       "Mod Security Audit Log"
     )
@@ -42,8 +43,8 @@ int main( int argc, char** argv )
       "Raw input will use bogus connection information."
     )
     ;
-  desc.add( general ).add( input );
-  
+  desc.add( general_desc ).add( input_desc );
+
   po::variables_map vm;
   auto options = po::parse_command_line( argc, argv, desc );
 
