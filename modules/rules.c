@@ -144,17 +144,21 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     /* Find first space */
     space = strchr(copy, ' ');
     if (space != NULL) {
-        size_t  oplen = strspn(space, " ");
-        char   *end;
         size_t  alen;
 
+        /* Find the first non-whitespace */
+        args = space;
+        while( isspace(*args) ) {
+            ++args;
+        }
+
+        /* Mark the end of the operator itself with a NUL */
         *space = '\0';
-        args = space + oplen;
 
         /* Strip off trailing whitespace from args */
         alen = strlen(args);
         if (alen > 0) {
-            end = args+alen-1;
+            char *end = args+alen-1;
             while( (end > args) && ( *end == ' ') ) {
                 *end = '\0';
                 --end;
@@ -210,20 +214,19 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT(parse_inputs);
     ib_status_t  rc = IB_OK;
-    size_t       len;
-    const char  *start;
     const char  *cur;
     char        *copy;
     char        *save;
     
     /* Copy the input string */
-    len = strspn(input_str, " ");
-    start = input_str+len;
-    if (*start == '\0') {
+    while(isspace(*input_str)) {
+        ++input_str;
+    }
+    if (*input_str == '\0') {
         ib_log_error(cp->ib, 4, "Rule inputs is empty");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), start);
+    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), input_str);
     if (copy == NULL) {
         ib_log_error(cp->ib, 4, "Failed to copy rule inputs");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
