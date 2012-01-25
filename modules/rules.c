@@ -25,6 +25,8 @@
 #include <ironbee/config.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/operator.h>
+#include <ironbee/action.h>
 
 #include <rules_lua.h>
 
@@ -325,8 +327,34 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         }
     }
     else {
-        ib_log_error(cp->ib, 4, "Unknown modifier %s", name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        ib_action_inst_t  *action;
+        ib_rule_action_t   atype = RULE_ACTION_TRUE;
+        if (*name == '!') {
+            name++;
+            atype = RULE_ACTION_FALSE;
+        }
+
+        /* Create a new action instance */
+        rc = ib_action_inst_create(
+            cp->ib, name, value, IB_ACTINST_FLAG_NONE, &action);
+        if (rc == IB_EINVAL) {
+            ib_log_error(cp->ib, 4, "Unknown modifier %s", name);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        else if (rc != IB_OK) {
+            ib_log_error(cp->ib, 4,
+                         "Failed to create action instance '%s': %d", name, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the action to the rule */
+        rc = ib_rule_add_action(cp->ib, rule, action, atype);
+        if (rc != IB_OK) {
+            ib_log_error(cp->ib, 4,
+                         "Failed to add action %s to rule '%s': %d",
+                         name, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     IB_FTRACE_RET_STATUS(rc);

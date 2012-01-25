@@ -31,6 +31,7 @@
 #include <ironbee/types.h>
 #include <ironbee/engine.h>
 #include <ironbee/operator.h>
+#include <ironbee/action.h>
 #include <ironbee/rule_defs.h>
 
 #ifdef __cplusplus
@@ -45,6 +46,14 @@ typedef enum {
     FLAG_OP_OR,                     /**< Or in the specified flags */
     FLAG_OP_CLEAR,                  /**< Clear the specified flags */
 } ib_rule_flagop_t;
+
+/**
+ * Rule action add operator.
+ */
+typedef enum {
+    RULE_ACTION_TRUE,               /**< Add a True action */
+    RULE_ACTION_FALSE,              /**< Add a False action */
+} ib_rule_action_t;
 
 /**
  * Create a rule.
@@ -87,6 +96,15 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
                                       ib_rule_t *rule,
                                       const char *id);
+
+/**
+ * Get a rule's ID string.
+ *
+ * @param rule Rule to operate on
+ *
+ * @returns Status code
+ */
+const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
 
 /**
  * Update a rule's flags.
@@ -136,6 +154,21 @@ ib_status_t DLL_PUBLIC ib_rule_add_input(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_rule_add_modifier(ib_engine_t *ib,
                                             ib_rule_t *rule,
                                             const char *str);
+
+/**
+ * Add a modifier to a rule.
+ *
+ * @param ib IronBee engine
+ * @param rule Rule to operate on
+ * @param action Action instance to add
+ * @param which Which action list to add to
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
+                                          ib_rule_t *rule,
+                                          ib_action_inst_t *action,
+                                          ib_rule_action_t which);
 
 /**
  * Register a rule.

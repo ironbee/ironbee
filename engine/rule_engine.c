@@ -561,6 +561,11 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
+{
+    return rule->meta.id;
+}
+
 ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
                                             ib_rule_t *rule,
                                             ib_rule_flagop_t op,
@@ -614,6 +619,41 @@ ib_status_t DLL_PUBLIC ib_rule_add_input(ib_engine_t *ib,
     rc = ib_list_push(rule->input_fields, (void*)name);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Failed to add rule input '%s': %d", name, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
+                                          ib_rule_t *rule,
+                                          ib_action_inst_t *action,
+                                          ib_rule_action_t which)
+{
+    IB_FTRACE_INIT(ib_rule_add_action);
+    ib_status_t rc;
+
+    if ( (rule == NULL) || (action == NULL) ) {
+        ib_log_error(ib, 4,
+                     "Can't add rule action: Invalid rule or action");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Add the rule to the appropriate action list */
+    if (which == RULE_ACTION_TRUE) {
+        rc = ib_list_push(rule->true_actions, (void*)action);
+    }
+    else if (which == RULE_ACTION_FALSE) {
+        rc = ib_list_push(rule->false_actions, (void*)action);
+    }
+    else {
+        rc = IB_EINVAL;
+    }
+
+    /* Problems? */
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, "Failed to add rule action '%s': %d",
+                     action->action->name, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
