@@ -73,7 +73,7 @@ ib_status_t test_execute_fn(void *data, ib_field_t *field, ib_num_t *result) {
 class OperatorTest : public BaseFixture {
 };
 
-TEST_F(OperatorTest, call_operator) {
+TEST_F(OperatorTest, OperatorCallTest) {
     ib_status_t status;
     ib_num_t call_result;
     status = ib_operator_register(ib_engine,
@@ -113,10 +113,10 @@ TEST_F(OperatorTest, call_operator) {
 }
 
 
-class CoreOperatorsTest : public OperatorTest {
+class CoreOperatorsTest : public BaseFixture {
 };
 
-TEST_F(CoreOperatorsTest, test_contains_operator) {
+TEST_F(CoreOperatorsTest, ContainsTest) {
     ib_status_t status;
     ib_num_t call_result;
     ib_operator_inst_t *op;

@@ -37,7 +37,7 @@
 class ActionTest : public BaseFixture {
 };
 
-TEST_F(ActionTest, register_test) {
+TEST_F(ActionTest, RegisterTest) {
     ib_status_t status;
     status = ib_action_register(ib_engine,
                                 "test_action",
@@ -48,7 +48,7 @@ TEST_F(ActionTest, register_test) {
     EXPECT_EQ(IB_OK, status);
 }
 
-TEST_F(ActionTest, register_dup) {
+TEST_F(ActionTest, RegisterDup) {
     ib_status_t status;
     status = ib_action_register(ib_engine,
                                 "test_action",
@@ -66,7 +66,7 @@ TEST_F(ActionTest, register_dup) {
     EXPECT_EQ(IB_EINVAL, status);
 }
 
-TEST_F(ActionTest, call_action) {
+TEST_F(ActionTest, CallAction) {
     ib_status_t status;
     ib_action_inst_t *act;
     status = ib_action_register(ib_engine,
@@ -86,5 +86,3 @@ TEST_F(ActionTest, call_action) {
     status = ib_action_execute(act, NULL, NULL);
     ASSERT_EQ(IB_OK, status);
 }
-
-
