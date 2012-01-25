@@ -413,7 +413,7 @@ static ib_status_t pcre_operator_execute(void *data,
 /* -- Module Routines -- */
 
 static ib_status_t modpcre_init(ib_engine_t *ib,
-                                ib_module_t module)
+                                ib_module_t *m)
 {
     IB_FTRACE_INIT(modpcre_init);
     ib_status_t rc;
