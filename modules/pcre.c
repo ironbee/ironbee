@@ -348,6 +348,8 @@ static ib_status_t pcre_operator_execute(void *data,
     size_t subject_len;
     ib_bytestr_t* bytestr;
     pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
+    pcre_extra *regex_extra;
+    pcre *regex;
 
     if (field->type == IB_FTYPE_NULSTR) {
         subject = ib_field_value_nulstr(field);
@@ -364,19 +366,26 @@ static ib_status_t pcre_operator_execute(void *data,
     }
     
     /* Alloc space to copy regex. */
-    pcre *regex = (pcre*)malloc(rule_data->regex_sz);
-    pcre_extra *regex_extra = (pcre_extra*)malloc(rule_data->regex_extra_sz);
+    regex = (pcre*)malloc(rule_data->regex_sz);
 
     /* Copy rules for parallel execution. */
     memcpy(regex, rule_data->regex, rule_data->regex_sz);
-    memcpy(regex_extra, rule_data->regex_extra, rule_data->regex_extra_sz);
 
-    /* Put some modest limits on our regex. */
-    regex_extra->match_limit = 100;
-    regex_extra->match_limit_recursion = 100;
-    regex_extra->flags = regex_extra->flags |
-                         PCRE_EXTRA_MATCH_LIMIT |
-                         PCRE_EXTRA_MATCH_LIMIT_RECURSION;
+    if (rule_data->regex_extra_sz == 0 ) {
+        regex_extra = NULL;
+    }
+    else {
+        regex_extra = (pcre_extra*)malloc(rule_data->regex_extra_sz);
+        memcpy(regex_extra,
+               rule_data->regex_extra,
+               rule_data->regex_extra_sz);
+        /* Put some modest limits on our regex. */
+        regex_extra->match_limit = 100;
+        regex_extra->match_limit_recursion = 100;
+        regex_extra->flags = regex_extra->flags |
+                            PCRE_EXTRA_MATCH_LIMIT |
+                            PCRE_EXTRA_MATCH_LIMIT_RECURSION;
+    }
     
     pcre_rc = pcre_exec(regex,
                         regex_extra,
