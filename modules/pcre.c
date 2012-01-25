@@ -246,7 +246,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
 
     /* Build the regular expression. */
     regex = pcre_compile(pattern,
-                         PCRE_NEWLINE_ANY | PCRE_UTF8 | PCRE_NO_UTF8_CHECK,
+                         0,
                          &errptr,
                          &erroffset,
                          (const unsigned char*)NULL);
