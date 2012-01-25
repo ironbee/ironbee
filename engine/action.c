@@ -33,6 +33,7 @@
 
 ib_status_t ib_action_register(ib_engine_t *ib,
                                const char *name,
+                               ib_flags_t flags,
                                ib_action_create_fn_t fn_create,
                                ib_action_destroy_fn_t fn_destroy,
                                ib_action_execute_fn_t fn_execute)
@@ -60,6 +61,7 @@ ib_status_t ib_action_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     act->name = name_copy;
+    act->flags = flags;
     act->fn_create = fn_create;
     act->fn_destroy = fn_destroy;
     act->fn_execute = fn_execute;
@@ -70,9 +72,10 @@ ib_status_t ib_action_register(ib_engine_t *ib,
 }
 
 ib_status_t ib_action_inst_create(ib_engine_t *ib,
-                                    const char *name,
-                                    const char *parameters,
-                                    ib_action_inst_t **act_inst)
+                                  const char *name,
+                                  const char *parameters,
+                                  ib_flags_t flags,
+                                  ib_action_inst_t **act_inst)
 {
     IB_FTRACE_INIT(ib_action_inst_create);
     ib_hash_t *action_hash = ib->actions;
@@ -92,6 +95,7 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     (*act_inst)->action = action;
+    (*act_inst)->flags = flags;
 
     if (action->fn_create != NULL) {
         rc = action->fn_create(pool, parameters, *act_inst);

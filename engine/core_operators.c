@@ -49,7 +49,7 @@ static ib_status_t strop_create(ib_mpool_t *mp,
                                 const char *parameters,
                                 ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(strop_create_fn);
+    IB_FTRACE_INIT(strop_create);
     char *str;
 
     if (parameters == NULL) {
@@ -79,7 +79,7 @@ static ib_status_t op_streq_execute(void *data,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
-    IB_FTRACE_INIT(op_streq_fn);
+    IB_FTRACE_INIT(op_streq_execute);
 
     /* This works on C-style (NUL terminated) and byte strings */
     const char *cstr = (const char *)data;
@@ -184,9 +184,10 @@ static ib_status_t op_exists_execute(void *data,
                                      ib_field_t *field,
                                      ib_num_t *result)
 {
+    IB_FTRACE_INIT(op_exists_execute);
     /* Return true of field is not NULL */
     *result = (field != NULL);
-    return IB_OK;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
