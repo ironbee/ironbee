@@ -27,6 +27,8 @@
 #include <ironbee/types.h>
 #include <ironbee/action.h>
 
+#include "ironbee_core_private.h"
+
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT(ib_core_actions_init);
