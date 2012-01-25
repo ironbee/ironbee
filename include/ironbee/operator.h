@@ -113,8 +113,11 @@ struct ib_operator_inst_t {
  * @param[in] name The name of the operator.
  * @param[in] flags Operator flags.
  * @param[in] fn_create A pointer to the instance creation function.
+ *                      (May be NULL)
  * @param[in] fn_destroy A pointer to the instance destruction function.
+ *                       (May be NULL)
  * @param[in] fn_execute A pointer to the operator function.
+ *                       If NULL the operator will always return 1 (true).
  *
  * @returns IB_OK on success, IB_EINVAL if the name is not unique.
  */

@@ -307,6 +307,8 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
     memcpy(rule_data->regex, regex, rule_data->regex_sz);
     memcpy(rule_data->regex_extra, regex_extra, rule_data->regex_extra_sz);
 
+    op_inst->data = rule_data;
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

@@ -109,8 +109,11 @@ struct ib_action_inst_t {
  * @param[in] ib ironbee engine
  * @param[in] name The name of the action.
  * @param[in] fn_create A pointer to the instance creation function.
+ *                      (May be NULL)
  * @param[in] fn_destroy A pointer to the instance destruction function.
+ *                       (May be NULL)
  * @param[in] fn_execute A pointer to the action function.
+ *                       (May be NULL)
  *
  * @returns IB_OK on success, IB_EINVAL if the name is not unique.
  */
