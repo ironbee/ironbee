@@ -13,6 +13,7 @@
 #include <boost/function.hpp>
 
 #include <string>
+#include <iostream>
 
 namespace IronBee {
 namespace CLI {
@@ -42,6 +43,7 @@ struct buffer_t
    *
    * \param[in] s String to initialize buffer from.
    **/
+  explicit
   buffer_t( const std::string& s );
 
   //! Pointer to buffer.  Not necessarilly null terminated.
@@ -49,6 +51,8 @@ struct buffer_t
   //! Length of buffer.
   size_t      length;
 };
+
+std::ostream& operator<<( std::ostream& out, const buffer_t& buffer );
 
 /**
  * \class input_t
@@ -67,6 +71,8 @@ struct input_t
   buffer_t    request;
   buffer_t    response;
 };
+
+std::ostream& operator<<( std::ostream& out, const input_t& input );
 
 //! A generator of inputs.
 /**
