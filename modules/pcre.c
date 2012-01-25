@@ -244,6 +244,12 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
     pcre *regex;
     pcre_extra *regex_extra;
 
+    rule_data = (pcre_rule_data_t*) ib_mpool_alloc(pool, sizeof(*rule_data));
+
+    if (rule_data == NULL) {
+        return IB_EALLOC;
+    }
+
     /* Build the regular expression. */
     regex = pcre_compile(pattern,
                          0,
@@ -278,12 +284,6 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
                             &rule_data->regex_extra_sz);
 
     if (pcre_rc != 0) {
-        return IB_EALLOC;
-    }
-
-    rule_data = (pcre_rule_data_t*) ib_mpool_alloc(pool, sizeof(*rule_data));
-
-    if (rule_data == NULL) {
         return IB_EALLOC;
     }
 
