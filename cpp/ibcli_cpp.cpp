@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include "audit_log_generator.hpp"
+#include "raw_generator.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -113,8 +114,10 @@ input_generator_t init_raw_input( const string& arg )
     throw runtime_error( "Raw inputs must be _request_,_response_." );
   }
 
-  // XXX
-  return input_generator_t();
+  return RawGenerator(
+    arg.substr( 0, comma_i ),
+    arg.substr( comma_i+1 )
+  );
 }
 
 bool on_error( const string& message )
