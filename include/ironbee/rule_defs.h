@@ -63,12 +63,6 @@ typedef enum {
  */
 typedef struct ib_rule_t ib_rule_t;
 
-/**
- * TODO: in Craig's code
- */
-typedef struct ib_action_t ib_action_t;
-typedef struct ib_action_inst_t ib_action_inst_t;
-
 #ifdef __cplusplus
 }
 #endif

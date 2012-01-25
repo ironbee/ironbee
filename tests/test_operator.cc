@@ -22,6 +22,7 @@
 /// @author Craig Forbes <cforbes@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
+#include "base_fixture.h"
 #include <ironbee/operator.h>
 #include <ironbee/plugin.h>
 #include <ironbee/engine.h>
@@ -31,6 +32,7 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+
 
 ib_status_t test_create_fn(ib_mpool_t *pool,
                            const char *data,
@@ -68,28 +70,8 @@ ib_status_t test_execute_fn(void *data, ib_field_t *field, ib_num_t *result) {
     return IB_OK;
 }
 
-class OperatorTest : public ::testing::Test {
-protected:
-    virtual void SetUp() {
-        atexit(ib_shutdown);
-        ib_initialize();
-        ib_engine_create(&ib_engine, &ibt_ibplugin);
-        ib_engine_init(ib_engine);
-    }
-
-    virtual void TearDown() {
-        ib_engine_destroy(ib_engine);
-    }
-
-    ib_engine_t *ib_engine;
-    static ib_plugin_t ibt_ibplugin;
+class OperatorTest : public BaseFixture {
 };
-
-ib_plugin_t OperatorTest::ibt_ibplugin = {
-    IB_PLUGIN_HEADER_DEFAULTS,
-    "unit_tests"
-};
-
 
 TEST_F(OperatorTest, call_operator) {
     ib_status_t status;
@@ -157,7 +139,7 @@ TEST_F(CoreOperatorsTest, test_contains_operator) {
     status = ib_operator_execute(op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
-    
+
     ib_field_setv(field, &nonmatching);
     status = ib_operator_execute(op, field, &call_result);
     ASSERT_EQ(IB_OK, status);

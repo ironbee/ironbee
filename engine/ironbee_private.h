@@ -80,6 +80,7 @@ struct ib_engine_t {
     ib_hash_t          *providers;        /**< Hash tracking providers */
     ib_hash_t          *tfns;             /**< Hash tracking transformations */
     ib_hash_t          *operators;        /**< Hash tracking operators */
+    ib_hash_t          *actions;          /**< Hash tracking rules */
     ib_rules_t         *rules;            /**< Rule engine data */
 };
 
