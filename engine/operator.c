@@ -135,6 +135,7 @@ ib_status_t ib_operator_execute(const ib_operator_inst_t *op_inst,
         rc = op_inst->op->fn_execute(op_inst->data, field, result);
     }
     else {
+        *result = 1;
         rc = IB_OK;
     }
 
