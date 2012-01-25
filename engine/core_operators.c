@@ -149,29 +149,6 @@ static ib_status_t contains_execute_fn(void *data,
 
 /**
  * @internal
- * Create function for the "@exists" operator
- *
- * @param mp Memory pool to use for allocation
- * @param parameters Constant parameters
- * @param op_inst Instance operator
- *
- * @returns Status code
- */
-static ib_status_t op_exists_create(ib_mpool_t *mp,
-                                    const char *parameters,
-                                    ib_operator_inst_t *op_inst)
-{
-    IB_FTRACE_INIT(op_exists_create);
-
-    if (parameters != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    op_inst->data = NULL;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
  * Execute function for the "@exists" operator
  *
  * @param data C-style string to compare to
@@ -187,6 +164,44 @@ static ib_status_t op_exists_execute(void *data,
     IB_FTRACE_INIT(op_exists_execute);
     /* Return true of field is not NULL */
     *result = (field != NULL);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "@true" operator
+ *
+ * @param data C-style string to compare to
+ * @param field Field value
+ * @param result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_true_execute(void *data,
+                                   ib_field_t *field,
+                                   ib_num_t *result)
+{
+    IB_FTRACE_INIT(op_true_execute);
+    *result = 1;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "@false" operator
+ *
+ * @param data C-style string to compare to
+ * @param field Field value
+ * @param result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_false_execute(void *data,
+                                    ib_field_t *field,
+                                    ib_num_t *result)
+{
+    IB_FTRACE_INIT(op_exists_execute);
+    *result = 0;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -221,9 +236,29 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "@exists",
                               IB_OP_FLAG_ALLOW_NULL,
-                              op_exists_create,
+                              NULL, /* No create function */
                               NULL, /* no destroy function */
                               op_exists_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_operator_register(ib,
+                              "@true",
+                              IB_OP_FLAG_ALLOW_NULL,
+                              NULL, /* No create function */
+                              NULL, /* no destroy function */
+                              op_true_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_operator_register(ib,
+                              "@false",
+                              IB_OP_FLAG_ALLOW_NULL,
+                              NULL, /* No create function */
+                              NULL, /* no destroy function */
+                              op_false_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

@@ -76,7 +76,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
     ib_status_t   rc;
 
     /* Run it, check the results */
-    rc = opinst->op->fn_execute(opinst->data, field, result);
+    rc = ib_operator_execute(opinst, field, result);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4,
                      "Operator %s returned an error for field %s: %d",
@@ -185,7 +185,7 @@ static ib_status_t execute_action(ib_engine_t *ib,
                  rule->meta.id, name, action->action->name);
 
     /* Run it, check the results */
-    rc = action->action->fn_execute(action->data, rule, tx);
+    rc = ib_action_execute(action, rule, tx);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4,
                      "Action %s returned an error: %d",
