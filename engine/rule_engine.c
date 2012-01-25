@@ -28,7 +28,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>
 #include <ironbee/operator.h>
-#include <ironbee/action-nrl.h>
+#include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
 
 #include "ironbee_private.h"
