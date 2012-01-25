@@ -41,6 +41,7 @@ TEST_F(ActionTest, register_test) {
     ib_status_t status;
     status = ib_action_register(ib_engine,
                                 "test_action",
+                                IB_ACT_FLAG_NONE,
                                 NULL,
                                 NULL,
                                 NULL);
@@ -51,12 +52,14 @@ TEST_F(ActionTest, register_dup) {
     ib_status_t status;
     status = ib_action_register(ib_engine,
                                 "test_action",
+                                IB_ACT_FLAG_NONE,
                                 NULL,
                                 NULL,
                                 NULL);
     ASSERT_EQ(IB_OK, status);
     status = ib_action_register(ib_engine,
                                 "test_action",
+                                IB_ACT_FLAG_NONE,
                                 NULL,
                                 NULL,
                                 NULL);
@@ -68,6 +71,7 @@ TEST_F(ActionTest, call_action) {
     ib_action_inst_t *act;
     status = ib_action_register(ib_engine,
                                 "test_action",
+                                IB_ACT_FLAG_NONE,
                                 NULL,
                                 NULL,
                                 NULL);
@@ -75,6 +79,7 @@ TEST_F(ActionTest, call_action) {
 
     status = ib_action_inst_create(ib_engine,
                                    "test_action", "parameters",
+                                   IB_ACTINST_FLAG_NONE,
                                    &act);
     ASSERT_EQ(IB_OK, status);
 

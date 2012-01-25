@@ -116,10 +116,10 @@ static ib_status_t execute_rule(ib_engine_t *ib,
 
     /* Loop through all of the fields */
     IB_LIST_LOOP(rule->input_fields, node) {
-        ib_status_t   rc;
         const char   *fname = (const char *)node->data;
         ib_field_t   *value = 0;
         ib_num_t      result = 0;
+        ib_status_t   rc = IB_OK;
 
         /* Get the field value */
         rc = ib_data_get(tx->dpi, fname, &value);
@@ -131,7 +131,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         }
         else if (rc != IB_OK) {
             ib_log_debug(ib, 4, "Error getting field %s: %d\n", fname, rc);
-            IB_FTRACE_RET_STATUS(rc);
+            continue;
         }
 
         /* Execute the operator */
@@ -214,25 +214,32 @@ static ib_status_t execute_actions(ib_engine_t *ib,
                                    const char *name,
                                    ib_list_t *actions)
 {
-    ib_list_node_t      *node = NULL;
+    ib_list_node_t   *node = NULL;
+    ib_status_t       rc = IB_OK;
  
-     ib_log_debug(ib, 4, "Executing %s rule %s actions", rule->meta.id, name);
+    ib_log_debug(ib, 4, "Executing %s rule %s actions", rule->meta.id, name);
 
     /* Loop through all of the fields */
     IB_LIST_LOOP(actions, node) {
-        ib_status_t       rc;
+        ib_status_t       arc;  /* Action's return code */
         ib_action_inst_t *action = (ib_action_inst_t *)node->data;
 
         /* Execute the action */
-        rc = execute_action(ib, rule, tx, name, action);
-        if (rc != IB_OK) {
+        arc = execute_action(ib, rule, tx, name, action);
+        if (arc == IB_DECLINED) {
+            ib_log_debug(ib, 4,
+                         "Action %s/%s did not run",
+                         name, action->action->name);
+        }
+        else if (arc != IB_OK) {
             ib_log_debug(ib, 4,
                          "Action %s/%s returned an error: %d",
-                         name, action->action->name, rc);
+                         name, action->action->name, arc);
+            rc = arc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -276,7 +283,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
                  IB_LIST_ELEMENTS(rules),
                  rdata->phase, rdata->name, (void*)pctx);
 
-    /* Loop through all of the rules, execute them */
+    /* Loop through all of the rules for this phase, execute them */
     IB_LIST_LOOP(rules, node) {
         ib_rule_t   *rule = (ib_rule_t*)node->data;
         ib_num_t     rule_result = 0;
