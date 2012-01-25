@@ -26,6 +26,9 @@ namespace CLI {
  **/
 struct buffer_t
 {
+  //! Default constructor.
+  buffer_t() = default;
+
   //! Constructor.
   /**
    * \param[in] data   Pointer to buffer.  Not necessarilly null terminated.
