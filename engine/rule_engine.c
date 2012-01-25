@@ -27,6 +27,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>
+#include <ironbee/operator.h>
+#include <ironbee/action-nrl.h>
 #include <ironbee/rule_engine.h>
 
 #include "ironbee_private.h"
@@ -70,14 +72,15 @@ static ib_status_t execute_operator(ib_engine_t *ib,
                                     const char *fname,
                                     ib_num_t *result)
 {
+    IB_FTRACE_INIT(execute_operator);
     ib_status_t   rc;
 
     /* Run it, check the results */
     rc = opinst->op->fn_execute(opinst->data, field, result);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4,
-                     "Operator %s returned an error for field %s",
-                     opinst->op->name, fname);
+                     "Operator %s returned an error for field %s: %d",
+                     opinst->op->name, fname, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_debug(ib, 9,
@@ -102,6 +105,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
                                 ib_tx_t *tx,
                                 ib_num_t *rule_result)
 {
+    IB_FTRACE_INIT(execute_rule);
     ib_list_node_t      *node = NULL;
     ib_operator_inst_t  *opinst = rule->condition.opinst;
 
@@ -157,6 +161,82 @@ static ib_status_t execute_rule(ib_engine_t *ib,
 
 /**
  * @internal
+ * Execute a single rule action
+ *
+ * @param ib Engine
+ * @param rule Rule to execute
+ * @param tx Transaction
+ * @param name Action list name ("TRUE"/"FALSE")
+ * @param action The action to execute
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_action(ib_engine_t *ib,
+                                  ib_rule_t *rule,
+                                  ib_tx_t *tx,
+                                  const char *name,
+                                  ib_action_inst_t *action)
+{
+    IB_FTRACE_INIT(execute_action);
+    ib_status_t   rc;
+
+    ib_log_debug(ib, 4,
+                 "Executing %s rule %s action %s",
+                 rule->meta.id, name, action->action->name);
+
+    /* Run it, check the results */
+    rc = action->action->fn_execute(action->data, rule, tx);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 4,
+                     "Action %s returned an error: %d",
+                     action->action->name, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute a rule's actions
+ *
+ * @param ib Engine
+ * @param rule Rule to execute
+ * @param tx Transaction
+ * @param name Name of the actions ("TRUE" or "FALSE")
+ * @param actions List of actions to execute
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_actions(ib_engine_t *ib,
+                                   ib_rule_t *rule,
+                                   ib_tx_t *tx,
+                                   const char *name,
+                                   ib_list_t *actions)
+{
+    ib_list_node_t      *node = NULL;
+ 
+     ib_log_debug(ib, 4, "Executing %s rule %s actions", rule->meta.id, name);
+
+    /* Loop through all of the fields */
+    IB_LIST_LOOP(actions, node) {
+        ib_status_t       rc;
+        ib_action_inst_t *action = (ib_action_inst_t *)node->data;
+
+        /* Execute the action */
+        rc = execute_action(ib, rule, tx, name, action);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4,
+                         "Action %s/%s returned an error: %d",
+                         name, action->action->name, rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
  * Run a set of rules.
  *
  * @param ib Engine
@@ -196,15 +276,24 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
                  IB_LIST_ELEMENTS(rules),
                  rdata->phase, rdata->name, (void*)pctx);
 
-    /* @todo */
+    /* Loop through all of the rules, execute them */
     IB_LIST_LOOP(rules, node) {
         ib_rule_t   *rule = (ib_rule_t*)node->data;
         ib_num_t     rule_result = 0;
         ib_status_t  rc;
 
+        /* Execute the rule */
         rc = execute_rule(ib, rule, tx, &rule_result);
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Error executing rule %s", rule->meta.id);
+        }
+
+        /* Execute the actions */
+        if (rule_result != 0) {
+            rc = execute_actions(ib, rule, tx, "TRUE",  rule->true_actions);
+        }
+        else {
+            rc = execute_actions(ib, rule, tx, "FALSE", rule->false_actions);
         }
     }
 
