@@ -44,10 +44,10 @@ int main( int argc, char** argv )
 
   po::options_description input_desc( "Input Options:" );
   input_desc.add_options()
-    ( "audit,A", po::value<string>(),
+    ( "audit,A", po::value<vector<string>>(),
       "Mod Security Audit Log"
     )
-    ( "raw,R", po::value<string>(),
+    ( "raw,R", po::value<vector<string>>(),
       "Raw inputs.  Use comma separated pair: request path,response path.  "
       "Raw input will use bogus connection information."
     )
