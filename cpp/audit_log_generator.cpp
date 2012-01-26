@@ -62,15 +62,15 @@ bool AuditLogGenerator::operator()( input_t& out_input )
   boost::smatch match;
   const auto& A = e["A"];
   if ( regex_search( A, match, section_a ) ) {
-    out_input.src_ip.data   = A.c_str() + match.position( 1 );
-    out_input.src_ip.length = match.length( 1 );
+    out_input.local_ip.data   = A.c_str() + match.position( 1 );
+    out_input.local_ip.length = match.length( 1 );
 
-    out_input.src_port = boost::lexical_cast<uint16_t>( match.str( 2 ) );
+    out_input.local_port = boost::lexical_cast<uint16_t>( match.str( 2 ) );
 
-    out_input.dst_ip.data   = A.c_str() + match.position( 3 );
-    out_input.dst_ip.length = match.length( 3 );
+    out_input.remote_ip.data   = A.c_str() + match.position( 3 );
+    out_input.remote_ip.length = match.length( 3 );
 
-    out_input.dst_port = boost::lexical_cast<uint16_t>( match.str( 4 ) );
+    out_input.remote_port = boost::lexical_cast<uint16_t>( match.str( 4 ) );
   } else {
     throw runtime_error(
       "Could not parse connection information: " + A

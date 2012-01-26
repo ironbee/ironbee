@@ -10,8 +10,8 @@ std::ostream& operator<<( std::ostream& out, const buffer_t& buffer )
 
 std::ostream& operator<<( std::ostream& out, const input_t& input )
 {
-  out << input.src_ip << " " << input.src_port << " -> "
-      << input.dst_ip << " " << input.dst_port << ": "
+  out << input.local_ip  << " " << input.local_port << " -> "
+      << input.remote_ip << " " << input.remote_port << ": "
       << "#transactions=" << input.transactions.size()
       ;
   return out;

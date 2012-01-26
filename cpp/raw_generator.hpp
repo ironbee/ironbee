@@ -20,10 +20,10 @@ namespace CLI {
 class RawGenerator
 {
 public:
-  static const std::string src_ip;
-  static const std::string dst_ip;
-  static const uint16_t    src_port;
-  static const uint16_t    dst_port;
+  static const std::string local_ip;
+  static const std::string remote_ip;
+  static const uint16_t    local_port;
+  static const uint16_t    remote_port;
 
   //! Default Constructor.
   /**

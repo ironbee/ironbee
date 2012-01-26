@@ -65,11 +65,11 @@ std::ostream& operator<<( std::ostream& out, const buffer_t& buffer );
  **/
 struct input_t
 {
-  buffer_t    src_ip;
-  uint16_t    src_port;
+  buffer_t    local_ip;
+  uint16_t    local_port;
 
-  buffer_t    dst_ip;
-  uint16_t    dst_port;
+  buffer_t    remote_ip;
+  uint16_t    remote_port;
 
   struct transaction_t {
     transaction_t( buffer_t request_, buffer_t response_ );

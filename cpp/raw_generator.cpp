@@ -52,10 +52,10 @@ bool RawGenerator::operator()( input_t& out_input )
     return false;
   }
 
-  out_input.src_ip          = buffer_t( src_ip );
-  out_input.dst_ip          = buffer_t( dst_ip );
-  out_input.src_port        = src_port;
-  out_input.dst_port        = dst_port;
+  out_input.local_ip          = buffer_t( local_ip );
+  out_input.remote_ip         = buffer_t( remote_ip );
+  out_input.local_port        = local_port;
+  out_input.remote_port       = remote_port;
   out_input.transactions.clear();
   out_input.transactions.push_back(
     input_t::transaction_t(
@@ -75,10 +75,10 @@ bool RawGenerator::operator()( input_t& out_input )
   return true;
 }
 
-const std::string RawGenerator::src_ip    = "1.2.3.4";
-const std::string RawGenerator::dst_ip    = "5.6.7.8";
-const uint16_t    RawGenerator::src_port  = 1234;
-const uint16_t    RawGenerator::dst_port  = 5678;
+const std::string RawGenerator::local_ip    = "1.2.3.4";
+const std::string RawGenerator::remote_ip   = "5.6.7.8";
+const uint16_t    RawGenerator::local_port  = 1234;
+const uint16_t    RawGenerator::remote_port = 5678;
 
 } // CLI
 } // IronBee
