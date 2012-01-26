@@ -46,6 +46,9 @@ struct buffer_t
   explicit
   buffer_t( const std::string& s );
 
+  //! Convert to string.  Makes a copy.
+  std::string to_s() const;
+
   //! Pointer to buffer.  Not necessarilly null terminated.
   const char* data;
   //! Length of buffer.
