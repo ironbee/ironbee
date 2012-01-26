@@ -77,8 +77,10 @@ bool AuditLogGenerator::operator()( input_t& out_input )
     );
   }
 
-  out_input.request  = buffer_t( e["B"] );
-  out_input.response = buffer_t( e["F"] );
+  out_input.transactions.clear();
+  out_input.transactions.push_back( input_t::transaction_t(
+    buffer_t( e["B"] ), buffer_t( e["F"] )
+  ) );
 
   return true;
 }

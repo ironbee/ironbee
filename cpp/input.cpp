@@ -13,8 +13,8 @@ std::ostream& operator<<( std::ostream& out, const input_t& input )
 {
   out << input.src_ip << " " << input.src_port << " -> "
       << input.dst_ip << " " << input.dst_port << ": "
-      << "request size=" << input.request.length << "  "
-      << "response size=" << input.response.length;
+      << "#transactions=" << input.transactions.size()
+      ;
   return out;
 }
 
@@ -26,6 +26,15 @@ buffer_t::buffer_t( const char* data_, size_t length_ ) :
 
 buffer_t::buffer_t( const std::string& s ) :
   buffer_t( s.c_str(), s.length() )
+{
+  // nop
+}
+
+input_t::transaction_t::transaction_t(
+  buffer_t request_,
+  buffer_t response_
+) :
+  request( request_ ), response( response_ )
 {
   // nop
 }

@@ -56,10 +56,19 @@ bool RawGenerator::operator()( input_t& out_input )
   out_input.dst_ip          = buffer_t( dst_ip );
   out_input.src_port        = src_port;
   out_input.dst_port        = dst_port;
-  out_input.request.data    = &*m_request_buffer.begin();
-  out_input.request.length  = m_request_buffer.size();
-  out_input.response.data   = &*m_response_buffer.begin();
-  out_input.response.length = m_response_buffer.size();
+  out_input.transactions.clear();
+  out_input.transactions.push_back(
+    input_t::transaction_t(
+      buffer_t(
+        &*m_request_buffer.begin(),
+        m_request_buffer.size()
+      ),
+      buffer_t(
+        &*m_response_buffer.begin(),
+        m_response_buffer.size()
+      )
+    )
+  );
 
   m_produced_input = true;
 

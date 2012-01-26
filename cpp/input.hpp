@@ -13,6 +13,7 @@
 #include <boost/function.hpp>
 
 #include <string>
+#include <vector>
 #include <iostream>
 
 namespace IronBee {
@@ -68,8 +69,12 @@ struct input_t
   buffer_t    dst_ip;
   uint16_t    dst_port;
 
-  buffer_t    request;
-  buffer_t    response;
+  struct transaction_t {
+    transaction_t( buffer_t request_, buffer_t response_ );
+    buffer_t request;
+    buffer_t response;
+  };
+  std::vector<transaction_t> transactions;
 };
 
 std::ostream& operator<<( std::ostream& out, const input_t& input );
