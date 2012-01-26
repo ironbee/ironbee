@@ -118,3 +118,7 @@ user_agent_SOURCES = user_agent.c \
                      user_agent_private.h
 user_agent_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) -DUSER_AGENT_MAIN
 user_agent_LDFLAGS = $(AM_LDFLAGS) $(top_builddir)/util/libibutil.la -libutil -lhtp
+if FREEBSD
+user_agent_LDADD = -liconv
+endif
+
