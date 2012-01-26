@@ -25,16 +25,20 @@ int main( int argc, char** argv )
 {
   namespace po = boost::program_options;
 
-  bool show_help = false;
+  bool   show_help = false;
+  string config_path;
 
   po::options_description desc(
-    "All input options can be repeated.  Inputs will be processed in the"
+    "All input options can be repeated.  Inputs will be processed in the "
     "order listed."
   );
 
   po::options_description general_desc( "General:" );
   general_desc.add_options()
     ( "help", po::bool_switch( &show_help ), "Output help message." )
+    ( "config,C", po::value<string>( &config_path ),
+      "IronBee config file.  REQUIRED"
+    )
     ;
 
   po::options_description input_desc( "Input Options:" );
@@ -49,11 +53,20 @@ int main( int argc, char** argv )
     ;
   desc.add( general_desc ).add( input_desc );
 
-  po::variables_map vm;
   auto options = po::parse_command_line( argc, argv, desc );
+
+  po::variables_map vm;
+  po::store( options, vm );
+  po::notify( vm );
 
   if ( show_help ) {
     cerr << desc << endl;
+    return 1;
+  }
+
+  if ( config_path.empty() ) {
+    cerr << "Config required." << endl;
+    cout << desc << endl;
     return 1;
   }
 
