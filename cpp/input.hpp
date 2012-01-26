@@ -17,7 +17,6 @@
 #include <iostream>
 
 namespace IronBee {
-namespace CLI {
 
 /**
  * \class buffer_t
@@ -90,7 +89,6 @@ std::ostream& operator<<( std::ostream& out, const input_t& input );
  **/
 using input_generator_t   = boost::function<bool(input_t&)>;
 
-} // CLI
 } // IronBee
 
 #endif

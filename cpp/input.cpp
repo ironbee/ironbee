@@ -1,7 +1,6 @@
 #include "input.hpp"
 
 namespace IronBee {
-namespace CLI {
 
 std::ostream& operator<<( std::ostream& out, const buffer_t& buffer )
 {
@@ -39,5 +38,4 @@ input_t::transaction_t::transaction_t(
   // nop
 }
 
-} // CLI
 } // IronBee
