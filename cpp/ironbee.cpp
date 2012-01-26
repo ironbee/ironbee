@@ -65,41 +65,25 @@ void IronBee::load_config( const std::string& config_path )
   ib_state_notify_cfg_finished( m_ironbee.get() );
 }
 
-void IronBee::open_connection(
+IronBee::connection_p IronBee::open_connection(
   const buffer_t&    local_ip,
   uint16_t           local_port,
   const buffer_t&    remote_ip,
   uint16_t           remote_port
 )
 {
-  {
-    ib_conn_t* conn;
-    expect_ok( ib_conn_create( m_ironbee.get(), &conn, NULL ),
-      "Creating connection."
-    );
-    // This will destroy any existing current connection.
-    m_current_connection.reset( conn, &ib_conn_destroy );
-  }
-
-  m_current_local_ip                 = local_ip.to_s();
-  m_current_remote_ip                = remote_ip.to_s();
-  m_current_connection->local_ipstr  = m_current_local_ip.c_str();
-  m_current_connection->local_port   = local_port;
-  m_current_connection->remote_ipstr = m_current_remote_ip.c_str();
-  m_current_connection->remote_port  = remote_port;
-
-  expect_ok(
-    ib_state_notify_conn_opened(
-      m_ironbee.get(),
-      m_current_connection.get()
-    ),
-    "Opening connection."
-  );
+  return IronBee::connection_p( new Connection(
+    *this,
+    local_ip,
+    local_port,
+    remote_ip,
+    remote_port
+  ) );
 }
 
-void IronBee::open_connection( const input_t& input )
+IronBee::connection_p IronBee::open_connection( const input_t& input )
 {
-  open_connection(
+  return open_connection(
     input.local_ip,
     input.local_port,
     input.remote_ip,
@@ -107,11 +91,54 @@ void IronBee::open_connection( const input_t& input )
   );
 }
 
-void IronBee::close_connection()
+IronBee::Connection::Connection(
+  IronBee&           ib,
+  const buffer_t&    local_ip,
+  uint16_t           local_port,
+  const buffer_t&    remote_ip,
+  uint16_t           remote_port
+) :
+  m_ib( ib )
 {
-  ib_state_notify_conn_closed( m_ironbee.get(), m_current_connection.get() );
-  m_current_connection.reset();
+  {
+    ib_conn_t* conn;
+    expect_ok( ib_conn_create( m_ib.m_ironbee.get(), &conn, NULL ),
+      "Creating connection."
+    );
+    // This will destroy any existing current connection.
+    m_connection.reset( conn, &ib_conn_destroy );
+  }
+
+  m_local_ip                 = local_ip.to_s();
+  m_remote_ip                = remote_ip.to_s();
+  m_connection->local_ipstr  = m_local_ip.c_str();
+  m_connection->local_port   = local_port;
+  m_connection->remote_ipstr = m_remote_ip.c_str();
+  m_connection->remote_port  = remote_port;
+
+  expect_ok(
+    ib_state_notify_conn_opened(
+      m_ib.m_ironbee.get(),
+      m_connection.get()
+    ),
+    "Opening connection."
+  );
 }
 
+IronBee::Connection::~Connection()
+{
+  if ( m_connection ) {
+    close();
+  }
+}
+
+void IronBee::Connection::close()
+{
+  expect_ok(
+    ib_state_notify_conn_closed( m_ib.m_ironbee.get(), m_connection.get() ),
+    "Closing connection."
+  );
+  m_connection.reset();
+}
 
 } // IronBee
