@@ -264,6 +264,6 @@ ib_status_t ib_bytestr_append_nulstr(ib_bytestr_t *dst,
 
 int ib_bytestr_index_of_c(ib_bytestr_t *haystack, char *needle)
 {
-    IB_FTRACE_INIT(ib_bytestr_indexofc);
+    IB_FTRACE_INIT(ib_bytestr_index_of_c);
     IB_FTRACE_RET_INT(bstr_index_of_c(haystack->data, needle));
 }

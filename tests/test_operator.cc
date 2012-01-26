@@ -53,7 +53,8 @@ ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst) {
     return IB_OK;
 }
 
-ib_status_t test_execute_fn(void *data, ib_field_t *field, ib_num_t *result) {
+ib_status_t test_execute_fn(ib_engine_t *ib, ib_tx_t *tx,
+                            void *data, ib_field_t *field, ib_num_t *result) {
     char *searchstr = (char *)data;
 
     if (field->type != IB_FTYPE_NULSTR) {
@@ -99,12 +100,12 @@ TEST_F(OperatorTest, OperatorCallTest) {
                     "testfield", IB_FTYPE_NULSTR, NULL);
 
     ib_field_setv(field, &matching);
-    status = ib_operator_execute(op, field, &call_result);
+    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, &nonmatching);
-    status = ib_operator_execute(op, field, &call_result);
+    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 
@@ -136,12 +137,12 @@ TEST_F(CoreOperatorsTest, ContainsTest) {
                     "testfield", IB_FTYPE_NULSTR, NULL);
 
     ib_field_setv(field, &matching);
-    status = ib_operator_execute(op, field, &call_result);
+    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, &nonmatching);
-    status = ib_operator_execute(op, field, &call_result);
+    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }

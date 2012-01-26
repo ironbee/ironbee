@@ -44,7 +44,7 @@ enum {
 };
 
 ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf) {
-    IB_FTRACE_INIT(ib_logformat_alloc);
+    IB_FTRACE_INIT(ib_logformat_create);
     if (lf == NULL) {
         return IB_EINVAL;
     }

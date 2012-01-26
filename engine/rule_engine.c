@@ -76,7 +76,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
     ib_status_t   rc;
 
     /* Run it, check the results */
-    rc = ib_operator_execute(opinst, field, result);
+    rc = ib_operator_execute(ib, NULL, opinst, field, result);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4,
                      "Operator %s returned an error for field %s: %d",
@@ -214,6 +214,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
                                    const char *name,
                                    ib_list_t *actions)
 {
+    IB_FTRACE_INIT(execute_actions);
     ib_list_node_t   *node = NULL;
     ib_status_t       rc = IB_OK;
  
@@ -323,7 +324,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
                                  ib_flags_t flags,
                                  ib_rules_t **prules)
 {
-    IB_FTRACE_INIT(ib_rule_engine_init);
+    IB_FTRACE_INIT(ib_rules_init);
     rule_cbdata_t  *cbdata;
     ib_rules_t     *rules;
     ib_status_t     rc;

@@ -448,7 +448,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
 static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
                                            ib_module_t *m)
 {
-    IB_FTRACE_INIT(modlua_module_init_lua_wrapper);
+    IB_FTRACE_INIT(modlua_init_lua_wrapper);
     modlua_cfg_t *maincfg;
     lua_State *L;
     const char *funcname = "onModuleLoad";
@@ -1881,7 +1881,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                      const char *p1,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_param1);
+    IB_FTRACE_INIT(modlua_dir_param1);
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
 

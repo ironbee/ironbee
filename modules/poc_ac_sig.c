@@ -437,7 +437,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                                       ib_tx_t *tx,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT(pocacsig_handle_post);
+    IB_FTRACE_INIT(pocacsig_handle_sigs);
     pocacsig_cfg_t *cfg;
     pocacsig_phase_t phase = (pocacsig_phase_t)(uintptr_t)cbdata;
     ib_list_t *sigs;

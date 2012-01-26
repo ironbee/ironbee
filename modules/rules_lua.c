@@ -81,7 +81,7 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
                              const char *file,
                              const char *func_name)
 {
-    IB_FTRACE_INIT(add_lua_rule);
+    IB_FTRACE_INIT(ib_lua_load_func);
     ib_status_t ib_rc;
 
     /* Load (compile) the lua module. */

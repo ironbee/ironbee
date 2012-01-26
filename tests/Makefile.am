@@ -10,6 +10,15 @@ if FREEBSD
   LDFLAGS+=-fstack-protector
 endif
 
+# This is a common set of files for runnign tests of modules.
+MODULE_TEST_LDADD = gtest/libgtest.la \
+                    $(top_builddir)/engine/libironbee.la \
+                    $(top_builddir)/util/libibutil.la \
+                    -lhtp
+if FREEBSD
+MODULE_TEST_LDADD += -liconv
+endif
+
 # Point the module base path to the modules build dir
 CPPFLAGS+=-DMODULE_BASE_PATH=$(top_builddir)/modules/.libs
 
@@ -25,6 +34,7 @@ check_PROGRAMS = test_gtest \
                  test_util_ahocorasick \
                  test_engine \
                  test_module_trace \
+		 test_module_pcre \
                  test_module_poc_sig \
                  test_module_rules_lua \
                  test_operator \
@@ -133,18 +143,7 @@ test_util_ahocorasick_LDADD = gtest/libgtest.la \
 endif
 
 test_engine_SOURCES = test_engine.cc test_main.cc
-if FREEBSD
-test_engine_LDADD = gtest/libgtest.la \
-                    $(top_builddir)/engine/libironbee.la \
-                    $(top_builddir)/util/libibutil.la \
-                    -lhtp \
-                    -liconv
-else
-test_engine_LDADD = gtest/libgtest.la \
-                    $(top_builddir)/engine/libironbee.la \
-                    $(top_builddir)/util/libibutil.la \
-                    -lhtp
-endif
+test_engine_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_trace_SOURCES = test_module_trace.cc test_main.cc
 if FREEBSD
@@ -169,13 +168,10 @@ test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
                         -D_XOPEN_SOURCE=1 \
                         -DTEST_LUA_FILE=\"$(abs_top_srcdir)/tests/test_module_rules_lua.lua\" \
                         -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
-test_module_rules_lua_LDADD = gtest/libgtest.la \
-                            $(top_builddir)/engine/libironbee.la \
-                            $(top_builddir)/util/libibutil.la \
+test_module_rules_lua_LDADD = $(MODULE_TEST_LDADD) \
                             $(top_builddir)/lua/libironbee-lua.la \
                             $(top_builddir)/modules/ibmod_rules_la-rules_lua.o \
                            -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
-                           -lhtp \
                            -lluajit-ironbee \
                            -lm
 if FREEBSD
@@ -183,46 +179,16 @@ test_module_rules_lua_LDADD += -liconv
 endif
 
 test_module_poc_sig_SOURCES = test_module_poc_sig.cc test_main.cc
-if FREEBSD
-test_module_poc_sig_LDADD = gtest/libgtest.la \
-                            $(top_builddir)/engine/libironbee.la \
-                            $(top_builddir)/util/libibutil.la \
-                            -lhtp \
-                            -liconv
-else
-test_module_poc_sig_LDADD = gtest/libgtest.la \
-                            $(top_builddir)/engine/libironbee.la \
-                            $(top_builddir)/util/libibutil.la \
-                            -lhtp
-endif
+test_module_poc_sig_LDADD = $(MODULE_TEST_LDADD)
 
 test_operator_SOURCES = test_operator.cc test_main.cc
-if FREEBSD
-test_operator_LDADD = gtest/libgtest.la \
-                      $(top_builddir)/engine/libironbee.la \
-                      $(top_builddir)/util/libibutil.la \
-                      -lhtp \
-                      -liconv
-else
-test_operator_LDADD = gtest/libgtest.la \
-                      $(top_builddir)/engine/libironbee.la \
-                      $(top_builddir)/util/libibutil.la \
-                      -lhtp
-endif
+test_operator_LDADD = $(MODULE_TEST_LDADD)
 
 test_action_SOURCES = test_action.cc test_main.cc
-if FREEBSD
-test_action_LDADD = gtest/libgtest.la \
-                    $(top_builddir)/engine/libironbee.la \
-                    $(top_builddir)/util/libibutil.la \
-                    -lhtp \
-                    -liconv
-else
-test_action_LDADD = gtest/libgtest.la \
-                    $(top_builddir)/engine/libironbee.la \
-                    $(top_builddir)/util/libibutil.la \
-                    -lhtp
-endif
+test_action_LDADD = $(MODULE_TEST_LDADD)
+
+test_module_pcre_SOURCES = test_module_pcre.cc test_main.cc
+test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 

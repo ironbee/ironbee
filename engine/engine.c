@@ -274,7 +274,7 @@ failed:
 
 ib_status_t ib_engine_init(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT(ib_init);
+    IB_FTRACE_INIT(ib_engine_init);
     ib_status_t rc = ib_context_init(ib->ectx);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -346,7 +346,7 @@ void ib_engine_pool_temp_destroy(ib_engine_t *ib)
 
 void ib_engine_destroy(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT(ib_destroy);
+    IB_FTRACE_INIT(ib_engine_destroy);
     if (ib) {
         size_t ne;
         size_t idx;

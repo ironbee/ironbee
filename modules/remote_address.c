@@ -61,7 +61,7 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
                                             ib_tx_t *tx,
                                             void *data)
 {
-    IB_FTRACE_INIT(modra_handle_tx);
+    IB_FTRACE_INIT(modra_handle_req_headers);
     ib_field_t    *req_fwd = NULL;
     ib_status_t    rc = IB_OK;
     ib_bytestr_t  *bs;
@@ -123,7 +123,7 @@ static ib_status_t modra_handle_req_headers(ib_engine_t *ib,
  */
 static ib_status_t modra_init(ib_engine_t *ib, ib_module_t *m)
 {
-   IB_FTRACE_INIT(modra_context_init);
+   IB_FTRACE_INIT(modra_init);
    ib_status_t rc;
 
    /* Register our callback */

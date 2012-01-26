@@ -177,7 +177,7 @@ static const uint8_t core_placeholder_value[] = {
 static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
                                                   const char *name)
 {
-    IB_FTRACE_INIT(core_field_gen_bytestr);
+    IB_FTRACE_INIT(core_field_placeholder_bytestr);
     ib_status_t rc = ib_data_add_bytestr_ex(dpi,
                                             (const char *)name,
                                             strlen(name),
@@ -651,7 +651,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                                              char *line,
                                              int *line_size)
 {
-    IB_FTRACE_INIT(core_audit_get_index_fields);
+    IB_FTRACE_INIT(core_audit_get_index_line);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_tx_t *tx = log->tx;
@@ -2569,7 +2569,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
                                           ib_conn_t *conn,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT(parser_hook_init);
+    IB_FTRACE_INIT(core_hook_conn_started);
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_core_cfg_t *corecfg;
@@ -4414,6 +4414,7 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                   const char *name,
                                   const char *val)
 {
+    IB_FTRACE_INIT(core_set_value);
     ib_engine_t *ib = ctx->ib;
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi;
