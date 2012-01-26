@@ -39,6 +39,7 @@ acinclude/lt*
 autom4te.cache/
 .deps/
 .libs/
+config.rpath
 
 # Build Generated files:
 tests/test_gtest
