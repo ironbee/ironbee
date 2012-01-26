@@ -146,18 +146,7 @@ test_engine_SOURCES = test_engine.cc test_main.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_trace_SOURCES = test_module_trace.cc test_main.cc
-if FREEBSD
-test_module_trace_LDADD = gtest/libgtest.la \
-                          $(top_builddir)/engine/libironbee.la \
-                          $(top_builddir)/util/libibutil.la \
-                          -lhtp \
-                          -liconv
-else
-test_module_trace_LDADD = gtest/libgtest.la \
-                          $(top_builddir)/engine/libironbee.la \
-                          $(top_builddir)/util/libibutil.la \
-                          -lhtp
-endif
+test_module_trace_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
                                 test_main.cc
