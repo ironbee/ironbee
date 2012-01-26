@@ -504,7 +504,10 @@ failed:
 void ib_conn_destroy(ib_conn_t *conn)
 {
     /// @todo Probably need to update state???
-    ib_mpool_destroy(conn->mp);
+    if ( conn != NULL && conn->mp != NULL ) {
+        ib_mpool_destroy(conn->mp);
+        conn->mp = NULL;
+    }
 }
 
 /**
