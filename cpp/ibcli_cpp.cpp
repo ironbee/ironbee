@@ -11,6 +11,10 @@
 using namespace std;
 using namespace IronBee::CLI;
 
+using IronBee::input_t;
+using IronBee::input_generator_t;
+using IronBee::buffer_t;
+
 //! A producer of input generators.
 using input_factory_t     = boost::function<input_generator_t(const string&)>;
 
