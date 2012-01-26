@@ -215,7 +215,7 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
                                       const char *collection_name,
                                       const char *flag)
 {
-    IB_FTRACE_INIT(modhtp_set_tx_flag);
+    IB_FTRACE_INIT(modhtp_add_flag_to_collection);
     ib_engine_t *ib = itx->ib;
     ib_status_t rc;
     ib_field_t *f;
@@ -533,7 +533,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
 
 static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
 {
-    IB_FTRACE_INIT(modhtp_htp_body_data);
+    IB_FTRACE_INIT(modhtp_htp_request_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;

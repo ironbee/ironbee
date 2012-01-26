@@ -278,7 +278,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                void *cbdata)
 {
-    IB_FTRACE_INIT(modtrace_handle_tx);
+    IB_FTRACE_INIT(modtrace_handle_req_headers);
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
@@ -338,7 +338,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
  */
 static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(modtrace_context_init);
+    IB_FTRACE_INIT(modtrace_init);
     static event_info_t event_info[IB_STATE_EVENT_NUM];
     ib_status_t rc;
     int event;

@@ -200,7 +200,7 @@ static ib_status_t op_false_execute(void *data,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
-    IB_FTRACE_INIT(op_exists_execute);
+    IB_FTRACE_INIT(op_false_execute);
     *result = 0;
     IB_FTRACE_RET_STATUS(IB_OK);
 }

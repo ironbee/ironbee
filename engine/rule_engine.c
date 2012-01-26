@@ -324,7 +324,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
                                  ib_flags_t flags,
                                  ib_rules_t **prules)
 {
-    IB_FTRACE_INIT(ib_rule_engine_init);
+    IB_FTRACE_INIT(ib_rules_init);
     rule_cbdata_t  *cbdata;
     ib_rules_t     *rules;
     ib_status_t     rc;

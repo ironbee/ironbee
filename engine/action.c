@@ -38,7 +38,7 @@ ib_status_t ib_action_register(ib_engine_t *ib,
                                ib_action_destroy_fn_t fn_destroy,
                                ib_action_execute_fn_t fn_execute)
 {
-    IB_FTRACE_INIT(ib_register_action);
+    IB_FTRACE_INIT(ib_action_register);
     ib_hash_t *action_hash = ib->actions;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_status_t rc;
@@ -108,7 +108,7 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
 
 ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
 {
-    IB_FTRACE_INIT(ib_action_inst_create);
+    IB_FTRACE_INIT(ib_action_inst_destroy);
     ib_status_t rc;
 
     if (act_inst != NULL && act_inst->action != NULL
