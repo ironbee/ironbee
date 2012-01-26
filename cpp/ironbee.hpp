@@ -42,6 +42,9 @@ public:
     const buffer_t&    remote_ip,
     uint16_t           remote_port
   );
+
+  void open_connection( const input_t& input );
+
   void close_connection();
 
 private:

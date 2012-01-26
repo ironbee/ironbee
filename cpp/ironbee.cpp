@@ -97,6 +97,16 @@ void IronBee::open_connection(
   );
 }
 
+void IronBee::open_connection( const input_t& input )
+{
+  open_connection(
+    input.local_ip,
+    input.local_port,
+    input.remote_ip,
+    input.remote_port
+  );
+}
+
 void IronBee::close_connection()
 {
   ib_state_notify_conn_closed( m_ironbee.get(), m_current_connection.get() );
