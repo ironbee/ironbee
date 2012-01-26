@@ -329,12 +329,17 @@ static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
 
 /**
  * @brief Execute the rule.
+ *
+ * @param[in] ib Ironbee engine
+ * @param[in] tx The transaction.
  * @param[in,out] User data. A @c pcre_rule_data_t.
  * @param[in] field The field content.
  * @param[in] result The result.
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static ib_status_t pcre_operator_execute(void *data,
+static ib_status_t pcre_operator_execute(ib_engine_t *ib,
+                                         ib_tx_t *tx,
+                                         void *data,
                                          ib_field_t *field,
                                          ib_num_t *result)
 {

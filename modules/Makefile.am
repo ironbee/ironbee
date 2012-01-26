@@ -117,4 +117,4 @@ user_agent_SOURCES = user_agent.c \
                      user_agent_rules.c \
                      user_agent_private.h
 user_agent_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) -DUSER_AGENT_MAIN
-user_agent_LDFLAGS = $(AM_LDFLAGS) -libutil
+user_agent_LDFLAGS = $(AM_LDFLAGS) -libutil -lhtp
