@@ -25,6 +25,12 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
+/**
+ * @defgroup IronBeeActions Actions
+ * @ingroup IronBee
+ * @{
+ */
+
 #include <ironbee/types.h>
 #include <ironbee/field.h>
 #include <ironbee/engine.h>
@@ -167,5 +173,9 @@ ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @} IronBeeActions
+ */
 
 #endif /* _IB_ACTION_H_ */

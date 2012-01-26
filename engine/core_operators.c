@@ -69,13 +69,17 @@ static ib_status_t strop_create(ib_mpool_t *mp,
  * @internal
  * Execute function for the "@streq" operator
  *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
  * @param data C-style string to compare to
  * @param field Field value
  * @param result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t op_streq_execute(void *data,
+static ib_status_t op_streq_execute(ib_engine_t *ib,
+                                    ib_tx_t *tx,
+                                    void *data,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
@@ -109,13 +113,17 @@ static ib_status_t op_streq_execute(void *data,
  * @internal
  * Execute function for the "@contains" operator
  *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
  * @param data C-style string to compare to
  * @param field Field value
  * @param result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t contains_execute_fn(void *data,
+static ib_status_t contains_execute_fn(ib_engine_t *ib,
+                                       ib_tx_t *tx,
+                                       void *data,
                                        ib_field_t *field,
                                        ib_num_t *result)
 {
@@ -151,13 +159,17 @@ static ib_status_t contains_execute_fn(void *data,
  * @internal
  * Execute function for the "@exists" operator
  *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
  * @param data C-style string to compare to
  * @param field Field value
  * @param result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t op_exists_execute(void *data,
+static ib_status_t op_exists_execute(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     void *data,
                                      ib_field_t *field,
                                      ib_num_t *result)
 {
@@ -171,13 +183,17 @@ static ib_status_t op_exists_execute(void *data,
  * @internal
  * Execute function for the "@true" operator
  *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
  * @param data C-style string to compare to
  * @param field Field value
  * @param result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t op_true_execute(void *data,
+static ib_status_t op_true_execute(ib_engine_t *ib,
+                                   ib_tx_t *tx,
+                                   void *data,
                                    ib_field_t *field,
                                    ib_num_t *result)
 {
@@ -190,13 +206,17 @@ static ib_status_t op_true_execute(void *data,
  * @internal
  * Execute function for the "@false" operator
  *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
  * @param data C-style string to compare to
  * @param field Field value
  * @param result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t op_false_execute(void *data,
+static ib_status_t op_false_execute(ib_engine_t *ib,
+                                    ib_tx_t *tx,
+                                    void *data,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {

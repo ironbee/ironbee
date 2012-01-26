@@ -25,6 +25,12 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
+/**
+ * @defgroup IronBeeOperators Operators
+ * @ingroup IronBee
+ * @{
+ */
+
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 #include <ironbee/field.h>
@@ -64,15 +70,19 @@ typedef ib_status_t (* ib_operator_create_fn_t)(ib_mpool_t *pool,
 typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
 
 /**
- * Operator instance execution callback type
+ * Operator instance execution callback type.
  *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
  * @param[in] data Instance data needed for execution.
  * @param[in] field The field to operate on.
  * @param[out] result The result of the operator 1=true 0=false.
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_operator_execute_fn_t)(void *data,
+typedef ib_status_t (* ib_operator_execute_fn_t)(ib_engine_t *ib,
+                                                 ib_tx_t *tx,
+                                                 void *data,
                                                  ib_field_t *field,
                                                  ib_num_t *result);
 
@@ -161,18 +171,26 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(ib_operator_inst_t *op_inst);
 /**
  * Call the execute function for an operator instance.
  *
+ * @param[in] ib Ironbee engine
+ * @param[in] tx The transaction for this action.
  * @param[in] op Operator instance to use.
  * @param[in] field Field to operate on.
  * @param[out] result The result of the operator
  *
  * @returns IB_OK on success
  */
-ib_status_t DLL_PUBLIC ib_operator_execute(const ib_operator_inst_t *op_inst,
+ib_status_t DLL_PUBLIC ib_operator_execute(ib_engine_t *ib,
+                                           ib_tx_t *tx,
+                                           const ib_operator_inst_t *op_inst,
                                            ib_field_t *field,
                                            ib_num_t *result);
 
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * @} IronBeeOperators
+ */
 
 #endif /* _IB_OPERATOR_H_ */

@@ -76,7 +76,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
     ib_status_t   rc;
 
     /* Run it, check the results */
-    rc = ib_operator_execute(opinst, field, result);
+    rc = ib_operator_execute(ib, NULL, opinst, field, result);
     if (rc != IB_OK) {
         ib_log_debug(ib, 4,
                      "Operator %s returned an error for field %s: %d",
