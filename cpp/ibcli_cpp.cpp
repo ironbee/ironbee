@@ -109,7 +109,9 @@ int main( int argc, char** argv )
     // Process inputs.
     input_t input;
     while ( generator( input ) ) {
+      ib.open_connection( input );
       cout << "Found input: " << input << endl;
+      ib.close_connection();
     }
   }
 
