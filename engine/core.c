@@ -4414,6 +4414,7 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                   const char *name,
                                   const char *val)
 {
+    IB_FTRACE_INIT(core_set_value);
     ib_engine_t *ib = ctx->ib;
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi;

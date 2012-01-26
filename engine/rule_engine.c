@@ -214,6 +214,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
                                    const char *name,
                                    ib_list_t *actions)
 {
+    IB_FTRACE_INIT(execute_actions);
     ib_list_node_t   *node = NULL;
     ib_status_t       rc = IB_OK;
  
