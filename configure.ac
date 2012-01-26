@@ -279,11 +279,6 @@ if test "$util_cli" != 0; then
     TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} cli"
 fi
 
-dnl Enable cpp subdir if enabled
-if test "$cpp_code" != 0; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} cpp"
-fi
-
 dnl Make sure abs_top_builddir is available
 AC_MSG_CHECKING([abs_top_builddir is available])
 if test -z "$abs_top_builddir"; then
