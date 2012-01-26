@@ -6,11 +6,13 @@ ibcli_cpp_SOURCES = \
   input.cpp \
   audit_log.cpp \
   audit_log_generator.cpp \
-  raw_generator.cpp
+  raw_generator.cpp \
+  ironbee.cpp
 ibcli_cpp_CXXFLAGS = -std=c++11
 ibcli_cpp_LDFLAGS = \
   -lboost_system \
   -lboost_filesystem \
   -lboost_program_options \
   -lboost_regex \
-  -lstdc++
+  -lstdc++ \
+  -lironbee
