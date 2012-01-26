@@ -88,6 +88,14 @@ typedef enum ib_status_t {
 } ib_status_t;
 
 /**
+ * Convert status code to a string for human consumption.
+ *
+ * @param[in] status Status coce.
+ * @return String describing status code, e.g., EINVAL.
+ **/
+const char *ib_status_to_string(ib_status_t status);
+
+/**
  * @} IronBeeUtil
  */
 
