@@ -1,6 +1,7 @@
 #include "input.hpp"
 #include "audit_log_generator.hpp"
 #include "raw_generator.hpp"
+#include "ironbee.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -74,6 +75,10 @@ int main( int argc, char** argv )
   input_factory_map_t input_factory_map;
   input_factory_map["audit"] = &init_audit_input;
   input_factory_map["raw"]   = &init_raw_input;
+
+  // Initialize IronBee.
+  IronBee::IronBee ib;
+  ib.load_config( config_path );
 
   // We loop through the options, generating and processing input generators
   // as needed to limit the scope of each input generator.  As input
