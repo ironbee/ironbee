@@ -19,6 +19,16 @@ LoadModule "ibmod_poc_sig.so"
 ### Main Context (need separate directives for these)
 Set parser "htp"
 
+# Trace / example module
+#LoadModule "ibmod_trace.so"
+
+# Parse the user agent
+#LoadModule "ibmod_user_agent.so"
+
+# GeoIP lookup
+#LoadModule "ibmod_geoip.so"
+#GeoIPDatabaseFile /var/lib/GeoIP/GeoLiteCity.dat
+
 # Enable inspection engine (TODO: Implement)
 #InspectionEngine On
 
