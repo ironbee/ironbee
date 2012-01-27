@@ -147,7 +147,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  * @param[in] name The name of the operator to create.
  * @param[in] parameters Parameters used to create the instance.
  * @param[in] flags Operator instance flags (i.e. IB_OPINST_FLAG_INVERT)
- * @param[out] instance The resulting instance.
+ * @param[out] op_inst The resulting instance.
  *
  * @returns IB_OK on success, IB_EINVAL if the named operator does not exist.
  */
@@ -173,7 +173,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(ib_operator_inst_t *op_inst);
  *
  * @param[in] ib Ironbee engine
  * @param[in] tx The transaction for this action.
- * @param[in] op Operator instance to use.
+ * @param[in] op_inst Operator instance to use.
  * @param[in] field Field to operate on.
  * @param[out] result The result of the operator
  *

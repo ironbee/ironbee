@@ -30,6 +30,8 @@
 
 #include "gtest/gtest.h"
 
+#include <stdexcept>
+
 class BaseFixture : public ::testing::Test {
 public:
     virtual void SetUp() {
@@ -45,12 +47,119 @@ public:
         ib_engine_init(ib_engine);
     }
 
+    /**
+     * @brief Parse and load the configuration TestName.TestCase.config.
+     * @details The given file is sent through the IronBee configuration 
+     *          parser. It is not expected that modules will be loaded
+     *          through this interface, but that they will have
+     *          already been initialized using the BaseModuleFixture
+     *          class (a child of this class). The parsing of
+     *          the configuration file, then, is to setup to test
+     *          the loaded module, or other parsing.
+     * @paragraph Realize, though, that nothing prevents the tester from
+     *            using the LoadModule directive in their configuration.
+     */
+    virtual void configureIronBee() {
+        using ::testing::TestInfo;
+        using ::testing::UnitTest;
+
+        const TestInfo* const info =
+            UnitTest::GetInstance()->current_test_info();
+
+        std::string configFile = 
+            std::string(info->test_case_name())+
+            "."+
+            std::string(info->name()) +
+            ".config";
+        
+        ib_status_t rc;
+        ib_cfgparser_t *p;
+        rc = ib_cfgparser_create(&p, ib_engine);
+
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("Failed to create parser: "+rc));
+        }
+
+        rc = ib_cfgparser_parse(p, configFile.c_str());
+
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("Failed to parse configuration file."));
+        }
+    }
+
     virtual void TearDown() {
         ib_engine_destroy(ib_engine);
     }
 
     ib_engine_t *ib_engine;
     ib_plugin_t ibt_ibplugin;
+};
+
+/**
+ * @brief Testing fixture by which to test IronBee modules.
+ * @details Users of this class should extend it and pass in
+ *          the name of the module to be tested.
+ * @code
+ * class MyModTest : public BaseModuleFixture {
+ *     public:
+ *     MyModTest() : BaseModuleFixture("mymodule.so") { }
+ * };
+ *
+ * TEST_F(MyModTest, test001) {
+ *   // Test the module!
+ * }
+ * @endcode
+ */
+class BaseModuleFixture : public BaseFixture {
+protected:
+    //! The file name of the module.
+    std::string m_module_file;
+
+    //! The path to the module file to load at SetUp time.
+    std::string m_module_path;
+
+    //! The setup module is stored here.
+    ib_module_t *ib_module;
+
+
+public:
+    BaseModuleFixture(const std::string& module_file) :
+        m_module_file(module_file),
+        m_module_path(std::string(IB_XSTRINGIFY(MODULE_BASE_PATH)) +
+                      "/" + 
+                      module_file)
+    {}
+
+    virtual void SetUp()
+    {
+        BaseFixture::SetUp();
+
+        ib_status_t rc;
+        
+        rc = ib_module_load(&ib_module, ib_engine, m_module_path.c_str());
+
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to load module " + m_module_file);
+        }
+
+        rc = ib_module_init(ib_module, ib_engine);
+
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to init module " + m_module_file);
+        }
+    }
+
+    virtual void TearDown() {
+        ib_status_t rc;
+        rc = ib_module_unload(ib_module);
+
+        if (rc != IB_OK) {
+            std::cerr<<"Failed to unload module "+m_module_file+" with ib_status of "<<rc<<std::endl;
+        }
+        BaseFixture::TearDown();
+    }
 };
 
 #endif /* __BASE_FIXTURE_H__ */

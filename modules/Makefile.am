@@ -97,7 +97,7 @@ ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_rules.c \
                               user_agent_private.h 
 ibmod_user_agent_la_CFLAGS = ${AM_CFLAGS}
-ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS) -libutil
+ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS)
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
@@ -117,4 +117,8 @@ user_agent_SOURCES = user_agent.c \
                      user_agent_rules.c \
                      user_agent_private.h
 user_agent_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) -DUSER_AGENT_MAIN
-user_agent_LDFLAGS = $(AM_LDFLAGS) -libutil
+user_agent_LDFLAGS = $(AM_LDFLAGS) $(top_builddir)/util/libibutil.la -libutil -lhtp
+if FREEBSD
+user_agent_LDADD = -liconv
+endif
+
