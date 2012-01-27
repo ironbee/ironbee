@@ -33,8 +33,8 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeRuleEngine Rule Engine
- * @ingroup IronBee
+ * @defgroup IronBeeRuleDefs Rule Engine Definitions
+ * @ingroup IronBeeEngine
  * @{
  */
 
@@ -59,9 +59,14 @@ typedef enum {
 #define IB_RULE_FLAG_NONE   0x00000000    /**< No flags */
 
 /**
- * Rule engine: Rule
+ * Rule engine: Basic rule type
  */
 typedef struct ib_rule_t ib_rule_t;
+
+
+/**
+ * @} IronBeeRuleDefs
+ */
 
 #ifdef __cplusplus
 }

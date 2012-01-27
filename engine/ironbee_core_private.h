@@ -41,11 +41,6 @@
 extern "C" {
 #endif
 
-/**
- * @defgroup IronBeeCore IronBee Core 
- * @ingroup IronBee
- * @{
- */
 
 /**
  * Rule engine: Rule meta data

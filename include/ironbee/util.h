@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeUtil Utility
+ * @defgroup IronBeeUtil Utility Functions
  * @ingroup IronBee
  * @{
  */
@@ -165,6 +165,7 @@ ib_status_t DLL_PUBLIC ib_initialize(void);
  * Shutdown the IB lib.
  */
 void DLL_PUBLIC ib_shutdown(void);
+
 
 /**
  * @} IronBeeUtil

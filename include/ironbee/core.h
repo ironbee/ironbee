@@ -92,7 +92,7 @@ struct ib_core_cfg_t {
 
 
 /**
- * @} IronBeeModule
+ * @} IronBeeCore
  */
 
 #ifdef __cplusplus

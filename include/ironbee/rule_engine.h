@@ -60,9 +60,9 @@ typedef enum {
  *
  * Allocates a rule for the rule engine, initializes it.
  *
- * @param ib IronBee engine
- * @param ctx Current IronBee context
- * @param prule Address which new rule is written
+ * @param[in] ib IronBee engine
+ * @param[in] ctx Current IronBee context
+ * @param[out] prule Address which new rule is written
  *
  * @returns Status code
  */
@@ -73,10 +73,9 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
 /**
  * Set a rule's operator.
  *
- * @param ib IronBee engine
- * @param rule Rule to operate on
- * @param opinst Operator instance
- * @param flags Operator flags
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] opinst Operator instance
  *
  * @returns Status code
  */
@@ -87,9 +86,9 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
 /**
  * Set a rule's ID.
  *
- * @param ib IronBee engine
- * @param rule Rule to operate on
- * @param id Rule ID
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] id Rule ID
  *
  * @returns Status code
  */
@@ -100,7 +99,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
 /**
  * Get a rule's ID string.
  *
- * @param rule Rule to operate on
+ * @param[in] rule Rule to operate on
  *
  * @returns Status code
  */
@@ -109,9 +108,10 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
 /**
  * Update a rule's flags.
  *
- * @param ib IronBee engine
- * @param rule Rule to operate on
- * @param id Rule ID
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] op Flag operation
+ * @param[in] flags Flags to operate on
  *
  * @returns Status code
  */
@@ -123,7 +123,7 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
 /**
  * Get a rule's flags.
  *
- * @param rule The rule
+ * @param[in] rule The rule
  *
  * @returns The rule's flags
  */
@@ -132,9 +132,9 @@ ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule);
 /**
  * Add an input field to a rule.
  *
- * @param ib IronBee engine
- * @param rule Rule to operate on
- * @param name Input field name.
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] name Input field name.
  *
  * @returns Status code
  */
@@ -145,9 +145,9 @@ ib_status_t DLL_PUBLIC ib_rule_add_input(ib_engine_t *ib,
 /**
  * Add a modifier to a rule.
  *
- * @param ib IronBee engine
- * @param rule Rule to operate on
- * @param str Modifier string
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] str Modifier string
  *
  * @returns Status code
  */
@@ -158,10 +158,10 @@ ib_status_t DLL_PUBLIC ib_rule_add_modifier(ib_engine_t *ib,
 /**
  * Add a modifier to a rule.
  *
- * @param ib IronBee engine
- * @param rule Rule to operate on
- * @param action Action instance to add
- * @param which Which action list to add to
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] action Action instance to add
+ * @param[in] which Which action list to add to
  *
  * @returns Status code
  */
@@ -175,10 +175,10 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
  *
  * Register a rule for the rule engine.
  *
- * @param ib IronBee engine
- * @param ctx Context in which to execute the rule
- * @param rule Rule to register
- * @param phase Phase number in which to execute the rule
+ * @param[in] ib IronBee engine
+ * @param[in,out] ctx Context in which to execute the rule
+ * @param[in,out] rule Rule to register
+ * @param[in] phase Phase number in which to execute the rule
  *
  * @returns Status code
  */
@@ -190,7 +190,7 @@ ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
 /**
  * Get the memory pool to use for rule allocations.
  *
- * @param ib IronBee engine
+ * @param[in] ib IronBee engine
  *
  * @returns Pointer to the memory pool to use.
  */
