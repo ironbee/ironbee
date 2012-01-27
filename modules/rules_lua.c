@@ -186,31 +186,6 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t lua_operator_create(ib_mpool_t *pool,
-                                       const char *pattern,
-                                       ib_operator_inst_t *op_inst)
-{
-    IB_FTRACE_INIT(lua_operator_create);
-    /* Nop. */
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t lua_pcre_operator_destroy(ib_operator_inst_t *op_inst)
-{
-    IB_FTRACE_INIT(lua_operator_destroy);
-    /* Nop. */
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t lua_pcre_operator_execute(void *data,
-                                             ib_field_t *field,
-                                             ib_num_t *result)
-{
-    IB_FTRACE_INIT(lua_operator_execute);
-    /* Nop. */
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 /**
  * @brief Print a thread name of @a L into the character buffer @a thread_name.
  * @details @a thread_name should be about 20 characters long
