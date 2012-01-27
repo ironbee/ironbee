@@ -31,18 +31,25 @@ extern "C" {
 #define TESTING
 
 #include "ibtest_util.c"
-
+#include "ironbee/hash.h"
+#include "ironbee/mpool.h"
 #include <string>
+#include "base_fixture.h"
 
 namespace {
     const char* luafile = TEST_LUA_FILE;
     const char* ffifile = TEST_FFI_FILE;
 }
 
-TEST(TestIronBeeModuleRulesLua, load_eval)
+class TestIronBeeModuleRulesLua : public BaseModuleFixture {
+    public:
+    TestIronBeeModuleRulesLua() : BaseModuleFixture("ibmod_rules.so") {
+    }
+
+};
+
+TEST_F(TestIronBeeModuleRulesLua, load_eval)
 {
-    ib_engine_t *ib;
-    ibtest_engine_create(&ib);
     ib_tx_t tx;
 
     lua_State *L = luaL_newstate();
@@ -50,54 +57,94 @@ TEST(TestIronBeeModuleRulesLua, load_eval)
     luaL_openlibs(L);
 
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
+    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib_engine, L, ffifile));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ffi", "ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib_engine, L, luafile));
 
-    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ironbee", "ironbee-ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ffi", "ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, luafile));
-
-    ibtest_engine_destroy(ib);
 }
 
-TEST(TestIronBeeModuleRulesLua, load_func_eval)
+TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
 {
-    ib_engine_t *ib;
-    ibtest_engine_create(&ib);
+    int res = 0;
     ib_tx_t tx;
     tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
 
     lua_State *L = luaL_newstate();
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
     luaL_openlibs(L);
-    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ironbee", "ironbee-ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ffi", "ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_load_func(ib, L, luafile, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_func_eval(ib, &tx, L, "f1"));
-
-    ibtest_engine_destroy(ib);
+    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib_engine, L, ffifile));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ffi", "ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L, luafile, "f1"));
+    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(ib_engine, &tx, L, "f1", &res));
+    ASSERT_EQ(5, res);
 }
 
-TEST(TestIronBeeModuleRulesLua, new_state)
+TEST_F(TestIronBeeModuleRulesLua, new_state)
 {
-    ib_engine_t *ib;
-    ibtest_engine_create(&ib);
+    int res = 0;
     ib_tx_t tx;
     tx.id = "tx_id.TestIronBeeModuleRulesLua.new_state";
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
-    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib, L, ffifile));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ironbee", "ironbee-ffi"));
-    ASSERT_EQ(IB_OK, ib_lua_require(ib, L, "ffi", "ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_load_eval(ib_engine, L, ffifile));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
+    ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ffi", "ffi"));
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
 
     lua_State *L2;
 
-    ASSERT_EQ(IB_OK, ib_lua_new_thread(ib, L, &L2));
+    ASSERT_EQ(IB_OK, ib_lua_new_thread(ib_engine, L, &L2));
     ASSERT_NE(static_cast<lua_State*>(NULL), L2);
-    ASSERT_EQ(IB_OK, ib_lua_load_func(ib, L2, luafile, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_func_eval(ib, &tx, L2, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_join_thread(ib, L, &L2));
+    ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L2, luafile, "f1"));
+    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(ib_engine, &tx, L2, "f1", &res));
+    ASSERT_EQ(IB_OK, ib_lua_join_thread(ib_engine, L, &L2));
+    ASSERT_EQ(5, res);
+}
 
-    ibtest_engine_destroy(ib);
+TEST_F(TestIronBeeModuleRulesLua, operator_test)
+{
+    int res = 0;
+    ib_tx_t tx;
+
+    ib_operator_t op;
+    ib_operator_inst_t *op_inst=NULL;
+    ib_num_t result;
+
+    ib_field_t* field1;
+
+    const char* op_name = "lua:test_module_rules_lua.lua";
+    const char* rule_name = "luarule001";
+
+    char* str1 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
+    strcpy(str1, "string 1");
+
+    tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
+    
+    // Create field 1.
+    ASSERT_EQ(IB_OK,
+        ib_field_create(
+            &field1, ib_engine->mp, "field1", IB_FTYPE_NULSTR, &str1));
+
+    /* Configure the operator. */
+    configureIronBee();
+
+    // Ensure that the operator exists.
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, op_name, &op));
+
+    ASSERT_EQ(IB_OK, ib_operator_inst_create(ib_engine,
+                                             op_name,
+                                             "unused parameter.",
+                                             0,
+                                             &op_inst));
+
+    op_inst->data = (void*) rule_name;
+
+    // Attempt to match.
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
+        ib_engine, &tx, op_inst->data, field1, &result));
+
+    // This time we should succeed.
+    ASSERT_TRUE(result);
 }

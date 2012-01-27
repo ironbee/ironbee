@@ -156,8 +156,13 @@ public:
         rc = ib_module_unload(ib_module);
 
         if (rc != IB_OK) {
-            std::cerr<<"Failed to unload module "+m_module_file+" with ib_status of "<<rc<<std::endl;
+            std::cerr<<"Failed to unload module "
+                     <<m_module_file
+                     <<" with ib_status of "
+                     <<rc
+                     <<std::endl;
         }
+
         BaseFixture::TearDown();
     }
 };

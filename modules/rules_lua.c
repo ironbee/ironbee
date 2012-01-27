@@ -101,10 +101,11 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_lua_func_eval(ib_engine_t *ib,
-                             ib_tx_t *tx,
-                             lua_State *L,
-                             const char *func_name)
+ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 lua_State *L,
+                                 const char *func_name,
+                                 int *return_value)
 {
     IB_FTRACE_INIT(ib_lua_func_eval);
   
@@ -141,7 +142,7 @@ ib_status_t ib_lua_func_eval(ib_engine_t *ib,
     lua_settable(L, -3);
 
     /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
-    lua_rc = lua_pcall(L, 1, 0, 0);
+    lua_rc = lua_pcall(L, 1, 1, 0);
   
     /* Only check errors if ec is not 0 (LUA_OK). */
     if (lua_rc != 0) {
@@ -177,7 +178,36 @@ ib_status_t ib_lua_func_eval(ib_engine_t *ib,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
+
+    /* If there is no error, pull the return value off. */
+    *return_value = lua_tointeger(L, -1);
+    lua_pop(L, -1);
   
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t lua_operator_create(ib_mpool_t *pool,
+                                       const char *pattern,
+                                       ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(lua_operator_create);
+    /* Nop. */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t lua_pcre_operator_destroy(ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(lua_operator_destroy);
+    /* Nop. */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t lua_pcre_operator_execute(void *data,
+                                             ib_field_t *field,
+                                             ib_num_t *result)
+{
+    IB_FTRACE_INIT(lua_operator_execute);
+    /* Nop. */
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

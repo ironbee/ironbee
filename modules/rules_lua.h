@@ -58,12 +58,14 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
  *                as the local variable @c tx.
  * @param[in] L The Lua execution state/stack to use to call the rule.
  * @param[in] func_name The name of the Lua function to call.
+ * @param[out] return_value The integer that this function evaluates to.
  * @returns IronBee status.
  */
-ib_status_t ib_lua_func_eval(ib_engine_t *ib,
-                             ib_tx_t *tx,
-                             lua_State *L,
-                             const char *func_name);
+ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 lua_State *L,
+                                 const char *func_name,
+                                 int *return_value);
 
 /**
  * @brief Spawn a new Lua thread and place a pointer to it in @a L.

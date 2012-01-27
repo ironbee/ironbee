@@ -26,3 +26,5 @@ else
   log("TX id value is \"" .. ffi.string(tx.id) .. "\"")
 end
 
+-- Return 5
+return 5
