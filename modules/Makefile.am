@@ -18,7 +18,6 @@ pkglib_LTLIBRARIES =  ibmod_htp.la \
                      ibmod_poc_ac_sig.la \
                      ibmod_lua.la \
                      ibmod_poc_sig.la \
-                     ibmod_remote_address.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la \
                      ibmod_trace.la
@@ -72,10 +71,6 @@ ibmod_poc_sig_la_CFLAGS = $(AM_CFLAGS)
 ibmod_poc_ac_sig_la_SOURCES = poc_ac_sig.c 
 ibmod_poc_ac_sig_la_LDFLAGS = $(AM_LDFLAGS)
 ibmod_poc_ac_sig_la_CFLAGS = $(AM_CFLAGS)
-
-ibmod_remote_address_la_SOURCES = remote_address.c
-ibmod_remote_address_la_CFLAGS = ${AM_CFLAGS}
-ibmod_remote_address_la_LDFLAGS = $(AM_LDFLAGS)
 
 ibmod_rules_la_SOURCES = rules.c \
                          rules_lua.c \
