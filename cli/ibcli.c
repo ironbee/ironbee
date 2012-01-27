@@ -751,7 +751,7 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
     ib_list_node_t *node = NULL;
 
     /* Extract the request headers field from the provider instance */
-    rc = ib_data_get(tx->dpi, "User-Agent", &req);
+    rc = ib_data_get(tx->dpi, "UA", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4,
                      "print_user_agent: No user agent info available" );

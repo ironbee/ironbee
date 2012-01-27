@@ -445,7 +445,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     }
 
     /* Build a new list. */
-    rc = ib_data_add_list(tx->dpi, "User-Agent", &agent_list);
+    rc = ib_data_add_list(tx->dpi, "UA", &agent_list);
     if (rc != IB_OK)
     {
         ib_log_error(ib, 0, "Unable to add UserAgent list to DPI.");
@@ -459,13 +459,13 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     }
 
     /* Store product */
-    rc = modua_store_field(ib, tx->mp, agent_list, "product", product);
+    rc = modua_store_field(ib, tx->mp, agent_list, "PRODUCT", product);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Store Platform */
-    rc = modua_store_field(ib, tx->mp, agent_list, "platform", platform);
+    rc = modua_store_field(ib, tx->mp, agent_list, "OS", platform);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
