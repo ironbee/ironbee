@@ -124,7 +124,8 @@ struct ib_rules_t {
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
  */
-ib_status_t ib_rule_engine_init(ib_engine_t *ib, ib_module_t *mod);
+ib_status_t ib_rule_engine_init(ib_engine_t *ib,
+                                ib_module_t *mod);
 
 /**
  * @internal
@@ -161,7 +162,8 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib,
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
  */
-ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod);
+ib_status_t ib_core_actions_init(ib_engine_t *ib,
+                                 ib_module_t *mod);
 
 
 #ifdef __cplusplus

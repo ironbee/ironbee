@@ -39,9 +39,9 @@
  * @internal
  * Create function for the "@str" operators
  *
- * @param mp Memory pool to use for allocation
- * @param parameters Constant parameters
- * @param op_inst Instance operator
+ * @param[in,out] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters
+ * @param[in,out] op_inst Instance operator
  *
  * @returns Status code
  */
@@ -71,9 +71,9 @@ static ib_status_t strop_create(ib_mpool_t *mp,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param data C-style string to compare to
- * @param field Field value
- * @param result Pointer to number in which to store the result
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -115,9 +115,9 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param data C-style string to compare to
- * @param field Field value
- * @param result Pointer to number in which to store the result
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -161,9 +161,9 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param data C-style string to compare to
- * @param field Field value
- * @param result Pointer to number in which to store the result
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -185,9 +185,9 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param data C-style string to compare to
- * @param field Field value
- * @param result Pointer to number in which to store the result
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -208,9 +208,9 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param data C-style string to compare to
- * @param field Field value
- * @param result Pointer to number in which to store the result
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -233,6 +233,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     IB_FTRACE_INIT(ib_core_operators_init);
     ib_status_t rc;
 
+    /* Register the string equal '@streq' operator */
     rc = ib_operator_register(ib,
                               "@streq",
                               IB_OP_FLAG_NONE,
@@ -243,6 +244,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Register the string contains '@contains' operator */
     rc = ib_operator_register(ib,
                               "@contains",
                               IB_OP_FLAG_NONE,
@@ -253,6 +255,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Register the field exists '@exists' operator */
     rc = ib_operator_register(ib,
                               "@exists",
                               IB_OP_FLAG_ALLOW_NULL,
@@ -263,6 +266,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Register the true '@true' operator */
     rc = ib_operator_register(ib,
                               "@true",
                               IB_OP_FLAG_ALLOW_NULL,
@@ -273,6 +277,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Register the false '@false' operator */
     rc = ib_operator_register(ib,
                               "@false",
                               IB_OP_FLAG_ALLOW_NULL,

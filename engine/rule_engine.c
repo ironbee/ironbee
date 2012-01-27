@@ -58,10 +58,10 @@ static rule_cbdata_t rule_cbdata[] = {
  * @internal
  * Execute a single rule
  *
- * @param ib Engine
- * @param rule Rule to execute
- * @param tx Transaction
- * @param result Pointer to number in which to store the result
+ * @param[in] ib Engine
+ * @param[in] rule Rule to execute
+ * @param[in,out] tx Transaction
+ * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -131,11 +131,11 @@ static ib_status_t execute_rule(ib_engine_t *ib,
  * @internal
  * Execute a single rule action
  *
- * @param ib Engine
- * @param rule Rule to execute
- * @param tx Transaction
- * @param name Action list name ("TRUE"/"FALSE")
- * @param action The action to execute
+ * @param[in] ib Engine
+ * @param[in] rule Rule to execute
+ * @param[in,out] tx Transaction
+ * @param[in] name Action list name ("TRUE"/"FALSE")
+ * @param[in] action The action to execute
  *
  * @returns Status code
  */
@@ -168,11 +168,11 @@ static ib_status_t execute_action(ib_engine_t *ib,
  * @internal
  * Execute a rule's actions
  *
- * @param ib Engine
- * @param rule Rule to execute
- * @param tx Transaction
- * @param name Name of the actions ("TRUE" or "FALSE")
- * @param actions List of actions to execute
+ * @param[in] ib Engine
+ * @param[in] rule Rule to execute
+ * @param[in,out] tx Transaction
+ * @param[in] name Name of the actions ("TRUE" or "FALSE")
+ * @param[in] actions List of actions to execute
  *
  * @returns Status code
  */
@@ -215,8 +215,8 @@ static ib_status_t execute_actions(ib_engine_t *ib,
  * @internal
  * Run a set of rules.
  *
- * @param ib Engine
- * @param tx Transaction
+ * @param[in] ib Engine
+ * @param[in,out] tx Transaction
  * @param cbdata Callback data (unused)
  *
  * @returns Status code
@@ -280,10 +280,10 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
  * @internal
  * Initialize a rule engine object.
  *
- * @param ib Engine
- * @param mp Memory pool to use for allocations
- * @param flags Initialization flags (IB_RULES_INIT_*)
- * @param prules Pointer to new rules object
+ * @param[in] ib Engine
+ * @param[in,out] mp Memory pool to use for allocations
+ * @param[in] flags Initialization flags (IB_RULES_INIT_*)
+ * @param[out] prules Pointer to new rules object
  *
  * @returns Status code
  */
