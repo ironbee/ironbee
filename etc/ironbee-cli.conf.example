@@ -27,7 +27,7 @@ Set parser "htp"
 # Trace / example module
 #LoadModule "ibmod_trace.so"
 
-# Extract the user agent
+# Parse the user agent
 #LoadModule "ibmod_user_agent.so"
 
 # GeoIP lookup
