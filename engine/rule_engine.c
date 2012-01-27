@@ -56,41 +56,6 @@ static rule_cbdata_t rule_cbdata[] = {
 
 /**
  * @internal
- * Execute a single rule on a single field
- *
- * @param ib Engine
- * @param opinst Operator instance
- * @param field Field argument to operator
- * @param fname Name of the field
- * @param result Pointer to number in which to store the result
- *
- * @returns Status code
- */
-static ib_status_t execute_operator(ib_engine_t *ib,
-                                    ib_operator_inst_t *opinst,
-                                    ib_field_t *field,
-                                    const char *fname,
-                                    ib_num_t *result)
-{
-    IB_FTRACE_INIT(execute_operator);
-    ib_status_t   rc;
-
-    /* Run it, check the results */
-    rc = ib_operator_execute(ib, NULL, opinst, field, result);
-    if (rc != IB_OK) {
-        ib_log_debug(ib, 4,
-                     "Operator %s returned an error for field %s: %d",
-                     opinst->op->name, fname, rc);
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    ib_log_debug(ib, 9,
-                 "Operator %s, field %s => %d",
-                 opinst->op->name, fname, *result);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
  * Execute a single rule
  *
  * @param ib Engine
@@ -135,12 +100,15 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         }
 
         /* Execute the operator */
-        rc = execute_operator(ib, opinst, value, fname, &result);
+        rc = ib_operator_execute(ib, NULL, opinst, value, &result);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4, "Operator %s returned an error: %d",
-                         opinst->op->name, rc);
+            ib_log_debug(ib, 4,
+                         "Operator %s returned an error for field %s: %d",
+                         opinst->op->name, fname, rc);
             continue;
         }
+        ib_log_debug(ib, 9, "Operator %s, field %s => %d",
+                     opinst->op->name, fname, result);
 
         /* Store the result */
         if (result != 0) {
