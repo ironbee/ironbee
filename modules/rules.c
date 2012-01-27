@@ -75,7 +75,7 @@ static lua_State *g_ironbee_rules_lua;
 /**
  * @brief Semaphore ID used to protect Lua thread creation and destruction.
  */
-static int g_lua_lock;
+static int g_lua_lock = -1;
 
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
@@ -748,6 +748,24 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
+static void clean_up_ipc_mem()
+{
+    int rc;
+
+    if (g_lua_lock != -1) {
+        rc = semctl(g_lua_lock, 0, IPC_RMID);
+
+        if (rc != -1) {
+            g_lua_lock = -1;
+        }
+        else {
+            fprintf(stderr, "Failed to clean up semaphore %d."
+                            "Please remove it manually with ipcrm or similar.",
+                            g_lua_lock);
+        }
+    }
+}
+
 static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(rules_init);
@@ -768,29 +786,36 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
     /* Initialize semaphore */
     sem_val.val=0;
-    g_lua_lock = semget(IPC_PRIVATE, 1, S_IRUSR|S_IWUSR);
 
-    if (g_lua_lock == -1) {
-        ib_log_error(ib, 1,
-          "Failed to initialize Lua runtime lock - %s", strerror(errno));
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
+    if ( g_lua_lock == -1 ) {
+        ib_log_debug(ib, 1, "Initializing Lua environment guard.");
 
-    sys_rc = semctl(g_lua_lock, 0, SETVAL, sem_val);
+        g_lua_lock = semget(IPC_PRIVATE, 1, S_IRUSR|S_IWUSR);
 
-    if (sys_rc == -1) {
-        ib_log_error(ib, 1,
-          "Failed to initialize Lua runtime lock - %s", strerror(errno));
-        semctl(g_lua_lock, IPC_RMID, 0);
-        g_lua_lock = -1;
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        if (g_lua_lock == -1) {
+            ib_log_error(ib, 1,
+              "Failed to initialize Lua runtime lock - %s", strerror(errno));
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        atexit(&clean_up_ipc_mem);
+
+        sys_rc = semctl(g_lua_lock, 0, SETVAL, sem_val);
+
+        if (sys_rc == -1) {
+            ib_log_error(ib, 1,
+              "Failed to initialize Lua runtime lock - %s", strerror(errno));
+            semctl(g_lua_lock, 0, IPC_RMID);
+            g_lua_lock = -1;
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
     }
 
     ib_log_debug(ib, 1, "Initializing rules module.");
 
     if (m == NULL) {
         IB_FTRACE_MSG("Module is null.");
-        semctl(g_lua_lock, IPC_RMID, 0);
+        semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -805,7 +830,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         ib_log_error(ib, 1, 
             "Failed to eval \"%s\" for Lua rule execution.",
             c_ffi_file);
-        semctl(g_lua_lock, IPC_RMID, 0);
+        semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
     }
@@ -816,7 +841,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         ib_log_error(ib, 1,
             "Failed to require \"%s\" for Lua rule execution.",
             c_ffi_file);
-        semctl(g_lua_lock, IPC_RMID, 0);
+        semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
     }
@@ -825,7 +850,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ffi", "ffi");
     if (ib_rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to load FFI for Lua rule execution.");
-        semctl(g_lua_lock, IPC_RMID, 0);
+        semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
     }
@@ -838,14 +863,7 @@ static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m)
     IB_FTRACE_INIT(rules_fini);
     ib_log_debug(ib, 4, "Rules module unloading.");
     
-    if (g_lua_lock >= 0) {
-        semctl(g_lua_lock, IPC_RMID, 0);
-    }
-
-    if (m == NULL) {
-        IB_FTRACE_MSG("Module is null.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+    clean_up_ipc_mem();
 
     if (g_ironbee_rules_lua != NULL) {
         lua_close(g_ironbee_rules_lua);
