@@ -556,6 +556,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     ib_field_t    *req_fwd = NULL;
     ib_status_t    rc = IB_OK;
     ib_bytestr_t  *bs;
+    uint8_t       *data;
     unsigned       len;
     char          *buf;
     uint8_t       *comma;
@@ -572,11 +573,12 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* Found it: copy the data into a newly allocated string buffer */
     bs = ib_field_value_bytestr(req_fwd);
     len = ib_bytestr_length(bs);
+    data = ib_bytestr_ptr(bs);
 
     /* Search for a comma in the buffer */
-    comma = memchr(ib_bytestr_ptr(bs), ',', len);
+    comma = memchr(data, ',', len);
     if (comma != NULL) {
-        len = comma - ib_bytestr_ptr(bs);
+        len = comma - data;
     }
 
     /* Allocate the memory */
@@ -589,7 +591,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     }
 
     /* Copy the string out */
-    memcpy(buf, ib_bytestr_ptr(bs), len);
+    memcpy(buf, data, len);
     buf[len] = '\0';
 
     ib_log_debug(ib, 4, "Remote address => '%s'", buf);
