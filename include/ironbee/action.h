@@ -49,7 +49,7 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  * @param[in] pool Memory pool to be used for allocating needed memory.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the action instance.
- * @param[in,out] act_inst Pointer to the operator instance to be initialized.
+ * @param[in,out] act_inst Pointer to the action instance to be initialized.
  *
  * @returns IB_OK if successful.
  */
@@ -63,14 +63,14 @@ typedef ib_status_t (* ib_action_create_fn_t)(ib_mpool_t *pool,
  * This frees any resources allocated to the instance but does not free
  * the instance itself.
  *
- * @param op_inst Action Instance to be destroyed.
+ * @param act_inst Action Instance to be destroyed.
  *
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_action_destroy_fn_t)(ib_action_inst_t *act_inst);
 
 /**
- * Operator instance execution callback type
+ * Action instance execution callback type
  *
  * @param[in] data Instance data needed for execution.
  * @param[in] rule The rule executing this action.
