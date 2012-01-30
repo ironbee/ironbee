@@ -511,7 +511,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     void *data)
 {
-    IB_FTRACE_INIT(modua_handle_req_headers);
+    IB_FTRACE_INIT(modua_user_agent);
     ib_field_t   *req_agent = NULL;
     ib_status_t   rc = IB_OK;
     ib_bytestr_t *bs;
@@ -544,15 +544,15 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction object
- * @param[in] data Callback data (not used)
+ * @param[in] cbdata Callback data (not used)
  *
  * @returns Status code
  */
 static ib_status_t modua_remoteip(ib_engine_t *ib,
                                   ib_tx_t *tx,
-                                  void *data)
+                                  void *cbdata)
 {
-    IB_FTRACE_INIT(modra_remoteip_);
+    IB_FTRACE_INIT(modra_remoteip);
     ib_field_t    *req_fwd = NULL;
     ib_status_t    rc = IB_OK;
     ib_bytestr_t  *bs;
@@ -561,17 +561,20 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     char          *buf;
     uint8_t       *comma;
 
-    /* Extract the request headers field from the provider instance */
+    /* Extract the X-Forwarded-For from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &req_fwd);
     if ( (req_fwd == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, 4,
-                     "request_headers_event: No forward header" );
+        ib_log_debug(ib, 4, "No forward header" );
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
 
     /* Found it: copy the data into a newly allocated string buffer */
     bs = ib_field_value_bytestr(req_fwd);
+    if (bs == NULL) {
+        ib_log_debug(ib, 4, "Forward header not a bytestr");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
     len = ib_bytestr_length(bs);
     data = ib_bytestr_ptr(bs);
 
