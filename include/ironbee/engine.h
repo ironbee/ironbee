@@ -146,6 +146,7 @@ typedef enum {
 #define IB_TX_FRES_SEENHEADERS  (1 << 0) /**< Response headers seen */
 #define IB_TX_FRES_SEENBODY     (1 <<11) /**< Response body seen */
 #define IB_TX_FRES_FINISHED     (1 <<12) /**< Response finished  */
+#define IB_TX_FSUSPICIOUS       (1 <<13) /**< Transaction is suspicous */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
