@@ -698,34 +698,34 @@ end
 -- Lua OO Wrappers around IronBee raw C types
 -- TODO: Add metatable w/__tostring for each type
 -- ===============================================
-local function newMpool(val)
+function newMpool(val)
     local c_val = ffi.cast("ib_mpool_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
-local function newProvider(val)
+function newProvider(val)
     local c_val = ffi.cast("ib_provider_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newProviderInst(val)
+function newProviderInst(val)
     local c_val = ffi.cast("ib_provider_inst_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newContext(val)
+function newContext(val)
     local c_val = ffi.cast("ib_context_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newField(val)
+function newField(val)
     local c_val = ffi.cast("ib_field_t *", val)
     local c_list
     local t = {
@@ -804,21 +804,21 @@ local function newField(val)
     return t
 end
 
-local function newLogevent(val)
+function newLogevent(val)
     local c_val = ffi.cast("ib_logevent_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newEngine(val)
+function newEngine(val)
     local c_val = ffi.cast("ib_engine_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newConnData(val)
+function newConnData(val)
     local c_val = ffi.cast("ib_conndata_t *", val)
     return {
         cvalue = function() return c_val end,
@@ -827,18 +827,19 @@ local function newConnData(val)
     }
 end
 
-local function newConn(val)
+function newConn(val)
     local c_val = ffi.cast("ib_conn_t *", val)
     return {
         cvalue = function() return c_val end,
         mp = function() return newMpool(c_val.mp) end,
+        ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
         tx_count = function() return ffi.cast("size_t", c_val.tx_count) end,
     }
 end
 
-local function newTxData(val)
+function newTxData(val)
     local c_val = ffi.cast("ib_txdata_t *", val)
     return {
         cvalue = function() return c_val end,
@@ -848,11 +849,12 @@ local function newTxData(val)
     }
 end
 
-local function newTx(val)
+function newTx(val)
     local c_val = ffi.cast("ib_tx_t *", val)
     return {
         cvalue = function() return c_val end,
         mp = function() return newMpool(c_val.mp) end,
+        ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
         epi = function() return newProviderInst(c_val.epi) end,
