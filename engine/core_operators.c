@@ -181,6 +181,40 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
 
 /**
  * @internal
+ * Execute function for the "@checkflag" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_checkflag_execute(ib_engine_t *ib,
+                                        ib_tx_t *tx,
+                                        void *data,
+                                        ib_field_t *field,
+                                        ib_num_t *result)
+{
+    IB_FTRACE_INIT(op_checkflag_execute);
+
+    /* Data will be a C-Style string */
+    const char *cstr = (const char *)data;
+
+    /* Handle the suspicous flag */
+    if (strcasecmp(cstr, "suspicious") == 0) {
+        *result = ib_tx_flags_isset(tx, IB_TX_FSUSPICIOUS);
+    }
+    else {
+        ib_log_error(tx->ib, 4, "checkflag operator: invalid flag '%s'", cstr);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
  * Execute function for the "@true" operator
  *
  * @param[in] ib Ironbee engine.
@@ -251,6 +285,17 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               strop_create,
                               NULL, /* no destroy function */
                               contains_execute_fn);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the string contains '@checkflag' operator */
+    rc = ib_operator_register(ib,
+                              "@checkflag",
+                              IB_OP_FLAG_ALLOW_NULL,
+                              strop_create,
+                              NULL, /* no destroy function */
+                              op_checkflag_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

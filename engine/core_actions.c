@@ -33,11 +33,11 @@
 
 /**
  * @internal
- * Create function for the log operator.
+ * Create function for the log action.
  *
  * @param mp Memory pool to use for allocation
  * @param parameters Constant parameters
- * @param op_inst Instance operator
+ * @param inst Action instance
  *
  * @returns Status code
  */
@@ -63,11 +63,11 @@ static ib_status_t act_log_create(ib_mpool_t *mp,
 
 /**
  * @internal
- * Execute function for the "@streq" operator
+ * Execute function for the "log" action
  *
  * @param data C-style string to compare to
- * @param field Field value
- * @param result Pointer to number in which to store the result
+ * @param rule The matched rule
+ * @param tx IronBee transaction
  *
  * @returns Status code
  */
@@ -84,17 +84,90 @@ static ib_status_t act_log_execute(void *data,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * @internal
+ * Create function for the setflags action.
+ *
+ * @param mp Memory pool to use for allocation
+ * @param parameters Constant parameters
+ * @param inst Action instance
+ *
+ * @returns Status code
+ */
+static ib_status_t act_setflags_create(ib_mpool_t *mp,
+                                  const char *parameters,
+                                  ib_action_inst_t *inst)
+{
+    IB_FTRACE_INIT(act_setflags_create);
+    char *str;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    str = ib_mpool_strdup(mp, parameters);
+    if (str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    inst->data = str;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "set flag" action
+ *
+ * @param data C-style string to compare to
+ * @param rule The matched rule
+ * @param tx IronBee transaction
+ *
+ * @returns Status code
+ */
+static ib_status_t act_setflag_execute(void *data,
+                                       ib_rule_t *rule,
+                                       ib_tx_t *tx)
+{
+    IB_FTRACE_INIT(act_setflag_execute);
+
+    /* Data will be a C-Style string */
+    const char *cstr = (const char *)data;
+
+    /* Handle the suspicous flag */
+    if (strcasecmp(cstr, "suspicious") == 0) {
+        ib_tx_flags_set(tx, IB_TX_FSUSPICIOUS);
+    }
+    else {
+        ib_log_error(tx->ib, 4, "Set flag action: invalid flag '%s'", cstr);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT(ib_core_actions_init);
     ib_status_t  rc;
 
+    /* Register the log action */
     rc = ib_action_register(ib,
                             "log",
                             IB_ACT_FLAG_NONE,
                             act_log_create,
                             NULL, /* no destroy function */
                             act_log_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Regiseter the set flag action */
+    rc = ib_action_register(ib,
+                            "setflag",
+                            IB_ACT_FLAG_NONE,
+                            act_setflags_create,
+                            NULL, /* no destroy function */
+                            act_setflag_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
