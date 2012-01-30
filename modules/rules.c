@@ -110,27 +110,30 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT(parse_operator);
     ib_status_t         rc = IB_OK;
-    const char         *at;
-    const char         *bang;
-    const char         *op;
+    const char         *at = NULL;
+    ib_num_t            bang = 0;
+    const char         *op = NULL;
+    const char         *cptr;
     ib_flags_t          flags = IB_OPINST_FLAG_NONE;
     char               *copy;
     char               *space;
     char               *args = NULL;
     ib_operator_inst_t *operator;
-    
 
-    /* Find the '@' that starts an operator */
-    at = strchr(str, '@');
-    if (at == NULL) {
-        ib_log_error(cp->ib, 4, "No operator in rule '%s'", str);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Do we have a leading '!'? */
-    bang = strchr(str, '!');
-    if ( (bang != NULL) && (bang < at) ) {
-        flags |= IB_OPINST_FLAG_INVERT;
+    /* Search for leading '!' / '@' */
+    for (cptr = str;  *cptr != '\0';  cptr++) {
+        if ( (at == NULL) && (bang == 0) && (*cptr == '!') ) {
+            bang = 1;
+            flags |= IB_OPINST_FLAG_INVERT;
+        }
+        else if ( (at == NULL) && (*cptr == '@') ) {
+            at = cptr;
+            break;
+        }
+        else if (isblank(*cptr) == 0) {
+            ib_log_error(cp->ib, 4, "Invalid rule syntax '%s'", str);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
     }
 
     /* Make a copy of the string to operate on */
@@ -216,7 +219,6 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
     ib_status_t  rc = IB_OK;
     const char  *cur;
     char        *copy;
-    char        *save;
     
     /* Copy the input string */
     while(isspace(*input_str)) {
@@ -233,9 +235,9 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
     }
 
     /* Split it up */
-    for (cur = strtok_r(copy, "|,", &save);
+    for (cur = strtok(copy, "|,");
          cur != NULL;
-         cur = strtok_r(NULL, "|,", &save) ) {
+         cur = strtok(NULL, "|,") ) {
         rc = ib_rule_add_input(cp->ib, rule, cur);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 4, "Failed to add rule input '%s'", cur);
