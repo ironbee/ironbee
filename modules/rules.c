@@ -557,6 +557,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         ib_log_error(cp->ib, 1, "Failed to allocate rule: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
+    ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_EXTERNAL);
 
     /* Parse all of the modifiers */
     mod = inputs;

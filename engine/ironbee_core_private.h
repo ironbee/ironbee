@@ -55,7 +55,6 @@ typedef struct {
  */
 typedef struct {
     ib_operator_inst_t    *opinst;        /**< Condition operator instance */
-    ib_flags_t             flags;         /**< Invert, etc. */
 } ib_rule_condition_t;
 
 /**
@@ -84,6 +83,7 @@ struct ib_rule_t {
     ib_list_t             *true_actions;  /**< Actions if condition True */
     ib_list_t             *false_actions; /**< Actions if condition False */
     ib_rulelist_t         *parent_rlist;  /**< Parent rule list */
+    ib_flags_t             flags;         /**< External, etc. */
 };
 
 /**

@@ -98,8 +98,8 @@ struct ib_operator_t {
 };
 
 /** Operator flags */
-#define IB_OP_FLAG_NONE        0x00000000 /**< No flags */
-#define IB_OP_FLAG_ALLOW_NULL  0x00000001 /**< Op. accepts NULL fields */
+#define IB_OP_FLAG_NONE        (0x0)      /**< No flags */
+#define IB_OP_FLAG_ALLOW_NULL  (1 << 0)   /**< Op. accepts NULL fields */
 
 struct ib_operator_inst_t {
     struct ib_operator_t *op;    /**< Pointer to the operator type */
@@ -108,8 +108,8 @@ struct ib_operator_inst_t {
 };
 
 /** Operator instance flags */
-#define IB_OPINST_FLAG_NONE        0x00000000 /**< No flags */
-#define IB_OPINST_FLAG_INVERT      0x00000001 /**< Invert the operator */
+#define IB_OPINST_FLAG_NONE    (0x0)      /**< No flags */
+#define IB_OPINST_FLAG_INVERT  (1 << 0)   /**< Invert the operator */
 
 /**
  * Register an operator.

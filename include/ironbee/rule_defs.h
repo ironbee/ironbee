@@ -56,7 +56,8 @@ typedef enum {
 /**
  * Rule flags
  */
-#define IB_RULE_FLAG_NONE   0x00000000    /**< No flags */
+#define IB_RULE_FLAG_NONE     (0x0)     /**< No flags */
+#define IB_RULE_FLAG_EXTERNAL (1 << 0)  /**< External rule */
 
 /**
  * Rule engine: Basic rule type

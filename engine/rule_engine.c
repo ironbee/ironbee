@@ -77,7 +77,23 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     /* Initialize the rule result */
     *rule_result = 0;
 
+    /* Log what we're going to do */
     ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
+
+    /* Special case: External rules */
+    if ((rule->flags & IB_RULE_FLAG_EXTERNAL) == IB_RULE_FLAG_EXTERNAL) {
+        ib_status_t rc;
+
+        /* Execute the operator */
+        ib_log_debug(ib, 4, "Executing external rule");
+        rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4,
+                         "External operator %s returned an error: %d",
+                         opinst->op->name, rc);
+        }
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Loop through all of the fields */
     IB_LIST_LOOP(rule->input_fields, node) {
@@ -100,7 +116,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         }
 
         /* Execute the operator */
-        rc = ib_operator_execute(ib, NULL, opinst, value, &result);
+        rc = ib_operator_execute(ib, tx, opinst, value, &result);
         if (rc != IB_OK) {
             ib_log_debug(ib, 4,
                          "Operator %s returned an error for field %s: %d",
@@ -411,7 +427,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     }
 
     /* Init flags */
-    rule->condition.flags = IB_RULE_FLAG_NONE;
+    rule->flags = IB_RULE_FLAG_NONE;
 
     /* Input list */
     rc = ib_list_create(&lst, mp);
@@ -556,13 +572,13 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
 
     switch(op) {
         case FLAG_OP_SET:
-            rule->condition.flags = flags;
+            rule->flags = flags;
             break;
         case FLAG_OP_OR:
-            rule->condition.flags |= flags;
+            rule->flags |= flags;
             break;
         case FLAG_OP_CLEAR:
-            rule->condition.flags &= (~flags);
+            rule->flags &= (~flags);
             break;
         default:
             ib_log_error(ib, 4,
@@ -576,7 +592,7 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
 
 ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule)
 {
-    return rule->condition.flags;
+    return rule->flags;
 }
 
 ib_status_t DLL_PUBLIC ib_rule_add_input(ib_engine_t *ib,
