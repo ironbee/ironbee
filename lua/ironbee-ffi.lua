@@ -832,6 +832,7 @@ local function newConn(val)
     return {
         cvalue = function() return c_val end,
         mp = function() return newMpool(c_val.mp) end,
+        ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
         tx_count = function() return ffi.cast("size_t", c_val.tx_count) end,
@@ -853,6 +854,7 @@ local function newTx(val)
     return {
         cvalue = function() return c_val end,
         mp = function() return newMpool(c_val.mp) end,
+        ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
         epi = function() return newProviderInst(c_val.epi) end,
