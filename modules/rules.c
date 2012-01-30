@@ -748,7 +748,7 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
-static void clean_up_ipc_mem()
+static void clean_up_ipc_mem(void)
 {
     int rc;
 
