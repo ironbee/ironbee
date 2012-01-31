@@ -59,26 +59,42 @@ std::ostream& operator<<( std::ostream& out, const buffer_t& buffer );
 
 /**
  * \class input_t
- * \brief An input (transaction) for IronBee to process.
+ * \brief An input for IronBee to process.
  *
- * XXX
+ * This structure represents the basic input for IronBee.  It is connection
+ * information and 0 or more transactions.
  **/
 struct input_t
 {
+  //! Local IP address.  Must outlive input_t.
   buffer_t    local_ip;
+  //! Local port.
   uint16_t    local_port;
 
+  //! Remote IP address.  Must outlive input_t.
   buffer_t    remote_ip;
+  //! Remote port.
   uint16_t    remote_port;
 
+  /**
+   * \class input_t::transaction_t
+   * \brief A transaction for IronBee to process.
+   **/
   struct transaction_t {
+    //! Constructor.
     transaction_t( buffer_t request_, buffer_t response_ );
+
+    //! Request data.  Must outlive input_t.
     buffer_t request;
+    //! Response data.  Must outlive input_t.
     buffer_t response;
   };
+
+  //! Zero or more transactions.
   std::vector<transaction_t> transactions;
 };
 
+//! Ostream output operator for an input.
 std::ostream& operator<<( std::ostream& out, const input_t& input );
 
 //! A generator of inputs.

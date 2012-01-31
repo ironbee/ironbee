@@ -20,9 +20,13 @@ namespace CLI {
 class RawGenerator
 {
 public:
+  //! Local IP address to use for raw inputs.
   static const std::string local_ip;
+  //! Remote IP address to use for raw inputs.
   static const std::string remote_ip;
+  //! Remote port to use for raw inputs.
   static const uint16_t    local_port;
+  //! Remote port to use for raw inputs.
   static const uint16_t    remote_port;
 
   //! Default Constructor.
@@ -36,7 +40,6 @@ public:
    * \param[in] request_path  Path to request data.
    * \param[in] response_path Path to request data.
    **/
-  explicit
   RawGenerator(
     const std::string& request_path,
     const std::string& response_path
