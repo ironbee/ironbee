@@ -78,7 +78,6 @@ typedef struct {
     uint64_t      stop_msec;
 } perf_info_t;
 
-uint64_t get_time_stamp_ticks(void);
 uint64_t get_time_stamp_ms(void);
 
 static perf_info_t *get_perf_info(ib_engine_t *,void *, int);
@@ -107,28 +106,6 @@ uint64_t get_time_stamp_ms(void){
      */
     ms = (uint64_t)((t.tv_sec * 1000000) + (t.tv_nsec / 1000));
     return ms;
-}
-
-/**
- * @internal
- * Get a timestamp as a tick counter. 
- *
- * Returns a ts as uint64_t tick using CPU aligned RDTSC.
- */
-uint64_t get_time_stamp_ticks(void)
-{
-    uint32_t clock_lo, clock_hi;
-    uint64_t tick_cnt;
-    
-    /* Even though we are locking to a single CPU things like
-     * freq scaling can skew this.
-     * http://en.wikipedia.org/wiki/Time_Stamp_Counter.
-     */
-    __asm__ __volatile__("\t\txorl %%eax,%%eax \n\t\tcpuid\t"
-                         :::"%rax", "%rbx", "%rcx", "%rdx");
-    __asm__ __volatile__("rdtsc" : "=a" (clock_lo), "=d" (clock_hi));
-    tick_cnt = (uint64_t)clock_hi << 32 | clock_lo;
-    return tick_cnt;
 }
 
 /**
