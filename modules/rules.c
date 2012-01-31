@@ -15,6 +15,7 @@
  * limitations under the License.
  *****************************************************************************/
 
+#include <ironbee/core.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
@@ -58,11 +59,10 @@
 #define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH)
 #endif
 
-/**
- * @brief LuaJit FFI definitions.
- * @details This is loaded into the Lua environment for use by Lua rules.
- */
-static const char* c_ffi_file = X_MODULE_BASE_PATH "/ironbee-ffi.lua";
+/// @todo Fix this:
+#ifndef X_RULE_BASE_PATH
+#define X_RULE_BASE_PATH IB_XSTRINGIFY(RULE_BASE_PATH) "/"
+#endif
 
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
@@ -777,6 +777,10 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
     /* Error code from Iron Bee calls. */
     ib_status_t ib_rc;
+    ib_core_cfg_t *corecfg = NULL;
+
+    const char* ffi_file_name = "ironbee-ffi.lua";
+    char *ffi_file_path = NULL;
 
     /* Snipped from the Linux man page semctl(2). */
     union semun {
@@ -826,12 +830,36 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     g_ironbee_rules_lua = luaL_newstate();
     luaL_openlibs(g_ironbee_rules_lua);
 
+    ib_rc = ib_context_module_config(ib_context_main(ib),
+                                     ib_core_module(),
+                                     (void *)&corecfg);
+
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, 1, "Could not retrieve core module configuration.");
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
+
+    ffi_file_path = malloc(strlen(ffi_file_name) + 
+                           strlen(corecfg->module_base_path + 
+                           2));
+
+    if (ffi_file_path == NULL) {
+        semctl(g_lua_lock, 0, IPC_RMID);
+        g_lua_lock = -1;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Build string module_base_path/ffi_file_name. */
+    strcpy(ffi_file_path, corecfg->module_base_path);
+    strcpy(ffi_file_path + strlen(ffi_file_path), "/");
+    strcpy(ffi_file_path + strlen(ffi_file_path) + 1, ffi_file_name);
+
     /* Load and evaluate the ffi file. */
-    ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, c_ffi_file);
+    ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, ffi_file_path);
     if (ib_rc != IB_OK) {
         ib_log_error(ib, 1,
             "Failed to eval \"%s\" for Lua rule execution.",
-            c_ffi_file);
+            ffi_file_path);
         semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
@@ -842,7 +870,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     if (ib_rc != IB_OK) {
         ib_log_error(ib, 1,
             "Failed to require \"%s\" for Lua rule execution.",
-            c_ffi_file);
+            ffi_file_path);
         semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);

@@ -88,6 +88,8 @@ struct ib_core_cfg_t {
     char            *audit;             /**< Active audit provider key */
     char            *parser;            /**< Active parser provider key */
     char            *data;              /**< Active data provider key */
+    const char      *module_base_path;  /**< Module base path. */
+    const char      *rule_base_path;    /**< Rule base path. */
 };
 
 

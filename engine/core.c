@@ -76,9 +76,24 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
 
 static void ib_timestamp(char *, ib_timeval_t *);
 
+#ifndef MODULE_BASE_PATH
+/* Always define a module base path. */
+#define MODULE_BASE_PATH /usr/local/ironbee/lib
+#endif
+
+#ifndef RULE_BASE_PATH
+/* Always define a rule base path. */
+#define RULE_BASE_PATH /usr/local/ironbee/lib
+#endif
+
 /// @todo Fix this:
 #ifndef X_MODULE_BASE_PATH
 #define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH) "/"
+#endif
+
+/// @todo Fix this:
+#ifndef X_RULE_BASE_PATH
+#define X_RULE_BASE_PATH IB_XSTRINGIFY(RULE_BASE_PATH) "/"
 #endif
 
 
@@ -4121,6 +4136,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     IB_FTRACE_INIT(core_dir_param1);
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
+    ib_core_cfg_t *corecfg;
 
     if (strcasecmp("InspectionEngine", name) == 0) {
         ib_log_debug(ib, 4, "TODO: Handle Directive: %s \"%s\"", name, p1);
@@ -4240,6 +4256,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         char *absfile;
         ib_module_t *m;
 
@@ -4247,7 +4264,16 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             absfile = (char *)p1;
         }
         else {
-            rc = core_abs_module_path(ib, X_MODULE_BASE_PATH, p1, &absfile);
+            rc = ib_context_module_config(ctx,
+                                          ib_core_module(),
+                                          (void *)&corecfg);
+
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            rc = core_abs_module_path(ib, corecfg->module_base_path, p1, &absfile);
+
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -4354,6 +4380,35 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         ib_log_debug(ib, 7, "%s: %s", name, site->id_str);
         IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (strcasecmp("ModuleBasePath", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+
+        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3, "Could not set ModuleBasePath %s", p1);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        corecfg->module_base_path = p1;
+        ib_log_debug(ib, 7, "ModuleBasePath: %s", p1);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (strcasecmp("RuleBasePath", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+
+        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3, "Could not set RuleBasePath %s", p1);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        
+        corecfg->rule_base_path = p1;
+        ib_log_debug(ib, 7, "RuleBasePath: %s", p1);
+        IB_FTRACE_RET_STATUS(IB_OK);
+
     }
 
     ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
@@ -4710,6 +4765,21 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_parts_map
     ),
 
+    /* Search Paths - Modules */
+    IB_DIRMAP_INIT_PARAM1(
+        "ModuleBasePath",
+        core_dir_param1,
+        NULL
+    ),
+
+    /* Search Paths - Rules */
+    IB_DIRMAP_INIT_PARAM1(
+        "RuleBasePath",
+        core_dir_param1,
+        NULL
+    ),
+
+ 
     /* End */
     IB_DIRMAP_INIT_LAST
 };
@@ -4745,6 +4815,9 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_log_error(ib, 0, "Failed to fetch core module config: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    corecfg->module_base_path = X_MODULE_BASE_PATH;
+    corecfg->rule_base_path = X_RULE_BASE_PATH;
 
     /* Define transformations. */
     ib_tfn_create(ib, "lowercase", core_tfn_lowercase, NULL, NULL);
