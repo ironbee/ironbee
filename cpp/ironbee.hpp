@@ -40,6 +40,11 @@ public:
 
     void close();
 
+    // This copies data in because IronBee expects to be able to modify the
+    // buffers you give it.
+    void data_in(  const buffer_t& data );
+    void data_out( const buffer_t& data );
+
   private:
     Connection(
       IronBee&           ib,

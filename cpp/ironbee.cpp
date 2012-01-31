@@ -1,6 +1,7 @@
 #include "ironbee.hpp"
 
 #include <ironbee/config.h>
+#include <ironbee/mpool.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -18,6 +19,25 @@ void expect_ok( ib_status_t rc, const char* message )
       string( "Error (" ) + ib_status_to_string( rc ) + "): " + message
     );
   }
+}
+
+ib_conndata_t* buffer_to_conndata(
+  ib_conn_t*               conn,
+  const IronBee::buffer_t& buffer
+)
+{
+  ib_conndata_t* conndata;
+  // We hope IronBee eventually destroys this...
+  expect_ok( ib_conn_data_create( conn, &conndata, buffer.length ),
+    "Allocating connection data."
+  );
+  conndata->dlen = buffer.length;
+  std::copy(
+    buffer.data, buffer.data + buffer.length,
+    reinterpret_cast<char*>( conndata->data )
+  );
+
+  return conndata;
 }
 
 }
@@ -63,6 +83,15 @@ void IronBee::load_config( const std::string& config_path )
   );
 
   ib_state_notify_cfg_finished( m_ironbee.get() );
+
+  // Do some sanity checks.
+  auto ctx = ib_context_main( m_ironbee.get() );
+  if ( ! ctx ) {
+    throw runtime_error( "IronBee has no main context." );
+  }
+  if ( ib_context_get_engine( ctx ) != m_ironbee.get() ) {
+    throw runtime_error( "IronBee has corrupt context." );
+  }
 }
 
 IronBee::connection_p IronBee::open_connection(
@@ -139,6 +168,30 @@ void IronBee::Connection::close()
     "Closing connection."
   );
   m_connection.reset();
+}
+
+void IronBee::Connection::data_in( const buffer_t& data )
+{
+  auto conndata = buffer_to_conndata(
+    m_connection.get(),
+    data
+  );
+
+  expect_ok( ib_state_notify_conn_data_in( m_ib.m_ironbee.get(), conndata ),
+    "Connection data in."
+  );
+}
+
+void IronBee::Connection::data_out( const buffer_t& data )
+{
+  auto conndata = buffer_to_conndata(
+    m_connection.get(),
+    data
+  );
+
+  expect_ok( ib_state_notify_conn_data_out( m_ib.m_ironbee.get(), conndata ),
+    "Connection data in."
+  );
 }
 
 } // IronBee
