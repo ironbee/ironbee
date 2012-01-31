@@ -948,7 +948,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
     if (rv != TS_SUCCESS) {
         return IB_OK + rv;
     }
-   
+
     rc = atexit(ibexit);
     if (rc != 0) {
         return IB_OK + rv;

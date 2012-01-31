@@ -90,7 +90,7 @@ struct ib_engine_t {
  * Transformation.
  */
 struct ib_tfn_t {
-    const char         *name;              /**< Tfn name */  
+    const char         *name;              /**< Tfn name */
     ib_tfn_fn_t         transform;         /**< Tfn function */
     void               *fndata;            /**< Tfn function data */
 };

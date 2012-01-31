@@ -36,7 +36,7 @@
 
 /**
  * @defgroup IronBeeTests Unit Testing
- * 
+ *
  * Various utility macros/functions for unit testing.
  *
  * @ingroup IronBee

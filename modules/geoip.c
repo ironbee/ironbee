@@ -116,7 +116,7 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
                         IB_FTYPE_NUM,
                         &longitude);
         ib_field_list_add(geoip_lst, tmp_field);
-                       
+
         /* Add integers. */
         tmp_field = NULL;
 
@@ -218,7 +218,7 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
                         IB_FTYPE_NUM,
                         &geoip_rec->metro_code);
         ib_field_list_add(geoip_lst, tmp_field);
-                          
+
         /* Wrap single character arguments into a 2-character string and add. */
         one_char_str[0] = geoip_rec->country_conf;
         ib_field_create(&tmp_field,
@@ -252,14 +252,14 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
                         &one_char_str);
         ib_field_list_add(geoip_lst, tmp_field);
 #endif /* GEOIP_HAVE_VERSION */
-    
+
         GeoIPRecord_delete(geoip_rec);
     }
     else
     {
         ib_log_debug(ib, 4, "No GeoIP record found.");
     }
-   
+
     IB_FTRACE_RET_VOID();
 }
 
@@ -307,9 +307,9 @@ static IB_DIRMAP_INIT_STRUCTURE(geoip_directive_map) = {
 static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(geoip_init);
-   
+
     ib_status_t rc;
-   
+
     if (geoip_db == NULL)
     {
         ib_log_debug(ib, 4, "Initializing default GeoIP database...");
@@ -330,15 +330,15 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
                           handle_context_tx_event,
                           (ib_void_fn_t)geoip_lookup,
                           NULL);
-                         
+
     ib_log_debug(ib, 4, "Done registering handler.");
-   
+
     if (rc != IB_OK)
     {
         ib_log_debug(ib, 4, "Failed to load GeoIP module.");
         IB_FTRACE_RET_STATUS(rc);
     }
-   
+
     ib_log_debug(ib, 4, "GeoIP module loaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }

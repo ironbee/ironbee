@@ -511,11 +511,11 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                         matches with references to the sigs. Let's iterate them
                         and process the pcre expression */
                     ib_logevent_t *e;
-        
+
                     ib_log_debug(ib, dbglvl, "PocACSig MATCH: prequal:\"%s\""
                                              " pcre:\"%s\" at %s", s->prequal,
                                              s->patt, pfe->target);
-        
+
                     /* Create the event. */
                     rc = ib_logevent_create(
                         &e,
@@ -538,7 +538,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                                      "event: %d", rc);
                         continue;
                     }
-        
+
                     /* Log the event. */
                     ib_event_add(tx->epi, e);
                 }

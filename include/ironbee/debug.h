@@ -163,7 +163,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 #define IB_FTRACE_INIT(name) \
     const char *__ib_fname__ = IB_XSTRINGIFY(name); \
     ib_trace_msg(__FILE__, __LINE__, __ib_fname__, "called")
-    
+
 /**
  * Logs a string message to the ftrace log.
  *
@@ -247,7 +247,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 
 /**
  * Return wrapper for functions which return a string value.
- * 
+ *
  * @param rv Return value
  */
 #define IB_FTRACE_RET_STR(rv) \
@@ -259,7 +259,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 
 /**
  * Return wrapper for functions which return a constant string value.
- * 
+ *
  * @param rv Return value
  */
 #define IB_FTRACE_RET_CONSTSTR(rv) \

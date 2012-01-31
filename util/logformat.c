@@ -184,7 +184,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
                         /* literal string */
                         literal[j++] = lf->orig_format[i];
                 }
-        }        
+        }
     }
 
     if (lf->orig_format[i] != '\0' || status == IB_LOGFORMAT_ST_PR) {
@@ -206,6 +206,3 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-
-
-

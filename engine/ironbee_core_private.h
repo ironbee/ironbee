@@ -77,7 +77,7 @@ typedef struct {
  * The typedef of ib_rule_t is done in ironbee/rule_engine.h
  */
 struct ib_rule_t {
-    ib_rule_meta_t         meta;          /**< Rule meta data */ 
+    ib_rule_meta_t         meta;          /**< Rule meta data */
     ib_rule_condition_t    condition;     /**< Rule condition */
     ib_list_t             *input_fields;  /**< List of input fields */
     ib_list_t             *true_actions;  /**< Actions if condition True */

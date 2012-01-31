@@ -246,7 +246,7 @@ uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
 
 /**
  * Search for a c string in a byte string.
- * 
+ *
  * @param[in] haystack Byte string to search.
  * @param[in] needle String to search for.
  *

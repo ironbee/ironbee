@@ -23,7 +23,7 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ctype.h>  
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -129,7 +129,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
         return IB_OK;
     }
 
-    /* Attempt to create the dir.  If it returns ENOENT, then 
+    /* Attempt to create the dir.  If it returns ENOENT, then
      * recursivly attempt to create the parent dir(s) until
      * they are all created.
      */
@@ -175,7 +175,7 @@ cleanup:
 
 /**
  * @brief Convert the input character to the byte value represented by
- *        it's hexidecimal value. The input of 'F' results in the 
+ *        it's hexidecimal value. The input of 'F' results in the
  *        character 15 being returned. If a character is not
  *        submitted that is hexidecimal, then -1 is returned.
  * @param[in] a the input character to be converted. A-F, a-f, or 0-9.
@@ -220,7 +220,7 @@ static inline char hex_to_int(char high, char low) {
   return hexchar_to_byte(high) << 4 | hexchar_to_byte(low);
 }
 
-ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst, 
+ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                                                size_t* dst_len,
                                                const char* src,
                                                size_t src_len) {

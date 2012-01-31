@@ -156,7 +156,7 @@ static const char *modlua_data_reader(lua_State *L,
         //ib_log_error(ib, 4, "No more chunk parts to read: %d", rc);
         return NULL;
     }
-    
+
     *size = cpart->dlen;
 
     //ib_log_debug(ib, 9, "Lua reading part=%d size=%" PRIuMAX, (int)tracker->part, *size);
@@ -1258,7 +1258,7 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
 
     /* Run through the luaevents list, which is a list of loaded
      * lua modules that have an event handler for this event. The
-     * corresponding lua event handler (onEventFoo) need to be 
+     * corresponding lua event handler (onEventFoo) need to be
      * executed for each module in the list.
      */
     IB_LIST_LOOP(luaevents, node) {
@@ -1336,7 +1336,7 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
 
     /* Run through the luaevents list, which is a list of loaded
      * lua modules that have an event handler for this event. The
-     * corresponding lua event handler (onEventFoo) need to be 
+     * corresponding lua event handler (onEventFoo) need to be
      * executed for each module in the list.
      */
     IB_LIST_LOOP(luaevents, node) {
@@ -1411,7 +1411,7 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
 
     /* Run through the luaevents list, which is a list of loaded
      * lua modules that have an event handler for this event. The
-     * corresponding lua event handler (onEventFoo) need to be 
+     * corresponding lua event handler (onEventFoo) need to be
      * executed for each module in the list.
      */
     IB_LIST_LOOP(luaevents, node) {
@@ -1486,7 +1486,7 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
 
     /* Run through the luaevents list, which is a list of loaded
      * lua modules that have an event handler for this event. The
-     * corresponding lua event handler (onEventFoo) need to be 
+     * corresponding lua event handler (onEventFoo) need to be
      * executed for each module in the list.
      */
     IB_LIST_LOOP(luaevents, node) {
@@ -1892,7 +1892,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         else {
             /// @todo Handle larger fn???
             char fn[512];
-            size_t len = snprintf(fn, sizeof(fn), "%s/%s", 
+            size_t len = snprintf(fn, sizeof(fn), "%s/%s",
                                   X_MODULE_BASE_PATH,
                                   p1);
 

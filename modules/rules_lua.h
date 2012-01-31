@@ -82,7 +82,7 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
 
 /**
  * @brief Destroy a new Lua thread pointed to by @a L.
- * @details This modifies the global state of L by removing the 
+ * @details This modifies the global state of L by removing the
  *          reference to the thread name t_%h. The result is that
  *          the thread should be garbage collected.
  * @param[out] ib The IronBee engine used to log errors.

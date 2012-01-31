@@ -1160,7 +1160,7 @@ static ib_status_t run_transaction(ib_engine_t* ib,
     ib_conndata_t  conn_data;
     ib_status_t    rc;
 
-    /* Open the request and response files that we'll use for this 
+    /* Open the request and response files that we'll use for this
      * transaction */
     if (settings.verbose >= 2) {
         printf("Transaction #%zd:\n"
@@ -1213,7 +1213,7 @@ static ib_status_t run_transaction(ib_engine_t* ib,
         fprintf(stderr, "Failed to read/send output data: %d\n", rc);
         goto end;
     }
- 
+
     /* If we have mde it this far everything is okay */
     rc = IB_OK;
 
@@ -1298,7 +1298,7 @@ end:
 
     /* Print trace request/response count */
     if (settings.trace) {
-        fprintf(stderr, "Trace Request Count: %" PRIu64 
+        fprintf(stderr, "Trace Request Count: %" PRIu64
                 " Trace Response Count : %" PRIu64 "\n",
                 settings.trace_request_cnt, settings.trace_response_cnt);
     }
@@ -1400,7 +1400,7 @@ int main(int argc, char* argv[])
 
     /* Set all contexts' debug flags from the command line args
      * We do this because they may have been overwritten by DebugLog
-     * directives. */ 
+     * directives. */
 #if DEBUG_ARGS_ENABLE
     if ( (settings.debug_level >= 0) || (settings.debug_uri != NULL) ) {
         ib_context_t *ctx = NULL;

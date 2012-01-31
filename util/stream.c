@@ -61,7 +61,7 @@ ib_status_t ib_stream_push_sdata(ib_stream_t *s,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-                           
+
 ib_status_t ib_stream_push(ib_stream_t *s,
                            ib_sdata_type_t type,
                            int dtype,
@@ -85,7 +85,7 @@ ib_status_t ib_stream_push(ib_stream_t *s,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-                           
+
 ib_status_t ib_stream_pull(ib_stream_t *s,
                            ib_sdata_t **psdata)
 {

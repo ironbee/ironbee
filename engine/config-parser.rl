@@ -73,12 +73,12 @@ static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
   }
   pvallen = (size_t)(afpc - fpc_mark);
   pval = (char *)malloc(pvallen + 1 * sizeof(*pval));
-  
+
   ib_util_unescape_string(pval, &pvallen, fpc_mark, pvallen);
-  
+
   /* Shrink the buffer appropriately. */
   pval = (char*)realloc(pval, pvallen+1);
-  
+
   return pval;
 }
 
@@ -142,7 +142,7 @@ static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
         }
         blkname = (char *)cp->cur_blkname;
     }
-    
+
     WS = [ \t];
     EOLSEQ = '\r'? '\n';
     EOL = WS* EOLSEQ;

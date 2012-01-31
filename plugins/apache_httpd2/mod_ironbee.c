@@ -461,7 +461,7 @@ static int ironbee_dbg_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
                      "DBGFILTER: type=%d mode=%d block=%d readbytes=%d %s", xf->frec->ftype, mode, block, (int)readbytes, xf->frec->name);
     } while((xf = xf->next) != NULL);
 #endif
-    
+
     rc = ap_get_brigade(f->next, bb, mode, block, readbytes);
     if (rc == APR_SUCCESS) {
 
@@ -546,7 +546,7 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
                             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
                                          IB_PRODUCT_NAME ": DATA[%d]: %.*s", (int)sdata->dlen, (int)sdata->dlen, (char *)sdata->data);
 #endif
-                            
+
                             /// @todo Is this creating a copy?  Just need a reference.
                             ibucket = apr_bucket_heap_create(sdata->data,
                                                              sdata->dlen,

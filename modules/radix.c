@@ -86,7 +86,7 @@ struct modradix_content_t {
 /* -- Matcher Interface -- */
 
 /**
- * Add a prefix to the prefixes of the radix, given a prefix and 
+ * Add a prefix to the prefixes of the radix, given a prefix and
  * callback + extra arg
  *
  * @param mpr matcher provider
@@ -96,7 +96,7 @@ struct modradix_content_t {
  * @param arg the extra argument to pass to the callback
  * @param errptr a pointer reference to point where an error ocur
  * @param erroffset a pointer holding the offset of the error
- * 
+ *
  * @return status of the operation
  */
 static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
@@ -126,7 +126,7 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
 
     ib_radix_prefix_t *pre = NULL;
 
-    rc = ib_radix_ip_to_prefix(prefix, &pre, mpi->pr->mp); 
+    rc = ib_radix_ip_to_prefix(prefix, &pre, mpi->pr->mp);
     if (rc != IB_OK) {
         ib_log_error(mpi->pr->ib, 4, "Failed to create a radix prefix for %s"
                                  " to the Radix tree %x", prefix,
@@ -215,7 +215,7 @@ static ib_status_t modradix_match(ib_provider_inst_t *mpi,
 
     ib_radix_prefix_t *pre = NULL;
 
-    rc = ib_radix_ip_to_prefix((const char *)data, &pre, mpi->mp); 
+    rc = ib_radix_ip_to_prefix((const char *)data, &pre, mpi->mp);
 
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);

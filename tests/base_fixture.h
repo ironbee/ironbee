@@ -49,7 +49,7 @@ public:
 
     /**
      * @brief Parse and load the configuration TestName.TestCase.config.
-     * @details The given file is sent through the IronBee configuration 
+     * @details The given file is sent through the IronBee configuration
      *          parser. It is not expected that modules will be loaded
      *          through this interface, but that they will have
      *          already been initialized using the BaseModuleFixture
@@ -86,12 +86,12 @@ public:
         const TestInfo* const info =
             UnitTest::GetInstance()->current_test_info();
 
-        const std::string configFile = 
+        const std::string configFile =
             std::string(info->test_case_name())+
             "."+
             std::string(info->name()) +
             ".config";
-        
+
         configureIronBee(configFile);
     }
 
@@ -100,9 +100,9 @@ public:
     {
         ib_status_t rc;
 
-        std::string module_path = 
+        std::string module_path =
             std::string(IB_XSTRINGIFY(MODULE_BASE_PATH)) +
-            "/" + 
+            "/" +
             module_file;
 
         rc = ib_module_load(ib_module, ib_engine, module_path.c_str());

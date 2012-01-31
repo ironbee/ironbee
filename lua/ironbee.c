@@ -68,12 +68,12 @@ static int log_debug(lua_State *L)
     int nargs = lua_gettop(L);
     const char *msg;
     int ec;
-    
-    /* 
+
+    /*
      * Call string.format() to do the actual formatting.
      *
      * This is done as lua cannot bind a vararg C function.  Instead,
-     * this reorganizes the stack, replacing the "level" arg with the 
+     * this reorganizes the stack, replacing the "level" arg with the
      * format function, then calls string.format with the remaining args.
      * This allows string.format to do the formatting so that a single
      * string arg can be passed to the underlying ironbee log function.

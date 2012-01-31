@@ -149,7 +149,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst, 
+ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
                                                size_t *dst_len,
                                                const char *src,
                                                size_t src_len);

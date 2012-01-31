@@ -85,7 +85,7 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
     ib_status_t rc;
     ib_provider_def_t *prd;
     ib_provider_t *pr;
-    
+
     if (ppr != NULL) {
         *ppr = NULL;
     }

@@ -92,7 +92,7 @@ typedef struct modac_provider_data_t modac_provider_data_t;
 /* -- Matcher Interface -- */
 
 /**
- * Add a pattern to the patterns of the matcher given a pattern and 
+ * Add a pattern to the patterns of the matcher given a pattern and
  * callback + extra arg
  *
  * @param mpr matcher provider
@@ -102,7 +102,7 @@ typedef struct modac_provider_data_t modac_provider_data_t;
  * @param arg the extra argument to pass to the callback
  * @param errptr a pointer reference to point where an error ocur
  * @param erroffset a pointer holding the offset of the error
- * 
+ *
  * @return status of the operation
  */
 static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
@@ -286,7 +286,7 @@ static ib_status_t readfile(const char* filename, char **buffer)
     ssize_t len; /**< Length of the file. */
     ssize_t bytes_read;
     ssize_t total_bytes_read;
-    
+
     if (fd < 0) {
         fprintf(stderr,
                 "Failed to open pattern file %s - %s",
@@ -319,7 +319,7 @@ static ib_status_t readfile(const char* filename, char **buffer)
     total_bytes_read = 0;
 
     do {
-        bytes_read = read(fd, 
+        bytes_read = read(fd,
                           (*buffer)+total_bytes_read,
                           len - total_bytes_read);
 
@@ -474,7 +474,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     else {
         return IB_EALLOC;
     }
- 
+
     ib_ac_init_ctx(&ac_ctx, ac);
 
     rc = ib_ac_consume(&ac_ctx, subject, subject_len, 0, tx->mp);

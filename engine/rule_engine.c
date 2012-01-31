@@ -201,7 +201,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
     IB_FTRACE_INIT(execute_actions);
     ib_list_node_t   *node = NULL;
     ib_status_t       rc = IB_OK;
- 
+
     ib_log_debug(ib, 4, "Executing %s rule %s actions", rule->meta.id, name);
 
     /* Loop through all of the fields */

@@ -284,7 +284,7 @@ static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     IB_FTRACE_INIT(ib_engine_context_create_main);
     ib_context_t *ctx;
     ib_status_t rc;
-    
+
     rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -396,7 +396,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     uint16_t pid16 = (uint16_t)(getpid() & 0xffff);
     ib_status_t rc;
     char namebuf[64];
-    
+
     /* Create a sub-pool for each connection and allocate from it */
     /// @todo Need to tune the pool size
     rc = ib_mpool_create_ex(&pool, "Connection", ib->mp, 2048);
@@ -465,7 +465,7 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     ib_engine_t *ib = conn->ib;
     ib_mpool_t *pool;
     ib_status_t rc;
-    
+
     /* Create a sub-pool for data buffers */
     /// @todo Need to tune the pool size
     rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
@@ -655,7 +655,7 @@ void ib_tx_destroy(ib_tx_t *tx)
 {
     ib_tx_t *curr;
 
-    /// @todo It should always be the first one in the list, 
+    /// @todo It should always be the first one in the list,
     ///       so this should not be needed and should cause an error
     ///       or maybe for us to throw a flag???
     if (tx->conn->tx_first != tx) {
@@ -795,7 +795,7 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     IB_FTRACE_INIT(ib_state_notify_conn);
     ib_hook_t *hook = NULL;
     ib_status_t rc = IB_OK;
-    
+
     rc = ib_state_notify(ib, event, conn);
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
@@ -839,7 +839,7 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
     ib_conn_t *conn = conndata->conn;
     ib_hook_t *hook = NULL;
     ib_status_t rc = IB_OK;
-    
+
     rc = ib_state_notify(ib, event, conndata);
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
@@ -929,7 +929,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     IB_FTRACE_INIT(ib_state_notify_tx);
     ib_hook_t *hook = NULL;
     ib_status_t rc = IB_OK;
-    
+
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
@@ -1284,7 +1284,7 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_state_notify_request_body_ex);
     ib_status_t rc;
-    
+
     rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOB);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1737,7 +1737,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
 
     rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &sym.dso);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load module %s: no symbol named %s", 
+        ib_log_error(ib, 1, "Failed to load module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1745,7 +1745,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     /* Fetch the module structure. */
     *pm = sym.fn_sym();
     if (*pm == NULL) {
-        ib_log_error(ib, 1, "Failed to load module %s: no module structure", 
+        ib_log_error(ib, 1, "Failed to load module %s: no module structure",
                      file);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -1819,7 +1819,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     cfgdata->module = m;
-    
+
     /* Set default values from parent values. */
 
     /* Add module config entries to config context, first copying the

@@ -943,7 +943,7 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
             {
                 IB_FTRACE_RET_STATUS(IB_ENOENT);
             }
-    
+
             if (offset >= prefix->prefixlen && node->data != NULL) {
                 if (*rlist == NULL) {
                     ret = ib_list_create(rlist, mp);
@@ -981,7 +981,7 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
         if (ret != IB_OK && ret != IB_ENOENT) {
             IB_FTRACE_RET_STATUS(ret);
         }
-            
+
         ret = ib_radix_match_all(node->one, prefix, offset, rlist, mp);
         if (ret != IB_OK && ret != IB_ENOENT) {
             IB_FTRACE_RET_STATUS(ret);

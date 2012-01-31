@@ -31,7 +31,7 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
     lua_rc = luaL_loadfile(L, file);
 
     if (lua_rc != 0) {
-        ib_log_error(ib, 1, "Failed to load %s - %s (%d)", 
+        ib_log_error(ib, 1, "Failed to load %s - %s (%d)",
                      file,
                      lua_tostring(L, -1),
                      lua_rc);
@@ -41,7 +41,7 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
 
     /* Evaluate the loaded ffi file. */
     lua_rc = lua_pcall(L, 0, 0, 0);
-  
+
     /* Only check errors if ec is not 0 (LUA_OK). */
     switch(lua_rc) {
         case 0:
@@ -62,7 +62,7 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
                 "Error fetching error message during FFI evaluation.");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
 #if LUA_VERSION_NUM > 501
-        /* If LUA_ERRGCMM is defined, include a custom error for it as well. 
+        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
           This was introduced in Lua 5.2. */
         case LUA_ERRGCMM:
             ib_log_error(ib, 1,
@@ -86,7 +86,7 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
 
     /* Load (compile) the lua module. */
     ib_rc = luaL_loadfile(L, file);
-  
+
     if (ib_rc != 0) {
         ib_log_error(ib, 1, "Failed to load file module \"%s\" - %s (%d)",
                      file, lua_tostring(L, -1), ib_rc);
@@ -95,7 +95,7 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
         lua_pop(L, 1);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-  
+
     lua_setglobal(L, func_name);
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -108,18 +108,18 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
                                  int *return_value)
 {
     IB_FTRACE_INIT(ib_lua_func_eval);
-  
+
     int lua_rc;
-  
+
     if (!lua_checkstack(L, 5)) {
-        ib_log_error(ib, 1, 
+        ib_log_error(ib, 1,
             "Not enough stack space to call Lua rule %s.", func_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-  
+
     /* Push the function on the stack. Preparation to call. */
     lua_getglobal(L, func_name);
-  
+
     if (!lua_isfunction(L, -1)) {
         ib_log_error(ib, 1, "Variable \"%s\" is not a LUA function - %s",
                      func_name);
@@ -128,7 +128,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
         lua_pop(L, 1);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-  
+
     /* Create a table for the coming function call. */
     lua_newtable(L);
 
@@ -143,7 +143,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
 
     /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
     lua_rc = lua_pcall(L, 1, 1, 0);
-  
+
     /* Only check errors if ec is not 0 (LUA_OK). */
     if (lua_rc != 0) {
         switch(lua_rc) {
@@ -182,7 +182,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     /* If there is no error, pull the return value off. */
     *return_value = lua_tointeger(L, -1);
     lua_pop(L, -1);
-  
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -262,7 +262,7 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
     lua_rc = lua_pcall(L, 1, 1, 0);
 
     if (lua_rc != 0) {
-        ib_log_error(ib, 1, "Require failed %s - %s (%d)", 
+        ib_log_error(ib, 1, "Require failed %s - %s (%d)",
                      required_name,
                      lua_tostring(L, -1),
                      lua_rc);

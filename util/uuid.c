@@ -54,7 +54,7 @@ ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *uuid,
         str[8] != '-' ||
         str[13] != '-' ||
         str[18] != '-' ||
-        str[23] != '-' ) 
+        str[23] != '-' )
     {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }

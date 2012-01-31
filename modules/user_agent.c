@@ -180,7 +180,7 @@ static ib_status_t modua_parse_uastring(char *str,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/* Macros used to return the correct value based on a value and an 
+/* Macros used to return the correct value based on a value and an
  * match value.
  * av: Actual value
  * mv: Match value
@@ -264,7 +264,7 @@ static int modua_mrule_match( const char *fields[],
          ++ruleno, ++fr) {
 
         /* Apply the rule */
-        modua_matchresult_t result = 
+        modua_matchresult_t result =
             modua_frule_match(fields[fr->match_field], fr);
 
         /* If it doesn't match the expect results, we're done, return 0 */
@@ -282,12 +282,12 @@ static int modua_mrule_match( const char *fields[],
  * @internal
  * Apply the user agent category rules.
  *
- * Walks through the internal static category rules, attempts to apply 
+ * Walks through the internal static category rules, attempts to apply
  * each of them to the passed in agent info, and returns a pointer to the
  * first rule that matches, or NULL if no rules match.
  *
  * Note that the fields array (filled in below) uses values from the
- * modua_matchfield_t enum (PRODUCT, PLATFORM, EXTRA). 
+ * modua_matchfield_t enum (PRODUCT, PLATFORM, EXTRA).
  *
  * @param[in] product UA product component
  * @param[in] platform UA platform component
@@ -740,7 +740,7 @@ int main(int argc, const char *argv[])
             --end;
         }
         *end = '\0';
-        
+
         printf("%s:\n", buf);
 
         /* Parse it */

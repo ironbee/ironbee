@@ -605,7 +605,7 @@ ib_status_t DLL_PUBLIC ib_context_siteloc_chooser(ib_context_t *ctx,
                                                   ib_ctype_t type,
                                                   void *ctxdata,
                                                   void *cbdata);
-                                                  
+
 
 /**
  * Default Site/Location context chooser.
@@ -2095,7 +2095,7 @@ struct ib_fdata_t {
  *
  * Data comes into the filter controller via the @ref source, gets
  * pushed through the list of data @ref filters, into the buffer filter
- * @ref fbuffer where the data may be held while it is being processed 
+ * @ref fbuffer where the data may be held while it is being processed
  * and finally makes it to the @ref sink where it is ready to be sent.
  */
 struct ib_fctl_t {
@@ -2236,7 +2236,7 @@ ib_status_t DLL_PUBLIC ib_fctl_meta_add(ib_fctl_t *fc,
 ib_status_t DLL_PUBLIC ib_fctl_drain(ib_fctl_t *fc,
                                      ib_stream_t **pstream);
 
-                                               
+
 /**
  * @} IronBeeFilter
  */

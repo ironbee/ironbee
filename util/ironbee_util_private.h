@@ -79,7 +79,7 @@ struct ib_mpool_buffer_t {
     uint8_t                    *buffer;     /**< ptr to the buffer */
     size_t                      used;       /**< amount of mem really used */
     size_t                      size;       /**< size */
-    
+
     ib_mpool_buffer_t          *prev;       /**< Sibling previous */
     ib_mpool_buffer_t          *next;       /**< Sibling next */
     /// @todo later we might want to be able to free just one page
@@ -231,7 +231,7 @@ struct ib_mpool_t {
         (pool)->size += (rbuf)->size; \
         (pool)->buffer_cnt += 1; \
         (pool)->current = (rbuf); \
-    } while (0) 
+    } while (0)
 
 /**
  * @internal

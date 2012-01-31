@@ -194,7 +194,7 @@ ib_status_t DLL_PUBLIC ib_provider_instance_create_ex(ib_engine_t *ib,
                                                       void *data);
 
 /**
- * Create an instance of a registered provider by looking up with 
+ * Create an instance of a registered provider by looking up with
  * the given type/key
  *
  * @param ib Engine

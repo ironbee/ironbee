@@ -123,7 +123,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* The check to see if JIT compilation was a success changed in 8.20RC1 
+    /* The check to see if JIT compilation was a success changed in 8.20RC1
        now uses pcre_fullinfo see doc/pcrejit.3 */
     pcre_fullinfo_ret = pcre_fullinfo(
         pcre_cpatt->cpatt, pcre_cpatt->edata, PCRE_INFO_JIT, &pcre_jit_ret);
@@ -261,7 +261,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
         return IB_EALLOC;
     }
 
-    /* Attempt to optimize execution of the regular expression at rule 
+    /* Attempt to optimize execution of the regular expression at rule
        evaluation time. */
     regex_extra = pcre_study(regex, 0, &errptr);
 
@@ -315,7 +315,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
 /**
  * @brief Deinitialize the rule.
  * @param[in,out] op_inst The instance of the operator to be deallocated.
- *                Operator data is allocated out of the memory pool for 
+ *                Operator data is allocated out of the memory pool for
  *                IronBee so we do not destroy the operator here.
  *                pool for IronBee and need not be freed by us.
  * @returns IB_OK always.
@@ -369,7 +369,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         free(ovector);
         return IB_EALLOC;
     }
-    
+
     /* Alloc space to copy regex. */
     regex = (pcre*)malloc(rule_data->regex_sz);
 
@@ -391,7 +391,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                             PCRE_EXTRA_MATCH_LIMIT |
                             PCRE_EXTRA_MATCH_LIMIT_RECURSION;
     }
-    
+
     pcre_rc = pcre_exec(regex,
                         regex_extra,
                         subject,
@@ -411,7 +411,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         *result = 0;
     }
     else {
-        /* Some other error occurred. Set the status to false and 
+        /* Some other error occurred. Set the status to false and
         report the error. */
         ib_rc = IB_EUNKNOWN;
         *result = 0;
@@ -444,7 +444,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                               NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, 3,
-                     MODULE_NAME_STR 
+                     MODULE_NAME_STR
                      ": Error registering pcre matcher provider: "
                      "%d", rc);
         IB_FTRACE_RET_STATUS(IB_OK);

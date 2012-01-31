@@ -80,7 +80,7 @@ static int g_lua_lock = -1;
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
  * @details This callback should take a @c ib_engine_t* which is used
- *          for logging, @c a lua_State* which is used to create the 
+ *          for logging, @c a lua_State* which is used to create the
  *          new thread, and a @c lua_State** which will be assigned a
  *          new @c lua_State*.
  */
@@ -213,13 +213,12 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
 static ib_status_t parse_inputs(ib_cfgparser_t *cp,
                                 ib_rule_t *rule,
                                 const char *input_str)
-                                 
 {
     IB_FTRACE_INIT(parse_inputs);
     ib_status_t  rc = IB_OK;
     const char  *cur;
     char        *copy;
-    
+
     /* Copy the input string */
     while(isspace(*input_str)) {
         ++input_str;
@@ -500,7 +499,7 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
     const char *func_name = (char*) data;
 
     ib_log_debug(ib, 1, "Calling lua function %s.", func_name);
-    
+
     ib_rc = ib_lua_func_eval_r(ib, tx, func_name, result);
 
     ib_log_debug(ib, 1, "Calling to lua function %s=%d.", func_name, *result);
@@ -691,7 +690,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
         ib_log_error(cp->ib, 1, "Failed to allocate rule: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     /* Parse the inputs */
     rc = parse_inputs(cp, rule, inputs->data);
     if (rc != IB_OK) {
@@ -699,7 +698,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
                      "Error parsing rule inputs: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     /* Parse the operator */
     rc = parse_operator(cp, rule, op->data);
     if (rc != IB_OK) {
@@ -740,7 +739,7 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
         rules_rule_params,
         NULL
     ),
-    
+
     IB_DIRMAP_INIT_LIST(
         "RuleExt",
         rules_ruleext_params,
@@ -822,7 +821,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-  
+
     ironbee_loaded_rule_count = 0;
     g_ironbee_rules_lua = luaL_newstate();
     luaL_openlibs(g_ironbee_rules_lua);
@@ -830,7 +829,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     /* Load and evaluate the ffi file. */
     ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, c_ffi_file);
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, 
+        ib_log_error(ib, 1,
             "Failed to eval \"%s\" for Lua rule execution.",
             c_ffi_file);
         semctl(g_lua_lock, 0, IPC_RMID);
@@ -857,7 +856,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
     }
-   
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -865,14 +864,14 @@ static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m)
 {
     IB_FTRACE_INIT(rules_fini);
     ib_log_debug(ib, 4, "Rules module unloading.");
-    
+
     clean_up_ipc_mem();
 
     if (g_ironbee_rules_lua != NULL) {
         lua_close(g_ironbee_rules_lua);
         g_ironbee_rules_lua = NULL;
     }
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

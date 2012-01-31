@@ -267,7 +267,7 @@ ib_status_t DLL_PUBLIC ib_field_alias_mem(ib_field_t **pf,
 
 /**
  * Add a field to a IB_FTYPE_LIST field.
- * 
+ *
  * @param f Field list
  * @param val Field to add to the list
  *
@@ -278,7 +278,7 @@ ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
 
 /**
  * Add a buffer to a @ref IB_FTYPE_SBUFFER type field.
- * 
+ *
  * @param f Field list
  * @param dtype Data type
  * @param buf Buffer
@@ -293,7 +293,7 @@ ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
 
 /**
  * Set a field value.
- * 
+ *
  * @param f Field to add
  * @param pval Pointer to value to store in field (based on type)
  *
