@@ -20,7 +20,7 @@ MODULE_TEST_LDADD += -liconv
 endif
 
 # Point the module base path to the modules build dir
-CPPFLAGS+=-DMODULE_BASE_PATH=$(top_builddir)/modules/.libs
+CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
 
 check_PROGRAMS = test_gtest \
                  test_util_array \
@@ -33,6 +33,7 @@ check_PROGRAMS = test_gtest \
                  test_util_logformat \
                  test_util_ahocorasick \
                  test_engine \
+                 test_module_ahocorasick \
                  test_module_trace \
 		 test_module_pcre \
                  test_module_poc_sig \
@@ -166,6 +167,11 @@ test_module_rules_lua_LDADD = $(MODULE_TEST_LDADD) \
 if FREEBSD
 test_module_rules_lua_LDADD += -liconv
 endif
+
+test_module_ahocorasick_SOURCES = test_module_ahocorasick.cc test_main.cc
+test_module_ahocorasick_LDADD = $(MODULE_TEST_LDADD)
+test_module_ahocorasick_CPPFLAGS = $(CPPFLAGS) \
+                                   -I$(top_srcdir)/modules
 
 test_module_poc_sig_SOURCES = test_module_poc_sig.cc test_main.cc
 test_module_poc_sig_LDADD = $(MODULE_TEST_LDADD)

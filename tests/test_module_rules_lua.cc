@@ -23,6 +23,7 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "base_fixture.h"
 
 extern "C" {
 #include "rules_lua.h"
@@ -34,7 +35,6 @@ extern "C" {
 #include "ironbee/hash.h"
 #include "ironbee/mpool.h"
 #include <string>
-#include "base_fixture.h"
 
 namespace {
     const char* luafile = TEST_LUA_FILE;

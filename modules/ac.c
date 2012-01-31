@@ -24,23 +24,28 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <ctype.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/types.h>
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
-#include <ironbee/cfgmap.h>
 #include <ironbee/ahocorasick.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/operator.h>
 #include <ironbee/provider.h>
-
+#include <ironbee/types.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        ac
@@ -253,6 +258,240 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modac_matcher_iface = {
     modac_match
 };
 
+static void nop_ac_match(ib_ac_t *orig,
+                         ib_ac_char_t *pattern,
+                         size_t pattern_len,
+                         void* userdata,
+                         size_t offset,
+                         size_t relative_offset)
+{
+    /* Nop. */
+}
+
+/**
+ * @internal
+ * @brief Read the given file into memory and return the malloced buffer.
+ * @param[in] filename Filename to read.
+ * @param[in,out] buffer Character buffer pointer that will be malloced
+ *                and must be free'ed by the caller.
+ * @param[in,out] len The length of buffer, which will also be resized.
+ */
+static ib_status_t readfile(const char* filename, char **buffer)
+{
+    IB_FTRACE_INIT(readfile);
+
+    int fd = open(filename, O_RDONLY);
+    int rc;
+    struct stat fd_stat;
+    ssize_t len; /**< Length of the file. */
+    ssize_t bytes_read;
+    ssize_t total_bytes_read;
+    
+    if (fd < 0) {
+        fprintf(stderr,
+                "Failed to open pattern file %s - %s",
+                filename,
+                strerror(errno));
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = fstat(fd, &fd_stat);
+
+    if (rc == -1) {
+        fprintf(stderr,
+                "Failed to stat file %s - %s", filename, strerror(errno));
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Protect the user from building a tree from a 1GB file of patterns. */
+    if (fd_stat.st_size > 1024000000) {
+        fprintf(stderr,
+                "Refusing to parse file %s because it is too large.",
+                filename);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* If conversion from off_t to ssize_t is required, it happens here. */
+    len = fd_stat.st_size;
+
+    *buffer = malloc(len);
+
+    total_bytes_read = 0;
+
+    do {
+        bytes_read = read(fd, 
+                          (*buffer)+total_bytes_read,
+                          len - total_bytes_read);
+
+        if (bytes_read < 0) {
+            free(*buffer);
+            *buffer = NULL;
+            len = 0;
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        total_bytes_read += bytes_read;
+    } while(total_bytes_read < len);
+
+    if (*buffer==NULL) {
+        close(fd);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t pmf_operator_create(ib_mpool_t *pool,
+                                       const char *pattern_file,
+                                       ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(pmf_operator_create);
+
+    ib_status_t rc;
+
+    ib_ac_t *ac;
+
+    char* file;
+    char* line;
+
+    rc = readfile(pattern_file, &file);
+
+    rc = ib_ac_create(&ac, 0, pool);
+
+    if (rc != IB_OK) {
+        free(file);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    for (line=strtok(file, "\n"); line != NULL; line=strtok(NULL, "\n")) {
+        rc = ib_ac_add_pattern (ac, line, &nop_ac_match, NULL, 0);
+
+        if (rc != IB_OK) {
+            free(file);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+
+    rc = ib_ac_build_links(ac);
+
+    if (rc != IB_OK) {
+        free(file);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    op_inst->data = ac;
+
+    free(file);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t pm_operator_create(ib_mpool_t *pool,
+                                      const char *pattern,
+                                      ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(pm_operator_create);
+
+    ib_status_t rc;
+
+    ib_ac_t *ac;
+
+    size_t tok_buffer_sz = strlen(pattern)+1;
+    char* tok_buffer = malloc(tok_buffer_sz);
+    char* tok;
+
+    if (tok_buffer == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    memcpy(tok_buffer, pattern, tok_buffer_sz);
+
+    rc = ib_ac_create(&ac, 0, pool);
+
+    if (rc != IB_OK) {
+        free(tok_buffer);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    for (tok = strtok(tok_buffer, " "); tok != NULL; tok = strtok(NULL, " "))
+    {
+        if (strlen(tok) > 0 ) {
+            rc = ib_ac_add_pattern (ac, tok, &nop_ac_match, NULL, 0);
+
+            if (rc != IB_OK) {
+                free(tok_buffer);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+    }
+
+    rc = ib_ac_build_links(ac);
+
+    if (rc != IB_OK) {
+        free(tok_buffer);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    op_inst->data = ac;
+
+    free(tok_buffer);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t pm_operator_execute(ib_engine_t *ib,
+                                       ib_tx_t *tx,
+                                       void *data,
+                                       ib_field_t *field,
+                                       ib_num_t *result)
+{
+    IB_FTRACE_INIT(pm_operator_execute);
+
+    ib_ac_t *ac = (ib_ac_t*)data;
+    ib_ac_context_t ac_ctx;
+    ib_status_t rc;
+
+    char* subject;
+    size_t subject_len;
+    ib_bytestr_t* bytestr;
+
+    if (field->type == IB_FTYPE_NULSTR) {
+        subject = ib_field_value_nulstr(field);
+        subject_len = strlen(subject);
+    }
+    else if (field->type == IB_FTYPE_BYTESTR) {
+        bytestr = ib_field_value_bytestr(field);
+        subject_len = ib_bytestr_length(bytestr);
+        subject = (char*) ib_bytestr_ptr(bytestr);
+    }
+    else {
+        return IB_EALLOC;
+    }
+ 
+    ib_ac_init_ctx(&ac_ctx, ac);
+
+    rc = ib_ac_consume(&ac_ctx, subject, subject_len, 0, tx->mp);
+
+    if (rc == IB_ENOENT) {
+        *result = 0;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    } else if (rc == IB_OK) {
+        *result = (ac_ctx.match_cnt > 0) ? 1 : 0;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t pm_operator_destroy(ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(pm_operator_destroy);
+
+    /* Nop. */
+
+    /* No callback required. Allocations are out of the IB memory pool. */
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /* -- Module Routines -- */
 
@@ -275,6 +514,15 @@ static ib_status_t modac_init(ib_engine_t *ib,
                      "%d", rc);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+    ib_operator_register(ib, "@pm", 0,
+                         &pm_operator_create,
+                         &pm_operator_destroy,
+                         &pm_operator_execute);
+    ib_operator_register(ib, "@pmf", 0,
+                         &pmf_operator_create,
+                         &pm_operator_destroy,
+                         &pm_operator_execute);
 
     ib_log_debug(ib, 4, "AC Status: compiled=\"%d.%d %s\" AC Matcher"
                         " registered", AC_MAJOR, AC_MINOR, IB_XSTRINGIFY(AC_DATE));

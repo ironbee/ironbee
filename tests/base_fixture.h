@@ -59,19 +59,8 @@ public:
      * @paragraph Realize, though, that nothing prevents the tester from
      *            using the LoadModule directive in their configuration.
      */
-    virtual void configureIronBee() {
-        using ::testing::TestInfo;
-        using ::testing::UnitTest;
+    virtual void configureIronBee(const std::string& configFile) {
 
-        const TestInfo* const info =
-            UnitTest::GetInstance()->current_test_info();
-
-        std::string configFile = 
-            std::string(info->test_case_name())+
-            "."+
-            std::string(info->name()) +
-            ".config";
-        
         ib_status_t rc;
         ib_cfgparser_t *p;
         rc = ib_cfgparser_create(&p, ib_engine);
@@ -86,6 +75,46 @@ public:
         if (rc != IB_OK) {
             throw std::runtime_error(
                 std::string("Failed to parse configuration file."));
+        }
+    }
+
+    virtual void configureIronBee()
+    {
+        using ::testing::TestInfo;
+        using ::testing::UnitTest;
+
+        const TestInfo* const info =
+            UnitTest::GetInstance()->current_test_info();
+
+        const std::string configFile = 
+            std::string(info->test_case_name())+
+            "."+
+            std::string(info->name()) +
+            ".config";
+        
+        configureIronBee(configFile);
+    }
+
+    virtual void loadModule(ib_module_t **ib_module,
+                            const std::string& module_file)
+    {
+        ib_status_t rc;
+
+        std::string module_path = 
+            std::string(IB_XSTRINGIFY(MODULE_BASE_PATH)) +
+            "/" + 
+            module_file;
+
+        rc = ib_module_load(ib_module, ib_engine, module_path.c_str());
+
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to load module " + module_file);
+        }
+
+        rc = ib_module_init(*ib_module, ib_engine);
+
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to init module " + module_file);
         }
     }
 
@@ -117,9 +146,6 @@ protected:
     //! The file name of the module.
     std::string m_module_file;
 
-    //! The path to the module file to load at SetUp time.
-    std::string m_module_path;
-
     //! The setup module is stored here.
     ib_module_t *ib_module;
 
@@ -127,28 +153,14 @@ protected:
 public:
     BaseModuleFixture(const std::string& module_file) :
         m_module_file(module_file),
-        m_module_path(std::string(IB_XSTRINGIFY(MODULE_BASE_PATH)) +
-                      "/" + 
-                      module_file)
+        ib_module(NULL)
     {}
 
     virtual void SetUp()
     {
         BaseFixture::SetUp();
 
-        ib_status_t rc;
-        
-        rc = ib_module_load(&ib_module, ib_engine, m_module_path.c_str());
-
-        if (rc != IB_OK) {
-            throw std::runtime_error("Failed to load module " + m_module_file);
-        }
-
-        rc = ib_module_init(ib_module, ib_engine);
-
-        if (rc != IB_OK) {
-            throw std::runtime_error("Failed to init module " + m_module_file);
-        }
+        loadModule(&ib_module, m_module_file);
     }
 
     virtual void TearDown() {
