@@ -856,10 +856,13 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
     /* Load and evaluate the ffi file. */
     ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, ffi_file_path);
+
     if (ib_rc != IB_OK) {
         ib_log_error(ib, 1,
             "Failed to eval \"%s\" for Lua rule execution.",
             ffi_file_path);
+        free(ffi_file_path);
+        ffi_file_path = NULL;
         semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
@@ -871,10 +874,15 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         ib_log_error(ib, 1,
             "Failed to require \"%s\" for Lua rule execution.",
             ffi_file_path);
+        free(ffi_file_path);
+        ffi_file_path = NULL;
         semctl(g_lua_lock, 0, IPC_RMID);
         g_lua_lock = -1;
         IB_FTRACE_RET_STATUS(ib_rc);
     }
+
+    free(ffi_file_path);
+    ffi_file_path = NULL;
 
     /* Require the ffi module. */
     ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ffi", "ffi");
