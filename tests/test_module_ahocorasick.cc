@@ -49,7 +49,7 @@ public:
     }
 };
 
-TEST_F(AhoCorasickModuleTest, test_load_module)
+TEST_F(AhoCorasickModuleTest, test_pm_rule)
 {
     ib_tx_t tx; /**< We do need a transaction for the memory pool. */
 
@@ -94,6 +94,60 @@ TEST_F(AhoCorasickModuleTest, test_load_module)
 
     // We should fail.
     ASSERT_FALSE(result);
+
+    // Attempt to match again.
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
+        ib_engine, &tx, op_inst->data, field2, &result));
+
+    // This time we should succeed.
+    ASSERT_TRUE(result);
+}
+
+TEST_F(AhoCorasickModuleTest, test_pmf_rule)
+{
+    ib_tx_t tx; /**< We do need a transaction for the memory pool. */
+
+    ib_operator_t op;
+    ib_operator_inst_t *op_inst = NULL;
+    ib_num_t result;
+
+    ib_field_t* field1;
+    ib_field_t* field2;
+
+    char* str1 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string1")+1));
+    char* str2 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string2")+1));
+    strcpy(str1, "string1");
+    strcpy(str2, "string2");
+
+    tx.mp = ib_engine->mp;
+
+    // Create field 1.
+    ASSERT_EQ(IB_OK,
+        ib_field_create(
+            &field1, ib_engine->mp, "field1", IB_FTYPE_NULSTR, &str1));
+
+    // Create field 2.
+    ASSERT_EQ(IB_OK,
+        ib_field_create(
+            &field2, ib_engine->mp, "field2", IB_FTYPE_NULSTR, &str2));
+
+    // Ensure that the operator exists.
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, "@pmf", &op));
+
+    // Get the operator.
+    ASSERT_EQ(IB_OK,
+              ib_operator_inst_create(ib_engine,
+                                      "@pmf",
+                                      "ahocorasick.patterns",
+                                      0,
+                                      &op_inst));
+
+    // Attempt to match.
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
+        ib_engine, &tx, op_inst->data, field1, &result));
+
+    // We should fail.
+    ASSERT_TRUE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
