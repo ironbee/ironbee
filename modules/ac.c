@@ -351,10 +351,18 @@ static ib_status_t pmf_operator_create(ib_mpool_t *pool,
 
     ib_ac_t *ac;
 
-    char* file;
-    char* line;
+    char* file = NULL;
+    char* line = NULL;
 
     rc = readfile(pattern_file, &file);
+
+    if (rc != IB_OK) {
+        if (file != NULL) {
+            free(file);
+        }
+
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     rc = ib_ac_create(&ac, 0, pool);
 
