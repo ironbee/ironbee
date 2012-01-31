@@ -172,9 +172,11 @@ htp_cfg_t *htp_config_create(void) {
  * @return A copy of the configuration structure.
  */
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
-    htp_cfg_t *copy = calloc(1, sizeof(htp_cfg_t));
+    htp_cfg_t *copy = malloc(sizeof(htp_cfg_t));
     if (copy == NULL) return NULL;
-
+    
+    *copy = *cfg;
+    
     // Create copies of the hooks' structures
     if (cfg->hook_transaction_start != NULL) {
         copy->hook_transaction_start = hook_copy(cfg->hook_transaction_start);
