@@ -159,6 +159,12 @@ AC_ARG_ENABLE(cli,
                              [Disable the cli utility (enabled by default).]),[enable_cli_utility="$enableval"],[enable_cli_utility=yes])
 AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
 
+### CPP
+AC_ARG_ENABLE(cpp,
+              AS_HELP_STRING([--enable-cpp],
+                             [Enabel C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
+AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
+
 ### Ragel
 AC_ARG_WITH([ragel],
             [  --with-ragel=PROG ragel executable],
@@ -313,6 +319,10 @@ AC_CONFIG_FILES([plugins/trafficserver/Makefile])
 
 if test "$util_cli" != 0; then
 AC_CONFIG_FILES([cli/Makefile])
+fi
+
+if test "$cpp_code" != 0; then
+AC_CONFIG_FILES([cpp/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])
