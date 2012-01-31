@@ -20,7 +20,8 @@ MODULE_TEST_LDADD += -liconv
 endif
 
 # Point the module base path to the modules build dir
-CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
+CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
+          -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs
 
 check_PROGRAMS = test_gtest \
                  test_util_array \
@@ -188,6 +189,7 @@ test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 
 check-local: $(check_PROGRAMS)
+	cp $(abs_top_srcdir)/lua/ironbee-ffi.lua $(abs_top_builddir)/modules/.libs/
 	for cp in $(check_PROGRAMS); do \
 	  ./$${cp} --gtest_output=xml:$${cp}_details.xml 2> $${cp}_stderr.log; \
 	  if test -n "$(VALGRIND)"; then \

@@ -26,6 +26,7 @@
 #define __BASE_FIXTURE_H__
 
 #include <ironbee/release.h>
+#include <ironbee/core.h>
 #include "ironbee_private.h"
 
 #include "gtest/gtest.h"
@@ -45,6 +46,37 @@ public:
         ib_initialize();
         ib_engine_create(&ib_engine, &ibt_ibplugin);
         ib_engine_init(ib_engine);
+
+        resetRuleBasePath();
+        resetModuleBasePath();
+    }
+
+    virtual void resetRuleBasePath()
+    {
+        setRuleBasePath(IB_XSTRINGIFY(RULE_BASE_PATH));
+    }
+
+    virtual void setRuleBasePath(const char* path)
+    {
+        ib_core_cfg_t *corecfg = NULL;
+        ib_context_module_config(ib_engine->ctx,
+                                 ib_core_module(), 
+                                 static_cast<void*>(&corecfg));
+        corecfg->rule_base_path = path;
+    }
+
+    virtual void resetModuleBasePath()
+    {
+        setModuleBasePath(IB_XSTRINGIFY(MODULE_BASE_PATH));
+    }
+
+    virtual void setModuleBasePath(const char* path)
+    {
+        ib_core_cfg_t *corecfg = NULL;
+        ib_context_module_config(ib_engine->ctx,
+                                 ib_core_module(), 
+                                 static_cast<void*>(&corecfg));
+        corecfg->module_base_path = path;
     }
 
     /**

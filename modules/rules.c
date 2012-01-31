@@ -839,9 +839,9 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
-    ffi_file_path = malloc(strlen(ffi_file_name) + 
-                           strlen(corecfg->module_base_path + 
-                           2));
+    ffi_file_path = malloc(strlen(corecfg->module_base_path) + 
+                           strlen(ffi_file_name) + 
+                           2);
 
     if (ffi_file_path == NULL) {
         semctl(g_lua_lock, 0, IPC_RMID);
@@ -852,7 +852,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     /* Build string module_base_path/ffi_file_name. */
     strcpy(ffi_file_path, corecfg->module_base_path);
     strcpy(ffi_file_path + strlen(ffi_file_path), "/");
-    strcpy(ffi_file_path + strlen(ffi_file_path) + 1, ffi_file_name);
+    strcpy(ffi_file_path + strlen(ffi_file_path), ffi_file_name);
 
     /* Load and evaluate the ffi file. */
     ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, ffi_file_path);
