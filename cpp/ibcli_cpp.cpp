@@ -110,7 +110,10 @@ int main( int argc, char** argv )
     input_t input;
     while ( generator( input ) ) {
       auto connection = ib.open_connection( input );
-      cout << "Found input: " << input << endl;
+      for ( const auto& transaction : input.transactions ) {
+        connection->data_in( transaction.request );
+        connection->data_out( transaction.response );
+      }
       connection->close();
     }
   }
