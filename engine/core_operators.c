@@ -161,7 +161,7 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
+ * @param[in] data C-style string to compare to (ignored)
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *

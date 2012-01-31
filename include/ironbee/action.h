@@ -94,7 +94,7 @@ struct ib_action_t {
 };
 
 /** Action flags */
-#define IB_ACT_FLAG_NONE         0x00000000 /**< No flags */
+#define IB_ACT_FLAG_NONE         (0x0)      /**< No flags */
 
 struct ib_action_inst_t {
     struct ib_action_t *action; /**< Pointer to the action type */
@@ -103,7 +103,7 @@ struct ib_action_inst_t {
 };
 
 /** Action instance flags */
-#define IB_ACTINST_FLAG_NONE     0x00000000 /**< No flags */
+#define IB_ACTINST_FLAG_NONE     (0x0)      /**< No flags */
 
 /**
  * Register an action.

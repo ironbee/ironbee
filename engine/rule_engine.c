@@ -51,8 +51,8 @@ static rule_cbdata_t rule_cbdata[] = {
 };
 
 /* Init rule flags */
-#define IB_RULES_INIT_RULESET     0x0001
-#define IB_RULES_INIT_CALLBACKS   0x0002
+#define IB_RULES_INIT_RULESET     (1 << 0)
+#define IB_RULES_INIT_CALLBACKS   (1 << 1)
 
 /**
  * @internal
