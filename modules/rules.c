@@ -54,16 +54,6 @@
 #define MODULE_NAME        rules
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
-/// @todo Fix this:
-#ifndef X_MODULE_BASE_PATH
-#define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH)
-#endif
-
-/// @todo Fix this:
-#ifndef X_RULE_BASE_PATH
-#define X_RULE_BASE_PATH IB_XSTRINGIFY(RULE_BASE_PATH) "/"
-#endif
-
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
 
