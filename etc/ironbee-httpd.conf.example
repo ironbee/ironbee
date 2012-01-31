@@ -12,6 +12,10 @@ SensorName ExampleSensorName
 SensorHostname example.sensor.tld
 
 ### Load Modules
+
+# Must load perf stats module first if you enable it.
+#LoadModule "ibmod_perf_stats.so"
+
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_radix.so"
 LoadModule "ibmod_binradix.so"

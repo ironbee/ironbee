@@ -158,6 +158,15 @@ typedef enum {
 //    IB_CTYPE_CUSTOM,
 } ib_ctype_t;
 
+/** Callback Data Type */
+enum cb_data_type {
+    IB_CBDATA_CONN_T,
+    IB_CBDATA_CONN_DATA_T,
+    IB_CBDATA_TX_T,
+    IB_CBDATA_TX_DATA_T,
+    IB_CBDATA_NONE,
+};
+
 /**
  * Configuration Context Function.
  *
@@ -977,6 +986,15 @@ typedef ib_status_t (*ib_state_hook_fn_t)(ib_engine_t *ib,
  * @returns Statically allocated event name
  */
 const char *ib_state_event_name(ib_state_event_type_t event);
+
+/**
+ * Resolve an event name to data given in callback .
+ *
+ * @param event Event type
+ *
+ * @returns Statically allocated event cbdata type 
+ */
+int ib_state_event_cbdata_type(ib_state_event_type_t event);
 
 /**
  * Notify the state machine that the configuration process has started.

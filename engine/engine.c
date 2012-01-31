@@ -64,7 +64,6 @@ const ib_default_string_t ib_default_string = {
 typedef struct ib_field_callback_data_t ib_field_callback_data_t;
 #endif
 
-
 /* -- Internal Routines -- */
 
 /**
@@ -740,6 +739,57 @@ const char *ib_state_event_name(ib_state_event_type_t event)
     IB_FTRACE_RET_CONSTSTR(ib_state_event_name_list[event]);
 }
 
+
+/**
+ * @internal
+ * List of callback data types for event id to type lookups.
+ */
+static int ib_state_event_name_cbdata_type_list[] = {
+    /* Engine States */
+    IB_CBDATA_CONN_T,      /**< handle_conn_started_event */
+    IB_CBDATA_CONN_T,      /**< handle_conn_finished_event */
+    IB_CBDATA_TX_T,        /**< handle_context_tx_started_event */
+    IB_CBDATA_TX_T,        /**< handle_context_tx_process_event */
+    IB_CBDATA_TX_T,        /**< handle_context_tx_finished_event */
+
+    /* Handler States */
+    IB_CBDATA_CONN_T,      /**< handle_context_conn_event */
+    IB_CBDATA_CONN_T,      /**< handle_connect_event */
+    IB_CBDATA_TX_T,        /**< handle_context_tx_event */
+    IB_CBDATA_TX_T,        /**< handle_request_headers_event */
+    IB_CBDATA_TX_T,        /**< handle_request_event */
+    IB_CBDATA_TX_T,        /**< handle_response_headers_event */
+    IB_CBDATA_TX_T,        /**< handle_response_event */
+    IB_CBDATA_CONN_T,      /**< handle_disconnect_event */
+    IB_CBDATA_TX_T,        /**< handle_postprocess_event */
+
+    /* Plugin States */
+    IB_CBDATA_NONE,        /**< cfg_started_event */
+    IB_CBDATA_NONE,        /**< cfg_finished_event */
+    IB_CBDATA_CONN_T,      /**< conn_opened_event */
+    IB_CBDATA_CONN_DATA_T, /**< conn_data_in_event */
+    IB_CBDATA_CONN_DATA_T, /**< conn_data_out_event */
+    IB_CBDATA_CONN_T,      /**< conn_closed_event */
+
+    /* Parser States */
+    IB_CBDATA_TX_DATA_T,   /**< tx_data_in_event */
+    IB_CBDATA_TX_DATA_T,   /**< tx_data_out_event */
+    IB_CBDATA_TX_T,        /**< request_started_event */
+    IB_CBDATA_TX_T,        /**< request_headers_event */
+    IB_CBDATA_TX_T,        /**< request_body_event */
+    IB_CBDATA_TX_T,        /**< request_finished_event */
+    IB_CBDATA_TX_T,        /**< response_started_event */
+    IB_CBDATA_TX_T,        /**< response_headers_event */
+    IB_CBDATA_TX_T,        /**< response_body_event */
+    IB_CBDATA_TX_T,        /**< response_finished_event */
+
+    IB_CBDATA_NONE 
+};
+int ib_state_event_cbdata_type(ib_state_event_type_t event)
+{
+    IB_FTRACE_INIT(ib_state_event_cbdata_type);
+    IB_FTRACE_RET_INT(ib_state_event_name_cbdata_type_list[event]);
+}
 
 /**
  * @internal
