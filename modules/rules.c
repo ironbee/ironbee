@@ -95,15 +95,15 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                                   const char *str)
 {
     IB_FTRACE_INIT(parse_operator);
-    ib_status_t         rc = IB_OK;
-    const char         *at = NULL;
-    ib_num_t            bang = 0;
-    const char         *op = NULL;
-    const char         *cptr;
-    ib_flags_t          flags = IB_OPINST_FLAG_NONE;
-    char               *copy;
-    char               *space;
-    char               *args = NULL;
+    ib_status_t rc = IB_OK;
+    const char *at = NULL;
+    ib_num_t bang = 0;
+    const char *op = NULL;
+    const char *cptr;
+    ib_flags_t flags = IB_OPINST_FLAG_NONE;
+    char *copy;
+    char *space;
+    char *args = NULL;
     ib_operator_inst_t *operator;
 
     /* Search for leading '!' / '@' */
@@ -201,9 +201,9 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
                                 const char *input_str)
 {
     IB_FTRACE_INIT(parse_inputs);
-    ib_status_t  rc = IB_OK;
-    const char  *cur;
-    char        *copy;
+    ib_status_t rc = IB_OK;
+    const char *cur;
+    char *copy;
 
     /* Copy the input string */
     while(isspace(*input_str)) {
@@ -256,11 +256,11 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
                                   const char *modifier_str)
 {
     IB_FTRACE_INIT(parse_modifier);
-    ib_status_t  rc = IB_OK;
-    const char  *name;
-    char        *colon;
-    char        *copy;
-    const char  *value = NULL;
+    ib_status_t rc = IB_OK;
+    const char *name;
+    char *colon;
+    char *copy;
+    const char *value = NULL;
 
     /* Copy the string */
     copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), modifier_str);
@@ -646,12 +646,12 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
                                      void *cbdata)
 {
     IB_FTRACE_INIT(rules_rule_params);
-    ib_status_t      rc;
-    ib_list_node_t  *inputs;
-    ib_list_node_t  *op;
-    ib_list_node_t  *mod;
-    ib_rule_phase_t  phase = PHASE_NONE;
-    ib_rule_t       *rule;
+    ib_status_t rc;
+    ib_list_node_t *inputs;
+    ib_list_node_t *op;
+    ib_list_node_t *mod;
+    ib_rule_phase_t phase = PHASE_NONE;
+    ib_rule_t *rule;
 
     if (cbdata != NULL) {
         IB_FTRACE_MSG("Callback data is not null.");
