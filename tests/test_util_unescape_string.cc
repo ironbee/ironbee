@@ -38,11 +38,11 @@ TEST(TestIBUtilUnescapeString, singleCharacter) {
   EXPECT_EQ('\n', str2[1]);
   EXPECT_EQ('\t', str2[2]);
   EXPECT_EQ('\0', str2[3]);
-  ASSERT_EQ(3, len);
+  ASSERT_EQ(3UL, len);
 }
 
 TEST(TestIBUtilUnescapeString, singleBytes) {
-  char *str = "\\x01\\x02";
+  const char *str = "\\x01\\x02";
   char str2[3];
   char chk[2] = { 1, 2 };
   size_t len;
@@ -51,11 +51,11 @@ TEST(TestIBUtilUnescapeString, singleBytes) {
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
   EXPECT_EQ('\0', str2[2]);
-  EXPECT_EQ(2, len);
+  EXPECT_EQ(2UL, len);
 }
 
 TEST(TestIBUtilUnescapeString, longBytes) {
-  char *str = "\\u0001\\u4321";
+  const char *str = "\\u0001\\u4321";
   char str2[5];
   char chk[4] = { 0, 1, 67, 33 };
   size_t len;
@@ -66,39 +66,39 @@ TEST(TestIBUtilUnescapeString, longBytes) {
   EXPECT_EQ(chk[2], str2[2]);
   EXPECT_EQ(chk[3], str2[3]);
   EXPECT_EQ('\0', str2[4]);
-  EXPECT_EQ(4, len);
+  EXPECT_EQ(4UL, len);
 }
 
 TEST(TestIBUtilUnescapeString, shortSingleBytesEndOfLine) {
-  char *str = "\\x01\\x0";
+  const char *str = "\\x01\\x0";
   char str2[3];
   size_t len;
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2, &len, str, strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, shortSingleBytes) {
-  char *str = "\\x0\\x00";
+  const char *str = "\\x0\\x00";
   char str2[3];
   size_t len;
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2, &len, str, strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, shortLongBytes) {
-  char *str = "\\u001\\u4321";
+  const char *str = "\\u001\\u4321";
   char str2[5];
   size_t len;
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2, &len, str, strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
-  char *str = "\\u0001\\u431";
+  const char *str = "\\u0001\\u431";
   char str2[5];
   size_t len;
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(str2, &len, str, strlen(str)));
 }
 
 TEST(TestIBUtilUnescapeString, nochange01) {
-  char* str = "LoadModule";
+  const char* str = "LoadModule";
   char str2[100];
   size_t len;
   ASSERT_EQ(IB_OK, ib_util_unescape_string(str2, &len, str, strlen(str)));
