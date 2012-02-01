@@ -80,6 +80,10 @@
 #define IRONBEE_DISCONNECT           3
 #define IRONBEE_ABORT                4
 
+// APR uses char* instead of void* for it's generic pointer type.  This
+// causes some false warnings.  We're okay, because the values we put in to
+// APR are properly aligned.
+#pragma clang diagnostic ignored "-Wcast-align"
 
 /* -- Data Structures -- */
 
