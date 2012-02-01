@@ -274,10 +274,9 @@ TEST(TestIBUtilHash, test_hashfunc_djb2)
 {
     unsigned int hash1 = 0;
     unsigned int hash2 = 0;
-    ib_status_t rc;
 
     atexit(ib_shutdown);
-    rc = ib_initialize();
+    ib_initialize();
 
     // Test with no case sensitive
     hash1 = ib_hashfunc_djb2("Key", 3,
