@@ -50,9 +50,12 @@ static rule_cbdata_t rule_cbdata[] = {
     {PHASE_INVALID,         NULL,              (ib_state_event_type_t) -1}
 };
 
-/* Init rule flags */
-#define IB_RULES_INIT_RULESET     (1 << 0)
-#define IB_RULES_INIT_CALLBACKS   (1 << 1)
+/**
+ * Init rule flags.  Used to specify which parts of the rules object
+ * will be initialized by ib_rules_init()
+ **/
+#define IB_RULES_INIT_RULESET     (1 << 0)   /**< Initialize the ruleset */
+#define IB_RULES_INIT_CALLBACKS   (1 << 1)   /**< Initialize the callbacks */
 
 /**
  * @internal
