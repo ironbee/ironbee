@@ -117,7 +117,7 @@ struct ib_operator_inst_t {
  * This registers the name and the callbacks used to create, destroy and
  * execute an operator instance.
  *
- * If the name is not unique an error status will be returned.
+ * If the name is not unique, an error status will be returned.
  *
  * @param[in] ib Ironbee engine
  * @param[in] name The name of the operator.
