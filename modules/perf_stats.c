@@ -72,10 +72,10 @@ typedef struct {
     int           cbdata_type;
     const char   *name;
     uint64_t      call_cnt;
-    uint64_t      total_msec;
-    uint64_t      max_msec;
-    uint64_t      start_msec;
-    uint64_t      stop_msec;
+    uint64_t      total_usec;
+    uint64_t      max_usec;
+    uint64_t      start_usec;
+    uint64_t      stop_usec;
 } perf_info_t;
 
 uint64_t get_time_stamp_us(void);
@@ -162,20 +162,20 @@ static ib_status_t mod_perf_stats_reg_conn_counter(ib_engine_t *ib,
              */
             if (event == cevent) {
                 perfp->call_cnt = 1;
-                perfp->start_msec = get_time_stamp_us();
+                perfp->start_usec = get_time_stamp_us();
             }
             else {
                 perfp->call_cnt = 0;
-                perfp->start_msec = 0;
+                perfp->start_usec = 0;
             } 
           
             /* Setup other defaults */
             perfp->number = event;
             perfp->name = ib_state_event_name((ib_state_event_type_t)event);
             perfp->cbdata_type = ib_state_event_cbdata_type(event); 
-            perfp->max_msec = 0;
-            perfp->total_msec = 0;
-            perfp->stop_msec = 0;
+            perfp->max_usec = 0;
+            perfp->total_usec = 0;
+            perfp->stop_usec = 0;
 
             ib_log_debug(ib, 4, "Perf callback registered %s (%d) (%d)",
                          perfp->name, perfp->number, perfp->cbdata_type);                
@@ -189,6 +189,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(ib_engine_t *ib,
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+
 /**
  * @internal
  * Perf Stats Start Event Callback.
@@ -198,7 +199,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in] param Callback data which differs based on hook type.
- * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * @param[in] cbdata Callback data: acutally a perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_start_callback(ib_engine_t *ib,
@@ -222,13 +223,13 @@ static ib_status_t mod_perf_stats_event_start_callback(ib_engine_t *ib,
         perfp = &perf_info[cevent];
 
         /* Set the start time for event */
-        perfp->start_msec = get_time_stamp_us();
+        perfp->start_usec = get_time_stamp_us();
 
         /* Incriment the call counter */
         perfp->call_cnt++;
 
         ib_log_debug(ib, 4, "Start Callback: %s (%llu) (%llu) ",
-                     perfp->name, perfp->call_cnt, perfp->start_msec);
+                     perfp->name, perfp->call_cnt, perfp->start_usec);
     }
     else
     {
@@ -270,24 +271,24 @@ static ib_status_t mod_perf_stats_event_stop_callback(ib_engine_t *ib,
         perfp = &perf_info[cevent];
 
         /* Set the stop time for the event. */
-        perfp->stop_msec = get_time_stamp_us();
+        perfp->stop_usec = get_time_stamp_us();
 
         /* Get the msec the event took. */
-        time_taken = (perfp->stop_msec - perfp->start_msec);
+        time_taken = (perfp->stop_usec - perfp->start_usec);
 
         /* Update total time spent on event. */
-        perfp->total_msec += time_taken;
+        perfp->total_usec += time_taken;
 
         /* Update max time taken for event if needed. */
-        if (time_taken > perfp->max_msec) {
-            perfp->max_msec = time_taken;
+        if (time_taken > perfp->max_usec) {
+            perfp->max_usec = time_taken;
         }
 
         ib_log_debug(ib, 4, "Stop Callback: %s call_cnt:(%llu) start:(%llu) "
                      "stop:(%llu) took:(%llu) conn total:(%llu) max:(%llu)",
-                     perfp->name, perfp->call_cnt, perfp->start_msec, 
-                     perfp->stop_msec, time_taken, perfp->total_msec, 
-                     perfp->max_msec);
+                     perfp->name, perfp->call_cnt, perfp->start_usec, 
+                     perfp->stop_usec, time_taken, perfp->total_usec, 
+                     perfp->max_usec);
     }
     else {
         ib_log_debug(ib, 4, "Connection based perf_info is NULL");
@@ -298,9 +299,9 @@ static ib_status_t mod_perf_stats_event_stop_callback(ib_engine_t *ib,
 
 /**
  * @internal
- * Given @ib_txdata_t, @ib_tx_t, @ib_conn_t, or @ib_conndata_t
+ * Given ib_txdata_t, ib_tx_t, ib_conn_t, or ib_conndata_t
  * return the performance info associated with it.
- *
+ * @param[in] ib IronBee object
  * @param[in] hook callback data 
  * @param[in] call back data type
  */
@@ -311,29 +312,34 @@ static perf_info_t *get_perf_info(ib_engine_t *ib, void *param, int cbdata_type)
     int rc;
 
     /* Fetch data from connection hash depending on callback data type */
-    if (cbdata_type == IB_CBDATA_CONN_T) {
-        ib_conn_t *connp = (ib_conn_t *)param;;
-        rc = ib_hash_get(connp->data, "MOD_PERF_STATS",
-                         (void *)&perf_info);
-    } 
-    else if (cbdata_type == IB_CBDATA_CONN_DATA_T) {
-        ib_conndata_t *connd = (ib_conndata_t *)param;
-        rc = ib_hash_get(connd->conn->data, "MOD_PERF_STATS",
-                         (void *)&perf_info);
-    } 
-    else if (cbdata_type == IB_CBDATA_TX_T) {
-        ib_tx_t *tx = (ib_tx_t *)param;
-        rc = ib_hash_get(tx->conn->data, "MOD_PERF_STATS",
-                         (void *)&perf_info);
-    } 
-    else if (cbdata_type == IB_CBDATA_TX_DATA_T) {
-        ib_txdata_t *txd = (ib_txdata_t *)param;
-        rc = ib_hash_get(txd->tx->conn->data, "MOD_PERF_STATS",
-                         (void *)&perf_info);
-    }
-    else {
-        ib_log_error(ib,3,"Unknown Callback data type (%d)", cbdata_type);
-        return NULL;
+    switch (cbdata_type) {
+        case (IB_CBDATA_CONN_T): {
+            ib_conn_t *connp = (ib_conn_t *)param;;
+            rc = ib_hash_get(connp->data, "MOD_PERF_STATS",
+                             (void *)&perf_info);
+            break;
+        } 
+        case (IB_CBDATA_CONN_DATA_T): {
+            ib_conndata_t *connd = (ib_conndata_t *)param;
+            rc = ib_hash_get(connd->conn->data, "MOD_PERF_STATS",
+                             (void *)&perf_info);
+            break;
+        }   
+        case (IB_CBDATA_TX_T): {
+            ib_tx_t *tx = (ib_tx_t *)param;
+            rc = ib_hash_get(tx->conn->data, "MOD_PERF_STATS",
+                             (void *)&perf_info);
+            break;
+        } 
+        case (IB_CBDATA_TX_DATA_T): {
+            ib_txdata_t *txd = (ib_txdata_t *)param;
+            rc = ib_hash_get(txd->tx->conn->data, "MOD_PERF_STATS",
+                             (void *)&perf_info);
+            break;
+        }
+        default :
+            ib_log_error(ib,3,"Unknown Callback data type (%d)", cbdata_type);
+            return NULL;
     }
 
     if (rc != IB_OK) {
@@ -404,8 +410,6 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-
-
 
 /**
  * @internal
