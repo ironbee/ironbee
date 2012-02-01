@@ -29,7 +29,7 @@ void Entry::clear()
 
 namespace  {
 
-static boost::regex re_boundary("^--([0-9a-z]+)-([A-Z])--$");
+static const boost::regex re_boundary("^--([0-9a-z]+)-([A-Z])--$");
 
 }
 
