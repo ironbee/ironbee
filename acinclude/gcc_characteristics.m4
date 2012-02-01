@@ -1100,8 +1100,8 @@ dnl -----------------------------------------------
 dnl Check for GCC pedantic support
 dnl -----------------------------------------------
 AC_ARG_ENABLE(gcc_warn_pedantic,
-              AS_HELP_STRING([--disable-gcc-warn-pedantic], [Disable GCC pedantic warnings demanded by strict ISO C and ISO C++, this option uses the standard used in --with-gcc-c-standard]))
-    if test "$enable_gcc_warn_pedantic" != "no"; then
+              AS_HELP_STRING([--enable-gcc-warn-pedantic], [Disable GCC pedantic warnings demanded by strict ISO C and ISO C++, this option uses the standard used in --with-gcc-c-standard]))
+    if test "$enable_gcc_warn_pedantic" == "yes"; then
 
         if test "$GCC_C_STD_SET" = "yes"; then
             save_CFLAGS="${CFLAGS}"
