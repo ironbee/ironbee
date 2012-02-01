@@ -24,8 +24,9 @@
  * @author William Metcalf <wmetcalf@qualys.com>
  */
 
-/* _POSIX_C_SOURCE 200112L Required for clock_getttime(). */
-#define _POSIX_C_SOURCE 200112L
+/* We need this before time.h, so that we get the right prototypes. */
+#include "ironbee_config_auto.h"
+   
 #include <time.h>
 
 #include <stdint.h>
@@ -41,7 +42,6 @@
 #include <ironbee/provider.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
-
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME               perf_stats
@@ -78,34 +78,47 @@ typedef struct {
     uint64_t      stop_msec;
 } perf_info_t;
 
-uint64_t get_time_stamp_ms(void);
+uint64_t get_time_stamp_us(void);
 
 static perf_info_t *get_perf_info(ib_engine_t *,void *, int);
 
 /**
  * @internal
- * Get a millisecond ts  
+ * Get a microsecond ts  
  *
  * Returns a timestamp as uint64_t from CLOCK_MONOTONIC_RAW or CLOCK_MONOTINIC.
  *
  */ 
-uint64_t get_time_stamp_ms(void){
-    uint64_t ms;
-    struct timespec t;
+uint64_t get_time_stamp_us(void){
+    uint64_t us;
 
-    /* Ticks seem to be an undesireable due for many reasons.
-     * IB_CLOCK is set to CLOCK_MONOTONIC which is vulnerable to slew or
-     * if avaliable set to CLOCK_MONOTONIC_RAW which does not suffer from slew.
-     *
-     * timespec provides sec and nsec resolution so we have to convert to msec.
-     */
-    clock_gettime(IB_CLOCK,&t);
-    
-    /* There are 1 million microsecs in a sec.
-     * There are 1000 nanosecs in a microsec 
-     */
-    ms = (uint64_t)((t.tv_sec * 1000000) + (t.tv_nsec / 1000));
-    return ms;
+#ifdef _DARWIN_C_SOURCE
+    {
+      struct timeval t;
+      
+      gettimeofday(&t, NULL);
+      
+      us = t.tv_sec*1e6 + t.tv_usec;
+    }
+#else
+    {
+        struct timespec t;
+        
+        /* Ticks seem to be an undesireable due for many reasons.
+         * IB_CLOCK is set to CLOCK_MONOTONIC which is vulnerable to slew or
+         * if avaliable set to CLOCK_MONOTONIC_RAW which does not suffer from slew.
+         *
+         * timespec provides sec and nsec resolution so we have to convert to msec.
+         */
+        clock_gettime(IB_CLOCK,&t);
+        
+        /* There are 1 million microsecs in a sec.
+         * There are 1000 nanosecs in a microsec 
+         */
+        us = (uint64_t)((t.tv_sec * 1000000) + (t.tv_nsec / 1000));
+    }
+#endif
+    return us;
 }
 
 /**
@@ -149,7 +162,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(ib_engine_t *ib,
              */
             if (event == cevent) {
                 perfp->call_cnt = 1;
-                perfp->start_msec = get_time_stamp_ms();
+                perfp->start_msec = get_time_stamp_us();
             }
             else {
                 perfp->call_cnt = 0;
@@ -209,7 +222,7 @@ static ib_status_t mod_perf_stats_event_start_callback(ib_engine_t *ib,
         perfp = &perf_info[cevent];
 
         /* Set the start time for event */
-        perfp->start_msec = get_time_stamp_ms();
+        perfp->start_msec = get_time_stamp_us();
 
         /* Incriment the call counter */
         perfp->call_cnt++;
@@ -257,7 +270,7 @@ static ib_status_t mod_perf_stats_event_stop_callback(ib_engine_t *ib,
         perfp = &perf_info[cevent];
 
         /* Set the stop time for the event. */
-        perfp->stop_msec = get_time_stamp_ms();
+        perfp->stop_msec = get_time_stamp_us();
 
         /* Get the msec the event took. */
         time_taken = (perfp->stop_msec - perfp->start_msec);
