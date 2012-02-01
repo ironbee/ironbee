@@ -1675,14 +1675,14 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".pkg_path",
         IB_FTYPE_NULSTR,
-        &modlua_global_cfg,
+        modlua_cfg_t,
         pkg_path,
         NULL
     ),
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".pkg_cpath",
         IB_FTYPE_NULSTR,
-        &modlua_global_cfg,
+        modlua_cfg_t,
         pkg_cpath,
         NULL
     ),

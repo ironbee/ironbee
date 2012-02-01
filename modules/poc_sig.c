@@ -300,7 +300,7 @@ static IB_CFGMAP_INIT_STRUCTURE(pocsig_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".trace",
         IB_FTYPE_NUM,
-        &pocsig_global_cfg,
+        pocsig_cfg_t,
         trace,
         0
     ),

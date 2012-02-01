@@ -448,7 +448,7 @@ static IB_CFGMAP_INIT_STRUCTURE(modtrace_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".trace_mpools",
         IB_FTYPE_NULSTR,
-        &modtrace_global_config,
+        modtrace_config_t,
         trace_mpools,
         "no"
     ),

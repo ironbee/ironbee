@@ -1518,7 +1518,7 @@ static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".personality",
         IB_FTYPE_NULSTR,
-        &modhtp_global_cfg,
+        modhtp_cfg_t,
         personality,
         "Apache_2_2"
     ),

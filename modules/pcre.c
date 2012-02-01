@@ -471,21 +471,21 @@ static IB_CFGMAP_INIT_STRUCTURE(modpcre_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".study",
         IB_FTYPE_NUM,
-        &modpcre_global_cfg,
+        modpcre_cfg_t,
         study,
         1
     ),
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".match_limit",
         IB_FTYPE_NUM,
-        &modpcre_global_cfg,
+        modpcre_cfg_t,
         match_limit,
         5000
     ),
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".match_limit_recursion",
         IB_FTYPE_NUM,
-        &modpcre_global_cfg,
+        modpcre_cfg_t,
         match_limit_recursion,
         5000
     ),

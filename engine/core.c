@@ -5046,46 +5046,46 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_handler,
-        (const uintptr_t)MODULE_NAME_STR
+        MODULE_NAME_STR
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER ".log_level",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_level,
         4
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER ".log_uri",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_uri,
         ""
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER ".log_handler",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_handler,
-        (const uintptr_t)MODULE_NAME_STR
+        MODULE_NAME_STR
     ),
 
     /* Logevent */
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGEVENT,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         logevent,
-        (const uintptr_t)MODULE_NAME_STR
+        MODULE_NAME_STR
     ),
 
     /* Parser */
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_PARSER,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         parser,
         MODULE_NAME_STR
     ),
@@ -5094,14 +5094,14 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         "buffer_req",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         buffer_req,
         0
     ),
     IB_CFGMAP_INIT_ENTRY(
         "buffer_res",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         buffer_res,
         0
     ),
@@ -5110,63 +5110,63 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         "audit_engine",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         audit_engine,
         0
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_index",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_index,
         "ironbee-index.log"
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dmode",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_dmode,
         0700
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_fmode",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_fmode,
         0600
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_parts",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_parts,
         IB_ALPARTS_DEFAULT
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dir",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_dir,
         "/var/log/ironbee"
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_sdir_fmt",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_sdir_fmt,
         ""
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_index_fmt",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_index_fmt,
         IB_LOGFORMAT_DEFAULT
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_AUDIT,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         audit,
         MODULE_NAME_STR
     ),
@@ -5175,7 +5175,7 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_DATA,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         data,
         MODULE_NAME_STR
     ),
