@@ -76,17 +76,13 @@ static int g_lua_lock = -1;
  */
 typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State*, lua_State**);
 
-/**
- * @brief Counter used to generate internal rule IDs.
- */
-static int ironbee_loaded_rule_count;
-
 
 /**
  * @internal
  * Parse rule's operator.
  *
- * Parsers the rule's operator string, stores the results in the rule object.
+ * Parses the rule's operator string @a str and, stores the results in the
+ * rule object @a rule.
  *
  * @param cp IronBee configuaration parser
  * @param rule Rule object to update
@@ -191,8 +187,8 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
  * @internal
  * Parse a rule's input string.
  *
- * Parsers the rule's input field list string, stores the results in the rule
- * object.
+ * Parses the rule's input field list string @a input_str, and stores the
+ * results in the rule object @a rule.
  *
  * @param cp IronBee configuration parser
  * @param rule Rule to operate on
@@ -244,12 +240,13 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
  * @internal
  * Parse a rule's modifier string.
  *
- * Parsers the rule's modifier string, stores the results in the rule
- * object.
+ * Parses the rule's modifier string @a modifier_str, and stores the results
+ * in the rule object @a rule.
  *
- * @param cp IronBee configuration parser
- * @param rule Rule to operate on
- * @param modifier_str Input field name.
+ * @param[in] cp IronBee configuration parser
+ * @param[in,out] rule Rule to operate on
+ * @param[out] phase Rule phase in which the rule should be executed.
+ * @param[in] modifier_str Input field name.
  *
  * @returns Status code
  */
@@ -356,7 +353,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
 /**
  * @brief This will use @c g_lua_lock to atomically call @a fn.
- * @details The argument @fn will be either
+ * @details The argument @a fn will be either
  *          ib_lua_new_thread(ib_engine_t*, lua_State**) or
  *          ib_lua_join_thread(ib_engine_t*, lua_State**) which will be called
  *          only if @c g_lua_lock can be locked using @c semop.
@@ -365,7 +362,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
  * @param[in,out] L The Lua State to create or destroy. Passed to @a fn.
  * @returns If any error locking or unlocking the
  *          semaphore is encountered, IB_EUNKNOWN is returned.
- *          Otherwise the result of \a fn is returned.
+ *          Otherwise the result of @a fn is returned.
  */
 static ib_status_t call_in_critical_section(ib_engine_t *ib,
                                             critical_section_fn_t fn,
@@ -816,7 +813,6 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ironbee_loaded_rule_count = 0;
     g_ironbee_rules_lua = luaL_newstate();
     luaL_openlibs(g_ironbee_rules_lua);
 
