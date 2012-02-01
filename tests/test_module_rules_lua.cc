@@ -50,8 +50,6 @@ class TestIronBeeModuleRulesLua : public BaseModuleFixture {
 
 TEST_F(TestIronBeeModuleRulesLua, load_eval)
 {
-    ib_tx_t tx;
-
     lua_State *L = luaL_newstate();
     
     luaL_openlibs(L);
@@ -105,7 +103,6 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
 
 TEST_F(TestIronBeeModuleRulesLua, operator_test)
 {
-    int res = 0;
     ib_tx_t tx;
 
     ib_operator_t op;
