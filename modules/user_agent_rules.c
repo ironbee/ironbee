@@ -1059,7 +1059,7 @@ const modua_match_ruleset_t *modua_ruleset_get( void )
 {
     IB_FTRACE_INIT(modua_ruleset_get);
     if (modua_match_ruleset.num_rules == 0) {
-        IB_FTRACE_RET_PTR(modua_match_rule_t, NULL);
+        IB_FTRACE_RET_PTR(modua_match_ruleset_t, NULL);
     }
     IB_FTRACE_RET_PTR(modua_match_ruleset_t, &modua_match_ruleset);
 }
