@@ -144,14 +144,14 @@ test_util_ahocorasick_LDADD = gtest/libgtest.la \
                     -lhtp
 endif
 
-test_engine_SOURCES = test_engine.cc test_main.cc
+test_engine_SOURCES = test_engine.cc test_main.cc ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
 
-test_module_trace_SOURCES = test_module_trace.cc test_main.cc
+test_module_trace_SOURCES = test_module_trace.cc test_main.cc ibtest_util.cc
 test_module_trace_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
-                                test_main.cc
+                                test_main.cc ibtest_util.cc
 test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
                         -I$(top_srcdir)/modules \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
@@ -174,7 +174,8 @@ test_module_ahocorasick_LDADD = $(MODULE_TEST_LDADD)
 test_module_ahocorasick_CPPFLAGS = $(CPPFLAGS) \
                                    -I$(top_srcdir)/modules
 
-test_module_poc_sig_SOURCES = test_module_poc_sig.cc test_main.cc
+test_module_poc_sig_SOURCES = test_module_poc_sig.cc test_main.cc \
+                              ibtest_util.cc
 test_module_poc_sig_LDADD = $(MODULE_TEST_LDADD)
 
 test_operator_SOURCES = test_operator.cc test_main.cc

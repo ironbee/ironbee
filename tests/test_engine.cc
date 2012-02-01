@@ -41,7 +41,7 @@
 #include "engine/operator.c"
 #include "engine/core_operators.c"
 
-#include "ibtest_util.c"
+#include "ibtest_util.hh"
 
 /// @test Test ironbee library - ib_engine_create()
 TEST(TestIronBee, test_engine_create_null_plugin)

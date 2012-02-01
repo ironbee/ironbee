@@ -27,7 +27,7 @@
 
 #define TESTING
 
-#include "ibtest_util.c"
+#include "ibtest_util.hh"
 
 /// @test Test poc_sig module - load module programatically
 TEST(TestIronBee, test_module_poc_sig_load_module)

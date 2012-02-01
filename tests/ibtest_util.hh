@@ -43,10 +43,7 @@
  * @{
  */
 
-static ib_plugin_t ibt_ibplugin = {
-    IB_PLUGIN_HEADER_DEFAULTS,
-    "unit_tests"
-};
+extern ib_plugin_t ibt_ibplugin;
 
 /**
  * Create and initialize a new engine, asserting correctness.
@@ -155,10 +152,7 @@ static ib_plugin_t ibt_ibplugin = {
  *
  * @returns true if memory values are equal
  */
-bool ibtest_memeq(const void *v1, const void *v2, size_t n)
-{
-    return memcmp(v1, v2, n) ? false : true;
-}
+bool ibtest_memeq(const void *v1, const void *v2, size_t n);
 
 /**
  * Assert that values in memory are equal.

@@ -27,7 +27,7 @@
 
 #define TESTING
 
-#include "ibtest_util.c"
+#include "ibtest_util.hh"
 
 /// @test Test trace module - load module programatically
 TEST(TestIronBee, test_module_trace_load_module)
