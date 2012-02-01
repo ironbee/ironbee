@@ -37,7 +37,7 @@
 
 /**
  * @internal
- * Create function for the "@str" operators
+ * Create function for the "\@str" family of operators
  *
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters
@@ -67,7 +67,7 @@ static ib_status_t strop_create(ib_mpool_t *mp,
 
 /**
  * @internal
- * Execute function for the "@streq" operator
+ * Execute function for the "\@streq" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -85,7 +85,11 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(op_streq_execute);
 
-    /* This works on C-style (NUL terminated) and byte strings */
+    /**
+     * This works on C-style (NUL terminated) and byte strings.  Note
+     * that data is assumed to be a NUL terminated string (because our
+     * configuration parser can't produce anything else).
+     **/
     const char *cstr = (const char *)data;
     if (field->type==IB_FTYPE_NULSTR) {
         const char *fval = ib_field_value_nulstr( field );
@@ -111,10 +115,10 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "@contains" operator
+ * Execute function for the "\@contains" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
+ * @param[in] ib Ironbee engine (unused).
+ * @param[in] tx The transaction for this operator (unused).
  * @param[in] data C-style string to compare to
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
@@ -128,9 +132,15 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
                                        ib_num_t *result)
 {
     IB_FTRACE_INIT(contains_execute_fn);
+    /* 'searchstr' should be const, but the bytestr index fn takes a char* */
     char *searchstr = (char *)data;
     ib_status_t rc = IB_OK;
 
+    /**
+     * This works on C-style (NUL terminated) and byte strings.  Note
+     * that data is assumed to be a NUL terminated string (because our
+     * configuration parser can't produce anything else).
+     **/
     if (field->type == IB_FTYPE_NULSTR) {
         if (strstr(ib_field_value_nulstr(field), searchstr) == NULL) {
             *result = 0;
@@ -149,7 +159,7 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
         }
     }
     else {
-        return IB_EINVAL;
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -157,11 +167,11 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "@exists" operator
+ * Execute function for the "\@exists" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to (ignored)
+ * @param[in] ib Ironbee engine (unused).
+ * @param[in] tx The transaction for this operator (unused).
+ * @param[in] data Operator data (unused)
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -174,6 +184,7 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
                                      ib_num_t *result)
 {
     IB_FTRACE_INIT(op_exists_execute);
+
     /* Return true of field is not NULL */
     *result = (field != NULL);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -181,11 +192,11 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "@checkflag" operator
+ * Execute function for the "\@checkflag" operator
  *
- * @param[in] ib Ironbee engine.
+ * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
+ * @param[in] data Name of the flag to check.
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -215,12 +226,12 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "@true" operator
+ * Execute function for the "\@true" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
- * @param[in] field Field value
+ * @param[in] ib Ironbee engine (unused)
+ * @param[in] tx The transaction for this operator (unused)
+ * @param[in] data Operator data (unused)
+ * @param[in] field Field value (unused)
  * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
@@ -238,12 +249,12 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "@false" operator
+ * Execute function for the "\@false" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
- * @param[in] field Field value
+ * @param[in] ib Ironbee engine (unused)
+ * @param[in] tx The transaction for this operator (unused)
+ * @param[in] data Operator data (unused)
+ * @param[in] field Field value (unused)
  * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
@@ -267,7 +278,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     IB_FTRACE_INIT(ib_core_operators_init);
     ib_status_t rc;
 
-    /* Register the string equal '@streq' operator */
+    /* Register the string equal '\@streq' operator */
     rc = ib_operator_register(ib,
                               "@streq",
                               IB_OP_FLAG_NONE,
@@ -278,7 +289,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the string contains '@contains' operator */
+    /* Register the string contains '\@contains' operator */
     rc = ib_operator_register(ib,
                               "@contains",
                               IB_OP_FLAG_NONE,
@@ -289,7 +300,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the string contains '@checkflag' operator */
+    /* Register the '\@checkflag' operator */
     rc = ib_operator_register(ib,
                               "@checkflag",
                               IB_OP_FLAG_ALLOW_NULL,
@@ -300,7 +311,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the field exists '@exists' operator */
+    /* Register the field exists '\@exists' operator */
     rc = ib_operator_register(ib,
                               "@exists",
                               IB_OP_FLAG_ALLOW_NULL,
@@ -311,7 +322,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the true '@true' operator */
+    /* Register the true '\@true' operator */
     rc = ib_operator_register(ib,
                               "@true",
                               IB_OP_FLAG_ALLOW_NULL,
@@ -322,7 +333,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the false '@false' operator */
+    /* Register the false '\@false' operator */
     rc = ib_operator_register(ib,
                               "@false",
                               IB_OP_FLAG_ALLOW_NULL,

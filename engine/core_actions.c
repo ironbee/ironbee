@@ -35,9 +35,9 @@
  * @internal
  * Create function for the log action.
  *
- * @param mp Memory pool to use for allocation
- * @param parameters Constant parameters
- * @param inst Action instance
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
  *
  * @returns Status code
  */
@@ -65,9 +65,9 @@ static ib_status_t act_log_create(ib_mpool_t *mp,
  * @internal
  * Execute function for the "log" action
  *
- * @param data C-style string to compare to
- * @param rule The matched rule
- * @param tx IronBee transaction
+ * @param[in] data C-style string to log
+ * @param[in] rule The matched rule
+ * @param[in] tx IronBee transaction
  *
  * @returns Status code
  */
@@ -77,7 +77,7 @@ static ib_status_t act_log_execute(void *data,
 {
     IB_FTRACE_INIT(act_log_execute);
 
-    /* This works on C-style (NUL terminated) and byte strings */
+    /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
 
     ib_log_debug(tx->ib, 9, "LOG: %s", cstr);
@@ -88,15 +88,15 @@ static ib_status_t act_log_execute(void *data,
  * @internal
  * Create function for the setflags action.
  *
- * @param mp Memory pool to use for allocation
- * @param parameters Constant parameters
- * @param inst Action instance
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
  *
  * @returns Status code
  */
 static ib_status_t act_setflags_create(ib_mpool_t *mp,
-                                  const char *parameters,
-                                  ib_action_inst_t *inst)
+                                       const char *parameters,
+                                       ib_action_inst_t *inst)
 {
     IB_FTRACE_INIT(act_setflags_create);
     char *str;
@@ -118,9 +118,9 @@ static ib_status_t act_setflags_create(ib_mpool_t *mp,
  * @internal
  * Execute function for the "set flag" action
  *
- * @param data C-style string to compare to
- * @param rule The matched rule
- * @param tx IronBee transaction
+ * @param[in] data Name of the flag to set
+ * @param[in] rule The matched rule
+ * @param[in] tx IronBee transaction
  *
  * @returns Status code
  */
