@@ -115,7 +115,6 @@ TEST(TestIronBee, test_tfn)
     ib_flags_t flags;
     uint8_t data_in[128];
     uint8_t data_out[128];
-    ib_status_t rc;
 
     ibtest_engine_create(&ib);
 
@@ -166,8 +165,6 @@ TEST(TestIronBee, test_dpi)
     ib_provider_inst_t *dpi;
     ib_field_t *dynf;
     ib_field_t *f;
-    ib_num_t *pnumval;
-    ib_status_t rc;
 
     ibtest_engine_create(&ib);
 
@@ -189,7 +186,7 @@ TEST(TestIronBee, test_dpi)
                         "test_dynf", IB_FTYPE_GENERIC, NULL)
     );
     ASSERT_TRUE(dynf);
-    ASSERT_EQ(9, dynf->nlen);
+    ASSERT_EQ(9UL, dynf->nlen);
     ASSERT_MEMEQ("test_dynf", dynf->name, 9);
 
     /* Make it a dynamic field which calls dyn_get() with "dynf" as the data. */
@@ -207,7 +204,7 @@ TEST(TestIronBee, test_dpi)
     /* Fetch a dynamic field from the data store */
     ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf.dyn_subkey", &f));
     ASSERT_TRUE(f);
-    ASSERT_EQ(10, f->nlen);
+    ASSERT_EQ(10UL, f->nlen);
 
     /* Get the value from the dynamic field. */
     ASSERT_EQ(5, *ib_field_value_num(f));
@@ -215,7 +212,7 @@ TEST(TestIronBee, test_dpi)
     /* Fetch another dynamic field from the data store */
     ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf.dyn_subkey2", &f));
     ASSERT_TRUE(f);
-    ASSERT_EQ(11, f->nlen);
+    ASSERT_EQ(11UL, f->nlen);
     ASSERT_MEMEQ("dyn_subkey2", f->name, 11);
 
     /* Get the value from the dynamic field. */
