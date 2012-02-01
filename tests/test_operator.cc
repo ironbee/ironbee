@@ -38,6 +38,8 @@ ib_status_t test_create_fn(ib_mpool_t *pool,
                            const char *data,
                            ib_operator_inst_t *op_inst)
 {
+    IB_FTRACE_INIT(test_create_fn);
+    
     char *str;
     str = ib_mpool_strdup(pool, data);
     if (str == NULL) {
@@ -46,7 +48,7 @@ ib_status_t test_create_fn(ib_mpool_t *pool,
 
     op_inst->data = str;
 
-    return IB_OK;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst) {
