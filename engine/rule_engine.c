@@ -61,7 +61,7 @@ static rule_cbdata_t rule_cbdata[] = {
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
  * @param[in,out] tx Transaction
- * @param[out] result Pointer to number in which to store the result
+ * @param[out] rule_result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -81,7 +81,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
 
     /* Special case: External rules */
-    if ((rule->flags & IB_RULE_FLAG_EXTERNAL) == IB_RULE_FLAG_EXTERNAL) {
+    if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
         ib_status_t rc;
 
         /* Execute the operator */
@@ -133,7 +133,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     }
 
     /* Invert? */
-    if (opinst->flags & IB_OPINST_FLAG_INVERT) {
+    if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
         *rule_result = ( (*rule_result) == 0);
     }
 
@@ -217,7 +217,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
                          name, action->action->name);
         }
         else if (arc != IB_OK) {
-            ib_log_debug(ib, 4,
+            ib_log_error(ib, 4,
                          "Action %s/%s returned an error: %d",
                          name, action->action->name, arc);
             rc = arc;
@@ -233,7 +233,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
  *
  * @param[in] ib Engine
  * @param[in,out] tx Transaction
- * @param cbdata Callback data (unused)
+ * @param[in] cbdata Callback data (actually rule_cbdata_t *)
  *
  * @returns Status code
  */
@@ -406,6 +406,8 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
 ib_mpool_t *ib_rule_mpool(ib_engine_t *ib)
 {
     IB_FTRACE_INIT(ib_rule_mpool);
+
+    /* Return a pointer to the configuration memory pool */
     IB_FTRACE_RET_PTR(ib_mpool_t, ib_engine_pool_config_get(ib));
 }
 
@@ -509,7 +511,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     /* Add it to the list */
     rc = ib_list_push(rules, (void*)rule);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4,
+        ib_log_error(ib, 4,
                      "Failed to add rule phase=%d context=%p: %d",
                      phase, (void*)ctx, rc);
         IB_FTRACE_RET_STATUS(rc);
