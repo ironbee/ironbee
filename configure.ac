@@ -78,6 +78,20 @@ if test "$GCC" = "yes"; then
     GCC_CHARACTERISTICS()
 fi
 
+# Check for -Wno-null-dereference
+AC_MSG_CHECKING(for -Wno-null-dereference support)    
+save_CPPFLAGS="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} -Wno-null-dereference"
+AC_TRY_COMPILE(,,
+  [have_no_warn_null_deref=yes],[have_no_warn_null_deref=no])
+CPPFLAGS="${save_CPPFLAGS}"
+if test "$have_no_warn_null_deref" == "yes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([HAVE_NO_WARN_NULL_DEREF], [test "$have_no_warn_null_deref" = "yes"])
+
 AC_MSG_CHECKING([OS])
 case "$OS" in
         FreeBSD*)
