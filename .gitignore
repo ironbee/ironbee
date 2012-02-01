@@ -46,6 +46,9 @@ tests/test_gtest
 tests/test_daemon
 tests/test_engine
 tests/test_util_*
+tests/test_module_*
+tests/test_action
+tests/test_operator
 !tests/test_util_*.cc
 tests/*_details.xml
 tests/*_memcheck.xml
