@@ -1,4 +1,4 @@
-CPPFLAGS += \
+CPPFLAGS += @GCC_CHARACTERISTICS_CPPFLAGS@ \
             @IB_DEBUG@ \
             -I$(top_srcdir)/tests/gtest/include \
             -I$(top_srcdir)/include \
