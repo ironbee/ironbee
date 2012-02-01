@@ -104,12 +104,12 @@ ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
     hti->cur_entry = hti->next;
     while (!hti->cur_entry) {
         if (hti->index > hti->cur_ht->size) {
-            IB_FTRACE_RET_PTR(ib_hash_iter_t *, NULL);
+            IB_FTRACE_RET_PTR(ib_hash_iter_t, NULL);
         }
         hti->cur_entry = hti->cur_ht->slots[hti->index++];
     }
     hti->next = hti->cur_entry->next;
-    IB_FTRACE_RET_PTR(ib_hash_iter_t *, hti);
+    IB_FTRACE_RET_PTR(ib_hash_iter_t, hti);
 }
 
 ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
@@ -121,7 +121,7 @@ ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
     if (p != NULL) {
         hti = (ib_hash_iter_t *)ib_mpool_calloc(p, 1, sizeof(ib_hash_iter_t));
         if (hti == NULL) {
-            IB_FTRACE_RET_PTR(ib_hash_iter_t *, NULL);
+            IB_FTRACE_RET_PTR(ib_hash_iter_t, NULL);
         }
     }
     else {
@@ -131,7 +131,7 @@ ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
     memset(hti, 0, sizeof(ib_hash_iter_t));
     hti->cur_ht = ib_ht;
 
-    IB_FTRACE_RET_PTR(ib_hash_iter_t *, ib_hash_next(hti));
+    IB_FTRACE_RET_PTR(ib_hash_iter_t, ib_hash_next(hti));
 }
 
 /**
@@ -162,15 +162,15 @@ static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
                     }
                 }
                 if (i == len) {
-                    IB_FTRACE_RET_PTR(ib_hash_entry_t *, hte);
+                    IB_FTRACE_RET_PTR(ib_hash_entry_t, hte);
                 }
              }
             else if (memcmp(hte->key, key, len) == 0) {
-                IB_FTRACE_RET_PTR(ib_hash_entry_t *, hte);
+                IB_FTRACE_RET_PTR(ib_hash_entry_t, hte);
             }
         }
     }
-    IB_FTRACE_RET_PTR(ib_hash_entry_t *, NULL);
+    IB_FTRACE_RET_PTR(ib_hash_entry_t, NULL);
 }
 
 /**
