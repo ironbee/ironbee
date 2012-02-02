@@ -128,7 +128,7 @@ static void ib_radix_node_print_ud(ib_radix_t *radix,
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-function"
-#elif defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 5
+#elif defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 6 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
