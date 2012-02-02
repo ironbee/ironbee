@@ -44,6 +44,8 @@
 #include <ironbee/config.h>
 #include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/rule_defs.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee_private.h>
 
 /* Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line
@@ -90,6 +92,7 @@ typedef struct {
 
     /* Dump output */
     int dump_tx;
+    int dump_tx_full;
     int dump_user_agent;
     int dump_geoip;
 
@@ -117,19 +120,27 @@ static runtime_settings_t settings =
     NULL,                  /* config_file */
     { 0 },                 /* req_files */
     { 0 },                 /* rsp_files */
+    /* Address / port settings */
     "192.168.1.1",         /* local_ip */
     8080,                  /* local_port */
     "10.10.10.10",         /* remote_ip */
     23424,                 /* remote_port */
+    /* Trace settings */
     0,                     /* trace */
     0,                     /* trace_request_count */
     0,                     /* trace_response_count */
+    /* Dump settings */
+    0,                     /* dump_tx */
+    0,                     /* dump_tx_full */
     0,                     /* dump_user_agent */
-    0,                     /* dump_effective_ip */
     0,                     /* dump_geoip */
+    /* Request headers */
     { 0 },                 /* request_headers */
+    /* Max # of transactions */
     -1,                    /* Max # of transactions to run */
+    /* Verbose */
     0,                     /* Verbose level */
+    /* Debug settings */
 #if DEBUG_ARGS_ENABLE
     NULL,                  /* debug_uri */
     -1                     /* debug_level */
@@ -228,7 +239,7 @@ static void help(void)
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
     print_option("trace", NULL, "Enable tracing", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
-                 "tx, user-agent, geop");
+                 "tx, tx-full, user-agent, geop");
     print_option("request-header", "name: value",
                  "Specify request field & value", 0, NULL );
     print_option("request-header", "-name:",
@@ -427,6 +438,10 @@ static ib_status_t command_line(int argc, char *argv[])
             }
             else if (strcasecmp(optarg, "tx") == 0) {
                 settings.dump_tx = 1;
+            }
+            else if (strcasecmp(optarg, "tx-full") == 0) {
+                settings.dump_tx = 1;
+                settings.dump_tx_full = 1;
             }
             else {
                 fprintf(stderr, "Unknown dump: %s", optarg);
@@ -676,27 +691,105 @@ static void print_field(const char *label,
      * Note: field->name is not always a null ('\0') terminated string */
     switch (field->type) {
         case IB_FTYPE_NUM :          /**< Numeric value */
-            printf( "  %s %.*s = %jd\n",
-                    label, (int)field->nlen, field->name,
-                    *(intmax_t *)ib_field_value_num(field) );
+            printf( "  %s: %jd\n",
+                    label, *(intmax_t *)ib_field_value_num(field) );
             break;
         case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
-            printf( "  %s %.*s = %ju\n",
-                    label, (int)field->nlen, field->name,
-                    *(uintmax_t *)ib_field_value_unum(field) );
+            printf( "  %s: %ju\n",
+                    label, *(uintmax_t *)ib_field_value_unum(field) );
             break;
         case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
-            printf( "  %s %.*s = '%s'\n",
-                    label, (int)field->nlen, field->name,
-                    ib_field_value_nulstr(field) );
-            break;
+            {
+                const char *s = ib_field_value_nulstr(field);
+                if ( (settings.verbose != 0) || (strlen(s) != 0) ) {
+                    printf( "  %s: '%s'\n", label, s );
+                }
+                break;
+            }
         case IB_FTYPE_BYTESTR :      /**< Binary data value */
-            bs = ib_field_value_bytestr(field);
-            printf( "  %s %.*s = '%.*s'\n",
-                    label, (int)field->nlen, field->name,
-                    (int)ib_bytestr_length(bs), ib_bytestr_ptr(bs) );
-            break;
+            {
+                bs = ib_field_value_bytestr(field);
+                size_t len = ib_bytestr_length(bs);
+                if ( (settings.verbose != 0) || (len != 0) ) {
+                    printf( "  %s: '%.*s'\n",
+                            label, (int)len, ib_bytestr_ptr(bs) );
+                }
+                break;
+            }
     }
+}
+
+/**
+ * @internal
+ * Build a path by appending the field name to an existing path.
+ *
+ * @param[in] path Base path
+ * @param[in] field Field whose name to append
+ *
+ * @returns Pointer to newly allocated path string
+ */
+static const char *build_path( const char *path, ib_field_t *field )
+{
+    size_t pathlen;
+    size_t fullpath_len;
+    char *fullpath;
+
+    /* Special case */
+    if (field->name == NULL) {
+        return strdup(path);
+    }
+
+    pathlen = strlen(path);
+    fullpath_len = pathlen + 2 + field->nlen;
+    fullpath = (char *)malloc(fullpath_len);
+
+    strcpy(fullpath, path);
+
+    strcat(fullpath, "/");
+    memcpy(fullpath+pathlen+1, field->name, field->nlen);
+    fullpath[fullpath_len-1] = '\0';
+    return fullpath;
+}
+
+/**
+ * @internal
+ * Print transaction details.
+ *
+ * Extract the address & ports from the transaction & print them.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object
+ * @param[in] data Callback data (not used)
+ *
+ * @returns Status code
+ */
+static ib_status_t print_list(const char *path, ib_list_t *lst)
+{
+    IB_FTRACE_INIT(print_list);
+    ib_list_node_t *node = NULL;
+
+    /* Loop through the list & print everything */
+    IB_LIST_LOOP(lst, node) {
+        ib_field_t **field = (ib_field_t **)ib_list_node_data(node);
+        const char *fullpath = build_path( path, *field );
+        switch ((*field)->type) {
+            case IB_FTYPE_NUM:
+            case IB_FTYPE_UNUM:
+            case IB_FTYPE_NULSTR:
+            case IB_FTYPE_BYTESTR:
+                print_field(fullpath, *field);
+                break;
+            case IB_FTYPE_LIST:
+                print_list(fullpath, ib_field_value_list(*field) );
+                break;
+            default :
+                break;
+        }
+        free( (char *)fullpath );
+    }
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -716,10 +809,40 @@ static ib_status_t print_tx(ib_engine_t *ib,
                             void *data)
 {
     IB_FTRACE_INIT(print_tx);
+    ib_list_t *lst;
+    ib_status_t rc;
 
-    printf( "%s:%d -> %s:%d\n",
-            tx->er_ipstr, tx->conn->remote_port,
-            tx->conn->local_ipstr, tx->conn->local_port );
+    printf("TX:\n");
+    printf("  tx/remote: %s:%d\n",
+            tx->er_ipstr, tx->conn->remote_port);
+    printf("  tx/local: %s:%d\n",
+           tx->conn->local_ipstr, tx->conn->local_port);
+
+    /* Not doing a full dump?  Done */
+    if (settings.dump_tx_full == 0) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Build the list */
+    rc = ib_list_create(&lst, ib->mp);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 4, "print_tx: Failed to create tx list: %d", rc);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* Extract the request headers field from the provider instance */
+    rc = ib_data_get_all(tx->dpi, lst);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 4, "print_tx: Failed to get all headers: %d", rc);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* Print it all */
+    rc = print_list("tx", lst);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 4, "print_tx: Failed printing headers: %d", rc);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -768,10 +891,11 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
     }
 
     /* Loop through the list & print everything */
-    printf("User Agent information:\n");
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        print_field("User Agent", field);
+        const char *path = build_path( "tx/User-Agent", field );
+        print_field( path, field );
+        free((char*)path);
     }
 
     /* Done */
@@ -835,6 +959,58 @@ static ib_status_t print_geoip(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * @internal
+ * Create function for the 'print' action.
+ *
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ *
+ * @returns Status code
+ */
+static ib_status_t action_print_create(ib_mpool_t *mp,
+                                       const char *parameters,
+                                       ib_action_inst_t *inst)
+{
+    IB_FTRACE_INIT(action_print_create);
+    char *str;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    str = ib_mpool_strdup(mp, parameters);
+    if (str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    inst->data = str;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "print" action
+ *
+ * @param[in] data C-style string to log
+ * @param[in] rule The matched rule
+ * @param[in] tx IronBee transaction
+ *
+ * @returns Status code
+ */
+static ib_status_t action_print_execute(void *data,
+                                        ib_rule_t *rule,
+                                        ib_tx_t *tx)
+{
+    IB_FTRACE_INIT(action_print_execute);
+
+    /* This works on C-style (NUL terminated) strings */
+    const char *cstr = (const char *)data;
+
+    printf( "Rule %s => %s\n", ib_rule_id(rule), cstr);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /**
  * @internal
@@ -895,6 +1071,47 @@ static ib_status_t register_handlers(ib_engine_t* ib)
 {
     IB_FTRACE_INIT(register_handlers);
     ib_status_t rc;
+
+    /* Register a connection open event handler */
+    rc = ib_hook_register(ib,
+                          conn_opened_event,
+                          (ib_void_fn_t)ironbee_conn_init,
+                          NULL);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to register connection opened event: %d\n", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the print action */
+    rc = ib_action_register(ib,
+                            "print",
+                            IB_ACT_FLAG_NONE,
+                            action_print_create,
+                            NULL, /* no destroy function */
+                            action_print_execute);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to register print action: %d\n", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @Internal
+ * Register event handlers.
+ *
+ * Register event handlers to print specific pieces of data; which ones are
+ * registered is controlled via command line arguments.
+ *
+ * @param[in] ib IronBee object
+ *
+ * @returns status
+ */
+static ib_status_t register_late_handlers(ib_engine_t* ib)
+{
+    IB_FTRACE_INIT(register_late_handlers);
+    ib_status_t rc;
     ib_status_t status = IB_OK;
 
     /* Register the trace handlers */
@@ -925,7 +1142,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering tx handlers\n");
         }
-        rc = ib_hook_register(ib, handle_context_tx_event,
+        rc = ib_hook_register(ib, handle_request_headers_event,
                               (ib_void_fn_t)print_tx, NULL);
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register tx handler: %d\n", rc);
@@ -937,13 +1154,14 @@ static ib_status_t register_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering user agent handlers\n");
         }
-        rc = ib_hook_register(ib, request_headers_event,
+        rc = ib_hook_register(ib, handle_request_headers_event,
                               (ib_void_fn_t)print_user_agent, NULL);
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register user_agent handler: %d\n", rc);
             status = rc;
         }
     }
+
     /* Register the GeoIP handler */
     if (settings.dump_geoip != 0) {
         if (settings.verbose > 2) {
@@ -956,6 +1174,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
             status = rc;
         }
     }
+
     IB_FTRACE_RET_STATUS(status);
 }
 
@@ -1174,6 +1393,9 @@ static ib_status_t run_transaction(ib_engine_t* ib,
         printf("Transaction #%zd: req=%s rsp=%s\n",
                trans_num, basename(req), basename(rsp) );
     }
+    else {
+        printf("Transaction #%zd:\n", trans_num);
+    }
     reqfp = fopen(req_file, "rb");
     if (reqfp == NULL) {
         fprintf(stderr, "Error opening request file '%s'\n", req_file);
@@ -1252,7 +1474,7 @@ static void run_connection(ib_engine_t* ib)
 
     /* Register the event handlers late so they run after the relevant
      * module's event handler */
-    rc = register_handlers(ib);
+    rc = register_late_handlers(ib);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register one or more handlers\n");
     }
@@ -1374,9 +1596,11 @@ int main(int argc, char* argv[])
         fatal_error("Error initializing engine: %d\n", rc);
     }
 
-    /* Register a connection open event handler */
-    ib_hook_register(ironbee, conn_opened_event,
-                     (ib_void_fn_t)ironbee_conn_init, NULL);
+    /* Register handlers */
+    rc = register_handlers(ironbee);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to register one or more handlers\n");
+    }
 
     /* Set the engine's debug flags from the command line args */
 #if DEBUG_ARGS_ENABLE
