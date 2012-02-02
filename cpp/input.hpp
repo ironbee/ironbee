@@ -67,14 +67,14 @@ std::ostream& operator<<( std::ostream& out, const buffer_t& buffer );
 struct input_t
 {
   //! Local IP address.  Must outlive input_t.
-  buffer_t    local_ip;
+  buffer_t local_ip;
   //! Local port.
-  uint16_t    local_port;
+  uint16_t local_port;
 
   //! Remote IP address.  Must outlive input_t.
-  buffer_t    remote_ip;
+  buffer_t remote_ip;
   //! Remote port.
-  uint16_t    remote_port;
+  uint16_t remote_port;
 
   /**
    * \class input_t::transaction_t
@@ -106,7 +106,7 @@ std::ostream& operator<<( std::ostream& out, const input_t& input );
  * It should not make any assumptions about the existing value of its
  * argument, i.e., it should set every field.
  **/
-using input_generator_t   = boost::function<bool(input_t&)>;
+using input_generator_t = boost::function<bool(input_t&)>;
 
 } // IronBee
 
