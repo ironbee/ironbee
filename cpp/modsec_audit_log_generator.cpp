@@ -1,4 +1,4 @@
-#include "audit_log_generator.hpp"
+#include "modsec_audit_log_generator.hpp"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wparentheses"
@@ -18,7 +18,7 @@ using namespace std;
 namespace IronBee {
 namespace CLI {
 
-AuditLogGenerator::AuditLogGenerator(
+ModSecAuditLogGenerator::ModSecAuditLogGenerator(
   const std::string& path,
   on_error_t on_error
  ) :
@@ -31,9 +31,9 @@ AuditLogGenerator::AuditLogGenerator(
   }
 }
 
-bool AuditLogGenerator::operator()( input_t& out_input )
+bool ModSecAuditLogGenerator::operator()( input_t& out_input )
 {
-  AuditLog::Entry e;
+  ModSecAuditLog::Entry e;
 
   bool have_entry = false;
   bool result;

@@ -1,4 +1,4 @@
-#include "audit_log.hpp"
+#include "modsec_audit_log.hpp"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wparentheses"
@@ -11,7 +11,7 @@
 using namespace std;
 
 namespace IronBee {
-namespace AuditLog {
+namespace ModSecAuditLog {
 
 const std::string& Entry::operator[](const std::string& section) const
 {

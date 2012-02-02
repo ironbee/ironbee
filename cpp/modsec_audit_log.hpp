@@ -1,5 +1,5 @@
-#ifndef __IRONBEE__CPP__AUDIT_LOG__
-#define __IRONBEE__CPP__AUDIT_LOG__
+#ifndef __IRONBEE__CPP__MODSEC_AUDIT_LOG__
+#define __IRONBEE__CPP__MODSEC_AUDIT_LOG__
 
 #include <iostream>
 #include <vector>
@@ -7,12 +7,14 @@
 #include <string>
 
 namespace IronBee {
-namespace AuditLog {
+namespace ModSecAuditLog {
 /**
  * \class Entry
  * \brief An AuditLog entry.
  *
  * Represents an audit log entry.  Contains a buffer of each section.
+ *
+ * Format documented at: http://www.modsecurity.org/documentation/
  *
  * \sa Parser.
  **/

@@ -4,8 +4,8 @@ bin_PROGRAMS=ibcli_cpp
 ibcli_cpp_SOURCES = \
   ibcli_cpp.cpp \
   input.cpp \
-  audit_log.cpp \
-  audit_log_generator.cpp \
+  modsec_audit_log.cpp \
+  modsec_audit_log_generator.cpp \
   raw_generator.cpp \
   ironbee.cpp
 ibcli_cpp_CXXFLAGS = -std=c++11

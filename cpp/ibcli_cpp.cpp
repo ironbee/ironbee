@@ -1,5 +1,5 @@
 #include "input.hpp"
-#include "audit_log_generator.hpp"
+#include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
 #include "ironbee.hpp"
 
@@ -123,7 +123,7 @@ int main( int argc, char** argv )
 
 input_generator_t init_audit_input( const string& str )
 {
-  return AuditLogGenerator( str, on_error );
+  return ModSecAuditLogGenerator( str, on_error );
 }
 
 input_generator_t init_raw_input( const string& arg )

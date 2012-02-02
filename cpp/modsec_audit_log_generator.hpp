@@ -1,8 +1,8 @@
-#ifndef __IRONBEE_CPP__AUDIT_LOG_GENERATOR__
-#define __IRONBEE_CPP__AUDIT_LOG_GENERATOR__
+#ifndef __IRONBEE_CPP__MODSEC_AUDIT_LOG_GENERATOR__
+#define __IRONBEE_CPP__MODSEC_AUDIT_LOG_GENERATOR__
 
 #include "input.hpp"
-#include "audit_log.hpp"
+#include "modsec_audit_log.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
@@ -14,21 +14,21 @@ namespace IronBee {
 namespace CLI {
 
 /**
- * \class AuditLogGenerator
+ * \class ModSecAuditLogGenerator
  * \brief Input generator from modsec audit logs.
  *
  * Produces input_t's from an modsec audit log.  This uses
  * IronBee::AuditLog::Parser to parse the audit log.  It requires that the
  * audit log provide sections B and F.
  **/
-class AuditLogGenerator
+class ModSecAuditLogGenerator
 {
 public:
   //! Default Constructor.
   /**
    * Behavior except for assinging to is undefined.
    **/
-  AuditLogGenerator() = default;
+  ModSecAuditLogGenerator() = default;
 
   //! Type of on_error.  See AuditLogGenerator()
   using on_error_t = boost::function<bool(const std::string&)>;
@@ -43,7 +43,7 @@ public:
    *                     error.
    **/
   explicit
-  AuditLogGenerator(
+  ModSecAuditLogGenerator(
     const std::string& path,
     on_error_t on_error = on_error_t()
   );
@@ -54,7 +54,7 @@ public:
 private:
   on_error_t                      m_on_error;
   boost::shared_ptr<std::istream> m_input;
-  AuditLog::Parser                m_parser;
+  ModSecAuditLog::Parser          m_parser;
 };
 
 } // CLI
