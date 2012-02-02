@@ -4,9 +4,6 @@ EXTRA_DIST = gtest
 include $(top_srcdir)/build/tests.mk
 
 LIBUTIL_LDADD = gtest/libgtest.la $(top_builddir)/util/libibutil.la
-if FREEBSD
-LIBUTIL_LDADD += -ldl
-endif
 
 HTP_LDADD = -lhtp
 if FREEBSD
