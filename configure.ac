@@ -27,12 +27,18 @@ case "$OS" in
                 if test "$GCC45BIN" != "no"; then
                     CC="gcc45"
                     CPP="cpp45"
+                    CXX="g++45"
+                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc45"
                 elif test "$GCC46BIN" != "no"; then
                     CC="gcc46"
                     CPP="cpp46"
+                    CXX="g++46"
+                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc46"
                 elif test "$GCC47BIN" != "no"; then
                     CC="gcc47"
                     CPP="cpp47"
+                    CXX="g++47"
+                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc47"
                 else
                     echo
                     echo "   You must have gcc45/gcc46/gcc47 to compile on FreeBSD 7/8/9"
