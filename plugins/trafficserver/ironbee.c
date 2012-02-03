@@ -809,7 +809,9 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
  * @returns status
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                     ib_conn_t *iconn, void *cbdata)
+                                     ib_state_event_type_t event,
+                                     ib_conn_t *iconn,
+                                     void *cbdata)
 {
     /* when does this happen? */
     ib_status_t rc;
@@ -954,8 +956,8 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return IB_OK + rv;
     }
 
-    ib_hook_register(ironbee, conn_opened_event,
-                     (ib_void_fn_t)ironbee_conn_init, NULL);
+    ib_conn_hook_register(ironbee, conn_opened_event,
+                          ironbee_conn_init, NULL);
 
 
     ib_state_notify_cfg_started(ironbee);
