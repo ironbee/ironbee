@@ -2593,6 +2593,11 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
     rc = ib_context_module_config(conn->ctx, ib_core_module(),
                                   (void *)&corecfg);
 
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize core module: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Data Provider Instance */
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &conn->dpi,
                                         conn->mp, NULL);
