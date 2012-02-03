@@ -39,6 +39,8 @@
 #include <ctype.h> /* tolower */
 #include <time.h>
 #include <errno.h>
+     
+#include <assert.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
@@ -2368,16 +2370,21 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
  * Handle writing the logevents.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
+                                             ib_state_event_type_t event,
                                              ib_tx_t *tx,
                                              void *cbdata)
 {
     IB_FTRACE_INIT(logevent_hook_postprocess);
+    
+    assert(event == handle_postprocess_event);
+    
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
     core_audit_cfg_t *cfg;
@@ -2575,16 +2582,21 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
  * Create the data provider instance and initialize the parser.
  *
  * @param ib Engine
+ * @param event Event type
  * @param conn Connection
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t core_hook_conn_started(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
                                           ib_conn_t *conn,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(core_hook_conn_started);
+    
+    assert(event == conn_started_event);
+    
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_core_cfg_t *corecfg;
@@ -2627,16 +2639,21 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
  * Handle a new connection.
  *
  * @param ib Engine
+ * @param event Event type
  * @param conn Connection
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_connect(ib_engine_t *ib,
+                                       ib_state_event_type_t event,
                                        ib_conn_t *conn,
                                        void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_connect);
+    
+    assert(event == handle_connect_event);
+    
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -2691,16 +2708,21 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
  * Handle a disconnection.
  *
  * @param ib Engine
+ * @param event Event type
  * @param conn Connection
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
                                           ib_conn_t *conn,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_disconnect);
+    
+    assert(event == handle_disconnect_event);
+    
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -2724,16 +2746,21 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
  * Handle the request header.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_req_header(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
                                           ib_tx_t *tx,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_req_header);
+    
+    assert(event == request_headers_event);
+    
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_field_t *f;
@@ -2774,16 +2801,21 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
  * Handle the response header.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
+                                           ib_state_event_type_t event,
                                            ib_tx_t *tx,
                                            void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_resp_header);
+    
+    assert(event == request_headers_event);
+    
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -3410,16 +3442,20 @@ static ib_status_t filter_buffer(ib_filter_t *f,
  * Configure the filter controller.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t filter_ctl_config(ib_engine_t *ib,
+                                     ib_state_event_type_t event,
                                      ib_tx_t *tx,
                                      void *cbdata)
 {
     IB_FTRACE_INIT(filter_ctl_config);
+    assert(event == handle_context_tx_event);
+    
     ib_status_t rc = IB_OK;
 
     /// @todo Need an API for this.
@@ -3577,16 +3613,21 @@ static ib_status_t core_tfn_trim(void *fndata,
  * stream buffer field.
  *
  * @param ib Engine
+ * @param event Event type.
  * @param txdata Transaction data
  * @param cbdata Unused
  *
  * @return Status code
  */
 static ib_status_t process_txdata_in(ib_engine_t *ib,
+                                     ib_state_event_type_t event,
                                      ib_txdata_t *txdata,
                                      void *cbdata)
 {
     IB_FTRACE_INIT(process_txdata_in);
+    
+    assert(event == tx_data_in_event);
+    
     ib_tx_t *tx;
     ib_core_cfg_t *modcfg;
     ib_field_t *reqbody;
@@ -3632,16 +3673,21 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
  * stream buffer field.
  *
  * @param ib Engine
+ * @param event Event type
  * @param txdata Transaction data
  * @param cbdata Unused
  *
  * @return Status code
  */
 static ib_status_t process_txdata_out(ib_engine_t *ib,
+                                      ib_state_event_type_t event,
                                       ib_txdata_t *txdata,
                                       void *cbdata)
 {
     IB_FTRACE_INIT(process_txdata_out);
+    
+    assert(event == tx_data_out_event);
+    
     ib_tx_t *tx;
     ib_core_cfg_t *modcfg;
     ib_field_t *resbody;
@@ -3692,16 +3738,21 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
  * the field prior to it it being initialized.
  *
  * @param ib Engine
+ * @param event Event type.
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t core_hook_tx_started(ib_engine_t *ib,
+                                        ib_state_event_type_t event,
                                         ib_tx_t *tx,
                                         void *cbdata)
 {
     IB_FTRACE_INIT(core_hook_tx_started);
+    
+    assert(event == tx_started_event);
+    
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -4904,37 +4955,37 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_log_error(ib, 0, "Failed to register buffer filter: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_hook_register(ib, handle_context_tx_event,
-                     (ib_void_fn_t)filter_ctl_config, fbuffer);
+    ib_tx_hook_register(ib, handle_context_tx_event,
+                        filter_ctl_config, fbuffer);
 
 
     /* Register data event handlers. */
-    ib_hook_register(ib, tx_data_in_event,
-                     (ib_void_fn_t)process_txdata_in,
-                     NULL);
-    ib_hook_register(ib, tx_data_out_event,
-                     (ib_void_fn_t)process_txdata_out,
-                     NULL);
+    ib_txdata_hook_register(ib, tx_data_in_event,
+                            process_txdata_in,
+                            NULL);
+    ib_txdata_hook_register(ib, tx_data_out_event,
+                            process_txdata_out,
+                            NULL);
 
     /* Register parser hooks. */
-    ib_hook_register(ib, conn_started_event,
-                     (ib_void_fn_t)core_hook_conn_started, NULL);
-    ib_hook_register(ib, handle_connect_event,
-                     (ib_void_fn_t)parser_hook_connect, NULL);
-    ib_hook_register(ib, handle_disconnect_event,
-                     (ib_void_fn_t)parser_hook_disconnect, NULL);
-    ib_hook_register(ib, tx_started_event,
-                     (ib_void_fn_t)core_hook_tx_started, NULL);
+    ib_conn_hook_register(ib, conn_started_event,
+                          core_hook_conn_started, NULL);
+    ib_conn_hook_register(ib, handle_connect_event,
+                          parser_hook_connect, NULL);
+    ib_conn_hook_register(ib, handle_disconnect_event,
+                          parser_hook_disconnect, NULL);
+    ib_tx_hook_register(ib, tx_started_event,
+                        core_hook_tx_started, NULL);
     /// @todo Need the parser to parse headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
     //ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
-    ib_hook_register(ib, request_headers_event,
-                     (ib_void_fn_t)parser_hook_req_header, NULL);
-    ib_hook_register(ib, response_headers_event,
-                     (ib_void_fn_t)parser_hook_resp_header, NULL);
+    ib_tx_hook_register(ib, request_headers_event,
+                        parser_hook_req_header, NULL);
+    ib_tx_hook_register(ib, response_headers_event,
+                        parser_hook_resp_header, NULL);
 
     /* Register logevent hooks. */
-    ib_hook_register(ib, handle_postprocess_event,
-                     (ib_void_fn_t)logevent_hook_postprocess, NULL);
+    ib_tx_hook_register(ib, handle_postprocess_event,
+                        logevent_hook_postprocess, NULL);
 
     /* Define the data field provider API */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_DATA,

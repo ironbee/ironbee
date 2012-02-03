@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include <ironbee/types.h>
 #include <ironbee/engine.h>
@@ -486,16 +487,21 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
  * connection object fields.
  *
  * @param[in] ib IronBee object
+ * @param event Event type
  * @param[in,out] tx Transaction object
  * @param[in] data Callback data (not used)
  *
  * @returns Status code
  */
 static ib_status_t modua_user_agent(ib_engine_t *ib,
+                                    ib_state_event_type_t event,
                                     ib_tx_t *tx,
                                     void *data)
 {
     IB_FTRACE_INIT(modua_user_agent);
+    
+    assert(event == request_headers_event);
+    
     ib_field_t   *req_agent = NULL;
     ib_status_t   rc = IB_OK;
     ib_bytestr_t *bs;
@@ -527,16 +533,21 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
  * object.
  *
  * @param[in] ib IronBee object
+ * @param event Event type
  * @param[in,out] tx Transaction object
  * @param[in] cbdata Callback data (not used)
  *
  * @returns Status code
  */
 static ib_status_t modua_remoteip(ib_engine_t *ib,
+                                  ib_state_event_type_t event,
                                   ib_tx_t *tx,
                                   void *cbdata)
 {
     IB_FTRACE_INIT(modra_remoteip);
+    
+    assert(event == request_headers_event);
+    
     ib_field_t    *req_fwd = NULL;
     ib_status_t    rc = IB_OK;
     ib_bytestr_t  *bs;
@@ -609,17 +620,17 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
     unsigned int failed_frule_num;
 
     /* Register the user agent callback */
-    rc = ib_hook_register(ib, request_headers_event,
-                          (ib_void_fn_t)modua_user_agent,
-                          (void*)request_headers_event);
+    rc = ib_tx_hook_register(ib, request_headers_event,
+                             modua_user_agent,
+                             NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Hook register returned %d", rc);
     }
 
     /* Register the remote address callback */
-    rc = ib_hook_register(ib, request_headers_event,
-                          (ib_void_fn_t)modua_remoteip,
-                          (void*)request_headers_event);
+    rc = ib_tx_hook_register(ib, request_headers_event,
+                             modua_remoteip,
+                             NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Hook register returned %d", rc);
     }

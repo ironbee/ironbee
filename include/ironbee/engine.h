@@ -23,6 +23,7 @@
  * @brief IronBee
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <string.h>
@@ -959,15 +960,97 @@ typedef enum {
 } ib_state_event_type_t;
 
 /**
- * State Hook Callback Function.
+ * State Event Hook Types
+ **/
+typedef enum {
+    IB_STATE_HOOK_CONN,     /**< Hook received ib_conn_t */
+    IB_STATE_HOOK_CONNDATA, /**< Hook received ib_conndata_t */
+    IB_STATE_HOOK_TX,       /**< Hook received ib_tx_t */
+    IB_STATE_HOOK_TXDATA,   /**< Hook received ib_txdata_t */
+    IB_STATE_HOOK_NULL,     /**< Hook has no parameter */
+    IB_STATE_HOOK_INVALID   /**< Something went wrong. */
+} ib_state_hook_type_t;
+
+/**
+ * Hook type for an event.
+ *
+ * \param[in] event Event type.
+ * \return Hook type or IB_STATE_HOOK_INVALID if bad event.
+ **/
+ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event);
+ 
+/**
+ * Dataless Event Hook Callback Function.
  *
  * @param ib Engine handle
- * @param param Call parameter
+ * @param event Which event trigger the callback.
  * @param cbdata Callback data
  */
-typedef ib_status_t (*ib_state_hook_fn_t)(ib_engine_t *ib,
-                                          void *param,
-                                          void *cbdata);
+typedef ib_status_t (*ib_state_null_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    void *cbdata 
+);
+
+/**
+ * Connection Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param conn Conneciton.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_conn_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conn_t *conn,
+    void *cbdata 
+);
+
+/**
+ * Connection Data Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param conndata Conneciton data.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conndata_t *conndata,
+    void *cbdata 
+);
+
+/**
+ * Transaction Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param tx Transaction.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_tx_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_tx_t *tx,
+    void *cbdata 
+);
+
+/**
+ * Transaction Data Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param txdata Transaction data.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_txdata_t *txdata,
+    void *cbdata 
+);
 
 /**
  * Resolve an event name.
@@ -1172,11 +1255,10 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_finished(ib_engine_t *ib,
  * @{
  */
 
-/** Hook */
-typedef struct ib_hook_t ib_hook_t;
+/* No data */
 
 /**
- * Register a callback for a given event
+ * Register a callback for a no data event.
  *
  * @param ib Engine handle
  * @param event Event
@@ -1185,12 +1267,15 @@ typedef struct ib_hook_t ib_hook_t;
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_register(ib_engine_t *ib,
-                                        ib_state_event_type_t event,
-                                        ib_void_fn_t cb, void *cdata);
-
+ib_status_t DLL_PUBLIC ib_null_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb, 
+    void *cdata
+);
+ 
 /**
- * Unregister a callback for a given event
+ * Unregister a callback for a no data event.
  *
  * @param ib Engine handle
  * @param event Event
@@ -1198,36 +1283,309 @@ ib_status_t DLL_PUBLIC ib_hook_register(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_unregister(ib_engine_t *ib,
-                                          ib_state_event_type_t event,
-                                          ib_void_fn_t cb);
+ib_status_t DLL_PUBLIC ib_null_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb
+);
 
 /**
- * Register a callback with a config context for a given event
+ * Register a context callback for a no data event.
  *
- * @param ctx Config context
+ * @param ib Engine handle
  * @param event Event
  * @param cb The callback to register
  * @param cdata Data passed to the callback (or NULL)
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_register_context(ib_context_t *ctx,
-                                                ib_state_event_type_t event,
-                                                ib_void_fn_t cb, void *cdata);
+ib_status_t DLL_PUBLIC ib_null_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb, 
+    void *cdata
+);
 
 /**
- * Unregister a callback with a config context for a given event
+ * Unregister a context callback for a no data event.
  *
- * @param ctx Config context
+ * @param ib Engine handle
  * @param event Event
  * @param cb The callback to unregister
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_unregister_context(ib_context_t *ctx,
-                                                  ib_state_event_type_t event,
-                                                  ib_void_fn_t cb);
+ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb
+);
+
+
+/* ib_conn_t data */
+ 
+/**
+ * Register a callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb
+);
+
+/* ib_conndata_t data */
+ 
+/**
+ * Register a callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb
+);
+ 
+/* ib_tx_t data */
+ 
+/**
+ * Register a callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb
+);
+
+/* ib_txdata_t data */
+ 
+/**
+ * Register a callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_register_context(
+    ib_context_t* ctxdata,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_unregister_context(
+    ib_context_t* ctxdata,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb
+);
+
 
 /**
  * @} IronBeeEngineHooks

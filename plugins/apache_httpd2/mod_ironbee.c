@@ -40,6 +40,8 @@
 #if APR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+     
+#include <assert.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/plugin.h>
@@ -381,8 +383,12 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
  * Called to initialize data in a new connection.
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                   ib_conn_t *iconn, void *cbdata)
+                                     ib_state_event_type_t event,
+                                     ib_conn_t *iconn, 
+                                     void *cbdata)
 {
+    assert(event == conn_opened_event);
+    
     //server_rec *s = cbdata;
     conn_rec *c = (conn_rec *)iconn->pctx;
     ib_status_t rc;
@@ -850,8 +856,8 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                               apr_pool_cleanup_null);
 
     /* Register conn/tx init hooks. */
-    ib_hook_register(ironbee, conn_opened_event,
-                     (ib_void_fn_t)ironbee_conn_init, s);
+    ib_conn_hook_register(ironbee, conn_opened_event,
+                          ironbee_conn_init, s);
 
     /* Configure the engine. */
     if (modcfg->config != NULL) {

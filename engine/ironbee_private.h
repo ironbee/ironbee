@@ -38,8 +38,17 @@
  *
  * Internal hook structure
  */
+typedef struct ib_hook_t ib_hook_t;
 struct ib_hook_t {
-    ib_void_fn_t        callback;         /**< Callback function */
+    union {
+        ib_state_null_hook_fn_t     null;
+        ib_state_conn_hook_fn_t     conn;
+        ib_state_conndata_hook_fn_t conndata;
+        ib_state_tx_hook_fn_t       tx;
+        ib_state_txdata_hook_fn_t   txdata;
+        /*! Comparison only */
+        ib_void_fn_t                as_void;
+    } callback;
     void               *cdata;            /**< Data passed to the callback */
     ib_hook_t          *next;             /**< The next callback in the list */
 };

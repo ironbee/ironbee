@@ -235,12 +235,14 @@ static ib_status_t execute_actions(ib_engine_t *ib,
  * Run a set of rules.
  *
  * @param[in] ib Engine
+ * @param[in] event Event type
  * @param[in,out] tx Transaction
  * @param[in] cbdata Callback data (actually rule_cbdata_t *)
  *
  * @returns Status code
  */
 static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
                                           ib_tx_t *tx,
                                           void *cbdata)
 {
@@ -353,10 +355,10 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
      * generic handler for the rest */
     if (flags & IB_RULES_INIT_CALLBACKS) {
         for (cbdata = rule_cbdata; cbdata->phase != PHASE_INVALID; ++cbdata) {
-            rc = ib_hook_register(ib,
-                                  cbdata->event,
-                                  (ib_void_fn_t)ib_rule_engine_execute,
-                                  (void*)cbdata);
+            rc = ib_tx_hook_register(ib,
+                                     cbdata->event,
+                                     ib_rule_engine_execute,
+                                     (void*)cbdata);
             if (rc != IB_OK) {
                 ib_log_error(ib, 4, "Hook register for %d/%d/%s returned %d",
                              cbdata->phase, cbdata->event, cbdata->name, rc);

@@ -600,6 +600,7 @@ static void set_debug( ib_context_t *ctx )
  * Sets the connection local/remote address/port
  *
  * @param[in] ib IronBee object (not used)
+ * @param[in] event Event type
  * @param[in] tx Transaction object
  * @param[in] cbdata Callback data (not used)
  *
@@ -607,9 +608,12 @@ static void set_debug( ib_context_t *ctx )
  *
  * @returns void
  */
-static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                     ib_conn_t *iconn,
-                                     void *cbdata)
+static ib_status_t ironbee_conn_init(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conn_t *iconn,
+    void *cbdata
+)
 {
     iconn->local_port=settings.local_port;
     iconn->local_ipstr=settings.local_ip;
@@ -624,14 +628,18 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
  * Trace request processing.
  *
  * @param[in] ib IronBee object
+ * @param[in] event Event type
  * @param[in] txdata Transaction data object
  * @param[in] cbdata Callback data
  *
  * @returns Status code
  */
-static ib_status_t trace_tx_request(ib_engine_t *ib,
-                                    ib_txdata_t *txdata,
-                                    void *cbdata)
+static ib_status_t trace_tx_request(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_txdata_t *txdata,
+     void *cbdata
+)
 {
     IB_FTRACE_INIT(trace_tx_request);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
@@ -650,14 +658,18 @@ static ib_status_t trace_tx_request(ib_engine_t *ib,
  * Trace request processing.
  *
  * @param[in] ib IronBee object
+ * @param[in] event Event type
  * @param[in] txdata Transaction data object
  * @param[in] cbdata Callback data
  *
  * @returns Status code
  */
-static ib_status_t trace_tx_response(ib_engine_t *ib,
-                                     ib_txdata_t *txdata,
-                                     void *cbdata)
+static ib_status_t trace_tx_response(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_txdata_t *txdata,
+    void *cbdata
+)
 {
     IB_FTRACE_INIT(trace_tx_response);
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
@@ -799,14 +811,18 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
  * Extract the address & ports from the transaction & print them.
  *
  * @param[in] ib IronBee object
+ * @param[in] event Event type
  * @param[in] tx Transaction object
  * @param[in] data Callback data (not used)
  *
  * @returns Status code
  */
-static ib_status_t print_tx(ib_engine_t *ib,
-                            ib_tx_t *tx,
-                            void *data)
+static ib_status_t print_tx(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_tx_t *tx,
+     void *data
+)
 {
     IB_FTRACE_INIT(print_tx);
     ib_list_t *lst;
@@ -856,6 +872,7 @@ static ib_status_t print_tx(ib_engine_t *ib,
  * fields.
  *
  * @param[in] ib IronBee object
+ * @param[in] event Event type
  * @param[in] tx Transaction object
  * @param[in] data Callback data (not used)
  *
@@ -863,9 +880,12 @@ static ib_status_t print_tx(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t print_user_agent(ib_engine_t *ib,
-                                    ib_tx_t *tx,
-                                    void *data)
+static ib_status_t print_user_agent(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_tx_t *tx,
+    void *data
+)
 {
     IB_FTRACE_INIT(print_user_agent);
     ib_field_t *req = NULL;
@@ -910,6 +930,7 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
  * fields.
  *
  * @param[in] ib IronBee object
+ * @param[in] event Event type
  * @param[in] tx Transaction object
  * @param[in] data Callback data (not used)
  *
@@ -917,9 +938,12 @@ static ib_status_t print_user_agent(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t print_geoip(ib_engine_t *ib,
-                               ib_tx_t *tx,
-                               void *data)
+static ib_status_t print_geoip(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_tx_t *tx,
+     void *data
+)
 {
     IB_FTRACE_INIT(print_geoip);
     ib_field_t *req = NULL;
@@ -1121,16 +1145,24 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
 
         /* Register the request trace handler. */
-        rc = ib_hook_register(ib, tx_data_in_event,
-                              (ib_void_fn_t)trace_tx_request, NULL);
+        rc = ib_txdata_hook_register(
+            ib, 
+            tx_data_in_event,
+            trace_tx_request, 
+            NULL
+        );
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register tx request handler: %d\n", rc);
             status = rc;
         }
 
         /* Register the response trace handler. */
-        rc = ib_hook_register(ib, tx_data_out_event,
-                              (ib_void_fn_t)trace_tx_response, NULL);
+        rc = ib_txdata_hook_register(
+            ib,
+            tx_data_out_event,
+            trace_tx_response, 
+            NULL
+        );
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register tx response handler: %d\n", rc);
             status = rc;
@@ -1142,8 +1174,12 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering tx handlers\n");
         }
-        rc = ib_hook_register(ib, handle_request_headers_event,
-                              (ib_void_fn_t)print_tx, NULL);
+        rc = ib_tx_hook_register(
+            ib, 
+            handle_request_headers_event,
+            print_tx, 
+            NULL
+        );
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register tx handler: %d\n", rc);
             status = rc;
@@ -1154,8 +1190,12 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering user agent handlers\n");
         }
-        rc = ib_hook_register(ib, handle_request_headers_event,
-                              (ib_void_fn_t)print_user_agent, NULL);
+        rc = ib_tx_hook_register(
+            ib, 
+            request_headers_event,
+            print_user_agent, 
+            NULL
+        );
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register user_agent handler: %d\n", rc);
             status = rc;
@@ -1167,8 +1207,12 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering GeoIP handlers\n");
         }
-        rc = ib_hook_register(ib, handle_context_tx_event,
-                              (ib_void_fn_t)print_geoip, NULL);
+        rc = ib_tx_hook_register(
+            ib, 
+            handle_context_tx_event,
+            print_geoip, 
+            NULL
+        );
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register geoip handler: %d\n", rc);
             status = rc;
