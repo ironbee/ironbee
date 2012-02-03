@@ -428,15 +428,20 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     /* Setup the base uuid structure which is used to generate
      * transaction IDs.
      */
+    (*pconn)->base_uuid.st.time_low = 0;
+    (*pconn)->base_uuid.st.time_mid = 0;
+    (*pconn)->base_uuid.st.time_hi_and_ver = 0;
+
+    /// @todo These two need set to thread ID or some other identifier
+    (*pconn)->base_uuid.st.clk_seq_hi_res = 0x8f;
+    (*pconn)->base_uuid.st.clk_seq_low = 0xff;
+
     (*pconn)->base_uuid.st.node[0] = (pid16 >> 8) & 0xff;
     (*pconn)->base_uuid.st.node[1] = (pid16 & 0xff);
     (*pconn)->base_uuid.st.node[2] = ib->sensor_id_hash & 0xff;
     (*pconn)->base_uuid.st.node[3] = (ib->sensor_id_hash >> 8) & 0xff;
     (*pconn)->base_uuid.st.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
     (*pconn)->base_uuid.st.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
-    /// @todo This needs set to thread ID or some other identifier
-    (*pconn)->base_uuid.st.clk_seq_hi_res = 0x8f;
-    (*pconn)->base_uuid.st.clk_seq_low = 0xff;
 
     rc = ib_hash_create(&((*pconn)->data), (*pconn)->mp);
     if (rc != IB_OK) {
@@ -524,9 +529,7 @@ static void ib_tx_generate_id(ib_tx_t *tx)
     ib_uuid_t uuid;
 
     /* Start with the base values. */
-    uuid.st.clk_seq_hi_res = tx->conn->base_uuid.st.clk_seq_hi_res;
-    uuid.st.clk_seq_low = tx->conn->base_uuid.st.clk_seq_low;
-    *uuid.st.node = *tx->conn->base_uuid.st.node;
+    uuid.st = tx->conn->base_uuid.st;
 
     /* Set the tx specific values */
     uuid.st.time_low = tx->started.tv_sec;
