@@ -557,7 +557,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
         }
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Hook register for %d/%s returned %d",
-                         rc, eventp->number, eventp->name);
+                         eventp->number, eventp->name, rc);
         }
     }
 

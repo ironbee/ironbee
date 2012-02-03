@@ -195,7 +195,7 @@ int ib_state_event_cbdata_type(ib_state_event_type_t event)
  */
 static ib_status_t mod_perf_stats_reg_conn_counter(
      ib_engine_t *ib,
-     ib_state_event_type_t event,
+     ib_state_event_type_t event_type,
      ib_conn_t *connp,
      void *cbdata
 )
@@ -206,6 +206,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
     event_info_t *eventp = (event_info_t *)cbdata;
     int cevent = eventp->number;
     int rc;
+    int event;
 
     perf_info = ib_mpool_alloc(connp->mp, sizeof(*perf_info) * IB_STATE_EVENT_NUM);
 
@@ -669,6 +670,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
         else if ((eventp->cbdata_type == IB_CBDATA_NONE) || 
                  (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T))
         {
+            rc = IB_EINVAL;
             ib_log_error(ib, 4, "Cannot register handler "
                          "for:%d name:%s cbdata_type: %d",
                          eventp->number, eventp->name, eventp->cbdata_type);
@@ -709,6 +711,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
                     );
                     break;
                 default:
+                    rc = IB_EINVAL;
                     ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
                                  eventp->number, eventp->name);
                     
@@ -748,64 +751,68 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
     int event;
 
     /* Check that we are in the main ctx otherwise return */
-    if (ctx == ib_context_main(ib))
-    {
-        for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {
-            event_info_t *eventp = &event_info[event];
+    if (ctx != ib_context_main(ib)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
-            if ((eventp->cbdata_type == IB_CBDATA_NONE) ||
-                (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T)) {
-                ib_log_error(ib, 4, "Cannot register handler "
-                             "for:%d name:%s cbdata_type: %d",
-                             eventp->number, eventp->name, eventp->cbdata_type);
-            }
-            else {
-                switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
-                    case IB_STATE_HOOK_CONN:
-                        rc = ib_conn_hook_register(
-                            ib,
-                            (ib_state_event_type_t)event,
-                            mod_perf_stats_event_stop_conn_callback,
-                            (void*)eventp
-                        );
-                        break;
-                    case IB_STATE_HOOK_CONNDATA:
-                        rc = ib_conndata_hook_register(
-                            ib,
-                            (ib_state_event_type_t)event,
-                            mod_perf_stats_event_stop_conndata_callback,
-                            (void*)eventp
-                        );
-                        break;
-                    case IB_STATE_HOOK_TX:
-                       rc = ib_tx_hook_register(
-                            ib,
-                            (ib_state_event_type_t)event,
-                            mod_perf_stats_event_stop_tx_callback,
-                            (void*)eventp
-                        );
-                        break;
-                    case IB_STATE_HOOK_TXDATA:
-                        rc = ib_txdata_hook_register(
-                            ib,
-                            (ib_state_event_type_t)event,
-                            mod_perf_stats_event_stop_txdata_callback,
-                            (void*)eventp
-                        );
-                        break;
-                    default:
-                        ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
-                                     eventp->number, eventp->name);
+    for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {
+        event_info_t *eventp = &event_info[event];
+
+        if ((eventp->cbdata_type == IB_CBDATA_NONE) ||
+            (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T))
+        {
+            rc = IB_EINVAL;
+            ib_log_error(ib, 4, "Cannot register handler "
+                         "for:%d name:%s cbdata_type: %d",
+                         eventp->number, eventp->name, eventp->cbdata_type);
+        }
+        else {
+            switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
+                case IB_STATE_HOOK_CONN:
+                    rc = ib_conn_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_stop_conn_callback,
+                        (void*)eventp
+                                               );
+                    break;
+                case IB_STATE_HOOK_CONNDATA:
+                    rc = ib_conndata_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_stop_conndata_callback,
+                        (void*)eventp
+                                                   );
+                    break;
+                case IB_STATE_HOOK_TX:
+                    rc = ib_tx_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_stop_tx_callback,
+                        (void*)eventp
+                                             );
+                    break;
+                case IB_STATE_HOOK_TXDATA:
+                    rc = ib_txdata_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_stop_txdata_callback,
+                        (void*)eventp
+                                                 );
+                    break;
+                default:
+                    rc = IB_EINVAL;
+                    ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
+                                 eventp->number, eventp->name);
                     
-                }
             }
+        }
 
-            if (rc != IB_OK) {
-                ib_log_error(ib, 4, "Hook register for "
-                             "event:%d name:%s cbdata_type: %d returned %d",
-                             eventp->number, eventp->name, 
-                             eventp->cbdata_type, rc);
-            }
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Hook register for "
+                         "event:%d name:%s cbdata_type: %d returned %d",
+                         eventp->number, eventp->name, 
+                         eventp->cbdata_type, rc);
         }
     }
 
