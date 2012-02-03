@@ -1097,10 +1097,12 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     ib_status_t rc;
 
     /* Register a connection open event handler */
-    rc = ib_hook_register(ib,
-                          conn_opened_event,
-                          (ib_void_fn_t)ironbee_conn_init,
-                          NULL);
+    rc = ib_conn_hook_register(
+        ib,
+        conn_opened_event,
+        ironbee_conn_init,
+        NULL
+    );
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register connection opened event: %d\n", rc);
         IB_FTRACE_RET_STATUS(rc);
