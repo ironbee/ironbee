@@ -104,7 +104,7 @@ typedef struct {
 /**
  * Rule engine data; typedef in ironbee_private.h
  */
-struct ib_rules_t {
+struct ib_rule_engine_t {
     ib_ruleset_t       ruleset;      /**< Rules to exec */
     ib_rulelist_t      rule_list;    /**< All rules owned by this context */
 };

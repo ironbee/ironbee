@@ -302,29 +302,31 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
  * @param[in] ib Engine
  * @param[in,out] mp Memory pool to use for allocations
  * @param[in] flags Initialization flags (IB_RULES_INIT_*)
- * @param[out] prules Pointer to new rules object
+ * @param[out] p_rule_engine Pointer to new rule engine object
  *
  * @returns Status code
  */
 static ib_status_t ib_rules_init(ib_engine_t *ib,
                                  ib_mpool_t *mp,
                                  ib_flags_t flags,
-                                 ib_rules_t **prules)
+                                 ib_rule_engine_t **p_rule_engine)
 {
     IB_FTRACE_INIT(ib_rules_init);
-    rule_cbdata_t  *cbdata;
-    ib_rules_t     *rules;
-    ib_status_t     rc;
+    rule_cbdata_t    *cbdata;
+    ib_rule_engine_t *rule_engine;
+    ib_status_t       rc;
 
     /* Create the rule object */
-    rules = (ib_rules_t *)ib_mpool_calloc(mp, 1, sizeof(ib_rules_t));
-    if (rules == NULL) {
-        ib_log_error(ib, 4, "Rule engine failed to allocate rules object");
+    rule_engine = (ib_rule_engine_t *)
+        ib_mpool_calloc(mp, 1, sizeof(*rule_engine));
+    if (rule_engine == NULL) {
+        ib_log_error(ib, 4,
+                     "Rule engine failed to allocate rule engine object");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Create the rule list */
-    rc = ib_list_create(&(rules->rule_list.rule_list), mp);
+    rc = ib_list_create(&(rule_engine->rule_list.rule_list), mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Rule engine failed to initialize rule list: %d", rc);
@@ -337,7 +339,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
         for (phase = (ib_num_t)PHASE_NONE;
              phase <= (ib_num_t)PHASE_MAX;
              ++phase) {
-            ib_rule_phase_data_t *p = &(rules->ruleset.phases[phase]);
+            ib_rule_phase_data_t *p = &(rule_engine->ruleset.phases[phase]);
             p->phase = (ib_rule_phase_t)phase;
             rc = ib_list_create(&(p->rules.rule_list), mp);
             if (rc != IB_OK) {
@@ -365,7 +367,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
         }
     }
 
-    *prules = rules;
+    *p_rule_engine = rule_engine;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
