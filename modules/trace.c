@@ -549,6 +549,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                         );
                         break;
                     default:
+                        rc = IB_EINVAL;
                         ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
                                      eventp->number, eventp->name);
                     
