@@ -526,7 +526,7 @@ static void ib_tx_generate_id(ib_tx_t *tx)
     /* Start with the base values. */
     uuid.st.clk_seq_hi_res = tx->conn->base_uuid.st.clk_seq_hi_res;
     uuid.st.clk_seq_low = tx->conn->base_uuid.st.clk_seq_low;
-    memcpy(uuid.st.node, tx->conn->base_uuid.st.node, sizeof(uuid.st.node));
+    *uuid.st.node = *tx->conn->base_uuid.st.node;
 
     /* Set the tx specific values */
     uuid.st.time_low = tx->started.tv_sec;
@@ -1899,7 +1899,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
 
     /* Copy initial values from parent. */
     if (parent != NULL) {
-        memcpy(*pctx, parent, sizeof(*pctx));
+        **pctx = *parent;
     }
 
     (*pctx)->mp = pool;
