@@ -40,7 +40,7 @@
 #if APR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-     
+
 #include <assert.h>
 
 #include <ironbee/engine.h>
@@ -384,11 +384,11 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
                                      ib_state_event_type_t event,
-                                     ib_conn_t *iconn, 
+                                     ib_conn_t *iconn,
                                      void *cbdata)
 {
     assert(event == conn_opened_event);
-    
+
     //server_rec *s = cbdata;
     conn_rec *c = (conn_rec *)iconn->pctx;
     ib_status_t rc;

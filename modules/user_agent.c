@@ -499,9 +499,9 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
                                     void *data)
 {
     IB_FTRACE_INIT(modua_user_agent);
-    
+
     assert(event == request_headers_event);
-    
+
     ib_field_t   *req_agent = NULL;
     ib_status_t   rc = IB_OK;
     ib_bytestr_t *bs;
@@ -545,9 +545,9 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
                                   void *cbdata)
 {
     IB_FTRACE_INIT(modra_remoteip);
-    
+
     assert(event == request_headers_event);
-    
+
     ib_field_t    *req_fwd = NULL;
     ib_status_t    rc = IB_OK;
     ib_bytestr_t  *bs;

@@ -946,9 +946,9 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
                                            void *cbdata)
 {
     IB_FTRACE_INIT(modlua_init_lua_runtime);
-    
+
     assert(event == conn_started_event);
-    
+
     lua_State *L;
     modlua_cfg_t *modcfg;
     modlua_runtime_t *lua;
@@ -1031,9 +1031,9 @@ static ib_status_t modlua_destroy_lua_runtime(ib_engine_t *ib,
                                               void *cbdata)
 {
     IB_FTRACE_INIT(modlua_destroy_lua_runtime);
-    
+
     assert(event == conn_finished_event);
-    
+
     modlua_runtime_t *lua;
     ib_status_t rc;
 

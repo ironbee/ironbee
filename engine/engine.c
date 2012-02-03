@@ -76,8 +76,8 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
     IB_STATE_HOOK_TX,       /**< tx_started_event */
     IB_STATE_HOOK_TX,       /**< tx_process_event */
     IB_STATE_HOOK_TX,       /**< tx_finished_event */
-                              
-    /* Handler States */      
+
+    /* Handler States */
     IB_STATE_HOOK_CONN,     /**< handle_context_conn_event */
     IB_STATE_HOOK_CONN,     /**< handle_connect_event */
     IB_STATE_HOOK_TX,       /**< handle_context_tx_event */
@@ -87,16 +87,16 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
     IB_STATE_HOOK_TX,       /**< handle_response_event */
     IB_STATE_HOOK_CONN,     /**< handle_disconnect_event */
     IB_STATE_HOOK_TX,       /**< handle_postprocess_event */
-                              
-    /* Plugin States */       
+
+    /* Plugin States */
     IB_STATE_HOOK_NULL,     /**< cfg_started_event */
     IB_STATE_HOOK_NULL,     /**< cfg_finished_event */
     IB_STATE_HOOK_CONN,     /**< conn_opened_event */
     IB_STATE_HOOK_CONNDATA, /**< conn_data_in_event */
     IB_STATE_HOOK_CONNDATA, /**< conn_data_out_event */
     IB_STATE_HOOK_CONN,     /**< conn_closed_event */
-                              
-    /* Parser States */       
+
+    /* Parser States */
     IB_STATE_HOOK_TXDATA,   /**< tx_data_in_event */
     IB_STATE_HOOK_TXDATA,   /**< tx_data_out_event */
     IB_STATE_HOOK_TX,       /**< request_started_event */
@@ -170,12 +170,12 @@ static ib_status_t _ib_check_hook(
 )
 {
     IB_FTRACE_INIT(_ib_check_hook);
-    static const size_t num_events = 
+    static const size_t num_events =
         sizeof(ib_state_event_hook_types) / sizeof(ib_state_hook_type_t);
     ib_state_hook_type_t expected_hook_type;
-        
+
     if (event > num_events) {
-        ib_log_error( ib, 1, 
+        ib_log_error( ib, 1,
             "Event/hook mismatch: Unknown event type: %d", event
         );
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -189,7 +189,7 @@ static ib_status_t _ib_check_hook(
         );
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -200,13 +200,13 @@ static ib_status_t _ib_register_hook(
 )
 {
     IB_FTRACE_INIT(_ib_register_hook);
-    
+
     ib_hook_t *last = ib->ectx->hook[event];
 
     /* Insert the hook at the end of the list */
     if (last == NULL) {
         ib_log(ib, 9, "Registering %s hook: %p",
-               ib_state_event_name(event), 
+               ib_state_event_name(event),
                hook->callback.as_void);
 
         ib->ectx->hook[event] = hook;
@@ -220,9 +220,9 @@ static ib_status_t _ib_register_hook(
     last->next = hook;
 
     ib_log(ib, 9, "Registering %s hook after %p: %p",
-           ib_state_event_name(event), last->callback, 
+           ib_state_event_name(event), last->callback,
            hook->callback.as_void);
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -983,13 +983,13 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_state_notify_conn);
 
-    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);    
+    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, conn);
-    
+
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1022,9 +1022,9 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, conndata);
-    
+
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1052,17 +1052,17 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_state_notify_tx_data);
     ib_tx_t *tx = txdata->tx;
-    
-    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);    
+
+    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
-    
+
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, txdata, ib, txdata);
-    
+
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1090,16 +1090,16 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_state_notify_tx);
 
-    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);    
+    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
-    
+
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx);
-    
+
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1655,7 +1655,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
 ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
 {
-    static const size_t num_events = 
+    static const size_t num_events =
         sizeof(ib_state_event_hook_types) / sizeof(ib_state_hook_type_t);
 
     if (event > num_events) {
@@ -1668,19 +1668,19 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
 ib_status_t DLL_PUBLIC ib_null_hook_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_null_hook_fn_t cb, 
+    ib_state_null_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_null_hook_register);
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -1692,7 +1692,7 @@ ib_status_t DLL_PUBLIC ib_null_hook_register(
     hook->next = NULL;
 
     rc = _ib_register_hook(ib, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1703,38 +1703,38 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister(
 )
 {
     IB_FTRACE_INIT(ib_null_hook_unregister);
-    
+
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_null_hook_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
-    ib_state_null_hook_fn_t cb, 
+    ib_state_null_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_null_hook_register_context);
 
-    ib_engine_t *ib = ctx->ib;    
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -1746,7 +1746,7 @@ ib_status_t DLL_PUBLIC ib_null_hook_register_context(
     hook->next = NULL;
 
     rc = _ib_register_hook_context(ctx, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1757,18 +1757,18 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
 )
 {
     IB_FTRACE_INIT(ib_null_hook_unregister_context);
-    
-    ib_engine_t *ib = ctx->ib;    
+
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1776,19 +1776,19 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
 ib_status_t DLL_PUBLIC ib_conn_hook_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_conn_hook_fn_t cb, 
+    ib_state_conn_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_conn_hook_register);
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -1800,7 +1800,7 @@ ib_status_t DLL_PUBLIC ib_conn_hook_register(
     hook->next = NULL;
 
     rc = _ib_register_hook(ib, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1811,38 +1811,38 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
 )
 {
     IB_FTRACE_INIT(ib_conn_hook_unregister);
-    
+
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_conn_hook_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
-    ib_state_conn_hook_fn_t cb, 
+    ib_state_conn_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_conn_hook_register_context);
 
-    ib_engine_t *ib = ctx->ib;    
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -1854,7 +1854,7 @@ ib_status_t DLL_PUBLIC ib_conn_hook_register_context(
     hook->next = NULL;
 
     rc = _ib_register_hook_context(ctx, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1865,37 +1865,37 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister_context(
 )
 {
     IB_FTRACE_INIT(ib_conn_hook_unregister_context);
-    
-    ib_engine_t *ib = ctx->ib;    
+
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_conndata_hook_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb, 
+    ib_state_conndata_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_conndata_hook_register);
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -1907,7 +1907,7 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_register(
     hook->next = NULL;
 
     rc = _ib_register_hook(ib, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1918,38 +1918,38 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
 )
 {
     IB_FTRACE_INIT(ib_conndata_hook_unregister);
-    
+
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_conndata_hook_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb, 
+    ib_state_conndata_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_conndata_hook_register_context);
 
-    ib_engine_t *ib = ctx->ib;    
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -1961,7 +1961,7 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_register_context(
     hook->next = NULL;
 
     rc = _ib_register_hook_context(ctx, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1972,37 +1972,37 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister_context(
 )
 {
     IB_FTRACE_INIT(ib_conndata_hook_unregister_context);
-    
-    ib_engine_t *ib = ctx->ib;    
+
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_tx_hook_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_tx_hook_fn_t cb, 
+    ib_state_tx_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_tx_hook_register);
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -2014,7 +2014,7 @@ ib_status_t DLL_PUBLIC ib_tx_hook_register(
     hook->next = NULL;
 
     rc = _ib_register_hook(ib, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2025,38 +2025,38 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
 )
 {
     IB_FTRACE_INIT(ib_tx_hook_unregister);
-    
+
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_tx_hook_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
-    ib_state_tx_hook_fn_t cb, 
+    ib_state_tx_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_txe_hook_register_context);
 
-    ib_engine_t *ib = ctx->ib;    
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -2068,7 +2068,7 @@ ib_status_t DLL_PUBLIC ib_tx_hook_register_context(
     hook->next = NULL;
 
     rc = _ib_register_hook_context(ctx, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2079,37 +2079,37 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister_context(
 )
 {
     IB_FTRACE_INIT(ib_tx_hook_unregister_context);
-    
-    ib_engine_t *ib = ctx->ib;    
+
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_txdata_hook_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_txdata_hook_fn_t cb, 
+    ib_state_txdata_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_txdata_hook_register);
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -2121,7 +2121,7 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_register(
     hook->next = NULL;
 
     rc = _ib_register_hook(ib, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2132,38 +2132,38 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
 )
 {
     IB_FTRACE_INIT(ib_txdata_hook_unregister);
-    
+
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_txdata_hook_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
-    ib_state_txdata_hook_fn_t cb, 
+    ib_state_txdata_hook_fn_t cb,
     void *cdata
 )
 {
     IB_FTRACE_INIT(ib_txdatae_hook_register_context);
 
-    ib_engine_t *ib = ctx->ib;    
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
@@ -2175,7 +2175,7 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_register_context(
     hook->next = NULL;
 
     rc = _ib_register_hook_context(ctx, event, hook);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2186,18 +2186,18 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister_context(
 )
 {
     IB_FTRACE_INIT(ib_txdata_hook_unregister_context);
-    
-    ib_engine_t *ib = ctx->ib;    
+
+    ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
-    
+
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-    
+
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
-    
+
     IB_FTRACE_RET_STATUS(rc);
 }
 

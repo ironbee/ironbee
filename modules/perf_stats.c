@@ -26,7 +26,7 @@
 
 /* We need this before time.h, so that we get the right prototypes. */
 #include "ironbee_config_auto.h"
-   
+
 #include <time.h>
 
 #include <stdint.h>
@@ -92,26 +92,26 @@ int ib_state_event_cbdata_type(ib_state_event_type_t);
 
 /**
  * @internal
- * Get a microsecond ts  
+ * Get a microsecond ts
  *
  * Returns a timestamp as uint64_t from CLOCK_MONOTONIC_RAW or CLOCK_MONOTINIC.
  *
- */ 
+ */
 uint64_t get_time_stamp_us(void){
     uint64_t us;
 
 #ifdef _DARWIN_C_SOURCE
     {
       struct timeval t;
-      
+
       gettimeofday(&t, NULL);
-      
+
       us = t.tv_sec*1e6 + t.tv_usec;
     }
 #else
     {
         struct timespec t;
-        
+
         /* Ticks seem to be an undesireable due for many reasons.
          * IB_CLOCK is set to CLOCK_MONOTONIC which is vulnerable to slew or
          * if avaliable set to CLOCK_MONOTONIC_RAW which does not suffer from slew.
@@ -119,9 +119,9 @@ uint64_t get_time_stamp_us(void){
          * timespec provides sec and nsec resolution so we have to convert to msec.
          */
         clock_gettime(IB_CLOCK,&t);
-        
+
         /* There are 1 million microsecs in a sec.
-         * There are 1000 nanosecs in a microsec 
+         * There are 1000 nanosecs in a microsec
          */
         us = (uint64_t)((t.tv_sec * 1000000) + (t.tv_nsec / 1000));
     }
@@ -184,7 +184,7 @@ int ib_state_event_cbdata_type(ib_state_event_type_t event)
  * @internal
  * Perf Event Start Event Callback.
  *
- * On a connection started event we register connection 
+ * On a connection started event we register connection
  * counters for the connection.
  *
  * @param[in] ib IronBee object
@@ -219,7 +219,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
         else {
             perf_info_t *perfp = &perf_info[event];
 
-            /* Does this event match conn_started_event? 
+            /* Does this event match conn_started_event?
              * If so we should init counters for this event.
              */
             if (event == cevent) {
@@ -229,21 +229,21 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
             else {
                 perfp->call_cnt = 0;
                 perfp->start_usec = 0;
-            } 
-          
+            }
+
             /* Setup other defaults */
             perfp->number = event;
             perfp->name = ib_state_event_name((ib_state_event_type_t)event);
-            perfp->cbdata_type = ib_state_event_cbdata_type(event); 
+            perfp->cbdata_type = ib_state_event_cbdata_type(event);
             perfp->max_usec = 0;
             perfp->total_usec = 0;
             perfp->stop_usec = 0;
 
             ib_log_debug(ib, 4, "Perf callback registered %s (%d) (%d)",
-                         perfp->name, perfp->number, perfp->cbdata_type);                
+                         perfp->name, perfp->number, perfp->cbdata_type);
         }
     }
-       
+
     rc = ib_hash_set(connp->data, "MOD_PERF_STATS" ,perf_info);
     if (rc != IB_OK) {
         ib_log_debug(ib, 3, "Failed to store perf stats in connection data: %d", rc);
@@ -255,7 +255,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
 
 /**
  * Handle event starts.
- * 
+ *
  * Here we set start times and incriment the call counter.
  *
  * \param[in] ib IronBee object.
@@ -310,13 +310,13 @@ static ib_status_t mod_perf_stats_event_stop(
      perf_info_t *perf_info
 )
 {
-    
+
     IB_FTRACE_INIT(mod_perf_stats_event_stop);
 
     int cevent = eventp->number;                   /* Current event number. */
     perf_info_t *perfp;                            /* Perf data on current event. */
     uint64_t time_taken;                           /* Temp storage for time the event took */
-   
+
     if (perf_info != NULL) {
         perfp = &perf_info[cevent];
 
@@ -336,8 +336,8 @@ static ib_status_t mod_perf_stats_event_stop(
 
         ib_log_debug(ib, 4, "Stop Callback: %s call_cnt:(%llu) start:(%llu) "
                      "stop:(%llu) took:(%llu) conn total:(%llu) max:(%llu)",
-                     perfp->name, perfp->call_cnt, perfp->start_usec, 
-                     perfp->stop_usec, time_taken, perfp->total_usec, 
+                     perfp->name, perfp->call_cnt, perfp->start_usec,
+                     perfp->stop_usec, time_taken, perfp->total_usec,
                      perfp->max_usec);
     }
     else {
@@ -351,7 +351,7 @@ static ib_status_t mod_perf_stats_event_stop(
  * @internal
  * Perf Stats Start Event conn Callback.
  *
- * Handles all conn callback events other than conn_start_event. 
+ * Handles all conn callback events other than conn_start_event.
  *
  * @param[in] ib IronBee object
  * @param[in] event Event type
@@ -362,7 +362,7 @@ static ib_status_t mod_perf_stats_event_stop(
 static ib_status_t mod_perf_stats_event_start_conn_callback(
      ib_engine_t *ib,
      ib_state_event_type_t event,
-     ib_conn_t* conn,     
+     ib_conn_t* conn,
      void *cbdata
 )
 {
@@ -386,7 +386,7 @@ static ib_status_t mod_perf_stats_event_start_conn_callback(
  * @internal
  * Perf Stats Start Event conndata Callback.
  *
- * Handles all conndata callback events other than conndata_start_event. 
+ * Handles all conndata callback events other than conndata_start_event.
  *
  * @param[in] ib IronBee object
  * @param[in] event Event type
@@ -397,13 +397,13 @@ static ib_status_t mod_perf_stats_event_start_conn_callback(
 static ib_status_t mod_perf_stats_event_start_conndata_callback(
      ib_engine_t *ib,
      ib_state_event_type_t event,
-     ib_conndata_t* conndata,     
+     ib_conndata_t* conndata,
      void *cbdata
 )
 {
     IB_FTRACE_INIT(mod_perf_stats_event_start_conndata_callback);
 
-    event_info_t *eventp = (event_info_t *)cbdata; 
+    event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(conndata->conn->data, "MOD_PERF_STATS",
@@ -421,7 +421,7 @@ static ib_status_t mod_perf_stats_event_start_conndata_callback(
  * @internal
  * Perf Stats Start Event tx Callback.
  *
- * Handles all tx callback events other than tx_start_event. 
+ * Handles all tx callback events other than tx_start_event.
  *
  * @param[in] ib IronBee object
  * @param[in] event Event type
@@ -432,13 +432,13 @@ static ib_status_t mod_perf_stats_event_start_conndata_callback(
 static ib_status_t mod_perf_stats_event_start_tx_callback(
      ib_engine_t *ib,
      ib_state_event_type_t event,
-     ib_tx_t* tx,     
+     ib_tx_t* tx,
      void *cbdata
 )
 {
     IB_FTRACE_INIT(mod_perf_stats_event_start_tx_callback);
 
-    event_info_t *eventp = (event_info_t *)cbdata; 
+    event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(tx->conn->data, "MOD_PERF_STATS",
@@ -455,7 +455,7 @@ static ib_status_t mod_perf_stats_event_start_tx_callback(
  * @internal
  * Perf Stats Start Event txdata Callback.
  *
- * Handles all txdata callback events other than txdata_start_event. 
+ * Handles all txdata callback events other than txdata_start_event.
  *
  * @param[in] ib IronBee object
  * @param[in] event Event type
@@ -466,13 +466,13 @@ static ib_status_t mod_perf_stats_event_start_tx_callback(
 static ib_status_t mod_perf_stats_event_start_txdata_callback(
      ib_engine_t *ib,
      ib_state_event_type_t event,
-     ib_txdata_t* txdata,     
+     ib_txdata_t* txdata,
      void *cbdata
 )
 {
     IB_FTRACE_INIT(mod_perf_stats_event_start_txdata_callback);
 
-    event_info_t *eventp = (event_info_t *)cbdata; 
+    event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(txdata->tx->conn->data, "MOD_PERF_STATS",
@@ -505,7 +505,7 @@ static ib_status_t mod_perf_stats_event_stop_conn_callback(
     void *cbdata
 )
 {
-    
+
     IB_FTRACE_INIT(mod_perf_stats_event_stop_conn_callback);
 
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -541,7 +541,7 @@ static ib_status_t mod_perf_stats_event_stop_conndata_callback(
     void *cbdata
 )
 {
-    
+
     IB_FTRACE_INIT(mod_perf_stats_event_stop_conndata_callback);
 
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -577,7 +577,7 @@ static ib_status_t mod_perf_stats_event_stop_tx_callback(
     void *cbdata
 )
 {
-    
+
     IB_FTRACE_INIT(mod_perf_stats_event_stop_tx_callback);
 
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -613,7 +613,7 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
     void *cbdata
 )
 {
-    
+
     IB_FTRACE_INIT(mod_perf_stats_event_stop_txdata_callback);
 
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -633,7 +633,7 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
 /**
  * @internal
  * Called when module is loaded
- * Start event hooks are registered here. 
+ * Start event hooks are registered here.
  *
  * @param[in] ib IronBee object
  * @param[in] m Module object
@@ -646,10 +646,10 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
     ib_log_debug(ib, 4, "Perf stats module loaded.");
     ib_status_t rc;
     int event;
-    
+
     /* Register specific handlers for specific events, and a
      * generic handler for the rest */
-    for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {         
+    for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {
         event_info_t *eventp = &event_info[event];
 
         /* Record event info */
@@ -657,17 +657,17 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
         eventp->name = ib_state_event_name((ib_state_event_type_t)event);
         eventp->cbdata_type = ib_state_event_cbdata_type(event);
 
-        /* init the per connection counters here. 
+        /* init the per connection counters here.
          * Otherwise use callback data type.
-         */ 
-        if (event == conn_started_event) { 
+         */
+        if (event == conn_started_event) {
             rc = ib_conn_hook_register(
                 ib, (ib_state_event_type_t)event,
                 mod_perf_stats_reg_conn_counter,
                 (void*)eventp
             );
-        } 
-        else if ((eventp->cbdata_type == IB_CBDATA_NONE) || 
+        }
+        else if ((eventp->cbdata_type == IB_CBDATA_NONE) ||
                  (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T))
         {
             rc = IB_EINVAL;
@@ -675,7 +675,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
                          "for:%d name:%s cbdata_type: %d",
                          eventp->number, eventp->name, eventp->cbdata_type);
         }
-        else 
+        else
         {
             switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
                 case IB_STATE_HOOK_CONN:
@@ -714,14 +714,14 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
                     rc = IB_EINVAL;
                     ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
                                  eventp->number, eventp->name);
-                    
+
             }
         }
 
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Hook register for"
                          "event:%d name:%s cbdata_type: %d returned %d",
-                         eventp->number, eventp->name, 
+                         eventp->number, eventp->name,
                          eventp->cbdata_type, rc);
         }
     }
@@ -732,7 +732,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
  * @internal
  * Initialize a context for the perf_stats module.
  *
- * This is a hack. 
+ * This is a hack.
  * Hook callbacks set here to get end times for hooks.
  * Currently no other modules register hook call backs.
  * Because of this it should
@@ -804,14 +804,14 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
                     rc = IB_EINVAL;
                     ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
                                  eventp->number, eventp->name);
-                    
+
             }
         }
 
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Hook register for "
                          "event:%d name:%s cbdata_type: %d returned %d",
-                         eventp->number, eventp->name, 
+                         eventp->number, eventp->name,
                          eventp->cbdata_type, rc);
         }
     }

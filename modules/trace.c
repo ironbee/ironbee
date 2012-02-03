@@ -223,7 +223,7 @@ static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
         buf[len] = '\0';
         ib_log_debug(ib, 4, "%s: data=%s", eventp->name, buf);
     }
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -471,7 +471,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
         switch( event ) {
             case conn_data_in_event:
                 rc = ib_conndata_hook_register(
-                    ib, 
+                    ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_conn_data,
                     (void*)eventp
@@ -480,7 +480,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 
             case tx_data_in_event:
                 rc = ib_tx_hook_register(
-                    ib, 
+                    ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_tx,
                     (void*)eventp
@@ -490,7 +490,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
             case tx_started_event:
             case tx_finished_event:
                 rc = ib_tx_hook_register(
-                    ib, 
+                    ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_tx_mem,
                     (void*)eventp
@@ -499,7 +499,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 
             case request_headers_event:
                 rc = ib_tx_hook_register(
-                    ib, 
+                    ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_req_headers,
                     (void*)eventp
@@ -552,7 +552,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                         rc = IB_EINVAL;
                         ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
                                      eventp->number, eventp->name);
-                    
+
                 }
         }
         if (rc != IB_OK) {

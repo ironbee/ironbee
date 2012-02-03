@@ -39,7 +39,7 @@
 #include <ctype.h> /* tolower */
 #include <time.h>
 #include <errno.h>
-     
+
 #include <assert.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
@@ -2382,9 +2382,9 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                                              void *cbdata)
 {
     IB_FTRACE_INIT(logevent_hook_postprocess);
-    
+
     assert(event == handle_postprocess_event);
-    
+
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
     core_audit_cfg_t *cfg;
@@ -2594,9 +2594,9 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(core_hook_conn_started);
-    
+
     assert(event == conn_started_event);
-    
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_core_cfg_t *corecfg;
@@ -2651,9 +2651,9 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
                                        void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_connect);
-    
+
     assert(event == handle_connect_event);
-    
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -2720,9 +2720,9 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_disconnect);
-    
+
     assert(event == handle_disconnect_event);
-    
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -2758,9 +2758,9 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_req_header);
-    
+
     assert(event == request_headers_event);
-    
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_field_t *f;
@@ -2813,9 +2813,9 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
                                            void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_resp_header);
-    
+
     assert(event == request_headers_event);
-    
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -3455,7 +3455,7 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(filter_ctl_config);
     assert(event == handle_context_tx_event);
-    
+
     ib_status_t rc = IB_OK;
 
     /// @todo Need an API for this.
@@ -3625,9 +3625,9 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
                                      void *cbdata)
 {
     IB_FTRACE_INIT(process_txdata_in);
-    
+
     assert(event == tx_data_in_event);
-    
+
     ib_tx_t *tx;
     ib_core_cfg_t *modcfg;
     ib_field_t *reqbody;
@@ -3685,9 +3685,9 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
                                       void *cbdata)
 {
     IB_FTRACE_INIT(process_txdata_out);
-    
+
     assert(event == tx_data_out_event);
-    
+
     ib_tx_t *tx;
     ib_core_cfg_t *modcfg;
     ib_field_t *resbody;
@@ -3750,9 +3750,9 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
                                         void *cbdata)
 {
     IB_FTRACE_INIT(core_hook_tx_started);
-    
+
     assert(event == tx_started_event);
-    
+
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -4460,7 +4460,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, 3, "Could not set RuleBasePath %s", p1);
             IB_FTRACE_RET_STATUS(rc);
         }
-        
+
         corecfg->rule_base_path = p1;
         ib_log_debug(ib, 7, "RuleBasePath: %s", p1);
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -4835,7 +4835,7 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
 
- 
+
     /* End */
     IB_DIRMAP_INIT_LAST
 };
