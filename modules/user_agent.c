@@ -30,14 +30,6 @@
 #include <string.h>
 #include <ctype.h>
 
-/* Include files required to build this as a stand-alone program */
-#ifdef USER_AGENT_MAIN
-#  include <stdlib.h>
-#  include <stddef.h>
-#  include <errno.h>
-#  include <stdio.h>
-#endif
-
 #include <ironbee/types.h>
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
@@ -47,19 +39,12 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/mpool.h>
 
-/* Max line buffer for the stand alone program */
-#ifdef USER_AGENT_MAIN
-#  define MAX_LINE_BUF (16*1024)
-#endif
-
-#ifndef USER_AGENT_MAIN
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        user_agent
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
-#endif
 
 static const modua_match_ruleset_t *modua_match_ruleset = NULL;
 
@@ -323,7 +308,6 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
     IB_FTRACE_RET_PTR( const modua_match_rule_t, NULL );
 }
 
-#ifndef USER_AGENT_MAIN
 /**
  * @internal
  * Store a field in the agent list
@@ -672,101 +656,3 @@ IB_MODULE_INIT(
     NULL,                           /* Context init function */
     NULL                            /* Context fini function */
 );
-#else
-
-/**
- * @brief
- * Main to run a simple test of the user agent logic.
- *
- * Reads user agent strings from a file, and invokes the internal
- * modua_parse_uastring() function to parse each string, then prints the
- * resulting data.
- *
- * @param[in] argc Argument count
- * @param[in] argv Argument list
- *
- * @returns Status code
- */
-int main(int argc, const char *argv[])
-{
-    char         buf[MAX_LINE_BUF];
-    FILE        *fp;
-    ib_status_t  rc;
-    modua_match_rule_t *failed_rule;
-    unsigned int failed_frule_num;
-
-
-
-    /* Rule Initializations */
-    rc = modua_ruleset_init(&failed_rule, &failed_frule_num);
-    if (rc != IB_OK) {
-        fprintf(stderr,
-                "User agent rule initialization failed"
-                " on rule %s field rule #%d: %d",
-                failed_rule->label, failed_frule_num, rc);
-    }
-
-    /* Get the rules */
-    modua_match_ruleset = modua_ruleset_get( );
-    if (modua_match_ruleset == NULL) {
-        fprintf(stderr, "Failed to get user agent rule list: %d", rc);
-    }
-    printf("Found %d match rules\n", modua_match_ruleset->num_rules);
-
-    /* Parse command line. */
-    if (argc != 2) {
-        fprintf(stderr, "usage: user_agent <file>\n");
-        exit(1);
-    }
-
-    /* Attempt to open the user agent file */
-    fp = fopen(argv[1], "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Failed to open file %s: %s\n",
-                argv[1], strerror(errno));
-        exit(1);
-    }
-
-    /* Read each line of the file, try to parse it as a user agent string. */
-    while (fgets(buf, sizeof(buf), fp) != NULL) {
-        const modua_match_rule_t *match;
-        char                     *product;
-        char                     *platform;
-        char                     *extra;
-
-        /* Strip off the trailing whitespace */
-        char       *end = buf+strlen(buf)-1;
-        while ( (end > buf) && (isspace(*end) != 0) ) {
-            --end;
-        }
-        *end = '\0';
-
-        printf("%s:\n", buf);
-
-        /* Parse it */
-        modua_parse_uastring(buf, &product, &platform, &extra);
-        match = modua_match_cat_rules(product, platform, extra);
-
-        /* Print the results */
-        if (product != NULL) {
-            printf("  PRODUCT  = '%s'\n", product);
-        }
-        if (platform != NULL) {
-            printf("  PLATFORM = '%s'\n", platform);
-        }
-        if (extra != NULL) {
-            printf("  EXTRA    = '%s'\n", extra);
-        }
-        if (match != NULL) {
-            printf("  RULENUM  = %d\n",   match->rule_num);
-            printf("  LABEL    = %s\n",   match->label);
-            printf("  CATEGORY = '%s'\n", match->category);
-        }
-    }
-
-    /* Done */
-    fclose(fp);
-    return 0;
-}
-
-#endif
