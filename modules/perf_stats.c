@@ -88,7 +88,6 @@ enum cb_data_type {
 };
 
 uint64_t get_time_stamp_us(void);
-static perf_info_t *get_perf_info(ib_engine_t *,void *, int);
 int ib_state_event_cbdata_type(ib_state_event_type_t);
 
 /**
@@ -189,20 +188,23 @@ int ib_state_event_cbdata_type(ib_state_event_type_t event)
  * counters for the connection.
  *
  * @param[in] ib IronBee object
+ * @param[in] event Event type
  * @param[in] connp Connection object
  * @param[in] cbdata Callback data: acutally an perf_info_t describing the
  * event.
  */
-static ib_status_t mod_perf_stats_reg_conn_counter(ib_engine_t *ib,
-                                                   ib_conn_t *connp,
-                                                   void *cbdata)
+static ib_status_t mod_perf_stats_reg_conn_counter(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_conn_t *connp,
+     void *cbdata
+)
 {
     IB_FTRACE_INIT(mod_perf_stats_reg_conn_counter);
 
     perf_info_t *perf_info;
     event_info_t *eventp = (event_info_t *)cbdata;
     int cevent = eventp->number;
-    int event;
     int rc;
 
     perf_info = ib_mpool_alloc(connp->mp, sizeof(*perf_info) * IB_STATE_EVENT_NUM);
@@ -249,33 +251,26 @@ static ib_status_t mod_perf_stats_reg_conn_counter(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+
 /**
- * @internal
- * Perf Stats Start Event Callback.
+ * Handle event starts.
+ * 
+ * Here we set start times and incriment the call counter.
  *
- * Handles all callback events other than conn_start_event. Here we set start times 
- * and incriment the call counter.
- *
- * @param[in] ib IronBee object
- * @param[in] param Callback data which differs based on hook type.
- * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
- * event.
- */
-static ib_status_t mod_perf_stats_event_start_callback(ib_engine_t *ib,
-                                                       void *param,
-                                                       void *cbdata)
+ * \param[in] ib IronBee object.
+ * \param[in] eventp Event info.
+ * \param[in] perf_info Perf info.
+ **/
+static void mod_perf_stats_event_start(
+    ib_engine_t *ib,
+    event_info_t *eventp,
+    perf_info_t *perf_info
+)
 {
+    IB_FTRACE_INIT(mod_perf_stats_event_start);
 
-    IB_FTRACE_INIT(mod_perf_stats_event_start_callback);
-
-    event_info_t *eventp = (event_info_t *)cbdata; /* Handler is generic lets tell it about the event. */
     int cevent = eventp->number;                   /* Current event number. */
-    int cbdata_type = eventp->cbdata_type;         /* Current callback data type. */
-    perf_info_t *perf_info;                        /* Storage for perf data from connection hash. */
     perf_info_t *perfp;                            /* Perf data on current event. */
-
-    /* Get data back from the connection hash. */
-    perf_info = get_perf_info(ib,param,cbdata_type);
 
     if (perf_info != NULL) {
         /* Set perfp to current event type. */
@@ -294,36 +289,32 @@ static ib_status_t mod_perf_stats_event_start_callback(ib_engine_t *ib,
         ib_log_debug(ib, 4, "Connection based perf_info is NULL");
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_VOID();
 }
 
 /**
  * @internal
- * Perf Stats Stop Event Callback.
+ * Handle event stops.
  *
- * Called at the end of an event. Counters are updaated and displayed.
+ * Counters are updaated and displayed.
  *
  * @param[in] ib IronBee object
- * @param[in] param Callback data which differs based on hook type.
- * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * \param[in] eventp Event info.
+ * \param[in] perf_info Perf info.
  * event.
  */
-static ib_status_t mod_perf_stats_event_stop_callback(ib_engine_t *ib,
-                                                      void *param,
-                                                      void *cbdata)
+static ib_status_t mod_perf_stats_event_stop(
+     ib_engine_t *ib,
+     event_info_t *eventp,
+     perf_info_t *perf_info
+)
 {
     
-    IB_FTRACE_INIT(mod_perf_stats_event_stop_callback);
+    IB_FTRACE_INIT(mod_perf_stats_event_stop);
 
-    event_info_t *eventp = (event_info_t *)cbdata; /* Handler is generic lets tell it about the event. */
     int cevent = eventp->number;                   /* Current event number. */
-    int cbdata_type = eventp->cbdata_type;         /* Current callback data type. */
-    perf_info_t *perf_info;                        /* Storage for perf data from connection hash. */
     perf_info_t *perfp;                            /* Perf data on current event. */
     uint64_t time_taken;                           /* Temp storage for time the event took */
-
-    /* Get data back from the connection hash */
-    perf_info = get_perf_info(ib,param,cbdata_type);
    
     if (perf_info != NULL) {
         perfp = &perf_info[cevent];
@@ -357,55 +348,286 @@ static ib_status_t mod_perf_stats_event_stop_callback(ib_engine_t *ib,
 
 /**
  * @internal
- * Given @ref ib_txdata_t, @ref ib_tx_t, @ref ib_conn_t, or @ref ib_conndata_t
- * return the performance info associated with it.
+ * Perf Stats Start Event conn Callback.
+ *
+ * Handles all conn callback events other than conn_start_event. 
+ *
  * @param[in] ib IronBee object
- * @param[in] hook callback data 
- * @param[in] call back data type
+ * @param[in] event Event type
+ * @param[in] conn Connection.
+ * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * event.
  */
-static perf_info_t *get_perf_info(ib_engine_t *ib, void *param, int cbdata_type){
-    /* storage from hash */
+static ib_status_t mod_perf_stats_event_start_conn_callback(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_conn_t* conn,     
+     void *cbdata
+)
+{
+    IB_FTRACE_INIT(mod_perf_stats_event_start_conn_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
 
-    int rc;
-
-    /* Fetch data from connection hash depending on callback data type */
-    switch (cbdata_type) {
-        case (IB_CBDATA_CONN_T): {
-            ib_conn_t *connp = (ib_conn_t *)param;;
-            rc = ib_hash_get(connp->data, "MOD_PERF_STATS",
-                             (void *)&perf_info);
-            break;
-        } 
-        case (IB_CBDATA_CONN_DATA_T): {
-            ib_conndata_t *connd = (ib_conndata_t *)param;
-            rc = ib_hash_get(connd->conn->data, "MOD_PERF_STATS",
-                             (void *)&perf_info);
-            break;
-        }   
-        case (IB_CBDATA_TX_T): {
-            ib_tx_t *tx = (ib_tx_t *)param;
-            rc = ib_hash_get(tx->conn->data, "MOD_PERF_STATS",
-                             (void *)&perf_info);
-            break;
-        } 
-        case (IB_CBDATA_TX_DATA_T): {
-            ib_txdata_t *txd = (ib_txdata_t *)param;
-            rc = ib_hash_get(txd->tx->conn->data, "MOD_PERF_STATS",
-                             (void *)&perf_info);
-            break;
-        }
-        default :
-            ib_log_error(ib,3,"Unknown Callback data type (%d)", cbdata_type);
-            return NULL;
-    }
-
+    ib_status_t rc = ib_hash_get(conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
     if (rc != IB_OK) {
-        return NULL;
+        perf_info = NULL;
     }
 
-    return perf_info;
-} 
+    mod_perf_stats_event_start(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Perf Stats Start Event conndata Callback.
+ *
+ * Handles all conndata callback events other than conndata_start_event. 
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in] conndata Connection.
+ * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * event.
+ */
+static ib_status_t mod_perf_stats_event_start_conndata_callback(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_conndata_t* conndata,     
+     void *cbdata
+)
+{
+    IB_FTRACE_INIT(mod_perf_stats_event_start_conndata_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata; 
+    perf_info_t *perf_info;
+
+    ib_status_t rc = ib_hash_get(conndata->conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
+    if (rc != IB_OK) {
+        perf_info = NULL;
+    }
+
+    mod_perf_stats_event_start(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Perf Stats Start Event tx Callback.
+ *
+ * Handles all tx callback events other than tx_start_event. 
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in] tx Connection.
+ * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * event.
+ */
+static ib_status_t mod_perf_stats_event_start_tx_callback(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_tx_t* tx,     
+     void *cbdata
+)
+{
+    IB_FTRACE_INIT(mod_perf_stats_event_start_tx_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata; 
+    perf_info_t *perf_info;
+
+    ib_status_t rc = ib_hash_get(tx->conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
+    if (rc != IB_OK) {
+        perf_info = NULL;
+    }
+
+    mod_perf_stats_event_start(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * @internal
+ * Perf Stats Start Event txdata Callback.
+ *
+ * Handles all txdata callback events other than txdata_start_event. 
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in] txdata Connection.
+ * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * event.
+ */
+static ib_status_t mod_perf_stats_event_start_txdata_callback(
+     ib_engine_t *ib,
+     ib_state_event_type_t event,
+     ib_txdata_t* txdata,     
+     void *cbdata
+)
+{
+    IB_FTRACE_INIT(mod_perf_stats_event_start_txdata_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata; 
+    perf_info_t *perf_info;
+
+    ib_status_t rc = ib_hash_get(txdata->tx->conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
+    if (rc != IB_OK) {
+        perf_info = NULL;
+    }
+
+    mod_perf_stats_event_start(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Perf Stats Stop Event conn Callback.
+ *
+ * Called at the end of an event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in] param Callback data which differs based on hook type.
+ * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * event.
+ */
+static ib_status_t mod_perf_stats_event_stop_conn_callback(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conn_t* conn,
+    void *cbdata
+)
+{
+    
+    IB_FTRACE_INIT(mod_perf_stats_event_stop_conn_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata;
+    perf_info_t *perf_info;
+
+    ib_status_t rc = ib_hash_get(conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
+    if (rc != IB_OK) {
+        perf_info = NULL;
+    }
+
+    mod_perf_stats_event_stop(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Perf Stats Stop Event conndata Callback.
+ *
+ * Called at the end of an event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in] param Callback data which differs based on hook type.
+ * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * event.
+ */
+static ib_status_t mod_perf_stats_event_stop_conndata_callback(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conndata_t* conndata,
+    void *cbdata
+)
+{
+    
+    IB_FTRACE_INIT(mod_perf_stats_event_stop_conndata_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata;
+    perf_info_t *perf_info;
+
+    ib_status_t rc = ib_hash_get(conndata->conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
+    if (rc != IB_OK) {
+        perf_info = NULL;
+    }
+
+    mod_perf_stats_event_stop(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Perf Stats Stop Event tx Callback.
+ *
+ * Called at the end of an event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in] param Callback data which differs based on hook type.
+ * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * event.
+ */
+static ib_status_t mod_perf_stats_event_stop_tx_callback(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_tx_t* tx,
+    void *cbdata
+)
+{
+    
+    IB_FTRACE_INIT(mod_perf_stats_event_stop_tx_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata;
+    perf_info_t *perf_info;
+
+    ib_status_t rc = ib_hash_get(tx->conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
+    if (rc != IB_OK) {
+        perf_info = NULL;
+    }
+
+    mod_perf_stats_event_stop(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Perf Stats Stop Event txdata Callback.
+ *
+ * Called at the end of an event.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in] param Callback data which differs based on hook type.
+ * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * event.
+ */
+static ib_status_t mod_perf_stats_event_stop_txdata_callback(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_txdata_t* txdata,
+    void *cbdata
+)
+{
+    
+    IB_FTRACE_INIT(mod_perf_stats_event_stop_txdata_callback);
+
+    event_info_t *eventp = (event_info_t *)cbdata;
+    perf_info_t *perf_info;
+
+    ib_status_t rc = ib_hash_get(txdata->tx->conn->data, "MOD_PERF_STATS",
+                     (void *)&perf_info);
+    if (rc != IB_OK) {
+        perf_info = NULL;
+    }
+
+    mod_perf_stats_event_stop(ib, eventp, perf_info);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /**
  * @internal
@@ -426,9 +648,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
     
     /* Register specific handlers for specific events, and a
      * generic handler for the rest */
-    for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {
-        ib_void_fn_t  handler = NULL;
-         
+    for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {         
         event_info_t *eventp = &event_info[event];
 
         /* Record event info */
@@ -440,7 +660,11 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
          * Otherwise use callback data type.
          */ 
         if (event == conn_started_event) { 
-            handler = (ib_void_fn_t)mod_perf_stats_reg_conn_counter;
+            rc = ib_conn_hook_register(
+                ib, (ib_state_event_type_t)event,
+                mod_perf_stats_reg_conn_counter,
+                (void*)eventp
+            );
         } 
         else if ((eventp->cbdata_type == IB_CBDATA_NONE) || 
                  (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T))
@@ -451,21 +675,51 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
         }
         else 
         {
-            handler = (ib_void_fn_t)mod_perf_stats_event_start_callback; 
+            switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
+                case IB_STATE_HOOK_CONN:
+                    rc = ib_conn_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_start_conn_callback,
+                        (void*)eventp
+                    );
+                    break;
+                case IB_STATE_HOOK_CONNDATA:
+                    rc = ib_conndata_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_start_conndata_callback,
+                        (void*)eventp
+                    );
+                    break;
+                case IB_STATE_HOOK_TX:
+                   rc = ib_tx_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_start_tx_callback,
+                        (void*)eventp
+                    );
+                    break;
+                case IB_STATE_HOOK_TXDATA:
+                    rc = ib_txdata_hook_register(
+                        ib,
+                        (ib_state_event_type_t)event,
+                        mod_perf_stats_event_start_txdata_callback,
+                        (void*)eventp
+                    );
+                    break;
+                default:
+                    ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
+                                 eventp->number, eventp->name);
+                    
+            }
         }
 
-        /* Might have a NONE call back data type for cfg parser.
-         * If this is the case don't set a handler 
-         */
-        if (handler != NULL) {
-            rc = ib_hook_register(ib, (ib_state_event_type_t)event,
-                                  handler,(void*)eventp);
-            if (rc != IB_OK) {
-                ib_log_error(ib, 4, "Hook register for"
-                             "event:%d name:%s cbdata_type: %d returned %d",
-                             eventp->number, eventp->name, 
-                             eventp->cbdata_type, rc);
-            }
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Hook register for"
+                         "event:%d name:%s cbdata_type: %d returned %d",
+                         eventp->number, eventp->name, 
+                         eventp->cbdata_type, rc);
         }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -497,7 +751,6 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
     if (ctx == ib_context_main(ib))
     {
         for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {
-            ib_void_fn_t  handler = NULL;
             event_info_t *eventp = &event_info[event];
 
             if ((eventp->cbdata_type == IB_CBDATA_NONE) ||
@@ -507,21 +760,53 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
                              eventp->number, eventp->name, eventp->cbdata_type);
             }
             else {
-                handler = (ib_void_fn_t)mod_perf_stats_event_stop_callback;
-            }
-
-            if (handler != NULL){
-                rc = ib_hook_register(ib, (ib_state_event_type_t)event,
-                                      handler,(void*)eventp);
-                if (rc != IB_OK) {
-                    ib_log_error(ib, 4, "Hook register for "
-                                 "event:%d name:%s cbdata_type: %d returned %d",
-                                 eventp->number, eventp->name, 
-                                 eventp->cbdata_type, rc);
+                switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
+                    case IB_STATE_HOOK_CONN:
+                        rc = ib_conn_hook_register(
+                            ib,
+                            (ib_state_event_type_t)event,
+                            mod_perf_stats_event_stop_conn_callback,
+                            (void*)eventp
+                        );
+                        break;
+                    case IB_STATE_HOOK_CONNDATA:
+                        rc = ib_conndata_hook_register(
+                            ib,
+                            (ib_state_event_type_t)event,
+                            mod_perf_stats_event_stop_conndata_callback,
+                            (void*)eventp
+                        );
+                        break;
+                    case IB_STATE_HOOK_TX:
+                       rc = ib_tx_hook_register(
+                            ib,
+                            (ib_state_event_type_t)event,
+                            mod_perf_stats_event_stop_tx_callback,
+                            (void*)eventp
+                        );
+                        break;
+                    case IB_STATE_HOOK_TXDATA:
+                        rc = ib_txdata_hook_register(
+                            ib,
+                            (ib_state_event_type_t)event,
+                            mod_perf_stats_event_stop_txdata_callback,
+                            (void*)eventp
+                        );
+                        break;
+                    default:
+                        ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
+                                     eventp->number, eventp->name);
+                    
                 }
             }
 
-        } 
+            if (rc != IB_OK) {
+                ib_log_error(ib, 4, "Hook register for "
+                             "event:%d name:%s cbdata_type: %d returned %d",
+                             eventp->number, eventp->name, 
+                             eventp->cbdata_type, rc);
+            }
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

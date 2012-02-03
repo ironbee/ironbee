@@ -428,16 +428,19 @@ static IB_DIRMAP_INIT_STRUCTURE(pocacsig_directive_map) = {
  * Handle signature execution.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Phase passed as pointer value
  *
  * @return Status code
  */
 static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
-                                      ib_tx_t *tx,
-                                      void *cbdata)
+                                        ib_state_event_type_t event,
+                                        ib_tx_t *tx,
+                                        void *cbdata)
 {
     IB_FTRACE_INIT(pocacsig_handle_sigs);
+    
     pocacsig_cfg_t *cfg;
     pocacsig_phase_t phase = (pocacsig_phase_t)(uintptr_t)cbdata;
     ib_list_t *sigs;
@@ -586,24 +589,24 @@ static ib_status_t pocacsig_context_init(ib_engine_t *ib,
     /// @todo Inherit signatures from parent context???
 
     /* Register hooks to handle the phases. */
-    ib_hook_register_context(ctx, handle_context_tx_event,
-                             (ib_void_fn_t)pocacsig_handle_sigs,
-                             (void *)POCACSIG_PRE);
-    ib_hook_register_context(ctx, handle_request_headers_event,
-                             (ib_void_fn_t)pocacsig_handle_sigs,
-                             (void *)POCACSIG_REQHEAD);
-    ib_hook_register_context(ctx, handle_request_event,
-                             (ib_void_fn_t)pocacsig_handle_sigs,
-                             (void *)POCACSIG_REQ);
-    ib_hook_register_context(ctx, handle_response_headers_event,
-                             (ib_void_fn_t)pocacsig_handle_sigs,
-                             (void *)POCACSIG_RESHEAD);
-    ib_hook_register_context(ctx, handle_response_event,
-                             (ib_void_fn_t)pocacsig_handle_sigs,
-                             (void *)POCACSIG_RES);
-    ib_hook_register_context(ctx, handle_postprocess_event,
-                             (ib_void_fn_t)pocacsig_handle_sigs,
-                             (void *)POCACSIG_POST);
+    ib_tx_hook_register_context(ctx, handle_context_tx_event,
+                                pocacsig_handle_sigs,
+                                (void *)POCACSIG_PRE);
+    ib_tx_hook_register_context(ctx, handle_request_headers_event,
+                                pocacsig_handle_sigs,
+                                (void *)POCACSIG_REQHEAD);
+    ib_tx_hook_register_context(ctx, handle_request_event,
+                                pocacsig_handle_sigs,
+                                (void *)POCACSIG_REQ);
+    ib_tx_hook_register_context(ctx, handle_response_headers_event,
+                                pocacsig_handle_sigs,
+                                (void *)POCACSIG_RESHEAD);
+    ib_tx_hook_register_context(ctx, handle_response_event,
+                                pocacsig_handle_sigs,
+                                (void *)POCACSIG_RES);
+    ib_tx_hook_register_context(ctx, handle_postprocess_event,
+                                pocacsig_handle_sigs,
+                                (void *)POCACSIG_POST);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

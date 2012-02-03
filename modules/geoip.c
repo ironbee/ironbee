@@ -43,7 +43,12 @@ IB_MODULE_DECLARE();
  */
 static GeoIP *geoip_db = NULL;
 
-static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
+static ib_status_t geoip_lookup(
+    ib_engine_t *ib, 
+    ib_state_event_type_t event,
+    ib_tx_t *tx, 
+    void *data 
+)
 {
     IB_FTRACE_INIT(geoip_lookup);
 
@@ -51,7 +56,7 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
 
     if (ip == NULL) {
         ib_log_error(ib, 0, "Trying to lookup NULL IP in GEOIP");
-        IB_FTRACE_RET_VOID();
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
 #ifdef GEOIP_HAVE_VERSION
@@ -89,7 +94,7 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
     if (rc != IB_OK)
     {
         ib_log_error(ib, 0, "Unable to add GEOIP list to DPI.");
-        IB_FTRACE_RET_VOID();
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
     geoip_rec = GeoIP_record_by_addr(geoip_db, ip);
@@ -260,7 +265,7 @@ static void geoip_lookup(ib_engine_t *ib, ib_tx_t *tx, void *data )
         ib_log_debug(ib, 4, "No GeoIP record found.");
     }
 
-    IB_FTRACE_RET_VOID();
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
@@ -326,9 +331,9 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
 
     ib_log_debug(ib, 4, "Registering handler...");
 
-    rc = ib_hook_register(ib,
+    rc = ib_tx_hook_register(ib,
                           handle_context_tx_event,
-                          (ib_void_fn_t)geoip_lookup,
+                          geoip_lookup,
                           NULL);
 
     ib_log_debug(ib, 4, "Done registering handler.");
