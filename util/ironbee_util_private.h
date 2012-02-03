@@ -243,7 +243,7 @@ struct ib_mpool_t {
 #define IB_MPOOL_SET_INDEX(size,rindex) \
     do { \
         size_t sz = (size) >> IB_MPOOL_MIN_SIZE_BITS; \
-        for (; (sz >> (rindex)) !=  0; (rindex)++); \
+        for (; (sz >> (rindex)) !=  0; (rindex)++) { /* nobody */ } \
         if ((rindex) > 0) {\
             (rindex)--; \
         } \
@@ -262,7 +262,7 @@ struct ib_mpool_t {
 #define IB_MPOOL_GET_REQ_INDEX(size,rindex) \
     do { \
         size_t sz = 0; \
-        for (sz = (size) >> IB_MPOOL_MIN_SIZE_BITS; sz >> (rindex); (rindex)++); \
+        for (sz = (size) >> IB_MPOOL_MIN_SIZE_BITS; sz >> (rindex); (rindex)++) { /* nobody */ } \
         if ((rindex) > IB_MPOOL_MAX_INDEX) { \
             (rindex) = IB_MPOOL_MAX_INDEX; \
         } \
