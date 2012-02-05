@@ -97,6 +97,9 @@ ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_private.h 
 ibmod_user_agent_la_CFLAGS = ${AM_CFLAGS}
 ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS)
+if FREEBSD
+ibmod_user_agent_la_LIBADD = -liconv
+endif
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
@@ -112,7 +115,4 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
 
-if FREEBSD
-user_agent_LDADD = -liconv
-endif
 
