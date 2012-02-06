@@ -956,7 +956,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return IB_OK + rv;
     }
 
-    ib_conn_hook_register(ironbee, conn_opened_event,
+    ib_hook_conn_register(ironbee, conn_opened_event,
                           ironbee_conn_init, NULL);
 
 

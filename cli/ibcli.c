@@ -1097,7 +1097,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     ib_status_t rc;
 
     /* Register a connection open event handler */
-    rc = ib_conn_hook_register(
+    rc = ib_hook_conn_register(
         ib,
         conn_opened_event,
         ironbee_conn_init,
@@ -1147,7 +1147,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
 
         /* Register the request trace handler. */
-        rc = ib_txdata_hook_register(
+        rc = ib_hook_txdata_register(
             ib, 
             tx_data_in_event,
             trace_tx_request, 
@@ -1159,7 +1159,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
 
         /* Register the response trace handler. */
-        rc = ib_txdata_hook_register(
+        rc = ib_hook_txdata_register(
             ib,
             tx_data_out_event,
             trace_tx_response, 
@@ -1176,7 +1176,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering tx handlers\n");
         }
-        rc = ib_tx_hook_register(
+        rc = ib_hook_tx_register(
             ib, 
             handle_request_headers_event,
             print_tx, 
@@ -1192,7 +1192,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering user agent handlers\n");
         }
-        rc = ib_tx_hook_register(
+        rc = ib_hook_tx_register(
             ib, 
             request_headers_event,
             print_user_agent, 
@@ -1209,7 +1209,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         if (settings.verbose > 2) {
             printf("Registering GeoIP handlers\n");
         }
-        rc = ib_tx_hook_register(
+        rc = ib_hook_tx_register(
             ib, 
             handle_context_tx_event,
             print_geoip, 

@@ -1267,7 +1267,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_finished(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_null_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb, 
@@ -1299,7 +1299,7 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_null_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_null_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb, 
@@ -1334,7 +1334,7 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_conn_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_conn_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb, 
@@ -1366,7 +1366,7 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_conn_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_conn_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb, 
@@ -1400,7 +1400,7 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister_context(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_conndata_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_conndata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conndata_hook_fn_t cb, 
@@ -1432,7 +1432,7 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_conndata_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_conndata_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_conndata_hook_fn_t cb, 
@@ -1466,7 +1466,7 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister_context(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_tx_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb, 
@@ -1498,7 +1498,7 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_tx_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_tx_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb, 
@@ -1532,7 +1532,7 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister_context(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_txdata_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb, 
@@ -1564,7 +1564,7 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_txdata_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_txdata_register_context(
     ib_context_t* ctxdata,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb, 

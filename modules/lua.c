@@ -1534,107 +1534,107 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     }
 
     /* Hooks to initialize/destroy the lua runtime for configuration. */
-    ib_null_hook_register(ib, cfg_finished_event,
+    ib_hook_null_register(ib, cfg_finished_event,
                           modlua_destroy_lua_runtime_cfg,
                           NULL);
 
     /* Hook to initialize the lua runtime with the connection. */
-    ib_conn_hook_register(ib, conn_started_event,
+    ib_hook_conn_register(ib, conn_started_event,
                           modlua_init_lua_runtime,
                           NULL);
 
     /* Hook to destroy the lua runtime with the connection. */
-    ib_conn_hook_register(ib, conn_finished_event,
+    ib_hook_conn_register(ib, conn_finished_event,
                           modlua_destroy_lua_runtime,
                           NULL);
 
     /* Register data event handlers. */
-    ib_conndata_hook_register(ib, conn_data_in_event,
+    ib_hook_conndata_register(ib, conn_data_in_event,
                               modlua_handle_lua_conndata_event,
                               NULL);
-    ib_conndata_hook_register(ib, conn_data_out_event,
+    ib_hook_conndata_register(ib, conn_data_out_event,
                               modlua_handle_lua_conndata_event,
                               NULL);
-    ib_txdata_hook_register(ib, tx_data_in_event,
+    ib_hook_txdata_register(ib, tx_data_in_event,
                             modlua_handle_lua_txdata_event,
                             NULL);
-    ib_txdata_hook_register(ib, tx_data_out_event,
+    ib_hook_txdata_register(ib, tx_data_out_event,
                             modlua_handle_lua_txdata_event,
                             NULL);
 
     /* Register connection event handlers. */
-    ib_conn_hook_register(ib, conn_started_event,
+    ib_hook_conn_register(ib, conn_started_event,
                           modlua_handle_lua_conn_event,
                           NULL);
-    ib_conn_hook_register(ib, conn_opened_event,
+    ib_hook_conn_register(ib, conn_opened_event,
                           modlua_handle_lua_conn_event,
                           NULL);
-    ib_conn_hook_register(ib, handle_context_conn_event,
+    ib_hook_conn_register(ib, handle_context_conn_event,
                           modlua_handle_lua_conn_event,
                           NULL);
-    ib_conn_hook_register(ib, handle_connect_event,
+    ib_hook_conn_register(ib, handle_connect_event,
                           modlua_handle_lua_conn_event,
                           NULL);
-    ib_conn_hook_register(ib, conn_closed_event,
+    ib_hook_conn_register(ib, conn_closed_event,
                           modlua_handle_lua_conn_event,
                           NULL);
-    ib_conn_hook_register(ib, handle_disconnect_event,
+    ib_hook_conn_register(ib, handle_disconnect_event,
                           modlua_handle_lua_conn_event,
                           NULL);
-    ib_conn_hook_register(ib, conn_finished_event,
+    ib_hook_conn_register(ib, conn_finished_event,
                           modlua_handle_lua_conn_event,
                           NULL);
 
     /* Register transaction event handlers. */
-    ib_tx_hook_register(ib, tx_started_event,
+    ib_hook_tx_register(ib, tx_started_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, request_started_event,
+    ib_hook_tx_register(ib, request_started_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, request_headers_event,
+    ib_hook_tx_register(ib, request_headers_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, handle_context_tx_event,
+    ib_hook_tx_register(ib, handle_context_tx_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, handle_request_headers_event,
+    ib_hook_tx_register(ib, handle_request_headers_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, request_body_event,
+    ib_hook_tx_register(ib, request_body_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, handle_request_event,
+    ib_hook_tx_register(ib, handle_request_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, request_finished_event,
+    ib_hook_tx_register(ib, request_finished_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, tx_process_event,
+    ib_hook_tx_register(ib, tx_process_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, response_started_event,
+    ib_hook_tx_register(ib, response_started_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, response_headers_event,
+    ib_hook_tx_register(ib, response_headers_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, handle_response_headers_event,
+    ib_hook_tx_register(ib, handle_response_headers_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, response_body_event,
+    ib_hook_tx_register(ib, response_body_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, handle_response_event,
+    ib_hook_tx_register(ib, handle_response_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, response_finished_event,
+    ib_hook_tx_register(ib, response_finished_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, handle_postprocess_event,
+    ib_hook_tx_register(ib, handle_postprocess_event,
                         modlua_handle_lua_tx_event,
                         NULL);
-    ib_tx_hook_register(ib, tx_finished_event,
+    ib_hook_tx_register(ib, tx_finished_event,
                         modlua_handle_lua_tx_event,
                         NULL);
 

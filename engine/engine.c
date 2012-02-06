@@ -1665,14 +1665,14 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
     return ib_state_event_hook_types[event];
 }
 
-ib_status_t DLL_PUBLIC ib_null_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_null_hook_register);
+    IB_FTRACE_INIT(ib_hook_null_register);
     ib_status_t rc;
 
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
@@ -1717,14 +1717,14 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_null_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_null_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_null_hook_register_context);
+    IB_FTRACE_INIT(ib_hook_null_register_context);
 
     ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
@@ -1773,14 +1773,14 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
 }
 
 
-ib_status_t DLL_PUBLIC ib_conn_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_conn_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_conn_hook_register);
+    IB_FTRACE_INIT(ib_hook_conn_register);
     ib_status_t rc;
 
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
@@ -1825,14 +1825,14 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_conn_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_conn_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_conn_hook_register_context);
+    IB_FTRACE_INIT(ib_hook_conn_register_context);
 
     ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
@@ -1880,14 +1880,14 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister_context(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_conndata_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_conndata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conndata_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_conndata_hook_register);
+    IB_FTRACE_INIT(ib_hook_conndata_register);
     ib_status_t rc;
 
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
@@ -1932,14 +1932,14 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_conndata_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_conndata_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_conndata_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_conndata_hook_register_context);
+    IB_FTRACE_INIT(ib_hook_conndata_register_context);
 
     ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
@@ -1987,14 +1987,14 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister_context(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_tx_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_tx_hook_register);
+    IB_FTRACE_INIT(ib_hook_tx_register);
     ib_status_t rc;
 
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
@@ -2039,14 +2039,14 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_tx_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_tx_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_txe_hook_register_context);
+    IB_FTRACE_INIT(ib_hook_txe_register_context);
 
     ib_engine_t *ib = ctx->ib;
     ib_status_t rc;
@@ -2094,14 +2094,14 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister_context(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_txdata_hook_register(
+ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_txdata_hook_register);
+    IB_FTRACE_INIT(ib_hook_txdata_register);
     ib_status_t rc;
 
     rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
@@ -2146,14 +2146,14 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_txdata_hook_register_context(
+ib_status_t DLL_PUBLIC ib_hook_txdata_register_context(
     ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb,
     void *cdata
 )
 {
-    IB_FTRACE_INIT(ib_txdatae_hook_register_context);
+    IB_FTRACE_INIT(ib_hook_txdatae_register_context);
 
     ib_engine_t *ib = ctx->ib;
     ib_status_t rc;

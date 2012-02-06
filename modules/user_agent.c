@@ -620,7 +620,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
     unsigned int failed_frule_num;
 
     /* Register the user agent callback */
-    rc = ib_tx_hook_register(ib, request_headers_event,
+    rc = ib_hook_tx_register(ib, request_headers_event,
                              modua_user_agent,
                              NULL);
     if (rc != IB_OK) {
@@ -628,7 +628,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
     }
 
     /* Register the remote address callback */
-    rc = ib_tx_hook_register(ib, request_headers_event,
+    rc = ib_hook_tx_register(ib, request_headers_event,
                              modua_remoteip,
                              NULL);
     if (rc != IB_OK) {

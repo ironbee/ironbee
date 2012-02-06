@@ -489,22 +489,22 @@ static ib_status_t pocsig_context_init(ib_engine_t *ib,
     /// @todo Inherit signatures from parent context???
 
     /* Register hooks to handle the phases. */
-    ib_tx_hook_register_context(ctx, handle_context_tx_event,
+    ib_hook_tx_register_context(ctx, handle_context_tx_event,
                                 pocsig_handle_sigs,
                                 (void *)POCSIG_PRE);
-    ib_tx_hook_register_context(ctx, handle_request_headers_event,
+    ib_hook_tx_register_context(ctx, handle_request_headers_event,
                                 pocsig_handle_sigs,
                                 (void *)POCSIG_REQHEAD);
-    ib_tx_hook_register_context(ctx, handle_request_event,
+    ib_hook_tx_register_context(ctx, handle_request_event,
                                 pocsig_handle_sigs,
                                 (void *)POCSIG_REQ);
-    ib_tx_hook_register_context(ctx, handle_response_headers_event,
+    ib_hook_tx_register_context(ctx, handle_response_headers_event,
                                 pocsig_handle_sigs,
                                 (void *)POCSIG_RESHEAD);
-    ib_tx_hook_register_context(ctx, handle_response_event,
+    ib_hook_tx_register_context(ctx, handle_response_event,
                                 pocsig_handle_sigs,
                                 (void *)POCSIG_RES);
-    ib_tx_hook_register_context(ctx, handle_postprocess_event,
+    ib_hook_tx_register_context(ctx, handle_postprocess_event,
                                 pocsig_handle_sigs,
                                 (void *)POCSIG_POST);
 

@@ -331,7 +331,7 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
 
     ib_log_debug(ib, 4, "Registering handler...");
 
-    rc = ib_tx_hook_register(ib,
+    rc = ib_hook_tx_register(ib,
                           handle_context_tx_event,
                           geoip_lookup,
                           NULL);

@@ -357,7 +357,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
      * generic handler for the rest */
     if (flags & IB_RULES_INIT_CALLBACKS) {
         for (cbdata = rule_cbdata; cbdata->phase != PHASE_INVALID; ++cbdata) {
-            rc = ib_tx_hook_register(ib,
+            rc = ib_hook_tx_register(ib,
                                      cbdata->event,
                                      ib_rule_engine_execute,
                                      (void*)cbdata);

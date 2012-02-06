@@ -856,7 +856,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                               apr_pool_cleanup_null);
 
     /* Register conn/tx init hooks. */
-    ib_conn_hook_register(ironbee, conn_opened_event,
+    ib_hook_conn_register(ironbee, conn_opened_event,
                           ironbee_conn_init, s);
 
     /* Configure the engine. */

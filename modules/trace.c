@@ -470,7 +470,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
         /* For these specific ones, use more spefic handlers */
         switch( event ) {
             case conn_data_in_event:
-                rc = ib_conndata_hook_register(
+                rc = ib_hook_conndata_register(
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_conn_data,
@@ -479,7 +479,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                 break;
 
             case tx_data_in_event:
-                rc = ib_tx_hook_register(
+                rc = ib_hook_tx_register(
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_tx,
@@ -489,7 +489,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 
             case tx_started_event:
             case tx_finished_event:
-                rc = ib_tx_hook_register(
+                rc = ib_hook_tx_register(
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_tx_mem,
@@ -498,7 +498,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                 break;
 
             case request_headers_event:
-                rc = ib_tx_hook_register(
+                rc = ib_hook_tx_register(
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_req_headers,
@@ -509,7 +509,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
             default:
                 switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
                     case IB_STATE_HOOK_CONN:
-                        rc = ib_conn_hook_register(
+                        rc = ib_hook_conn_register(
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_conn_event_callback,
@@ -517,7 +517,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                         );
                         break;
                     case IB_STATE_HOOK_CONNDATA:
-                        rc = ib_conndata_hook_register(
+                        rc = ib_hook_conndata_register(
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_conndata_event_callback,
@@ -525,7 +525,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                         );
                         break;
                     case IB_STATE_HOOK_TX:
-                       rc = ib_tx_hook_register(
+                       rc = ib_hook_tx_register(
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_tx_event_callback,
@@ -533,7 +533,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                         );
                         break;
                     case IB_STATE_HOOK_TXDATA:
-                        rc = ib_txdata_hook_register(
+                        rc = ib_hook_txdata_register(
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_txdata_event_callback,
@@ -541,7 +541,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
                         );
                         break;
                     case IB_STATE_HOOK_NULL:
-                        rc = ib_null_hook_register(
+                        rc = ib_hook_null_register(
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_null_event_callback,

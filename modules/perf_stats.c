@@ -661,7 +661,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
          * Otherwise use callback data type.
          */
         if (event == conn_started_event) {
-            rc = ib_conn_hook_register(
+            rc = ib_hook_conn_register(
                 ib, (ib_state_event_type_t)event,
                 mod_perf_stats_reg_conn_counter,
                 (void*)eventp
@@ -679,7 +679,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
         {
             switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
                 case IB_STATE_HOOK_CONN:
-                    rc = ib_conn_hook_register(
+                    rc = ib_hook_conn_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_conn_callback,
@@ -687,7 +687,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
                     );
                     break;
                 case IB_STATE_HOOK_CONNDATA:
-                    rc = ib_conndata_hook_register(
+                    rc = ib_hook_conndata_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_conndata_callback,
@@ -695,7 +695,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
                     );
                     break;
                 case IB_STATE_HOOK_TX:
-                   rc = ib_tx_hook_register(
+                   rc = ib_hook_tx_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_tx_callback,
@@ -703,7 +703,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
                     );
                     break;
                 case IB_STATE_HOOK_TXDATA:
-                    rc = ib_txdata_hook_register(
+                    rc = ib_hook_txdata_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_txdata_callback,
@@ -769,7 +769,7 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
         else {
             switch( ib_state_hook_type( (ib_state_event_type_t)event ) ) {
                 case IB_STATE_HOOK_CONN:
-                    rc = ib_conn_hook_register(
+                    rc = ib_hook_conn_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_conn_callback,
@@ -777,7 +777,7 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
                                                );
                     break;
                 case IB_STATE_HOOK_CONNDATA:
-                    rc = ib_conndata_hook_register(
+                    rc = ib_hook_conndata_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_conndata_callback,
@@ -785,7 +785,7 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
                                                    );
                     break;
                 case IB_STATE_HOOK_TX:
-                    rc = ib_tx_hook_register(
+                    rc = ib_hook_tx_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_tx_callback,
@@ -793,7 +793,7 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
                                              );
                     break;
                 case IB_STATE_HOOK_TXDATA:
-                    rc = ib_txdata_hook_register(
+                    rc = ib_hook_txdata_register(
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_txdata_callback,

@@ -4955,36 +4955,36 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_log_error(ib, 0, "Failed to register buffer filter: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_tx_hook_register(ib, handle_context_tx_event,
+    ib_hook_tx_register(ib, handle_context_tx_event,
                         filter_ctl_config, fbuffer);
 
 
     /* Register data event handlers. */
-    ib_txdata_hook_register(ib, tx_data_in_event,
+    ib_hook_txdata_register(ib, tx_data_in_event,
                             process_txdata_in,
                             NULL);
-    ib_txdata_hook_register(ib, tx_data_out_event,
+    ib_hook_txdata_register(ib, tx_data_out_event,
                             process_txdata_out,
                             NULL);
 
     /* Register parser hooks. */
-    ib_conn_hook_register(ib, conn_started_event,
+    ib_hook_conn_register(ib, conn_started_event,
                           core_hook_conn_started, NULL);
-    ib_conn_hook_register(ib, handle_connect_event,
+    ib_hook_conn_register(ib, handle_connect_event,
                           parser_hook_connect, NULL);
-    ib_conn_hook_register(ib, handle_disconnect_event,
+    ib_hook_conn_register(ib, handle_disconnect_event,
                           parser_hook_disconnect, NULL);
-    ib_tx_hook_register(ib, tx_started_event,
+    ib_hook_tx_register(ib, tx_started_event,
                         core_hook_tx_started, NULL);
     /// @todo Need the parser to parse headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
     //ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
-    ib_tx_hook_register(ib, request_headers_event,
+    ib_hook_tx_register(ib, request_headers_event,
                         parser_hook_req_header, NULL);
-    ib_tx_hook_register(ib, response_headers_event,
+    ib_hook_tx_register(ib, response_headers_event,
                         parser_hook_resp_header, NULL);
 
     /* Register logevent hooks. */
-    ib_tx_hook_register(ib, handle_postprocess_event,
+    ib_hook_tx_register(ib, handle_postprocess_event,
                         logevent_hook_postprocess, NULL);
 
     /* Define the data field provider API */
