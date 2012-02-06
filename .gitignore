@@ -54,6 +54,8 @@ tests/*_details.xml
 tests/*_memcheck.xml
 tests/*_stderr.log
 docs/doxygen/
+docs/doxygen_internal/
+docs/doxygen_external/
 docs/docbook/manual/output/
 libs/luajit-2.0-ironbee/
 libs/libhtp/
