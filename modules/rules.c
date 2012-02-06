@@ -490,23 +490,23 @@ static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
  */
 static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                                         const char *name,
-                                        ib_list_t *vars,
+                                        const ib_list_t *vars,
                                         void *cbdata)
 {
     IB_FTRACE_INIT();
 
     ib_status_t rc;
-    ib_list_node_t *inputs;
-    ib_list_node_t *mod;
+    const ib_list_node_t *inputs;
+    const ib_list_node_t *mod;
     ib_rule_t *rule;
     ib_rule_phase_t phase = PHASE_NONE;
     ib_operator_inst_t *op_inst;
-    char *file_name;
+    const char *file_name;
 
     /* Get the inputs string */
-    inputs = ib_list_first(vars);
+    inputs = ib_list_first_const(vars);
 
-    file_name = (char*)ib_list_node_data(inputs);
+    file_name = (const char*)ib_list_node_data_const(inputs);
 
     if ( file_name == NULL ) {
         ib_log_error(cp->ib, 1, "No inputs for rule");
@@ -525,7 +525,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
 
     /* Parse all of the modifiers */
     mod = inputs;
-    while( (mod = ib_list_node_next(mod)) != NULL) {
+    while( (mod = ib_list_node_next_const(mod)) != NULL) {
         ib_log_debug(cp->ib, 1, "Parsing modifier %s", mod->data);
         rc = parse_modifier(cp, rule, &phase, mod->data);
         if (rc != IB_OK) {
@@ -620,14 +620,14 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
  */
 static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
                                      const char *name,
-                                     ib_list_t *vars,
+                                     const ib_list_t *vars,
                                      void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_list_node_t *inputs;
-    ib_list_node_t *op;
-    ib_list_node_t *mod;
+    const ib_list_node_t *inputs;
+    const ib_list_node_t *op;
+    const ib_list_node_t *mod;
     ib_rule_phase_t phase = PHASE_NONE;
     ib_rule_t *rule;
 
@@ -636,14 +636,14 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     }
 
     /* Get the inputs string */
-    inputs = ib_list_first(vars);
+    inputs = ib_list_first_const(vars);
     if ( (inputs == NULL) || (inputs->data == NULL) ) {
         ib_log_error(cp->ib, 1, "No inputs for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Get the operator string */
-    op = ib_list_node_next(inputs);
+    op = ib_list_node_next_const(inputs);
     if ( (op == NULL) || (op->data == NULL) ) {
         ib_log_error(cp->ib, 1, "No operator for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -674,7 +674,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
 
     /* Parse all of the modifiers */
     mod = op;
-    while( (mod = ib_list_node_next(mod)) != NULL) {
+    while( (mod = ib_list_node_next_const(mod)) != NULL) {
         rc = parse_modifier(cp, rule, &phase, mod->data);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 1,

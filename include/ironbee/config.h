@@ -152,7 +152,7 @@ struct ib_dirmap_init_t {
         ib_config_cb_param1_fn_t  fn_param1; /**< 1 param directive */
         ib_config_cb_param2_fn_t  fn_param2; /**< 2 param directive */
         ib_config_cb_list_fn_t    fn_list;   /**< List directive */
-        ib_config_cb_opflags_fn_t  fn_opflags;/**< Option flags directive */
+        ib_config_cb_opflags_fn_t fn_opflags;/**< Option flags directive */
         ib_config_cb_sblk1_fn_t   fn_sblk1;  /**< 1 param subblock directive */
     } cb;
     ib_config_cb_blkend_fn_t      fn_blkend; /**< Called when block ends */
@@ -161,8 +161,18 @@ struct ib_dirmap_init_t {
     /// @todo Do we need help text or error messages???
 };
 
-/// @todo Use designated initializers if supported so that better type
-///       checking is performed.
+
+/**
+ * @intenral
+ * Helper macro to use designated initializers to typecheck \a cb argument to
+ * \c IB_DIRMAP_INIT_X macros.  If we are in C, uses designated initializers,
+ * but if we are in C++, uses generic \c _init member.
+ **/
+#ifdef __cplusplus
+#define IB_DIRMAP_INIT_CB_HELPER(name,cb) { (ib_void_fn_t)(cb) }
+#else
+#define IB_DIRMAP_INIT_CB_HELPER(name,cb) { .name = (cb) }
+#endif
 
 /**
  * Defines a configuration directive map initialization structure.
@@ -180,7 +190,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_ONOFF(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_ONOFF, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_ONOFF, IB_DIRMAP_INIT_CB_HELPER(fn_onoff,(cb)), NULL, (cbdata), NULL }
 
 /**
  * Directive with a single string parameter.
@@ -190,7 +200,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_PARAM1(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_PARAM1, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_PARAM1, IB_DIRMAP_INIT_CB_HELPER(fn_param1,(cb)), NULL, (cbdata), NULL }
 
 /**
  * Directive with two string parameters.
@@ -200,7 +210,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_PARAM2(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_PARAM2, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_PARAM2, IB_DIRMAP_INIT_CB_HELPER(fn_param2,(cb)), NULL, (cbdata), NULL }
 
 /**
  * Directive with list of string parameters.
@@ -210,7 +220,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_LIST(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_LIST, { (ib_void_fn_t)(cb) }, NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_LIST, IB_DIRMAP_INIT_CB_HELPER(fn_list,(cb)), NULL, (cbdata), NULL }
 
 /**
  * Directive with list of unique options string parameters which are
@@ -227,7 +237,7 @@ struct ib_dirmap_init_t {
  * @param valmap Array of @ref ib_strval_t structures mapping options to values
  */
 #define IB_DIRMAP_INIT_OPFLAGS(name,cb,cbdata,valmap) \
-    { (name), IB_DIRTYPE_OPFLAGS, { (ib_void_fn_t)(cb) }, NULL, (cbdata), (valmap) }
+    { (name), IB_DIRTYPE_OPFLAGS, IB_DIRMAP_INIT_CB_HELPER(fn_opflags,(cb)), NULL, (cbdata), (valmap) }
 
 /**
  * Block with single parameter enclosing more directives.
@@ -240,7 +250,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_SBLK1(name,cb,blkend,cbdata) \
-    { (name), IB_DIRTYPE_SBLK1, { (ib_void_fn_t)(cb) }, (blkend), (cbdata), NULL }
+    { (name), IB_DIRTYPE_SBLK1, IB_DIRMAP_INIT_CB_HELPER(fn_sblk1,(cb)), (blkend), (cbdata), NULL }
 
 /** Required last entry. */
 #define IB_DIRMAP_INIT_LAST { NULL }

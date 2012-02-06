@@ -131,13 +131,14 @@ static ib_status_t pocsig_dir_trace(ib_cfgparser_t *cp,
  */
 static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
                                         const char *name,
-                                        ib_list_t *args,
+                                        const ib_list_t *args,
                                         void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_list_t *list;
+    const ib_list_node_t *current_arg;
     const char *target;
     const char *op;
     const char *action;
@@ -234,26 +235,33 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    current_arg = ib_list_first_const(args);
+    
     /* Target */
-    rc = ib_list_shift(args, &target);
-    if (rc != IB_OK) {
+    if (current_arg == NULL) {
         ib_log_error(ib, 1, "No PocSig target");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+    target = ib_list_node_data_const(current_arg);
+    current_arg = ib_list_node_next_const(current_arg);
 
     /* Operator */
-    rc = ib_list_shift(args, &op);
-    if (rc != IB_OK) {
+    if (current_arg == NULL) {
         ib_log_error(ib, 1, "No PocSig operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+    op = ib_list_node_data_const(current_arg);
+    current_arg = ib_list_node_next_const(current_arg);
 
     /* Action */
-    rc = ib_list_shift(args, &action);
-    if (rc != IB_OK) {
+    if (current_arg == NULL) {
         ib_log_debug(ib, 4, "No PocSig action");
         action = "";
+    } else {
+        action = ib_list_node_data_const(current_arg);
+        current_arg = ib_list_node_next_const(current_arg);
     }
+
 
     /* Signature */
     sig = (pocsig_sig_t *)ib_mpool_alloc(ib_engine_pool_config_get(ib),

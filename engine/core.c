@@ -4130,16 +4130,16 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
  */
 static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                                      const char *name,
-                                     ib_list_t *args,
+                                     const ib_list_t *args,
                                      void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
-    ib_list_node_t *node;
+    const ib_list_node_t *node;
     ib_status_t rc = IB_EINVAL;
 
-    IB_LIST_LOOP(args, node) {
-        char *p = (char *)ib_list_node_data(node);
+    IB_LIST_LOOP_CONST(args, node) {
+        const char *p = (const char *)ib_list_node_data_const(node);
 
         if (strncasecmp("ip=", p, 3) == 0) {
             p += 3; /* Skip over ip= */
