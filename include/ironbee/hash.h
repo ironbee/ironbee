@@ -85,14 +85,14 @@ ib_status_t DLL_PUBLIC ib_hash_create(ib_hash_t **ph, ib_mpool_t *pool);
  *
  * This is the default hash function.
  *
- * @param key buffer holding the key to hash
+ * @param ckey buffer holding the key to hash
  * @param len size of the key to hash in bytes
  * @param flags bit flag options for the key
  *              (currently IB_HASH_FLAG_NOCASE)
  *
  * @returns Status code
  */
-unsigned int DLL_PUBLIC ib_hashfunc_djb2(const void *char_key,
+unsigned int DLL_PUBLIC ib_hashfunc_djb2(const void *ckey,
                                          size_t len,
                                          uint8_t flags);
 
@@ -100,8 +100,10 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2(const void *char_key,
  * Create a hash table with nocase option by default.
  * If you dont need it, use ib_hash_create_ex
  *
- * @param ph Address which new hash table is written
+ * @param ht Address which new hash table is written
  * @param pool Memory pool to use
+ * @param slots Number of slots
+ * @param flags Flags to apply to every lookup.
  *
  * @returns Status code
  */
@@ -120,6 +122,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(ib_hash_t **ht,
  * @param len number of bytes key length
  * @param hte pointer reference used to store the entry if found
  * @param hash reference to store the calculated hash
+ * @param lookup_flags Flags to use during lookup, e.g., (IB_HASH_FLAG_NOCASE)
  *
  * @returns Status code
  */
@@ -144,6 +147,7 @@ void DLL_PUBLIC ib_hash_clear(ib_hash_t *h);
  * @param key Key to lookup
  * @param len Length of key
  * @param pdata Address which data is written
+ * @param lookup_flags Flags to use during lookup, e.g., (IB_HASH_FLAG_NOCASE)
  *
  * @returns Status code
  */
@@ -252,7 +256,7 @@ ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
 /**
  * Creates an initialized iterator for the hash table entries.
  *
- * @param mp Memory pool for the iterator allocation
+ * @param p Memory pool for the iterator allocation
  * @param ib_ht hash table to iterate
  *
  * @returns Status code

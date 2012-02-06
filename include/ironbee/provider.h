@@ -179,8 +179,7 @@ ib_status_t DLL_PUBLIC ib_provider_lookup(ib_engine_t *ib,
  * Create an instance of a provider
  *
  * @param ib Engine
- * @param type Type of provider being interfaced
- * @param key Unique key for interface lookup
+ * @param pr Provider being interfaced
  * @param ppi Location where provider instance is written
  * @param pool Pool to allocate instance
  * @param data Arbitrary data passed to init function or stored with instance

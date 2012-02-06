@@ -163,7 +163,7 @@ struct ib_dirmap_init_t {
 
 
 /**
- * @intenral
+ * @internal
  * Helper macro to use designated initializers to typecheck \a cb argument to
  * \c IB_DIRMAP_INIT_X macros.  If we are in C, uses designated initializers,
  * but if we are in C++, uses generic \c _init member.

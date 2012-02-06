@@ -312,7 +312,8 @@ ib_status_t ib_radix_new(ib_radix_t **radix,
  * creates a clone of the tree, allocating memory from mp
  *
  * @param orig pointer to the original pool
- * @param new_pool reference to a pointer that will link to the allocated pool
+ * @param new_radix reference to a pointer that will link to the allocated
+ *                  radix
  * @param mp memory pool that the allocation should use
  *
  * @returns Status code

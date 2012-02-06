@@ -46,6 +46,7 @@
  * #endif
  * #define IB_MODULE_SYM_PREFIX myprefix
  * #include "modules/mymodule.c"
+ * @endcode
  */
 #define IB_MODULE_SYM_PREFIX          ibsym
 #endif

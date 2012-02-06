@@ -144,7 +144,7 @@ extern ib_plugin_t ibt_ibplugin;
     } while(0)
 
 /**
- * Memory comparison function that works with @ref ASSERT_PRED3.
+ * Memory comparison function that works with \c ASSERT_PRED3.
  *
  * @param[in] v1 First memory location
  * @param[in] v2 Second memory location

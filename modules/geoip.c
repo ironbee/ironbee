@@ -39,7 +39,6 @@ IB_MODULE_DECLARE();
 /**
  * @internal
  * The GeoIP database.
- * @endinternal
  */
 static GeoIP *geoip_db = NULL;
 

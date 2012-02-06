@@ -96,7 +96,6 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf);
 /**
  * Used to parse and store the specified format
  *
- * @param mp memory pool to use
  * @param lf pointer to the logformat helper
  * @param format string with the format to process
  *

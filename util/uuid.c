@@ -31,16 +31,6 @@
 #include <ironbee/uuid.h>
 #include <ironbee/debug.h>
 
-/**
- * Parses an ASCII UUID (with the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
- * where x are hex chars) into a @ref ib_uuid_t.
- *
- * @param uuid Address of an already allocated ib_uuid_t buffer
- * @param uuid ASCII string uuid (no blank spaces allowed)
- * @param ib pointer to the engine (to log format errors)
- *
- * @returns Status code
- */
 ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *uuid,
                                  const char *str)
 {

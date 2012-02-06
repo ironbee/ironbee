@@ -47,7 +47,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeUtilRadix
+ * @defgroup IronBeeUtilRadix IronBee utility routines for Radix.
  * @ingroup IronBeeUtil
  * @{
  */
