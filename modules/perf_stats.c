@@ -297,7 +297,7 @@ static void mod_perf_stats_event_start(
  * @internal
  * Handle event stops.
  *
- * Counters are updaated and displayed.
+ * Counters are updated and displayed.
  *
  * @param[in] ib IronBee object
  * \param[in] eventp Event info.
