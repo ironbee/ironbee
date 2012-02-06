@@ -56,7 +56,7 @@ static ib_status_t geoip_lookup(
 
     if (ip == NULL) {
         ib_log_error(ib, 0, "Trying to lookup NULL IP in GEOIP");
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
 #ifdef GEOIP_HAVE_VERSION
@@ -94,7 +94,7 @@ static ib_status_t geoip_lookup(
     if (rc != IB_OK)
     {
         ib_log_error(ib, 0, "Unable to add GEOIP list to DPI.");
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     geoip_rec = GeoIP_record_by_addr(geoip_db, ip);
