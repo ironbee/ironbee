@@ -32,6 +32,8 @@
 #include "ironbee/release.h"
 #include "ironbee/types.h"
 
+#include <pthread.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,9 +41,7 @@ extern "C" {
 /**
  * @brief The lock type for ironbee locks.
  */
-typedef int ib_lock_t;
-
-#define IB_LOCK_UNINITIALIZED -1
+typedef pthread_mutex_t ib_lock_t;
 
 /**
  * param[in] ib The IronBee engine.
