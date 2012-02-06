@@ -1,6 +1,6 @@
 #if defined(__cplusplus) && !defined(__STDC_CONSTANT_MACROS)
-/* C99 7.18.4 requires that stdint.h only exposes INT64_C 
- *  *  * and UINT64_C for C++ implementations if this is defined: */
+/* C99 7.18.4 requires that stdint.h only exposes INT64_C
+ * and UINT64_C for C++ implementations if this is defined: */
 #define __STDC_CONSTANT_MACROS
 #endif
 #include <stdint.h>

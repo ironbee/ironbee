@@ -51,11 +51,41 @@ typedef struct {
 static char *dirname = NULL;
 static char *blkname = NULL;
 static char *pval = NULL;
+
+/* Store the start of a string to act on.
+   fpc - mark is the string length when processing after
+   a mark action. */
 static char *mark = NULL;
+
+/**
+ * @brief Malloc and unescpe into that buffer the marked string.
+ * @param[in] fpc_mark the start of the string.
+ * @param[in] fpc the current character from ragel.
+ * @return a calloc'ed and realloc'ed buffer containing a string.
+ */
+static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
+  char *afpc = fpc;
+  size_t pvallen;
+  /* Adjust for quoted value. */
+  if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc-2)) {
+      fpc_mark++;
+      afpc--;
+  }
+  pvallen = (size_t)(afpc - fpc_mark);
+  pval = (char *)malloc(pvallen + 1 * sizeof(*pval));
+
+  ib_util_unescape_string(pval, &pvallen, fpc_mark, pvallen);
+
+  /* Shrink the buffer appropriately. */
+  pval = (char*)realloc(pval, pvallen+1);
+
+  return pval;
+}
 
 %%{
     machine ironbee_config;
 
+    # Mark the start of a string.
     action mark { mark = fpc; }
     action error {
         ib_log_debug(ib, 4, "ERROR: parser error before \"%.*s\"", (int)(fpc - mark), mark);
@@ -63,29 +93,11 @@ static char *mark = NULL;
 
     # Parameter
     action push_param {
-        char *afpc = fpc;
-        size_t pvallen;
-        /* Adjust for quoted value. */
-        if ((*mark == '"') && (*(afpc-1) == '"') && (mark+1 < afpc-2)) {
-            mark++;
-            afpc--;
-        }
-        pvallen = (size_t)(afpc - mark);
-        pval = (char *)calloc(pvallen + 1, sizeof(*pval));
-        memcpy(pval, mark, pvallen);
+        pval = calloc_cpy_marked_string(mark, fpc);
         ib_list_push(plist, pval);
     }
     action push_blkparam {
-        char *afpc = fpc;
-        size_t pvallen;
-        /* Adjust for quoted value. */
-        if ((*mark == '"') && (*(afpc-1) == '"') && (mark+1 < afpc-2)) {
-            mark++;
-            afpc--;
-        }
-        pvallen = (size_t)(afpc - mark);
-        pval = (char *)calloc(pvallen + 1, sizeof(*pval));
-        memcpy(pval, mark, pvallen);
+        pval = calloc_cpy_marked_string(mark, fpc);
         ib_list_push(plist, pval);
     }
 

@@ -186,7 +186,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                                  ib_radix_prefix_t *prefix,
                                  void *prefix_data);
 
-/* 
+/*
  * creates a clone of the tree, allocating memory from mp
  *
  * @param orig pointer to the original pool

@@ -192,10 +192,10 @@ ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
 {
     IB_FTRACE_INIT(ib_matcher_add_pattern_ex);
     IB_PROVIDER_API_TYPE(matcher) *mapi;
-    ib_status_t rc; 
-    
+    ib_status_t rc;
+
     mapi = (IB_PROVIDER_API_TYPE(matcher) *)m->mpr->api;
-    
+
     rc = mapi->add_pattern_ex(m->mpi, &m->mpr->data, patt, callback, arg,
                                errptr, erroffset);
     if (rc != IB_OK) {

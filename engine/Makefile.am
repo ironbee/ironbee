@@ -7,9 +7,15 @@ EXTRA_DIST =  config-parser.rl
 lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c tfn.c \
                         config.c config-parser.c config-parser.h core.c \
-						matcher.c filter.c \
-						config-parser.h ironbee_private.h \
-						$(builddir)/lua/ironbee.h
+                        matcher.c filter.c \
+                        operator.c action.c \
+                        core_operators.c \
+                        core_actions.c \
+                        rule_engine.c \
+                        config-parser.h \
+                        ironbee_private.h \
+                        ironbee_core_private.h \
+                        $(top_builddir)/lua/ironbee.h
 libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la
 
 if DARWIN

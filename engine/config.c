@@ -98,7 +98,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     ib_status_t rc;
 
     /* Create parser memory pool */
-    rc = ib_mpool_create(&pool, ib->mp);
+    rc = ib_mpool_create(&pool, "Config/Parser", ib->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -359,7 +359,7 @@ void ib_cfgparser_destroy(ib_cfgparser_t *cp)
 ib_status_t ib_config_register_directives(ib_engine_t *ib,
                                           const ib_dirmap_init_t *init)
 {
-    IB_FTRACE_INIT(ib_conf_register_directives);
+    IB_FTRACE_INIT(ib_config_register_directives);
     const ib_dirmap_init_t *rec = init;
     ib_status_t rc;
 
@@ -382,7 +382,7 @@ ib_status_t ib_config_register_directive(ib_engine_t *ib,
                                          ib_config_cb_blkend_fn_t fn_blkend,
                                          void *cbdata)
 {
-    IB_FTRACE_INIT(ib_conf_register_directive);
+    IB_FTRACE_INIT(ib_config_register_directive);
     ib_dirmap_init_t *rec;
     ib_status_t rc;
 

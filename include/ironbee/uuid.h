@@ -69,14 +69,20 @@ extern "C" {
  * This is loosely based of of Apache mod_unique_id, but with
  * future expansion in mind.
  */
-typedef struct ib_uuid_t ib_uuid_t;
-struct ib_uuid_t {
-    uint32_t  time_low;
-    uint16_t  time_mid;
-    uint16_t  time_hi_and_ver;
-    uint8_t   clk_seq_hi_res;
-    uint8_t   clk_seq_low;
-    uint8_t   node[6];
+typedef union ib_uuid_t ib_uuid_t;
+union ib_uuid_t {
+    uint8_t       byte[16];
+    uint16_t      uint16[8];
+    uint32_t      uint32[4];
+    uint64_t      uint64[2];
+    struct {
+        uint32_t  time_low;
+        uint16_t  time_mid;
+        uint16_t  time_hi_and_ver;
+        uint8_t   clk_seq_hi_res;
+        uint8_t   clk_seq_low;
+        uint8_t   node[6];
+    } st;
 };
 
 /**

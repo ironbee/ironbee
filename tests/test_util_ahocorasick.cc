@@ -61,7 +61,7 @@ TEST(TestIBUtilAhoCorasick, generic_ac_test)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "shershis";
@@ -217,7 +217,7 @@ TEST(TestIBUtilAhoCorasick, test_ib_ac_consume)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "shershis";
@@ -315,7 +315,7 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_case_sensitive)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     /* Change some letters to capital */
@@ -377,7 +377,7 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_nocase)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     /* Change some letters to capital */
@@ -535,7 +535,7 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_multiple_common_prefix)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     /* Change some letters to capital */
@@ -599,7 +599,7 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_check_list)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "shershis";
@@ -727,7 +727,7 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_contained_patterns)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     const char *text = "abcabcabcabc";

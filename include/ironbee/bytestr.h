@@ -244,6 +244,18 @@ size_t DLL_PUBLIC ib_bytestr_size(ib_bytestr_t *bs);
  */
 uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
 
+/**
+ * Search for a c string in a byte string.
+ *
+ * @param[in] haystack Byte string to search.
+ * @param[in] needle String to search for.
+ *
+ * @returns position of the match, or -1 if there is no match
+ */
+int DLL_PUBLIC ib_bytestr_index_of_c(ib_bytestr_t *haystack, char *needle);
+
+
+
 /** @} IronBeeUtilByteStr */
 
 

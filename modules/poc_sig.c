@@ -300,7 +300,7 @@ static IB_CFGMAP_INIT_STRUCTURE(pocsig_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".trace",
         IB_FTYPE_NUM,
-        &pocsig_global_cfg,
+        pocsig_cfg_t,
         trace,
         0
     ),
@@ -362,16 +362,18 @@ static IB_DIRMAP_INIT_STRUCTURE(pocsig_directive_map) = {
  * Handle signature execution.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Phase passed as pointer value
  *
  * @return Status code
  */
 static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
+                                      ib_state_event_type_t event,
                                       ib_tx_t *tx,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT(pocsig_handle_post);
+    IB_FTRACE_INIT(pocsig_handle_sigs);
     pocsig_cfg_t *cfg;
     pocsig_phase_t phase = (pocsig_phase_t)(uintptr_t)cbdata;
     ib_list_t *sigs;
@@ -430,11 +432,11 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
                 IB_LEVENT_ACT_UNKNOWN,
                 IB_LEVENT_PCLASS_UNKNOWN,
                 IB_LEVENT_SCLASS_UNKNOWN,
-                90,
-                80,
                 IB_LEVENT_SYS_UNKNOWN,
                 IB_LEVENT_ACTION_IGNORE,
                 IB_LEVENT_ACTION_IGNORE,
+                90,
+                80,
                 s->emsg
             );
             if (rc != IB_OK) {
@@ -443,7 +445,7 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
             }
 
             /* Log the event. */
-            ib_clog_event(tx->ctx, e);
+            ib_event_add(tx->epi, e);
         }
         else {
             ib_log_debug(ib, dbglvl, "PocSig NOMATCH");
@@ -487,24 +489,24 @@ static ib_status_t pocsig_context_init(ib_engine_t *ib,
     /// @todo Inherit signatures from parent context???
 
     /* Register hooks to handle the phases. */
-    ib_hook_register_context(ctx, handle_context_tx_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_PRE);
-    ib_hook_register_context(ctx, handle_request_headers_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_REQHEAD);
-    ib_hook_register_context(ctx, handle_request_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_REQ);
-    ib_hook_register_context(ctx, handle_response_headers_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_RESHEAD);
-    ib_hook_register_context(ctx, handle_response_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_RES);
-    ib_hook_register_context(ctx, handle_postprocess_event,
-                             (ib_void_fn_t)pocsig_handle_sigs,
-                             (void *)POCSIG_POST);
+    ib_tx_hook_register_context(ctx, handle_context_tx_event,
+                                pocsig_handle_sigs,
+                                (void *)POCSIG_PRE);
+    ib_tx_hook_register_context(ctx, handle_request_headers_event,
+                                pocsig_handle_sigs,
+                                (void *)POCSIG_REQHEAD);
+    ib_tx_hook_register_context(ctx, handle_request_event,
+                                pocsig_handle_sigs,
+                                (void *)POCSIG_REQ);
+    ib_tx_hook_register_context(ctx, handle_response_headers_event,
+                                pocsig_handle_sigs,
+                                (void *)POCSIG_RESHEAD);
+    ib_tx_hook_register_context(ctx, handle_response_event,
+                                pocsig_handle_sigs,
+                                (void *)POCSIG_RES);
+    ib_tx_hook_register_context(ctx, handle_postprocess_event,
+                                pocsig_handle_sigs,
+                                (void *)POCSIG_POST);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

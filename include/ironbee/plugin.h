@@ -49,8 +49,8 @@ typedef struct ib_plugin_t ib_plugin_t;
 
 struct ib_plugin_t {
     /* Header */
-    int                      vernum;   /**< Engine version number */
-    int                      abinum;   /**< Engine ABI Number */
+    uint32_t                 vernum;   /**< Engine version number */
+    uint32_t                 abinum;   /**< Engine ABI Number */
     const char              *version;  /**< Engine version string */
     const char              *filename; /**< Plugin code filename */
 

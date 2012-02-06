@@ -23,6 +23,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -128,7 +129,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
         return IB_OK;
     }
 
-    /* Attempt to create the dir.  If it returns ENOENT, then 
+    /* Attempt to create the dir.  If it returns ENOENT, then
      * recursivly attempt to create the parent dir(s) until
      * they are all created.
      */
@@ -172,7 +173,154 @@ cleanup:
     return rc;
 }
 
+/**
+ * @brief Convert the input character to the byte value represented by
+ *        it's hexidecimal value. The input of 'F' results in the
+ *        character 15 being returned. If a character is not
+ *        submitted that is hexidecimal, then -1 is returned.
+ * @param[in] a the input character to be converted. A-F, a-f, or 0-9.
+ * @returns The byte value of the passed in hexidecimal character. -1 otherwise.
+ */
+static inline char hexchar_to_byte(char a) {
+  switch(a) {
+    case '0':  return 0;
+    case '1':  return 1;
+    case '2':  return 2;
+    case '3':  return 3;
+    case '4':  return 4;
+    case '5':  return 5;
+    case '6':  return 6;
+    case '7':  return 7;
+    case '8':  return 8;
+    case '9':  return 9;
+    case 'a':
+    case 'A':  return 10;
+    case 'b':
+    case 'B':  return 11;
+    case 'c':
+    case 'C':  return 12;
+    case 'd':
+    case 'D':  return 13;
+    case 'e':
+    case 'E':  return 14;
+    case 'f':
+    case 'F':  return 15;
+  default:
+    return -1;
+  }
+}
 
+/**
+ * @brief Take two hex characters and merge them into a single byte.
+ * @param[in] high high order byte.
+ * @param[in] low low order byte.
+ * @returns high and low mixed into a single byte.
+ */
+static inline char hex_to_int(char high, char low) {
+  return hexchar_to_byte(high) << 4 | hexchar_to_byte(low);
+}
+
+ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
+                                               size_t* dst_len,
+                                               const char* src,
+                                               size_t src_len) {
+  size_t dst_i = 0;
+  size_t src_i = 0;
+
+  /* For loop variables. */
+  int i;
+
+  for (src_i=0; src_i<src_len; ++src_i) {
+    switch (src[src_i]) {
+      case '\\':
+        ++src_i;
+
+        if (src_i>=src_len) {
+          return IB_EINVAL;
+        }
+
+        switch (src[src_i]) {
+
+          case 'b':
+            dst[dst_i++] = '\b';
+            break;
+          case 'f':
+            dst[dst_i++] = '\f';
+            break;
+          case 'n':
+            dst[dst_i++] = '\n';
+            break;
+          case 'r':
+            dst[dst_i++] = '\r';
+            break;
+          case 't':
+            dst[dst_i++] = '\t';
+            break;
+          case 'v':
+            dst[dst_i++] = '\v';
+            break;
+          case '\'':
+          case '\"':
+          case '\\':
+            dst[dst_i++] = src[src_i];
+            break;
+          case 'x':
+            /* Hex Hex decode */
+
+            /* Protect against array out of bounds dereferencing. */
+            if (src_i+2>=src_len) {
+              return IB_EINVAL;
+            }
+
+            /* Ensure that the next 2 characters are hex digits. */
+            for (i=1; i <= 2; i++) {
+              if ( ! isxdigit(src[src_i + i]) ) {
+                return IB_EINVAL;
+              }
+            }
+
+            src_i+=2;
+            dst[dst_i++] = hex_to_int(src[src_i-1], src[src_i]);
+            break;
+          case 'u':
+            /* Hex Hex Hex Hex decode */
+
+            /* Protect against array out of bounds dereferencing. */
+            if (src_i+4>=src_len) {
+              return IB_EINVAL;
+            }
+
+            /* Ensure that the next 4 characters are hex digits. */
+            for (i=1; i <= 4; i++) {
+              if ( ! isxdigit(src[src_i + i]) ) {
+                return IB_EINVAL;
+              }
+            }
+
+            /* Convert the first byte. */
+            src_i+=2;
+            dst[dst_i++] = hex_to_int(src[src_i-1], src[src_i]);
+
+            /* Convert the second byte. */
+            src_i+=2;
+            dst[dst_i++] = hex_to_int(src[src_i-1], src[src_i]);
+
+            break;
+          default:
+            dst[dst_i++] = src[src_i];
+        }
+
+        break;
+      default:
+        dst[dst_i++] = src[src_i];
+    }
+  }
+
+  dst[dst_i] = '\0';
+  *dst_len = dst_i;
+
+  return IB_OK;
+}
 /* -- Library Setup -- */
 
 ib_status_t ib_initialize(void)

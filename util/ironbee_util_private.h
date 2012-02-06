@@ -57,11 +57,11 @@
 /**
  * IB_MPOOL_MIN_SIZE_BITS defines the minimum size guaranteed by indexed[0]
  * as a exponent of 2, so IB_MPOOL_MIN_SIZE_BITS 4 implies that 16 bytes can
- * be allocated in buffers linked from indexed[0] */
+ * be allocated in buffers linked from @a indexed[0] */
 #define IB_MPOOL_MIN_SIZE_BITS      4
 
 /**
- * IB_MPOOL_NUM_SLOTS defines the number of slots in \a indexed */
+ * IB_MPOOL_NUM_SLOTS defines the number of slots in @a indexed */
 #define IB_MPOOL_NUM_SLOTS          8
 
 /**
@@ -79,58 +79,66 @@ struct ib_mpool_buffer_t {
     uint8_t                    *buffer;     /**< ptr to the buffer */
     size_t                      used;       /**< amount of mem really used */
     size_t                      size;       /**< size */
-    
-    ib_mpool_buffer_t          *prev;       /**< Sibling prev */
+
+    ib_mpool_buffer_t          *prev;       /**< Sibling previous */
     ib_mpool_buffer_t          *next;       /**< Sibling next */
-    /* @todo later we might want to be able to free just one page
-     * so here we will need references to parent and child pools */
+    /// @todo later we might want to be able to free just one page
+    ///       so here we will need references to parent and child pools.
+    /// @todo Make this a list/node so IB_LIST_* macros will work?
 };
 
 #define IB_MPOOL_MAX_INDEX 7
 
+typedef struct ib_mpool_cleanup_t ib_mpool_cleanup_t;
+struct ib_mpool_cleanup_t {
+    ib_mpool_cleanup_t         *next;       /**< Sibling next */
+    ib_mpool_cleanup_fn_t       free;       /**< Function cleanup callback */
+    void                       *free_data;  /**< Data to pass to the callback */
+};
+
 /**
  * @internal
  * Memory pool structure.
- *     The behavior of ib_mpool_t can be changed by tuning sizes and definitions
- *     but right now, this is how empty memory (not allocated) of buffers
- *     is indexed:
+ * The behavior of ib_mpool_t can be changed by tuning sizes and definitions
+ * but right now, this is how empty memory (not allocated) of buffers
+ * is indexed:
  *
- *     indexed[] will hold the buffers in such way that buffers linked from
- *     indexed[0] guarantee to have available memory (free) of at
- *                least 16 bytes and less than 32
- *     indexed[1] -> at least 32 and less than 64
- *     indexed[2] -> at least 64 and less than 128
- *     ...           ...
- *     indexed[7] -> at least 2048 and no limit here. We should set one.
- *     When ib_mpool_(c?alloc|memdup) is called, the ib_mpool_buffer_t
- *     will reserve size for the allocation. The remaining buffer available will
- *     determine the index at indexed[] where the buffer will be moved.
- *     This allow to reutilize buffers in order to reduce fragmentation.
- *     The limit is 7 in the current definition, but it should be possible to
- *     increase it by just changing the sizes / limits
+ * indexed[] will hold the buffers in such way that buffers linked:
+ *
+ * indexed[0] guarantee to have available memory (free) of at
+ *            least 16 bytes and less than 32
+ * indexed[1] -> at least 32 and less than 64
+ * indexed[2] -> at least 64 and less than 128
+ * ...           ...
+ * indexed[7] -> at least 2048 and no limit here. We should set one.
+ *
+ * When ib_mpool_(c?alloc|memdup) is called, the ib_mpool_buffer_t
+ * will reserve size for the allocation. The remaining buffer available will
+ * determine the index at indexed[] where the buffer will be moved.
+ * This allow to reutilize buffers in order to reduce fragmentation.
+ * The limit is 7 in the current definition, but it should be possible to
+ * increase it by just changing the sizes / limits.
  */
 struct ib_mpool_t {
+    const char             *name;         /**< Memory pool name */
     ib_mpool_buffer_t      *busy_buffers; /**< List of reserved buffers */
-    ib_mpool_buffer_t      *current;      /**< Points to the last buffer used
-                                               (but not the next one to use!)*/
+    ib_mpool_buffer_t      *current;      /**< Points to the last buffer used */
     size_t                  size;         /**< Sum of all buffer sizes */
-    size_t                  buffer_cnt;   /**< Counter of buffers allocated
-                                               (with malloc)*/
+    size_t                  buffer_cnt;   /**< Counter of buffers allocated */
     size_t                  inuse;        /**< Number of bytes in real use */
     size_t                  page_size;    /**< default page size */
 
-    ib_mpool_t             *parent;       /**< Pointer to parent pool
-                                               (used only if it's a child) */
-    ib_mpool_t             *next;         /**< Sibling next */
-    ib_mpool_t             *prev;         /**< Sibling prev */
+    ib_mpool_t             *parent;       /**< Pointer to parent pool */
+    ib_mpool_t             *next;         /**< Pointer to next pool in list */
     ib_mpool_t             *child;        /**< Pointer to child list */
+    ib_mpool_t             *child_last;   /**< Last child */
 
-    ib_mpool_cleanup_fn_t   free;         /**< Function cleanup callback */
-    void                   *free_data;    /**< Data to pass to the callback */
+    ib_mpool_cleanup_t     *cleanup;      /**< List of items to cleanup */
+    ib_mpool_cleanup_t     *cleanup_last; /**< Last cleanup */
 
-    ib_mpool_buffer_t        *indexed[IB_MPOOL_MAX_INDEX + 1];
-    /* @todo threads? we will need a spinlock/mutex here to lock
-       on allocs/free()s */
+    ib_mpool_buffer_t      *indexed[IB_MPOOL_MAX_INDEX + 1];/**< Buffer index */
+    /// @todo Threads? Will we need a to lock allocs/free()s?
+    /// @todo Make this a list/node so IB_LIST_* macros will work?
 };
 
 /* Helper Macros for ib_mpool_t / ib_mpool_buffer_t */
@@ -144,10 +152,10 @@ struct ib_mpool_t {
  * @param ptr Pointer to the start of the mem allocated
  */
 #define IB_MPOOL_BUFFER_ALLOC(buf,rsize,ptr) \
-        do { \
-         (ptr) = (buf)->buffer + (buf)->used; \
-         (buf)->used += (rsize); \
-        } while (0)
+    do { \
+        (ptr) = (buf)->buffer + (buf)->used; \
+        (buf)->used += (rsize); \
+    } while (0)
 
 /**
  * @internal
@@ -156,9 +164,9 @@ struct ib_mpool_t {
  * @param buf Pointer to the buffer
  */
 #define IB_MPOOL_BUFFER_RESET(buf) \
-        do { \
-         (buf)->used = 0; \
-        } while (0)
+    do { \
+        (buf)->used = 0; \
+    } while (0)
 
 /**
  * @internal
@@ -167,7 +175,7 @@ struct ib_mpool_t {
  * @param buf Pointer to the buffer
  */
 #define IB_MPOOL_BUFFER_AVAILABLE(buf) \
-        ((int)((int)(buf)->size - (int)(buf)->used))
+    ((int)((int)(buf)->size - (int)(buf)->used))
 
 /**
  * @internal
@@ -177,7 +185,7 @@ struct ib_mpool_t {
  * @param rsize Size to check
  */
 #define IB_MPOOL_BUFFER_IS_AVAILABLE(buf,rsize) \
-        (( (int)((int)(buf)->size - (int)(buf)->used) > (int)(rsize)))
+    (( (int)((int)(buf)->size - (int)(buf)->used) > (int)(rsize)))
 
 /**
  * @internal
@@ -188,18 +196,20 @@ struct ib_mpool_t {
  */
 #define IB_MPOOL_CREATE_BUFFER(buf,rsize) \
     do { \
-     (buf) = (ib_mpool_buffer_t *)malloc(sizeof(ib_mpool_buffer_t)); \
-     if ((buf) != NULL) { \
-      (buf)->size = (rsize); \
-      (buf)->buffer = (uint8_t *)malloc((rsize)); \
-      if ((buf)->buffer == NULL) { \
-       free(buf); \
-       buf = NULL; \
-      } \
-      else { \
-       (buf)->used = 0; \
-      } \
-     } \
+        (buf) = (ib_mpool_buffer_t *)malloc(sizeof(ib_mpool_buffer_t)); \
+        if ((buf) != NULL) { \
+            (buf)->prev = NULL; \
+            (buf)->next = NULL; \
+            (buf)->size = (rsize); \
+            (buf)->buffer = (uint8_t *)malloc((rsize)); \
+            if ((buf)->buffer == NULL) { \
+                free(buf); \
+                buf = NULL; \
+            } \
+            else { \
+                (buf)->used = 0; \
+            } \
+        } \
     } while(0)
 
 /**
@@ -212,16 +222,16 @@ struct ib_mpool_t {
  */
 #define IB_MPOOL_ADD_BUFFER(pool,rbuf,rindex) \
     do { \
-     (rbuf)->prev = NULL; \
-     (rbuf)->next = (pool)->indexed[(rindex)]; \
-     if ((rbuf)->next != NULL) { \
-         (rbuf)->next->prev = (rbuf); \
-     } \
-     (pool)->indexed[(rindex)] = (rbuf); \
-     (pool)->size += (rbuf)->size; \
-     (pool)->buffer_cnt += 1; \
-     (pool)->current = (rbuf); \
-    } while (0) 
+        (rbuf)->prev = NULL; \
+        (rbuf)->next = (pool)->indexed[(rindex)]; \
+        if ((rbuf)->next != NULL) { \
+            (rbuf)->next->prev = (rbuf); \
+        } \
+        (pool)->indexed[(rindex)] = (rbuf); \
+        (pool)->size += (rbuf)->size; \
+        (pool)->buffer_cnt += 1; \
+        (pool)->current = (rbuf); \
+    } while (0)
 
 /**
  * @internal
@@ -232,15 +242,15 @@ struct ib_mpool_t {
  */
 #define IB_MPOOL_SET_INDEX(size,rindex) \
     do { \
-     size_t sz = 0; \
-     for (sz = (size) >> IB_MPOOL_MIN_SIZE_BITS; sz >> (rindex); (rindex)++); \
-     if ((rindex) > 0) {\
-      (rindex)--; \
-     } \
-     if ((rindex) > IB_MPOOL_MAX_INDEX) { \
-      (rindex) = IB_MPOOL_MAX_INDEX; \
-     } \
-    }while(0)
+        size_t sz = (size) >> IB_MPOOL_MIN_SIZE_BITS; \
+        for (; (sz >> (rindex)) !=  0; (rindex)++) { /* nobody */ } \
+        if ((rindex) > 0) {\
+            (rindex)--; \
+        } \
+        if ((rindex) > IB_MPOOL_MAX_INDEX) { \
+            (rindex) = IB_MPOOL_MAX_INDEX; \
+        } \
+    } while(0)
 
 /**
  * @internal
@@ -251,11 +261,11 @@ struct ib_mpool_t {
  */
 #define IB_MPOOL_GET_REQ_INDEX(size,rindex) \
     do { \
-     size_t sz = 0; \
-     for (sz = (size) >> IB_MPOOL_MIN_SIZE_BITS; sz >> (rindex); (rindex)++); \
-     if ((rindex) > IB_MPOOL_MAX_INDEX) { \
-      (rindex) = IB_MPOOL_MAX_INDEX; \
-     } \
+        size_t sz = 0; \
+        for (sz = (size) >> IB_MPOOL_MIN_SIZE_BITS; sz >> (rindex); (rindex)++) { /* nobody */ } \
+        if ((rindex) > IB_MPOOL_MAX_INDEX) { \
+            (rindex) = IB_MPOOL_MAX_INDEX; \
+        } \
     }while(0)
 
 
@@ -318,6 +328,7 @@ struct ib_field_val_t {
         ib_bytestr_t  *bytestr;       /**< Byte string value */
         char          *nulstr;        /**< NUL string value */
         ib_list_t     *list;          /**< List of fields */
+        ib_stream_t   *stream;        /**< Stream buffer */
         void          *ptr;           /**< Pointer value */
     } u;
 };

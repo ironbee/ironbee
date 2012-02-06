@@ -64,6 +64,8 @@ typedef struct ib_cfgmap_init_t ib_cfgmap_init_t;
 typedef struct ib_field_t ib_field_t;
 typedef struct ib_field_val_t ib_field_val_t;
 typedef struct ib_bytestr_t ib_bytestr_t;
+typedef struct ib_stream_t ib_stream_t;
+typedef struct ib_sdata_t ib_sdata_t;
 
 /** Generic function pointer type. */
 typedef void (*ib_void_fn_t)(void);
@@ -71,18 +73,27 @@ typedef void (*ib_void_fn_t)(void);
 
 /** Status code. */
 typedef enum ib_status_t {
-    IB_OK,                          /**< No error */
-    IB_DECLINED,                    /**< Declined execution */
-    IB_EUNKNOWN,                    /**< Unknown error */
-    IB_ENOTIMPL,                    /**< Not implemented (yet?) */
-    IB_EINCOMPAT,                   /**< Incompatible with ABI version */
-    IB_EALLOC,                      /**< Could not allocate resources */
-    IB_EINVAL,                      /**< Invalid argument */
-    IB_ENOENT,                      /**< Entity does not exist */
-    IB_ETRUNC,                      /**< Buffer truncated, size limit reached */
-    IB_ETIMEDOUT,                   /**< Operation timed out */
-    IB_EAGAIN,                      /**< Not ready, try again later */
+    IB_OK,                      /**<  0: No error */
+    IB_DECLINED,                /**<  1: Declined execution */
+    IB_EUNKNOWN,                /**<  2: Unknown error */
+    IB_ENOTIMPL,                /**<  3: Not implemented (yet?) */
+    IB_EINCOMPAT,               /**<  4: Incompatible with ABI version */
+    IB_EALLOC,                  /**<  5: Could not allocate resources */
+    IB_EINVAL,                  /**<  6: Invalid argument */
+    IB_ENOENT,                  /**<  7: Entity does not exist */
+    IB_ETRUNC,                  /**<  8: Buffer truncated, size limit reached */
+    IB_ETIMEDOUT,               /**<  9: Operation timed out */
+    IB_EAGAIN,                  /**< 10: Not ready, try again later */
+    IB_EOTHER,                  /**< 11: Other error */
 } ib_status_t;
+
+/**
+ * Convert status code to a string for human consumption.
+ *
+ * @param[in] status Status coce.
+ * @return String describing status code, e.g., EINVAL.
+ **/
+const char *ib_status_to_string(ib_status_t status);
 
 /**
  * @} IronBeeUtil

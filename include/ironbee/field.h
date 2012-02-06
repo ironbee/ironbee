@@ -37,21 +37,13 @@
 #include <arpa/inet.h>
 
 
-#include <ironbee/build.h>
-#include <ironbee/release.h>
 #include <ironbee/types.h>
 #include <ironbee/array.h>
+#include <ironbee/list.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @defgroup IronBeeUtilField Field Utility
- * @ingroup IronBeeUtil
- * @{
- */
-
 
 /**
  * @defgroup IronBeeUtilField Field
@@ -68,6 +60,7 @@ extern "C" {
 #define IB_FTYPE_NULSTR       3          /**< NUL terminated string value */
 #define IB_FTYPE_BYTESTR      4          /**< Binary data value */
 #define IB_FTYPE_LIST         5          /**< List of fields */
+#define IB_FTYPE_SBUFFER      6          /**< Stream buffer */
 
 /**
  * Dynamic field get function.
@@ -78,7 +71,7 @@ extern "C" {
  * @returns Value
  */
 typedef void *(*ib_field_get_fn_t)(ib_field_t *f,
-                                   void *arg, size_t alen,
+                                   const void *arg, size_t alen,
                                    void *data);
 
 #if 0
@@ -112,12 +105,12 @@ typedef void *(*ib_field_rset_fn_t)(ib_field_t *f,
 
 /** Field Structure */
 struct ib_field_t {
-    ib_mpool_t               *mp;        /**< Memory pool */
-    ib_ftype_t                type;      /**< Field type */
-    const char               *name;      /**< Field name */
-    size_t                    nlen;      /**< Field name length */
-    const char               *tfn;       /**< Transformations performed */
-    ib_field_val_t           *val;       /**< Private value store */
+    ib_mpool_t      *mp;        /**< Memory pool */
+    ib_ftype_t       type;      /**< Field type */
+    const char      *name;      /**< Field name; not '\0' terminated! */
+    size_t           nlen;      /**< Field name length */
+    const char      *tfn;       /**< Transformations performed */
+    ib_field_val_t  *val;       /**< Private value store */
 };
 
 /**
@@ -274,7 +267,7 @@ ib_status_t DLL_PUBLIC ib_field_alias_mem(ib_field_t **pf,
 
 /**
  * Add a field to a IB_FTYPE_LIST field.
- * 
+ *
  * @param f Field list
  * @param val Field to add to the list
  *
@@ -284,8 +277,23 @@ ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
                                          ib_field_t *val);
 
 /**
+ * Add a buffer to a @ref IB_FTYPE_SBUFFER type field.
+ *
+ * @param f Field list
+ * @param dtype Data type
+ * @param buf Buffer
+ * @param blen Buffer length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
+                                        int dtype,
+                                        uint8_t *buf,
+                                        size_t blen);
+
+/**
  * Set a field value.
- * 
+ *
  * @param f Field to add
  * @param pval Pointer to value to store in field (based on type)
  *
@@ -294,34 +302,114 @@ ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
 ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
                                      void *pval);
 
+/**
+ * Get the value stored in the field, passing the argument on to dynamic fields.
+ *
+ * @param[in] f Field
+ * @param[in] arg Arbitrary argument
+ * @param[in] alen Argument length
+ *
+ * @returns Value stored in the field
+ */
+void DLL_PUBLIC *ib_field_value_ex(ib_field_t *f,
+                                   const void *arg,
+                                   size_t alen);
+
+/**
+ * Get the value stored in the field, passing the argument on to dynamic
+ * fields, with type checking.
+ *
+ * @param[in] f Field
+ * @param[in] t Field type number
+ * @param[in] arg Arbitrary argument
+ * @param[in] alen Argument length
+ *
+ * @returns Value stored in the field
+ */
+void DLL_PUBLIC *ib_field_value_type_ex(ib_field_t *f,
+                                        ib_ftype_t t,
+                                        const void *arg,
+                                        size_t alen);
+
+/** Return field value for a field as "ib_num_t *" with argument. */
+#define ib_field_value_num_ex(f,arg,alen) \
+    (ib_num_t *)ib_field_value_type_ex((f),IB_FTYPE_NUM,(arg),(alen))
+
+/** Return field value for a field as "ib_unum_t * with argument". */
+#define ib_field_value_unum_ex(f,arg,alen) \
+    (ib_unum_t *)ib_field_value_type_ex((f),IB_FTYPE_UNUM,(arg),(alen))
+
+/** Return field value for a field as "ib_bytestr_t * with argument". */
+#define ib_field_value_bytestr_ex(f,arg,alen) \
+    (ib_bytestr_t *)ib_field_value_type_ex((f),IB_FTYPE_BYTESTR,(arg),(alen))
+
+/** Return field value for a field as "void * with argument". */
+#define ib_field_value_generic_ex(f,arg,alen) \
+    (void *)ib_field_value_type_ex((f),IB_FTYPE_GENERIC,(arg),(alen))
+
+/** Return field value for a field as "char * with argument". */
+#define ib_field_value_nulstr_ex(f,arg,alen) \
+    (char *)ib_field_value_type_ex((f),IB_FTYPE_NULSTR,(arg),(alen))
+
+/** Return field value for a field as "ib_list_t * with argument". */
+#define ib_field_value_list_ex(f,arg,alen) \
+    (ib_list_t *)ib_field_value_type_ex((f),IB_FTYPE_LIST,(arg),(alen))
+
 
 /**
  * Get the value stored in the field.
  *
- * @param f Field
+ * @param[in] f Field
  *
  * @returns Value stored in the field
  */
 void DLL_PUBLIC *ib_field_value(ib_field_t *f);
 
+/**
+ * Get the value stored in the field, with type checking.
+ *
+ * @param[in] f Field
+ * @param[in] t Expected type
+ *
+ * @returns Value stored in the field
+ */
+void DLL_PUBLIC *ib_field_value_type(ib_field_t *f, ib_ftype_t t);
+
 /** Return field value for a field as "ib_num_t *". */
-#define ib_field_value_num(f) (ib_num_t *)ib_field_value(f)
+#define ib_field_value_num(f) \
+    (ib_num_t *)ib_field_value_type((f), IB_FTYPE_NUM)
 
 /** Return field value for a field as "ib_unum_t *". */
-#define ib_field_value_unum(f) (ib_unum_t *)ib_field_value(f)
+#define ib_field_value_unum(f) \
+    (ib_unum_t *)ib_field_value_type((f), IB_FTYPE_UNUM)
 
 /** Return field value for a field as "ib_bytestr_t *". */
-#define ib_field_value_bytestr(f) (ib_bytestr_t *)ib_field_value(f)
+#define ib_field_value_bytestr(f) \
+    (ib_bytestr_t *)ib_field_value_type((f), IB_FTYPE_BYTESTR)
 
 /** Return field value for a field as "void *". */
-#define ib_field_value_generic(f) (void *)ib_field_value(f)
+#define ib_field_value_generic(f) \
+    (void *)ib_field_value_type((f), IB_FTYPE_GENERIC)
 
 /** Return field value for a field as "char *". */
-#define ib_field_value_nulstr(f) (char *)ib_field_value(f)
+#define ib_field_value_nulstr(f) \
+    (char *)ib_field_value_type((f), IB_FTYPE_NULSTR)
 
 /** Return field value for a field as "ib_list_t *". */
-#define ib_field_value_list(f) (ib_list_t *)ib_field_value(f)
+#define ib_field_value_list(f) \
+    (ib_list_t *)ib_field_value_type((f), IB_FTYPE_LIST)
 
+/** Return field value for a field as "ib_stream_t *". */
+#define ib_field_value_stream(f) (ib_stream_t *)ib_field_value(f)
+
+/**
+ * Determine if a field is dynamic.
+ *
+ * @param f Field
+ *
+ * @return true if field is dynamic
+ */
+int ib_field_is_dynamic(ib_field_t *f);
 
 /**
  * Set userdata for dynamic field access.

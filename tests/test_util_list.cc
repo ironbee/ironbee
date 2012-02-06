@@ -47,7 +47,7 @@ TEST(TestIBUtilList, test_list_create_and_destroy)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_list_create(&list, mp);
@@ -74,7 +74,7 @@ TEST(TestIBUtilList, test_list_push_and_pop)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_list_create(&list, mp);
@@ -151,7 +151,7 @@ TEST(TestIBUtilList, test_list_unshift_and_shift)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_list_create(&list, mp);
@@ -226,7 +226,7 @@ TEST(TestIBUtilList, test_list_loop)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_list_create(&list, mp);
@@ -266,7 +266,7 @@ TEST(TestIBUtilList, test_list_loop_safe)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_list_create(&list, mp);
@@ -305,7 +305,7 @@ TEST(TestIBUtilList, test_list_loop_reverse)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_list_create(&list, mp);
@@ -344,7 +344,7 @@ TEST(TestIBUtilList, test_list_loop_reverse_safe)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     
     rc = ib_list_create(&list, mp);

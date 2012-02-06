@@ -39,12 +39,16 @@ acinclude/lt*
 autom4te.cache/
 .deps/
 .libs/
+build/config.rpath
 
 # Build Generated files:
 tests/test_gtest
 tests/test_daemon
 tests/test_engine
 tests/test_util_*
+tests/test_module_*
+tests/test_action
+tests/test_operator
 !tests/test_util_*.cc
 tests/*_details.xml
 tests/*_memcheck.xml
@@ -55,4 +59,7 @@ libs/luajit-2.0-ironbee/
 libs/libhtp/
 ironbee.pc
 libs/.build-luajit
+cli/ibcli
+cpp/ibcli_cpp
+
 

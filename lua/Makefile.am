@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 
 include $(top_srcdir)/build/common.mk
 
-luadir = $(prefix)/lib
+luadir = $(libdir)
 
 if FREEBSD
 AM_LDFLAGS = -L/usr/local/lib -no-undefined -static-libtool-libs

@@ -314,8 +314,8 @@ function onEventHandleRequestHeaders(ib, tx)
         if rc == ironbee.IB_OK then
             ironbee.ib_log_debug(ib, 4, "Request Line matches: %s", patt)
             -- Generate a test event (alert)
-            ironbee.ib_clog_event(
-                tx.ctx(), 
+            ironbee.ib_event_add(
+                tx.epi(), 
                 ironbee.ib_logevent_create(
                     tx.mp(),
                     "-",
@@ -323,10 +323,10 @@ function onEventHandleRequestHeaders(ib, tx)
                     IB_LEVENT_ACT_ATTEMPTED_ATTACK,
                     IB_LEVENT_PCLASS_INJECTION,
                     IB_LEVENT_SCLASS_SQL,
-                    90, 80,
                     IB_LEVENT_SYS_PUBLIC,
                     IB_LEVENT_ACTION_BLOCK,
                     IB_LEVENT_ACTION_IGNORED,
+                    90, 80,
                     "[TEST Event] Request Line matches: %s", patt
                 )
             )

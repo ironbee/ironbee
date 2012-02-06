@@ -210,6 +210,148 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
 #define modhtp_field_gen_list(dpi,name,pf) \
     ib_data_add_list_ex(dpi,name,strlen(name),pf)
 
+/* -- Utility functions -- */
+static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
+                                      const char *collection_name,
+                                      const char *flag)
+{
+    IB_FTRACE_INIT(modhtp_add_flag_to_collection);
+    ib_engine_t *ib = itx->ib;
+    ib_status_t rc;
+    ib_field_t *f;
+
+    rc = ib_data_get(itx->dpi, collection_name, &f);
+    if (f == NULL) {
+        rc = ib_data_add_list(itx->dpi, collection_name, &f);
+    }
+    if (rc == IB_OK && f != NULL) {
+        ib_field_t *lf;
+        int value = 1;
+        ib_field_create(&lf,
+                        itx->mp,
+                        flag,
+                        IB_FTYPE_NUM,
+                        &value);
+        rc = ib_field_list_add(f, lf);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 9, "Failed to add %s field: %s",
+                         collection_name, flag);
+        }
+    } else {
+        ib_log_debug(ib, 9, "Failed to add flag collection: %s",
+                     collection_name);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
+                                          const char *collection_name,
+                                          unsigned int flags)
+{
+    IB_FTRACE_INIT(modhtp_set_parser_flag);
+    ib_engine_t *ib = itx->ib;
+    ib_status_t rc = IB_OK;
+
+    if (flags & HTP_AMBIGUOUS_HOST) {
+        flags ^= HTP_AMBIGUOUS_HOST;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                           "HTP_AMBIGUOUS_HOST");
+    }
+    if (flags & HTP_FIELD_INVALID) {
+        flags ^= HTP_FIELD_INVALID;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                           "HTP_FIELD_INVALID");
+    }
+    if (flags & HTP_FIELD_LONG) {
+        flags ^= HTP_FIELD_LONG;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                           "HTP_FIELD_LONG");
+    }
+    if (flags & HTP_FIELD_UNPARSEABLE) {
+        flags ^= HTP_FIELD_UNPARSEABLE;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                           "HTP_FIELD_UNPARSEABLE");
+    }
+    if (flags & HTP_HOST_MISSING) {
+        flags ^= HTP_HOST_MISSING;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                           "HTP_HOST_MISSING");
+    }
+    if (flags & HTP_INVALID_CHUNKING) {
+        flags ^= HTP_INVALID_CHUNKING;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_INVALID_CHUNKING");
+    }
+    if (flags & HTP_INVALID_FOLDING) {
+        flags ^= HTP_INVALID_FOLDING;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_INVALID_FOLDING");
+    }
+    if (flags & HTP_MULTI_PACKET_HEAD) {
+        flags ^= HTP_MULTI_PACKET_HEAD;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_MULTI_PACKET_HEAD");
+    }
+    if (flags & HTP_PATH_ENCODED_NUL) {
+        flags ^= HTP_PATH_ENCODED_NUL;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_ENCODED_NUL");
+    }
+    if (flags & HTP_PATH_ENCODED_SEPARATOR) {
+        flags ^= HTP_PATH_ENCODED_SEPARATOR;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_ENCODED_SEPARATOR");
+    }
+    if (flags & HTP_PATH_FULLWIDTH_EVASION) {
+        flags ^= HTP_PATH_FULLWIDTH_EVASION;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_FULLWIDTH_EVASION");
+    }
+    if (flags & HTP_PATH_INVALID_ENCODING) {
+        flags ^= HTP_PATH_INVALID_ENCODING;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_INVALID_ENCODING");
+    }
+    if (flags & HTP_PATH_OVERLONG_U) {
+        flags ^= HTP_PATH_OVERLONG_U;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_OVERLONG_U");
+    }
+    if (flags & HTP_PATH_UTF8_INVALID) {
+        flags ^= HTP_PATH_UTF8_INVALID;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_UTF8_INVALID");
+    }
+    if (flags & HTP_PATH_UTF8_OVERLONG) {
+        flags ^= HTP_PATH_UTF8_OVERLONG;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_UTF8_OVERLONG");
+    }
+    if (flags & HTP_PATH_UTF8_VALID) {
+        flags ^= HTP_PATH_UTF8_VALID;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_PATH_UTF8_VALID");
+    }
+    if (flags & HTP_REQUEST_SMUGGLING) {
+        flags ^= HTP_REQUEST_SMUGGLING;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_REQUEST_SMUGGLING");
+    }
+    if (flags & HTP_STATUS_LINE_INVALID) {
+        flags ^= HTP_STATUS_LINE_INVALID;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                    "HTP_STATUS_LINE_INVALID");
+    }
+
+    /* If flags is not 0 we did not handle one of the bits. */
+    if (flags != 0) {
+        ib_log_error(ib, 4, "HTP parser unknown flag: 0x%08x", flags);
+        rc = IB_EUNKNOWN;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
 
 /* -- LibHTP Callbacks -- */
 
@@ -271,16 +413,16 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
 
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in request line: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
 
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
@@ -339,16 +481,16 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in request headers: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
 
     /* Update the hostname that may have changed with headers. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
@@ -391,7 +533,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
 
 static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
 {
-    IB_FTRACE_INIT(modhtp_htp_body_data);
+    IB_FTRACE_INIT(modhtp_htp_request_body_data);
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
@@ -409,16 +551,16 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in request body: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
 
     /* Check for the "end-of-request" indicator. */
     if (txdata->data == NULL) {
@@ -465,16 +607,16 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in request trailer: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
 
     /// @todo Notify tx_datain_event w/request trailer
     ib_log_debug(ib, 4, "TODO: tx_datain_event w/request trailer: tx=%p", itx);
@@ -500,17 +642,17 @@ static int modhtp_htp_request(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction, determine if this is a no-body
      * request and notify the engine that the request body is available
      * and is now finished.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in request: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
 
     ib_state_notify_request_finished(ib, itx);
 
@@ -536,16 +678,16 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in response line: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+    }
 
     ib_state_notify_response_started(ib, itx);
 
@@ -585,16 +727,16 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that the request headers are now available.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in response headers: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+    }
 
     /* Fill in a temporary ib_txdata_t structure for each header line
      * and use it to notify the engine of transaction data.
@@ -644,16 +786,16 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in response body: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+    }
 
     /* Check for the "end-of-response" indicator. */
     if (txdata->data == NULL) {
@@ -695,17 +837,17 @@ static int modhtp_htp_response(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that the response body is available, the response
      * is finished and logging has begun.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in response: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+    }
 
     ib_state_notify_response_finished(ib, itx);
 
@@ -737,16 +879,16 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
-    if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event: 0x%08x", tx->flags);
-        /// @todo Do something about it
-    }
-
 
     /* Fetch the ironbee transaction and notify the engine
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+
+    if (tx->flags) {
+        ib_log_error(ib, 4, "HTP parser flagged an event in response trailer: 0x%08x", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+    }
 
     /// @todo Notify tx_dataout_event w/response trailer
     ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response trailer: tx=%p", itx);
@@ -764,6 +906,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     ib_context_t *ctx = iconn->ctx;
     modhtp_cfg_t *modcfg;
     modhtp_context_t *modctx;
+    htp_time_t htv;
     ib_status_t rc;
     int personality;
 
@@ -820,8 +963,11 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     htp_connp_open(modctx->htp,
                    iconn->remote_ipstr, iconn->remote_port,
                    iconn->local_ipstr, iconn->local_port,
-                   (htp_time_t *)&iconn->started);
+                   &htv);
 
+    /* Record the connection time. */
+    iconn->started.tv_sec = (uint32_t)htv.tv_sec;
+    iconn->started.tv_usec = (uint32_t)htv.tv_usec;
 
     /* Store the context. */
     rc = ib_hash_set(iconn->data, "MODHTP_CTX", modctx);
@@ -1257,7 +1403,6 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                      MODULE_NAME_STR, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
@@ -1373,7 +1518,7 @@ static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".personality",
         IB_FTYPE_NULSTR,
-        &modhtp_global_cfg,
+        modhtp_cfg_t,
         personality,
         "Apache_2_2"
     ),

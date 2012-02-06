@@ -96,12 +96,19 @@ ib_status_t ib_bytestr_create(ib_bytestr_t **pdst,
     }
     (*pdst)->mp = pool;
     (*pdst)->flags = 0;
-    ib_mpool_cleanup_register((*pdst)->mp, *pdst, bytestr_cleanup);
+
+    rc = ib_mpool_cleanup_register((*pdst)->mp, bytestr_cleanup, *pdst);
+    if (rc != IB_OK) {
+        goto failed;
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
     /* Make sure everything is cleaned up on failure */
+    if ((*pdst != NULL) &&((*pdst)->data != NULL)) {
+        bstr_free(&(*pdst)->data);
+    }
     *pdst = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
@@ -255,3 +262,8 @@ ib_status_t ib_bytestr_append_nulstr(ib_bytestr_t *dst,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+int ib_bytestr_index_of_c(ib_bytestr_t *haystack, char *needle)
+{
+    IB_FTRACE_INIT(ib_bytestr_index_of_c);
+    IB_FTRACE_RET_INT(bstr_index_of_c(haystack->data, needle));
+}

@@ -32,11 +32,13 @@
 #include <time.h>
 #include <ctype.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
+#include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/operator.h>
 #include <ironbee/provider.h>
 
 #include <pcre.h>
@@ -98,11 +100,13 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
 
     if (cpatt == NULL) {
         *(void **)pcpatt = NULL;
-        ib_util_log_error(4, "PCRE compile error for \"%s\": %s at offset %d", patt, *errptr, *erroffset);
+        ib_util_log_error(4, "PCRE compile error for \"%s\": %s at offset %d",
+            patt, *errptr, *erroffset);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    pcre_cpatt = (modpcre_cpatt_t *)ib_mpool_alloc(mpr->mp, sizeof(*pcre_cpatt));
+    pcre_cpatt = (modpcre_cpatt_t *)ib_mpool_alloc(mpr->mp,
+                                                   sizeof(*pcre_cpatt));
     if (pcre_cpatt == NULL) {
         *(void **)pcpatt = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -112,18 +116,25 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
     pcre_cpatt->cpatt = cpatt;
 
 #ifdef PCRE_HAVE_JIT
-    pcre_cpatt->edata = pcre_study(pcre_cpatt->cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
+    pcre_cpatt->edata =
+        pcre_study(pcre_cpatt->cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
     if(*errptr != NULL)  {
         ib_util_log_error(4,"PCRE-JIT study failed : %s", *errptr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* The check to see if JIT compilation was a success changed in 8.20RC1 now uses pcre_fullinfo see doc/pcrejit.3 */
-    pcre_fullinfo_ret = pcre_fullinfo(pcre_cpatt->cpatt, pcre_cpatt->edata, PCRE_INFO_JIT, &pcre_jit_ret);
+    /* The check to see if JIT compilation was a success changed in 8.20RC1
+       now uses pcre_fullinfo see doc/pcrejit.3 */
+    pcre_fullinfo_ret = pcre_fullinfo(
+        pcre_cpatt->cpatt, pcre_cpatt->edata, PCRE_INFO_JIT, &pcre_jit_ret);
     if (pcre_fullinfo_ret != 0) {
         ib_util_log_error(4,"PCRE-JIT failed to get pcre_fullinfo");
-    } else if (pcre_jit_ret != 1) {
-        ib_util_log_error(4,"PCRE-JIT compiler does not support: %s. It will fallback to the normal PCRE", pcre_cpatt->patt);
+    }
+    else if (pcre_jit_ret != 1) {
+        ib_util_log_error(4,
+            "PCRE-JIT compiler does not support: %s. "
+            "It will fallback to the normal PCRE",
+            pcre_cpatt->patt);
     }
 #else
     pcre_cpatt->edata = pcre_study(pcre_cpatt->cpatt, 0, errptr);
@@ -141,7 +152,8 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
                                           void *cpatt,
                                           ib_flags_t flags,
                                           const uint8_t *data,
-                                          size_t dlen, void *ctx)
+                                          size_t dlen,
+                                          void *ctx)
 {
     IB_FTRACE_INIT(modpcre_match_compiled);
     modpcre_cpatt_t *pcre_cpatt = (modpcre_cpatt_t *)cpatt;
@@ -202,6 +214,218 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
     modpcre_match
 };
 
+struct pcre_rule_data {
+    pcre *regex;
+    size_t regex_sz;
+    pcre_extra *regex_extra;
+    size_t regex_extra_sz;
+};
+
+typedef struct pcre_rule_data pcre_rule_data_t;
+
+/**
+ * @brief Create the PCRE operator.
+ * @param[in,out] pool The memory pool into which @c op_inst->data
+ *                will be allocated.
+ * @param[in] The regular expression to be built.
+ * @param[out] op_inst The operator instance that will be populated by
+ *             parsing @a pattern.
+ * @returns IB_OK on success or IB_EALLOC on any other type of error.
+ */
+static ib_status_t pcre_operator_create(ib_mpool_t *pool,
+                                        const char *pattern,
+                                        ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(pcre_operator_create);
+    const char* errptr;
+    int erroffset;
+    int pcre_rc;
+    pcre_rule_data_t *rule_data;
+    pcre *regex;
+    pcre_extra *regex_extra;
+
+    rule_data = (pcre_rule_data_t*) ib_mpool_alloc(pool, sizeof(*rule_data));
+
+    if (rule_data == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Build the regular expression. */
+    regex = pcre_compile(pattern,
+                         0,
+                         &errptr,
+                         &erroffset,
+                         (const unsigned char*)NULL);
+
+    if (regex == NULL && errptr != NULL ) {
+        return IB_EALLOC;
+    }
+
+    /* Attempt to optimize execution of the regular expression at rule
+       evaluation time. */
+    regex_extra = pcre_study(regex, 0, &errptr);
+
+    if (regex_extra == NULL && errptr != NULL ) {
+        return IB_EALLOC;
+    }
+
+    pcre_rc = pcre_fullinfo(regex,
+                            NULL,
+                            PCRE_INFO_SIZE,
+                            &rule_data->regex_sz);
+
+    if (pcre_rc != 0) {
+        return IB_EALLOC;
+    }
+
+    pcre_rc = pcre_fullinfo(regex,
+                            NULL,
+                            PCRE_INFO_STUDYSIZE,
+                            &rule_data->regex_extra_sz);
+
+    if (pcre_rc != 0) {
+        return IB_EALLOC;
+    }
+
+    /* Allocate data to copy regex into. */
+    rule_data->regex =
+        (pcre*) ib_mpool_alloc(pool, rule_data->regex_sz);
+
+    if (rule_data->regex == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Allocate data to copy regex_extra into. */
+    rule_data->regex_extra =
+        (pcre_extra*) ib_mpool_alloc(pool, rule_data->regex_extra_sz);
+
+    if (rule_data->regex == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Copy regex and regex_extra into rule_data. */
+    memcpy(rule_data->regex, regex, rule_data->regex_sz);
+    memcpy(rule_data->regex_extra, regex_extra, rule_data->regex_extra_sz);
+
+    op_inst->data = rule_data;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @brief Deinitialize the rule.
+ * @param[in,out] op_inst The instance of the operator to be deallocated.
+ *                Operator data is allocated out of the memory pool for
+ *                IronBee so we do not destroy the operator here.
+ *                pool for IronBee and need not be freed by us.
+ * @returns IB_OK always.
+ */
+static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT(pcre_operator_destroy);
+    /* Nop */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @brief Execute the rule.
+ *
+ * @param[in] ib Ironbee engine
+ * @param[in] tx The transaction.
+ * @param[in,out] User data. A @c pcre_rule_data_t.
+ * @param[in] field The field content.
+ * @param[in] result The result.
+ * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
+ */
+static ib_status_t pcre_operator_execute(ib_engine_t *ib,
+                                         ib_tx_t *tx,
+                                         void *data,
+                                         ib_field_t *field,
+                                         ib_num_t *result)
+{
+    IB_FTRACE_INIT(pcre_operator_execute);
+
+    int pcre_rc;
+    ib_status_t ib_rc;
+    const int ovecsize = 30;
+    int* ovector = malloc(ovecsize * sizeof(int));
+    char* subject;
+    size_t subject_len;
+    ib_bytestr_t* bytestr;
+    pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
+    pcre_extra *regex_extra;
+    pcre *regex;
+
+    if (field->type == IB_FTYPE_NULSTR) {
+        subject = ib_field_value_nulstr(field);
+        subject_len = strlen(subject);
+    }
+    else if (field->type == IB_FTYPE_BYTESTR) {
+        bytestr = ib_field_value_bytestr(field);
+        subject_len = ib_bytestr_length(bytestr);
+        subject = (char*) ib_bytestr_ptr(bytestr);
+    }
+    else {
+        free(ovector);
+        return IB_EALLOC;
+    }
+
+    /* Alloc space to copy regex. */
+    regex = (pcre*)malloc(rule_data->regex_sz);
+
+    /* Copy rules for parallel execution. */
+    memcpy(regex, rule_data->regex, rule_data->regex_sz);
+
+    if (rule_data->regex_extra_sz == 0 ) {
+        regex_extra = NULL;
+    }
+    else {
+        regex_extra = (pcre_extra*)malloc(rule_data->regex_extra_sz);
+        memcpy(regex_extra,
+               rule_data->regex_extra,
+               rule_data->regex_extra_sz);
+        /* Put some modest limits on our regex. */
+        regex_extra->match_limit = 100;
+        regex_extra->match_limit_recursion = 100;
+        regex_extra->flags = regex_extra->flags |
+                            PCRE_EXTRA_MATCH_LIMIT |
+                            PCRE_EXTRA_MATCH_LIMIT_RECURSION;
+    }
+
+    pcre_rc = pcre_exec(regex,
+                        regex_extra,
+                        subject,
+                        subject_len,
+                        0, /* Starting offset. */
+                        0, /* Options. */
+                        ovector,
+                        ovecsize);
+
+    if (pcre_rc > 0) {
+        ib_rc = IB_OK;
+        *result = 1;
+    }
+    else if (pcre_rc == PCRE_ERROR_NOMATCH) {
+        /* No match. Return false to the caller (*result = 0). */
+        ib_rc = IB_OK;
+        *result = 0;
+    }
+    else {
+        /* Some other error occurred. Set the status to false and
+        report the error. */
+        ib_rc = IB_EUNKNOWN;
+        *result = 0;
+    }
+
+    free(ovector);
+    free(regex);
+
+    if (regex_extra != NULL ) {
+        free(regex_extra);
+    }
+
+    IB_FTRACE_RET_STATUS(ib_rc);
+}
 
 /* -- Module Routines -- */
 
@@ -220,12 +444,26 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                               NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, 3,
-                     MODULE_NAME_STR ": Error registering pcre matcher provider: "
+                     MODULE_NAME_STR
+                     ": Error registering pcre matcher provider: "
                      "%d", rc);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib, 4,"PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"", PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
+    ib_log_debug(ib, 4,"PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"",
+        PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
+
+    /* Register operators. */
+    ib_operator_register(ib, "@pcre", 0,
+                                      pcre_operator_create,
+                                      pcre_operator_destroy,
+                                      pcre_operator_execute);
+    /* An alias of @pcre. The same callbacks are registered. */
+    ib_operator_register(ib, "@rx", 0,
+                                    pcre_operator_create,
+                                    pcre_operator_destroy,
+                                    pcre_operator_execute);
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -233,21 +471,21 @@ static IB_CFGMAP_INIT_STRUCTURE(modpcre_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".study",
         IB_FTYPE_NUM,
-        &modpcre_global_cfg,
+        modpcre_cfg_t,
         study,
         1
     ),
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".match_limit",
         IB_FTYPE_NUM,
-        &modpcre_global_cfg,
+        modpcre_cfg_t,
         match_limit,
         5000
     ),
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".match_limit_recursion",
         IB_FTYPE_NUM,
-        &modpcre_global_cfg,
+        modpcre_cfg_t,
         match_limit_recursion,
         5000
     ),

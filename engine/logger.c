@@ -33,6 +33,7 @@
 
 
 #include <ironbee/engine.h>
+#include <ironbee/core.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
 
@@ -245,80 +246,12 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_provider_inst_t *ib_logevent_provider_get_instance(ib_context_t *ctx)
-{
-    IB_FTRACE_INIT(ib_logevent_provider_get_instance);
-    ib_core_cfg_t *corecfg;
-    ib_status_t rc;
-
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_PTR(ib_provider_inst_t, NULL);
-    }
-
-    IB_FTRACE_RET_PTR(ib_provider_inst_t, corecfg->pi.logevent);
-}
-
-void ib_logevent_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
-{
-    IB_FTRACE_INIT(ib_logevent_provider_set_instance);
-    ib_core_cfg_t *corecfg;
-    ib_status_t rc;
-
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        /// @todo This func should return ib_status_t now
-        IB_FTRACE_RET_VOID();
-    }
-
-    corecfg->pi.logevent = pi;
-
-    IB_FTRACE_RET_VOID();
-}
-
-
-/* -- Audit Log Routines -- */
-
-ib_provider_inst_t *ib_audit_provider_get_instance(ib_context_t *ctx)
-{
-    IB_FTRACE_INIT(ib_audit_provider_get_instance);
-    ib_core_cfg_t *corecfg;
-    ib_status_t rc;
-
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_PTR(ib_provider_inst_t, NULL);
-    }
-
-    IB_FTRACE_RET_PTR(ib_provider_inst_t, corecfg->pi.audit);
-}
-
-void ib_audit_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
-{
-    IB_FTRACE_INIT(ib_audit_provider_set_instance);
-    ib_core_cfg_t *corecfg;
-    ib_status_t rc;
-
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        /// @todo This func should return ib_status_t now
-        IB_FTRACE_RET_VOID();
-    }
-
-    corecfg->pi.audit = pi;
-
-    IB_FTRACE_RET_VOID();
-}
 
 /* -- Exported Logging Routines -- */
 
 ib_provider_inst_t *ib_log_provider_get_instance(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(ib_logger_provider_get_instance);
+    IB_FTRACE_INIT(ib_log_provider_get_instance);
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -333,7 +266,7 @@ ib_provider_inst_t *ib_log_provider_get_instance(ib_context_t *ctx)
 
 void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT(ib_logger_provider_set_instance);
+    IB_FTRACE_INIT(ib_log_provider_set_instance);
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -397,134 +330,85 @@ void ib_vclog_ex(ib_context_t *ctx, int level,
     default_logger(stderr, level, prefix_with_pid, file, line, fmt, ap);
 }
 
-ib_status_t ib_clog_event(ib_context_t *ctx,
-                          ib_logevent_t *e)
+ib_status_t ib_event_add(ib_provider_inst_t *pi,
+                         ib_logevent_t *e)
 {
-    IB_FTRACE_INIT(ib_clog_event);
+    IB_FTRACE_INIT(ib_event_add);
     IB_PROVIDER_API_TYPE(logevent) *api;
-    ib_core_cfg_t *corecfg;
-    ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
 
-    if (ctx == NULL) {
+    if (pi == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    pi = corecfg->pi.logevent;
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
     rc = api->add_event(pi, e);
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_clog_event_remove(ib_context_t *ctx,
-                                 uint32_t id)
+ib_status_t ib_event_remove(ib_provider_inst_t *pi,
+                            uint32_t id)
 {
-    IB_FTRACE_INIT(ib_clog_event_remove);
+    IB_FTRACE_INIT(ib_event_remove);
     IB_PROVIDER_API_TYPE(logevent) *api;
-    ib_core_cfg_t *corecfg;
-    ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
 
-    if (ctx == NULL) {
+    if (pi == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    pi = corecfg->pi.logevent;
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
     rc = api->remove_event(pi, id);
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_clog_events_get(ib_context_t *ctx,
-                               ib_list_t **pevents)
+ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
+                             ib_list_t **pevents)
 {
-    IB_FTRACE_INIT(ib_clog_events_get);
+    IB_FTRACE_INIT(ib_event_get_all);
     IB_PROVIDER_API_TYPE(logevent) *api;
-    ib_core_cfg_t *corecfg;
-    ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
 
-    if (ctx == NULL) {
+    if (pi == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    pi = corecfg->pi.logevent;
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
-    rc =api->fetch_events(pi, pevents);
+    rc = api->fetch_events(pi, pevents);
     IB_FTRACE_RET_STATUS(rc);
 }
 
-void ib_clog_events_write(ib_context_t *ctx)
+ib_status_t ib_event_write_all(ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT(ib_clog_events_write);
+    IB_FTRACE_INIT(ib_event_write_all);
     IB_PROVIDER_API_TYPE(logevent) *api;
-    ib_core_cfg_t *corecfg;
-    ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
 
-    if (ctx == NULL) {
-        /// @todo This func should return ib_status_t now
-        IB_FTRACE_RET_VOID();
+    if (pi == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        /// @todo This func should return ib_status_t now
-        IB_FTRACE_RET_VOID();
-    }
-
-    pi = corecfg->pi.logevent;
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
-    api->write_events(pi);
-    IB_FTRACE_RET_VOID();
+    rc = api->write_events(pi);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
-void ib_clog_auditlog_write(ib_context_t *ctx)
+ib_status_t ib_auditlog_write(ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT(ib_clog_auditlog_write);
+    IB_FTRACE_INIT(ib_auditlog_write);
     IB_PROVIDER_API_TYPE(audit) *api;
-    ib_core_cfg_t *corecfg;
-    ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
 
-    if (ctx == NULL) {
-        /// @todo This func should return ib_status_t now
-        IB_FTRACE_RET_VOID();
+    if (pi == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
-    if (rc != IB_OK) {
-        /// @todo This func should return ib_status_t now
-        IB_FTRACE_RET_VOID();
-    }
-
-    pi = corecfg->pi.audit;
     api = (IB_PROVIDER_API_TYPE(audit) *)pi->pr->api;
 
-    api->write_log(pi);
-    IB_FTRACE_RET_VOID();
+    rc = api->write_log(pi);
+    IB_FTRACE_RET_STATUS(rc);
 }

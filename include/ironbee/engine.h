@@ -23,14 +23,17 @@
  * @brief IronBee
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
 #include <ironbee/build.h>
 #include <ironbee/release.h>
 #include <ironbee/types.h>
+#include <ironbee/stream.h>
 #include <ironbee/list.h>
 #include <ironbee/uuid.h>
 
@@ -89,9 +92,14 @@ typedef struct ib_site_t ib_site_t;
 typedef struct ib_loc_t ib_loc_t;
 typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
-typedef struct timeval ib_timeval_t;
+typedef struct ib_timeval_t ib_timeval_t;
 typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
+
+struct ib_timeval_t {
+    uint32_t   tv_sec;
+    uint32_t   tv_usec;
+};
 
 typedef enum {
     IB_DTYPE_META,
@@ -110,18 +118,6 @@ typedef enum {
     IB_FILTER_CONN,
     IB_FILTER_TX,
 } ib_filter_type_t;
-
-typedef struct ib_stream_t ib_stream_t;
-typedef struct ib_sdata_t ib_sdata_t;
-
-typedef enum {
-    IB_STREAM_DATA,                      /**< Data is available */
-    IB_STREAM_FLUSH,                     /**< Data should be flushed */
-    IB_STREAM_EOH,                       /**< End of Headers */
-    IB_STREAM_EOB,                       /**< End of Body */
-    IB_STREAM_EOS,                       /**< End of Stream */
-    IB_STREAM_ERROR,                     /**< Error */
-} ib_sdata_type_t;
 
 #define IB_UUID_HEX_SIZE 37
 
@@ -151,6 +147,7 @@ typedef enum {
 #define IB_TX_FRES_SEENHEADERS  (1 << 0) /**< Response headers seen */
 #define IB_TX_FRES_SEENBODY     (1 <<11) /**< Response body seen */
 #define IB_TX_FRES_FINISHED     (1 <<12) /**< Response finished  */
+#define IB_TX_FSUSPICIOUS       (1 <<13) /**< Transaction is suspicous */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
@@ -230,15 +227,16 @@ struct ib_conn_t {
 
     const char         *remote_ipstr;    /**< Remote IP as string */
 //    struct sockaddr_storage remote_addr; /**< Remote address */
-    int                 remote_port;     /**< Remote port */
+    uint16_t            remote_port;     /**< Remote port */
 
     const char         *local_ipstr;     /**< Local IP as string */
 //    struct sockaddr_storage local_addr;  /**< Local address */
-    int                 local_port;      /**< Local port */
+    uint16_t            local_port;      /**< Local port */
 
     ib_uuid_t           base_uuid;       /**< UUID to base tx ID */
     size_t              tx_count;        /**< Transaction count */
 
+    ib_tx_t            *tx_first;        /**< First transaction in the list */
     ib_tx_t            *tx;              /**< Pending transaction(s) */
     ib_tx_t            *tx_last;         /**< Last transaction in the list */
 
@@ -254,13 +252,16 @@ struct ib_tx_t {
     ib_context_t       *ctx;             /**< Config context */
     void               *pctx;            /**< Plugin context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
+    ib_provider_inst_t *epi;             /**< Log event provider instance */
     ib_hash_t          *data;            /**< Generic data store */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
     ib_timeval_t        started;         /**< Tx (request) start time */
     ib_timeval_t        tv_response;     /**< Response start time */
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */
+    const char         *er_ipstr;        /**< Effective remote IP as string */
     const char         *path;            /**< Path used in the request */
+    //struct sockaddr_storage er_addr;   /**< Effectvie remote address */
     ib_flags_t          flags;           /**< Transaction flags */
 };
 
@@ -481,6 +482,18 @@ ib_site_t DLL_PUBLIC *ib_context_site_get(ib_context_t *ctx);
 void DLL_PUBLIC ib_context_destroy(ib_context_t *ctx);
 
 /**
+ * Get the IronBee engine object.
+ *
+ * This returns a pointer to the IronBee engine associated with
+ * the given context.
+ *
+ * @param ctx Config context
+ *
+ * @returns Pointer to the engine.
+ */
+ib_engine_t DLL_PUBLIC *ib_context_get_engine(ib_context_t *ctx);
+
+/**
  * Get the engine (startup) configuration context.
  *
  * @param ib Engine handle
@@ -593,7 +606,7 @@ ib_status_t DLL_PUBLIC ib_context_siteloc_chooser(ib_context_t *ctx,
                                                   ib_ctype_t type,
                                                   void *ctxdata,
                                                   void *cbdata);
-                                                  
+
 
 /**
  * Default Site/Location context chooser.
@@ -947,15 +960,97 @@ typedef enum {
 } ib_state_event_type_t;
 
 /**
- * State Hook Callback Function.
+ * State Event Hook Types
+ **/
+typedef enum {
+    IB_STATE_HOOK_CONN,     /**< Hook received ib_conn_t */
+    IB_STATE_HOOK_CONNDATA, /**< Hook received ib_conndata_t */
+    IB_STATE_HOOK_TX,       /**< Hook received ib_tx_t */
+    IB_STATE_HOOK_TXDATA,   /**< Hook received ib_txdata_t */
+    IB_STATE_HOOK_NULL,     /**< Hook has no parameter */
+    IB_STATE_HOOK_INVALID   /**< Something went wrong. */
+} ib_state_hook_type_t;
+
+/**
+ * Hook type for an event.
+ *
+ * \param[in] event Event type.
+ * \return Hook type or IB_STATE_HOOK_INVALID if bad event.
+ **/
+ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event);
+ 
+/**
+ * Dataless Event Hook Callback Function.
  *
  * @param ib Engine handle
- * @param param Call parameter
+ * @param event Which event trigger the callback.
  * @param cbdata Callback data
  */
-typedef ib_status_t (*ib_state_hook_fn_t)(ib_engine_t *ib,
-                                          void *param,
-                                          void *cbdata);
+typedef ib_status_t (*ib_state_null_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    void *cbdata 
+);
+
+/**
+ * Connection Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param conn Conneciton.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_conn_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conn_t *conn,
+    void *cbdata 
+);
+
+/**
+ * Connection Data Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param conndata Conneciton data.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conndata_t *conndata,
+    void *cbdata 
+);
+
+/**
+ * Transaction Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param tx Transaction.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_tx_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_tx_t *tx,
+    void *cbdata 
+);
+
+/**
+ * Transaction Data Event Hook Callback Function.
+ *
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param txdata Transaction data.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_txdata_t *txdata,
+    void *cbdata 
+);
 
 /**
  * Resolve an event name.
@@ -1160,11 +1255,10 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_finished(ib_engine_t *ib,
  * @{
  */
 
-/** Hook */
-typedef struct ib_hook_t ib_hook_t;
+/* No data */
 
 /**
- * Register a callback for a given event
+ * Register a callback for a no data event.
  *
  * @param ib Engine handle
  * @param event Event
@@ -1173,12 +1267,15 @@ typedef struct ib_hook_t ib_hook_t;
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_register(ib_engine_t *ib,
-                                        ib_state_event_type_t event,
-                                        ib_void_fn_t cb, void *cdata);
-
+ib_status_t DLL_PUBLIC ib_null_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb, 
+    void *cdata
+);
+ 
 /**
- * Unregister a callback for a given event
+ * Unregister a callback for a no data event.
  *
  * @param ib Engine handle
  * @param event Event
@@ -1186,36 +1283,309 @@ ib_status_t DLL_PUBLIC ib_hook_register(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_unregister(ib_engine_t *ib,
-                                          ib_state_event_type_t event,
-                                          ib_void_fn_t cb);
+ib_status_t DLL_PUBLIC ib_null_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb
+);
 
 /**
- * Register a callback with a config context for a given event
+ * Register a context callback for a no data event.
  *
- * @param ctx Config context
+ * @param ib Engine handle
  * @param event Event
  * @param cb The callback to register
  * @param cdata Data passed to the callback (or NULL)
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_register_context(ib_context_t *ctx,
-                                                ib_state_event_type_t event,
-                                                ib_void_fn_t cb, void *cdata);
+ib_status_t DLL_PUBLIC ib_null_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb, 
+    void *cdata
+);
 
 /**
- * Unregister a callback with a config context for a given event
+ * Unregister a context callback for a no data event.
  *
- * @param ctx Config context
+ * @param ib Engine handle
  * @param event Event
  * @param cb The callback to unregister
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hook_unregister_context(ib_context_t *ctx,
-                                                  ib_state_event_type_t event,
-                                                  ib_void_fn_t cb);
+ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb
+);
+
+
+/* ib_conn_t data */
+ 
+/**
+ * Register a callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a connection event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conn_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb
+);
+
+/* ib_conndata_t data */
+ 
+/**
+ * Register a callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a connection data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_conndata_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb
+);
+ 
+/* ib_tx_t data */
+ 
+/**
+ * Register a callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a transaction event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_hook_unregister_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb
+);
+
+/* ib_txdata_t data */
+ 
+/**
+ * Register a callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb
+);
+
+/**
+ * Register a context callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to register
+ * @param cdata Data passed to the callback (or NULL)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_register_context(
+    ib_context_t* ctxdata,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb, 
+    void *cdata
+);
+
+/**
+ * Unregister a context callback for a transaction data event.
+ *
+ * @param ib Engine handle
+ * @param event Event
+ * @param cb The callback to unregister
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_txdata_hook_unregister_context(
+    ib_context_t* ctxdata,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb
+);
+
 
 /**
  * @} IronBeeEngineHooks
@@ -1319,6 +1689,21 @@ ib_status_t DLL_PUBLIC ib_data_add_list_ex(ib_provider_inst_t *dpi,
                                            const char *name,
                                            size_t nlen,
                                            ib_field_t **pf);
+
+/**
+ * Create and add a stream buffer data field (extended version).
+ *
+ * @param dpi Data provider instance
+ * @param name Name as byte string
+ * @param nlen Name length
+ * @param pf Pointer where new field is written if non-NULL
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_add_stream_ex(ib_provider_inst_t *dpi,
+                                             const char *name,
+                                             size_t nlen,
+                                             ib_field_t **pf);
 
 /**
  * Get a data field (extended version).
@@ -1434,6 +1819,22 @@ ib_status_t DLL_PUBLIC ib_data_add_list(ib_provider_inst_t *dpi,
 
 #define ib_data_add_list(dpi,name,pf) \
     ib_data_add_list_ex(dpi,name,strlen(name),pf)
+
+/**
+ * Create and add a stream buffer data field.
+ *
+ * @param dpi Data provider instance
+ * @param name Name as byte string
+ * @param pf Pointer where new field is written if non-NULL
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_add_stream(ib_provider_inst_t *dpi,
+                                          const char *name,
+                                          ib_field_t **pf);
+
+#define ib_data_add_stream(dpi,name,pf) \
+    ib_data_add_stream_ex(dpi,name,strlen(name),pf)
 
 /**
  * Get a data field.
@@ -1630,51 +2031,55 @@ void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
 /**
  * Add an event to be logged.
  *
- * @param ctx Config context
+ * @param pi Provider instance
  * @param e Event
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_clog_event(ib_context_t *ctx,
-                                     ib_logevent_t *e);
+ib_status_t DLL_PUBLIC ib_event_add(ib_provider_inst_t *pi,
+                                    ib_logevent_t *e);
 
 /**
  * Remove an event from the queue before it is logged.
  *
- * @param ctx Config context
+ * @param pi Provider instance
  * @param id Event id
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_clog_event_remove(ib_context_t *ctx,
-                                            uint32_t id);
+ib_status_t DLL_PUBLIC ib_event_remove(ib_provider_inst_t *pi,
+                                       uint32_t id);
 
 /**
  * Get a list of pending events to be logged.
  *
  * @note The list can be modified directly.
  *
- * @param ctx Config context
+ * @param pi Provider instance
  * @param pevents Address where list of events is written
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_clog_events_get(ib_context_t *ctx,
-                                          ib_list_t **pevents);
+ib_status_t DLL_PUBLIC ib_event_get_all(ib_provider_inst_t *pi,
+                                        ib_list_t **pevents);
 
 /**
  * Write out any pending events to the log.
  *
- * @param ctx Config context
+ * @param pi Provider instance
+ *
+ * @returns Status code
  */
-void DLL_PUBLIC ib_clog_events_write(ib_context_t *ctx);
+ib_status_t DLL_PUBLIC ib_event_write_all(ib_provider_inst_t *pi);
 
 /**
  * Write out audit log.
  *
- * @param ctx Config context
+ * @param pi Provider instance
+ *
+ * @returns Status code
  */
-void DLL_PUBLIC ib_clog_auditlog_write(ib_context_t *ctx);
+ib_status_t DLL_PUBLIC ib_auditlog_write(ib_provider_inst_t *pi);
 
 /**
  * @} IronBeeEngineLog
@@ -2048,7 +2453,7 @@ struct ib_fdata_t {
  *
  * Data comes into the filter controller via the @ref source, gets
  * pushed through the list of data @ref filters, into the buffer filter
- * @ref fbuffer where the data may be held while it is being processed 
+ * @ref fbuffer where the data may be held while it is being processed
  * and finally makes it to the @ref sink where it is ready to be sent.
  */
 struct ib_fctl_t {
@@ -2059,28 +2464,6 @@ struct ib_fctl_t {
     ib_filter_t             *fbuffer;   /**< Buffering filter (flow control) */
     ib_stream_t             *source;    /**< Data source (new data) */
     ib_stream_t             *sink;      /**< Data sink (processed data) */
-};
-
-/**
- * IronBee Stream.
- *
- * This is essentially a list of data chunks (ib_sdata_t) with some
- * associated metadata.
- */
-struct ib_stream_t {
-    /// @todo Need a list of recycled sdata
-    ib_mpool_t             *mp;         /**< Stream memory pool */
-    size_t                  slen;       /**< Stream length */
-    IB_LIST_REQ_FIELDS(ib_sdata_t); /* Required list fields */
-};
-
-/** IronBee Stream Data */
-struct ib_sdata_t {
-    ib_sdata_type_t         type;       /**< Stream data type */
-    ib_data_type_t          dtype;      /**< Data type */
-    size_t                  dlen;       /**< Data length */
-    void                   *data;       /**< Data */
-    IB_LIST_NODE_REQ_FIELDS(ib_sdata_t); /* Required list node fields */
 };
 
 
@@ -2181,10 +2564,10 @@ ib_status_t DLL_PUBLIC ib_fctl_process(ib_fctl_t *fc);
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_fctl_data(ib_fctl_t *fc,
-                                    ib_data_type_t dtype,
-                                    void *data,
-                                    size_t dlen);
+ib_status_t DLL_PUBLIC ib_fctl_data_add(ib_fctl_t *fc,
+                                        ib_data_type_t dtype,
+                                        void *data,
+                                        size_t dlen);
 
 /**
  * Add meta data to the filter controller.
@@ -2197,8 +2580,8 @@ ib_status_t DLL_PUBLIC ib_fctl_data(ib_fctl_t *fc,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_fctl_meta(ib_fctl_t *fc,
-                                    ib_sdata_type_t stype);
+ib_status_t DLL_PUBLIC ib_fctl_meta_add(ib_fctl_t *fc,
+                                        ib_sdata_type_t stype);
 
 /**
  * Drain processed data from the filter controller.
@@ -2211,45 +2594,6 @@ ib_status_t DLL_PUBLIC ib_fctl_meta(ib_fctl_t *fc,
 ib_status_t DLL_PUBLIC ib_fctl_drain(ib_fctl_t *fc,
                                      ib_stream_t **pstream);
 
-                                               
-/**
- * Push stream data into a stream.
- *
- * @param s Stream
- * @param sdata Stream data
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_stream_push_sdata(ib_stream_t *s,
-                                            ib_sdata_t *sdata);
-                           
-/**
- * Push a chunk of data (or metadata) into a stream.
- *
- * @param s Stream
- * @param type Stream data type
- * @param dtype Data type
- * @param data Data
- * @param dlen Data length
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_stream_push(ib_stream_t *s,
-                                      ib_sdata_type_t type,
-                                      ib_data_type_t dtype,
-                                      void *data,
-                                      size_t dlen);
-                           
-/**
- * Pull a chunk of data (or metadata) from a stream.
- *
- * @param s Stream
- * @param psdata Address which stream data is written
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_stream_pull(ib_stream_t *s,
-                                      ib_sdata_t **psdata);
 
 /**
  * @} IronBeeFilter

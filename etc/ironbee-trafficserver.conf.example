@@ -12,12 +12,30 @@ SensorName ExampleSensorName
 SensorHostname example.sensor.tld
 
 ### Load Modules
+
+# Must load perf stats module first if you enable it.
+#LoadModule "ibmod_perf_stats.so"
+
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_htp.so"
 LoadModule "ibmod_poc_sig.so"
 
+# Lua
+LoadModule "ibmod_lua.so"
+LuaLoadModule "example.lua"
+
 ### Main Context (need separate directives for these)
 Set parser "htp"
+
+# Trace / example module
+#LoadModule "ibmod_trace.so"
+
+# Parse the user agent
+#LoadModule "ibmod_user_agent.so"
+
+# GeoIP lookup
+#LoadModule "ibmod_geoip.so"
+#GeoIPDatabaseFile /var/lib/GeoIP/GeoLiteCity.dat
 
 # Enable inspection engine (TODO: Implement)
 #InspectionEngine On

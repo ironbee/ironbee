@@ -38,6 +38,8 @@
 
 #include <ironbee/build.h>
 #include <ironbee/release.h>
+#include <ironbee/list.h>
+#include <ironbee/engine.h>
 
 #ifdef __cplusplus
 extern "C" {

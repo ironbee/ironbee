@@ -69,8 +69,10 @@ ffi.cdef [[
         IB_EALLOC,
         IB_EINVAL,
         IB_ENOENT,
+        IB_ETRUNC,
         IB_ETIMEDOUT,
-        IB_EAGAIN
+        IB_EAGAIN,
+        IB_EOTHER
     } ib_status_t;
     typedef enum {
         IB_FTYPE_GENERIC,
@@ -78,7 +80,8 @@ ffi.cdef [[
         IB_FTYPE_UNUM,
         IB_FTYPE_NULSTR,
         IB_FTYPE_BYTESTR,
-        IB_FTYPE_LIST
+        IB_FTYPE_LIST,
+        IB_FTYPE_SBUFFER
     } ib_ftype_t;
     typedef enum {
         conn_started_event,
@@ -208,8 +211,8 @@ ffi.cdef [[
     };
 
     struct ib_plugin_t {
-        int                      vernum;
-        int                      abinum;
+        uint32_t                 vernum;
+        uint32_t                 abinum;
         const char              *version;
         const char              *filename;
         const char              *name;
@@ -225,11 +228,12 @@ ffi.cdef [[
         ib_hash_t          *data;
         ib_timeval_t        started;
         const char         *remote_ipstr;
-        int                 remote_port;
+        uint16_t            remote_port;
         const char         *local_ipstr;
-        int                 local_port;
+        uint16_t            local_port;
         ib_uuid_t           base_uuid;
         size_t              tx_count;
+        ib_tx_t            *tx_first;
         ib_tx_t            *tx;
         ib_tx_t            *tx_last;
         ib_flags_t          flags;
@@ -265,12 +269,14 @@ ffi.cdef [[
         ib_context_t       *ctx;
         void               *pctx;
         ib_provider_inst_t *dpi;
+        ib_provider_inst_t *epi;
         ib_hash_t          *data;
         ib_fctl_t          *fctl;
         ib_timeval_t        started;
         ib_timeval_t        tv_request;
         ib_tx_t            *next;
         const char         *hostname;
+        const char         *er_ipstr;
         const char         *path;
         ib_flags_t          flags;
     };
@@ -425,13 +431,13 @@ ffi.cdef [[
                                    uint8_t severity,
                                    const char *fmt,
                                    ...);
-    ib_status_t ib_clog_event(ib_context_t *ctx,
-                              ib_logevent_t *e);
-    ib_status_t ib_clog_event_remove(ib_context_t *ctx,
-                                     uint64_t id);
-    ib_status_t ib_clog_events_get(ib_context_t *ctx,
-                                   ib_list_t **pevents);
-    void ib_clog_events_write(ib_context_t *ctx);
+    ib_status_t ib_event_add(ib_provider_inst_t *pi,
+                             ib_logevent_t *e);
+    ib_status_t ib_event_remove(ib_provider_inst_t *pi,
+                                uint64_t id);
+    ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
+                                 ib_list_t **pevents);
+    ib_status_t ib_event_write_all(ib_provider_inst_t *pi);
 
 
     /* Byte String */
@@ -586,6 +592,8 @@ IB_EALLOC        = ffi.cast("int", c.IB_EALLOC)
 IB_EINVAL        = ffi.cast("int", c.IB_EINVAL)
 IB_ENOENT        = ffi.cast("int", c.IB_ENOENT)
 IB_ETIMEDOUT     = ffi.cast("int", c.IB_ETIMEDOUT)
+IB_EAGAIN        = ffi.cast("int", c.IB_EAGAIN)
+IB_EOTHER        = ffi.cast("int", c.IB_EOTHER)
 
 -- ===============================================
 -- Field Types
@@ -595,6 +603,7 @@ IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
 IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
 IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
 IB_FTYPE_LIST    = ffi.cast("int", c.IB_FTYPE_LIST)
+IB_FTYPE_SBUFFER = ffi.cast("int", c.IB_FTYPE_SBUFFER)
 
 -- ===============================================
 -- Directive Types
@@ -689,34 +698,34 @@ end
 -- Lua OO Wrappers around IronBee raw C types
 -- TODO: Add metatable w/__tostring for each type
 -- ===============================================
-local function newMpool(val)
+function newMpool(val)
     local c_val = ffi.cast("ib_mpool_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
-local function newProvider(val)
+function newProvider(val)
     local c_val = ffi.cast("ib_provider_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newProviderInst(val)
+function newProviderInst(val)
     local c_val = ffi.cast("ib_provider_inst_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newContext(val)
+function newContext(val)
     local c_val = ffi.cast("ib_context_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newField(val)
+function newField(val)
     local c_val = ffi.cast("ib_field_t *", val)
     local c_list
     local t = {
@@ -795,21 +804,21 @@ local function newField(val)
     return t
 end
 
-local function newLogevent(val)
+function newLogevent(val)
     local c_val = ffi.cast("ib_logevent_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newEngine(val)
+function newEngine(val)
     local c_val = ffi.cast("ib_engine_t *", val)
     return {
         cvalue = function() return c_val end,
     }
 end
 
-local function newConnData(val)
+function newConnData(val)
     local c_val = ffi.cast("ib_conndata_t *", val)
     return {
         cvalue = function() return c_val end,
@@ -818,18 +827,19 @@ local function newConnData(val)
     }
 end
 
-local function newConn(val)
+function newConn(val)
     local c_val = ffi.cast("ib_conn_t *", val)
     return {
         cvalue = function() return c_val end,
         mp = function() return newMpool(c_val.mp) end,
+        ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
         tx_count = function() return ffi.cast("size_t", c_val.tx_count) end,
     }
 end
 
-local function newTxData(val)
+function newTxData(val)
     local c_val = ffi.cast("ib_txdata_t *", val)
     return {
         cvalue = function() return c_val end,
@@ -839,13 +849,15 @@ local function newTxData(val)
     }
 end
 
-local function newTx(val)
+function newTx(val)
     local c_val = ffi.cast("ib_tx_t *", val)
     return {
         cvalue = function() return c_val end,
         mp = function() return newMpool(c_val.mp) end,
+        ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
         dpi = function() return newProviderInst(c_val.dpi) end,
+        epi = function() return newProviderInst(c_val.epi) end,
         conn = function() return newConn(c_val.conn) end,
         id = function() return ffi.cast("const char *", c_val.id) end,
     }
@@ -1043,26 +1055,26 @@ function ib_logevent_create(pool, rule_id, type, activity,
     return newLogevent(c_le[0])
 end
 
-function ib_clog_event(ctx, e)
-    local c_ctx = ctx.cvalue()
+function ib_event_add(pi, e)
+    local c_pi = pi.cvalue()
     local c_e = e.cvalue()
 
-    return c.ib_clog_event(c_ctx, c_e)
+    return c.ib_event_add(c_pi, c_e)
 end
 
-function ib_clog_event_remove(ctx, id)
-    local c_ctx = ctx.cvalue()
+function ib_event_remove(pi, id)
+    local c_pi = pi.cvalue()
     local c_id = ffi.cast("uint64_t", id)
 
-    return c.ib_clog_event_remove(c_ctx, c_id)
+    return c.ib_event_remove(c_pi, c_id)
 end
 
-function ib_clog_events_get(ctx)
-    local c_ctx = ctx.cvalue()
+function ib_events_get_all(pi)
+    local c_pi = pi.cvalue()
     local c_events = ffi.new("ib_list_t*[1]")
     local rc
 
-    rc = c.ib_clog_event_get(c_ctx, c_events)
+    rc = c.ib_event_get_all(c_pi, c_events)
 
     -- Loop through and create a list of logevents to return
     local l_vals = {}
@@ -1077,10 +1089,10 @@ function ib_clog_events_get(ctx)
     return l_vals
 end
 
-function ib_clog_events_write(ctx)
-    local c_ctx = ctx.cvalue()
+function ib_events_write_all(pi)
+    local c_pi = pi.cvalue()
 
-    return c.ib_clog_events_write(c_ctx)
+    return c.ib_event_write_all(c_pi)
 end
 
 function ib_config_register_directive(ib,

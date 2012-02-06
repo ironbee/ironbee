@@ -41,10 +41,13 @@
 #include <unistd.h>
 #endif
 
+#include <assert.h>
+
 #include <ironbee/engine.h>
 #include <ironbee/plugin.h>
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
+#include <ironbee/core.h>   /* Only needed while config is in here. */
 #include <ironbee/provider.h>
 #include <apache_httpd2.h>
 
@@ -79,6 +82,12 @@
 #define IRONBEE_DISCONNECT           3
 #define IRONBEE_ABORT                4
 
+// APR uses char* instead of void* for it's generic pointer type.  This
+// causes some false warnings.  We're okay, because the values we put in to
+// APR are properly aligned.
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wcast-align"
+#endif
 
 /* -- Data Structures -- */
 
@@ -374,8 +383,12 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
  * Called to initialize data in a new connection.
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                   ib_conn_t *iconn, void *cbdata)
+                                     ib_state_event_type_t event,
+                                     ib_conn_t *iconn,
+                                     void *cbdata)
 {
+    assert(event == conn_opened_event);
+
     //server_rec *s = cbdata;
     conn_rec *c = (conn_rec *)iconn->pctx;
     ib_status_t rc;
@@ -460,7 +473,7 @@ static int ironbee_dbg_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
                      "DBGFILTER: type=%d mode=%d block=%d readbytes=%d %s", xf->frec->ftype, mode, block, (int)readbytes, xf->frec->name);
     } while((xf = xf->next) != NULL);
 #endif
-    
+
     rc = ap_get_brigade(f->next, bb, mode, block, readbytes);
     if (rc == APR_SUCCESS) {
 
@@ -545,7 +558,7 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
                             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
                                          IB_PRODUCT_NAME ": DATA[%d]: %.*s", (int)sdata->dlen, (int)sdata->dlen, (char *)sdata->data);
 #endif
-                            
+
                             /// @todo Is this creating a copy?  Just need a reference.
                             ibucket = apr_bucket_heap_create(sdata->data,
                                                              sdata->dlen,
@@ -843,8 +856,8 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                               apr_pool_cleanup_null);
 
     /* Register conn/tx init hooks. */
-    ib_hook_register(ironbee, conn_opened_event,
-                     (ib_void_fn_t)ironbee_conn_init, s);
+    ib_conn_hook_register(ironbee, conn_opened_event,
+                          ironbee_conn_init, s);
 
     /* Configure the engine. */
     if (modcfg->config != NULL) {

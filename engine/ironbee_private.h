@@ -25,6 +25,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/types.h>
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/debug.h>
@@ -37,11 +38,27 @@
  *
  * Internal hook structure
  */
+typedef struct ib_hook_t ib_hook_t;
 struct ib_hook_t {
-    ib_void_fn_t        callback;         /**< Callback function */
+    union {
+        ib_state_null_hook_fn_t     null;
+        ib_state_conn_hook_fn_t     conn;
+        ib_state_conndata_hook_fn_t conndata;
+        ib_state_tx_hook_fn_t       tx;
+        ib_state_txdata_hook_fn_t   txdata;
+        /*! Comparison only */
+        ib_void_fn_t                as_void;
+    } callback;
     void               *cdata;            /**< Data passed to the callback */
     ib_hook_t          *next;             /**< The next callback in the list */
 };
+
+/**
+ * @internal
+ *
+ * Rule engine per-context data
+ */
+typedef struct ib_rule_engine_t ib_rule_engine_t;
 
 /**
  * @internal
@@ -71,6 +88,9 @@ struct ib_engine_t {
     ib_hash_t          *apis;             /**< Hash tracking provider APIs */
     ib_hash_t          *providers;        /**< Hash tracking providers */
     ib_hash_t          *tfns;             /**< Hash tracking transformations */
+    ib_hash_t          *operators;        /**< Hash tracking operators */
+    ib_hash_t          *actions;          /**< Hash tracking rules */
+    ib_rule_engine_t   *rules;            /**< Rule engine data */
 };
 
 /**
@@ -79,7 +99,7 @@ struct ib_engine_t {
  * Transformation.
  */
 struct ib_tfn_t {
-    const char         *name;              /**< Tfn name */  
+    const char         *name;              /**< Tfn name */
     ib_tfn_fn_t         transform;         /**< Tfn function */
     void               *fndata;            /**< Tfn function data */
 };
@@ -118,6 +138,9 @@ struct ib_context_t {
 
     /* Hooks */
     ib_hook_t   *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
+
+    /* Rules associated with this context */
+    ib_rule_engine_t        *rules;       /**< Rule engine data */
 };
 
 /**

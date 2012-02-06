@@ -40,6 +40,8 @@
 #include <time.h>
 #include <errno.h>
 
+#include <assert.h>
+
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
@@ -57,9 +59,11 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/logformat.h>
 #include <ironbee/module.h>
+#include <ironbee/core.h>
 #include <ironbee/provider.h>
 
 #include "ironbee_private.h"
+#include "ironbee_core_private.h"
 
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
@@ -74,9 +78,24 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
 
 static void ib_timestamp(char *, ib_timeval_t *);
 
+#ifndef MODULE_BASE_PATH
+/* Always define a module base path. */
+#define MODULE_BASE_PATH /usr/local/ironbee/lib
+#endif
+
+#ifndef RULE_BASE_PATH
+/* Always define a rule base path. */
+#define RULE_BASE_PATH /usr/local/ironbee/lib
+#endif
+
 /// @todo Fix this:
 #ifndef X_MODULE_BASE_PATH
 #define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH) "/"
+#endif
+
+/// @todo Fix this:
+#ifndef X_RULE_BASE_PATH
+#define X_RULE_BASE_PATH IB_XSTRINGIFY(RULE_BASE_PATH) "/"
 #endif
 
 
@@ -162,6 +181,33 @@ static FILE *fdup( FILE *fh )
 
     // Done
     return new_fh;
+}
+
+/* Placeholder for as-of-yet-initialized bytestring fields. */
+static const uint8_t core_placeholder_value[] = {
+    '_', '_', 'c', 'o', 'r', 'e', '_', '_',
+    'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
+    'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
+    'u', 'e', '_', '_',  0,   0,   0,   0
+};
+
+static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
+                                                  const char *name)
+{
+    IB_FTRACE_INIT(core_field_placeholder_bytestr);
+    ib_status_t rc = ib_data_add_bytestr_ex(dpi,
+                                            (const char *)name,
+                                            strlen(name),
+                                            (uint8_t *)core_placeholder_value,
+                                            0,
+                                            NULL);
+    if (rc != IB_OK) {
+        ib_log_error(dpi->pr->ib, 3,
+                     "Failed to generate \"%s\" placeholder field: %d",
+                     name, rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 
@@ -445,8 +491,9 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         char dtmp[64]; /// @todo Allocate size???
         char dn[512]; /// @todo Allocate size???
         struct tm *tm;
+        time_t t = (time_t)cfg->logtime->tv_sec;
 
-        tm = gmtime(&cfg->logtime->tv_sec);
+        tm = gmtime(&t);
         if (tm == 0) {
             ib_log_error(log->ib, 1,
                          "Could not create audit log filename template:"
@@ -621,7 +668,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                                              char *line,
                                              int *line_size)
 {
-    IB_FTRACE_INIT(core_audit_get_index_fields);
+    IB_FTRACE_INIT(core_audit_get_index_line);
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_tx_t *tx = log->tx;
@@ -916,11 +963,19 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                             (void *)name, klen,
                             (void *)pf, IB_HASH_FLAG_NOCASE);
         if (rc == IB_OK) {
+            /* Try dynamic lookup. */
+            if(ib_field_is_dynamic(*pf)) {
+                *pf = (ib_field_t *)ib_field_value_ex(*pf, (void *)subkey, sklen);
+                if (*pf != NULL) {
+                    IB_FTRACE_RET_STATUS(IB_OK);
+                }
+
+            }
             if ((*pf)->type == IB_FTYPE_LIST) {
                 ib_list_node_t *node;
 
                 /* Lookup the subkey value in the field list. */
-                IB_LIST_LOOP(ib_field_value_list(*pf), node) {
+                IB_LIST_LOOP(ib_field_value_list_ex(*pf, (void *)subkey, sklen), node) {
                     ib_field_t *sf = (ib_field_t *)ib_list_node_data(node);
 
                     if (   (sf->nlen == sklen)
@@ -942,7 +997,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 
 /**
  * @internal
- * Core data provider implementation to get a data all data fields.
+ * Core data provider implementation to get all data fields.
  *
  * @param dpi Data provider instance
  * @param list List which fields will be pushed
@@ -1040,6 +1095,9 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                                const char *fmt, va_list ap)
 {
     IB_PROVIDER_IFACE_TYPE(logger) *iface;
+    ib_core_cfg_t *main_core_config = NULL;
+    ib_context_t  *main_ctx;
+    ib_provider_t *main_lp;
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
     const char *uri = NULL;
@@ -1061,6 +1119,18 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
 
     // Get the current 'logger' provider interface
     iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
+
+    // If it's not the core log provider, we're done: we know nothing
+    // about it's data, so don't try to treat it as a file handle!
+    main_ctx = ib_context_main(ctx->ib);
+    rc = ib_context_module_config(
+        main_ctx, ib_core_module(), (void *)&main_core_config);
+    main_lp = main_core_config->pi.logger->pr;
+    if ( (main_lp != lpi->pr)
+         || (iface->logger != (ib_log_logger_fn_t)core_logger) ) {
+        iface->logger(lpi->data, level, prefix, file, line, fmt, ap);
+        return;
+    }
 
     // If no interface, do *something*
     //  Note that this should be the same as the default case
@@ -1423,59 +1493,56 @@ static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-#if 0
-static size_t ib_auditlog_gen_raw(ib_auditlog_part_t *part,
-                                  const uint8_t **chunk)
+static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
+                                         const uint8_t **chunk)
 {
-    ib_engine_t *ib = part->log->ib;
-    ib_list_node_t *node;
+    //ib_engine_t *ib = part->log->ib;
+    ib_sdata_t *sdata;
+    size_t dlen;
 
     if (part->gen_data == NULL) {
-        ib_list_t *list = (ib_list_t *)part->part_data;
+        ib_stream_t *stream = (ib_stream_t *)part->part_data;
 
         /* No data. */
-        if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, 4, "No data in audit log part: %s", part->name);
+        if (stream->slen == 0) {
             *chunk = NULL;
             part->gen_data = (void *)-1;
             return 0;
         }
 
-        node = ib_list_first(list);
-        /// @todo Probably node data needs to be ib_bytestr_t instead
-        *chunk = (const uint8_t *)ib_list_node_data(node);
+        sdata = (ib_sdata_t *)IB_LIST_FIRST(stream);
+        dlen = sdata->dlen;
+        *chunk = (const uint8_t *)sdata->data;
 
-        node = ib_list_node_next(node);
-        if (node != NULL) {
-            part->gen_data = node;
+        sdata = IB_LIST_NODE_NEXT(sdata);
+        if (sdata != NULL) {
+            part->gen_data = sdata;
         }
         else {
-            part->gen_data = (void *)1;
+            part->gen_data = (void *)-1;
         }
 
-        /// @todo Need length
-        return strlen(*(const char **)chunk);
+        return dlen;
     }
     else if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
         return 0;
     }
 
-    node = (ib_list_node_t *)part->gen_data;
-    *chunk = (const uint8_t *)ib_list_node_data(node);
+    sdata = (ib_sdata_t *)part->gen_data;
+    dlen = sdata->dlen;
+    *chunk = (const uint8_t *)sdata->data;
 
-    node = ib_list_node_next(node);
-    if (node != NULL) {
-        part->gen_data = node;
+    sdata = IB_LIST_NODE_NEXT(sdata);
+    if (sdata != NULL) {
+        part->gen_data = sdata;
     }
     else {
         part->gen_data = (void *)1;
     }
 
-    /// @todo Need length
-    return strlen(*(const char **)chunk);
+    return dlen;
 }
-#endif
 
 static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
@@ -1854,7 +1921,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
  */
 static void ib_timestamp(char *buf, ib_timeval_t *tv)
 {
-    struct tm *tm = localtime((time_t *)&tv->tv_sec);
+    time_t t = (time_t)tv->tv_sec;
+    struct tm *tm = localtime(&t);
 
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
     snprintf(buf + 19, 12, ".%04lu", (unsigned long)tv->tv_usec);
@@ -1970,7 +2038,7 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Get the list of events. */
-    rc = ib_clog_events_get(log->ctx, &list);
+    rc = ib_event_get_all(log->tx->epi, &list);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2202,6 +2270,30 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     IB_FTRACE_RET_STATUS(rc);
 }
 
+static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(ib_auditlog_add_part_http_request_body);
+    ib_tx_t *tx = log->tx;
+    ib_field_t *f;
+    ib_status_t rc;
+
+    /* Get the field storing the raw body via stream buffer. */
+    rc = ib_data_get(tx->dpi, "request_body", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Add the part to the auditlog. */
+    rc = ib_auditlog_part_add(log,
+                              "http-request-body",
+                              "application/octet-stream",
+                              ib_field_value_stream(f),
+                              ib_auditlog_gen_raw_stream,
+                              NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT(ib_auditlog_add_part_http_response_head);
@@ -2249,21 +2341,50 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
     IB_FTRACE_RET_STATUS(rc);
 }
 
+static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
+{
+    IB_FTRACE_INIT(ib_auditlog_add_part_http_response_body);
+    ib_tx_t *tx = log->tx;
+    ib_field_t *f;
+    ib_status_t rc;
+
+    /* Get the field storing the raw body via stream buffer. */
+    rc = ib_data_get(tx->dpi, "response_body", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Add the part to the auditlog. */
+    rc = ib_auditlog_part_add(log,
+                              "http-response-body",
+                              "application/octet-stream",
+                              ib_field_value_stream(f),
+                              ib_auditlog_gen_raw_stream,
+                              NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 /**
  * @internal
  * Handle writing the logevents.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
+                                             ib_state_event_type_t event,
                                              ib_tx_t *tx,
                                              void *cbdata)
 {
     IB_FTRACE_INIT(logevent_hook_postprocess);
+
+    assert(event == handle_postprocess_event);
+
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
     core_audit_cfg_t *cfg;
@@ -2286,7 +2407,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
             break;
         /* Only if events are present */
         case 2:
-            rc = ib_clog_events_get(tx->ctx, &events);
+            rc = ib_event_get_all(tx->epi, &events);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -2353,24 +2474,29 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADERS) {
         ib_auditlog_add_part_http_request_head(log);
     }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
+        ib_auditlog_add_part_http_request_body(log);
+    }
     if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADERS) {
         ib_auditlog_add_part_http_response_head(log);
     }
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
+        ib_auditlog_add_part_http_response_body(log);
+    }
 
-    /* Audit Provider */
-    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
-                                     corecfg->audit, &audit,
-                                     ib->mp, log);
+    /* Audit Log Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.audit, &audit,
+                                        tx->mp, log);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_AUDIT, rc);
+        ib_log_error(ib, 0, "Failed to create audit log provider instance: %d",
+                     rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_audit_provider_set_instance(tx->ctx, audit);
 
-    ib_clog_auditlog_write(tx->ctx);
+    ib_auditlog_write(audit);
 
     /* Events */
-    ib_clog_events_write(tx->ctx);
+    ib_event_write_all(tx->epi);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -2451,22 +2577,48 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
 
 /**
  * @internal
- * Initialize the parser.
+ * Handle the connection starting.
+ *
+ * Create the data provider instance and initialize the parser.
  *
  * @param ib Engine
+ * @param event Event type
  * @param conn Connection
  * @param cbdata Callback data
  *
  * @returns Status code
  */
-static ib_status_t parser_hook_init(ib_engine_t *ib,
-                                    ib_conn_t *conn,
-                                    void *cbdata)
+static ib_status_t core_hook_conn_started(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
+                                          ib_conn_t *conn,
+                                          void *cbdata)
 {
-    IB_FTRACE_INIT(parser_hook_init);
+    IB_FTRACE_INIT(core_hook_conn_started);
+
+    assert(event == conn_started_event);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    ib_core_cfg_t *corecfg;
     ib_status_t rc;
+
+    rc = ib_context_module_config(conn->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize core module: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Data Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &conn->dpi,
+                                        conn->mp, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create conn data provider instance: %d",
+                     rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
@@ -2487,16 +2639,21 @@ static ib_status_t parser_hook_init(ib_engine_t *ib,
  * Handle a new connection.
  *
  * @param ib Engine
+ * @param event Event type
  * @param conn Connection
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_connect(ib_engine_t *ib,
+                                       ib_state_event_type_t event,
                                        ib_conn_t *conn,
                                        void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_connect);
+
+    assert(event == handle_connect_event);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -2551,16 +2708,21 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
  * Handle a disconnection.
  *
  * @param ib Engine
+ * @param event Event type
  * @param conn Connection
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
                                           ib_conn_t *conn,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_disconnect);
+
+    assert(event == handle_disconnect_event);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -2584,16 +2746,21 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
  * Handle the request header.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_req_header(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
                                           ib_tx_t *tx,
                                           void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_req_header);
+
+    assert(event == request_headers_event);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_field_t *f;
@@ -2634,16 +2801,21 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
  * Handle the response header.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
+                                           ib_state_event_type_t event,
                                            ib_tx_t *tx,
                                            void *cbdata)
 {
     IB_FTRACE_INIT(parser_hook_resp_header);
+
+    assert(event == request_headers_event);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -3270,22 +3442,26 @@ static ib_status_t filter_buffer(ib_filter_t *f,
  * Configure the filter controller.
  *
  * @param ib Engine
+ * @param event Event type
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t filter_ctl_config(ib_engine_t *ib,
+                                     ib_state_event_type_t event,
                                      ib_tx_t *tx,
                                      void *cbdata)
 {
     IB_FTRACE_INIT(filter_ctl_config);
+    assert(event == handle_context_tx_event);
+
     ib_status_t rc = IB_OK;
 
     /// @todo Need an API for this.
     tx->fctl->filters = tx->ctx->filters;
     tx->fctl->fbuffer = (ib_filter_t *)cbdata;
-    ib_fctl_meta(tx->fctl, IB_STREAM_FLUSH);
+    ib_fctl_meta_add(tx->fctl, IB_STREAM_FLUSH);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3328,7 +3504,6 @@ static ib_status_t core_tfn_lowercase(void *fndata,
 
     if (modified != 0) {
         (*pflags) |= IB_TFN_FMODIFIED;
-        (*data_out)[*dlen_out] = '\0';
     }
 
     return IB_OK;
@@ -3428,57 +3603,185 @@ static ib_status_t core_tfn_trim(void *fndata,
 }
 
 
-/* -- Core Hook Handlers -- */
+/* -- Core Data Processors -- */
 
-/* Placeholder for as-of-yet-initialized bytestring fields. */
-static const uint8_t core_placeholder_value[] = {
-    '_', '_', 'c', 'o', 'r', 'e', '_', '_',
-    'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
-    'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
-    'u', 'e', '_', '_',  0,   0,   0,   0
-};
-
-static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
-                                                  const char *name)
+/**
+ * @internal
+ * Process the transaction data.
+ *
+ * This is currently used to build the request body
+ * stream buffer field.
+ *
+ * @param ib Engine
+ * @param event Event type.
+ * @param txdata Transaction data
+ * @param cbdata Unused
+ *
+ * @return Status code
+ */
+static ib_status_t process_txdata_in(ib_engine_t *ib,
+                                     ib_state_event_type_t event,
+                                     ib_txdata_t *txdata,
+                                     void *cbdata)
 {
-    IB_FTRACE_INIT(core_field_gen_bytestr);
-    ib_status_t rc = ib_data_add_bytestr_ex(dpi,
-                                            (const char *)name,
-                                            strlen(name),
-                                            (uint8_t *)core_placeholder_value,
-                                            0,
-                                            NULL);
-    if (rc != IB_OK) {
-        ib_log_error(dpi->pr->ib, 3,
-                     "Failed to generate \"%s\" placeholder field: %d",
-                     name, rc);
+    IB_FTRACE_INIT(process_txdata_in);
+
+    assert(event == tx_data_in_event);
+
+    ib_tx_t *tx;
+    ib_core_cfg_t *modcfg;
+    ib_field_t *reqbody;
+    uint8_t *buf;
+    ib_status_t rc;
+
+    /* Only interested in the body. */
+    if (txdata->dtype != IB_DTYPE_HTTP_BODY) {
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+    tx = txdata->tx;
+
+    /* Get the module config. */
+    rc = ib_context_module_config(tx->ctx,
+                                  IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
+                     MODULE_NAME_STR, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_get(tx->dpi, "request_body", &reqbody);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    buf = (uint8_t *)ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+    if (buf == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_field_buf_add(reqbody, txdata->dtype, buf, txdata->dlen);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
  * @internal
- * Handle the transaction starting.
+ * Process the transaction data.
  *
- * Setup placeholders for all of the core fields. This
- * allows other modules to refer to the field prior to it
- * it being initialized.
+ * This is currently used to build the response body
+ * stream buffer field.
  *
  * @param ib Engine
+ * @param event Event type
+ * @param txdata Transaction data
+ * @param cbdata Unused
+ *
+ * @return Status code
+ */
+static ib_status_t process_txdata_out(ib_engine_t *ib,
+                                      ib_state_event_type_t event,
+                                      ib_txdata_t *txdata,
+                                      void *cbdata)
+{
+    IB_FTRACE_INIT(process_txdata_out);
+
+    assert(event == tx_data_out_event);
+
+    ib_tx_t *tx;
+    ib_core_cfg_t *modcfg;
+    ib_field_t *resbody;
+    uint8_t *buf;
+    ib_status_t rc;
+
+    /* Only interested in the body. */
+    if (   (txdata->dtype != IB_DTYPE_HTTP_BODY)
+        && (txdata->dlen > 0)) {
+        ib_log_debug(ib, 9, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    tx = txdata->tx;
+
+    /* Get the module config. */
+    rc = ib_context_module_config(tx->ctx,
+                                  IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
+                     MODULE_NAME_STR, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_get(tx->dpi, "response_body", &resbody);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    buf = (uint8_t *)ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+    if (buf == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_field_buf_add(resbody, txdata->dtype, buf, txdata->dlen);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/* -- Core Hook Handlers -- */
+
+/**
+ * @internal
+ * Handle the transaction starting.
+ *
+ * Create the transaction provider instances.  And setup placeholders
+ * for all of the core fields. This allows other modules to refer to
+ * the field prior to it it being initialized.
+ *
+ * @param ib Engine
+ * @param event Event type.
  * @param tx Transaction
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t core_hook_tx_started(ib_engine_t *ib,
+                                        ib_state_event_type_t event,
                                         ib_tx_t *tx,
                                         void *cbdata)
 {
     IB_FTRACE_INIT(core_hook_tx_started);
+
+    assert(event == tx_started_event);
+
+    ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
+    rc = ib_context_module_config(tx->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+
+    /* Data Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &tx->dpi,
+                                        tx->mp, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create tx data provider instance: %d",
+                     rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Logevent Provider Instance */
+    rc = ib_provider_instance_create_ex(ib, corecfg->pr.logevent, &tx->epi,
+                                        tx->mp, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to create logevent provider instance: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Core Request Fields */
+    rc = ib_data_add_stream(tx->dpi, "request_body", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = core_field_placeholder_bytestr(tx->dpi, "request_line");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -3566,6 +3869,11 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     }
 
     /* Core Response Fields */
+    rc = ib_data_add_stream(tx->dpi, "response_body", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = core_field_placeholder_bytestr(tx->dpi, "response_line");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -3884,6 +4192,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     IB_FTRACE_INIT(core_dir_param1);
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
+    ib_core_cfg_t *corecfg;
 
     if (strcasecmp("InspectionEngine", name) == 0) {
         ib_log_debug(ib, 4, "TODO: Handle Directive: %s \"%s\"", name, p1);
@@ -4003,6 +4312,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         char *absfile;
         ib_module_t *m;
 
@@ -4010,7 +4320,16 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             absfile = (char *)p1;
         }
         else {
-            rc = core_abs_module_path(ib, X_MODULE_BASE_PATH, p1, &absfile);
+            rc = ib_context_module_config(ctx,
+                                          ib_core_module(),
+                                          (void *)&corecfg);
+
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            rc = core_abs_module_path(ib, corecfg->module_base_path, p1, &absfile);
+
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -4047,6 +4366,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("SensorId", name) == 0) {
+        union {
+            uint64_t uint64;
+            uint32_t uint32[2];
+        } reduce;
+
         /* Store the ASCII version for logging */
         ib->sensor_id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
 
@@ -4069,20 +4393,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_id_str);
 
         /* Generate a 4byte hash id to use it for transaction id generations */
-        uint64_t first_reduce = 0;
-        uint8_t *ptr = (uint8_t *)&ib->sensor_id;
-        uint8_t *result = (uint8_t *)&first_reduce;
+        reduce.uint64 = ib->sensor_id.uint64[0] ^
+                        ib->sensor_id.uint64[1];
 
-        int i = 0;
-        for (i = 0; i < 8; i++) {
-            result[i] = ptr[i] ^ ptr[i + 8];
-        }
-
-        ptr = (uint8_t *)&first_reduce;
-        result = (uint8_t *)&ib->sensor_id_hash;
-        for (i = 0; i < 4; i++) {
-            result[i] = ptr[i] ^ ptr[i + 8];
-        }
+        ib->sensor_id_hash = reduce.uint32[0] ^
+                             reduce.uint32[1];
 
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -4121,6 +4436,35 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         ib_log_debug(ib, 7, "%s: %s", name, site->id_str);
         IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (strcasecmp("ModuleBasePath", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+
+        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3, "Could not set ModuleBasePath %s", p1);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        corecfg->module_base_path = p1;
+        ib_log_debug(ib, 7, "ModuleBasePath: %s", p1);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (strcasecmp("RuleBasePath", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+
+        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3, "Could not set RuleBasePath %s", p1);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        corecfg->rule_base_path = p1;
+        ib_log_debug(ib, 7, "RuleBasePath: %s", p1);
+        IB_FTRACE_RET_STATUS(IB_OK);
+
     }
 
     ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
@@ -4176,11 +4520,12 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-static void core_set_value(ib_context_t *ctx,
-                           ib_ftype_t type,
-                           const char *name,
-                           const char *val)
+static ib_status_t core_set_value(ib_context_t *ctx,
+                                  ib_ftype_t type,
+                                  const char *name,
+                                  const char *val)
 {
+    IB_FTRACE_INIT(core_set_value);
     ib_engine_t *ib = ctx->ib;
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi;
@@ -4195,32 +4540,58 @@ static void core_set_value(ib_context_t *ctx,
 
     if (strcasecmp("parser", name) == 0) {
         if (strcmp(MODULE_NAME_STR, corecfg->parser) == 0) {
-            return;
+            IB_FTRACE_RET_STATUS(IB_OK);
         }
-        /* Lookup/set parser provider. */
+        /* Lookup/set parser provider instance. */
         rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
                                          val, &pi,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
             ib_log_error(ib, 0, "Failed to create %s provider instance: %d",
                          IB_PROVIDER_TYPE_PARSER, rc);
-            return;
+            IB_FTRACE_RET_STATUS(rc);
         }
         ib_parser_provider_set_instance(ctx, pi);
         pi = ib_parser_provider_get_instance(ctx);
     }
     else if (strcasecmp("audit", name) == 0) {
-        /* Lookup/set audit provider. */
-        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_AUDIT,
-                                         val, &pi,
-                                         ib->mp, NULL);
+        /* Lookup the audit log provider. */
+        rc = ib_provider_lookup(ib,
+                                IB_PROVIDER_TYPE_AUDIT,
+                                val,
+                                &corecfg->pr.audit);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %d",
-                         IB_PROVIDER_TYPE_AUDIT, rc);
-            return;
+            ib_log_error(ib, 0, "Failed to lookup %s audit log provider: %d",
+                         val, rc);
+            IB_FTRACE_RET_STATUS(rc);
         }
-        ib_audit_provider_set_instance(ctx, pi);
     }
+    else if (strcasecmp("data", name) == 0) {
+        /* Lookup the data provider. */
+        rc = ib_provider_lookup(ib,
+                                IB_PROVIDER_TYPE_DATA,
+                                val,
+                                &corecfg->pr.data);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 0, "Failed to lookup %s data provider: %d",
+                         val, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (strcasecmp("logevent", name) == 0) {
+        /* Lookup the logevent provider. */
+        rc = ib_provider_lookup(ib,
+                                IB_PROVIDER_TYPE_LOGEVENT,
+                                val,
+                                &corecfg->pr.logevent);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 0, "Failed to lookup %s logevent provider: %d",
+                         val, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 
@@ -4244,7 +4615,7 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT(core_dir_param2);
     ib_engine_t *ib = cp->ib;
-    //ib_status_t rc;
+    ib_status_t rc;
 
     if (strcasecmp("Set", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
@@ -4268,7 +4639,8 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        core_set_value(ctx, type, p1, p2);
+        rc = core_set_value(ctx, type, p1, p2);
+        IB_FTRACE_RET_STATUS(rc);
     }
     else {
         ib_log_error(ib, 1, "Unhandled directive: %s %s %s", name, p1, p2);
@@ -4449,6 +4821,21 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_parts_map
     ),
 
+    /* Search Paths - Modules */
+    IB_DIRMAP_INIT_PARAM1(
+        "ModuleBasePath",
+        core_dir_param1,
+        NULL
+    ),
+
+    /* Search Paths - Rules */
+    IB_DIRMAP_INIT_PARAM1(
+        "RuleBasePath",
+        core_dir_param1,
+        NULL
+    ),
+
+
     /* End */
     IB_DIRMAP_INIT_LAST
 };
@@ -4473,7 +4860,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_provider_t *core_audit_provider;
     ib_provider_t *core_data_provider;
     ib_provider_inst_t *logger;
-    ib_provider_inst_t *logevent;
     ib_provider_inst_t *parser;
     ib_filter_t *fbuffer;
     ib_status_t rc;
@@ -4485,6 +4871,9 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_log_error(ib, 0, "Failed to fetch core module config: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    corecfg->module_base_path = X_MODULE_BASE_PATH;
+    corecfg->rule_base_path = X_RULE_BASE_PATH;
 
     /* Define transformations. */
     ib_tfn_create(ib, "lowercase", core_tfn_lowercase, NULL, NULL);
@@ -4566,29 +4955,37 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_log_error(ib, 0, "Failed to register buffer filter: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_hook_register(ib, handle_context_tx_event,
-                     (ib_void_fn_t)filter_ctl_config, fbuffer);
+    ib_tx_hook_register(ib, handle_context_tx_event,
+                        filter_ctl_config, fbuffer);
 
+
+    /* Register data event handlers. */
+    ib_txdata_hook_register(ib, tx_data_in_event,
+                            process_txdata_in,
+                            NULL);
+    ib_txdata_hook_register(ib, tx_data_out_event,
+                            process_txdata_out,
+                            NULL);
 
     /* Register parser hooks. */
-    ib_hook_register(ib, conn_started_event,
-                     (ib_void_fn_t)parser_hook_init, NULL);
-    ib_hook_register(ib, handle_connect_event,
-                     (ib_void_fn_t)parser_hook_connect, NULL);
-    ib_hook_register(ib, handle_disconnect_event,
-                     (ib_void_fn_t)parser_hook_disconnect, NULL);
-    ib_hook_register(ib, tx_started_event,
-                     (ib_void_fn_t)core_hook_tx_started, NULL);
+    ib_conn_hook_register(ib, conn_started_event,
+                          core_hook_conn_started, NULL);
+    ib_conn_hook_register(ib, handle_connect_event,
+                          parser_hook_connect, NULL);
+    ib_conn_hook_register(ib, handle_disconnect_event,
+                          parser_hook_disconnect, NULL);
+    ib_tx_hook_register(ib, tx_started_event,
+                        core_hook_tx_started, NULL);
     /// @todo Need the parser to parse headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
     //ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
-    ib_hook_register(ib, request_headers_event,
-                     (ib_void_fn_t)parser_hook_req_header, NULL);
-    ib_hook_register(ib, response_headers_event,
-                     (ib_void_fn_t)parser_hook_resp_header, NULL);
+    ib_tx_hook_register(ib, request_headers_event,
+                        parser_hook_req_header, NULL);
+    ib_tx_hook_register(ib, response_headers_event,
+                        parser_hook_resp_header, NULL);
 
     /* Register logevent hooks. */
-    ib_hook_register(ib, handle_postprocess_event,
-                     (ib_void_fn_t)logevent_hook_postprocess, NULL);
+    ib_tx_hook_register(ib, handle_postprocess_event,
+                        logevent_hook_postprocess, NULL);
 
     /* Define the data field provider API */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_DATA,
@@ -4626,15 +5023,38 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
     ib_log_provider_set_instance(ib->ctx, logger);
 
-    /* Lookup/set default logevent provider. */
-    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGEVENT,
-                                     corecfg->logevent, &logevent,
-                                     ib->mp, NULL);
+    /* Lookup the core data provider. */
+    rc = ib_provider_lookup(ib,
+                            IB_PROVIDER_TYPE_DATA,
+                            IB_DSTR_CORE,
+                            &corecfg->pr.data);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_LOGEVENT, rc);
+        ib_log_error(ib, 0, "Failed to lookup %s data provider: %d",
+                     IB_DSTR_CORE, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_logevent_provider_set_instance(ib->ctx, logevent);
+
+    /* Lookup the core audit log provider. */
+    rc = ib_provider_lookup(ib,
+                            IB_PROVIDER_TYPE_AUDIT,
+                            IB_DSTR_CORE,
+                            &corecfg->pr.audit);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to lookup %s audit log provider: %d",
+                     IB_DSTR_CORE, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Lookup the core logevent provider. */
+    rc = ib_provider_lookup(ib,
+                            IB_PROVIDER_TYPE_LOGEVENT,
+                            IB_DSTR_CORE,
+                            &corecfg->pr.logevent);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to lookup %s logevent provider: %d",
+                     IB_DSTR_CORE, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Lookup/set default parser provider if not the "core" parser. */
     if (strcmp(MODULE_NAME_STR, corecfg->parser) != 0) {
@@ -4642,10 +5062,32 @@ static ib_status_t core_init(ib_engine_t *ib,
                                          corecfg->parser, &parser,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %d", IB_PROVIDER_TYPE_PARSER, rc);
+            ib_log_error(ib, 0, "Failed to create %s provider instance: %d",
+                         IB_DSTR_CORE, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_parser_provider_set_instance(ib->ctx, parser);
+    }
+
+    /* Initialize the core rule engine */
+    rc = ib_rule_engine_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize rule engine: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the core operators */
+    rc = ib_core_operators_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize core operators: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the core operators */
+    rc = ib_core_actions_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize core actions: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -4660,46 +5102,46 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_handler,
-        (const uintptr_t)MODULE_NAME_STR
+        MODULE_NAME_STR
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER ".log_level",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_level,
         4
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER ".log_uri",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_uri,
         ""
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER ".log_handler",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         log_handler,
-        (const uintptr_t)MODULE_NAME_STR
+        MODULE_NAME_STR
     ),
 
     /* Logevent */
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGEVENT,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         logevent,
-        (const uintptr_t)MODULE_NAME_STR
+        MODULE_NAME_STR
     ),
 
     /* Parser */
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_PARSER,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         parser,
         MODULE_NAME_STR
     ),
@@ -4708,14 +5150,14 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         "buffer_req",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         buffer_req,
         0
     ),
     IB_CFGMAP_INIT_ENTRY(
         "buffer_res",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         buffer_res,
         0
     ),
@@ -4724,63 +5166,63 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         "audit_engine",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         audit_engine,
         0
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_index",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_index,
         "ironbee-index.log"
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dmode",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_dmode,
         0700
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_fmode",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_fmode,
         0600
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_parts",
         IB_FTYPE_NUM,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_parts,
         IB_ALPARTS_DEFAULT
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dir",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_dir,
         "/var/log/ironbee"
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_sdir_fmt",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_sdir_fmt,
         ""
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_index_fmt",
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         auditlog_index_fmt,
         IB_LOGFORMAT_DEFAULT
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_AUDIT,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         audit,
         MODULE_NAME_STR
     ),
@@ -4789,7 +5231,7 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_DATA,
         IB_FTYPE_NULSTR,
-        &core_global_cfg,
+        ib_core_cfg_t,
         data,
         MODULE_NAME_STR
     ),
@@ -4827,6 +5269,13 @@ static ib_status_t core_ctx_init(ib_engine_t *ib,
     ib_core_cfg_t *main_core_config;
     ib_provider_t *main_lp;
     FILE *orig_fp;
+
+    /* Initialize the rule engine for the context */
+    rc = ib_rule_engine_ctx_init(ib, mod, ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize rule engine contxt: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     // Get the main context config, it's config, and it's logger
     main_ctx = ib_context_main(ib);

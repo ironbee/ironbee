@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -112,12 +113,18 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  *
  * @param name Configuration entry name
  * @param type Configuration entry data type
- * @param base Base address of the structure holding the values
+ * @param basetype Type of structure holding values
  * @param field Field name in structure holding values
  * @param defval Default value of entry
  */
-#define IB_CFGMAP_INIT_ENTRY(name,type,base,field,defval) \
-    { (name), (type), (off_t)(((uintptr_t)&((base)->field)) - ((uintptr_t)(base))), sizeof((base)->field), (uintptr_t)(defval) }
+#define IB_CFGMAP_INIT_ENTRY(name,type,basetype,field,defval) \
+    { \
+        (name), \
+        (type), \
+        offsetof(basetype, field), \
+        sizeof(((basetype*)(0))->field), \
+        (const uintptr_t)(defval) \
+    }
 
 /**
  * Required as the last entry.

@@ -48,7 +48,7 @@ TEST(TestIBUtilHash, test_hash_create)
     atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     rc = ib_hash_create(&ht, mp);
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
@@ -68,7 +68,7 @@ TEST(TestIBUtilHash, test_hash_set_and_get)
 
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, 0);
@@ -112,7 +112,7 @@ TEST(TestIBUtilHash, test_hash_nocase)
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, IB_HASH_FLAG_NOCASE);
@@ -168,7 +168,7 @@ TEST(TestIBUtilHash, test_hash_set_and_get_ex)
 
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, 0);
@@ -221,7 +221,7 @@ TEST(TestIBUtilHash, test_hash_get_ex_nocase)
 
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, IB_HASH_FLAG_NOCASE);
@@ -274,10 +274,9 @@ TEST(TestIBUtilHash, test_hashfunc_djb2)
 {
     unsigned int hash1 = 0;
     unsigned int hash2 = 0;
-    ib_status_t rc;
 
     atexit(ib_shutdown);
-    rc = ib_initialize();
+    ib_initialize();
 
     // Test with no case sensitive
     hash1 = ib_hashfunc_djb2("Key", 3,
@@ -309,7 +308,7 @@ TEST(TestIBUtilHash, test_hash_resizing)
 
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, IB_HASH_FLAG_NOCASE);
@@ -386,7 +385,7 @@ TEST(TestIBUtilHash, test_hash_iterating)
 
     rc = ib_initialize();
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
+    rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_list_create(&list, mp);

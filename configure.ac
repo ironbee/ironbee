@@ -16,6 +16,38 @@ AM_INIT_AUTOMAKE([foreign])
 
 dnl Checks for programs.
 dnl If CFLAGS and CXXFLAGS are blank these macro's fill in defaults we don't want that
+OS=`uname -s`
+
+#We need to set/detect CC and CPP piror to calling these macros as AC_PROG_LIBTOOL etc depend on them.
+case "$OS" in
+        FreeBSD*)
+                AC_PATH_PROG(GCC46BIN,gcc46,no)
+                AC_PATH_PROG(GCC47BIN,gcc47,no)
+                AC_PATH_PROG(GCC45BIN,gcc45,no)
+                if test "$GCC45BIN" != "no"; then
+                    CC="gcc45"
+                    CPP="cpp45"
+                    CXX="g++45"
+                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc45"
+                elif test "$GCC46BIN" != "no"; then
+                    CC="gcc46"
+                    CPP="cpp46"
+                    CXX="g++46"
+                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc46"
+                elif test "$GCC47BIN" != "no"; then
+                    CC="gcc47"
+                    CPP="cpp47"
+                    CXX="g++47"
+                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc47"
+                else
+                    echo
+                    echo "   You must have gcc45/gcc46/gcc47 to compile on FreeBSD 7/8/9"
+                    echo
+                    exit 1
+                fi
+        ;;
+esac
+
 save_CFLAGS="${CFLAGS}"
 save_CXXFLAGS="${CXXFLAGS}"
 AC_PROG_CC
@@ -52,25 +84,27 @@ if test "$GCC" = "yes"; then
     GCC_CHARACTERISTICS()
 fi
 
-# Determine the OS 
+# Check for -Wno-null-dereference
+AC_MSG_CHECKING(for -Wno-null-dereference support)    
+save_CPPFLAGS="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} -Wno-null-dereference"
+AC_TRY_COMPILE(,,
+  [have_no_warn_null_deref=yes],[have_no_warn_null_deref=no])
+CPPFLAGS="${save_CPPFLAGS}"
+if test "$have_no_warn_null_deref" == "yes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([HAVE_NO_WARN_NULL_DEREF], [test "$have_no_warn_null_deref" = "yes"])
+
 AC_MSG_CHECKING([OS])
-OS=`uname -s`
 case "$OS" in
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD) 
                 OS_FREEBSD="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/local/include/htp"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
-                AC_PATH_PROG([GCC45BIN], [gcc45],[yes],[no])
-                if test "$GCC45BIN" = "yes"; then
-                    CC="gcc45"
-                    CPP="cpp45"
-                else
-                    echo
-                    echo "   You must have gcc45 to compile on FreeBSD 7/8"
-                    echo
-                    exit 1
-                fi
         ;;
         Darwin*)
                 AC_MSG_RESULT(Darwin) 
@@ -93,6 +127,13 @@ case "$OS" in
 esac
 AM_CONDITIONAL([FREEBSD], [test "$OS_FREEBSD" = "true"])
 AM_CONDITIONAL([DARWIN], [test "$OS_DARWIN" = "true"])
+
+#We need to call the iconv macro after OS detection for FreeBSD to work properly
+sinclude(acinclude/iconv.m4)
+sinclude(acinclude/lib-ld.m4)
+sinclude(acinclude/lib-link.m4)
+sinclude(acinclude/lib-prefix.m4)
+AM_ICONV
 
 dnl Checks for library functions.
 
@@ -134,18 +175,15 @@ fi
 
 ### CLI
 AC_ARG_ENABLE(cli,
-              AS_HELP_STRING([--enable-cli],
-                             [Enable the cli utility.]),
-[
-  if test "$enableval" != "no"; then
-    util_cli=1
-  else
-    util_cli=0
-  fi
-],
-[
-  util_cli=0
-])
+              AS_HELP_STRING([--disable-cli],
+                             [Disable the cli utility (enabled by default).]),[enable_cli_utility="$enableval"],[enable_cli_utility=yes])
+AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
+
+### CPP
+AC_ARG_ENABLE(cpp,
+              AS_HELP_STRING([--enable-cpp],
+                             [Enabel C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
+AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
 
 ### Ragel
 AC_ARG_WITH([ragel],
@@ -219,6 +257,7 @@ sinclude(acinclude/apr.m4)
 sinclude(acinclude/apu.m4)
 sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
+sinclude(acinclude/geoip.m4)
 
 # Required libs
 CHECK_HTP()
@@ -230,10 +269,14 @@ CHECK_APR()
 CHECK_APU()
 CHECK_HTTPD()
 CHECK_TS()
+CHECK_GEOIP()
 
 #If we are not building plugins bail
 if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
-    AC_MSG_ERROR("No plugins enabled exiting")
+    echo "**********************************************"
+    echo "* Warning! No plugins enabled!               *"
+    echo "* We will only be building the cli test tool.*"
+    echo "**********************************************"
 fi
   
 dnl Optional build modules
@@ -296,6 +339,10 @@ AC_CONFIG_FILES([plugins/trafficserver/Makefile])
 
 if test "$util_cli" != 0; then
 AC_CONFIG_FILES([cli/Makefile])
+fi
+
+if test "$cpp_code" != 0; then
+AC_CONFIG_FILES([cpp/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])

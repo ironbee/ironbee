@@ -20,6 +20,7 @@
  * @brief IronBee
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -41,6 +42,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/module.h>
+#include <ironbee/core.h>
 #include <ironbee/plugin.h>
 
 #include "ironbee_private.h"
@@ -63,6 +65,49 @@ const ib_default_string_t ib_default_string = {
 typedef struct ib_field_callback_data_t ib_field_callback_data_t;
 #endif
 
+/**
+ * @internal
+ * List of callback data types for event id to type lookups.
+ */
+static const ib_state_hook_type_t ib_state_event_hook_types[] = {
+    /* Engine States */
+    IB_STATE_HOOK_CONN,     /**< conn_started_event */
+    IB_STATE_HOOK_CONN,     /**< conn_finished_event */
+    IB_STATE_HOOK_TX,       /**< tx_started_event */
+    IB_STATE_HOOK_TX,       /**< tx_process_event */
+    IB_STATE_HOOK_TX,       /**< tx_finished_event */
+
+    /* Handler States */
+    IB_STATE_HOOK_CONN,     /**< handle_context_conn_event */
+    IB_STATE_HOOK_CONN,     /**< handle_connect_event */
+    IB_STATE_HOOK_TX,       /**< handle_context_tx_event */
+    IB_STATE_HOOK_TX,       /**< handle_request_headers_event */
+    IB_STATE_HOOK_TX,       /**< handle_request_event */
+    IB_STATE_HOOK_TX,       /**< handle_response_headers_event */
+    IB_STATE_HOOK_TX,       /**< handle_response_event */
+    IB_STATE_HOOK_CONN,     /**< handle_disconnect_event */
+    IB_STATE_HOOK_TX,       /**< handle_postprocess_event */
+
+    /* Plugin States */
+    IB_STATE_HOOK_NULL,     /**< cfg_started_event */
+    IB_STATE_HOOK_NULL,     /**< cfg_finished_event */
+    IB_STATE_HOOK_CONN,     /**< conn_opened_event */
+    IB_STATE_HOOK_CONNDATA, /**< conn_data_in_event */
+    IB_STATE_HOOK_CONNDATA, /**< conn_data_out_event */
+    IB_STATE_HOOK_CONN,     /**< conn_closed_event */
+
+    /* Parser States */
+    IB_STATE_HOOK_TXDATA,   /**< tx_data_in_event */
+    IB_STATE_HOOK_TXDATA,   /**< tx_data_out_event */
+    IB_STATE_HOOK_TX,       /**< request_started_event */
+    IB_STATE_HOOK_TX,       /**< request_headers_event */
+    IB_STATE_HOOK_TX,       /**< request_body_event */
+    IB_STATE_HOOK_TX,       /**< request_finished_event */
+    IB_STATE_HOOK_TX,       /**< response_started_event */
+    IB_STATE_HOOK_TX,       /**< response_headers_event */
+    IB_STATE_HOOK_TX,       /**< response_body_event */
+    IB_STATE_HOOK_TX        /**< response_finished_event */
+};
 
 /* -- Internal Routines -- */
 
@@ -118,18 +163,198 @@ static ib_status_t _ib_context_get(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t _ib_check_hook(
+    ib_engine_t* ib,
+    ib_state_event_type_t event,
+    ib_state_hook_type_t hook_type
+)
+{
+    IB_FTRACE_INIT(_ib_check_hook);
+    static const size_t num_events =
+        sizeof(ib_state_event_hook_types) / sizeof(ib_state_hook_type_t);
+    ib_state_hook_type_t expected_hook_type;
+
+    if (event > num_events) {
+        ib_log_error( ib, 1,
+            "Event/hook mismatch: Unknown event type: %d", event
+        );
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    expected_hook_type = ib_state_event_hook_types[event];
+    if ( expected_hook_type != hook_type ) {
+        ib_log_error( ib, 1,
+            "Event/hook mismatch: Expected %d but received %d",
+            expected_hook_type, hook_type
+        );
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t _ib_register_hook(
+    ib_engine_t* ib,
+    ib_state_event_type_t event,
+    ib_hook_t* hook
+)
+{
+    IB_FTRACE_INIT(_ib_register_hook);
+
+    ib_hook_t *last = ib->ectx->hook[event];
+
+    /* Insert the hook at the end of the list */
+    if (last == NULL) {
+        ib_log(ib, 9, "Registering %s hook: %p",
+               ib_state_event_name(event),
+               hook->callback.as_void);
+
+        ib->ectx->hook[event] = hook;
+
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    while (last->next != NULL) {
+        last = last->next;
+    }
+
+    last->next = hook;
+
+    ib_log(ib, 9, "Registering %s hook after %p: %p",
+           ib_state_event_name(event), last->callback,
+           hook->callback.as_void);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t _ib_unregister_hook(
+    ib_engine_t* ib,
+    ib_state_event_type_t event,
+    ib_void_fn_t cb
+)
+{
+    IB_FTRACE_INIT(_ib_unregister_hook);
+    ib_hook_t *prev = NULL;
+    ib_hook_t *hook = ib->ectx->hook[event];
+
+    /* Remove the first matching hook */
+    while (hook != NULL) {
+        if (hook->callback.as_void == cb) {
+            if (prev == NULL) {
+                ib->ectx->hook[event] = hook->next;
+            }
+            else {
+                prev->next = hook->next;
+            }
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+        prev = hook;
+        hook = hook->next;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+static ib_status_t _ib_register_hook_context(
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    ib_hook_t* hook
+)
+{
+    IB_FTRACE_INIT(_ib_register_hook_context);
+    ib_engine_t *ib = ctx->ib;
+    ib_hook_t *last = ctx->hook[event];
+
+    ib_log_debug(ib, 7, "_ib_register_hook_context(%p,%d,%p,%p)",
+                 ctx, event, (intptr_t)(hook->callback.as_void), hook->cdata);
+
+    /* Insert the hook at the end of the list */
+    if (last == NULL) {
+        ib_log(ib, 9, "Registering %s ctx hook: %p",
+               ib_state_event_name(event), hook->callback.as_void);
+
+        ctx->hook[event] = hook;
+
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    while (last->next != NULL) {
+        last = last->next;
+    }
+
+    ib_log(ib, 9, "Registering %s ctx hook: %p",
+           ib_state_event_name(event), hook->callback.as_void);
+
+    last->next = hook;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t _ib_unregister_hook_context(
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    ib_void_fn_t cb
+)
+{
+    IB_FTRACE_INIT(_ib_unregister_hook_context);
+    ib_hook_t *prev = NULL;
+    ib_hook_t *hook = ctx->hook[event];
+
+    /* Remove the first matching hook */
+    while (hook != NULL) {
+        if (hook->callback.as_void == cb) {
+            if (prev == NULL) {
+                ctx->hook[event] = hook->next;
+            }
+            else {
+                prev->next = hook->next;
+            }
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+        prev = hook;
+        hook = hook->next;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+#define CALL_HOOKS(OUT_RC, FIRST_HOOK, EVENT, WHICH_CB, IB, PARAM) \
+    { \
+        *(OUT_RC) = IB_OK; \
+        for (ib_hook_t* hook_ = (FIRST_HOOK); hook_ != NULL; hook_ = hook_->next ) { \
+            ib_status_t rc_ = hook_->callback.WHICH_CB((IB), (EVENT), (PARAM), hook_->cdata); \
+            if (rc_ != IB_OK) { \
+                ib_log_error((IB), 4, "Hook returned error: %s=%d", \
+                             ib_state_event_name((EVENT)), rc_); \
+                (*OUT_RC) = rc_; \
+                break; \
+             } \
+        } \
+    }
+
+#define CALL_NULL_HOOKS(OUT_RC, FIRST_HOOK, EVENT, WHICH_CB, IB) \
+    { \
+        *(OUT_RC) = IB_OK; \
+        for (ib_hook_t* hook_ = (FIRST_HOOK); hook_ != NULL; hook_ = hook_->next ) { \
+            ib_status_t rc_ = hook_->callback.WHICH_CB((IB), (EVENT), hook_->cdata); \
+            if (rc_ != IB_OK) { \
+                ib_log_error((IB), 4, "Hook returned error: %s=%d", \
+                             ib_state_event_name((EVENT)), rc_); \
+                (*OUT_RC) = rc_; \
+                break; \
+             } \
+        } \
+    }
 
 /* -- Main Engine Routines -- */
 
 ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 {
-    IB_FTRACE_INIT(ib_create);
+    IB_FTRACE_INIT(ib_engine_create);
     ib_mpool_t *pool;
     ib_plugin_t *p = (ib_plugin_t *)plugin;
     ib_status_t rc;
 
     /* Create primary memory pool */
-    rc = ib_mpool_create(&pool, NULL);
+    rc = ib_mpool_create(&pool, "Engine", NULL);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -144,13 +369,21 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     (*pib)->mp = pool;
 
     /* Create temporary memory pool */
-    rc = ib_mpool_create(&((*pib)->temp_mp), pool);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&((*pib)->temp_mp),
+                            "Engine/Temp",
+                            (*pib)->mp,
+                            8192);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the config memory pool */
-    rc = ib_mpool_create(&((*pib)->config_mp), (*pib)->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&((*pib)->config_mp),
+                            "Engine/Config",
+                            (*pib)->mp,
+                            8192);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -189,8 +422,6 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     (*pib)->plugin = p;
 
     /* Sensor info. */
-    /// @todo Fetch real values
-    memset(&(*pib)->sensor_id, 0, sizeof(ib_uuid_t));
     (*pib)->sensor_name = IB_DSTR_UNKNOWN;
     (*pib)->sensor_version = IB_PRODUCT_VERSION_NAME;
     (*pib)->sensor_hostname = IB_DSTR_UNKNOWN;
@@ -233,6 +464,18 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
         goto failed;
     }
 
+    /* Create a hash to hold operators by name */
+    rc = ib_hash_create(&((*pib)->operators), (*pib)->mp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
+    /* Create a hash to hold actions by name */
+    rc = ib_hash_create(&((*pib)->actions), (*pib)->mp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Initialize the core static module. */
     /// @todo Probably want to do this in a less hard-coded manner.
     rc = ib_module_init(ib_core_module(), *pib);
@@ -255,7 +498,7 @@ failed:
 
 ib_status_t ib_engine_init(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT(ib_init);
+    IB_FTRACE_INIT(ib_engine_init);
     ib_status_t rc = ib_context_init(ib->ectx);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -265,7 +508,7 @@ static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     IB_FTRACE_INIT(ib_engine_context_create_main);
     ib_context_t *ctx;
     ib_status_t rc;
-    
+
     rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -327,7 +570,7 @@ void ib_engine_pool_temp_destroy(ib_engine_t *ib)
 
 void ib_engine_destroy(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT(ib_destroy);
+    IB_FTRACE_INIT(ib_engine_destroy);
     if (ib) {
         size_t ne;
         size_t idx;
@@ -376,9 +619,11 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     struct timeval tv;
     uint16_t pid16 = (uint16_t)(getpid() & 0xffff);
     ib_status_t rc;
-    
+    char namebuf[64];
+
     /* Create a sub-pool for each connection and allocate from it */
-    rc = ib_mpool_create(&pool, ib->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&pool, "Connection", ib->mp, 2048);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create connection memory pool: %d", rc);
         rc = IB_EALLOC;
@@ -391,6 +636,10 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
         goto failed;
     }
 
+    /* Name the connection pool */
+    snprintf(namebuf, sizeof(namebuf), "Connection/%p", (void*)(*pconn));
+    ib_mpool_setname(pool, namebuf);
+
     (*pconn)->ib = ib;
     (*pconn)->mp = pool;
     (*pconn)->ctx = ib->ctx;
@@ -398,32 +647,26 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 
     /// @todo Need to avoid gettimeofday and set from parser
     gettimeofday(&tv, NULL);
-    (*pconn)->started.tv_sec = tv.tv_sec;
-    (*pconn)->started.tv_usec = tv.tv_usec;
+    (*pconn)->started.tv_sec = (uint32_t)tv.tv_sec;
+    (*pconn)->started.tv_usec = (uint32_t)tv.tv_usec;
 
     /* Setup the base uuid structure which is used to generate
      * transaction IDs.
      */
-    (*pconn)->base_uuid.node[0] = (pid16 >> 8) & 0xff;
-    (*pconn)->base_uuid.node[1] = (pid16 & 0xff);
-    (*pconn)->base_uuid.node[2] = ib->sensor_id_hash & 0xff;
-    (*pconn)->base_uuid.node[3] = (ib->sensor_id_hash >> 8) & 0xff;
-    (*pconn)->base_uuid.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
-    (*pconn)->base_uuid.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
-    /// @todo This needs set to thread ID or some other identifier
-    (*pconn)->base_uuid.clk_seq_hi_res = 0x8f;
-    (*pconn)->base_uuid.clk_seq_low = 0xff;
+    (*pconn)->base_uuid.st.time_low = 0;
+    (*pconn)->base_uuid.st.time_mid = 0;
+    (*pconn)->base_uuid.st.time_hi_and_ver = 0;
 
-    /* Create the core data provider instance */
-    rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_TYPE_DATA,
-                                     IB_DSTR_CORE,
-                                     &((*pconn)->dpi),
-                                     (*pconn)->mp,
-                                     NULL);
-    if (rc != IB_OK) {
-        goto failed;
-    }
+    /// @todo These two need set to thread ID or some other identifier
+    (*pconn)->base_uuid.st.clk_seq_hi_res = 0x8f;
+    (*pconn)->base_uuid.st.clk_seq_low = 0xff;
+
+    (*pconn)->base_uuid.st.node[0] = (pid16 >> 8) & 0xff;
+    (*pconn)->base_uuid.st.node[1] = (pid16 & 0xff);
+    (*pconn)->base_uuid.st.node[2] = ib->sensor_id_hash & 0xff;
+    (*pconn)->base_uuid.st.node[3] = (ib->sensor_id_hash >> 8) & 0xff;
+    (*pconn)->base_uuid.st.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
+    (*pconn)->base_uuid.st.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
 
     rc = ib_hash_create(&((*pconn)->data), (*pconn)->mp);
     if (rc != IB_OK) {
@@ -451,11 +694,13 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     ib_engine_t *ib = conn->ib;
     ib_mpool_t *pool;
     ib_status_t rc;
-    
+
     /* Create a sub-pool for data buffers */
-    rc = ib_mpool_create(&pool, conn->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create connection data memory pool: %d", rc);
+        ib_log_error(ib, 0,
+                     "Failed to create connection data memory pool: %d", rc);
         rc = IB_EALLOC;
         goto failed;
     }
@@ -494,7 +739,10 @@ failed:
 void ib_conn_destroy(ib_conn_t *conn)
 {
     /// @todo Probably need to update state???
-    ib_mpool_destroy(conn->mp);
+    if ( conn != NULL && conn->mp != NULL ) {
+        ib_mpool_destroy(conn->mp);
+        conn->mp = NULL;
+    }
 }
 
 /**
@@ -506,15 +754,13 @@ static void ib_tx_generate_id(ib_tx_t *tx)
     ib_uuid_t uuid;
 
     /* Start with the base values. */
-    uuid.clk_seq_hi_res = tx->conn->base_uuid.clk_seq_hi_res;
-    uuid.clk_seq_low = tx->conn->base_uuid.clk_seq_low;
-    memcpy(uuid.node, tx->conn->base_uuid.node, sizeof(uuid.node));
+    uuid.st = tx->conn->base_uuid.st;
 
     /* Set the tx specific values */
-    uuid.time_low = tx->started.tv_sec;
-    uuid.time_mid = tx->conn->started.tv_usec + tx->conn->tx_count;
-    uuid.time_hi_and_ver = (uint16_t)tx->started.tv_usec & 0x0fff;
-    uuid.time_hi_and_ver |= (4 << 12);
+    uuid.st.time_low = tx->started.tv_sec;
+    uuid.st.time_mid = tx->conn->started.tv_usec + tx->conn->tx_count;
+    uuid.st.time_hi_and_ver = (uint16_t)tx->started.tv_usec & 0x0fff;
+    uuid.st.time_hi_and_ver |= (4 << 12);
 
     /* Convert to a hex-string representation */
     tx->id = (const char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
@@ -524,17 +770,17 @@ static void ib_tx_generate_id(ib_tx_t *tx)
 
     snprintf((char *)tx->id, IB_UUID_HEX_SIZE,
             "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-            uuid.time_low,
-            uuid.time_mid,
-            uuid.time_hi_and_ver,
-            uuid.clk_seq_hi_res,
-            uuid.clk_seq_low,
-            uuid.node[0],
-            uuid.node[1],
-            uuid.node[2],
-            uuid.node[3],
-            uuid.node[4],
-            uuid.node[5]);
+            uuid.st.time_low,
+            uuid.st.time_mid,
+            uuid.st.time_hi_and_ver,
+            uuid.st.clk_seq_hi_res,
+            uuid.st.clk_seq_low,
+            uuid.st.node[0],
+            uuid.st.node[1],
+            uuid.st.node[2],
+            uuid.st.node[3],
+            uuid.st.node[4],
+            uuid.st.node[5]);
 }
 
 ib_status_t ib_tx_create(ib_engine_t *ib,
@@ -546,11 +792,13 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     ib_mpool_t *pool;
     struct timeval tv;
     ib_status_t rc;
-    
+    char namebuf[64];
+
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
      */
-    rc = ib_mpool_create(&pool, conn->mp);
+    /// @todo Need to tune the pool size
+    rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create transaction memory pool: %d", rc);
         rc = IB_EALLOC;
@@ -563,34 +811,27 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         goto failed;
     }
 
+    /* Name the transaction pool */
+    snprintf(namebuf, sizeof(namebuf), "TX/%p", (void*)(*ptx));
+    ib_mpool_setname(pool, namebuf);
+
     /// @todo Need to avoid gettimeofday and set from parser tx time, but
     ///       it currently only has second accuracy.
     gettimeofday(&tv, NULL);
-    (*ptx)->started.tv_sec = tv.tv_sec;
-    (*ptx)->started.tv_usec = tv.tv_usec;
+    (*ptx)->started.tv_sec = (uint32_t)tv.tv_sec;
+    (*ptx)->started.tv_usec = (uint32_t)tv.tv_usec;
 
     (*ptx)->ib = ib;
     (*ptx)->mp = pool;
     (*ptx)->ctx = ib->ctx;
     (*ptx)->pctx = pctx;
     (*ptx)->conn = conn;
+    (*ptx)->er_ipstr = conn->remote_ipstr;
     (*ptx)->hostname = IB_DSTR_EMPTY;
     (*ptx)->path = IB_DSTR_URI_ROOT_PATH;
 
     conn->tx_count++;
     ib_tx_generate_id(*ptx);
-
-    /* Create the core data provider instance */
-    rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_TYPE_DATA,
-                                     IB_DSTR_CORE,
-                                     &((*ptx)->dpi),
-                                     (*ptx)->mp,
-                                     NULL);
-    if (rc != IB_OK) {
-        goto failed;
-    }
-
 
     /* Create the generic data store. */
     rc = ib_hash_create(&((*ptx)->data), (*ptx)->mp);
@@ -606,21 +847,26 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     }
 
     /* Add transaction to the connection list */
-    if (conn->tx == NULL) {
+    if (conn->tx_first == NULL) {
+        conn->tx_first = *ptx;
         conn->tx = *ptx;
         conn->tx_last = *ptx;
+        ib_log_debug(ib, 9, "First transaction: %p", *ptx);
     }
     else {
+        conn->tx = *ptx;
         conn->tx_last->next = *ptx;
         conn->tx_last = *ptx;
 
         /* If there are more than one transactions, then this is a pipeline
          * request and needs to be marked as such.
          */
-        ib_tx_flags_set(conn->tx, IB_TX_FPIPELINED);
+        if (conn->tx_first->next == *ptx) {
+            ib_tx_flags_set(conn->tx_first, IB_TX_FPIPELINED);
+        }
         ib_tx_flags_set(*ptx, IB_TX_FPIPELINED);
 
-        ib_log_debug(ib, 9, "Found a pipelined transaction.");
+        ib_log_debug(ib, 9, "Found a pipelined transaction: %p", *ptx);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -637,26 +883,29 @@ failed:
 
 void ib_tx_destroy(ib_tx_t *tx)
 {
-    ib_tx_t *conn_tx = tx->conn->tx;
+    ib_tx_t *curr;
 
-    /* Remove transaction from the connection list */
-    if (conn_tx == tx) {
-        tx->conn->tx = tx->conn->tx->next;
+    /// @todo It should always be the first one in the list,
+    ///       so this should not be needed and should cause an error
+    ///       or maybe for us to throw a flag???
+    if (tx->conn->tx_first != tx) {
+        abort(); /// @todo Testing - should never happen
     }
-    else {
-        /// @todo It should always be the first one in the list, 
-        ///       so this should not be needed and should cause an error
-        ///       or maybe for us to throw a flag???
-        while (conn_tx->next != NULL) {
-            if (conn_tx->next == tx) {
-                conn_tx->next = conn_tx->next->next;
-                break;
-            }
-            conn_tx = conn_tx->next;
+
+    /* Keep track of the first/current tx. */
+    tx->conn->tx_first = tx->next;
+    tx->conn->tx = tx->next;
+
+    for (curr = tx->conn->tx_first; curr != NULL; curr = curr->next) {
+        if (curr == tx) {
+            curr->next = curr->next ? curr->next->next : NULL;
+            break;
         }
-        if (conn_tx == NULL) {
-            abort(); /// @todo Testing - should never happen
-        }
+    }
+
+    /* Keep track of the last tx. */
+    if (tx->conn->tx_last == tx) {
+        tx->conn->tx_last = NULL;
     }
 
     /// @todo Probably need to update state???
@@ -718,47 +967,6 @@ const char *ib_state_event_name(ib_state_event_type_t event)
     IB_FTRACE_RET_CONSTSTR(ib_state_event_name_list[event]);
 }
 
-
-/**
- * @internal
- * Notify the engine that an event has occurred.
- *
- * This is a generic function that handles all types.
- *
- * @param ib Engine
- * @param event Event
- * @param param Parameter (type is event specific)
- *
- * @returns Status code
- */
-static ib_status_t ib_state_notify(ib_engine_t *ib,
-                                   ib_state_event_type_t event,
-                                   void *param)
-{
-    IB_FTRACE_INIT(ib_state_notify);
-    ib_hook_t *hook = NULL;
-    ib_status_t rc = IB_OK;
-
-    hook = ib->ectx->hook[event];
-
-    ib_log_debug(ib, 5, "EVENT: %s", ib_state_event_name(event));
-
-    while (hook != NULL) {
-        ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
-        rc = cb(ib, param, hook->cdata);
-        if (rc != IB_OK) {
-            /// @todo Or should we go on???
-            ib_log_error(ib, 4, "Hook returned error: %s=%d",
-                         ib_state_event_name(event), rc);
-            break;
-        }
-
-        hook = hook->next;
-    }
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
 /**
  * @internal
  * Notify the engine that a connection event has occurred.
@@ -774,29 +982,20 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
     IB_FTRACE_INIT(ib_state_notify_conn);
-    ib_hook_t *hook = NULL;
-    ib_status_t rc = IB_OK;
-    
-    rc = ib_state_notify(ib, event, conn);
+
+    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, conn);
+
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (conn->ctx != ib->ctx) {
-        hook = conn->ctx->hook[event];
-    }
-
-    while (hook != NULL) {
-        ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
-        rc = cb(ib, conn, hook->cdata);
-        if (rc != IB_OK) {
-            /// @todo Or should we go on???
-            ib_log_error(ib, 4, "Hook returned error: %s=%d",
-                         ib_state_event_name(event), rc);
-            break;
-        }
-
-        hook = hook->next;
+        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conn, ib, conn);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -818,29 +1017,20 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_state_notify_conn_data);
     ib_conn_t *conn = conndata->conn;
-    ib_hook_t *hook = NULL;
-    ib_status_t rc = IB_OK;
-    
-    rc = ib_state_notify(ib, event, conndata);
+
+    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, conndata);
+
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (conn->ctx != ib->ctx) {
-        hook = conn->ctx->hook[event];
-    }
-
-    while (hook != NULL) {
-        ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
-        rc = cb(ib, conndata, hook->cdata);
-        if (rc != IB_OK) {
-            /// @todo Or should we go on???
-            ib_log_error(ib, 4, "Hook returned error: %s=%d",
-                         ib_state_event_name(event), rc);
-            break;
-        }
-
-        hook = hook->next;
+        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conndata, ib, conndata);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -856,35 +1046,29 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t ib_state_notify_tx_data(ib_engine_t *ib,
-                                           ib_state_event_type_t event,
-                                           ib_txdata_t *txdata)
+static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
+                                          ib_state_event_type_t event,
+                                          ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT(ib_state_notify_tx_data);
     ib_tx_t *tx = txdata->tx;
-    ib_hook_t *hook = NULL;
-    ib_status_t rc = IB_OK;
-    
-    rc = ib_state_notify(ib, event, txdata);
+
+    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* This transaction is now the current (for pipelined). */
+    tx->conn->tx = tx;
+
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, txdata, ib, txdata);
+
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        hook = tx->ctx->hook[event];
-    }
-
-    while (hook != NULL) {
-        ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
-        rc = cb(ib, txdata, hook->cdata);
-        if (rc != IB_OK) {
-            /// @todo Or should we go on???
-            ib_log_error(ib, 4, "Hook returned error: %s=%d",
-                         ib_state_event_name(event), rc);
-            break;
-        }
-
-        hook = hook->next;
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, txdata, ib, txdata);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -905,29 +1089,23 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
                                       ib_tx_t *tx)
 {
     IB_FTRACE_INIT(ib_state_notify_tx);
-    ib_hook_t *hook = NULL;
-    ib_status_t rc = IB_OK;
-    
-    rc = ib_state_notify(ib, event, tx);
+
+    ib_status_t rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* This transaction is now the current (for pipelined). */
+    tx->conn->tx = tx;
+
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx);
+
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        hook = tx->ctx->hook[event];
-    }
-
-    while (hook != NULL) {
-        ib_state_hook_fn_t cb = (ib_state_hook_fn_t)hook->callback;
-        rc = cb(ib, tx, hook->cdata);
-        if (rc != IB_OK) {
-            /// @todo Or should we go on???
-            ib_log_error(ib, 4, "Hook returned error: %s=%d",
-                         ib_state_event_name(event), rc);
-            break;
-        }
-
-        hook = hook->next;
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -942,8 +1120,7 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
     ib_engine_context_create_main(ib);
 
     /// @todo Create a temp mem pool???
-
-    rc = ib_state_notify(ib, cfg_started_event, NULL);
+    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_started_event], cfg_started_event, null, ib);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -960,7 +1137,7 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     }
 
     /* Run the hooks. */
-    rc = ib_state_notify(ib, cfg_finished_event, NULL);
+    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_finished_event], cfg_finished_event, null, ib);
 
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);
@@ -1138,15 +1315,15 @@ ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
         ib_tx_flags_set(txdata->tx, IB_TX_FSEENDATAIN);
     }
 
-    rc = ib_state_notify_tx_data(ib, tx_data_in_event, txdata);
+    rc = ib_state_notify_txdata(ib, tx_data_in_event, txdata);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_fctl_data(txdata->tx->fctl,
-                      txdata->dtype,
-                      txdata->data,
-                      txdata->dlen);
+    rc = ib_fctl_data_add(txdata->tx->fctl,
+                          txdata->dtype,
+                          txdata->data,
+                          txdata->dlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1160,7 +1337,7 @@ ib_status_t ib_state_notify_tx_data_out(ib_engine_t *ib,
         ib_tx_flags_set(txdata->tx, IB_TX_FSEENDATAOUT);
     }
 
-    rc = ib_state_notify_tx_data(ib, tx_data_out_event, txdata);
+    rc = ib_state_notify_txdata(ib, tx_data_out_event, txdata);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1219,7 +1396,7 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
     }
 
     /// @todo Seems this gets there too late.
-    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOH);
+    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOH);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1259,8 +1436,8 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(ib_state_notify_request_body_ex);
     ib_status_t rc;
-    
-    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOB);
+
+    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOB);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1320,7 +1497,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_fctl_meta(tx->fctl, IB_STREAM_EOS);
+    rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOS);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1359,8 +1536,8 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     /// @todo Need to avoid gettimeofday and set from parser
     gettimeofday(&tv, NULL);
-    tx->tv_response.tv_sec = tv.tv_sec;
-    tx->tv_response.tv_usec = tv.tv_usec;
+    tx->tv_response.tv_sec = (uint32_t)tv.tv_sec;
+    tx->tv_response.tv_usec = (uint32_t)tv.tv_usec;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
@@ -1474,140 +1651,556 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-
 /* -- Hook Routines -- */
 
-ib_status_t ib_hook_register(ib_engine_t *ib,
-                             ib_state_event_type_t event,
-                             ib_void_fn_t cb, void *cdata)
+ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
 {
-    IB_FTRACE_INIT(ib_hook_register);
-    ib_hook_t *last = ib->ectx->hook[event];
+    static const size_t num_events =
+        sizeof(ib_state_event_hook_types) / sizeof(ib_state_hook_type_t);
+
+    if (event > num_events) {
+        return IB_STATE_HOOK_INVALID;
+    }
+
+    return ib_state_event_hook_types[event];
+}
+
+ib_status_t DLL_PUBLIC ib_null_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_null_hook_register);
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
         ib_log_abort(ib, "Error in ib_mpool_calloc");
     }
 
-    hook->callback = cb;
+    hook->callback.null = cb;
     hook->cdata = cdata;
     hook->next = NULL;
 
-    /* Insert the hook at the end of the list */
-    if (last == NULL) {
-        ib_log(ib, 9, "Registering %s hook: %p",
-               ib_state_event_name(event), cb);
+    rc = _ib_register_hook(ib, event, hook);
 
-        ib->ectx->hook[event] = hook;
-
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-    while (last->next != NULL) {
-        last = last->next;
-    }
-
-    last->next = hook;
-
-    ib_log(ib, 9, "Registering %s hook after %p: %p",
-           ib_state_event_name(event), last->callback, cb);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_hook_unregister(ib_engine_t *ib,
-                               ib_state_event_type_t event,
-                               ib_void_fn_t cb)
+ib_status_t DLL_PUBLIC ib_null_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb
+)
 {
-    IB_FTRACE_INIT(ib_hook_unregister);
-    ib_hook_t *prev = NULL;
-    ib_hook_t *hook = ib->ectx->hook[event];
+    IB_FTRACE_INIT(ib_null_hook_unregister);
 
-    /* Remove the first matching hook */
-    while (hook != NULL) {
-        if (hook->callback == cb) {
-            if (prev == NULL) {
-                ib->ectx->hook[event] = hook->next;
-            }
-            else {
-                prev->next = hook->next;
-            }
-            IB_FTRACE_RET_STATUS(IB_OK);
-        }
-        prev = hook;
-        hook = hook->next;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_ENOENT);
+    rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
-
-ib_status_t ib_hook_register_context(ib_context_t *ctx,
-                                     ib_state_event_type_t event,
-                                     ib_void_fn_t cb, void *cdata)
+ib_status_t DLL_PUBLIC ib_null_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb,
+    void *cdata
+)
 {
-    IB_FTRACE_INIT(ib_hook_register_context);
+    IB_FTRACE_INIT(ib_null_hook_register_context);
+
     ib_engine_t *ib = ctx->ib;
-    ib_hook_t *last = ctx->hook[event];
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ctx->mp, sizeof(*hook));
+    ib_status_t rc;
 
-    ib_log_debug(ib, 7, "ib_hook_register_context(%p,%d,%p,%p)",
-                 ctx, event, (intptr_t)cb, cdata);
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
         ib_log_abort(ib, "Error in ib_mpool_calloc");
     }
 
-    hook->callback = cb;
+    hook->callback.null = cb;
     hook->cdata = cdata;
     hook->next = NULL;
 
-    /* Insert the hook at the end of the list */
-    if (last == NULL) {
-        ib_log(ib, 9, "Registering %s ctx hook: %p",
-               ib_state_event_name(event), cb);
+    rc = _ib_register_hook_context(ctx, event, hook);
 
-        ctx->hook[event] = hook;
-
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-    while (last->next != NULL) {
-        last = last->next;
-    }
-
-    ib_log(ib, 9, "Registering %s ctx hook: %p",
-           ib_state_event_name(event), cb);
-
-    last->next = hook;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_hook_unregister_context(ib_context_t *ctx,
-                                       ib_state_event_type_t event,
-                                       ib_void_fn_t cb)
+ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    ib_state_null_hook_fn_t cb
+)
 {
-    IB_FTRACE_INIT(ib_hook_unregister_context);
-    //ib_engine_t *ib = ctx->ib;
-    ib_hook_t *prev = NULL;
-    ib_hook_t *hook = ctx->hook[event];
+    IB_FTRACE_INIT(ib_null_hook_unregister_context);
 
-    /* Remove the first matching hook */
-    while (hook != NULL) {
-        if (hook->callback == cb) {
-            if (prev == NULL) {
-                ctx->hook[event] = hook->next;
-            }
-            else {
-                prev->next = hook->next;
-            }
-            IB_FTRACE_RET_STATUS(IB_OK);
-        }
-        prev = hook;
-        hook = hook->next;
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_ENOENT);
+    rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
 }
+
+
+ib_status_t DLL_PUBLIC ib_conn_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_conn_hook_register);
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.conn = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook(ib, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_conn_hook_unregister);
+
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_conn_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_conn_hook_register_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.conn = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook_context(ctx, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_conn_hook_unregister_context(
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    ib_state_conn_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_conn_hook_unregister_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_conndata_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_conndata_hook_register);
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.conndata = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook(ib, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_conndata_hook_unregister);
+
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_conndata_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_conndata_hook_register_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.conndata = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook_context(ctx, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_conndata_hook_unregister_context(
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    ib_state_conndata_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_conndata_hook_unregister_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_tx_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_tx_hook_register);
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.tx = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook(ib, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_tx_hook_unregister);
+
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_tx_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_txe_hook_register_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.tx = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook_context(ctx, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_tx_hook_unregister_context(
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    ib_state_tx_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_tx_hook_unregister_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_txdata_hook_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_txdata_hook_register);
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.txdata = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook(ib, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_txdata_hook_unregister);
+
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_txdata_hook_register_context(
+    ib_context_t* ctx,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb,
+    void *cdata
+)
+{
+    IB_FTRACE_INIT(ib_txdatae_hook_register_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
+
+    if (hook == NULL) {
+        ib_log_abort(ib, "Error in ib_mpool_calloc");
+    }
+
+    hook->callback.txdata = cb;
+    hook->cdata = cdata;
+    hook->next = NULL;
+
+    rc = _ib_register_hook_context(ctx, event, hook);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_txdata_hook_unregister_context(
+    ib_context_t *ctx,
+    ib_state_event_type_t event,
+    ib_state_txdata_hook_fn_t cb
+)
+{
+    IB_FTRACE_INIT(ib_txdata_hook_unregister_context);
+
+    ib_engine_t *ib = ctx->ib;
+    ib_status_t rc;
+
+    rc = _ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = _ib_unregister_hook_context(ctx, event, (ib_void_fn_t)cb);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 
 
 /* -- Connection Handling -- */
@@ -1712,7 +2305,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
 
     rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &sym.dso);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load module %s: no symbol named %s", 
+        ib_log_error(ib, 1, "Failed to load module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1720,7 +2313,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     /* Fetch the module structure. */
     *pm = sym.fn_sym();
     if (*pm == NULL) {
-        ib_log_error(ib, 1, "Failed to load module %s: no module structure", 
+        ib_log_error(ib, 1, "Failed to load module %s: no module structure",
                      file);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -1794,7 +2387,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     cfgdata->module = m;
-    
+
     /* Set default values from parent values. */
 
     /* Add module config entries to config context, first copying the
@@ -1858,7 +2451,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
 
     /* Create memory subpool */
     /// @todo Should we be doing this???
-    rc = ib_mpool_create(&pool, ib->mp);
+    rc = ib_mpool_create(&pool, NULL, ib->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -1873,7 +2466,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
 
     /* Copy initial values from parent. */
     if (parent != NULL) {
-        memcpy(*pctx, parent, sizeof(*pctx));
+        **pctx = *parent;
     }
 
     (*pctx)->mp = pool;
@@ -2055,6 +2648,11 @@ ib_context_t *ib_context_engine(ib_engine_t *ib)
 ib_context_t *ib_context_main(ib_engine_t *ib)
 {
     return ib->ctx;
+}
+
+ib_engine_t *ib_context_get_engine(ib_context_t *ctx)
+{
+    return ctx->ib;
 }
 
 ib_status_t ib_context_init_cfg(ib_context_t *ctx,

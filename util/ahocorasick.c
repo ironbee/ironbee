@@ -595,7 +595,7 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
 static inline ib_ac_state_t *ib_ac_bintree_goto(ib_ac_state_t *state,
                                                 ib_ac_char_t letter)
 {
-    IB_FTRACE_INIT(ib_ac_bintree_find);
+    IB_FTRACE_INIT(ib_ac_bintree_goto);
 
     ib_ac_bintree_t *bin_state = NULL;
 

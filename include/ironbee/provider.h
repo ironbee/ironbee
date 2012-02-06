@@ -188,13 +188,13 @@ ib_status_t DLL_PUBLIC ib_provider_lookup(ib_engine_t *ib,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_provider_instance_create_ex(ib_engine_t *ib,
-                                                   ib_provider_t *pr,
-                                                   ib_provider_inst_t **ppi,
-                                                   ib_mpool_t *pool,
-                                                   void *data);
+                                                      ib_provider_t *pr,
+                                                      ib_provider_inst_t **ppi,
+                                                      ib_mpool_t *pool,
+                                                      void *data);
 
 /**
- * Create an instance of a registered provider by looking up with 
+ * Create an instance of a registered provider by looking up with
  * the given type/key
  *
  * @param ib Engine

@@ -95,7 +95,7 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
 
     *hp = ib_ht;
 
-    IB_FTRACE_RET_STATUS(IB_OK); 
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
@@ -104,12 +104,12 @@ ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
     hti->cur_entry = hti->next;
     while (!hti->cur_entry) {
         if (hti->index > hti->cur_ht->size) {
-            IB_FTRACE_RET_PTR(ib_hash_iter_t *, NULL);
+            IB_FTRACE_RET_PTR(ib_hash_iter_t, NULL);
         }
         hti->cur_entry = hti->cur_ht->slots[hti->index++];
-    }   
+    }
     hti->next = hti->cur_entry->next;
-    IB_FTRACE_RET_PTR(ib_hash_iter_t *, hti);
+    IB_FTRACE_RET_PTR(ib_hash_iter_t, hti);
 }
 
 ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
@@ -121,7 +121,7 @@ ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
     if (p != NULL) {
         hti = (ib_hash_iter_t *)ib_mpool_calloc(p, 1, sizeof(ib_hash_iter_t));
         if (hti == NULL) {
-            IB_FTRACE_RET_PTR(ib_hash_iter_t *, NULL);
+            IB_FTRACE_RET_PTR(ib_hash_iter_t, NULL);
         }
     }
     else {
@@ -129,9 +129,9 @@ ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
     }
 
     memset(hti, 0, sizeof(ib_hash_iter_t));
-    hti->cur_ht = ib_ht; 
+    hti->cur_ht = ib_ht;
 
-    IB_FTRACE_RET_PTR(ib_hash_iter_t *, ib_hash_next(hti));
+    IB_FTRACE_RET_PTR(ib_hash_iter_t, ib_hash_next(hti));
 }
 
 /**
@@ -152,7 +152,7 @@ static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
         if (hte->hash == hash
             && hte->len == len)
         {
-            if (flags & IB_HASH_FLAG_NOCASE) 
+            if (flags & IB_HASH_FLAG_NOCASE)
             {
                 size_t i = 0;
                 const char *k = (const char *)key;
@@ -162,15 +162,15 @@ static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
                     }
                 }
                 if (i == len) {
-                    IB_FTRACE_RET_PTR(ib_hash_entry_t *, hte);
+                    IB_FTRACE_RET_PTR(ib_hash_entry_t, hte);
                 }
              }
             else if (memcmp(hte->key, key, len) == 0) {
-                IB_FTRACE_RET_PTR(ib_hash_entry_t *, hte);
+                IB_FTRACE_RET_PTR(ib_hash_entry_t, hte);
             }
         }
     }
-    IB_FTRACE_RET_PTR(ib_hash_entry_t *, NULL);
+    IB_FTRACE_RET_PTR(ib_hash_entry_t, NULL);
 }
 
 /**
@@ -200,7 +200,7 @@ ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
 
     /* Ensure that NOCASE lookups are allowed at ib_hash_t flags */
     if (hte == NULL || hash == NULL ||
-        ( (lookup_flags & IB_HASH_FLAG_NOCASE) && 
+        ( (lookup_flags & IB_HASH_FLAG_NOCASE) &&
          !(ib_ht->flags & IB_HASH_FLAG_NOCASE)))
     {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -215,7 +215,7 @@ ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
     *hte = he;
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -354,13 +354,13 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
 
     hte_prev = &ib_ht->slots[hash & ib_ht->size];
     hte = *hte_prev;
-    
+
     for (; *hte_prev != NULL; hte_prev = &hte->next) {
         hte = *hte_prev;
         if (hte->hash == hash
             && hte->len == len)
         {
-            if (ib_ht->flags & IB_HASH_FLAG_NOCASE) 
+            if (ib_ht->flags & IB_HASH_FLAG_NOCASE)
             {
                 size_t i = 0;
                 const char *k = (const char *)key;
@@ -401,7 +401,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
         /* it's not in the list. Add it if pdata != NULL */
         if (pdata != NULL) {
             ib_hash_entry_t *entry = NULL;
-        
+
             /* add a new entry for non-NULL datas */
             if ((entry = ib_ht->free) != NULL) {
                 ib_ht->free = entry->next;
@@ -417,7 +417,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
             entry->key  = key;
             entry->len = len;
             entry->data = pdata;
-        
+
             *hte_prev = entry;
             entry->next = NULL;
 

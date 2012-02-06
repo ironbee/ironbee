@@ -30,6 +30,7 @@
 #include <ironbee/string.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/field.h>
+#include <ironbee/stream.h>
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
 
@@ -82,7 +83,7 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
      * externally (see createn version).
      */
     /// @todo Make this a function
-    (*pf)->val = ib_mpool_calloc(mp, 1, sizeof(*((*pf)->val)));
+    (*pf)->val = (ib_field_val_t *)ib_mpool_calloc(mp, 1, sizeof(*((*pf)->val)));
     if ((*pf)->val == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -118,6 +119,19 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
             }
             (*pf)->val->pval = (void *)&((*pf)->val->u.list);
             break;
+        case IB_FTYPE_SBUFFER:
+            if (pval != NULL) {
+                /// @todo Should do shallow copy
+                (*pf)->val->u.stream = *(ib_stream_t **)pval;
+            }
+            else {
+                rc = ib_stream_create(&(*pf)->val->u.stream, mp);
+                if (rc != IB_OK) {
+                    goto failed;
+                }
+            }
+            (*pf)->val->pval = (void *)&((*pf)->val->u.stream);
+            break;
         case IB_FTYPE_NULSTR:
             if (pval != NULL) {
                 size_t len = strlen(*(char **)pval) + 1;
@@ -130,7 +144,6 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
                 }
             }
             else {
-                /// @todo Or should this be ""???
                 (*pf)->val->u.nulstr = NULL;
             }
             ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (*pf)->val->u.nulstr, (*pf)->val->u.nulstr);
@@ -207,7 +220,7 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
      */
     /// @todo Make this a function
     /// @todo Make val->pval access not require allocating all of val
-    (*pf)->val = ib_mpool_alloc(mp, sizeof(*((*pf)->val)));
+    (*pf)->val = (ib_field_val_t *)ib_mpool_alloc(mp, sizeof(*((*pf)->val)));
     if ((*pf)->val == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -218,6 +231,7 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
             ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)((*pf)->val->pval)), (*pf)->val->pval);
             break;
         case IB_FTYPE_LIST:
+        case IB_FTYPE_SBUFFER:
             break;
         case IB_FTYPE_NULSTR:
             ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), *(char **)((*pf)->val->pval), (*pf)->val->pval);
@@ -261,8 +275,8 @@ ib_status_t ib_field_copy_ex(ib_field_t **pf,
     /* Copy over dynamic fields */
     (*pf)->val->fn_get = src->val->fn_get;
 #if 0
-    (*pf)->val->fn_get = src->val->fn_set;
-    (*pf)->val->fn_get = src->val->fn_rset;
+    (*pf)->val->fn_set = src->val->fn_set;
+    (*pf)->val->fn_rset = src->val->fn_rset;
 #endif
     (*pf)->val->fndata = src->val->fndata;
 
@@ -301,7 +315,7 @@ ib_status_t ib_field_alias_mem_ex(ib_field_t **pf,
     (*pf)->name = (const char *)name_copy;
 
     /* Set the value as an aliased byte string. */
-    (*pf)->val = ib_mpool_alloc(mp, sizeof(*((*pf)->val)));
+    (*pf)->val = (ib_field_val_t *)ib_mpool_alloc(mp, sizeof(*((*pf)->val)));
     if ((*pf)->val == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -332,9 +346,23 @@ ib_status_t ib_field_list_add(ib_field_t *f,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_util_log_debug(9, "Adding field %" IB_BYTESTR_FMT ":%" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTRSL_FMT_PARAM(fval->name,fval->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)(fval->val->pval)), fval->val->pval);
-
     rc = ib_list_push(*(ib_list_t **)(f->val->pval), (void *)fval);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
+                                        int dtype,
+                                        uint8_t *buf,
+                                        size_t blen)
+{
+    IB_FTRACE_INIT(ib_field_buf_add);
+    ib_status_t rc;
+
+    if (f->type != IB_FTYPE_SBUFFER) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rc = ib_stream_push(*(ib_stream_t **)(f->val->pval), IB_STREAM_DATA, dtype, buf, blen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -345,26 +373,53 @@ ib_status_t ib_field_setv(ib_field_t *f,
     /* Set the value based on the field type. */
     switch (f->type) {
         case IB_FTYPE_BYTESTR:
+            /* May be NULL for dynamic fields. */
+            if (f->val->pval == NULL) {
+                f->val->pval = (void *)&(f->val->u.bytestr);
+            }
             *(ib_bytestr_t **)(f->val->pval) = *(ib_bytestr_t **)pval;
             ib_util_log_debug(9, "SETV FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)(f->val->pval)), f->val->pval);
             break;
         case IB_FTYPE_LIST:
+            /* May be NULL for dynamic fields. */
+            if (f->val->pval == NULL) {
+                f->val->pval = (void *)&(f->val->u.list);
+            }
             *(ib_list_t **)(f->val->pval) = *(ib_list_t **)pval;
             break;
+        case IB_FTYPE_SBUFFER:
+            *(ib_stream_t **)(f->val->pval) = *(ib_stream_t **)pval;
+            break;
         case IB_FTYPE_NULSTR:
+            /* May be NULL for dynamic fields. */
+            if (f->val->pval == NULL) {
+                f->val->pval = (void *)&(f->val->u.nulstr);
+            }
             *(char **)(f->val->pval) = *(char **)pval;
             ib_util_log_debug(9, "SETV FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)(f->val->pval), f->val->pval);
             break;
         case IB_FTYPE_NUM:
+            /* May be NULL for dynamic fields. */
+            if (f->val->pval == NULL) {
+                f->val->pval = (void *)&(f->val->u.num);
+            }
             *(ib_num_t *)(f->val->pval) = *(ib_num_t *)pval;
             ib_util_log_debug(9, "SETV FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(int *)(f->val->pval), f->val->pval);
             break;
         case IB_FTYPE_UNUM:
+            /* May be NULL for dynamic fields. */
+            if (f->val->pval == NULL) {
+                f->val->pval = (void *)&(f->val->u.unum);
+            }
             *(ib_unum_t *)(f->val->pval) = *(ib_unum_t *)pval;
             ib_util_log_debug(9, "SETV FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(unsigned int *)(f->val->pval), f->val->pval);
             break;
         case IB_FTYPE_GENERIC:
         default:
+            /* May be NULL for dynamic fields. */
+            if (f->val->pval == NULL) {
+                f->val->pval = (void *)&(f->val->u.ptr);
+            }
             /// @todo Perhaps unknown should be an error???
             *(void **)(f->val->pval) = *(void **)pval;
             break;
@@ -373,13 +428,13 @@ ib_status_t ib_field_setv(ib_field_t *f,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-void *ib_field_value(ib_field_t *f)
+void *ib_field_value_ex(ib_field_t *f, const void *arg, size_t alen)
 {
     /* If there is not a stored value, then attempt to use the
      * fn_get call to retrieve the value.
      */
     if ((f->val->pval == NULL) && (f->val->fn_get != NULL)) {
-        return f->val->fn_get(f, NULL, 0, f->val->fndata);
+        return f->val->fn_get(f, arg, alen, f->val->fndata);
     }
 
     /* Non-pointer values are returned as pointers to those values. */
@@ -390,6 +445,39 @@ void *ib_field_value(ib_field_t *f)
     }
 
     return f->val->pval ? *(void **)f->val->pval : NULL;
+}
+
+void *ib_field_value_type_ex(ib_field_t *f, ib_ftype_t t,
+                             const void *arg, size_t alen)
+{
+    /* Compare the types */
+    if (f->type != t) {
+        return NULL;
+    }
+
+    /* Return the value as normal. */
+    return ib_field_value_ex(f, arg, alen);
+}
+
+void *ib_field_value(ib_field_t *f)
+{
+    return ib_field_value_ex(f, NULL, 0);
+}
+
+void *ib_field_value_type(ib_field_t *f, ib_ftype_t t)
+{
+    /* Compare the types */
+    if (f->type != t) {
+        return NULL;
+    }
+
+    /* Return the value as normal. */
+    return ib_field_value(f);
+}
+
+int ib_field_is_dynamic(ib_field_t *f)
+{
+    return f->val->pval ? 0 : 1;
 }
 
 void ib_field_dyn_set_data(ib_field_t *f,
@@ -405,6 +493,7 @@ void ib_field_dyn_register_get(ib_field_t *f,
 {
     IB_FTRACE_INIT(ib_field_dyn_register_get);
     f->val->fn_get = fn_get;
+    f->val->pval = NULL;
     IB_FTRACE_RET_VOID();
 }
 

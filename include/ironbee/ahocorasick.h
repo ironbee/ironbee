@@ -57,8 +57,8 @@ extern "C" {
 
 /* General flags for the parser (and matcher) */
 #define IB_AC_FLAG_PARSER_NOCASE    0x01 /**< Case insensitive */
-#define IB_AC_FLAG_PARSER_COMPILED  0x02 /**< "Compiled", failure state 
-                                              links and output state links 
+#define IB_AC_FLAG_PARSER_COMPILED  0x02 /**< "Compiled", failure state
+                                              links and output state links
                                               are built */
 #define IB_AC_FLAG_PARSER_READY     0x04 /**< the ac automata is ready */
 
@@ -74,13 +74,13 @@ extern "C" {
                                                    (if any) */
 
 #define IB_AC_FLAG_CONSUME_MATCHALL      0x01 /**< Should be used in
-                                                   combination to dolist 
+                                                   combination to dolist
                                                    or docallback. Otherwise
                                                    you are wasting cycles*/
 
 #define IB_AC_FLAG_CONSUME_DOLIST        0x02 /**< Enable the storage of a
-                                                   list of matching states 
-                                                   (match_list located at 
+                                                   list of matching states
+                                                   (match_list located at
                                                    the matching context */
 
 #define IB_AC_FLAG_CONSUME_DOCALLBACK    0x04 /**< Enable the callback
@@ -123,7 +123,7 @@ struct ib_ac_context_t {
 
     ib_list_t *match_list;      /**< result list of matches */
     size_t match_cnt;           /**< number of matches */
-}; 
+};
 
 /**
  * Aho Corasick match result. Holds the pattern, pattern length
@@ -233,7 +233,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
                               size_t len);
 
 /**
- * Search patterns of the ac_tree matcher in the given buffer using a 
+ * Search patterns of the ac_tree matcher in the given buffer using a
  * matching context. The matching context stores offsets used to process
  * a search over multiple data segments. The function has option flags to
  * specify to return where the first pattern is found, or after all the

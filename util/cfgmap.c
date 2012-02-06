@@ -41,7 +41,7 @@ ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
     IB_FTRACE_INIT(ib_cfgmap_create);
     ib_hash_t *hash;
     ib_status_t rc;
-    
+
     /* Underlying hash structure. */
     rc = ib_hash_create(&hash, pool);
     if (rc != IB_OK) {
@@ -202,5 +202,3 @@ ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-
-                         

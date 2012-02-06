@@ -183,6 +183,36 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
+                                  const char *name,
+                                  size_t nlen,
+                                  ib_field_t **pf)
+{
+    IB_FTRACE_INIT(ib_data_add_stream_ex);
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_field_t *f;
+    ib_status_t rc;
+
+    if (pf != NULL) {
+        *pf = NULL;
+    }
+
+    rc = ib_field_create_ex(&f, dpi->mp, IB_S2SL(name), IB_FTYPE_SBUFFER, NULL);
+    if (rc != IB_OK) {
+        ib_util_log_debug(9, "SBUFFER field creation failed: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = api->add(dpi, f, f->name, f->nlen);
+    ib_util_log_debug(9, "SBUFFER field creation returned: %d", rc);
+    if ((rc == IB_OK) && (pf != NULL)) {
+        *pf = f;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
                            const char *name,
                            size_t nlen,

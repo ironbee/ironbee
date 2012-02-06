@@ -29,7 +29,7 @@
  * immediately. The second dimension, the data index (column), is allocated
  * on demand (though the first set is allocated immediately).
  *
- * When data is added, enough extents are allocated to accommodate for the 
+ * When data is added, enough extents are allocated to accommodate for the
  * index. If the number of extents required exceeds what is available, then
  * a replacement extents array is allocated, double the size it was
  * previously, the data arrays are copied into the new extents array, and
