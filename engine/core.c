@@ -194,7 +194,7 @@ static const uint8_t core_placeholder_value[] = {
 static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
                                                   const char *name)
 {
-    IB_FTRACE_INIT(core_field_placeholder_bytestr);
+    IB_FTRACE_INIT();
     ib_status_t rc = ib_data_add_bytestr_ex(dpi,
                                             (const char *)name,
                                             strlen(name),
@@ -313,7 +313,7 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
                                         ib_auditlog_part_gen_fn_t generator,
                                         void *gen_data)
 {
-    IB_FTRACE_INIT(ib_auditlog_part_add);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     ib_auditlog_part_t *part =
@@ -338,7 +338,7 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
 static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                    ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(core_audit_open);
+    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
@@ -588,7 +588,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
                                            ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(core_audit_write_header);
+    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     const char *header = "\r\nThis is a multi-part message in MIME format.\r\n\r\n";
     size_t hlen = strlen(header);
@@ -605,7 +605,7 @@ static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
 static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
                                          ib_auditlog_part_t *part)
 {
-    IB_FTRACE_INIT(core_audit_write_part);
+    IB_FTRACE_INIT();
     ib_auditlog_t *log = part->log;
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     const uint8_t *chunk;
@@ -641,7 +641,7 @@ static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
 static ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
                                            ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(core_audit_write_footer);
+    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
 
     if (cfg->parts_written > 0) {
@@ -668,7 +668,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                                              char *line,
                                              int *line_size)
 {
-    IB_FTRACE_INIT(core_audit_get_index_line);
+    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_tx_t *tx = log->tx;
@@ -779,7 +779,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
 static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
                                     ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(core_audit_close);
+    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
@@ -854,7 +854,7 @@ static ib_status_t core_data_add(ib_provider_inst_t *dpi,
                                  const char *name,
                                  size_t nlen)
 {
-    IB_FTRACE_INIT(core_data_add);
+    IB_FTRACE_INIT();
     /// @todo Needs to be more field-aware (handle lists, etc)
     /// @todo Needs to not allow adding if already exists (except list items)
     ib_status_t rc = ib_hash_set_ex((ib_hash_t *)dpi->data,
@@ -876,7 +876,7 @@ static ib_status_t core_data_set(ib_provider_inst_t *dpi,
                                  const char *name,
                                  size_t nlen)
 {
-    IB_FTRACE_INIT(core_data_set);
+    IB_FTRACE_INIT();
     /// @todo Needs to be more field-aware (handle lists, etc)
     ib_status_t rc = ib_hash_set_ex((ib_hash_t *)dpi->data,
                                     (void *)name, nlen, f);
@@ -899,7 +899,7 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
                                           size_t nlen,
                                           intmax_t adjval)
 {
-    IB_FTRACE_INIT(core_data_set_relative);
+    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
 
@@ -944,7 +944,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                                  size_t nlen,
                                  ib_field_t **pf)
 {
-    IB_FTRACE_INIT(core_data_get);
+    IB_FTRACE_INIT();
     const char *subkey;
     ib_status_t rc;
 
@@ -1007,7 +1007,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 static ib_status_t core_data_get_all(ib_provider_inst_t *dpi,
                                      ib_list_t *list)
 {
-    IB_FTRACE_INIT(core_data_get);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_hash_get_all((ib_hash_t *)dpi->data, list);
@@ -1033,7 +1033,7 @@ static ib_status_t core_data_remove(ib_provider_inst_t *dpi,
                                     size_t nlen,
                                     ib_field_t **pf)
 {
-    IB_FTRACE_INIT(core_data_remove);
+    IB_FTRACE_INIT();
     ib_status_t rc = ib_hash_remove_ex((ib_hash_t *)dpi->data,
                                        (void *)name, nlen,
                                        (void *)pf);
@@ -1050,7 +1050,7 @@ static ib_status_t core_data_remove(ib_provider_inst_t *dpi,
  */
 static ib_status_t core_data_clear(ib_provider_inst_t *dpi)
 {
-    IB_FTRACE_INIT(core_data_clear);
+    IB_FTRACE_INIT();
     ib_hash_clear((ib_hash_t *)dpi->data);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1247,7 +1247,7 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
 static ib_status_t logger_register(ib_engine_t *ib,
                                    ib_provider_t *lpr)
 {
-    IB_FTRACE_INIT(logger_register);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(logger) *iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpr->iface;
 
     /* Check that versions match. */
@@ -1272,7 +1272,7 @@ static ib_status_t logger_register(ib_engine_t *ib,
 static ib_status_t logger_init(ib_provider_inst_t *lpi,
                                void *data)
 {
-    IB_FTRACE_INIT(logger_init);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1299,7 +1299,7 @@ static IB_PROVIDER_API_TYPE(logger) logger_api = {
  */
 static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
 {
-    IB_FTRACE_INIT(audit_api_write_log);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(audit) *iface = (IB_PROVIDER_IFACE_TYPE(audit) *)lpi->pr->iface;
     ib_auditlog_t *log = (ib_auditlog_t *)lpi->data;
     ib_list_node_t *node;
@@ -1369,7 +1369,7 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
 static ib_status_t audit_register(ib_engine_t *ib,
                                   ib_provider_t *lpr)
 {
-    IB_FTRACE_INIT(audit_register);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(audit) *iface = (IB_PROVIDER_IFACE_TYPE(audit) *)lpr->iface;
 
     /* Check that versions match. */
@@ -1410,7 +1410,7 @@ static IB_PROVIDER_API_TYPE(audit) audit_api = {
 static ib_status_t logevent_api_add_event(ib_provider_inst_t *epi,
                                           ib_logevent_t *e)
 {
-    IB_FTRACE_INIT(logevent_api_add_event);
+    IB_FTRACE_INIT();
     ib_list_t *events = (ib_list_t *)epi->data;
 
     ib_list_push(events, e);
@@ -1430,7 +1430,7 @@ static ib_status_t logevent_api_add_event(ib_provider_inst_t *epi,
 static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
                                              uint32_t id)
 {
-    IB_FTRACE_INIT(logevent_api_remove_event);
+    IB_FTRACE_INIT();
     ib_list_t *events;
     ib_list_node_t *node;
     ib_list_node_t *node_next;
@@ -1459,7 +1459,7 @@ static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
 static ib_status_t logevent_api_fetch_events(ib_provider_inst_t *epi,
                                              ib_list_t **pevents)
 {
-    IB_FTRACE_INIT(logevent_api_fetch_events);
+    IB_FTRACE_INIT();
     *pevents = (ib_list_t *)epi->data;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1475,7 +1475,7 @@ static ib_status_t logevent_api_fetch_events(ib_provider_inst_t *epi,
  */
 static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
 {
-    IB_FTRACE_INIT(logevent_api_write_events);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(logevent) *iface;
     ib_list_t *events;
     ib_logevent_t *e;
@@ -1933,7 +1933,7 @@ static void ib_timestamp(char *buf, ib_timeval_t *tv)
 
 static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_header);
+    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
     ib_site_t *site;
@@ -2033,7 +2033,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
 static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_events);
+    IB_FTRACE_INIT();
     ib_list_t *list;
     ib_status_t rc;
 
@@ -2056,7 +2056,7 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
 
 static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_http_request_meta);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
     ib_unum_t tx_num = tx ? tx->conn->tx_count : 0;
@@ -2168,7 +2168,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 
 static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_http_response_meta);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
     ib_mpool_t *pool = log->mp;
@@ -2225,7 +2225,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
 
 static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_http_request_head);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = log->ib;
     ib_mpool_t *pool = log->mp;
     ib_tx_t *tx = log->tx;
@@ -2272,7 +2272,7 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 
 static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_http_request_body);
+    IB_FTRACE_INIT();
     ib_tx_t *tx = log->tx;
     ib_field_t *f;
     ib_status_t rc;
@@ -2296,7 +2296,7 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
 
 static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_http_response_head);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = log->ib;
     ib_mpool_t *pool = log->mp;
     ib_tx_t *tx = log->tx;
@@ -2343,7 +2343,7 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 
 static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT(ib_auditlog_add_part_http_response_body);
+    IB_FTRACE_INIT();
     ib_tx_t *tx = log->tx;
     ib_field_t *f;
     ib_status_t rc;
@@ -2381,7 +2381,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                                              ib_tx_t *tx,
                                              void *cbdata)
 {
-    IB_FTRACE_INIT(logevent_hook_postprocess);
+    IB_FTRACE_INIT();
 
     assert(event == handle_postprocess_event);
 
@@ -2515,7 +2515,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
 static ib_status_t logevent_register(ib_engine_t *ib,
                                      ib_provider_t *lpr)
 {
-    IB_FTRACE_INIT(logevent_register);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(logevent) *iface = (IB_PROVIDER_IFACE_TYPE(logevent) *)lpr->iface;
 
     /* Check that versions match. */
@@ -2547,7 +2547,7 @@ static ib_status_t logevent_register(ib_engine_t *ib,
 static ib_status_t logevent_init(ib_provider_inst_t *epi,
                                  void *data)
 {
-    IB_FTRACE_INIT(logevent_init);
+    IB_FTRACE_INIT();
     ib_list_t *events;
     ib_status_t rc;
 
@@ -2593,7 +2593,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
                                           ib_conn_t *conn,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT(core_hook_conn_started);
+    IB_FTRACE_INIT();
 
     assert(event == conn_started_event);
 
@@ -2650,7 +2650,7 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
                                        ib_conn_t *conn,
                                        void *cbdata)
 {
-    IB_FTRACE_INIT(parser_hook_connect);
+    IB_FTRACE_INIT();
 
     assert(event == handle_connect_event);
 
@@ -2719,7 +2719,7 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
                                           ib_conn_t *conn,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT(parser_hook_disconnect);
+    IB_FTRACE_INIT();
 
     assert(event == handle_disconnect_event);
 
@@ -2757,7 +2757,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
                                           ib_tx_t *tx,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT(parser_hook_req_header);
+    IB_FTRACE_INIT();
 
     assert(event == request_headers_event);
 
@@ -2812,7 +2812,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
                                            ib_tx_t *tx,
                                            void *cbdata)
 {
-    IB_FTRACE_INIT(parser_hook_resp_header);
+    IB_FTRACE_INIT();
 
     assert(event == response_headers_event);
 
@@ -2846,7 +2846,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 static ib_status_t parser_register(ib_engine_t *ib,
                                    ib_provider_t *pr)
 {
-    IB_FTRACE_INIT(parser_register);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pr?(IB_PROVIDER_IFACE_TYPE(parser) *)pr->iface:NULL;
 
     /* Check that versions match. */
@@ -2885,7 +2885,7 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
                                 const char *name,
                                 size_t nlen)
 {
-    IB_FTRACE_INIT(data_api_add);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
     ib_status_t rc;
 
@@ -2916,7 +2916,7 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
                                 const char *name,
                                 size_t nlen)
 {
-    IB_FTRACE_INIT(data_api_set);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
     ib_status_t rc;
 
@@ -2951,7 +2951,7 @@ static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
                                          size_t nlen,
                                          intmax_t adjval)
 {
-    IB_FTRACE_INIT(data_api_set_relative);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
     ib_status_t rc;
 
@@ -2984,7 +2984,7 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
                                 size_t nlen,
                                 ib_field_t **pf)
 {
-    IB_FTRACE_INIT(data_api_get);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
     ib_status_t rc;
 
@@ -3013,7 +3013,7 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
 static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
                                     ib_list_t *list)
 {
-    IB_FTRACE_INIT(data_api_get);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
     ib_status_t rc;
 
@@ -3046,7 +3046,7 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
                                    size_t nlen,
                                    ib_field_t **pf)
 {
-    IB_FTRACE_INIT(data_api_remove);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
     ib_status_t rc;
 
@@ -3073,7 +3073,7 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
  */
 static ib_status_t data_api_clear(ib_provider_inst_t *dpi)
 {
-    IB_FTRACE_INIT(data_api_clear);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
     ib_status_t rc;
 
@@ -3117,7 +3117,7 @@ static IB_PROVIDER_API_TYPE(data) data_api = {
 static ib_status_t data_register(ib_engine_t *ib,
                                  ib_provider_t *pr)
 {
-    IB_FTRACE_INIT(data_register);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)pr->iface;
 
     /* Check that versions match. */
@@ -3153,7 +3153,7 @@ static ib_status_t data_register(ib_engine_t *ib,
 static ib_status_t data_init(ib_provider_inst_t *dpi,
                              void *data)
 {
-    IB_FTRACE_INIT(data_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_hash_t *ht;
 
@@ -3192,7 +3192,7 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
                                                int *erroffset)
 
 {
-    IB_FTRACE_INIT(matcher_api_compile_pattern);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
     ib_status_t rc;
 
@@ -3228,7 +3228,7 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
                                               const uint8_t *data,
                                               size_t dlen, void *ctx)
 {
-    IB_FTRACE_INIT(matcher_api_match_compiled);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
     ib_status_t rc;
 
@@ -3266,7 +3266,7 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
                                               const char **errptr,
                                               int *erroffset)
 {
-    IB_FTRACE_INIT(matcher_api_add_pattern);
+    IB_FTRACE_INIT();
 
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = NULL;
 
@@ -3300,7 +3300,7 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
 static ib_status_t matcher_api_add_pattern(ib_provider_inst_t *mpi,
                                            const char *patt)
 {
-    IB_FTRACE_INIT(matcher_api_add_pattern);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -3323,7 +3323,7 @@ static ib_status_t matcher_api_match(ib_provider_inst_t *mpi,
                                      size_t dlen,
                                      void *ctx)
 {
-    IB_FTRACE_INIT(matcher_api_match);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -3353,7 +3353,7 @@ static IB_PROVIDER_API_TYPE(matcher) matcher_api = {
 static ib_status_t matcher_register(ib_engine_t *ib,
                                     ib_provider_t *mpr)
 {
-    IB_FTRACE_INIT(matcher_register);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = (IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface;
 
     /* Check that versions match. */
@@ -3393,7 +3393,7 @@ static ib_status_t filter_buffer(ib_filter_t *f,
                                  ib_mpool_t *pool,
                                  ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT(filter_buffer);
+    IB_FTRACE_INIT();
 //    ib_engine_t *ib = f->ib;
     ib_stream_t *buf = (ib_stream_t *)fdata->state;
     ib_sdata_t *sdata;
@@ -3453,7 +3453,7 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
                                      ib_tx_t *tx,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(filter_ctl_config);
+    IB_FTRACE_INIT();
     assert(event == handle_context_tx_event);
 
     ib_status_t rc = IB_OK;
@@ -3624,7 +3624,7 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
                                      ib_txdata_t *txdata,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(process_txdata_in);
+    IB_FTRACE_INIT();
 
     assert(event == tx_data_in_event);
 
@@ -3684,7 +3684,7 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
                                       ib_txdata_t *txdata,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT(process_txdata_out);
+    IB_FTRACE_INIT();
 
     assert(event == tx_data_out_event);
 
@@ -3749,7 +3749,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
                                         ib_tx_t *tx,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT(core_hook_tx_started);
+    IB_FTRACE_INIT();
 
     assert(event == tx_started_event);
 
@@ -3925,7 +3925,7 @@ static ib_status_t core_abs_module_path(ib_engine_t *ib,
                                         const char *file,
                                         char **pabsfile)
 {
-    IB_FTRACE_INIT(core_abs_module_path);
+    IB_FTRACE_INIT();
     ib_mpool_t *pool = ib_engine_pool_config_get(ib);
 
     *pabsfile = (char *)ib_mpool_alloc(pool, strlen(basedir) + 1 + strlen(file) + 1);
@@ -3957,7 +3957,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
                                        const char *p1,
                                        void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_site_start);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_site_t *site;
@@ -4006,7 +4006,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
                                      const char *name,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_site_end);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_status_t rc;
@@ -4049,7 +4049,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                                       const char *p1,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_loc_start);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_site_t *site = cp->cur_site;
@@ -4092,7 +4092,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
                                     const char *name,
                                     void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_loc_end);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_status_t rc;
@@ -4133,7 +4133,7 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                                      ib_list_t *args,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_hostname);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_list_node_t *node;
     ib_status_t rc = IB_EINVAL;
@@ -4189,7 +4189,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                                    const char *p1,
                                    void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_param1);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
     ib_core_cfg_t *corecfg;
@@ -4489,7 +4489,7 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
                                           ib_flags_t fmask,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_auditlogparts);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_num_t parts;
@@ -4525,7 +4525,7 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                   const char *name,
                                   const char *val)
 {
-    IB_FTRACE_INIT(core_set_value);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = ctx->ib;
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi;
@@ -4613,7 +4613,7 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
                                    const char *p2,
                                    void *cbdata)
 {
-    IB_FTRACE_INIT(core_dir_param2);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
 
@@ -4854,7 +4854,7 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
 static ib_status_t core_init(ib_engine_t *ib,
                              ib_module_t *m)
 {
-    IB_FTRACE_INIT(core_init);
+    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_provider_t *core_log_provider;
     ib_provider_t *core_audit_provider;
@@ -5259,7 +5259,7 @@ static ib_status_t core_ctx_init(ib_engine_t *ib,
                                  ib_module_t *mod,
                                  ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(core_ctx_init);
+    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_provider_t *lp;
     ib_provider_inst_t *lpi;
@@ -5353,7 +5353,7 @@ static ib_status_t core_ctx_finish(ib_engine_t *ib,
                                    ib_module_t *mod,
                                    ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(core_ctx_finish);
+    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_provider_t *lp;
     ib_provider_inst_t *lpi;

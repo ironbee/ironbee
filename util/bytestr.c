@@ -39,7 +39,7 @@ struct ib_bytestr_t {
 
 static ib_status_t bytestr_cleanup(void *data)
 {
-    IB_FTRACE_INIT(bytestr_cleanup);
+    IB_FTRACE_INIT();
     ib_bytestr_t *bs = (ib_bytestr_t *)data;
     bstr_free(&bs->data);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -48,7 +48,7 @@ static ib_status_t bytestr_cleanup(void *data)
 
 size_t ib_bytestr_length(ib_bytestr_t *bs)
 {
-    IB_FTRACE_INIT(ib_bytestr_length);
+    IB_FTRACE_INIT();
     if ((bs == NULL) || (bs->data == NULL)) {
         IB_FTRACE_RET_SIZET(0);
     }
@@ -58,7 +58,7 @@ size_t ib_bytestr_length(ib_bytestr_t *bs)
 
 size_t ib_bytestr_size(ib_bytestr_t *bs)
 {
-    IB_FTRACE_INIT(ib_bytestr_size);
+    IB_FTRACE_INIT();
     if ((bs == NULL) || (bs->data == NULL)) {
         IB_FTRACE_RET_SIZET(0);
     }
@@ -68,7 +68,7 @@ size_t ib_bytestr_size(ib_bytestr_t *bs)
 
 uint8_t *ib_bytestr_ptr(ib_bytestr_t *bs)
 {
-    IB_FTRACE_INIT(ib_bytestr_ptr);
+    IB_FTRACE_INIT();
     if ((bs == NULL) || (bs->data == NULL)) {
         IB_FTRACE_RET_PTR(uint8_t, NULL);
     }
@@ -80,7 +80,7 @@ ib_status_t ib_bytestr_create(ib_bytestr_t **pdst,
                               ib_mpool_t *pool,
                               size_t size)
 {
-    IB_FTRACE_INIT(ib_bytestr_create);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Create the structure. */
@@ -118,7 +118,7 @@ ib_status_t ib_bytestr_dup(ib_bytestr_t **pdst,
                            ib_mpool_t *pool,
                            const ib_bytestr_t *src)
 {
-    IB_FTRACE_INIT(ib_bytestr_dup);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ((src == NULL) || (src->data == NULL)) {
@@ -139,7 +139,7 @@ ib_status_t ib_bytestr_dup_mem(ib_bytestr_t **pdst,
                                const uint8_t *data,
                                size_t dlen)
 {
-    IB_FTRACE_INIT(ib_bytestr_dup_mem);
+    IB_FTRACE_INIT();
     ib_status_t rc = ib_bytestr_create(pdst, pool, dlen);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -153,7 +153,7 @@ ib_status_t ib_bytestr_dup_nulstr(ib_bytestr_t **pdst,
                                      ib_mpool_t *pool,
                                      const char *data)
 {
-    IB_FTRACE_INIT(ib_bytestr_dup_nulstr);
+    IB_FTRACE_INIT();
     ib_status_t rc = ib_bytestr_dup_mem(pdst, pool, (uint8_t *)data, strlen(data));
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -162,7 +162,7 @@ ib_status_t ib_bytestr_alias(ib_bytestr_t **pdst,
                              ib_mpool_t *pool,
                              const ib_bytestr_t *src)
 {
-    IB_FTRACE_INIT(ib_bytestr_alias);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ((src == NULL) || (src->data == NULL)) {
@@ -187,7 +187,7 @@ ib_status_t ib_bytestr_alias_mem(ib_bytestr_t **pdst,
                                  const uint8_t *data,
                                  size_t dlen)
 {
-    IB_FTRACE_INIT(ib_bytestr_alias_mem);
+    IB_FTRACE_INIT();
     ib_status_t rc = ib_bytestr_create(pdst, pool, 0);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -205,7 +205,7 @@ ib_status_t ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
                                     ib_mpool_t *pool,
                                     const char *data)
 {
-    IB_FTRACE_INIT(ib_bytestr_alias_nulstr);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(ib_bytestr_alias_mem(pdst, pool, (uint8_t *)data, strlen(data)));
 }
 
@@ -213,7 +213,7 @@ ib_status_t ib_bytestr_setv(ib_bytestr_t *dst,
                             const uint8_t *data,
                             size_t dlen)
 {
-    IB_FTRACE_INIT(ib_bytestr_setv);
+    IB_FTRACE_INIT();
     if (dst == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -228,7 +228,7 @@ ib_status_t ib_bytestr_setv(ib_bytestr_t *dst,
 ib_status_t ib_bytestr_append(ib_bytestr_t *dst,
                               const ib_bytestr_t *src)
 {
-    IB_FTRACE_INIT(ib_bytestr_append);
+    IB_FTRACE_INIT();
     if (IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -241,7 +241,7 @@ ib_status_t ib_bytestr_append_mem(ib_bytestr_t *dst,
                                   const uint8_t *data,
                                   size_t dlen)
 {
-    IB_FTRACE_INIT(ib_bytestr_append_mem);
+    IB_FTRACE_INIT();
     if (IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -253,7 +253,7 @@ ib_status_t ib_bytestr_append_mem(ib_bytestr_t *dst,
 ib_status_t ib_bytestr_append_nulstr(ib_bytestr_t *dst,
                                      const char *data)
 {
-    IB_FTRACE_INIT(ib_bytestr_append_nulstr);
+    IB_FTRACE_INIT();
     if (IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -264,6 +264,6 @@ ib_status_t ib_bytestr_append_nulstr(ib_bytestr_t *dst,
 
 int ib_bytestr_index_of_c(ib_bytestr_t *haystack, char *needle)
 {
-    IB_FTRACE_INIT(ib_bytestr_index_of_c);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_INT(bstr_index_of_c(haystack->data, needle));
 }

@@ -46,7 +46,7 @@ static ib_status_t act_log_create(ib_mpool_t *mp,
                                   const char *parameters,
                                   ib_action_inst_t *inst)
 {
-    IB_FTRACE_INIT(act_log_create);
+    IB_FTRACE_INIT();
     char *str;
 
     if (parameters == NULL) {
@@ -76,7 +76,7 @@ static ib_status_t act_log_execute(void *data,
                                    ib_rule_t *rule,
                                    ib_tx_t *tx)
 {
-    IB_FTRACE_INIT(act_log_execute);
+    IB_FTRACE_INIT();
 
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
@@ -99,7 +99,7 @@ static ib_status_t act_setflags_create(ib_mpool_t *mp,
                                        const char *parameters,
                                        ib_action_inst_t *inst)
 {
-    IB_FTRACE_INIT(act_setflags_create);
+    IB_FTRACE_INIT();
     char *str;
 
     if (parameters == NULL) {
@@ -129,7 +129,7 @@ static ib_status_t act_setflag_execute(void *data,
                                        ib_rule_t *rule,
                                        ib_tx_t *tx)
 {
-    IB_FTRACE_INIT(act_setflag_execute);
+    IB_FTRACE_INIT();
 
     /* Data will be a C-Style string */
     const char *cstr = (const char *)data;
@@ -166,7 +166,7 @@ static ib_status_t act_event_create_inst(ib_mpool_t *pool,
                                          const char *data,
                                          ib_action_inst_t *act_inst)
 {
-    IB_FTRACE_INIT(act_event_create_inst);
+    IB_FTRACE_INIT();
     act_event_data_t *ev_data;
     ev_data = (act_event_data_t *)ib_mpool_alloc(pool, sizeof(*ev_data));
 
@@ -192,7 +192,7 @@ static ib_status_t act_event_execute(void *data,
                                      ib_rule_t *rule,
                                      ib_tx_t *tx)
 {
-    IB_FTRACE_INIT(act_event_execute);
+    IB_FTRACE_INIT();
     ib_status_t  rc;
     act_event_data_t *ev_data = data;
     ib_logevent_t *e;
@@ -227,7 +227,7 @@ static ib_status_t act_event_execute(void *data,
 
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
-    IB_FTRACE_INIT(ib_core_actions_init);
+    IB_FTRACE_INIT();
     ib_status_t  rc;
 
     /* Register the log action */

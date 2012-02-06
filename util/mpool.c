@@ -45,7 +45,7 @@ ib_status_t ib_mpool_create(ib_mpool_t **pmp,
                             const char *name,
                             ib_mpool_t *parent)
 {
-    IB_FTRACE_INIT(ib_mpool_create);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if (pmp == NULL) {
@@ -63,7 +63,7 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
                                ib_mpool_t *parent,
                                size_t size)
 {
-    IB_FTRACE_INIT(ib_mpool_create_ex);
+    IB_FTRACE_INIT();
     ib_mpool_buffer_t *buf = NULL;
     size_t slot = 0;
 
@@ -135,7 +135,7 @@ void ib_mpool_setname(ib_mpool_t *mp, const char *name)
 
 void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
 {
-    IB_FTRACE_INIT(ib_mpool_alloc);
+    IB_FTRACE_INIT();
     void *ptr = NULL;
     ib_mpool_buffer_t *buf = NULL;
     ib_mpool_buffer_t *iter = NULL;
@@ -280,7 +280,7 @@ void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
 
 void *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size)
 {
-    IB_FTRACE_INIT(ib_mpool_calloc);
+    IB_FTRACE_INIT();
     void *ptr = ib_mpool_alloc(mp, nelem * size);
 
     if (ptr == NULL) {
@@ -294,7 +294,7 @@ void *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size)
 
 char *ib_mpool_strdup(ib_mpool_t *mp, const char *src)
 {
-    IB_FTRACE_INIT(ib_mpool_strdup);
+    IB_FTRACE_INIT();
     size_t size = strlen(src)+1;
     char *ptr = (char *)ib_mpool_alloc(mp, size);
 
@@ -307,7 +307,7 @@ char *ib_mpool_strdup(ib_mpool_t *mp, const char *src)
 
 void *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size)
 {
-    IB_FTRACE_INIT(ib_mpool_memdup);
+    IB_FTRACE_INIT();
     void *ptr = ib_mpool_alloc(mp, size);
 
     if (ptr != NULL) {
@@ -319,7 +319,7 @@ void *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size)
 
 void ib_mpool_clear(ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_mpool_clear);
+    IB_FTRACE_INIT();
     ib_mpool_buffer_t *buf;
     ib_mpool_buffer_t *next;
     ib_mpool_t *child;
@@ -381,7 +381,7 @@ void ib_mpool_clear(ib_mpool_t *mp)
 
 void ib_mpool_destroy(ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_mpool_destroy);
+    IB_FTRACE_INIT();
     ib_mpool_buffer_t *buf;
     ib_mpool_buffer_t *next;
     ib_mpool_t *child;
@@ -478,7 +478,7 @@ ib_status_t ib_mpool_cleanup_register(ib_mpool_t *mp,
                                       ib_mpool_cleanup_fn_t cleanup,
                                       void *data)
 {
-    IB_FTRACE_INIT(ib_mpool_cleanup_register);
+    IB_FTRACE_INIT();
     ib_mpool_cleanup_t *mpc;
 
     mpc = (ib_mpool_cleanup_t *)ib_mpool_alloc(mp, sizeof(*mpc));

@@ -99,7 +99,7 @@ static ib_status_t pocsig_dir_trace(ib_cfgparser_t *cp,
                                     const char *p1,
                                     void *cbdata)
 {
-    IB_FTRACE_INIT(pocsig_dir_trace);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_status_t rc;
@@ -134,7 +134,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
                                         ib_list_t *args,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT(pocsig_dir_signature);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_list_t *list;
@@ -373,7 +373,7 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
                                       ib_tx_t *tx,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT(pocsig_handle_sigs);
+    IB_FTRACE_INIT();
     pocsig_cfg_t *cfg;
     pocsig_phase_t phase = (pocsig_phase_t)(uintptr_t)cbdata;
     ib_list_t *sigs;
@@ -461,7 +461,7 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
 static ib_status_t pocsig_init(ib_engine_t *ib,
                                ib_module_t *m)
 {
-    IB_FTRACE_INIT(pocsig_init);
+    IB_FTRACE_INIT();
 
     /* Initialize the global config items that are not mapped to config
      * parameters as these will not have default values.
@@ -476,7 +476,7 @@ static ib_status_t pocsig_context_init(ib_engine_t *ib,
                                        ib_module_t *m,
                                        ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(pocsig_context_init);
+    IB_FTRACE_INIT();
     pocsig_cfg_t *cfg;
     ib_status_t rc;
 

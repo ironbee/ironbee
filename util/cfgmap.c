@@ -38,7 +38,7 @@
 ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
                              ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_cfgmap_create);
+    IB_FTRACE_INIT();
     ib_hash_t *hash;
     ib_status_t rc;
 
@@ -74,7 +74,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                            const ib_cfgmap_init_t *init,
                            int usedefaults)
 {
-    IB_FTRACE_INIT(ib_cfgmap_init);
+    IB_FTRACE_INIT();
     ib_cfgmap_init_t *rec = (ib_cfgmap_init_t *)init;
     ib_field_t *f;
     ib_status_t rc;
@@ -113,7 +113,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
 
 void ib_cfgmap_clear(ib_cfgmap_t *cm)
 {
-    IB_FTRACE_INIT(ib_cfgmap_clear);
+    IB_FTRACE_INIT();
     /// @todo Implement
     abort();
     IB_FTRACE_RET_VOID();
@@ -123,7 +123,7 @@ ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
                           const char *name,
                           void *pval)
 {
-    IB_FTRACE_INIT(ib_cfgmap_set);
+    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
 
@@ -157,7 +157,7 @@ ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
                           const char *name,
                           void *pval, ib_ftype_t *ptype)
 {
-    IB_FTRACE_INIT(ib_cfgmap_get);
+    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
 

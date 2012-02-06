@@ -998,7 +998,7 @@ static modua_match_ruleset_t modua_match_ruleset =
  */
 static ib_status_t modua_field_rule_init(modua_field_rule_t *rule)
 {
-    IB_FTRACE_INIT(modua_field_rule_init);
+    IB_FTRACE_INIT();
     if (rule->string != NULL) {
         rule->slen = strlen(rule->string);
     }
@@ -1009,7 +1009,7 @@ static ib_status_t modua_field_rule_init(modua_field_rule_t *rule)
 ib_status_t modua_ruleset_init(modua_match_rule_t **failed_rule,
                                unsigned int *failed_field_rule_num)
 {
-    IB_FTRACE_INIT(modua_ruleset_init);
+    IB_FTRACE_INIT();
     modua_match_rule_t  *match_rule;
     unsigned int         match_rule_num;
     ib_status_t          rc;
@@ -1057,7 +1057,7 @@ ib_status_t modua_ruleset_init(modua_match_rule_t **failed_rule,
 /* Get the match rule set */
 const modua_match_ruleset_t *modua_ruleset_get( void )
 {
-    IB_FTRACE_INIT(modua_ruleset_get);
+    IB_FTRACE_INIT();
     if (modua_match_ruleset.num_rules == 0) {
         IB_FTRACE_RET_PTR(modua_match_ruleset_t, NULL);
     }

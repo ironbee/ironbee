@@ -107,7 +107,7 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
                                         const char **errptr,
                                         int *erroffset)
 {
-    IB_FTRACE_INIT(modradix_add_prefix_ex);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_radix_t *radix_tree = (ib_radix_t *)mpi->data;
 
@@ -159,7 +159,7 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
 static ib_status_t modradix_provider_instance_init(ib_provider_inst_t *mpi,
                                                 void *data)
 {
-    IB_FTRACE_INIT(modradix_provider_instance_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     modradix_provider_data_t *dt;
 
@@ -200,7 +200,7 @@ static ib_status_t modradix_match(ib_provider_inst_t *mpi,
                                  size_t dlen,
                                  void *ctx)
 {
-    IB_FTRACE_INIT(modradix_match);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     modradix_provider_data_t *dt = mpi->data;
 
@@ -251,7 +251,7 @@ static ib_status_t modradix_compile(ib_provider_t *mpr,
                                    const char **errptr,
                                    int *erroffset)
 {
-    IB_FTRACE_INIT(modradix_compile);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -262,14 +262,14 @@ static ib_status_t modradix_match_compiled(ib_provider_t *mpr,
                                           size_t dlen,
                                           void *ctx)
 {
-    IB_FTRACE_INIT(modradix_match_compiled);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
 static ib_status_t modradix_add_prefix(ib_provider_inst_t *pi,
                                        void *cprefix)
 {
-    IB_FTRACE_INIT(modradix_add);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -292,7 +292,7 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modradix_matcher_iface = {
 static ib_status_t modradix_init(ib_engine_t *ib,
                                 ib_module_t *m)
 {
-    IB_FTRACE_INIT(modradix_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register as a matcher provider. */

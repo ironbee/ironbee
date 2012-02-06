@@ -86,7 +86,7 @@ static ib_status_t modua_parse_uastring(char *str,
                                         char **p_platform,
                                         char **p_extra)
 {
-    IB_FTRACE_INIT(modua_parse_uastring);
+    IB_FTRACE_INIT();
     char *lp = NULL;            /* lp: Left parent */
     char *extra = NULL;
 
@@ -189,7 +189,7 @@ static ib_status_t modua_parse_uastring(char *str,
 static modua_matchresult_t modua_frule_match(const char *str,
                                              const modua_field_rule_t *rule)
 {
-    IB_FTRACE_INIT(modua_frule_match);
+    IB_FTRACE_INIT();
 
     /* First, handle the simple NULL string case */
     if (str == NULL) {
@@ -240,7 +240,7 @@ static modua_matchresult_t modua_frule_match(const char *str,
 static int modua_mrule_match( const char *fields[],
                               const modua_match_rule_t *rule)
 {
-    IB_FTRACE_INIT(modua_mrule_match);
+    IB_FTRACE_INIT();
     const modua_field_rule_t *fr;
     unsigned int ruleno;
 
@@ -285,7 +285,7 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
                                                        const char *platform,
                                                        const char *extra)
 {
-    IB_FTRACE_INIT(modua_match_cat_rules);
+    IB_FTRACE_INIT();
     const char *fields[3] = { product, platform, extra };
     const modua_match_rule_t *rule;
     unsigned int ruleno;
@@ -329,7 +329,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
                                      const char *name,
                                      const char *value)
 {
-    IB_FTRACE_INIT(modua_store_field);
+    IB_FTRACE_INIT();
     ib_field_t *tmp_field = NULL;
     ib_status_t rc = IB_OK;
 
@@ -377,7 +377,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
                                       ib_tx_t *tx,
                                       ib_bytestr_t *bs)
 {
-    IB_FTRACE_INIT(modua_agent_fields);
+    IB_FTRACE_INIT();
     const modua_match_rule_t *rule = NULL;
     ib_field_t               *agent_list = NULL;
     char                     *product = NULL;
@@ -498,7 +498,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     void *data)
 {
-    IB_FTRACE_INIT(modua_user_agent);
+    IB_FTRACE_INIT();
 
     assert(event == request_headers_event);
 
@@ -544,7 +544,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
                                   ib_tx_t *tx,
                                   void *cbdata)
 {
-    IB_FTRACE_INIT(modra_remoteip);
+    IB_FTRACE_INIT();
 
     assert(event == request_headers_event);
 
@@ -614,7 +614,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
  */
 static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(modua_init);
+    IB_FTRACE_INIT();
     ib_status_t  rc;
     modua_match_rule_t *failed_rule;
     unsigned int failed_frule_num;

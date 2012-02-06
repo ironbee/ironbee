@@ -24,7 +24,7 @@
 
 ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
 {
-    IB_FTRACE_INIT(ib_lua_load_eval);
+    IB_FTRACE_INIT();
 
     int lua_rc;
 
@@ -81,7 +81,7 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
                              const char *file,
                              const char *func_name)
 {
-    IB_FTRACE_INIT(ib_lua_load_func);
+    IB_FTRACE_INIT();
     ib_status_t ib_rc;
 
     /* Load (compile) the lua module. */
@@ -107,7 +107,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
                                  const char *func_name,
                                  int *return_value)
 {
-    IB_FTRACE_INIT(ib_lua_func_eval);
+    IB_FTRACE_INIT();
 
     int lua_rc;
 
@@ -202,7 +202,7 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
                               lua_State *L,
                               lua_State **thread)
 {
-    IB_FTRACE_INIT(ib_lua_new_thread);
+    IB_FTRACE_INIT();
     char *thread_name = (char*)malloc(THREAD_NAME_BUFFER_SZ);
 
     ib_log_debug(ib, 1, "Setting up new Lua thread.");
@@ -230,7 +230,7 @@ ib_status_t ib_lua_join_thread(ib_engine_t *ib,
                                lua_State* L,
                                lua_State **thread)
 {
-    IB_FTRACE_INIT(ib_lua_join_thread);
+    IB_FTRACE_INIT();
     char *thread_name = (char*)malloc(THREAD_NAME_BUFFER_SZ);
     sprint_threadname(thread_name, *thread);
 
@@ -251,7 +251,7 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
                            const char* module_name,
                            const char* required_name)
 {
-    IB_FTRACE_INIT(ib_lua_require);
+    IB_FTRACE_INIT();
 
     int lua_rc;
 

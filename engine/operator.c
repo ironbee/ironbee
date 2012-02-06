@@ -38,7 +38,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
                                  ib_operator_destroy_fn_t fn_destroy,
                                  ib_operator_execute_fn_t fn_execute)
 {
-    IB_FTRACE_INIT(ib_operator_register);
+    IB_FTRACE_INIT();
     ib_hash_t *operator_hash = ib->operators;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_status_t rc;
@@ -77,7 +77,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
                                     ib_flags_t flags,
                                     ib_operator_inst_t **op_inst)
 {
-    IB_FTRACE_INIT(ib_operator_inst_create);
+    IB_FTRACE_INIT();
     ib_hash_t *operator_hash = ib->operators;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_operator_t *op;
@@ -109,7 +109,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
 
 ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(ib_operator_inst_destroy);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ((op_inst != NULL) && (op_inst->op != NULL)
@@ -129,7 +129,7 @@ ib_status_t ib_operator_execute(ib_engine_t *ib,
                                 ib_field_t *field,
                                 ib_num_t *result)
 {
-    IB_FTRACE_INIT(ib_operator_execute);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ((op_inst != NULL) && (op_inst->op != NULL)

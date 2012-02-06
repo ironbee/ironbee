@@ -83,7 +83,7 @@ static ib_status_t modtrace_tx_event_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(modtrace_tx_event_callback);
+    IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -108,7 +108,7 @@ static ib_status_t modtrace_txdata_event_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(modtrace_txdata_event_callback);
+    IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -133,7 +133,7 @@ static ib_status_t modtrace_conn_event_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(modtrace_conn_event_callback);
+    IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -158,7 +158,7 @@ static ib_status_t modtrace_conndata_event_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(modtrace_conndata_event_callback);
+    IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -181,7 +181,7 @@ static ib_status_t modtrace_null_event_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(modtrace_null_event_callback);
+    IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -208,7 +208,7 @@ static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
                                       ib_conndata_t *cd,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT(modtrace_handle_conn_data);
+    IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
 
     ib_log_debug(ib, 4, "handle_conn_data [%s]: data=%p dlen=%u",
@@ -246,7 +246,7 @@ static ib_status_t modtrace_handle_tx(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(modtrace_handle_tx);
+    IB_FTRACE_INIT();
     const event_info_t *eventp = (const event_info_t *)cbdata;
 
     ib_log_debug(ib, 4, "handle_tx [%s]: data=%p tx->dpi=%p",
@@ -335,7 +335,7 @@ static ib_status_t modtrace_handle_tx_mem(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(modtrace_handle_tx_mem);
+    IB_FTRACE_INIT();
     const event_info_t *eventp = (const event_info_t *)cbdata;
     mpool_usage_t anon  = {0,0,0};
     mpool_usage_t total = {0,0,0};
@@ -393,7 +393,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                void *cbdata)
 {
-    IB_FTRACE_INIT(modtrace_handle_req_headers);
+    IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
@@ -453,7 +453,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
  */
 static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(modtrace_init);
+    IB_FTRACE_INIT();
     static event_info_t event_info[IB_STATE_EVENT_NUM];
     ib_status_t rc;
     int event;
@@ -575,7 +575,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
  */
 static ib_status_t modtrace_finish(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(modtrace_finish);
+    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Trace module unloaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -594,7 +594,7 @@ static ib_status_t modtrace_context_init(ib_engine_t *ib,
                                         ib_module_t *m,
                                         ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(modtrace_context_init);
+    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Trace module initializing context=%p.", ctx);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -613,7 +613,7 @@ static ib_status_t modtrace_context_finish(ib_engine_t *ib,
                                            ib_module_t *m,
                                            ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(modtrace_context_finish);
+    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Trace module finishing context=%p.", ctx);
     IB_FTRACE_RET_STATUS(IB_OK);
 }

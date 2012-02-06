@@ -51,7 +51,7 @@
 ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
                             size_t ninit, size_t nextents)
 {
-    IB_FTRACE_INIT(ib_array_create);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Validate. */
@@ -98,7 +98,7 @@ failed:
 
 ib_status_t ib_array_get(ib_array_t *arr, size_t idx, void *pval)
 {
-    IB_FTRACE_INIT(ib_array_get);
+    IB_FTRACE_INIT();
     size_t r, c;
     void **data;
 
@@ -119,7 +119,7 @@ ib_status_t ib_array_get(ib_array_t *arr, size_t idx, void *pval)
 
 ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
 {
-    IB_FTRACE_INIT(ib_array_setn);
+    IB_FTRACE_INIT();
     size_t r, c;
     void **data;
 
@@ -164,19 +164,19 @@ ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
 
 ib_status_t ib_array_appendn(ib_array_t *arr, void *val)
 {
-    IB_FTRACE_INIT(ib_array_appendn);
+    IB_FTRACE_INIT();
     ib_status_t rc = ib_array_setn(arr, arr->nelts, val);
     IB_FTRACE_RET_STATUS(rc);
 }
 
 size_t ib_array_elements(ib_array_t *arr)
 {
-    IB_FTRACE_INIT(ib_array_elements);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_SIZET(arr->nelts);
 }
 
 size_t ib_array_size(ib_array_t *arr)
 {
-    IB_FTRACE_INIT(ib_array_size);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_SIZET(arr->size);
 }

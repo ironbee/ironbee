@@ -641,7 +641,7 @@ static ib_status_t trace_tx_request(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(trace_tx_request);
+    IB_FTRACE_INIT();
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         settings.trace_request_cnt++;
         fprintf(stderr, "REQUEST[%d]: %.*s\n",
@@ -671,7 +671,7 @@ static ib_status_t trace_tx_response(
     void *cbdata
 )
 {
-    IB_FTRACE_INIT(trace_tx_response);
+    IB_FTRACE_INIT();
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         settings.trace_response_cnt++;
         fprintf(stderr, "RESPONSE[%d]: %.*s\n",
@@ -777,7 +777,7 @@ static const char *build_path( const char *path, ib_field_t *field )
  */
 static ib_status_t print_list(const char *path, ib_list_t *lst)
 {
-    IB_FTRACE_INIT(print_list);
+    IB_FTRACE_INIT();
     ib_list_node_t *node = NULL;
 
     /* Loop through the list & print everything */
@@ -824,7 +824,7 @@ static ib_status_t print_tx(
      void *data
 )
 {
-    IB_FTRACE_INIT(print_tx);
+    IB_FTRACE_INIT();
     ib_list_t *lst;
     ib_status_t rc;
 
@@ -887,7 +887,7 @@ static ib_status_t print_user_agent(
     void *data
 )
 {
-    IB_FTRACE_INIT(print_user_agent);
+    IB_FTRACE_INIT();
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
     ib_list_t *lst = NULL;
@@ -945,7 +945,7 @@ static ib_status_t print_geoip(
      void *data
 )
 {
-    IB_FTRACE_INIT(print_geoip);
+    IB_FTRACE_INIT();
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
     ib_list_t *lst = NULL;
@@ -997,7 +997,7 @@ static ib_status_t action_print_create(ib_mpool_t *mp,
                                        const char *parameters,
                                        ib_action_inst_t *inst)
 {
-    IB_FTRACE_INIT(action_print_create);
+    IB_FTRACE_INIT();
     char *str;
 
     if (parameters == NULL) {
@@ -1027,7 +1027,7 @@ static ib_status_t action_print_execute(void *data,
                                         ib_rule_t *rule,
                                         ib_tx_t *tx)
 {
-    IB_FTRACE_INIT(action_print_execute);
+    IB_FTRACE_INIT();
 
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
@@ -1093,7 +1093,7 @@ static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
  */
 static ib_status_t register_handlers(ib_engine_t* ib)
 {
-    IB_FTRACE_INIT(register_handlers);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register a connection open event handler */
@@ -1136,7 +1136,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
  */
 static ib_status_t register_late_handlers(ib_engine_t* ib)
 {
-    IB_FTRACE_INIT(register_late_handlers);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_status_t status = IB_OK;
 
@@ -1243,7 +1243,7 @@ static ib_status_t send_header(ib_engine_t* ib,
                                ib_conndata_t *icdata,
                                FILE *fp)
 {
-    IB_FTRACE_INIT(send_header);
+    IB_FTRACE_INIT();
     ib_status_t  rc;
     reqhdr_buf_t rbuf;            /* Request header buffer for I/O */
     int          fnum;            /* Request header field number */
@@ -1374,7 +1374,7 @@ static ib_status_t send_file(ib_engine_t* ib,
                              FILE *fp,
                              data_direction_t direction)
 {
-    IB_FTRACE_INIT(send_file);
+    IB_FTRACE_INIT();
     size_t      nbytes = 0;     /* # bytes currently in the buffer */
     ib_status_t rc;
     const char *ioname = (direction == DATA_IN) ? "input" : "output";
@@ -1419,7 +1419,7 @@ static ib_status_t run_transaction(ib_engine_t* ib,
                                    const char *req_file,
                                    const char *rsp_file)
 {
-    IB_FTRACE_INIT(run_transaction);
+    IB_FTRACE_INIT();
     FILE          *reqfp  = NULL;
     FILE          *rspfp = NULL;
     ib_conndata_t  conn_data;
@@ -1508,7 +1508,7 @@ end:
  */
 static void run_connection(ib_engine_t* ib)
 {
-    IB_FTRACE_INIT(run_connection);
+    IB_FTRACE_INIT();
     ib_status_t    rc;
     ib_conn_t     *conn = NULL;
     char          *buf = NULL;      /* I/O buffer */

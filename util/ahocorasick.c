@@ -53,7 +53,7 @@ ib_status_t ib_ac_create(ib_ac_t **ac_tree,
                          uint8_t flags,
                          ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_ac_create);
+    IB_FTRACE_INIT();
 
     if (ac_tree == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -91,7 +91,7 @@ static ib_ac_state_t*
 ib_ac_child_for_code(ib_ac_state_t *parent_state,
                      ib_ac_char_t char_state)
 {
-    IB_FTRACE_INIT(ib_ac_child_for_code);
+    IB_FTRACE_INIT();
 
     ib_ac_state_t *state = NULL;
 
@@ -123,7 +123,7 @@ ib_ac_child_for_code(ib_ac_state_t *parent_state,
 static void ib_ac_add_child(ib_ac_state_t *parent,
                             ib_ac_state_t *child)
 {
-    IB_FTRACE_INIT(ib_ac_add_child);
+    IB_FTRACE_INIT();
 
     ib_ac_state_t *state = NULL;
 
@@ -168,7 +168,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
                               void *data,
                               size_t len)
 {
-    IB_FTRACE_INIT(ib_ac_add_pattern);
+    IB_FTRACE_INIT();
 
     ib_ac_state_t *parent = NULL;
     ib_ac_state_t *child = NULL;
@@ -251,7 +251,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
 static void ib_ac_link_outputs(ib_ac_t *ac_tree,
                                ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT(ib_ac_link_outputs);
+    IB_FTRACE_INIT();
     ib_ac_state_t *child = NULL;
     ib_ac_state_t *outs = NULL;
 
@@ -296,7 +296,7 @@ static void ib_ac_link_outputs(ib_ac_t *ac_tree,
 static void ib_ac_unlink_unuseful(ib_ac_t *ac_tree,
                                ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT(ib_ac_unlink_unuseful);
+    IB_FTRACE_INIT();
     ib_ac_state_t *child = NULL;
     ib_ac_state_t *fail_state = NULL;
     ib_ac_state_t *found = NULL;
@@ -365,7 +365,7 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
                                   int rb,
                                   ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_ac_add_bintree_sorted);
+    IB_FTRACE_INIT();
     ib_status_t st;
     int left = 0;
     int right = 0;
@@ -426,7 +426,7 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
 static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
                                        ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT(ib_ac_build_bintree);
+    IB_FTRACE_INIT();
 
     ib_ac_state_t *child = state->child;
     ib_ac_state_t **states = NULL;
@@ -503,7 +503,7 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
  */
 static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
 {
-    IB_FTRACE_INIT(ib_ac_link_fail_states);
+    IB_FTRACE_INIT();
 
     ib_status_t rc;
 
@@ -595,7 +595,7 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
 static inline ib_ac_state_t *ib_ac_bintree_goto(ib_ac_state_t *state,
                                                 ib_ac_char_t letter)
 {
-    IB_FTRACE_INIT(ib_ac_bintree_goto);
+    IB_FTRACE_INIT();
 
     ib_ac_bintree_t *bin_state = NULL;
 
@@ -628,7 +628,7 @@ static inline ib_ac_state_t *ib_ac_bintree_goto(ib_ac_state_t *state,
  */
 ib_status_t ib_ac_build_links(ib_ac_t *ac_tree)
 {
-    IB_FTRACE_INIT(ib_ac_build_links);
+    IB_FTRACE_INIT();
 
     ib_status_t st;
 
@@ -654,7 +654,7 @@ ib_status_t ib_ac_build_links(ib_ac_t *ac_tree)
 static void ib_ac_do_callback(ib_ac_context_t *ac_ctx,
                               ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT(ib_ac_do_callback);
+    IB_FTRACE_INIT();
 
     ib_ac_t *ac_tree = ac_ctx->ac_tree;
 
@@ -692,7 +692,7 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                           uint8_t flags,
                           ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_ac_consume);
+    IB_FTRACE_INIT();
 
     const char *end;
 

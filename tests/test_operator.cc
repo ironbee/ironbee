@@ -38,7 +38,7 @@ ib_status_t test_create_fn(ib_mpool_t *pool,
                            const char *data,
                            ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(test_create_fn);
+    IB_FTRACE_INIT();
     
     char *str;
     str = ib_mpool_strdup(pool, data);

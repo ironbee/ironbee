@@ -50,7 +50,7 @@
 ib_status_t ib_radix_prefix_new(ib_radix_prefix_t **prefix,
                                 ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_radix_prefix_new);
+    IB_FTRACE_INIT();
     *prefix = (ib_radix_prefix_t *) ib_mpool_calloc(pool, 1,
                                                     sizeof(ib_radix_prefix_t));
 
@@ -78,7 +78,7 @@ ib_status_t ib_radix_prefix_create(ib_radix_prefix_t **prefix,
                                    uint8_t prefixlen,
                                    ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_radix_prefix_create);
+    IB_FTRACE_INIT();
     ib_status_t status = ib_radix_prefix_new(prefix, pool);
 
     if (status != IB_OK) {
@@ -108,7 +108,7 @@ ib_status_t ib_radix_clone_prefix(ib_radix_prefix_t *orig,
                                   ib_radix_prefix_t **new_prefix,
                                   ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_clone_prefix);
+    IB_FTRACE_INIT();
     ib_status_t ret = ib_radix_prefix_new(new_prefix, mp);
     if (ret != IB_OK) {
         IB_FTRACE_RET_STATUS(ret);
@@ -148,7 +148,7 @@ ib_status_t ib_radix_clone_prefix(ib_radix_prefix_t *orig,
 ib_status_t ib_radix_prefix_destroy(ib_radix_prefix_t **prefix,
                                     ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_radix_prefix_destroy);
+    IB_FTRACE_INIT();
     /* @todo: reimplement ib_mpool_t to allow individual deallocations */
     memset(*prefix, 0, sizeof(ib_radix_prefix_t));
     *prefix = NULL;
@@ -167,7 +167,7 @@ ib_status_t ib_radix_prefix_destroy(ib_radix_prefix_t **prefix,
 ib_status_t ib_radix_node_new(ib_radix_node_t **node,
                               ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_radix_node_new);
+    IB_FTRACE_INIT();
     *node = (ib_radix_node_t *)ib_mpool_calloc(pool, 1,
                                                sizeof(ib_radix_node_t));
 
@@ -193,7 +193,7 @@ ib_status_t ib_radix_clone_node(ib_radix_node_t *orig,
                                 ib_radix_node_t **new_node,
                                 ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_clone_node);
+    IB_FTRACE_INIT();
     if (orig == NULL) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
@@ -240,7 +240,7 @@ ib_status_t ib_radix_node_destroy(ib_radix_t *radix,
                                   ib_radix_node_t **node,
                                   ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_radix_node_destroy);
+    IB_FTRACE_INIT();
     if (*node == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -291,7 +291,7 @@ ib_status_t ib_radix_new(ib_radix_t **radix,
                          ib_radix_update_fn_t update_data,
                          ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_radix_new);
+    IB_FTRACE_INIT();
     *radix = (ib_radix_t *) ib_mpool_calloc(pool, 1, sizeof(ib_radix_t));
 
     if (*radix == NULL) {
@@ -321,7 +321,7 @@ ib_status_t ib_radix_clone_radix(ib_radix_t *orig,
                                  ib_radix_t **new_radix,
                                  ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_clone_radix);
+    IB_FTRACE_INIT();
     ib_status_t ret = ib_radix_new(new_radix, orig->free_data,
                                    orig->print_data, orig->update_data, mp);
     if (ret != IB_OK) {
@@ -349,7 +349,7 @@ ib_status_t ib_radix_clone_radix(ib_radix_t *orig,
  */
 size_t ib_radix_elements(ib_radix_t *radix)
 {
-    IB_FTRACE_INIT(ib_radix_elements);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_SIZET(radix->data_cnt);
 }
 
@@ -370,7 +370,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                                  ib_radix_prefix_t *prefix,
                                  void *prefix_data)
 {
-    IB_FTRACE_INIT(ib_radix_insert_data);
+    IB_FTRACE_INIT();
     ib_status_t st;
 
     if (prefix == NULL) {
@@ -812,7 +812,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
  */
 ib_status_t ib_radix_destroy(ib_radix_t **radix)
 {
-    IB_FTRACE_INIT(ib_radix_destroy);
+    IB_FTRACE_INIT();
 
     if (!radix) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -844,7 +844,7 @@ static ib_status_t ib_radix_match_prefix(ib_radix_node_t *node,
                                                 uint8_t type,
                                                 void *result)
 {
-    IB_FTRACE_INIT(ib_radix_match_prefix);
+    IB_FTRACE_INIT();
     int i = 0;
 
     if (node == NULL) {
@@ -909,7 +909,7 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
                                                 ib_list_t **rlist,
                                                 ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_match_all);
+    IB_FTRACE_INIT();
     ib_status_t ret = IB_OK;
     uint8_t inserted = 0;
 
@@ -1014,7 +1014,7 @@ ib_status_t ib_radix_match_exact(ib_radix_t *radix,
                                  ib_radix_prefix_t *prefix,
                                  void *result)
 {
-    IB_FTRACE_INIT(ib_radix_match_exact);
+    IB_FTRACE_INIT();
     if (radix->start == NULL) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
@@ -1059,7 +1059,7 @@ ib_status_t ib_radix_match_closest(ib_radix_t *radix,
                                    ib_radix_prefix_t *prefix,
                                    void *result)
 {
-    IB_FTRACE_INIT(ib_radix_match_closest);
+    IB_FTRACE_INIT();
 
     if (radix->start == NULL) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
@@ -1110,7 +1110,7 @@ ib_status_t ib_radix_match_all_data(ib_radix_t *radix,
                                      ib_list_t **rlist,
                                      ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_match_all_data);
+    IB_FTRACE_INIT();
     ib_status_t ret;
 
     if (rlist == NULL) {
@@ -1182,7 +1182,7 @@ ib_status_t ib_radix_match_all_data(ib_radix_t *radix,
 static inline struct in_addr *ib_radix_get_IPV4_addr(const char *ip,
                                                      ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_get_IPV4_addr);
+    IB_FTRACE_INIT();
     struct in_addr *rawbytes = NULL;
 
     if ((rawbytes = (struct in_addr *) ib_mpool_calloc(mp, 1,
@@ -1211,7 +1211,7 @@ static inline struct in_addr *ib_radix_get_IPV4_addr(const char *ip,
 static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
                                                       ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_get_IPV6_addr);
+    IB_FTRACE_INIT();
     struct in6_addr *rawbytes = NULL;
 
     if ((rawbytes = (struct in6_addr *) ib_mpool_calloc(mp, 1,
@@ -1244,7 +1244,7 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                                   ib_radix_prefix_t **prefix,
                                   ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT(ib_radix_ip_to_prefix);
+    IB_FTRACE_INIT();
 
     /* If we got a mask, we will need to copy the IP to separate it from
      the mask, and the max length should be the length of a IPv6 in ascii,

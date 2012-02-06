@@ -38,7 +38,7 @@ ib_status_t DLL_PUBLIC ib_dso_open(ib_dso_t **dso,
                                    const char *file,
                                    ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_dso_open);
+    IB_FTRACE_INIT();
     void *handle;
 
     /// @todo Probably need to do this portably someday
@@ -63,7 +63,7 @@ ib_status_t DLL_PUBLIC ib_dso_open(ib_dso_t **dso,
 
 ib_status_t DLL_PUBLIC ib_dso_close(ib_dso_t *dso)
 {
-    IB_FTRACE_INIT(ib_dso_close);
+    IB_FTRACE_INIT();
     if (dso == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -79,7 +79,7 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(ib_dso_t *dso,
                                        const char *name,
                                        ib_dso_sym_t **sym)
 {
-    IB_FTRACE_INIT(ib_dso_sym_find);
+    IB_FTRACE_INIT();
     char *err;
 
     if (dso == NULL) {

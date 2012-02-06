@@ -39,7 +39,7 @@
 
 ib_status_t ib_lock_init(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT(ib_lock_init);
+    IB_FTRACE_INIT();
 
     int rc;
 
@@ -57,7 +57,7 @@ ib_status_t ib_lock_init(ib_lock_t *lock)
 
 ib_status_t ib_lock_lock(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT(ib_lock_lock);
+    IB_FTRACE_INIT();
 
     /* Return code from system calls. */
     int rc = pthread_mutex_lock(lock);
@@ -72,7 +72,7 @@ ib_status_t ib_lock_lock(ib_lock_t *lock)
 
 ib_status_t ib_lock_unlock(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT(ib_lock_unlock);
+    IB_FTRACE_INIT();
 
     /* Return code from system calls. */
     int rc = pthread_mutex_unlock(lock);
@@ -88,7 +88,7 @@ ib_status_t ib_lock_unlock(ib_lock_t *lock)
 
 ib_status_t ib_lock_destroy(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT(ib_lock_destroy);
+    IB_FTRACE_INIT();
 
     int rc = pthread_mutex_destroy(lock);
 

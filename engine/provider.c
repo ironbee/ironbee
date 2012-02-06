@@ -43,7 +43,7 @@ ib_status_t ib_provider_define(ib_engine_t *ib,
                                ib_provider_register_fn_t fn_reg,
                                void *api)
 {
-    IB_FTRACE_INIT(ib_provider_define);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_provider_def_t *prd;
     char *type_copy;
@@ -80,7 +80,7 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
                                  void *iface,
                                  ib_provider_inst_init_fn_t fn_init)
 {
-    IB_FTRACE_INIT(ib_provider_register);
+    IB_FTRACE_INIT();
     char *pr_key;
     ib_status_t rc;
     ib_provider_def_t *prd;
@@ -147,7 +147,7 @@ ib_status_t ib_provider_lookup(ib_engine_t *ib,
                                const char *key,
                                ib_provider_t **ppr)
 {
-    IB_FTRACE_INIT(ib_provider_lookup);
+    IB_FTRACE_INIT();
     char *pr_key;
     ib_status_t rc;
 
@@ -172,7 +172,7 @@ ib_status_t ib_provider_instance_create_ex(ib_engine_t *ib,
                                            ib_mpool_t *pool,
                                            void *data)
 {
-    IB_FTRACE_INIT(ib_provider_instance_create);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Create the provider instance. */
@@ -205,7 +205,7 @@ ib_status_t ib_provider_instance_create(ib_engine_t *ib,
                                         ib_mpool_t *pool,
                                         void *data)
 {
-    IB_FTRACE_INIT(ib_provider_instance_create);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_provider_t *pr;
 
@@ -224,13 +224,13 @@ ib_status_t ib_provider_instance_create(ib_engine_t *ib,
 
 void *ib_provider_data_get(ib_provider_t *pr)
 {
-    IB_FTRACE_INIT(ib_provider_data_get);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_PTR(void, pr->data);
 }
 
 void ib_provider_data_set(ib_provider_t *pr, void *data)
 {
-    IB_FTRACE_INIT(ib_provider_data_set);
+    IB_FTRACE_INIT();
     pr->data = data;
     IB_FTRACE_RET_VOID();
 }

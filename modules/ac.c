@@ -113,7 +113,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
                                         const char **errptr,
                                         int *erroffset)
 {
-    IB_FTRACE_INIT(modac_add_pattern_ex);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_ac_t *ac_tree = (ib_ac_t *)((modac_provider_data_t*)mpi->data)->ac_tree;
 
@@ -153,7 +153,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
 static ib_status_t modac_provider_instance_init(ib_provider_inst_t *mpi,
                                                 void *data)
 {
-    IB_FTRACE_INIT(modac_provider_instance_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     modac_provider_data_t *dt;
 
@@ -188,7 +188,7 @@ static ib_status_t modac_match(ib_provider_inst_t *mpi,
                                  const uint8_t *data,
                                  size_t dlen, void *ctx)
 {
-    IB_FTRACE_INIT(modac_match);
+    IB_FTRACE_INIT();
     modac_provider_data_t *dt = mpi->data;
 
     if (dt == NULL) {
@@ -224,7 +224,7 @@ static ib_status_t modac_compile(ib_provider_t *mpr,
                                    const char **errptr,
                                    int *erroffset)
 {
-    IB_FTRACE_INIT(modac_compile);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -234,14 +234,14 @@ static ib_status_t modac_match_compiled(ib_provider_t *mpr,
                                           const uint8_t *data,
                                           size_t dlen, void *ctx)
 {
-    IB_FTRACE_INIT(modac_match_compiled);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
 static ib_status_t modac_add_pattern(ib_provider_inst_t *pi,
                                        void *cpatt)
 {
-    IB_FTRACE_INIT(modac_add);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -278,7 +278,7 @@ static void nop_ac_match(ib_ac_t *orig,
  */
 static ib_status_t readfile(const char* filename, char **buffer)
 {
-    IB_FTRACE_INIT(readfile);
+    IB_FTRACE_INIT();
 
     int fd = open(filename, O_RDONLY);
     int rc;
@@ -345,7 +345,7 @@ static ib_status_t pmf_operator_create(ib_mpool_t *pool,
                                        const char *pattern_file,
                                        ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(pmf_operator_create);
+    IB_FTRACE_INIT();
 
     ib_status_t rc;
 
@@ -398,7 +398,7 @@ static ib_status_t pm_operator_create(ib_mpool_t *pool,
                                       const char *pattern,
                                       ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(pm_operator_create);
+    IB_FTRACE_INIT();
 
     ib_status_t rc;
 
@@ -452,7 +452,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
                                        ib_field_t *field,
                                        ib_num_t *result)
 {
-    IB_FTRACE_INIT(pm_operator_execute);
+    IB_FTRACE_INIT();
 
     ib_ac_t *ac = (ib_ac_t*)data;
     ib_ac_context_t ac_ctx;
@@ -492,7 +492,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
 
 static ib_status_t pm_operator_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(pm_operator_destroy);
+    IB_FTRACE_INIT();
 
     /* Nop. */
 
@@ -506,7 +506,7 @@ static ib_status_t pm_operator_destroy(ib_operator_inst_t *op_inst)
 static ib_status_t modac_init(ib_engine_t *ib,
                                 ib_module_t *m)
 {
-    IB_FTRACE_INIT(modac_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register as a matcher provider. */

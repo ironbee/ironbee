@@ -144,6 +144,28 @@ void DLL_PUBLIC ib_trace_str(const char *file,
                              const char *str);
 
 /**
+ * @internal
+ * Current function name.
+ *
+ * In C, __FUNCTION__, __PRETTY_FUNCTION__, and __func__ are all (probably)
+ * identical.  In C++, __FUNCTION__ is (probably) shorter than
+ * __PRETTY_FUNCTION__ and __func__.
+ *
+ * 'probably' means could be otherwise for some compilers.
+ **/
+#if defined(__GNUC__)
+#if defined(__cplusplus)
+#define IB_CURRENT_FUNCTION __FUNCTION__
+#else
+#define IB_CURRENT_FUNCTION __func__
+#endif
+#elif defined(__STDC__VERSION__)
+#define IB_CURRENT_FUNCTION __func__
+#else
+#define IB_CURRENT_FUNCTION "(unknown function due to unknown compiler)"
+#endif
+
+/**
  * Initialize function tracing for a function.
  *
  * This should be the first line of a function and is required before
@@ -152,7 +174,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
  * @code
  * ib_status_t my_func_name(int foo)
  * {
- *     IB_FTRACE_INIT(my_func_name);
+ *     IB_FTRACE_INIT();
  *     ...
  *     IB_FTRACE_RET_STATUS(IB_OK);
  * }
@@ -160,8 +182,8 @@ void DLL_PUBLIC ib_trace_str(const char *file,
  *
  * @param name Name of function
  */
-#define IB_FTRACE_INIT(name) \
-    const char *__ib_fname__ = IB_XSTRINGIFY(name); \
+#define IB_FTRACE_INIT() \
+    const char *__ib_fname__ = IB_CURRENT_FUNCTION; \
     ib_trace_msg(__FILE__, __LINE__, __ib_fname__, "called")
 
 /**

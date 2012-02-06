@@ -176,7 +176,7 @@ static int ib_state_event_name_cbdata_type_list[] = {
 };
 int ib_state_event_cbdata_type(ib_state_event_type_t event)
 {
-    IB_FTRACE_INIT(ib_state_event_cbdata_type);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_INT(ib_state_event_name_cbdata_type_list[event]);
 }
 
@@ -200,7 +200,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(mod_perf_stats_reg_conn_counter);
+    IB_FTRACE_INIT();
 
     perf_info_t *perf_info;
     event_info_t *eventp = (event_info_t *)cbdata;
@@ -268,7 +268,7 @@ static void mod_perf_stats_event_start(
     perf_info_t *perf_info
 )
 {
-    IB_FTRACE_INIT(mod_perf_stats_event_start);
+    IB_FTRACE_INIT();
 
     int cevent = eventp->number;                   /* Current event number. */
     perf_info_t *perfp;                            /* Perf data on current event. */
@@ -311,7 +311,7 @@ static ib_status_t mod_perf_stats_event_stop(
 )
 {
 
-    IB_FTRACE_INIT(mod_perf_stats_event_stop);
+    IB_FTRACE_INIT();
 
     int cevent = eventp->number;                   /* Current event number. */
     perf_info_t *perfp;                            /* Perf data on current event. */
@@ -366,7 +366,7 @@ static ib_status_t mod_perf_stats_event_start_conn_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(mod_perf_stats_event_start_conn_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -401,7 +401,7 @@ static ib_status_t mod_perf_stats_event_start_conndata_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(mod_perf_stats_event_start_conndata_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -436,7 +436,7 @@ static ib_status_t mod_perf_stats_event_start_tx_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(mod_perf_stats_event_start_tx_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -470,7 +470,7 @@ static ib_status_t mod_perf_stats_event_start_txdata_callback(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT(mod_perf_stats_event_start_txdata_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -506,7 +506,7 @@ static ib_status_t mod_perf_stats_event_stop_conn_callback(
 )
 {
 
-    IB_FTRACE_INIT(mod_perf_stats_event_stop_conn_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -542,7 +542,7 @@ static ib_status_t mod_perf_stats_event_stop_conndata_callback(
 )
 {
 
-    IB_FTRACE_INIT(mod_perf_stats_event_stop_conndata_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -578,7 +578,7 @@ static ib_status_t mod_perf_stats_event_stop_tx_callback(
 )
 {
 
-    IB_FTRACE_INIT(mod_perf_stats_event_stop_tx_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -614,7 +614,7 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
 )
 {
 
-    IB_FTRACE_INIT(mod_perf_stats_event_stop_txdata_callback);
+    IB_FTRACE_INIT();
 
     event_info_t *eventp = (event_info_t *)cbdata;
     perf_info_t *perf_info;
@@ -642,7 +642,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
 {
     /*Detect main context otherwise return IB_ENGINE_CONTEXT_MAIN. */
 
-    IB_FTRACE_INIT(perf_stats_init);
+    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Perf stats module loaded.");
     ib_status_t rc;
     int event;
@@ -746,7 +746,7 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
                                            ib_module_t *m,
                                            ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(perf_stats_context_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     int event;
 
@@ -822,7 +822,7 @@ static ib_status_t perf_stats_context_init(ib_engine_t *ib,
 /* Called when module is unloaded. */
 static ib_status_t perf_stats_fini(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(perf_stats_fini);
+    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Perf stats module unloaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }

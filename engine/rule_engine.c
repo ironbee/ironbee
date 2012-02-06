@@ -73,7 +73,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
                                 ib_tx_t *tx,
                                 ib_num_t *rule_result)
 {
-    IB_FTRACE_INIT(execute_rule);
+    IB_FTRACE_INIT();
     ib_list_node_t      *node = NULL;
     ib_operator_inst_t  *opinst = rule->condition.opinst;
 
@@ -164,7 +164,7 @@ static ib_status_t execute_action(ib_engine_t *ib,
                                   const char *name,
                                   ib_action_inst_t *action)
 {
-    IB_FTRACE_INIT(execute_action);
+    IB_FTRACE_INIT();
     ib_status_t   rc;
 
     ib_log_debug(ib, 4,
@@ -201,7 +201,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
                                    const char *name,
                                    ib_list_t *actions)
 {
-    IB_FTRACE_INIT(execute_actions);
+    IB_FTRACE_INIT();
     ib_list_node_t   *node = NULL;
     ib_status_t       rc = IB_OK;
 
@@ -246,7 +246,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
                                           ib_tx_t *tx,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT(ib_rule_engine_execute);
+    IB_FTRACE_INIT();
     const rule_cbdata_t  *rdata = (const rule_cbdata_t *) cbdata;
     ib_context_t         *ctx = tx->ctx;
     ib_context_t         *pctx = ctx->parent;
@@ -313,7 +313,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
                                  ib_flags_t flags,
                                  ib_rule_engine_t **p_rule_engine)
 {
-    IB_FTRACE_INIT(ib_rules_init);
+    IB_FTRACE_INIT();
     rule_cbdata_t    *cbdata;
     ib_rule_engine_t *rule_engine;
     ib_status_t       rc;
@@ -377,7 +377,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
 ib_status_t ib_rule_engine_init(ib_engine_t *ib,
                                 ib_module_t *mod)
 {
-    IB_FTRACE_INIT(ib_rule_engine_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_rules_init(ib, ib->mp, IB_RULES_INIT_CALLBACKS, &(ib->rules) );
@@ -392,7 +392,7 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                                     ib_module_t *mod,
                                     ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(ib_rule_engine_ctx_init);
+    IB_FTRACE_INIT();
     ib_status_t  rc;
 
     /* If the rules are already initialized, do nothing */
@@ -412,7 +412,7 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
 
 ib_mpool_t *ib_rule_mpool(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT(ib_rule_mpool);
+    IB_FTRACE_INIT();
 
     /* Return a pointer to the configuration memory pool */
     IB_FTRACE_RET_PTR(ib_mpool_t, ib_engine_pool_config_get(ib));
@@ -422,7 +422,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
                                       ib_rule_t **prule)
 {
-    IB_FTRACE_INIT(ib_rule_create);
+    IB_FTRACE_INIT();
     ib_status_t  rc;
     ib_rule_t   *rule;
     ib_list_t   *lst;
@@ -473,7 +473,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                              ib_rule_t *rule,
                              ib_rule_phase_t phase)
 {
-    IB_FTRACE_INIT(ib_rule_register);
+    IB_FTRACE_INIT();
     ib_status_t           rc;
     ib_rule_phase_data_t *phasep;
     ib_list_t            *rules;
@@ -534,7 +534,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
                                             ib_rule_t *rule,
                                             ib_operator_inst_t *opinst)
 {
-    IB_FTRACE_INIT(ib_rule_set_operator);
+    IB_FTRACE_INIT();
 
     if ( (rule == NULL) || (opinst == NULL) ) {
         ib_log_error(ib, 4,
@@ -550,7 +550,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
                                       ib_rule_t *rule,
                                       const char *id)
 {
-    IB_FTRACE_INIT(ib_rule_set_id);
+    IB_FTRACE_INIT();
 
     if ( (rule == NULL) || (id == NULL) ) {
         ib_log_error(ib, 4, "Can't set rule id: Invalid rule or id");
@@ -572,7 +572,7 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
                                             ib_rule_flagop_t op,
                                             ib_flags_t flags)
 {
-    IB_FTRACE_INIT(ib_rule_update_flags);
+    IB_FTRACE_INIT();
 
     if (rule == NULL) {
         ib_log_error(ib, 4, "Can't update rule flags: Invalid rule");
@@ -608,7 +608,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_input(ib_engine_t *ib,
                                          ib_rule_t *rule,
                                          const char *name)
 {
-    IB_FTRACE_INIT(ib_rule_add_input);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ( (rule == NULL) || (name == NULL) ) {
@@ -631,7 +631,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
                                           ib_action_inst_t *action,
                                           ib_rule_action_t which)
 {
-    IB_FTRACE_INIT(ib_rule_add_action);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ( (rule == NULL) || (action == NULL) ) {

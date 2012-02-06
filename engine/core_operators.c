@@ -49,7 +49,7 @@ static ib_status_t strop_create(ib_mpool_t *mp,
                                 const char *parameters,
                                 ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(strop_create);
+    IB_FTRACE_INIT();
     char *str;
 
     if (parameters == NULL) {
@@ -83,7 +83,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
-    IB_FTRACE_INIT(op_streq_execute);
+    IB_FTRACE_INIT();
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -131,7 +131,7 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
                                        ib_field_t *field,
                                        ib_num_t *result)
 {
-    IB_FTRACE_INIT(contains_execute_fn);
+    IB_FTRACE_INIT();
     /* 'searchstr' should be const, but the bytestr index fn takes a char* */
     char *searchstr = (char *)data;
     ib_status_t rc = IB_OK;
@@ -183,7 +183,7 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
                                      ib_field_t *field,
                                      ib_num_t *result)
 {
-    IB_FTRACE_INIT(op_exists_execute);
+    IB_FTRACE_INIT();
 
     /* Return true of field is not NULL */
     *result = (field != NULL);
@@ -208,7 +208,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
                                         ib_field_t *field,
                                         ib_num_t *result)
 {
-    IB_FTRACE_INIT(op_checkflag_execute);
+    IB_FTRACE_INIT();
 
     /* Data will be a C-Style string */
     const char *cstr = (const char *)data;
@@ -242,7 +242,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
                                    ib_field_t *field,
                                    ib_num_t *result)
 {
-    IB_FTRACE_INIT(op_true_execute);
+    IB_FTRACE_INIT();
     *result = 1;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -265,7 +265,7 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
-    IB_FTRACE_INIT(op_false_execute);
+    IB_FTRACE_INIT();
     *result = 0;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -275,7 +275,7 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
  */
 ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 {
-    IB_FTRACE_INIT(ib_core_operators_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register the string equal '\@streq' operator */

@@ -104,7 +104,7 @@ static const modhtp_nameval_t modhtp_personalities[] = {
 /* Lookup a numeric personality from a name. */
 static int modhtp_personality(const char *name)
 {
-    IB_FTRACE_INIT(modhtp_personality);
+    IB_FTRACE_INIT();
     const modhtp_nameval_t *rec = modhtp_personalities;
 
     if (name == NULL) {
@@ -125,7 +125,7 @@ static int modhtp_personality(const char *name)
 /* Log htp data via ironbee logging. */
 static int modhtp_callback_log(htp_log_t *log)
 {
-    IB_FTRACE_INIT(modhtp_callback_log);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx =
         (modhtp_context_t *)htp_connp_get_user_data(log->connp);
     int level;
@@ -215,7 +215,7 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
                                       const char *collection_name,
                                       const char *flag)
 {
-    IB_FTRACE_INIT(modhtp_add_flag_to_collection);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = itx->ib;
     ib_status_t rc;
     ib_field_t *f;
@@ -249,7 +249,7 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
                                           const char *collection_name,
                                           unsigned int flags)
 {
-    IB_FTRACE_INIT(modhtp_set_parser_flag);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = itx->ib;
     ib_status_t rc = IB_OK;
 
@@ -357,7 +357,7 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
 
 static int modhtp_htp_tx_start(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_tx_start);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
@@ -396,7 +396,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 
 static int modhtp_htp_request_line(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_request_line);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -463,7 +463,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
 
 static int modhtp_htp_request_headers(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_request_headers);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     htp_header_line_t *hline;
@@ -533,7 +533,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
 
 static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
 {
-    IB_FTRACE_INIT(modhtp_htp_request_body_data);
+    IB_FTRACE_INIT();
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
@@ -591,7 +591,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
 
 static int modhtp_htp_request_trailer(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_request_trailer);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -626,7 +626,7 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
 
 static int modhtp_htp_request(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_request);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -661,7 +661,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
 
 static int modhtp_htp_response_line(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_response_line);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -709,7 +709,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
 
 static int modhtp_htp_response_headers(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_response_headers);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     htp_header_line_t *hline;
@@ -768,7 +768,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
 
 static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
 {
-    IB_FTRACE_INIT(modhtp_htp_response_body_data);
+    IB_FTRACE_INIT();
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
@@ -821,7 +821,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
 
 static int modhtp_htp_response(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_response);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -862,7 +862,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
 
 static int modhtp_htp_response_trailer(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT(modhtp_htp_response_trailer);
+    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -901,7 +901,7 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
                                      ib_conn_t *iconn)
 {
-    IB_FTRACE_INIT(modhtp_iface_init);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = iconn->ib;
     ib_context_t *ctx = iconn->ctx;
     modhtp_cfg_t *modcfg;
@@ -1006,7 +1006,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
 static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
                                            ib_conn_t *iconn)
 {
-    IB_FTRACE_INIT(modhtp_iface_disconnect);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = iconn->ib;
     modhtp_context_t *modctx;
     ib_status_t rc;
@@ -1029,7 +1029,7 @@ static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
 static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                                         ib_conndata_t *qcdata)
 {
-    IB_FTRACE_INIT(modhtp_iface_data_in);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = qcdata->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
@@ -1087,7 +1087,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
 static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                                          ib_conndata_t *qcdata)
 {
-    IB_FTRACE_INIT(modhtp_iface_data_out);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = qcdata->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
@@ -1145,7 +1145,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
 static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi,
                                                           ib_tx_t *itx)
 {
-    IB_FTRACE_INIT(modhtp_iface_gen_request_header_fields);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = itx->ib;
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
@@ -1377,7 +1377,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *pi,
                                                            ib_tx_t *itx)
 {
-    IB_FTRACE_INIT(modhtp_iface_gen_response_header_fields);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = itx->ib;
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
@@ -1496,7 +1496,7 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 static ib_status_t modhtp_init(ib_engine_t *ib,
                                ib_module_t *m)
 {
-    IB_FTRACE_INIT(modhtp_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register as a parser provider. */

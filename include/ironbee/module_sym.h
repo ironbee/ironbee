@@ -40,7 +40,7 @@
  * @note This can be defined before including @a module.h in order
  *       to avoid clashing symbols for static modules.
  *
- * @example
+ * @code
  * #ifdef IB_MODULE_SYM_PREFIX
  * #undef IB_MODULE_SYM_PREFIX
  * #endif

@@ -39,7 +39,7 @@ ib_status_t ib_matcher_create(ib_engine_t *ib,
                               const char *key,
                               ib_matcher_t **pm)
 {
-    IB_FTRACE_INIT(ib_matcher_create);
+    IB_FTRACE_INIT();
     ib_provider_t *mpr;
     ib_status_t rc;
 
@@ -68,7 +68,7 @@ ib_status_t ib_matcher_instance_create(ib_engine_t *ib,
                                        const char *key,
                                        ib_matcher_t **pm)
 {
-    IB_FTRACE_INIT(ib_matcher_instance_create);
+    IB_FTRACE_INIT();
     ib_provider_t *mpr;
     ib_status_t rc;
 
@@ -104,7 +104,7 @@ void *ib_matcher_compile(ib_matcher_t *m,
                          const char **errptr,
                          int *erroffset)
 {
-    IB_FTRACE_INIT(ib_matcher_compile);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     void *cpatt;
     ib_status_t rc;
@@ -128,7 +128,7 @@ ib_status_t ib_matcher_match_buf(ib_matcher_t *m,
                                  size_t dlen,
                                  void *ctx)
 {
-    IB_FTRACE_INIT(ib_matcher_match_buf);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     ib_status_t rc;
 
@@ -144,7 +144,7 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
                                    ib_field_t *f,
                                    void *ctx)
 {
-    IB_FTRACE_INIT(ib_matcher_match_field);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface;
     ib_bytestr_t *bs;
     char *cs;
@@ -179,7 +179,7 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
 ib_status_t ib_matcher_add_pattern(ib_matcher_t *m,
                                    const char *patt)
 {
-    IB_FTRACE_INIT(ib_matcher_add_pattern);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -190,7 +190,7 @@ ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
                                       const char **errptr,
                                       int *erroffset)
 {
-    IB_FTRACE_INIT(ib_matcher_add_pattern_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     ib_status_t rc;
 
@@ -212,7 +212,7 @@ ib_status_t ib_matcher_exec_buf(ib_matcher_t *m,
                                 size_t dlen,
                                 void *ctx)
 {
-    IB_FTRACE_INIT(ib_matcher_exec_buf);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     ib_status_t rc;
 
@@ -226,7 +226,7 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
                                   ib_field_t *f,
                                   void *ctx)
 {
-    IB_FTRACE_INIT(ib_matcher_exec_field);
+    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface;
     ib_bytestr_t *bs;
     char *cs;

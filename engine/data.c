@@ -44,7 +44,7 @@
 ib_status_t ib_data_add(ib_provider_inst_t *dpi,
                         ib_field_t *f)
 {
-    IB_FTRACE_INIT(ib_data_add);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
@@ -58,7 +58,7 @@ ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
                               const char *key,
                               size_t klen)
 {
-    IB_FTRACE_INIT(ib_data_add);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
@@ -73,7 +73,7 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
                                ib_num_t val,
                                ib_field_t **pf)
 {
-    IB_FTRACE_INIT(ib_data_add_num_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
@@ -102,7 +102,7 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
                                   char *val,
                                   ib_field_t **pf)
 {
-    IB_FTRACE_INIT(ib_data_add_nulstr_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
@@ -132,7 +132,7 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
                                    size_t vlen,
                                    ib_field_t **pf)
 {
-    IB_FTRACE_INIT(ib_data_add_bytestr_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
@@ -160,7 +160,7 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
                                 size_t nlen,
                                 ib_field_t **pf)
 {
-    IB_FTRACE_INIT(ib_data_add_list_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
@@ -188,7 +188,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
                                   size_t nlen,
                                   ib_field_t **pf)
 {
-    IB_FTRACE_INIT(ib_data_add_stream_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
@@ -218,7 +218,7 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
                            size_t nlen,
                            ib_field_t **pf)
 {
-    IB_FTRACE_INIT(ib_data_get_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
@@ -230,7 +230,7 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
 ib_status_t ib_data_get_all(ib_provider_inst_t *dpi,
                             ib_list_t *list)
 {
-    IB_FTRACE_INIT(ib_data_get_all);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
@@ -245,7 +245,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf,
                                const char *tfn)
 {
-    IB_FTRACE_INIT(ib_data_tfn_get_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_engine_t *ib = dpi->pr->ib;

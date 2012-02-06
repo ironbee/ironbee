@@ -93,7 +93,7 @@ static ib_status_t cfgp_opval(const char *opname, const ib_strval_t *map,
 ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
                                 ib_engine_t *ib)
 {
-    IB_FTRACE_INIT(ib_cfgparser_create);
+    IB_FTRACE_INIT();
     ib_mpool_t *pool;
     ib_status_t rc;
 
@@ -151,7 +151,7 @@ failed:
 ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                const char *file)
 {
-    IB_FTRACE_INIT(ib_cfgparser_parse);
+    IB_FTRACE_INIT();
     int fd = open(file, O_RDONLY);
     uint8_t buf[8192];
     uint8_t *buf_end = buf + sizeof(buf) - 1;
@@ -236,7 +236,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
 static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(cfgp_set_current);
+    IB_FTRACE_INIT();
     cp->cur_ctx = ctx;
     cp->cur_loc = (ib_loc_t *)ctx->fn_ctx_data;
     cp->cur_site = cp->cur_loc?cp->cur_loc->site:NULL;
@@ -246,7 +246,7 @@ static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
 ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
                                       ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(ib_cfgparser_context_push);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
 
@@ -268,7 +268,7 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
                                      ib_context_t **pctx)
 {
-    IB_FTRACE_INIT(ib_cfgparser_context_pop);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_status_t rc;
@@ -303,7 +303,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
 ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
                                                const char *name)
 {
-    IB_FTRACE_INIT(ib_cfgparser_block_push);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
 
@@ -320,7 +320,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
                                               const char **pname)
 {
-    IB_FTRACE_INIT(ib_cfgparser_block_pop);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     const char *name;
     ib_status_t rc;
@@ -348,7 +348,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
 
 void ib_cfgparser_destroy(ib_cfgparser_t *cp)
 {
-    IB_FTRACE_INIT(ib_cfgparser_destroy);
+    IB_FTRACE_INIT();
 
     if (cp != NULL) {
         ib_mpool_destroy(cp->mp);
@@ -359,7 +359,7 @@ void ib_cfgparser_destroy(ib_cfgparser_t *cp)
 ib_status_t ib_config_register_directives(ib_engine_t *ib,
                                           const ib_dirmap_init_t *init)
 {
-    IB_FTRACE_INIT(ib_config_register_directives);
+    IB_FTRACE_INIT();
     const ib_dirmap_init_t *rec = init;
     ib_status_t rc;
 
@@ -382,7 +382,7 @@ ib_status_t ib_config_register_directive(ib_engine_t *ib,
                                          ib_config_cb_blkend_fn_t fn_blkend,
                                          void *cbdata)
 {
-    IB_FTRACE_INIT(ib_config_register_directive);
+    IB_FTRACE_INIT();
     ib_dirmap_init_t *rec;
     ib_status_t rc;
 
@@ -405,7 +405,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                                         const char *name,
                                         ib_list_t *args)
 {
-    IB_FTRACE_INIT(ib_config_directive_process);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
     ib_list_node_t *node;
@@ -545,7 +545,7 @@ ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
 ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
                                     const char *name)
 {
-    IB_FTRACE_INIT(ib_config_block_process);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
     ib_status_t rc;
@@ -579,7 +579,7 @@ ib_status_t ib_site_create(ib_site_t **psite,
                            ib_engine_t *ib,
                            const char *name)
 {
-    IB_FTRACE_INIT(ib_site_create);
+    IB_FTRACE_INIT();
     ib_mpool_t *pool = ib->config_mp;
     ib_status_t rc;
 
@@ -602,7 +602,7 @@ ib_status_t ib_site_create(ib_site_t **psite,
 ib_status_t ib_site_address_add(ib_site_t *site,
                                 const char *ip)
 {
-    IB_FTRACE_INIT(ib_site_address_add);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Create a list if this is the first item. */
@@ -621,14 +621,14 @@ ib_status_t ib_site_address_add(ib_site_t *site,
 ib_status_t ib_site_address_validate(ib_site_t *site,
                                      const char *ip)
 {
-    IB_FTRACE_INIT(ib_site_address_validate);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
 ib_status_t ib_site_hostname_add(ib_site_t *site,
                                  const char *host)
 {
-    IB_FTRACE_INIT(ib_site_hostname_add);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Create a list if this is the first item. */
@@ -647,7 +647,7 @@ ib_status_t ib_site_hostname_add(ib_site_t *site,
 ib_status_t ib_site_hostname_validate(ib_site_t *site,
                                       const char *host)
 {
-    IB_FTRACE_INIT(ib_site_hostname_validate);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -655,7 +655,7 @@ ib_status_t ib_site_loc_create(ib_site_t *site,
                                ib_loc_t **ploc,
                                const char *path)
 {
-    IB_FTRACE_INIT(ib_site_loc_create);
+    IB_FTRACE_INIT();
     ib_loc_t *loc;
     ib_status_t rc;
 
@@ -692,7 +692,7 @@ ib_status_t ib_site_loc_create(ib_site_t *site,
 ib_status_t ib_site_loc_create_default(ib_site_t *site,
                                        ib_loc_t **ploc)
 {
-    IB_FTRACE_INIT(ib_site_loc_create);
+    IB_FTRACE_INIT();
     ib_loc_t *loc;
     ib_status_t rc;
 

@@ -145,7 +145,7 @@ static const char *modlua_data_reader(lua_State *L,
                                       void *udata,
                                       size_t *size)
 {
-    IB_FTRACE_INIT(modlua_data_reader);
+    IB_FTRACE_INIT();
     modlua_chunk_tracker_t *tracker = (modlua_chunk_tracker_t *)udata;
     modlua_chunk_t *chunk = tracker->chunk;
     //ib_engine_t *ib = chunk->ib;
@@ -172,7 +172,7 @@ static int modlua_data_writer(lua_State *L,
                               size_t size,
                               void *udata)
 {
-    IB_FTRACE_INIT(modlua_data_writer);
+    IB_FTRACE_INIT();
     modlua_chunk_t *chunk = (modlua_chunk_t *)udata;
     //ib_engine_t *ib = chunk->ib;
     modlua_cpart_t *cpart;
@@ -204,7 +204,7 @@ static int modlua_data_writer(lua_State *L,
 
 static int modlua_load_lua_data(ib_engine_t *ib, lua_State *L, modlua_chunk_t *chunk)
 {
-    IB_FTRACE_INIT(modlua_load_lua_data);
+    IB_FTRACE_INIT();
     modlua_chunk_tracker_t tracker;
     int ec;
 
@@ -232,7 +232,7 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib,
                                                  const char *event_name,
                                                  ib_module_t *m)
 {
-    IB_FTRACE_INIT(modlua_register_event_handler);
+    IB_FTRACE_INIT();
     ib_mpool_t *pool = ib_engine_pool_config_get(ib);
     modlua_cfg_t *modcfg;
     ib_state_event_type_t event;
@@ -359,7 +359,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
                                         const char *file,
                                         modlua_chunk_t **pchunk)
 {
-    IB_FTRACE_INIT(modlua_load_lua_file);
+    IB_FTRACE_INIT();
     ib_mpool_t *pool = ib_engine_pool_config_get(ib);
     modlua_chunk_t *chunk;
     lua_State *L = ls;
@@ -449,7 +449,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
 static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
                                            ib_module_t *m)
 {
-    IB_FTRACE_INIT(modlua_init_lua_wrapper);
+    IB_FTRACE_INIT();
     modlua_cfg_t *maincfg;
     lua_State *L;
     const char *funcname = "onModuleLoad";
@@ -517,7 +517,7 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
                                       ib_module_t **pm,
                                       const char *file)
 {
-    IB_FTRACE_INIT(modlua_module_load);
+    IB_FTRACE_INIT();
     modlua_chunk_t *chunk;
     modlua_cfg_t *maincfg;
     ib_list_t *mlist = (ib_list_t *)IB_MODULE_STRUCT.data;
@@ -614,7 +614,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                                           ib_context_t *ctx,
                                           const char *name)
 {
-    IB_FTRACE_INIT(modlua_lua_module_init);
+    IB_FTRACE_INIT();
     ib_mpool_t *pool = ib_engine_pool_config_get(ib); /// @todo config pool???
     lua_State *L;
     ib_module_t *m;
@@ -753,7 +753,7 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
                                               modlua_cfg_t *modcfg,
                                               lua_State *L)
 {
-    IB_FTRACE_INIT(modlua_load_ironbee_module);
+    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     modlua_chunk_t *chunk;
     ib_module_t *m;
@@ -838,7 +838,7 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
  */
 static modlua_runtime_t *modlua_runtime_get(ib_conn_t *conn)
 {
-    IB_FTRACE_INIT(modlua_runtime_get);
+    IB_FTRACE_INIT();
     modlua_runtime_t *lua;
 
     ib_hash_get(conn->data, MODLUA_CONN_KEY, &lua);
@@ -864,7 +864,7 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
                                                void *param,
                                                void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_init_lua_runtime_cfg);
+    IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
     ib_status_t rc;
 
@@ -909,7 +909,7 @@ static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
                                                   ib_state_event_type_t event,
                                                   void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_destroy_lua_runtime_cfg);
+    IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
     ib_status_t rc;
 
@@ -945,7 +945,7 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
                                            ib_conn_t *conn,
                                            void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_init_lua_runtime);
+    IB_FTRACE_INIT();
 
     assert(event == conn_started_event);
 
@@ -1030,7 +1030,7 @@ static ib_status_t modlua_destroy_lua_runtime(ib_engine_t *ib,
                                               ib_conn_t *conn,
                                               void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_destroy_lua_runtime);
+    IB_FTRACE_INIT();
 
     assert(event == conn_finished_event);
 
@@ -1055,7 +1055,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
                                            const char *modname,
                                            ib_state_event_type_t event)
 {
-    IB_FTRACE_INIT(modlua_exec_lua_handler);
+    IB_FTRACE_INIT();
     lua_State *L = lua->L;
     const char *funcname = NULL;
     ib_status_t rc = IB_OK;
@@ -1225,7 +1225,7 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
                                                     ib_conndata_t *conndata,
                                                     void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_handle_lua_conndata_event);
+    IB_FTRACE_INIT();
     ib_conn_t *conn = conndata->conn;
     modlua_cfg_t *modcfg;
     modlua_runtime_t *lua;
@@ -1300,7 +1300,7 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
                                                   ib_txdata_t *txdata,
                                                   void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_handle_lua_txdata_event);
+    IB_FTRACE_INIT();
     ib_tx_t *tx = txdata->tx;
     ib_conn_t *conn = tx->conn;
     modlua_cfg_t *modcfg;
@@ -1377,7 +1377,7 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
                                                 ib_conn_t *conn,
                                                 void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_handle_lua_conn_event);
+    IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
     modlua_runtime_t *lua;
     ib_list_t *luaevents;
@@ -1451,7 +1451,7 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_handle_lua_tx_event);
+    IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
     modlua_runtime_t *lua;
     ib_list_t *luaevents;
@@ -1515,7 +1515,7 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
 static ib_status_t modlua_init(ib_engine_t *ib,
                                ib_module_t *m)
 {
-    IB_FTRACE_INIT(modlua_init);
+    IB_FTRACE_INIT();
     ib_list_t *mlist;
     ib_status_t rc;
 
@@ -1645,7 +1645,7 @@ static ib_status_t modlua_context_init(ib_engine_t *ib,
                                        ib_module_t *m,
                                        ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(modlua_context_init);
+    IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
     ib_list_t *mlist = (ib_list_t *)m->data;
     ib_list_node_t *node;
@@ -1708,7 +1708,7 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
                                           ib_list_t *args,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_dir_lua_wrapper);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     modlua_wrapper_cbdata_t *wcbdata = (modlua_wrapper_cbdata_t *)cbdata;
     ib_list_node_t *node;
@@ -1795,7 +1795,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
                                              const char *name,
                                              void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_blkend_lua_wrapper);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     modlua_wrapper_cbdata_t *wcbdata = (modlua_wrapper_cbdata_t *)cbdata;
     modlua_cfg_t *maincfg;
@@ -1888,7 +1888,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                      const char *p1,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(modlua_dir_param1);
+    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
 

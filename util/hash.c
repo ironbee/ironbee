@@ -37,7 +37,7 @@ unsigned int ib_hashfunc_djb2(const void *ckey,
                               size_t len,
                               uint8_t flags)
 {
-    IB_FTRACE_INIT(ib_hashfunc_djb2);
+    IB_FTRACE_INIT();
     unsigned int hash = 0;
     const unsigned char *key = (const unsigned char *)ckey;
     size_t i = 0;
@@ -66,7 +66,7 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
                               int size,
                               uint8_t flags)
 {
-    IB_FTRACE_INIT(ib_hash_create_ex);
+    IB_FTRACE_INIT();
     ib_hash_t *ib_ht = NULL;
 
     if (hp == NULL) {
@@ -100,7 +100,7 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
 
 ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
 {
-    IB_FTRACE_INIT(ib_hash_next);
+    IB_FTRACE_INIT();
     hti->cur_entry = hti->next;
     while (!hti->cur_entry) {
         if (hti->index > hti->cur_ht->size) {
@@ -115,7 +115,7 @@ ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
 ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
                               ib_hash_t *ib_ht)
 {
-    IB_FTRACE_INIT(ib_hash_first);
+    IB_FTRACE_INIT();
     ib_hash_iter_t *hti = NULL;
 
     if (p != NULL) {
@@ -146,7 +146,7 @@ static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
                                               unsigned int hash,
                                               uint8_t flags)
 {
-    IB_FTRACE_INIT(ib_hash_find_htentry);
+    IB_FTRACE_INIT();
 
     for (; hte != NULL; hte = hte->next) {
         if (hte->hash == hash
@@ -193,7 +193,7 @@ ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
                                unsigned int *hash,
                                uint8_t lookup_flags)
 {
-    IB_FTRACE_INIT(ib_hash_find_entry);
+    IB_FTRACE_INIT();
 
     ib_hash_entry_t *slot = NULL;
     ib_hash_entry_t *he = NULL;
@@ -227,7 +227,7 @@ ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
  */
 static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
 {
-    IB_FTRACE_INIT(ib_hash_resize_slots);
+    IB_FTRACE_INIT();
     ib_hash_iter_t *hti = NULL;
     ib_hash_entry_t **new_slots = NULL;
     unsigned int new_max = 0;
@@ -254,7 +254,7 @@ static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
 
 void ib_hash_clear(ib_hash_t *h)
 {
-    IB_FTRACE_INIT(ib_hash_clear);
+    IB_FTRACE_INIT();
     ib_hash_iter_t *hti = NULL;
     for (hti = ib_hash_first(NULL, h);
          hti;
@@ -269,7 +269,7 @@ ib_status_t ib_hash_get(ib_hash_t *h,
                         const char *key,
                         void *pdata)
 {
-    IB_FTRACE_INIT(ib_hash_get);
+    IB_FTRACE_INIT();
     if (key == NULL) {
         *(void **)pdata = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -282,7 +282,7 @@ ib_status_t ib_hash_get_nocase(ib_hash_t *h,
                                const char *key,
                                void *pdata)
 {
-    IB_FTRACE_INIT(ib_hash_get);
+    IB_FTRACE_INIT();
     if (key == NULL) {
         *(void **)pdata = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -298,7 +298,7 @@ ib_status_t ib_hash_get_ex(ib_hash_t *ib_ht,
                            void *pdata,
                            uint8_t lookup_flags)
 {
-    IB_FTRACE_INIT(ib_hash_get_ex);
+    IB_FTRACE_INIT();
     ib_hash_entry_t *he = NULL;
     ib_status_t rc = IB_EINVAL;
     unsigned int hash = 0;
@@ -321,7 +321,7 @@ ib_status_t ib_hash_get_ex(ib_hash_t *ib_ht,
 
 ib_status_t ib_hash_get_all(ib_hash_t *h, ib_list_t *list)
 {
-    IB_FTRACE_INIT(ib_hash_get_all);
+    IB_FTRACE_INIT();
     ib_hash_iter_t *hti = NULL;
 
     for (hti = ib_hash_first(list->mp, h);
@@ -343,7 +343,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
                            size_t len,
                            const void *pdata)
 {
-    IB_FTRACE_INIT(ib_hash_set_ex);
+    IB_FTRACE_INIT();
     unsigned int hash = 0;
     uint8_t found = 0;
 
@@ -437,7 +437,7 @@ ib_status_t ib_hash_set(ib_hash_t *h,
                         const char *key,
                         void *data)
 {
-    IB_FTRACE_INIT(ib_hash_set);
+    IB_FTRACE_INIT();
     /* Cannot be a NULL value (this means delete). */
     if (data == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -449,7 +449,7 @@ ib_status_t ib_hash_remove_ex(ib_hash_t *h,
                               void *key, size_t len,
                               void *pdata)
 {
-    IB_FTRACE_INIT(ib_hash_remove_ex);
+    IB_FTRACE_INIT();
     ib_status_t rc = IB_ENOENT;
     void *data = NULL;
 

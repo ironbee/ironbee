@@ -95,7 +95,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                                   ib_rule_t *rule,
                                   const char *str)
 {
-    IB_FTRACE_INIT(parse_operator);
+    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     const char *at = NULL;
     ib_num_t bang = 0;
@@ -201,7 +201,7 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
                                 ib_rule_t *rule,
                                 const char *input_str)
 {
-    IB_FTRACE_INIT(parse_inputs);
+    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     const char *cur;
     char *copy;
@@ -256,7 +256,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
                                   ib_rule_phase_t *phase,
                                   const char *modifier_str)
 {
-    IB_FTRACE_INIT(parse_modifier);
+    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     const char *name;
     char *colon;
@@ -369,7 +369,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
                                             critical_section_fn_t fn,
                                             lua_State **L)
 {
-    IB_FTRACE_INIT(call_in_critical_section);
+    IB_FTRACE_INIT();
 
     /* Return code from IronBee calls. */
     ib_status_t ib_rc;
@@ -414,7 +414,7 @@ static ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
                                       const char *func_name,
                                       ib_num_t *result)
 {
-    IB_FTRACE_INIT(ib_lua_func_eval_r);
+    IB_FTRACE_INIT();
 
     int result_int;
     ib_status_t ib_rc;
@@ -449,7 +449,7 @@ static ib_status_t lua_operator_create(ib_mpool_t *pool,
                                      const char *parameters,
                                      ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(lua_operator_create);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -459,7 +459,7 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
                                       ib_field_t *field,
                                       ib_num_t *result)
 {
-    IB_FTRACE_INIT(lua_operator_execute);
+    IB_FTRACE_INIT();
     ib_status_t ib_rc;
     const char *func_name = (char*) data;
 
@@ -474,7 +474,7 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
 
 static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(lua_operator_destroy);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -493,7 +493,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                                         ib_list_t *vars,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT(rules_ruleext_params);
+    IB_FTRACE_INIT();
 
     ib_status_t rc;
     ib_list_node_t *inputs;
@@ -623,7 +623,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
                                      ib_list_t *vars,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT(rules_rule_params);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_list_node_t *inputs;
     ib_list_node_t *op;
@@ -722,7 +722,7 @@ static void clean_up_ipc_mem(void)
 
 static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(rules_init);
+    IB_FTRACE_INIT();
 
     /* Error code from Iron Bee calls. */
     ib_status_t ib_rc;
@@ -814,7 +814,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
 
 static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(rules_fini);
+    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Rules module unloading.");
 
     ib_lock_destroy(&g_lua_lock);

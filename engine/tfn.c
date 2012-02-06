@@ -42,7 +42,7 @@ ib_status_t ib_tfn_create(ib_engine_t *ib,
                           void *fndata,
                           ib_tfn_t **ptfn)
 {
-    IB_FTRACE_INIT(ib_tfn_create);
+    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_tfn_t *tfn;
     char *name_copy;
@@ -88,7 +88,7 @@ ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
                              size_t nlen,
                              ib_tfn_t **ptfn)
 {
-    IB_FTRACE_INIT(ib_tfn_lookup);
+    IB_FTRACE_INIT();
     ib_status_t rc = ib_hash_get_ex(ib->tfns, (void *)name, nlen, (void *)ptfn,
                                     IB_HASH_FLAG_NOCASE);
     IB_FTRACE_RET_STATUS(rc);
@@ -102,7 +102,7 @@ ib_status_t ib_tfn_transform(ib_tfn_t *tfn,
                              size_t *dlen_out,
                              ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT(ib_tfn_transform);
+    IB_FTRACE_INIT();
     ib_status_t rc = tfn->transform(tfn->fndata, pool, data_in, dlen_in, data_out, dlen_out, pflags);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -111,7 +111,7 @@ ib_status_t ib_tfn_transform_field(ib_tfn_t *tfn,
                                    ib_field_t *f,
                                    ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT(ib_tfn_transform);
+    IB_FTRACE_INIT();
     ib_bytestr_t *bs;
     char *str;
     uint8_t *data_out;

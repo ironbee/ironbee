@@ -87,7 +87,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
                                    const char **errptr,
                                    int *erroffset)
 {
-    IB_FTRACE_INIT(modpcre_compile);
+    IB_FTRACE_INIT();
     pcre *cpatt;
     modpcre_cpatt_t *pcre_cpatt;
 #ifdef PCRE_HAVE_JIT
@@ -155,7 +155,7 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
                                           size_t dlen,
                                           void *ctx)
 {
-    IB_FTRACE_INIT(modpcre_match_compiled);
+    IB_FTRACE_INIT();
     modpcre_cpatt_t *pcre_cpatt = (modpcre_cpatt_t *)cpatt;
     int ovector[30];
     int ec;
@@ -176,7 +176,7 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
 static ib_status_t modpcre_add_pattern(ib_provider_inst_t *pi,
                                        void *cpatt)
 {
-    IB_FTRACE_INIT(modpcre_add);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -188,7 +188,7 @@ static ib_status_t modpcre_add_pattern_ex(ib_provider_inst_t *mpi,
                                           const char **errptr,
                                           int *erroffset)
 {
-    IB_FTRACE_INIT(modpcre_add);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -197,7 +197,7 @@ static ib_status_t modpcre_match(ib_provider_inst_t *mpi,
                                  const uint8_t *data,
                                  size_t dlen, void *ctx)
 {
-    IB_FTRACE_INIT(modpcre_match);
+    IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -236,7 +236,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
                                         const char *pattern,
                                         ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(pcre_operator_create);
+    IB_FTRACE_INIT();
     const char* errptr;
     int erroffset;
     int pcre_rc;
@@ -322,7 +322,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
  */
 static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT(pcre_operator_destroy);
+    IB_FTRACE_INIT();
     /* Nop */
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -343,7 +343,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                                          ib_field_t *field,
                                          ib_num_t *result)
 {
-    IB_FTRACE_INIT(pcre_operator_execute);
+    IB_FTRACE_INIT();
 
     int pcre_rc;
     ib_status_t ib_rc;
@@ -432,7 +432,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 static ib_status_t modpcre_init(ib_engine_t *ib,
                                 ib_module_t *m)
 {
-    IB_FTRACE_INIT(modpcre_init);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register as a matcher provider. */

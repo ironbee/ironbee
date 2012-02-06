@@ -60,7 +60,7 @@ static void default_logger(FILE *fp, int level,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)
 {
-    IB_FTRACE_INIT(default_logger);
+    IB_FTRACE_INIT();
     char fmt2[1024 + 1];
 
     if (level > 4) {
@@ -206,7 +206,7 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
                                const char *fmt,
                                ...)
 {
-    IB_FTRACE_INIT(ib_logevent_create);
+    IB_FTRACE_INIT();
     char buf[8192];
     struct timeval tv;
     va_list ap;
@@ -251,7 +251,7 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
 
 ib_provider_inst_t *ib_log_provider_get_instance(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT(ib_log_provider_get_instance);
+    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -266,7 +266,7 @@ ib_provider_inst_t *ib_log_provider_get_instance(ib_context_t *ctx)
 
 void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT(ib_log_provider_set_instance);
+    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -297,7 +297,7 @@ void ib_vclog_ex(ib_context_t *ctx, int level,
                  const char *prefix, const char *file, int line,
                  const char *fmt, va_list ap)
 {
-    IB_FTRACE_INIT(ib_vclog_ex);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logger) *api;
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi = NULL;
@@ -333,7 +333,7 @@ void ib_vclog_ex(ib_context_t *ctx, int level,
 ib_status_t ib_event_add(ib_provider_inst_t *pi,
                          ib_logevent_t *e)
 {
-    IB_FTRACE_INIT(ib_event_add);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
@@ -350,7 +350,7 @@ ib_status_t ib_event_add(ib_provider_inst_t *pi,
 ib_status_t ib_event_remove(ib_provider_inst_t *pi,
                             uint32_t id)
 {
-    IB_FTRACE_INIT(ib_event_remove);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
@@ -367,7 +367,7 @@ ib_status_t ib_event_remove(ib_provider_inst_t *pi,
 ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
                              ib_list_t **pevents)
 {
-    IB_FTRACE_INIT(ib_event_get_all);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
@@ -383,7 +383,7 @@ ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
 
 ib_status_t ib_event_write_all(ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT(ib_event_write_all);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
@@ -399,7 +399,7 @@ ib_status_t ib_event_write_all(ib_provider_inst_t *pi)
 
 ib_status_t ib_auditlog_write(ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT(ib_auditlog_write);
+    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(audit) *api;
     ib_status_t rc;
 

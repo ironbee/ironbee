@@ -44,7 +44,7 @@
 ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *uuid,
                                  const char *str)
 {
-    IB_FTRACE_INIT(ib_uuid_ascii_to_bin);
+    IB_FTRACE_INIT();
     int i;
     int j;
 

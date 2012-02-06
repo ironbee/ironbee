@@ -33,7 +33,7 @@
 
 ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT(ib_stream_create);
+    IB_FTRACE_INIT();
     /* Create the structure. */
     *pstream = (ib_stream_t *)ib_mpool_calloc(pool, 1, sizeof(**pstream));
     if (*pstream == NULL) {
@@ -48,7 +48,7 @@ ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool)
 ib_status_t ib_stream_push_sdata(ib_stream_t *s,
                                  ib_sdata_t *sdata)
 {
-    IB_FTRACE_INIT(ib_stream_push_sdata);
+    IB_FTRACE_INIT();
 
     s->slen += sdata->dlen;
 
@@ -68,7 +68,7 @@ ib_status_t ib_stream_push(ib_stream_t *s,
                            void *data,
                            size_t dlen)
 {
-    IB_FTRACE_INIT(ib_stream_push);
+    IB_FTRACE_INIT();
     /// @todo take from a resource pool, if available
     ib_sdata_t *node = (ib_sdata_t *)ib_mpool_calloc(s->mp,
                                                      1, sizeof(*node));
@@ -89,7 +89,7 @@ ib_status_t ib_stream_push(ib_stream_t *s,
 ib_status_t ib_stream_pull(ib_stream_t *s,
                            ib_sdata_t **psdata)
 {
-    IB_FTRACE_INIT(ib_stream_pull);
+    IB_FTRACE_INIT();
 
     if (s->nelts == 0) {
         if (psdata != NULL) {

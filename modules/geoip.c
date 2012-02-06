@@ -50,7 +50,7 @@ static ib_status_t geoip_lookup(
     void *data 
 )
 {
-    IB_FTRACE_INIT(geoip_lookup);
+    IB_FTRACE_INIT();
 
     const char *ip = tx->er_ipstr;
 
@@ -273,7 +273,7 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
                                                   const char *p1,
                                                   void *cbdata)
 {
-    IB_FTRACE_INIT(geoip_database_file_dir_param1);
+    IB_FTRACE_INIT();
 
     if (geoip_db != NULL)
     {
@@ -311,7 +311,7 @@ static IB_DIRMAP_INIT_STRUCTURE(geoip_directive_map) = {
 /* Called when module is loaded. */
 static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(geoip_init);
+    IB_FTRACE_INIT();
 
     ib_status_t rc;
 
@@ -351,7 +351,7 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
 /* Called when module is unloaded. */
 static ib_status_t geoip_fini(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT(geoip_fini);
+    IB_FTRACE_INIT();
     if (geoip_db!=NULL)
     {
         GeoIP_delete(geoip_db);
