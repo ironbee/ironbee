@@ -165,7 +165,7 @@ typedef void (*ib_ac_callback_t)(ib_ac_t *orig,
  */
 #define ib_ac_init_ctx(ac_ctx,ac_tree) \
         do { \
-            (ac_ctx)->ac_treeree = (ac_tree); \
+            (ac_ctx)->ac_tree = (ac_tree); \
             if ((ac_tree) != NULL) {\
             (ac_ctx)->current = (ac_tree)->root; }\
             (ac_ctx)->processed = 0; \
@@ -181,7 +181,7 @@ typedef void (*ib_ac_callback_t)(ib_ac_t *orig,
  */
 #define ib_ac_reset_ctx(ac_ctx,ac_tree) \
         do { \
-            (ac_ctx)->ac_treeree = (ac_tree); \
+            (ac_ctx)->ac_tree = (ac_tree); \
             if ((ac_tree) != NULL) {\
             (ac_ctx)->current = (ac_tree)->root; }\
             (ac_ctx)->processed = 0; \
