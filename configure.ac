@@ -6,8 +6,7 @@ AC_PREREQ(2.59)
 
 AC_INIT([ironbee], [0.2], [brectanus@qualys.com])
 
-AC_CONFIG_MACRO_DIR([acinclude])
-AC_CONFIG_SRCDIR([README])
+AC_CONFIG_MACRO_DIR([acinclude]) AC_CONFIG_SRCDIR([README])
 AC_CONFIG_HEADERS([ironbee_config_auto_gen.h])
 AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
@@ -258,11 +257,17 @@ sinclude(acinclude/apu.m4)
 sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
 sinclude(acinclude/geoip.m4)
+sinclude(acinclude/ax_pthread.m4)
 
 # Required libs
 CHECK_HTP()
 CHECK_PCRE()
 CHECK_XML2()
+AX_PTHREAD([LIBS="$LIBS $PTHREAD_LIBS"
+            CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+            CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+            AC_MSG_RESULT([yes])],
+           [AC_MSG_ERROR([Pthreads is required])])
 dnl TODO: These need to be optional (only if building apache httpd plugin)
 CHECK_APXS()
 CHECK_APR()

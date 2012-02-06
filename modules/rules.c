@@ -66,7 +66,7 @@ static lua_State *g_ironbee_rules_lua;
 /**
  * @brief Semaphore ID used to protect Lua thread creation and destruction.
  */
-static ib_lock_t g_lua_lock = IB_LOCK_UNINITIALIZED;
+static ib_lock_t g_lua_lock;
 
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
@@ -731,16 +731,13 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     const char* ffi_file_name = "ironbee-ffi.lua";
     char *ffi_file_path = NULL;
 
-    if (g_lua_lock == IB_LOCK_UNINITIALIZED)
-    {
-        ib_rc = ib_lock_init(&g_lua_lock);
+    ib_rc = ib_lock_init(&g_lua_lock);
 
-        if (ib_rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to initialize lua global lock.");
-        }
-
-        atexit(&clean_up_ipc_mem);
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to initialize lua global lock.");
     }
+
+    atexit(&clean_up_ipc_mem);
 
     ib_log_debug(ib, 1, "Initializing rules module.");
 
