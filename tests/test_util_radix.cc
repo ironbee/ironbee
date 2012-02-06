@@ -27,12 +27,12 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#define TESTING
+#include <ironbee/util.h>
+#include <ironbee/radix.h>
+#include <ironbee/mpool.h>
+#include <ironbee/debug.h>
 
-#include "util/util.c"
-#include "util/radix.c"
-#include "util/mpool.c"
-#include "util/debug.c"
+#include "util/ironbee_util_private.h"
 
 /* -- Helper functions -- */
 
