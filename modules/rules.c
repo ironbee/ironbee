@@ -759,8 +759,8 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
-    ffi_file_path = malloc(strlen(corecfg->module_base_path) + 
-                           strlen(ffi_file_name) + 
+    ffi_file_path = malloc(strlen(corecfg->module_base_path) +
+                           strlen(ffi_file_name) +
                            2);
 
     if (ffi_file_path == NULL) {

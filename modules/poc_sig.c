@@ -236,7 +236,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     }
 
     current_arg = ib_list_first_const(args);
-    
+
     /* Target */
     if (current_arg == NULL) {
         ib_log_error(ib, 1, "No PocSig target");

@@ -43,7 +43,7 @@ struct ib_hook_t {
     union {
         /*! Comparison only */
         ib_void_fn_t                as_void;
-        
+
         ib_state_null_hook_fn_t     null;
         ib_state_conn_hook_fn_t     conn;
         ib_state_conndata_hook_fn_t conndata;

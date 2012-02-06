@@ -60,7 +60,7 @@ public:
     {
         ib_core_cfg_t *corecfg = NULL;
         ib_context_module_config(ib_engine->ctx,
-                                 ib_core_module(), 
+                                 ib_core_module(),
                                  static_cast<void*>(&corecfg));
         corecfg->rule_base_path = path;
     }
@@ -74,7 +74,7 @@ public:
     {
         ib_core_cfg_t *corecfg = NULL;
         ib_context_module_config(ib_engine->ctx,
-                                 ib_core_module(), 
+                                 ib_core_module(),
                                  static_cast<void*>(&corecfg));
         corecfg->module_base_path = path;
     }

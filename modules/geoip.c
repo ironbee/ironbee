@@ -44,10 +44,10 @@ IB_MODULE_DECLARE();
 static GeoIP *geoip_db = NULL;
 
 static ib_status_t geoip_lookup(
-    ib_engine_t *ib, 
+    ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_tx_t *tx, 
-    void *data 
+    ib_tx_t *tx,
+    void *data
 )
 {
     IB_FTRACE_INIT();
