@@ -1,0 +1,3 @@
+spell-check.rb: Run aspell on all source files.  Will use custom dictionaries
+located in this directory.  The idea is to build up those dictionaries so
+that there are no false positives.  This will create some false negatives.
