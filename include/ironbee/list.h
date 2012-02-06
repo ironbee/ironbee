@@ -274,7 +274,7 @@ struct ib_list_t {
 /**
  * Loop through all elements in the list.
  *
- * @todo Make this generic (non-ib_list__t specific)
+ * @todo Make this generic (non-ib_list_t specific)
  *
  * @warning Do not use to delete an element in the list. Instead use
  *          the @ref IB_LIST_LOOP_SAFE loop.
@@ -288,9 +288,25 @@ struct ib_list_t {
          (node) = ib_list_node_next(node))
 
 /**
+ * Loop through all elements in the const list.
+ *
+ * @todo Make this generic (non-ib_list_t specific)
+ *
+ * @warning Do not use to delete an element in the list. Instead use
+ *          the @ref IB_LIST_LOOP_SAFE loop.
+ *
+ * @param list List
+ * @param node Symbol holding node
+ */
+#define IB_LIST_LOOP_CONST(list,node) \
+    for ((node) = ib_list_first_const(list); \
+         (node) != NULL; \
+         (node) = ib_list_node_next_const(node))
+
+/**
  * Loop through all elements in the list, taking care to allow for deletions.
  *
- * @todo Make this generic (non-ib_list__t specific)
+ * @todo Make this generic (non-ib_list_t specific)
  *
  * This loop allows deleting elements. If this is not needed, then
  * use the @ref IB_LIST_LOOP loop.
@@ -309,7 +325,7 @@ struct ib_list_t {
 /**
  * Loop through all elements in the list in reverse order.
  *
- * @todo Make this generic (non-ib_list__t specific)
+ * @todo Make this generic (non-ib_list_t specific)
  *
  * @warning Do not use to delete an element in the list. Instead use
  *          the @ref IB_LIST_LOOP_REVERSE_SAFE loop.
@@ -326,7 +342,7 @@ struct ib_list_t {
  * Loop through all elements in the list in reverse order, taking care
  * to allow for deletions.
  *
- * @todo Make this generic (non-ib_list__t specific)
+ * @todo Make this generic (non-ib_list_t specific)
  *
  * This loop allows deleting elements. If this is not needed, then
  * use the @ref IB_LIST_LOOP_REVERSE loop.
@@ -439,7 +455,7 @@ void DLL_PUBLIC ib_list_clear(ib_list_t *list);
  *
  * @returns Number of elements stored in the list
  */
-size_t DLL_PUBLIC ib_list_elements(ib_list_t *list);
+size_t DLL_PUBLIC ib_list_elements(const ib_list_t *list);
 
 /**
  * Return first node in the list.
@@ -478,6 +494,42 @@ ib_list_node_t DLL_PUBLIC *ib_list_node_next(ib_list_node_t *node);
 ib_list_node_t DLL_PUBLIC *ib_list_node_prev(ib_list_node_t *node);
 
 /**
+ * Return first node in the const list.
+ *
+ * @param list List
+ *
+ * @returns First node in the list.
+ */
+const ib_list_node_t DLL_PUBLIC *ib_list_first_const(const ib_list_t *list);
+
+/**
+ * Return last node in the const list.
+ *
+ * @param list List
+ *
+ * @returns Last node in the list.
+ */
+const ib_list_node_t DLL_PUBLIC *ib_list_last_const(const ib_list_t *list);
+
+/**
+ * Return next node in the const list.
+ *
+ * @param node Node in a list
+ *
+ * @returns Next node in the list.
+ */
+const ib_list_node_t DLL_PUBLIC *ib_list_node_next_const(const ib_list_node_t *node);
+
+/**
+ * Return previous node in the const list.
+ *
+ * @param node Node in a list
+ *
+ * @returns Previous node in the list.
+ */
+const ib_list_node_t DLL_PUBLIC *ib_list_node_prev_const(const ib_list_node_t *node);
+
+/**
  * Remove a node from the list.
  *
  * @param list List
@@ -493,6 +545,15 @@ void DLL_PUBLIC ib_list_node_remove(ib_list_t *list, ib_list_node_t *node);
  * @returns Data stored in the node
  */
 void DLL_PUBLIC *ib_list_node_data(ib_list_node_t *node);
+
+/**
+ * Return const data from the given node.
+ *
+ * @param node Node in a list
+ *
+ * @returns Data stored in the node
+ */
+const void DLL_PUBLIC *ib_list_node_data_const(const ib_list_node_t *node);
 
 /** @} IronBeeUtilList */
 

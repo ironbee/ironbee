@@ -134,7 +134,7 @@ void ib_list_clear(ib_list_t *list)
     IB_FTRACE_RET_VOID();
 }
 
-size_t ib_list_elements(ib_list_t *list)
+size_t ib_list_elements(const ib_list_t *list)
 {
     IB_FTRACE_INIT();
     IB_FTRACE_RET_SIZET(list->nelts);
@@ -164,6 +164,30 @@ ib_list_node_t *ib_list_node_prev(ib_list_node_t *node)
     IB_FTRACE_RET_PTR(ib_list_node_t, IB_LIST_NODE_PREV(node));
 }
 
+const ib_list_node_t *ib_list_first_const(const ib_list_t *list)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_PTR(ib_list_node_t, IB_LIST_FIRST(list));
+}
+
+const ib_list_node_t *ib_list_last_const(const ib_list_t *list)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_PTR(ib_list_node_t, IB_LIST_LAST(list));
+}
+
+const ib_list_node_t *ib_list_node_next_const(const ib_list_node_t *node)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_PTR(ib_list_node_t, IB_LIST_NODE_NEXT(node));
+}
+
+const ib_list_node_t *ib_list_node_prev_const(const ib_list_node_t *node)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_PTR(ib_list_node_t, IB_LIST_NODE_PREV(node));
+}
+
 void ib_list_node_remove(ib_list_t *list, ib_list_node_t *node)
 {
     IB_FTRACE_INIT();
@@ -172,6 +196,12 @@ void ib_list_node_remove(ib_list_t *list, ib_list_node_t *node)
 }
 
 void *ib_list_node_data(ib_list_node_t *node)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_PTR(void, IB_LIST_NODE_DATA(node));
+}
+
+const void *ib_list_node_data_const(const ib_list_node_t *node)
 {
     IB_FTRACE_INIT();
     IB_FTRACE_RET_PTR(void, IB_LIST_NODE_DATA(node));
