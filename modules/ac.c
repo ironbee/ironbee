@@ -472,7 +472,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
         subject = (char*) ib_bytestr_ptr(bytestr);
     }
     else {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     ib_ac_init_ctx(&ac_ctx, ac);

@@ -358,7 +358,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 
             fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
             if (fn == NULL) {
-                return IB_EALLOC;
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
 
             memcpy(fn, corecfg->auditlog_index, fnsize);
@@ -369,7 +369,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 
             fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
             if (fn == NULL) {
-                return IB_EALLOC;
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
 
             memcpy(fn, corecfg->auditlog_index + 1, fnsize);
@@ -389,7 +389,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 
             fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
             if (fn == NULL) {
-                return IB_EALLOC;
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
 
             ec = snprintf(fn, fnsize, "%s/%s",

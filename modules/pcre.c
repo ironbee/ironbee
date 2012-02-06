@@ -247,7 +247,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
     rule_data = (pcre_rule_data_t*) ib_mpool_alloc(pool, sizeof(*rule_data));
 
     if (rule_data == NULL) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Build the regular expression. */
@@ -258,7 +258,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
                          (const unsigned char*)NULL);
 
     if (regex == NULL && errptr != NULL ) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Attempt to optimize execution of the regular expression at rule
@@ -266,7 +266,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
     regex_extra = pcre_study(regex, 0, &errptr);
 
     if (regex_extra == NULL && errptr != NULL ) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     pcre_rc = pcre_fullinfo(regex,
@@ -275,7 +275,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
                             &rule_data->regex_sz);
 
     if (pcre_rc != 0) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     pcre_rc = pcre_fullinfo(regex,
@@ -284,7 +284,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
                             &rule_data->regex_extra_sz);
 
     if (pcre_rc != 0) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Allocate data to copy regex into. */
@@ -292,7 +292,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
         (pcre*) ib_mpool_alloc(pool, rule_data->regex_sz);
 
     if (rule_data->regex == NULL) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Allocate data to copy regex_extra into. */
@@ -300,7 +300,7 @@ static ib_status_t pcre_operator_create(ib_mpool_t *pool,
         (pcre_extra*) ib_mpool_alloc(pool, rule_data->regex_extra_sz);
 
     if (rule_data->regex == NULL) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Copy regex and regex_extra into rule_data. */
@@ -367,7 +367,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     }
     else {
         free(ovector);
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Alloc space to copy regex. */

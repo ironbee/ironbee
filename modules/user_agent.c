@@ -193,19 +193,19 @@ static modua_matchresult_t modua_frule_match(const char *str,
 
     /* First, handle the simple NULL string case */
     if (str == NULL) {
-        return NO;
+        IB_FTRACE_RET_INT(NO);
     }
 
     /* Match using the rule's match type */
     switch (rule->match_type) {
         case EXISTS:         /* Note: NULL/NO handled above */
-            return YES;
+            IB_FTRACE_RET_INT(YES);
         case MATCHES:
-            return RESULT_EQ(strcmp(str, rule->string), 0);
+            IB_FTRACE_RET_INT(RESULT_EQ(strcmp(str, rule->string), 0));
         case STARTSWITH:
-            return RESULT_EQ(strncmp(str, rule->string, rule->slen), 0);
+            IB_FTRACE_RET_INT(RESULT_EQ(strncmp(str, rule->string, rule->slen), 0));
         case CONTAINS:
-            return RESULT_NE(strstr(str, rule->string), NULL);
+            IB_FTRACE_RET_INT(RESULT_NE(strstr(str, rule->string), NULL));
         case ENDSWITH: {
             size_t slen = strlen(str);
             size_t offset;

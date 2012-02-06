@@ -155,7 +155,7 @@ static const char *modlua_data_reader(lua_State *L,
     rc = ib_array_get(chunk->cparts, tracker->part, &cpart);
     if (rc != IB_OK) {
         //ib_log_error(ib, 4, "No more chunk parts to read: %d", rc);
-        return NULL;
+        IB_FTRACE_RET_CONSTSTR(NULL);
     }
 
     *size = cpart->dlen;
@@ -1523,7 +1523,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     rc = ib_list_create(&mlist, ib_engine_pool_config_get(ib));
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create lua module list: %d", rc);
-        return rc;
+        IB_FTRACE_RET_STATUS(rc);
     }
     m->data = mlist;
 

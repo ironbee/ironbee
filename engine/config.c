@@ -553,7 +553,7 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     /* Finished with this block. */
     rc = ib_cfgparser_block_pop(cp, NULL);
     if (rc != IB_OK) {
-        return rc;
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     rc = ib_hash_get(ib->dirmap, name, (void *)&rec);

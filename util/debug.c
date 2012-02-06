@@ -127,12 +127,13 @@ void ib_trace_str(const char *file,
 {
     const char *sep = func?"() - ":"";
     const char *sep2 = msg?" ":"";
+    const char *real_str = (str != NULL) ? str : "(null)";
 
     fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s%s\"%s\"\n",
             file, line,
             (func?func:""), sep,
             (msg?msg:""), sep2,
-            str);
+            real_str);
     fflush(ib_trace_fh);
 }
 
