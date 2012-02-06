@@ -1,3 +1,8 @@
 spell-check.rb: Run aspell on all source files.  Will use custom dictionaries
 located in this directory.  The idea is to build up those dictionaries so
 that there are no false positives.  This will create some false negatives.
+
+check-ftrace.rb: Heuristic script that looks for functions that have
+FTRACE_INIT() at the top of their body and a return statement in the body.
+These return statements should be replaced with appropriate FTRACE_RET_X 
+macros
