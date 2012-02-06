@@ -57,7 +57,7 @@ typedef enum {
  * Rule flags
  *
  * If the external flag is set, the rule engine will always execute the
- * operatore, passing NULL in as the field pointer.  The external rule is
+ * operator, passing NULL in as the field pointer.  The external rule is
  * expected to extract whatever fields, etc. it requires itself.
  */
 #define IB_RULE_FLAG_NONE     (0x0)     /**< No flags */

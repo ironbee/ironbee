@@ -130,7 +130,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
     }
 
     /* Attempt to create the dir.  If it returns ENOENT, then
-     * recursivly attempt to create the parent dir(s) until
+     * recursively attempt to create the parent dir(s) until
      * they are all created.
      */
     if ((mkdir(path, mode) == -1) && (errno == ENOENT)) {
@@ -175,11 +175,11 @@ cleanup:
 
 /**
  * @brief Convert the input character to the byte value represented by
- *        it's hexidecimal value. The input of 'F' results in the
+ *        it's hexadecimal value. The input of 'F' results in the
  *        character 15 being returned. If a character is not
- *        submitted that is hexidecimal, then -1 is returned.
+ *        submitted that is hexadecimal, then -1 is returned.
  * @param[in] a the input character to be converted. A-F, a-f, or 0-9.
- * @returns The byte value of the passed in hexidecimal character. -1 otherwise.
+ * @returns The byte value of the passed in hexadecimal character. -1 otherwise.
  */
 static inline char hexchar_to_byte(char a) {
   switch(a) {

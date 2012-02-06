@@ -2369,7 +2369,7 @@ ib_status_t ib_module_unload(ib_module_t *m)
 
     /// @todo Implement
 
-    /* Deregister directives */
+    /* Unregister directives */
 
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }

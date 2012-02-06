@@ -96,11 +96,11 @@ typedef struct modac_provider_data_t modac_provider_data_t;
  * callback + extra arg
  *
  * @param mpr matcher provider
- * @param patterns pointer to the pattern container (ie: an AC tree)
+ * @param patterns pointer to the pattern container (i.e.: an AC tree)
  * @param patt the pattern to be added
  * @param callback the callback to register with the given pattern
  * @param arg the extra argument to pass to the callback
- * @param errptr a pointer reference to point where an error ocur
+ * @param errptr a pointer reference to point where an error occurred
  * @param erroffset a pointer holding the offset of the error
  *
  * @return status of the operation

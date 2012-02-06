@@ -291,8 +291,8 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
      */
     if (TSVIONTodoGet(input_vio) > 0) {
         if (towrite > 0) {
-            /* If there is data left to read, then we reenable the output
-             * connection by reenabling the output VIO. This will wake up
+            /* If there is data left to read, then we re-enable the output
+             * connection by re-enabling the output VIO. This will wake up
              * the output connection and allow it to consume data from the
              * output buffer.
              */
@@ -307,7 +307,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         /* If there is no data left to read, then we modify the output
          * VIO to reflect how much data the output connection should
          * expect. This allows the output connection to know when it
-         * is done reading. We then reenable the output connection so
+         * is done reading. We then re-enable the output connection so
          * that it can consume the data we just gave it.
          */
         TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
@@ -376,11 +376,11 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
             break;
         case TS_EVENT_VCONN_WRITE_READY:
             TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_READY");
-            /* fallthrough */
+            /* fall through */
         default:
             TSDebug("ironbee", "\t(event is %d)", event);
             /* If we get a WRITE_READY event or any other type of
-             * event (sent, perhaps, because we were reenabled) then
+             * event (sent, perhaps, because we were re-enabled) then
              * we'll attempt to transform more data.
              */
             process_data(contp, ibd);
@@ -573,7 +573,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         /* CONNECTION */
         case TS_EVENT_HTTP_SSN_START:
             /* start of connection */
-            /* But we can't initialise conn stuff here, because there's
+            /* But we can't initialize conn stuff here, because there's
              * no API to get the connection stuff required by ironbee
              * at this point.  So instead, intercept the first TXN
              *
@@ -1012,7 +1012,7 @@ void TSPluginInit(int argc, const char *argv[])
 
     cont = TSContCreate(ironbee_plugin, NULL);
 
-    /* connection initialisation & cleanup */
+    /* connection initialization & cleanup */
     TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
 
 
@@ -1022,7 +1022,7 @@ void TSPluginInit(int argc, const char *argv[])
     }
     rv = ironbee_init(argv[1], argc >= 3 ? argv[2] : DEFAULT_LOG);
     if (rv != IB_OK) {
-        TSError("[ironbee] initialisation failed with %d\n", rv);
+        TSError("[ironbee] initialization failed with %d\n", rv);
     }
     return;
 

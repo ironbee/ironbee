@@ -85,7 +85,7 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State*, lua_State*
  * Parses the rule's operator string @a str and, stores the results in the
  * rule object @a rule.
  *
- * @param cp IronBee configuaration parser
+ * @param cp IronBee configuration parser
  * @param rule Rule object to update
  * @param str Operator string
  *

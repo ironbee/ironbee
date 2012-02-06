@@ -130,7 +130,7 @@ ib_status_t ib_tfn_transform_field(ib_tfn_t *tfn,
                                 &dlen_out,
                                 pflags);
 
-            /* If it is modified and not done inplace, then the
+            /* If it is modified and not done in place, then the
              * field value needs to be updated.
              */
             if (   IB_TFN_CHECK_FMODIFIED(*pflags)
@@ -159,7 +159,7 @@ ib_status_t ib_tfn_transform_field(ib_tfn_t *tfn,
                                 &dlen_out,
                                 pflags);
 
-            /* If it is modified and not done inplace, then the
+            /* If it is modified and not done in place, then the
              * field value needs to be updated.
              *
              * NOTE: Anytime a transformation modifies data it

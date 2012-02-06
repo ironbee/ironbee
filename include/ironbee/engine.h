@@ -147,7 +147,7 @@ typedef enum {
 #define IB_TX_FRES_SEENHEADERS  (1 << 0) /**< Response headers seen */
 #define IB_TX_FRES_SEENBODY     (1 <<11) /**< Response body seen */
 #define IB_TX_FRES_FINISHED     (1 <<12) /**< Response finished  */
-#define IB_TX_FSUSPICIOUS       (1 <<13) /**< Transaction is suspicous */
+#define IB_TX_FSUSPICIOUS       (1 <<13) /**< Transaction is suspicious */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
@@ -261,7 +261,7 @@ struct ib_tx_t {
     const char         *hostname;        /**< Hostname used in the request */
     const char         *er_ipstr;        /**< Effective remote IP as string */
     const char         *path;            /**< Path used in the request */
-    //struct sockaddr_storage er_addr;   /**< Effectvie remote address */
+    //struct sockaddr_storage er_addr;   /**< Effective remote address */
     ib_flags_t          flags;           /**< Transaction flags */
 };
 
@@ -997,7 +997,7 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
  *
  * @param ib Engine handle
  * @param event Which event trigger the callback.
- * @param conn Conneciton.
+ * @param conn Connection.
  * @param cbdata Callback data
  */
 typedef ib_status_t (*ib_state_conn_hook_fn_t)(
@@ -1012,7 +1012,7 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
  *
  * @param ib Engine handle
  * @param event Which event trigger the callback.
- * @param conndata Conneciton data.
+ * @param conndata Connection data.
  * @param cbdata Callback data
  */
 typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
@@ -1994,7 +1994,7 @@ ib_status_t DLL_PUBLIC ib_log_init(ib_engine_t *ib);
  *
  * @todo Get a real logging framework.
  *
- * @warning There is currently a 1024 byte formatter limit when prepending the
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
  *
  * @param ctx Config context
@@ -2013,7 +2013,7 @@ void DLL_PUBLIC ib_clog_ex(ib_context_t *ctx, int level,
  *
  * @todo Get a real logging framework.
  *
- * @warning There is currently a 1024 byte formatter limit when prepending the
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
  *
  * @param ctx Config context

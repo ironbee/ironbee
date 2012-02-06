@@ -60,7 +60,7 @@ static char *pval = NULL;
 static char *mark = NULL;
 
 /**
- * @brief Malloc and unescpe into that buffer the marked string.
+ * @brief Malloc and unescape into that buffer the marked string.
  * @param[in] fpc_mark the start of the string.
  * @param[in] fpc the current character from ragel.
  * @return a calloc'ed and realloc'ed buffer containing a string.

@@ -85,7 +85,7 @@
 #undef IB_MODULE_INIT
 #endif
 
-/* Macros to allow for expanding arguments with concatination. */
+/* Macros to allow for expanding arguments with concatenation. */
 #define IB_XMODULE_SYM(prefix)        prefix ## __module_sym
 #define IB_XXMODULE_SYM(prefix)       IB_XMODULE_SYM(prefix)
 #define IB_XMODULE_STRUCT(prefix)     prefix ## __module_struct

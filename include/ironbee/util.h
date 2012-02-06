@@ -122,7 +122,7 @@ void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
                                const char *fmt, ...);
 
 /**
- * Create a directory path recursivly.
+ * Create a directory path recursively.
  *
  * @param path Path to create
  * @param mode Mode to create directories with

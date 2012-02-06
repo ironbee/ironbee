@@ -38,7 +38,7 @@ public:
     // Calls close().
     ~Connection();
 
-    //! Close the connection.  Do not use data_in() or data_out() afrer this.
+    //! Close the connection.  Do not use data_in() or data_out() after this.
     void close();
 
     // This copies data in because IronBee expects to be able to modify the
@@ -84,7 +84,7 @@ public:
   /**
    * This will initialize the IronBee library and create an IronBee engine.
    *
-   * Currently it sets trace output to STDERR.
+   * Currently it sets trace output to stderr.
    *
    * \todo Allow alternative trace outputs.
    * \todo Move library initialization to separate code so that it is called

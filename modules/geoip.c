@@ -88,7 +88,7 @@ static ib_status_t geoip_lookup(
     /* Build a new list. */
     rc = ib_data_add_list(tx->dpi, "GEOIP", &geoip_lst);
 
-    /* NOTICE: Called beofore GeoIP_record_by_addr allocates a
+    /* NOTICE: Called before GeoIP_record_by_addr allocates a
      * GeoIPRecord. */
     if (rc != IB_OK)
     {

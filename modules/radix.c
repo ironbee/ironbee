@@ -73,7 +73,7 @@ struct modradix_provider_data_t {
  * If a match occur and data != NULL, this callback will be called.
  * If data is NULL the match() function will be considered as if
  * no match happened. The reason is that we can implement here
- * "expceptions" of certain ip addresses/ranges inside of a registered
+ * "exceptions" of certain ip addresses/ranges inside of a registered
  * subnet. If you do not need to pass any extra data, just set it to 1
  * and ignore it as a pointer in the callback (if any)
  */
@@ -90,11 +90,11 @@ struct modradix_content_t {
  * callback + extra arg
  *
  * @param mpr matcher provider
- * @param prefixes pointer to the prefix container (ie: an Radix tree)
+ * @param prefixes pointer to the prefix container (i.e.: an Radix tree)
  * @param prefix the prefix to be added
  * @param callback the callback to register with the given prefix
  * @param arg the extra argument to pass to the callback
- * @param errptr a pointer reference to point where an error ocur
+ * @param errptr a pointer reference to point where an error occurred
  * @param erroffset a pointer holding the offset of the error
  *
  * @return status of the operation

@@ -80,7 +80,7 @@ ib_status_t ib_ac_create(ib_ac_t **ac_tree,
 /**
  * @internal
  * Returns the state that would result of applying the
- * aho corasic goto() function to a given state with the given letter
+ * aho corasick goto() function to a given state with the given letter
  *
  * @param parent_state the state from which the transition would be done
  * @param char_state the letter used for the transition
@@ -323,7 +323,7 @@ static void ib_ac_unlink_unuseful(ib_ac_t *ac_tree,
         }
 
         if (found != NULL) {
-            /* Theres no transition in the fail state that will
+            /* There's no transition in the fail state that will
              * success, since the fail state doesn't have any letter not
              * present at the goto() of the main state. So let's
              * change the fail state to parent. Consider that this is

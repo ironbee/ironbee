@@ -63,7 +63,7 @@ typedef enum {
 
 /* Match a string to a field */
 typedef struct modua_field_rule_s {
-    modua_matchfield_t  match_field;  /**< Field to match agaist */
+    modua_matchfield_t  match_field;  /**< Field to match against */
     modua_matchtype_t   match_type;   /**< Type of the match */
     const char         *string;       /**< String to match field with */
     modua_matchresult_t match_result; /**< Match result */

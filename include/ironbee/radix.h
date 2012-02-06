@@ -136,7 +136,7 @@ ib_status_t ib_radix_clone_node(ib_radix_node_t *orig,
                                 ib_mpool_t *mp);
 
 /**
- * Destroy a node and its childs (this includes prefix and userdatas)
+ * Destroy a node and its children (this includes prefix and userdata)
  *
  * @param radix the radix of the node
  * @param node the node to destroy
@@ -171,7 +171,7 @@ ib_status_t ib_radix_new(ib_radix_t **radix,
 
 /*
  * Inserts a new user data associated to the prefix passed. The prefix is not
- * used, so developers are responsible to free that prefixs
+ * used, so developers are responsible to free that prefix
  * Keys can be of "any size" but this will be probably used for
  * CIDR data prefixes only (from 0 to 32 ~ 128 depending on IPv4
  * or IPv6 respectively)
@@ -222,7 +222,7 @@ ib_status_t ib_radix_destroy(ib_radix_t **radix);
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param result reference to the pointer that will be linked to the data if any
  * @param mp pool where we should allocate the list
  *
@@ -234,7 +234,7 @@ ib_status_t ib_radix_match_exact(ib_radix_t *radix,
 
 /*
  * Function that return the data linked to an exact prefix if any. Otherwise
- * it will start falling backwars until it reach a immediate shorter prefix with
+ * it will start falling backwards until it reach a immediate shorter prefix with
  * any data returning it. If no data is found on it's path it will return null.
  *
  * Example: insert data in 192.168.1.0/24
@@ -244,7 +244,7 @@ ib_status_t ib_radix_match_exact(ib_radix_t *radix,
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param result reference to the pointer that will be linked to the data if any
  * @param mp pool where we should allocate the list
  *
@@ -265,7 +265,7 @@ ib_status_t ib_radix_match_closest(ib_radix_t *radix,
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param rlist reference to the pointer that will be linked to the list, if any
  * @param mp pool where we should allocate the list
  *

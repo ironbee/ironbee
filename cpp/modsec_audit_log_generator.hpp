@@ -26,7 +26,7 @@ class ModSecAuditLogGenerator
 public:
   //! Default Constructor.
   /**
-   * Behavior except for assinging to is undefined.
+   * Behavior except for assigning to is undefined.
    **/
   ModSecAuditLogGenerator() = default;
 
@@ -36,7 +36,7 @@ public:
   //! Constructor.
   /**
    * \param[in] path     Path to audit log.
-   * \param[in] on_error Function to call if an error occurs.  Messae will be
+   * \param[in] on_error Function to call if an error occurs.  Message will be
    *                     passed in.  If returns true, generator will try to
    *                     recover, otherwise generator will stop parsing.  If
    *                     default, then generator will throw exception on

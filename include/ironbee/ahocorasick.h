@@ -127,7 +127,7 @@ struct ib_ac_context_t {
 
 /**
  * Aho Corasick match result. Holds the pattern, pattern length
- * offset from the beggining of the match, and relative offset.
+ * offset from the beginning of the match, and relative offset.
  * Relative offset is the offset from the end of the given chunk buffer
  * Keep in mind that the start of the match can be at a previous
  * processed chunk

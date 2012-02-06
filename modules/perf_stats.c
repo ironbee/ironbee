@@ -94,7 +94,7 @@ int ib_state_event_cbdata_type(ib_state_event_type_t);
  * @internal
  * Get a microsecond ts
  *
- * Returns a timestamp as uint64_t from CLOCK_MONOTONIC_RAW or CLOCK_MONOTINIC.
+ * Returns a timestamp as uint64_t from CLOCK_MONOTONIC_RAW or CLOCK_MONOTONIC.
  *
  */
 uint64_t get_time_stamp_us(void){
@@ -112,9 +112,9 @@ uint64_t get_time_stamp_us(void){
     {
         struct timespec t;
 
-        /* Ticks seem to be an undesireable due for many reasons.
+        /* Ticks seem to be an undesirable due for many reasons.
          * IB_CLOCK is set to CLOCK_MONOTONIC which is vulnerable to slew or
-         * if avaliable set to CLOCK_MONOTONIC_RAW which does not suffer from slew.
+         * if available set to CLOCK_MONOTONIC_RAW which does not suffer from slew.
          *
          * timespec provides sec and nsec resolution so we have to convert to msec.
          */
@@ -190,7 +190,7 @@ int ib_state_event_cbdata_type(ib_state_event_type_t event)
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] connp Connection object
- * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * @param[in] cbdata Callback data: actually an perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_reg_conn_counter(
@@ -256,7 +256,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
 /**
  * Handle event starts.
  *
- * Here we set start times and incriment the call counter.
+ * Here we set start times and increment the call counter.
  *
  * \param[in] ib IronBee object.
  * \param[in] eventp Event info.
@@ -280,7 +280,7 @@ static void mod_perf_stats_event_start(
         /* Set the start time for event */
         perfp->start_usec = get_time_stamp_us();
 
-        /* Incriment the call counter */
+        /* Increment the call counter */
         perfp->call_cnt++;
 
         ib_log_debug(ib, 4, "Start Callback: %s (%llu) (%llu) ",
@@ -356,7 +356,7 @@ static ib_status_t mod_perf_stats_event_stop(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] conn Connection.
- * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * @param[in] cbdata Callback data: actually @ref perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_start_conn_callback(
@@ -391,7 +391,7 @@ static ib_status_t mod_perf_stats_event_start_conn_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] conndata Connection.
- * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * @param[in] cbdata Callback data: actually @ref perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_start_conndata_callback(
@@ -426,7 +426,7 @@ static ib_status_t mod_perf_stats_event_start_conndata_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] tx Connection.
- * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * @param[in] cbdata Callback data: actually @ref perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_start_tx_callback(
@@ -460,7 +460,7 @@ static ib_status_t mod_perf_stats_event_start_tx_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] txdata Connection.
- * @param[in] cbdata Callback data: acutally @ref perf_info_t describing the
+ * @param[in] cbdata Callback data: actually @ref perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_start_txdata_callback(
@@ -495,7 +495,7 @@ static ib_status_t mod_perf_stats_event_start_txdata_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] param Callback data which differs based on hook type.
- * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * @param[in] cbdata Callback data: actually an perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_stop_conn_callback(
@@ -531,7 +531,7 @@ static ib_status_t mod_perf_stats_event_stop_conn_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] param Callback data which differs based on hook type.
- * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * @param[in] cbdata Callback data: actually an perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_stop_conndata_callback(
@@ -567,7 +567,7 @@ static ib_status_t mod_perf_stats_event_stop_conndata_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] param Callback data which differs based on hook type.
- * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * @param[in] cbdata Callback data: actually an perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_stop_tx_callback(
@@ -603,7 +603,7 @@ static ib_status_t mod_perf_stats_event_stop_tx_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] param Callback data which differs based on hook type.
- * @param[in] cbdata Callback data: acutally an perf_info_t describing the
+ * @param[in] cbdata Callback data: actually an perf_info_t describing the
  * event.
  */
 static ib_status_t mod_perf_stats_event_stop_txdata_callback(

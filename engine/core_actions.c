@@ -134,7 +134,7 @@ static ib_status_t act_setflag_execute(void *data,
     /* Data will be a C-Style string */
     const char *cstr = (const char *)data;
 
-    /* Handle the suspicous flag */
+    /* Handle the suspicious flag */
     if (strcasecmp(cstr, "suspicious") == 0) {
         ib_tx_flags_set(tx, IB_TX_FSUSPICIOUS);
     }
@@ -241,7 +241,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Regiseter the set flag action */
+    /* Register the set flag action */
     rc = ib_action_register(ib,
                             "setflag",
                             IB_ACT_FLAG_NONE,

@@ -22,7 +22,7 @@
  */
 
 /**
- * This is a radix tree bitwise implementaion initiallly designed for
+ * This is a radix tree bitwise implementation initially designed for
  * IP / CIDR addresses.
  */
 #include "ironbee_config_auto.h"
@@ -228,7 +228,7 @@ ib_status_t ib_radix_clone_node(ib_radix_node_t *orig,
 }
 
 /**
- * Destroy a node and its childs (this includes prefix and userdatas)
+ * Destroy a node and its children (this includes prefix and userdata)
  *
  * @param radix the radix of the node
  * @param node the node to destroy
@@ -356,7 +356,7 @@ size_t ib_radix_elements(ib_radix_t *radix)
 
 /*
  * Inserts a new user data associated to the prefix passed. The prefix is not
- * used, so developers are responsible to free that prefixs
+ * used, so developers are responsible to free that prefixes
  * Keys can be of "any size" but this will be probably used for
  * CIDR data prefixes only (from 0 to 32 ~ 128 depending on IPv4
  * or IPv6 respectively)
@@ -444,7 +444,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                  * common prefix (of the cur_node and the new prefix)
                  * and different suffix. */
 
-                /* Create the new sufix from the end of the cur_node rawbits */
+                /* Create the new suffix from the end of the cur_node rawbits */
                 uint8_t *rawbits = NULL;
                 int size = 0;
                 size = IB_BITS_TO_BYTES(
@@ -453,7 +453,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                                                       sizeof(uint8_t) * size);
                 memset(rawbits, 0, sizeof(uint8_t) * size);
 
-                /* Copy the new sufix bits starting from the cur_prefix_offset
+                /* Copy the new suffix bits starting from the cur_prefix_offset
                  * bit offset (where the difference begins) */
                 int i = cur_prefix_offset;
                 int ni = 0;
@@ -465,7 +465,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                     }
                 }
 
-                /* Create a prefix for the new sufix */
+                /* Create a prefix for the new suffix */
                 ib_radix_prefix_t *k = NULL;
                 st = ib_radix_prefix_create(&k, rawbits,
                                cur_node->prefix->prefixlen -(cur_prefix_offset),
@@ -475,7 +475,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                     IB_FTRACE_RET_STATUS(IB_EALLOC);
                 }
 
-                /* Create a node for the new sufix */
+                /* Create a node for the new suffix */
                 ib_radix_node_t *n = NULL;
                 st = ib_radix_node_new(&n, radix->mp);
                 if (st != IB_OK) {
@@ -532,7 +532,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                                                       sizeof(uint8_t) * size);
                 memset(rawbits, 0, sizeof(uint8_t) * size);
 
-                /* Copy the new sufix bits from offset cnt
+                /* Copy the new suffix bits from offset cnt
                  * (where the difference begins) to the end of the prefix */
                 i = cnt;
                 ni = 0;
@@ -542,7 +542,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                     }
                 }
 
-                /* Create the prefix for the new rawbits sufix */
+                /* Create the prefix for the new rawbits suffix */
                 st = ib_radix_prefix_create(&k, rawbits,
                                             prefix->prefixlen - cnt, radix->mp);
 
@@ -558,7 +558,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
 
                 n->prefix = k;
 
-                /* Update the cur_node to point to this sufix aswell */
+                /* Update the cur_node to point to this suffix as well */
                 if (IB_READ_BIT(prefix->rawbits[cnt / 8], cnt % 8) == 0) {
                     cur_node->zero = n;
                 }
@@ -574,7 +574,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
             }
         }
 
-        /* If we are here then we didn't find the palce yet. Check if
+        /* If we are here then we didn't find the place yet. Check if
          * 1. We are just on a node with the same prefix
          * 2. We don't need to split any old prefix, just to append
          * 3. We just need to append because we are at an ending node
@@ -647,7 +647,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                                                   sizeof(uint8_t) * size);
             memset(rawbits, 0, sizeof(uint8_t) * size);
 
-            /* Copy the new sufix */
+            /* Copy the new suffix */
             int i = cur_prefix_offset;
             int ni = 0;
 
@@ -659,7 +659,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                 }
             }
 
-            /* Create prefix for the new sufix */
+            /* Create prefix for the new suffix */
             ib_radix_prefix_t *k = NULL;
             st = ib_radix_prefix_create(&k, rawbits,
                       cur_node->prefix->prefixlen-cur_prefix_offset, radix->mp);
@@ -689,7 +689,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                 cur_node->zero = NULL;
             }
 
-            /* Copy reference to user data to the new sufix */
+            /* Copy reference to user data to the new suffix */
             n->data = cur_node->data;
             cur_node->data = prefix_data;
 
@@ -756,7 +756,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
 
         memset(rawbits, 0, sizeof(uint8_t) * size);
 
-        /* Copy the new sufix bits from offset cnt (where the difference begins)
+        /* Copy the new suffix bits from offset cnt (where the difference begins)
         to the end of the prefix */
         int i = cnt;
         int ni = 0;
@@ -833,7 +833,7 @@ ib_status_t ib_radix_destroy(ib_radix_t **radix)
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param type can be IB_RADIX_PREFIX or IB_RADIX_CLOSEST
  * @param result reference to the pointer that will be linked to the data if any
  *
@@ -898,7 +898,7 @@ static ib_status_t ib_radix_match_prefix(ib_radix_node_t *node,
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param rlist reference to a pointer where the list will be allocated
  * @param mp pool where we should allocate the list
  *
@@ -1005,7 +1005,7 @@ static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param result reference to the pointer that will be linked to the data if any
  * @param mp pool where we should allocate the list
  *
@@ -1040,7 +1040,7 @@ ib_status_t ib_radix_match_exact(ib_radix_t *radix,
 
 /*
  * Function that return the data linked to an exact prefix if any. Otherwise
- * it will start falling backwars until it reach a immediate shorter prefix with
+ * it will start falling backwards until it reach a immediate shorter prefix with
  * any data returning it. If no data is found on it's path it will return null.
  *
  * Example: insert data in 192.168.1.0/24
@@ -1050,7 +1050,7 @@ ib_status_t ib_radix_match_exact(ib_radix_t *radix,
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param result reference to the pointer that will be linked to the data if any
  * @param mp pool where we should allocate the list
  *
@@ -1100,7 +1100,7 @@ ib_status_t ib_radix_match_closest(ib_radix_t *radix,
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur possition)
+ * @param offset, the number of bits already compared +1 (cur position)
  * @param rlist reference to the pointer that will be linked to the list, if any
  * @param mp pool where we should allocate the list
  *
@@ -1265,7 +1265,7 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
-            /* Don't modify the orign cidr, instead of that, create a local copy
+            /* Don't modify the origin cidr, instead of that, create a local copy
              in stack memory to avoid allocations */
             memcpy(ip_tmp, cidr, mask - cidr);
             ip_tmp[mask - cidr] = '\0';
@@ -1295,7 +1295,7 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
-            /* Don't modify the orign cidr, instead of that, create a local copy
+            /* Don't modify the origin cidr, instead of that, create a local copy
              in stack memory to avoid allocations */
             memcpy(ip_tmp, cidr, mask - cidr);
             ip_tmp[mask - cidr] = '\0';

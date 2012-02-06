@@ -32,7 +32,7 @@ struct buffer_t
 
   //! Constructor.
   /**
-   * \param[in] data   Pointer to buffer.  Not necessarilly null terminated.
+   * \param[in] data   Pointer to buffer.  Not necessarily null terminated.
    * \param[in] length Length of buffer.
    **/
   buffer_t( const char* data_, size_t length_ );
@@ -49,7 +49,7 @@ struct buffer_t
   //! Convert to string.  Makes a copy.
   std::string to_s() const;
 
-  //! Pointer to buffer.  Not necessarilly null terminated.
+  //! Pointer to buffer.  Not necessarily null terminated.
   const char* data;
   //! Length of buffer.
   size_t      length;

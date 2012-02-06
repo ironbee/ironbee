@@ -73,7 +73,7 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
     }
 
     /* Always allocate on the heap (as apposed to in the parent pool)
-     * so that subpools can be completly freed without having to free
+     * so that subpools can be completely freed without having to free
      * the parent pool.
      */
     *pmp = (ib_mpool_t *)calloc(1, sizeof(ib_mpool_t));
@@ -146,7 +146,7 @@ void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
     IB_MPOOL_GET_REQ_INDEX(size, cur_slot);
     for (; cur_slot < IB_MPOOL_NUM_SLOTS; ++cur_slot) {
         iter = mp->indexed[cur_slot];
-        /* Should not be neccesary to check if mem is available, since buf
+        /* Should not be necessary to check if mem is available, since buf
          * should have at least 2^(IB_MPOOL_MIN_SIZE_BITS+cur_slot).
          */
         if (iter != NULL &&

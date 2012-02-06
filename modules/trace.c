@@ -73,7 +73,7 @@ static modtrace_config_t modtrace_global_config;
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] tx Transaction object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_tx_event_callback(
@@ -98,7 +98,7 @@ static ib_status_t modtrace_tx_event_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] txdata Transaction data object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_txdata_event_callback(
@@ -123,7 +123,7 @@ static ib_status_t modtrace_txdata_event_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] conn Connection object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_conn_event_callback(
@@ -148,7 +148,7 @@ static ib_status_t modtrace_conn_event_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] conndata Connection data object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_conndata_event_callback(
@@ -172,7 +172,7 @@ static ib_status_t modtrace_conndata_event_callback(
  *
  * @param[in] ib IronBee object
  * @param[in] event Event type
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_null_event_callback(
@@ -200,7 +200,7 @@ static ib_status_t modtrace_null_event_callback(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] tx Transaction object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
@@ -236,7 +236,7 @@ static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] tx Transaction object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_tx(
@@ -319,13 +319,13 @@ static void mempool_walk(ib_engine_t *ib,
  * @internal
  * Trace tx_{started,finished}_event event handler.
  *
- * Handles tx started and finsihed events, dumping some memory info on the
+ * Handles tx started and finished events, dumping some memory info on the
  * event.
  *
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] tx Transaction object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_tx_mem(
@@ -385,7 +385,7 @@ static ib_status_t modtrace_handle_tx_mem(
  * @param[in] ib IronBee object
  * @param[in] event Event type
  * @param[in] tx Transaction object
- * @param[in] cbdata Callback data: acutally an event_info_t describing the
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
@@ -467,7 +467,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
         eventp->number = event;
         eventp->name   = ib_state_event_name((ib_state_event_type_t)event);
 
-        /* For these specific ones, use more spefic handlers */
+        /* For these specific ones, use more specific handlers */
         switch( event ) {
             case conn_data_in_event:
                 rc = ib_hook_conndata_register(

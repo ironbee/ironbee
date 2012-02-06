@@ -148,7 +148,7 @@ static runtime_settings_t settings =
 };
 
 typedef struct {
-    char     *buf;         /* Acutal buffer */
+    char     *buf;         /* Actual buffer */
     size_t    len;         /* Length of data in the buffer */
     size_t    size;        /* Current size of buffer */
 } reqhdr_buf_t;
@@ -239,7 +239,7 @@ static void help(void)
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
     print_option("trace", NULL, "Enable tracing", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
-                 "tx, tx-full, user-agent, geop");
+                 "tx, tx-full, user-agent, geoip");
     print_option("request-header", "name: value",
                  "Specify request field & value", 0, NULL );
     print_option("request-header", "-name:",
@@ -471,7 +471,7 @@ static ib_status_t command_line(int argc, char *argv[])
             /* Simple checks */
             if (nlen == 0) {
                 fprintf(stderr,
-                        "Mal-formed request-header parameter '%s'",
+                        "Malformed request-header parameter '%s'",
                         optarg);
                 usage();
             }
@@ -507,7 +507,7 @@ static ib_status_t command_line(int argc, char *argv[])
                 snprintf( buf, sizeof(buf), "file://%s", s );
             }
             else if ( strncmp(s, "file://", 7) != 0 ) {
-                fprintf( stderr, "--debug-log: Unsupport URI \"%s\"", s );
+                fprintf( stderr, "--debug-log: Unsupported URI \"%s\"", s );
                 usage( );
             }
             else {
@@ -1042,7 +1042,7 @@ static ib_status_t action_print_execute(void *data,
  *
  * This function adds a line to header.  This function uses malloc() &
  * realloc() instead of the IronBee memory pool because the memory pool
- * currently doesn't provide a realloc() equivilent.
+ * currently doesn't provide a realloc() equivalent.
  *
  * @param[in] buf Request header buffer
  * @param[in] linebuf Line to copy in
@@ -1228,10 +1228,10 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
  * @internal
  * Simulate the reception of request header.
  *
- * Do the work to simulate the recieving of the header, replacing / adding
+ * Do the work to simulate the receiving of the header, replacing / adding
  * fields to it, etc.  This function uses malloc() & realloc() instead of the
  * IronBee memory pool because the memory pool currently doesn't provide a
- * realloc() equivilent.
+ * realloc() equivalent.
  *
  * @param[in] ib IronBee engine to send header to
  * @param[in] icdata IronBee connection data
@@ -1482,7 +1482,7 @@ static ib_status_t run_transaction(ib_engine_t* ib,
         goto end;
     }
 
-    /* If we have mde it this far everything is okay */
+    /* If we have made it this far everything is okay */
     rc = IB_OK;
 
 end:

@@ -91,7 +91,7 @@ struct ib_rule_t {
  */
 typedef struct {
     ib_rule_phase_t        phase;         /**< Phase number */
-    ib_rulelist_t          rules;         /**< Rules to exececute in phase */
+    ib_rulelist_t          rules;         /**< Rules to execute in phase */
 } ib_rule_phase_data_t;
 
 /**
@@ -126,7 +126,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
  * @internal
  * Initialize a context the rule engine.
  *
- * Called when a context is initialized, performs rule engine initializations.
+ * Called when a context is initialized, performs rule engine initialization.
  *
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object

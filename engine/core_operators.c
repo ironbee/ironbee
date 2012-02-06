@@ -213,7 +213,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
     /* Data will be a C-Style string */
     const char *cstr = (const char *)data;
 
-    /* Handle the suspicous flag */
+    /* Handle the suspicious flag */
     if (strcasecmp(cstr, "suspicious") == 0) {
         *result = ib_tx_flags_isset(tx, IB_TX_FSUSPICIOUS);
     }

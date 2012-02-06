@@ -88,16 +88,16 @@ TEST(TestIBUtilArray, test_array_set_and_get)
 
     /* Get invalid. */
     rc = ib_array_get(arr, 10, &val);
-    ASSERT_TRUE(rc == IB_EINVAL) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_EINVAL) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val == NULL) << "ib_array_get() failed - not NULL value";
     ASSERT_TRUE(ib_array_size(arr) == 10) << "ib_array_create() failed - wrong size";
     ASSERT_TRUE(ib_array_elements(arr) == 0) << "ib_array_create() failed - wrong number of elements";
 
     /* Simple set. */
     rc = ib_array_setn(arr, 0, &v0);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     rc = ib_array_get(arr, 0, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_array_get() failed - NULL value";
     ASSERT_TRUE(*val == v0) << "ib_array_get() failed - wrong value";
     ASSERT_TRUE(ib_array_size(arr) == 10) << "ib_array_create() failed - wrong size";
@@ -105,9 +105,9 @@ TEST(TestIBUtilArray, test_array_set_and_get)
 
     /* Should not extend. */
     rc = ib_array_setn(arr, 9, &v9);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     rc = ib_array_get(arr, 9, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_array_get() failed - NULL value";
     ASSERT_TRUE(*val == v9) << "ib_array_get() failed - wrong value";
     ASSERT_TRUE(ib_array_size(arr) == 10) << "ib_array_create() failed - wrong size";
@@ -115,16 +115,16 @@ TEST(TestIBUtilArray, test_array_set_and_get)
 
     /* Should be null if unset. */
     rc = ib_array_get(arr, 5, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val == NULL) << "ib_array_get() failed - not NULL value";
     ASSERT_TRUE(ib_array_size(arr) == 10) << "ib_array_create() failed - wrong size";
     ASSERT_TRUE(ib_array_elements(arr) == 10) << "ib_array_create() failed - wrong number of elements";
 
     /* Should extend once. */
     rc = ib_array_setn(arr, 10, &v10);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     rc = ib_array_get(arr, 10, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_array_get() failed - NULL value";
     ASSERT_TRUE(*val == v10) << "ib_array_get() failed - wrong value";
     ASSERT_TRUE(ib_array_size(arr) == 20) << "ib_array_create() failed - wrong size";
@@ -132,9 +132,9 @@ TEST(TestIBUtilArray, test_array_set_and_get)
 
     /* Should extend to max. */
     rc = ib_array_setn(arr, 99, &v99);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     rc = ib_array_get(arr, 99, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_array_get() failed - NULL value";
     ASSERT_TRUE(*val == v99) << "ib_array_get() failed - wrong value";
     ASSERT_TRUE(ib_array_size(arr) == 100) << "ib_array_create() failed - wrong size";
@@ -142,9 +142,9 @@ TEST(TestIBUtilArray, test_array_set_and_get)
 
     /* Should reallocate extents. */
     rc = ib_array_setn(arr, 100, &v100);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     rc = ib_array_get(arr, 100, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_array_get() failed - NULL value";
     ASSERT_TRUE(*val == v100) << "ib_array_get() failed - wrong value";
     ASSERT_TRUE(ib_array_size(arr) == 110) << "ib_array_create() failed - wrong size";
@@ -152,9 +152,9 @@ TEST(TestIBUtilArray, test_array_set_and_get)
 
     /* Should reallocate extents 2 more times. */
     rc = ib_array_setn(arr, 1000, &v1000);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     rc = ib_array_get(arr, 1000, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_array_get() failed - NULL value";
     ASSERT_TRUE(*val == v1000) << "ib_array_get() failed - wrong value";
     ASSERT_TRUE(ib_array_size(arr) == 1010) << "ib_array_create() failed - wrong size";
@@ -162,9 +162,9 @@ TEST(TestIBUtilArray, test_array_set_and_get)
 
     /* Should reallocate extents many more times. */
     rc = ib_array_setn(arr, 1000000, &v1000000);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     rc = ib_array_get(arr, 1000000, &val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_array_get() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_array_get() failed - NULL value";
     ASSERT_TRUE(*val == v1000000) << "ib_array_get() failed - wrong value";
     ASSERT_TRUE(ib_array_size(arr) == 1000010) << "ib_array_create() failed - wrong size";

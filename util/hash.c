@@ -136,7 +136,7 @@ ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
 
 /**
  * @internal
- * Seach an entry in the given list
+ * Search an entry in the given list
  *
  * @returns ib_hash_entry_t
  */
@@ -175,7 +175,7 @@ static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
 
 /**
  * @internal
- * Seach an entry for the given key and key length
+ * Search an entry for the given key and key length
  * The hash used to search the key will be also returned via param
  *
  * @param ib_ht the hash table to search in

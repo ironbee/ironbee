@@ -72,7 +72,7 @@ struct modbinradix_provider_data_t {
  * If a match occur and data != NULL, this callback will be called.
  * If data is NULL the match() function will be considered as if
  * no match happened. The reason is that we can implement here
- * "expceptions" of certain ip addresses/ranges inside of a registered
+ * "exceptions" of certain ip addresses/ranges inside of a registered
  * subnet. If you do not need to pass any extra data, just set it to 1
  * and ignore it as a pointer in the callback (if any)
  */
@@ -89,11 +89,11 @@ struct modbinradix_content_t {
  * callback + extra arg
  *
  * @param mpr matcher provider
- * @param prefixes pointer to the prefix container (ie: an BinRadix tree)
+ * @param prefixes pointer to the prefix container (i.e.: an BinRadix tree)
  * @param prefix the prefix to be added
  * @param callback the callback to register with the given prefix
  * @param arg the extra argument to pass to the callback
- * @param errptr a pointer reference to point where an error ocur
+ * @param errptr a pointer reference to point where an error occurred
  * @param erroffset a pointer holding the offset of the error
  *
  * @return status of the operation
@@ -213,7 +213,7 @@ static ib_status_t modbinradix_match(ib_provider_inst_t *mpi,
 
     ib_radix_prefix_t *pre = NULL;
 
-    /* Create the prefix directly. Data should be a binary ip addres already */
+    /* Create the prefix directly. Data should be a binary ip address already */
     rc = ib_radix_prefix_create(&pre, (uint8_t *)data, (uint8_t)dlen * 8,
                                 mpi->mp);
     if (rc != IB_OK) {

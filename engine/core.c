@@ -223,7 +223,7 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
  *
  * @param fh File handle
  * @param level Log level
- * @param prefix String prefix to prepend to the message or NULL
+ * @param prefix String prefix to prefix to the message or NULL
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
  * @param fmt Printf like format string
@@ -1080,7 +1080,7 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
  * @param lpi Logger provider instance
  * @param ctx Config context
  * @param level Log level
- * @param prefix String prefix to prepend to the message or NULL
+ * @param prefix String to prefix to the message or NULL
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
  * @param fmt Printf like format string
@@ -1187,7 +1187,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
  * @param lpi Logger provider instance
  * @param ctx Config context
  * @param level Log level
- * @param prefix String prefix to prepend to the message or NULL
+ * @param prefix String to prefix to the message or NULL
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
  * @param fmt Printf like format string
@@ -2209,7 +2209,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
     }
     else {
-        ib_log_error(ib, 4, "Failed to get response_protcol: %d", rc);
+        ib_log_error(ib, 4, "Failed to get response_protocol: %d", rc);
     }
 
     /* Add the part to the auditlog. */
@@ -4294,7 +4294,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
         else if ( strncmp(p1, "file://", 7) != 0 ) {
             ib_log_error(ib, 3,
-                         "Unsupport URI in %s: \"%s\"",
+                         "Unsupported URI in %s: \"%s\"",
                          name, p1);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
@@ -4380,7 +4380,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
                             "UUID format "
                             "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
-                            " hexa values)",
+                            " hex values)",
                             name, p1);
 
             /* Use the default id. */
@@ -4424,7 +4424,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
                             "UUID format "
                             "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
-                            " hexa values)",
+                            " hex values)",
                             name, p1);
 
             /* Use the default id. */
@@ -5279,7 +5279,7 @@ static ib_status_t core_ctx_init(ib_engine_t *ib,
     /* Initialize the rule engine for the context */
     rc = ib_rule_engine_ctx_init(ib, mod, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize rule engine contxt: %d", rc);
+        ib_log_error(ib, 0, "Failed to initialize rule engine context: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 

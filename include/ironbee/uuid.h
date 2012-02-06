@@ -88,7 +88,7 @@ union ib_uuid_t {
 
 /**
  * Parses an ASCII UUID (with the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
- * where x are hexa chars) into a ib_uuid_t
+ * where x are hex chars) into a ib_uuid_t
  *
  * @param ibuuid pointer to an already allocated \c ib_uuid_t buffer
  * @param uuid pointer to the ascii string of the uuid (no blank spaces allowed)

@@ -43,7 +43,7 @@
 /**
  * The page size can be set to other with ib_mpool_create_ex()
  * but it must be greater than IB_MPOOL_MIN_PAGE_SIZE, otherwise it will be
- * overwriten by IB_MPOOL_MIN_PAGE_SIZE
+ * overwritten by IB_MPOOL_MIN_PAGE_SIZE
  */
 #define IB_MPOOL_MIN_PAGE_SIZE     ((size_t)512)
 
@@ -145,7 +145,7 @@ struct ib_mpool_t {
 
 /**
  * @internal
- * Allocates mem for a var in a buffer. The addres is pointed by ptr.
+ * Allocates mem for a var in a buffer. The address is pointed by ptr.
  *
  * @param buf Pointer to the buffer
  * @param rsize Size to allocate

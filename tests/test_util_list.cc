@@ -84,50 +84,50 @@ TEST(TestIBUtilList, test_list_push_and_pop)
 
     /* Pop invalid. */
     rc = ib_list_pop(list,(void *)&val);
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_list_pop() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_ENOENT) << "ib_list_pop() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val == NULL) << "ib_list_pop() failed - not NULL value";
     ASSERT_TRUE(ib_list_elements(list) == 0) << "ib_list_create() failed - wrong number of elements";
 
     /* Simple pushes followed by pops. */
     rc = ib_list_push(list, &v0);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 1) << "ib_list_push() failed - wrong number of elements";
     rc = ib_list_push(list, &v1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 2) << "ib_list_push() failed - wrong number of elements";
     rc = ib_list_push(list, &v2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 3) << "ib_list_push() failed - wrong number of elements";
     rc = ib_list_push(list, &v3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 4) << "ib_list_push() failed - wrong number of elements";
     rc = ib_list_push(list, &v4);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 5) << "ib_list_push() failed - wrong number of elements";
     ASSERT_TRUE(*(int *)(ib_list_node_data(ib_list_first(list))) == v0) << "ib_list_push() failed - wrong first element";
     ASSERT_TRUE(*(int *)(ib_list_node_data(ib_list_last(list))) == v4) << "ib_list_push() failed - wrong last element";
     rc = ib_list_pop(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_pop() failed - NULL value";
     ASSERT_TRUE(*val == v4) << "ib_list_pop() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 4) << "ib_list_pop() failed - wrong number of elements";
     rc = ib_list_pop(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_pop() failed - NULL value";
     ASSERT_TRUE(*val == v3) << "ib_list_pop() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 3) << "ib_list_pop() failed - wrong number of elements";
     rc = ib_list_pop(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_pop() failed - NULL value";
     ASSERT_TRUE(*val == v2) << "ib_list_pop() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 2) << "ib_list_pop() failed - wrong number of elements";
     rc = ib_list_pop(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_pop() failed - NULL value";
     ASSERT_TRUE(*val == v1) << "ib_list_pop() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 1) << "ib_list_pop() failed - wrong number of elements";
     rc = ib_list_pop(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_pop() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_pop() failed - NULL value";
     ASSERT_TRUE(*val == v0) << "ib_list_pop() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 0) << "ib_list_pop() failed - wrong number of elements";
@@ -161,50 +161,50 @@ TEST(TestIBUtilList, test_list_unshift_and_shift)
 
     /* shift invalid. */
     rc = ib_list_shift(list,(void *)&val);
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_list_shift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_ENOENT) << "ib_list_shift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val == NULL) << "ib_list_shift() failed - not NULL value";
     ASSERT_TRUE(ib_list_elements(list) == 0) << "ib_list_create() failed - wrong number of elements";
 
-    /* Simple unshiftes followed by shifts. */
+    /* Simple unshifts followed by shifts. */
     rc = ib_list_unshift(list, &v0);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 1) << "ib_list_unshift() failed - wrong number of elements";
     rc = ib_list_unshift(list, &v1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 2) << "ib_list_unshift() failed - wrong number of elements";
     rc = ib_list_unshift(list, &v2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 3) << "ib_list_unshift() failed - wrong number of elements";
     rc = ib_list_unshift(list, &v3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 4) << "ib_list_unshift() failed - wrong number of elements";
     rc = ib_list_unshift(list, &v4);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_unshift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(ib_list_elements(list) == 5) << "ib_list_unshift() failed - wrong number of elements";
     ASSERT_TRUE(*(int *)(ib_list_node_data(ib_list_first(list))) == v4) << "ib_list_unshift() failed - wrong first element";
     ASSERT_TRUE(*(int *)(ib_list_node_data(ib_list_last(list))) == v0) << "ib_list_unshift() failed - wrong last element";
     rc = ib_list_shift(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_shift() failed - NULL value";
     ASSERT_TRUE(*val == v4) << "ib_list_shift() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 4) << "ib_list_shift() failed - wrong number of elements";
     rc = ib_list_shift(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_shift() failed - NULL value";
     ASSERT_TRUE(*val == v3) << "ib_list_shift() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 3) << "ib_list_shift() failed - wrong number of elements";
     rc = ib_list_shift(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_shift() failed - NULL value";
     ASSERT_TRUE(*val == v2) << "ib_list_shift() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 2) << "ib_list_shift() failed - wrong number of elements";
     rc = ib_list_shift(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_shift() failed - NULL value";
     ASSERT_TRUE(*val == v1) << "ib_list_shift() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 1) << "ib_list_shift() failed - wrong number of elements";
     rc = ib_list_shift(list, (void *)&val);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_INVAL";
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_shift() failed - rc != IB_EINVAL";
     ASSERT_TRUE(val != NULL) << "ib_list_shift() failed - NULL value";
     ASSERT_TRUE(*val == v0) << "ib_list_shift() failed - wrong value";
     ASSERT_TRUE(ib_list_elements(list) == 0) << "ib_list_shift() failed - wrong number of elements";
@@ -236,7 +236,7 @@ TEST(TestIBUtilList, test_list_loop)
 
     for (i = 0; i < 5; i++) {
         rc = ib_list_push(list, &init[i]);
-        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     }
     ASSERT_TRUE(ib_list_elements(list) == 5) << "ib_list_push() failed - wrong number of elements";
 
@@ -276,7 +276,7 @@ TEST(TestIBUtilList, test_list_loop_safe)
 
     for (i = 0; i < 5; i++) {
         rc = ib_list_push(list, &init[i]);
-        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     }
     ASSERT_TRUE(ib_list_elements(list) == 5) << "ib_list_push() failed - wrong number of elements";
 
@@ -315,7 +315,7 @@ TEST(TestIBUtilList, test_list_loop_reverse)
 
     for (i = 0; i < 5; i++) {
         rc = ib_list_push(list, &init[i]);
-        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     }
     ASSERT_TRUE(ib_list_elements(list) == 5) << "ib_list_push() failed - wrong number of elements";
 
@@ -354,7 +354,7 @@ TEST(TestIBUtilList, test_list_loop_reverse_safe)
 
     for (i = 0; i < 5; i++) {
         rc = ib_list_push(list, &init[i]);
-        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_INVAL";
+        ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed - rc != IB_EINVAL";
     }
     ASSERT_TRUE(ib_list_elements(list) == 5) << "ib_list_push() failed - wrong number of elements";
 

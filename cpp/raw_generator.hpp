@@ -31,7 +31,7 @@ public:
 
   //! Default Constructor.
   /**
-   * Behavior except for assinging to is undefined.
+   * Behavior except for assigning to is undefined.
    **/
   RawGenerator() = default;
 

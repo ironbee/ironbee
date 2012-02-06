@@ -98,7 +98,7 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2(const void *ckey,
 
 /**
  * Create a hash table with nocase option by default.
- * If you dont need it, use ib_hash_create_ex
+ * If you don't need it, use ib_hash_create_ex
  *
  * @param ht Address which new hash table is written
  * @param pool Memory pool to use
@@ -114,7 +114,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(ib_hash_t **ht,
 
 /**
  * @internal
- * Seach an entry for the given key and key length
+ * Search an entry for the given key and key length
  * The hash used to search the key will be also returned via param
  *
  * @param ib_ht the hash table to search in

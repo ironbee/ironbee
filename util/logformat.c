@@ -74,7 +74,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
 
     literal[0] = '\0';
 
-    /* Store the original format (right now its just for debugging purposses) */
+    /* Store the original format (right now its just for debugging purposes) */
     lf->orig_format = ib_mpool_strdup(lf->mp, format);
     if (lf->orig_format == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -138,7 +138,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
                     literal[j] = '\0';
                     lf->literals[l] = ib_mpool_strdup(lf->mp, literal);
                     if (lf->literals[l] == NULL) {
-                        /* Uops.. */
+                        /* Oops.. */
                         IB_FTRACE_RET_STATUS(IB_EINVAL);
                     }
                     else {
