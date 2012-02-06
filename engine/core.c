@@ -2814,7 +2814,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 {
     IB_FTRACE_INIT(parser_hook_resp_header);
 
-    assert(event == request_headers_event);
+    assert(event == response_headers_event);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
