@@ -316,33 +316,33 @@ static ib_status_t _ib_unregister_hook_context(
     IB_FTRACE_RET_STATUS(IB_ENOENT);
 }
 
-#define CALL_HOOKS(OUT_RC, FIRST_HOOK, EVENT, WHICH_CB, IB, PARAM) \
-    { \
-        *(OUT_RC) = IB_OK; \
-        for (ib_hook_t* hook_ = (FIRST_HOOK); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.WHICH_CB((IB), (EVENT), (PARAM), hook_->cdata); \
+#define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, param) \
+    do { \
+        *(out_rc) = IB_OK; \
+        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
+            ib_status_t rc_ = hook_->callback.whicb((ib), (event), (param), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((IB), 4, "Hook returned error: %s=%d", \
-                             ib_state_event_name((EVENT)), rc_); \
-                (*OUT_RC) = rc_; \
+                ib_log_error((ib), 4, "Hook returned error: %s=%d", \
+                             ib_state_event_name((event)), rc_); \
+                (*out_rc) = rc_; \
                 break; \
              } \
         } \
-    }
+    } while(0)
 
-#define CALL_NULL_HOOKS(OUT_RC, FIRST_HOOK, EVENT, WHICH_CB, IB) \
-    { \
-        *(OUT_RC) = IB_OK; \
-        for (ib_hook_t* hook_ = (FIRST_HOOK); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.WHICH_CB((IB), (EVENT), hook_->cdata); \
+#define CALL_NULL_HOOKS(out_rc, first_hook, event, whicb, ib) \
+    do { \
+        *(out_rc) = IB_OK; \
+        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
+            ib_status_t rc_ = hook_->callback.whicb((ib), (event), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((IB), 4, "Hook returned error: %s=%d", \
-                             ib_state_event_name((EVENT)), rc_); \
-                (*OUT_RC) = rc_; \
+                ib_log_error((ib), 4, "Hook returned error: %s=%d", \
+                             ib_state_event_name((event)), rc_); \
+                (*out_rc) = rc_; \
                 break; \
              } \
         } \
-    }
+    } while(0)
 
 /* -- Main Engine Routines -- */
 
