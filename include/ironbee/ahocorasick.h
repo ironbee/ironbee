@@ -161,13 +161,13 @@ typedef void (*ib_ac_callback_t)(ib_ac_t *orig,
 /**
  * Init macro for a matching context (needed by ib_ac_consume())
  * @param ac_ctx the ac matching context
- * @param ac_tree the ac tree
+ * @param ac_t the ac tree
  */
-#define ib_ac_init_ctx(ac_ctx,ac_tree) \
+#define ib_ac_init_ctx(ac_ctx,ac_t) \
         do { \
-            (ac_ctx)->ac_tree = (ac_tree); \
-            if ((ac_tree) != NULL) {\
-            (ac_ctx)->current = (ac_tree)->root; }\
+            (ac_ctx)->ac_tree = (ac_t); \
+            if ((ac_t) != NULL) {\
+            (ac_ctx)->current = (ac_t)->root; }\
             (ac_ctx)->processed = 0; \
             (ac_ctx)->current_offset = 0; \
             (ac_ctx)->match_cnt = 0; \
@@ -177,13 +177,13 @@ typedef void (*ib_ac_callback_t)(ib_ac_t *orig,
 /**
  * Reset macro for a matching context
  * @param ac_ctx the ac matching context
- * @param ac_tree the ac tree
+ * @param ac_t the ac tree
  */
-#define ib_ac_reset_ctx(ac_ctx,ac_tree) \
+#define ib_ac_reset_ctx(ac_ctx,ac_t) \
         do { \
-            (ac_ctx)->ac_tree = (ac_tree); \
-            if ((ac_tree) != NULL) {\
-            (ac_ctx)->current = (ac_tree)->root; }\
+            (ac_ctx)->ac_tree = (ac_t); \
+            if ((ac_t) != NULL) {\
+            (ac_ctx)->current = (ac_t)->root; }\
             (ac_ctx)->processed = 0; \
             (ac_ctx)->match_cnt = 0; \
             (ac_ctx)->current_offset = 0; \
