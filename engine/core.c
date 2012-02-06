@@ -4976,8 +4976,14 @@ static ib_status_t core_init(ib_engine_t *ib,
                           parser_hook_disconnect, NULL);
     ib_hook_tx_register(ib, tx_started_event,
                         core_hook_tx_started, NULL);
-    /// @todo Need the parser to parse headers before context, but others after context so that the personality can change based on headers (Host, uri path, etc)
-    //ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
+    /*
+     * @todo Need the parser to parse headers before context, but others after
+     * context so that the personality can change based on headers (Host, uri
+     * path, etc)
+     */
+    /*
+     * ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header,NULL);
+     */
     ib_hook_tx_register(ib, request_headers_event,
                         parser_hook_req_header, NULL);
     ib_hook_tx_register(ib, response_headers_event,
