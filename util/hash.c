@@ -30,8 +30,89 @@
 #include <ironbee/types.h>
 #include <ironbee/debug.h>
 #include <ironbee/hash.h>
-
+#include <assert.h>
+     
 #include "ironbee_util_private.h"
+     
+/* Internal Declarations */
+
+#define IB_HASH_INITIAL_SIZE   15
+
+typedef struct ib_hash_entry_t ib_hash_entry_t;
+typedef struct ib_hash_iter_t ib_hash_iter_t;
+
+struct ib_hash_entry_t {
+    const void          *key;
+    size_t               len;
+    const void          *data;
+    unsigned int         hash;
+    ib_hash_entry_t     *next;
+};
+
+struct ib_hash_iter_t {
+    ib_hash_t           *cur_ht;
+    ib_hash_entry_t     *cur_entry;
+    ib_hash_entry_t     *next;
+    unsigned int         index;
+};
+
+struct ib_hash_t {
+    uint8_t              flags;
+    ib_hashfunc_t        hash_fn;
+    ib_hash_entry_t    **slots;
+    unsigned int         size;
+    ib_hash_iter_t       iterator;  /* For ib_internalhash_first(NULL, ...) */
+    ib_mpool_t          *mp;        /**< Mem pool */
+    ib_hash_entry_t     *free;
+    unsigned int         cnt;
+};
+
+
+/**
+ * @internal
+ * Search an entry for the given key and key length
+ * The hash used to search the key will be also returned via param
+ *
+ * @param ib_ht the hash table to search in
+ * @param key buffer holding the key
+ * @param len number of bytes key length
+ * @param hte pointer reference used to store the entry if found
+ * @param hash reference to store the calculated hash
+ * @param lookup_flags Flags to use during lookup, e.g., (IB_HASH_FLAG_NOCASE)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_hash_find_entry(ib_hash_t *ib_ht,
+                                          const void *key,
+                                          size_t len,
+                                          ib_hash_entry_t **hte,
+                                          unsigned int *hash,
+                                          uint8_t lookup_flags);
+
+
+/**
+ * @internal
+ * Creates an initialized iterator for the hash table entries.
+ *
+ * @param p Memory pool for the iterator allocation
+ * @param ib_ht hash table to iterate
+ *
+ * @returns Status code
+ */
+ib_hash_iter_t DLL_PUBLIC *ib_hash_first(ib_mpool_t *p,
+                                         ib_hash_t *ib_ht);
+
+/**
+ * @internal
+ * Move the iterator to the next entry.
+ *
+ * @param hti hash table iterator
+ *
+ * @returns Status code
+ */
+ib_hash_iter_t DLL_PUBLIC *ib_hash_next(ib_hash_iter_t *hti);
+
+/* End Internal Declarations */
 
 unsigned int ib_hashfunc_djb2(const void *ckey,
                               size_t len,

@@ -282,36 +282,6 @@ struct ib_dso_t {
     void                *handle;        /**< Real DSO handle */
 };
 
-struct ib_hash_entry_t {
-    const void          *key;
-    size_t               len;
-    const void          *data;
-    unsigned int         hash;
-    ib_hash_entry_t     *next;
-};
-
-struct ib_hash_iter_t {
-    ib_hash_t           *cur_ht;
-    ib_hash_entry_t     *cur_entry;
-    ib_hash_entry_t     *next;
-    unsigned int         index;
-};
-
-/**
- * @internal
- * Hash Table structure.
- */
-struct ib_hash_t {
-    uint8_t              flags;
-    ib_hashfunc_t        hash_fn;
-    ib_hash_entry_t    **slots;
-    unsigned int         size;
-    ib_hash_iter_t       iterator;  /* For ib_internalhash_first(NULL, ...) */
-    ib_mpool_t          *mp;        /**< Mem pool */
-    ib_hash_entry_t     *free;
-    unsigned int         cnt;
-};
-
 /**
  * @internal
  * Field value structure.
