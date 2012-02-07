@@ -24,9 +24,12 @@
 
 #include "ironbee_config_auto.h"
 
+#include <assert.h>
+
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/radix.h>
 #include <ironbee/debug.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/operator.h>
@@ -34,6 +37,10 @@
 #include "ironbee_private.h"
 #include "ironbee_core_private.h"
 
+/**
+ * Static data
+ **/
+static ib_engine_t *g_ib = NULL;
 
 /**
  * @internal
@@ -271,12 +278,163 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
 }
 
 /**
- * Initialize the core operators
+ * @internal
+ * Create function for the "\@ipmatch" operator
+ *
+ * @param[in,out] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters (ip address strings)
+ * @param[in,out] op_inst Instance operator
+ *
+ * @returns Status code
  */
+static ib_status_t op_ipmatch_create(ib_mpool_t *mp,
+                                     const char *parameters,
+                                     ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    char *copy;
+    char *p;
+    ib_radix_t *radix;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Make a copy of the parameters to operate on */
+    copy = ib_mpool_strdup(mp, parameters);
+    if (copy == NULL) {
+        ib_log_error(g_ib, 4, "Error coping rule parameters '%s'", parameters);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Create the radix matcher */
+    rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
+    if (rc != IB_OK) {
+        ib_log_error(g_ib, 4, "Failed to allocate a radix matcher: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Split the parameters into the separate pieces */
+    for (p = strtok(copy, " ");  p != NULL;  p = strtok(NULL, " ") ) {
+        ib_radix_prefix_t *prefix = NULL;
+
+        /* Convert the IP address string to a prefix object */
+        rc = ib_radix_ip_to_prefix(p, &prefix, mp);
+        if (rc != IB_OK) {
+            ib_log_error(g_ib, 4,
+                         "Error created radix prefix for %s: %d", p, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Insert the prefix into the radix tree */
+        rc = ib_radix_insert_data(radix, prefix, NULL);
+        if (rc != IB_OK) {
+            ib_log_error(g_ib, 4,
+                         "Error loading prefix %s to the radix tree: %d",
+                         p, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        ib_log_debug(g_ib, 4, "prefix '%s' added to the radix tree", p);
+    }
+
+    /* Done */
+    op_inst->data = radix;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "\@ipmatch" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
+                                      ib_tx_t *tx,
+                                      void *data,
+                                      ib_field_t *field,
+                                      ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_radix_t *radix = (ib_radix_t *)data; /* The radix matcher object */
+    ib_radix_prefix_t *prefix;              /* The IP address */
+    const char *ipstr;                      /* String version of the address */
+    ib_num_t iplen;                         /* Length of the address string */
+    char *rmatch = NULL;                    /* Radix match */
+
+    /**
+     * This works on C-style (NUL terminated) and byte strings.  Note
+     * that data is assumed to be a NUL terminated string (because our
+     * configuration parser can't produce anything else).
+     **/
+    if (field->type==IB_FTYPE_NULSTR) {
+        ipstr = ib_field_value_nulstr( field );
+
+        /* Verify that we got out a string */
+        if (ipstr == NULL) {
+            ib_log_error(g_ib, 4, "Failed to get NULSTR from field");
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+        iplen = strlen(ipstr);
+    }
+    else if (field->type==IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *bs = ib_field_value_bytestr(field);
+
+        /* Verify that we got out a bytestr */
+        assert(bs != NULL);
+
+        /* Get the bytestr's length and pointer */
+        iplen = ib_bytestr_length(bs);
+        ipstr = (char *)ib_bytestr_ptr(bs);
+    }
+    else {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Convert the IP address string to a prefix object */
+    rc = ib_radix_ip_to_prefix_ex(ipstr, iplen, &prefix, tx->mp);
+    if (rc != IB_OK) {
+        ib_log_error(g_ib, 4,
+                     "Error created radix prefix for %*s: %d",
+                     iplen, ipstr, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    
+    /* Do the matching */
+    rc = ib_radix_match_closest(radix, prefix, &rmatch);
+    if (rc == IB_ENOENT) {
+        *result = 0;
+    }
+    else if (rc == IB_OK) {
+        *result = 1;
+    }
+    else {
+        ib_log_error(g_ib, 4,
+                     "Radix matcher failed matching for %*s: %d",
+                     iplen, ipstr, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Initialize the core operators
+ **/
 ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
+
+    /* Store off a pointer to the engine */
+    g_ib = ib;
 
     /* Register the string equal '\@streq' operator */
     rc = ib_operator_register(ib,
@@ -340,6 +498,17 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               NULL, /* No create function */
                               NULL, /* no destroy function */
                               op_false_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the false '\@ipmatch' operator */
+    rc = ib_operator_register(ib,
+                              "@ipmatch",
+                              IB_OP_FLAG_NONE,
+                              op_ipmatch_create,
+                              NULL, /* no destroy function */
+                              op_ipmatch_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
