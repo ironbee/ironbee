@@ -22,6 +22,10 @@ if DARWIN
 LDFLAGS += -pagezero_size 10000 -image_base 100000000 
 endif
 
+if LINUX
+LDADD += -ldl
+endif
+
 # This is a common set of files for runnign tests of modules.
 MODULE_TEST_LDADD = $(LDADD) \
                     $(top_builddir)/engine/libironbee.la
@@ -91,7 +95,8 @@ test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
                                  -D_XOPEN_SOURCE=1 \
                                  -DTEST_LUA_FILE=\"$(abs_top_srcdir)/tests/test_module_rules_lua.lua\" \
                                  -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
-test_module_rules_lua_LDADD = $(MODULE_TEST_LDADD) \
+test_module_rules_lua_LDADD = $(LDADD) \
+                              $(MODULE_TEST_LDADD) \
                               $(top_builddir)/lua/libironbee-lua.la \
                               $(top_builddir)/modules/ibmod_rules_la-rules_lua.o \
                               -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
