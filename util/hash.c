@@ -67,7 +67,7 @@ struct ib_hash_entry_t {
     /** Value. */
     const void          *value;
     /** Hash of @c key. */
-    unsigned int         hash;
+    unsigned int         hash_value;
     /** Next entry in slot for @c hash. */
     ib_hash_entry_t     *next_entry;
 };
@@ -142,10 +142,30 @@ static ib_status_t ib_hash_find_entry(
 );
 
 /**
+ * Search for a hash entry in the list of entries starting at @a first.
+ * @internal
+ *
+ * @param[in] first      Beginning of list to search.
+ * @param[in] key        Key to search for.
+ * @param[in] key_length Length of @a key.
+ * @param[in] hash_value Hash value of @a key.
+ * @param[in] flags      Flags.
+ *
+ * @returns Hash entry if found and NULL otherwise.
+ */
+static ib_hash_entry_t *ib_hash_find_htentry(
+     ib_hash_entry_t *first,
+     const void      *key,
+     size_t           key_length,
+     unsigned int     hash_value,
+     uint8_t          flags
+);
+
+/**
  * @internal
  * Return iterator pointing to first entry of @a hash.
  *
- * @param[in]  hash     Hash table to iterate over.
+ * @param[in]  hash Hash table to iterate over.
  *
  * @return Iterator pointing to first entry in @a hash.
  */
@@ -174,27 +194,135 @@ static void ib_hash_next(
 
 /* End Internal Declarations */
 
-unsigned int ib_hashfunc_djb2(const void *key,
-                              size_t len,
-                              uint8_t flags)
+/* Internal Definitions */
+
+static ib_hash_entry_t *ib_hash_find_htentry(
+    ib_hash_entry_t *first,
+    const void      *key,
+    size_t           key_length,
+    unsigned int     hash_value,
+    uint8_t          flags
+)
 {
     IB_FTRACE_INIT();
-    unsigned int hash = 0;
-    const unsigned char *ckey = (const unsigned char *)key;
-    size_t i = 0;
 
-    /* This is stored at ib_hash_t flags, however,
-     * the lookup function should take care to compare
-     * the real keys with or without tolower (so there will
-     * be a collision of hashes but the keys still different).
-     * See lookup_flags to choose with or without case sensitive */
-    if ( (flags & IB_HASH_FLAG_NOCASE)) {
-        for (i = 0; i < len ; i++) {
-            hash = (hash << 5) + tolower(ckey[i]);
+    for (
+        ib_hash_entry_t* current_entry = first;
+        current_entry != NULL;
+        current_entry = current_entry->next_entry
+    )
+    {
+        if (
+               current_entry->hash_value == hash_value
+            && current_entry->key_length == key_length
+        )
+        {
+            if (flags & IB_HASH_FLAG_NOCASE)
+            {
+                size_t i = 0;
+                for (i = 0; i < key_length; ++i) {
+                    char a = tolower(((char*)key)[i]);
+                    char b = tolower(((char*)current_entry->key)[i]);
+                    if ( a != b ) {
+                        break;
+                    }
+                }
+                if (i == key_length) {
+                    IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
+                }
+            }
+            else if ( memcmp(current_entry->key, key, key_length) == 0 ) {
+                IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
+            }
         }
     }
-    else {
-        for (i = 0; i < len; i++) {
+    IB_FTRACE_RET_PTR(ib_hash_entry_t, NULL);
+}
+
+ib_status_t ib_hash_find_entry(
+     ib_hash_entry_t **hash_entry,
+     unsigned int     *hash_value,
+     ib_hash_t        *hash,
+     const void       *key,
+     size_t            key_length,
+     uint8_t           flags
+)
+{
+    IB_FTRACE_INIT();
+
+    ib_hash_entry_t *current_slot  = NULL;
+    ib_hash_entry_t *current_entry = NULL;
+
+    /* Ensure that NOCASE lookups are allowed at ib_hash_t flags */
+    if (hash_entry == NULL || hash == NULL ||
+        ( (flags & IB_HASH_FLAG_NOCASE) &&
+         !(hash->flags & IB_HASH_FLAG_NOCASE)))
+    {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    *hash_value = hash->hash_function(key, key_length, hash->flags);
+
+    slot = hash->slots[*hash_value & hash->size];
+    he = ib_hash_find_htentry(slot, key, key_length, *hash_value, flags);
+    if (he == NULL) {
+        *hash_entry = NULL;
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+    }
+    *hash_entry = he;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Resize the number of slots holding the entry lists
+ *
+ * @returns ib_hash_entry_t
+ */
+static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
+{
+    IB_FTRACE_INIT();
+    ib_hash_entry_t **new_slots = NULL;
+    ib_hash_entry_t *current_entry = NULL;
+    unsigned int new_max = 0;
+
+    new_max = (ib_ht->size * 2) + 1;
+    new_slots = (ib_hash_entry_t **)ib_mpool_calloc(ib_ht->pool, new_max + 1,
+                                                    sizeof(ib_hash_entry_t *));
+    if (new_slots == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    IB_HASH_LOOP(current_entry, ib_ht) {
+        unsigned int i = current_entry->hash_value & new_max;
+        current_entry->next_entry = new_slots[i];
+        new_slots[i] = current_entry;
+    }
+    ib_ht->size = new_max;
+    ib_ht->slots = new_slots;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/* End Internal Definitions */
+
+unsigned int ib_hashfunc_djb2(
+    const void *key,
+    size_t      key_length,
+    uint8_t     flags
+)
+{
+    IB_FTRACE_INIT();
+
+    unsigned int         hash = 0;
+    const unsigned char *ckey = (const unsigned char *)key;
+
+    if ( flags & IB_HASH_FLAG_NOCASE ) {
+        for (size_t i = 0; i < key_length; ++i) {
+            hash = (hash << 5) + tolower(ckey[i]);
+        }
+    } else {
+        for (size_t i = 0; i < key_length; ++i) {
             hash = (hash << 5) + ckey[i];
         }
     }
@@ -291,110 +419,6 @@ void ib_hash_next(
     }
     iterator->next_entry = iterator->current_entry->next_entry;
     IB_FTRACE_RET_VOID();
-}
-
-/**
- * @internal
- * Search an entry in the given list
- *
- * @returns ib_hash_entry_t
- */
-static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
-                                              const void *key,
-                                              size_t len,
-                                              unsigned int hash,
-                                              uint8_t flags)
-{
-    IB_FTRACE_INIT();
-
-    for (; hte != NULL; hte = hte->next_entry) {
-        if (hte->hash == hash
-            && hte->key_length == len)
-        {
-            if (flags & IB_HASH_FLAG_NOCASE)
-            {
-                size_t i = 0;
-                const char *k = (const char *)key;
-                for (; i < len; i++) {
-                    if (tolower((char)k[i]) != tolower(((char *)hte->key)[i])) {
-                        break;
-                    }
-                }
-                if (i == len) {
-                    IB_FTRACE_RET_PTR(ib_hash_entry_t, hte);
-                }
-             }
-            else if (memcmp(hte->key, key, len) == 0) {
-                IB_FTRACE_RET_PTR(ib_hash_entry_t, hte);
-            }
-        }
-    }
-    IB_FTRACE_RET_PTR(ib_hash_entry_t, NULL);
-}
-
-ib_status_t ib_hash_find_entry(
-     ib_hash_entry_t **hash_entry,
-     unsigned int     *hash_value,
-     ib_hash_t        *hash,
-     const void       *key,
-     size_t            key_length,
-     uint8_t           flags
-)
-{
-    IB_FTRACE_INIT();
-
-    ib_hash_entry_t *slot = NULL;
-    ib_hash_entry_t *he = NULL;
-
-    /* Ensure that NOCASE lookups are allowed at ib_hash_t flags */
-    if (hash_entry == NULL || hash == NULL ||
-        ( (flags & IB_HASH_FLAG_NOCASE) &&
-         !(hash->flags & IB_HASH_FLAG_NOCASE)))
-    {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    *hash_value = hash->hash_function(key, key_length, hash->flags);
-
-    slot = hash->slots[*hash_value & hash->size];
-    he = ib_hash_find_htentry(slot, key, key_length, *hash_value, flags);
-    if (he == NULL) {
-        *hash_entry = NULL;
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
-    }
-    *hash_entry = he;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
- * Resize the number of slots holding the entry lists
- *
- * @returns ib_hash_entry_t
- */
-static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
-{
-    IB_FTRACE_INIT();
-    ib_hash_entry_t **new_slots = NULL;
-    ib_hash_entry_t *current_entry = NULL;
-    unsigned int new_max = 0;
-
-    new_max = (ib_ht->size * 2) + 1;
-    new_slots = (ib_hash_entry_t **)ib_mpool_calloc(ib_ht->pool, new_max + 1,
-                                                    sizeof(ib_hash_entry_t *));
-    if (new_slots == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    IB_HASH_LOOP(current_entry, ib_ht) {
-        unsigned int i = current_entry->hash & new_max;
-        current_entry->next_entry = new_slots[i];
-        new_slots[i] = current_entry;
-    }
-    ib_ht->size = new_max;
-    ib_ht->slots = new_slots;
-    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 void ib_hash_clear(ib_hash_t *hash)
@@ -508,7 +532,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
 
     for (; *hte_prev != NULL; hte_prev = &hte->next_entry) {
         hte = *hte_prev;
-        if (hte->hash == hash
+        if (hte->hash_value == hash
             && hte->key_length == len)
         {
             if (ib_ht->flags & IB_HASH_FLAG_NOCASE)
@@ -564,7 +588,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
                     IB_FTRACE_RET_STATUS(IB_EALLOC);
                 }
             }
-            entry->hash = hash;
+            entry->hash_value = hash;
             entry->key  = key;
             entry->key_length = len;
             entry->value = value;
