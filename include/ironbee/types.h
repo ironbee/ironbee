@@ -53,7 +53,26 @@ typedef struct ib_mpool_buffer_t ib_mpool_buffer_t;
 
 typedef struct ib_dso_t ib_dso_t;
 typedef void ib_dso_sym_t;
-typedef struct ib_hash_t ib_hash_t;
+
+/**
+ * @ingroup IronBeeHash
+ * @{
+ **/
+     
+/**
+ * Hash table.
+ *
+ * A map of keys (byte sequences or strings) to values (\c void*).
+ *
+ * @sa IronBeeHash
+ * @sa hash.h
+ **/
+typedef struct ib_hash_t ib_hash_t; 
+ 
+/**
+ * @} IronBeeHash
+ **/
+
 typedef uint32_t ib_ftype_t;
 typedef uint32_t ib_flags_t;
 typedef uint64_t ib_flags64_t;
