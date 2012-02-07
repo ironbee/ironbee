@@ -98,17 +98,17 @@ struct ib_hash_t {
     uint8_t              flags;
     /** Hash function. */
     ib_hash_function_t   hash_function;
-    /** 
+    /**
      * Slots.
-     *  
-     * Each slot holds a (possibly empty) linked list of ib_hash_entry_t's, 
+     *
+     * Each slot holds a (possibly empty) linked list of ib_hash_entry_t's,
      * all of which have the same hash value.
      **/
     ib_hash_entry_t    **slots;
     /** Size of @c slots. */
     unsigned int         size;
     /** Memory pool. */
-    ib_mpool_t          *pool;        
+    ib_mpool_t          *pool;
     /** Linked list of removed hash entries to use for recycling. */
     ib_hash_entry_t     *free;
     /** Number of entries. */
@@ -166,7 +166,7 @@ static void ib_hash_next(
         ((entry) = iterator.current_entry) != NULL; \
         ib_hash_next(&iterator) \
     )
-          
+
 /** @} IronBeeUtilHash */
 
 /* End Internal Declarations */
@@ -264,11 +264,11 @@ static ib_hash_iterator_t ib_hash_first(
 {
     // There is no ftace return macro for custom types.
     ib_hash_iterator_t iterator;
-    
+
     memset(&iterator, 0, sizeof(ib_hash_iterator_t));
     iterator.hash = hash;
     ib_hash_next(&iterator);
-    
+
     return iterator;
 }
 
@@ -277,7 +277,7 @@ void ib_hash_next(
 )
 {
     IB_FTRACE_INIT();
-    
+
     iterator->current_entry = iterator->next_entry;
     while (! iterator->current_entry) {
         if (iterator->slot_index > iterator->hash->size) {
@@ -408,7 +408,7 @@ static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
 void ib_hash_clear(ib_hash_t *hash)
 {
     IB_FTRACE_INIT();
-    
+
     ib_hash_entry_t *current_entry = NULL;
     IB_HASH_LOOP(current_entry, hash) {
         ib_hash_set_ex(hash, current_entry->key, current_entry->key_length, NULL);
@@ -485,7 +485,7 @@ ib_status_t ib_hash_get_all(
 {
     IB_FTRACE_INIT();
     ib_hash_entry_t* current_entry = NULL;
-    
+
     IB_HASH_LOOP(current_entry, hash) {
         ib_list_push(list, &current_entry->value);
     }

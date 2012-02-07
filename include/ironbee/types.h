@@ -58,7 +58,7 @@ typedef void ib_dso_sym_t;
  * @ingroup IronBeeHash
  * @{
  **/
-     
+
 /**
  * Hash table.
  *
@@ -67,8 +67,8 @@ typedef void ib_dso_sym_t;
  * @sa IronBeeHash
  * @sa hash.h
  **/
-typedef struct ib_hash_t ib_hash_t; 
- 
+typedef struct ib_hash_t ib_hash_t;
+
 /**
  * @} IronBeeHash
  **/
