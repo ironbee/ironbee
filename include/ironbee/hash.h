@@ -244,7 +244,8 @@ ib_status_t DLL_PUBLIC ib_hash_get_nocase(
 /**
  * Push every entry from @a hash onto @a list.
  *
- * Order is undefined.
+ * Order is undefined.  The values pushed to the list are pointers to
+ * the (@c const @c void*) data, i.e., pointers to pointers.
  *
  * @param[in,out] list List to push values.
  * @param[in]     hash   Hash table to take values from.
