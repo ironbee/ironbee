@@ -80,16 +80,17 @@ public:
     }
 
     /**
-     * @brief Parse and load the configuration TestName.TestCase.config.
-     * @details The given file is sent through the IronBee configuration
-     *          parser. It is not expected that modules will be loaded
-     *          through this interface, but that they will have
-     *          already been initialized using the BaseModuleFixture
-     *          class (a child of this class). The parsing of
-     *          the configuration file, then, is to setup to test
-     *          the loaded module, or other parsing.
-     * @paragraph Realize, though, that nothing prevents the tester from
-     *            using the LoadModule directive in their configuration.
+     * Parse and load the configuration \c TestName.TestCase.config.
+     *
+     * The given file is sent through the IronBee configuration parser. It is
+     * not expected that modules will be loaded through this interface, but
+     * that they will have already been initialized using the
+     * \c BaseModuleFixture class (a child of this class). The parsing of
+     * the configuration file, then, is to setup to test the loaded module,
+     * or other parsing.
+     *
+     * Realize, though, that nothing prevents the tester from using the
+     * LoadModule directive in their configuration.
      */
     virtual void configureIronBee(const std::string& configFile) {
 
@@ -159,9 +160,11 @@ public:
 };
 
 /**
- * @brief Testing fixture by which to test IronBee modules.
- * @details Users of this class should extend it and pass in
- *          the name of the module to be tested.
+ * Testing fixture by which to test IronBee modules.
+ *
+ * Users of this class should extend it and pass in the name of the module to
+ * be tested.
+ *
  * @code
  * class MyModTest : public BaseModuleFixture {
  *     public:
