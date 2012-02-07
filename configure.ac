@@ -116,6 +116,7 @@ case "$OS" in
         ;;
         Linux*)
                 AC_MSG_RESULT(Linux)
+                AC_CHECK_LIB([dl], [dlopen], [])
                 AC_DEFINE(_GNU_SOURCE, [1], [Enable GNU C source feature test macro])
                 OS_LINUX="true"
         ;;
