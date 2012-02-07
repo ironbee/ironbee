@@ -1013,7 +1013,7 @@ static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get((void *)&modctx, iconn->data, "MODHTP_CTX");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1042,7 +1042,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get((void *)&modctx, iconn->data, "MODHTP_CTX");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1100,7 +1100,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get((void *)&modctx, iconn->data, "MODHTP_CTX");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1165,7 +1165,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get((void *)&modctx, iconn->data, "MODHTP_CTX");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1397,7 +1397,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
 
     /* Fetch context from the connection. */
     /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, "MODHTP_CTX", (void *)&modctx);
+    rc = ib_hash_get((void *)&modctx, iconn->data, "MODHTP_CTX");
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to fetch module %s context: %d",
                      MODULE_NAME_STR, rc);

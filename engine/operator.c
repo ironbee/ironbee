@@ -50,7 +50,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_hash_get(operator_hash, name, &op);
+    rc = ib_hash_get(&op, operator_hash, name);
     if (rc == IB_OK) {
         /* name already is registered */
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -88,7 +88,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     ib_operator_t *op;
     ib_status_t rc;
 
-    rc = ib_hash_get(operator_hash, name, &op);
+    rc = ib_hash_get(&op, operator_hash, name);
     if (rc != IB_OK) {
         /* name is not registered */
         IB_FTRACE_RET_STATUS(rc);

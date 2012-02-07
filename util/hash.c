@@ -45,7 +45,7 @@ typedef struct ib_hash_iter_t ib_hash_iter_t;
 struct ib_hash_entry_t {
     const void          *key;
     size_t               len;
-    const void          *data;
+    const void          *value;
     unsigned int         hash;
     ib_hash_entry_t     *next;
 };
@@ -115,13 +115,13 @@ ib_hash_iter_t DLL_PUBLIC *ib_hash_next(ib_hash_iter_t *hti);
 
 /* End Internal Declarations */
 
-unsigned int ib_hashfunc_djb2(const void *ckey,
+unsigned int ib_hashfunc_djb2(const void *key,
                               size_t len,
                               uint8_t flags)
 {
     IB_FTRACE_INIT();
     unsigned int hash = 0;
-    const unsigned char *key = (const unsigned char *)ckey;
+    const unsigned char *ckey = (const unsigned char *)key;
     size_t i = 0;
 
     /* This is stored at ib_hash_t flags, however,
@@ -131,12 +131,12 @@ unsigned int ib_hashfunc_djb2(const void *ckey,
      * See lookup_flags to choose with or without case sensitive */
     if ( (flags & IB_HASH_FLAG_NOCASE)) {
         for (i = 0; i < len ; i++) {
-            hash = (hash << 5) + tolower(key[i]);
+            hash = (hash << 5) + tolower(ckey[i]);
         }
     }
     else {
         for (i = 0; i < len; i++) {
-            hash = (hash << 5) + key[i];
+            hash = (hash << 5) + ckey[i];
         }
     }
 
@@ -145,7 +145,8 @@ unsigned int ib_hashfunc_djb2(const void *ckey,
 
 ib_status_t ib_hash_create_ex(ib_hash_t **hp,
                               ib_mpool_t *pool,
-                              int size,
+                              unsigned int size,
+                              ib_hashfunc_t   hash_fn,
                               uint8_t flags)
 {
     IB_FTRACE_INIT();
@@ -169,7 +170,7 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_ht->hash_fn = ib_hashfunc_djb2;
+    ib_ht->hash_fn = hash_fn;
     ib_ht->cnt = 0;
     ib_ht->flags = flags;
     ib_ht->free = NULL;
@@ -189,15 +190,16 @@ ib_status_t ib_hash_create(
         ph,
         pool,
         IB_HASH_INITIAL_SIZE,
+        ib_hashfunc_djb2,
         IB_HASH_FLAG_NOCASE
     );
 }
 
-ib_mpool_t DLL_PUBLIC *ib_hash_mpool(ib_hash_t *ht)
+ib_mpool_t DLL_PUBLIC *ib_hash_pool(ib_hash_t *hash)
 {
-    assert(ht != NULL);
+    assert(hash != NULL);
 
-    return ht->mp;
+    return hash->mp;
 }
 
 ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
@@ -354,51 +356,59 @@ static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-void ib_hash_clear(ib_hash_t *h)
+void ib_hash_clear(ib_hash_t *hash)
 {
     IB_FTRACE_INIT();
     ib_hash_iter_t *hti = NULL;
-    for (hti = ib_hash_first(NULL, h);
+    for (hti = ib_hash_first(NULL, hash);
          hti;
          hti = ib_hash_next(hti))
     {
-        ib_hash_set_ex(h, hti->cur_entry->key, hti->cur_entry->len, NULL);
+        ib_hash_set_ex(hash, hti->cur_entry->key, hti->cur_entry->len, NULL);
     }
     IB_FTRACE_RET_VOID();
 }
 
-ib_status_t ib_hash_get(ib_hash_t *h,
-                        const char *key,
-                        void *pdata)
+ib_status_t ib_hash_get(
+    void* value,
+    ib_hash_t *hash,
+    const char *key
+)
 {
     IB_FTRACE_INIT();
+
     if (key == NULL) {
-        *(void **)pdata = NULL;
+        *(void **)value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    IB_FTRACE_RET_STATUS(ib_hash_get_ex(h, (void *)key, strlen(key), pdata, 0));
+    IB_FTRACE_RET_STATUS(ib_hash_get_ex(value, hash, (void *)key, strlen(key), 0));
 }
 
-ib_status_t ib_hash_get_nocase(ib_hash_t *h,
-                               const char *key,
-                               void *pdata)
+ib_status_t ib_hash_get_nocase(
+    void *value,
+    ib_hash_t *hash,
+    const char *key
+)
 {
     IB_FTRACE_INIT();
     if (key == NULL) {
-        *(void **)pdata = NULL;
+        *(void **)value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    IB_FTRACE_RET_STATUS(ib_hash_get_ex(h, (void *)key, strlen(key), pdata,
+    IB_FTRACE_RET_STATUS(ib_hash_get_ex(value, hash, (void *)key, strlen(key),
                                         IB_HASH_FLAG_NOCASE));
 }
 
 
-ib_status_t ib_hash_get_ex(ib_hash_t *ib_ht,
-                           void *key, size_t len,
-                           void *pdata,
-                           uint8_t lookup_flags)
+ib_status_t ib_hash_get_ex(
+    void *value,
+    ib_hash_t *ib_ht,
+    void *key,
+    size_t len,
+    uint8_t lookup_flags
+)
 {
     IB_FTRACE_INIT();
     ib_hash_entry_t *he = NULL;
@@ -406,31 +416,34 @@ ib_status_t ib_hash_get_ex(ib_hash_t *ib_ht,
     unsigned int hash = 0;
 
     if (key == NULL) {
-        *(void **)pdata = NULL;
+        *(void **)value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     rc = ib_hash_find_entry(ib_ht, key, len, &he, &hash, lookup_flags);
     if (rc == IB_OK) {
-        *(void **)pdata = (void *)he->data;
+        *(void **)value = (void *)he->value;
     }
     else {
-        *(void **)pdata = NULL;
+        *(void **)value = NULL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_hash_get_all(ib_hash_t *h, ib_list_t *list)
+ib_status_t ib_hash_get_all(
+    ib_list_t *list,
+    ib_hash_t *hash
+)
 {
     IB_FTRACE_INIT();
     ib_hash_iter_t *hti = NULL;
 
-    for (hti = ib_hash_first(list->mp, h);
+    for (hti = ib_hash_first(list->mp, hash);
          hti;
          hti = ib_hash_next(hti))
     {
-        ib_list_push(list, &hti->cur_entry->data);
+        ib_list_push(list, &hti->cur_entry->value);
     }
 
     if (ib_list_elements(list) <= 0) {
@@ -443,7 +456,7 @@ ib_status_t ib_hash_get_all(ib_hash_t *h, ib_list_t *list)
 ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
                            const void *key,
                            size_t len,
-                           const void *pdata)
+                           const void *value)
 {
     IB_FTRACE_INIT();
     unsigned int hash = 0;
@@ -484,14 +497,14 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
         }
     }
 
-    /* it's in the list, update or delete if pdata == NULL*/
+    /* it's in the list, update or delete if value == NULL*/
     if (*hte_prev != NULL) {
-        if (pdata != NULL && found) {
+        if (value != NULL && found) {
             /* Update */
-            hte->data = pdata;
+            hte->value = value;
         } else {
             /* Delete */
-            hte->data = NULL;
+            hte->value = NULL;
             ib_ht->cnt--;
             ib_hash_entry_t *entry = *hte_prev;
             *hte_prev = (*hte_prev)->next;
@@ -500,11 +513,11 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
         }
     }
     else {
-        /* it's not in the list. Add it if pdata != NULL */
-        if (pdata != NULL) {
+        /* it's not in the list. Add it if value != NULL */
+        if (value != NULL) {
             ib_hash_entry_t *entry = NULL;
 
-            /* add a new entry for non-NULL datas */
+            /* add a new entry for non-NULL values */
             if ((entry = ib_ht->free) != NULL) {
                 ib_ht->free = entry->next;
             }
@@ -518,7 +531,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
             entry->hash = hash;
             entry->key  = key;
             entry->len = len;
-            entry->data = pdata;
+            entry->value = value;
 
             *hte_prev = entry;
             entry->next = NULL;
@@ -535,44 +548,49 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_hash_set(ib_hash_t *h,
-                        const char *key,
-                        void *data)
+ib_status_t ib_hash_set(
+    ib_hash_t *hash,
+    const char *key,
+    void *value
+)
 {
     IB_FTRACE_INIT();
     /* Cannot be a NULL value (this means delete). */
-    if (data == NULL) {
+    if (value == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    IB_FTRACE_RET_STATUS(ib_hash_set_ex(h, (void *)key, strlen(key), data));
+    IB_FTRACE_RET_STATUS(ib_hash_set_ex(hash, (void *)key, strlen(key), value));
 }
 
-ib_status_t ib_hash_remove_ex(ib_hash_t *h,
-                              void *key, size_t len,
-                              void *pdata)
+ib_status_t ib_hash_remove_ex(
+    void *value,
+    ib_hash_t *hash,
+    void *key,
+    size_t len
+)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = IB_ENOENT;
-    void *data = NULL;
+    void *local_value = NULL;
 
-    rc = ib_hash_get_ex(h, key, (size_t)len, &data, h->flags);
+    rc = ib_hash_get_ex(&local_value, hash, key, (size_t)len, hash->flags);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    if ((pdata != NULL) && (data != NULL)) {
-        *(void **)pdata = data;
+    if ((value != NULL) && (local_value != NULL)) {
+        *(void **)value = local_value;
     }
-    rc = ib_hash_set_ex(h, key, (size_t)len, NULL);
+    rc = ib_hash_set_ex(hash, key, (size_t)len, NULL);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_hash_remove(
-    ib_hash_t *h,
-    const char *key,
-    void *pdata
+    void *value,
+    ib_hash_t *hash,
+    const char *key
 )
 {
-    return ib_hash_remove_ex(h, (void*)key, strlen(key), pdata);
+    return ib_hash_remove_ex(value, hash, (void*)key, strlen(key));
 }

@@ -48,7 +48,7 @@ ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
         rc = IB_EALLOC;
         goto failed;
     }
-    pool = ib_hash_mpool(hash);
+    pool = ib_hash_pool(hash);
 
     *pcm = (ib_cfgmap_t *)ib_mpool_alloc(pool, sizeof(**pcm));
     if (*pcm == NULL) {
@@ -127,7 +127,7 @@ ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
     ib_field_t *f;
     ib_status_t rc;
 
-    rc = ib_hash_get(cm->hash, name, (void *)&f);
+    rc = ib_hash_get((void *)&f, cm->hash, name);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -161,7 +161,7 @@ ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
     ib_field_t *f;
     ib_status_t rc;
 
-    rc = ib_hash_get(cm->hash, name, &f);
+    rc = ib_hash_get(&f, cm->hash, name);
     if (rc != IB_OK) {
         if (ptype != NULL) {
             *ptype = IB_FTYPE_GENERIC;

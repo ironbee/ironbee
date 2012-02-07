@@ -907,9 +907,12 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
     ib_field_t *f;
     ib_status_t rc;
 
-    rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
-                        (void *)name, nlen,
-                        (void *)&f, IB_HASH_FLAG_NOCASE);
+    rc = ib_hash_get_ex(
+        (void *)&f,
+        (ib_hash_t *)dpi->data,
+        (void *)name, nlen,
+        IB_HASH_FLAG_NOCASE
+    );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
@@ -963,9 +966,12 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
         klen = (subkey - name) - 1;
         sklen = nlen - klen - 1;
 
-        rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
-                            (void *)name, klen,
-                            (void *)pf, IB_HASH_FLAG_NOCASE);
+        rc = ib_hash_get_ex(
+            (void *)pf,
+            (ib_hash_t *)dpi->data,
+            (void *)name, klen,
+            IB_HASH_FLAG_NOCASE
+        );
         if (rc == IB_OK) {
             /* Try dynamic lookup. */
             if(ib_field_is_dynamic(*pf)) {
@@ -993,9 +999,12 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
         }
     }
 
-    rc = ib_hash_get_ex((ib_hash_t *)dpi->data,
-                                    (void *)name, nlen,
-                                    (void *)pf, IB_HASH_FLAG_NOCASE);
+    rc = ib_hash_get_ex(
+        (void *)pf,
+        (ib_hash_t *)dpi->data,
+        (void *)name, nlen,
+        IB_HASH_FLAG_NOCASE
+    );
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1014,7 +1023,7 @@ static ib_status_t core_data_get_all(ib_provider_inst_t *dpi,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = ib_hash_get_all((ib_hash_t *)dpi->data, list);
+    rc = ib_hash_get_all(list, (ib_hash_t *)dpi->data);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1038,9 +1047,11 @@ static ib_status_t core_data_remove(ib_provider_inst_t *dpi,
                                     ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = ib_hash_remove_ex((ib_hash_t *)dpi->data,
-                                       (void *)name, nlen,
-                                       (void *)pf);
+    ib_status_t rc = ib_hash_remove_ex(
+        (void *)pf,
+        (ib_hash_t *)dpi->data,
+        (void *)name, nlen
+    );
     IB_FTRACE_RET_STATUS(rc);
 }
 
