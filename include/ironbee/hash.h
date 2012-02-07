@@ -111,27 +111,26 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(ib_hash_t **ht,
                                          ib_mpool_t *pool,
                                          int slots,
                                          uint8_t flags);
-
+ 
 /**
- * @internal
- * Search an entry for the given key and key length
- * The hash used to search the key will be also returned via param
+ * Create a hash table with nocase option by default.
  *
- * @param ib_ht the hash table to search in
- * @param key buffer holding the key
- * @param len number of bytes key length
- * @param hte pointer reference used to store the entry if found
- * @param hash reference to store the calculated hash
- * @param lookup_flags Flags to use during lookup, e.g., (IB_HASH_FLAG_NOCASE)
+ * If you do not need key case insensitivity, use ib_hash_create_ex()
+ *
+ * @param ph Address which new hash table is written
+ * @param pool Memory pool to use
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_hash_find_entry(ib_hash_t *ib_ht,
-                                          const void *key,
-                                          size_t len,
-                                          ib_hash_entry_t **hte,
-                                          unsigned int *hash,
-                                          uint8_t lookup_flags);
+ib_status_t DLL_PUBLIC ib_hash_create(ib_hash_t **ph, ib_mpool_t *pool);
+
+/**
+ * Access hash mpool.
+ *
+ * @param[in] ht Hash table.
+ * @return Memory pool of \a ht.
+ **/
+ib_mpool_t DLL_PUBLIC *ib_hash_mpool(ib_hash_t *ht);
 
 /**
  * Clear a hash table.

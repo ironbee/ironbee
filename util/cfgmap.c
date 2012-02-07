@@ -48,7 +48,7 @@ ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
         rc = IB_EALLOC;
         goto failed;
     }
-    pool = hash->mp;
+    pool = ib_hash_mpool(hash);
 
     *pcm = (ib_cfgmap_t *)ib_mpool_alloc(pool, sizeof(**pcm));
     if (*pcm == NULL) {

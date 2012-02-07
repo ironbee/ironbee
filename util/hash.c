@@ -98,6 +98,26 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+ib_status_t ib_hash_create(
+    ib_hash_t **ph, 
+    ib_mpool_t *pool
+)
+{
+    return ib_hash_create_ex(
+        ph, 
+        pool, 
+        IB_HASH_INITIAL_SIZE, 
+        IB_HASH_FLAG_NOCASE
+    );
+}
+
+ib_mpool_t DLL_PUBLIC *ib_hash_mpool(ib_hash_t *ht)
+{
+    assert(ht != NULL);
+    
+    return ht->mp;
+}
+
 ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
 {
     IB_FTRACE_INIT();
