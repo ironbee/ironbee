@@ -60,7 +60,7 @@ extern "C" {
 
 /**
  * IB_MPOOL_MIN_SIZE_BITS defines the minimum size guaranteed by indexed[0]
- * as a exponent of 2, so IB_MPOOL_MIN_SIZE_BITS 4 implies that 16 bytes can
+ * as a exponent of 2, so IB_MPOOL_MIN_SIZE_BITS 4 implies that 31 bytes can
  * be allocated in buffers linked from @a indexed[0] */
 #define IB_MPOOL_MIN_SIZE_BITS      4
 

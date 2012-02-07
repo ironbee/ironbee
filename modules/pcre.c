@@ -301,12 +301,13 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
     rule_data->regex_extra =
         (pcre_extra*) ib_mpool_alloc(pool, rule_data->regex_extra_sz);
 
-    if (rule_data->regex == NULL) {
+    if (rule_data->regex_extra == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Copy regex and regex_extra into rule_data. */
     memcpy(rule_data->regex, regex, rule_data->regex_sz);
+    pcre_free(regex);
     memcpy(rule_data->regex_extra, regex_extra, rule_data->regex_extra_sz);
 
     op_inst->data = rule_data;

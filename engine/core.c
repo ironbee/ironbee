@@ -5427,6 +5427,12 @@ static ib_status_t core_ctx_finish(ib_engine_t *ib,
 
     // Get the main context config, it's config, and it's logger
     main_ctx = ib_context_main(ib);
+
+    // If the main context has already been destroyed nothing must be done.
+    if (main_ctx == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+        
     rc = ib_context_module_config(main_ctx, ib_core_module(),
                                   (void *)&main_core_config);
     if (rc != IB_OK) {

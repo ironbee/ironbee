@@ -591,9 +591,11 @@ void ib_engine_destroy(ib_engine_t *ib)
         if (ib->ctx != ib->ectx) {
             ib_log(ib, 9, "Destroying main configuration context...");
             ib_context_destroy(ib->ctx);
+            ib->ctx = NULL;
         }
         ib_log(ib, 9, "Destroying engine configuration context...");
         ib_context_destroy(ib->ectx);
+        ib->ectx = ib->ctx = NULL;
 
         ib_log(ib, 9, "Unloading modules...");
         IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {

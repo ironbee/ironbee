@@ -40,6 +40,7 @@ check_PROGRAMS = test_gtest \
                  test_util_uuid \
                  test_util_logformat \
                  test_util_ahocorasick \
+                 test_util_mpool \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_trace \
@@ -50,6 +51,7 @@ check_PROGRAMS = test_gtest \
                  test_action \
                  test_luajit
 
+TESTS=$(check_PROGRAMS)
 # TODO: Get libhtp working w/C++
 # test_util_bytestr
 test_util_unescape_string_SOURCES = test_util_unescape_string.cc \
@@ -75,6 +77,10 @@ test_util_field_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
+
+test_util_mpool_SOURCES = test_util_mpool.cc
+test_util_mpool_CFLAGS = $(AM_CFLAGS) $(VALGRIND_CFLAGS)
+test_util_mpool_LDADD = $(MODULE_TEST_LDADD)
 
 test_engine_SOURCES = test_engine.cc test_main.cc ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
@@ -137,4 +143,3 @@ check-local: $(check_PROGRAMS)
 		 $(VALGRIND) --xml=yes --xml-file=$${cp}_valgrind_memcheck.xml ./$${cp}; \
 		fi; \
 	done
-

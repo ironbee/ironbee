@@ -314,7 +314,12 @@ static ib_status_t readfile(const char* filename, char **buffer)
     /* If conversion from off_t to ssize_t is required, it happens here. */
     len = fd_stat.st_size;
 
-    *buffer = malloc(len);
+    *buffer = malloc(len + 1);
+
+    if (*buffer == NULL) {
+        close(fd);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
     total_bytes_read = 0;
 
@@ -327,16 +332,15 @@ static ib_status_t readfile(const char* filename, char **buffer)
             free(*buffer);
             *buffer = NULL;
             len = 0;
+            close(fd);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
         total_bytes_read += bytes_read;
     } while(total_bytes_read < len);
 
-    if (*buffer==NULL) {
-        close(fd);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
+    /* Null terminate the buffer */
+    (*buffer)[total_bytes_read] = '\0';
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -380,7 +384,6 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-
 
     rc = ib_ac_build_links(ac);
 

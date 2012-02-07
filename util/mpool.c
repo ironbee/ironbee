@@ -405,12 +405,23 @@ void ib_mpool_destroy(ib_mpool_t *mp)
     }
     mp->child = mp->child_last = NULL;
 
+    /* Run all of the cleanup functions.
+     * This must happen before freeing the pool buffers.*/
+    if (mp->cleanup != NULL) {
+        ib_mpool_cleanup_t *mpc;
+
+        for (mpc = mp->cleanup; mpc != NULL; mpc = mpc->next) {
+            mpc->free(mpc->free_data);
+        }
+    }
+
     /* Free the indexed buffers. */
-    for (i = 0; i < IB_MPOOL_MAX_INDEX; ++i) {
+    for (i = 0; i <= IB_MPOOL_MAX_INDEX; ++i) {
         buf = mp->indexed[i];
         if (buf != NULL) {
             for (; buf != NULL; buf = next) {
                 next = buf->next;
+                free(buf->buffer);
                 free(buf);
             }
             mp->indexed[i] = NULL;
@@ -420,6 +431,7 @@ void ib_mpool_destroy(ib_mpool_t *mp)
     /* Free all busy buffers. */
     for (buf = mp->busy_buffers; buf != NULL; buf = next) {
         next = buf->next;
+        free(buf->buffer);
         free(buf);
     }
 
@@ -427,15 +439,6 @@ void ib_mpool_destroy(ib_mpool_t *mp)
     mp->current = NULL;
     mp->size = 0;
     mp->inuse = 0;
-
-    /* Run all of the cleanup functions. */
-    if (mp->cleanup != NULL) {
-        ib_mpool_cleanup_t *mpc;
-
-        for (mpc = mp->cleanup; mpc != NULL; mpc = mpc->next) {
-            mpc->free(mpc->free_data);
-        }
-    }
 
     /* Unlink parent/child. */
     if (mp->parent != NULL) {

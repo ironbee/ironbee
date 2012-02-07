@@ -1527,7 +1527,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
                                   "allocate mem for a ascii cidr";
     memcpy(cidr1, ascii2, strlen(ascii2) + 1);
-    rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp_tmp);
+    rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
     ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
 
     /*We are going to link it to the const ascii representation of the prefix2*/
@@ -1539,7 +1539,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
                                   "allocate mem for a ascii cidr";
     memcpy(cidr1, ascii3, strlen(ascii3) + 1);
-    rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp_tmp);
+    rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
     ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
 
     /*We are going to link it to the const ascii representation of the prefix3*/
@@ -1551,7 +1551,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
                                   "allocate mem for a ascii cidr";
     memcpy(cidr1, ascii4, strlen(ascii4) + 1);
-    rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp_tmp);
+    rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
     ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
 
     /*We are going to link it to the const ascii representation of the prefix4*/

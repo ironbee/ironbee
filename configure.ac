@@ -248,6 +248,7 @@ else
 fi
 
 VALGRIND=$valgrind
+PKG_CHECK_MODULES([VALGRIND], [valgrind], [AC_DEFINE([HAVE_VALGRIND],[1],[valgrind exists])])
 
 dnl Checks for various external dependencies
 sinclude(acinclude/htp.m4)

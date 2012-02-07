@@ -118,8 +118,6 @@ TEST(TestIronBee, test_tfn)
 
     ibtest_engine_create(&ib);
 
-    ibtest_engine_create(&ib);
-
     ASSERT_EQ(IB_OK, ib_tfn_create(ib, "foo2bar", foo2bar, NULL, NULL));
     ASSERT_EQ(IB_OK, ib_tfn_lookup(ib, "foo2bar", &tfn));
     ASSERT_NE((ib_tfn_t *)-1, tfn);
