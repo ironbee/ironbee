@@ -90,7 +90,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(ib_hash_t **ht,
                                          ib_mpool_t *pool,
                                          int slots,
                                          uint8_t flags);
- 
+
 /**
  * Create a hash table with nocase option by default.
  *
@@ -226,7 +226,7 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(ib_hash_t *h,
 ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
                                       const char *key,
                                       void *pdata);
-    
+
 
 /** @} IronBeeUtilHash */
 

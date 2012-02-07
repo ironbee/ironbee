@@ -31,9 +31,9 @@
 #include <ironbee/debug.h>
 #include <ironbee/hash.h>
 #include <assert.h>
-     
+
 #include "ironbee_util_private.h"
-     
+
 /* Internal Declarations */
 
 #define IB_HASH_INITIAL_SIZE   15
@@ -180,14 +180,14 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
 }
 
 ib_status_t ib_hash_create(
-    ib_hash_t **ph, 
+    ib_hash_t **ph,
     ib_mpool_t *pool
 )
 {
     return ib_hash_create_ex(
-        ph, 
-        pool, 
-        IB_HASH_INITIAL_SIZE, 
+        ph,
+        pool,
+        IB_HASH_INITIAL_SIZE,
         IB_HASH_FLAG_NOCASE
     );
 }
@@ -195,7 +195,7 @@ ib_status_t ib_hash_create(
 ib_mpool_t DLL_PUBLIC *ib_hash_mpool(ib_hash_t *ht)
 {
     assert(ht != NULL);
-    
+
     return ht->mp;
 }
 
