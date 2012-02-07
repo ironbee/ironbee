@@ -63,13 +63,13 @@ struct ib_hash_entry_t {
     /** Key. */
     const void          *key;
     /** Length of @c key. */
-    size_t               len;
+    size_t               key_length;
     /** Value. */
     const void          *value;
     /** Hash of @c key. */
     unsigned int         hash;
     /** Next entry in slot for @c hash. */
-    ib_hash_entry_t     *next;
+    ib_hash_entry_t     *next_entry;
 };
 
 /**
@@ -78,11 +78,11 @@ struct ib_hash_entry_t {
  **/
 struct ib_hash_iter_t {
     /** Hash table we are iterating through. */
-    ib_hash_t           *cur_ht;
+    ib_hash_t           *hash;
     /** Current entry. */
-    ib_hash_entry_t     *cur_entry;
+    ib_hash_entry_t     *current_entry;
     /** Next entry. */
-    ib_hash_entry_t     *next;
+    ib_hash_entry_t     *next_entry;
     /** Index in sequence. */
     unsigned int         index;
 };
@@ -91,10 +91,10 @@ struct ib_hash_iter_t {
  * See ib_hash_t()
  **/
 struct ib_hash_t {
-    /** Flags to pass to @c hash_fn. */
+    /** Flags to pass to @c hash_function. */
     uint8_t              flags;
     /** Hash function. */
-    ib_hashfunc_t        hash_fn;
+    ib_hash_function_t        hash_function;
     /** 
      * Slots.
      *  
@@ -151,13 +151,13 @@ ib_hash_iter_t DLL_PUBLIC *ib_hash_first(ib_mpool_t *p,
 
 /**
  * @internal
- * Move the iterator to the next entry.
+ * Move the iterator to the next_entry entry.
  *
  * @param hti hash table iterator
  *
  * @returns Status code
  */
-ib_hash_iter_t DLL_PUBLIC *ib_hash_next(ib_hash_iter_t *hti);
+ib_hash_iter_t DLL_PUBLIC *ib_hash_next_entry(ib_hash_iter_t *hti);
 
 /** @} IronBeeUtilHash */
 
@@ -194,7 +194,7 @@ unsigned int ib_hashfunc_djb2(const void *key,
 ib_status_t ib_hash_create_ex(ib_hash_t **hp,
                               ib_mpool_t *pool,
                               unsigned int size,
-                              ib_hashfunc_t   hash_fn,
+                              ib_hash_function_t   hash_function,
                               uint8_t flags)
 {
     IB_FTRACE_INIT();
@@ -218,7 +218,7 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_ht->hash_fn = hash_fn;
+    ib_ht->hash_function = hash_function;
     ib_ht->count = 0;
     ib_ht->flags = flags;
     ib_ht->free = NULL;
@@ -250,17 +250,17 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(ib_hash_t *hash)
     return hash->pool;
 }
 
-ib_hash_iter_t *ib_hash_next(ib_hash_iter_t *hti)
+ib_hash_iter_t *ib_hash_next_entry(ib_hash_iter_t *hti)
 {
     IB_FTRACE_INIT();
-    hti->cur_entry = hti->next;
-    while (!hti->cur_entry) {
-        if (hti->index > hti->cur_ht->size) {
+    hti->current_entry = hti->next_entry;
+    while (!hti->current_entry) {
+        if (hti->index > hti->hash->size) {
             IB_FTRACE_RET_PTR(ib_hash_iter_t, NULL);
         }
-        hti->cur_entry = hti->cur_ht->slots[hti->index++];
+        hti->current_entry = hti->hash->slots[hti->index++];
     }
-    hti->next = hti->cur_entry->next;
+    hti->next_entry = hti->current_entry->next_entry;
     IB_FTRACE_RET_PTR(ib_hash_iter_t, hti);
 }
 
@@ -281,9 +281,9 @@ ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
     }
 
     memset(hti, 0, sizeof(ib_hash_iter_t));
-    hti->cur_ht = ib_ht;
+    hti->hash = ib_ht;
 
-    IB_FTRACE_RET_PTR(ib_hash_iter_t, ib_hash_next(hti));
+    IB_FTRACE_RET_PTR(ib_hash_iter_t, ib_hash_next_entry(hti));
 }
 
 /**
@@ -300,9 +300,9 @@ static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
 {
     IB_FTRACE_INIT();
 
-    for (; hte != NULL; hte = hte->next) {
+    for (; hte != NULL; hte = hte->next_entry) {
         if (hte->hash == hash
-            && hte->len == len)
+            && hte->key_length == len)
         {
             if (flags & IB_HASH_FLAG_NOCASE)
             {
@@ -358,7 +358,7 @@ ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    *hash = ib_ht->hash_fn(key, len, ib_ht->flags);
+    *hash = ib_ht->hash_function(key, len, ib_ht->flags);
 
     slot = ib_ht->slots[*hash & ib_ht->size];
     he = ib_hash_find_htentry(slot, key, len, *hash, lookup_flags);
@@ -393,11 +393,11 @@ static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
 
     for (hti = ib_hash_first(NULL, ib_ht);
          hti != NULL;
-         hti = ib_hash_next(hti))
+         hti = ib_hash_next_entry(hti))
     {
-        unsigned int i = hti->cur_entry->hash & new_max;
-        hti->cur_entry->next = new_slots[i];
-        new_slots[i] = hti->cur_entry;
+        unsigned int i = hti->current_entry->hash & new_max;
+        hti->current_entry->next_entry = new_slots[i];
+        new_slots[i] = hti->current_entry;
     }
     ib_ht->size = new_max;
     ib_ht->slots = new_slots;
@@ -410,9 +410,9 @@ void ib_hash_clear(ib_hash_t *hash)
     ib_hash_iter_t *hti = NULL;
     for (hti = ib_hash_first(NULL, hash);
          hti;
-         hti = ib_hash_next(hti))
+         hti = ib_hash_next_entry(hti))
     {
-        ib_hash_set_ex(hash, hti->cur_entry->key, hti->cur_entry->len, NULL);
+        ib_hash_set_ex(hash, hti->current_entry->key, hti->current_entry->key_length, NULL);
     }
     IB_FTRACE_RET_VOID();
 }
@@ -489,9 +489,9 @@ ib_status_t ib_hash_get_all(
 
     for (hti = ib_hash_first(list->mp, hash);
          hti;
-         hti = ib_hash_next(hti))
+         hti = ib_hash_next_entry(hti))
     {
-        ib_list_push(list, &hti->cur_entry->value);
+        ib_list_push(list, &hti->current_entry->value);
     }
 
     if (ib_list_elements(list) <= 0) {
@@ -513,15 +513,15 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
     ib_hash_entry_t *hte = NULL;
     ib_hash_entry_t **hte_prev = NULL;
 
-    hash = ib_ht->hash_fn(key, len, ib_ht->flags);
+    hash = ib_ht->hash_function(key, len, ib_ht->flags);
 
     hte_prev = &ib_ht->slots[hash & ib_ht->size];
     hte = *hte_prev;
 
-    for (; *hte_prev != NULL; hte_prev = &hte->next) {
+    for (; *hte_prev != NULL; hte_prev = &hte->next_entry) {
         hte = *hte_prev;
         if (hte->hash == hash
-            && hte->len == len)
+            && hte->key_length == len)
         {
             if (ib_ht->flags & IB_HASH_FLAG_NOCASE)
             {
@@ -555,8 +555,8 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
             hte->value = NULL;
             ib_ht->count--;
             ib_hash_entry_t *entry = *hte_prev;
-            *hte_prev = (*hte_prev)->next;
-            entry->next = ib_ht->free;
+            *hte_prev = (*hte_prev)->next_entry;
+            entry->next_entry = ib_ht->free;
             ib_ht->free = entry;
         }
     }
@@ -567,7 +567,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
 
             /* add a new entry for non-NULL values */
             if ((entry = ib_ht->free) != NULL) {
-                ib_ht->free = entry->next;
+                ib_ht->free = entry->next_entry;
             }
             else {
                 entry = (ib_hash_entry_t *)ib_mpool_calloc(ib_ht->pool, 1,
@@ -578,11 +578,11 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
             }
             entry->hash = hash;
             entry->key  = key;
-            entry->len = len;
+            entry->key_length = len;
             entry->value = value;
 
             *hte_prev = entry;
-            entry->next = NULL;
+            entry->next_entry = NULL;
 
             ib_ht->count++;
 

@@ -66,7 +66,7 @@ extern "C" {
  *
  * @returns Hash value of \a key.
  **/
-typedef unsigned int (*ib_hashfunc_t)(
+typedef unsigned int (*ib_hash_function_t)(
     const void *key,
     size_t      key_length,
     uint8_t     flags
@@ -113,23 +113,23 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2(
  *
  * @sa ib_hash_create()
  *
- * @param[out] hash    The newly created hash table.
- * @param[in]  pool    Memory pool to use.
- * @param[in]  size    The number of slots in the hash table.
- * @param[in]  hash_fn Hash function to use, e.g., ib_hashfunc_djb2().
- * @param[in]  flags   Flags to pass to the hash function, e.g.,
- *                     IB_HASH_FLAG_NOCASE
+ * @param[out] hash          The newly created hash table.
+ * @param[in]  pool          Memory pool to use.
+ * @param[in]  size          The number of slots in the hash table.
+ * @param[in]  hash_function Hash function to use, e.g., ib_hashfunc_djb2().
+ * @param[in]  flags         Flags to pass to the hash function, e.g.,
+ *                           IB_HASH_FLAG_NOCASE
  *
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
  */
 ib_status_t DLL_PUBLIC ib_hash_create_ex(
-    ib_hash_t     **hash,
-    ib_mpool_t     *pool,
-    unsigned int    size,
-    ib_hashfunc_t   hash_fn,
-    uint8_t         flags
+    ib_hash_t          **hash,
+    ib_mpool_t          *pool,
+    unsigned int         size,
+    ib_hash_function_t   hash_function,
+    uint8_t              flags
 );
 
 /**
