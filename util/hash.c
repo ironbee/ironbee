@@ -20,6 +20,7 @@
  * @brief IronBee - Utility Hash Functions
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"

@@ -23,6 +23,7 @@
  * @brief IronBee - Hash Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <stdlib.h>
