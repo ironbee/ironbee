@@ -60,15 +60,15 @@ extern "C" {
  * A hash function converts keys (byte sequences) into hash values (unsinged
  * integers).  A good hash function is vital to the performance of a hash.
  *
- * @param[in] key   Key to hash.
- * @param[in] len   Length of @a key.
+ * @param[in] key           Key to hash.
+ * @param[in] key_length    Length of @a key.
  * @param[in] flags Flags.  Currently, only flag is IB_HASH_FLAG_NOCASE.
  *
  * @returns Hash value of \a key.
  **/
 typedef unsigned int (*ib_hashfunc_t)(
     const void *key,
-    size_t      len,
+    size_t      key_length,
     uint8_t     flags
 );
 
@@ -94,16 +94,17 @@ typedef unsigned int (*ib_hashfunc_t)(
  *   hash = hash * 33 + c
  * @endcode
  *
- * @param[in] key   The key to hash.
- * @param[in] len   Length of @a key.
- * @param[in] flags If contains IB_HASH_FLAG_NOCASE, will convert upper
- *                  case bytes to lower case.  All other bits are ignored.
+ * @param[in] key          The key to hash.
+ * @param[in] key_length   Length of @a key.
+ * @param[in] flags        If contains IB_HASH_FLAG_NOCASE, will convert upper
+ *                         case bytes to lower case.  All other bits are
+ *                         ignored.
  *
  * @returns Hash value of @a key.
  */
 unsigned int DLL_PUBLIC ib_hashfunc_djb2(
     const void *key,
-    size_t      len,
+    size_t      key_length,
     uint8_t     flags
 );
 
@@ -176,11 +177,12 @@ void DLL_PUBLIC ib_hash_clear(
  * @sa ib_hash_get()
  * @sa ib_hash_get_nocase()
  *
- * @param[out] value Address which value is written.
- * @param[in]  hash  Hash table.
- * @param[in]  key   Key to lookup.
- * @param[in]  len   Length of @a key.
- * @param[in]  flags Flags to use during lookup, e.g., IB_HASH_FLAG_NOCASE.
+ * @param[out] value        Address which value is written.
+ * @param[in]  hash         Hash table.
+ * @param[in]  key          Key to lookup.
+ * @param[in]  key_length   Length of @a key.
+ * @param[in]  flags        Flags to use during lookup, e.g.,
+ *                          IB_HASH_FLAG_NOCASE.
  *
  * @returns
  * - IB_OK on success.
@@ -191,7 +193,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
     void      *value,
     ib_hash_t *hash,
     void      *key,
-    size_t     len,
+    size_t     key_length,
     uint8_t    flags
 );
 
@@ -261,10 +263,10 @@ ib_status_t DLL_PUBLIC ib_hash_get_all(
  *
  * @sa ib_hash_set()
  *
- * @param[in,out] hash  Hash table.
- * @param[in]     key   Key.
- * @param[in]     len   Length of @a key
- * @param[in]     value Value.
+ * @param[in,out] hash         Hash table.
+ * @param[in]     key          Key.
+ * @param[in]     key_length   Length of @a key
+ * @param[in]     value        Value.
  *
  * @returns
  * - IB_OK on success.
@@ -273,7 +275,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_all(
 ib_status_t DLL_PUBLIC ib_hash_set_ex(
     ib_hash_t  *hash,
     const void *key,
-    size_t      len,
+    size_t      key_length,
     const void *value
 );
 
@@ -301,10 +303,10 @@ ib_status_t DLL_PUBLIC ib_hash_set(
  *
  * @sa ib_hash_remove()
  *
- * @param[in,out] value If non-NULL, removed value will be stored here.
- * @param[in,out] hash  Hash table.
- * @param[in]     key   Key.
- * @param[in]     len   Length of @a key.
+ * @param[in,out] value        If non-NULL, removed value will be stored here.
+ * @param[in,out] hash         Hash table.
+ * @param[in]     key          Key.
+ * @param[in]     key_length   Length of @a key.
  *
  * @returns
  * - IB_OK on success.
@@ -315,7 +317,7 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(
     void      *value,
     ib_hash_t *hash,
     void      *key,
-    size_t     len
+    size_t     key_length
 );
 
 /**
