@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeHash Hashashable
+ * @defgroup IronBeeHash Hash
  * @ingroup IronBeeUtil
  *
  * @{
