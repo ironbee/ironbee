@@ -226,9 +226,7 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(ib_hash_t *h,
 ib_status_t DLL_PUBLIC ib_hash_remove(ib_hash_t *h,
                                       const char *key,
                                       void *pdata);
-
-#define ib_hash_remove(h,key,pdata) \
-    ib_hash_remove_ex((h),(void *)(key),strlen(key),(pdata))
+    
 
 /** @} IronBeeUtilHash */
 

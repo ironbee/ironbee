@@ -566,3 +566,12 @@ ib_status_t ib_hash_remove_ex(ib_hash_t *h,
 
     IB_FTRACE_RET_STATUS(rc);
 }
+
+ib_status_t ib_hash_remove(
+    ib_hash_t *h,
+    const char *key,
+    void *pdata
+)
+{
+    return ib_hash_remove_ex(h, (void*)key, strlen(key), pdata);
+}
