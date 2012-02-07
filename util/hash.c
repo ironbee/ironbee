@@ -53,7 +53,7 @@
 #define IB_HASH_INITIAL_SIZE   15
 
 typedef struct ib_hash_entry_t ib_hash_entry_t;
-typedef struct ib_hash_iter_t ib_hash_iter_t;
+typedef struct ib_hash_iterator_t ib_hash_iterator_t;
 
 /**
  * Entry in a ib_hash_t.
@@ -75,16 +75,19 @@ struct ib_hash_entry_t {
 /**
  * External iterator for ib_hash_t.
  * @internal
+ *
+ * The end of the sequence is indicated by \c current_entry being NULL.
+ * Any iterator is invalidated by any mutating operation on the hash.
  **/
-struct ib_hash_iter_t {
+struct ib_hash_iterator_t {
     /** Hash table we are iterating through. */
     ib_hash_t           *hash;
     /** Current entry. */
     ib_hash_entry_t     *current_entry;
     /** Next entry. */
     ib_hash_entry_t     *next_entry;
-    /** Index in sequence. */
-    unsigned int         index;
+    /** Which slot we are in. */
+    unsigned int         slot_index;
 };
 
 /**
@@ -94,7 +97,7 @@ struct ib_hash_t {
     /** Flags to pass to @c hash_function. */
     uint8_t              flags;
     /** Hash function. */
-    ib_hash_function_t        hash_function;
+    ib_hash_function_t   hash_function;
     /** 
      * Slots.
      *  
@@ -104,8 +107,6 @@ struct ib_hash_t {
     ib_hash_entry_t    **slots;
     /** Size of @c slots. */
     unsigned int         size;
-    /** @todo Remove. */
-    ib_hash_iter_t       iterator;
     /** Memory pool. */
     ib_mpool_t          *pool;        
     /** Linked list of removed hash entries to use for recycling. */
@@ -139,26 +140,33 @@ ib_status_t DLL_PUBLIC ib_hash_find_entry(ib_hash_t *ib_ht,
 
 /**
  * @internal
- * Creates an initialized iterator for the hash table entries.
+ * Return iterator pointing to first entry of @a hash.
  *
- * @param p Memory pool for the iterator allocation
- * @param ib_ht hash table to iterate
+ * @param[in]  hash     Hash table to iterate over.
  *
- * @returns Status code
+ * @return Iterator pointing to first entry in @a hash.
  */
-ib_hash_iter_t DLL_PUBLIC *ib_hash_first(ib_mpool_t *p,
-                                         ib_hash_t *ib_ht);
+static ib_hash_iterator_t ib_hash_first(
+     ib_hash_t* hash
+);
 
 /**
  * @internal
- * Move the iterator to the next_entry entry.
+ * Move \a iterator to the next entry.
  *
- * @param hti hash table iterator
- *
- * @returns Status code
+ * @param[in,out] iterator Iterator to advance.
  */
-ib_hash_iter_t DLL_PUBLIC *ib_hash_next_entry(ib_hash_iter_t *hti);
+static void ib_hash_next(
+    ib_hash_iterator_t *iterator
+);
 
+#define IB_HASH_LOOP(entry,hash) \
+    for ( \
+        ib_hash_iterator_t iterator = ib_hash_first(hash); \
+        ((entry) = iterator.current_entry) != NULL; \
+        ib_hash_next(&iterator) \
+    )
+          
 /** @} IronBeeUtilHash */
 
 /* End Internal Declarations */
@@ -250,40 +258,36 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(ib_hash_t *hash)
     return hash->pool;
 }
 
-ib_hash_iter_t *ib_hash_next_entry(ib_hash_iter_t *hti)
+static ib_hash_iterator_t ib_hash_first(
+    ib_hash_t *hash
+)
 {
-    IB_FTRACE_INIT();
-    hti->current_entry = hti->next_entry;
-    while (!hti->current_entry) {
-        if (hti->index > hti->hash->size) {
-            IB_FTRACE_RET_PTR(ib_hash_iter_t, NULL);
-        }
-        hti->current_entry = hti->hash->slots[hti->index++];
-    }
-    hti->next_entry = hti->current_entry->next_entry;
-    IB_FTRACE_RET_PTR(ib_hash_iter_t, hti);
+    // There is no ftace return macro for custom types.
+    ib_hash_iterator_t iterator;
+    
+    memset(&iterator, 0, sizeof(ib_hash_iterator_t));
+    iterator.hash = hash;
+    ib_hash_next(&iterator);
+    
+    return iterator;
 }
 
-ib_hash_iter_t *ib_hash_first(ib_mpool_t *p,
-                              ib_hash_t *ib_ht)
+void ib_hash_next(
+    ib_hash_iterator_t *iterator
+)
 {
     IB_FTRACE_INIT();
-    ib_hash_iter_t *hti = NULL;
-
-    if (p != NULL) {
-        hti = (ib_hash_iter_t *)ib_mpool_calloc(p, 1, sizeof(ib_hash_iter_t));
-        if (hti == NULL) {
-            IB_FTRACE_RET_PTR(ib_hash_iter_t, NULL);
+    
+    iterator->current_entry = iterator->next_entry;
+    while (! iterator->current_entry) {
+        if (iterator->slot_index > iterator->hash->size) {
+            IB_FTRACE_RET_VOID();
         }
+        iterator->current_entry = iterator->hash->slots[iterator->slot_index];
+        ++iterator->slot_index;
     }
-    else {
-        hti = &ib_ht->iterator;
-    }
-
-    memset(hti, 0, sizeof(ib_hash_iter_t));
-    hti->hash = ib_ht;
-
-    IB_FTRACE_RET_PTR(ib_hash_iter_t, ib_hash_next_entry(hti));
+    iterator->next_entry = iterator->current_entry->next_entry;
+    IB_FTRACE_RET_VOID();
 }
 
 /**
@@ -380,8 +384,8 @@ ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
 static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
 {
     IB_FTRACE_INIT();
-    ib_hash_iter_t *hti = NULL;
     ib_hash_entry_t **new_slots = NULL;
+    ib_hash_entry_t *current_entry = NULL;
     unsigned int new_max = 0;
 
     new_max = (ib_ht->size * 2) + 1;
@@ -391,13 +395,10 @@ static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    for (hti = ib_hash_first(NULL, ib_ht);
-         hti != NULL;
-         hti = ib_hash_next_entry(hti))
-    {
-        unsigned int i = hti->current_entry->hash & new_max;
-        hti->current_entry->next_entry = new_slots[i];
-        new_slots[i] = hti->current_entry;
+    IB_HASH_LOOP(current_entry, ib_ht) {
+        unsigned int i = current_entry->hash & new_max;
+        current_entry->next_entry = new_slots[i];
+        new_slots[i] = current_entry;
     }
     ib_ht->size = new_max;
     ib_ht->slots = new_slots;
@@ -407,12 +408,10 @@ static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
 void ib_hash_clear(ib_hash_t *hash)
 {
     IB_FTRACE_INIT();
-    ib_hash_iter_t *hti = NULL;
-    for (hti = ib_hash_first(NULL, hash);
-         hti;
-         hti = ib_hash_next_entry(hti))
-    {
-        ib_hash_set_ex(hash, hti->current_entry->key, hti->current_entry->key_length, NULL);
+    
+    ib_hash_entry_t *current_entry = NULL;
+    IB_HASH_LOOP(current_entry, hash) {
+        ib_hash_set_ex(hash, current_entry->key, current_entry->key_length, NULL);
     }
     IB_FTRACE_RET_VOID();
 }
@@ -485,13 +484,10 @@ ib_status_t ib_hash_get_all(
 )
 {
     IB_FTRACE_INIT();
-    ib_hash_iter_t *hti = NULL;
-
-    for (hti = ib_hash_first(list->mp, hash);
-         hti;
-         hti = ib_hash_next_entry(hti))
-    {
-        ib_list_push(list, &hti->current_entry->value);
+    ib_hash_entry_t* current_entry = NULL;
+    
+    IB_HASH_LOOP(current_entry, hash) {
+        ib_list_push(list, &current_entry->value);
     }
 
     if (ib_list_elements(list) <= 0) {
