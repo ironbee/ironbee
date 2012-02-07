@@ -50,9 +50,9 @@
  * Default size to use for ib_hash_create().
  * @internal
  **/
-#define IB_HASH_INITIAL_SIZE   15
+#define IB_HASH_INITIAL_SIZE 15
 
-typedef struct ib_hash_entry_t ib_hash_entry_t;
+typedef struct ib_hash_entry_t    ib_hash_entry_t;
 typedef struct ib_hash_iterator_t ib_hash_iterator_t;
 
 /**
@@ -117,26 +117,29 @@ struct ib_hash_t {
 
 
 /**
+ * Search for an entry in @a hash matching @key.
  * @internal
- * Search an entry for the given key and key length
- * The hash used to search the key will be also returned via param
  *
- * @param ib_ht the hash table to search in
- * @param key buffer holding the key
- * @param len number of bytes key length
- * @param hte pointer reference used to store the entry if found
- * @param hash reference to store the calculated hash
- * @param lookup_flags Flags to use during lookup, e.g., (IB_HASH_FLAG_NOCASE)
+ * @param[out] hash_entry Hash entry.
+ * @param[out] hash_value Hash value of @a key.
+ * @param[in]  hash       Hash table.
+ * @param[in]  key        Key.
+ * @param[in]  key_length Length of @a key.
+ * @param[in]  flags      Flags to pass to hash function.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK on success.
+ * - IB_EINVAL on invalid flags.
+ * - IB_ENOENT if @a key not found.
  */
-ib_status_t DLL_PUBLIC ib_hash_find_entry(ib_hash_t *ib_ht,
-                                          const void *key,
-                                          size_t len,
-                                          ib_hash_entry_t **hte,
-                                          unsigned int *hash,
-                                          uint8_t lookup_flags);
-
+static ib_status_t ib_hash_find_entry(
+    ib_hash_entry_t **hash_entry,
+    unsigned int     *hash_value,
+    ib_hash_t        *hash,
+    const void       *key,
+    size_t            key_length,
+    uint8_t           flags
+);
 
 /**
  * @internal
@@ -329,25 +332,14 @@ static ib_hash_entry_t *ib_hash_find_htentry(ib_hash_entry_t *hte,
     IB_FTRACE_RET_PTR(ib_hash_entry_t, NULL);
 }
 
-/**
- * @internal
- * Search an entry for the given key and key length
- * The hash used to search the key will be also returned via param
- *
- * @param ib_ht the hash table to search in
- * @param key buffer holding the key
- * @param len number of bytes key length
- * @param hte pointer reference used to store the entry if found
- * @param hash reference to store the calculated hash
- *
- * @returns Status code
- */
-ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
-                               const void *key,
-                               size_t len,
-                               ib_hash_entry_t **hte,
-                               unsigned int *hash,
-                               uint8_t lookup_flags)
+ib_status_t ib_hash_find_entry(
+     ib_hash_entry_t **hash_entry,
+     unsigned int     *hash_value,
+     ib_hash_t        *hash,
+     const void       *key,
+     size_t            key_length,
+     uint8_t           flags
+)
 {
     IB_FTRACE_INIT();
 
@@ -355,22 +347,22 @@ ib_status_t ib_hash_find_entry(ib_hash_t *ib_ht,
     ib_hash_entry_t *he = NULL;
 
     /* Ensure that NOCASE lookups are allowed at ib_hash_t flags */
-    if (hte == NULL || hash == NULL ||
-        ( (lookup_flags & IB_HASH_FLAG_NOCASE) &&
-         !(ib_ht->flags & IB_HASH_FLAG_NOCASE)))
+    if (hash_entry == NULL || hash == NULL ||
+        ( (flags & IB_HASH_FLAG_NOCASE) &&
+         !(hash->flags & IB_HASH_FLAG_NOCASE)))
     {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    *hash = ib_ht->hash_function(key, len, ib_ht->flags);
+    *hash_value = hash->hash_function(key, key_length, hash->flags);
 
-    slot = ib_ht->slots[*hash & ib_ht->size];
-    he = ib_hash_find_htentry(slot, key, len, *hash, lookup_flags);
+    slot = hash->slots[*hash_value & hash->size];
+    he = ib_hash_find_htentry(slot, key, key_length, *hash_value, flags);
     if (he == NULL) {
-        *hte = NULL;
+        *hash_entry = NULL;
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
-    *hte = he;
+    *hash_entry = he;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -467,7 +459,7 @@ ib_status_t ib_hash_get_ex(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_hash_find_entry(ib_ht, key, len, &he, &hash, lookup_flags);
+    rc = ib_hash_find_entry(&he, &hash, ib_ht, key, len, lookup_flags);
     if (rc == IB_OK) {
         *(void **)value = (void *)he->value;
     }
