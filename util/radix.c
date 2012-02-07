@@ -1228,6 +1228,93 @@ static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
     IB_FTRACE_RET_PTR(struct in6_addr, rawbytes);
 }
 
+/**
+ * Determine if a bytestring looks like a CIDR IPV4 address.
+ */
+ib_status_t ib_radix_is_ipv4_ex(const char *str,
+                                size_t len,
+                                ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ssize_t offset;
+
+    rc = ib_radix_strchr_nul_error(str, len, ':', &offset);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    *result = (offset < 0);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Determine if a bytestring looks like a CIDR IPV6 address.
+ */
+ib_status_t ib_radix_is_ipv6_ex(const char *str,
+                                size_t len,
+                                ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ssize_t offset;
+
+    rc = ib_radix_strchr_nul_error(str, len, ':', &offset);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    *result = (offset >= 0);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version will ignore NUL characters.
+ */
+ib_status_t ib_radix_strchr_nul_ignore(const char *str,
+                                       size_t len,
+                                       int c,
+                                       ssize_t *offset)
+{
+    IB_FTRACE_INIT();
+    const char *p;
+
+    for ( p=str;  len > 0;  ++p, --len) {
+        if (*p == c) {
+            *offset = (p - str);
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+    }
+    *offset = -1;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version returns an error if a NUL character is encountered
+ * before len chars.
+ */
+ib_status_t ib_radix_strchr_nul_error(const char *str,
+                                      size_t len,
+                                      int c,
+                                      ssize_t *offset)
+{
+    IB_FTRACE_INIT();
+    const char *p;
+
+    for ( p=str;  len > 0;  ++p, --len) {
+        if (*p == c) {
+            *offset = (p - str);
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+        else if (*p == '\0') {
+            *offset = -1;
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+    *offset = -1;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /*
  * Create a prefix of type ib_radix_prefix_t given the cidr ascii representation
  * Valid for ipv4 and ipv6.
@@ -1235,15 +1322,31 @@ static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
  *  the criteria to determine if ipv6 or ipv4 is the presence of ':' (ipv6)
  *  so the functions using this API should implement their own checks for valid
  *  formats, with regex, or functions, thought
- *
- * @param cidr ascii representation
- * @param mp pool where we should allocate the prefix
- *
- * @returns struct in6_addr*
  */
 ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                                   ib_radix_prefix_t **prefix,
                                   ib_mpool_t *mp)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+    rc = ib_radix_ip_to_prefix_ex(cidr, strlen(cidr), prefix, mp);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/*
+ * Create a prefix of type ib_radix_prefix_t given the cidr ascii representation
+ * Valid for ipv4 and ipv6.
+ * warning:
+ *  the criteria to determine if ipv6 or ipv4 is the presence of ':' (ipv6)
+ *  so the functions using this API should implement their own checks for valid
+ *  formats, with regex, or functions, thought
+ */
+ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
+                                     ib_num_t len,
+                                     ib_radix_prefix_t **prefix,
+                                     ib_mpool_t *mp)
 {
     IB_FTRACE_INIT();
 
@@ -1254,9 +1357,31 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
 
     const char *mask = NULL;
     uint64_t nmask = 0;
+    ib_num_t is_ipv4;
+    ib_num_t is_ipv6;
+    ib_status_t rc;
 
-    if (IB_RADIX_IS_IPV4(cidr)) {
-        mask = strstr(cidr, "/");
+    /* Verify that there are no NUL chars in the string */
+    if (strlen(cidr) != (size_t)len) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    rc = ib_radix_is_ipv4_ex(cidr, len, &is_ipv4);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_radix_is_ipv6_ex(cidr, len, &is_ipv6);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (is_ipv4) {
+        ssize_t offset;
+        rc = ib_radix_strchr_nul_error(cidr, len, '/', &offset);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else if (offset >= 0) {
+            mask = cidr + offset;
+        }
 
         if (mask != NULL) {
             nmask = strtoull(mask+1, NULL, 10);
@@ -1286,7 +1411,14 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                                                     (uint8_t) nmask, mp));
     }
     else if (IB_RADIX_IS_IPV6(cidr)) {
-        mask = strstr(cidr, "/");
+        ssize_t offset;
+        rc = ib_radix_strchr_nul_error(cidr, len, '/', &offset);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else if (offset >= 0) {
+            mask = cidr + offset;
+        }
 
         if (mask != NULL) {
             nmask = strtoull(mask+1, NULL, 10);

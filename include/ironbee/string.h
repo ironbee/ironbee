@@ -98,6 +98,17 @@ extern "C" {
 /** Printf style format string for bytestr. */
 #define IB_BYTESTR_FMT         ".*s"
 
+/**
+ * strchr() equvilent that operates on a string buffer with a length
+ * which can have embedded NUL characters in it.
+ *
+ * @param[in] s String
+ * @param[in] l Length
+ * @param[in] c Character to search for
+ */
+char DLL_PUBLIC *ib_strchr(const char *s, size_t l, int c);
+
+
 
 /**
  * @} IronBeeUtil

@@ -255,7 +255,6 @@ uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
 int DLL_PUBLIC ib_bytestr_index_of_c(ib_bytestr_t *haystack, char *needle);
 
 
-
 /** @} IronBeeUtilByteStr */
 
 

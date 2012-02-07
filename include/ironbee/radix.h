@@ -220,11 +220,9 @@ ib_status_t ib_radix_destroy(ib_radix_t **radix);
 /*
  * Function that return the data allocated to an exact prefix
  *
- * @param node the node to check
+ * @param radix The radix tree
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur position)
  * @param result reference to the pointer that will be linked to the data if any
- * @param mp pool where we should allocate the list
  *
  * @returns Status code
  */
@@ -242,11 +240,9 @@ ib_status_t ib_radix_match_exact(ib_radix_t *radix,
  * it will not have an exact match ending with .27, but walking backwards the
  * recursion, it will find data associated to 192.168.1.0/24
  *
- * @param node the node to check
+ * @param radix The radix tree
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur position)
  * @param result reference to the pointer that will be linked to the data if any
- * @param mp pool where we should allocate the list
  *
  * @returns Status code
  */
@@ -263,9 +259,8 @@ ib_status_t ib_radix_match_closest(ib_radix_t *radix,
  * it should return a list containing all the datas except the associated to
  * 10.0.0.0/8
  *
- * @param node the node to check
+ * @param radix The radix tree
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur position)
  * @param rlist reference to the pointer that will be linked to the list, if any
  * @param mp pool where we should allocate the list
  *
@@ -284,15 +279,36 @@ ib_status_t ib_radix_match_all_data(ib_radix_t *radix,
  *  so the functions using this API should implement their own checks for valid
  *  formats, with regex, or functions, thought
  *
- * @param cidr ascii representation
- * @param prefix reference to link the new prefix
- * @param mp pool where we should allocate the list
+ * @param[in] cidr ascii representation
+ * @param[out] prefix reference to link the new prefix
+ * @param[in] mp pool where we should allocate the prefix
  *
- * @returns struct in6_addr*
+ * @returns Status code
  */
 ib_status_t ib_radix_ip_to_prefix(const char *cidr,
                                   ib_radix_prefix_t **prefix,
                                   ib_mpool_t *mp);
+
+/*
+ * Create a prefix of type ib_radix_prefix_t given the cidr ASCII
+ * representation Valid for ipv4 and ipv6.
+ *
+ * warning:
+ *  the criteria to determine if ipv6 or ipv4 is the presence of ':' (ipv6)
+ *  so the functions using this API should implement their own checks for valid
+ *  formats, with regex, or functions, thought
+ *
+ * @param[in] cidr ASCII representation
+ * @param[in] len ASCII string length
+ * @param[out] prefix reference to link the new prefix
+ * @param[in] mp pool where we should allocate the list
+ *
+ * @returns Status code
+ */
+ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
+                                     ib_num_t len,
+                                     ib_radix_prefix_t **prefix,
+                                     ib_mpool_t *mp);
 
 /** @} IronBeeUtilRadix */
 

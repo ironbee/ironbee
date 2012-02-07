@@ -35,6 +35,10 @@
 #include <ironbee/ahocorasick.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Memory pool definitions */
 
 /** Default page size. Buffers will be of size N * IB_MPOOL_DEFAULT_PAGE_SIZE */
@@ -476,7 +480,7 @@ enum {
  * @internal
  * Return if the given prefix is IPV4
  *
- * @param cidr const char * with format ip/mask where mask is optional
+ * @param[in] cidr const char * with format ip/mask where mask is optional
  * @returns 1 if true, 0 if false
  */
 #define IB_RADIX_IS_IPV4(cidr) ((strchr(cidr, ':') == NULL) ? 1 : 0)
@@ -490,6 +494,92 @@ enum {
  */
 #define IB_RADIX_IS_IPV6(cidr) ((strchr(cidr, ':') != NULL) ? 1 : 0)
 
+/**
+ * @internal
+ * Determine if the given prefix is IPV4
+ *
+ * @param[in] cidr const char * with format ip/mask where mask is optional
+ * @param[in] len length of the str 
+ * @param[out] result Result: 1 if true, 0 if false
+ *
+ * @returns Status code
+ */
+#define IB_RADIX_IS_IPV4_EX(cidr,len,result)                          \
+    ib_radix_is_ipv4_ex((cidr), (len), &result)
+
+/**
+ * @internal
+ * Determine if the given prefix is IPV6
+ *
+ * @param[in] cidr const char * with format ip/mask where mask is optional
+ * @param[in] len length of the str 
+ * @param[out] result Result: 1 if true, 0 if false
+ *
+ * @returns Status code
+ */
+#define IB_RADIX_IS_IPV6_EX(cidr,len,result)                          \
+    ib_radix_is_ipv6_ex((cidr), (len), &result)
+
+/**
+ * @internal
+ * Determine if the given prefix is IPV4
+ *
+ * @param[in] str const char * with format ip/mask where mask is optional
+ * @param[in] len length of the str 
+ * @param[out] result Result: 1 if true, 0 if false
+ *
+ * @returns Status code
+ */
+ib_status_t ib_radix_is_ipv4_ex(const char *str,
+                                size_t len,
+                                ib_num_t *result);
+
+/**
+ * @internal
+ * Determine if the given prefix is IPv6
+ *
+ * @param[in] str const char * with format ip/mask where mask is optional
+ * @param[in] len length of the str 
+ * @param[out] result Result: 1 if true, 0 if false
+ *
+ * @returns Status code
+ */
+ib_status_t ib_radix_is_ipv6_ex(const char *str,
+                                size_t len,
+                                ib_num_t *result);
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version will ignore NUL characters.
+ *
+ * @param[in] str String to search
+ * @param[in] len length of the str 
+ * @param[in] c The character to search for
+ * @param[out] offset Offset of the character; -1 if not found
+ *
+ * @return Status code
+ */
+ib_status_t ib_radix_strchr_nul_ignore(const char *str,
+                                       size_t len,
+                                       int c,
+                                       ssize_t *offset);
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version returns an error if a NUL character is encountered
+ * before len chars.
+ *
+ * @param[in] str String to search
+ * @param[in] len length of the str 
+ * @param[in] c The character to search for
+ * @param[out] offset Offset of the character; -1 if not found
+ *
+ * @return Status code
+ */
+ib_status_t ib_radix_strchr_nul_error(const char *str,
+                                      size_t len,
+                                      int c,
+                                      ssize_t *offset);
 
 /**
  *@ internal
@@ -537,5 +627,11 @@ struct ib_ac_bintree_t {
     ib_ac_bintree_t   *left;      /**< chars lower than current */
     ib_ac_bintree_t   *right;     /**< chars greater than current */
 };
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* IB_UTIL_PRIVATE_H_ */
 

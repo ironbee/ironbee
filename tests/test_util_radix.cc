@@ -429,6 +429,146 @@ TEST(TestIBUtilRadix, test_radix_insert_null_data)
     ib_mpool_destroy(radix->mp);
 }
 
+/* @test Test util radix library - ib_radix_is_ipv4_ex() */
+TEST(TestIBUtilRadix, test_radix_is_ipv4_ex)
+{
+    ib_status_t rc;
+    ib_num_t result;
+    const char *ascii1 = "192.168.1.10";
+    const char *ascii2 = "AAAA:BBBB::1";
+
+    const char *ascii3 = "192.168.2.0/23";
+    const char *ascii4 = "AAAA:BBBB::1/111";
+
+    const char ascii5[] = "192.168.2.0\0/23";
+    const char ascii6[] = "AA\0AA:BBBB::1/111";
+
+    
+    atexit(ib_shutdown);
+    rc = ib_initialize();
+    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+
+    /* IPV4 prefix */
+    rc = ib_radix_is_ipv4_ex(ascii1, strlen(ascii1), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
+
+    /* Check the result */
+    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv4_ex() failed - "
+                                "result should be true - "
+                                "IPv4 address was specified";
+
+    /* IPV6 prefix */
+    rc = ib_radix_is_ipv4_ex(ascii2, strlen(ascii2), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
+
+    /* Check the result */
+    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv4_ex() failed - "
+                                "result should be false - "
+                                "IPv6 address was specified";
+
+    /* IPV4 prefix */
+    rc = ib_radix_is_ipv4_ex(ascii3, strlen(ascii3), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
+
+
+    /* Check the result */
+    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv4_ex() failed - "
+                                "result should be true - "
+                                "IPv4 address was specified";
+
+    /* IPV6 prefix */
+    rc = ib_radix_is_ipv4_ex(ascii4, strlen(ascii4), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
+
+    /* Check specified prefix bit len from CIDR */
+    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv4_ex() failed - "
+                                "result should be false - "
+                                "IPv6 address was specified";
+
+    /* Invalid IPV4 prefix */
+    rc = ib_radix_is_ipv4_ex(ascii5, sizeof(ascii5), &result);
+    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv4_ex() failed - rc == IB_OK -"
+                                "should have failed because an invalid "
+                                "IPv4 address was specified";
+
+    /* IPV6 prefix */
+    rc = ib_radix_is_ipv4_ex(ascii6, sizeof(ascii6), &result);
+    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv4_ex() failed - rc == IB_OK -"
+                                "should have failed because an invalid "
+                                "IPv6 address was specified";
+
+}
+
+/* @test Test util radix library - ib_radix_is_ipv6_ex() */
+TEST(TestIBUtilRadix, test_radix_is_ipv6_ex)
+{
+    ib_status_t rc;
+    ib_num_t result;
+    const char *ascii1 = "192.168.1.10";
+    const char *ascii2 = "AAAA:BBBB::1";
+
+    const char *ascii3 = "192.168.2.0/23";
+    const char *ascii4 = "AAAA:BBBB::1/111";
+
+    const char ascii5[] = "192.168.2.0\0/23";
+    const char ascii6[] = "AA\0AA:BBBB::1/111";
+
+    
+    atexit(ib_shutdown);
+    rc = ib_initialize();
+    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+
+    /* IPV4 prefix */
+    rc = ib_radix_is_ipv6_ex(ascii1, strlen(ascii1), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
+
+    /* Check the result */
+    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv6_ex() failed - "
+                                "result should be false - "
+                                "IPv4 address was specified";
+
+    /* IPV6 prefix */
+    rc = ib_radix_is_ipv6_ex(ascii2, strlen(ascii2), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
+
+    /* Check the result */
+    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv6_ex() failed - "
+                                "result should be true - "
+                                "IPv6 address was specified";
+
+    /* IPV4 prefix */
+    rc = ib_radix_is_ipv6_ex(ascii3, strlen(ascii3), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
+
+
+    /* Check the result */
+    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv6_ex() failed - "
+                                "result should be false - "
+                                "IPv4 address was specified";
+
+    /* IPV6 prefix */
+    rc = ib_radix_is_ipv6_ex(ascii4, strlen(ascii4), &result);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
+
+    /* Check specified prefix bit len from CIDR */
+    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv6_ex() failed - "
+                                "result should be true - "
+                                "IPv6 address was specified";
+
+    /* Invalid IPV4 prefix */
+    rc = ib_radix_is_ipv6_ex(ascii5, sizeof(ascii5), &result);
+    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv6_ex() failed - rc == IB_OK -"
+                                "should have failed because an invalid "
+                                "IPv4 address was specified";
+
+    /* IPV6 prefix */
+    rc = ib_radix_is_ipv6_ex(ascii6, sizeof(ascii6), &result);
+    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv6_ex() failed - rc == IB_OK -"
+                                "should have failed because an invalid "
+                                "IPv6 address was specified";
+
+}
+
 /* @test Test util radix library - ib_radix_ip_to_prefix() */
 TEST(TestIBUtilRadix, test_radix_ip_to_prefix)
 {
@@ -524,12 +664,18 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ib_radix_prefix_t *prefix3 = NULL;
     ib_radix_prefix_t *prefix4 = NULL;
     ib_radix_prefix_t *prefix5 = NULL;
+    ib_radix_prefix_t *prefix6 = NULL;
+    ib_radix_prefix_t *prefix7 = NULL;
+    ib_radix_prefix_t *prefix8 = NULL;
 
     const char *ascii1 = "192.168.1.1";
     const char *ascii2 = "192.168.1.10";
     const char *ascii3 = "192.168.0.0/16";
     const char *ascii4 = "10.0.0.1";
     const char *ascii5 = "192.168.1.27";
+    const char *ascii6 = "127.0.0.1";
+    const char *ascii7 = "127.0.0.2";
+    const char *ascii8 = "127.0.0.0/24";
 
     char *cidr1 = NULL;
 
@@ -611,6 +757,40 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_TRUE(ib_radix_elements(radix) == 4) << "ib_radix_elements() failed -"
                                                   " there should be 4";
 
+    /* IPV4 prefix6 (127.0.0.1) */
+    cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii6) + 1);
+    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
+                                  "allocate mem for a ascii cidr";
+    memcpy(cidr1, ascii6, strlen(ascii6) + 1);
+    rc = ib_radix_ip_to_prefix(cidr1, &prefix6, mp);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix6() failed - rc != IB_OK";
+
+    /*We are going to link it to the const ascii representation of the prefix4*/
+    rc = ib_radix_insert_data(radix, prefix6, (void*)ascii6);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+
+
+    /* IPV4 prefix7 (127.0.0.2) Not added */
+    cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii7) + 1);
+    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
+                                  "allocate mem for a ascii cidr";
+    memcpy(cidr1, ascii7, strlen(ascii7) + 1);
+    rc = ib_radix_ip_to_prefix(cidr1, &prefix7, mp);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix7() failed - rc != IB_OK";
+
+    /* IPV4 prefix8 (127.0.0.0/24) */
+    cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii8) + 1);
+    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
+                                  "allocate mem for a ascii cidr";
+    memcpy(cidr1, ascii8, strlen(ascii8) + 1);
+    rc = ib_radix_ip_to_prefix(cidr1, &prefix8, mp);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix8() failed - rc != IB_OK";
+
+    /*We are going to link it to the const ascii representation of the prefix4*/
+    rc = ib_radix_insert_data(radix, prefix8, (void*)ascii8);
+    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+
+
     /* Now that we have some keys inserted, let's test the matching functions */
 
     /* match all */
@@ -688,6 +868,28 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
                                    "but closest is data of ascii3";
     ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
                                              " - wrong result";
+
+    /* match closest */
+    result = NULL;
+    rc = ib_radix_match_closest(radix, prefix6, &result);
+    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_TRUE(strcmp(result, ascii6) == 0) <<"ib_radix_match_closest() failed"
+                                             " - wrong result";
+
+    /* match closest */
+    result = NULL;
+    rc = ib_radix_match_closest(radix, prefix7, &result);
+    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_TRUE(strcmp(result, ascii8) == 0) <<"ib_radix_match_closest() failed"
+                                             " - wrong result";
+
+    /* match exact */
+    result = NULL;
+    rc = ib_radix_match_exact(radix, prefix6, &result);
+    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_TRUE(strcmp(result, ascii6) == 0) << "ib_radix_match_exact() failed"
+                                             " - wrong result";
+
 
     ib_mpool_destroy(radix->mp);
 }
