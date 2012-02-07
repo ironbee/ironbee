@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include <ironbee/core.h>
 #include <ironbee/engine.h>
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
@@ -54,11 +55,6 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-
-/// @todo Fix this:
-#ifndef X_MODULE_BASE_PATH
-#define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH)
-#endif
 
 /* -- Module Setup -- */
 
@@ -763,6 +759,9 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
     modlua_chunk_t *chunk;
     ib_module_t *m;
+    ib_core_cfg_t *corecfg = NULL;
+    const size_t pathmax = 512;
+    char *path = NULL;
 
     rc = ib_engine_module_get(ib, IB_FFI_MODULE_STR, &m);
     if (rc == IB_OK) {
@@ -786,9 +785,41 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
         }
     }
     else if (rc == IB_ENOENT) {
+        rc = ib_context_module_config(ib_context_main(ib),
+                                      ib_core_module(),
+                                      (void *)&corecfg);
+
+        if (rc != IB_OK) {
+            ib_log_error(ib, 1, "Failed to retrieve core configuration.");
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        path = malloc(pathmax);
+
+        if (path==NULL) {
+            ib_log_error(ib, 1, "Cannot allocate memory for module path.");
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        size_t len = snprintf(path, pathmax, "%s/%s",
+                              corecfg->module_base_path,
+                              "ironbee-ffi.lua");
+
+        if (len >= pathmax) {
+            ib_log_error(ib, 1,
+                         "Filename too long: %s/%s",
+                         corecfg->module_base_path,
+                         "ironbee-ffi.lua");
+            free(path);
+            path = NULL;
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
         /* Load the ironbee FFI module. */
-        /// @todo Do not hardcode this filename.
-        rc = modlua_module_load(ib, NULL, X_MODULE_BASE_PATH "/ironbee-ffi.lua");
+        rc = modlua_module_load(ib, NULL, path);
+        free(path);
+        path = NULL;
+
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -1897,24 +1928,45 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
+    ib_core_cfg_t *corecfg = NULL;
+    const size_t pathmax = 512;
+    char *path = NULL;
+
+    rc = ib_context_module_config(ib_context_main(ib),
+                                  ib_core_module(),
+                                  (void *)&corecfg);
+
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to retrieve core configuration.");
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     if (strcasecmp("LuaLoadModule", name) == 0) {
         if (*p1 == '/') {
             modlua_module_load(ib, NULL, p1);
         }
         else {
-            /// @todo Handle larger fn???
-            char fn[512];
-            size_t len = snprintf(fn, sizeof(fn), "%s/%s",
-                                  X_MODULE_BASE_PATH,
+            path = malloc(pathmax);
+
+            if (path==NULL) {
+                ib_log_error(ib, 1, "Cannot allocate memory for module path.");
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+
+            size_t len = snprintf(path, pathmax, "%s/%s",
+                                  corecfg->module_base_path,
                                   p1);
 
-            if (len >= sizeof(fn)) {
+            if (len >= pathmax) {
                 ib_log_error(ib, 1, "Filename too long: %s %s", name, p1);
+                free(path);
+                path = NULL;
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
-            modlua_module_load(ib, NULL, fn);
+            modlua_module_load(ib, NULL, path);
+            free(path);
+            path = NULL;
         }
     }
     else if (strcasecmp("LuaPackagePath", name) == 0) {
