@@ -548,7 +548,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 
     assert(event == request_headers_event);
 
-    ib_field_t    *req_fwd = NULL;
+    ib_field_t    *field = NULL;
     ib_status_t    rc = IB_OK;
     ib_bytestr_t  *bs;
     uint8_t       *data;
@@ -557,15 +557,15 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     uint8_t       *comma;
 
     /* Extract the X-Forwarded-For from the provider instance */
-    rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &req_fwd);
-    if ( (req_fwd == NULL) || (rc != IB_OK) ) {
+    rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &field);
+    if ( (field == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4, "No forward header" );
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
 
     /* Found it: copy the data into a newly allocated string buffer */
-    bs = ib_field_value_bytestr(req_fwd);
+    bs = ib_field_value_bytestr(field);
     if (bs == NULL) {
         ib_log_debug(ib, 4, "Forward header not a bytestr");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -582,9 +582,9 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* Allocate the memory */
     buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
-        ib_log_error( ib, 4,
-                      "Failed to allocate %d bytes for local address",
-                      len+1 );
+        ib_log_error(ib, 4,
+                     "Failed to allocate %d bytes for local address",
+                     len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -598,6 +598,15 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
      * buffer, but it should be cleaned up with the rest
      * of the memory pool. */
     tx->er_ipstr = buf;
+
+    /* Update the remote address field in the tx collection */
+    rc = ib_data_add_bytestr(tx->dpi, "remote_addr", (uint8_t*)buf, len, NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Failed to create remote address TX field: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

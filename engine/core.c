@@ -2793,6 +2793,51 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
         }
     }
 
+    /**
+     * Alias connection remote and server addresses
+     */
+
+    /* Server address */
+    rc = ib_data_get(tx->conn->dpi, "server_addr", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Server port */
+    rc = ib_data_get(tx->conn->dpi, "server_port", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Remote address */
+    rc = ib_data_get(tx->conn->dpi, "remote_addr", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Remote port */
+    rc = ib_data_get(tx->conn->dpi, "remote_port", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
