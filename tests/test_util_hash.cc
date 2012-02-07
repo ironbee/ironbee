@@ -22,19 +22,14 @@
 /// @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
 //////////////////////////////////////////////////////////////////////////////
 
+#include <ironbee/hash.h>
+
 #include "ironbee_config_auto.h"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#define TESTING
-
-#include "util/util.c"
-#include "util/hash.c"
-#include "util/list.c"
-#include "util/mpool.c"
-#include "util/debug.c"
-
+#include <ironbee/mpool.h>
 
 /* -- Tests -- */
 
@@ -45,9 +40,6 @@ TEST(TestIBUtilHash, test_hash_create)
     ib_hash_t *ht = NULL;
     ib_status_t rc;
 
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
     rc = ib_hash_create(&ht, mp);
@@ -64,14 +56,10 @@ TEST(TestIBUtilHash, test_hash_set_and_get)
     ib_hash_t *ht = NULL;
     ib_status_t rc;
 
-    atexit(ib_shutdown);
-
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
-    rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, ib_hashfunc_djb2, 0);
+    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, 0);
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
     rc = ib_hash_set(ht, "Key", (void*)"value");
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
@@ -108,14 +96,10 @@ TEST(TestIBUtilHash, test_hash_nocase)
     ib_hash_t *ht = NULL;
     ib_status_t rc;
 
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
-    rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
+    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
 
     rc = ib_hash_set(ht, "Key", (void*)"value");
@@ -164,14 +148,10 @@ TEST(TestIBUtilHash, test_hash_set_and_get_ex)
     char key3[] = "kEY1";
     char key4[] = "kEY2";
 
-    atexit(ib_shutdown);
-
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
-    rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, ib_hashfunc_djb2, 0);
+    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, 0);
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
 
     rc = ib_hash_set_ex(ht, key1, 2, (void*)"value");
@@ -217,14 +197,10 @@ TEST(TestIBUtilHash, test_hash_get_ex_nocase)
     char key3[] = "kEY1";
     char key4[] = "kEY2";
 
-    atexit(ib_shutdown);
-
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
-    rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
+    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
 
     rc = ib_hash_set_ex(ht, key1, 2, (void*)"value");
@@ -275,9 +251,6 @@ TEST(TestIBUtilHash, test_hashfunc_djb2)
     unsigned int hash1 = 0;
     unsigned int hash2 = 0;
 
-    atexit(ib_shutdown);
-    ib_initialize();
-
     // Test with no case sensitive
     hash1 = ib_hashfunc_djb2("Key", 3,
                              IB_HASH_FLAG_NOCASE);
@@ -304,14 +277,10 @@ TEST(TestIBUtilHash, test_hash_resizing)
 
     char combs[] = "abcdefghij";
 
-    atexit(ib_shutdown);
-
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
-    rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
+    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
 
     int i = 0;
@@ -372,26 +341,26 @@ TEST(TestIBUtilHash, test_hash_resizing)
 }
 
 /// @test Test util hash library - Check multiple keys and resizing
-TEST(TestIBUtilHash, test_hash_iterating)
+TEST(TestIBUtilHash, test_hash_getall)
 {
     ib_mpool_t *mp = NULL;
     ib_status_t rc;
     ib_hash_t *ht = NULL;
     ib_list_t *list = NULL;
+    ib_list_t *list2 = NULL;
 
     char combs[] = "abcdefghij";
 
-    atexit(ib_shutdown);
-
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
 
     rc = ib_list_create(&list, mp);
     ASSERT_TRUE(rc == IB_OK) << "ib_list_create() failed - rc != IB_OK";
 
-    rc = ib_hash_create_ex(&ht, mp, IB_HASH_INITIAL_SIZE, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
+    rc = ib_list_create(&list2, mp);
+    ASSERT_TRUE(rc == IB_OK) << "ib_list_create() failed - rc != IB_OK";
+
+    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, IB_HASH_FLAG_NOCASE);
     ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
 
     int i = 0;
@@ -428,42 +397,26 @@ TEST(TestIBUtilHash, test_hash_iterating)
                                             " the items are inserted. Count is "
                                             << ib_list_elements(list);
 
-    /* Iterate the hash table */
-    ib_hash_iter_t *hti = NULL;
-    ib_list_node_t *li = ib_list_first(list);
-    ib_list_node_t *del = NULL;
-    uint16_t cnt_local = 0;
-    for (hti = ib_hash_first(NULL, ht);
-         hti;
-         hti = ib_hash_next(hti), cnt_local++)
+    rc = ib_hash_get_all(list2, ht);
+    ASSERT_EQ(IB_OK, rc);
     {
-        /* Search it in the list */
+        ib_list_node_t *li = NULL;
+        ib_list_node_t *li2 = NULL;
+        size_t num_found = 0;
+        /*
+         * We know that all elements of list are unique, so we make sure 
+         * every element of list is in list2.
+         */
         IB_LIST_LOOP(list, li) {
-
-            if (del != NULL) {
-                ib_list_node_remove(list, del);
-                del = NULL;
-            }
-
-            if (hti->cur_entry->key == li->data) {
-                /* if we find the item at the list, remove it */
-                del = li;
-                break;
+            IB_LIST_LOOP(list2, li2) {
+                if ( memcmp(li->data,*((void**)(li2->data)),4) == 0 ) {
+                    ++num_found;
+                    break;
+                }
             }
         }
+        ASSERT_EQ(1000UL, num_found);
     }
-
-    if (del != NULL) {
-        ib_list_node_remove(list, del);
-        del = NULL;
-    }
-
-    ASSERT_TRUE(ib_list_elements(list) == 0 && cnt_local == 1000) <<
-                                            "ib_list_first/next() failed"
-                                            " - All the items at the list "
-                                            "should be removed. list Cnt is "
-                                            << ib_list_elements(list)
-                                            << " local_cnt is " << cnt_local;
-
+    
     ib_mpool_destroy(mp);
 }
