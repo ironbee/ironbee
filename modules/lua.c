@@ -415,6 +415,12 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
     /* Setup a Lua state if one was not passed. */
     if (L == NULL) {
         L = luaL_newstate();
+
+        if (L==NULL) {
+            ib_log_error(ib, 0, "Failed to create LuaJIT state.");
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
         luaL_openlibs(L);
     }
 

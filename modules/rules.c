@@ -748,6 +748,12 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     }
 
     g_ironbee_rules_lua = luaL_newstate();
+
+    if (g_ironbee_rules_lua == NULL) {
+        ib_log_error(ib, 0, "Failed to create LuaJIT state.");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
     luaL_openlibs(g_ironbee_rules_lua);
 
     ib_rc = ib_context_module_config(ib_context_main(ib),
