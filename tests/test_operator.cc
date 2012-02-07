@@ -125,7 +125,7 @@ TEST_F(CoreOperatorsTest, ContainsTest) {
     ib_operator_inst_t *op;
 
     status = ib_operator_inst_create(ib_engine,
-                                     "@contains",
+                                     "contains",
                                      "needle",
                                      IB_OPINST_FLAG_NONE,
                                      &op);

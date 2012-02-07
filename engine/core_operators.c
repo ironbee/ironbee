@@ -44,7 +44,7 @@ static ib_engine_t *g_ib = NULL;
 
 /**
  * @internal
- * Create function for the "\@str" family of operators
+ * Create function for the "str" family of operators
  *
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters
@@ -74,7 +74,7 @@ static ib_status_t strop_create(ib_mpool_t *mp,
 
 /**
  * @internal
- * Execute function for the "\@streq" operator
+ * Execute function for the "streq" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -122,7 +122,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "\@contains" operator
+ * Execute function for the "contains" operator
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
@@ -174,7 +174,7 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "\@exists" operator
+ * Execute function for the "exists" operator
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
@@ -199,7 +199,7 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "\@checkflag" operator
+ * Execute function for the "checkflag" operator
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator.
@@ -233,7 +233,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "\@true" operator
+ * Execute function for the "true" operator
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
@@ -256,7 +256,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "\@false" operator
+ * Execute function for the "false" operator
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
@@ -279,7 +279,7 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Create function for the "\@ipmatch" operator
+ * Create function for the "ipmatch" operator
  *
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters (ip address strings)
@@ -346,7 +346,7 @@ static ib_status_t op_ipmatch_create(ib_mpool_t *mp,
 
 /**
  * @internal
- * Execute function for the "\@ipmatch" operator
+ * Execute function for the "ipmatch" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -436,9 +436,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Store off a pointer to the engine */
     g_ib = ib;
 
-    /* Register the string equal '\@streq' operator */
+    /* Register the string equal operator */
     rc = ib_operator_register(ib,
-                              "@streq",
+                              "streq",
                               IB_OP_FLAG_NONE,
                               strop_create,
                               NULL, /* no destroy function */
@@ -447,9 +447,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the string contains '\@contains' operator */
+    /* Register the string contains operator */
     rc = ib_operator_register(ib,
-                              "@contains",
+                              "contains",
                               IB_OP_FLAG_NONE,
                               strop_create,
                               NULL, /* no destroy function */
@@ -458,9 +458,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the '\@checkflag' operator */
+    /* Register the checkflag operator */
     rc = ib_operator_register(ib,
-                              "@checkflag",
+                              "checkflag",
                               IB_OP_FLAG_ALLOW_NULL,
                               strop_create,
                               NULL, /* no destroy function */
@@ -469,9 +469,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the field exists '\@exists' operator */
+    /* Register the field exists operator */
     rc = ib_operator_register(ib,
-                              "@exists",
+                              "exists",
                               IB_OP_FLAG_ALLOW_NULL,
                               NULL, /* No create function */
                               NULL, /* no destroy function */
@@ -480,9 +480,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the true '\@true' operator */
+    /* Register the true operator */
     rc = ib_operator_register(ib,
-                              "@true",
+                              "true",
                               IB_OP_FLAG_ALLOW_NULL,
                               NULL, /* No create function */
                               NULL, /* no destroy function */
@@ -491,9 +491,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the false '\@false' operator */
+    /* Register the false operator */
     rc = ib_operator_register(ib,
-                              "@false",
+                              "false",
                               IB_OP_FLAG_ALLOW_NULL,
                               NULL, /* No create function */
                               NULL, /* no destroy function */
@@ -502,9 +502,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the false '\@ipmatch' operator */
+    /* Register the ipmatch operator */
     rc = ib_operator_register(ib,
-                              "@ipmatch",
+                              "ipmatch",
                               IB_OP_FLAG_NONE,
                               op_ipmatch_create,
                               NULL, /* no destroy function */

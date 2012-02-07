@@ -454,12 +454,12 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
 
     /* Register operators. */
-    ib_operator_register(ib, "@pcre", 0,
+    ib_operator_register(ib, "pcre", 0,
                                       pcre_operator_create,
                                       pcre_operator_destroy,
                                       pcre_operator_execute);
     /* An alias of @pcre. The same callbacks are registered. */
-    ib_operator_register(ib, "@rx", 0,
+    ib_operator_register(ib, "rx", 0,
                                     pcre_operator_create,
                                     pcre_operator_destroy,
                                     pcre_operator_execute);
