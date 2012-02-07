@@ -126,6 +126,7 @@ case "$OS" in
 esac
 AM_CONDITIONAL([FREEBSD], [test "$OS_FREEBSD" = "true"])
 AM_CONDITIONAL([DARWIN], [test "$OS_DARWIN" = "true"])
+AM_CONDITIONAL([LINUX], [test "$OS_LINUX" = "true"])
 
 #We need to call the iconv macro after OS detection for FreeBSD to work properly
 sinclude(acinclude/iconv.m4)

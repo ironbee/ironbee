@@ -17,6 +17,11 @@ if FREEBSD
 	LDFLAGS+=-fstack-protector
 endif
 
+if DARWIN
+# On Darwin (OSX) this is necessary for LuaJIT to run properly.
+LDFLAGS += -pagezero_size 10000 -image_base 100000000 
+endif
+
 # This is a common set of files for runnign tests of modules.
 MODULE_TEST_LDADD = $(LDADD) \
                     $(top_builddir)/engine/libironbee.la
@@ -42,13 +47,14 @@ check_PROGRAMS = test_gtest \
                  test_module_poc_sig \
                  test_module_rules_lua \
                  test_operator \
-                 test_action
+                 test_action \
+                 test_luajit
 
 # TODO: Get libhtp working w/C++
-#									test_util_bytestr
+# test_util_bytestr
 test_util_unescape_string_SOURCES = test_util_unescape_string.cc \
-              						test_gtest.cc \
-							        test_main.cc
+                                    test_gtest.cc \
+                                    test_main.cc
 
 test_gtest_SOURCES = test_gtest.cc test_main.cc
 
@@ -109,6 +115,17 @@ test_action_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_pcre_SOURCES = test_module_pcre.cc test_main.cc
 test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
+
+test_luajit_SOURCES = test_main.cc \
+                      test_luajit.cc
+test_luajit_CPPFLAGS = $(CPPFLAGS) \
+                       -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+                       -I$(top_srcdir)
+test_luajit_LDADD = $(LDADD) \
+                    $(MODULE_TEST_LDADD) \
+                    $(top_builddir)/lua/libironbee-lua.la \
+                    -lm \
+                    gtest/libgtest.la 
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 
