@@ -1538,7 +1538,7 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
         part->gen_data = sdata;
     }
     else {
-        part->gen_data = (void *)1;
+        part->gen_data = (void *)-1;
     }
 
     return dlen;
