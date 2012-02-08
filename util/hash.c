@@ -193,7 +193,7 @@ static void ib_hash_next(
 
 /* Internal Definitions */
 
-static ib_hash_entry_t *ib_hash_find_htentry(
+ib_hash_entry_t *ib_hash_find_htentry(
     ib_hash_t       *hash,
     ib_hash_entry_t *first,
     const void      *key,
@@ -214,7 +214,7 @@ static ib_hash_entry_t *ib_hash_find_htentry(
             && hash->equal_predicate( 
                     key,                key_length,
                     current_entry->key, current_entry->key_length
-                ) == 0
+               )
         ) {
             IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
         }
@@ -327,7 +327,7 @@ int DLL_PUBLIC ib_hashequal_default(
 {
     return 
            (a_length == b_length)
-        && memcmp(a, b, a_length) == 0;
+        && (memcmp(a, b, a_length) == 0);
 }
 
 int DLL_PUBLIC ib_hashequal_nocase(
@@ -559,7 +559,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
             && ib_ht->equal_predicate(
                   hte->key, hte->key_length,
                   key, len
-               ) == 0
+               )
         ) {
             found = 1;
             break;
