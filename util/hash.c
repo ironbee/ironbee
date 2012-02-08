@@ -271,7 +271,7 @@ ib_hash_iterator_t ib_hash_first(
     ib_hash_t *hash
 )
 {
-    // There is no ftace return macro for custom types.
+    // There is no ftrace return macro for custom types.
     ib_hash_iterator_t iterator;
 
     memset(&iterator, 0, sizeof(ib_hash_iterator_t));
@@ -296,6 +296,7 @@ void ib_hash_next(
         ++iterator->slot_index;
     }
     iterator->next_entry = iterator->current_entry->next_entry;
+
     IB_FTRACE_RET_VOID();
 }
 
@@ -320,7 +321,7 @@ ib_status_t ib_hash_resize_slots(
     }
 
     IB_HASH_LOOP(current_entry, hash) {
-        unsigned int i            = current_entry->hash_value & new_size;
+        size_t i                  = current_entry->hash_value & new_size;
         current_entry->next_entry = new_slots[i];
         new_slots[i]              = current_entry;
     }
@@ -402,7 +403,7 @@ int DLL_PUBLIC ib_hashequal_nocase(
 }
 
 ib_status_t ib_hash_create_ex(
-    ib_hash_t          **hp,
+    ib_hash_t          **hash,
     ib_mpool_t          *pool,
     unsigned int         size,
     ib_hash_function_t   hash_function,
@@ -410,33 +411,38 @@ ib_status_t ib_hash_create_ex(
 )
 {
     IB_FTRACE_INIT();
-    ib_hash_t *ib_ht = NULL;
 
-    if (hp == NULL) {
+    ib_hash_t *new_hash = NULL;
+
+    if (hash == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_ht = (ib_hash_t *)ib_mpool_calloc(pool, 1, sizeof(ib_hash_t));
-    if (ib_ht == NULL) {
-        *hp = NULL;
+    new_hash = (ib_hash_t *)ib_mpool_calloc(pool, 1, sizeof(*new_hash));
+    if (new_hash == NULL) {
+        *hash = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_ht->size = size;
-    ib_ht->slots = (ib_hash_entry_t **)ib_mpool_calloc(pool, ib_ht->size + 1,
-                                sizeof(ib_hash_entry_t *));
-    if (ib_ht->slots == NULL) {
-        *hp = NULL;
+    ib_hash_entry_t **slots = (ib_hash_entry_t **)ib_mpool_calloc(
+        pool,
+        size + 1,
+        sizeof(*slots)
+    );
+    if (slots == NULL) {
+        *hash = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_ht->hash_function = hash_function;
-    ib_ht->equal_predicate = equal_predicate;
-    ib_ht->count = 0;
-    ib_ht->free = NULL;
-    ib_ht->pool = pool;
+    new_hash->hash_function   = hash_function;
+    new_hash->equal_predicate = equal_predicate;
+    new_hash->size            = size;
+    new_hash->slots           = slots;
+    new_hash->pool            = pool;
+    new_hash->free            = NULL;
+    new_hash->count           = 0;
 
-    *hp = ib_ht;
+    *hash = new_hash;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
