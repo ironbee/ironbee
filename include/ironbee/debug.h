@@ -180,7 +180,6 @@ void DLL_PUBLIC ib_trace_str(const char *file,
  * }
  * @endcode
  *
- * @param name Name of function
  */
 #define IB_FTRACE_INIT() \
     const char *__ib_fname__ = IB_CURRENT_FUNCTION; \

@@ -2215,18 +2215,19 @@ struct ib_logevent_t {
 /**
  * Create a logevent.
  *
- * @param ple Address which new logevent is written
- * @param pool Memory pool
- * @param type Event type
- * @param activity Event activity
- * @param pri_class Event primary class
- * @param sec_class Event secondary class
- * @param sys_env Event system environment
- * @param rec_action Event recommended action
- * @param action Event action taken
- * @param confidence Event confidence
- * @param severity Event severity
- * @param fmt Event message format string
+ * @param[in] ple Address which new logevent is written
+ * @param[in] pool Memory pool
+ * @param[in] rule_id Rule that fired
+ * @param[in] type Event type
+ * @param[in] activity Event activity
+ * @param[in] pri_class Event primary class
+ * @param[in] sec_class Event secondary class
+ * @param[in] sys_env Event system environment
+ * @param[in] rec_action Event recommended action
+ * @param[in] action Event action taken
+ * @param[in] confidence Event confidence
+ * @param[in] severity Event severity
+ * @param[in] fmt Event message format string
  *
  * @returns Status code
  */
