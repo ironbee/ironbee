@@ -494,10 +494,23 @@ void ib_hash_clear(ib_hash_t *hash)
 {
     IB_FTRACE_INIT();
 
-    ib_hash_entry_t *current_entry = NULL;
-    IB_HASH_LOOP(current_entry, hash) {
-        ib_hash_set_ex(hash, current_entry->key, current_entry->key_length, NULL);
+    for (size_t i = 0; i < hash->size; ++i) {
+        if ( hash->slots[i] != NULL ) {
+            ib_hash_entry_t *current_entry;
+            for (
+                current_entry = hash->slots[i];
+                current_entry->next_entry != NULL;
+                current_entry = current_entry->next_entry
+            ) {
+                current_entry->value = NULL;
+            }
+
+            current_entry->next_entry = hash->free;
+            hash->free                = hash->slots[i];
+            hash->slots[i]            = NULL;
+        }
     }
+
     IB_FTRACE_RET_VOID();
 }
 
