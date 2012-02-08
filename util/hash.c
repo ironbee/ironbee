@@ -267,7 +267,39 @@ ib_status_t ib_hash_find_entry(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t ib_hash_resize_slots(
+ib_hash_iterator_t ib_hash_first(
+    ib_hash_t *hash
+)
+{
+    // There is no ftace return macro for custom types.
+    ib_hash_iterator_t iterator;
+
+    memset(&iterator, 0, sizeof(ib_hash_iterator_t));
+    iterator.hash = hash;
+    ib_hash_next(&iterator);
+
+    return iterator;
+}
+
+void ib_hash_next(
+    ib_hash_iterator_t *iterator
+)
+{
+    IB_FTRACE_INIT();
+
+    iterator->current_entry = iterator->next_entry;
+    while (! iterator->current_entry) {
+        if (iterator->slot_index > iterator->hash->size) {
+            IB_FTRACE_RET_VOID();
+        }
+        iterator->current_entry = iterator->hash->slots[iterator->slot_index];
+        ++iterator->slot_index;
+    }
+    iterator->next_entry = iterator->current_entry->next_entry;
+    IB_FTRACE_RET_VOID();
+}
+
+ib_status_t ib_hash_resize_slots(
     ib_hash_t *hash
 )
 {
@@ -443,38 +475,6 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(ib_hash_t *hash)
     assert(hash != NULL);
 
     return hash->pool;
-}
-
-static ib_hash_iterator_t ib_hash_first(
-    ib_hash_t *hash
-)
-{
-    // There is no ftace return macro for custom types.
-    ib_hash_iterator_t iterator;
-
-    memset(&iterator, 0, sizeof(ib_hash_iterator_t));
-    iterator.hash = hash;
-    ib_hash_next(&iterator);
-
-    return iterator;
-}
-
-void ib_hash_next(
-    ib_hash_iterator_t *iterator
-)
-{
-    IB_FTRACE_INIT();
-
-    iterator->current_entry = iterator->next_entry;
-    while (! iterator->current_entry) {
-        if (iterator->slot_index > iterator->hash->size) {
-            IB_FTRACE_RET_VOID();
-        }
-        iterator->current_entry = iterator->hash->slots[iterator->slot_index];
-        ++iterator->slot_index;
-    }
-    iterator->next_entry = iterator->current_entry->next_entry;
-    IB_FTRACE_RET_VOID();
 }
 
 void ib_hash_clear(ib_hash_t *hash)
