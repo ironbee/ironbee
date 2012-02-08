@@ -121,7 +121,6 @@ struct ib_hash_t {
  * @internal
  *
  * @param[out] hash_entry Hash entry.
- * @param[out] hash_value Hash value of @a key.
  * @param[in]  hash       Hash table.
  * @param[in]  key        Key.
  * @param[in]  key_length Length of @a key.
@@ -132,7 +131,6 @@ struct ib_hash_t {
  */
 static ib_status_t ib_hash_find_entry(
     ib_hash_entry_t **hash_entry,
-    unsigned int     *hash_value,
     ib_hash_t        *hash,
     const void       *key,
     size_t            key_length
@@ -159,8 +157,8 @@ static ib_hash_entry_t *ib_hash_find_htentry(
 );
 
 /**
- * @internal
  * Return iterator pointing to first entry of @a hash.
+ * @internal
  *
  * @param[in]  hash Hash table to iterate over.
  *
@@ -171,8 +169,8 @@ static ib_hash_iterator_t ib_hash_first(
 );
 
 /**
- * @internal
  * Move \a iterator to the next entry.
+ * @internal
  *
  * @param[in,out] iterator Iterator to advance.
  */
@@ -186,6 +184,18 @@ static void ib_hash_next(
         ((entry) = iterator.current_entry) != NULL; \
         ib_hash_next(&iterator) \
     )
+
+/**
+ * Resize the number of slots in @a hash.
+ * @internal
+ *
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+static ib_status_t ib_hash_resize_slots(
+    ib_hash_t *hash
+);
 
 /** @} IronBeeUtilHash */
 
@@ -224,7 +234,6 @@ ib_hash_entry_t *ib_hash_find_htentry(
 
 ib_status_t ib_hash_find_entry(
      ib_hash_entry_t **hash_entry,
-     unsigned int     *hash_value,
      ib_hash_t        *hash,
      const void       *key,
      size_t            key_length
@@ -239,10 +248,16 @@ ib_status_t ib_hash_find_entry(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    *hash_value = hash->hash_function(key, key_length);
+    unsigned int hash_value = hash->hash_function(key, key_length);
 
-    current_slot = hash->slots[*hash_value & hash->size];
-    current_entry = ib_hash_find_htentry(hash, current_slot, key, key_length, *hash_value);
+    current_slot = hash->slots[hash_value & hash->size];
+    current_entry = ib_hash_find_htentry(
+        hash,
+        current_slot,
+        key,
+        key_length,
+        hash_value
+    );
     if (current_entry == NULL) {
         *hash_entry = NULL;
         IB_FTRACE_RET_STATUS(IB_ENOENT);
@@ -291,11 +306,11 @@ unsigned int ib_hashfunc_djb2(
 {
     IB_FTRACE_INIT();
 
-    unsigned int         hash = 0;
-    const unsigned char *ckey = (const unsigned char *)key;
+    unsigned int  hash  = 0;
+    const char   *key_s = (const char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
-        hash = (hash << 5) + ckey[i];
+        hash = (hash << 5) + key_s[i];
     }
 
     IB_FTRACE_RET_UINT(hash);
@@ -308,11 +323,11 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
 {
     IB_FTRACE_INIT();
 
-    unsigned int  hash = 0;
-    const char   *ckey = (const char *)key;
+    unsigned int  hash  = 0;
+    const char   *key_s = (const char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
-        hash = (hash << 5) + tolower(ckey[i]);
+        hash = (hash << 5) + tolower(key_s[i]);
     }
 
     IB_FTRACE_RET_UINT(hash);
@@ -337,15 +352,15 @@ int DLL_PUBLIC ib_hashequal_nocase(
     size_t b_length
 )
 {
-    const char *akey = (const char*)a;
-    const char *bkey = (const char*)b;
+    const char *a_s = (const char*)a;
+    const char *b_s = (const char*)b;
 
     if (a_length != b_length) {
         return 0;
     }
 
     for (size_t i = 0; i < a_length; ++i) {
-        if (tolower(akey[i]) != tolower(bkey[i])) {
+        if (tolower(a_s[i]) != tolower(b_s[i])) {
             return 0;
         }
     }
@@ -498,14 +513,13 @@ ib_status_t ib_hash_get_ex(
     IB_FTRACE_INIT();
     ib_hash_entry_t *he = NULL;
     ib_status_t rc = IB_EINVAL;
-    unsigned int hash = 0;
 
     if (key == NULL) {
         *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_hash_find_entry(&he, &hash, ib_ht, key, len);
+    rc = ib_hash_find_entry(&he, ib_ht, key, len);
     if (rc == IB_OK) {
         *value = he->value;
     }
