@@ -267,33 +267,34 @@ ib_status_t ib_hash_find_entry(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * @internal
- * Resize the number of slots holding the entry lists
- *
- * @returns ib_hash_entry_t
- */
-static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
+static ib_status_t ib_hash_resize_slots(
+    ib_hash_t *hash
+)
 {
     IB_FTRACE_INIT();
-    ib_hash_entry_t **new_slots = NULL;
-    ib_hash_entry_t *current_entry = NULL;
-    unsigned int new_max = 0;
 
-    new_max = (ib_ht->size * 2) + 1;
-    new_slots = (ib_hash_entry_t **)ib_mpool_calloc(ib_ht->pool, new_max + 1,
-                                                    sizeof(ib_hash_entry_t *));
+    ib_hash_entry_t **new_slots     = NULL;
+    ib_hash_entry_t  *current_entry = NULL;
+    unsigned int      new_size      = 0;
+
+    new_size  = (hash->size * 2) + 1;
+    new_slots = (ib_hash_entry_t **)ib_mpool_calloc(
+        hash->pool,
+        new_size + 1,
+        sizeof(*new_slots)
+    );
     if (new_slots == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    IB_HASH_LOOP(current_entry, ib_ht) {
-        unsigned int i = current_entry->hash_value & new_max;
+    IB_HASH_LOOP(current_entry, hash) {
+        unsigned int i            = current_entry->hash_value & new_size;
         current_entry->next_entry = new_slots[i];
-        new_slots[i] = current_entry;
+        new_slots[i]              = current_entry;
     }
-    ib_ht->size = new_max;
-    ib_ht->slots = new_slots;
+    hash->size  = new_size;
+    hash->slots = new_slots;
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
