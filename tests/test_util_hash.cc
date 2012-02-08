@@ -321,6 +321,56 @@ TEST_F(TestIBUtilHash, test_hash_getall)
     }
 }
 
+TEST_F(TestIBUtilHash, test_hash_clear)
+{
+    ib_status_t  rc;
+    ib_hash_t   *hash  = NULL;
+
+    static const char combs[] = "abcdefghij";
+
+    rc = ib_hash_create(&hash, m_pool);
+    ASSERT_EQ(IB_OK, rc);
+
+    // Insert 1000 keys with value equal to the key used.
+    for (int i = 0; i < 10; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            for (int k = 0; k < 10; ++k) {
+                char *v;
+                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                EXPECT_TRUE(c);
+                c[0] = combs[i];
+                c[1] = combs[j];
+                c[2] = combs[k];
+                c[4] = '\0';
+
+                ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
+                ASSERT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
+                ASSERT_EQ(v, (void*)c);
+            }
+        }
+    }
+
+    ib_hash_clear(hash);
+
+    for (int i = 9; i >= 0; --i) {
+        for (int j = 9; j >= 0; --j) {
+            for (int k = 9; k >= 0; --k) {
+                char *v;
+                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                EXPECT_TRUE(c);
+                c[0] = combs[i];
+                c[1] = combs[j];
+                c[2] = combs[k];
+                c[4] = '\0';
+
+                ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
+                ASSERT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
+                ASSERT_EQ(v, (void*)c);
+            }
+        }
+    }
+}
+
 static unsigned int test_hash_delete_hashfunc(
     const void* key,
     size_t      key_length
