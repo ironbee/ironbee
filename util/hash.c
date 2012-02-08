@@ -65,7 +65,7 @@ struct ib_hash_entry_t {
     /** Length of @c key. */
     size_t               key_length;
     /** Value. */
-    const void          *value;
+    void                *value;
     /** Hash of @c key. */
     unsigned int         hash_value;
     /** Next entry in slot for @c hash. */
@@ -473,7 +473,7 @@ void ib_hash_clear(ib_hash_t *hash)
 }
 
 ib_status_t ib_hash_get(
-    void* value,
+    void** value,
     ib_hash_t *hash,
     const char *key
 )
@@ -481,7 +481,7 @@ ib_status_t ib_hash_get(
     IB_FTRACE_INIT();
 
     if (key == NULL) {
-        *(void **)value = NULL;
+        *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -489,7 +489,7 @@ ib_status_t ib_hash_get(
 }
 
 ib_status_t ib_hash_get_ex(
-    void *value,
+    void **value,
     ib_hash_t *ib_ht,
     void *key,
     size_t len
@@ -501,16 +501,16 @@ ib_status_t ib_hash_get_ex(
     unsigned int hash = 0;
 
     if (key == NULL) {
-        *(void **)value = NULL;
+        *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     rc = ib_hash_find_entry(&he, &hash, ib_ht, key, len);
     if (rc == IB_OK) {
-        *(void **)value = (void *)he->value;
+        *value = he->value;
     }
     else {
-        *(void **)value = NULL;
+        *value = NULL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -538,7 +538,7 @@ ib_status_t ib_hash_get_all(
 ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
                            const void *key,
                            size_t len,
-                           const void *value)
+                           void *value)
 {
     IB_FTRACE_INIT();
     unsigned int hash = 0;

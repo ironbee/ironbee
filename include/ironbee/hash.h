@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *****************************************************************************/
+ ****************************************************************************/
 
 #ifndef _IB_HASH_H_
 #define _IB_HASH_H_
@@ -84,9 +84,9 @@ typedef unsigned int (*ib_hash_function_t)(
  * @returns 1 if @a a and @a b are to be considered equal and 0 otherwise.
  **/
 typedef int (*ib_hash_equal_t)(
-    const void* a,
+    const void *a,
     size_t a_length,
-    const void* b,
+    const void *b,
     size_t b_length
 );
 
@@ -154,9 +154,9 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
  * otherwise.
  **/
 int DLL_PUBLIC ib_hashequal_default(
-    const void* a,
+    const void *a,
     size_t a_length,
-    const void* b,
+    const void *b,
     size_t b_length
 );
 
@@ -176,9 +176,9 @@ int DLL_PUBLIC ib_hashequal_default(
  * otherwise.
  **/
 int DLL_PUBLIC ib_hashequal_nocase(
-    const void* a,
+    const void *a,
     size_t a_length,
-    const void* b,
+    const void *b,
     size_t b_length
 );
 
@@ -280,10 +280,10 @@ void DLL_PUBLIC ib_hash_clear(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get_ex(
-    void      *value,
-    ib_hash_t *hash,
-    void      *key,
-    size_t     key_length
+    void      **value,
+    ib_hash_t  *hash,
+    void       *key,
+    size_t      key_length
 );
 
 /**
@@ -302,9 +302,9 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get(
-    void       *value,
-    ib_hash_t  *hash,
-    const char *key
+    void       **value,
+    ib_hash_t   *hash,
+    const char  *key
 );
 
 /**
@@ -343,7 +343,7 @@ ib_status_t DLL_PUBLIC ib_hash_set_ex(
     ib_hash_t  *hash,
     const void *key,
     size_t      key_length,
-    const void *value
+    void       *value
 );
 
 /**

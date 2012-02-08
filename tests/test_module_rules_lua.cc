@@ -128,7 +128,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     configureIronBee();
 
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(&op, ib_engine->operators, op_name));
+    ASSERT_EQ(IB_OK, ib_hash_get((void **)&op, ib_engine->operators, op_name));
 
     ASSERT_EQ(IB_OK, ib_operator_inst_create(ib_engine,
                                              op_name,
