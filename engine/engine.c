@@ -2464,13 +2464,8 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         goto failed;
     }
 
-    /* Copy initial values from parent. */
-    if (parent != NULL) {
-        **pctx = *parent;
-    }
-
-    (*pctx)->mp = pool;
     (*pctx)->ib = ib;
+    (*pctx)->mp = pool;
     (*pctx)->parent = parent;
     (*pctx)->fn_ctx = fn_ctx;
     (*pctx)->fn_ctx_site = fn_ctx_site;
