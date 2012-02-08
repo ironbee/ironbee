@@ -59,49 +59,32 @@ static rule_cbdata_t rule_cbdata[] = {
 
 /**
  * @internal
- * Execute a single rule
+ * Execute a rule on a list of fields
  *
  * @param[in] ib Engine
- * @param[in] rule Rule to execute
- * @param[in,out] tx Transaction
+ * @param[in] field_list List of fields to execute
+ * @param[in] opinst Operator instance
+ * @param[in] tx Transaction
  * @param[out] rule_result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t execute_rule(ib_engine_t *ib,
-                                ib_rule_t *rule,
-                                ib_tx_t *tx,
-                                ib_num_t *rule_result)
+static ib_status_t execute_rule_fields(ib_engine_t *ib,
+                                       ib_list_t *field_list,
+                                       ib_operator_inst_t *opinst,
+                                       ib_tx_t *tx,
+                                       ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     ib_list_node_t      *node = NULL;
-    ib_operator_inst_t  *opinst = rule->condition.opinst;
 
     /* Initialize the rule result */
     *rule_result = 0;
 
-    /* Log what we're going to do */
-    ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
-
-    /* Special case: External rules */
-    if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
-        ib_status_t rc;
-
-        /* Execute the operator */
-        ib_log_debug(ib, 4, "Executing external rule");
-        rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
-        if (rc != IB_OK) {
-            ib_log_debug(ib, 4,
-                         "External operator %s returned an error: %d",
-                         opinst->op->name, rc);
-        }
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     /* Loop through all of the fields */
-    IB_LIST_LOOP(rule->input_fields, node) {
+    IB_LIST_LOOP(field_list, node) {
         const char   *fname = (const char *)node->data;
-        ib_field_t   *value = 0;
+        ib_field_t   *value = NULL;
         ib_num_t      result = 0;
         ib_status_t   rc = IB_OK;
 
@@ -116,6 +99,23 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         else if (rc != IB_OK) {
             ib_log_debug(ib, 4, "Error getting field %s: %d\n", fname, rc);
             continue;
+        }
+
+        /* Is the field a list? */
+        if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
+            ib_list_t *vlist = ib_field_value_list(value);
+            if (vlist == NULL) {
+                ib_log_debug(ib, 4,
+                             "Error getting list from field %s\n", fname );
+                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            }
+            rc = execute_rule_fields(ib, vlist, opinst, tx, rule_result);
+            if (rc != IB_OK) {
+                ib_log_debug(ib, 4,
+                             "Error executing %s on list %s: %d\n",
+                             opinst->op->name, fname, rc);
+            }
+            IB_FTRACE_RET_STATUS(rc);
         }
 
         /* Execute the operator */
@@ -133,6 +133,62 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         if (result != 0) {
             *rule_result = result;
         }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute a single rule
+ *
+ * @param[in] ib Engine
+ * @param[in] rule Rule to execute
+ * @param[in,out] tx Transaction
+ * @param[out] rule_result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_rule(ib_engine_t *ib,
+                                ib_rule_t *rule,
+                                ib_tx_t *tx,
+                                ib_num_t *rule_result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t          rc = IB_OK;
+    ib_operator_inst_t  *opinst = rule->condition.opinst;
+
+    /* Initialize the rule result */
+    *rule_result = 0;
+
+    /* Log what we're going to do */
+    ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
+
+    /* Special case: External rules */
+    if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
+
+        /* Execute the operator */
+        ib_log_debug(ib, 4, "Executing external rule");
+        rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4,
+                         "External operator %s returned an error: %d",
+                         opinst->op->name, rc);
+        }
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Loop through all of the fields */
+    rc = execute_rule_fields(ib,
+                             rule->input_fields,
+                             opinst,
+                             tx,
+                             rule_result);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Error executing rule %s on field list: %d",
+                     rule->meta.id, rc);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Invert? */
