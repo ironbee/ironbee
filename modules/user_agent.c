@@ -487,7 +487,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
  * connection object fields.
  *
  * @param[in] ib IronBee object
- * @param event Event type
+ * @param[in] event Event type
  * @param[in,out] tx Transaction object
  * @param[in] data Callback data (not used)
  *
@@ -509,8 +509,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers.User-Agent", &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, 4,
-                     "request_headers_event: No user agent" );
+        ib_log_debug(ib, 4, "request_headers_event: No user agent");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -533,7 +532,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
  * object.
  *
  * @param[in] ib IronBee object
- * @param event Event type
+ * @param[in] event Event type
  * @param[in,out] tx Transaction object
  * @param[in] cbdata Callback data (not used)
  *
@@ -559,7 +558,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* Extract the X-Forwarded-For from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &field);
     if ( (field == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, 4, "No forward header" );
+        ib_log_debug(ib, 4, "No forward header");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
