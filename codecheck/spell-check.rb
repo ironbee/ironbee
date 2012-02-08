@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 
+$:.unshift(File.dirname(__FILE__))
+
+require 'all-code'
+
 ASPELL_DIR   = File.expand_path(File.dirname(__FILE__))
 IRONBEE_DIR  = File.dirname(ASPELL_DIR)
-EXTENSIONS   = ['.h','.c','.hh','.cc','.hpp','.cpp']
 
 def spell_check(path)
   system(
@@ -16,28 +19,7 @@ def spell_check(path)
   )
 end
 
-globs = []
 
-[
-  'cpp',
-  'cli',
-  'engine',
-  'include',
-  'modules',
-  'plugins',
-  'util'
-].each do |dir|
-  EXTENSIONS.each do |e|
-    globs << "#{dir}/**/*#{e}"
-  end
-end
-EXTENSIONS.each do |e|
-  globs << "tests/*#{e}"
-end
-
-globs.each do |glob|
-  Dir.chdir(IRONBEE_DIR)
-  Dir.glob(glob).each do |path|
-    spell_check(path)
-  end
+all_ironbee_code do |path|
+  spell_check(path)
 end
