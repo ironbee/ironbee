@@ -8,6 +8,8 @@
 # Editor files
 *~
 *.swp
+tags
+TAGS
 
 # Crash files
 core
