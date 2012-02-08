@@ -69,12 +69,12 @@ TEST_F(PcreModuleTest, test_load_module)
             &field2, ib_engine->mp, "field2", IB_FTYPE_NULSTR, &str2));
 
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, "@pcre", &op));
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, "pcre", &op));
 
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
-                                      "@pcre",
+                                      "pcre",
                                       "string\\s2",
                                       0,
                                       &op_inst));
