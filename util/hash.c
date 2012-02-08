@@ -514,47 +514,60 @@ void ib_hash_clear(ib_hash_t *hash)
     IB_FTRACE_RET_VOID();
 }
 
-ib_status_t ib_hash_get(
-    void** value,
-    ib_hash_t *hash,
-    const char *key
-)
-{
-    IB_FTRACE_INIT();
-
-    if (key == NULL) {
-        *value = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(ib_hash_get_ex(value, hash, (void *)key, strlen(key)));
-}
-
 ib_status_t ib_hash_get_ex(
-    void **value,
-    ib_hash_t *ib_ht,
-    void *key,
-    size_t len
+    void      **value,
+    ib_hash_t  *hash,
+    void       *key,
+    size_t      key_length
 )
 {
     IB_FTRACE_INIT();
-    ib_hash_entry_t *he = NULL;
-    ib_status_t rc = IB_EINVAL;
+
+    ib_status_t      rc;
+    ib_hash_entry_t *current_entry = NULL;
 
     if (key == NULL) {
         *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_hash_find_entry(&he, ib_ht, key, len);
+    rc = ib_hash_find_entry(
+        &current_entry,
+        hash,
+        key,
+        key_length
+    );
     if (rc == IB_OK) {
-        *value = he->value;
+        assert(current_entry != NULL);
+
+        *value = current_entry->value;
     }
     else {
         *value = NULL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_hash_get(
+    void       **value,
+    ib_hash_t   *hash,
+    const char  *key
+)
+{
+    IB_FTRACE_INIT();
+
+    if (key == NULL) {
+        *value = NULL;
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(ib_hash_get_ex(
+        value,
+        hash,
+        (void *)key,
+        strlen(key)
+    ));
 }
 
 ib_status_t ib_hash_get_all(
