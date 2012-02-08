@@ -525,7 +525,7 @@ ib_status_t ib_hash_get_all(
     ib_hash_entry_t* current_entry = NULL;
 
     IB_HASH_LOOP(current_entry, hash) {
-        ib_list_push(list, &current_entry->value);
+        ib_list_push(list, current_entry->value);
     }
 
     if (ib_list_elements(list) <= 0) {

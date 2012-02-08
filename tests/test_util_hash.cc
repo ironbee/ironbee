@@ -317,7 +317,7 @@ TEST_F(TestIBUtilHash, test_hash_getall)
         //every element of list is in list2.
         IB_LIST_LOOP(list, li) {
             IB_LIST_LOOP(list2, li2) {
-                if ( memcmp(li->data,*((void**)(li2->data)),4) == 0 ) {
+                if ( memcmp(li->data, li2->data,4) == 0 ) {
                     ++num_found;
                     break;
                 }
