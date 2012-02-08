@@ -448,17 +448,19 @@ ib_status_t ib_hash_create_ex(
 }
 
 ib_status_t ib_hash_create(
-    ib_hash_t **ph,
-    ib_mpool_t *pool
+    ib_hash_t  **hash,
+    ib_mpool_t  *pool
 )
 {
-    return ib_hash_create_ex(
-        ph,
+    IB_FTRACE_INIT();
+
+    IB_FTRACE_RET_STATUS(ib_hash_create_ex(
+        hash,
         pool,
         IB_HASH_INITIAL_SIZE,
         ib_hashfunc_djb2,
         ib_hashequal_default
-    );
+    ));
 }
 
 ib_status_t DLL_PUBLIC ib_hash_create_nocase(
@@ -466,21 +468,26 @@ ib_status_t DLL_PUBLIC ib_hash_create_nocase(
     ib_mpool_t  *pool
 )
 {
-    return ib_hash_create_ex(
+    IB_FTRACE_INIT();
+
+    IB_FTRACE_RET_STATUS(ib_hash_create_ex(
         hash,
         pool,
         IB_HASH_INITIAL_SIZE,
         ib_hashfunc_djb2_nocase,
         ib_hashequal_nocase
-    );
+    ));
 }
 
-
-ib_mpool_t DLL_PUBLIC *ib_hash_pool(ib_hash_t *hash)
+ib_mpool_t DLL_PUBLIC *ib_hash_pool(
+    ib_hash_t *hash
+)
 {
+    IB_FTRACE_INIT();
+
     assert(hash != NULL);
 
-    return hash->pool;
+    IB_FTRACE_RET_PTR(ib_mpool_t *, hash->pool);
 }
 
 void ib_hash_clear(ib_hash_t *hash)
