@@ -441,37 +441,37 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     }
 
     /* Create a hash to hold configuration directive mappings by name */
-    rc = ib_hash_create(&((*pib)->dirmap), (*pib)->mp);
+    rc = ib_hash_create_nocase(&((*pib)->dirmap), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold provider apis by name */
-    rc = ib_hash_create(&((*pib)->apis), (*pib)->mp);
+    rc = ib_hash_create_nocase(&((*pib)->apis), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold providers by name */
-    rc = ib_hash_create(&((*pib)->providers), (*pib)->mp);
+    rc = ib_hash_create_nocase(&((*pib)->providers), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold transformations by name */
-    rc = ib_hash_create(&((*pib)->tfns), (*pib)->mp);
+    rc = ib_hash_create_nocase(&((*pib)->tfns), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold operators by name */
-    rc = ib_hash_create(&((*pib)->operators), (*pib)->mp);
+    rc = ib_hash_create_nocase(&((*pib)->operators), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a hash to hold actions by name */
-    rc = ib_hash_create(&((*pib)->actions), (*pib)->mp);
+    rc = ib_hash_create_nocase(&((*pib)->actions), (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -670,7 +670,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->base_uuid.st.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
     (*pconn)->base_uuid.st.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
 
-    rc = ib_hash_create(&((*pconn)->data), (*pconn)->mp);
+    rc = ib_hash_create_nocase(&((*pconn)->data), (*pconn)->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -836,7 +836,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     ib_tx_generate_id(*ptx);
 
     /* Create the generic data store. */
-    rc = ib_hash_create(&((*ptx)->data), (*ptx)->mp);
+    rc = ib_hash_create_nocase(&((*ptx)->data), (*ptx)->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;

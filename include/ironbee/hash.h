@@ -62,31 +62,42 @@ extern "C" {
  *
  * @param[in] key           Key to hash.
  * @param[in] key_length    Length of @a key.
- * @param[in] flags Flags.  Currently, only flag is IB_HASH_FLAG_NOCASE.
  *
  * @returns Hash value of \a key.
  **/
 typedef unsigned int (*ib_hash_function_t)(
     const void *key,
-    size_t      key_length,
-    uint8_t     flags
+    size_t      key_length
+);
+ 
+/**
+ * Function pointer for a key equality function.
+ *
+ * Should return 1 if @a a and @a b are to be considered equal keys and 0 
+ * otherwise.
+ *
+ * @param[in] a        First key.
+ * @param[in] a_length Length of @a a.
+ * @param[in] b        Second key.
+ * @param[in] b_length Length of @a b.
+ *
+ * @returns 1 if @a a and @a b are to be considered equal and 0 otherwise.
+ **/
+typedef int (*ib_hash_equal_t)(
+    const void* a,
+    size_t a_length,
+    const void* b,
+    size_t b_length
 );
 
 /* Options */
 
 /**
- * Ignore case during lookup.
- *
- * Instructs the hash function to treat upper and lower case letters as the
- * same.  That is, changing the case of any byte of the key should not alter
- * the hash value of the key.
- **/
-#define IB_HASH_FLAG_NOCASE    0x01
-
-/**
  * DJB2 Hash Function (Dan Bernstein).
  *
- * This is the default hash function.
+ * This is the default hash function for ib_hash_create().
+ *
+ * @sa ib_hashfunc_djb2_nocase().
  *
  * @code
  * hash = 5381
@@ -96,16 +107,79 @@ typedef unsigned int (*ib_hash_function_t)(
  *
  * @param[in] key          The key to hash.
  * @param[in] key_length   Length of @a key.
- * @param[in] flags        If contains IB_HASH_FLAG_NOCASE, will convert upper
- *                         case bytes to lower case.  All other bits are
- *                         ignored.
  *
  * @returns Hash value of @a key.
  */
 unsigned int DLL_PUBLIC ib_hashfunc_djb2(
     const void *key,
-    size_t      key_length,
-    uint8_t     flags
+    size_t      key_length
+);
+
+/**
+ * DJB2 Hash Function (Dan Bernstein).  Case insensitive version.
+ *
+ * This is the default hash function for ib_hash_create_nocase().
+ *
+ * @sa ib_hashfunc_djb2().
+ *
+ * @code
+ * hash = 5381
+ * for c in ckey
+ *   hash = hash * 33 + tolower(c)
+ * @endcode
+ *
+ * @param[in] key          The key to hash.
+ * @param[in] key_length   Length of @a key.
+ *
+ * @returns Hash value of @a key.
+ */
+unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
+    const void *key,
+    size_t      key_length
+);
+
+/**
+ * Byte for byte equality predicate.
+ *
+ * This is the default equality predicate for ib_hash_create().
+ *
+ * @sa ib_hashequal_nocase().
+ *
+ * @param[in] a        First key.
+ * @param[in] a_length Length of @a a.
+ * @param[in] b        Second key.
+ * @param[in] b_length Length of @a b.
+ *
+ * @returns 1 if @a a and @a b have same length and same bytes and 0  
+ * otherwise.
+ **/
+int DLL_PUBLIC ib_hashequal_default(
+    const void* a,
+    size_t a_length,
+    const void* b,
+    size_t b_length
+);
+
+/**
+ * Byte for byte equality predicate.
+ *
+ * This is the default equality predicate for ib_hash_create_nocase().
+ *
+ * @sa ib_hashequal_default().
+ *
+ * @param[in] a        First key.
+ * @param[in] a_length Length of @a a.
+ * @param[in] b        Second key.
+ * @param[in] b_length Length of @a b.
+ *
+ * @returns 1 if @a a and @a b have same length and same bytes and 0  
+ * otherwise.
+ **/
+int DLL_PUBLIC ib_hashequal_nocase(
+    const void* a,
+    size_t a_length,
+    const void* b,
+    size_t b_length
 );
 
 /**
@@ -113,12 +187,11 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2(
  *
  * @sa ib_hash_create()
  *
- * @param[out] hash          The newly created hash table.
- * @param[in]  pool          Memory pool to use.
- * @param[in]  size          The number of slots in the hash table.
- * @param[in]  hash_function Hash function to use, e.g., ib_hashfunc_djb2().
- * @param[in]  flags         Flags to pass to the hash function, e.g.,
- *                           IB_HASH_FLAG_NOCASE
+ * @param[out] hash            The newly created hash table.
+ * @param[in]  pool            Memory pool to use.
+ * @param[in]  size            The number of slots in the hash table.
+ * @param[in]  hash_function   Hash function to use, e.g., ib_hashfunc_djb2().
+ * @param[in]  equal_predicate Predicate to use for key equality.
  *
  * @returns
  * - IB_OK on success.
@@ -129,11 +202,12 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(
     ib_mpool_t          *pool,
     unsigned int         size,
     ib_hash_function_t   hash_function,
-    uint8_t              flags
+    ib_hash_equal_t      equal_predicate
 );
 
 /**
- * Create a hash table with nocase flag and a default size.
+ * Create a hash table with ib_hashfunc_djb2(), ib_hashequal_default(), and a 
+ * default size.
  *
  * @sa ib_hash_create_ex()
  *
@@ -145,6 +219,24 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(
  * - IB_EALLOC on allocation failure.
  */
 ib_status_t DLL_PUBLIC ib_hash_create(
+    ib_hash_t  **hash,
+    ib_mpool_t  *pool
+);
+
+/**
+ * Create a hash table with ib_hashfunc_djb2_nocase(), ib_hashequal_noacse()
+ * and a default size.
+ *
+ * @sa ib_hash_create_ex()
+ *
+ * @param[out] hash   The newly created hash table.
+ * @param[in]  pool Memory pool to use.
+ *
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ */
+ib_status_t DLL_PUBLIC ib_hash_create_nocase(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
 );
@@ -181,8 +273,6 @@ void DLL_PUBLIC ib_hash_clear(
  * @param[in]  hash         Hash table.
  * @param[in]  key          Key to lookup.
  * @param[in]  key_length   Length of @a key.
- * @param[in]  flags        Flags to use during lookup, e.g.,
- *                          IB_HASH_FLAG_NOCASE.
  *
  * @returns
  * - IB_OK on success.
@@ -193,8 +283,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
     void      *value,
     ib_hash_t *hash,
     void      *key,
-    size_t     key_length,
-    uint8_t    flags
+    size_t     key_length
 );
 
 /**
@@ -217,29 +306,6 @@ ib_status_t DLL_PUBLIC ib_hash_get(
     ib_hash_t  *hash,
     const char *key
 );
-
-/**
- * Get value for @a key (NULL terminated char string) from @a hash, ignoring
- * case.
- *
- * @sa ib_hash_get_ex()
- * @sa ib_hash_get()
- *
- * @param[out] value Address which value is written.
- * @param[in]  hash  Hash table.
- * @param[in]  key   Key to lookup.
- *
- * @returns
- * - IB_OK on success.
- * - IB_ENOENT if @a key is not in hash table.
- * - IB_EINVAL if any parameters are invalid.
- */
-ib_status_t DLL_PUBLIC ib_hash_get_nocase(
-    void       *value,
-    ib_hash_t  *hash,
-    const char *key
-);
-
 
 /**
  * Push every entry from @a hash onto @a list.

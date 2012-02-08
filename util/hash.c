@@ -94,10 +94,10 @@ struct ib_hash_iterator_t {
  * See ib_hash_t()
  **/
 struct ib_hash_t {
-    /** Flags to pass to @c hash_function. */
-    uint8_t              flags;
     /** Hash function. */
     ib_hash_function_t   hash_function;
+    /** Key equality predicate. */
+    ib_hash_equal_t      equal_predicate;
     /**
      * Slots.
      *
@@ -125,11 +125,9 @@ struct ib_hash_t {
  * @param[in]  hash       Hash table.
  * @param[in]  key        Key.
  * @param[in]  key_length Length of @a key.
- * @param[in]  flags      Flags to pass to hash function.
  *
  * @returns
  * - IB_OK on success.
- * - IB_EINVAL on invalid flags.
  * - IB_ENOENT if @a key not found.
  */
 static ib_status_t ib_hash_find_entry(
@@ -137,28 +135,27 @@ static ib_status_t ib_hash_find_entry(
     unsigned int     *hash_value,
     ib_hash_t        *hash,
     const void       *key,
-    size_t            key_length,
-    uint8_t           flags
+    size_t            key_length
 );
 
 /**
  * Search for a hash entry in the list of entries starting at @a first.
  * @internal
  *
+ * @param[in] hash       Hash table.
  * @param[in] first      Beginning of list to search.
  * @param[in] key        Key to search for.
  * @param[in] key_length Length of @a key.
  * @param[in] hash_value Hash value of @a key.
- * @param[in] flags      Flags.
  *
  * @returns Hash entry if found and NULL otherwise.
  */
 static ib_hash_entry_t *ib_hash_find_htentry(
+     ib_hash_t       *hash,
      ib_hash_entry_t *first,
      const void      *key,
      size_t           key_length,
-     unsigned int     hash_value,
-     uint8_t          flags
+     unsigned int     hash_value
 );
 
 /**
@@ -197,11 +194,11 @@ static void ib_hash_next(
 /* Internal Definitions */
 
 static ib_hash_entry_t *ib_hash_find_htentry(
+    ib_hash_t       *hash,
     ib_hash_entry_t *first,
     const void      *key,
     size_t           key_length,
-    unsigned int     hash_value,
-    uint8_t          flags
+    unsigned int     hash_value
 )
 {
     IB_FTRACE_INIT();
@@ -214,26 +211,12 @@ static ib_hash_entry_t *ib_hash_find_htentry(
     {
         if (
                current_entry->hash_value == hash_value
-            && current_entry->key_length == key_length
-        )
-        {
-            if (flags & IB_HASH_FLAG_NOCASE)
-            {
-                size_t i = 0;
-                for (i = 0; i < key_length; ++i) {
-                    char a = tolower(((char*)key)[i]);
-                    char b = tolower(((char*)current_entry->key)[i]);
-                    if ( a != b ) {
-                        break;
-                    }
-                }
-                if (i == key_length) {
-                    IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
-                }
-            }
-            else if ( memcmp(current_entry->key, key, key_length) == 0 ) {
-                IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
-            }
+            && hash->equal_predicate( 
+                    key,                key_length,
+                    current_entry->key, current_entry->key_length
+                ) == 0
+        ) {
+            IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
         }
     }
     IB_FTRACE_RET_PTR(ib_hash_entry_t, NULL);
@@ -244,8 +227,7 @@ ib_status_t ib_hash_find_entry(
      unsigned int     *hash_value,
      ib_hash_t        *hash,
      const void       *key,
-     size_t            key_length,
-     uint8_t           flags
+     size_t            key_length
 )
 {
     IB_FTRACE_INIT();
@@ -253,23 +235,19 @@ ib_status_t ib_hash_find_entry(
     ib_hash_entry_t *current_slot  = NULL;
     ib_hash_entry_t *current_entry = NULL;
 
-    /* Ensure that NOCASE lookups are allowed at ib_hash_t flags */
-    if (hash_entry == NULL || hash == NULL ||
-        ( (flags & IB_HASH_FLAG_NOCASE) &&
-         !(hash->flags & IB_HASH_FLAG_NOCASE)))
-    {
+    if (hash_entry == NULL || hash == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    *hash_value = hash->hash_function(key, key_length, hash->flags);
+    *hash_value = hash->hash_function(key, key_length);
 
-    slot = hash->slots[*hash_value & hash->size];
-    he = ib_hash_find_htentry(slot, key, key_length, *hash_value, flags);
-    if (he == NULL) {
+    current_slot = hash->slots[*hash_value & hash->size];
+    current_entry = ib_hash_find_htentry(hash, current_slot, key, key_length, *hash_value);
+    if (current_entry == NULL) {
         *hash_entry = NULL;
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
-    *hash_entry = he;
+    *hash_entry = current_entry;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -308,8 +286,7 @@ static ib_status_t ib_hash_resize_slots(ib_hash_t *ib_ht)
 
 unsigned int ib_hashfunc_djb2(
     const void *key,
-    size_t      key_length,
-    uint8_t     flags
+    size_t      key_length
 )
 {
     IB_FTRACE_INIT();
@@ -317,24 +294,72 @@ unsigned int ib_hashfunc_djb2(
     unsigned int         hash = 0;
     const unsigned char *ckey = (const unsigned char *)key;
 
-    if ( flags & IB_HASH_FLAG_NOCASE ) {
-        for (size_t i = 0; i < key_length; ++i) {
-            hash = (hash << 5) + tolower(ckey[i]);
-        }
-    } else {
-        for (size_t i = 0; i < key_length; ++i) {
-            hash = (hash << 5) + ckey[i];
-        }
+    for (size_t i = 0; i < key_length; ++i) {
+        hash = (hash << 5) + ckey[i];
     }
 
     IB_FTRACE_RET_UINT(hash);
 }
 
-ib_status_t ib_hash_create_ex(ib_hash_t **hp,
-                              ib_mpool_t *pool,
-                              unsigned int size,
-                              ib_hash_function_t   hash_function,
-                              uint8_t flags)
+unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
+    const void *key,
+    size_t      key_length
+)
+{
+    IB_FTRACE_INIT();
+
+    unsigned int  hash = 0;
+    const char   *ckey = (const char *)key;
+
+    for (size_t i = 0; i < key_length; ++i) {
+        hash = (hash << 5) + tolower(ckey[i]);
+    }
+
+    IB_FTRACE_RET_UINT(hash);
+}
+
+int DLL_PUBLIC ib_hashequal_default(
+    const void* a,
+    size_t a_length,
+    const void* b,
+    size_t b_length
+)
+{
+    return 
+           (a_length == b_length)
+        && memcmp(a, b, a_length) == 0;
+}
+
+int DLL_PUBLIC ib_hashequal_nocase(
+    const void* a,
+    size_t a_length,
+    const void* b,
+    size_t b_length
+)
+{
+    const char *akey = (const char*)a;
+    const char *bkey = (const char*)b;
+    
+    if (a_length != b_length) {
+        return 0;
+    }
+    
+    for (size_t i = 0; i < a_length; ++i) {
+        if (tolower(akey[i]) != tolower(bkey[i])) {
+            return 0;
+        }
+    }
+    
+    return 1;
+}
+
+ib_status_t ib_hash_create_ex(
+    ib_hash_t          **hp,
+    ib_mpool_t          *pool,
+    unsigned int         size,
+    ib_hash_function_t   hash_function,
+    ib_hash_equal_t      equal_predicate
+)
 {
     IB_FTRACE_INIT();
     ib_hash_t *ib_ht = NULL;
@@ -358,8 +383,8 @@ ib_status_t ib_hash_create_ex(ib_hash_t **hp,
     }
 
     ib_ht->hash_function = hash_function;
+    ib_ht->equal_predicate = equal_predicate;
     ib_ht->count = 0;
-    ib_ht->flags = flags;
     ib_ht->free = NULL;
     ib_ht->pool = pool;
 
@@ -378,9 +403,24 @@ ib_status_t ib_hash_create(
         pool,
         IB_HASH_INITIAL_SIZE,
         ib_hashfunc_djb2,
-        IB_HASH_FLAG_NOCASE
+        ib_hashequal_default
     );
 }
+
+ib_status_t DLL_PUBLIC ib_hash_create_nocase(
+    ib_hash_t  **hash,
+    ib_mpool_t  *pool
+)
+{
+    return ib_hash_create_ex(
+        hash,
+        pool,
+        IB_HASH_INITIAL_SIZE,
+        ib_hashfunc_djb2_nocase,
+        ib_hashequal_nocase
+    );
+}
+
 
 ib_mpool_t DLL_PUBLIC *ib_hash_pool(ib_hash_t *hash)
 {
@@ -445,32 +485,14 @@ ib_status_t ib_hash_get(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    IB_FTRACE_RET_STATUS(ib_hash_get_ex(value, hash, (void *)key, strlen(key), 0));
+    IB_FTRACE_RET_STATUS(ib_hash_get_ex(value, hash, (void *)key, strlen(key)));
 }
-
-ib_status_t ib_hash_get_nocase(
-    void *value,
-    ib_hash_t *hash,
-    const char *key
-)
-{
-    IB_FTRACE_INIT();
-    if (key == NULL) {
-        *(void **)value = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(ib_hash_get_ex(value, hash, (void *)key, strlen(key),
-                                        IB_HASH_FLAG_NOCASE));
-}
-
 
 ib_status_t ib_hash_get_ex(
     void *value,
     ib_hash_t *ib_ht,
     void *key,
-    size_t len,
-    uint8_t lookup_flags
+    size_t len
 )
 {
     IB_FTRACE_INIT();
@@ -483,7 +505,7 @@ ib_status_t ib_hash_get_ex(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_hash_find_entry(&he, &hash, ib_ht, key, len, lookup_flags);
+    rc = ib_hash_find_entry(&he, &hash, ib_ht, key, len);
     if (rc == IB_OK) {
         *(void **)value = (void *)he->value;
     }
@@ -525,35 +547,22 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
     ib_hash_entry_t *hte = NULL;
     ib_hash_entry_t **hte_prev = NULL;
 
-    hash = ib_ht->hash_function(key, len, ib_ht->flags);
+    hash = ib_ht->hash_function(key, len);
 
     hte_prev = &ib_ht->slots[hash & ib_ht->size];
     hte = *hte_prev;
 
     for (; *hte_prev != NULL; hte_prev = &hte->next_entry) {
         hte = *hte_prev;
-        if (hte->hash_value == hash
-            && hte->key_length == len)
-        {
-            if (ib_ht->flags & IB_HASH_FLAG_NOCASE)
-            {
-                size_t i = 0;
-                const char *k = (const char *)key;
-                for (; i < len; i++) {
-                    if (tolower((char)k[i]) != tolower(((char *)hte->key)[i])) {
-                        break;
-                    }
-                }
-                if (i == len) {
-                    /* Found */
-                    found = 1;
-                    break;
-                }
-             }
-            else if (memcmp(hte->key, key, len) == 0) {
-                found = 1;
-                break;
-            }
+        if (
+            hte->hash_value == hash
+            && ib_ht->equal_predicate(
+                  hte->key, hte->key_length,
+                  key, len
+               ) == 0
+        ) {
+            found = 1;
+            break;
         }
     }
 
@@ -562,7 +571,8 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
         if (value != NULL && found) {
             /* Update */
             hte->value = value;
-        } else {
+        } 
+        else {
             /* Delete */
             hte->value = NULL;
             ib_ht->count--;
@@ -633,7 +643,7 @@ ib_status_t ib_hash_remove_ex(
     ib_status_t rc = IB_ENOENT;
     void *local_value = NULL;
 
-    rc = ib_hash_get_ex(&local_value, hash, key, (size_t)len, hash->flags);
+    rc = ib_hash_get_ex(&local_value, hash, key, (size_t)len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

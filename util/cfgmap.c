@@ -43,7 +43,7 @@ ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
     ib_status_t rc;
 
     /* Underlying hash structure. */
-    rc = ib_hash_create(&hash, pool);
+    rc = ib_hash_create_nocase(&hash, pool);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;

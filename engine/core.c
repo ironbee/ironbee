@@ -910,8 +910,7 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
     rc = ib_hash_get_ex(
         (void *)&f,
         (ib_hash_t *)dpi->data,
-        (void *)name, nlen,
-        IB_HASH_FLAG_NOCASE
+        (void *)name, nlen
     );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
@@ -969,8 +968,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
         rc = ib_hash_get_ex(
             (void *)pf,
             (ib_hash_t *)dpi->data,
-            (void *)name, klen,
-            IB_HASH_FLAG_NOCASE
+            (void *)name, klen
         );
         if (rc == IB_OK) {
             /* Try dynamic lookup. */
@@ -1002,8 +1000,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
     rc = ib_hash_get_ex(
         (void *)pf,
         (ib_hash_t *)dpi->data,
-        (void *)name, nlen,
-        IB_HASH_FLAG_NOCASE
+        (void *)name, nlen
     );
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3220,7 +3217,7 @@ static ib_status_t data_init(ib_provider_inst_t *dpi,
     ib_status_t rc;
     ib_hash_t *ht;
 
-    rc = ib_hash_create(&ht, dpi->mp);
+    rc = ib_hash_create_nocase(&ht, dpi->mp);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -3230,7 +3227,6 @@ static ib_status_t data_init(ib_provider_inst_t *dpi,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-
 
 /* -- Matcher Implementation -- */
 
