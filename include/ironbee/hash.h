@@ -69,11 +69,11 @@ typedef unsigned int (*ib_hash_function_t)(
     const void *key,
     size_t      key_length
 );
- 
+
 /**
  * Function pointer for a key equality function.
  *
- * Should return 1 if @a a and @a b are to be considered equal keys and 0 
+ * Should return 1 if @a a and @a b are to be considered equal keys and 0
  * otherwise.
  *
  * @param[in] a        First key.
@@ -150,7 +150,7 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
  * @param[in] b        Second key.
  * @param[in] b_length Length of @a b.
  *
- * @returns 1 if @a a and @a b have same length and same bytes and 0  
+ * @returns 1 if @a a and @a b have same length and same bytes and 0
  * otherwise.
  **/
 int DLL_PUBLIC ib_hashequal_default(
@@ -172,7 +172,7 @@ int DLL_PUBLIC ib_hashequal_default(
  * @param[in] b        Second key.
  * @param[in] b_length Length of @a b.
  *
- * @returns 1 if @a a and @a b have same length and same bytes and 0  
+ * @returns 1 if @a a and @a b have same length and same bytes and 0
  * otherwise.
  **/
 int DLL_PUBLIC ib_hashequal_nocase(
@@ -206,7 +206,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(
 );
 
 /**
- * Create a hash table with ib_hashfunc_djb2(), ib_hashequal_default(), and a 
+ * Create a hash table with ib_hashfunc_djb2(), ib_hashequal_default(), and a
  * default size.
  *
  * @sa ib_hash_create_ex()

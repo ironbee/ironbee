@@ -211,7 +211,7 @@ ib_hash_entry_t *ib_hash_find_htentry(
     {
         if (
                current_entry->hash_value == hash_value
-            && hash->equal_predicate( 
+            && hash->equal_predicate(
                     key,                key_length,
                     current_entry->key, current_entry->key_length
                )
@@ -325,7 +325,7 @@ int DLL_PUBLIC ib_hashequal_default(
     size_t b_length
 )
 {
-    return 
+    return
            (a_length == b_length)
         && (memcmp(a, b, a_length) == 0);
 }
@@ -339,17 +339,17 @@ int DLL_PUBLIC ib_hashequal_nocase(
 {
     const char *akey = (const char*)a;
     const char *bkey = (const char*)b;
-    
+
     if (a_length != b_length) {
         return 0;
     }
-    
+
     for (size_t i = 0; i < a_length; ++i) {
         if (tolower(akey[i]) != tolower(bkey[i])) {
             return 0;
         }
     }
-    
+
     return 1;
 }
 
@@ -571,7 +571,7 @@ ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
         if (value != NULL && found) {
             /* Update */
             hte->value = value;
-        } 
+        }
         else {
             /* Delete */
             hte->value = NULL;
