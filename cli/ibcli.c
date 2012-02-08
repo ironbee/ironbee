@@ -898,7 +898,7 @@ static ib_status_t print_user_agent(
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4,
                      "print_user_agent: No user agent info available" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* The field value *should* be a list, extract it as such */
@@ -907,7 +907,7 @@ static ib_status_t print_user_agent(
         ib_log_debug(ib, 4,
                      "print_user_agent: "
                      "Field list missing / incorrect type" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Loop through the list & print everything */
