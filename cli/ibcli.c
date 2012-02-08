@@ -73,6 +73,13 @@ typedef struct {
     int         used;           /* Has this field been used */
 } request_header_t;
 
+/* Dump flags */
+#define DUMP_TX                 (1<< 0) /* Dump base transaction */
+#define DUMP_TX_FULL            (1<< 1) /* Dump full transaction */
+#define DUMP_TX_AGGRESSIVE      (1<< 2) /* Aggressive transaction dump */
+#define DUMP_USER_AGENT         (1<< 3) /* Dump user agent data */
+#define DUMP_GEOIP              (1<< 4) /* Dump GeoIP data */
+
 /* Runtime settings */
 typedef struct {
     char *config_file;
@@ -91,10 +98,7 @@ typedef struct {
     uint64_t trace_response_cnt;
 
     /* Dump output */
-    int dump_tx;
-    int dump_tx_full;
-    int dump_user_agent;
-    int dump_geoip;
+    ib_flags_t dump_flags;
 
     /* Request header fields */
     struct {
@@ -130,10 +134,7 @@ static runtime_settings_t settings =
     0,                     /* trace_request_count */
     0,                     /* trace_response_count */
     /* Dump settings */
-    0,                     /* dump_tx */
-    0,                     /* dump_tx_full */
-    0,                     /* dump_user_agent */
-    0,                     /* dump_geoip */
+    0,                     /* dump_flags */
     /* Request headers */
     { 0 },                 /* request_headers */
     /* Max # of transactions */
@@ -161,6 +162,20 @@ ib_plugin_t ibplugin = {
     IB_PLUGIN_HEADER_DEFAULTS,
     "ibcli"
 };
+
+
+/**
+ * @internal
+ * Test if a dump flag bit(s) are set.
+ *
+ * @param[in] flags Flag bits to test.
+ *
+ * @returns 1 if the flag bit(s) are set, otherwise 0
+ */
+static ib_num_t test_dump_flags(ib_flags_t flags)
+{
+    return ( (settings.dump_flags & flags) != 0);
+}
 
 /**
  * @internal
@@ -239,7 +254,7 @@ static void help(void)
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
     print_option("trace", NULL, "Enable tracing", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
-                 "tx, tx-full, user-agent, geoip");
+                 "tx, tx-full, tx-aggressive, user-agent, geoip");
     print_option("request-header", "name: value",
                  "Specify request field & value", 0, NULL );
     print_option("request-header", "-name:",
@@ -431,17 +446,20 @@ static ib_status_t command_line(int argc, char *argv[])
         }
         else if (! strcmp("dump", longopts[option_index].name)) {
             if (strcasecmp(optarg, "geoip") == 0) {
-                settings.dump_geoip = 1;
+                settings.dump_flags |= DUMP_GEOIP;
             }
             else if (strcasecmp(optarg, "user-agent") == 0) {
-                settings.dump_user_agent = 1;
+                settings.dump_flags |= DUMP_USER_AGENT;
             }
             else if (strcasecmp(optarg, "tx") == 0) {
-                settings.dump_tx = 1;
+                settings.dump_flags |= DUMP_TX;
             }
             else if (strcasecmp(optarg, "tx-full") == 0) {
-                settings.dump_tx = 1;
-                settings.dump_tx_full = 1;
+                settings.dump_flags |= (DUMP_TX|DUMP_TX_FULL);
+            }
+            else if (strcasecmp(optarg, "tx-aggressive") == 0) {
+                settings.dump_flags |=
+                    (DUMP_TX|DUMP_TX_FULL|DUMP_TX_AGGRESSIVE);
             }
             else {
                 fprintf(stderr, "Unknown dump: %s", optarg);
@@ -746,21 +764,90 @@ static const char *build_path( const char *path, ib_field_t *field )
     size_t fullpath_len;
     char *fullpath;
 
+    int nlen = (int)field->nlen;
+    if ( (nlen <= 0) || (field->name == NULL) ) {
+        nlen = 0;
+    }
+    else if ( nlen > 32 ) {
+        int i;
+        const char *p;
+        for (i = 0, p=field->name; isprint(*p) && (i < 32);  i++) {
+            /* Do nothing */
+        }
+        nlen = i;
+    }
+
+
     /* Special case */
-    if (field->name == NULL) {
+    if ( (nlen == 0) || (field->name == NULL) ) {
         return strdup(path);
     }
 
+    /* Allocate a path buffer */
     pathlen = strlen(path);
-    fullpath_len = pathlen + 2 + field->nlen;
+    fullpath_len = pathlen + 2 + nlen;
     fullpath = (char *)malloc(fullpath_len);
 
+    /* Copy in the base path */
     strcpy(fullpath, path);
-
     strcat(fullpath, "/");
-    memcpy(fullpath+pathlen+1, field->name, field->nlen);
+
+    /* Append the field's name */
+    memcpy(fullpath+pathlen+1, field->name, nlen);
     fullpath[fullpath_len-1] = '\0';
     return fullpath;
+}
+
+/* Crude ugly hack */
+static int valid_dptr( void *p)
+{
+    static void *minptr = (void*)0xff;
+    static void *maxptr = (void*)0xffffff;
+    return (p >= minptr) && (p <= maxptr);
+}
+
+static ib_status_t print_list(const char *path, ib_list_t *lst);
+static void print_other(const char *path, void *data)
+{
+    ib_list_t *lst;
+    ib_field_t *field;
+    uint8_t *p;
+    unsigned i;
+
+    /* Try to treat @a data as an ib_list_t pointer */
+    lst = (ib_list_t *)data;
+    if ( (lst->nelts < 100) && 
+         (valid_dptr(lst->head) != 0) &&
+         (valid_dptr(lst->tail) != 0) )
+    {
+        if (settings.verbose > 2) {
+            printf("  ->Treating %p as a list\n", data);
+        }
+        print_list(path, lst);
+        return;
+    }
+
+    /* Try to treat @a data as an ib_field_t pointer */
+    field = (ib_field_t *)data;
+    if (field->nlen <= 32) {
+        if (settings.verbose > 2) {
+            printf("  ->Treating %p as a field\n", data);
+        }
+        print_field(path, field);
+        return;
+    }
+
+    /* No idea what this thing is. */
+    if (settings.verbose > 2) {
+        printf("I have no idea what %p is:", data);
+        for (i = 0, p = (uint8_t *)data;  i < 32;  ++i, ++p) {
+            if ( (i & 0x7) == 0) {
+                printf("%02x:", i);
+            }
+            printf("%02x ", (unsigned int)(*p & 0xff) );
+        }
+        printf("\n");
+    }
 }
 
 /**
@@ -782,19 +869,25 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
 
     /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
-        ib_field_t **field = (ib_field_t **)ib_list_node_data(node);
-        const char *fullpath = build_path( path, *field );
+        void *data = ib_list_node_data(node);
+        ib_field_t **field = (ib_field_t **)data;
+        const char *fullpath = NULL;
         switch ((*field)->type) {
             case IB_FTYPE_NUM:
             case IB_FTYPE_UNUM:
             case IB_FTYPE_NULSTR:
             case IB_FTYPE_BYTESTR:
+                fullpath = build_path( path, *field );
                 print_field(fullpath, *field);
                 break;
             case IB_FTYPE_LIST:
+                fullpath = build_path( path, *field );
                 print_list(fullpath, ib_field_value_list(*field) );
                 break;
             default :
+                if (test_dump_flags(DUMP_TX_AGGRESSIVE) != 0) {
+                    print_other(path, data);
+                }
                 break;
         }
         free( (char *)fullpath );
@@ -817,17 +910,16 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
  *
  * @returns Status code
  */
-static ib_status_t print_tx(
-     ib_engine_t *ib,
-     ib_state_event_type_t event,
-     ib_tx_t *tx,
-     void *data
-)
+static ib_status_t print_tx( ib_engine_t *ib,
+                             ib_state_event_type_t event,
+                             ib_tx_t *tx,
+                             void *data )
 {
     IB_FTRACE_INIT();
     ib_list_t *lst;
     ib_status_t rc;
 
+    ib_log_debug(ib, 9, "print_tx");
     printf("TX:\n");
     printf("  tx/remote: %s:%d\n",
             tx->er_ipstr, tx->conn->remote_port);
@@ -835,7 +927,7 @@ static ib_status_t print_tx(
            tx->conn->local_ipstr, tx->conn->local_port);
 
     /* Not doing a full dump?  Done */
-    if (settings.dump_tx_full == 0) {
+    if (test_dump_flags(DUMP_TX_FULL) == 0) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -1174,7 +1266,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
     }
 
     /* Register the tx handler */
-    if (settings.dump_tx != 0) {
+    if (test_dump_flags(DUMP_TX) != 0) {
         if (settings.verbose > 2) {
             printf("Registering tx handlers\n");
         }
@@ -1190,7 +1282,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
     }
     /* Register the user agent handler */
-    if (settings.dump_user_agent != 0) {
+    if (test_dump_flags(DUMP_USER_AGENT) != 0) {
         if (settings.verbose > 2) {
             printf("Registering user agent handlers\n");
         }
@@ -1207,7 +1299,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
     }
 
     /* Register the GeoIP handler */
-    if (settings.dump_geoip != 0) {
+    if (test_dump_flags(DUMP_GEOIP) != 0) {
         if (settings.verbose > 2) {
             printf("Registering GeoIP handlers\n");
         }
