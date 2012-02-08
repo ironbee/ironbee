@@ -45,6 +45,11 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
     char *name_copy;
     ib_operator_t *op;
 
+    /* Verify that it doesn't start with '@' */
+    if (*name == '@') {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
     rc = ib_hash_get(operator_hash, name, &op);
     if (rc == IB_OK) {
         /* name already is registered */
@@ -98,7 +103,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     (*op_inst)->flags = flags;
 
     if (op->fn_create != NULL) {
-        rc = op->fn_create(pool, parameters, *op_inst);
+        rc = op->fn_create(ib, pool, parameters, *op_inst);
     }
     else {
         rc = IB_OK;

@@ -451,19 +451,20 @@ static ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(ib_rc);
 }
 
-static ib_status_t lua_operator_create(ib_mpool_t *pool,
-                                     const char *parameters,
-                                     ib_operator_inst_t *op_inst)
+static ib_status_t lua_operator_create(ib_engine_t *ib,
+                                       ib_mpool_t *pool,
+                                       const char *parameters,
+                                       ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 static ib_status_t lua_operator_execute(ib_engine_t *ib,
-                                      ib_tx_t *tx,
-                                      void *data,
-                                      ib_field_t *field,
-                                      ib_num_t *result)
+                                        ib_tx_t *tx,
+                                        void *data,
+                                        ib_field_t *field,
+                                        ib_num_t *result)
 {
     IB_FTRACE_INIT();
     ib_status_t ib_rc;

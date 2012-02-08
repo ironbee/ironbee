@@ -225,6 +225,7 @@ typedef struct pcre_rule_data pcre_rule_data_t;
 
 /**
  * @brief Create the PCRE operator.
+ * @param[in] engine The IronBee engine (unused)
  * @param[in,out] pool The memory pool into which @c op_inst->data
  *                will be allocated.
  * @param[in] The regular expression to be built.
@@ -232,7 +233,8 @@ typedef struct pcre_rule_data pcre_rule_data_t;
  *             parsing @a pattern.
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
-static ib_status_t pcre_operator_create(ib_mpool_t *pool,
+static ib_status_t pcre_operator_create(ib_engine_t *ib,
+                                        ib_mpool_t *pool,
                                         const char *pattern,
                                         ib_operator_inst_t *op_inst)
 {

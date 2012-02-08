@@ -98,7 +98,7 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
     (*act_inst)->flags = flags;
 
     if (action->fn_create != NULL) {
-        rc = action->fn_create(pool, parameters, *act_inst);
+        rc = action->fn_create(ib, pool, parameters, *act_inst);
     } else {
         rc = IB_OK;
     }

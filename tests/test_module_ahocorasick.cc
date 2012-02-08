@@ -78,12 +78,12 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
             &field2, ib_engine->mp, "field2", IB_FTYPE_NULSTR, &str2));
 
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, "@pm", &op));
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, "pm", &op));
 
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
-                                      "@pm",
+                                      "pm",
                                       "string2",
                                       0,
                                       &op_inst));
@@ -132,12 +132,12 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
             &field2, ib_engine->mp, "field2", IB_FTYPE_NULSTR, &str2));
 
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, "@pmf", &op));
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, "pmf", &op));
 
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
-                                      "@pmf",
+                                      "pmf",
                                       "ahocorasick.patterns",
                                       0,
                                       &op_inst));

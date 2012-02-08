@@ -46,6 +46,7 @@ typedef struct ib_action_inst_t ib_action_inst_t;
 /**
  * Action instance creation callback type.
  *
+ * @param[in] ib IronBee engine.
  * @param[in] pool Memory pool to be used for allocating needed memory.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the action instance.
@@ -53,7 +54,8 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_action_create_fn_t)(ib_mpool_t *pool,
+typedef ib_status_t (* ib_action_create_fn_t)(ib_engine_t *ib,
+                                              ib_mpool_t *pool,
                                               const char *data,
                                               ib_action_inst_t *act_inst);
 

@@ -34,7 +34,8 @@
 #include "gtest/gtest-spi.h"
 
 
-ib_status_t test_create_fn(ib_mpool_t *pool,
+ib_status_t test_create_fn(ib_engine_t *ib,
+                           ib_mpool_t *pool,
                            const char *data,
                            ib_operator_inst_t *op_inst)
 {

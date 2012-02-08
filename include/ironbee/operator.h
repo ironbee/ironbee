@@ -53,7 +53,8 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_operator_create_fn_t)(ib_mpool_t *pool,
+typedef ib_status_t (* ib_operator_create_fn_t)(ib_engine_t *ib,
+                                                ib_mpool_t *pool,
                                                 const char *parameters,
                                                 ib_operator_inst_t *op_inst);
 

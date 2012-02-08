@@ -341,7 +341,8 @@ static ib_status_t readfile(const char* filename, char **buffer)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t pmf_operator_create(ib_mpool_t *pool,
+static ib_status_t pmf_operator_create(ib_engine_t *ib,
+                                       ib_mpool_t *pool,
                                        const char *pattern_file,
                                        ib_operator_inst_t *op_inst)
 {
@@ -394,7 +395,8 @@ static ib_status_t pmf_operator_create(ib_mpool_t *pool,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t pm_operator_create(ib_mpool_t *pool,
+static ib_status_t pm_operator_create(ib_engine_t *ib,
+                                      ib_mpool_t *pool,
                                       const char *pattern,
                                       ib_operator_inst_t *op_inst)
 {
@@ -523,11 +525,11 @@ static ib_status_t modac_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_operator_register(ib, "@pm", 0,
+    ib_operator_register(ib, "pm", 0,
                          &pm_operator_create,
                          &pm_operator_destroy,
                          &pm_operator_execute);
-    ib_operator_register(ib, "@pmf", 0,
+    ib_operator_register(ib, "pmf", 0,
                          &pmf_operator_create,
                          &pm_operator_destroy,
                          &pm_operator_execute);

@@ -987,13 +987,15 @@ static ib_status_t print_geoip(
  * @internal
  * Create function for the 'print' action.
  *
+ * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
  *
  * @returns Status code
  */
-static ib_status_t action_print_create(ib_mpool_t *mp,
+static ib_status_t action_print_create(ib_engine_t *ib,
+                                       ib_mpool_t *mp,
                                        const char *parameters,
                                        ib_action_inst_t *inst)
 {
