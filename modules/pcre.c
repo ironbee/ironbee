@@ -225,7 +225,7 @@ typedef struct pcre_rule_data pcre_rule_data_t;
 
 /**
  * @brief Create the PCRE operator.
- * @param[in] engine The IronBee engine (unused)
+ * @param[in] ib The IronBee engine (unused)
  * @param[in,out] pool The memory pool into which @c op_inst->data
  *                will be allocated.
  * @param[in] The regular expression to be built.
