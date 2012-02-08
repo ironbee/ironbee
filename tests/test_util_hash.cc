@@ -17,9 +17,10 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee - Hash Test Functions
+/// @brief IronBee - Hash Test
 ///
 /// @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
+/// @author Christopher Alfeld <calfeld@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
 #include <ironbee/hash.h>
@@ -31,380 +32,289 @@
 
 #include <ironbee/mpool.h>
 
-/* -- Tests -- */
+#include <stdexcept>
 
-/// @test Test util hash library - ib_hash_create()
-TEST(TestIBUtilHash, test_hash_create)
+class TestIBUtilHash : public testing::Test
 {
-    ib_mpool_t *mp = NULL;
-    ib_hash_t *ht = NULL;
-    ib_status_t rc;
+public:
+    TestIBUtilHash() 
+    {
+        ib_status_t rc = ib_mpool_create(&m_pool, NULL, NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not initialize mpool.");
+        }
+    }
+    
+    ~TestIBUtilHash()
+    {
+        ib_mpool_destroy(m_pool);
+    }
+    
+protected:
+    ib_mpool_t* m_pool;
+};
 
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-    rc = ib_hash_create(&ht, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
-    ib_hash_clear(ht);
+TEST_F(TestIBUtilHash, test_hash_create)
+{
+    ib_hash_t   *hash = NULL;
+    ib_status_t  rc;
 
-    ib_mpool_destroy(mp);
+    rc = ib_hash_create(&hash, m_pool);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(hash);
+    ib_hash_clear(hash);
 }
 
-/// @test Test util hash library - ib_hash_create_ex(), ib_hash_set/get()
-TEST(TestIBUtilHash, test_hash_set_and_get)
+TEST_F(TestIBUtilHash, test_hash_set_and_get)
 {
-    ib_mpool_t *mp = NULL;
-    ib_hash_t *ht = NULL;
-    ib_status_t rc;
+    ib_hash_t   *hash = NULL;
+    char        *val = NULL;
+    ib_status_t  rc;
 
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    rc = ib_hash_create_ex(
+        &hash, 
+        m_pool, 
+        17, 
+        ib_hashfunc_djb2, 
+        ib_hashequal_default
+    );
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_hash_set(hash, "Key", (void*)"value");
+    ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, ib_hashequal_default);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
-    rc = ib_hash_set(ht, "Key", (void*)"value");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
+    rc = ib_hash_get((void **)&val, hash, "Key");
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ("value", val);
+
+    rc = ib_hash_set(hash, "Key2", (void*)"value2");
+    ASSERT_EQ(IB_OK, rc);
+
+    val = NULL;
+    rc = ib_hash_get((void **)&val, hash, "Key");
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ("value", val);
+
+    val = NULL;
+    rc = ib_hash_get((void **)&val, hash, "Key2");
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ("value2", val);
+
+    val = NULL;
+    rc = ib_hash_get((void **)&val, hash, "noKey");
+    ASSERT_EQ(IB_ENOENT, rc);
+}
+
+TEST_F(TestIBUtilHash, test_hash_nocase)
+{
+    ib_hash_t   *hash = NULL;
+    ib_status_t  rc;
+
+    rc = ib_hash_create_nocase(&hash, m_pool);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_hash_set(hash, "Key", (void*)"value");
+    ASSERT_EQ(IB_OK, rc);
 
     char *val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "Key");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("value", val, 5) == 0) << "ib_hash_get() failed -"
-                                             " expected \"value\", got " << val;
-    rc = ib_hash_set(ht, "Key2", (void*)"value2");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
-    val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "Key");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("value", val, 5) == 0) << "ib_hash_get() failed -"
-                                             " expected \"value\", got " << val;
-    val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "Key2");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("value2", val, 5) == 0) << "ib_hash_get() failed -"
-                                             " expected \"value\", got " << val;
+    rc = ib_hash_get((void **)&val, hash, "kEY");
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_STREQ("value", val);
+    rc = ib_hash_set(hash, "KeY2", (void*)"value2");
+    ASSERT_EQ(IB_OK, rc);
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "noKey");
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_hash_get() failed - rc != IB_ENOENT";
+    rc = ib_hash_get((void **)&val, hash, "KeY");
+    ASSERT_EQ(IB_OK, rc);
 
-    ib_mpool_destroy(mp);
+    ASSERT_STREQ("value", val);
+    val = NULL;
+    rc = ib_hash_get((void **)&val, hash, "KEY2");
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_STREQ("value2", val);
+
+    val = NULL;
+    rc = ib_hash_get((void **)&val, hash, "noKey");
+    ASSERT_EQ(IB_ENOENT, rc);
 }
 
-/// @test Test util hash library - ib_hash_set/get() with nocase
-TEST(TestIBUtilHash, test_hash_nocase)
+TEST_F(TestIBUtilHash, test_hash_ex)
 {
-    ib_mpool_t *mp = NULL;
-    ib_hash_t *ht = NULL;
-    ib_status_t rc;
+    ib_hash_t         *hash = NULL;
+    ib_status_t        rc;
+    static const char  key1[] = "Key1";
+    static const char  key2[] = "Key2";
+    static const char  key3[] = "kEY1";
+    static const char  key4[] = "kEY2";
 
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    rc = ib_hash_create_ex(
+        &hash, 
+        m_pool, 
+        17, 
+        ib_hashfunc_djb2,
+        ib_hashequal_default
+    );
+    ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2_nocase, ib_hashequal_nocase);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
-
-    rc = ib_hash_set(ht, "Key", (void*)"value");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
+    rc = ib_hash_set_ex(hash, key1, 2, (void*)"value");
+    ASSERT_EQ(IB_OK, rc);
 
     char *val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "kEY");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get() failed - rc != IB_OK";
+    rc = ib_hash_get_ex((void **)&val, hash, (void *)key1, 2);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ("value", val);
 
-    ASSERT_TRUE(strncmp("value", val, 5) == 0) << "ib_hash_get() "
-                                                  "failed - expected "
-                                                  "\"value\", got " << val;
-    rc = ib_hash_set(ht, "KeY2", (void*)"value2");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
+    rc = ib_hash_set_ex(hash, (void *)key2, 2, (void*)"other");
+    ASSERT_EQ(IB_OK, rc);
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "KeY");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get() failed - rc != IB_OK";
-
-    ASSERT_TRUE(strncmp("value", val, 5) == 0) << "ib_hash_get() failed "
-                                                  "- expected \"value\", "
-                                                  "got " << val;
-    val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "KEY2");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get() failed - rc != IB_OK";
-
-    ASSERT_TRUE(strncmp("value2", val, 6) == 0) << "ib_hash_get() failed"
-                                           " - expected \"value\", got " << val;
+    rc = ib_hash_get_ex((void **)&val, hash, (void *)key2, 2);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ("other", val);
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, ht, "noKey");
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_hash_get() failed - "
-                                    "rc != IB_ENOENT";
+    rc = ib_hash_get_ex((void **)&val, hash, (void *)key1, 2);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ("other", val);
 
-    ib_mpool_destroy(mp);
+    val = NULL;
+    rc = ib_hash_get_ex((void **)&val, hash, (void *)key3, 2);
+    ASSERT_EQ(IB_ENOENT, rc);
+
+    val = NULL;
+    rc = ib_hash_get_ex((void **)&val, hash, (void *)key4, 2);
+    ASSERT_EQ(IB_ENOENT, rc);
 }
 
-/// @test Test util hash library - ib_hash_create_ex(), ib_hash_set/get_ex()
-TEST(TestIBUtilHash, test_hash_set_and_get_ex)
-{
-    ib_mpool_t *mp = NULL;
-    ib_hash_t *ht = NULL;
-    ib_status_t rc;
-    char key1[] = "Key1";
-    char key2[] = "Key2";
-    char key3[] = "kEY1";
-    char key4[] = "kEY2";
-
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-
-    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2, 0);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
-
-    rc = ib_hash_set_ex(ht, key1, 2, (void*)"value");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
-
-    char *val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key1, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("value", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    rc = ib_hash_set_ex(ht, key2, 2, (void*)"other");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key2, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("other", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key1, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("other", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key3, 2);
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_hash_get_ex() failed - rc != IB_ENOENT";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key4, 2);
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_hash_get_ex() failed - rc != IB_ENOENT";
-
-    ib_mpool_destroy(mp);
-}
-
-/// @test Test util hash library - ib_hash_set/get_ex() with nocase
-TEST(TestIBUtilHash, test_hash_get_ex_nocase)
-{
-    ib_mpool_t *mp = NULL;
-    ib_hash_t *ht = NULL;
-    ib_status_t rc;
-    char key1[] = "Key1";
-    char key2[] = "Key2";
-    char key3[] = "kEY1";
-    char key4[] = "kEY2";
-
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-
-    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2_nocase, ib_hashequal_nocase);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
-
-    rc = ib_hash_set_ex(ht, key1, 2, (void*)"value");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
-
-    char *val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key1, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("value", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    rc = ib_hash_set_ex(ht, key2, 2, (void*)"other");
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed - rc != IB_OK";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key2, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("other", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key1, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("other", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key3, 2);
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_hash_get_ex() failed - rc != IB_ENOENT";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key4, 2);
-    ASSERT_TRUE(rc == IB_ENOENT) << "ib_hash_get_ex() failed - rc != IB_ENOENT";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key3, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("other", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    val = NULL;
-    rc = ib_hash_get_ex((void **) &val, ht, key4, 2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed - rc != IB_OK";
-    ASSERT_TRUE(strncmp("other", val, 5) == 0) << "ib_hash_get_ex() failed -";
-
-    ib_mpool_destroy(mp);
-}
-
-/// @test Test util hash library - ib_hash_djb2 with flags
-TEST(TestIBUtilHash, test_hashfunc_djb2)
+TEST_F(TestIBUtilHash, test_hashfunc_djb2)
 {
     unsigned int hash1 = 0;
     unsigned int hash2 = 0;
 
     // Test with no case sensitive
-    hash1 = ib_hashfunc_djb2("Key", 3);
-    hash2 = ib_hashfunc_djb2("kEY", 3);
-    ASSERT_TRUE(hash1 == hash2) << "ib_hashfunc_djb2() failed - hash1:"
-                                << hash1 << " != Hash2:" << hash2
-                                << " but should be equal";
+    hash1 = ib_hashfunc_djb2_nocase("Key", 3);
+    hash2 = ib_hashfunc_djb2_nocase("kEY", 3);
+    ASSERT_EQ(hash2, hash1);
     // Test with case sensitive
     hash1 = hash2 = 0;
     hash1 = ib_hashfunc_djb2("Key", 3);
     hash2 = ib_hashfunc_djb2("kEY", 3);
-    ASSERT_TRUE(hash1 != hash2) << "ib_hashfunc_djb2() failed - hash1:"
-                                << hash1 << " == Hash2:" << hash2
-                                << " but should not be equal";
+    ASSERT_NE(hash2, hash1);
 }
 
-/// @test Test util hash library - Check multiple keys and resizing
-TEST(TestIBUtilHash, test_hash_resizing)
+TEST_F(TestIBUtilHash, test_hashequal)
 {
-    ib_mpool_t *mp = NULL;
-    ib_status_t rc;
-    ib_hash_t *ht = NULL;
+    EXPECT_EQ(1, ib_hashequal_default("key",3,"key",3));
+    EXPECT_EQ(0, ib_hashequal_default("key",3,"kEy",3));
+    EXPECT_EQ(0, ib_hashequal_default("key",3,"keys",4));
+    EXPECT_EQ(1, ib_hashequal_nocase("key",3,"key",3));
+    EXPECT_EQ(1, ib_hashequal_nocase("key",3,"kEy",3));
+    EXPECT_EQ(0, ib_hashequal_nocase("key",3,"kEys",4));
+}
 
-    char combs[] = "abcdefghij";
+TEST_F(TestIBUtilHash, test_hash_resizing)
+{
+    ib_status_t  rc;
+    ib_hash_t   *hash = NULL;
 
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    static const char combs[] = "abcdefghij";
 
-    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2_nocase, ib_hashequal_nocase);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
+    rc = ib_hash_create(&hash, m_pool);
+    ASSERT_EQ(IB_OK, rc);
 
-    int i = 0;
-    int j = 0;
-    int k = 0;
-
-    /* Insert 1000 keys with value equal to the key used */
-    for (i = 0; i < 10; i++) {
-        for (j = 0; j < 10; j++) {
-            for (k = 0; k < 10; k++) {
-                char *c = (char *)ib_mpool_calloc(mp, 1, 4);
-                ASSERT_TRUE(c != NULL) << "ib_mpool_calloc() failed "
-                                          "- c == NULL";
+    // Insert 1000 keys with value equal to the key used.
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            for (int k = 0; k < 10; k++) {
+                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                ASSERT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
                 c[4] = '\0';
-                rc = ib_hash_set_ex(ht, c, 3, (void *)c);
-                ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed "
-                                            "- rc != IB_OK";
+                rc = ib_hash_set_ex(hash, c, 3, (void *)c);
+                ASSERT_EQ(IB_OK, rc);
 
-                // Search keys now (because it will perform resizing as soon as
-                // we reach the ratio, so check it before) and after resizing
+                // Check now (pre-resizing) and later (after resizing).
                 char *val = NULL;
-                rc = ib_hash_get_ex((void **) &val, ht, c, 3);
-                ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed -"
-                                            " rc != IB_OK at key '" << c << "'";
-                ASSERT_TRUE(strncmp(c, val, 3) == 0) << "ib_hash_get_ex()"
-                                                              " failed -";
+                rc = ib_hash_get_ex((void **)&val, hash, c, 3);
+                ASSERT_EQ(IB_OK, rc);
+                ASSERT_STREQ(c, val);
 
             }
         }
     }
 
     // After resizing
-    for (i = 0; i < 10; i++) {
-        for (j = 0; j < 10; j++) {
-            for (k = 0; k < 10; k++) {
-                char *c = (char *)ib_mpool_calloc(mp, 1, 4);
-                ASSERT_TRUE(c != NULL) << "ib_mpool_calloc() failed "
-                                          "- c == NULL";
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            for (int k = 0; k < 10; k++) {
+                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                ASSERT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
                 c[4] = '\0';
                 char *val = NULL;
-                rc = ib_hash_get_ex((void **) &val, ht, c, 3);
-                ASSERT_TRUE(rc == IB_OK) << "ib_hash_get_ex() failed "
-                                            "- rc != IB_OK";
-                ASSERT_TRUE(strncmp(c, val, 3) == 0) << "ib_hash_get_ex()"
-                                                              " failed -";
+                rc = ib_hash_get_ex((void **)&val, hash, c, 3);
+                ASSERT_EQ(IB_OK, rc);
+                ASSERT_STREQ(c, val);
 
             }
         }
     }
-
-    ib_mpool_destroy(mp);
 }
 
-/// @test Test util hash library - Check multiple keys and resizing
-TEST(TestIBUtilHash, test_hash_getall)
+TEST_F(TestIBUtilHash, test_hash_getall)
 {
-    ib_mpool_t *mp = NULL;
-    ib_status_t rc;
-    ib_hash_t *ht = NULL;
-    ib_list_t *list = NULL;
-    ib_list_t *list2 = NULL;
+    ib_status_t  rc;
+    ib_hash_t   *hash  = NULL;
+    ib_list_t   *list  = NULL;
+    ib_list_t   *list2 = NULL;
 
-    char combs[] = "abcdefghij";
+    static const char combs[] = "abcdefghij";
 
-    rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    rc = ib_list_create(&list, m_pool);
+    ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_list_create(&list, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_create() failed - rc != IB_OK";
+    rc = ib_list_create(&list2, m_pool);
+    ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_list_create(&list2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_list_create() failed - rc != IB_OK";
+    rc = ib_hash_create(&hash, m_pool);
+    ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_hash_create_ex(&ht, mp, 17, ib_hashfunc_djb2_nocase, ib_hashequal_nocase);
-    ASSERT_TRUE(rc == IB_OK) << "ib_hash_create_ex() failed - rc != IB_OK";
-
-    int i = 0;
-    int j = 0;
-    int k = 0;
-
-    /* Insert 1000 keys with value equal to the key used */
-    for (; i < 10; i++) {
-        for (j = 0; j < 10; j++) {
-            for (k = 0; k < 10; k++) {
-                char *c = (char *)ib_mpool_calloc(mp, 1, 4);
-                ASSERT_TRUE(c != NULL) << "ib_mpool_calloc() failed "
-                                          "- c == NULL";
+    // Insert 1000 keys with value equal to the key used.
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            for (int k = 0; k < 10; k++) {
+                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                EXPECT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
                 c[4] = '\0';
 
-                rc = ib_hash_set_ex(ht, c, 3, (void *)c);
-                ASSERT_TRUE(rc == IB_OK) << "ib_hash_set() failed "
-                                            "- rc != IB_OK";
+                rc = ib_hash_set_ex(hash, c, 3, (void *)c);
+                ASSERT_EQ(IB_OK, rc);
 
-                /* Insert it in the list first */
                 rc = ib_list_push(list, (void *)c);
-                ASSERT_TRUE(rc == IB_OK) << "ib_list_push() failed "
-                                            "- rc != IB_OK";
+                ASSERT_EQ(IB_OK, rc);
 
             }
         }
     }
 
-    ASSERT_TRUE(ib_list_elements(list) == 1000) << "ib_list_push() failed"
-                                            " - We need to make sure that all"
-                                            " the items are inserted. Count is "
-                                            << ib_list_elements(list);
+    ASSERT_EQ(1000UL, ib_list_elements(list));
 
-    rc = ib_hash_get_all(list2, ht);
+    rc = ib_hash_get_all(list2, hash);
     ASSERT_EQ(IB_OK, rc);
     {
         ib_list_node_t *li = NULL;
         ib_list_node_t *li2 = NULL;
         size_t num_found = 0;
-        /*
-         * We know that all elements of list are unique, so we make sure 
-         * every element of list is in list2.
-         */
+        // We know that all elements of list are unique, so we make sure 
+        //every element of list is in list2.
         IB_LIST_LOOP(list, li) {
             IB_LIST_LOOP(list2, li2) {
                 if ( memcmp(li->data,*((void**)(li2->data)),4) == 0 ) {
@@ -415,6 +325,4 @@ TEST(TestIBUtilHash, test_hash_getall)
         }
         ASSERT_EQ(1000UL, num_found);
     }
-    
-    ib_mpool_destroy(mp);
 }
