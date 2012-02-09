@@ -743,7 +743,7 @@ void ib_conn_destroy(ib_conn_t *conn)
     /// @todo Probably need to update state???
     if ( conn != NULL && conn->mp != NULL ) {
         ib_mpool_destroy(conn->mp);
-        conn->mp = NULL;
+        /* Don't do this: conn->mp = NULL; conn is now freed memory! */
     }
 }
 
