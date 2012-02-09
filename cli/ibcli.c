@@ -740,7 +740,7 @@ static void print_field(const char *label,
                 }
                 break;
             }
-        case IB_FTYPE_BYTESTR :      /**< Binary data value */
+        case IB_FTYPE_BYTESTR :      /**< Byte string value */
             {
                 bs = ib_field_value_bytestr(field);
                 size_t len = ib_bytestr_length(bs);
