@@ -69,7 +69,6 @@
 IB_MODULE_DECLARE();
 
 typedef struct modlua_chunk_t modlua_chunk_t;
-typedef struct modlua_chunk_fp_tracker_t modlua_chunk_fp_tracker_t;
 typedef struct modlua_chunk_tracker_t modlua_chunk_tracker_t;
 typedef struct modlua_cpart_t modlua_cpart_t;
 typedef struct modlua_reg_t modlua_reg_t;
@@ -77,34 +76,43 @@ typedef struct modlua_runtime_t modlua_runtime_t;
 typedef struct modlua_cfg_t modlua_cfg_t;
 typedef struct modlua_wrapper_cbdata_t modlua_wrapper_cbdata_t;
 
-/** Lua Module Binary Data Chunk */
+/**
+ * @brief A container to store Lua Module byte code dumped by lua_dump.
+ */
 struct modlua_chunk_t {
     ib_engine_t        *ib;           /**< Engine */
     ib_mpool_t         *mp;           /**< Pool to allocate from */
     const char         *name;         /**< Name for debug */
-    ib_array_t         *cparts;       /**< Chunk (array of chunk parts) */
+
+    /**
+     * Array of chunk parts. These are segments of memory allocated 
+     * from mp which represent a Lua function in byte code.
+     */
+    ib_array_t         *cparts;      
 };
 
-/** Structure to track file reader chunk parts */
-struct modlua_chunk_fp_tracker_t {
-    modlua_chunk_t     *chunk;        /**< The chunk that is being loaded */
-    FILE               *fp;           /**< File pointer */
-};
-
-/** Structure to track chunk parts while reading */
+/**
+ * Structure to track chunk parts while reading. Used by modlua_load_lua_data.
+ */
 struct modlua_chunk_tracker_t {
     modlua_chunk_t     *chunk;        /**< The chunk that is being read */
     size_t              part;         /**< The current part index */
 
 };
 
-/** Lua Module Binary Data in Parts */
+/**
+ * Lua Module byte code. This is stored in the member cparts (an ib_list_t)
+ * of modlua_chunk_t.
+ */
 struct modlua_cpart_t {
     uint8_t            *data;         /**< Data */
     size_t              dlen;         /**< Data length */
 };
 
-/** Lua runtime */
+/**
+ * @brief Lua runtime
+ * @details Created for each connection and stored at MODLUA_CONN_KEY.
+ */
 struct modlua_runtime_t {
     lua_State          *L;            /**< Lua stack */
 };
@@ -137,32 +145,71 @@ static modlua_cfg_t modlua_global_cfg;
 
 /* -- Lua Routines -- */
 
-static const char *modlua_data_reader(lua_State *L,
-                                      void *udata,
-                                      size_t *size)
+/**
+ * @brief Reader callback to lua_load.
+ * @details This is used to convert modula_chunk_t* into a function on the
+ *          top of the Lua stack.
+ * @param[in] L Lua state @a udata will be loaded into.
+ * @param[in,out] udata Always a modlua_chunk_tracker_t*. 
+ *                This stores a pointer to a modlua_chunk_t which contains
+ *                an ib_list_t of chunks of data. The modlua_chunk_tracker_t
+ *                also contains the current index in that list of chunks
+ *                that is next to be delivered to the Lua runtime.
+ * @param[in] size The size of the char* returned by this function.
+ * @returns The memory pointed to by ((modlua_chunk_tracker_t*)udata)->part
+ *          with a size of @a size. This represents a chunk of Lua bytecode
+ *          that, when assembled with all the other chunks, will be a Lua
+ *          function placed on top of @a L.
+ *          NULL is returned on an error or the end of the list of chunks.
+ */
+static const char *modlua_data_reader(lua_State *L, void *udata, size_t *size)
 {
     IB_FTRACE_INIT();
+
+    /* Holds the modlua_chunk_t and the index into its list of chunks. */
     modlua_chunk_tracker_t *tracker = (modlua_chunk_tracker_t *)udata;
+
+    /* A container for the ib_list_t of the chunks as well as other 
+     * relevant pointers, eg the IronBee engine. */
     modlua_chunk_t *chunk = tracker->chunk;
-    //ib_engine_t *ib = chunk->ib;
+
+    /* The list of data chunks that represent a Lua function in byte code. 
+     * We must return one of these list elements. */
+    ib_engine_t *ib_engine = chunk->ib;
+
+    /* We will set this to the list element we are going to return. */
     modlua_cpart_t *cpart;
+
+    /* Return code. */
     ib_status_t rc;
 
+    /* Get the Lua byte code from the list. */
     rc = ib_array_get(chunk->cparts, tracker->part, &cpart);
     if (rc != IB_OK) {
-        //ib_log_error(ib, 4, "No more chunk parts to read: %d", rc);
+        ib_log_error(ib_engine, 4, "No more chunk parts to read: %d", rc);
         IB_FTRACE_RET_CONSTSTR(NULL);
     }
 
+    /* Return to the caller (Lua) the size of the byte code pointer we
+     * are about to return to it via cpart->data. */
     *size = cpart->dlen;
 
-    //ib_log_debug(ib, 9, "Lua reading part=%d size=%" PRIuMAX, (int)tracker->part, *size);
-
+    /* Increment the iteration through our list of chunks. */
     tracker->part++;
 
+    /* Return the chunk of Lua byte code. */
     IB_FTRACE_RET_CONSTSTR((const char *)cpart->data);
 }
 
+/**
+ * @brief Callback for lua_dump to store compiled bytecode.
+ * @param[in] L Lua state.
+ * @param[in] data Byte code to be copied.
+ * @param[in] size Length of @a data.
+ * @param[out] udata User memory that will store the byte code. This is
+ *             always a modlua_chunk_t*.
+ * @returns 0 on success and -1 on failure.
+ */
 static int modlua_data_writer(lua_State *L,
                               const void *data,
                               size_t size,
@@ -198,7 +245,9 @@ static int modlua_data_writer(lua_State *L,
 
 /* -- Lua Wrappers -- */
 
-static int modlua_load_lua_data(ib_engine_t *ib, lua_State *L, modlua_chunk_t *chunk)
+static int modlua_load_lua_data(ib_engine_t *ib_engine,
+                                lua_State *L,
+                                modlua_chunk_t *chunk)
 {
     IB_FTRACE_INIT();
     modlua_chunk_tracker_t tracker;
@@ -223,13 +272,13 @@ static int modlua_load_lua_data(ib_engine_t *ib, lua_State *L, modlua_chunk_t *c
 #define IB_FFI_MODULE_EVENT_WRAPPER     _IRONBEE_CALL_EVENT_HANDLER
 #define IB_FFI_MODULE_EVENT_WRAPPER_STR IB_XSTRINGIFY(IB_FFI_MODULE_EVENT_WRAPPER)
 
-static ib_status_t modlua_register_event_handler(ib_engine_t *ib,
+static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
                                                  ib_context_t *ctx,
                                                  const char *event_name,
                                                  ib_module_t *module)
 {
     IB_FTRACE_INIT();
-    ib_mpool_t *pool = ib_engine_pool_config_get(ib);
+    ib_mpool_t *pool = ib_engine_pool_config_get(ib_engine);
     modlua_cfg_t *modcfg;
     ib_state_event_type_t event;
     ib_status_t rc;
@@ -237,7 +286,7 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib,
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
+        ib_log_error(ib_engine, 0, "Failed to fetch module %s config: %d",
                      MODULE_NAME_STR, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -327,11 +376,11 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib,
         event = conn_data_out_event;
     }
     else {
-        ib_log_error(ib, 4, "Unhandled event %s", event_name);
+        ib_log_error(ib_engine, 4, "Unhandled event %s", event_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(ib, 9,
+    ib_log_debug(ib_engine, 9,
                  "Registering lua event handler m=%p event=%d: onEvent%s",
                  module,
                  event,
@@ -346,28 +395,38 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib,
     }
 
     /* Add the lua module to the lua event list. */
-    ib_log_debug(ib, 9, "Adding module=%p to event=%d list=%p",
+    ib_log_debug(ib_engine, 9, "Adding module=%p to event=%d list=%p",
                  module, event, modcfg->event_reg[event]);
     rc = ib_list_push(modcfg->event_reg[event], (void *)module);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
-                                        lua_State *ls,
+/**
+ * @brief Load the given file into the given Lua state.
+ * @param[in] ib_engine IronBee engine for logging.
+ * @param[in,out] L Lua state the file will be loaded into.
+ * @param[in] file The Lua script to be loaded.
+ * @param[out] pchunk If @a file is succesfully loaded, it is dumped
+ *             by lua_dump into *pchunk. The memory in *pchunk is
+ *             allocated from the @a ib_engine memory pool and does not
+ *             need to be explicitly freed by the caller.
+ * @returns IB_OK or appropriate status.
+ */
+static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
+                                        lua_State *L,
                                         const char *file,
                                         modlua_chunk_t **pchunk)
 {
     IB_FTRACE_INIT();
-    ib_mpool_t *pool = ib_engine_pool_config_get(ib);
+    ib_mpool_t *pool = ib_engine_pool_config_get(ib_engine);
     modlua_chunk_t *chunk;
-    lua_State *L = ls;
     char *name;
     char *name_start;
     char *name_end;
     int name_len;
-    ib_status_t rc;
-    int ec;
+    ib_status_t ib_rc;
+    int sys_rc;
 
     /* Figure out the name based on the file. */
     /// @todo Need a better way???
@@ -390,61 +449,50 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib,
     memcpy(name, name_start, name_len);
     name[name_len] = '\0';
 
-    ib_log_debug(ib, 6, "Loading lua module \"%s\": %s",
+    ib_log_debug(ib_engine, 6, "Loading lua module \"%s\": %s",
                  name, file);
 
     /* Save the Lua chunk. */
-    ib_log_debug(ib, 9, "Allocating chunk");
+    ib_log_debug(ib_engine, 9, "Allocating chunk");
     chunk = (modlua_chunk_t *)ib_mpool_alloc(pool, sizeof(*chunk));
     if (chunk == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    chunk->ib = ib;
-    chunk->mp = ib_engine_pool_config_get(ib);
+    chunk->ib = ib_engine;
+    chunk->mp = ib_engine_pool_config_get(ib_engine);
     chunk->name = name;
     *pchunk = chunk;
 
-    ib_log_debug(ib, 9, "Creating array for chunk parts");
+    ib_log_debug(ib_engine, 9, "Creating array for chunk parts");
     /// @todo Make this initial size configurable
-    rc = ib_array_create(&chunk->cparts, pool, 32, 32);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+    ib_rc = ib_array_create(&chunk->cparts, pool, 32, 32);
+    if (ib_rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(ib_rc);
     }
 
-    /* Setup a Lua state if one was not passed. */
-    if (L == NULL) {
-        L = luaL_newstate();
-
-        if (L==NULL) {
-            ib_log_error(ib, 0, "Failed to create LuaJIT state.");
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-
-        luaL_openlibs(L);
-    }
-
-    ib_log_debug(ib, 7, "Using precompilation via lua_dump.");
+    ib_log_debug(ib_engine, 7, "Using precompilation via lua_dump.");
 
     /* Load (compile) the lua module. */
-    ec = luaL_loadfile(L, file);
-    if (ec != 0) {
-        ib_log_error(ib, 1, "Failed to load lua module \"%s\" - %s (%d)",
-                     file, lua_tostring(L, -1), ec);
+    sys_rc = luaL_loadfile(L, file);
+    if (sys_rc != 0) {
+        ib_log_error(ib_engine, 1, "Failed to load lua module \"%s\" - %s (%d)",
+                     file, lua_tostring(L, -1), sys_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ec = lua_dump(L, modlua_data_writer, chunk);
-    if (ec != 0) {
-        ib_log_error(ib, 1, "Failed to save lua module \"%s\" - %s (%d)",
-                     file, lua_tostring(L, -1), ec);
+    /* Dump the byte code into lua chunk. */
+    sys_rc = lua_dump(L, modlua_data_writer, chunk);
+    if (sys_rc != 0) {
+        ib_log_error(ib_engine, 1, "Failed to save lua module \"%s\" - %s (%d)",
+                     file, lua_tostring(L, -1), sys_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     lua_pushstring(L, name);
-    ec = lua_pcall(L, 1,0,0);
-    if (ec != 0) {
-        ib_log_error(ib, 1, "Failed to run lua module \"%s\" - %s (%d)",
-                     file, lua_tostring(L, -1), ec);
+    sys_rc = lua_pcall(L, 1,0,0);
+    if (sys_rc != 0) {
+        ib_log_error(ib_engine, 1, "Failed to run lua module \"%s\" - %s (%d)",
+                     file, lua_tostring(L, -1), sys_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1199,7 +1247,6 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
 
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
-            break;
     }
 
     /* Call event handler via a wrapper. */
@@ -1389,10 +1436,11 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
      * executed for each module in the list.
      */
     IB_LIST_LOOP(luaevents, node) {
-        ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug(ib, 9, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
-                     m->name, m, event, ib_state_event_name(event));
-        rc = modlua_exec_lua_handler(ib, txdata, lua, m->name, event);
+        ib_module_t *module = (ib_module_t *)ib_list_node_data(node);
+        ib_log_debug(ib, 9,
+                     "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+                     module->name, module, event, ib_state_event_name(event));
+        rc = modlua_exec_lua_handler(ib, txdata, lua, module->name, event);
         if (rc != IB_OK) {
             ib_log_error(ib, 3, "Error executing lua handler");
         }
@@ -1463,10 +1511,11 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
      * executed for each module in the list.
      */
     IB_LIST_LOOP(luaevents, node) {
-        ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug(ib, 9, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
-                     m->name, m, event, ib_state_event_name(event));
-        rc = modlua_exec_lua_handler(ib, conn, lua, m->name, event);
+        ib_module_t *module = (ib_module_t *)ib_list_node_data(node);
+        ib_log_debug(ib, 9,
+                     "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+                     module->name, module, event, ib_state_event_name(event));
+        rc = modlua_exec_lua_handler(ib, conn, lua, module->name, event);
         if (rc != IB_OK) {
             ib_log_error(ib, 3, "Error executing lua handler");
         }
