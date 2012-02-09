@@ -789,6 +789,10 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     /* Retrieve corecfg to get the AuditLogIndexFormat */
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   &corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(log->ib, 0, "Failure accessing core module: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Close the audit log. */
     if (cfg->fp != NULL) {
@@ -1123,7 +1127,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     // If it's not the core log provider, we're done: we know nothing
     // about it's data, so don't try to treat it as a file handle!
     main_ctx = ib_context_main(ctx->ib);
-    rc = ib_context_module_config(
+    ib_context_module_config(
         main_ctx, ib_core_module(), (void *)&main_core_config);
     main_lp = main_core_config->pi.logger->pr;
     if ( (main_lp != lpi->pr)
@@ -2085,74 +2089,76 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                        strlen(tstamp));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
-                       "tx-id",
-                       (uint8_t *)tx->id,
-                       strlen(tx->id));
-    ib_list_push(list, f);
-
     ib_field_create(&f, pool,
                     "tx-num",
                     IB_FTYPE_UNUM,
                     &tx_num);
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
-                       "remote-addr",
-                       (uint8_t *)tx->conn->remote_ipstr,
-                       strlen(tx->conn->remote_ipstr));
-    ib_list_push(list, f);
-
-    ib_field_create(&f, pool,
-                    "remote-port",
-                    IB_FTYPE_UNUM,
-                    &tx->conn->remote_port);
-    ib_list_push(list, f);
-
-    ib_field_alias_mem(&f, pool,
-                       "local-addr",
-                       (uint8_t *)tx->conn->local_ipstr,
-                       strlen(tx->conn->local_ipstr));
-    ib_list_push(list, f);
-
-    ib_field_create(&f, pool,
-                    "local-port",
-                    IB_FTYPE_UNUM,
-                    &tx->conn->local_port);
-    ib_list_push(list, f);
-
-    /// @todo If this is NULL, parser failed - what to do???
-    if (tx->path != NULL) {
+    if (tx != NULL) {
         ib_field_alias_mem(&f, pool,
-                           "request-uri-path",
-                           (uint8_t *)tx->path,
-                           strlen(tx->path));
+                           "tx-id",
+                           (uint8_t *)tx->id,
+                           strlen(tx->id));
         ib_list_push(list, f);
-    }
 
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_protocol"), &f);
-    if (rc == IB_OK) {
-        ib_list_push(list, f);
-    }
-    else {
-        ib_log_error(ib, 4, "Failed to get request_protocol: %d", rc);
-    }
-
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_method"), &f);
-    if (rc == IB_OK) {
-        ib_list_push(list, f);
-    }
-    else {
-        ib_log_error(ib, 4, "Failed to get request_method: %d", rc);
-    }
-
-    /// @todo If this is NULL, parser failed - what to do???
-    if (tx->hostname != NULL) {
         ib_field_alias_mem(&f, pool,
-                           "request-hostname",
-                           (uint8_t *)tx->hostname,
-                           strlen(tx->hostname));
+                           "remote-addr",
+                           (uint8_t *)tx->conn->remote_ipstr,
+                           strlen(tx->conn->remote_ipstr));
         ib_list_push(list, f);
+
+        ib_field_create(&f, pool,
+                        "remote-port",
+                        IB_FTYPE_UNUM,
+                        &tx->conn->remote_port);
+        ib_list_push(list, f);
+
+        ib_field_alias_mem(&f, pool,
+                           "local-addr",
+                           (uint8_t *)tx->conn->local_ipstr,
+                           strlen(tx->conn->local_ipstr));
+        ib_list_push(list, f);
+
+        ib_field_create(&f, pool,
+                        "local-port",
+                        IB_FTYPE_UNUM,
+                        &tx->conn->local_port);
+        ib_list_push(list, f);
+
+        /// @todo If this is NULL, parser failed - what to do???
+        if (tx->path != NULL) {
+            ib_field_alias_mem(&f, pool,
+                               "request-uri-path",
+                               (uint8_t *)tx->path,
+                               strlen(tx->path));
+            ib_list_push(list, f);
+        }
+
+        rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_protocol"), &f);
+        if (rc == IB_OK) {
+            ib_list_push(list, f);
+        }
+        else {
+            ib_log_error(ib, 4, "Failed to get request_protocol: %d", rc);
+        }
+
+        rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_method"), &f);
+        if (rc == IB_OK) {
+            ib_list_push(list, f);
+        }
+        else {
+            ib_log_error(ib, 4, "Failed to get request_method: %d", rc);
+        }
+
+        /// @todo If this is NULL, parser failed - what to do???
+        if (tx->hostname != NULL) {
+            ib_field_alias_mem(&f, pool,
+                               "request-hostname",
+                               (uint8_t *)tx->hostname,
+                               strlen(tx->hostname));
+            ib_list_push(list, f);
+        }
     }
 
     /* Add the part to the auditlog. */
@@ -2892,7 +2898,10 @@ static ib_status_t parser_register(ib_engine_t *ib,
                                    ib_provider_t *pr)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pr?(IB_PROVIDER_IFACE_TYPE(parser) *)pr->iface:NULL;
+
+    assert(pr != NULL);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface = (IB_PROVIDER_IFACE_TYPE(parser) *)pr->iface;
+    assert(iface != NULL);
 
     /* Check that versions match. */
     if (iface->version != IB_PROVIDER_VERSION_PARSER) {
@@ -3119,14 +3128,12 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
 static ib_status_t data_api_clear(ib_provider_inst_t *dpi)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
-    ib_status_t rc;
 
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+
+    IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
+    ib_status_t rc;
 
     /* This function is required, so no NULL check. */
 
@@ -3803,6 +3810,10 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
 
     rc = ib_context_module_config(tx->ctx, ib_core_module(),
                                   (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failure accessing core module: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Data Provider Instance */
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &tx->dpi,
