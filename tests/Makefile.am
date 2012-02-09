@@ -131,7 +131,6 @@ test_luajit_LDADD = $(LDADD) \
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 
 check-local: $(check_PROGRAMS)
-	cp $(abs_top_srcdir)/lua/ironbee-ffi.lua $(abs_top_builddir)/modules/.libs/
 	for cp in $(check_PROGRAMS); do \
 		./$${cp} --gtest_output=xml:$${cp}_details.xml 2> $${cp}_stderr.log; \
 		if test -n "$(VALGRIND)"; then \

@@ -10,9 +10,7 @@ else
 AM_LDFLAGS = -module -avoid-version
 endif
 
-check_LTLIBRARIES = ironbee-ffi.lua
-
-pkglib_LTLIBRARIES =  ibmod_htp.la \
+pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
                      ibmod_ac.la \
                      ibmod_radix.la \
@@ -24,9 +22,6 @@ pkglib_LTLIBRARIES =  ibmod_htp.la \
                      ibmod_user_agent.la \
                      ibmod_trace.la \
                      ibmod_perf_stats.la 
-
-ironbee-ffi.lua : $(abs_top_srcdir)/lua/ironbee-ffi.lua
-	cp $< .libs
 
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la 
@@ -120,4 +115,7 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
 
+
+all-local: $(abs_top_srcdir)/lua/ironbee-ffi.lua
+	cp $(<) $(abs_top_builddir)/modules/.libs/ironbee-ffi.lua
 
