@@ -32,6 +32,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/config.h>
+#include <ironbee/mpool.h>
 
 #include "config-parser.h"
 #include "ironbee_private.h"
@@ -58,12 +59,19 @@ static char *pval = NULL;
 static char *mark = NULL;
 
 /**
- * @brief Malloc and unescpe into that buffer the marked string.
- * @param[in] fpc_mark the start of the string.
- * @param[in] fpc the current character from ragel.
- * @return a calloc'ed and realloc'ed buffer containing a string.
+ * @brief Malloc and unescape into that buffer the marked string.
+ * @param[in] fpc_mark The start of the string.
+ * @param[in] fpc The current character from ragel.
+ * @param[in,out] mp Temporary memory pool passed in by Ragel.
+ * @return a buffer allocated from the tmpmp memory pool
+ *         available in ib_cfgparser_ragel_parse_chunk. This buffer may be
+ *         larger than the string stored in it if the length of the string is
+ *         reduced by Javascript unescaping.
  */
-static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
+static char* alloc_cpy_marked_string(char *fpc_mark,
+                                     char *fpc,
+                                     ib_mpool_t* mp)
+{
   char *afpc = fpc;
   size_t pvallen;
   /* Adjust for quoted value. */
@@ -72,13 +80,13 @@ static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
       afpc--;
   }
   pvallen = (size_t)(afpc - fpc_mark);
-  pval = (char *)malloc(pvallen + 1 * sizeof(*pval));
+  pval = (char *)ib_mpool_alloc(mp, (pvallen + 1) * sizeof(*pval));
 
   ib_util_unescape_string(pval, &pvallen, fpc_mark, pvallen);
 
-  /* Shrink the buffer appropriately. */
-  pval = (char*)realloc(pval, pvallen+1);
-
+  /* At this point the buffer i pvallen+1 in size, but we cannot shrink it. */
+  /* This is not considered a problem for configuration parsing and it is
+     deallocated after parsing and configuration is complete. */
   return pval;
 }
 
@@ -93,11 +101,11 @@ static char* calloc_cpy_marked_string(char *fpc_mark, char *fpc) {
 
     # Parameter
     action push_param {
-        pval = calloc_cpy_marked_string(mark, fpc);
+        pval = alloc_cpy_marked_string(mark, fpc, mptmp);
         ib_list_push(plist, pval);
     }
     action push_blkparam {
-        pval = calloc_cpy_marked_string(mark, fpc);
+        pval = alloc_cpy_marked_string(mark, fpc, mptmp);
         ib_list_push(plist, pval);
     }
 
