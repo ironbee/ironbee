@@ -816,7 +816,7 @@ static void print_other(const char *path, void *data)
 
     /* Try to treat @a data as an ib_list_t pointer */
     lst = (ib_list_t *)data;
-    if ( (lst->nelts < 100) && 
+    if ( (lst->nelts < 100) &&
          (valid_dptr(lst->head) != 0) &&
          (valid_dptr(lst->tail) != 0) )
     {

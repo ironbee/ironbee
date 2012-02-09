@@ -407,7 +407,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
                      iplen, ipstr, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     /* Do the matching */
     rc = ib_radix_match_closest(radix, prefix, &rmatch);
     if (rc == IB_ENOENT) {

@@ -85,10 +85,10 @@ struct modlua_chunk_t {
     const char         *name;         /**< Name for debug */
 
     /**
-     * Array of chunk parts. These are segments of memory allocated 
+     * Array of chunk parts. These are segments of memory allocated
      * from mp which represent a Lua function in byte code.
      */
-    ib_array_t         *cparts;      
+    ib_array_t         *cparts;
 };
 
 /**
@@ -150,7 +150,7 @@ static modlua_cfg_t modlua_global_cfg;
  * @details This is used to convert modula_chunk_t* into a function on the
  *          top of the Lua stack.
  * @param[in] L Lua state @a udata will be loaded into.
- * @param[in,out] udata Always a modlua_chunk_tracker_t*. 
+ * @param[in,out] udata Always a modlua_chunk_tracker_t*.
  *                This stores a pointer to a modlua_chunk_t which contains
  *                an ib_list_t of chunks of data. The modlua_chunk_tracker_t
  *                also contains the current index in that list of chunks
@@ -169,11 +169,11 @@ static const char *modlua_data_reader(lua_State *L, void *udata, size_t *size)
     /* Holds the modlua_chunk_t and the index into its list of chunks. */
     modlua_chunk_tracker_t *tracker = (modlua_chunk_tracker_t *)udata;
 
-    /* A container for the ib_list_t of the chunks as well as other 
+    /* A container for the ib_list_t of the chunks as well as other
      * relevant pointers, eg the IronBee engine. */
     modlua_chunk_t *chunk = tracker->chunk;
 
-    /* The list of data chunks that represent a Lua function in byte code. 
+    /* The list of data chunks that represent a Lua function in byte code.
      * We must return one of these list elements. */
     ib_engine_t *ib_engine = chunk->ib;
 

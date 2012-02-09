@@ -499,7 +499,7 @@ enum {
  * Determine if the given prefix is IPV4
  *
  * @param[in] cidr const char * with format ip/mask where mask is optional
- * @param[in] len length of the str 
+ * @param[in] len length of the str
  * @param[out] result Result: 1 if true, 0 if false
  *
  * @returns Status code
@@ -512,7 +512,7 @@ enum {
  * Determine if the given prefix is IPV6
  *
  * @param[in] cidr const char * with format ip/mask where mask is optional
- * @param[in] len length of the str 
+ * @param[in] len length of the str
  * @param[out] result Result: 1 if true, 0 if false
  *
  * @returns Status code
@@ -525,7 +525,7 @@ enum {
  * Determine if the given prefix is IPV4
  *
  * @param[in] str const char * with format ip/mask where mask is optional
- * @param[in] len length of the str 
+ * @param[in] len length of the str
  * @param[out] result Result: 1 if true, 0 if false
  *
  * @returns Status code
@@ -539,7 +539,7 @@ ib_status_t ib_radix_is_ipv4_ex(const char *str,
  * Determine if the given prefix is IPv6
  *
  * @param[in] str const char * with format ip/mask where mask is optional
- * @param[in] len length of the str 
+ * @param[in] len length of the str
  * @param[out] result Result: 1 if true, 0 if false
  *
  * @returns Status code
@@ -553,7 +553,7 @@ ib_status_t ib_radix_is_ipv6_ex(const char *str,
  * in it.  This version will ignore NUL characters.
  *
  * @param[in] str String to search
- * @param[in] len length of the str 
+ * @param[in] len length of the str
  * @param[in] c The character to search for
  * @param[out] offset Offset of the character; -1 if not found
  *
@@ -570,7 +570,7 @@ ib_status_t ib_radix_strchr_nul_ignore(const char *str,
  * before len chars.
  *
  * @param[in] str String to search
- * @param[in] len length of the str 
+ * @param[in] len length of the str
  * @param[in] c The character to search for
  * @param[out] offset Offset of the character; -1 if not found
  *
