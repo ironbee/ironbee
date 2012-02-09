@@ -335,6 +335,8 @@ ib_status_t DLL_PUBLIC ib_hash_get_all(
  * @param[in]     key_length   Length of @a key
  * @param[in]     value        Value.
  *
+ * If @a value is NULL, removes element.
+ *
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC if @a hash attempted to grow and failed.
@@ -354,6 +356,8 @@ ib_status_t DLL_PUBLIC ib_hash_set_ex(
  * @param[in,out] hash  Hash table.
  * @param[in]     key   Key.
  * @param[in]     value Value.
+ *
+ * If @a value is NULL, removes element.
  *
  * @returns
  * - IB_OK on success.

@@ -589,100 +589,114 @@ ib_status_t ib_hash_get_all(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_hash_set_ex(ib_hash_t *ib_ht,
-                           const void *key,
-                           size_t len,
-                           void *value)
+ib_status_t ib_hash_set_ex(
+    ib_hash_t  *hash,
+    const void *key,
+    size_t      key_length,
+    void       *value
+)
 {
     IB_FTRACE_INIT();
-    unsigned int hash = 0;
-    uint8_t found = 0;
 
-    ib_hash_entry_t *hte = NULL;
-    ib_hash_entry_t **hte_prev = NULL;
+    unsigned int hash_value = 0;
+    size_t       slot_index = 0;
+    int          found      = 0;
 
-    hash = ib_ht->hash_function(key, len);
+    ib_hash_entry_t  *current_entry         = NULL;
+    /* Points to pointer that points to current_entry */
+    ib_hash_entry_t **current_entry_handle  = NULL;
 
-    hte_prev = &ib_ht->slots[hash & ib_ht->size];
-    hte = *hte_prev;
+    hash_value = hash->hash_function(key, key_length);
+    slot_index = (hash_value & hash->size);
 
-    for (; *hte_prev != NULL; hte_prev = &hte->next_entry) {
-        hte = *hte_prev;
+    current_entry_handle = &hash->slots[slot_index];
+
+    while ( *current_entry_handle != NULL ) {
+        current_entry = *current_entry_handle;
         if (
-            hte->hash_value == hash
-            && ib_ht->equal_predicate(
-                  hte->key, hte->key_length,
-                  key, len
+               current_entry->hash_value == hash_value
+            && hash->equal_predicate(
+                   current_entry->key, current_entry->key_length,
+                   key,                key_length
                )
         ) {
             found = 1;
             break;
         }
+        current_entry_handle = &(current_entry->next_entry);
     }
+    /* current_entry is now the entry to change, and current_entry_handler
+     * points to the pointer to it.
+     */
+    if (found) {
+        assert(current_entry != NULL);
+        assert(current_entry == *current_entry_handle);
 
-    /* it's in the list, update or delete if value == NULL*/
-    if (*hte_prev != NULL) {
-        if (value != NULL && found) {
-            /* Update */
-            hte->value = value;
-        }
-        else {
+        /* Update. */
+        current_entry->value = value;
+
+        /* Delete if appropriate. */
+        if (value == NULL) {
             /* Delete */
-            hte->value = NULL;
-            ib_ht->count--;
-            ib_hash_entry_t *entry = *hte_prev;
-            *hte_prev = (*hte_prev)->next_entry;
-            entry->next_entry = ib_ht->free;
-            ib_ht->free = entry;
+            --hash->count;
+
+            /* Remove from slot list .*/
+            *current_entry_handle = current_entry->next_entry;
+
+            /* Add to free list. */
+            current_entry->next_entry = hash->free;
+            hash->free                = current_entry;
         }
     }
     else {
-        /* it's not in the list. Add it if value != NULL */
+        /* It's not in the list. Add it if value != NULL. */
         if (value != NULL) {
             ib_hash_entry_t *entry = NULL;
 
-            /* add a new entry for non-NULL values */
-            if ((entry = ib_ht->free) != NULL) {
-                ib_ht->free = entry->next_entry;
+            if (hash->free != NULL) {
+                entry = hash->free;
+                hash->free = entry->next_entry;
             }
             else {
-                entry = (ib_hash_entry_t *)ib_mpool_calloc(ib_ht->pool, 1,
-                                                       sizeof(ib_hash_entry_t));
+                entry = (ib_hash_entry_t *)ib_mpool_calloc(
+                    hash->pool,
+                    1,
+                    sizeof(*entry)
+                );
                 if (entry == NULL) {
                     IB_FTRACE_RET_STATUS(IB_EALLOC);
                 }
             }
-            entry->hash_value = hash;
-            entry->key  = key;
-            entry->key_length = len;
-            entry->value = value;
 
-            *hte_prev = entry;
-            entry->next_entry = NULL;
+            entry->hash_value = hash_value;
+            entry->key        = key;
+            entry->key_length = key_length;
+            entry->value      = value;
+            entry->next_entry = hash->slots[slot_index];
 
-            ib_ht->count++;
+            hash->slots[slot_index] = entry;
 
-            /* Change this to accept more */
-            if (ib_ht->count > ib_ht->size) {
-                IB_FTRACE_RET_STATUS(ib_hash_resize_slots(ib_ht));
+            ++hash->count;
+
+            /* If we have more elements that slots, resize. */
+            if (hash->count > hash->size) {
+                IB_FTRACE_RET_STATUS(ib_hash_resize_slots(hash));
             }
         }
-        /* else, no changes needed */
+        /* Else value == NULL and no changes are needed. */
     }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_hash_set(
-    ib_hash_t *hash,
+    ib_hash_t  *hash,
     const char *key,
-    void *value
+    void       *value
 )
 {
     IB_FTRACE_INIT();
-    /* Cannot be a NULL value (this means delete). */
-    if (value == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+
     IB_FTRACE_RET_STATUS(ib_hash_set_ex(hash, (void *)key, strlen(key), value));
 }
 
