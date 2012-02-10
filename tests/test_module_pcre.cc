@@ -74,6 +74,7 @@ TEST_F(PcreModuleTest, test_load_module)
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
+                                      NULL,
                                       "pcre",
                                       "string\\s2",
                                       0,

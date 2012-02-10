@@ -35,6 +35,7 @@
 
 
 ib_status_t test_create_fn(ib_engine_t *ib,
+                           ib_context_t *ctx,
                            ib_mpool_t *pool,
                            const char *data,
                            ib_operator_inst_t *op_inst)
@@ -90,6 +91,7 @@ TEST_F(OperatorTest, OperatorCallTest) {
 
     ib_operator_inst_t *op;
     status = ib_operator_inst_create(ib_engine,
+                                     NULL,
                                      "test_op",
                                      "data",
                                      IB_OPINST_FLAG_NONE,
@@ -126,6 +128,7 @@ TEST_F(CoreOperatorsTest, ContainsTest) {
     ib_operator_inst_t *op;
 
     status = ib_operator_inst_create(ib_engine,
+                                     NULL,
                                      "contains",
                                      "needle",
                                      IB_OPINST_FLAG_NONE,

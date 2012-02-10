@@ -83,6 +83,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
+                                      NULL,
                                       "pm",
                                       "string2",
                                       0,
@@ -137,6 +138,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
+                                      NULL,
                                       "pmf",
                                       "ahocorasick.patterns",
                                       0,
