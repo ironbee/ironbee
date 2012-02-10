@@ -226,8 +226,7 @@ ib_hash_entry_t *ib_hash_find_htentry(
     const void      *key,
     size_t           key_length,
     uint32_t         hash_value
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -257,8 +256,7 @@ ib_status_t ib_hash_find_entry(
      const ib_hash_t  *hash,
      const void       *key,
      size_t            key_length
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash_entry != NULL);
@@ -293,8 +291,7 @@ ib_status_t ib_hash_find_entry(
 
 ib_hash_iterator_t ib_hash_first(
     const ib_hash_t *hash
-)
-{
+) {
     // There is no ftrace return macro for custom types.
     assert(hash != NULL);
 
@@ -309,8 +306,7 @@ ib_hash_iterator_t ib_hash_first(
 
 void ib_hash_next(
     ib_hash_iterator_t *iterator
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(iterator != NULL);
@@ -330,8 +326,7 @@ void ib_hash_next(
 
 ib_status_t ib_hash_resize_slots(
     ib_hash_t *hash
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -366,8 +361,7 @@ ib_status_t ib_hash_resize_slots(
 uint32_t ib_hashfunc_djb2(
     const void *key,
     size_t      key_length
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(key != NULL);
@@ -385,8 +379,7 @@ uint32_t ib_hashfunc_djb2(
 uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     const void *key,
     size_t      key_length
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(key != NULL);
@@ -406,8 +399,7 @@ int DLL_PUBLIC ib_hashequal_default(
     size_t a_length,
     const void* b,
     size_t b_length
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(a != NULL);
@@ -424,8 +416,7 @@ int DLL_PUBLIC ib_hashequal_nocase(
     size_t a_length,
     const void* b,
     size_t b_length
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(a != NULL);
@@ -453,8 +444,7 @@ ib_status_t ib_hash_create_ex(
     size_t               size,
     ib_hash_function_t   hash_function,
     ib_hash_equal_t      equal_predicate
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -499,8 +489,7 @@ ib_status_t ib_hash_create_ex(
 ib_status_t ib_hash_create(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -518,8 +507,7 @@ ib_status_t ib_hash_create(
 ib_status_t DLL_PUBLIC ib_hash_create_nocase(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -536,8 +524,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_nocase(
 
 ib_mpool_t DLL_PUBLIC *ib_hash_pool(
     ib_hash_t *hash
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -547,8 +534,7 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
 
 size_t DLL_PUBLIC ib_hash_size(
     ib_hash_t* hash
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -561,8 +547,7 @@ ib_status_t ib_hash_get_ex(
     const ib_hash_t  *hash,
     void             *key,
     size_t            key_length
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(value != NULL);
@@ -598,8 +583,7 @@ ib_status_t ib_hash_get(
     void              *value,
     const ib_hash_t   *hash,
     const char        *key
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(value != NULL);
@@ -621,8 +605,7 @@ ib_status_t ib_hash_get(
 ib_status_t ib_hash_get_all(
     ib_list_t       *list,
     const ib_hash_t *hash
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(list != NULL);
@@ -646,8 +629,7 @@ ib_status_t ib_hash_set_ex(
     const void *key,
     size_t      key_length,
     void       *value
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -748,8 +730,7 @@ ib_status_t ib_hash_set(
     ib_hash_t  *hash,
     const char *key,
     void       *value
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -763,8 +744,7 @@ ib_status_t ib_hash_set(
     ));
 }
 
-void ib_hash_clear(ib_hash_t *hash)
-{
+void ib_hash_clear(ib_hash_t *hash) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
@@ -795,8 +775,7 @@ ib_status_t ib_hash_remove_ex(
     ib_hash_t *hash,
     void      *key,
     size_t     key_length
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash  != NULL);
@@ -822,8 +801,7 @@ ib_status_t ib_hash_remove(
     void        *value,
     ib_hash_t   *hash,
     const char  *key
-)
-{
+) {
     IB_FTRACE_INIT();
 
     assert(hash != NULL);
