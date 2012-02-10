@@ -90,7 +90,6 @@ typedef int (*ib_hash_equal_t)(
     size_t b_length
 );
 
-/* Options */
 
 /**
  * DJB2 Hash Function (Dan Bernstein).
