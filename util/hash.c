@@ -753,45 +753,52 @@ ib_status_t ib_hash_set(
     assert(hash != NULL);
     assert(key  != NULL);
 
-    IB_FTRACE_RET_STATUS(ib_hash_set_ex(hash, (void *)key, strlen(key), value));
+    IB_FTRACE_RET_STATUS(ib_hash_set_ex(
+        hash,
+        (void *)key,
+        strlen(key),
+        value
+    ));
 }
 
 ib_status_t ib_hash_remove_ex(
-    void *value,
+    void      **value,
     ib_hash_t *hash,
-    void *key,
-    size_t len
+    void      *key,
+    size_t     key_length
 )
 {
     IB_FTRACE_INIT();
 
-    assert(value != NULL);
     assert(hash  != NULL);
     assert(key   != NULL);
 
-    ib_status_t rc = IB_ENOENT;
-    void *local_value = NULL;
+    ib_status_t  rc          = IB_ENOENT;
+    void        *local_value = NULL;
 
-    rc = ib_hash_get_ex(&local_value, hash, key, (size_t)len);
+    rc = ib_hash_get_ex(&local_value, hash, key, key_length);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if ((value != NULL) && (local_value != NULL)) {
-        *(void **)value = local_value;
+        *value = local_value;
     }
-    rc = ib_hash_set_ex(hash, key, (size_t)len, NULL);
+    rc = ib_hash_set_ex(hash, key, key_length, NULL);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_hash_remove(
-    void *value,
-    ib_hash_t *hash,
-    const char *key
+    void       **value,
+    ib_hash_t   *hash,
+    const char  *key
 )
 {
     IB_FTRACE_INIT();
+
+    assert(hash != NULL);
+    assert(key  != NULL);
 
     IB_FTRACE_RET_STATUS(
         ib_hash_remove_ex(value, hash, (void*)key, strlen(key))

@@ -385,10 +385,10 @@ ib_status_t DLL_PUBLIC ib_hash_set(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_remove_ex(
-    void      *value,
-    ib_hash_t *hash,
-    void      *key,
-    size_t     key_length
+    void      **value,
+    ib_hash_t  *hash,
+    void       *key,
+    size_t      key_length
 );
 
 /**
@@ -406,9 +406,9 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_remove(
-    void       *value,
-    ib_hash_t  *hash,
-    const char *key
+    void       **value,
+    ib_hash_t   *hash,
+    const char  *key
 );
 
 /** @} IronBeeUtilHash */
