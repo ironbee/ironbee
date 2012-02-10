@@ -383,7 +383,7 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
 {
     ib_status_t  rc;
     ib_hash_t   *hash  = NULL;
-    int          value;
+    uint64_t     value;
     
     // Make sure we have collisions.
     rc = ib_hash_create_ex(
@@ -398,19 +398,18 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
     EXPECT_EQ(IB_OK, ib_hash_set(hash, "abc", (void*)7));
     EXPECT_EQ(IB_OK, ib_hash_set(hash, "def", (void*)8));
     EXPECT_EQ(IB_OK, ib_hash_set(hash, "ghi", (void*)9));
-    
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "abc"));
-    EXPECT_EQ(7, value);
+    EXPECT_EQ(7UL, value);
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "def"));
-    EXPECT_EQ(8, value);
+    EXPECT_EQ(8UL, value);
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "ghi"));
-    EXPECT_EQ(9, value);
+    EXPECT_EQ(9UL, value);
     
     EXPECT_EQ(IB_OK, ib_hash_set(hash, "abc", NULL));
     
     EXPECT_EQ(IB_ENOENT, ib_hash_get((void**)&value, hash, "abc"));
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "def"));
-    EXPECT_EQ(8, value);
+    EXPECT_EQ(8UL, value);
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "ghi"));
-    EXPECT_EQ(9, value);    
+    EXPECT_EQ(9UL, value); 
 }
