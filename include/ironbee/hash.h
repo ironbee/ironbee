@@ -57,9 +57,9 @@ extern "C" {
 /**
  * Hash table.
  *
- * A map of keys (byte sequences or strings) to values (\c void*).
+ * A map of keys (byte sequences or strings) to values (@c void*).
  *
- * @warning The \c void* value type works well for pointers but can cause
+ * @warning The @c void* value type works well for pointers but can cause
  * problems if other data is stored in there.  If you store non-pointer
  * types, make sure they are as wide as your pointers are.
  *
@@ -77,7 +77,7 @@ typedef struct ib_hash_t ib_hash_t;
  * @param[in] key           Key to hash.
  * @param[in] key_length    Length of @a key.
  *
- * @returns Hash value of \a key.
+ * @returns Hash value of @a key.
  **/
 typedef unsigned int (*ib_hash_function_t)(
     const void *key,
@@ -327,10 +327,10 @@ size_t DLL_PUBLIC ib_hash_size(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get_ex(
-    void      **value,
-    ib_hash_t  *hash,
-    void       *key,
-    size_t      key_length
+    void            **value,
+    const ib_hash_t  *hash,
+    void             *key,
+    size_t            key_length
 );
 
 /**
@@ -349,16 +349,16 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get(
-    void       **value,
-    ib_hash_t   *hash,
-    const char  *key
+    void             **value,
+    const ib_hash_t   *hash,
+    const char        *key
 );
 
 /**
  * Push every entry from @a hash onto @a list.
  *
  * Order is undefined.  The values pushed to the list are the entry values
- * (\c void \c *).
+ * (@c void @c *).
  *
  * @param[in,out] list List to push values.
  * @param[in]     hash   Hash table to take values from.
@@ -368,8 +368,8 @@ ib_status_t DLL_PUBLIC ib_hash_get(
  * - IB_ENOENT if @a hash is empty.
  */
 ib_status_t DLL_PUBLIC ib_hash_get_all(
-    ib_list_t *list,
-    ib_hash_t *hash
+    ib_list_t       *list,
+    const ib_hash_t *hash
 );
 
 /*@}*/

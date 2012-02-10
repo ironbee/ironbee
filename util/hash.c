@@ -35,7 +35,6 @@
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
-
 /* Internal Declarations */
 
 /**
@@ -83,12 +82,12 @@ struct ib_hash_entry_t {
  * External iterator for ib_hash_t.
  * @internal
  *
- * The end of the sequence is indicated by \c current_entry being NULL.
+ * The end of the sequence is indicated by @c current_entry being NULL.
  * Any iterator is invalidated by any mutating operation on the hash.
  **/
 struct ib_hash_iterator_t {
     /** Hash table we are iterating through. */
-    ib_hash_t           *hash;
+    const ib_hash_t     *hash;
     /** Current entry. */
     ib_hash_entry_t     *current_entry;
     /** Next entry. */
@@ -122,7 +121,6 @@ struct ib_hash_t {
     unsigned int         size;
 };
 
-
 /**
  * Search for an entry in @a hash matching @key.
  * @internal
@@ -138,7 +136,7 @@ struct ib_hash_t {
  */
 static ib_status_t ib_hash_find_entry(
     ib_hash_entry_t **hash_entry,
-    ib_hash_t        *hash,
+    const ib_hash_t  *hash,
     const void       *key,
     size_t            key_length
 );
@@ -156,7 +154,7 @@ static ib_status_t ib_hash_find_entry(
  * @returns Hash entry if found and NULL otherwise.
  */
 static ib_hash_entry_t *ib_hash_find_htentry(
-     ib_hash_t       *hash,
+     const ib_hash_t *hash,
      ib_hash_entry_t *first,
      const void      *key,
      size_t           key_length,
@@ -174,11 +172,11 @@ static ib_hash_entry_t *ib_hash_find_htentry(
  * @return Iterator pointing to first entry in @a hash.
  */
 static ib_hash_iterator_t ib_hash_first(
-     ib_hash_t* hash
+     const ib_hash_t* hash
 );
 
 /**
- * Move \a iterator to the next entry.
+ * Move @a iterator to the next entry.
  * @internal
  *
  * @sa IB_HASH_LOOP()
@@ -226,7 +224,7 @@ static ib_status_t ib_hash_resize_slots(
 /* Internal Definitions */
 
 ib_hash_entry_t *ib_hash_find_htentry(
-    ib_hash_t       *hash,
+    const ib_hash_t *hash,
     ib_hash_entry_t *first,
     const void      *key,
     size_t           key_length,
@@ -259,7 +257,7 @@ ib_hash_entry_t *ib_hash_find_htentry(
 
 ib_status_t ib_hash_find_entry(
      ib_hash_entry_t **hash_entry,
-     ib_hash_t        *hash,
+     const ib_hash_t  *hash,
      const void       *key,
      size_t            key_length
 )
@@ -297,7 +295,7 @@ ib_status_t ib_hash_find_entry(
 }
 
 ib_hash_iterator_t ib_hash_first(
-    ib_hash_t *hash
+    const ib_hash_t *hash
 )
 {
     // There is no ftrace return macro for custom types.
@@ -562,10 +560,10 @@ size_t DLL_PUBLIC ib_hash_size(
 }
 
 ib_status_t ib_hash_get_ex(
-    void      **value,
-    ib_hash_t  *hash,
-    void       *key,
-    size_t      key_length
+    void            **value,
+    const ib_hash_t  *hash,
+    void             *key,
+    size_t            key_length
 )
 {
     IB_FTRACE_INIT();
@@ -600,9 +598,9 @@ ib_status_t ib_hash_get_ex(
 }
 
 ib_status_t ib_hash_get(
-    void       **value,
-    ib_hash_t   *hash,
-    const char  *key
+    void             **value,
+    const ib_hash_t   *hash,
+    const char        *key
 )
 {
     IB_FTRACE_INIT();
@@ -624,8 +622,8 @@ ib_status_t ib_hash_get(
 }
 
 ib_status_t ib_hash_get_all(
-    ib_list_t *list,
-    ib_hash_t *hash
+    ib_list_t       *list,
+    const ib_hash_t *hash
 )
 {
     IB_FTRACE_INIT();
