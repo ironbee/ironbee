@@ -239,11 +239,11 @@ ib_hash_entry_t *ib_hash_find_htentry(
     )
     {
         if (
-               current_entry->hash_value == hash_value
-            && hash->equal_predicate(
-                    key,                key_length,
-                    current_entry->key, current_entry->key_length
-               )
+            current_entry->hash_value == hash_value &&
+            hash->equal_predicate(
+                key,                key_length,
+                current_entry->key, current_entry->key_length
+            )
         ) {
             IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
         }
@@ -406,8 +406,8 @@ int DLL_PUBLIC ib_hashequal_default(
     assert(b != NULL);
 
     IB_FTRACE_RET_INT(
-           (a_length == b_length)
-        && (memcmp(a, b, a_length) == 0)
+        (a_length == b_length) &&
+        (memcmp(a, b, a_length) == 0)
    );
 }
 
@@ -651,11 +651,11 @@ ib_status_t ib_hash_set_ex(
     while (*current_entry_handle != NULL) {
         current_entry = *current_entry_handle;
         if (
-               current_entry->hash_value == hash_value
-            && hash->equal_predicate(
-                   current_entry->key, current_entry->key_length,
-                   key,                key_length
-               )
+            current_entry->hash_value == hash_value &&
+            hash->equal_predicate(
+               current_entry->key, current_entry->key_length,
+               key,                key_length
+            )
         ) {
             found = 1;
             break;
