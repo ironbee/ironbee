@@ -475,7 +475,7 @@ ib_status_t ib_hash_create_ex(
 
     new_hash->hash_function   = hash_function;
     new_hash->equal_predicate = equal_predicate;
-    new_hash->num_slots            = size;
+    new_hash->num_slots       = size;
     new_hash->slots           = slots;
     new_hash->pool            = pool;
     new_hash->free            = NULL;
@@ -545,7 +545,7 @@ size_t DLL_PUBLIC ib_hash_size(
 ib_status_t ib_hash_get_ex(
     void             *value,
     const ib_hash_t  *hash,
-    void             *key,
+    const void       *key,
     size_t            key_length
 ) {
     IB_FTRACE_INIT();
@@ -597,7 +597,7 @@ ib_status_t ib_hash_get(
     IB_FTRACE_RET_STATUS(ib_hash_get_ex(
         value,
         hash,
-        (void *)key,
+        key,
         strlen(key)
     ));
 }

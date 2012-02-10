@@ -316,7 +316,7 @@ size_t DLL_PUBLIC ib_hash_size(
 ib_status_t DLL_PUBLIC ib_hash_get_ex(
     void             *value,
     const ib_hash_t  *hash,
-    void             *key,
+    const void       *key,
     size_t            key_length
 );
 
