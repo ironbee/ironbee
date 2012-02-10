@@ -25,13 +25,10 @@
 
 #include <ironbee/hash.h>
 
-#include "ironbee_config_auto.h"
-
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
 
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
