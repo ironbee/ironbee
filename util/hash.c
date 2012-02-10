@@ -376,7 +376,7 @@ uint32_t ib_hashfunc_djb2(
     const char   *key_s = (const char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
-        hash = (hash << 5) + key_s[i];
+        hash = ((hash << 5) + hash) + key_s[i];
     }
 
     IB_FTRACE_RET_UINT(hash);
@@ -395,7 +395,7 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     const char   *key_s = (const char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
-        hash = (hash << 5) + tolower(key_s[i]);
+        hash = ((hash << 5) + hash) + tolower(key_s[i]);
     }
 
     IB_FTRACE_RET_UINT(hash);
