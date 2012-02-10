@@ -550,6 +550,7 @@ void ib_hash_clear(ib_hash_t *hash)
             hash->slots[i]            = NULL;
         }
     }
+    hash->size = 0;
 
     IB_FTRACE_RET_VOID();
 }
