@@ -292,6 +292,9 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
         else {
             rc = execute_actions(ib, rule, tx, "FALSE", rule->false_actions);
         }
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Error executing action for rule %s", rule->meta.id);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
