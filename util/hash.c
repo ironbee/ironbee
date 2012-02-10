@@ -106,13 +106,13 @@ struct ib_hash_t {
      **/
     ib_hash_entry_t    **slots;
     /** Size of @c slots. */
-    unsigned int         size;
+    unsigned int         num_slots;
     /** Memory pool. */
     ib_mpool_t          *pool;
     /** Linked list of removed hash entries to use for recycling. */
     ib_hash_entry_t     *free;
     /** Number of entries. */
-    unsigned int         count;
+    unsigned int         size;
 };
 
 
@@ -257,7 +257,7 @@ ib_status_t ib_hash_find_entry(
 
     unsigned int hash_value = hash->hash_function(key, key_length);
 
-    current_slot = hash->slots[hash_value & hash->size];
+    current_slot = hash->slots[hash_value & hash->num_slots];
     current_entry = ib_hash_find_htentry(
         hash,
         current_slot,
@@ -300,7 +300,7 @@ void ib_hash_next(
 
     iterator->current_entry = iterator->next_entry;
     while (! iterator->current_entry) {
-        if (iterator->slot_index > iterator->hash->size) {
+        if (iterator->slot_index > iterator->hash->num_slots) {
             IB_FTRACE_RET_VOID();
         }
         iterator->current_entry = iterator->hash->slots[iterator->slot_index];
@@ -323,7 +323,7 @@ ib_status_t ib_hash_resize_slots(
     ib_hash_entry_t  *current_entry = NULL;
     unsigned int      new_size      = 0;
 
-    new_size  = (hash->size * 2) + 1;
+    new_size  = (hash->num_slots * 2) + 1;
     new_slots = (ib_hash_entry_t **)ib_mpool_calloc(
         hash->pool,
         new_size + 1,
@@ -338,7 +338,7 @@ ib_status_t ib_hash_resize_slots(
         current_entry->next_entry = new_slots[i];
         new_slots[i]              = current_entry;
     }
-    hash->size  = new_size;
+    hash->num_slots  = new_size;
     hash->slots = new_slots;
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -468,11 +468,11 @@ ib_status_t ib_hash_create_ex(
 
     new_hash->hash_function   = hash_function;
     new_hash->equal_predicate = equal_predicate;
-    new_hash->size            = size;
+    new_hash->num_slots            = size;
     new_hash->slots           = slots;
     new_hash->pool            = pool;
     new_hash->free            = NULL;
-    new_hash->count           = 0;
+    new_hash->size            = 0;
 
     *hash = new_hash;
 
@@ -534,7 +534,7 @@ void ib_hash_clear(ib_hash_t *hash)
 
     assert(hash != NULL);
 
-    for (size_t i = 0; i < hash->size; ++i) {
+    for (size_t i = 0; i < hash->num_slots; ++i) {
         if ( hash->slots[i] != NULL ) {
             ib_hash_entry_t *current_entry;
             for (
@@ -660,7 +660,7 @@ ib_status_t ib_hash_set_ex(
     ib_hash_entry_t **current_entry_handle  = NULL;
 
     hash_value = hash->hash_function(key, key_length);
-    slot_index = (hash_value & hash->size);
+    slot_index = (hash_value & hash->num_slots);
 
     current_entry_handle = &hash->slots[slot_index];
 
@@ -691,7 +691,7 @@ ib_status_t ib_hash_set_ex(
         /* Delete if appropriate. */
         if (value == NULL) {
             /* Delete */
-            --hash->count;
+            --hash->size;
 
             /* Remove from slot list .*/
             *current_entry_handle = current_entry->next_entry;
@@ -729,10 +729,10 @@ ib_status_t ib_hash_set_ex(
 
             hash->slots[slot_index] = entry;
 
-            ++hash->count;
+            ++hash->size;
 
             /* If we have more elements that slots, resize. */
-            if (hash->count > hash->size) {
+            if (hash->size > hash->num_slots) {
                 IB_FTRACE_RET_STATUS(ib_hash_resize_slots(hash));
             }
         }
