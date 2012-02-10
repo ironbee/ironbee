@@ -1,7 +1,7 @@
 /*****************************************************************************
  * Licensed to Qualys, Inc. (QUALYS) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyrighash ownership.
+ * this work for additional information regarding copyright ownership.
  * QUALYS licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
@@ -58,7 +58,7 @@ typedef struct ib_hash_t ib_hash_t;
 /**
  * Function pointer for a hash function.
  *
- * A hash function converts keys (byte sequences) into hash values (unsinged
+ * A hash function converts keys (byte sequences) into hash values (unsigned
  * integers).  A good hash function is vital to the performance of a hash.
  *
  * @param[in] key        Key to hash.
@@ -240,7 +240,7 @@ ib_status_t DLL_PUBLIC ib_hash_create(
 );
 
 /**
- * Create a hash table with ib_hashfunc_djb2_nocase(), ib_hashequal_noacse()
+ * Create a hash table with ib_hashfunc_djb2_nocase(), ib_hashequal_nocase()
  * and a default size.
  *
  * @sa ib_hash_create_ex()

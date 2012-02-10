@@ -170,7 +170,7 @@ static const char *modlua_data_reader(lua_State *L, void *udata, size_t *size)
     modlua_chunk_tracker_t *tracker = (modlua_chunk_tracker_t *)udata;
 
     /* A container for the ib_list_t of the chunks as well as other
-     * relevant pointers, eg the IronBee engine. */
+     * relevant pointers, e.g., the IronBee engine. */
     modlua_chunk_t *chunk = tracker->chunk;
 
     /* The list of data chunks that represent a Lua function in byte code.
@@ -407,7 +407,7 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
  * @param[in] ib_engine IronBee engine for logging.
  * @param[in,out] L Lua state the file will be loaded into.
  * @param[in] file The Lua script to be loaded.
- * @param[out] pchunk If @a file is succesfully loaded, it is dumped
+ * @param[out] pchunk If @a file is successfully loaded, it is dumped
  *             by lua_dump into *pchunk. The memory in *pchunk is
  *             allocated from the @a ib_engine memory pool and does not
  *             need to be explicitly freed by the caller.

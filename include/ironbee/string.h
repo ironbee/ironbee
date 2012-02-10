@@ -99,7 +99,7 @@ extern "C" {
 #define IB_BYTESTR_FMT         ".*s"
 
 /**
- * strchr() equvilent that operates on a string buffer with a length
+ * strchr() equivalent that operates on a string buffer with a length
  * which can have embedded NUL characters in it.
  *
  * @param[in] s String
