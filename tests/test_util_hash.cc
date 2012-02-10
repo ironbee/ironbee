@@ -340,7 +340,7 @@ TEST_F(TestIBUtilHash, test_hash_clear)
     }
 }
 
-static unsigned int test_hash_delete_hashfunc(
+static uint32_t test_hash_delete_hashfunc(
     const void* key,
     size_t      key_length
 )

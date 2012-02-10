@@ -66,7 +66,7 @@ typedef struct ib_hash_t ib_hash_t;
  *
  * @returns Hash value of @a key.
  **/
-typedef unsigned int (*ib_hash_function_t)(
+typedef uint32_t (*ib_hash_function_t)(
     const void *key,
     size_t      key_length
 );
@@ -117,7 +117,7 @@ typedef int (*ib_hash_equal_t)(
  *
  * @returns Hash value of @a key.
  */
-unsigned int DLL_PUBLIC ib_hashfunc_djb2(
+uint32_t DLL_PUBLIC ib_hashfunc_djb2(
     const void *key,
     size_t      key_length
 );
@@ -140,7 +140,7 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2(
  *
  * @returns Hash value of @a key.
  */
-unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
+uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     const void *key,
     size_t      key_length
 );

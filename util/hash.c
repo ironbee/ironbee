@@ -70,7 +70,7 @@ struct ib_hash_entry_t {
     /** Value. */
     void                *value;
     /** Hash of @c key. */
-    unsigned int         hash_value;
+    uint32_t             hash_value;
     /** Next entry in slot for @c hash. */
     ib_hash_entry_t     *next_entry;
 };
@@ -155,7 +155,7 @@ static ib_hash_entry_t *ib_hash_find_htentry(
      ib_hash_entry_t *first,
      const void      *key,
      size_t           key_length,
-     unsigned int     hash_value
+     uint32_t         hash_value
 );
 
 /**
@@ -225,7 +225,7 @@ ib_hash_entry_t *ib_hash_find_htentry(
     ib_hash_entry_t *first,
     const void      *key,
     size_t           key_length,
-    unsigned int     hash_value
+    uint32_t         hash_value
 )
 {
     IB_FTRACE_INIT();
@@ -272,7 +272,7 @@ ib_status_t ib_hash_find_entry(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    unsigned int hash_value = hash->hash_function(key, key_length);
+    uint32_t hash_value = hash->hash_function(key, key_length);
 
     current_slot = hash->slots[hash_value % hash->num_slots];
     current_entry = ib_hash_find_htentry(
@@ -363,7 +363,7 @@ ib_status_t ib_hash_resize_slots(
 
 /* End Internal Definitions */
 
-unsigned int ib_hashfunc_djb2(
+uint32_t ib_hashfunc_djb2(
     const void *key,
     size_t      key_length
 )
@@ -372,7 +372,7 @@ unsigned int ib_hashfunc_djb2(
 
     assert(key != NULL);
 
-    unsigned int  hash  = 0;
+    uint32_t      hash  = 0;
     const char   *key_s = (const char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
@@ -382,7 +382,7 @@ unsigned int ib_hashfunc_djb2(
     IB_FTRACE_RET_UINT(hash);
 }
 
-unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
+uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     const void *key,
     size_t      key_length
 )
@@ -391,7 +391,7 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
 
     assert(key != NULL);
 
-    unsigned int  hash  = 0;
+    uint32_t      hash  = 0;
     const char   *key_s = (const char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
@@ -653,7 +653,7 @@ ib_status_t ib_hash_set_ex(
     assert(hash != NULL);
     assert(key  != NULL);
 
-    unsigned int hash_value = 0;
+    uint32_t     hash_value = 0;
     size_t       slot_index = 0;
     int          found      = 0;
 
