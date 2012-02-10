@@ -297,7 +297,7 @@ ib_hash_iterator_t ib_hash_first(
 
     ib_hash_iterator_t iterator;
 
-    memset(&iterator, 0, sizeof(ib_hash_iterator_t));
+    memset(&iterator, 0, sizeof(iterator));
     iterator.hash = hash;
     ib_hash_next(&iterator);
 
