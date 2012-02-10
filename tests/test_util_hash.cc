@@ -56,7 +56,7 @@ protected:
 
 TEST_F(TestIBUtilHash, test_hash_create)
 {
-    ib_hash_t   *hash = NULL;
+    ib_hash_t *hash = NULL;
 
     ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
     ASSERT_TRUE(hash);
@@ -66,34 +66,34 @@ TEST_F(TestIBUtilHash, test_hash_create)
 
 TEST_F(TestIBUtilHash, test_hash_set_and_get)
 {
-    ib_hash_t   *hash = NULL;
-    char        *val = NULL;
+    ib_hash_t  *hash  = NULL;
+    const char *value = NULL;
 
     ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, "Key", (void*)"value"));
     EXPECT_EQ(1UL, ib_hash_size(hash));
 
-    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "Key"));
-    EXPECT_STREQ("value", val);
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, "Key"));
+    EXPECT_STREQ("value", value);
 
     ASSERT_EQ(IB_OK,ib_hash_set(hash, "Key2", (void*)"value2"));
     EXPECT_EQ(2UL, ib_hash_size(hash));
 
-    val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "Key"));
-    EXPECT_STREQ("value", val);
+    value = NULL;
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, "Key"));
+    EXPECT_STREQ("value", value);
 
-    val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "Key2"));
-    EXPECT_STREQ("value2", val);
+    value = NULL;
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, "Key2"));
+    EXPECT_STREQ("value2", value);
 
-    val = NULL;
-    EXPECT_EQ(IB_ENOENT, ib_hash_get(&val, hash, "noKey"));
+    value = NULL;
+    EXPECT_EQ(IB_ENOENT, ib_hash_get(&value, hash, "noKey"));
 }
 
 TEST_F(TestIBUtilHash, test_hash_nocase)
 {
-    ib_hash_t   *hash = NULL;
+    ib_hash_t *hash = NULL;
 
     ASSERT_EQ(IB_OK, ib_hash_create_nocase(&hash, m_pool));
 
@@ -165,15 +165,16 @@ TEST_F(TestIBUtilHash, test_hash_ex)
 
 TEST_F(TestIBUtilHash, test_hashfunc_djb2)
 {
-    unsigned int hash1 = 0;
-    unsigned int hash2 = 0;
+    uint32_t hash1 = 0;
+    uint32_t hash2 = 0;
 
     // Test with no case sensitive
     hash1 = ib_hashfunc_djb2_nocase("Key", 3);
     hash2 = ib_hashfunc_djb2_nocase("kEY", 3);
     EXPECT_EQ(hash2, hash1);
     // Test with case sensitive
-    hash1 = hash2 = 0;
+    hash1 = 0;
+    hash2 = 0;
     hash1 = ib_hashfunc_djb2("Key", 3);
     hash2 = ib_hashfunc_djb2("kEY", 3);
     EXPECT_NE(hash2, hash1);
@@ -191,7 +192,7 @@ TEST_F(TestIBUtilHash, test_hashequal)
 
 TEST_F(TestIBUtilHash, test_hash_resizing)
 {
-    ib_hash_t   *hash = NULL;
+    ib_hash_t *hash = NULL;
 
     static const char combs[] = "abcdefghij";
 
@@ -241,9 +242,9 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
 
 TEST_F(TestIBUtilHash, test_hash_getall)
 {
-    ib_hash_t   *hash  = NULL;
-    ib_list_t   *list  = NULL;
-    ib_list_t   *list2 = NULL;
+    ib_hash_t *hash  = NULL;
+    ib_list_t *list  = NULL;
+    ib_list_t *list2 = NULL;
 
     static const char combs[] = "abcdefghij";
 
@@ -273,7 +274,7 @@ TEST_F(TestIBUtilHash, test_hash_getall)
 
     EXPECT_EQ(IB_OK, ib_hash_get_all(list2, hash));
     {
-        ib_list_node_t *li = NULL;
+        ib_list_node_t *li  = NULL;
         ib_list_node_t *li2 = NULL;
         size_t num_found = 0;
         // We know that all elements of list are unique, so we make sure 
@@ -292,7 +293,7 @@ TEST_F(TestIBUtilHash, test_hash_getall)
 
 TEST_F(TestIBUtilHash, test_hash_clear)
 {
-    ib_hash_t   *hash  = NULL;
+    ib_hash_t *hash  = NULL;
 
     static const char combs[] = "abcdefghij";
 
@@ -350,11 +351,11 @@ static uint32_t test_hash_delete_hashfunc(
 
 TEST_F(TestIBUtilHash, test_hash_collision_delete)
 {
-    ib_hash_t *hash  = NULL;
-    static const char* a = "abc";
-    static const char* b = "def";
-    static const char* c = "ghi";
-    const char* value;
+    ib_hash_t *hash          = NULL;
+    static const char* a     = "abc";
+    static const char* b     = "def";
+    static const char* c     = "ghi";
+    const char*        value = NULL;
     
     // Make sure we have collisions.
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
@@ -386,11 +387,11 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
 
 TEST_F(TestIBUtilHash, test_hash_remove)
 {
-    ib_hash_t *hash = NULL;
-    static const char* a = "abc";
-    static const char* b = "def";
-    static const char* c = "ghi";
-    const char* value;
+    ib_hash_t *hash          = NULL;
+    static const char* a     = "abc";
+    static const char* b     = "def";
+    static const char* c     = "ghi";
+    const char*        value = NULL;
     
     ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
