@@ -10,7 +10,7 @@ CPPFLAGS += @GCC_CHARACTERISTICS_CPPFLAGS@ \
             -I$(top_srcdir) \
             -Wno-unused-parameter
 
-CXXFLAGS += -g -O2
+CXXFLAGS += -g
 
 LDFLAGS += @GCC_CHARACTERISTICS_LDFLAGS@
 
