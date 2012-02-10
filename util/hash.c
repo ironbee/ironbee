@@ -560,7 +560,7 @@ size_t DLL_PUBLIC ib_hash_size(
 }
 
 ib_status_t ib_hash_get_ex(
-    void            **value,
+    void             *value,
     const ib_hash_t  *hash,
     void             *key,
     size_t            key_length
@@ -575,7 +575,7 @@ ib_status_t ib_hash_get_ex(
     ib_hash_entry_t *current_entry = NULL;
 
     if (key == NULL) {
-        *value = NULL;
+        *(void **)value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -588,17 +588,17 @@ ib_status_t ib_hash_get_ex(
     if (rc == IB_OK) {
         assert(current_entry != NULL);
 
-        *value = current_entry->value;
+        *(void **)value = current_entry->value;
     }
     else {
-        *value = NULL;
+        *(void **)value = NULL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_hash_get(
-    void             **value,
+    void              *value,
     const ib_hash_t   *hash,
     const char        *key
 )
@@ -609,7 +609,7 @@ ib_status_t ib_hash_get(
     assert(hash  != NULL);
 
     if (key == NULL) {
-        *value = NULL;
+        *(void **)value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -794,7 +794,7 @@ void ib_hash_clear(ib_hash_t *hash)
 }
 
 ib_status_t ib_hash_remove_ex(
-    void      **value,
+    void      *value,
     ib_hash_t *hash,
     void      *key,
     size_t     key_length
@@ -814,7 +814,7 @@ ib_status_t ib_hash_remove_ex(
     }
 
     if ((value != NULL) && (local_value != NULL)) {
-        *value = local_value;
+        *(void **)value = local_value;
     }
     rc = ib_hash_set_ex(hash, key, key_length, NULL);
 
@@ -822,7 +822,7 @@ ib_status_t ib_hash_remove_ex(
 }
 
 ib_status_t ib_hash_remove(
-    void       **value,
+    void        *value,
     ib_hash_t   *hash,
     const char  *key
 )

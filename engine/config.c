@@ -417,7 +417,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     ib_status_t rc;
     int i;
 
-    rc = ib_hash_get((void **)&rec, ib->dirmap, name);
+    rc = ib_hash_get(&rec, ib->dirmap, name);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -556,7 +556,7 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_hash_get((void **)&rec, ib->dirmap, name);
+    rc = ib_hash_get(&rec, ib->dirmap, name);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

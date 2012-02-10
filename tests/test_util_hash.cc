@@ -73,22 +73,22 @@ TEST_F(TestIBUtilHash, test_hash_set_and_get)
     ASSERT_EQ(IB_OK, ib_hash_set(hash, "Key", (void*)"value"));
     EXPECT_EQ(1UL, ib_hash_size(hash));
 
-    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "Key"));
+    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "Key"));
     EXPECT_STREQ("value", val);
 
     ASSERT_EQ(IB_OK,ib_hash_set(hash, "Key2", (void*)"value2"));
     EXPECT_EQ(2UL, ib_hash_size(hash));
 
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "Key"));
+    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "Key"));
     EXPECT_STREQ("value", val);
 
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "Key2"));
+    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "Key2"));
     EXPECT_STREQ("value2", val);
 
     val = NULL;
-    EXPECT_EQ(IB_ENOENT, ib_hash_get((void **)&val, hash, "noKey"));
+    EXPECT_EQ(IB_ENOENT, ib_hash_get(&val, hash, "noKey"));
 }
 
 TEST_F(TestIBUtilHash, test_hash_nocase)
@@ -100,22 +100,22 @@ TEST_F(TestIBUtilHash, test_hash_nocase)
     ASSERT_EQ(IB_OK, ib_hash_set(hash, "Key", (void*)"value"));
 
     char *val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "kEY"));
+    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "kEY"));
 
     EXPECT_STREQ("value", val);
     ASSERT_EQ(IB_OK, ib_hash_set(hash, "KeY2", (void*)"value2"));
 
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "KeY"));
+    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "KeY"));
 
     EXPECT_STREQ("value", val);
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "KEY2"));
+    EXPECT_EQ(IB_OK, ib_hash_get(&val, hash, "KEY2"));
 
     EXPECT_STREQ("value2", val);
 
     val = NULL;
-    EXPECT_EQ(IB_ENOENT, ib_hash_get((void **)&val, hash, "noKey"));
+    EXPECT_EQ(IB_ENOENT, ib_hash_get(&val, hash, "noKey"));
 }
 
 TEST_F(TestIBUtilHash, test_hash_ex)
@@ -137,29 +137,29 @@ TEST_F(TestIBUtilHash, test_hash_ex)
     ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, key1, 2, (void*)"value"));
 
     char *val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, (void *)key1, 2));
+    EXPECT_EQ(IB_OK, ib_hash_get_ex(&val, hash, (void *)key1, 2));
     EXPECT_STREQ("value", val);
 
     ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, (void *)key2, 2, (void*)"other"));
 
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, (void *)key2, 2));
+    EXPECT_EQ(IB_OK, ib_hash_get_ex(&val, hash, (void *)key2, 2));
     EXPECT_STREQ("other", val);
 
     val = NULL;
-    EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, (void *)key1, 2));
+    EXPECT_EQ(IB_OK, ib_hash_get_ex(&val, hash, (void *)key1, 2));
     EXPECT_STREQ("other", val);
 
     val = NULL;
     EXPECT_EQ(
         IB_ENOENT, 
-        ib_hash_get_ex((void **)&val, hash, (void *)key3, 2)
+        ib_hash_get_ex(&val, hash, (void *)key3, 2)
     );
 
     val = NULL;
     EXPECT_EQ(
         IB_ENOENT, 
-        ib_hash_get_ex((void **)&val, hash, (void *)key4, 2)
+        ib_hash_get_ex(&val, hash, (void *)key4, 2)
     );
 }
 
@@ -211,7 +211,7 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
 
                 // Check now (pre-resizing) and later (after resizing).
                 char *val = NULL;
-                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, c, 3));
+                EXPECT_EQ(IB_OK, ib_hash_get_ex(&val, hash, c, 3));
                 EXPECT_STREQ(c, val);
 
             }
@@ -231,7 +231,7 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
                 c[2] = combs[k];
                 c[4] = '\0';
                 char *val = NULL;
-                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, c, 3));
+                EXPECT_EQ(IB_OK, ib_hash_get_ex(&val, hash, c, 3));
                 EXPECT_STREQ(c, val);
 
             }
@@ -311,7 +311,7 @@ TEST_F(TestIBUtilHash, test_hash_clear)
                 c[4] = '\0';
 
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
-                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
+                EXPECT_EQ(IB_OK, ib_hash_get_ex(&v, hash, c, 3));
                 EXPECT_EQ(v, (void*)c);
             }
         }
@@ -333,7 +333,7 @@ TEST_F(TestIBUtilHash, test_hash_clear)
                 c[4] = '\0';
 
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
-                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
+                EXPECT_EQ(IB_OK, ib_hash_get_ex(&v, hash, c, 3));
                 EXPECT_EQ(v, (void*)c);
             }
         }
@@ -368,19 +368,19 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, b, (void *)b));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, c, (void *)c));
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, a));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, a));
     EXPECT_EQ(a, value);
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, b));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, b));
     EXPECT_EQ(b, value);
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, c));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, c));
     EXPECT_EQ(c, value);
     
     EXPECT_EQ(IB_OK, ib_hash_set(hash, a, NULL));
     
-    EXPECT_EQ(IB_ENOENT, ib_hash_get((void**)&value, hash, a));
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, b));
+    EXPECT_EQ(IB_ENOENT, ib_hash_get(&value, hash, a));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, b));
     EXPECT_EQ(b, value);
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, c));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, c));
     EXPECT_EQ(c, value); 
 }
 
@@ -396,22 +396,22 @@ TEST_F(TestIBUtilHash, test_hash_remove)
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, b, (void *)b));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, c, (void *)c));
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, a));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, a));
     EXPECT_EQ(a, value);
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, b));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, b));
     EXPECT_EQ(b, value);
-    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, c));
+    EXPECT_EQ(IB_OK, ib_hash_get(&value, hash, c));
     EXPECT_EQ(c, value);
     EXPECT_EQ(3UL, ib_hash_size(hash));
     
-    EXPECT_EQ(IB_OK, ib_hash_remove((void**)&value, hash, a));
+    EXPECT_EQ(IB_OK, ib_hash_remove(&value, hash, a));
     EXPECT_EQ(a, value);
     EXPECT_EQ(2UL, ib_hash_size(hash));
-    EXPECT_EQ(IB_ENOENT, ib_hash_get((void**)&value, hash, a));
+    EXPECT_EQ(IB_ENOENT, ib_hash_get(&value, hash, a));
 
     EXPECT_EQ(IB_OK, ib_hash_remove(NULL, hash, c));
     EXPECT_EQ(1UL, ib_hash_size(hash));
-    EXPECT_EQ(IB_ENOENT, ib_hash_get((void**)&value, hash, c));
+    EXPECT_EQ(IB_ENOENT, ib_hash_get(&value, hash, c));
     
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void*)7));
     EXPECT_EQ(2UL, ib_hash_size(hash));
@@ -420,7 +420,7 @@ TEST_F(TestIBUtilHash, test_hash_remove)
     
     EXPECT_EQ(
         IB_OK, 
-        ib_hash_remove_ex((void**)&value, hash, (void*)b, 3)
+        ib_hash_remove_ex(&value, hash, (void*)b, 3)
     );
     EXPECT_EQ(b, value);
     EXPECT_EQ(1UL, ib_hash_size(hash));

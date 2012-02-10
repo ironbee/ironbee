@@ -929,7 +929,7 @@ static modlua_runtime_t *modlua_runtime_get(ib_conn_t *conn)
     IB_FTRACE_INIT();
     modlua_runtime_t *lua;
 
-    ib_hash_get((void **)(&lua), conn->data, MODLUA_CONN_KEY);
+    ib_hash_get(&lua, conn->data, MODLUA_CONN_KEY);
 
     IB_FTRACE_RET_PTR(modlua_runtime_t, lua);
 }

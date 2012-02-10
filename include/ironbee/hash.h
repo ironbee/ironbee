@@ -74,8 +74,8 @@ typedef struct ib_hash_t ib_hash_t;
  * A hash function converts keys (byte sequences) into hash values (unsinged
  * integers).  A good hash function is vital to the performance of a hash.
  *
- * @param[in] key           Key to hash.
- * @param[in] key_length    Length of @a key.
+ * @param[in] key        Key to hash.
+ * @param[in] key_length Length of @a key.
  *
  * @returns Hash value of @a key.
  **/
@@ -125,8 +125,8 @@ typedef int (*ib_hash_equal_t)(
  *   hash = hash * 33 + c
  * @endcode
  *
- * @param[in] key          The key to hash.
- * @param[in] key_length   Length of @a key.
+ * @param[in] key        The key to hash.
+ * @param[in] key_length Length of @a key.
  *
  * @returns Hash value of @a key.
  */
@@ -148,8 +148,8 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2(
  *   hash = hash * 33 + tolower(c)
  * @endcode
  *
- * @param[in] key          The key to hash.
- * @param[in] key_length   Length of @a key.
+ * @param[in] key        The key to hash.
+ * @param[in] key_length Length of @a key.
  *
  * @returns Hash value of @a key.
  */
@@ -240,7 +240,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_ex(
  *
  * @sa ib_hash_create_ex()
  *
- * @param[out] hash   The newly created hash table.
+ * @param[out] hash The newly created hash table.
  * @param[in]  pool Memory pool to use.
  *
  * @returns
@@ -258,7 +258,7 @@ ib_status_t DLL_PUBLIC ib_hash_create(
  *
  * @sa ib_hash_create_ex()
  *
- * @param[out] hash   The newly created hash table.
+ * @param[out] hash The newly created hash table.
  * @param[in]  pool Memory pool to use.
  *
  * @returns
@@ -316,10 +316,10 @@ size_t DLL_PUBLIC ib_hash_size(
  * @sa ib_hash_get()
  * @sa ib_hash_get_nocase()
  *
- * @param[out] value        Address which value is written.
- * @param[in]  hash         Hash table.
- * @param[in]  key          Key to lookup.
- * @param[in]  key_length   Length of @a key.
+ * @param[out] value      Address which value is written.
+ * @param[in]  hash       Hash table.
+ * @param[in]  key        Key to lookup.
+ * @param[in]  key_length Length of @a key.
  *
  * @returns
  * - IB_OK on success.
@@ -327,7 +327,7 @@ size_t DLL_PUBLIC ib_hash_size(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get_ex(
-    void            **value,
+    void             *value,
     const ib_hash_t  *hash,
     void             *key,
     size_t            key_length
@@ -349,7 +349,7 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get(
-    void             **value,
+    void              *value,
     const ib_hash_t   *hash,
     const char        *key
 );
@@ -361,7 +361,7 @@ ib_status_t DLL_PUBLIC ib_hash_get(
  * (@c void @c *).
  *
  * @param[in,out] list List to push values.
- * @param[in]     hash   Hash table to take values from.
+ * @param[in]     hash Hash table to take values from.
  *
  * @returns
  * - IB_OK if any elements are pushed.
@@ -386,10 +386,10 @@ ib_status_t DLL_PUBLIC ib_hash_get_all(
  *
  * @sa ib_hash_set()
  *
- * @param[in,out] hash         Hash table.
- * @param[in]     key          Key.
- * @param[in]     key_length   Length of @a key
- * @param[in]     value        Value.
+ * @param[in,out] hash       Hash table.
+ * @param[in]     key        Key.
+ * @param[in]     key_length Length of @a key
+ * @param[in]     value      Value.
  *
  * If @a value is NULL, removes element.
  *
@@ -441,10 +441,10 @@ void DLL_PUBLIC ib_hash_clear(
  *
  * @sa ib_hash_remove()
  *
- * @param[in,out] value        If non-NULL, removed value will be stored here.
- * @param[in,out] hash         Hash table.
- * @param[in]     key          Key.
- * @param[in]     key_length   Length of @a key.
+ * @param[in,out] value      If non-NULL, removed value will be stored here.
+ * @param[in,out] hash       Hash table.
+ * @param[in]     key        Key.
+ * @param[in]     key_length Length of @a key.
  *
  * @returns
  * - IB_OK on success.
@@ -452,7 +452,7 @@ void DLL_PUBLIC ib_hash_clear(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_remove_ex(
-    void      **value,
+    void       *value,
     ib_hash_t  *hash,
     void       *key,
     size_t      key_length
@@ -473,7 +473,7 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_remove(
-    void       **value,
+    void        *value,
     ib_hash_t   *hash,
     const char  *key
 );
