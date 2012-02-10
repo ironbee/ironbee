@@ -213,6 +213,9 @@ ib_hash_entry_t *ib_hash_find_htentry(
 {
     IB_FTRACE_INIT();
 
+    assert(hash != NULL);
+    assert(key  != NULL);
+
     for (
         ib_hash_entry_t* current_entry = first;
         current_entry != NULL;
@@ -240,6 +243,10 @@ ib_status_t ib_hash_find_entry(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(hash_entry != NULL);
+    assert(hash       != NULL);
+    assert(key        != NULL);
 
     ib_hash_entry_t *current_slot  = NULL;
     ib_hash_entry_t *current_entry = NULL;
@@ -272,6 +279,8 @@ ib_hash_iterator_t ib_hash_first(
 )
 {
     // There is no ftrace return macro for custom types.
+    assert(hash != NULL);
+
     ib_hash_iterator_t iterator;
 
     memset(&iterator, 0, sizeof(ib_hash_iterator_t));
@@ -286,6 +295,8 @@ void ib_hash_next(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(iterator != NULL);
 
     iterator->current_entry = iterator->next_entry;
     while (! iterator->current_entry) {
@@ -305,6 +316,8 @@ ib_status_t ib_hash_resize_slots(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(hash != NULL);
 
     ib_hash_entry_t **new_slots     = NULL;
     ib_hash_entry_t  *current_entry = NULL;
@@ -340,6 +353,8 @@ unsigned int ib_hashfunc_djb2(
 {
     IB_FTRACE_INIT();
 
+    assert(key != NULL);
+
     unsigned int  hash  = 0;
     const char   *key_s = (const char *)key;
 
@@ -356,6 +371,8 @@ unsigned int DLL_PUBLIC ib_hashfunc_djb2_nocase(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(key != NULL);
 
     unsigned int  hash  = 0;
     const char   *key_s = (const char *)key;
@@ -374,9 +391,15 @@ int DLL_PUBLIC ib_hashequal_default(
     size_t b_length
 )
 {
-    return
+    IB_FTRACE_INIT();
+
+    assert(a != NULL);
+    assert(b != NULL);
+
+    IB_FTRACE_RET_INT(
            (a_length == b_length)
-        && (memcmp(a, b, a_length) == 0);
+        && (memcmp(a, b, a_length) == 0)
+   );
 }
 
 int DLL_PUBLIC ib_hashequal_nocase(
@@ -386,20 +409,25 @@ int DLL_PUBLIC ib_hashequal_nocase(
     size_t b_length
 )
 {
+    IB_FTRACE_INIT();
+
+    assert(a != NULL);
+    assert(b != NULL);
+
     const char *a_s = (const char*)a;
     const char *b_s = (const char*)b;
 
     if (a_length != b_length) {
-        return 0;
+        IB_FTRACE_RET_INT(0);
     }
 
     for (size_t i = 0; i < a_length; ++i) {
         if (tolower(a_s[i]) != tolower(b_s[i])) {
-            return 0;
+            IB_FTRACE_RET_INT(0);
         }
     }
 
-    return 1;
+    IB_FTRACE_RET_INT(1);
 }
 
 ib_status_t ib_hash_create_ex(
@@ -411,6 +439,10 @@ ib_status_t ib_hash_create_ex(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(hash != NULL);
+    assert(pool != NULL);
+    assert(size > 0);
 
     ib_hash_t *new_hash = NULL;
 
@@ -454,6 +486,9 @@ ib_status_t ib_hash_create(
 {
     IB_FTRACE_INIT();
 
+    assert(hash != NULL);
+    assert(pool != NULL);
+
     IB_FTRACE_RET_STATUS(ib_hash_create_ex(
         hash,
         pool,
@@ -469,6 +504,9 @@ ib_status_t DLL_PUBLIC ib_hash_create_nocase(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(hash != NULL);
+    assert(pool != NULL);
 
     IB_FTRACE_RET_STATUS(ib_hash_create_ex(
         hash,
@@ -493,6 +531,8 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
 void ib_hash_clear(ib_hash_t *hash)
 {
     IB_FTRACE_INIT();
+
+    assert(hash != NULL);
 
     for (size_t i = 0; i < hash->size; ++i) {
         if ( hash->slots[i] != NULL ) {
@@ -522,6 +562,9 @@ ib_status_t ib_hash_get_ex(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(value != NULL);
+    assert(hash  != NULL);
 
     ib_status_t      rc;
     ib_hash_entry_t *current_entry = NULL;
@@ -557,6 +600,9 @@ ib_status_t ib_hash_get(
 {
     IB_FTRACE_INIT();
 
+    assert(value != NULL);
+    assert(hash  != NULL);
+
     if (key == NULL) {
         *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -576,6 +622,10 @@ ib_status_t ib_hash_get_all(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(list != NULL);
+    assert(hash != NULL);
+
     ib_hash_entry_t* current_entry = NULL;
 
     IB_HASH_LOOP(current_entry, hash) {
@@ -597,6 +647,9 @@ ib_status_t ib_hash_set_ex(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(hash != NULL);
+    assert(key  != NULL);
 
     unsigned int hash_value = 0;
     size_t       slot_index = 0;
@@ -697,6 +750,9 @@ ib_status_t ib_hash_set(
 {
     IB_FTRACE_INIT();
 
+    assert(hash != NULL);
+    assert(key  != NULL);
+
     IB_FTRACE_RET_STATUS(ib_hash_set_ex(hash, (void *)key, strlen(key), value));
 }
 
@@ -708,6 +764,11 @@ ib_status_t ib_hash_remove_ex(
 )
 {
     IB_FTRACE_INIT();
+
+    assert(value != NULL);
+    assert(hash  != NULL);
+    assert(key   != NULL);
+
     ib_status_t rc = IB_ENOENT;
     void *local_value = NULL;
 
@@ -730,5 +791,9 @@ ib_status_t ib_hash_remove(
     const char *key
 )
 {
-    return ib_hash_remove_ex(value, hash, (void*)key, strlen(key));
+    IB_FTRACE_INIT();
+
+    IB_FTRACE_RET_STATUS(
+        ib_hash_remove_ex(value, hash, (void*)key, strlen(key))
+    );
 }
