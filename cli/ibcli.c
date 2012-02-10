@@ -720,6 +720,10 @@ static void print_field(const char *label,
     /* Check the field name
      * Note: field->name is not always a null ('\0') terminated string */
     switch (field->type) {
+        case IB_FTYPE_GENERIC :      /**< Generic data */
+            printf( "  %s: %p\n",
+                    label, ib_field_value(field) );
+            break;
         case IB_FTYPE_NUM :          /**< Numeric value */
             printf( "  %s: %jd\n",
                     label, *(intmax_t *)ib_field_value_num(field) );
@@ -870,19 +874,20 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
     /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
         void *data = ib_list_node_data(node);
-        ib_field_t **field = (ib_field_t **)data;
+        ib_field_t *field = (ib_field_t *)data;
         const char *fullpath = NULL;
-        switch ((*field)->type) {
+        switch (field->type) {
+            case IB_FTYPE_GENERIC:
             case IB_FTYPE_NUM:
             case IB_FTYPE_UNUM:
             case IB_FTYPE_NULSTR:
             case IB_FTYPE_BYTESTR:
-                fullpath = build_path( path, *field );
-                print_field(fullpath, *field);
+                fullpath = build_path( path, field );
+                print_field(fullpath, field);
                 break;
             case IB_FTYPE_LIST:
-                fullpath = build_path( path, *field );
-                print_list(fullpath, ib_field_value_list(*field) );
+                fullpath = build_path( path, field );
+                print_list(fullpath, ib_field_value_list(field) );
                 break;
             default :
                 if (test_dump_flags(DUMP_TX_AGGRESSIVE) != 0) {
