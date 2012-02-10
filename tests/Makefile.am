@@ -81,6 +81,9 @@ test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
 test_util_mpool_SOURCES = test_util_mpool.cc
 test_util_mpool_CFLAGS = $(AM_CFLAGS) $(VALGRIND_CFLAGS)
 test_util_mpool_LDADD = $(MODULE_TEST_LDADD)
+if HAVE_NO_UNUSED_BUT_SET_VARIABLE
+test_util_mpool_CPPFLAGS = $(CPPFLAGS) -Wno-unused-but-set-variable
+endif
 
 test_engine_SOURCES = test_engine.cc test_main.cc ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)

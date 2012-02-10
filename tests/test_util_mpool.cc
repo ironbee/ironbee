@@ -65,7 +65,7 @@ void check_for_leaks()
     VALGRIND_DO_QUICK_LEAK_CHECK;
     VALGRIND_COUNT_LEAKS(leaked, dubious, reachable, suppressed);
 
-    EXPECT_EQ(0, (leaked - last_leaked)) << "Memory was leaked";
+    EXPECT_EQ(0UL, (leaked - last_leaked)) << "Memory was leaked";
 #endif
 }
 
@@ -91,8 +91,8 @@ TEST_F(MpoolTest, CreateDestroy) {
     ASSERT_EQ(IB_OK, rc);
 
     EXPECT_EQ(IB_MPOOL_DEFAULT_PAGE_SIZE, pool->size);
-    EXPECT_EQ(1, pool->buffer_cnt);
-    EXPECT_EQ(0, pool->inuse);
+    EXPECT_EQ(1UL, pool->buffer_cnt);
+    EXPECT_EQ(0UL, pool->inuse);
     EXPECT_EQ(IB_MPOOL_DEFAULT_PAGE_SIZE, pool->page_size);
 
     ib_mpool_destroy(pool);
@@ -103,13 +103,12 @@ TEST_F(MpoolTest, CreateDestroy) {
 TEST_F(MpoolTest, SingleAlloc) {
     ib_mpool_t *pool;
     ib_status_t rc;
-    char *buf;
 
     rc = ib_mpool_create(&pool, "base", NULL);
     ASSERT_EQ(IB_OK, rc);
 
-    buf = (char *)ib_mpool_alloc(pool, 32);
-    EXPECT_EQ(32, pool->inuse);
+    ib_mpool_alloc(pool, 32);
+    EXPECT_EQ(32UL, pool->inuse);
 
     ib_mpool_destroy(pool);
 
@@ -119,15 +118,14 @@ TEST_F(MpoolTest, SingleAlloc) {
 TEST_F(MpoolTest, TwoAllocs) {
     ib_mpool_t *pool;
     ib_status_t rc;
-    char *buf;
 
     rc = ib_mpool_create(&pool, "base", NULL);
     ASSERT_EQ(IB_OK, rc);
 
-    buf = (char *)ib_mpool_alloc(pool, 32);
-    buf = (char *)ib_mpool_alloc(pool, 32);
+    ib_mpool_alloc(pool, 32);
+    ib_mpool_alloc(pool, 32);
 
-    EXPECT_EQ(64, pool->inuse);
+    EXPECT_EQ(64UL, pool->inuse);
 
     ib_mpool_destroy(pool);
 
