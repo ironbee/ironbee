@@ -111,14 +111,6 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-void ib_cfgmap_clear(ib_cfgmap_t *cm)
-{
-    IB_FTRACE_INIT();
-    /// @todo Implement
-    abort();
-    IB_FTRACE_RET_VOID();
-}
-
 ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
                           const char *name,
                           void *pval)

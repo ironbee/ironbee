@@ -148,14 +148,6 @@ ib_status_t DLL_PUBLIC ib_cfgmap_init(ib_cfgmap_t *cm,
                                       const ib_cfgmap_init_t *init,
                                       int usedefaults);
 
-
-/**
- * Clear a configuration map.
- *
- * @param cm Map
- */
-void DLL_PUBLIC ib_cfgmap_clear(ib_cfgmap_t *cm);
-
 /**
  * Set a configuration value.
  *
