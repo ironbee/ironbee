@@ -277,7 +277,7 @@ ib_status_t ib_hash_find_entry(
 
     unsigned int hash_value = hash->hash_function(key, key_length);
 
-    current_slot = hash->slots[hash_value & hash->num_slots];
+    current_slot = hash->slots[hash_value % hash->num_slots];
     current_entry = ib_hash_find_htentry(
         hash,
         current_slot,
@@ -341,12 +341,12 @@ ib_status_t ib_hash_resize_slots(
 
     ib_hash_entry_t **new_slots     = NULL;
     ib_hash_entry_t  *current_entry = NULL;
-    unsigned int      new_size      = 0;
+    size_t            new_num_slots = 0;
 
-    new_size  = (hash->num_slots * 2) + 1;
+    new_num_slots = (hash->num_slots * 2) + 1;
     new_slots = (ib_hash_entry_t **)ib_mpool_calloc(
         hash->pool,
-        new_size + 1,
+        new_num_slots + 1,
         sizeof(*new_slots)
     );
     if (new_slots == NULL) {
@@ -354,12 +354,12 @@ ib_status_t ib_hash_resize_slots(
     }
 
     IB_HASH_LOOP(current_entry, hash) {
-        size_t i                  = current_entry->hash_value & new_size;
+        size_t i                  = current_entry->hash_value % new_num_slots;
         current_entry->next_entry = new_slots[i];
         new_slots[i]              = current_entry;
     }
-    hash->num_slots  = new_size;
-    hash->slots = new_slots;
+    hash->num_slots = new_num_slots;
+    hash->slots     = new_slots;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -665,7 +665,7 @@ ib_status_t ib_hash_set_ex(
     ib_hash_entry_t **current_entry_handle  = NULL;
 
     hash_value = hash->hash_function(key, key_length);
-    slot_index = (hash_value & hash->num_slots);
+    slot_index = (hash_value % hash->num_slots);
 
     current_entry_handle = &hash->slots[slot_index];
 
