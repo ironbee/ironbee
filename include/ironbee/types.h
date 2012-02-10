@@ -64,6 +64,10 @@ typedef void ib_dso_sym_t;
  *
  * A map of keys (byte sequences or strings) to values (\c void*).
  *
+ * @warning The \c void* value type works well for pointers but can cause
+ * problems if other data is stored in there.  If you store non-pointer
+ * types, make sure they are as wide as your pointers are.
+ *
  * @sa IronBeeHash
  * @sa hash.h
  **/
