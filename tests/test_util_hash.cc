@@ -350,8 +350,8 @@ static unsigned int test_hash_delete_hashfunc(
 
 TEST_F(TestIBUtilHash, test_hash_collision_delete)
 {
-    ib_hash_t   *hash  = NULL;
-    uint64_t     value;
+    ib_hash_t *hash  = NULL;
+    uint64_t   value;
     
     // Make sure we have collisions.
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
@@ -362,9 +362,9 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
         ib_hashequal_default
     ));
     
-    EXPECT_EQ(IB_OK, ib_hash_set(hash, "abc", (void*)7));
-    EXPECT_EQ(IB_OK, ib_hash_set(hash, "def", (void*)8));
-    EXPECT_EQ(IB_OK, ib_hash_set(hash, "ghi", (void*)9));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "abc", (void*)7));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "def", (void*)8));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "ghi", (void*)9));
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "abc"));
     EXPECT_EQ(7UL, value);
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "def"));
@@ -379,4 +379,43 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
     EXPECT_EQ(8UL, value);
     EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "ghi"));
     EXPECT_EQ(9UL, value); 
+}
+
+TEST_F(TestIBUtilHash, test_hash_remove)
+{
+    ib_hash_t *hash = NULL;
+    uint64_t   value;
+    
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "abc", (void*)7));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "def", (void*)8));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "ghi", (void*)9));
+    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "abc"));
+    EXPECT_EQ(7UL, value);
+    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "def"));
+    EXPECT_EQ(8UL, value);
+    EXPECT_EQ(IB_OK, ib_hash_get((void**)&value, hash, "ghi"));
+    EXPECT_EQ(9UL, value);
+    EXPECT_EQ(3UL, ib_hash_size(hash));
+    
+    EXPECT_EQ(IB_OK, ib_hash_remove((void**)&value, hash, "abc"));
+    EXPECT_EQ(7UL, value);
+    EXPECT_EQ(2UL, ib_hash_size(hash));
+    EXPECT_EQ(IB_ENOENT, ib_hash_get((void**)&value, hash, "abc"));
+
+    EXPECT_EQ(IB_OK, ib_hash_remove(NULL, hash, "ghi"));
+    EXPECT_EQ(1UL, ib_hash_size(hash));
+    EXPECT_EQ(IB_ENOENT, ib_hash_get((void**)&value, hash, "ghi"));
+    
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "abc", (void*)7));
+    EXPECT_EQ(2UL, ib_hash_size(hash));
+    
+    EXPECT_EQ(IB_ENOENT, ib_hash_remove(NULL, hash, "ghi"));
+    
+    EXPECT_EQ(
+        IB_OK, 
+        ib_hash_remove_ex((void**)&value, hash, (void*)"def", 3)
+    );
+    EXPECT_EQ(8UL, value);
+    EXPECT_EQ(1UL, ib_hash_size(hash));
 }
