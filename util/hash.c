@@ -457,7 +457,7 @@ ib_status_t ib_hash_create_ex(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    new_hash = (ib_hash_t *)ib_mpool_calloc(pool, 1, sizeof(*new_hash));
+    new_hash = (ib_hash_t *)ib_mpool_alloc(pool, sizeof(*new_hash));
     if (new_hash == NULL) {
         *hash = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -648,7 +648,7 @@ ib_status_t ib_hash_set_ex(
 
     current_entry_handle = &hash->slots[slot_index];
 
-    while ( *current_entry_handle != NULL ) {
+    while (*current_entry_handle != NULL) {
         current_entry = *current_entry_handle;
         if (
                current_entry->hash_value == hash_value
@@ -677,7 +677,7 @@ ib_status_t ib_hash_set_ex(
             /* Delete */
             --hash->size;
 
-            /* Remove from slot list .*/
+            /* Remove from slot list. */
             *current_entry_handle = current_entry->next_entry;
 
             /* Add to free list. */
@@ -695,9 +695,8 @@ ib_status_t ib_hash_set_ex(
                 hash->free = entry->next_entry;
             }
             else {
-                entry = (ib_hash_entry_t *)ib_mpool_calloc(
+                entry = (ib_hash_entry_t *)ib_mpool_alloc(
                     hash->pool,
-                    1,
                     sizeof(*entry)
                 );
                 if (entry == NULL) {
@@ -750,7 +749,7 @@ void ib_hash_clear(ib_hash_t *hash) {
     assert(hash != NULL);
 
     for (size_t i = 0; i < hash->num_slots; ++i) {
-        if ( hash->slots[i] != NULL ) {
+        if (hash->slots[i] != NULL) {
             ib_hash_entry_t *current_entry;
             for (
                 current_entry = hash->slots[i];
