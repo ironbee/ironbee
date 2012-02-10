@@ -62,6 +62,7 @@ TEST_F(TestIBUtilHash, test_hash_create)
     rc = ib_hash_create(&hash, m_pool);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(hash);
+    ASSERT_EQ(0UL, ib_hash_size(hash));
     ib_hash_clear(hash);
 }
 
@@ -75,6 +76,7 @@ TEST_F(TestIBUtilHash, test_hash_set_and_get)
     ASSERT_EQ(IB_OK, rc);
     rc = ib_hash_set(hash, "Key", (void*)"value");
     ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1UL, ib_hash_size(hash));
 
     rc = ib_hash_get((void **)&val, hash, "Key");
     ASSERT_EQ(IB_OK, rc);
@@ -82,6 +84,7 @@ TEST_F(TestIBUtilHash, test_hash_set_and_get)
 
     rc = ib_hash_set(hash, "Key2", (void*)"value2");
     ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(2UL, ib_hash_size(hash));
 
     val = NULL;
     rc = ib_hash_get((void **)&val, hash, "Key");
@@ -239,6 +242,8 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
             }
         }
     }
+    
+    ASSERT_EQ(1000UL, ib_hash_size(hash));
 
     // After resizing
     for (int i = 0; i < 10; i++) {
@@ -300,6 +305,7 @@ TEST_F(TestIBUtilHash, test_hash_getall)
     }
 
     ASSERT_EQ(1000UL, ib_list_elements(list));
+    ASSERT_EQ(1000UL, ib_hash_size(hash));
 
     rc = ib_hash_get_all(list2, hash);
     ASSERT_EQ(IB_OK, rc);
@@ -350,7 +356,9 @@ TEST_F(TestIBUtilHash, test_hash_clear)
         }
     }
 
+    ASSERT_EQ(1000UL, ib_hash_size(hash));
     ib_hash_clear(hash);
+    ASSERT_EQ(0UL, ib_hash_size(hash));
 
     for (int i = 9; i >= 0; --i) {
         for (int j = 9; j >= 0; --j) {
