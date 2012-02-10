@@ -348,6 +348,9 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(log->ib, 1, "Could not fetch core configuration: %d", rc );
+    }
 
     if (corecfg->auditlog_index_fp != NULL) {
         cfg->index_fp = corecfg->auditlog_index_fp;
@@ -974,12 +977,12 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
             /* Try dynamic lookup. */
             if(ib_field_is_dynamic(*pf)) {
                 *pf = (ib_field_t *)ib_field_value_ex(*pf, (void *)subkey, sklen);
-                if (*pf != NULL) {
-                    IB_FTRACE_RET_STATUS(IB_OK);
+                if (*pf == NULL) {
+                    IB_FTRACE_RET_STATUS(IB_ENOENT);
                 }
-
+                IB_FTRACE_RET_STATUS(IB_OK);
             }
-            if ((*pf)->type == IB_FTYPE_LIST) {
+            else if ((*pf)->type == IB_FTYPE_LIST) {
                 ib_list_node_t *node;
 
                 /* Lookup the subkey value in the field list. */
@@ -994,6 +997,9 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                     }
                 }
             }
+            
+            ib_log_error(dpi->pr->ib, 1, "Trying to lookup subkey in non-list.");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
 
@@ -2948,7 +2954,10 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
                                 size_t nlen)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
+    
+    assert(dpi != NULL);
+    
+    IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -2979,7 +2988,10 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
                                 size_t nlen)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
+    
+    assert(dpi != NULL);
+    
+    IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -3014,7 +3026,10 @@ static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
                                          intmax_t adjval)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
+    
+    assert(dpi != NULL);
+    
+    IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -3047,7 +3062,10 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
                                 ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
+    
+    assert(dpi != NULL);
+    
+    IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -3076,7 +3094,10 @@ static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
                                     ib_list_t *list)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
+    
+    assert(dpi != NULL);
+    
+    IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -3109,7 +3130,10 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
                                    ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(data) *iface = dpi?(IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface:NULL;
+    
+    assert(dpi != NULL);
+    
+    IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -4705,12 +4729,9 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
         rc = core_set_value(ctx, type, p1, p2);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else {
-        ib_log_error(ib, 1, "Unhandled directive: %s %s %s", name, p1, p2);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    ib_log_error(ib, 1, "Unhandled directive: %s %s %s", name, p1, p2);
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 
