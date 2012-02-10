@@ -37,6 +37,7 @@
  * Create function for the log action.
  *
  * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
  * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
@@ -44,6 +45,7 @@
  * @returns Status code
  */
 static ib_status_t act_log_create(ib_engine_t *ib,
+                                  ib_context_t *ctx,
                                   ib_mpool_t *mp,
                                   const char *parameters,
                                   ib_action_inst_t *inst)
@@ -92,6 +94,7 @@ static ib_status_t act_log_execute(void *data,
  * Create function for the setflags action.
  *
  * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
  * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
@@ -99,6 +102,7 @@ static ib_status_t act_log_execute(void *data,
  * @returns Status code
  */
 static ib_status_t act_setflags_create(ib_engine_t *ib,
+                                       ib_context_t *ctx,
                                        ib_mpool_t *mp,
                                        const char *parameters,
                                        ib_action_inst_t *inst)
@@ -160,6 +164,7 @@ struct act_event_data_t {
  * Event action creation callback.
  *
  * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current IronBee context (unused)
  * @param[in] pool Memory pool to be used for allocating needed memory.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the action instance.
@@ -168,6 +173,7 @@ struct act_event_data_t {
  * @returns IB_OK if successful.
  */
 static ib_status_t act_event_create_inst(ib_engine_t *ib,
+                                         ib_context_t *ctx,
                                          ib_mpool_t *pool,
                                          const char *data,
                                          ib_action_inst_t *act_inst)

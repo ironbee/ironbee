@@ -43,6 +43,7 @@
  * Create function for the "str" family of operators
  *
  * @param[in] ib The IronBee engine (unused)
+ * @param[in] ctx The current IronBee context (unused)
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters
  * @param[in,out] op_inst Instance operator
@@ -50,6 +51,7 @@
  * @returns Status code
  */
 static ib_status_t strop_create(ib_engine_t *ib,
+                                ib_context_t *ctx,
                                 ib_mpool_t *mp,
                                 const char *parameters,
                                 ib_operator_inst_t *op_inst)
@@ -280,6 +282,7 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
  * Create function for the "ipmatch" operator
  *
  * @param[in] ib The IronBee engine
+ * @param[in] ctx The current IronBee context (unused)
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters (ip address strings)
  * @param[in,out] op_inst Instance operator
@@ -287,6 +290,7 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t op_ipmatch_create(ib_engine_t *ib,
+                                     ib_context_t *ctx,
                                      ib_mpool_t *mp,
                                      const char *parameters,
                                      ib_operator_inst_t *op_inst)

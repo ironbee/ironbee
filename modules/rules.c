@@ -75,7 +75,9 @@ static ib_lock_t g_lua_lock;
  *          new thread, and a @c lua_State** which will be assigned a
  *          new @c lua_State*.
  */
-typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*, lua_State*, lua_State**);
+typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*,
+                                            lua_State*,
+                                            lua_State**);
 
 
 /**
@@ -168,7 +170,8 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     }
 
     /* Create the operator instance */
-    rc = ib_operator_inst_create(cp->ib, op, args, flags, &operator);
+    rc = ib_operator_inst_create(
+        cp->ib, cp->cur_ctx, op, args, flags, &operator);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 4,
                      "Failed to create operator instance '%s': %d", op, rc);
@@ -241,7 +244,6 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
 
     IB_FTRACE_RET_STATUS(rc);
 }
-
 
 /**
  * @internal
@@ -334,7 +336,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
         /* Create a new action instance */
         rc = ib_action_inst_create(
-            cp->ib, name, value, IB_ACTINST_FLAG_NONE, &action);
+            cp->ib, cp->cur_ctx, name, value, IB_ACTINST_FLAG_NONE, &action);
         if (rc == IB_EINVAL) {
             ib_log_error(cp->ib, 4, "Unknown modifier %s", name);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -452,6 +454,7 @@ static ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
 }
 
 static ib_status_t lua_operator_create(ib_engine_t *ib,
+                                       ib_context_t *ctx,
                                        ib_mpool_t *pool,
                                        const char *parameters,
                                        ib_operator_inst_t *op_inst)
@@ -570,7 +573,8 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
 
         ib_log_debug(cp->ib, 1, "Registered IronBee operator %s", file_name);
 
-        rc = ib_operator_inst_create(cp->ib, file_name, NULL, 0, &op_inst);
+        rc = ib_operator_inst_create(
+            cp->ib, cp->cur_ctx, file_name, NULL, 0, &op_inst);
 
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 1,

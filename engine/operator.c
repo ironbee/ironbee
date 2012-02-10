@@ -77,6 +77,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
 }
 
 ib_status_t ib_operator_inst_create(ib_engine_t *ib,
+                                    ib_context_t *ctx,
                                     const char *name,
                                     const char *parameters,
                                     ib_flags_t flags,
@@ -103,7 +104,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     (*op_inst)->flags = flags;
 
     if (op->fn_create != NULL) {
-        rc = op->fn_create(ib, pool, parameters, *op_inst);
+        rc = op->fn_create(ib, ctx, pool, parameters, *op_inst);
     }
     else {
         rc = IB_OK;

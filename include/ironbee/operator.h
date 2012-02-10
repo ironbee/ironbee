@@ -46,6 +46,8 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
 /**
  * Operator instance creation callback type.
  *
+ * @param[in] ib IronBee engine.
+ * @param[in] ctx Current context.
  * @param[in] pool Memory pool to be used for allocating needed memory.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the operator instance.
@@ -54,6 +56,7 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_create_fn_t)(ib_engine_t *ib,
+                                                ib_context_t *ctx,
                                                 ib_mpool_t *pool,
                                                 const char *parameters,
                                                 ib_operator_inst_t *op_inst);
@@ -145,6 +148,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  * Looks up the operator by name and executes the operator creation callback.
  *
  * @param[in] ib Ironbee engine
+ * @param[in] ctx Current IronBee context
  * @param[in] name The name of the operator to create.
  * @param[in] parameters Parameters used to create the instance.
  * @param[in] flags Operator instance flags (i.e. IB_OPINST_FLAG_INVERT)
@@ -153,6 +157,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  * @returns IB_OK on success, IB_EINVAL if the named operator does not exist.
  */
 ib_status_t DLL_PUBLIC ib_operator_inst_create(ib_engine_t *ib,
+                                               ib_context_t *ctx,
                                                const char *name,
                                                const char *parameters,
                                                ib_flags_t flags,
