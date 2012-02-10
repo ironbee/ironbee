@@ -44,6 +44,7 @@
 #include <ironbee/array.h>
 #include <ironbee/list.h>
 #include <ironbee/field.h>
+#include <ironbee/hash.h>
 
 #ifdef __cplusplus
 extern "C" {

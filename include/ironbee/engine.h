@@ -36,6 +36,7 @@
 #include <ironbee/stream.h>
 #include <ironbee/list.h>
 #include <ironbee/uuid.h>
+#include <ironbee/hash.h>
 
 #ifdef __cplusplus
 extern "C" {

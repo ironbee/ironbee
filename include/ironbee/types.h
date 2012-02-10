@@ -54,29 +54,6 @@ typedef struct ib_mpool_buffer_t ib_mpool_buffer_t;
 typedef struct ib_dso_t ib_dso_t;
 typedef void ib_dso_sym_t;
 
-/**
- * @ingroup IronBeeHash
- * @{
- **/
-
-/**
- * Hash table.
- *
- * A map of keys (byte sequences or strings) to values (\c void*).
- *
- * @warning The \c void* value type works well for pointers but can cause
- * problems if other data is stored in there.  If you store non-pointer
- * types, make sure they are as wide as your pointers are.
- *
- * @sa IronBeeHash
- * @sa hash.h
- **/
-typedef struct ib_hash_t ib_hash_t;
-
-/**
- * @} IronBeeHash
- **/
-
 typedef uint32_t ib_ftype_t;
 typedef uint32_t ib_flags_t;
 typedef uint64_t ib_flags64_t;
