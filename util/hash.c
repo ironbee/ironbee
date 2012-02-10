@@ -265,12 +265,12 @@ ib_status_t ib_hash_find_entry(
 
     ib_hash_entry_t *current_slot  = NULL;
     ib_hash_entry_t *current_entry = NULL;
-
+    uint32_t         hash_value    = 0;
     if (hash_entry == NULL || hash == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    uint32_t hash_value = hash->hash_function(key, key_length);
+    hash_value = hash->hash_function(key, key_length);
 
     current_slot = hash->slots[hash_value % hash->num_slots];
     current_entry = ib_hash_find_htentry(
@@ -292,7 +292,7 @@ ib_status_t ib_hash_find_entry(
 ib_hash_iterator_t ib_hash_first(
     const ib_hash_t *hash
 ) {
-    // There is no ftrace return macro for custom types.
+    /* There is no ftrace return macro for custom types. */
     assert(hash != NULL);
 
     ib_hash_iterator_t iterator;
