@@ -997,7 +997,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                     }
                 }
             }
-            
+
             ib_log_error(dpi->pr->ib, 1, "Trying to lookup subkey in non-list.");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
@@ -2954,9 +2954,9 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
                                 size_t nlen)
 {
     IB_FTRACE_INIT();
-    
+
     assert(dpi != NULL);
-    
+
     IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
@@ -2988,9 +2988,9 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
                                 size_t nlen)
 {
     IB_FTRACE_INIT();
-    
+
     assert(dpi != NULL);
-    
+
     IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
@@ -3026,9 +3026,9 @@ static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
                                          intmax_t adjval)
 {
     IB_FTRACE_INIT();
-    
+
     assert(dpi != NULL);
-    
+
     IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
@@ -3062,9 +3062,9 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
                                 ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    
+
     assert(dpi != NULL);
-    
+
     IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
@@ -3094,9 +3094,9 @@ static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
                                     ib_list_t *list)
 {
     IB_FTRACE_INIT();
-    
+
     assert(dpi != NULL);
-    
+
     IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
@@ -3130,9 +3130,9 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
                                    ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    
+
     assert(dpi != NULL);
-    
+
     IB_PROVIDER_IFACE_TYPE(data) *iface = (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
     ib_status_t rc;
 
