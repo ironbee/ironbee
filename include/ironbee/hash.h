@@ -216,7 +216,7 @@ int DLL_PUBLIC ib_hashequal_nocase(
 ib_status_t DLL_PUBLIC ib_hash_create_ex(
     ib_hash_t          **hash,
     ib_mpool_t          *pool,
-    unsigned int         size,
+    size_t               size,
     ib_hash_function_t   hash_function,
     ib_hash_equal_t      equal_predicate
 );

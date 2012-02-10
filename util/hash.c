@@ -90,7 +90,7 @@ struct ib_hash_iterator_t {
     /** Next entry. */
     ib_hash_entry_t     *next_entry;
     /** Which slot we are in. */
-    unsigned int         slot_index;
+    size_t               slot_index;
 };
 
 /**
@@ -109,13 +109,13 @@ struct ib_hash_t {
      **/
     ib_hash_entry_t    **slots;
     /** Size of @c slots. */
-    unsigned int         num_slots;
+    size_t               num_slots;
     /** Memory pool. */
     ib_mpool_t          *pool;
     /** Linked list of removed hash entries to use for recycling. */
     ib_hash_entry_t     *free;
     /** Number of entries. */
-    unsigned int         size;
+    size_t               size;
 };
 
 /**
@@ -450,7 +450,7 @@ int DLL_PUBLIC ib_hashequal_nocase(
 ib_status_t ib_hash_create_ex(
     ib_hash_t          **hash,
     ib_mpool_t          *pool,
-    unsigned int         size,
+    size_t               size,
     ib_hash_function_t   hash_function,
     ib_hash_equal_t      equal_predicate
 )
