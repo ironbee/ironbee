@@ -5439,7 +5439,7 @@ static ib_status_t core_ctx_finish(ib_engine_t *ib,
     if (main_ctx == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-        
+
     rc = ib_context_module_config(main_ctx, ib_core_module(),
                                   (void *)&main_core_config);
     if (rc != IB_OK) {
