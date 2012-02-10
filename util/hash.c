@@ -384,8 +384,8 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
 
     assert(key != NULL);
 
-    uint32_t      hash  = 0;
-    const char   *key_s = (const char *)key;
+    uint32_t             hash  = 0;
+    const unsigned char *key_s = (const unsigned char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
         hash = ((hash << 5) + hash) + tolower(key_s[i]);
@@ -395,10 +395,10 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
 }
 
 int DLL_PUBLIC ib_hashequal_default(
-    const void* a,
-    size_t a_length,
-    const void* b,
-    size_t b_length
+    const void *a,
+    size_t      a_length,
+    const void *b,
+    size_t      b_length
 ) {
     IB_FTRACE_INIT();
 
@@ -412,18 +412,18 @@ int DLL_PUBLIC ib_hashequal_default(
 }
 
 int DLL_PUBLIC ib_hashequal_nocase(
-    const void* a,
-    size_t a_length,
-    const void* b,
-    size_t b_length
+    const void *a,
+    size_t      a_length,
+    const void *b,
+    size_t      b_length
 ) {
     IB_FTRACE_INIT();
 
     assert(a != NULL);
     assert(b != NULL);
 
-    const char *a_s = (const char*)a;
-    const char *b_s = (const char*)b;
+    const unsigned char *a_s = (const unsigned char*)a;
+    const unsigned char *b_s = (const unsigned char*)b;
 
     if (a_length != b_length) {
         IB_FTRACE_RET_INT(0);
