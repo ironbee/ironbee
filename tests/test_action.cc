@@ -78,6 +78,7 @@ TEST_F(ActionTest, CallAction) {
     ASSERT_EQ(IB_OK, status);
 
     status = ib_action_inst_create(ib_engine,
+                                   NULL,
                                    "test_action", "parameters",
                                    IB_ACTINST_FLAG_NONE,
                                    &act);
