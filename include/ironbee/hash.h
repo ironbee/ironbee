@@ -86,9 +86,9 @@ typedef uint32_t (*ib_hash_function_t)(
  **/
 typedef int (*ib_hash_equal_t)(
     const void *a,
-    size_t a_length,
+    size_t      a_length,
     const void *b,
-    size_t b_length
+    size_t      b_length
 );
 
 /**
@@ -162,9 +162,9 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
  **/
 int DLL_PUBLIC ib_hashequal_default(
     const void *a,
-    size_t a_length,
+    size_t      a_length,
     const void *b,
-    size_t b_length
+    size_t      b_length
 );
 
 /**
@@ -184,9 +184,9 @@ int DLL_PUBLIC ib_hashequal_default(
  **/
 int DLL_PUBLIC ib_hashequal_nocase(
     const void *a,
-    size_t a_length,
+    size_t      a_length,
     const void *b,
-    size_t b_length
+    size_t      b_length
 );
 
 /*@}*/
