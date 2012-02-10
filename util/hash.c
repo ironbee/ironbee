@@ -528,6 +528,17 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
     IB_FTRACE_RET_PTR(ib_mpool_t *, hash->pool);
 }
 
+size_t DLL_PUBLIC ib_hash_size(
+    ib_hash_t* hash
+)
+{
+    IB_FTRACE_INIT();
+
+    assert(hash != NULL);
+
+    IB_FTRACE_RET_UINT(hash->size);
+}
+
 void ib_hash_clear(ib_hash_t *hash)
 {
     IB_FTRACE_INIT();

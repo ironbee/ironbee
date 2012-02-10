@@ -252,6 +252,17 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
     ib_hash_t *hash
 );
 
+ /**
+  * Number of elements in @a hash.
+  *
+  * @param[in] hash Hash table.
+  *
+  * @returns Number of elements in @a hash.
+  **/
+size_t DLL_PUBLIC ib_hash_size(
+    ib_hash_t* hash
+);
+
 /**
  * Clear hash table @a hash.
  *
