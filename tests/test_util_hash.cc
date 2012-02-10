@@ -57,12 +57,10 @@ protected:
 TEST_F(TestIBUtilHash, test_hash_create)
 {
     ib_hash_t   *hash = NULL;
-    ib_status_t  rc;
 
-    rc = ib_hash_create(&hash, m_pool);
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
     ASSERT_TRUE(hash);
-    ASSERT_EQ(0UL, ib_hash_size(hash));
+    EXPECT_EQ(0UL, ib_hash_size(hash));
     ib_hash_clear(hash);
 }
 
@@ -70,118 +68,99 @@ TEST_F(TestIBUtilHash, test_hash_set_and_get)
 {
     ib_hash_t   *hash = NULL;
     char        *val = NULL;
-    ib_status_t  rc;
 
-    rc = ib_hash_create(&hash, m_pool);
-    ASSERT_EQ(IB_OK, rc);
-    rc = ib_hash_set(hash, "Key", (void*)"value");
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(1UL, ib_hash_size(hash));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "Key", (void*)"value"));
+    EXPECT_EQ(1UL, ib_hash_size(hash));
 
-    rc = ib_hash_get((void **)&val, hash, "Key");
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_STREQ("value", val);
+    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "Key"));
+    EXPECT_STREQ("value", val);
 
-    rc = ib_hash_set(hash, "Key2", (void*)"value2");
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(2UL, ib_hash_size(hash));
+    ASSERT_EQ(IB_OK,ib_hash_set(hash, "Key2", (void*)"value2"));
+    EXPECT_EQ(2UL, ib_hash_size(hash));
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, hash, "Key");
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_STREQ("value", val);
+    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "Key"));
+    EXPECT_STREQ("value", val);
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, hash, "Key2");
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_STREQ("value2", val);
+    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "Key2"));
+    EXPECT_STREQ("value2", val);
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, hash, "noKey");
-    ASSERT_EQ(IB_ENOENT, rc);
+    EXPECT_EQ(IB_ENOENT, ib_hash_get((void **)&val, hash, "noKey"));
 }
 
 TEST_F(TestIBUtilHash, test_hash_nocase)
 {
     ib_hash_t   *hash = NULL;
-    ib_status_t  rc;
 
-    rc = ib_hash_create_nocase(&hash, m_pool);
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_hash_create_nocase(&hash, m_pool));
 
-    rc = ib_hash_set(hash, "Key", (void*)"value");
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "Key", (void*)"value"));
 
     char *val = NULL;
-    rc = ib_hash_get((void **)&val, hash, "kEY");
-    ASSERT_EQ(IB_OK, rc);
+    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "kEY"));
 
-    ASSERT_STREQ("value", val);
-    rc = ib_hash_set(hash, "KeY2", (void*)"value2");
-    ASSERT_EQ(IB_OK, rc);
+    EXPECT_STREQ("value", val);
+    ASSERT_EQ(IB_OK, ib_hash_set(hash, "KeY2", (void*)"value2"));
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, hash, "KeY");
-    ASSERT_EQ(IB_OK, rc);
+    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "KeY"));
 
-    ASSERT_STREQ("value", val);
+    EXPECT_STREQ("value", val);
     val = NULL;
-    rc = ib_hash_get((void **)&val, hash, "KEY2");
-    ASSERT_EQ(IB_OK, rc);
+    EXPECT_EQ(IB_OK, ib_hash_get((void **)&val, hash, "KEY2"));
 
-    ASSERT_STREQ("value2", val);
+    EXPECT_STREQ("value2", val);
 
     val = NULL;
-    rc = ib_hash_get((void **)&val, hash, "noKey");
-    ASSERT_EQ(IB_ENOENT, rc);
+    EXPECT_EQ(IB_ENOENT, ib_hash_get((void **)&val, hash, "noKey"));
 }
 
 TEST_F(TestIBUtilHash, test_hash_ex)
 {
     ib_hash_t         *hash = NULL;
-    ib_status_t        rc;
     static const char  key1[] = "Key1";
     static const char  key2[] = "Key2";
     static const char  key3[] = "kEY1";
     static const char  key4[] = "kEY2";
 
-    rc = ib_hash_create_ex(
+    ASSERT_EQ(IB_OK, ib_hash_create_ex(
         &hash, 
         m_pool, 
         17, 
         ib_hashfunc_djb2,
         ib_hashequal_default
-    );
-    ASSERT_EQ(IB_OK, rc);
+    ));
 
-    rc = ib_hash_set_ex(hash, key1, 2, (void*)"value");
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, key1, 2, (void*)"value"));
 
     char *val = NULL;
-    rc = ib_hash_get_ex((void **)&val, hash, (void *)key1, 2);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_STREQ("value", val);
+    EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, (void *)key1, 2));
+    EXPECT_STREQ("value", val);
 
-    rc = ib_hash_set_ex(hash, (void *)key2, 2, (void*)"other");
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, (void *)key2, 2, (void*)"other"));
 
     val = NULL;
-    rc = ib_hash_get_ex((void **)&val, hash, (void *)key2, 2);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_STREQ("other", val);
+    EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, (void *)key2, 2));
+    EXPECT_STREQ("other", val);
 
     val = NULL;
-    rc = ib_hash_get_ex((void **)&val, hash, (void *)key1, 2);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_STREQ("other", val);
+    EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, (void *)key1, 2));
+    EXPECT_STREQ("other", val);
 
     val = NULL;
-    rc = ib_hash_get_ex((void **)&val, hash, (void *)key3, 2);
-    ASSERT_EQ(IB_ENOENT, rc);
+    EXPECT_EQ(
+        IB_ENOENT, 
+        ib_hash_get_ex((void **)&val, hash, (void *)key3, 2)
+    );
 
     val = NULL;
-    rc = ib_hash_get_ex((void **)&val, hash, (void *)key4, 2);
-    ASSERT_EQ(IB_ENOENT, rc);
+    EXPECT_EQ(
+        IB_ENOENT, 
+        ib_hash_get_ex((void **)&val, hash, (void *)key4, 2)
+    );
 }
 
 TEST_F(TestIBUtilHash, test_hashfunc_djb2)
@@ -192,12 +171,12 @@ TEST_F(TestIBUtilHash, test_hashfunc_djb2)
     // Test with no case sensitive
     hash1 = ib_hashfunc_djb2_nocase("Key", 3);
     hash2 = ib_hashfunc_djb2_nocase("kEY", 3);
-    ASSERT_EQ(hash2, hash1);
+    EXPECT_EQ(hash2, hash1);
     // Test with case sensitive
     hash1 = hash2 = 0;
     hash1 = ib_hashfunc_djb2("Key", 3);
     hash2 = ib_hashfunc_djb2("kEY", 3);
-    ASSERT_NE(hash2, hash1);
+    EXPECT_NE(hash2, hash1);
 }
 
 TEST_F(TestIBUtilHash, test_hashequal)
@@ -212,13 +191,11 @@ TEST_F(TestIBUtilHash, test_hashequal)
 
 TEST_F(TestIBUtilHash, test_hash_resizing)
 {
-    ib_status_t  rc;
     ib_hash_t   *hash = NULL;
 
     static const char combs[] = "abcdefghij";
 
-    rc = ib_hash_create(&hash, m_pool);
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
 
     // Insert 1000 keys with value equal to the key used.
     for (int i = 0; i < 10; i++) {
@@ -230,20 +207,18 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
                 c[1] = combs[j];
                 c[2] = combs[k];
                 c[4] = '\0';
-                rc = ib_hash_set_ex(hash, c, 3, (void *)c);
-                ASSERT_EQ(IB_OK, rc);
+                ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
 
                 // Check now (pre-resizing) and later (after resizing).
                 char *val = NULL;
-                rc = ib_hash_get_ex((void **)&val, hash, c, 3);
-                ASSERT_EQ(IB_OK, rc);
-                ASSERT_STREQ(c, val);
+                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, c, 3));
+                EXPECT_STREQ(c, val);
 
             }
         }
     }
     
-    ASSERT_EQ(1000UL, ib_hash_size(hash));
+    EXPECT_EQ(1000UL, ib_hash_size(hash));
 
     // After resizing
     for (int i = 0; i < 10; i++) {
@@ -256,9 +231,8 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
                 c[2] = combs[k];
                 c[4] = '\0';
                 char *val = NULL;
-                rc = ib_hash_get_ex((void **)&val, hash, c, 3);
-                ASSERT_EQ(IB_OK, rc);
-                ASSERT_STREQ(c, val);
+                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&val, hash, c, 3));
+                EXPECT_STREQ(c, val);
 
             }
         }
@@ -267,21 +241,15 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
 
 TEST_F(TestIBUtilHash, test_hash_getall)
 {
-    ib_status_t  rc;
     ib_hash_t   *hash  = NULL;
     ib_list_t   *list  = NULL;
     ib_list_t   *list2 = NULL;
 
     static const char combs[] = "abcdefghij";
 
-    rc = ib_list_create(&list, m_pool);
-    ASSERT_EQ(IB_OK, rc);
-
-    rc = ib_list_create(&list2, m_pool);
-    ASSERT_EQ(IB_OK, rc);
-
-    rc = ib_hash_create(&hash, m_pool);
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_list_create(&list, m_pool));
+    ASSERT_EQ(IB_OK, ib_list_create(&list2, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
 
     // Insert 1000 keys with value equal to the key used.
     for (int i = 0; i < 10; i++) {
@@ -294,21 +262,16 @@ TEST_F(TestIBUtilHash, test_hash_getall)
                 c[2] = combs[k];
                 c[4] = '\0';
 
-                rc = ib_hash_set_ex(hash, c, 3, (void *)c);
-                ASSERT_EQ(IB_OK, rc);
-
-                rc = ib_list_push(list, (void *)c);
-                ASSERT_EQ(IB_OK, rc);
-
+                ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
+                ASSERT_EQ(IB_OK, ib_list_push(list, (void *)c));
             }
         }
     }
 
-    ASSERT_EQ(1000UL, ib_list_elements(list));
-    ASSERT_EQ(1000UL, ib_hash_size(hash));
+    EXPECT_EQ(1000UL, ib_list_elements(list));
+    EXPECT_EQ(1000UL, ib_hash_size(hash));
 
-    rc = ib_hash_get_all(list2, hash);
-    ASSERT_EQ(IB_OK, rc);
+    EXPECT_EQ(IB_OK, ib_hash_get_all(list2, hash));
     {
         ib_list_node_t *li = NULL;
         ib_list_node_t *li2 = NULL;
@@ -323,19 +286,17 @@ TEST_F(TestIBUtilHash, test_hash_getall)
                 }
             }
         }
-        ASSERT_EQ(1000UL, num_found);
+        EXPECT_EQ(1000UL, num_found);
     }
 }
 
 TEST_F(TestIBUtilHash, test_hash_clear)
 {
-    ib_status_t  rc;
     ib_hash_t   *hash  = NULL;
 
     static const char combs[] = "abcdefghij";
 
-    rc = ib_hash_create(&hash, m_pool);
-    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
 
     // Insert 1000 keys with value equal to the key used.
     for (int i = 0; i < 10; ++i) {
@@ -350,15 +311,15 @@ TEST_F(TestIBUtilHash, test_hash_clear)
                 c[4] = '\0';
 
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
-                ASSERT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
-                ASSERT_EQ(v, (void*)c);
+                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
+                EXPECT_EQ(v, (void*)c);
             }
         }
     }
 
-    ASSERT_EQ(1000UL, ib_hash_size(hash));
+    EXPECT_EQ(1000UL, ib_hash_size(hash));
     ib_hash_clear(hash);
-    ASSERT_EQ(0UL, ib_hash_size(hash));
+    EXPECT_EQ(0UL, ib_hash_size(hash));
 
     for (int i = 9; i >= 0; --i) {
         for (int j = 9; j >= 0; --j) {
@@ -372,8 +333,8 @@ TEST_F(TestIBUtilHash, test_hash_clear)
                 c[4] = '\0';
 
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
-                ASSERT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
-                ASSERT_EQ(v, (void*)c);
+                EXPECT_EQ(IB_OK, ib_hash_get_ex((void **)&v, hash, c, 3));
+                EXPECT_EQ(v, (void*)c);
             }
         }
     }
@@ -389,19 +350,17 @@ static unsigned int test_hash_delete_hashfunc(
 
 TEST_F(TestIBUtilHash, test_hash_collision_delete)
 {
-    ib_status_t  rc;
     ib_hash_t   *hash  = NULL;
     uint64_t     value;
     
     // Make sure we have collisions.
-    rc = ib_hash_create_ex(
+    ASSERT_EQ(IB_OK, ib_hash_create_ex(
         &hash, 
         m_pool,
         17,
         test_hash_delete_hashfunc,
         ib_hashequal_default
-    );
-    ASSERT_EQ(IB_OK, rc);
+    ));
     
     EXPECT_EQ(IB_OK, ib_hash_set(hash, "abc", (void*)7));
     EXPECT_EQ(IB_OK, ib_hash_set(hash, "def", (void*)8));
