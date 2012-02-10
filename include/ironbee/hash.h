@@ -104,6 +104,13 @@ typedef int (*ib_hash_equal_t)(
     size_t b_length
 );
 
+/**
+ * @name Hash functions and equality predicates.
+ * Functions suitable for use as ib_hash_function_t and ib_hash_equal_t.
+ *
+ * @sa ib_hash_create_ex()
+ */
+/*@{*/
 
 /**
  * DJB2 Hash Function (Dan Bernstein).
@@ -195,6 +202,15 @@ int DLL_PUBLIC ib_hashequal_nocase(
     size_t b_length
 );
 
+/*@}*/
+
+/**
+ * @name Creation
+ *
+ * Functions to create hashes.
+ */
+/*@{*/
+
 /**
  * Create a hash table.
  *
@@ -254,6 +270,15 @@ ib_status_t DLL_PUBLIC ib_hash_create_nocase(
     ib_mpool_t  *pool
 );
 
+/*@}*/
+
+/**
+ * @name Accessors
+ *
+ * Functions to access hash properties.
+ */
+/*@{*/
+
 /**
  * Access memory pool of @a hash.
  *
@@ -276,16 +301,14 @@ size_t DLL_PUBLIC ib_hash_size(
     ib_hash_t* hash
 );
 
+/*@}*/
+
 /**
- * Clear hash table @a hash.
+ * @name Non-mutating
  *
- * Removes all entries from @a hash.
- *
- * @param[in,out] hash Hash table to clear.
+ * These functions do not alter the hash.
  */
-void DLL_PUBLIC ib_hash_clear(
-     ib_hash_t *hash
-);
+/*@{*/
 
 /**
  * Fetch value from @a hash for key @a key.
@@ -349,6 +372,15 @@ ib_status_t DLL_PUBLIC ib_hash_get_all(
     ib_hash_t *hash
 );
 
+/*@}*/
+
+/**
+ * @name Mutating
+ *
+ * These functions alter the hash.
+ */
+/*@{*/
+
 /**
  * Set value of @a key in @a hash to @a data.
  *
@@ -394,6 +426,17 @@ ib_status_t DLL_PUBLIC ib_hash_set(
 );
 
 /**
+ * Clear hash table @a hash.
+ *
+ * Removes all entries from @a hash.
+ *
+ * @param[in,out] hash Hash table to clear.
+ */
+void DLL_PUBLIC ib_hash_clear(
+     ib_hash_t *hash
+);
+
+/**
  * Remove value for @a key from @a data.
  *
  * @sa ib_hash_remove()
@@ -434,6 +477,8 @@ ib_status_t DLL_PUBLIC ib_hash_remove(
     ib_hash_t   *hash,
     const char  *key
 );
+
+/*@}*/
 
 /** @} IronBeeUtilHash */
 

@@ -52,7 +52,14 @@
  **/
 #define IB_HASH_INITIAL_SIZE 15
 
+/**
+ * See ib_hash_entry_t()
+ */
 typedef struct ib_hash_entry_t    ib_hash_entry_t;
+
+/**
+ * See ib_hash_iterator_t()
+ */
 typedef struct ib_hash_iterator_t ib_hash_iterator_t;
 
 /**
@@ -160,6 +167,8 @@ static ib_hash_entry_t *ib_hash_find_htentry(
  * Return iterator pointing to first entry of @a hash.
  * @internal
  *
+ * @sa IB_HASH_LOOP()
+ *
  * @param[in]  hash Hash table to iterate over.
  *
  * @return Iterator pointing to first entry in @a hash.
@@ -172,12 +181,27 @@ static ib_hash_iterator_t ib_hash_first(
  * Move \a iterator to the next entry.
  * @internal
  *
+ * @sa IB_HASH_LOOP()
+ *
  * @param[in,out] iterator Iterator to advance.
  */
 static void ib_hash_next(
     ib_hash_iterator_t *iterator
 );
 
+/**
+ * Set @a entry to every entry in @a hash in sequence.
+ *
+ * @code
+ * ib_hash_entry_t *current_entry;
+ * IB_HASH_LOOP(current_entry, hash) {
+ *   ...
+ * }
+ * @endcode
+ *
+ * @param[in,out] entry Set to each entry in @a hash in sequence.
+ * @param[in]     hash  Hash table to iterate through.
+ **/
 #define IB_HASH_LOOP(entry,hash) \
     for ( \
         ib_hash_iterator_t iterator = ib_hash_first(hash); \
@@ -196,8 +220,6 @@ static void ib_hash_next(
 static ib_status_t ib_hash_resize_slots(
     ib_hash_t *hash
 );
-
-/** @} IronBeeUtilHash */
 
 /* End Internal Declarations */
 
@@ -539,33 +561,6 @@ size_t DLL_PUBLIC ib_hash_size(
     IB_FTRACE_RET_UINT(hash->size);
 }
 
-void ib_hash_clear(ib_hash_t *hash)
-{
-    IB_FTRACE_INIT();
-
-    assert(hash != NULL);
-
-    for (size_t i = 0; i < hash->num_slots; ++i) {
-        if ( hash->slots[i] != NULL ) {
-            ib_hash_entry_t *current_entry;
-            for (
-                current_entry = hash->slots[i];
-                current_entry->next_entry != NULL;
-                current_entry = current_entry->next_entry
-            ) {
-                current_entry->value = NULL;
-            }
-
-            current_entry->next_entry = hash->free;
-            hash->free                = hash->slots[i];
-            hash->slots[i]            = NULL;
-        }
-    }
-    hash->size = 0;
-
-    IB_FTRACE_RET_VOID();
-}
-
 ib_status_t ib_hash_get_ex(
     void      **value,
     ib_hash_t  *hash,
@@ -773,6 +768,33 @@ ib_status_t ib_hash_set(
     ));
 }
 
+void ib_hash_clear(ib_hash_t *hash)
+{
+    IB_FTRACE_INIT();
+
+    assert(hash != NULL);
+
+    for (size_t i = 0; i < hash->num_slots; ++i) {
+        if ( hash->slots[i] != NULL ) {
+            ib_hash_entry_t *current_entry;
+            for (
+                current_entry = hash->slots[i];
+                current_entry->next_entry != NULL;
+                current_entry = current_entry->next_entry
+            ) {
+                current_entry->value = NULL;
+            }
+
+            current_entry->next_entry = hash->free;
+            hash->free                = hash->slots[i];
+            hash->slots[i]            = NULL;
+        }
+    }
+    hash->size = 0;
+
+    IB_FTRACE_RET_VOID();
+}
+
 ib_status_t ib_hash_remove_ex(
     void      **value,
     ib_hash_t *hash,
@@ -816,3 +838,5 @@ ib_status_t ib_hash_remove(
         ib_hash_remove_ex(value, hash, (void*)key, strlen(key))
     );
 }
+
+/** @} IronBeeUtilHash */
