@@ -259,7 +259,6 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
         action = "";
     } else {
         action = (const char*)ib_list_node_data_const(current_arg);
-        current_arg = ib_list_node_next_const(current_arg);
     }
 
 
