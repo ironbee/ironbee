@@ -3351,10 +3351,13 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
 {
     IB_FTRACE_INIT();
 
+    assert(mpi != NULL);
+    assert(mpi->pr != NULL);
+    
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = NULL;
 
     ib_status_t rc;
-    iface = mpi->pr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpi->pr->iface:NULL;
+    iface = (IB_PROVIDER_IFACE_TYPE(matcher) *)mpi->pr->iface;
 
     rc = iface->add_ex(mpi, patterns, patt, callback, arg,
                                errptr, erroffset);
