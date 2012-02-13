@@ -126,7 +126,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     }
 
     /* Make sure that we have an operator */
-    if (strlen(at+1) == 0) {
+    if (! at || strlen(at+1) == 0) {
         ib_log_error(cp->ib, 4, "Invalid rule syntax '%s'", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
