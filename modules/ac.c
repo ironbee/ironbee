@@ -331,7 +331,6 @@ static ib_status_t readfile(const char* filename, char **buffer)
         if (bytes_read < 0) {
             free(*buffer);
             *buffer = NULL;
-            len = 0;
             close(fd);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
