@@ -929,7 +929,7 @@ static modlua_runtime_t *modlua_runtime_get(ib_conn_t *conn)
     IB_FTRACE_INIT();
     modlua_runtime_t *lua;
 
-    ib_hash_get(&lua, conn->data, MODLUA_CONN_KEY);
+    ib_hash_get(conn->data, &lua, MODLUA_CONN_KEY);
 
     IB_FTRACE_RET_PTR(modlua_runtime_t, lua);
 }
@@ -1132,7 +1132,7 @@ static ib_status_t modlua_destroy_lua_runtime(ib_engine_t *ib,
         lua_close(lua->L);
     }
 
-    rc = ib_hash_remove(NULL, conn->data, MODLUA_CONN_KEY);
+    rc = ib_hash_remove(conn->data, NULL, MODLUA_CONN_KEY);
 
     IB_FTRACE_RET_STATUS(rc);
 }

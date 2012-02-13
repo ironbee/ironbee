@@ -91,7 +91,7 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
     }
 
     /* Get the API, if any */
-    rc = ib_hash_get(&prd, ib->apis, type);
+    rc = ib_hash_get(ib->apis, &prd, type);
     if (rc != IB_OK) {
         ib_log_error(ib, 1,
                      "Error registering provider \"%s\": "
@@ -134,7 +134,7 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
     if (prd->fn_reg != NULL) {
         rc = prd->fn_reg(ib, pr);
         if (rc != IB_OK) {
-            ib_hash_remove(NULL, ib->providers, pr_key);
+            ib_hash_remove(ib->providers, NULL, pr_key);
         }
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -157,7 +157,7 @@ ib_status_t ib_provider_lookup(ib_engine_t *ib,
     pr_key[strlen(type)] = '.';
     memcpy(pr_key + strlen(type) + 1, key, strlen(key));
     pr_key[strlen(type) + strlen(key) + 1] = '\0';
-    rc = ib_hash_get(ppr, ib->providers, pr_key);
+    rc = ib_hash_get(ib->providers, ppr, pr_key);
     if (rc != IB_OK) {
         *ppr = NULL;
         IB_FTRACE_RET_STATUS(rc);

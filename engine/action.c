@@ -45,7 +45,7 @@ ib_status_t ib_action_register(ib_engine_t *ib,
     char *name_copy;
     ib_action_t *act;
 
-    rc = ib_hash_get(&act, action_hash, name);
+    rc = ib_hash_get(action_hash, &act, name);
     if (rc == IB_OK) {
         /* name already is registered */
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -84,7 +84,7 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
     ib_action_t *action;
     ib_status_t rc;
 
-    rc = ib_hash_get(&action, action_hash, name);
+    rc = ib_hash_get(action_hash, &action, name);
     if (rc != IB_OK) {
         /* name is not registered */
         IB_FTRACE_RET_STATUS(rc);

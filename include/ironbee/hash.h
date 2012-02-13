@@ -303,8 +303,8 @@ size_t DLL_PUBLIC ib_hash_size(
  * @sa ib_hash_get()
  * @sa ib_hash_get_nocase()
  *
- * @param[out] value      Address which value is written.
  * @param[in]  hash       Hash table.
+ * @param[out] value      Address which value is written.
  * @param[in]  key        Key to lookup.
  * @param[in]  key_length Length of @a key.
  *
@@ -314,8 +314,8 @@ size_t DLL_PUBLIC ib_hash_size(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get_ex(
-    void             *value,
     const ib_hash_t  *hash,
+    void             *value,
     const void       *key,
     size_t            key_length
 );
@@ -326,8 +326,8 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
  * @sa ib_hash_get_ex()
  * @sa ib_hash_get_nocase()
  *
- * @param[out] value Address which value is written.
  * @param[in]  hash  Hash table.
+ * @param[out] value Address which value is written.
  * @param[in]  key   Key to lookup
  *
  * @returns
@@ -336,8 +336,8 @@ ib_status_t DLL_PUBLIC ib_hash_get_ex(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_get(
-    void              *value,
     const ib_hash_t   *hash,
+    void              *value,
     const char        *key
 );
 
@@ -347,16 +347,16 @@ ib_status_t DLL_PUBLIC ib_hash_get(
  * Order is undefined.  The values pushed to the list are the entry values
  * (@c void @c *).
  *
- * @param[in,out] list List to push values.
  * @param[in]     hash Hash table to take values from.
+ * @param[in,out] list List to push values.
  *
  * @returns
  * - IB_OK if any elements are pushed.
  * - IB_ENOENT if @a hash is empty.
  */
 ib_status_t DLL_PUBLIC ib_hash_get_all(
-    ib_list_t       *list,
-    const ib_hash_t *hash
+    const ib_hash_t *hash,
+    ib_list_t       *list
 );
 
 /*@}*/
@@ -428,8 +428,8 @@ void DLL_PUBLIC ib_hash_clear(
  *
  * @sa ib_hash_remove()
  *
- * @param[in,out] value      If non-NULL, removed value will be stored here.
  * @param[in,out] hash       Hash table.
+ * @param[in,out] value      If non-NULL, removed value will be stored here.
  * @param[in]     key        Key.
  * @param[in]     key_length Length of @a key.
  *
@@ -439,8 +439,8 @@ void DLL_PUBLIC ib_hash_clear(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_remove_ex(
-    void       *value,
     ib_hash_t  *hash,
+    void       *value,
     void       *key,
     size_t      key_length
 );
@@ -450,8 +450,8 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(
  *
  * @sa ib_hash_remove_ex()
  *
- * @param[in,out] value If non-NULL, removed value will be stored here.
  * @param[in,out] hash  Hash table.
+ * @param[in,out] value If non-NULL, removed value will be stored here.
  * @param[in]     key   Key.
  *
  * @returns
@@ -460,8 +460,8 @@ ib_status_t DLL_PUBLIC ib_hash_remove_ex(
  * - IB_EINVAL if any parameters are invalid.
  */
 ib_status_t DLL_PUBLIC ib_hash_remove(
-    void        *value,
     ib_hash_t   *hash,
+    void        *value,
     const char  *key
 );
 

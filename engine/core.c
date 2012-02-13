@@ -911,8 +911,8 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
     ib_status_t rc;
 
     rc = ib_hash_get_ex(
-        &f,
         (ib_hash_t *)dpi->data,
+        &f,
         (void *)name, nlen
     );
     if (rc != IB_OK) {
@@ -969,8 +969,8 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
         sklen = nlen - klen - 1;
 
         rc = ib_hash_get_ex(
-            pf,
             (ib_hash_t *)dpi->data,
+            pf,
             (void *)name, klen
         );
         if (rc == IB_OK) {
@@ -1004,8 +1004,8 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
     }
 
     rc = ib_hash_get_ex(
-        pf,
         (ib_hash_t *)dpi->data,
+        pf,
         (void *)name, nlen
     );
     IB_FTRACE_RET_STATUS(rc);
@@ -1026,7 +1026,7 @@ static ib_status_t core_data_get_all(ib_provider_inst_t *dpi,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = ib_hash_get_all(list, (ib_hash_t *)dpi->data);
+    rc = ib_hash_get_all((ib_hash_t *)dpi->data, list);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1051,8 +1051,8 @@ static ib_status_t core_data_remove(ib_provider_inst_t *dpi,
 {
     IB_FTRACE_INIT();
     ib_status_t rc = ib_hash_remove_ex(
-        pf,
         (ib_hash_t *)dpi->data,
+        pf,
         (void *)name, nlen
     );
     IB_FTRACE_RET_STATUS(rc);

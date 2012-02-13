@@ -122,8 +122,8 @@ struct ib_hash_t {
  * Search for an entry in @a hash matching @key.
  * @internal
  *
- * @param[out] hash_entry Hash entry.
  * @param[in]  hash       Hash table.
+ * @param[out] hash_entry Hash entry.
  * @param[in]  key        Key.
  * @param[in]  key_length Length of @a key.
  *
@@ -132,8 +132,8 @@ struct ib_hash_t {
  * - IB_ENOENT if @a key not found.
  */
 static ib_status_t ib_hash_find_entry(
-    ib_hash_entry_t **hash_entry,
     const ib_hash_t  *hash,
+    ib_hash_entry_t **hash_entry,
     const void       *key,
     size_t            key_length
 );
@@ -252,8 +252,8 @@ ib_hash_entry_t *ib_hash_find_htentry(
 }
 
 ib_status_t ib_hash_find_entry(
-     ib_hash_entry_t **hash_entry,
      const ib_hash_t  *hash,
+     ib_hash_entry_t **hash_entry,
      const void       *key,
      size_t            key_length
 ) {
@@ -543,8 +543,8 @@ size_t DLL_PUBLIC ib_hash_size(
 }
 
 ib_status_t ib_hash_get_ex(
-    void             *value,
     const ib_hash_t  *hash,
+    void             *value,
     const void       *key,
     size_t            key_length
 ) {
@@ -562,8 +562,8 @@ ib_status_t ib_hash_get_ex(
     }
 
     rc = ib_hash_find_entry(
-        &current_entry,
         hash,
+        &current_entry,
         key,
         key_length
     );
@@ -580,8 +580,8 @@ ib_status_t ib_hash_get_ex(
 }
 
 ib_status_t ib_hash_get(
-    void              *value,
     const ib_hash_t   *hash,
+    void              *value,
     const char        *key
 ) {
     IB_FTRACE_INIT();
@@ -595,16 +595,16 @@ ib_status_t ib_hash_get(
     }
 
     IB_FTRACE_RET_STATUS(ib_hash_get_ex(
-        value,
         hash,
+        value,
         key,
         strlen(key)
     ));
 }
 
 ib_status_t ib_hash_get_all(
-    ib_list_t       *list,
-    const ib_hash_t *hash
+    const ib_hash_t *hash,
+    ib_list_t       *list
 ) {
     IB_FTRACE_INIT();
 
@@ -770,8 +770,8 @@ void ib_hash_clear(ib_hash_t *hash) {
 }
 
 ib_status_t ib_hash_remove_ex(
-    void      *value,
     ib_hash_t *hash,
+    void      *value,
     void      *key,
     size_t     key_length
 ) {
@@ -783,7 +783,7 @@ ib_status_t ib_hash_remove_ex(
     ib_status_t  rc          = IB_ENOENT;
     void        *local_value = NULL;
 
-    rc = ib_hash_get_ex(&local_value, hash, key, key_length);
+    rc = ib_hash_get_ex(hash, &local_value, key, key_length);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -797,8 +797,8 @@ ib_status_t ib_hash_remove_ex(
 }
 
 ib_status_t ib_hash_remove(
-    void        *value,
     ib_hash_t   *hash,
+    void        *value,
     const char  *key
 ) {
     IB_FTRACE_INIT();
@@ -807,7 +807,7 @@ ib_status_t ib_hash_remove(
     assert(key  != NULL);
 
     IB_FTRACE_RET_STATUS(
-        ib_hash_remove_ex(value, hash, (void*)key, strlen(key))
+        ib_hash_remove_ex(hash, value, (void*)key, strlen(key))
     );
 }
 

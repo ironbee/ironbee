@@ -372,8 +372,9 @@ static ib_status_t mod_perf_stats_event_start_conn_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        conn->data, "MOD_PERF_STATS"
+        conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
@@ -409,8 +410,9 @@ static ib_status_t mod_perf_stats_event_start_conndata_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        conndata->conn->data, "MOD_PERF_STATS"
+        conndata->conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
@@ -446,8 +448,9 @@ static ib_status_t mod_perf_stats_event_start_tx_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        tx->conn->data, "MOD_PERF_STATS"
+        tx->conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
@@ -482,8 +485,9 @@ static ib_status_t mod_perf_stats_event_start_txdata_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        txdata->tx->conn->data, "MOD_PERF_STATS"
+        txdata->tx->conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
@@ -520,8 +524,9 @@ static ib_status_t mod_perf_stats_event_stop_conn_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        conn->data, "MOD_PERF_STATS"
+        conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
@@ -558,8 +563,9 @@ static ib_status_t mod_perf_stats_event_stop_conndata_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        conndata->conn->data, "MOD_PERF_STATS"
+        conndata->conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
@@ -596,8 +602,9 @@ static ib_status_t mod_perf_stats_event_stop_tx_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        tx->conn->data, "MOD_PERF_STATS"
+        tx->conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
@@ -634,8 +641,9 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        (void *)&perf_info,
-        txdata->tx->conn->data, "MOD_PERF_STATS"
+        txdata->tx->conn->data,
+        &perf_info,
+        "MOD_PERF_STATS"
     );
     if (rc != IB_OK) {
         perf_info = NULL;
