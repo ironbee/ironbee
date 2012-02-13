@@ -52,11 +52,24 @@ check_PROGRAMS = test_gtest \
                  test_luajit
 
 TESTS=$(check_PROGRAMS)
+
+BUILT_SOURCES = \
+	$(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
+	$(abs_builddir)/AhoCorasickModuleTest.config \
+	$(abs_builddir)/ahocorasick.patterns \
+    $(abs_builddir)/PcreModuleTest.test_load_module.config \
+	$(abs_builddir)/test_module_rules_lua.lua
+	
+$(abs_builddir)/%: $(srcdir)/%
+	if [ "$(builddir)" != "$(srcdir)" ]; then \
+    	cp -f $< $@; \
+    fi
+
 # TODO: Get libhtp working w/C++
 # test_util_bytestr
 test_util_unescape_string_SOURCES = test_util_unescape_string.cc \
-                                    test_gtest.cc \
-                                    test_main.cc
+									test_gtest.cc \
+									test_main.cc
 
 test_gtest_SOURCES = test_gtest.cc test_main.cc
 
