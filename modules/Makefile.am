@@ -117,5 +117,6 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 
 
 all-local: $(abs_top_srcdir)/lua/ironbee-ffi.lua
+	mkdir -p $(abs_top_builddir)/modules/.libs
 	cp $(<) $(abs_top_builddir)/modules/.libs/ironbee-ffi.lua
 
