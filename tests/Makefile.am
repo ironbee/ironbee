@@ -101,7 +101,7 @@ endif
 test_engine_SOURCES = test_engine.cc test_main.cc ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
 
-test_module_trace_SOURCES = test_module_trace.cc test_main.cc ib_test_util.hh ibtest_util.cc
+test_module_trace_SOURCES = test_module_trace.cc test_main.cc ibtest_util.hh ibtest_util.cc
 test_module_trace_LDADD = $(MODULE_TEST_LDADD) 
 
 test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
