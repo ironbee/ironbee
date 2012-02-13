@@ -14,7 +14,7 @@ else
 endif
 
 .build-luajit: $(srcdir)/luajit-2.0-ironbee/* $(srcdir)/luajit-2.0-ironbee/src/*
-	if [ "$(builddir)" != "$(srcdir)" ]; then \
+	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
 		cp -rp $(srcdir)/luajit-2.0-ironbee $(builddir); \
 		chmod -R u+w $(builddir)/luajit-2.0-ironbee; \
 	fi;

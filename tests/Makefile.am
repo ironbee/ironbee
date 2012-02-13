@@ -61,7 +61,7 @@ BUILT_SOURCES = \
 	$(abs_builddir)/test_module_rules_lua.lua
 	
 $(abs_builddir)/%: $(srcdir)/%
-	if [ "$(builddir)" != "$(srcdir)" ]; then \
+	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
     	cp -f $< $@; \
     fi
 
