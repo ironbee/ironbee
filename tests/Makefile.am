@@ -1,6 +1,13 @@
 ACLOCAL_AMFLAGS = -I../acinclude
 SUBDIRS = gtest
-EXTRA_DIST = gtest
+EXTRA_DIST = gtest \
+       TestIronBeeModuleRulesLua.operator_test.config \
+       AhoCorasickModuleTest.config \
+       ahocorasick.patterns \
+       PcreModuleTest.test_load_module.config \
+       test_module_rules_lua.lua \
+       base_fixture.h
+ 
 include $(top_srcdir)/build/tests.mk
 
 LIBUTIL_LDADD = gtest/libgtest.la $(top_builddir)/util/libibutil.la
@@ -53,13 +60,6 @@ check_PROGRAMS = test_gtest \
 
 TESTS=$(check_PROGRAMS)
 
-BUILT_SOURCES = \
-	$(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
-	$(abs_builddir)/AhoCorasickModuleTest.config \
-	$(abs_builddir)/ahocorasick.patterns \
-    $(abs_builddir)/PcreModuleTest.test_load_module.config \
-	$(abs_builddir)/test_module_rules_lua.lua
-	
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
     	cp -f $< $@; \
@@ -101,7 +101,7 @@ endif
 test_engine_SOURCES = test_engine.cc test_main.cc ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
 
-test_module_trace_SOURCES = test_module_trace.cc test_main.cc ibtest_util.cc
+test_module_trace_SOURCES = test_module_trace.cc test_main.cc ib_test_util.hh ibtest_util.cc
 test_module_trace_LDADD = $(MODULE_TEST_LDADD) 
 
 test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
