@@ -370,7 +370,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
  * @param[in] fn The function to execute. This is passed @a ib and @a fn.
  * @param[in,out] L The Lua State to create or destroy. Passed to @a fn.
  * @returns If any error locking or unlocking the
- *          semaphore is encountered, IB_EUNKNOWN is returned.
+ *          semaphore is encountered, the error code is returned.
  *          Otherwise the result of @a fn is returned.
  */
 static ib_status_t call_in_critical_section(ib_engine_t *ib,
@@ -381,6 +381,8 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
 
     /* Return code from IronBee calls. */
     ib_status_t ib_rc;
+    /* Return code form critical call. */
+    ib_status_t critical_rc;
 
     ib_rc  = ib_lock_lock(&g_lua_lock);
 
@@ -391,9 +393,13 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
     }
 
     /* Execute lua call in critical section. */
-    ib_rc = fn(ib, g_ironbee_rules_lua, L);
+    critical_rc = fn(ib, g_ironbee_rules_lua, L);
 
     ib_rc = ib_lock_unlock(&g_lua_lock);
+
+    if (critical_rc != IB_OK) {
+        ib_log_error(ib, 1, "Critical call failed: %d", critical_rc);
+    }
 
     /* Report semop error and return. */
     if (ib_rc != IB_OK) {
@@ -401,7 +407,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(critical_rc);
 }
 
 /**
