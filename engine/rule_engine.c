@@ -59,32 +59,46 @@ static rule_cbdata_t rule_cbdata[] = {
 
 /**
  * @internal
- * Execute a rule on a list of fields
+ * Execute a single rule's operator
  *
  * @param[in] ib Engine
- * @param[in] field_list List of fields to execute
- * @param[in] opinst Operator instance
- * @param[in] tx Transaction
+ * @param[in] rule Rule to execute
+ * @param[in,out] tx Transaction
  * @param[out] rule_result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t execute_rule_fields(ib_engine_t *ib,
-                                       ib_list_t *field_list,
-                                       ib_operator_inst_t *opinst,
-                                       ib_tx_t *tx,
-                                       ib_num_t *rule_result)
+static ib_status_t execute_rule_operator(ib_engine_t *ib,
+                                         ib_rule_t *rule,
+                                         ib_tx_t *tx,
+                                         ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     ib_list_node_t      *node = NULL;
+    ib_operator_inst_t  *opinst = rule->opinst;
 
-    /* Initialize the rule result */
-    *rule_result = 0;
+    /* Log what we're going to do */
+    ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
+
+    /* Special case: External rules */
+    if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
+        ib_status_t rc;
+
+        /* Execute the operator */
+        ib_log_debug(ib, 4, "Executing external rule");
+        rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4,
+                         "External operator %s returned an error: %d",
+                         opinst->op->name, rc);
+        }
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Loop through all of the fields */
-    IB_LIST_LOOP(field_list, node) {
+    IB_LIST_LOOP(rule->input_fields, node) {
         const char   *fname = (const char *)node->data;
-        ib_field_t   *value = NULL;
+        ib_field_t   *value = 0;
         ib_num_t      result = 0;
         ib_status_t   rc = IB_OK;
 
@@ -99,23 +113,6 @@ static ib_status_t execute_rule_fields(ib_engine_t *ib,
         else if (rc != IB_OK) {
             ib_log_debug(ib, 4, "Error getting field %s: %d\n", fname, rc);
             continue;
-        }
-
-        /* Is the field a list? */
-        if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
-            ib_list_t *vlist = ib_field_value_list(value);
-            if (vlist == NULL) {
-                ib_log_debug(ib, 4,
-                             "Error getting list from field %s\n", fname );
-                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-            }
-            rc = execute_rule_fields(ib, vlist, opinst, tx, rule_result);
-            if (rc != IB_OK) {
-                ib_log_debug(ib, 4,
-                             "Error executing %s on list %s: %d\n",
-                             opinst->op->name, fname, rc);
-            }
-            IB_FTRACE_RET_STATUS(rc);
         }
 
         /* Execute the operator */
@@ -133,62 +130,6 @@ static ib_status_t execute_rule_fields(ib_engine_t *ib,
         if (result != 0) {
             *rule_result = result;
         }
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * @internal
- * Execute a single rule
- *
- * @param[in] ib Engine
- * @param[in] rule Rule to execute
- * @param[in,out] tx Transaction
- * @param[out] rule_result Pointer to number in which to store the result
- *
- * @returns Status code
- */
-static ib_status_t execute_rule(ib_engine_t *ib,
-                                ib_rule_t *rule,
-                                ib_tx_t *tx,
-                                ib_num_t *rule_result)
-{
-    IB_FTRACE_INIT();
-    ib_status_t          rc = IB_OK;
-    ib_operator_inst_t  *opinst = rule->condition.opinst;
-
-    /* Initialize the rule result */
-    *rule_result = 0;
-
-    /* Log what we're going to do */
-    ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
-
-    /* Special case: External rules */
-    if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
-
-        /* Execute the operator */
-        ib_log_debug(ib, 4, "Executing external rule");
-        rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
-        if (rc != IB_OK) {
-            ib_log_debug(ib, 4,
-                         "External operator %s returned an error: %d",
-                         opinst->op->name, rc);
-        }
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Loop through all of the fields */
-    rc = execute_rule_fields(ib,
-                             rule->input_fields,
-                             opinst,
-                             tx,
-                             rule_result);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4,
-                     "Error executing rule %s on field list: %d",
-                     rule->meta.id, rc);
-        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Invert? */
@@ -209,7 +150,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
  * @param[in,out] tx Transaction
- * @param[in] name Action list name ("TRUE"/"FALSE")
+ * @param[in] result Rule execution result
  * @param[in] action The action to execute
  *
  * @returns Status code
@@ -217,11 +158,12 @@ static ib_status_t execute_rule(ib_engine_t *ib,
 static ib_status_t execute_action(ib_engine_t *ib,
                                   ib_rule_t *rule,
                                   ib_tx_t *tx,
-                                  const char *name,
+                                  ib_num_t result,
                                   ib_action_inst_t *action)
 {
     IB_FTRACE_INIT();
     ib_status_t   rc;
+    const char   *name = (result != 0) ? "True" : "False";
 
     ib_log_debug(ib, 4,
                  "Executing %s rule %s action %s",
@@ -246,7 +188,7 @@ static ib_status_t execute_action(ib_engine_t *ib,
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
  * @param[in,out] tx Transaction
- * @param[in] name Name of the actions ("TRUE" or "FALSE")
+ * @param[in] result Rule execution result
  * @param[in] actions List of actions to execute
  *
  * @returns Status code
@@ -254,22 +196,23 @@ static ib_status_t execute_action(ib_engine_t *ib,
 static ib_status_t execute_actions(ib_engine_t *ib,
                                    ib_rule_t *rule,
                                    ib_tx_t *tx,
-                                   const char *name,
+                                   ib_num_t result,
                                    ib_list_t *actions)
 {
     IB_FTRACE_INIT();
     ib_list_node_t   *node = NULL;
     ib_status_t       rc = IB_OK;
+    const char       *name = (result != 0) ? "True" : "False";
 
     ib_log_debug(ib, 4, "Executing %s rule %s actions", rule->meta.id, name);
 
     /* Loop through all of the fields */
     IB_LIST_LOOP(actions, node) {
-        ib_status_t       arc;  /* Action's return code */
+        ib_status_t       arc;     /* Action's return code */
         ib_action_inst_t *action = (ib_action_inst_t *)node->data;
 
         /* Execute the action */
-        arc = execute_action(ib, rule, tx, name, action);
+        arc = execute_action(ib, rule, tx, result, action);
         if (arc == IB_DECLINED) {
             ib_log_debug(ib, 4,
                          "Action %s/%s did not run",
@@ -284,6 +227,63 @@ static ib_status_t execute_actions(ib_engine_t *ib,
     }
 
     IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
+ * Execute a single rule, it's actions, and it's chained rules.
+ *
+ * @param[in] ib Engine
+ * @param[in] event Event type
+ * @param[in,out] tx Transaction
+ * @param[in] cbdata Callback data (actually rule_cbdata_t *)
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_rule(ib_engine_t *ib,
+                                ib_rule_t *rule,
+                                ib_tx_t *tx,
+                                ib_num_t *rule_result)
+{
+    IB_FTRACE_INIT();
+    ib_list_t   *actions;
+    ib_status_t  rc;
+
+    /* Initialize the rule result */
+    *rule_result = 0;
+
+    /* Execute the rule */
+    rc = execute_rule_operator(ib, rule, tx, rule_result);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, "Error executing rule %s", rule->meta.id);
+    }
+
+    /* Execute the actions */
+    if (*rule_result != 0) {
+        actions = rule->true_actions;
+    }
+    else {
+        actions = rule->false_actions;
+    }
+    rc = execute_actions(ib, rule, tx, *rule_result, actions);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Error executing action for rule %s", rule->meta.id);
+    }
+
+    /* Execute chained rule */
+    if ( (*rule_result != 0) && (rule->chained_rule != NULL) ) {
+        ib_log_debug(ib, 4,
+                     "Chaining to rule %s",
+                     rule->chained_rule->meta.id);
+        rc = execute_rule(ib, rule->chained_rule, tx, rule_result);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Error executing chained rule %s",
+                         rule->chained_rule->meta.id);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -335,21 +335,10 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
         ib_num_t     rule_result = 0;
         ib_status_t  rc;
 
-        /* Execute the rule */
+        /* Execute the rule, it's actions and chains */
         rc = execute_rule(ib, rule, tx, &rule_result);
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Error executing rule %s", rule->meta.id);
-        }
-
-        /* Execute the actions */
-        if (rule_result != 0) {
-            rc = execute_actions(ib, rule, tx, "TRUE",  rule->true_actions);
-        }
-        else {
-            rc = execute_actions(ib, rule, tx, "FALSE", rule->false_actions);
-        }
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Error executing action for rule %s", rule->meta.id);
         }
     }
 
@@ -431,7 +420,6 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
     *p_rule_engine = rule_engine;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-
 
 ib_status_t ib_rule_engine_init(ib_engine_t *ib,
                                 ib_module_t *mod)
@@ -521,6 +509,9 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     }
     rule->false_actions = lst;
 
+    /* Chained rule */
+    rule->chained_rule = NULL;
+
     /* Good */
     rule->parent_rlist = &(ctx->rules->rule_list);
     *prule = rule;
@@ -536,6 +527,29 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     ib_status_t           rc;
     ib_rule_phase_data_t *phasep;
     ib_list_t            *rules;
+    static ib_rule_t     *chain_rule = NULL;
+
+    /* Chain (if required) */
+    if (chain_rule != NULL) {
+
+        /* Verify that the rule phase's match */
+        if (chain_rule->meta.phase != rule->meta.phase) {
+            ib_log_error(ib, 4,
+                         "Chained rule '%s' phase %d != rule phase %d",
+                         chain_rule->meta.id,
+                         chain_rule->meta.phase,
+                         rule->meta.phase);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        /* Chain to the rule, update the our rule's flags */
+        chain_rule->chained_rule = rule;
+        rule->flags |= IB_RULE_FLAG_CHAINED_TO;
+        
+        ib_log_debug(ib, 4,
+                     "Rule '%s' chained from rule '%s'",
+                     rule->meta.id, chain_rule->meta.id);
+    }
 
     /* Sanity checks */
     if ( (phase <= PHASE_NONE) || (phase > PHASE_MAX) ) {
@@ -546,15 +560,15 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, 4, "Can't register rule: Rule is NULL");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (rule->condition.opinst == NULL) {
+    if (rule->opinst == NULL) {
         ib_log_error(ib, 4, "Can't register rule: No operator instance");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (rule->condition.opinst->op == NULL) {
+    if (rule->opinst->op == NULL) {
         ib_log_error(ib, 4, "Can't register rule: No operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (rule->condition.opinst->op->fn_execute == NULL) {
+    if (rule->opinst->op->fn_execute == NULL) {
         ib_log_error(ib, 4, "Can't register rule: No operator function");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -571,20 +585,32 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
     }
 
-    phasep = &(ctx->rules->ruleset.phases[phase]);
-    rules = phasep->rules.rule_list;
+    /* If the rule isn't chained to, add it to the appropriate phase list */
+    if ( (rule->flags & IB_RULE_FLAG_CHAINED_TO) == 0) {
+        phasep = &(ctx->rules->ruleset.phases[phase]);
+        rules = phasep->rules.rule_list;
 
-    /* Add it to the list */
-    rc = ib_list_push(rules, (void*)rule);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4,
-                     "Failed to add rule phase=%d context=%p: %d",
-                     phase, (void*)ctx, rc);
-        IB_FTRACE_RET_STATUS(rc);
+        /* Add it to the list */
+        rc = ib_list_push(rules, (void*)rule);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "Failed to add rule phase=%d context=%p: %d",
+                         phase, (void*)ctx, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        ib_log_debug(ib, 4,
+                     "Registered rule %s for phase %d of context %p",
+                     rule->meta.id, phase, (void*)ctx);
     }
-    ib_log_debug(ib, 4,
-                 "Registered rule for phase %d of context %p",
-                 phase, (void*)ctx);
+
+    /* Store off this rule for chaining */
+    if ( (rule->flags & IB_RULE_FLAG_CHAIN) != 0) {
+        chain_rule = rule;
+    }
+    else {
+        chain_rule = NULL;
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -600,7 +626,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
                      "Can't set rule operator: Invalid rule or operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    rule->condition.opinst = opinst;
+    rule->opinst = opinst;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

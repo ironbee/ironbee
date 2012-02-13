@@ -50,7 +50,7 @@ typedef enum {
     PHASE_RESPONSE_BODY,            /**< Response body available. */
     PHASE_POSTPROCESS,              /**< Post-processing phase. */
     PHASE_MAX = PHASE_POSTPROCESS,  /**< Max phase number. */
-    IB_RULE_PHASE_COUNT,
+    IB_RULE_PHASE_COUNT,            /**< Size of rule phase lists */
 } ib_rule_phase_t;
 
 /**
@@ -60,8 +60,10 @@ typedef enum {
  * operator, passing NULL in as the field pointer.  The external rule is
  * expected to extract whatever fields, etc. it requires itself.
  */
-#define IB_RULE_FLAG_NONE     (0x0)     /**< No flags */
-#define IB_RULE_FLAG_EXTERNAL (1 << 0)  /**< External rule */
+#define IB_RULE_FLAG_NONE       (0x0)     /**< No flags */
+#define IB_RULE_FLAG_EXTERNAL   (1 << 0)  /**< External rule */
+#define IB_RULE_FLAG_CHAIN      (1 << 1)  /**< Rule is part of a chain */
+#define IB_RULE_FLAG_CHAINED_TO (1 << 2)  /**< Rule is target of a chain */
 
 /**
  * Rule engine: Basic rule type

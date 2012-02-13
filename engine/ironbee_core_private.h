@@ -47,22 +47,8 @@ extern "C" {
  */
 typedef struct {
     const char            *id;            /**< Rule ID */
-    ib_rule_phase_t        phase;         /**< Phase to execute rule */
+    ib_rule_phase_t        phase;         /**< Phase toq execute rule */
 } ib_rule_meta_t;
-
-/**
- * Rule engine: condition data
- */
-typedef struct {
-    ib_operator_inst_t    *opinst;        /**< Condition operator instance */
-} ib_rule_condition_t;
-
-/**
- * Rule engine: action
- */
-typedef struct {
-    ib_action_inst_t      *action;        /**< Action */
-} ib_rule_rule_action_t;
 
 /**
  * Rule engine: Rule list
@@ -78,11 +64,12 @@ typedef struct {
  */
 struct ib_rule_t {
     ib_rule_meta_t         meta;          /**< Rule meta data */
-    ib_rule_condition_t    condition;     /**< Rule condition */
+    ib_operator_inst_t    *opinst;        /**< Rule operator */
     ib_list_t             *input_fields;  /**< List of input fields */
     ib_list_t             *true_actions;  /**< Actions if condition True */
     ib_list_t             *false_actions; /**< Actions if condition False */
     ib_rulelist_t         *parent_rlist;  /**< Parent rule list */
+    ib_rule_t             *chained_rule;  /**< Rule we're chained to */
     ib_flags_t             flags;         /**< External, etc. */
 };
 

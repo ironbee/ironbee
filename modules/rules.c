@@ -68,6 +68,7 @@ static lua_State *g_ironbee_rules_lua;
  */
 static ib_lock_t g_lua_lock;
 
+
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
  * @details This callback should take a @c ib_engine_t* which is used
@@ -321,10 +322,16 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         else if (strcasecmp(value,"POSTPROCESS") == 0) {
             *phase = PHASE_POSTPROCESS;
         }
+        else if (strcasecmp(value,"NONE") == 0) {
+            *phase = PHASE_NONE;
+        }
         else {
             ib_log_error(cp->ib, 4, "Invalid PHASE modifier '%s'", value);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
+    }
+    else if (strcasecmp(name, "chain") == 0) {
+        ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_CHAIN);
     }
     else {
         ib_action_inst_t  *action;
