@@ -129,6 +129,73 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
 
 /**
  * @internal
+ * Execute a rule on a list of values
+ *
+ * @param[in] ib Engine
+ * @param[in] fvalues List of field values
+ * @param[in] opinst Operator instance
+ * @param[in] fname Field name
+ * @param[in] tx Transaction
+ * @param[out] rule_result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_rule_operator(ib_engine_t *ib,
+                                         ib_tx_t *tx,
+                                         ib_operator_inst_t *opinst,
+                                         const char *fname,
+                                         ib_field_t *value,
+                                         ib_num_t *rule_result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    /* Handle a list by looping through it */
+    if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
+        ib_list_t *vlist = ib_field_value_list(value);
+        ib_list_node_t *node = NULL;
+        ib_num_t n = 0;
+        
+        ib_log_debug(ib, 9, "Value field is a list: looping %zd", vlist->nelts);
+        IB_LIST_LOOP(vlist, node) {
+            ib_field_t   *nvalue = ib_list_node_data(node);
+            ++n;
+
+            ib_log_debug(ib, 9, "Element #%d..", n);
+            rc = execute_rule_operator(
+                ib, tx, opinst, fname, nvalue, rule_result);
+            if (rc != IB_OK) {
+                ib_log_debug(ib, 4,
+                             "Error executing %s on list element #%d: %d",
+                             opinst->op->name, n, rc);
+            }
+            ib_log_debug(ib, 9, "Element %d -> %d", n, (int)*rule_result);
+        }
+        ib_log_debug(ib, 9, "Operator %s, field %s (list) => %d",
+                     opinst->op->name, fname, *rule_result);
+    }
+    else {
+        /* Execute the operator */
+        ib_num_t result;
+        rc = ib_operator_execute(ib, tx, opinst, value, &result);
+        if (rc != IB_OK) {
+            ib_log_debug(ib, 4,
+                         "Operator %s returned an error for field %s: %d",
+                         opinst->op->name, fname, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Store the result */
+        if (result != 0) {
+            *rule_result = result;
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
  * Execute a single rule's operator
  *
  * @param[in] ib Engine
@@ -138,10 +205,10 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t execute_rule_operator(ib_engine_t *ib,
-                                         ib_rule_t *rule,
-                                         ib_tx_t *tx,
-                                         ib_num_t *rule_result)
+static ib_status_t execute_rule(ib_engine_t *ib,
+                                ib_rule_t *rule,
+                                ib_tx_t *tx,
+                                ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     ib_list_node_t      *node = NULL;
@@ -202,8 +269,8 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
             continue;
         }
 
-        /* Execute the operator */
-        rc = ib_operator_execute(ib, tx, opinst, fopvalue, &result);
+        /* Execute the rule operator */
+        rc = execute_rule_operator(ib, tx, opinst, fname, fopvalue, &result);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Operator %s returned an error for field %s: %d",
@@ -332,10 +399,10 @@ static ib_status_t execute_actions(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t execute_rule(ib_engine_t *ib,
-                                ib_rule_t *rule,
-                                ib_tx_t *tx,
-                                ib_num_t *rule_result)
+static ib_status_t execute_rule_all(ib_engine_t *ib,
+                                    ib_rule_t *rule,
+                                    ib_tx_t *tx,
+                                    ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     ib_list_t   *actions;
@@ -351,7 +418,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
      * @todo The current behavior is to keep running even after an operator
      * returns an error.
      */
-    trc = execute_rule_operator(ib, rule, tx, rule_result);
+    trc = execute_rule(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
         ib_log_error(ib, 4, "Error executing rule %s: %d", rule->meta.id, trc);
         rc = trc;
@@ -388,7 +455,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         ib_log_debug(ib, 9,
                      "Chaining to rule %s",
                      rule->chained_rule->meta.id);
-        trc = execute_rule(ib, rule->chained_rule, tx, rule_result);
+        trc = execute_rule_all(ib, rule->chained_rule, tx, rule_result);
         if (trc != IB_OK) {
             ib_log_error(ib, 4, "Error executing chained rule %s",
                          rule->chained_rule->meta.id);
@@ -454,7 +521,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
         ib_status_t  rule_rc;
 
         /* Execute the rule, it's actions and chains */
-        rule_rc = execute_rule(ib, rule, tx, &rule_result);
+        rule_rc = execute_rule_all(ib, rule, tx, &rule_result);
         if (rule_rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Error executing rule %s: %d",
@@ -1204,8 +1271,6 @@ static ib_status_t parse_field_ops(ib_engine_t *ib,
     char             *cur;               /* Current position */
     char             *opname;            /* Operator name */
     char             *dup_str;           /* Duplicate string */
-    ib_field_op_fn_t  last_opfn = NULL;  /* Operator function */
-
 
     /* No parens?  Just store the target string as the field name & return. */
     if (strstr(target_str, "()") == NULL) {
@@ -1306,16 +1371,7 @@ static ib_status_t parse_field_ops(ib_engine_t *ib,
         /* Add the function to the list. */
         if (opfn != NULL) {
             ib_list_push(target_field->field_ops, (void *)opfn);
-            last_opfn = opfn;
         }
-    }
-
-    /**
-     * Add a max operator of the last operator is length.
-     */
-    if (last_opfn == fieldop_length) {
-        ib_log_debug(ib, 9, "Adding max field operator");
-        ib_list_push(target_field->field_ops, (void *)fieldop_max);
     }
 
     /**

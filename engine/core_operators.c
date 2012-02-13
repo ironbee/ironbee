@@ -103,6 +103,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
     if (field->type==IB_FTYPE_NULSTR) {
         const char *fval = ib_field_value_nulstr( field );
         *result = (strcmp(fval,cstr) == 0);
+        ib_log_debug(ib,9,"streq '%s' '%s' -> %d", fval, cstr, *result);
     }
     else if (field->type==IB_FTYPE_BYTESTR) {
         ib_bytestr_t *value = ib_field_value_bytestr(field);
