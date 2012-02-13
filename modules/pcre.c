@@ -41,6 +41,8 @@
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
 
+#include <assert.h>
+
 #include <pcre.h>
 
 
@@ -261,15 +263,17 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
                          &erroffset,
                          (const unsigned char*)NULL);
 
-    if (regex == NULL && errptr != NULL ) {
+    if (errptr != NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+
+    assert(regex != NULL);
 
     /* Attempt to optimize execution of the regular expression at rule
        evaluation time. */
     regex_extra = pcre_study(regex, 0, &errptr);
 
-    if (regex_extra == NULL && errptr != NULL ) {
+    if (regex_extra == NULL && errptr != NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -299,18 +303,21 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /* Allocate data to copy regex_extra into. */
-    rule_data->regex_extra =
-        (pcre_extra*) ib_mpool_alloc(pool, rule_data->regex_extra_sz);
-
-    if (rule_data->regex_extra == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
 
     /* Copy regex and regex_extra into rule_data. */
     memcpy(rule_data->regex, regex, rule_data->regex_sz);
     pcre_free(regex);
-    memcpy(rule_data->regex_extra, regex_extra, rule_data->regex_extra_sz);
+    if (regex_extra != NULL) {
+        /* Allocate data to copy regex_extra into. */
+        rule_data->regex_extra =
+            (pcre_extra*) ib_mpool_alloc(pool, rule_data->regex_extra_sz);
+        if (rule_data->regex_extra == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        memcpy(rule_data->regex_extra, regex_extra, rule_data->regex_extra_sz);
+    } else {
+        rule_data->regex_extra = NULL;
+    }
 
     op_inst->data = rule_data;
 
