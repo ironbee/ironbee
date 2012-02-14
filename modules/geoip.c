@@ -368,7 +368,8 @@ IB_MODULE_INIT(
     geoip_directive_map,                 /* Config directive map */
     geoip_init,                          /* Initialize function */
     geoip_fini,                          /* Finish function */
-    NULL,                                /* Context init function */
-    NULL                                 /* Context fini function */
+    NULL,                                /* Context open function */
+    NULL,                                /* Context close function */
+    NULL                                 /* Context destroy function */
 );
 

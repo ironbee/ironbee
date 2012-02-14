@@ -1545,7 +1545,8 @@ IB_MODULE_INIT(
     NULL,                                /**< Config directive map */
     modhtp_init,                         /**< Initialize function */
     NULL,                                /**< Finish function */
-    NULL,                                /**< Context init function */
-    NULL                                 /**< Context fini function */
+    NULL,                                /**< Context open function */
+    NULL,                                /**< Context close function */
+    NULL                                 /**< Context destroy function */
 );
 

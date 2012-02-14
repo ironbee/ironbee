@@ -766,7 +766,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
  * @param[in] m Module object
  * @param[in] ctx Context object
  */
-static ib_status_t perf_stats_context_init(ib_engine_t *ib,
+static ib_status_t perf_stats_context_close(ib_engine_t *ib,
                                            ib_module_t *m,
                                            ib_context_t *ctx)
 {
@@ -860,7 +860,8 @@ IB_MODULE_INIT(
     NULL,                           /* Config directive map */
     perf_stats_init,                /* Initialize function */
     perf_stats_fini,                /* Finish function */
-    perf_stats_context_init,        /* Context init function */
-    NULL                            /* Context fini function */
+    NULL,                           /* Context open function */
+    perf_stats_context_close,       /* Context close function */
+    NULL                            /* Context destroy function */
 );
 

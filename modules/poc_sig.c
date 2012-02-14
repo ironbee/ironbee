@@ -479,7 +479,7 @@ static ib_status_t pocsig_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t pocsig_context_init(ib_engine_t *ib,
+static ib_status_t pocsig_context_close(ib_engine_t *ib,
                                        ib_module_t *m,
                                        ib_context_t *ctx)
 {
@@ -531,7 +531,8 @@ IB_MODULE_INIT(
     pocsig_directive_map,                /**< Config directive map */
     pocsig_init,                         /**< Initialize function */
     NULL,                                /**< Finish function */
-    pocsig_context_init,                 /**< Context init function */
-    NULL                                 /**< Context fini function */
+    NULL,                                /**< Context open function */
+    pocsig_context_close,                /**< Context close function */
+    NULL                                 /**< Context destroy function */
 );
 

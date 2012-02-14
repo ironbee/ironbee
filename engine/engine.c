@@ -2549,8 +2549,8 @@ ib_status_t ib_context_init(ib_context_t *ctx)
         }
         ib_module_t *m = cfgdata->module;
 
-        if (m->fn_ctx_init != NULL) {
-            rc = m->fn_ctx_init(ib, m, ctx);
+        if (m->fn_ctx_close != NULL) {
+            rc = m->fn_ctx_close(ib, m, ctx);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, 4, "Failed to call context init: %d", rc);
@@ -2621,10 +2621,10 @@ void ib_context_destroy(ib_context_t *ctx)
         }
         ib_module_t *m = cfgdata->module;
 
-        if (m->fn_ctx_fini != NULL) {
+        if (m->fn_ctx_destroy != NULL) {
             ib_log_debug(ib, 9, "Finishing context ctx=%p for module=%s (%p)",
                          ctx, m->name, m);
-            rc = m->fn_ctx_fini(ib, m, ctx);
+            rc = m->fn_ctx_destroy(ib, m, ctx);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, 4, "Failed to call context fini: %d", rc);

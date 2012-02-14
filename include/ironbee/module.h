@@ -61,10 +61,11 @@ extern "C" {
  * @param xdm_init Config directive map
  * @param xfn_init Initialize function
  * @param xfn_fini Finish function
- * @param xfn_ctx_init Context init function
- * @param xfn_ctx_fini Context fini function
+ * @param xfn_ctx_open Context open function
+ * @param xfn_ctx_close Context close function
+ * @param xfn_ctx_destroy Context destroy function
  */
-#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xfn_fini,xfn_ctx_init,xfn_ctx_fini) \
+#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xfn_fini,xfn_ctx_open,xfn_ctx_close,xfn_ctx_destroy) \
     do { \
         (m)->vernum = IB_VERNUM; \
         (m)->abinum = IB_ABINUM; \
@@ -80,8 +81,9 @@ extern "C" {
         (m)->dm_init = xdm_init; \
         (m)->fn_init = xfn_init; \
         (m)->fn_fini = xfn_fini; \
-        (m)->fn_ctx_init = xfn_ctx_init; \
-        (m)->fn_ctx_fini = xfn_ctx_fini; \
+        (m)->fn_ctx_open = xfn_ctx_open; \
+        (m)->fn_ctx_close = xfn_ctx_close; \
+        (m)->fn_ctx_destroy = xfn_ctx_destroy; \
     } while (0)
 
 /** Defaults for all module structure headers */
@@ -137,36 +139,60 @@ typedef ib_status_t (*ib_module_fn_fini_t)(ib_engine_t *ib,
                                            ib_module_t *m);
 
 /**
- * Function to initialize a module configuration context.
+ * Function called when a context is opened.
  *
- * This is called when @ref ib_context_init() is called to initialize
- * a configuration context. This should be used to initialize
- * any per-config-context resources.
+ * This is called when a context is opened in the configuration file.
  *
- * @param ib Engine handle
- * @param ctx Config context
+ * @param[in] ib Engine handle
+ * @param[in] m Module.
+ * @param[in] ctx Config context
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_module_fn_ctx_init_t)(ib_engine_t *ib,
-                                               ib_module_t *m,
-                                               ib_context_t *ctx);
+typedef ib_status_t (*ib_module_fn_ctx_open_t)(
+     ib_engine_t  *ib,
+     ib_module_t  *m,
+     ib_context_t *ctx
+);
 
 /**
- * Function to finish a module configuration context.
+ * Function called when a context is closed.
+ *
+ * This is called when @ref ib_context_init() is called to initialize
+ * a configuration context.  Which happens whenever a context is closed 
+ * in the configuration file.  This should be used to initialize
+ * any per-config-context resources.
+ *
+ * @param[in] ib Engine handle
+ * @param[in] m Module.
+ * @param[in] ctx Config context
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*ib_module_fn_ctx_close_t)(
+     ib_engine_t  *ib,
+     ib_module_t  *m,
+     ib_context_t *ctx
+);
+
+/**
+ * Function called when a context is destroyed.
  *
  * This is called when @ref ib_context_destroy() is called to finish
  * a configuration context. This should be used to destroy
  * any per-config-context resources.
  *
- * @param ib Engine handle
- * @param ctx Config context
+ * @param[in] ib Engine handle
+ * @param[in] m Module.
+ * @param[in] ctx Config context
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_module_fn_ctx_fini_t)(ib_engine_t *ib,
-                                               ib_module_t *m,
-                                               ib_context_t *ctx);
+typedef ib_status_t (*ib_module_fn_ctx_destroy_t)(
+     ib_engine_t  *ib,
+     ib_module_t  *m,
+     ib_context_t *ctx
+);
 
 struct ib_module_t {
     /* Header */
@@ -187,10 +213,11 @@ struct ib_module_t {
     const ib_dirmap_init_t *dm_init;          /**< Module directive mapping */
 
     /* Functions */
-    ib_module_fn_init_t     fn_init;          /**< Module init */
-    ib_module_fn_fini_t     fn_fini;          /**< Module finish */
-    ib_module_fn_ctx_init_t fn_ctx_init;      /**< Module context init */
-    ib_module_fn_ctx_fini_t fn_ctx_fini;      /**< Module context finish */
+    ib_module_fn_init_t        fn_init;          /**< Module init */
+    ib_module_fn_fini_t        fn_fini;          /**< Module finish */
+    ib_module_fn_ctx_open_t    fn_ctx_open;      /**< Context open */
+    ib_module_fn_ctx_close_t   fn_ctx_close;     /**< Context close */
+    ib_module_fn_ctx_destroy_t fn_ctx_destroy;   /**< Context destroy */
 };
 
 /**

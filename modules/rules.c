@@ -866,7 +866,8 @@ IB_MODULE_INIT(
     rules_directive_map,                 /* Config directive map */
     rules_init,                          /* Initialize function */
     rules_fini,                          /* Finish function */
-    NULL,                                /* Context init function */
-    NULL                                 /* Context fini function */
+    NULL,                                /* Context open function */
+    NULL,                                /* Context close function */
+    NULL                                 /* Context destroy function */
 );
 

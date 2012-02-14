@@ -642,8 +642,9 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
         NULL,                           /**< Config directive map */
         (use_onload?modlua_init_lua_wrapper:NULL),/**< Initialize function */
         NULL,                           /**< Finish function */
-        NULL,                           /**< Context init function */
-        NULL                            /**< Context fini function */
+        NULL,                           /**< Context open function */
+        NULL,                           /**< Context close function */
+        NULL                            /**< Context destroy function */
     );
 
     /* Track loaded lua modules. */
@@ -1730,7 +1731,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t modlua_context_init(ib_engine_t *ib,
+static ib_status_t modlua_context_close(ib_engine_t *ib,
                                        ib_module_t *m,
                                        ib_context_t *ctx)
 {
@@ -2079,7 +2080,8 @@ IB_MODULE_INIT(
     modlua_directive_map,                /**< Config directive map */
     modlua_init,                         /**< Initialize function */
     NULL,                                /**< Finish function */
-    modlua_context_init,                 /**< Context init function */
-    NULL                                 /**< Context fini function */
+    NULL,                                /**< Context open function */
+    modlua_context_close,                /**< Context close function */
+    NULL                                 /**< Context destroy function */
 );
 

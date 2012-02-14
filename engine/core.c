@@ -5348,9 +5348,9 @@ ib_module_t *ib_core_module(void)
  *
  * @returns Status code
  */
-static ib_status_t core_ctx_init(ib_engine_t *ib,
-                                 ib_module_t *mod,
-                                 ib_context_t *ctx)
+static ib_status_t core_ctx_close(ib_engine_t *ib,
+                                  ib_module_t *mod,
+                                  ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
@@ -5424,7 +5424,7 @@ static ib_status_t core_ctx_init(ib_engine_t *ib,
         }
         else {
             fprintf(stderr,
-                    "core_ctx_init: failed to duplicate file handle: %s\n",
+                    "core_ctx_close:failed to duplicate file handle: %s\n",
                     strerror(errno));
         }
     }
@@ -5442,9 +5442,9 @@ static ib_status_t core_ctx_init(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t core_ctx_finish(ib_engine_t *ib,
-                                   ib_module_t *mod,
-                                   ib_context_t *ctx)
+static ib_status_t core_ctx_destroy(ib_engine_t *ib,
+                                    ib_module_t *mod,
+                                    ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
@@ -5500,7 +5500,7 @@ static ib_status_t core_ctx_finish(ib_engine_t *ib,
     if (fp != NULL) {
         if (fclose( fp ) < 0) {
             fprintf( stderr,
-                     "core_ctx_finish: Failed closing our fp %p: %s\n",
+                     "core_ctx_destroy:Failed closing our fp %p: %s\n",
                      (void*)fp, strerror(errno) );
         }
         lpi->data = NULL;
@@ -5521,6 +5521,7 @@ IB_MODULE_INIT(
     core_directive_map,                  /**< Config directive map */
     core_init,                           /**< Initialize function */
     NULL,                                /**< Finish function */
-    core_ctx_init,                       /**< Context init function */
-    core_ctx_finish                      /**< Context fini function */
+    NULL,                                /**< Context open function */
+    core_ctx_close,                      /**< Context close function */
+    core_ctx_destroy                     /**< Context destroy function */
 );

@@ -619,7 +619,7 @@ static ib_status_t modtrace_finish(ib_engine_t *ib, ib_module_t *m)
  * @param[in] m Module object
  * @param[in] ctx Context object
  */
-static ib_status_t modtrace_context_init(ib_engine_t *ib,
+static ib_status_t modtrace_context_close(ib_engine_t *ib,
                                         ib_module_t *m,
                                         ib_context_t *ctx)
 {
@@ -638,7 +638,7 @@ static ib_status_t modtrace_context_init(ib_engine_t *ib,
  * @param[in] m Module object
  * @param[in] ctx Context object
  */
-static ib_status_t modtrace_context_finish(ib_engine_t *ib,
+static ib_status_t modtrace_context_destroy(ib_engine_t *ib,
                                            ib_module_t *m,
                                            ib_context_t *ctx)
 {
@@ -669,6 +669,7 @@ IB_MODULE_INIT(
     NULL,                           /* Module directive map */
     modtrace_init,                  /* Initialize function */
     modtrace_finish,                /* Finish function */
-    modtrace_context_init,          /* Context init function */
-    modtrace_context_finish         /* Context finish function */
+    NULL,                           /* Context open function */
+    modtrace_context_close,         /* Context close function */
+    modtrace_context_destroy        /* Context destroyfunction */
 );
