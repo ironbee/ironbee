@@ -200,7 +200,7 @@ static char* alloc_cpy_marked_string(char *fpc_mark,
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
                                            size_t blen,
-                                           int is_last_block)
+                                           int is_last_chunk)
 {
     ib_engine_t *ib = cp->ib;
     ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib);
@@ -213,7 +213,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     fsm.p = data;
     fsm.pe = data + blen;
-    fsm.eof = (is_last_block? fsm.pe : NULL);
+    fsm.eof = (is_last_chunk ? fsm.pe : NULL);
 
     /* Init */
     mark = fsm.p;
