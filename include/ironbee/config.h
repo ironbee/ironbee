@@ -280,7 +280,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_create(ib_cfgparser_t **pcp,
  *
  * @param[in,out] cp The configuration parser to be used and populated.
  * @param[in] file The file to be opened and read.
- * @returns IB_OK on succes or another values on failure. Errors are logged.
+ * @returns IB_OK on success or another values on failure. Errors are logged.
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_parse(ib_cfgparser_t *cp,
                                           const char *file);

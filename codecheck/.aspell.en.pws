@@ -1,4 +1,4 @@
-personal_ws-1.1 en 910 
+personal_ws-1.1 en 911 
 cfg
 api
 IronBee
@@ -597,6 +597,7 @@ unhandled
 logfile
 DebugLogLevel
 ruleset
+nbytes
 soso
 IronBeeRuleDefs
 readbytes
