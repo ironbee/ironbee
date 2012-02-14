@@ -270,12 +270,17 @@ ib_status_t DLL_PUBLIC ib_cfgparser_create(ib_cfgparser_t **pcp,
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
 /**
- * Parse a configuration file.
+ * Open @a file and parse it.
  *
- * @param cp Parser
- * @param file Filename
+ * Parsing is done by reading in 8k at a time and passing 1 line
+ * at a time to ib_cfgparser_ragel_parse_chunk. Should the buffer
+ * fill up, the current line is shifted down the first index in
+ * the buffer. If a line is larger than ~8k, it is an error and parsing
+ * fails.
  *
- * @returns Status code
+ * @param[in,out] cp The configuration parser to be used and populated.
+ * @param[in] file The file to be opened and read.
+ * @returns IB_OK on succes or another values on failure. Errors are logged.
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_parse(ib_cfgparser_t *cp,
                                           const char *file);
