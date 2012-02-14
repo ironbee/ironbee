@@ -166,7 +166,7 @@ static char* alloc_cpy_marked_string(char *fpc_mark,
     comment = '#' (any -- EOLSEQ)*;
 
     parameters := |*
-        WS* param >mark $/push_param %push_param;
+        WS* param >mark %push_param $/push_param $/push_dir;
         EOL @push_dir { fret; };
     *|;
 

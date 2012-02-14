@@ -61,12 +61,6 @@ struct cfgp_blk_t {
     ib_list_t                *dirs;     /**< Block directives */
 };
 
-static void cfgp_dump(ib_cfgparser_t *cp)
-{
-    /// @todo Implement
-    ib_log_debug(cp->ib, 9, "Config Dump: %p (TODO)", cp);
-}
-
 /* Get an option value from a name/mapping. */
 static ib_status_t cfgp_opval(const char *opname, const ib_strval_t *map,
                               ib_num_t *pval)
@@ -157,8 +151,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
     const size_t bufsz = 8192;                 /**< Buffer size. */
     size_t buflen = 0;                         /**< Last char in buffer. */
     char *buf = NULL;                          /**< Buffer. */
-    char *eol = NULL;                          /**< buf[eol] = end of line. */
-    char *bol = NULL;                          /**< buf[bol] = begin line. */
+    char *eol = 0;                             /**< buf[eol] = end of line. */
+    char *bol = 0;                             /**< buf[bol] = begin line. */
 
     ib_status_t rc = IB_OK;
 
@@ -178,10 +172,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /* Fill the buffer, parse each line in the buffer.
-     * When all lines are consumed, discard the processed lines and fill
-     * again. Repeat.
-     */
+    /* Fill the buffer, parse each line. Conditionally read another line. */
     do {
         nbytes = read(fd, buf+buflen, bufsz-buflen);
         buflen += nbytes;
@@ -212,14 +203,14 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
             if (eol == NULL) {
                 if (buflen<bufsz) {
                     /* There is no end-of-line (\n) character and
-                     * there is more to read.
+                     * there is more to read. 
                      * Kick back out to while loop. */
                     continue;
                 }
                 else {
-                    /* There is no end of line and there is no more
+                    /* There is no end of line and there is no more 
                      * space in the buffer. This is an error. */
-                    ib_log_error(cp->ib, 1,
+                    ib_log_error(cp->ib, 1, 
                         "Unable to read a configuration line "
                             "larger than %d bytes from file %s. "
                             "Parsing has failed.",
@@ -231,7 +222,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
             }
             else {
                 /* We have found at least one end-of-line character.
-                 * Iterate through it and all others, passing each line to
+                 * Iterate through it and all otheres, passing each line to
                  * ib_cfgparser_ragel_parse_chunk */
                 do {
                     ib_cfgparser_ragel_parse_chunk(cp, bol, eol-bol+1, 0);
@@ -239,19 +230,14 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                     eol = (char*)memchr(bol, '\n', buf+buflen-bol);
                 } while (eol != NULL);
 
-                /* There are no more end-of-line opportunities.
-                 * Now move the last end-of-line to the beginning. */
+                /* There are no more end-of-line opportunities. 
+                 * Now move the last end-of-line to the begining. */
                 ib_log_debug(cp->ib, 3,
                     "Buffer of length %d must be shrunk.", buflen);
                 ib_log_debug(cp->ib, 3,
-                    "Beginning of last line is at index %d.", bol-buf);
+                    "Begining of last line is at index %d.", bol-buf);
                 buflen = buf + buflen - bol;
-                ib_log_debug(cp->ib, 3,
-                    "Discarding parsed lines. "
-                    "Moving %p to %p with length %d.",
-                    bol,
-                    buf,
-                    buflen);
+                ib_log_debug(cp->ib, 3, "Discarding parsed lines. Moving %p to %p with length %d.", bol, buf, buflen);
                 memmove(buf, bol, buflen);
             }
         }
@@ -269,7 +255,6 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
     close(fd);
     ib_log_debug(cp->ib, 9, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
 
-    cfgp_dump(cp);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
