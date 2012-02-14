@@ -101,11 +101,11 @@ static char* alloc_cpy_marked_string(char *fpc_mark,
 
     # Parameter
     action push_param {
-        pval = alloc_cpy_marked_string(mark, fpc, mptmp);
+        pval = alloc_cpy_marked_string(mark, fpc, mpcfg);
         ib_list_push(plist, pval);
     }
     action push_blkparam {
-        pval = alloc_cpy_marked_string(mark, fpc, mptmp);
+        pval = alloc_cpy_marked_string(mark, fpc, mpcfg);
         ib_list_push(plist, pval);
     }
 
@@ -204,6 +204,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 {
     ib_engine_t *ib = cp->ib;
     ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib);
+    ib_mpool_t *mpcfg = ib_engine_pool_config_get(ib);
     ib_status_t rc;
     ib_list_t *plist;
     /// @todo Which should be in cp???

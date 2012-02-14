@@ -270,6 +270,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 {
     ib_engine_t *ib = cp->ib;
     ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib);
+    ib_mpool_t *mpcfg = ib_engine_pool_config_get(ib);
     ib_status_t rc;
     ib_list_t *plist;
     /// @todo Which should be in cp???
@@ -292,16 +293,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
     
-#line 229 "config-parser.rl"
-    
 #line 230 "config-parser.rl"
     
 #line 231 "config-parser.rl"
     
 #line 232 "config-parser.rl"
+    
+#line 233 "config-parser.rl"
 
     
-#line 305 "config-parser.c"
+#line 306 "config-parser.c"
 	{
 	 fsm.cs = ironbee_config_start;
 	 fsm.top = 0;
@@ -310,9 +311,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 fsm.act = 0;
 	}
 
-#line 234 "config-parser.rl"
+#line 235 "config-parser.rl"
     
-#line 316 "config-parser.c"
+#line 317 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -333,7 +334,7 @@ _resume:
 #line 1 "NONE"
 	{ fsm.ts = ( fsm.p);}
 	break;
-#line 337 "config-parser.c"
+#line 338 "config-parser.c"
 		}
 	}
 
@@ -406,14 +407,14 @@ _eof_trans:
 	case 1:
 #line 103 "config-parser.rl"
 	{
-        pval = alloc_cpy_marked_string(mark, ( fsm.p), mptmp);
+        pval = alloc_cpy_marked_string(mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
 	case 2:
 #line 107 "config-parser.rl"
 	{
-        pval = alloc_cpy_marked_string(mark, ( fsm.p), mptmp);
+        pval = alloc_cpy_marked_string(mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
@@ -617,7 +618,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 621 "config-parser.c"
+#line 622 "config-parser.c"
 		}
 	}
 
@@ -634,7 +635,7 @@ _again:
 #line 1 "NONE"
 	{ fsm.act = 0;}
 	break;
-#line 638 "config-parser.c"
+#line 639 "config-parser.c"
 		}
 	}
 
@@ -656,11 +657,11 @@ _again:
 	case 1:
 #line 103 "config-parser.rl"
 	{
-        pval = alloc_cpy_marked_string(mark, ( fsm.p), mptmp);
+        pval = alloc_cpy_marked_string(mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
-#line 664 "config-parser.c"
+#line 665 "config-parser.c"
 		}
 	}
 	}
@@ -668,7 +669,7 @@ _again:
 	_out: {}
 	}
 
-#line 235 "config-parser.rl"
+#line 236 "config-parser.rl"
 
     return IB_OK;
 }
