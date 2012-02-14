@@ -529,7 +529,7 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
 
     assert(hash != NULL);
 
-    IB_FTRACE_RET_PTR(ib_mpool_t *, hash->pool);
+    IB_FTRACE_RET_PTR(ib_mpool_t, hash->pool);
 }
 
 size_t DLL_PUBLIC ib_hash_size(
