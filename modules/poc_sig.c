@@ -466,7 +466,8 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
 /* -- Module Routines -- */
 
 static ib_status_t pocsig_init(ib_engine_t *ib,
-                               ib_module_t *m)
+                               ib_module_t *m,
+                               void        *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -479,9 +480,10 @@ static ib_status_t pocsig_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t pocsig_context_close(ib_engine_t *ib,
-                                       ib_module_t *m,
-                                       ib_context_t *ctx)
+static ib_status_t pocsig_context_close(ib_engine_t  *ib,
+                                        ib_module_t  *m,
+                                        ib_context_t *ctx,
+                                        void         *cbdata)
 {
     IB_FTRACE_INIT();
     pocsig_cfg_t *cfg;
@@ -530,9 +532,14 @@ IB_MODULE_INIT(
     pocsig_config_map,                   /**< Configuration field map */
     pocsig_directive_map,                /**< Config directive map */
     pocsig_init,                         /**< Initialize function */
+    NULL,                                /**< Callback data */
     NULL,                                /**< Finish function */
+    NULL,                                /**< Callback data */
     NULL,                                /**< Context open function */
+    NULL,                                /**< Callback data */
     pocsig_context_close,                /**< Context close function */
-    NULL                                 /**< Context destroy function */
+    NULL,                                /**< Callback data */
+    NULL,                                /**< Context destroy function */
+    NULL                                 /**< Callback data */
 );
 

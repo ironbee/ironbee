@@ -1501,7 +1501,8 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 /* -- Module Routines -- */
 
 static ib_status_t modhtp_init(ib_engine_t *ib,
-                               ib_module_t *m)
+                               ib_module_t *m,
+                               void        *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -1544,9 +1545,14 @@ IB_MODULE_INIT(
     modhtp_config_map,                   /**< Configuration field map */
     NULL,                                /**< Config directive map */
     modhtp_init,                         /**< Initialize function */
+    NULL,                                /**< Callback data */     
     NULL,                                /**< Finish function */
+    NULL,                                /**< Callback data */     
     NULL,                                /**< Context open function */
+    NULL,                                /**< Callback data */     
     NULL,                                /**< Context close function */
-    NULL                                 /**< Context destroy function */
+    NULL,                                /**< Callback data */     
+    NULL,                                /**< Context destroy function */
+    NULL                                 /**< Callback data */     
 );
 

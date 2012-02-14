@@ -442,7 +442,8 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 /* -- Module Routines -- */
 
 static ib_status_t modpcre_init(ib_engine_t *ib,
-                                ib_module_t *m)
+                                ib_module_t *m,
+                                void        *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -517,9 +518,14 @@ IB_MODULE_INIT(
     modpcre_config_map,                   /**< Configuration field map */
     NULL,                                 /**< Config directive map */
     modpcre_init,                         /**< Initialize function */
+    NULL,                                 /**< Callback data */     
     NULL,                                 /**< Finish function */
+    NULL,                                 /**< Callback data */     
     NULL,                                 /**< Context open function */
+    NULL,                                 /**< Callback data */     
     NULL,                                 /**< Context close function */
-    NULL                                  /**< Context destroy function */
+    NULL,                                 /**< Callback data */     
+    NULL,                                 /**< Context destroy function */
+    NULL                                  /**< Callback data */     
 );
 

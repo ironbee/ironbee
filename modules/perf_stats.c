@@ -661,8 +661,11 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
  *
  * @param[in] ib IronBee object
  * @param[in] m Module object
+ * @param[in] cbdata Callback data (unused)
  */
-static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t perf_stats_init(ib_engine_t *ib, 
+                                   ib_module_t *m,
+                                   void        *cbdata)
 {
     /*Detect main context otherwise return IB_ENGINE_CONTEXT_MAIN. */
 
@@ -765,10 +768,12 @@ static ib_status_t perf_stats_init(ib_engine_t *ib, ib_module_t *m)
  * @param[in] ib IronBee object
  * @param[in] m Module object
  * @param[in] ctx Context object
+ * @param[in] cbdata Callback data (unused)
  */
-static ib_status_t perf_stats_context_close(ib_engine_t *ib,
-                                           ib_module_t *m,
-                                           ib_context_t *ctx)
+static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
+                                            ib_module_t  *m,
+                                            ib_context_t *ctx,
+                                            void         *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -844,7 +849,9 @@ static ib_status_t perf_stats_context_close(ib_engine_t *ib,
 }
 
 /* Called when module is unloaded. */
-static ib_status_t perf_stats_fini(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t perf_stats_fini(ib_engine_t *ib, 
+                                   ib_module_t *m, 
+                                   void        *cbdata)
 {
     IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Perf stats module unloaded.");
@@ -859,9 +866,14 @@ IB_MODULE_INIT(
     NULL,                           /* Configuration field map */
     NULL,                           /* Config directive map */
     perf_stats_init,                /* Initialize function */
+    NULL,                           /* Callback data */
     perf_stats_fini,                /* Finish function */
+    NULL,                           /* Callback data */
     NULL,                           /* Context open function */
+    NULL,                           /* Callback data */
     perf_stats_context_close,       /* Context close function */
-    NULL                            /* Context destroy function */
+    NULL,                           /* Callback data */
+    NULL,                           /* Context destroy function */
+    NULL                            /* Callback data */
 );
 

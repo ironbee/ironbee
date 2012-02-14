@@ -500,7 +500,8 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
 }
 
 static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
-                                           ib_module_t *module)
+                                           ib_module_t *module,
+                                           void        *cbdata)
 {
     IB_FTRACE_INIT();
     modlua_cfg_t *maincfg;
@@ -641,10 +642,15 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
         NULL,                           /**< Configuration field map */
         NULL,                           /**< Config directive map */
         (use_onload?modlua_init_lua_wrapper:NULL),/**< Initialize function */
+        NULL,                           /**< Callback data */
         NULL,                           /**< Finish function */
+        NULL,                           /**< Callback data */
         NULL,                           /**< Context open function */
+        NULL,                           /**< Callback data */
         NULL,                           /**< Context close function */
-        NULL                            /**< Context destroy function */
+        NULL,                           /**< Callback data */
+        NULL,                           /**< Context destroy function */
+        NULL                            /**< Callback data */
     );
 
     /* Track loaded lua modules. */
@@ -1603,7 +1609,8 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
 /* -- Module Routines -- */
 
 static ib_status_t modlua_init(ib_engine_t *ib,
-                               ib_module_t *m)
+                               ib_module_t *m,
+                               void        *cbdata)
 {
     IB_FTRACE_INIT();
     ib_list_t *mlist;
@@ -1731,9 +1738,10 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t modlua_context_close(ib_engine_t *ib,
-                                       ib_module_t *m,
-                                       ib_context_t *ctx)
+static ib_status_t modlua_context_close(ib_engine_t  *ib,
+                                        ib_module_t  *m,
+                                        ib_context_t *ctx,
+                                        void         *cbdata)
 {
     IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
@@ -2079,9 +2087,14 @@ IB_MODULE_INIT(
     modlua_config_map,                   /**< Configuration field map */
     modlua_directive_map,                /**< Config directive map */
     modlua_init,                         /**< Initialize function */
+    NULL,                                /**< Callback data */
     NULL,                                /**< Finish function */
+    NULL,                                /**< Callback data */
     NULL,                                /**< Context open function */
+    NULL,                                /**< Callback data */
     modlua_context_close,                /**< Context close function */
-    NULL                                 /**< Context destroy function */
+    NULL,                                /**< Callback data */
+    NULL,                                /**< Context destroy function */
+    NULL                                 /**< Callback data */
 );
 

@@ -744,7 +744,7 @@ static void clean_up_ipc_mem(void)
     ib_lock_destroy(&g_lua_lock);
 }
 
-static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -842,7 +842,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Rules module unloading.");
@@ -865,9 +865,14 @@ IB_MODULE_INIT(
     NULL,                                /* Configuration field map */
     rules_directive_map,                 /* Config directive map */
     rules_init,                          /* Initialize function */
+    NULL,                                /* Callback data */    
     rules_fini,                          /* Finish function */
+    NULL,                                /* Callback data */
     NULL,                                /* Context open function */
+    NULL,                                /* Callback data */
     NULL,                                /* Context close function */
-    NULL                                 /* Context destroy function */
+    NULL,                                /* Callback data */
+    NULL,                                /* Context destroy function */
+    NULL                                 /* Callback data */
 );
 

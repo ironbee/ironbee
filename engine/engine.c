@@ -2266,7 +2266,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     /* Init and register the module */
     if (m->fn_init != NULL) {
-        rc = m->fn_init(ib, m);
+        rc = m->fn_init(ib, m, m->cbdata_init);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Failed to initialize module %s %d",
                          m->name, rc);
@@ -2374,7 +2374,7 @@ ib_status_t ib_module_unload(ib_module_t *m)
 
     /* Finish the module */
     if (m->fn_fini != NULL) {
-        rc = m->fn_fini(ib, m);
+        rc = m->fn_fini(ib, m, m->cbdata_fini);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Failed to finish module %s %d",
                          m->name, rc);
@@ -2561,7 +2561,7 @@ ib_status_t ib_context_open(ib_context_t *ctx)
         ib_module_t *m = cfgdata->module;
 
         if (m->fn_ctx_open != NULL) {
-            rc = m->fn_ctx_open(ib, m, ctx);
+            rc = m->fn_ctx_open(ib, m, ctx, m->cbdata_ctx_open);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, 4, "Failed to call context open: %d", rc);
@@ -2591,7 +2591,7 @@ ib_status_t ib_context_close(ib_context_t *ctx)
         ib_module_t *m = cfgdata->module;
 
         if (m->fn_ctx_close != NULL) {
-            rc = m->fn_ctx_close(ib, m, ctx);
+            rc = m->fn_ctx_close(ib, m, ctx, m->cbdata_ctx_close);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, 4, "Failed to call context init: %d", rc);
@@ -2665,7 +2665,7 @@ void ib_context_destroy(ib_context_t *ctx)
         if (m->fn_ctx_destroy != NULL) {
             ib_log_debug(ib, 9, "Finishing context ctx=%p for module=%s (%p)",
                          ctx, m->name, m);
-            rc = m->fn_ctx_destroy(ib, m, ctx);
+            rc = m->fn_ctx_destroy(ib, m, ctx, m->cbdata_ctx_destroy);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, 4, "Failed to call context fini: %d", rc);

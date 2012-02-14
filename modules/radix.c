@@ -290,7 +290,8 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modradix_matcher_iface = {
 /* -- Module Routines -- */
 
 static ib_status_t modradix_init(ib_engine_t *ib,
-                                ib_module_t *m)
+                                 ib_module_t *m,
+                                 void        *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -329,9 +330,14 @@ IB_MODULE_INIT(
     NULL,                                   /**< Configuration field map */
     NULL,                                   /**< Config directive map */
     modradix_init,                          /**< Initialize function */
+    NULL,                                   /**< Callback data */     
     NULL,                                   /**< Finish function */
+    NULL,                                   /**< Callback data */
     NULL,                                   /**< Context open function */
+    NULL,                                   /**< Callback data */
     NULL,                                   /**< Context close function */
-    NULL                                    /**< Context destroy function */
+    NULL,                                   /**< Callback data */
+    NULL,                                   /**< Context destroy function */
+    NULL                                    /**< Callback data */
 );
 

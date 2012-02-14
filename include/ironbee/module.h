@@ -60,12 +60,17 @@ extern "C" {
  * @param xcm_init Configuration field map
  * @param xdm_init Config directive map
  * @param xfn_init Initialize function
+ * @param xcbdata_init Initialize function callback daata
  * @param xfn_fini Finish function
+ * @param xcbdata_fini Finish function callback data
  * @param xfn_ctx_open Context open function
+ * @param xcbdata_ctx_open Context open function callback data
  * @param xfn_ctx_close Context close function
+ * @param xcbdata_ctx_close Context close function callback data
  * @param xfn_ctx_destroy Context destroy function
+ * @param xcbdata_ctx_destroy Context destroy function callback data
  */
-#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xfn_fini,xfn_ctx_open,xfn_ctx_close,xfn_ctx_destroy) \
+#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xcbdata_init,xfn_fini,xcbdata_fini,xfn_ctx_open,xcbdata_ctx_open,xfn_ctx_close,xcbdata_ctx_close,xfn_ctx_destroy,xcbdata_ctx_destroy) \
     do { \
         (m)->vernum = IB_VERNUM; \
         (m)->abinum = IB_ABINUM; \
@@ -80,10 +85,15 @@ extern "C" {
         (m)->cm_init = xcm_init; \
         (m)->dm_init = xdm_init; \
         (m)->fn_init = xfn_init; \
+        (m)->cbdata_init = xcbdata_init; \
         (m)->fn_fini = xfn_fini; \
+        (m)->cbdata_fini = xcbdata_fini; \
         (m)->fn_ctx_open = xfn_ctx_open; \
+        (m)->cbdata_ctx_open = xcbdata_ctx_open; \
         (m)->fn_ctx_close = xfn_ctx_close; \
+        (m)->cbdata_ctx_close = xcbdata_ctx_close; \
         (m)->fn_ctx_destroy = xfn_ctx_destroy; \
+        (m)->cbdata_ctx_destroy = xcbdata_ctx_destroy; \
     } while (0)
 
 /** Defaults for all module structure headers */
@@ -119,24 +129,34 @@ typedef ib_module_t *(*ib_module_sym_fn)(void);
  *
  * This is called when the module is loaded.
  *
- * @param ib Engine handle
+ * @param[in] ib Engine handle
+ * @param[in] m Module
+ * @param[in] Callback data
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_module_fn_init_t)(ib_engine_t *ib,
-                                           ib_module_t *m);
+typedef ib_status_t (*ib_module_fn_init_t)(
+    ib_engine_t *ib,
+    ib_module_t *m,
+    void        *cbdata
+);
 
 /**
  * Function to finish a module.
  *
  * This is called when the module is unloaded.
  *
- * @param ib Engine handle
+ * @param[in] ib Engine handle
+ * @param[in] m Module
+ * @param[in] Callback data
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_module_fn_fini_t)(ib_engine_t *ib,
-                                           ib_module_t *m);
+typedef ib_status_t (*ib_module_fn_fini_t)(
+    ib_engine_t *ib,
+    ib_module_t *m,
+    void        *cbdata
+);
 
 /**
  * Function called when a context is opened.
@@ -146,13 +166,15 @@ typedef ib_status_t (*ib_module_fn_fini_t)(ib_engine_t *ib,
  * @param[in] ib Engine handle
  * @param[in] m Module.
  * @param[in] ctx Config context
+ * @param[in] Callback data
  *
  * @returns Status code
  */
 typedef ib_status_t (*ib_module_fn_ctx_open_t)(
-     ib_engine_t  *ib,
-     ib_module_t  *m,
-     ib_context_t *ctx
+    ib_engine_t  *ib,
+    ib_module_t  *m,
+    ib_context_t *ctx,
+    void         *cbdata
 );
 
 /**
@@ -166,13 +188,15 @@ typedef ib_status_t (*ib_module_fn_ctx_open_t)(
  * @param[in] ib Engine handle
  * @param[in] m Module.
  * @param[in] ctx Config context
+ * @param[in] Callback data
  *
  * @returns Status code
  */
 typedef ib_status_t (*ib_module_fn_ctx_close_t)(
-     ib_engine_t  *ib,
-     ib_module_t  *m,
-     ib_context_t *ctx
+    ib_engine_t  *ib,
+    ib_module_t  *m,
+    ib_context_t *ctx,
+    void         *cbdata
 );
 
 /**
@@ -185,13 +209,15 @@ typedef ib_status_t (*ib_module_fn_ctx_close_t)(
  * @param[in] ib Engine handle
  * @param[in] m Module.
  * @param[in] ctx Config context
+ * @param[in] cbdata Callback data.
  *
  * @returns Status code
  */
 typedef ib_status_t (*ib_module_fn_ctx_destroy_t)(
-     ib_engine_t  *ib,
-     ib_module_t  *m,
-     ib_context_t *ctx
+    ib_engine_t  *ib,
+    ib_module_t  *m,
+    ib_context_t *ctx,
+    void         *cbdata
 );
 
 struct ib_module_t {
@@ -214,10 +240,15 @@ struct ib_module_t {
 
     /* Functions */
     ib_module_fn_init_t        fn_init;          /**< Module init */
+    void*                      cbdata_init;      /**< fn_init callback data */
     ib_module_fn_fini_t        fn_fini;          /**< Module finish */
+    void*                      cbdata_fini;      /**< fn_init callback data */
     ib_module_fn_ctx_open_t    fn_ctx_open;      /**< Context open */
+    void*                      cbdata_ctx_open;  /**< fn_init callback data */
     ib_module_fn_ctx_close_t   fn_ctx_close;     /**< Context close */
+    void*                      cbdata_ctx_close; /**< fn_init callback data */
     ib_module_fn_ctx_destroy_t fn_ctx_destroy;   /**< Context destroy */
+    void*                      cbdata_ctx_destroy; /**< fn_init callback data */
 };
 
 /**

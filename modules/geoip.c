@@ -308,7 +308,7 @@ static IB_DIRMAP_INIT_STRUCTURE(geoip_directive_map) = {
 };
 
 /* Called when module is loaded. */
-static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -348,7 +348,7 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m)
 }
 
 /* Called when module is unloaded. */
-static ib_status_t geoip_fini(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t geoip_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
     if (geoip_db!=NULL)
@@ -367,9 +367,14 @@ IB_MODULE_INIT(
     NULL,                                /* Configuration field map */
     geoip_directive_map,                 /* Config directive map */
     geoip_init,                          /* Initialize function */
+    NULL,                                /* Callback data */
     geoip_fini,                          /* Finish function */
+    NULL,                                /* Callback data */
     NULL,                                /* Context open function */
+    NULL,                                /* Callback data */
     NULL,                                /* Context close function */
-    NULL                                 /* Context destroy function */
+    NULL,                                /* Callback data */
+    NULL,                                /* Context destroy function */
+    NULL                                 /* Callback data */
 );
 

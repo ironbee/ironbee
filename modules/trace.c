@@ -479,8 +479,11 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
  *
  * @param[in] ib IronBee object
  * @param[in] m Module object
+ * @param[in] cbdata Callback data (unused)
  */
-static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t modtrace_init(ib_engine_t *ib, 
+                                 ib_module_t *m, 
+                                 void        *cbdata)
 {
     IB_FTRACE_INIT();
     static event_info_t event_info[IB_STATE_EVENT_NUM];
@@ -601,8 +604,11 @@ static ib_status_t modtrace_init(ib_engine_t *ib, ib_module_t *m)
  *
  * @param[in] ib IronBee object
  * @param[in] m Module object
+ * @param[in] cbdata Callback data (unused)
  */
-static ib_status_t modtrace_finish(ib_engine_t *ib, ib_module_t *m)
+static ib_status_t modtrace_finish(ib_engine_t *ib, 
+                                   ib_module_t *m, 
+                                   void        *cbdata)
 {
     IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Trace module unloaded.");
@@ -618,10 +624,12 @@ static ib_status_t modtrace_finish(ib_engine_t *ib, ib_module_t *m)
  * @param[in] ib IronBee object
  * @param[in] m Module object
  * @param[in] ctx Context object
+ * @param[in] cbdata Callback data (unused)
  */
-static ib_status_t modtrace_context_close(ib_engine_t *ib,
-                                        ib_module_t *m,
-                                        ib_context_t *ctx)
+static ib_status_t modtrace_context_close(ib_engine_t  *ib,
+                                          ib_module_t  *m,
+                                          ib_context_t *ctx,
+                                          void         *cbdata)
 {
     IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Trace module initializing context=%p.", ctx);
@@ -637,10 +645,12 @@ static ib_status_t modtrace_context_close(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in] m Module object
  * @param[in] ctx Context object
+ * @param[in] cbdata Callback data (unused)
  */
-static ib_status_t modtrace_context_destroy(ib_engine_t *ib,
-                                           ib_module_t *m,
-                                           ib_context_t *ctx)
+static ib_status_t modtrace_context_destroy(ib_engine_t  *ib,
+                                            ib_module_t  *m,
+                                            ib_context_t *ctx,
+                                            void         *cbdata)
 {
     IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Trace module finishing context=%p.", ctx);
@@ -668,8 +678,13 @@ IB_MODULE_INIT(
     modtrace_config_map,            /* Module config map */
     NULL,                           /* Module directive map */
     modtrace_init,                  /* Initialize function */
+    NULL,                           /* Callback data */        
     modtrace_finish,                /* Finish function */
+    NULL,                           /* Callback data */        
     NULL,                           /* Context open function */
+    NULL,                           /* Callback data */        
     modtrace_context_close,         /* Context close function */
-    modtrace_context_destroy        /* Context destroyfunction */
+    NULL,                           /* Callback data */        
+    modtrace_context_destroy,       /* Context destroyfunction */
+    NULL                            /* Callback data */        
 );

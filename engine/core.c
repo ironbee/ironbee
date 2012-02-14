@@ -4952,12 +4952,15 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
  * @internal
  * Initialize the core module on load.
  *
- * @param ib Engine
+ * @param[in] ib Engine
+ * @param[in] m Module
+ * @param[in] cbdata Callback data (unused)
  *
  * @returns Status code
  */
 static ib_status_t core_init(ib_engine_t *ib,
-                             ib_module_t *m)
+                             ib_module_t *m,
+                             void        *cbdata)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
@@ -5363,12 +5366,14 @@ ib_module_t *ib_core_module(void)
  * @param ib Engine
  * @param mod Module
  * @param ctx Context
+ * @param cbdata Callback data (unused)
  *
  * @returns Status code
  */
-static ib_status_t core_ctx_close(ib_engine_t *ib,
-                                  ib_module_t *mod,
-                                  ib_context_t *ctx)
+static ib_status_t core_ctx_close(ib_engine_t  *ib,
+                                  ib_module_t  *mod,
+                                  ib_context_t *ctx,
+                                  void         *cbdata)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
@@ -5457,12 +5462,14 @@ static ib_status_t core_ctx_close(ib_engine_t *ib,
  * @param ib Engine
  * @param mod Module
  * @param ctx Context
+ * @param cbdata Callback data (unused)
  *
  * @returns Status code
  */
 static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                                     ib_module_t *mod,
-                                    ib_context_t *ctx)
+                                    ib_context_t *ctx,
+                                    void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
@@ -5538,8 +5545,13 @@ IB_MODULE_INIT(
     core_config_map,                     /**< Configuration field map */
     core_directive_map,                  /**< Config directive map */
     core_init,                           /**< Initialize function */
+    NULL,                                /**< Callback data */
     NULL,                                /**< Finish function */
+    NULL,                                /**< Callback data */     
     NULL,                                /**< Context open function */
+    NULL,                                /**< Callback data */     
     core_ctx_close,                      /**< Context close function */
-    core_ctx_destroy                     /**< Context destroy function */
+    NULL,                                /**< Callback data */     
+    core_ctx_destroy,                    /**< Context destroy function */
+    NULL                                 /**< Callback data */     
 );
