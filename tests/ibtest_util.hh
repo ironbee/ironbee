@@ -105,7 +105,7 @@ extern ib_plugin_t ibt_ibplugin;
         ASSERT_EQ(IB_OK, ib_state_notify_cfg_started(ibt_ib)); \
         ASSERT_EQ(IB_OK, ib_cfgparser_create(&ibt_cp, ibt_ib)); \
         ASSERT_TRUE(ibt_cp); \
-        ASSERT_EQ(IB_OK, ib_cfgparser_ragel_parse_chunk(ibt_cp,(buf),(len))); \
+        ASSERT_EQ(IB_OK, ib_cfgparser_ragel_parse_chunk(ibt_cp,(buf),(len),1)); \
         ib_cfgparser_destroy(ibt_cp); \
         ASSERT_EQ(IB_OK, ib_state_notify_cfg_finished(ibt_ib)); \
     } while(0)

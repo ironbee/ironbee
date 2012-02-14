@@ -168,7 +168,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     ssize_t nbytes = 0;                        /**< Bytes read by one read(). */
     const size_t bufsz = 8192;                 /**< Buffer size. */
     size_t buflen = 0;                         /**< Last char in buffer. */
-    char *buf = malloc(sizeof(*buf)*bufsz);    /**< Buffer for reading file. */
+    char *buf = (char*)malloc(sizeof(*buf)*bufsz);
     char *eol = 0;                             /**< buf[eol] = end of line. */
     char *bol = 0;                             /**< buf[bol] = begin line. */
 
@@ -213,7 +213,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
             /* The first line always begins at buf[0]. */
             bol = buf;
-            eol=memchr(bol, '\n', buflen);
+            eol = (char*)memchr(bol, '\n', buflen);
 
             /* Check that we found at least 1 end-of-line in this file. */
             if (eol == NULL) {
@@ -242,7 +242,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                 do {
                     ib_cfgparser_ragel_parse_chunk(cp, bol, eol-bol+1, 0);
                     bol = eol+1;
-                    eol = memchr(bol, '\n', buf+buflen-bol);
+                    eol = (char*)memchr(bol, '\n', buf+buflen-bol);
                 } while (eol != NULL);
 
                 /* There are no more end-of-line opportunities. 
