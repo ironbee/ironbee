@@ -47,6 +47,11 @@ case "$OS" in
         ;;
 esac
 
+
+dnl do gcc-characteristics
+AC_ARG_ENABLE(gcc-characteristics,
+              AS_HELP_STRING([--disable-gcc-characteristics],
+                             [Disable gcc feature and optimization macro (enabled by default).]),[enable_gcc_characteristics="$enableval"],[enable_gcc_characteristics=yes])
 save_CFLAGS="${CFLAGS}"
 save_CXXFLAGS="${CXXFLAGS}"
 AC_PROG_CC
@@ -54,9 +59,31 @@ AC_PROG_CPP
 AC_PROG_LIBTOOL
 AC_PROG_CXX
 AC_PROG_CXXCPP
-CFLAGS="${save_CFLAGS}"
-CXXFLAGS="${save_CXXFLAGS}"
 
+dnl if we have clang use the CFLAGS set by autoconf macros.
+dnl if not clang assume gcc and use the CFLAGS set by our macro.
+if test "$GCC" = "yes"; then
+    AC_TRY_COMPILE(,
+                   [#ifdef __clang__
+                       int x = 1;
+                    #else
+                       something invalid
+                    #endif
+                  return 0;],
+                [ cc_is_clang=yes ], [:]
+                )
+    if test "$cc_is_clang" == "yes"; then
+        CFLAGS="${CFLAGS} -Wall -fPIC" 
+        CXXFLAGS="${CXXFLAGS} -Wall -fPIC" 
+    elif test "$cc_is_clang" != "yes" && test "$enable_gcc_characteristics" = "yes"; then
+        CFLAGS="${save_CFLAGS}"
+        CXXFLAGS="${save_CXXFLAGS}"
+        sinclude(acinclude/gcc_characteristics.m4)
+        GCC_CHARACTERISTICS()
+    else
+        CFLAGS="${CFLAGS} -std=c99"
+    fi
+fi
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
@@ -74,14 +101,6 @@ AC_STRUCT_ST_BLOCKS
 AC_FUNC_CLOSEDIR_VOID
 AC_CHECK_FUNCS([memset strcasecmp])
 AC_CHECK_FUNC(mknod)
-    
-dnl Checks for typedefs, structures, and compiler characteristics.
-
-dnl check for avaliable gcc optimizations AC_PROG_CC should set GCC to yes
-if test "$GCC" = "yes"; then
-    sinclude(acinclude/gcc_characteristics.m4)
-    GCC_CHARACTERISTICS()
-fi
 
 # Check for -Wno-null-dereference
 AC_MSG_CHECKING(for -Wno-null-dereference support)    
@@ -149,9 +168,7 @@ sinclude(acinclude/lib-ld.m4)
 sinclude(acinclude/lib-link.m4)
 sinclude(acinclude/lib-prefix.m4)
 AM_ICONV
-
 dnl Checks for library functions.
-
 
 dnl Configure options
 ### Dmalloc (dmalloc.com)
@@ -275,14 +292,13 @@ sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
 sinclude(acinclude/geoip.m4)
 sinclude(acinclude/ax_pthread.m4)
-
 # Required libs
 CHECK_HTP()
 CHECK_PCRE()
 CHECK_XML2()
 AX_PTHREAD([LIBS="$LIBS $PTHREAD_LIBS"
-            CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-            CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+            CFLAGS="${CFLAGS} ${PTHREAD_CFLAGS}"
+            CXXFLAGS="${CXXFLAGS} ${PTHREAD_CFLAGS}"
             AC_MSG_RESULT([yes])],
            [AC_MSG_ERROR([Pthreads is required])])
 dnl TODO: These need to be optional (only if building apache httpd plugin)

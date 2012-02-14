@@ -46,8 +46,6 @@ for x in ${test_paths}; do
         break
     fi
 done
-    CFLAGS=$save_CFLAGS
-    LDFLAGS=$save_LDFLAGS
 
 if test -n "${xml2_path}"; then
     if test "${xml2_path}" != "no"; then
