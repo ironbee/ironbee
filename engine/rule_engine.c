@@ -98,7 +98,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
     /* Loop through all of the fields */
     IB_LIST_LOOP(rule->input_fields, node) {
         const char   *fname = (const char *)node->data;
-        ib_field_t   *value = 0;
+        ib_field_t   *value = NULL;
         ib_num_t      result = 0;
         ib_status_t   rc = IB_OK;
 
@@ -236,7 +236,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
  * @param[in] ib Engine
  * @param[in] event Event type
  * @param[in,out] tx Transaction
- * @param[in] cbdata Callback data (actually rule_cbdata_t *)
+ * @param[in,out] rule_result Result of rule execution
  *
  * @returns Status code
  */
@@ -248,14 +248,16 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_list_t   *actions;
     ib_status_t  rc;
+    ib_status_t  trc;         /* Temporary status code */
 
     /* Initialize the rule result */
     *rule_result = 0;
 
     /* Execute the rule */
-    rc = execute_rule_operator(ib, rule, tx, rule_result);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Error executing rule %s", rule->meta.id);
+    trc = execute_rule_operator(ib, rule, tx, rule_result);
+    if (trc != IB_OK) {
+        ib_log_error(ib, 4, "Error executing rule %s: %d", rule->meta.id, trc);
+        rc = trc;
     }
 
     /* Execute the actions */
@@ -265,10 +267,11 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     else {
         actions = rule->false_actions;
     }
-    rc = execute_actions(ib, rule, tx, *rule_result, actions);
-    if (rc != IB_OK) {
+    trc = execute_actions(ib, rule, tx, *rule_result, actions);
+    if (trc != IB_OK) {
         ib_log_error(ib, 4,
                      "Error executing action for rule %s", rule->meta.id);
+        rc = trc;
     }
 
     /* Execute chained rule */
@@ -276,14 +279,15 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         ib_log_debug(ib, 4,
                      "Chaining to rule %s",
                      rule->chained_rule->meta.id);
-        rc = execute_rule(ib, rule->chained_rule, tx, rule_result);
-        if (rc != IB_OK) {
+        trc = execute_rule(ib, rule->chained_rule, tx, rule_result);
+        if (trc != IB_OK) {
             ib_log_error(ib, 4, "Error executing chained rule %s",
                          rule->chained_rule->meta.id);
+            rc = trc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -309,6 +313,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     ib_rule_phase_data_t *phase = &(pctx->rules->ruleset.phases[rdata->phase]);
     ib_list_t            *rules = phase->rules.rule_list;
     ib_list_node_t       *node = NULL;
+    ib_status_t           rc = IB_OK;
 
     /* Sanity check */
     if (phase->phase != rdata->phase) {
@@ -333,16 +338,19 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     IB_LIST_LOOP(rules, node) {
         ib_rule_t   *rule = (ib_rule_t*)node->data;
         ib_num_t     rule_result = 0;
-        ib_status_t  rc;
+        ib_status_t  rule_rc;
 
         /* Execute the rule, it's actions and chains */
-        rc = execute_rule(ib, rule, tx, &rule_result);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Error executing rule %s", rule->meta.id);
+        rule_rc = execute_rule(ib, rule, tx, &rule_result);
+        if (rule_rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "Error executing rule %s: %d",
+                         rule->meta.id, rule_rc);
+            rc = rule_rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
