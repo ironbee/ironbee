@@ -166,7 +166,7 @@ static char* alloc_cpy_marked_string(char *fpc_mark,
     comment = '#' (any -- EOLSEQ)*;
 
     parameters := |*
-        WS* param >mark %push_param;
+        WS* param >mark $/push_param %push_param;
         EOL @push_dir { fret; };
     *|;
 
@@ -198,8 +198,9 @@ static char* alloc_cpy_marked_string(char *fpc_mark,
 %% write data;
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
-                                           uint8_t *buf,
-                                           size_t blen)
+                                           const char *buf,
+                                           size_t blen,
+                                           int is_last_block)
 {
     ib_engine_t *ib = cp->ib;
     ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib);
@@ -210,8 +211,8 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     fsm_t fsm;
 
     fsm.p = data;
-    fsm.pe = fsm.p + blen;
-    fsm.eof = 0;
+    fsm.pe = data + blen;
+    fsm.eof = (is_last_block? fsm.pe : NULL);
 
     /* Init */
     mark = fsm.p;

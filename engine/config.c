@@ -148,86 +148,117 @@ failed:
 
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
+/**
+ * @brief Open @a file and parse it.
+ * @details Parsing is done by reading in 8k at a time and passing 1 line
+ *          at a time to ib_cfgparser_ragel_parse_chunk. Should the buffer
+ *          fill up, the current line is shifted down the first index in
+ *          the buffer. If a line is larger than ~8k, it is an error and parsing
+ *          fails.
+ * @param[in,out] cp The configuration parser to be used and populated.
+ * @param[in] file The file to be opened and read.
+ * @returns IB_OK on succes or another values on failure. Errors are logged.
+ */
 ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                const char *file)
 {
     IB_FTRACE_INIT();
+    int ec;
     int fd = open(file, O_RDONLY);
-    uint8_t buf[8192];
-    uint8_t *buf_end = buf + sizeof(buf) - 1;
-    uint8_t *buf_mark = buf;
-    ssize_t nbytes;
+    ssize_t nbytes = 0;                        /**< Bytes read by one read(). */
+    const size_t bufsz = 8192;                 /**< Buffer size. */
+    size_t buflen = 0;                         /**< Last char in buffer. */
+    char *buf = malloc(sizeof(*buf)*bufsz);    /**< Buffer for reading file. */
+    char *eol = 0;                             /**< buf[eol] = end of line. */
+    char *bol = 0;                             /**< buf[bol] = begin line. */
+
     ib_status_t rc = IB_OK;
 
     if (fd == -1) {
-        int ec = errno;
+        ec = errno;
         ib_log_error(cp->ib, 1, "Could not open config file \"%s\": (%d) %s",
                      file, ec, strerror(ec));
+        free(buf);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-#define bufremain (sizeof(buf) - (buf_mark - buf))
+    if (buf==NULL){
+        ib_log_error(cp->ib, 1,
+            "Unable to allocate buffer for configuration file.");
+        free(buf);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
-    while ((nbytes = read(fd, buf_mark, bufremain))) {
-        int ec = errno;
-        size_t remaining;
-        uint8_t *chunk_start;
-        uint8_t *chunk_end;
+    /* Fill the buffer, parse each line. Conditionally read another line. */
+    do {
+        nbytes = read(fd, buf+buflen, bufsz-buflen);
+        buflen += nbytes;
+        ib_log_debug(cp->ib, 9, "Read a %d byte chunk. Total len=%d",
+            nbytes,
+            buflen);
 
-        ib_log_debug(cp->ib, 9, "Read a %d byte chunk", (int)nbytes);
-        if (nbytes == -1) {
-            if (ec == EAGAIN) {
-                continue;
-            }
-            else {
-                break;
-            }
-        }
+        if ( nbytes == 0 ) { /* EOF */
+                rc = ib_cfgparser_ragel_parse_chunk(cp, buf, nbytes, 1);
 
-        /* Move the buf_mark to next write point. */
-        buf_mark += nbytes;
-
-        /* Process all lines of data in buf. */
-        chunk_start = buf;
-        chunk_end = buf;
-        while (chunk_end < (buf_mark - 1)) {
-            /* Do not go too far. */
-            if (chunk_end > buf_end) {
-                ib_log_error(cp->ib, 1, "Error parsing \"%s\": Line >%d bytes",
-                             file, (int)sizeof(buf));
-                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-            }
-
-            /* Process a line of input. */
-            if (*chunk_end == '\n') {
-                size_t chunk_len = (chunk_end - chunk_start) + 1;
-
-                /// @todo Make the parser type configurable
-                ib_log_debug(cp->ib, 9, "Parsing %d byte chunk", (int)chunk_len);
-                rc = ib_cfgparser_ragel_parse_chunk(cp, chunk_start, chunk_len);
                 if (rc != IB_OK) {
-                    ib_log_error(cp->ib, 1, "Error parsing config file: %d", rc);
+                    ib_log_error(cp->ib, 1,
+                        "Error parsing config file: %d", rc);
+                    free(buf);
                     IB_FTRACE_RET_STATUS(rc);
                 }
 
-                /* Move chunk markers to potential next line in buf. */
-                chunk_end++;
-                chunk_start = chunk_end;
+                break;
+        }
+        else if ( nbytes > 0 ) { /* Normal. */
+
+            /* The first line always begins at buf[0]. */
+            bol = buf;
+            eol=memchr(bol, '\n', buflen);
+
+            /* Check that we found at least 1 end-of-line in this file. */
+            if (eol == NULL) {
+                if (buflen<bufsz) {
+                    /* There is no end-of-line (\n) character and
+                     * there is more to read. 
+                     * Kick back out to while loop. */
+                    continue;
+                }
+                else {
+                    /* There is no end of line and there is no more 
+                     * space in the buffer. This is an error. */
+                    ib_log_error(cp->ib, 1, 
+                        "Unable to read a configuration line "
+                            "larger than %d bytes from file %s. "
+                            "Parsing has failed.",
+                        buflen, file);
+                    free(buf);
+                    IB_FTRACE_RET_STATUS(IB_EALLOC);
+                }
             }
             else {
-                chunk_end++;
+                /* We have found at least one end-of-line character.
+                 * Iterate through it and all otheres, passing each line to
+                 * ib_cfgparser_ragel_parse_chunk */
+                do {
+                    ib_cfgparser_ragel_parse_chunk(cp, bol, eol-bol+1, 0);
+                    bol = eol+1;
+                    eol = memchr(bol, '\n', buf+buflen-bol);
+                } while (eol != NULL);
+
+                /* There are no more end-of-line opportunities. 
+                 * Now move the last end-of-line to the begining. */
+                ib_log_debug(cp->ib, 3,
+                    "Buffer of length %d must be shrunk.", buflen);
+                ib_log_debug(cp->ib, 3,
+                    "Begining of last line is at index %d.", bol-buf);
+                buflen = buf + buflen - bol;
+                ib_log_debug(cp->ib, 3, "Discarding parsed lines. Moving %p to %p with length %d.", bol, buf, buflen);
+                memmove(buf, bol, buflen);
             }
         }
+    } while (nbytes != -1);
 
-        /* Move remaining data to beginning of buf so that more can be read. */
-        remaining = buf_mark - chunk_end - 1;
-        if (remaining != 0) {
-            ib_log_debug(cp->ib, 9, "Moving %d bytes (%p -> %p)",
-                         (int)remaining, chunk_end + 1, buf);
-            memmove(buf, chunk_end + 1, remaining);
-            buf_mark = buf + remaining;
-        }
-    }
+    free(buf);
     ib_log_debug(cp->ib, 9, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
 
     cfgp_dump(cp);
