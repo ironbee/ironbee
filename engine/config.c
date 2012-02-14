@@ -157,7 +157,7 @@ failed:
  *          fails.
  * @param[in,out] cp The configuration parser to be used and populated.
  * @param[in] file The file to be opened and read.
- * @returns IB_OK on succes or another values on failure. Errors are logged.
+ * @returns IB_OK on success or another values on failure. Errors are logged.
  */
 ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                const char *file)
@@ -237,7 +237,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
             }
             else {
                 /* We have found at least one end-of-line character.
-                 * Iterate through it and all otheres, passing each line to
+                 * Iterate through it and all others, passing each line to
                  * ib_cfgparser_ragel_parse_chunk */
                 do {
                     ib_cfgparser_ragel_parse_chunk(cp, bol, eol-bol+1, 0);
@@ -246,11 +246,11 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                 } while (eol != NULL);
 
                 /* There are no more end-of-line opportunities.
-                 * Now move the last end-of-line to the begining. */
+                 * Now move the last end-of-line to the beginning. */
                 ib_log_debug(cp->ib, 3,
                     "Buffer of length %d must be shrunk.", buflen);
                 ib_log_debug(cp->ib, 3,
-                    "Begining of last line is at index %d.", bol-buf);
+                    "Beginning of last line is at index %d.", bol-buf);
                 buflen = buf + buflen - bol;
                 ib_log_debug(cp->ib, 3, "Discarding parsed lines. Moving %p to %p with length %d.", bol, buf, buflen);
                 memmove(buf, bol, buflen);

@@ -60,7 +60,7 @@ extern "C" {
  * @param xcm_init Configuration field map
  * @param xdm_init Config directive map
  * @param xfn_init Initialize function
- * @param xcbdata_init Initialize function callback daata
+ * @param xcbdata_init Initialize function callback data
  * @param xfn_fini Finish function
  * @param xcbdata_fini Finish function callback data
  * @param xfn_ctx_open Context open function

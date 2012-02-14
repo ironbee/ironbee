@@ -685,6 +685,6 @@ IB_MODULE_INIT(
     NULL,                           /* Callback data */
     modtrace_context_close,         /* Context close function */
     NULL,                           /* Callback data */
-    modtrace_context_destroy,       /* Context destroyfunction */
+    modtrace_context_destroy,       /* Context destroy function */
     NULL                            /* Callback data */
 );
