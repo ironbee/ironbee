@@ -257,7 +257,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_list_t   *actions;
-    ib_status_t  rc;
+    ib_status_t  rc = IB_OK;
     ib_status_t  trc;         /* Temporary status code */
 
     /* Initialize the rule result */
