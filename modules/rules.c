@@ -865,7 +865,7 @@ IB_MODULE_INIT(
     NULL,                                /* Configuration field map */
     rules_directive_map,                 /* Config directive map */
     rules_init,                          /* Initialize function */
-    NULL,                                /* Callback data */    
+    NULL,                                /* Callback data */
     rules_fini,                          /* Finish function */
     NULL,                                /* Callback data */
     NULL,                                /* Context open function */

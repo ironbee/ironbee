@@ -3353,7 +3353,7 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
 
     assert(mpi != NULL);
     assert(mpi->pr != NULL);
-    
+
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = NULL;
 
     ib_status_t rc;
@@ -5547,11 +5547,11 @@ IB_MODULE_INIT(
     core_init,                           /**< Initialize function */
     NULL,                                /**< Callback data */
     NULL,                                /**< Finish function */
-    NULL,                                /**< Callback data */     
+    NULL,                                /**< Callback data */
     NULL,                                /**< Context open function */
-    NULL,                                /**< Callback data */     
+    NULL,                                /**< Callback data */
     core_ctx_close,                      /**< Context close function */
-    NULL,                                /**< Callback data */     
+    NULL,                                /**< Callback data */
     core_ctx_destroy,                    /**< Context destroy function */
-    NULL                                 /**< Callback data */     
+    NULL                                 /**< Callback data */
 );

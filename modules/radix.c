@@ -330,7 +330,7 @@ IB_MODULE_INIT(
     NULL,                                   /**< Configuration field map */
     NULL,                                   /**< Config directive map */
     modradix_init,                          /**< Initialize function */
-    NULL,                                   /**< Callback data */     
+    NULL,                                   /**< Callback data */
     NULL,                                   /**< Finish function */
     NULL,                                   /**< Callback data */
     NULL,                                   /**< Context open function */

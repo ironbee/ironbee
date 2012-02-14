@@ -219,14 +219,14 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
             if (eol == NULL) {
                 if (buflen<bufsz) {
                     /* There is no end-of-line (\n) character and
-                     * there is more to read. 
+                     * there is more to read.
                      * Kick back out to while loop. */
                     continue;
                 }
                 else {
-                    /* There is no end of line and there is no more 
+                    /* There is no end of line and there is no more
                      * space in the buffer. This is an error. */
-                    ib_log_error(cp->ib, 1, 
+                    ib_log_error(cp->ib, 1,
                         "Unable to read a configuration line "
                             "larger than %d bytes from file %s. "
                             "Parsing has failed.",
@@ -245,7 +245,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                     eol = (char*)memchr(bol, '\n', buf+buflen-bol);
                 } while (eol != NULL);
 
-                /* There are no more end-of-line opportunities. 
+                /* There are no more end-of-line opportunities.
                  * Now move the last end-of-line to the begining. */
                 ib_log_debug(cp->ib, 3,
                     "Buffer of length %d must be shrunk.", buflen);

@@ -672,7 +672,7 @@ IB_MODULE_INIT(
     NULL,                           /* Module config map */
     NULL,                           /* Module directive map */
     modua_init,                     /* Initialize function */
-    NULL,                           /* Callback data */    
+    NULL,                           /* Callback data */
     NULL,                           /* Finish function */
     NULL,                           /* Callback data */
     NULL,                           /* Context open function */

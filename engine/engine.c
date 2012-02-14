@@ -500,7 +500,7 @@ ib_status_t ib_engine_init(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    
+
     rc = ib_context_open(ib->ectx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1127,7 +1127,7 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 
     /* Create and configure the main configuration context. */
     ib_engine_context_create_main(ib);
-    
+
     rc = ib_context_open(ib->ctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);

@@ -181,7 +181,7 @@ typedef ib_status_t (*ib_module_fn_ctx_open_t)(
  * Function called when a context is closed.
  *
  * This is called when @ref ib_context_init() is called to initialize
- * a configuration context.  Which happens whenever a context is closed 
+ * a configuration context.  Which happens whenever a context is closed
  * in the configuration file.  This should be used to initialize
  * any per-config-context resources.
  *

@@ -545,7 +545,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         /* Chain to the rule, update the our rule's flags */
         chain_rule->chained_rule = rule;
         rule->flags |= IB_RULE_FLAG_CHAINED_TO;
-        
+
         ib_log_debug(ib, 4,
                      "Rule '%s' chained from rule '%s'",
                      rule->meta.id, chain_rule->meta.id);

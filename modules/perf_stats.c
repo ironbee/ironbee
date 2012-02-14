@@ -663,7 +663,7 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
  * @param[in] m Module object
  * @param[in] cbdata Callback data (unused)
  */
-static ib_status_t perf_stats_init(ib_engine_t *ib, 
+static ib_status_t perf_stats_init(ib_engine_t *ib,
                                    ib_module_t *m,
                                    void        *cbdata)
 {
@@ -849,8 +849,8 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
 }
 
 /* Called when module is unloaded. */
-static ib_status_t perf_stats_fini(ib_engine_t *ib, 
-                                   ib_module_t *m, 
+static ib_status_t perf_stats_fini(ib_engine_t *ib,
+                                   ib_module_t *m,
                                    void        *cbdata)
 {
     IB_FTRACE_INIT();

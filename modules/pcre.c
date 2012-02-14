@@ -518,14 +518,14 @@ IB_MODULE_INIT(
     modpcre_config_map,                   /**< Configuration field map */
     NULL,                                 /**< Config directive map */
     modpcre_init,                         /**< Initialize function */
-    NULL,                                 /**< Callback data */     
+    NULL,                                 /**< Callback data */
     NULL,                                 /**< Finish function */
-    NULL,                                 /**< Callback data */     
+    NULL,                                 /**< Callback data */
     NULL,                                 /**< Context open function */
-    NULL,                                 /**< Callback data */     
+    NULL,                                 /**< Callback data */
     NULL,                                 /**< Context close function */
-    NULL,                                 /**< Callback data */     
+    NULL,                                 /**< Callback data */
     NULL,                                 /**< Context destroy function */
-    NULL                                  /**< Callback data */     
+    NULL                                  /**< Callback data */
 );
 

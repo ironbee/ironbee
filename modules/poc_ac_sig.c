@@ -632,14 +632,14 @@ IB_MODULE_INIT(
     pocacsig_config_map,                   /**< Configuration field map */
     pocacsig_directive_map,                /**< Config directive map */
     pocacsig_init,                         /**< Initialize function */
-    NULL,                                  /**< Callback data */     
+    NULL,                                  /**< Callback data */
     NULL,                                  /**< Finish function */
-    NULL,                                  /**< Callback data */     
+    NULL,                                  /**< Callback data */
     NULL,                                  /**< Context open function */
-    NULL,                                  /**< Callback data */     
+    NULL,                                  /**< Callback data */
     pocacsig_context_close,                /**< Context close function */
-    NULL,                                  /**< Callback data */     
+    NULL,                                  /**< Callback data */
     NULL,                                  /**< Context destroy function */
-    NULL                                   /**< Callback data */     
+    NULL                                   /**< Callback data */
 );
 
