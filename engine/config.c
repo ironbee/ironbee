@@ -239,7 +239,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                     eol = (char*)memchr(bol, '\n', buf+buflen-bol);
                 } while (eol != NULL);
 
-                /* There are no more end-of-line opportunities. 
+                /* There are no more end-of-line opportunities.
                  * Now move the last end-of-line to the beginning. */
                 ib_log_debug(cp->ib, 3,
                     "Buffer of length %d must be shrunk.", buflen);
