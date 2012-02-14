@@ -26,6 +26,7 @@
  * @brief IronBee - Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <stdint.h>
@@ -50,49 +51,49 @@ extern "C" {
 /**
  * Initialize values for dynamic modules created with ib_module_create().
  *
- * @param m Module
- * @param xfilename Module code filename
- * @param xdata Module data
- * @param xib Engine handle
- * @param xname Module name
- * @param xgcdata Global config data
- * @param xgclen Global config data length
- * @param xcm_init Configuration field map
- * @param xdm_init Config directive map
- * @param xfn_init Initialize function
- * @param xcbdata_init Initialize function callback data
- * @param xfn_fini Finish function
- * @param xcbdata_fini Finish function callback data
- * @param xfn_ctx_open Context open function
- * @param xcbdata_ctx_open Context open function callback data
- * @param xfn_ctx_close Context close function
- * @param xcbdata_ctx_close Context close function callback data
- * @param xfn_ctx_destroy Context destroy function
- * @param xcbdata_ctx_destroy Context destroy function callback data
+ * @param[in] m                   Module
+ * @param[in] xfilename           Module code filename
+ * @param[in] xdata               Module data
+ * @param[in] xib                 Engine handle
+ * @param[in] xname               Module name
+ * @param[in] xgcdata             Global config data
+ * @param[in] xgclen              Global config data length
+ * @param[in] xcm_init            Configuration field map
+ * @param[in] xdm_init            Config directive map
+ * @param[in] xfn_init            Initialize function
+ * @param[in] xcbdata_init        Initialize function callback data
+ * @param[in] xfn_fini            Finish function
+ * @param[in] xcbdata_fini        Finish function callback data
+ * @param[in] xfn_ctx_open        Context open function
+ * @param[in] xcbdata_ctx_open    Context open function callback data
+ * @param[in] xfn_ctx_close       Context close function
+ * @param[in] xcbdata_ctx_close   Context close function callback data
+ * @param[in] xfn_ctx_destroy     Context destroy function
+ * @param[in] xcbdata_ctx_destroy Context destroy function callback data
  */
 #define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xcbdata_init,xfn_fini,xcbdata_fini,xfn_ctx_open,xcbdata_ctx_open,xfn_ctx_close,xcbdata_ctx_close,xfn_ctx_destroy,xcbdata_ctx_destroy) \
     do { \
-        (m)->vernum = IB_VERNUM; \
-        (m)->abinum = IB_ABINUM; \
-        (m)->version = IB_VERSION; \
-        (m)->filename = xfilename; \
-        (m)->data = xdata; \
-        (m)->ib = xib; \
-        (m)->idx = 0; \
-        (m)->name = xname; \
-        (m)->gcdata = xgcdata; \
-        (m)->gclen = xgclen; \
-        (m)->cm_init = xcm_init; \
-        (m)->dm_init = xdm_init; \
-        (m)->fn_init = xfn_init; \
-        (m)->cbdata_init = xcbdata_init; \
-        (m)->fn_fini = xfn_fini; \
-        (m)->cbdata_fini = xcbdata_fini; \
-        (m)->fn_ctx_open = xfn_ctx_open; \
-        (m)->cbdata_ctx_open = xcbdata_ctx_open; \
-        (m)->fn_ctx_close = xfn_ctx_close; \
-        (m)->cbdata_ctx_close = xcbdata_ctx_close; \
-        (m)->fn_ctx_destroy = xfn_ctx_destroy; \
+        (m)->vernum             = IB_VERNUM; \
+        (m)->abinum             = IB_ABINUM; \
+        (m)->version            = IB_VERSION; \
+        (m)->filename           = xfilename; \
+        (m)->data               = xdata; \
+        (m)->ib                 = xib; \
+        (m)->idx                = 0; \
+        (m)->name               = xname; \
+        (m)->gcdata             = xgcdata; \
+        (m)->gclen              = xgclen; \
+        (m)->cm_init            = xcm_init; \
+        (m)->dm_init            = xdm_init; \
+        (m)->fn_init            = xfn_init; \
+        (m)->cbdata_init        = xcbdata_init; \
+        (m)->fn_fini            = xfn_fini; \
+        (m)->cbdata_fini        = xcbdata_fini; \
+        (m)->fn_ctx_open        = xfn_ctx_open; \
+        (m)->cbdata_ctx_open    = xcbdata_ctx_open; \
+        (m)->fn_ctx_close       = xfn_ctx_close; \
+        (m)->cbdata_ctx_close   = xcbdata_ctx_close; \
+        (m)->fn_ctx_destroy     = xfn_ctx_destroy; \
         (m)->cbdata_ctx_destroy = xcbdata_ctx_destroy; \
     } while (0)
 
@@ -115,10 +116,10 @@ extern "C" {
  * Function which is exported in an IronBee module to return the address
  * to the module structure used to load the module.
  *
- * This module function is declared by @ref IB_MODULE_DECLARE and defined
- * by @ref IB_MODULE_INIT. The address of this function is looked up by
- * name (@ref IB_MODULE_SYM) when the module is loaded and called to fetch
- * the address of the module structure built with @ref IB_MODULE_INIT.
+ * This module function is declared by IB_MODULE_DECLARE and defined
+ * by IB_MODULE_INIT. The address of this function is looked up by
+ * name (IB_MODULE_SYM) when the module is loaded and called to fetch
+ * the address of the module structure built with IB_MODULE_INIT.
  *
  * @returns Address of the module structure
  */
@@ -129,9 +130,9 @@ typedef ib_module_t *(*ib_module_sym_fn)(void);
  *
  * This is called when the module is loaded.
  *
- * @param[in] ib Engine handle
- * @param[in] m Module
- * @param[in] Callback data
+ * @param[in] ib     Engine handle
+ * @param[in] m      Module
+ * @param[in] cbdata Callback data
  *
  * @returns Status code
  */
@@ -146,9 +147,9 @@ typedef ib_status_t (*ib_module_fn_init_t)(
  *
  * This is called when the module is unloaded.
  *
- * @param[in] ib Engine handle
- * @param[in] m Module
- * @param[in] Callback data
+ * @param[in] ib     Engine handle
+ * @param[in] m      Module
+ * @param[in] cbdata Callback data
  *
  * @returns Status code
  */
@@ -163,10 +164,10 @@ typedef ib_status_t (*ib_module_fn_fini_t)(
  *
  * This is called when a context is opened in the configuration file.
  *
- * @param[in] ib Engine handle
- * @param[in] m Module.
- * @param[in] ctx Config context
- * @param[in] Callback data
+ * @param[in] ib     Engine handle
+ * @param[in] m      Module
+ * @param[in] ctx    Config context
+ * @param[in] cbdata Callback data
  *
  * @returns Status code
  */
@@ -180,15 +181,14 @@ typedef ib_status_t (*ib_module_fn_ctx_open_t)(
 /**
  * Function called when a context is closed.
  *
- * This is called when @ref ib_context_init() is called to initialize
- * a configuration context.  Which happens whenever a context is closed
- * in the configuration file.  This should be used to initialize
+ * This is called when ib_context_close() is called to close.
+ * a configuration context. This should be used to initialize
  * any per-config-context resources.
  *
- * @param[in] ib Engine handle
- * @param[in] m Module.
- * @param[in] ctx Config context
- * @param[in] Callback data
+ * @param[in] ib     Engine handle
+ * @param[in] m      Module
+ * @param[in] ctx    Config context
+ * @param[in] cbdata Callback data
  *
  * @returns Status code
  */
@@ -202,13 +202,13 @@ typedef ib_status_t (*ib_module_fn_ctx_close_t)(
 /**
  * Function called when a context is destroyed.
  *
- * This is called when @ref ib_context_destroy() is called to finish
+ * This is called when ib_context_destroy() is called to finish
  * a configuration context. This should be used to destroy
  * any per-config-context resources.
  *
- * @param[in] ib Engine handle
- * @param[in] m Module.
- * @param[in] ctx Config context
+ * @param[in] ib     Engine handle
+ * @param[in] m      Module
+ * @param[in] ctx    Config context
  * @param[in] cbdata Callback data.
  *
  * @returns Status code
@@ -220,6 +220,13 @@ typedef ib_status_t (*ib_module_fn_ctx_destroy_t)(
     void         *cbdata
 );
 
+/**
+ * Additional functionality for IronBee.
+ *
+ * A module provides additional functionality to IronBee.  It can register
+ * configuration values and directives, hook into events, and provide
+ * functions for other modules.
+ */
 struct ib_module_t {
     /* Header */
     uint32_t                vernum;           /**< Engine version number */
@@ -256,61 +263,72 @@ struct ib_module_t {
  *
  * Use this to initialize a static module.
  *
- * @param m Module handle (already loaded)
- * @param ib Engine handle
+ * @param[in] ib Engine handle
+ * @param[in] m  Module handle (already loaded)
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_module_init(ib_module_t *m, ib_engine_t *ib);
+ib_status_t DLL_PUBLIC ib_module_init(
+    ib_module_t *m,
+    ib_engine_t *ib
+);
 
 /**
  * Create a module structure.
  *
  * Use this to dynamically build modules.
  *
- * @param pm Address which module structure will be written
- * @param ib Engine handle
+ * @param[out] pm Address which module structure will be written
+ * @param[in]  ib Engine handle
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_module_create(ib_module_t **pm,
-                                        ib_engine_t *ib);
+ib_status_t DLL_PUBLIC ib_module_create(
+    ib_module_t **pm,
+    ib_engine_t  *ib
+);
 
 /**
  * Load and initialize an engine module.
  *
  * This causes the module init() function to be called.
  *
- * @param pm Address which module handle is written
- * @param ib Engine handle
- * @param file Filename of the module
+ * @param[out] pm   Address which module handle is written
+ * @param[in]  ib   Engine handle
+ * @param[in]  file Filename of the module
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_module_load(ib_module_t **pm,
-                                      ib_engine_t *ib,
-                                      const char *file);
+ib_status_t DLL_PUBLIC ib_module_load(
+    ib_module_t **pm,
+    ib_engine_t  *ib,
+    const char   *file
+);
 
 /**
  * Unload an engine module.
  *
- * @param m Module
+ * @param[in] m Module
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_module_unload(ib_module_t *m);
+ib_status_t DLL_PUBLIC ib_module_unload(
+     ib_module_t *m
+);
 
 
 /**
  * Register a module with a configuration context.
  *
- * @param m Module
- * @param ctx Configuration context
+ * @param[in] m Module
+ * @param[in] ctx Configuration context
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_module_register_context(ib_module_t *m,
-                                                  ib_context_t *ctx);
+ib_status_t DLL_PUBLIC ib_module_register_context(
+     ib_module_t  *m,
+     ib_context_t *ctx
+);
 
 
 /**
