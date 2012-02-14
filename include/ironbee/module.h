@@ -263,8 +263,8 @@ struct ib_module_t {
  *
  * Use this to initialize a static module.
  *
- * @param[in] ib Engine handle
  * @param[in] m  Module handle (already loaded)
+ * @param[in] ib Engine handle
  *
  * @returns Status code
  */
