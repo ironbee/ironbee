@@ -88,14 +88,22 @@ typedef struct {
     ib_rule_phase_data_t  phases[IB_RULE_PHASE_COUNT];
 } ib_ruleset_t;
 
+
+/**
+ * Rule engine parser data
+ */
+typedef struct {
+    ib_rule_t         *previous;     /**< Previous rule parsed */
+} ib_rule_parser_data_t;
+
 /**
  * Rule engine data; typedef in ironbee_private.h
  */
 struct ib_rule_engine_t {
-    ib_ruleset_t       ruleset;      /**< Rules to exec */
-    ib_rulelist_t      rule_list;    /**< All rules owned by this context */
+    ib_ruleset_t          ruleset;     /**< Rules to exec */
+    ib_rulelist_t         rule_list;   /**< All rules owned by this context */
+    ib_rule_parser_data_t parser_data; /**< Rule parser specific data */
 };
-
 
 /**
  * @internal

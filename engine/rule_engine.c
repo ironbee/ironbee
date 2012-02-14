@@ -535,29 +535,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     ib_status_t           rc;
     ib_rule_phase_data_t *phasep;
     ib_list_t            *rules;
-    static ib_rule_t     *chain_rule = NULL;
-
-    /* Chain (if required) */
-    if (chain_rule != NULL) {
-
-        /* Verify that the rule phase's match */
-        if (chain_rule->meta.phase != rule->meta.phase) {
-            ib_log_error(ib, 4,
-                         "Chained rule '%s' phase %d != rule phase %d",
-                         chain_rule->meta.id,
-                         chain_rule->meta.phase,
-                         rule->meta.phase);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        /* Chain to the rule, update the our rule's flags */
-        chain_rule->chained_rule = rule;
-        rule->flags |= IB_RULE_FLAG_CHAINED_TO;
-
-        ib_log_debug(ib, 4,
-                     "Rule '%s' chained from rule '%s'",
-                     rule->meta.id, chain_rule->meta.id);
-    }
+    ib_rule_engine_t     *rule_engine;
+    ib_rule_t            *chain_rule;
 
     /* Sanity checks */
     if ( (phase <= PHASE_NONE) || (phase > PHASE_MAX) ) {
@@ -593,9 +572,37 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
     }
 
+    /* Get the rule engine and previous rule */
+    rule_engine = ctx->rules;
+    chain_rule = rule_engine->parser_data.previous;
+
+    /* Chain (if required) */
+    if ( (chain_rule != NULL)
+         && ((chain_rule->flags & IB_RULE_FLAG_CHAIN) != 0) )
+    {
+
+        /* Verify that the rule phase's match */
+        if (chain_rule->meta.phase != rule->meta.phase) {
+            ib_log_error(ib, 4,
+                         "Chained rule '%s' phase %d != rule phase %d",
+                         chain_rule->meta.id,
+                         chain_rule->meta.phase,
+                         rule->meta.phase);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        /* Chain to the rule, update the our rule's flags. */
+        chain_rule->chained_rule = rule;
+        rule->flags |= IB_RULE_FLAG_CHAINED_TO;
+
+        ib_log_debug(ib, 4,
+                     "Rule '%s' chained from rule '%s'",
+                     rule->meta.id, chain_rule->meta.id);
+    }
+
     /* If the rule isn't chained to, add it to the appropriate phase list */
-    if ( (rule->flags & IB_RULE_FLAG_CHAINED_TO) == 0) {
-        phasep = &(ctx->rules->ruleset.phases[phase]);
+    else {
+        phasep = &(rule_engine->ruleset.phases[phase]);
         rules = phasep->rules.rule_list;
 
         /* Add it to the list */
@@ -613,12 +620,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     }
 
     /* Store off this rule for chaining */
-    if ( (rule->flags & IB_RULE_FLAG_CHAIN) != 0) {
-        chain_rule = rule;
-    }
-    else {
-        chain_rule = NULL;
-    }
+    rule_engine->parser_data.previous = rule;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
