@@ -95,7 +95,12 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Loop through all of the fields */
+    /**
+     * Loop through all of the fields.
+     *
+     * @todo The current behavior is to keep running even after an operator
+     * returns an error.
+     */
     IB_LIST_LOOP(rule->input_fields, node) {
         const char   *fname = (const char *)node->data;
         ib_field_t   *value = NULL;
@@ -206,7 +211,12 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 
     ib_log_debug(ib, 4, "Executing %s rule %s actions", rule->meta.id, name);
 
-    /* Loop through all of the fields */
+    /**
+     * Loop through all of the fields
+     *
+     * @todo The current behavior is to keep running even after an action
+     * returns an error.
+     */
     IB_LIST_LOOP(actions, node) {
         ib_status_t       arc;     /* Action's return code */
         ib_action_inst_t *action = (ib_action_inst_t *)node->data;
@@ -253,14 +263,24 @@ static ib_status_t execute_rule(ib_engine_t *ib,
     /* Initialize the rule result */
     *rule_result = 0;
 
-    /* Execute the rule */
+    /**
+     * Execute the rule
+     *
+     * @todo The current behavior is to keep running even after an operator
+     * returns an error.
+     */
     trc = execute_rule_operator(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
         ib_log_error(ib, 4, "Error executing rule %s: %d", rule->meta.id, trc);
         rc = trc;
     }
 
-    /* Execute the actions */
+    /**
+     * Execute the actions.
+     *
+     * @todo The current behavior is to keep running even after action(s)
+     * returns an error.
+     */
     if (*rule_result != 0) {
         actions = rule->true_actions;
     }
@@ -274,7 +294,12 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         rc = trc;
     }
 
-    /* Execute chained rule */
+    /**
+     * Execute chained rule
+     *
+     * @todo The current behavior is to keep running even after a chained rule
+     * rule returns an error.
+     */
     if ( (*rule_result != 0) && (rule->chained_rule != NULL) ) {
         ib_log_debug(ib, 4,
                      "Chaining to rule %s",
@@ -334,7 +359,12 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
                  IB_LIST_ELEMENTS(rules),
                  rdata->phase, rdata->name, (void*)pctx);
 
-    /* Loop through all of the rules for this phase, execute them */
+    /**
+     * Loop through all of the rules for this phase, execute them.
+     *
+     * @todo The current behavior is to keep running even after rule execution
+     * returns an error.
+     */
     IB_LIST_LOOP(rules, node) {
         ib_rule_t   *rule = (ib_rule_t*)node->data;
         ib_num_t     rule_result = 0;
