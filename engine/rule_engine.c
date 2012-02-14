@@ -299,6 +299,8 @@ static ib_status_t execute_rule(ib_engine_t *ib,
      *
      * @todo The current behavior is to keep running even after a chained rule
      * rule returns an error.
+     *
+     * @note Chaining is currently done via recursion.
      */
     if ( (*rule_result != 0) && (rule->chained_rule != NULL) ) {
         ib_log_debug(ib, 4,
