@@ -41,6 +41,19 @@
 extern "C" {
 #endif
 
+/**
+ * Field operator function type.
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] field The field to operate on.
+ * @param[out] result The result of the operator 1=true 0=false.
+ *
+ * @returns IB_OK if successful.
+ */
+typedef ib_status_t (* ib_field_op_fn_t)(ib_engine_t *ib,
+                                               ib_mpool_t *mp,
+                                               ib_field_t *field,
+                                               ib_field_t **result);
 
 /**
  * Rule engine: Rule meta data
@@ -62,6 +75,14 @@ typedef struct {
 } ib_rulelist_t;
 
 /**
+ * Rule engine: Target fields
+ */
+typedef struct {
+    const char            *field_name;    /**< The field name */
+    ib_list_t             *field_ops;     /**< List fo field operators */
+} ib_rule_target_t;
+
+/**
  * Rule engine: Rule
  *
  * The typedef of ib_rule_t is done in ironbee/rule_engine.h
@@ -69,7 +90,7 @@ typedef struct {
 struct ib_rule_t {
     ib_rule_meta_t         meta;          /**< Rule meta data */
     ib_operator_inst_t    *opinst;        /**< Rule operator */
-    ib_list_t             *input_fields;  /**< List of input fields */
+    ib_list_t             *target_fields; /**< List of target fields */
     ib_list_t             *true_actions;  /**< Actions if condition True */
     ib_list_t             *false_actions; /**< Actions if condition False */
     ib_rulelist_t         *parent_rlist;  /**< Parent rule list */

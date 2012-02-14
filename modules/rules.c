@@ -192,54 +192,143 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * @internal
+ * Rewrite the target string if required
+ *
+ * Parses the rule's target field list string @a target_str, looking for
+ * the '#' and '&' tokens at the start of it.
+ *
+ * @param[in] cp IronBee configuration parser
+ * @param[in] target_str Target field name.
+ * @param[out] rewritten Rewritten string.
+ *
+ * @returns Status code
+ */
+#define MAX_FIELD_OPS 5
+static ib_status_t rewrite_target(ib_cfgparser_t *cp,
+                                  const char *target_str,
+                                  char **rewritten)
+{
+    IB_FTRACE_INIT();
+    char const *ops[MAX_FIELD_OPS];
+    const char *cur = target_str;
+    char *new;
+    int count = 0;
+    int n;
+    int target_len = strlen(target_str);
+    int length = target_len + 1;
+
+    /**
+     * Loop 'til we reach max count
+     */
+    while ( (*cur != '\0') && (count < MAX_FIELD_OPS) ) {
+        if (*cur == '#') {
+            ops[count] = ".Count()";
+        }
+        else if (*cur == '&') {
+            ops[count] = ".Length()";
+        }
+        else {
+            break;
+        }
+
+        /* Update the required length */
+        length += strlen(ops[count]) - 1;
+        ++count;
+        ++cur;
+    }
+
+    /* No rewrites?  Done */
+    if (count == 0) {
+        *rewritten = NULL;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /**
+     * Allocate & build the new string
+     */
+    new = ib_mpool_alloc(cp->mp, length);
+    if (new == NULL) {
+        ib_log_error(cp->ib, 4,
+                     "Failed to duplicate target field string '%s'",
+                     target_str);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    strcpy(new, target_str+count);
+    for (n = 0;  n < count;  n++) {
+        strcat(new, ops[n] );
+    }
+
+    /* Log our rewrite */
+    ib_log_debug(cp->ib, 9, "Rewrote '%s' -> '%s'", target_str, new);
+
+    /* Done */
+    *rewritten = new;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /**
  * @internal
- * Parse a rule's input string.
+ * Parse a rule's target string.
  *
- * Parses the rule's input field list string @a input_str, and stores the
+ * Parses the rule's target field list string @a target_str, and stores the
  * results in the rule object @a rule.
  *
  * @param cp IronBee configuration parser
  * @param rule Rule to operate on
- * @param input_str Input field name.
+ * @param target_str Target field name.
  *
  * @returns Status code
  */
-static ib_status_t parse_inputs(ib_cfgparser_t *cp,
-                                ib_rule_t *rule,
-                                const char *input_str)
+static ib_status_t parse_targets(ib_cfgparser_t *cp,
+                                 ib_rule_t *rule,
+                                 const char *target_str)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     const char *cur;
     char *copy;
 
-    /* Copy the input string */
-    while(isspace(*input_str)) {
-        ++input_str;
+    /* Copy the target string */
+    while(isspace(*target_str)) {
+        ++target_str;
     }
-    if (*input_str == '\0') {
-        ib_log_error(cp->ib, 4, "Rule inputs is empty");
+    if (*target_str == '\0') {
+        ib_log_error(cp->ib, 4, "Rule targets is empty");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), input_str);
+    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), target_str);
     if (copy == NULL) {
-        ib_log_error(cp->ib, 4, "Failed to copy rule inputs");
+        ib_log_error(cp->ib, 4, "Failed to copy rule targets");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Split it up */
     for (cur = strtok(copy, "|,");
          cur != NULL;
-         cur = strtok(NULL, "|,") ) {
-        rc = ib_rule_add_input(cp->ib, rule, cur);
+         cur = strtok(NULL, "|,") )
+    {
+        char *rewritten = NULL;
+        rc = rewrite_target(cp, cur, &rewritten);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Failed to add rule input '%s'", cur);
+            ib_log_error(cp->ib, 4, "Error rewriting target '%s'", cur);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the target to the rule */
+        if (rewritten == NULL) {
+            rc = ib_rule_add_target(cp->ib, rule, cur);
+        }
+        else {
+            rc = ib_rule_add_target(cp->ib, rule, rewritten);
+        }
+        if (rc != IB_OK) {
+            ib_log_error(cp->ib, 4, "Failed to add rule target '%s'", cur);
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_log_debug(cp->ib, 9,
-                     "Added rule input '%s' to rule %p", cur, (void*)rule);
+                     "Added rule target '%s' to rule %p", cur, (void*)rule);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -255,7 +344,7 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
  * @param[in] cp IronBee configuration parser
  * @param[in,out] rule Rule to operate on
  * @param[out] phase Rule phase in which the rule should be executed.
- * @param[in] modifier_str Input field name.
+ * @param[in] modifier_str Target field name.
  *
  * @returns Status code
  */
@@ -540,20 +629,20 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     IB_FTRACE_INIT();
 
     ib_status_t rc;
-    const ib_list_node_t *inputs;
+    const ib_list_node_t *targets;
     const ib_list_node_t *mod;
     ib_rule_t *rule;
     ib_rule_phase_t phase = PHASE_NONE;
     ib_operator_inst_t *op_inst;
     const char *file_name;
 
-    /* Get the inputs string */
-    inputs = ib_list_first_const(vars);
+    /* Get the targets string */
+    targets = ib_list_first_const(vars);
 
-    file_name = (const char*)ib_list_node_data_const(inputs);
+    file_name = (const char*)ib_list_node_data_const(targets);
 
     if ( file_name == NULL ) {
-        ib_log_error(cp->ib, 1, "No inputs for rule");
+        ib_log_error(cp->ib, 1, "No targets for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -568,7 +657,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_EXTERNAL);
 
     /* Parse all of the modifiers */
-    mod = inputs;
+    mod = targets;
     while( (mod = ib_list_node_next_const(mod)) != NULL) {
         ib_log_debug(cp->ib, 9, "Parsing modifier %s", mod->data);
         rc = parse_modifier(cp, rule, &phase, mod->data);
@@ -671,7 +760,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    const ib_list_node_t *inputs;
+    const ib_list_node_t *targets;
     const ib_list_node_t *op;
     const ib_list_node_t *mod;
     ib_rule_phase_t phase = PHASE_NONE;
@@ -681,15 +770,15 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
         IB_FTRACE_MSG("Callback data is not null.");
     }
 
-    /* Get the inputs string */
-    inputs = ib_list_first_const(vars);
-    if ( (inputs == NULL) || (inputs->data == NULL) ) {
-        ib_log_error(cp->ib, 1, "No inputs for rule");
+    /* Get the targets string */
+    targets = ib_list_first_const(vars);
+    if ( (targets == NULL) || (targets->data == NULL) ) {
+        ib_log_error(cp->ib, 1, "No targets for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Get the operator string */
-    op = ib_list_node_next_const(inputs);
+    op = ib_list_node_next_const(targets);
     if ( (op == NULL) || (op->data == NULL) ) {
         ib_log_error(cp->ib, 1, "No operator for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -702,11 +791,11 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Parse the inputs */
-    rc = parse_inputs(cp, rule, inputs->data);
+    /* Parse the targets */
+    rc = parse_targets(cp, rule, targets->data);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1,
-                     "Error parsing rule inputs: %d", rc);
+                     "Error parsing rule targets: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -714,7 +803,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     rc = parse_operator(cp, rule, op->data);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1,
-                     "Error parsing rule inputs: %d", rc);
+                     "Error parsing rule targets: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 

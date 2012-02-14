@@ -127,17 +127,17 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
 ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule);
 
 /**
- * Add an input field to a rule.
+ * Add an target field to a rule.
  *
  * @param[in] ib IronBee engine
  * @param[in,out] rule Rule to operate on
- * @param[in] name Input field name.
+ * @param[in] name target field name.
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_add_input(ib_engine_t *ib,
-                                         ib_rule_t *rule,
-                                         const char *name);
+ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
+                                          ib_rule_t *rule,
+                                          const char *name);
 
 /**
  * Add a modifier to a rule.
