@@ -4073,8 +4073,17 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
                            loc);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Failed to create context for \"%s:%s\": %d", p1, loc->path, rc);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_cfgparser_context_push(cp, ctx);
+
+    ib_log_debug(ib, 8, "Opening context %p for \"%s\"", ctx, name);
+    rc = ib_context_open(ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Error opening context for \"%s\": %d",
+                     name, rc);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -4110,10 +4119,10 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 8, "Initializing context %p for \"%s\"", ctx, name);
-    rc = ib_context_init(ctx);
+    ib_log_debug(ib, 8, "Closing context %p for \"%s\"", ctx, name);
+    rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
+        ib_log_error(ib, 1, "Error closing context for \"%s\": %d",
                      name, rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -4159,8 +4168,17 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                            loc);
     if (rc != IB_OK) {
         ib_log_debug(ib, 6, "Failed to create context for \"%s:%s\": %d", site->name, loc->path, rc);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_cfgparser_context_push(cp, ctx);
+
+    ib_log_debug(ib, 8, "Opening context %p for \"%s\"", ctx, name);
+    rc = ib_context_open(ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Error opening context for \"%s\": %d",
+                     name, rc);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -4196,10 +4214,10 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 8, "Initializing context %p for \"%s\"", ctx, name);
-    rc = ib_context_init(ctx);
+    ib_log_debug(ib, 8, "Closing context %p for \"%s\"", ctx, name);
+    rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Error initializing context for \"%s\": %d",
+        ib_log_error(ib, 1, "Error closing context for \"%s\": %d",
                      name, rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }

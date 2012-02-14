@@ -436,17 +436,29 @@ ib_status_t DLL_PUBLIC ib_context_create(ib_context_t **pctx,
                                          void *fn_ctx_data);
 
 /**
- * Initialize a configuration context.
+ * Open a configuration context.
  *
- * This causes ctx_init functions to be executed for each module
- * registered in a configuration context.  It should be called
- * after a configuration context is fully configured.
+ * This causes ctx_open functions to be executed for each module
+ * registered in a configuration context.
  *
- * @param ctx Config context
+ * @param[in] ctx Config context
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_context_init(ib_context_t *ctx);
+ib_status_t DLL_PUBLIC ib_context_open(ib_context_t *ctx);
+
+/**
+ * Close a configuration context.
+ *
+ * This causes ctx_close functions to be executed for each module
+ * registered in a configuration context.  It should be called
+ * after a configuration context is fully configured.
+ *
+ * @param[in] ctx Config context
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_context_close(ib_context_t *ctx);
 
 /**
  * Get the parent context.

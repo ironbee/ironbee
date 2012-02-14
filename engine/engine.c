@@ -499,7 +499,14 @@ failed:
 ib_status_t ib_engine_init(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = ib_context_init(ib->ectx);
+    ib_status_t rc;
+    
+    rc = ib_context_open(ib->ectx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_context_close(ib->ectx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1120,6 +1127,11 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 
     /* Create and configure the main configuration context. */
     ib_engine_context_create_main(ib);
+    
+    rc = ib_context_open(ib->ctx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /// @todo Create a temp mem pool???
     CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_started_event], cfg_started_event, null, ib);
@@ -1133,7 +1145,7 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     ib_status_t rc;
 
     /* Initialize (and close) the main configuration context. */
-    rc = ib_context_init(ib->ctx);
+    rc = ib_context_close(ib->ctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2531,18 +2543,47 @@ failed:
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_context_init(ib_context_t *ctx)
+ib_status_t ib_context_open(ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
     ib_engine_t *ib = ctx->ib;
     ib_context_data_t *cfgdata;
     ib_status_t rc;
-    size_t ncfgdata, i;
+    size_t ncfgdata;
+    size_t i;
 
-    ib_log_debug(ib, 9, "Initializing context ctx=%p", ctx);
+    ib_log_debug(ib, 9, "Opening context ctx=%p", ctx);
 
-    /* Run through the context modules to call any ctx_init functions. */
-    /// @todo Not sure this is needed anymore
+    IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
+        if (cfgdata == NULL) {
+            continue;
+        }
+        ib_module_t *m = cfgdata->module;
+
+        if (m->fn_ctx_open != NULL) {
+            rc = m->fn_ctx_open(ib, m, ctx);
+            if (rc != IB_OK) {
+                /// @todo Log the error???  Fail???
+                ib_log_error(ib, 4, "Failed to call context open: %d", rc);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_context_close(ib_context_t *ctx)
+{
+    IB_FTRACE_INIT();
+    ib_engine_t *ib = ctx->ib;
+    ib_context_data_t *cfgdata;
+    ib_status_t rc;
+    size_t ncfgdata;
+    size_t i;
+
+    ib_log_debug(ib, 9, "Closing context ctx=%p", ctx);
+
     IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
         if (cfgdata == NULL) {
             continue;
