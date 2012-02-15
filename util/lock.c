@@ -24,30 +24,22 @@
  */
 
 
-#include "ironbee/lock.h"
+#include <ironbee/lock.h>
 
-#include "ironbee/core.h"
-#include "ironbee/debug.h"
-#include "ironbee/types.h"
+#include <ironbee/core.h>
+#include <ironbee/debug.h>
+#include <ironbee/types.h>
+#include <ironbee/util.h>
 
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <sys/stat.h>
-#include <ctype.h>
-#include <errno.h>
+#include <pthread.h>
 
 ib_status_t ib_lock_init(ib_lock_t *lock)
 {
     IB_FTRACE_INIT();
 
-    int rc;
-
-    rc = pthread_mutex_init(lock, NULL);
-
+    int rc = pthread_mutex_init(lock, NULL);
     if (rc != 0) {
-        fprintf(stderr, "Failed to initialize runtime lock - %s\n",
-                strerror(errno));
+//        ib_util_log_error(3, "Failed to initialize mutex: %d", rc);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -59,11 +51,9 @@ ib_status_t ib_lock_lock(ib_lock_t *lock)
 {
     IB_FTRACE_INIT();
 
-    /* Return code from system calls. */
     int rc = pthread_mutex_lock(lock);
-
     if (rc != 0) {
-        fprintf(stderr, "Failed to lock mutex - %s\n", strerror(errno));
+//        ib_util_log_error(3, "Failed to lock mutex: %d", rc);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -74,12 +64,9 @@ ib_status_t ib_lock_unlock(ib_lock_t *lock)
 {
     IB_FTRACE_INIT();
 
-    /* Return code from system calls. */
     int rc = pthread_mutex_unlock(lock);
-
-    /* Report semop error and return. */
-    if (rc == -1) {
-        fprintf(stderr, "Failed to unlock mutex - %s.\n", strerror(errno));
+    if (rc != 0) {
+//        ib_util_log_error(3, "Failed to unlock mutex: %d", rc);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -91,9 +78,8 @@ ib_status_t ib_lock_destroy(ib_lock_t *lock)
     IB_FTRACE_INIT();
 
     int rc = pthread_mutex_destroy(lock);
-
     if (rc != 0) {
-        fprintf(stderr, "Failed to clean up mutex - %s\n", strerror(errno));
+//        ib_util_log_error(3, "Failed to clean up mutex: %d", rc);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
