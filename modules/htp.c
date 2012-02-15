@@ -1263,7 +1263,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_headers);
-            ib_log_debug(ib, 4, "Adding request_headers fields");
+            ib_log_debug(ib, 9, "Adding request_headers fields");
             while ((key = table_iterator_next(tx->request_headers,
                                               (void *)&h)) != NULL)
             {
@@ -1305,7 +1305,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_cookies);
-            ib_log_debug(ib, 4, "Adding request_cookies fields");
+            ib_log_debug(ib, 9, "Adding request_cookies fields");
             while ((key = table_iterator_next(tx->request_cookies,
                                               (void *)&value)) != NULL)
             {
@@ -1346,7 +1346,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_params_query);
-            ib_log_debug(ib, 4, "Adding request_params_query fields");
+            ib_log_debug(ib, 9, "Adding request_params_query fields");
             while ((key = table_iterator_next(tx->request_params_query,
                                               (void *)&value)) != NULL)
             {
