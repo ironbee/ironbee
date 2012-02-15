@@ -130,7 +130,8 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     /* Make a copy of the string to operate on */
     copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), at+1);
     if (copy == NULL) {
-        ib_log_error(cp->ib, 4, "Failed to copy rule operator string '%s'", at);
+        ib_log_error(cp->ib, 3,
+                     "Failed to copy rule operator string '%s'", at+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     op = copy;
@@ -234,7 +235,7 @@ static ib_status_t parse_inputs(ib_cfgparser_t *cp,
             ib_log_error(cp->ib, 4, "Failed to add rule input '%s'", cur);
             IB_FTRACE_RET_STATUS(rc);
         }
-        ib_log_debug(cp->ib, 4,
+        ib_log_debug(cp->ib, 9,
                      "Added rule input '%s' to rule %p", cur, (void*)rule);
     }
 
@@ -321,7 +322,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             *phase = PHASE_NONE;
         }
         else {
-            ib_log_error(cp->ib, 4, "Invalid PHASE modifier '%s'", value);
+            ib_log_error(cp->ib, 4, "Invalid modifier: %s:%s", name, value);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
@@ -340,7 +341,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_action_inst_create(
             cp->ib, cp->cur_ctx, name, value, IB_ACTINST_FLAG_NONE, &action);
         if (rc == IB_EINVAL) {
-            ib_log_error(cp->ib, 4, "Unknown modifier %s", name);
+            ib_log_error(cp->ib, 4, "Unknown modifier: %s", name);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         else if (rc != IB_OK) {
@@ -443,8 +444,6 @@ static ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
-    ib_log_debug(ib, 1, "Calling lua function in new thread %s", func_name);
-
     /* Call the rule in isolation. */
     ib_rc = ib_lua_func_eval_int(ib, tx, L, func_name, &result_int);
 
@@ -481,11 +480,11 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
     ib_status_t ib_rc;
     const char *func_name = (char*) data;
 
-    ib_log_debug(ib, 1, "Calling lua function %s.", func_name);
+    ib_log_debug(ib, 9, "Calling lua function %s.", func_name);
 
     ib_rc = ib_lua_func_eval_r(ib, tx, func_name, result);
 
-    ib_log_debug(ib, 1, "Calling to lua function %s=%d.", func_name, *result);
+    ib_log_debug(ib, 9, "Lua function %s=%d.", func_name, *result);
 
     IB_FTRACE_RET_STATUS(ib_rc);
 }
@@ -531,12 +530,12 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(cp->ib, 1, "Processing ext rule string %s", file_name);
+    ib_log_debug(cp->ib, 9, "Processing external rule: %s", file_name);
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx, &rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Failed to allocate rule: %d", rc);
+        ib_log_error(cp->ib, 1, "Failed to create rule: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_EXTERNAL);
@@ -544,30 +543,31 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     /* Parse all of the modifiers */
     mod = inputs;
     while( (mod = ib_list_node_next_const(mod)) != NULL) {
-        ib_log_debug(cp->ib, 1, "Parsing modifier %s", mod->data);
+        ib_log_debug(cp->ib, 9, "Parsing modifier %s", mod->data);
         rc = parse_modifier(cp, rule, &phase, mod->data);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1,
-               "Error parsing rule modifier - \"%s\".",
-                mod->data);
+            ib_log_error(cp->ib, 3,
+                         "Error parsing rule modifier - \"%s\".",
+                         mod->data);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
     /* Using the rule->meta and file_name, load and stage the ext rule. */
-    if (!strncasecmp(file_name, "lua:", 4)) {
+    if (strncasecmp(file_name, "lua:", 4) == 0) {
         rc = ib_lua_load_func(cp->ib,
                              g_ironbee_rules_lua,
                              file_name+4,
                              ib_rule_id(rule));
 
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1,
-                "Failed to load ironbee file %s", file_name+4);
+            ib_log_error(cp->ib, 3,
+                         "Failed to load lua file %s",
+                         file_name+4);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(cp->ib, 1, "Loaded IronBee file %s", file_name+4);
+        ib_log_debug(cp->ib, 9, "Loaded lua file %s", file_name+4);
 
         rc = ib_operator_register(cp->ib, file_name, 0,
                                  &lua_operator_create,
@@ -575,22 +575,20 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                                  &lua_operator_execute);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 1,
-                "Failed to register ironbee lua operator %s", file_name);
+                         "Failed to register lua operator: %s",
+                         file_name);
             IB_FTRACE_RET_STATUS(rc);
         }
-
-        ib_log_debug(cp->ib, 1, "Registered IronBee operator %s", file_name);
 
         rc = ib_operator_inst_create(
             cp->ib, cp->cur_ctx, file_name, NULL, 0, &op_inst);
 
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 1,
-                "Failed to instantiate operator for rule %s", file_name+4);
+                         "Failed to instantiate lua operator for rule %s",
+                         file_name+4);
             IB_FTRACE_RET_STATUS(rc);
         }
-
-        ib_log_debug(cp->ib, 1, "Instantiated operator %s", file_name);
 
         /* The data is then name of the function. */
         op_inst->data = (void*)ib_rule_id(rule);
@@ -599,18 +597,19 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
 
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 1,
-                "Failed to associate operator and rule for %s", file_name+4);
+                         "Failed to associate lua operator with rule %s: %s",
+                         ib_rule_id(rule), file_name+4);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(cp->ib, 1, "Set operator %s for rule %s",
+        ib_log_debug(cp->ib, 9, "Set operator %s for rule %s",
                      file_name,
                      ib_rule_id(rule));
 
     }
     else {
-        ib_log_error(cp->ib, 1, "RuleExt does not support rule type %s.",
-            file_name);
+        ib_log_error(cp->ib, 3, "RuleExt does not support rule type %s.",
+                     file_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -622,7 +621,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(cp->ib, 1, "Registered rule %s", ib_rule_id(rule));
+    ib_log_debug(cp->ib, 4, "Registered rule %s", ib_rule_id(rule));
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -758,8 +757,6 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     atexit(&clean_up_ipc_mem);
 
-    ib_log_debug(ib, 1, "Initializing rules module.");
-
     if (m == NULL) {
         IB_FTRACE_MSG("Module is null.");
         clean_up_ipc_mem();
@@ -803,8 +800,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     if (ib_rc != IB_OK) {
         ib_log_error(ib, 1,
-            "Failed to eval \"%s\" for Lua rule execution.",
-            ffi_file_path);
+            "Failed to eval ironbee FFI module: %s", ffi_file_path);
         free(ffi_file_path);
         ffi_file_path = NULL;
         clean_up_ipc_mem();
@@ -815,8 +811,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ironbee", "ironbee-ffi");
     if (ib_rc != IB_OK) {
         ib_log_error(ib, 1,
-            "Failed to require \"%s\" for Lua rule execution.",
-            ffi_file_path);
+            "Failed to require ironbee FFI module: %s", ffi_file_path);
         free(ffi_file_path);
         ffi_file_path = NULL;
         clean_up_ipc_mem();
@@ -829,7 +824,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Require the ffi module. */
     ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ffi", "ffi");
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load FFI for Lua rule execution.");
+        ib_log_error(ib, 1, "Failed to require luajit FFI module.");
         clean_up_ipc_mem();
         IB_FTRACE_RET_STATUS(ib_rc);
     }
@@ -840,7 +835,6 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_log_debug(ib, 4, "Rules module unloading.");
 
     ib_lock_destroy(&g_lua_lock);
 

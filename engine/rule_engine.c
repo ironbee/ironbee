@@ -78,17 +78,17 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
     ib_operator_inst_t  *opinst = rule->opinst;
 
     /* Log what we're going to do */
-    ib_log_debug(ib, 4, "Executing rule %s", rule->meta.id);
+    ib_log_debug(ib, 9, "Executing rule %s", rule->meta.id);
 
     /* Special case: External rules */
     if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
         ib_status_t rc;
 
         /* Execute the operator */
-        ib_log_debug(ib, 4, "Executing external rule");
+        ib_log_debug(ib, 9, "Executing external rule");
         rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4,
+            ib_log_error(ib, 4,
                          "External operator %s returned an error: %d",
                          opinst->op->name, rc);
         }
@@ -110,20 +110,20 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         /* Get the field value */
         rc = ib_data_get(tx->dpi, fname, &value);
         if (rc == IB_ENOENT) {
-            ib_log_debug(ib, 4, "Field %s not found", fname );
+            ib_log_error(ib, 4, "Field %s not found", fname );
             if ( (opinst->op->flags & IB_OP_FLAG_ALLOW_NULL) == 0) {
                 continue;
             }
         }
         else if (rc != IB_OK) {
-            ib_log_debug(ib, 4, "Error getting field %s: %d\n", fname, rc);
+            ib_log_error(ib, 4, "Error getting field %s: %d\n", fname, rc);
             continue;
         }
 
         /* Execute the operator */
         rc = ib_operator_execute(ib, tx, opinst, value, &result);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4,
+            ib_log_error(ib, 4,
                          "Operator %s returned an error for field %s: %d",
                          opinst->op->name, fname, rc);
             continue;
@@ -170,14 +170,14 @@ static ib_status_t execute_action(ib_engine_t *ib,
     ib_status_t   rc;
     const char   *name = (result != 0) ? "True" : "False";
 
-    ib_log_debug(ib, 4,
+    ib_log_debug(ib, 9,
                  "Executing %s rule %s action %s",
                  rule->meta.id, name, action->action->name);
 
     /* Run it, check the results */
     rc = ib_action_execute(action, rule, tx);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4,
+        ib_log_error(ib, 4,
                      "Action %s returned an error: %d",
                      action->action->name, rc);
         IB_FTRACE_RET_STATUS(rc);
@@ -209,7 +209,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
     ib_status_t       rc = IB_OK;
     const char       *name = (result != 0) ? "True" : "False";
 
-    ib_log_debug(ib, 4, "Executing %s rule %s actions", rule->meta.id, name);
+    ib_log_debug(ib, 9, "Executing %s rule %s actions", rule->meta.id, name);
 
     /**
      * Loop through all of the fields
@@ -224,7 +224,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
         /* Execute the action */
         arc = execute_action(ib, rule, tx, result, action);
         if (arc == IB_DECLINED) {
-            ib_log_debug(ib, 4,
+            ib_log_error(ib, 4,
                          "Action %s/%s did not run",
                          name, action->action->name);
         }
@@ -303,7 +303,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
      * @note Chaining is currently done via recursion.
      */
     if ( (*rule_result != 0) && (rule->chained_rule != NULL) ) {
-        ib_log_debug(ib, 4,
+        ib_log_debug(ib, 9,
                      "Chaining to rule %s",
                      rule->chained_rule->meta.id);
         trc = execute_rule(ib, rule->chained_rule, tx, rule_result);
@@ -351,12 +351,12 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
 
     /* Walk through the rules & execute them */
     if (IB_LIST_ELEMENTS(rules) == 0) {
-        ib_log_debug(ib, 4,
+        ib_log_debug(ib, 9,
                      "No rules rules for phase %d/%s in context p=%p",
                      rdata->phase, rdata->name, (void*)pctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    ib_log_debug(ib, 4,
+    ib_log_debug(ib, 9,
                  "Executing %d rules for phase %d/%s in context %p",
                  IB_LIST_ELEMENTS(rules),
                  rdata->phase, rdata->name, (void*)pctx);
@@ -627,7 +627,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         chain_rule->chained_rule = rule;
         rule->flags |= IB_RULE_FLAG_CHAINED_TO;
 
-        ib_log_debug(ib, 4,
+        ib_log_debug(ib, 9,
                      "Rule '%s' chained from rule '%s'",
                      rule->meta.id, chain_rule->meta.id);
     }
@@ -646,7 +646,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(ib, 4,
+        ib_log_debug(ib, 7,
                      "Registered rule %s for phase %d of context %p",
                      rule->meta.id, phase, (void*)ctx);
     }
