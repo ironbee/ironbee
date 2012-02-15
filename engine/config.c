@@ -232,13 +232,16 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
 
                 /* There are no more end-of-line opportunities. 
                  * Now move the last end-of-line to the begining. */
-                ib_log_debug(cp->ib, 3,
-                    "Buffer of length %d must be shrunk.", buflen);
-                ib_log_debug(cp->ib, 3,
-                    "Begining of last line is at index %d.", bol-buf);
+                ib_log_debug(cp->ib, 7,
+                             "Buffer of length %d must be shrunk.", buflen);
+                ib_log_debug(cp->ib, 7,
+                             "Begining of last line is at index %d.", bol-buf);
                 buflen = buf + buflen - bol;
                 if (buflen > 0) {
-                    ib_log_debug(cp->ib, 3, "Discarding parsed lines. Moving %p to %p with length %d.", bol, buf, buflen);
+                    ib_log_debug(cp->ib, 7,
+                                 "Discarding parsed lines."
+                                 " Moving %p to %p with length %d.",
+                                 bol, buf, buflen);
                     memmove(buf, bol, buflen);
                 }
             }
