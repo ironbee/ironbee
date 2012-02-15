@@ -755,6 +755,11 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Null terminated list of search paths. */
     const char *lua_search_paths[3];
 
+    const char *lua_preloads[][2] = { { "ffi", "ffi" },
+                                      { "ironbee", "ironbee-ffi" },
+                                      { "ib", "ironbee-api" },
+                                      { NULL, NULL } };
+
     char *path = NULL;           /**< Tmp string to build a search path. */
 
     int i = 0; /**< An interator. */
@@ -825,26 +830,21 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     free(path);
     path = NULL;
 
-    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ffi", "ffi");
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load ffi.");
-        clean_up_ipc_mem();
-        IB_FTRACE_RET_STATUS(ib_rc);
-    }
-
-
-    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ironbee", "ironbee-ffi");
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load ironbee-ffi.");
-        clean_up_ipc_mem();
-        IB_FTRACE_RET_STATUS(ib_rc);
-    }
-
-    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ib", "ironbee-api");
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load ironbee-api.");
-        clean_up_ipc_mem();
-        IB_FTRACE_RET_STATUS(ib_rc);
+    for (i = 0; lua_preloads[i][0] != NULL; ++i)
+    {
+        ib_rc = ib_lua_require(ib,
+                               g_ironbee_rules_lua,
+                               lua_preloads[i][0],
+                               lua_preloads[i][1]);
+        if (ib_rc != IB_OK)
+        {
+            ib_log_error(ib, 1,
+                "Failed to load mode %s into %s.",
+                lua_preloads[i][1],
+                lua_preloads[i][0]);
+            clean_up_ipc_mem();
+            IB_FTRACE_RET_STATUS(ib_rc);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
