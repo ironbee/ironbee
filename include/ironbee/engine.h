@@ -1302,39 +1302,6 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister(
     ib_state_null_hook_fn_t cb
 );
 
-/**
- * Register a context callback for a no data event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_null_register_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_null_hook_fn_t cb,
-    void *cdata
-);
-
-/**
- * Unregister a context callback for a no data event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_null_hook_unregister_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_null_hook_fn_t cb
-);
-
-
 /* ib_conn_t data */
 
 /**
@@ -1365,38 +1332,6 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
  */
 ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_conn_hook_fn_t cb
-);
-
-/**
- * Register a context callback for a connection event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_conn_register_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_conn_hook_fn_t cb,
-    void *cdata
-);
-
-/**
- * Unregister a context callback for a connection event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_conn_hook_unregister_context(
-    ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb
 );
@@ -1435,38 +1370,6 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
     ib_state_conndata_hook_fn_t cb
 );
 
-/**
- * Register a context callback for a connection data event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_conndata_register_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb,
-    void *cdata
-);
-
-/**
- * Unregister a context callback for a connection data event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_conndata_hook_unregister_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb
-);
-
 /* ib_tx_t data */
 
 /**
@@ -1501,38 +1404,6 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
     ib_state_tx_hook_fn_t cb
 );
 
-/**
- * Register a context callback for a transaction event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_tx_register_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_tx_hook_fn_t cb,
-    void *cdata
-);
-
-/**
- * Unregister a context callback for a transaction event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_tx_hook_unregister_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_tx_hook_fn_t cb
-);
-
 /* ib_txdata_t data */
 
 /**
@@ -1563,38 +1434,6 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
  */
 ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_txdata_hook_fn_t cb
-);
-
-/**
- * Register a context callback for a transaction data event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_txdata_register_context(
-    ib_context_t* ctx,
-    ib_state_event_type_t event,
-    ib_state_txdata_hook_fn_t cb,
-    void *cdata
-);
-
-/**
- * Unregister a context callback for a transaction data event.
- *
- * @param ctx Context handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_txdata_hook_unregister_context(
-    ib_context_t* ctx,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb
 );
