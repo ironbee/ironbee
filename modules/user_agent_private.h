@@ -27,6 +27,7 @@
 
 #include <ironbee/types.h>
 
+#include <string.h> /* size_t */
 
 /* Category rules
  * If all of the expressions in the 'match rule' match, set the

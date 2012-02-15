@@ -25,17 +25,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include <stdint.h>
-
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 
 #ifdef __cplusplus
 extern "C" {
