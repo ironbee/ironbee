@@ -275,3 +275,21 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+
+void ib_lua_add_require_path(ib_engine_t *ib_engine,
+                             lua_State *L,
+                             const char *path)
+{
+    IB_FTRACE_INIT();
+
+    lua_getglobal(L, "package");
+    lua_pushstring(L, "path");
+    lua_pushstring(L, "path");
+    lua_gettable(L, -3);
+    lua_pushstring(L, ";");
+    lua_pushstring(L, path);
+    lua_concat(L, 3);
+    lua_settable(L, -3);
+
+    IB_FTRACE_RET_VOID();
+}

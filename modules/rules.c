@@ -746,8 +746,18 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     ib_status_t ib_rc;
     ib_core_cfg_t *corecfg = NULL;
 
-    const char* ffi_file_name = "ironbee-ffi.lua";
-    char *ffi_file_path = NULL;
+    /**
+     * This is the search pattern that is appended to each element of
+     * lua_search_paths and then added to the Lua runtime package.path
+     * global variable. */
+    const char *lua_file_pattern = "?.lua"; 
+
+    /* Null terminated list of search paths. */
+    const char *lua_search_paths[3];
+
+    char *path = NULL;           /**< Tmp string to build a search path. */
+
+    int i = 0; /**< An interator. */
 
     ib_rc = ib_lock_init(&g_lua_lock);
 
@@ -781,50 +791,58 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
-    ffi_file_path = malloc(strlen(corecfg->module_base_path) +
-                           strlen(ffi_file_name) +
-                           2);
+    /* Initialize the search paths list. */
+    lua_search_paths[0] = corecfg->module_base_path;
+    lua_search_paths[1] = corecfg->rule_base_path;
+    lua_search_paths[2] = NULL;
 
-    if (ffi_file_path == NULL) {
-        clean_up_ipc_mem();
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    for (i = 0; lua_search_paths[i] != NULL; ++i)
+    {
+        ib_log_error(ib, 0,
+            "Adding %s to lua search path.", lua_search_paths[i]);
+
+        /* Strlen + 2. One for \0 and 1 for the path separator. */
+        path = realloc(path,
+                       strlen(lua_search_paths[i]) + 
+                       strlen(lua_file_pattern) + 2);
+
+        if (path == NULL) {
+            ib_log_error(ib, 1, "Could allocate buffer for string append.");
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        strcpy(path, lua_search_paths[i]);
+        strcpy(path + strlen(path), "/");
+        strcpy(path + strlen(path), lua_file_pattern);
+
+        ib_lua_add_require_path(ib, g_ironbee_rules_lua, path);
+
+        ib_log_debug(ib, 1,"Added %s to lua search path.", path);
     }
 
-    /* Build string module_base_path/ffi_file_name. */
-    strcpy(ffi_file_path, corecfg->module_base_path);
-    strcpy(ffi_file_path + strlen(ffi_file_path), "/");
-    strcpy(ffi_file_path + strlen(ffi_file_path), ffi_file_name);
+    /* We are done with path. To be safe, we NULL it as there is more work
+     * to be done in this function, and we do not want to touch path again. */
+    free(path);
+    path = NULL;
 
-    /* Load and evaluate the ffi file. */
-    ib_rc = ib_lua_load_eval(ib, g_ironbee_rules_lua, ffi_file_path);
-
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1,
-            "Failed to eval ironbee FFI module: %s", ffi_file_path);
-        free(ffi_file_path);
-        ffi_file_path = NULL;
-        clean_up_ipc_mem();
-        IB_FTRACE_RET_STATUS(ib_rc);
-    }
-
-    /* Require the ironbee module we just evaled. */
-    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ironbee", "ironbee-ffi");
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1,
-            "Failed to require ironbee FFI module: %s", ffi_file_path);
-        free(ffi_file_path);
-        ffi_file_path = NULL;
-        clean_up_ipc_mem();
-        IB_FTRACE_RET_STATUS(ib_rc);
-    }
-
-    free(ffi_file_path);
-    ffi_file_path = NULL;
-
-    /* Require the ffi module. */
     ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ffi", "ffi");
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to require luajit FFI module.");
+        ib_log_error(ib, 1, "Failed to load ffi.");
+        clean_up_ipc_mem();
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
+
+
+    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ironbee", "ironbee-ffi");
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to load ironbee-ffi.");
+        clean_up_ipc_mem();
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
+
+    ib_rc = ib_lua_require(ib, g_ironbee_rules_lua, "ib", "ironbee-api");
+    if (ib_rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to load ironbee-api.");
         clean_up_ipc_mem();
         IB_FTRACE_RET_STATUS(ib_rc);
     }

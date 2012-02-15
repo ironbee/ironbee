@@ -41,9 +41,19 @@ namespace {
     const char* ffifile = TEST_FFI_FILE;
 }
 
-class TestIronBeeModuleRulesLua : public BaseModuleFixture {
+class TestIronBeeModuleRulesLua : public BaseFixture {
+    private:
+
+    ib_module_t *m_module;
+
     public:
-    TestIronBeeModuleRulesLua() : BaseModuleFixture("ibmod_rules.so") {
+
+    TestIronBeeModuleRulesLua() : BaseFixture() {
+    }
+
+    virtual void SetUp(){
+        BaseFixture::SetUp();
+        loadModule(&m_module, "ibmod_rules.so");
     }
 
 };
