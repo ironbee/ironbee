@@ -358,8 +358,8 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_rule_add_action(cp->ib, rule, action, atype);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 4,
-                         "Failed to add action %s to rule '%s': %d",
-                         name, rc);
+                         "Failed to add action '%s' to rule '%s': %d",
+                         name, ib_rule_id(rule), rc);
             IB_FTRACE_RET_STATUS(rc);
         }
     }

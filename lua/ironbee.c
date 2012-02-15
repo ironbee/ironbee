@@ -92,7 +92,7 @@ static int log_debug(lua_State *L)
     msg = lua_tostring(L, -1); /* formatted string */
 
     /* Call the ironbee API with the formatted message. */
-    ib_log_debug(ib, level, msg);
+    ib_log_debug(ib, level, "%s", msg);
 
     return 1;
 }

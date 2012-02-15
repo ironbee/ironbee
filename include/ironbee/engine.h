@@ -2019,7 +2019,8 @@ ib_status_t DLL_PUBLIC ib_log_init(ib_engine_t *ib);
  */
 void DLL_PUBLIC ib_clog_ex(ib_context_t *ctx, int level,
                            const char *prefix, const char *file, int line,
-                           const char *fmt, ...);
+                           const char *fmt, ...)
+                           PRINTF_ATTRIBUTE(6, 0);
 
 /**
  * Generic Logger (va_list version).
@@ -2039,7 +2040,8 @@ void DLL_PUBLIC ib_clog_ex(ib_context_t *ctx, int level,
  */
 void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
                             const char *prefix, const char *file, int line,
-                            const char *fmt, va_list ap);
+                            const char *fmt, va_list ap)
+                            VPRINTF_ATTRIBUTE(6);
 
 /**
  * Add an event to be logged.

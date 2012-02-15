@@ -119,7 +119,8 @@ ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
  */
 void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
                                const char *file, int line,
-                               const char *fmt, ...);
+                               const char *fmt, ...)
+                               PRINTF_ATTRIBUTE(5, 0);
 
 /**
  * Create a directory path recursively.

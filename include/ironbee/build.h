@@ -60,8 +60,8 @@
 /* For GNU C, tell the compiler to check printf like formatters */
 #ifndef PRINTF_ATTRIBUTE
 #if (defined(__GNUC__) && !defined(SOLARIS2))
-#define PRINTF_ATTRIBUTE(a,b) __attribute__((format (printf, a, b)))
-#define VPRINTF_ATTRIBUTE(a) __attribute__((format (printf, a, 0)))
+#define PRINTF_ATTRIBUTE(a,b) __attribute__((__format__ (printf, a, b)))
+#define VPRINTF_ATTRIBUTE(a) __attribute__((__format__ (printf, a, 0)))
 #else
 #define PRINTF_ATTRIBUTE(a,b)
 #define VPRINTF_ATTRIBUTE(a)
