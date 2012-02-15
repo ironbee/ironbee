@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <stdexcept>
 
 extern "C" {
 #include <ironbee/release.h>
@@ -28,7 +29,23 @@ public:
         appendToSearchPath(IB_XSTRINGIFY(MODULE_BASE_PATH));
     }
 
-    virtual void require(const string& namespace, const string& module)
+    virtual void require(const string& name, const string& module)
+    {
+        int rc;
+
+        lua_getglobal(L, "require");
+        lua_pushstring(L, module.c_str());
+        rc = lua_pcall(L, 1, 1, 0);
+
+        if (rc!=0) {
+            throw runtime_error("Failed to require "+module+" - "+
+                string(lua_tostring(L, -1)));
+            lua_pop(L, 1);
+        }
+
+        lua_setglobal(L, name.c_str());
+    }
+
     virtual void appendToSearchPath(const string& path)
     {
         /* Set lua load path. */
