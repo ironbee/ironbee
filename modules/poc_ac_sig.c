@@ -124,7 +124,7 @@ static ib_status_t pocacsig_dir_trace(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_error(ib, 1, "Failed to parse directive: %s \"%s\"", name, p1);
+    ib_log_error(ib, 3, "Failed to parse directive: %s \"%s\"", name, p1);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
@@ -195,13 +195,13 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
     else if (strcasecmp("PocACSigReqHead", name) == 0) {
         phase = POCACSIG_REQHEAD;
         if (cfg->phase[phase] == NULL) {
-            ib_log_debug(ib, 4, "Creating list for phase=%d", phase);
+            ib_log_debug(ib, 9, "Creating list for phase=%d", phase);
             rc = ib_list_create(&list,
                                 ib_engine_pool_config_get(ib));
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
-            ib_log_debug(ib, 4, "List for phase=%d list=%p", phase, list);
+            ib_log_debug(ib, 9, "List for phase=%d list=%p", phase, list);
             cfg->phase[phase] = list;
         }
     }
@@ -246,7 +246,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         }
     }
     else {
-        ib_log_error(ib, 2, "Invalid signature: %s", name);
+        ib_log_error(ib, 3, "Invalid signature: %s", name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -304,7 +304,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
 
     sig->cpatt = ib_matcher_compile(cfg->pcre, sig->patt, &errptr, &erroff);
     if (sig->cpatt == NULL) {
-        ib_log_error(ib, 2, "Error at offset=%d of PCRE patt=\"%s\": %s",
+        ib_log_error(ib, 3, "Error at offset=%d of PCRE patt=\"%s\": %s",
                      erroff, sig->patt, errptr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -577,45 +577,25 @@ static ib_status_t pocacsig_init(ib_engine_t *ib,
     memset(pocacsig_global_cfg.phase, 0, sizeof(pocacsig_global_cfg.phase));
     pocacsig_global_cfg.pcre = NULL;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t pocacsig_context_close(ib_engine_t  *ib,
-                                          ib_module_t  *m,
-                                          ib_context_t *ctx,
-                                          void         *cbdata)
-{
-    IB_FTRACE_INIT();
-    pocacsig_cfg_t *cfg;
-    ib_status_t rc;
-
-    rc = ib_context_module_config(ctx, m, (void *)&cfg);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to fetch %s config: %d",
-                     MODULE_NAME_STR, rc);
-    }
-
-    /// @todo Inherit signatures from parent context???
-
     /* Register hooks to handle the phases. */
-    ib_hook_tx_register_context(ctx, handle_context_tx_event,
-                                pocacsig_handle_sigs,
-                                (void *)POCACSIG_PRE);
-    ib_hook_tx_register_context(ctx, handle_request_headers_event,
-                                pocacsig_handle_sigs,
-                                (void *)POCACSIG_REQHEAD);
-    ib_hook_tx_register_context(ctx, handle_request_event,
-                                pocacsig_handle_sigs,
-                                (void *)POCACSIG_REQ);
-    ib_hook_tx_register_context(ctx, handle_response_headers_event,
-                                pocacsig_handle_sigs,
-                                (void *)POCACSIG_RESHEAD);
-    ib_hook_tx_register_context(ctx, handle_response_event,
-                                pocacsig_handle_sigs,
-                                (void *)POCACSIG_RES);
-    ib_hook_tx_register_context(ctx, handle_postprocess_event,
-                                pocacsig_handle_sigs,
-                                (void *)POCACSIG_POST);
+    ib_hook_tx_register(ib, handle_context_tx_event,
+                        pocacsig_handle_sigs,
+                        (void *)POCACSIG_PRE);
+    ib_hook_tx_register(ib, handle_request_headers_event,
+                        pocacsig_handle_sigs,
+                        (void *)POCACSIG_REQHEAD);
+    ib_hook_tx_register(ib, handle_request_event,
+                        pocacsig_handle_sigs,
+                        (void *)POCACSIG_REQ);
+    ib_hook_tx_register(ib, handle_response_headers_event,
+                        pocacsig_handle_sigs,
+                        (void *)POCACSIG_RESHEAD);
+    ib_hook_tx_register(ib, handle_response_event,
+                        pocacsig_handle_sigs,
+                        (void *)POCACSIG_RES);
+    ib_hook_tx_register(ib, handle_postprocess_event,
+                        pocacsig_handle_sigs,
+                        (void *)POCACSIG_POST);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -637,7 +617,7 @@ IB_MODULE_INIT(
     NULL,                                  /**< Callback data */
     NULL,                                  /**< Context open function */
     NULL,                                  /**< Callback data */
-    pocacsig_context_close,                /**< Context close function */
+    NULL,                                  /**< Context close function */
     NULL,                                  /**< Callback data */
     NULL,                                  /**< Context destroy function */
     NULL                                   /**< Callback data */
