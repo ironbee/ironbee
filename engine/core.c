@@ -4698,8 +4698,11 @@ static ib_status_t core_set_value(ib_context_t *ctx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
+    else {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 
