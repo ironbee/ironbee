@@ -39,10 +39,12 @@
 #include <util/ironbee_util_private.h>
 
 
+#if defined(HAVE_VALGRIND)
 static unsigned int last_leaked = 0;
 static unsigned int last_reachable = 0;
 static unsigned int last_suppressed = 0;
 static unsigned int last_dubious = 0;
+#endif
 
 int buffer_list_size(ib_mpool_buffer_t *buf)
 {
