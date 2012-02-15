@@ -360,7 +360,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     int pcre_rc;
     ib_status_t ib_rc;
     const int ovecsize = 30;
-    int* ovector = malloc(ovecsize * sizeof(int));
+    int *ovector = (int *)calloc(ovecsize, sizeof(*ovector));
     char* subject;
     size_t subject_len;
     ib_bytestr_t* bytestr;
