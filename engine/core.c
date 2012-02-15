@@ -486,7 +486,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         ///       shared structure.
         corecfg->auditlog_index_fp = cfg->index_fp;
 
-        ib_log_debug(log->ib, 3, "AUDITLOG INDEX%s: %s",
+        ib_log_debug(log->ib, 4, "AUDITLOG INDEX%s: %s",
                      (corecfg->auditlog_index[0] == '|'?" (piped)":""), fn);
     }
 
@@ -2805,11 +2805,11 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     if (rc == IB_OK) {
         rc = ib_data_add_named(tx->dpi, f, "args", 4);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4, "Failed to alias ARGS: %d", rc);
+            ib_log_error(ib, 4, "Failed to alias ARGS: %d", rc);
         }
         rc = ib_data_add_named(tx->dpi, f, "args_get", 8);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4, "Failed to alias ARGS_GET: %d", rc);
+            ib_log_error(ib, 4, "Failed to alias ARGS_GET: %d", rc);
         }
     }
 
@@ -3362,8 +3362,9 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
     rc = iface->add_ex(mpi, patterns, patt, callback, arg,
                                errptr, erroffset);
     if (rc != IB_OK) {
-        ib_log_debug(mpi->pr->ib, 4, "Failed to add pattern %s patt: (%d) %s at"
-                               " offset %d", patt, rc, errptr, erroffset);
+        ib_log_error(mpi->pr->ib, 4,
+                     "Failed to add pattern %s patt: (%d) %s at"
+                     " offset %d", patt, rc, errptr, erroffset);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4257,11 +4258,11 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
         }
         else if (strncasecmp("path=", p, 5) == 0) {
             //p += 5; /* Skip over path= */
-            ib_log_debug(ib, 4, "TODO: Handle: %s %p", name, p);
+            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p);
         }
         else if (strncasecmp("port=", p, 5) == 0) {
             //p += 5; /* Skip over port= */
-            ib_log_debug(ib, 4, "TODO: Handle: %s %p", name, p);
+            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p);
         }
         else {
             /// @todo Handle full wildcards
@@ -4611,7 +4612,7 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     parts = (flags & fmask) | (parts & ~fmask);
 
-    ib_log_debug(ib, 4, "AUDITLOG PARTS: 0x%08x", (unsigned long)parts);
+    ib_log_debug(ib, 7, "AUDITLOG PARTS: 0x%08x", (unsigned long)parts);
 
     rc = ib_context_set_num(ctx, "auditlog_parts", parts);
     IB_FTRACE_RET_STATUS(rc);

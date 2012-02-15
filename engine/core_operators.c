@@ -340,7 +340,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(ib, 4, "prefix '%s' added to the radix tree", p);
+        ib_log_debug(ib, 9, "prefix '%s' added to the radix tree", p);
     }
 
     /* Done */
