@@ -266,7 +266,7 @@ static const int ironbee_config_en_main = 16;
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
                                            size_t blen,
-                                           int is_last_block)
+                                           int is_last_chunk)
 {
     ib_engine_t *ib = cp->ib;
     ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib);
@@ -279,7 +279,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     fsm.p = data;
     fsm.pe = data + blen;
-    fsm.eof = (is_last_block? fsm.pe : NULL);
+    fsm.eof = (is_last_chunk ? fsm.pe : NULL);
 
     /* Init */
     mark = fsm.p;
@@ -356,7 +356,7 @@ _resume:
 			else if ( (*( fsm.p)) > *_mid )
 				_lower = _mid + 1;
 			else {
-				_trans += (_mid - _keys);
+				_trans += (unsigned int)(_mid - _keys);
 				goto _match;
 			}
 		}
@@ -379,7 +379,7 @@ _resume:
 			else if ( (*( fsm.p)) > _mid[1] )
 				_lower = _mid + 2;
 			else {
-				_trans += ((_mid - _keys)>>1);
+				_trans += (unsigned int)((_mid - _keys)>>1);
 				goto _match;
 			}
 		}
