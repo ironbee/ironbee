@@ -237,8 +237,10 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                 ib_log_debug(cp->ib, 3,
                     "Begining of last line is at index %d.", bol-buf);
                 buflen = buf + buflen - bol;
-                ib_log_debug(cp->ib, 3, "Discarding parsed lines. Moving %p to %p with length %d.", bol, buf, buflen);
-                memmove(buf, bol, buflen);
+                if (buflen > 0) {
+                    ib_log_debug(cp->ib, 3, "Discarding parsed lines. Moving %p to %p with length %d.", bol, buf, buflen);
+                    memmove(buf, bol, buflen);
+                }
             }
         }
         else {
