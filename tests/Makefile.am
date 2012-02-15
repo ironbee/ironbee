@@ -140,7 +140,8 @@ test_module_pcre_SOURCES = test_module_pcre.cc test_main.cc
 test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 
 test_luajit_SOURCES = test_main.cc \
-                      test_luajit.cc
+                      test_luajit.cc \
+                      test_ironbee_api.cc
 test_luajit_CPPFLAGS = $(CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)
