@@ -203,14 +203,14 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
             if (eol == NULL) {
                 if (buflen<bufsz) {
                     /* There is no end-of-line (\n) character and
-                     * there is more to read. 
+                     * there is more to read.
                      * Kick back out to while loop. */
                     continue;
                 }
                 else {
-                    /* There is no end of line and there is no more 
+                    /* There is no end of line and there is no more
                      * space in the buffer. This is an error. */
-                    ib_log_error(cp->ib, 1, 
+                    ib_log_error(cp->ib, 1,
                         "Unable to read a configuration line "
                             "larger than %d bytes from file %s. "
                             "Parsing has failed.",
@@ -222,7 +222,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
             }
             else {
                 /* We have found at least one end-of-line character.
-                 * Iterate through it and all otheres, passing each line to
+                 * Iterate through it and all others, passing each line to
                  * ib_cfgparser_ragel_parse_chunk */
                 do {
                     ib_cfgparser_ragel_parse_chunk(cp, bol, eol-bol+1, 0);
@@ -230,12 +230,12 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                     eol = (char*)memchr(bol, '\n', buf+buflen-bol);
                 } while (eol != NULL);
 
-                /* There are no more end-of-line opportunities. 
-                 * Now move the last end-of-line to the begining. */
+                /* There are no more end-of-line opportunities.
+                 * Now move the last end-of-line to the beginning. */
                 ib_log_debug(cp->ib, 7,
                              "Buffer of length %d must be shrunk.", buflen);
                 ib_log_debug(cp->ib, 7,
-                             "Begining of last line is at index %d.", bol-buf);
+                             "Beginning of last line is at index %d.", bol-buf);
                 buflen = buf + buflen - bol;
                 if (buflen > 0) {
                     ib_log_debug(cp->ib, 7,

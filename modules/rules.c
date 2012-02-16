@@ -778,7 +778,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
      * This is the search pattern that is appended to each element of
      * lua_search_paths and then added to the Lua runtime package.path
      * global variable. */
-    const char *lua_file_pattern = "?.lua"; 
+    const char *lua_file_pattern = "?.lua";
 
     /* Null terminated list of search paths. */
     const char *lua_search_paths[3];
@@ -790,7 +790,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     char *path = NULL;           /**< Tmp string to build a search path. */
 
-    int i = 0; /**< An interator. */
+    int i = 0; /**< An iterator. */
 
     ib_rc = ib_lock_init(&g_lua_lock);
 
@@ -836,7 +836,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
         /* Strlen + 2. One for \0 and 1 for the path separator. */
         path = realloc(path,
-                       strlen(lua_search_paths[i]) + 
+                       strlen(lua_search_paths[i]) +
                        strlen(lua_file_pattern) + 2);
 
         if (path == NULL) {
