@@ -1787,6 +1787,324 @@ ib_status_t DLL_PUBLIC ib_matcher_exec_field(ib_matcher_t *m,
  * @} IronBeeEngineMatcher
  */
 
+
+/**
+ * @defgroup IronBeeEngineLog Logging
+ * @{
+ */
+
+/**
+ * Logger callback.
+ *
+ * @param cbdata Callback data
+ * @param level Log level
+ * @param prefix Optional prefix to the log
+ * @param file Optional source filename (or NULL)
+ * @param line Optional source line number (or 0)
+ * @param fmt Formatting string
+ */
+typedef void (*ib_log_logger_fn_t)(void *cbdata,
+                                   int level,
+                                   const char *prefix,
+                                   const char *file, int line,
+                                   const char *fmt, va_list ap)
+                                   VPRINTF_ATTRIBUTE(6);
+
+/** Normal Logger. */
+#define ib_log(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),NULL,NULL,0,__VA_ARGS__)
+/** Error Logger. */
+#define ib_log_error(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
+/** Alert Logger. */
+#define ib_log_alert(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
+/** Abort Logger. */
+#define ib_log_abort(ib,...) do { ib_clog_ex(ib_context_main(ib),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
+/** Debug Logger. */
+#define ib_log_debug(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
+
+/** Normal Context Logger. */
+#define ib_clog(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,NULL,0,__VA_ARGS__)
+/** Error Logger. */
+#define ib_clog_error(ctx,lvl,...) ib_clog_ex((ctx),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
+/** Alert Logger. */
+#define ib_clog_alert(ib,lvl,...) ib_clog_ex((ctx),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
+/** Abort Logger. */
+#define ib_clog_abort(ctx,...) do { ib_clog_ex((ctx),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
+/** Debug Logger. */
+#define ib_clog_debug(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
+
+/**
+ * Initialize logging.
+ *
+ * @param ib Engine handle
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_log_init(ib_engine_t *ib);
+
+/**
+ * Generic Logger.
+ *
+ * @todo Get a real logging framework.
+ *
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
+ *          log header data.
+ *
+ * @param ctx Config context
+ * @param level Log level (0-9)
+ * @param prefix String to prefix log header data (or NULL)
+ * @param file Filename (or NULL)
+ * @param line Line number (or 0)
+ * @param fmt Printf-like format string
+ */
+void DLL_PUBLIC ib_clog_ex(ib_context_t *ctx, int level,
+                           const char *prefix, const char *file, int line,
+                           const char *fmt, ...)
+                           PRINTF_ATTRIBUTE(6, 0);
+
+/**
+ * Generic Logger (va_list version).
+ *
+ * @todo Get a real logging framework.
+ *
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
+ *          log header data.
+ *
+ * @param ctx Config context
+ * @param level Log level (0-9)
+ * @param prefix String to prefix log header data (or NULL)
+ * @param file Filename (or NULL)
+ * @param line Line number (or 0)
+ * @param fmt Printf-like format string
+ * @param ap Variable argument pointer
+ */
+void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
+                            const char *prefix, const char *file, int line,
+                            const char *fmt, va_list ap)
+                            VPRINTF_ATTRIBUTE(6);
+
+/**
+ * Add an event to be logged.
+ *
+ * @param pi Provider instance
+ * @param e Event
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_add(ib_provider_inst_t *pi,
+                                    ib_logevent_t *e);
+
+/**
+ * Remove an event from the queue before it is logged.
+ *
+ * @param pi Provider instance
+ * @param id Event id
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_remove(ib_provider_inst_t *pi,
+                                       uint32_t id);
+
+/**
+ * Get a list of pending events to be logged.
+ *
+ * @note The list can be modified directly.
+ *
+ * @param pi Provider instance
+ * @param pevents Address where list of events is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_get_all(ib_provider_inst_t *pi,
+                                        ib_list_t **pevents);
+
+/**
+ * Write out any pending events to the log.
+ *
+ * @param pi Provider instance
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_write_all(ib_provider_inst_t *pi);
+
+/**
+ * Write out audit log.
+ *
+ * @param pi Provider instance
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_auditlog_write(ib_provider_inst_t *pi);
+
+/**
+ * @} IronBeeEngineLog
+ */
+
+/**
+ * @defgroup IronBeeEngineLogEvent Log Events
+ * @{
+ */
+
+/* Log Event Types */
+typedef enum {
+    IB_LEVENT_TYPE_UNKNOWN,
+    IB_LEVENT_TYPE_ALERT,
+} ib_logevent_type_t;
+
+/** Log Event Activities */
+typedef enum {
+    IB_LEVENT_ACT_UNKNOWN,
+    IB_LEVENT_ACT_RECON,
+    IB_LEVENT_ACT_ATTEMPTED_ATTACK,
+    IB_LEVENT_ACT_SUCCESSFUL_ATTACK,
+} ib_logevent_activity_t;
+
+/** Log Event Primary Classification */
+typedef enum {
+    IB_LEVENT_PCLASS_UNKNOWN,
+    /// @todo These are just examples for now
+    IB_LEVENT_PCLASS_INJECTION,
+} ib_logevent_pri_class_t;
+
+/** Log Event Secondary Classification */
+typedef enum {
+    IB_LEVENT_SCLASS_UNKNOWN,
+    /// @todo These are just examples for now
+    IB_LEVENT_SCLASS_SQL,
+} ib_logevent_sec_class_t;
+
+/** Log Event System Environment */
+typedef enum {
+    IB_LEVENT_SYS_UNKNOWN,
+    IB_LEVENT_SYS_PUBLIC,
+    IB_LEVENT_SYS_PRIVATE,
+
+} ib_logevent_sys_env_t;
+
+/** Log Event Recommended Action */
+typedef enum {
+    IB_LEVENT_ACTION_UNKNOWN,
+    /// @todo These are just examples for now
+    IB_LEVENT_ACTION_LOG,
+    IB_LEVENT_ACTION_BLOCK,
+    IB_LEVENT_ACTION_IGNORE,
+} ib_logevent_action_t;
+
+/**
+ * Lookup log event type name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_type_name(ib_logevent_type_t num);
+
+/**
+ * Lookup log event activity name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_activity_name(ib_logevent_activity_t num);
+
+/**
+ * Lookup log event primary classification name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num);
+
+/**
+ * Lookup log event secondary classification name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num);
+
+/**
+ * Lookup log event system environment name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num);
+
+/**
+ * Lookup log event action name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_action_name(ib_logevent_action_t num);
+
+/** Log Event Structure */
+struct ib_logevent_t {
+    uint32_t                 event_id;   /**< Event ID */
+    const char              *rule_id;    /**< Rule ID (if any) */
+    const char              *publisher;  /**< Publisher name */
+    const char              *source;     /**< Source identifier */
+    const char              *source_ver; /**< Source version string */
+    const char              *msg;        /**< Event message */
+    size_t                   data_len;   /**< Event data size */
+    ib_list_t               *tags;       /**< List of tags */
+    ib_list_t               *fields;     /**< List of fields */
+    ib_mpool_t              *mp;         /**< Memory pool */
+    uint8_t                  confidence; /**< Event confidence (percent) */
+    uint8_t                  severity;   /**< Event severity (0-100?) */
+    ib_logevent_type_t       type;       /**< Event type */
+    ib_logevent_activity_t   activity;   /**< Event activity (recon/attack) */
+    ib_logevent_pri_class_t  pri_class;  /**< Primary class (ex: INJECTION) */
+    ib_logevent_sec_class_t  sec_class;  /**< Secondary class (ex: SQL) */
+    ib_logevent_sys_env_t    sys_env;    /**< System environment (pub/priv) */
+    ib_logevent_action_t     rec_action; /**< Recommended action */
+    ib_logevent_action_t     action;     /**< Action taken */
+};
+
+/**
+ * Create a logevent.
+ *
+ * @param[in] ple Address which new logevent is written
+ * @param[in] pool Memory pool
+ * @param[in] rule_id Rule that fired
+ * @param[in] type Event type
+ * @param[in] activity Event activity
+ * @param[in] pri_class Event primary class
+ * @param[in] sec_class Event secondary class
+ * @param[in] sys_env Event system environment
+ * @param[in] rec_action Event recommended action
+ * @param[in] action Event action taken
+ * @param[in] confidence Event confidence
+ * @param[in] severity Event severity
+ * @param[in] fmt Event message format string
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
+                                          ib_mpool_t *pool,
+                                          const char *rule_id,
+                                          ib_logevent_type_t type,
+                                          ib_logevent_activity_t activity,
+                                          ib_logevent_pri_class_t pri_class,
+                                          ib_logevent_sec_class_t sec_class,
+                                          ib_logevent_sys_env_t sys_env,
+                                          ib_logevent_action_t rec_action,
+                                          ib_logevent_action_t action,
+                                          uint8_t confidence,
+                                          uint8_t severity,
+                                          const char *fmt,
+                                          ...);
+
+/**
+ * @} IronBeeEngineLogEvent
+ */
+
+
 /**
  * @defgroup IronBeeEngineTfn Transformations
  * @{
