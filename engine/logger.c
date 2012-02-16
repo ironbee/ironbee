@@ -282,6 +282,17 @@ void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
     IB_FTRACE_RET_VOID();
 }
 
+void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
+                           const char *prefix, const char *file, int line,
+                           const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    ib_vclog_ex(ib_context_main(ib), level, prefix, file, line, fmt, ap);
+    va_end(ap);
+}
+
 void ib_clog_ex(ib_context_t *ctx, int level,
                 const char *prefix, const char *file, int line,
                 const char *fmt, ...)

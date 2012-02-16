@@ -1811,15 +1811,15 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
                                    VPRINTF_ATTRIBUTE(6);
 
 /** Normal Logger. */
-#define ib_log(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),NULL,NULL,0,__VA_ARGS__)
+#define ib_log(ib,lvl,...) ib_log_ex((ib),(lvl),NULL,NULL,0,__VA_ARGS__)
 /** Error Logger. */
-#define ib_log_error(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
+#define ib_log_error(ib,lvl,...) ib_log_ex((ib),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
 /** Alert Logger. */
-#define ib_log_alert(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
+#define ib_log_alert(ib,lvl,...) ib_log_ex((ib),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
 /** Abort Logger. */
-#define ib_log_abort(ib,...) do { ib_clog_ex(ib_context_main(ib),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
+#define ib_log_abort(ib,...) do { ib_log_ex((ib),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
 /** Debug Logger. */
-#define ib_log_debug(ib,lvl,...) ib_clog_ex(ib_context_main(ib),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
+#define ib_log_debug(ib,lvl,...) ib_log_ex((ib),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
 
 /** Normal Context Logger. */
 #define ib_clog(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,NULL,0,__VA_ARGS__)
@@ -1833,7 +1833,27 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 #define ib_clog_debug(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
 
 /**
- * Generic Logger.
+ * Generic Logger for engine..
+ *
+ * @todo Get a real logging framework.
+ *
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
+ *          log header data.
+ *
+ * @param ctx Config context
+ * @param level Log level (0-9)
+ * @param prefix String to prefix log header data (or NULL)
+ * @param file Filename (or NULL)
+ * @param line Line number (or 0)
+ * @param fmt Printf-like format string
+ */
+void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
+                          const char *prefix, const char *file, int line,
+                          const char *fmt, ...)
+                          PRINTF_ATTRIBUTE(6, 0);
+
+/**
+ * Generic Logger for context.
  *
  * @todo Get a real logging framework.
  *
