@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <assert.h>
+#include <ctype.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
@@ -431,12 +432,319 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
 }
 
 /**
+ * @internal
+ * Create function for the numeric comparison operators
+ *
+ * @param[in] ib The IronBee engine (unused)
+ * @param[in] ctx The current IronBee context (unused)
+ * @param[in,out] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters
+ * @param[in,out] op_inst Instance operator
+ *
+ * @returns Status code
+ */
+static ib_status_t op_numcmp_create(ib_engine_t *ib,
+                                    ib_context_t *ctx,
+                                    ib_mpool_t *mp,
+                                    const char *parameters,
+                                    ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT();
+    ib_num_t *vptr;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Allocate storage for the value */
+    vptr = (ib_num_t *)ib_mpool_alloc(mp, sizeof(*vptr));
+    if (vptr == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Convert the parameter string to an integer */
+    *vptr = strtol(parameters, NULL, 0);
+
+    op_inst->data = vptr;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Get interger representation of a field
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+#define MAX_FIELD_NUM_BUF    128
+static ib_status_t field_to_num(ib_engine_t *ib,
+                                ib_field_t *field,
+                                ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+
+    switch (field->type) {
+        case IB_FTYPE_NUM :
+            *result = *ib_field_value_num(field);
+            break;
+
+        case IB_FTYPE_UNUM :
+            *result = * (ib_num_t*)(ib_field_value_num(field));
+            break;
+
+        case IB_FTYPE_NULSTR :
+            {
+                const char *fval = ib_field_value_nulstr(field);
+                if ( (isdigit(*fval) == 0) || (*fval == '-') ) {
+                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                }
+                *result = (ib_num_t)strtol(fval, NULL, 0);
+            }
+            break;
+
+        case IB_FTYPE_BYTESTR:
+            {
+                ib_bytestr_t *value = ib_field_value_bytestr(field);
+                size_t        len = ib_bytestr_length(value);
+                char          buf[MAX_FIELD_NUM_BUF];
+                if (len >= (MAX_FIELD_NUM_BUF - 1)) {
+                    len = (MAX_FIELD_NUM_BUF - 1);
+                }
+                memcpy(buf, ib_bytestr_ptr(value), len);
+                buf[len+1] = '\0';
+                if ( (isdigit(buf[0]) == 0) || (buf[0] == '-') ) {
+                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                }
+                *result = (ib_num_t)strtol(buf, NULL, 0);
+            }
+            break;
+
+        default:
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+            
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "eq" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_eq_execute(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 void *data,
+                                 ib_field_t *field,
+                                 ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    const ib_num_t *vptr = (const ib_num_t *)data;
+    ib_num_t        value;
+    ib_status_t     rc;
+
+    /* Get integer representation of the field */
+    rc = field_to_num(ib, field, &value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Do the comparison */
+    *result = (value == *vptr);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "neq" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_neq_execute(ib_engine_t *ib,
+                                    ib_tx_t *tx,
+                                    void *data,
+                                    ib_field_t *field,
+                                    ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    const ib_num_t *vptr = (const ib_num_t *)data;
+    ib_num_t        value;
+    ib_status_t     rc;
+
+    /* Get integer representation of the field */
+    rc = field_to_num(ib, field, &value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Do the comparison */
+    *result = (value != *vptr);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "gt" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_gt_execute(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 void *data,
+                                 ib_field_t *field,
+                                 ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    const ib_num_t *vptr = (const ib_num_t *)data;
+    ib_num_t        value;
+    ib_status_t     rc;
+
+    /* Get integer representation of the field */
+    rc = field_to_num(ib, field, &value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Do the comparison */
+    *result = (value > *vptr);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "lt" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_lt_execute(ib_engine_t *ib,
+                                    ib_tx_t *tx,
+                                    void *data,
+                                    ib_field_t *field,
+                                    ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    const ib_num_t *vptr = (const ib_num_t *)data;
+    ib_num_t        value;
+    ib_status_t     rc;
+
+    /* Get integer representation of the field */
+    rc = field_to_num(ib, field, &value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Do the comparison */
+    *result = (value < *vptr);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "geq" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_geq_execute(ib_engine_t *ib,
+                                  ib_tx_t *tx,
+                                  void *data,
+                                  ib_field_t *field,
+                                  ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    const ib_num_t *vptr = (const ib_num_t *)data;
+    ib_num_t        value;
+    ib_status_t     rc;
+
+    /* Get integer representation of the field */
+    rc = field_to_num(ib, field, &value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Do the comparison */
+    *result = (value >= *vptr);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "leq" operator
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] tx The transaction for this operator.
+ * @param[in] data C-style string to compare to
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_leq_execute(ib_engine_t *ib,
+                                  ib_tx_t *tx,
+                                  void *data,
+                                  ib_field_t *field,
+                                  ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    const ib_num_t *vptr = (const ib_num_t *)data;
+    ib_num_t        value;
+    ib_status_t     rc;
+
+    /* Get integer representation of the field */
+    rc = field_to_num(ib, field, &value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Do the comparison */
+    *result = (value <= *vptr);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Initialize the core operators
  **/
 ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
+
+
+    /**
+     * String comparison operators
+     */
 
     /* Register the string equal operator */
     rc = ib_operator_register(ib,
@@ -460,6 +768,92 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Register the ipmatch operator */
+    rc = ib_operator_register(ib,
+                              "ipmatch",
+                              IB_OP_FLAG_NONE,
+                              op_ipmatch_create,
+                              NULL, /* no destroy function */
+                              op_ipmatch_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /**
+     * Numeric comparison operators
+     */
+
+    /* Register the numeric equal operator */
+    rc = ib_operator_register(ib,
+                              "eq",
+                              IB_OP_FLAG_NONE,
+                              op_numcmp_create,
+                              NULL, /* no destroy function */
+                              op_eq_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the numeric not-equal operator */
+    rc = ib_operator_register(ib,
+                              "neq",
+                              IB_OP_FLAG_NONE,
+                              op_numcmp_create,
+                              NULL, /* no destroy function */
+                              op_neq_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the numeric greater-than operator */
+    rc = ib_operator_register(ib,
+                              "gt",
+                              IB_OP_FLAG_NONE,
+                              op_numcmp_create,
+                              NULL, /* no destroy function */
+                              op_gt_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the numeric less-than operator */
+    rc = ib_operator_register(ib,
+                              "lt",
+                              IB_OP_FLAG_NONE,
+                              op_numcmp_create,
+                              NULL, /* no destroy function */
+                              op_lt_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the numeric greater-than or equal to operator */
+    rc = ib_operator_register(ib,
+                              "geq",
+                              IB_OP_FLAG_NONE,
+                              op_numcmp_create,
+                              NULL, /* no destroy function */
+                              op_geq_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the numeric less-than or equal to operator */
+    rc = ib_operator_register(ib,
+                              "leq",
+                              IB_OP_FLAG_NONE,
+                              op_numcmp_create,
+                              NULL, /* no destroy function */
+                              op_leq_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+
+    /**
+     * Misc operators
+     */
+
     /* Register the checkflag operator */
     rc = ib_operator_register(ib,
                               "checkflag",
@@ -482,6 +876,10 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /**
+     * Simple True / False operators.
+     */
+
     /* Register the true operator */
     rc = ib_operator_register(ib,
                               "true",
@@ -500,17 +898,6 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               NULL, /* No create function */
                               NULL, /* no destroy function */
                               op_false_execute);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Register the ipmatch operator */
-    rc = ib_operator_register(ib,
-                              "ipmatch",
-                              IB_OP_FLAG_NONE,
-                              op_ipmatch_create,
-                              NULL, /* no destroy function */
-                              op_ipmatch_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
