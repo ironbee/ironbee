@@ -34,6 +34,7 @@
 #include <ironbee/radix.h>
 #include <ironbee/ahocorasick.h>
 
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {

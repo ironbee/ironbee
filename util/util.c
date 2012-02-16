@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <libgen.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "ironbee_util_private.h"
 
