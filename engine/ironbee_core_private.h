@@ -47,7 +47,11 @@ extern "C" {
  */
 typedef struct {
     const char            *id;            /**< Rule ID */
-    ib_rule_phase_t        phase;         /**< Phase to execute rule */
+    const char            *msg;           /**< Rule message */
+    ib_list_t             *tags;          /**< Rule tags */
+    ib_rule_phase_t        phase;         /**< Rule execution phase */
+    uint8_t                severity;      /**< Rule severity */
+    uint8_t                confidence;    /**< Rule confidence */
 } ib_rule_meta_t;
 
 /**

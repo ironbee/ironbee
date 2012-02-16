@@ -525,6 +525,14 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* Init flags */
     rule->flags = IB_RULE_FLAG_NONE;
 
+    /* meta tags list */
+    rc = ib_list_create(&lst, mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Failed to create rule meta tags list: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rule->meta.tags = lst;
+
     /* Input list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {

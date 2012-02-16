@@ -33,6 +33,9 @@
 #include "rules_lua.h"
 #include "lua/ironbee.h"
 
+/// @todo Here until rule structures are public
+#include "ironbee_core_private.h"
+
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
@@ -297,6 +300,30 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         ib_rule_set_id(cp->ib, rule, value);
+    }
+    else if (strcasecmp(name, "msg") == 0) {
+        rule->meta.msg = value;
+    }
+    else if (strcasecmp(name, "tag") == 0) {
+        ib_list_push(rule->meta.tags, (void *)value);
+    }
+    else if (strcasecmp(name, "severity") == 0) {
+        int severity = atoi(value);
+
+        if (severity > UINT8_MAX) {
+            ib_log_error(cp->ib, 4, "Invalid severity: %s", value);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        rule->meta.severity = (uint8_t)severity;
+    }
+    else if (strcasecmp(name, "confidence") == 0) {
+        int confidence = atoi(value);
+
+        if (confidence > UINT8_MAX) {
+            ib_log_error(cp->ib, 4, "Invalid confidence: %s", value);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        rule->meta.confidence = (uint8_t)confidence;
     }
     else if (strcasecmp(name, "phase") == 0) {
         if (value == NULL) {
