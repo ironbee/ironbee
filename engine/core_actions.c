@@ -154,41 +154,6 @@ static ib_status_t act_setflag_execute(void *data,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-typedef struct act_event_data_t act_event_data_t;
-
-struct act_event_data_t {
-    char *msg;
-};
-
-/**
- * Event action creation callback.
- *
- * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current IronBee context (unused)
- * @param[in] pool Memory pool to be used for allocating needed memory.
- * @param[in] parameters Unparsed string with the parameters to
- *                       initialize the action instance.
- * @param[in,out] act_inst Pointer to the operator instance to be initialized.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t act_event_create_inst(ib_engine_t *ib,
-                                         ib_context_t *ctx,
-                                         ib_mpool_t *pool,
-                                         const char *data,
-                                         ib_action_inst_t *act_inst)
-{
-    IB_FTRACE_INIT();
-    act_event_data_t *ev_data;
-    ev_data = (act_event_data_t *)ib_mpool_alloc(pool, sizeof(*ev_data));
-
-    ev_data->msg = ib_mpool_strdup(pool, data);
-
-    act_inst->data = ev_data;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 /**
  * Event action execution callback.
  *
@@ -206,27 +171,32 @@ static ib_status_t act_event_execute(void *data,
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
-    act_event_data_t *ev_data = data;
     ib_logevent_t *e;
 
-    rc = ib_logevent_create(&e,
-                            tx->mp,
-                            ib_rule_id(rule),
-                            IB_LEVENT_TYPE_ALERT,
-                            IB_LEVENT_ACT_UNKNOWN,
-                            IB_LEVENT_PCLASS_UNKNOWN,
-                            IB_LEVENT_SCLASS_UNKNOWN,
-                            IB_LEVENT_SYS_UNKNOWN,
-                            IB_LEVENT_ACTION_IGNORE,
-                            IB_LEVENT_ACTION_IGNORE,
-                            90,
-                            80,
-                            ev_data->msg
-                            );
+    ib_log_debug(tx->ib, 4, "Creating event via action");
 
+    rc = ib_logevent_create(
+        &e,
+        tx->mp,
+        ib_rule_id(rule),
+        IB_LEVENT_TYPE_ALERT,
+        IB_LEVENT_ACT_UNKNOWN,
+        IB_LEVENT_PCLASS_UNKNOWN,
+        IB_LEVENT_SCLASS_UNKNOWN,
+        IB_LEVENT_SYS_UNKNOWN,
+        IB_LEVENT_ACTION_IGNORE,
+        IB_LEVENT_ACTION_IGNORE,
+        rule->meta.confidence,
+        rule->meta.severity,
+        (rule->meta.msg ? rule->meta.msg : "")
+    );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    /* Link to rule tags. */
+    /// @todo Probably need to copy here
+    e->tags = rule->meta.tags;
 
     /* Log the event. */
     rc = ib_event_add(tx->epi, e);
@@ -267,7 +237,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "event",
                             IB_ACT_FLAG_NONE,
-                            act_event_create_inst,
+                            NULL, /* no create function */
                             NULL, /* no destroy function */
                             act_event_execute);
     if (rc != IB_OK) {
