@@ -336,8 +336,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     IB_FTRACE_INIT();
     const rule_cbdata_t  *rdata = (const rule_cbdata_t *) cbdata;
     ib_context_t         *ctx = tx->ctx;
-    ib_context_t         *pctx = ctx->parent;
-    ib_rule_phase_data_t *phase = &(pctx->rules->ruleset.phases[rdata->phase]);
+    ib_rule_phase_data_t *phase = &(ctx->rules->ruleset.phases[rdata->phase]);
     ib_list_t            *rules = phase->rules.rule_list;
     ib_list_node_t       *node = NULL;
     ib_status_t           rc = IB_OK;
@@ -353,13 +352,13 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug(ib, 9,
                      "No rules rules for phase %d/%s in context p=%p",
-                     rdata->phase, rdata->name, (void*)pctx);
+                     rdata->phase, rdata->name, (void*)ctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug(ib, 9,
                  "Executing %d rules for phase %d/%s in context %p",
                  IB_LIST_ELEMENTS(rules),
-                 rdata->phase, rdata->name, (void*)pctx);
+                 rdata->phase, rdata->name, (void*)ctx);
 
     /**
      * Loop through all of the rules for this phase, execute them.

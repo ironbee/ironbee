@@ -648,7 +648,8 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(cp->ib, 4, "Registered rule %s", ib_rule_id(rule));
+    ib_log_debug(cp->ib, 4, "Registered rule %s in phase %d context %p",
+                 ib_rule_id(rule), phase, cp->cur_ctx);
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
