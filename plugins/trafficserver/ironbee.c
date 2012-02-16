@@ -187,7 +187,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
 
         ibd->data->output_buffer = TSIOBufferCreate();
         ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
-        TSDebug("ironbee", "\tWriting %d bytes on VConn", TSVIONBytesGet(input_vio));
+        TSDebug("ironbee", "\tWriting %ld bytes on VConn", TSVIONBytesGet(input_vio));
         ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
     }
     if (ibd->data->buf) {
@@ -481,7 +481,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
      * versions incorporate the fix
      */
 #if (TS_VERSION_MAJOR >= 3) &&  ( \
-    ((TS_VERSION_MINOR >= 1) && (TS_VERSION_MICRO >= 2)) ||  \
+    ((TS_VERSION_MINOR >= 1) && (TS_VERSION_MICRO >= 3)) ||  \
     (TS_VERSION_MINOR >= 2))
     if (ibd->dir == IBD_RESP) {
         /* before the HTTP headers comes the request line / response code */
@@ -597,7 +597,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 ib_status_t rc;
                 rc = ib_conn_create(ironbee, &iconn, contp);
                 if (rc != IB_OK) {
-                    TSError("ironbee", "ib_conn_create: %d\n", rc);
+                    TSError("ironbee: ib_conn_create: %d\n", rc);
                     return rc; // FIXME - figure out what to do
                 }
                 ssndata = TSmalloc(sizeof(ib_ssn_ctx));
@@ -687,7 +687,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
-            TSDebug("ironbee", "TXN Close: %x\n", contp);
+            TSDebug("ironbee", "TXN Close: %lx\n", (long unsigned int)contp);
             ib_txn_ctx_destroy(TSContDataGet(contp));
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
@@ -695,7 +695,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             break;
 
         case TS_EVENT_HTTP_SSN_CLOSE:
-            TSDebug("ironbee", "SSN Close: %x\n", contp);
+            TSDebug("ironbee", "SSN Close: %lx\n", (long unsigned int)contp);
             ib_ssn_ctx_destroy(TSContDataGet(contp));
             TSContDestroy(contp);
             TSHttpSsnReenable(ssnp, TS_EVENT_HTTP_CONTINUE);
