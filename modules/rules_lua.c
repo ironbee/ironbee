@@ -167,7 +167,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
      */
     lua_settable(L, -4);
 
-    /* Pop the ib module table off the stack leaving just the 
+    /* Pop the ib module table off the stack leaving just the
      * user rule function and the anonymous table we are building. */
     lua_pop(L, 1);
 
