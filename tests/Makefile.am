@@ -145,6 +145,7 @@ test_luajit_SOURCES = test_main.cc \
 test_luajit_CPPFLAGS = $(CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)
+test_luajig_LDFLAGS = $(LDFLAGS)
 test_luajit_LDADD = $(LDADD) \
                     $(MODULE_TEST_LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
