@@ -23,6 +23,8 @@
  * @internal
  */
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/lock.h>
 
 #include <ironbee/debug.h>

@@ -22,9 +22,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/provider.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/provider.h>
 
 #include <ironbee/mpool.h>
 

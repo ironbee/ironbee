@@ -21,9 +21,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/dso.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/dso.h>
 
 #include <ironbee/debug.h>
 #include <ironbee/util.h>

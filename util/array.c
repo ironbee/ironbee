@@ -38,9 +38,9 @@
  * for the task.
  */
 
-#include <ironbee/array.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/array.h>
 
 #include <ironbee/debug.h>
 

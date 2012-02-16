@@ -22,9 +22,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/core.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/core.h>
 
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE

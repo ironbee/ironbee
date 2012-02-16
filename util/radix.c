@@ -26,9 +26,9 @@
  * IP / CIDR addresses.
  */
 
-#include <ironbee/radix.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/radix.h>
 
 #include <ironbee/debug.h>
 

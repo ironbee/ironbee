@@ -24,9 +24,10 @@
 /**
  * Implementation of Aho Corasick
  */
-#include <ironbee/ahocorasick.h>
 
 #include "ironbee_config_auto.h"
+
+#include <ironbee/ahocorasick.h>
 
 #include <ironbee/debug.h>
 

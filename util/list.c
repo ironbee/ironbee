@@ -27,9 +27,9 @@
  * This is a doubly linked list.
  */
 
-#include <ironbee/list.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/list.h>
 
 #include <ironbee/debug.h>
 

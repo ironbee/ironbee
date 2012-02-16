@@ -22,6 +22,8 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/operator.h>
 
 #include <ironbee/debug.h>

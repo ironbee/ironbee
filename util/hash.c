@@ -23,6 +23,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/hash.h>
 
 #include <ironbee/debug.h>

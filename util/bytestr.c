@@ -21,9 +21,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/bytestr.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/bytestr.h>
 
 #include <ironbee/debug.h>
 

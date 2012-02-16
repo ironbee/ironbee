@@ -22,9 +22,9 @@
  * @todo Add bin to ascii
  */
 
-#include <ironbee/uuid.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/uuid.h>
 
 #include <ironbee/debug.h>
 

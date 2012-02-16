@@ -21,9 +21,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/field.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/field.h>
 
 #include <ironbee/stream.h>
 #include <ironbee/util.h>

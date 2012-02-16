@@ -21,9 +21,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <ironbee/types.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/types.h>
 
 const char *ib_status_to_string(ib_status_t status)
 {
