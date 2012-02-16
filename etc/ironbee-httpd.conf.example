@@ -84,7 +84,7 @@ RequestBuffering On
 #    PocACSigReqHead request_line foo (bar)+ "TESTING: Matched foo and (bar)+ in request line."
 
     # Example rule syntax
-    Rule ARGS.foo "@rx bar" id:1 phase:REQUEST msg:foo=bar tag:foo tag:bar event
+    Rule ARGS.foo "@rx bar" id:1 phase:REQUEST msg:foo=bar tag:foo tag:bar severity:12 confidence:30 event
 
     <Location /foo>
         DebugLogLevel 9
@@ -99,7 +99,7 @@ RequestBuffering On
     Hostname * ip=127.0.1.1
 
     # Example rule syntax
-    Rule ARGS.foo "@rx bar" id:2 phase:REQUEST msg:foo=bar tag:foo tag:bar event
+    Rule ARGS.foo "@rx bar" id:2 phase:REQUEST msg:foo=bar tag:foo tag:bar severity:12 confidence:30 event
 
 </Site>
 
@@ -110,7 +110,7 @@ RequestBuffering On
     Hostname *
 
     # Example rule syntax
-    Rule ARGS.foo "@rx bar" id:3 phase:REQUEST msg:foo=bar tag:foo tag:bar event
+    Rule ARGS.foo "@rx bar" id:3 phase:REQUEST msg:foo=bar tag:foo tag:bar severity:12 confidence:30 event
 
 </Site>
 

@@ -66,7 +66,7 @@ RequestBuffering On
     Hostname *
 
     # Example rule syntax
-    Rule ARGS.foo "@rx bar" id:1 phase:REQUEST msg:foo=bar tag:foo tag:bar event
+    Rule ARGS.foo "@rx bar" id:1 phase:REQUEST msg:foo=bar tag:foo tag:bar severity:12 confidence:30 event
 
     # This signature is handled by modules/poc_sig.c
     # syntax: sigphase field pcre_pattern title
