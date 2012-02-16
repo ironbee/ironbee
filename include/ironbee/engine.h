@@ -1833,15 +1833,6 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 #define ib_clog_debug(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
 
 /**
- * Initialize logging.
- *
- * @param ib Engine handle
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_log_init(ib_engine_t *ib);
-
-/**
  * Generic Logger.
  *
  * @todo Get a real logging framework.
