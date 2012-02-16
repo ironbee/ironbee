@@ -308,7 +308,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         ib_list_push(rule->meta.tags, (void *)value);
     }
     else if (strcasecmp(name, "severity") == 0) {
-        int severity = atoi(value);
+        int severity = value ? atoi(value) : 0;
 
         if (severity > UINT8_MAX) {
             ib_log_error(cp->ib, 4, "Invalid severity: %s", value);
@@ -317,7 +317,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rule->meta.severity = (uint8_t)severity;
     }
     else if (strcasecmp(name, "confidence") == 0) {
-        int confidence = atoi(value);
+        int confidence = value ? atoi(value) : 0;
 
         if (confidence > UINT8_MAX) {
             ib_log_error(cp->ib, 4, "Invalid confidence: %s", value);
