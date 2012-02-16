@@ -1843,6 +1843,45 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     if (e != NULL) {
         size_t rlen;
 
+        /* Turn tag list into JSON list, limiting the size. */
+        char tags[128];
+        char *tag_ptr = NULL;
+
+        if (e->tags != NULL) {
+            ib_list_node_t *tnode;
+            size_t tags_len = sizeof(tags);
+
+            tag_ptr = tags;
+            IB_LIST_LOOP(e->tags, tnode) {
+                char *tag = (char *)ib_list_node_data(tnode);
+                int wrote = snprintf(tag_ptr, tags_len,
+                                     "%s\"%s\"",
+                                     (tag_ptr == tags ? "" : ", "), tag);
+
+
+                /* Check that data was written, terminating if not. */
+                if (wrote >= (int)tags_len) {
+                    /* Not enough room. */
+                    *tag_ptr = '\0';
+                    break;
+                }
+
+
+                /* Adjust the length that remains in the tags buffer. */
+                tags_len -= wrote;
+                if (tags_len <= 0) {
+                    break;
+                }
+
+                tag_ptr += wrote;
+            }
+        }
+        else {
+            tags[0] = '\0';
+        }
+
+
+
         rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_REC_LEN);
 
         /* Error. */
@@ -1866,7 +1905,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"action\": \"%s\",\r\n"
                         "      \"confidence\": %u,\r\n"
                         "      \"severity\": %u,\r\n"
-                        "      \"tags\": [],\r\n"
+                        "      \"tags\": [%s],\r\n"
                         "      \"fields\": [],\r\n"
                         "      \"msg\": \"%s\",\r\n"
                         "      \"data\": \"\"\r\n"
@@ -1885,6 +1924,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         ib_logevent_action_name(e->action),
                         e->confidence,
                         e->severity,
+                        tags,
                         e->msg ? e->msg : "-");
 
         /* Verify size. */
