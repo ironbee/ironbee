@@ -5,6 +5,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/module.h>
+#include <ironbee/logger.h>
 
 #include "ironbee.h"
 

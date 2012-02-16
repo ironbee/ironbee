@@ -34,6 +34,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
+#include <ironbee/logger.h>
 
 #ifdef __cplusplus
 extern "C" {
