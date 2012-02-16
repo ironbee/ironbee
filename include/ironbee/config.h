@@ -25,20 +25,8 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
-#include <sys/types.h>
-#include <unistd.h>
-
 #include <ironbee/build.h>
-#include <ironbee/release.h>
-#include <ironbee/list.h>
+#include <ironbee/types.h>
 #include <ironbee/engine.h>
 
 #ifdef __cplusplus

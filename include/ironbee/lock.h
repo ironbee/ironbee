@@ -28,8 +28,6 @@
 #include "ironbee_config_auto.h"
 
 #include "ironbee/build.h"
-#include "ironbee/core.h"
-#include "ironbee/release.h"
 #include "ironbee/types.h"
 
 #include <pthread.h>

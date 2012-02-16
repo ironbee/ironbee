@@ -25,9 +25,6 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/build.h>
-#include <ironbee/release.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

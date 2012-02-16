@@ -22,25 +22,28 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/core.h>
+
 #include "ironbee_config_auto.h"
 
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
 #endif
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <strings.h>
-#include <sys/time.h> /* gettimeofday */
-#include <arpa/inet.h> /* htonl */
+#include <ironbee/mpool.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/string.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/field.h>
 
-#include <ctype.h> /* tolower */
-#include <time.h>
+#include "ironbee_core_private.h"
+
 #include <errno.h>
-
+#include <ctype.h>
 #include <assert.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
@@ -49,21 +52,6 @@
 #endif
 
 #include <inttypes.h>
-
-
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/string.h>
-#include <ironbee/cfgmap.h>
-#include <ironbee/logformat.h>
-#include <ironbee/module.h>
-#include <ironbee/core.h>
-#include <ironbee/provider.h>
-
-#include "ironbee_private.h"
-#include "ironbee_core_private.h"
 
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)

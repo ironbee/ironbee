@@ -30,6 +30,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/provider.h>
+#include <ironbee/field.h>
 
 #include "ironbee_private.h"
 

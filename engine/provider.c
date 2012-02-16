@@ -22,21 +22,13 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include "ironbee_config_auto.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-
-
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
 #include <ironbee/provider.h>
 
-#include "ironbee_private.h"
+#include "ironbee_config_auto.h"
 
+#include <ironbee/mpool.h>
+
+#include "ironbee_private.h"
 
 ib_status_t ib_provider_define(ib_engine_t *ib,
                                const char *type,

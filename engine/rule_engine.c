@@ -22,16 +22,13 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include "ironbee_config_auto.h"
-
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
-#include <ironbee/debug.h>
-#include <ironbee/operator.h>
-#include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
 
-#include "ironbee_private.h"
+#include "ironbee_config_auto.h"
+
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
+
 #include "ironbee_core_private.h"
 
 /* Callback data */

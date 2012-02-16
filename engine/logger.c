@@ -30,7 +30,7 @@
 #include <string.h>
 
 #include <sys/time.h> /// @todo Temp for gettimeofday()
-
+#include <unistd.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/core.h>

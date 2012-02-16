@@ -24,19 +24,15 @@
 /**
  * Implementation of Aho Corasick
  */
+#include <ironbee/ahocorasick.h>
+
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-#include <ctype.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
-#include <ironbee/ahocorasick.h>
 
 #include "ironbee_util_private.h"
 
+#include <ctype.h>
 
 /*------ Aho - Corasick ------*/
 

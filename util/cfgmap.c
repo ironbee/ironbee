@@ -21,17 +21,13 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/cfgmap.h>
+
 #include "ironbee_config_auto.h"
 
-#include <stdio.h>
-#include <string.h>
-
-#include <ironbee/types.h>
-#include <ironbee/string.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
+#include <ironbee/bytestr.h>
 
 #include "ironbee_util_private.h"
 

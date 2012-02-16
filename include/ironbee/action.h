@@ -32,7 +32,6 @@
  */
 
 #include <ironbee/types.h>
-#include <ironbee/field.h>
 #include <ironbee/engine.h>
 #include <ironbee/rule_defs.h>
 

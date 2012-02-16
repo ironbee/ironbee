@@ -23,15 +23,9 @@
  * @internal
  */
 
-
 #include <ironbee/lock.h>
 
-#include <ironbee/core.h>
 #include <ironbee/debug.h>
-#include <ironbee/types.h>
-#include <ironbee/util.h>
-
-#include <pthread.h>
 
 ib_status_t ib_lock_init(ib_lock_t *lock)
 {

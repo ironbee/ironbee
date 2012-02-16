@@ -21,26 +21,14 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/field.h>
+
 #include "ironbee_config_auto.h"
 
-#include <stdlib.h>
-#include <string.h>
-
-#include <ironbee/types.h>
-#include <ironbee/string.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/field.h>
 #include <ironbee/stream.h>
-#include <ironbee/debug.h>
 #include <ironbee/util.h>
-
-#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
-/* C99 requires that inttypes.h only exposes PRI* macros
- * for C++ implementations if this is defined: */
-#define __STDC_FORMAT_MACROS
-#endif
-
-#include <inttypes.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/debug.h>
 
 #include "ironbee_util_private.h"
 

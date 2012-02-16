@@ -21,18 +21,16 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/dso.h>
+
 #include "ironbee_config_auto.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <dlfcn.h>
-
-#include <ironbee/types.h>
-#include <ironbee/util.h>
-#include <ironbee/dso.h>
 #include <ironbee/debug.h>
+#include <ironbee/util.h>
 
 #include "ironbee_util_private.h"
+
+#include <dlfcn.h>
 
 ib_status_t DLL_PUBLIC ib_dso_open(ib_dso_t **dso,
                                    const char *file,

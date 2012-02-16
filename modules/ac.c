@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include <ironbee/ahocorasick.h>
 #include <ironbee/bytestr.h>
@@ -46,6 +47,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
 #include <ironbee/types.h>
+#include <ironbee/field.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        ac

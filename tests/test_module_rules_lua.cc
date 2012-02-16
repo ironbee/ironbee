@@ -32,8 +32,9 @@ extern "C" {
 #define TESTING
 
 #include "ibtest_util.hh"
-#include "ironbee/hash.h"
-#include "ironbee/mpool.h"
+#include <ironbee/hash.h>
+#include <ironbee/mpool.h>
+#include <ironbee/field.h>
 #include <string>
 
 namespace {

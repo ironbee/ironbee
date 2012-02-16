@@ -21,11 +21,11 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/bytestr.h>
+
 #include "ironbee_config_auto.h"
 
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
-#include <ironbee/bytestr.h>
 
 #include <bstr.h>
 

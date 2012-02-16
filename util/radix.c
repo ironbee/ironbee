@@ -25,19 +25,18 @@
  * This is a radix tree bitwise implementation initially designed for
  * IP / CIDR addresses.
  */
+
+#include <ironbee/radix.h>
+
 #include "ironbee_config_auto.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
-#include <ironbee/radix.h>
-#include <ironbee/engine.h>
 
 #include "ironbee_util_private.h"
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
 
 /**
  * Creates a new prefix instance

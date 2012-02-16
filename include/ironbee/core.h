@@ -27,13 +27,12 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <stdint.h>
-
 #include <ironbee/build.h>
-#include <ironbee/release.h>
-
 #include <ironbee/types.h>
 #include <ironbee/module.h>
+#include <ironbee/logformat.h>
+
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {

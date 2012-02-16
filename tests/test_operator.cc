@@ -27,6 +27,7 @@
 #include <ironbee/plugin.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
+#include <ironbee/field.h>
 
 #include "ironbee_private.h"
 

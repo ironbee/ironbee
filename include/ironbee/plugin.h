@@ -25,9 +25,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/engine.h>
-#include <ironbee/util.h>
-#include <ironbee/debug.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

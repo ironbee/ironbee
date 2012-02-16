@@ -46,7 +46,9 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
-#include <ironbee_private.h>
+#include <ironbee/field.h>
+
+#include "ironbee_private.h"
 
 /* Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line
  * handling.  It's currently disabled because DebugLog and DebugLogLevel

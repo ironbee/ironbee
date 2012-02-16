@@ -23,13 +23,11 @@
  */
 
 #include <ironbee/operator.h>
+
 #include <ironbee/debug.h>
-#include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 
 #include "ironbee_private.h"
-
-#include <string.h>
 
 ib_status_t ib_operator_register(ib_engine_t *ib,
                                  const char *name,

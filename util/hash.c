@@ -25,12 +25,12 @@
 
 #include <ironbee/hash.h>
 
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
+
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
-
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
 
 /* Internal Declarations */
 

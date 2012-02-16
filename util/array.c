@@ -38,15 +38,15 @@
  * for the task.
  */
 
+#include <ironbee/array.h>
+
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-
-#include <ironbee/types.h>
-#include <ironbee/array.h>
 #include <ironbee/debug.h>
 
 #include "ironbee_util_private.h"
+
+#include <string.h>
 
 ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
                             size_t ninit, size_t nextents)

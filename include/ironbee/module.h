@@ -29,14 +29,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <stdint.h>
-
 #include <ironbee/build.h>
-#include <ironbee/release.h>
-
-#include <ironbee/engine.h>
+#include <ironbee/types.h>
 #include <ironbee/config.h>
-#include <ironbee/logformat.h>
 
 #ifdef __cplusplus
 extern "C" {

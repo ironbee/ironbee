@@ -22,28 +22,18 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/config.h>
+
 #include "ironbee_config_auto.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <strings.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-
-
-#include <ironbee/engine.h>
+#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
-#include <ironbee/hash.h>
-#include <ironbee/config.h>
 
 #include "config-parser.h"
 #include "ironbee_private.h"
+
+#include <fcntl.h>
+#include <errno.h>
 
 /* -- Internal -- */
 

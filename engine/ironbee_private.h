@@ -32,6 +32,8 @@
 #include <ironbee/plugin.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
+#include <ironbee/array.h>
+#include <ironbee/logformat.h>
 
 /**
  * @internal

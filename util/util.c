@@ -21,21 +21,17 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include "ironbee_config_auto.h"
-
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <libgen.h>
-
 #include <ironbee/util.h>
 
-#include "ironbee_util_private.h"
+#include "ironbee_config_auto.h"
 
+#include <stdio.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <libgen.h>
+#include <ctype.h>
+
+#include "ironbee_util_private.h"
 
 /* -- Logging -- */
 

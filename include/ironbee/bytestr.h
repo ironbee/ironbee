@@ -25,24 +25,10 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdint.h>
-
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-
-#include <ironbee/build.h>
-#include <ironbee/release.h>
 #include <ironbee/types.h>
-#include <ironbee/array.h>
-#include <ironbee/list.h>
-#include <ironbee/field.h>
+#include <ironbee/build.h>
+
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +44,33 @@ extern "C" {
 #define IB_BYTESTR_FREADONLY           (1<<0)
 
 #define IB_BYTESTR_CHECK_FREADONLY(f)  ((f) & IB_BYTESTR_FREADONLY)
+
+/**
+ * Parameter for string/length formatter.
+ *
+ * Allow using a string and length for %.*s style formatters.
+ *
+ * @todo Fix with escaping for at least NULs
+ *
+ * @param s String
+ * @param l Length
+ */
+#define IB_BYTESTRSL_FMT_PARAM(s,l)  (int)(l), (const char *)(s)
+
+/**
+ * Parameter for byte string formatter.
+ *
+ * Allows using a ib_bytestr_t with %.*s style formatters.
+ *
+ * @todo Fix for ib_bytestr_t type with escaping for at least NULs
+ *
+ * @param bs Bytestring
+ */
+#define IB_BYTESTR_FMT_PARAM(bs) \
+  (int)ib_bytestr_length(bs), (const char *)ib_bytestr_ptr(bs)
+
+/** Printf style format string for bytestr. */
+#define IB_BYTESTR_FMT         ".*s"
 
 /**
  * Create a byte string.

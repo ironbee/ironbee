@@ -31,6 +31,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
+#include <ironbee/field.h>
 
 class AhoCorasickModuleTest : public BaseFixture {
 public:

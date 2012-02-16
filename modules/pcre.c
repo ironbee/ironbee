@@ -40,6 +40,8 @@
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
+#include <ironbee/util.h>
+#include <ironbee/field.h>
 
 #include <assert.h>
 

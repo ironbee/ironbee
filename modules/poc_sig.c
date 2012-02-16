@@ -35,6 +35,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
+#include <ironbee/field.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME               pocsig

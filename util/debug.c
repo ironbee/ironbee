@@ -21,21 +21,13 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/debug.h>
+
 #include "ironbee_config_auto.h"
 
 #include <stdio.h>
 
-#include <ironbee/debug.h>
-
 #ifdef IB_DEBUG
-
-#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
-/* C99 requires that inttypes.h only exposes PRI* macros
- * for C++ implementations if this is defined: */
-#define __STDC_FORMAT_MACROS
-#endif
-
-#include <inttypes.h>
 
 static FILE *ib_trace_fh;
 

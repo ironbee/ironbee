@@ -27,13 +27,11 @@
  * Logformat helper for custom index file formats
  */
 
+#include <ironbee/logformat.h>
+
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
-#include <ironbee/logformat.h>
 
 #include "ironbee_util_private.h"
 

@@ -39,7 +39,6 @@
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 
-
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        radix
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)

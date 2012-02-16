@@ -33,6 +33,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/operator.h>
+#include <ironbee/field.h>
 
 #include "ironbee_private.h"
 #include "ironbee_core_private.h"

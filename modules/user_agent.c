@@ -30,6 +30,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include <ironbee/types.h>
 #include <ironbee/engine.h>
@@ -39,6 +40,7 @@
 #include <ironbee/hash.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/mpool.h>
+#include <ironbee/field.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        user_agent

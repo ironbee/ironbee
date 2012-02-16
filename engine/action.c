@@ -24,7 +24,6 @@
 
 #include <ironbee/action.h>
 #include <ironbee/debug.h>
-#include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 
 #include "ironbee_private.h"

@@ -42,6 +42,8 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
+#include <ironbee/array.h>
+#include <ironbee/field.h>
 
 #include "lua/ironbee.h"
 

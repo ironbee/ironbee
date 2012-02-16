@@ -22,14 +22,13 @@
  * @todo Add bin to ascii
  */
 
+#include <ironbee/uuid.h>
+
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-
-#include <ironbee/engine.h>
-#include <ironbee/types.h>
-#include <ironbee/uuid.h>
 #include <ironbee/debug.h>
+
+#include <string.h>
 
 ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *uuid,
                                  const char *str)

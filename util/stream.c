@@ -21,15 +21,12 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/stream.h>
+
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-
 #include <ironbee/mpool.h>
-#include <ironbee/stream.h>
 #include <ironbee/debug.h>
-
-#include "ironbee_util_private.h"
 
 ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool)
 {

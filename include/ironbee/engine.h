@@ -26,17 +26,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-
 #include <ironbee/build.h>
-#include <ironbee/release.h>
-#include <ironbee/types.h>
-#include <ironbee/stream.h>
-#include <ironbee/list.h>
 #include <ironbee/uuid.h>
 #include <ironbee/hash.h>
+#include <ironbee/stream.h>
+
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {

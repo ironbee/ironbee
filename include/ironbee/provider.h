@@ -25,15 +25,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
-
 #include <ironbee/build.h>
-#include <ironbee/release.h>
-
+#include <ironbee/types.h>
 #include <ironbee/engine.h>
-#include <ironbee/util.h>
 
 #ifdef __cplusplus
 extern "C" {

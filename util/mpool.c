@@ -23,23 +23,16 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
+#include <ironbee/mpool.h>
+
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-
-#include <ironbee/types.h>
-#include <ironbee/util.h>
 #include <ironbee/debug.h>
-#include <ironbee/mpool.h>
 
 #include "ironbee_util_private.h"
 
-
-/* #define ASSERT_MPOOL */
-#ifdef ASSERT_MPOOL
+#include <stdlib.h>
 #include <assert.h>
-#endif
-
 
 ib_status_t ib_mpool_create(ib_mpool_t **pmp,
                             const char *name,

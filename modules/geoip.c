@@ -27,6 +27,7 @@
 #include <ironbee/provider.h>
 #include <ironbee/util.h>
 #include <ironbee/config.h>
+#include <ironbee/field.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        geoip

@@ -26,6 +26,8 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/release.h>
+
 /**
  * @defgroup IronBeeModule Module
  * @ingroup IronBee
