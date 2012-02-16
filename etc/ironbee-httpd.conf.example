@@ -21,8 +21,9 @@ LoadModule "ibmod_radix.so"
 LoadModule "ibmod_binradix.so"
 LoadModule "ibmod_ac.so"
 LoadModule "ibmod_htp.so"
-LoadModule "ibmod_poc_sig.so"
-LoadModule "ibmod_poc_ac_sig.so"
+LoadModule "ibmod_rules.so"
+#LoadModule "ibmod_poc_sig.so"
+#LoadModule "ibmod_poc_ac_sig.so"
 
 # Lua
 LoadModule "ibmod_lua.so"
@@ -60,7 +61,7 @@ RequestBuffering On
 # Response (TODO Implement)
 #ResponseBuffering Off
 
-PocSigTrace On
+#PocSigTrace On
 
 # -- Sites --
 # TODO: Hostname - currently wildcard can only be on left
@@ -73,14 +74,17 @@ PocSigTrace On
 
     # This signature is handled by modules/poc_sig.c
     # syntax: sigphase field pcre_pattern title
-    PocSigReqHead request_line bar "TESTING: Matched bar in request line."
+#    PocSigReqHead request_line bar "TESTING: Matched bar in request line."
 
     # This signature is handled by modules/poc_ac_sig.c
     # and it's basically like poc_sig but adds a prequalifier content processed
     # by an AhoCorasick Matcher. "foo" is the prequalifier. (bar)+ is a pcre
     # expression that will be inspected if AhoCorasick has match of foo
     # syntax: sigphase field prequalifier pcre_pattern title
-    PocACSigReqHead request_line foo (bar)+ "TESTING: Matched foo and (bar)+ in request line."
+#    PocACSigReqHead request_line foo (bar)+ "TESTING: Matched foo and (bar)+ in request line."
+
+    # Example rule syntax
+    Rule ARGS.foo "@rx bar" id:1 phase:REQUEST msg:foo=bar tag:foo tag:bar event
 
     <Location /foo>
         DebugLogLevel 9
@@ -93,6 +97,10 @@ PocSigTrace On
     # Site ID, must follow UUID format
     SiteId AAAABBBB-1111-2222-4444-000000000002
     Hostname * ip=127.0.1.1
+
+    # Example rule syntax
+    Rule ARGS.foo "@rx bar" id:2 phase:REQUEST msg:foo=bar tag:foo tag:bar event
+
 </Site>
 
 # Default
@@ -100,5 +108,9 @@ PocSigTrace On
     # Site ID, must follow UUID format
     SiteId AAAABBBB-1111-2222-4444-000000000000
     Hostname *
+
+    # Example rule syntax
+    Rule ARGS.foo "@rx bar" id:3 phase:REQUEST msg:foo=bar tag:foo tag:bar event
+
 </Site>
 
