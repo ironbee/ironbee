@@ -44,6 +44,8 @@
 #include <ironbee/module.h> /* Only needed while config is in here. */
 #include <ironbee/provider.h>
 #include <ironbee/plugin.h>
+#include <ironbee/util.h>
+#include <ironbee/debug.h>
 
 
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
@@ -187,7 +189,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
 
         ibd->data->output_buffer = TSIOBufferCreate();
         ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
-        TSDebug("ironbee", "\tWriting %ld bytes on VConn", TSVIONBytesGet(input_vio));
+        TSDebug("ironbee", "\tWriting %lld bytes on VConn", TSVIONBytesGet(input_vio));
         ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
     }
     if (ibd->data->buf) {
