@@ -1828,14 +1828,14 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 #define ib_clog_debug(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
 
 /**
- * Generic Logger for engine..
+ * Generic Logger for engine.
  *
  * @todo Get a real logging framework.
  *
  * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
  *
- * @param ctx Config context
+ * @param ib IronBee engine
  * @param level Log level (0-9)
  * @param prefix String to prefix log header data (or NULL)
  * @param file Filename (or NULL)
