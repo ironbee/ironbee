@@ -23,9 +23,9 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
-#include <ironbee/mpool.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/mpool.h>
 
 #include <ironbee/debug.h>
 
