@@ -132,14 +132,46 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     /* Create a table for the coming function call. */
     lua_newtable(L);
 
-    /* Push key. */
-    lua_pushstring(L, "tx");
+    lua_pushstring(L, "ib_tx");   /* Push key. */
+    lua_pushlightuserdata(L, tx); /* Push value. */
+    lua_settable(L, -3);          /* Assign to -3 key -2 and val -1. */
 
-    /* Push value. */
-    lua_pushlightuserdata(L, tx);
+    lua_pushstring(L, "ib_engine"); /* Push key. */
+    lua_pushlightuserdata(L, ib);   /* Push value. */
+    lua_settable(L, -3);            /* Assign to -3 key -2 and val -1*/
 
-    /* Take key -2 and value -1 and assign it into -3. */
-    lua_settable(L, -3);
+    /* Build an ironbee object. */
+    lua_getglobal(L, "ibapi");/* Push ib table (module) onto stack. */
+    lua_pushstring(L, "ib");  /* Push the key we will store the result at. */
+    lua_pushstring(L, "new"); /* Push the name of the function. */
+    lua_gettable(L, -3);      /* Get the ib.new function. */
+    lua_pushlightuserdata(L, ib); /* Push ib_engine argument to new. */
+    lua_pushlightuserdata(L, tx); /* Push ib_tx argument to new. */
+    lua_rc = lua_pcall(L, 2, 1, 0); /* Make new ib api object. */
+
+    if (lua_rc != 0) {
+        ib_log_error(ib, 1,
+            "Error running Lua Rule %s - %s", func_name, lua_tostring(L, -1));
+        /* Pop (1) error string, (2) string "ib", and (3) new table, (4) func */
+        lua_pop(L, 4);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* At this point the stack is:
+     *  |  rule function  |
+     *  | anonymous table |
+     *  | ib module table |
+     *  |   "ib" string   |
+     *  |   new ib obj    |
+     * Set the table at -4 the key "ib" = the new ib api object.
+     */
+    lua_settable(L, -4);
+
+    /* Pop the ib module table off the stack leaving just the 
+     * user rule function and the anonymous table we are building. */
+    lua_pop(L, 1);
+
+    ib_log_debug(ib, 1, "Executing user rule %s", func_name);
 
     /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
     lua_rc = lua_pcall(L, 1, 1, 0);

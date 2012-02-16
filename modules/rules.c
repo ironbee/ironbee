@@ -785,7 +785,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     const char *lua_preloads[][2] = { { "ffi", "ffi" },
                                       { "ironbee", "ironbee-ffi" },
-                                      { "ib", "ironbee-api" },
+                                      { "ibapi", "ironbee-api" },
                                       { NULL, NULL } };
 
     char *path = NULL;           /**< Tmp string to build a search path. */
@@ -831,7 +831,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     for (i = 0; lua_search_paths[i] != NULL; ++i)
     {
-        ib_log_error(ib, 0,
+        ib_log_debug(ib, 0,
             "Adding %s to lua search path.", lua_search_paths[i]);
 
         /* Strlen + 2. One for \0 and 1 for the path separator. */
