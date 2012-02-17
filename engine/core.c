@@ -984,6 +984,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                         IB_FTRACE_RET_STATUS(IB_OK);
                     }
                 }
+                IB_FTRACE_RET_STATUS(IB_ENOENT);
             }
 
             ib_log_error(dpi->pr->ib, 1, "Trying to lookup subkey in non-list.");
