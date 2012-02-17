@@ -14,5 +14,6 @@ ibcli_cpp_LDFLAGS = \
   -lboost_filesystem \
   -lboost_program_options \
   -lboost_regex \
-  -lstdc++ \
-  -lironbee
+  -lstdc++
+ibcli_cpp_LDADD = \
+  $(top_builddir)/engine/libironbee.la

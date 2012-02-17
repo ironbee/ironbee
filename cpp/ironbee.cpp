@@ -2,6 +2,9 @@
 
 #include <ironbee/config.h>
 #include <ironbee/mpool.h>
+#include <ironbee/release.h>
+#include <ironbee/debug.h>
+#include <ironbee/util.h>
 
 #include <boost/lexical_cast.hpp>
 
