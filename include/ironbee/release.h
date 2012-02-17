@@ -98,7 +98,7 @@ extern "C" {
  *     DD: 2-digit day
  *      n: Revision number if changes more than once in a day (default=0)
  */
-#define IB_ABINUM    (uint32_t)201201120
+#define IB_ABINUM    (uint32_t)201202170
 
 /**
  * @} IronBeeRelease
