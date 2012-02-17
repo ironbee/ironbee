@@ -338,6 +338,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                   (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_error(log->ib, 1, "Could not fetch core configuration: %d", rc );
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     if (corecfg->auditlog_index_fp != NULL) {
