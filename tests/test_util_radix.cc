@@ -36,7 +36,7 @@
 
 /* -- Helper functions -- */
 
-/*
+/* 
  * @internal
  * Helper functions for printing node info
  */
@@ -47,7 +47,7 @@ void padding(int i)
     printf("..");
 }
 
-/*
+/* 
  * @internal
  * Helper functions for printing node info
  */
@@ -69,7 +69,7 @@ void pdata(void* d) {
     printf("%s", data);
 }
 
-/*
+/* 
  * @internal
  * Helper functions for printing node info
  */
@@ -79,7 +79,7 @@ void printKey(ib_radix_prefix_t *prefix)
     printBin(prefix->rawbits, prefix->prefixlen);
 }
 
-/*
+/* 
  * @internal
  * Helper function, prints user data recursively with indentation accumulated
  * from the tree level
@@ -120,7 +120,7 @@ static void ib_radix_node_print_ud(ib_radix_t *radix,
                            bitlen + node->prefix->prefixlen, ud);
 }
 
-/*
+/* 
  * @internal
  * Helper function, prints user data
  */
@@ -133,7 +133,7 @@ static void ib_radix_node_print_ud(ib_radix_t *radix,
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 static void ib_radix_print(ib_radix_t *radix,
-                    uint8_t ud)
+                           uint8_t ud)
 {
   int level = 1;
 
@@ -177,18 +177,15 @@ TEST(TestIBUtilRadix, test_radix_prefix_new)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_prefix_new(&prefix, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_prefix_new() failed - rc != IB_OK";
-
-    ASSERT_TRUE(prefix->rawbits == NULL) << "ib_radix_prefix_new() failed - "
-                                            "there should be no data";
-    ASSERT_TRUE(prefix->prefixlen == 0) << "ib_radix_prefix_new() failed - "
-                                    "wrong number of elements (should be zero)";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(NULL, prefix->rawbits);
+    ASSERT_EQ(0, prefix->prefixlen);
 
     ib_mpool_destroy(mp);
 }
@@ -202,10 +199,10 @@ TEST(TestIBUtilRadix, test_radix_prefix_create_and_destroy)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     uint8_t *prefix_data = (uint8_t *) ib_mpool_calloc(mp, 1, 5);
     prefix_data[0] = 0xAA;
@@ -216,14 +213,10 @@ TEST(TestIBUtilRadix, test_radix_prefix_create_and_destroy)
     
     rc = ib_radix_prefix_create(&prefix, prefix_data, 5 * 8, mp);
 
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_prefix_create() failed - rc != IB_OK";
-    ASSERT_TRUE(prefix->rawbits != NULL) << "ib_radix_prefix_create() failed - "
-                                            "It should be pointing to key1";
-
-    ASSERT_TRUE(prefix->rawbits[0] == 0xAA) << "ib_radix_prefix_create() failed"
-                         " - It should be pointing to a byte with content 'h' ";
-    ASSERT_TRUE(prefix->prefixlen == 5 * 8) << "ib_radix_prefix_create() failed"
-                                   " - wrong prefix bit length (should be 4*8)";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, prefix->rawbits);
+    ASSERT_EQ(0xAA, prefix->rawbits[0]);
+    ASSERT_EQ(5 * 8, prefix->prefixlen);
 
     ib_mpool_destroy(mp);
 }
@@ -237,22 +230,16 @@ TEST(TestIBUtilRadix, test_radix_node_new)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_node_new(&node, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_node_new() failed - rc != IB_OK";
-
-    ASSERT_TRUE(node->zero == NULL) << "ib_radix_node_new() failed -"
-                                       " this pointer should be null";
-    ASSERT_TRUE(node->one == NULL) << "ib_radix_node_new() failed -"
-                                      " this pointer should be null";
-
-    ASSERT_TRUE(node->prefix == NULL) << "ib_radix_node_new() failed -"
-                                         " this pointer should be null";
-    ASSERT_TRUE(node->data == NULL) << "ib_radix_node_new() failed -"
-                                   " wrong number of elements (should be zero)";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(NULL, node->zero);
+    ASSERT_EQ(NULL, node->one);
+    ASSERT_EQ(NULL, node->prefix);
+    ASSERT_EQ(NULL, node->data);
 
     ib_mpool_destroy(mp);
 }
@@ -266,18 +253,15 @@ TEST(TestIBUtilRadix, test_radix_create_and_destroy)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
-
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed -"
-                                         " wrong number of elements";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+    ASSERT_EQ(NULL, radix->start);
 
     ib_mpool_destroy(mp);
 }
@@ -291,20 +275,16 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
-
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed -"
-                                         " wrong number of elements";
-
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+    ASSERT_EQ(NULL, radix->start);
 
     uint8_t *prefix_data = (uint8_t *) ib_mpool_calloc(mp, 1, 5);
     prefix_data[0] = 0xAA;
@@ -315,22 +295,13 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     
     ib_radix_prefix_t *prefix = NULL;
     rc = ib_radix_prefix_create(&prefix, prefix_data, 5 * 8, mp);
-
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_prefix_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_radix_insert_data(radix, prefix, prefix_data);
-
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
-    ASSERT_TRUE(radix->start != NULL) << "ib_radix_insert_data() failed -"
-                                         " There should be a starting node";
-
-    ASSERT_TRUE(radix->start->one != NULL) << "ib_radix_insert_data() failed -"
-                                              " The prefix starts with bit 1 so"
-                                              " start->one should hold a node "
-                                              "with that prefix";
-    ASSERT_TRUE(radix->start->zero == NULL) << "ib_radix_insert_data() failed -"
-                                               " The prefix starts with bit 1 "
-                                               "so start->zero should be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix->start);
+    ASSERT_NE((void*)NULL, radix->start->one);
+    ASSERT_EQ(NULL, radix->start->zero);
 
     prefix_data[0] = 0x0A;
     prefix_data[1] = 0xBB;
@@ -339,15 +310,9 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     prefix_data[4] = 0xEE;
 
     rc = ib_radix_insert_data(radix, prefix, prefix_data);
-
-    ASSERT_TRUE(radix->start->zero != NULL) << "ib_radix_insert_data() failed -"
-                                               " The prefix starts with bit 0 "
-                                               "so start->zero should hold a "
-                                               "node";
-
-    ASSERT_TRUE(radix->start->one != NULL) << "ib_radix_insert_data() failed -"
-                                              " The radix should also have a "
-                                              "previous node at start->one";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix->start->zero);
+    ASSERT_NE((void*)NULL, radix->start->one);
 
     prefix_data[0] = 0x0A;
     prefix_data[1] = 0x0B;
@@ -356,23 +321,11 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     prefix_data[4] = 0xEE;
 
     rc = ib_radix_insert_data(radix, prefix, prefix_data);
-
-    ASSERT_TRUE(radix->start->zero != NULL) << "ib_radix_insert_data() failed -"
-                                               " The prefix starts with bit 0 "
-                                               "so start->zero should hold a "
-                                               "node";
-    ASSERT_TRUE(radix->start->one != NULL) << "ib_radix_insert_data() failed - "
-                                              "The radix should also have a "
-                                              "previous node at start->one";
-
-    ASSERT_TRUE(radix->start->zero->zero != NULL) << "ib_radix_insert_data() "
-                "failed - The new prefix differs with the old one (the second "
-                "inserted) in a 0 (at the second byte = 0x0B), "
-                "so start->zero->zero should hold it";
-    ASSERT_TRUE(radix->start->zero->one != NULL) << "ib_radix_insert_data() "
-                "failed - The old (second) prefix differs with the new one by a"
-                " bit 1 (at the second byte = 0xBB), so start->zero->one should"
-                " hold a node with that prefix";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix->start->zero);
+    ASSERT_NE((void*)NULL, radix->start->one);
+    ASSERT_NE((void*)NULL, radix->start->zero->zero);
+    ASSERT_NE((void*)NULL, radix->start->zero->one);
 
     ib_mpool_destroy(radix->mp);
 }
@@ -387,20 +340,16 @@ TEST(TestIBUtilRadix, test_radix_insert_null_data)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
-
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed - wrong number "
-                                         "of elements";
-
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+    ASSERT_EQ((void*)NULL, radix->start);
 
     uint8_t *prefix_data = (uint8_t *) ib_mpool_calloc(mp, 1, 5);
     prefix_data[0] = 0xAA;
@@ -412,19 +361,13 @@ TEST(TestIBUtilRadix, test_radix_insert_null_data)
     ib_radix_prefix_t *prefix = NULL;
     rc = ib_radix_prefix_create(&prefix, prefix_data, 5 * 8, mp);
 
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_prefix_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_radix_insert_data(radix, prefix, NULL);
-
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
-    ASSERT_TRUE(radix->start != NULL) << "ib_radix_insert_data() failed - There"
-                                         " should be a starting node";
-
-    ASSERT_TRUE(radix->start->one != NULL) << "ib_radix_insert_data() failed - "
-                "The prefix starts with bit 1 so start->one should hold a node "
-                "with that prefix";
-    ASSERT_TRUE(radix->start->zero == NULL) << "ib_radix_insert_data() failed -"
-                " The prefix starts with bit 1 so start->zero should be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix->start);
+    ASSERT_NE((void*)NULL, radix->start->one);
+    ASSERT_EQ((void*)NULL, radix->start->zero);
 
     ib_mpool_destroy(radix->mp);
 }
@@ -446,57 +389,43 @@ TEST(TestIBUtilRadix, test_radix_is_ipv4_ex)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix */
     rc = ib_radix_is_ipv4_ex(ascii1, strlen(ascii1), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check the result */
-    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv4_ex() failed - "
-                                "result should be true - "
-                                "IPv4 address was specified";
+    ASSERT_NE(0, result);
 
     /* IPV6 prefix */
     rc = ib_radix_is_ipv4_ex(ascii2, strlen(ascii2), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check the result */
-    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv4_ex() failed - "
-                                "result should be false - "
-                                "IPv6 address was specified";
+    ASSERT_EQ(0, result);
 
     /* IPV4 prefix */
     rc = ib_radix_is_ipv4_ex(ascii3, strlen(ascii3), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
-
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check the result */
-    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv4_ex() failed - "
-                                "result should be true - "
-                                "IPv4 address was specified";
+    ASSERT_NE(0, result);
 
     /* IPV6 prefix */
     rc = ib_radix_is_ipv4_ex(ascii4, strlen(ascii4), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv4_ex() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check specified prefix bit len from CIDR */
-    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv4_ex() failed - "
-                                "result should be false - "
-                                "IPv6 address was specified";
+    ASSERT_EQ(0, result);
 
     /* Invalid IPV4 prefix */
     rc = ib_radix_is_ipv4_ex(ascii5, sizeof(ascii5), &result);
-    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv4_ex() failed - rc == IB_OK -"
-                                "should have failed because an invalid "
-                                "IPv4 address was specified";
+    ASSERT_NE(IB_OK, rc);
 
     /* IPV6 prefix */
     rc = ib_radix_is_ipv4_ex(ascii6, sizeof(ascii6), &result);
-    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv4_ex() failed - rc == IB_OK -"
-                                "should have failed because an invalid "
-                                "IPv6 address was specified";
-
+    ASSERT_NE(IB_OK, rc);
 }
 
 /* @test Test util radix library - ib_radix_is_ipv6_ex() */
@@ -506,67 +435,50 @@ TEST(TestIBUtilRadix, test_radix_is_ipv6_ex)
     ib_num_t result;
     const char *ascii1 = "192.168.1.10";
     const char *ascii2 = "AAAA:BBBB::1";
-
     const char *ascii3 = "192.168.2.0/23";
     const char *ascii4 = "AAAA:BBBB::1/111";
-
     const char ascii5[] = "192.168.2.0\0/23";
     const char ascii6[] = "AA\0AA:BBBB::1/111";
 
-    
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix */
     rc = ib_radix_is_ipv6_ex(ascii1, strlen(ascii1), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check the result */
-    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv6_ex() failed - "
-                                "result should be false - "
-                                "IPv4 address was specified";
+    ASSERT_EQ(0, result);
 
     /* IPV6 prefix */
     rc = ib_radix_is_ipv6_ex(ascii2, strlen(ascii2), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check the result */
-    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv6_ex() failed - "
-                                "result should be true - "
-                                "IPv6 address was specified";
+    ASSERT_NE(0, result);
 
     /* IPV4 prefix */
     rc = ib_radix_is_ipv6_ex(ascii3, strlen(ascii3), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
-
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check the result */
-    ASSERT_TRUE(result == 0) << "ib_radix_is_ipv6_ex() failed - "
-                                "result should be false - "
-                                "IPv4 address was specified";
+    ASSERT_EQ(0, result);
 
     /* IPV6 prefix */
     rc = ib_radix_is_ipv6_ex(ascii4, strlen(ascii4), &result);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_is_ipv6_ex() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check specified prefix bit len from CIDR */
-    ASSERT_TRUE(result != 0) << "ib_radix_is_ipv6_ex() failed - "
-                                "result should be true - "
-                                "IPv6 address was specified";
+    ASSERT_NE(0, result);
 
     /* Invalid IPV4 prefix */
     rc = ib_radix_is_ipv6_ex(ascii5, sizeof(ascii5), &result);
-    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv6_ex() failed - rc == IB_OK -"
-                                "should have failed because an invalid "
-                                "IPv4 address was specified";
+    ASSERT_NE(IB_OK, rc);
 
     /* IPV6 prefix */
     rc = ib_radix_is_ipv6_ex(ascii6, sizeof(ascii6), &result);
-    ASSERT_TRUE(rc != IB_OK) << "ib_radix_is_ipv6_ex() failed - rc == IB_OK -"
-                                "should have failed because an invalid "
-                                "IPv6 address was specified";
-
+    ASSERT_NE(IB_OK, rc);
 }
 
 /* @test Test util radix library - ib_radix_ip_to_prefix() */
@@ -577,75 +489,60 @@ TEST(TestIBUtilRadix, test_radix_ip_to_prefix)
     ib_radix_prefix_t *prefix = NULL;
     const char *ascii1 = "192.168.1.10";
     const char *ascii2 = "AAAA:BBBB::1";
-
     const char *ascii3 = "192.168.2.0/23";
     const char *ascii4 = "AAAA:BBBB::1/111";
-
 
     char *cidr1 = NULL;
     char *cidr2 = NULL;
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
 
     memcpy(cidr1, ascii1, strlen(ascii1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check default prefix bit len */
-    ASSERT_TRUE(prefix->prefixlen == 32) << "ib_radix_ip_to_prefix() failed - "
-                                            "prefix len should be 32 since no "
-                                            "mask was specified";
+    ASSERT_EQ(32, prefix->prefixlen);
 
     /* IPV6 prefix */
     cidr2 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii2) + 1);
-    ASSERT_TRUE(cidr2 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
-
+    ASSERT_NE((void*)NULL, cidr2);
     memcpy(cidr2, ascii2, strlen(ascii2) + 1);
     rc = ib_radix_ip_to_prefix(cidr2, &prefix, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check default prefix bit len */
-    ASSERT_TRUE(prefix->prefixlen == 128) << "ib_radix_ip_to_prefix() failed - "
-                                            "prefix len should be 128 since no "
-                                            "mask was specified";
+    ASSERT_EQ(128, prefix->prefixlen);
 
     /* IPV4 prefix */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
-
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii3, strlen(ascii3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix() failed - rc != IB_OK";
-
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check specified prefix bit len from CIDR */
-    ASSERT_TRUE(prefix->prefixlen == 23) << "ib_radix_ip_to_prefix() failed - "
-                                            "prefix len should be 23 (as cidr)";
+    ASSERT_EQ(23, prefix->prefixlen);
 
     /* IPV6 prefix */
     cidr2 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii4) + 1);
-    ASSERT_TRUE(cidr2 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr2);
     cidr2 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii4) + 1);
     memcpy(cidr2, ascii4, strlen(ascii4) + 1);
     rc = ib_radix_ip_to_prefix(cidr2, &prefix, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check specified prefix bit len from CIDR */
-    ASSERT_TRUE(prefix->prefixlen == 111) << "ib_radix_ip_to_prefix() failed - "
-                                           "prefix len should be 111 (as cidr)";
+    ASSERT_EQ(111, prefix->prefixlen);
 
     ib_mpool_destroy(mp);
 }
@@ -683,125 +580,114 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ib_list_node_t *node_next;
     
     atexit(ib_shutdown);
+    
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
-
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed - wrong number "
-                                         "of elements";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+    ASSERT_EQ(NULL, radix->start);
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii1, strlen(ascii1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix1, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix1() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix1*/
+    /* We are going to link it to the const ascii representation of the prefix1*/
     rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii2) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii2, strlen(ascii2) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix2*/
+    /* We are going to link it to the const ascii representation of the prefix2*/
     rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii3, strlen(ascii3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix3*/
+    /* We are going to link it to the const ascii representation of the prefix3*/
     rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii4) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii4, strlen(ascii4) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix4*/
+    /* We are going to link it to the const ascii representation of the prefix4*/
     rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5. We are not going to insert this one! */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii5) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii5, strlen(ascii5) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix5, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix5() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(4UL, ib_radix_elements(radix));
 
-    ASSERT_TRUE(ib_radix_elements(radix) == 4) << "ib_radix_elements() failed -"
-                                                  " there should be 4";
 
     /* IPV4 prefix6 (127.0.0.1) */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii6) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii6, strlen(ascii6) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix6, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix6() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix4*/
+    /* We are going to link it to the const ascii representation of the prefix4*/
     rc = ib_radix_insert_data(radix, prefix6, (void*)ascii6);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
-
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix7 (127.0.0.2) Not added */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii7) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii7, strlen(ascii7) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix7, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix7() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix8 (127.0.0.0/24) */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii8) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii8, strlen(ascii8) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix8, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix8() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix4*/
+    /* We are going to link it to the const ascii representation of the prefix4*/
     rc = ib_radix_insert_data(radix, prefix8, (void*)ascii8);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
 
     /* Now that we have some keys inserted, let's test the matching functions */
 
     /* match all */
     rc = ib_radix_match_all_data(radix, prefix3, &results, mp);
-    ASSERT_TRUE(results != NULL) << "results list should not be null";
-
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, results);
     int i = 0;
     IB_LIST_LOOP_SAFE(results, node, node_next) {
         char *val = (char *)ib_list_node_data(node);
-        ASSERT_TRUE(strcmp(val, ascii4) != 0) << "IB_LIST_LOOP_SAFE() failed"
-                                                 " - wrong value";
+        ASSERT_NE(0, strcmp(val, ascii4));
+
         //printf("Elem: %s\n", val);
         i++;
     }   
@@ -809,87 +695,83 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     /* To view the tree contents -> ib_radix_print(radix, 1); */
 
     /* Now that we have some keys inserted, let's test the matching functions */
-    ASSERT_TRUE(ib_list_elements(results) == 3) << "ib_radix_elements() failed"
-                                                  " - there should be 3, got "
-                                                  << ib_list_elements(results);
+    ASSERT_EQ(3UL, ib_list_elements(results));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix5, &result);
-    ASSERT_TRUE(result == NULL) << "We did not insert this key, "
-                                   "so it should be null";
+    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(NULL, result);
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix5, &result);
-    ASSERT_TRUE(result != NULL) << "We did not insert this key, "
-                                   "but closest is data of ascii3";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix6, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii6) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii6));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix7, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii8) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii8));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix6, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii6) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
-
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii6));
 
     ib_mpool_destroy(radix->mp);
 }
@@ -922,90 +804,90 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
 
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed - wrong number "
-                                         "of elements";
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+
+    ASSERT_EQ(NULL, radix->start);
+
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii1, strlen(ascii1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix1, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix1() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix1*/
+    /* We are going to link it to the const ascii representation of the prefix1*/
     rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii2) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii2, strlen(ascii2) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix2*/
+    /* We are going to link it to the const ascii representation of the prefix2*/
     rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii3, strlen(ascii3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix3*/
+    /* We are going to link it to the const ascii representation of the prefix3*/
     rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii4) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii4, strlen(ascii4) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix4*/
+    /* We are going to link it to the const ascii representation of the prefix4*/
     rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5. We are not going to insert this one! */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii5) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii5, strlen(ascii5) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix5, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix5() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    ASSERT_TRUE(ib_radix_elements(radix) == 4) << "ib_radix_elements() failed -"
-                                                  " there should be 4";
+    ASSERT_EQ(4UL, ib_radix_elements(radix));
+
 
     /* Now that we have some keys inserted, let's test the matching functions */
 
     /* match all */
     rc = ib_radix_match_all_data(radix, prefix3, &results, mp);
-    ASSERT_TRUE(results != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, results);
 
     int i = 0;
     IB_LIST_LOOP_SAFE(results, node, node_next) {
         char *val = (char *)ib_list_node_data(node);
-        ASSERT_TRUE(strcmp(val, ascii4) != 0) << "IB_LIST_LOOP_SAFE() failed"
-                                                 " - wrong value";
+        ASSERT_NE(0, strcmp(val, ascii4));
+
         //printf("Elem: %s\n", val);
         i++;
     }   
@@ -1013,65 +895,62 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     /* To view the tree contents -> ib_radix_print(radix, 1); */
 
     /* Now that we have some keys inserted, let's test the matching functions */
-    ASSERT_TRUE(ib_list_elements(results) == 3) << "ib_radix_elements() failed"
-                                                  " - there should be 3, got "
-                                                  << ib_list_elements(results);
+    ASSERT_EQ(3UL, ib_list_elements(results));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix5, &result);
-    ASSERT_TRUE(result == NULL) << "We did not insert this key, "
-                                   "so it should be null";
+    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(NULL, result);
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix5, &result);
-    ASSERT_TRUE(result != NULL) << "We did not insert this key, "
-                                   "but closest is data of ascii3";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     ib_mpool_destroy(radix->mp);
 }
@@ -1103,68 +982,62 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     char *cidr1 = NULL;
 
     atexit(ib_shutdown);
+    
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
-
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed - wrong number "
-                                         "of elements";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+    ASSERT_EQ(NULL, radix->start);
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii1, strlen(ascii1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix1, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix1() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix1*/
+    /* We are going to link it to the const ascii representation of the prefix1*/
     rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii2) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii2, strlen(ascii2) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix2*/
+    /* We are going to link it to the const ascii representation of the prefix2*/
     rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii3, strlen(ascii3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix3*/
+    /* We are going to link it to the const ascii representation of the prefix3*/
     rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii4) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii4, strlen(ascii4) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix4*/
+    /* We are going to link it to the const ascii representation of the prefix4*/
     rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
 
     /* The following prefixes are created only for queries,
@@ -1172,46 +1045,40 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host1, strlen(ascii_host1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix1, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix1() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host2) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host2, strlen(ascii_host2) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host3, strlen(ascii_host3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host4) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host4, strlen(ascii_host4) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii5) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii5, strlen(ascii5) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix5, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix5() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(4UL, ib_radix_elements(radix));
 
-    ASSERT_TRUE(ib_radix_elements(radix) == 4) << "ib_radix_elements() failed -"
-                                                  " there should be 4";
 
     /* Now that we have some keys inserted, let's test the matching functions */
 
@@ -1220,50 +1087,51 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix1, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix1 that in fact is ascii_host1, but we didn't
      * insert it and the closest prefix is ascii1 (the smallest subnet with
      * data of ascii_host1) */
-    ASSERT_TRUE(strcmp(result, ascii1) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii1));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix2 that in fact is ascii_host2, but we didn't
      * insert it and the closest prefix is ascii2 (the smallest subnet with
      * data of ascii_host2) */
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix3 that in fact is ascii_host3, but we didn't
      * insert it and the closest prefix is ascii3 (the smallest subnet with
      * data of ascii_host3) */
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix4 that in fact is ascii_host4, but we didn't
      * insert it and the closest prefix is ascii4 (the smallest subnet with
      * data of ascii_host4) */
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix5, &result);
+    ASSERT_EQ(IB_ENOENT, rc);
     /* So we are searching prefix5 that in fact is ascii_host5, but we didn't
      * insert it and there's NO subnet inserted containing this host, so it
      * should return NULL */
-    ASSERT_TRUE(result == NULL) << "results list should be null";
+    ASSERT_EQ(NULL, result);
 
     ib_mpool_destroy(radix->mp);
 }
@@ -1295,68 +1163,62 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     char *cidr1 = NULL;
 
     atexit(ib_shutdown);
+    
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
-
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed - wrong number "
-                                         "of elements";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+    ASSERT_EQ(NULL, radix->start);
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii1, strlen(ascii1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix1, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix1() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix1*/
+    /* We are going to link it to the const ascii representation of the prefix1*/
     rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii2) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii2, strlen(ascii2) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix2*/
+    /* We are going to link it to the const ascii representation of the prefix2*/
     rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii3, strlen(ascii3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix3*/
+    /* We are going to link it to the const ascii representation of the prefix3*/
     rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii4) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii4, strlen(ascii4) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix4*/
+    /* We are going to link it to the const ascii representation of the prefix4*/
     rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
 
     /* The following prefixes are created only for queries,
@@ -1364,46 +1226,40 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host1, strlen(ascii_host1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix1, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix1() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host2) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host2, strlen(ascii_host2) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host3, strlen(ascii_host3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii_host4) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii_host cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii_host4, strlen(ascii_host4) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii5) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii5, strlen(ascii5) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix5, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix5() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(4UL, ib_radix_elements(radix));
 
-    ASSERT_TRUE(ib_radix_elements(radix) == 4) << "ib_radix_elements() failed -"
-                                                  " there should be 4";
 
     /* Now that we have some keys inserted, let's test the matching functions */
 
@@ -1412,50 +1268,51 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix1, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix1 that in fact is ascii_host1, but we didn't
      * insert it and the closest prefix is ascii1 (the smallest subnet with
      * data of ascii_host1) */
-    ASSERT_TRUE(strcmp(result, ascii1) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii1));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix2 that in fact is ascii_host2, but we didn't
      * insert it and the closest prefix is ascii2 (the smallest subnet with
      * data of ascii_host2) */
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix3 that in fact is ascii_host3, but we didn't
      * insert it and the closest prefix is ascii3 (the smallest subnet with
      * data of ascii_host3) */
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
     /* So we are searching prefix4 that in fact is ascii_host4, but we didn't
      * insert it and the closest prefix is ascii4 (the smallest subnet with
      * data of ascii_host4) */
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix, prefix5, &result);
+    ASSERT_EQ(IB_ENOENT, rc);
     /* So we are searching prefix5 that in fact is ascii_host5, but we didn't
      * insert it and there's NO subnet inserted containing this host, so it
      * should return NULL */
-    ASSERT_TRUE(result == NULL) << "results list should be null";
+    ASSERT_EQ(NULL, result);
 
     ib_mpool_destroy(radix->mp);
 }
@@ -1493,86 +1350,82 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     atexit(ib_shutdown);
 
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp_tmp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_mpool_create(&mp, NULL, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
     
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp_tmp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_new() failed - rc != IB_OK";
-    ASSERT_TRUE(radix != NULL) << "ib_radix_new() failed - NULL value";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, radix);
+    ASSERT_EQ(0UL, ib_radix_elements(radix));
+    ASSERT_EQ(NULL, radix->start);
 
-    ASSERT_TRUE(ib_radix_elements(radix) == 0) << "ib_radix_new() failed -"
-                                                  " wrong number of elements";
-    ASSERT_TRUE(radix->start == NULL) << "ib_radix_new() failed - wrong number "
-                                         "of elements";
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp_tmp, 1, strlen(ascii1) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii1, strlen(ascii1) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix1, mp_tmp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix1() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix1*/
+    /* We are going to link it to the const ascii representation of the prefix1*/
     rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
     cidr1 = (char *) ib_mpool_calloc(mp_tmp, 1, strlen(ascii2) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii2, strlen(ascii2) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix2, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix2() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix2*/
+    /* We are going to link it to the const ascii representation of the prefix2*/
     rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
     cidr1 = (char *) ib_mpool_calloc(mp_tmp, 1, strlen(ascii3) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii3, strlen(ascii3) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix3, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix3() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix3*/
+    /* We are going to link it to the const ascii representation of the prefix3*/
     rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
     cidr1 = (char *) ib_mpool_calloc(mp_tmp, 1, strlen(ascii4) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
+
     memcpy(cidr1, ascii4, strlen(ascii4) + 1);
     rc = ib_radix_ip_to_prefix(cidr1, &prefix4, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix4() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
-    /*We are going to link it to the const ascii representation of the prefix4*/
+    /* We are going to link it to the const ascii representation of the prefix4*/
     rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_insert_data() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5. We are not going to insert this one */
     /* also we are going to use the definitive mem pool */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii5) + 1);
-    ASSERT_TRUE(cidr1 != NULL) << "ib_mpool_calloc() failed - could not "
-                                  "allocate mem for a ascii cidr";
+    ASSERT_NE((void*)NULL, cidr1);
     memcpy(cidr1, ascii5, strlen(ascii5) + 1);
+    
     rc = ib_radix_ip_to_prefix(cidr1, &prefix5, mp);
-    ASSERT_TRUE(rc == IB_OK) << "ib_radix_ip_to_prefix5() failed - rc != IB_OK";
-
-    ASSERT_TRUE(ib_radix_elements(radix) == 4) << "ib_radix_elements() failed -"
-                                                  " there should be 4";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(4UL, ib_radix_elements(radix));
 
     /* Now that we have some keys inserted, let's clone the radix to the other
      * memory pool (mp) */
-
+         
     ib_radix_clone_radix(radix, &radix_ok, mp);
 
     /* destroy the temporary pool */
@@ -1582,13 +1435,14 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
 
     /* match all */
     rc = ib_radix_match_all_data(radix_ok, prefix3, &results, mp);
-    ASSERT_TRUE(results != NULL) << "results list should not be null";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, results);
 
     int i = 0;
     IB_LIST_LOOP_SAFE(results, node, node_next) {
         char *val = (char *)ib_list_node_data(node);
-        ASSERT_TRUE(strcmp(val, ascii4) != 0) << "IB_LIST_LOOP_SAFE() failed"
-                                                 " - wrong value";
+        ASSERT_NE(0, strcmp(val, ascii4));
+
         //printf("Elem: %s\n", val);
         i++;
     }   
@@ -1596,65 +1450,62 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     /* To view the tree contents -> ib_radix_print(radix_ok, 1); */
 
     /* Now that we have some keys inserted, let's test the matching functions */
-    ASSERT_TRUE(ib_list_elements(results) == 3) << "ib_radix_elements() failed"
-                                                  " - there should be 3, got "
-                                                  << ib_list_elements(results);
+    ASSERT_EQ(3UL, ib_list_elements(results));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix_ok, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix_ok, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix_ok, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) << "ib_radix_match_exact() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match exact */
     result = NULL;
     rc = ib_radix_match_exact(radix_ok, prefix5, &result);
-    ASSERT_TRUE(result == NULL) << "We did not insert this key, "
-                                   "so it should be null";
+    ASSERT_EQ(IB_ENOENT, rc);
+    ASSERT_EQ(NULL, result);
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix_ok, prefix2, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii2) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii2));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix_ok, prefix4, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii4) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii4));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix_ok, prefix3, &result);
-    ASSERT_TRUE(result != NULL) << "results list should not be null";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     /* match closest */
     result = NULL;
     rc = ib_radix_match_closest(radix_ok, prefix5, &result);
-    ASSERT_TRUE(result != NULL) << "We did not insert this key, "
-                                   "but closest is data of ascii3";
-    ASSERT_TRUE(strcmp(result, ascii3) == 0) <<"ib_radix_match_closest() failed"
-                                             " - wrong result";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE((void*)NULL, result);
+    ASSERT_EQ(0, strcmp(result, ascii3));
 
     ib_mpool_destroy(mp);
 }
