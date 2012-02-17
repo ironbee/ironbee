@@ -213,8 +213,9 @@ AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
 ### CPP
 AC_ARG_ENABLE(cpp,
               AS_HELP_STRING([--enable-cpp],
-                             [Enabel C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
+                             [Enable C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
 AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
+AM_CONDITIONAL([CPP_CODE], [test "$cpp_code" = "1"])
 
 ### Ragel
 AC_ARG_WITH([ragel],
@@ -388,6 +389,8 @@ fi
 
 if test "$cpp_code" != 0; then
 AC_CONFIG_FILES([cpp/Makefile])
+AC_CONFIG_FILES([ironbeepp/Makefile])
+AC_CONFIG_FILES([ironbeepp/tests/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])
