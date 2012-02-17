@@ -1373,8 +1373,9 @@ static ib_status_t send_header(ib_engine_t* ib,
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
-    reqhdr_buf_t rbuf;            /* Request header buffer for I/O */
-    int          fnum;            /* Request header field number */
+    reqhdr_buf_t rbuf;              /* Request header buffer for I/O */
+    int          fnum;              /* Request header field number */
+    ib_num_t     http_version = 0;  /* HTTP version: 0.9=9, 1.0=10, 1.1=11 */
     static char  linebuf[MAX_LINE_BUF];
     const char  *lineptr;
 
@@ -1390,6 +1391,22 @@ static ib_status_t send_header(ib_engine_t* ib,
      * it to IronBee */
     while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
         size_t linelen = strlen(linebuf);
+
+        /* GET: Parse out the http version */
+        if ( (http_version == 0) && (strncasecmp(linebuf, "GET", 3) == 0) ) {
+            int major;
+            int minor;
+            const char *http = strstr(linebuf, "HTTP/");
+            if (  (http != NULL) &&
+                  ( (sscanf(http, "HTTP/%d.%d", &major, &minor) == 2) ||
+                    (sscanf(http, "http/%d.%d", &major, &minor) == 2) )   )
+            {
+                http_version = (major * 10) + minor;
+            }
+            else {
+                http_version = 9;
+            }
+        }
 
         /* By default, lineptr points at the line buffer */
         lineptr = linebuf;
@@ -1458,9 +1475,11 @@ static ib_status_t send_header(ib_engine_t* ib,
     }
 
     /* Add a empty line */
-    rc = append_req_hdr_buf(&rbuf, "\r\n", 2);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+    if (http_version >= 10) {
+        rc = append_req_hdr_buf(&rbuf, "\r\n", 2);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Send it */
