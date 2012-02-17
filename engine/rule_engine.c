@@ -984,6 +984,7 @@ static ib_status_t fieldop_max_list(ib_engine_t *ib,
                     const char *fval = ib_field_value_nulstr(ifield);
                     value = (ib_num_t)strlen(fval);
                 }
+                break;
 
             case IB_FTYPE_BYTESTR:
                 {
@@ -1076,6 +1077,8 @@ static ib_status_t fieldop_min_list(ib_engine_t *ib,
                     const char *fval = ib_field_value_nulstr(field);
                     value = (ib_num_t)strlen(fval);
                 }
+                break;
+
             case IB_FTYPE_BYTESTR:
                 {
                     ib_bytestr_t *fval = ib_field_value_bytestr(field);
