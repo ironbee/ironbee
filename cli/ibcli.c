@@ -717,7 +717,6 @@ static ib_status_t trace_tx_response(
 static void print_field(const char *label,
                         ib_field_t *field)
 {
-    ib_bytestr_t *bs = NULL;
 
     /* Check the field name
      * Note: field->name is not always a null ('\0') terminated string */
@@ -737,21 +736,29 @@ static void print_field(const char *label,
         case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
             {
                 const char *s = ib_field_value_nulstr(field);
-                if ( (settings.verbose != 0) || (strlen(s) != 0) ) {
-                    printf( "  %s: '%s'\n", label, s );
-                }
-                break;
+                printf( "  %s: '%s'\n", label, s );
             }
+            break;
         case IB_FTYPE_BYTESTR :      /**< Byte string value */
             {
-                bs = ib_field_value_bytestr(field);
+                ib_bytestr_t *bs = ib_field_value_bytestr(field);
                 size_t len = ib_bytestr_length(bs);
-                if ( (settings.verbose != 0) || (len != 0) ) {
+                if (len == 0) {
+                    printf("  %s: ''\n", label);
+                }
+                else {
                     printf( "  %s: '%.*s'\n",
                             label, (int)len, ib_bytestr_ptr(bs) );
                 }
-                break;
             }
+            break;
+        case IB_FTYPE_LIST :         /**< List */
+            {
+                ib_list_t *lst = ib_field_value_list(field);
+                size_t len = IB_LIST_ELEMENTS(lst);
+                printf( "  %s: list:len=%d\n", label, (int)len);
+            }
+            break;
     }
 }
 
@@ -889,6 +896,7 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
                 break;
             case IB_FTYPE_LIST:
                 fullpath = build_path( path, field );
+                print_field(fullpath, field);
                 print_list(fullpath, ib_field_value_list(field) );
                 break;
             default :
@@ -924,6 +932,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_list_t *lst;
+    ib_field_t *field = NULL;
     ib_status_t rc;
 
     ib_log_debug(ib, 9, "print_tx");
@@ -932,6 +941,22 @@ static ib_status_t print_tx( ib_engine_t *ib,
             tx->er_ipstr, tx->conn->remote_port);
     printf("  tx/local: %s:%d\n",
            tx->conn->local_ipstr, tx->conn->local_port);
+    
+    /* ARGS */
+    rc = ib_data_get(tx->dpi, "ARGS", &field);
+    if (rc != IB_OK) {
+        printf("print_tx: Failed to get ARGS: %d\n", rc);
+        ib_log_debug(ib, 4, "print_tx: Failed to get ARGS: %d", rc);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+    print_field("tx/ARGS", field);
+    lst = ib_field_value_list(field);
+    if (lst == NULL) {
+        printf("print_tx: Failed ARGS is not a list\n");
+        ib_log_debug(ib, 4, "print_tx: ARGS is not a list");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+    print_list("tx/ARGS", lst);
 
     /* Not doing a full dump?  Done */
     if (test_dump_flags(DUMP_TX_FULL) == 0) {
