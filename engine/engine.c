@@ -932,6 +932,8 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    ib_log_debug(ib, 9, "CONN EVENT: %s", ib_state_event_name(event));
+
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, conn);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
@@ -967,6 +969,8 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    ib_log_debug(ib, 9, "CONN DATA EVENT: %s", ib_state_event_name(event));
+
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, conndata);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
@@ -1001,6 +1005,9 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    ib_log_debug(ib, 9, "TX DATA EVENT: %s (type %d)",
+                 ib_state_event_name(event), txdata->dtype);
 
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
@@ -1038,6 +1045,8 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    ib_log_debug(ib, 9, "TX EVENT: %s", ib_state_event_name(event));
 
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
@@ -2304,7 +2313,7 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
                     }
                 }
                 else {
-                    ib_log_debug(ib, 6, "Skipping Host %s check against context %s",
+                    ib_log_debug(ib, 6, "Skipping Host \"%s\" check against context %s",
                                  txhost, host?host:"ANY");
                 }
                 if (numhosts > 0) {
