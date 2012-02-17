@@ -54,7 +54,7 @@ TEST(TestIronBee, test_engine_create_null_plugin)
     ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
 
     rc = ib_engine_create(&ib, NULL);
-    ASSERT_EQ(IB_EINVAL, ib_engine_create(&ib, NULL));
+    ASSERT_EQ(IB_EINVAL, rc);
     ASSERT_FALSE(ib);
 }
 

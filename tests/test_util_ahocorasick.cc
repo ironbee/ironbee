@@ -243,7 +243,8 @@ TEST(TestIBUtilAhoCorasick, test_ib_ac_consume)
 
     ib_ac_context_t ac_mctx;
     rc = ib_ac_build_links(ac_tree);
-
+    ASSERT_EQ(IB_OK, rc);
+    
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
     while (ac_mctx.processed < strlen(text)) {
@@ -405,6 +406,7 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_nocase)
     /* Create links and init the matching context */
     ib_ac_context_t ac_mctx;
     rc = ib_ac_build_links(ac_tree);
+    ASSERT_EQ(IB_OK, rc);
 
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
@@ -568,6 +570,7 @@ TEST(TestIBUtilAhoCorasick, ib_ac_consume_multiple_common_prefix)
     /* Create links and init the matching context */
     ib_ac_context_t ac_mctx;
     rc = ib_ac_build_links(ac_tree);
+    ASSERT_EQ(IB_OK, rc);
 
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
