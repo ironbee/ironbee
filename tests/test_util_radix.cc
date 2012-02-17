@@ -184,7 +184,7 @@ TEST(TestIBUtilRadix, test_radix_prefix_new)
     
     rc = ib_radix_prefix_new(&prefix, mp);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(NULL, prefix->rawbits);
+    ASSERT_EQ((void*)NULL, prefix->rawbits);
     ASSERT_EQ(0, prefix->prefixlen);
 
     ib_mpool_destroy(mp);
@@ -236,10 +236,10 @@ TEST(TestIBUtilRadix, test_radix_node_new)
     
     rc = ib_radix_node_new(&node, mp);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(NULL, node->zero);
-    ASSERT_EQ(NULL, node->one);
-    ASSERT_EQ(NULL, node->prefix);
-    ASSERT_EQ(NULL, node->data);
+    ASSERT_EQ((void*)NULL, node->zero);
+    ASSERT_EQ((void*)NULL, node->one);
+    ASSERT_EQ((void*)NULL, node->prefix);
+    ASSERT_EQ((void*)NULL, node->data);
 
     ib_mpool_destroy(mp);
 }
@@ -261,7 +261,7 @@ TEST(TestIBUtilRadix, test_radix_create_and_destroy)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE((void*)NULL, radix);
     ASSERT_EQ(0UL, ib_radix_elements(radix));
-    ASSERT_EQ(NULL, radix->start);
+    ASSERT_EQ((void*)NULL, radix->start);
 
     ib_mpool_destroy(mp);
 }
@@ -284,7 +284,7 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE((void*)NULL, radix);
     ASSERT_EQ(0UL, ib_radix_elements(radix));
-    ASSERT_EQ(NULL, radix->start);
+    ASSERT_EQ((void*)NULL, radix->start);
 
     uint8_t *prefix_data = (uint8_t *) ib_mpool_calloc(mp, 1, 5);
     prefix_data[0] = 0xAA;
@@ -301,7 +301,7 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE((void*)NULL, radix->start);
     ASSERT_NE((void*)NULL, radix->start->one);
-    ASSERT_EQ(NULL, radix->start->zero);
+    ASSERT_EQ((void*)NULL, radix->start->zero);
 
     prefix_data[0] = 0x0A;
     prefix_data[1] = 0xBB;
@@ -591,7 +591,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE((void*)NULL, radix);
     ASSERT_EQ(0UL, ib_radix_elements(radix));
-    ASSERT_EQ(NULL, radix->start);
+    ASSERT_EQ((void*)NULL, radix->start);
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
@@ -722,7 +722,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix5, &result);
     ASSERT_EQ(IB_ENOENT, rc);
-    ASSERT_EQ(NULL, result);
+    ASSERT_EQ((void*)NULL, result);
 
     /* match closest */
     result = NULL;
@@ -815,7 +815,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
 
     ASSERT_EQ(0UL, ib_radix_elements(radix));
 
-    ASSERT_EQ(NULL, radix->start);
+    ASSERT_EQ((void*)NULL, radix->start);
 
 
     /* IPV4 prefix1 */
@@ -922,7 +922,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     result = NULL;
     rc = ib_radix_match_exact(radix, prefix5, &result);
     ASSERT_EQ(IB_ENOENT, rc);
-    ASSERT_EQ(NULL, result);
+    ASSERT_EQ((void*)NULL, result);
 
     /* match closest */
     result = NULL;
@@ -993,7 +993,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE((void*)NULL, radix);
     ASSERT_EQ(0UL, ib_radix_elements(radix));
-    ASSERT_EQ(NULL, radix->start);
+    ASSERT_EQ((void*)NULL, radix->start);
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
@@ -1131,7 +1131,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     /* So we are searching prefix5 that in fact is ascii_host5, but we didn't
      * insert it and there's NO subnet inserted containing this host, so it
      * should return NULL */
-    ASSERT_EQ(NULL, result);
+    ASSERT_EQ((void*)NULL, result);
 
     ib_mpool_destroy(radix->mp);
 }
@@ -1174,7 +1174,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE((void*)NULL, radix);
     ASSERT_EQ(0UL, ib_radix_elements(radix));
-    ASSERT_EQ(NULL, radix->start);
+    ASSERT_EQ((void*)NULL, radix->start);
 
     /* IPV4 prefix1 */
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii1) + 1);
@@ -1312,7 +1312,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     /* So we are searching prefix5 that in fact is ascii_host5, but we didn't
      * insert it and there's NO subnet inserted containing this host, so it
      * should return NULL */
-    ASSERT_EQ(NULL, result);
+    ASSERT_EQ((void*)NULL, result);
 
     ib_mpool_destroy(radix->mp);
 }
@@ -1362,7 +1362,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE((void*)NULL, radix);
     ASSERT_EQ(0UL, ib_radix_elements(radix));
-    ASSERT_EQ(NULL, radix->start);
+    ASSERT_EQ((void*)NULL, radix->start);
 
 
     /* IPV4 prefix1 */
@@ -1477,7 +1477,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     result = NULL;
     rc = ib_radix_match_exact(radix_ok, prefix5, &result);
     ASSERT_EQ(IB_ENOENT, rc);
-    ASSERT_EQ(NULL, result);
+    ASSERT_EQ((void*)NULL, result);
 
     /* match closest */
     result = NULL;
