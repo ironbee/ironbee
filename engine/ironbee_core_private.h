@@ -79,7 +79,7 @@ typedef struct {
  */
 typedef struct {
     const char            *field_name;    /**< The field name */
-    ib_list_t             *field_ops;     /**< List fo field operators */
+    ib_list_t             *field_ops;     /**< List of field operators */
 } ib_rule_target_t;
 
 /**

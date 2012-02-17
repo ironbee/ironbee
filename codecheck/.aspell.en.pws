@@ -1,4 +1,4 @@
-personal_ws-1.1 en 932 
+personal_ws-1.1 en 943 
 cfg
 api
 IronBee
@@ -44,14 +44,15 @@ cnt
 urllib
 SensorId
 cpp
+redeclare
 VConn
 TearDown
 binradix
 BinRadix
 ctl
-DNS
 ffi
 dpi
+DNS
 nThis
 tmpmp
 ctx
@@ -71,12 +72,14 @@ OnOff
 epi
 dst
 env
+geq
 microsec
 maemo
 EOS
 modsec
 dup
 radix
+opname
 linebuf
 ghi
 stderr
@@ -92,9 +95,9 @@ IronBeeEngineTfn
 ibd
 dyn
 msec
-blen
-APIs
 apis
+APIs
+blen
 parr
 internalhash
 ETRUNC
@@ -172,6 +175,7 @@ pcrejit
 len
 perl
 LGE
+leq
 rawbits
 LuaPackageCPath
 ptype
@@ -184,6 +188,7 @@ ckey
 ctxdata
 mem
 corasick
+lld
 Javascript
 nbe
 nsec
@@ -202,6 +207,7 @@ Ostream
 parsers
 abcdef
 lpi
+neq
 onEventTxDataOut
 FixMe
 dataout
@@ -294,6 +300,7 @@ UNPARSEABLE
 ninit
 onEventTxStarted
 copyless
+sep
 filename
 plist
 fillcolor
@@ -453,6 +460,7 @@ psym
 dT
 setn
 SESS
+eq
 errfunc
 fn
 RequestBuffering
@@ -494,6 +502,7 @@ subnet
 lp
 parens
 strval
+lt
 sigs
 lu
 myprefix
@@ -597,6 +606,7 @@ formatter
 teashark
 Deinitialize
 tolower
+ironbeepp
 PocSigReq
 PocSigRes
 hostname
@@ -689,6 +699,7 @@ getnameinfo
 ibmod
 ResponseStarted
 incrementor
+IronBeeLog
 TxDataIn
 backend
 AuditLogDirMode

@@ -1202,7 +1202,7 @@ static ib_status_t parse_field_ops(ib_engine_t *ib,
     char             *opname;            /* Operator name */
     char             *dup_str;           /* Duplicate string */
     ib_field_op_fn_t  last_opfn = NULL;  /* Operator function */
-    
+
 
     /* No parens?  Just store the target string as the field name & return. */
     if (strstr(target_str, "()") == NULL) {
@@ -1273,7 +1273,7 @@ static ib_status_t parse_field_ops(ib_engine_t *ib,
                      (void*)parens, parens);
 #endif
 
-        /* Skip to top of loop if there's no oparator */
+        /* Skip to top of loop if there's no operator */
         if (opname == NULL) {
             continue;
         }
@@ -1317,7 +1317,7 @@ static ib_status_t parse_field_ops(ib_engine_t *ib,
 
     /**
      * The field name is the start of the duplicate string, even after
-     * it's been choped up into pieces.
+     * it's been chopped up into pieces.
      */
     target_field->field_name = dup_str;
     ib_log_debug(ib, 9, "Final target field name is '%s'", dup_str);

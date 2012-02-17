@@ -471,7 +471,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 
 /**
  * @internal
- * Get interger representation of a field
+ * Get integer representation of a field
  *
  * @param[in] ib Ironbee engine.
  * @param[in] field Field value
@@ -525,7 +525,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-            
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
