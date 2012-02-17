@@ -223,10 +223,10 @@ static ib_status_t rewrite_target(ib_cfgparser_t *cp,
      * Loop 'til we reach max count
      */
     while ( (*cur != '\0') && (count < MAX_FIELD_OPS) ) {
-        if (*cur == '#') {
+        if (*cur == '&') {
             ops[count] = ".Count()";
         }
-        else if (*cur == '&') {
+        else if (*cur == '#') {
             ops[count] = ".Length()";
         }
         else {
