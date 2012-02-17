@@ -1800,6 +1800,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                           const uint8_t **chunk)
 {
     ib_engine_t *ib = part->log->ib;
+    ib_list_t *list = (ib_list_t *)part->part_data;
+    void *list_first;
     ib_logevent_t *e;
     uint8_t *rec;
 
@@ -1810,8 +1812,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
      * means it is done. Anything else is a node in the event list.
      */
     if (part->gen_data == NULL) {
-        ib_list_t *list = (ib_list_t *)part->part_data;
-
         /* No events. */
         if (ib_list_elements(list) == 0) {
             ib_log_error(ib, 4, "No events in audit log");
@@ -1828,6 +1828,9 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         part->gen_data = NULL;
         return 0;
     }
+
+    /* Used to detect the first event. */
+    list_first = ib_list_first(list);
 
     e = (ib_logevent_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
     if (e != NULL) {
@@ -1870,8 +1873,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             tags[0] = '\0';
         }
 
-
-
         rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_REC_LEN);
 
         /* Error. */
@@ -1881,6 +1882,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         }
 
         rlen = snprintf((char *)rec, CORE_JSON_MAX_REC_LEN,
+                        "%s"
                         "    {\r\n"
                         "      \"event-id\": %" PRIu32 ",\r\n"
                         "      \"rule-id\": \"%s\",\r\n"
@@ -1899,7 +1901,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"fields\": [],\r\n"
                         "      \"msg\": \"%s\",\r\n"
                         "      \"data\": \"\"\r\n"
-                        "    }\r\n",
+                        "    }",
+                        (list_first == part->gen_data ? "" : ",\r\n"),
                         e->event_id,
                         e->rule_id ? e->rule_id : "-",
                         e->publisher ? e->publisher : "-",
@@ -1941,7 +1944,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         part->gen_data = (void *)-1;
 
-        if (clen+6 > CORE_JSON_MAX_REC_LEN) {
+        if (clen+8 > CORE_JSON_MAX_REC_LEN) {
             if (clen+2 > CORE_JSON_MAX_REC_LEN) {
                 ib_log_error(ib, 4, "Event too large to fit in buffer");
                 *chunk = (const uint8_t *)"    {}\r\n  ]\r\n}";
@@ -1949,8 +1952,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             memcpy(*(uint8_t **)chunk + clen, "]}", 2);
             return clen + 2;
         }
-        memcpy(*(uint8_t **)chunk + clen, "  ]\r\n}", 6);
-        return clen + 6;
+        memcpy(*(uint8_t **)chunk + clen, "\r\n  ]\r\n}", 8);
+        return clen + 8;
     }
 
     return strlen(*(const char **)chunk);
