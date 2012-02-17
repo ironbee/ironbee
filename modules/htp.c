@@ -159,7 +159,7 @@ static int modhtp_callback_log(htp_log_t *log)
 
     /* Log errors with the error code, otherwise it is just debug. */
     if (log->code != 0) {
-        ib_log_debug(modctx->ib, level, "LibHTP [error %d] %s",
+        ib_log_error(modctx->ib, level, "LibHTP [error %d] %s",
                      log->code, log->msg);
     }
     else {
