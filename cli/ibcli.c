@@ -941,7 +941,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
             tx->er_ipstr, tx->conn->remote_port);
     printf("  tx/local: %s:%d\n",
            tx->conn->local_ipstr, tx->conn->local_port);
-    
+
     /* ARGS */
     rc = ib_data_get(tx->dpi, "ARGS", &field);
     if (rc != IB_OK) {
