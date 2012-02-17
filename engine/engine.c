@@ -1416,6 +1416,12 @@ ib_status_t ib_state_notify_request_body(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    if ((tx->flags & IB_TX_FREQ_SEENHEADERS) == 0) {
+        ib_log_debug(ib, 9, "Automatically triggering %s",
+                     ib_state_event_name(request_headers_event));
+        ib_state_notify_request_headers(ib, tx);
+    }
+
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENBODY);
 
     rc = ib_state_notify_request_body_ex(ib, tx);
@@ -1444,6 +1450,18 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(request_finished_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if ((tx->flags & IB_TX_FREQ_SEENHEADERS) == 0) {
+        ib_log_debug(ib, 9, "Automatically triggering %s",
+                     ib_state_event_name(request_headers_event));
+        ib_state_notify_request_headers(ib, tx);
+    }
+
+    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY) == 0) {
+        ib_log_debug(ib, 9, "Automatically triggering %s",
+                     ib_state_event_name(request_body_event));
+        ib_state_notify_request_body(ib, tx);
     }
 
     rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOS);
@@ -1561,6 +1579,12 @@ ib_status_t ib_state_notify_response_body(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    if ((tx->flags & IB_TX_FRES_SEENHEADERS) == 0) {
+        ib_log_debug(ib, 9, "Automatically triggering %s",
+                     ib_state_event_name(response_headers_event));
+        ib_state_notify_response_headers(ib, tx);
+    }
+
     ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
 
     rc = ib_state_notify_tx(ib, response_body_event, tx);
@@ -1582,6 +1606,18 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(response_finished_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if ((tx->flags & IB_TX_FRES_SEENHEADERS) == 0) {
+        ib_log_debug(ib, 9, "Automatically triggering %s",
+                     ib_state_event_name(response_headers_event));
+        ib_state_notify_response_headers(ib, tx);
+    }
+
+    if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENBODY) == 0) {
+        ib_log_debug(ib, 9, "Automatically triggering %s",
+                     ib_state_event_name(response_body_event));
+        ib_state_notify_response_body(ib, tx);
     }
 
     ib_tx_flags_set(tx, IB_TX_FRES_FINISHED);
