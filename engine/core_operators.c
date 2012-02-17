@@ -531,7 +531,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "eq" operator
+ * Execute function for the numeric "equal" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -565,7 +565,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "neq" operator
+ * Execute function for the numeric "not equal" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -575,11 +575,11 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_neq_execute(ib_engine_t *ib,
-                                    ib_tx_t *tx,
-                                    void *data,
-                                    ib_field_t *field,
-                                    ib_num_t *result)
+static ib_status_t op_ne_execute(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 void *data,
+                                 ib_field_t *field,
+                                 ib_num_t *result)
 {
     IB_FTRACE_INIT();
     const ib_num_t *vptr = (const ib_num_t *)data;
@@ -633,7 +633,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "lt" operator
+ * Execute function for the numeric "less-than" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -644,10 +644,10 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t op_lt_execute(ib_engine_t *ib,
-                                    ib_tx_t *tx,
-                                    void *data,
-                                    ib_field_t *field,
-                                    ib_num_t *result)
+                                 ib_tx_t *tx,
+                                 void *data,
+                                 ib_field_t *field,
+                                 ib_num_t *result)
 {
     IB_FTRACE_INIT();
     const ib_num_t *vptr = (const ib_num_t *)data;
@@ -667,7 +667,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "geq" operator
+ * Execute function for the numeric "greater than or equal to" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -677,11 +677,11 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_geq_execute(ib_engine_t *ib,
-                                  ib_tx_t *tx,
-                                  void *data,
-                                  ib_field_t *field,
-                                  ib_num_t *result)
+static ib_status_t op_ge_execute(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 void *data,
+                                 ib_field_t *field,
+                                 ib_num_t *result)
 {
     IB_FTRACE_INIT();
     const ib_num_t *vptr = (const ib_num_t *)data;
@@ -701,7 +701,7 @@ static ib_status_t op_geq_execute(ib_engine_t *ib,
 
 /**
  * @internal
- * Execute function for the "leq" operator
+ * Execute function for the "less than or equal to" operator
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -711,11 +711,11 @@ static ib_status_t op_geq_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_leq_execute(ib_engine_t *ib,
-                                  ib_tx_t *tx,
-                                  void *data,
-                                  ib_field_t *field,
-                                  ib_num_t *result)
+static ib_status_t op_le_execute(ib_engine_t *ib,
+                                 ib_tx_t *tx,
+                                 void *data,
+                                 ib_field_t *field,
+                                 ib_num_t *result)
 {
     IB_FTRACE_INIT();
     const ib_num_t *vptr = (const ib_num_t *)data;
@@ -796,11 +796,11 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 
     /* Register the numeric not-equal operator */
     rc = ib_operator_register(ib,
-                              "neq",
+                              "ne",
                               IB_OP_FLAG_NONE,
                               op_numcmp_create,
                               NULL, /* no destroy function */
-                              op_neq_execute);
+                              op_ne_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -829,22 +829,22 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
 
     /* Register the numeric greater-than or equal to operator */
     rc = ib_operator_register(ib,
-                              "geq",
+                              "ge",
                               IB_OP_FLAG_NONE,
                               op_numcmp_create,
                               NULL, /* no destroy function */
-                              op_geq_execute);
+                              op_ge_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Register the numeric less-than or equal to operator */
     rc = ib_operator_register(ib,
-                              "leq",
+                              "le",
                               IB_OP_FLAG_NONE,
                               op_numcmp_create,
                               NULL, /* no destroy function */
-                              op_leq_execute);
+                              op_le_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
