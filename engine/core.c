@@ -2674,7 +2674,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
 
 
     if (iface == NULL) {
-        /// @todo Probably should not need this check
         ib_log_error(ib, 0, "Failed to fetch parser interface on init");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -4058,6 +4057,7 @@ static ib_status_t core_abs_module_path(ib_engine_t *ib,
     }
 
     strcpy(*pabsfile, basedir);
+    strcat(*pabsfile, "/");
     strcat(*pabsfile, file);
 
     IB_FTRACE_RET_STATUS(IB_OK);
