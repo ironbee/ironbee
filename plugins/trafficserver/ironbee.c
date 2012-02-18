@@ -50,7 +50,7 @@
 
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
-#define ADDRSIZE 48	/* what's the longest IPV6 addr ? */
+#define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
 
 ib_engine_t DLL_LOCAL *ironbee = NULL;
 TSTextLogObject ironbee_log;
@@ -68,7 +68,7 @@ typedef struct {
     /* store the IPs here so we can clean them up and not leak memory */
     char remote_ip[ADDRSIZE];
     char local_ip[ADDRSIZE];
-    TSHttpTxn txnp;	/* hack: conn data requires txnp to access */
+    TSHttpTxn txnp; /* hack: conn data requires txnp to access */
 } ib_ssn_ctx;
 
 typedef struct {
@@ -305,7 +305,8 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
              */
             TSContCall(TSVIOContGet(input_vio), TS_EVENT_VCONN_WRITE_READY, input_vio);
         }
-    } else {
+    }
+    else {
         /* If there is no data left to read, then we modify the output
          * VIO to reflect how much data the output connection should
          * expect. This allows the output connection to know when it
@@ -344,7 +345,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 
     if (TSVConnClosedGet(contp)) {
         TSDebug("ironbee", "\tVConn is closed");
-        TSContDestroy(contp);	/* from null-transform, ???? */
+        TSContDestroy(contp);    /* from null-transform, ???? */
 
 
         return 0;
@@ -409,10 +410,10 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
     if (data->out.buflen == (unsigned int)-1) {
-	TSDebug("ironbee", "\tout_data_event: buflen = -1");
-	ib_log_debug(ironbee, 9,
+    TSDebug("ironbee", "\tout_data_event: buflen = -1");
+    ib_log_debug(ironbee, 9,
                      "ironbee/out_data_event(): buflen = -1");
-	return 0;
+    return 0;
     }
     ibd_ctx direction;
     direction.ibd = &ironbee_direction_resp;
@@ -437,10 +438,10 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
     if (data->out.buflen == (unsigned int)-1) {
-	TSDebug("ironbee", "\tin_data_event: buflen = -1");
-	ib_log_debug(ironbee, 9,
-                     "ironbee/in_data_event(): buflen = -1");
-	return 0;
+    TSDebug("ironbee", "\tin_data_event: buflen = -1");
+    ib_log_debug(ironbee, 9,
+                 "ironbee/in_data_event(): buflen = -1");
+    return 0;
     }
     ibd_ctx direction;
     direction.ibd = &ironbee_direction_req;
@@ -486,6 +487,10 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     ((TS_VERSION_MINOR >= 1) && (TS_VERSION_MICRO >= 3)) ||  \
     (TS_VERSION_MINOR >= 2))
     if (ibd->dir == IBD_RESP) {
+        char *head_buf;
+        char *head_ptr;
+        void *head_start;
+
         /* before the HTTP headers comes the request line / response code */
         rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
         if (rv) {
@@ -502,14 +507,38 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         blockp = TSIOBufferReaderStart(readerp);
 
         len = TSIOBufferBlockReadAvail(blockp, readerp);
-        icdata.data = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+        head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+
+        /* Workaround:
+         * Search for and remove the extra "http://" in the path by
+         * advancing the bytes preceding the extra string forward.
+         *
+         * EX: Here 1 would become 2 (x are removed bytes)
+         *  1) "GET http:///foo HTTP/1.0"
+         *  2) "xxxxxxxGET /foo HTTP/1.0"
+         */
+        head_ptr = strnstr(head_buf, " http:///", len);
+        if (head_ptr != NULL) {
+            while (head_ptr > head_buf) {
+                *(head_ptr + 7) = *head_ptr;
+                --head_ptr;
+            }
+            head_start = head_buf + 7;
+            len -= 7;
+        }
+        else {
+            head_start = head_buf;
+        }
+
+        icdata.data = head_start;
         icdata.dlen = icdata.dalloc = len;
 
         (*ibd->ib_notify)(ironbee, &icdata);
 
         TSIOBufferDestroy(iobufp);
         TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
-    } else {
+    }
+    else {
         rv = TSHttpTxnClientDataGet(txnp, &icdata.data, &icdata.dlen);
         if (rv) {
             TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
