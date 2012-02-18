@@ -456,6 +456,11 @@ ffi.cdef [[
                                    ib_field_t **pf,
                                    const char *tfn);
 
+    ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
+                                      const char *name,
+                                      size_t nlen,
+                                      char *val,
+                                      ib_field_t **pf);
 
     /* Transformations */
     ib_status_t ib_tfn_lookup(ib_engine_t *ib,
@@ -542,6 +547,8 @@ ffi.cdef [[
                         const char *file, int line,
                         const char *fmt, ...);
 
+    /* Mpool */
+    char * ib_mpool_strdup(ib_mpool_t * mp, const char * src);
 ]]
 
 -- Cache lookup of ffi.C
