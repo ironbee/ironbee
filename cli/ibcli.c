@@ -66,6 +66,12 @@ typedef enum {
 #define MAX_REQUEST_HEADERS     8
 #define MAX_FILES            1024
 
+/* Trace context */
+typedef struct {
+    int         request;
+    int         response;
+} trace_context_t;
+
 /* Header / value pairs */
 typedef struct {
     const char *name;           /* Field name buffer */
@@ -662,8 +668,12 @@ static ib_status_t trace_tx_request(
 )
 {
     IB_FTRACE_INIT();
+    trace_context_t *trace_ctx = (trace_context_t *)cbdata;
+
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         settings.trace_request_cnt++;
+        trace_ctx->request = settings.trace_request_cnt;
+
         fprintf(stderr, "REQUEST[%d]: %.*s\n",
                 (int)settings.trace_request_cnt,
                 (int)(txdata->data[txdata->dlen] == '\n' ?
@@ -692,14 +702,27 @@ static ib_status_t trace_tx_response(
 )
 {
     IB_FTRACE_INIT();
+    trace_context_t *trace_ctx = (trace_context_t *)cbdata;
+
+    /* HTTP/0.9 will not have a response line, so rely on context. */
     if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
         settings.trace_response_cnt++;
+        trace_ctx->response = settings.trace_response_cnt;
+
         fprintf(stderr, "RESPONSE[%d]: %.*s\n",
                 (int)settings.trace_response_cnt,
                 (int)(txdata->data[txdata->dlen] == '\n' ?
                       txdata->dlen : txdata->dlen - 1),
                 txdata->data);
     }
+    else if (trace_ctx->request > trace_ctx->response) {
+        settings.trace_response_cnt++;
+        trace_ctx->response = settings.trace_response_cnt;
+
+        fprintf(stderr, "RESPONSE[%d]: HTTP/0.9\n",
+                (int)settings.trace_response_cnt);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1270,6 +1293,12 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
 
     /* Register the trace handlers */
     if (settings.trace) {
+        trace_context_t *trace_ctx =
+            (trace_context_t *)ib_mpool_calloc(ib->mp, 1, sizeof(*trace_ctx));
+        if (trace_ctx == NULL) {
+            fatal_error("Error allocating trace context.");
+        }
+
         if (settings.verbose > 2) {
             printf("Registering trace handlers\n");
         }
@@ -1279,7 +1308,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
             ib,
             tx_data_in_event,
             trace_tx_request,
-            NULL
+            trace_ctx
         );
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register tx request handler: %d\n", rc);
@@ -1291,7 +1320,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
             ib,
             tx_data_out_event,
             trace_tx_response,
-            NULL
+            trace_ctx
         );
         if (rc != IB_OK) {
             fprintf(stderr, "Failed to register tx response handler: %d\n", rc);
