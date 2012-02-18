@@ -156,7 +156,7 @@ public:
     {
         lua_close(L);
 
-        ib_state_notify_conn_closed(ib_engine, ib_conn);
+        //ib_state_notify_conn_closed(ib_engine, ib_conn);
 
         BaseFixture::TearDown();
     }
