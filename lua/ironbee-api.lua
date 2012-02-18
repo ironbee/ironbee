@@ -37,8 +37,8 @@ ibapi.new = function(ib_engine, ib_tx)
     ib_obj.private = {}
 
     -- Store raw C values.
-    ib_obj.private.ib_engine = ib_engine
-    ib_obj.private.ib_tx = ib_tx
+    ib_obj.private.ib_engine = ffi.cast("ib_engine_t*", ib_engine)
+    ib_obj.private.ib_tx = ffi.cast("ib_tx_t*", ib_tx)
 
     -- The private logging function. This function should only be called
     -- by self:log_error(...) or self:log_debug(...) or the file and line
@@ -60,6 +60,26 @@ ibapi.new = function(ib_engine, ib_tx)
     -- Log debug information at level 3.
     ib_obj.log_debug = function(self, msg, ...) 
         self.private:log(3, "LuaAPI - [DEBUG]", msg, ...)
+    end
+
+    ib_obj.setString = function(self, name, value)
+        ffi.C.ib_data_add_nulstr_ex(
+            self.private.ib_tx.dpi,
+            ffi.cast("char*", name),
+            string.len(name),
+            ffi.cast("char*", value),
+            nil)
+    end
+
+    ib_obj.getString = function(self, name)
+        local ib_field = ffi.new("ib_field_t*[1]")
+
+        ffi.C.ib_data_get_ex(self.private.ib_tx.dpi,
+                             name,
+                             string.len(name),
+                             ib_field)
+
+        return ffi.string(ffi.C.ib_field_value(ib_field[0]))
     end
 
     return ib_obj
