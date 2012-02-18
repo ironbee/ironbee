@@ -64,7 +64,7 @@ BUILT_SOURCES = \
 	$(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
 	$(abs_builddir)/AhoCorasickModuleTest.config \
 	$(abs_builddir)/ahocorasick.patterns \
-    $(abs_builddir)/PcreModuleTest.test_load_module.config \
+	$(abs_builddir)/PcreModuleTest.test_load_module.config \
 	$(abs_builddir)/test_module_rules_lua.lua
 	
 $(abs_builddir)/%: $(srcdir)/%
