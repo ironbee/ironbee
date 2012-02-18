@@ -9,6 +9,7 @@ extern "C" {
 #include <ironbee/release.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/mpool.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
@@ -156,7 +157,7 @@ public:
     {
         lua_close(L);
 
-        //ib_state_notify_conn_closed(ib_engine, ib_conn);
+        ib_state_notify_conn_closed(ib_engine, ib_conn);
 
         BaseFixture::TearDown();
     }
@@ -191,7 +192,7 @@ TEST_F(IronBeeLuaApi, get_string)
 {
     const char* key = "key2";
     const char* const_value = "myStringValue";
-    char* value = (char*)malloc(sizeof(const_value)+1);
+    char* value = (char*)ib_mpool_alloc(ib_engine->mp, (sizeof(const_value)+1));
 
     strcpy(value, const_value);
     ib_field_t* ib_field;
@@ -207,7 +208,5 @@ TEST_F(IronBeeLuaApi, get_string)
     ASSERT_STREQ(const_value, lua_tostring(L, -1));
     lua_pop(L, 1);
 
-    free(value);
 }
-
 
