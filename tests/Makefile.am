@@ -13,12 +13,7 @@ include $(top_srcdir)/build/tests.mk
 
 LIBUTIL_LDADD = gtest/libgtest.la $(top_builddir)/util/libibutil.la
 
-HTP_LDADD = -lhtp
-if FREEBSD
-  HTP_LDADD += -liconv
-endif
-
-LDADD = $(LIBUTIL_LDADD) $(HTP_LDADD)
+LDADD = $(LIBUTIL_LDADD)
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
@@ -93,8 +88,6 @@ test_util_list_SOURCES = test_util_list.cc test_main.cc
 test_util_radix_SOURCES = test_util_radix.cc test_main.cc
 
 test_util_field_SOURCES = test_util_field.cc test_main.cc
-test_util_field_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS)
-test_util_field_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 
