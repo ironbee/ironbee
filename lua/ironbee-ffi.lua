@@ -55,6 +55,8 @@ ffi.cdef [[
     typedef struct ib_list_node_t ib_list_node_t;
     typedef uint32_t ib_flags_t;
     typedef uint64_t ib_flags64_t;
+    typedef int64_t ib_num_t;
+    typedef uint64_t ib_unum_t;
     typedef struct ib_cfgmap_t ib_cfgmap_t;
     typedef struct ib_cfgmap_init_t ib_cfgmap_init_t;
     typedef struct ib_field_t ib_field_t;
@@ -355,6 +357,7 @@ ffi.cdef [[
                                  ib_field_t *src);
     ib_status_t ib_field_list_add(ib_field_t *f, ib_field_t *val);
     void *ib_field_value(ib_field_t *f);
+    ib_status_t ib_field_setv(ib_field_t *f, void *pval);
 
     /* Context */
     ib_context_t *ib_context_engine(ib_engine_t *ib);
@@ -464,11 +467,20 @@ ffi.cdef [[
                                       char *val,
                                       ib_field_t **pf);
 
+    ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
+                                   const char *name,
+                                   size_t nlen,
+                                   ib_num_t val,
+                                   ib_field_t **pf);
+
     ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
                                  const char *name,
                                  size_t nlen,
                                  ib_field_t **pf);
-
+    ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
+                                  const char *name,
+                                  size_t nlen,
+                                  ib_field_t **pf);
     /* Transformations */
     ib_status_t ib_tfn_lookup(ib_engine_t *ib,
                               const char *name,

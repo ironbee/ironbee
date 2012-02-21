@@ -173,55 +173,36 @@ TEST_F(IronBeeLuaApi, log_debug)
     eval("ib:log_debug(\"======== Test Log Message %d ========\", 100)");
 }
 
-TEST_F(IronBeeLuaApi, set_string)
+TEST_F(IronBeeLuaApi, add_and_get)
 {
-    const char* key = "key1";
     const char* val = "myStringValue";
 
     // Call ib:setString("key1", "myStringValue")
-    eval(std::string("ib:setString(\"")+key+"\", \""+val+"\")");
+    eval("ib:add(\"key1\", \"myStringValue\")");
+    eval("ib:add(\"key2\", 4)");
 
-    ib_field_t* ib_field;
-    ib_data_get_ex(ib_tx->dpi, key, strlen(key), &ib_field);
+    eval("return ib:get(\"key1\")");
+    eval("return ib:get(\"key2\")");
 
-    ASSERT_TRUE(NULL!=ib_field);
-    ASSERT_STREQ(val, static_cast<char*>(ib_field_value(ib_field)));
-}
+    ASSERT_STREQ(val, lua_tostring(L, -2));
+    ASSERT_EQ(4, lua_tonumber(L, -1));
 
-TEST_F(IronBeeLuaApi, get_string)
-{
-    const char* key = "key2";
-    const char* const_value = "myStringValue";
-    char* value = (char*)ib_mpool_alloc(ib_engine->mp, (sizeof(const_value)+1));
-
-    strcpy(value, const_value);
-    ib_field_t* ib_field;
-    ib_data_add_nulstr_ex(ib_tx->dpi, key, strlen(key), value, &ib_field);
-    ib_data_get_ex(ib_tx->dpi, key, strlen(key), &ib_field);
-
-    ASSERT_TRUE(NULL!=ib_field);
-    ASSERT_STREQ(const_value, static_cast<char*>(ib_field_value(ib_field)));
-
-    // Run return ib:getString("key2")
-    // We require the return to put the value on the lua stack to check.
-    eval(std::string("return ib:getString(\"")+key+"\")");
-    ASSERT_STREQ(const_value, lua_tostring(L, -1));
-    lua_pop(L, 1);
+    lua_pop(L, 2);
 
 }
 
-TEST_F(IronBeeLuaApi, list_fields)
+TEST_F(IronBeeLuaApi, get)
 {
-  eval("t = ib:listFields()");
+    eval("t = ib:get(\"request_headers\")");
 
-  eval("for k,v in pairs(t) do\n"
-       "  print(string.format(\"%s=%s\", k, v))\n"
-       "end");
+    eval("for k,v in pairs(t) do\n"
+         "  ib:log_debug(\"IronBeeLuaApi.get: %s=%s\", v[1], v[2])"
+         "end");
 }
 
-TEST_F(IronBeeLuaApi, list_fields_types)
+TEST_F(IronBeeLuaApi, get_field_list)
 {
-  eval("t = ib:fieldTypes()");
+  eval("t = ib:get_field_list()");
 
   eval("for k,v in pairs(t) do\n"
        "  print(string.format(\"%s=%s\", k, v))\n"
@@ -230,16 +211,7 @@ TEST_F(IronBeeLuaApi, list_fields_types)
 
 TEST_F(IronBeeLuaApi, request_headers)
 {
-  eval("return ib:getList(\"request_headers\")[1]");
-
-  ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
-
-  lua_pop(L, 1);
-}
-
-TEST_F(IronBeeLuaApi, request_headers_table)
-{
-  eval("return ib:getTable(\"request_headers\")[\"Host\"]");
+  eval("return ib:get(\"request_headers\")[1][2]");
 
   ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
 
@@ -248,29 +220,46 @@ TEST_F(IronBeeLuaApi, request_headers_table)
 
 TEST_F(IronBeeLuaApi, add_list)
 {
-  eval("ib:addList(\"MyList\")");
-
-  ib_field_t* ib_field;
   ib_field_t* list_field;
-  const char *a = "a string";
-  ib_field_create_ex(&ib_field,
-                     ib_tx->mp,
-                     "a",
-                     1,
-                     IB_FTYPE_NULSTR,
-                     &a);
 
-  ib_data_get(ib_tx->dpi, "MyList", &list_field);
+  eval("ib:add(\"MyList1\", {})");
 
-  // Adding a list worked.
+  ib_data_get(ib_tx->dpi, "MyList1", &list_field);
   ASSERT_TRUE(NULL!=list_field);
+
+  eval("ib:add(\"MyList1\", { { \"a\", \"b\" }, { \"c\", 21 } } )");
+  eval("return ib:get(\"MyList1\")[1][1]");
+  eval("return ib:get(\"MyList1\")[1][2]");
+  eval("return ib:get(\"MyList1\")[2][1]");
+  eval("return ib:get(\"MyList1\")[2][2]");
+
+  ASSERT_STREQ("a", lua_tostring(L, -4));
+  ASSERT_STREQ("b", lua_tostring(L, -3));
+  ASSERT_STREQ("c", lua_tostring(L, -2));
+  ASSERT_EQ(21, lua_tonumber(L, -1));
+  lua_pop(L, 2);
 }
 
-TEST_F(IronBeeLuaApi, append_list)
+TEST_F(IronBeeLuaApi, set)
 {
-  eval("ib:appendList(\"request_headers\", \"X-Test-Header\", \"Test 321\")");
-  eval("return ib:getTable(\"request_headers\")[\"X-Test-Header\"]");
+    eval("ib:add(\"MyInt\", 4)");
+    eval("ib:add(\"MyString\", \"my string\")");
+    eval("ib:add(\"MyTable\", { { \"a\", \"b\" } })");
 
-  ASSERT_STREQ("Test 321", lua_tostring(L, -1));
-  lua_pop(L, 1);
+    eval("ib:log_info(ib:get(\"MyInt\")+1)");
+    eval("ib:set(\"MyInt\", ib:get(\"MyInt\")+1)");
+    eval("ib:set(\"MyString\", \"my other string\")");
+    eval("ib:set(\"MyTable\", { { \"c\", \"d\" } })");
+
+    eval("return ib:get(\"MyInt\")");
+    eval("return ib:get(\"MyString\")");
+    eval("return ib:get(\"MyTable\")[1][1]");
+    eval("return ib:get(\"MyTable\")[1][2]");
+
+    ASSERT_EQ(5, lua_tonumber(L, -4));
+    ASSERT_STREQ("my other string", lua_tostring(L, -3));
+    ASSERT_STREQ("c", lua_tostring(L, -2));
+    ASSERT_STREQ("d", lua_tostring(L, -1));
+    lua_pop(L, 4);
 }
+

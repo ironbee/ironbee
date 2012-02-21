@@ -19,13 +19,46 @@
 -- Author: Sam Baskinger <sbaskinger@qualys.com>
 --
 -- =========================================================================
-
+--
+-- Public API Documentation
+--
+--
+-- Data Access
+--
+-- add(name, value) - add a string, number or table.
+-- append_to_list(list_name, name, value) - append a value to a list.
+-- get(name) - return a string, number or table.
+-- get_field_list() - Return a list of defined fields.
+-- set(name, value) - set a string, number or table.
+--
+-- Logging
+--
+-- log_error(format, ...) - Log an error message.
+-- log_info(format, ...) - Log an info message.
+-- log_debug(format, ...)- Log a debug message.
+-- 
 
 -- Lua 5.2 and later style module.
 ibapi = {}
 
 local ffi = require("ffi")
 local ironbee = require("ironbee-ffi")
+
+-- Iterate through each list node and pass the node data to
+-- then function as the only argument.
+-- NOTE: The first argument of this is NOT self.
+ibapi.each_list_node = function(ib_list, func)
+    local ib_list_node = ffi.cast("ib_list_node_t*", 
+                                  ffi.C.ib_list_first(ib_list))
+
+    while ib_list_node ~= nil do
+        -- Callback
+        func(ffi.cast("ib_field_t*", ffi.C.ib_list_node_data(ib_list_node)))
+
+        -- Next
+        ib_list_node = ffi.C.ib_list_node_next(ib_list_node)
+    end
+end
 
 -- Create an new ironbee object using the given engine and transaction.
 ibapi.new = function(ib_engine, ib_tx)
@@ -61,22 +94,18 @@ ibapi.new = function(ib_engine, ib_tx)
 
         -- Number
         if field.type == 1 then
-            self:log(7, "[fieldToLua]", "Casting field to number.")
-            return ffi.cast("ib_num_t*", value)[0]
+            return tonumber(ffi.cast("ib_num_t*", value)[0])
 
         -- Unsigned Number
         elseif field.type == 2 then
-            self:log(7, "[fieldToLua]", "Casting field to unsigned number.")
-            return ffi.cast("ib_unum_t*", value)[0]
+            return tonumber(ffi.cast("ib_unum_t*", value)[0])
 
         -- String
         elseif field.type == 3 then
-            self:log(7, "[fieldToLua]", "Casting field to string.")
             return ffi.string(ffi.cast("char*", value))
 
         -- Byte String
         elseif field.type == 4 then
-            self:log(7, "[fieldToLua]", "Casting field to byte string.")
             value = ffi.cast("const ib_bytestr_t*", value)
 
             return ffi.string(ffi.C.ib_bytestr_const_ptr(value),
@@ -84,17 +113,23 @@ ibapi.new = function(ib_engine, ib_tx)
 
         -- Lists - not handled.
         elseif field.type == 5 then
-            self:log(7, "[fieldToLua]", "Unhandled type: List")
-            return nil
+            local t = {}
+
+            ibapi.each_list_node(
+                ffi.cast("ib_list_t*", value),
+                function(data)
+                    t[#t+1] = { ffi.string(data.name, data.nlen),
+                                self:fieldToLua(data) }
+                end)
+
+            return t
 
         -- Stream buffers - not handled.
         elseif field.type == 6 then
-            self:log(7, "[fieldToLua]", "Unhandled type: Stream buffer")
             return nil
 
         -- Anything else - not handled.
         else
-            self:log(7, "[fieldToLua]", "Unhandled type: "..field.type)
             return nil
         end
    end
@@ -127,140 +162,40 @@ ibapi.new = function(ib_engine, ib_tx)
         self.private:log(0, "LuaAPI - [ERROR]", msg, ...)
     end
 
-    -- Log debug information at level 3.
-    ib_obj.log_debug = function(self, msg, ...) 
-        self.private:log(3, "LuaAPI - [DEBUG]", msg, ...)
+    -- Log an info message.
+    ib_obj.log_info = function(self, msg, ...) 
+        -- Note: Extra space after "INFO " is for text alignment.
+        -- It should be there.
+        self.private:log(4, "LuaAPI - [INFO ]", msg, ...)
     end
 
-    -- Return a table of fields mapped to a string representation of their
-    -- type (string, list, etc).
-    ib_obj.fieldTypes = function(self)
-      local fields = { }
-
-      local ib_list = ffi.new("ib_list_t*[1]")
-      ffi.C.ib_list_create(ib_list, self.private.ib_tx.mp)
-      ffi.C.ib_data_get_all(self.private.ib_tx.dpi, ib_list[0])
-
-      local ib_list_node = ffi.new("ib_list_node_t*",
-                           ffi.C.ib_list_first(ib_list[0]))
-
-      while ib_list_node ~= nil do
-        local data = ffi.C.ib_list_node_data(ib_list_node)
-        local field = ffi.cast("ib_field_t*", data)
-
-        name = ffi.string(field.name, field.nlen)
-        local type = nil
-
-        if field.type == 1 then
-          type = "NUMBER"
-        elseif field.type == 2 then
-          type = "UNSIGNED NUMBER"
-        elseif field.type == 3 then
-          type = "STRING"
-        elseif field.type == 4 then
-          type = "BYTE STRING"
-        elseif field.type == 5 then
-          type = "LIST"
-        elseif field.type == 6 then
-          type = "STREAM BUFFER"
-        else
-          type = "Unknown type "..field.type
-        end
-
-        fields[name] = type
-
-        ib_list_node = ffi.C.ib_list_node_next(ib_list_node)
-      end
-
-      return fields 
+    -- Log debug information at level 3.
+    ib_obj.log_debug = function(self, msg, ...) 
+        self.private:log(7, "LuaAPI - [DEBUG]", msg, ...)
     end
 
     -- Return a list of all the fields currently defined.
-    ib_obj.listFields = function(self)
+    ib_obj.get_field_list = function(self)
         local fields = { }
-        local i = 1 -- list iterator
 
         local ib_list = ffi.new("ib_list_t*[1]")
         ffi.C.ib_list_create(ib_list, self.private.ib_tx.mp)
         ffi.C.ib_data_get_all(self.private.ib_tx.dpi, ib_list[0])
 
-        local ib_list_node = ffi.new("ib_list_node_t*",
-                             ffi.C.ib_list_first(ib_list[0]))
-
-        while ib_list_node ~= nil do
-            local data = ffi.C.ib_list_node_data(ib_list_node)
-            local field = ffi.cast("ib_field_t*", data)
-
-            fields[i] = ffi.string(field.name, field.nlen)
-
-            i = i+1
+        ibapi.each_list_node(ib_list[0], function(field)
+            fields[#fields+1] = ffi.string(field.name, field.nlen)
         
             ib_list_node = ffi.C.ib_list_node_next(ib_list_node)
-        end
+        end)
 
         return fields 
     end
 
-    -- Convert a list in the transaction's DPI into a table of strings.
-    ib_obj.getList = function(self, listName)
-        local list = {}
-        local ib_field = self.private:getDpiField(listName)
-        local ib_list  = ffi.cast("ib_list_t*", ffi.C.ib_field_value(ib_field))
-        local ib_list_node = ffi.new("ib_list_node_t*",
-                                     ffi.C.ib_list_first(ib_list))
-        while ib_list_node ~= nil do
-            -- Get the data.
-            local data = ffi.cast("ib_field_t*", 
-                                  ffi.C.ib_list_node_data(ib_list_node))
-
-            -- Convert it to lua and append it to the table.
-            list[#list+1] = self.private:fieldToLua(data)
-
-            -- Next item.
-            ib_list_node = ffi.C.ib_list_node_next(ib_list_node);
-        end
-
-        return list
-    end
-
-    -- Convert a list in the transaction's DPI into a table of key, values.
-    -- If a name appears twice, the table returned will have a list of values
-    -- for that entry.
-    ib_obj.getTable = function(self, listName)
-        local list = {}
-        local ib_field = self.private:getDpiField(listName)
-        local ib_list  = ffi.cast("ib_list_t*", ffi.C.ib_field_value(ib_field))
-        local ib_list_node = ffi.new("ib_list_node_t*",
-                                     ffi.C.ib_list_first(ib_list))
-        while ib_list_node ~= nil do
-            -- Get the data.
-            local data = ffi.cast("ib_field_t*", 
-                                  ffi.C.ib_list_node_data(ib_list_node))
-
-            local name = ffi.string(data.name, data.nlen)
-
-            if list[name] == nil then
-                -- Convert it to lua and append it to the table.
-                list[name] = self.private:fieldToLua(data)
-            else
-                -- Convert it to lua and append it to the table.
-                list[name] = { [1] = list[name],
-                               [2] = self.private:fieldToLua(data) }
-            end
-
-            -- Next item.
-            ib_list_node = ffi.C.ib_list_node_next(ib_list_node);
-        end
-
-        return list
-    end
-
     -- Append a value to the end of the name list. This may be a string
-    -- or a number.
-    ib_obj.appendList = function(self, listName, fieldName, fieldValue)
+    -- or a number. This is used by ib_obj.add to append to a list.
+    ib_obj.append_to_list = function(self, listName, fieldName, fieldValue)
 
         local field = ffi.new("ib_field_t*[1]")
-        local fieldType
         local cfieldValue
 
         -- This if block must define fieldType and cfieldValue
@@ -276,7 +211,14 @@ ibapi.new = function(ib_engine, ib_tx)
                                      fieldValue_p)
 
         elseif type(fieldValue) == 'number' then
-            fieldType = ffi.C.IB_FTYPE_NUM
+            local fieldValue_p = ffi.new("ib_num_t[1]", fieldValue)
+
+            ffi.C.ib_field_create_ex(field,
+                                     self.private.ib_tx.mp,
+                                     ffi.cast("char*", fieldName),
+                                     #fieldName,
+                                     ffi.C.IB_FTYPE_NUM,
+                                     fieldValue_p)
         else
             return
         end
@@ -288,29 +230,87 @@ ibapi.new = function(ib_engine, ib_tx)
         ffi.C.ib_field_list_add(list, field[0])
     end
 
-    ib_obj.addList = function(self, listName)
-        --local list = ffi.new("ib_list_t*[1]")
-        --ffi.C.ib_list_create(list, self.private.ib_tx.mp)
-        ffi.C.ib_data_add_list_ex(self.private.ib_tx.dpi,
-                               ffi.cast("char*", listName),
-                               #listName,
-                               nil)
+    -- Add a string, number, or table to the transaction data provider.
+    -- If value is a string or a number, it is appended to the end of the
+    -- list of values available through the data provider.
+    -- If the value is a table, and the table exists in the data provider,
+    -- then the values are appended to that table. Otherwise, a new
+    -- table is created.
+    ib_obj.add = function(self, name, value)
+        if type(value) == 'string' then
+            ffi.C.ib_data_add_nulstr_ex(self.private.ib_tx.dpi,
+                                        ffi.cast("char*", name),
+                                        string.len(name),
+                                        ffi.cast("char*", value),
+                                        nil)
+        elseif type(value) == 'number' then
+            ffi.C.ib_data_add_num_ex(self.private.ib_tx.dpi,
+                                     ffi.cast("char*", name),
+                                     #name,
+                                     value,
+                                     nil)
+        elseif type(value) == 'table' then
+            local ib_field = ffi.new("ib_field_t*[1]")
+            ffi.C.ib_data_get_ex(self.private.ib_tx.dpi,
+                                 name,
+                                 string.len(name),
+                                 ib_field)
+            
+            -- If there is a value, but it is not a list, make a new table.
+            if ib_field[0] == nil or 
+               ib_field[0].type ~= ffi.C.IB_FTYPE_LIST then
+                ffi.C.ib_data_add_list_ex(self.private.ib_tx.dpi,
+                                          ffi.cast("char*", name),
+                                          string.len(name),
+                                          ib_field)
+            end
+
+            for k,v in pairs(value) do
+                self:append_to_list(name, v[1], v[2])
+            end
+        else
+            self:log_error("Unsupported type %s", type(value))
+        end
     end
 
-    -- Set a string value in the transaction's DPI.
-    ib_obj.setString = function(self, name, value)
-        ffi.C.ib_data_add_nulstr_ex(
-            self.private.ib_tx.dpi,
-            ffi.cast("char*", name),
-            string.len(name),
-            ffi.cast("char*", value),
-            nil)
-    end
+    ib_obj.set = function(self, name, value)
 
-    -- Get a string value from the transaction's DPI.
-    ib_obj.getString = function(self, name)
         local ib_field = self.private:getDpiField(name)
-        return ffi.string(ffi.C.ib_field_value(ib_field))
+
+        if ib_field == nil then
+            self:add(name, value)
+        elseif type(value) == 'string' then
+            local nval = ffi.C.ib_mpool_strdup(self.private.ib_tx.mp,
+                                               ffi.cast("char*", value))
+            
+            local nval_p = ffi.new("char*[1]", nval)
+            ffi.C.ib_field_setv(ib_field, nval_p)
+        elseif type(value) == 'number' then
+            local src = ffi.new("ib_num_t[1]", value)
+            local dst = ffi.cast("ib_num_t*",
+                                 ffi.C.ib_mpool_alloc(self.private.ib_tx.mp,
+                                                      ffi.sizeof("ib_num_t")))
+            ffi.copy(dst, src, ffi.sizeof("ib_num_t"))
+            ffi.C.ib_field_setv(ib_field, dst)
+        elseif type(value) == 'table' then
+            ffi.C.ib_data_remove_ex(self.private.ib_tx.dpi,
+                                    ffi.cast("char*", name),
+                                    #name,
+                                    nil)
+            self:add(name, value)
+        else
+            self:log_error("Unsupported type %s", type(value))
+        end
+    end
+
+    -- Get a value from the transaction's data provider instance.
+    -- If that parameter points to a string, a string is returned.
+    -- If name points to a number, a number is returned.
+    -- If name points to a list of name-value pairs a table is returned
+    --    where
+    ib_obj.get = function(self, name)
+        local ib_field = self.private:getDpiField(name)
+        return self.private:fieldToLua(ib_field)
     end
 
     return ib_obj
