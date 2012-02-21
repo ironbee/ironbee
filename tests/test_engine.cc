@@ -25,20 +25,9 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#include "engine/engine.c"
-#include "engine/logger.c"
-#include "engine/provider.c"
-#include "engine/parser.c"
-#include "engine/config.c"
-#include "engine/config-parser.c"
-#include "engine/data.c"
-#include "engine/tfn.c"
-#include "engine/filter.c"
-#include "engine/core.c"
-#include "engine/rule_engine.c"
-#include "engine/operator.c"
-#include "engine/core_operators.c"
+#include <ironbee/field.h>
 
+#include "config-parser.h"
 #include "ibtest_util.hh"
 
 /// @test Test ironbee library - ib_engine_create()
@@ -49,7 +38,7 @@ TEST(TestIronBee, test_engine_create_null_plugin)
 
     atexit(ib_shutdown);
     rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
+    ASSERT_EQ(IB_OK, rc);
 
     rc = ib_engine_create(&ib, NULL);
     ASSERT_EQ(IB_EINVAL, rc);
