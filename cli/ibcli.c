@@ -84,9 +84,8 @@ typedef struct {
 /* Dump flags */
 #define DUMP_TX                 (1<< 0) /* Dump base transaction */
 #define DUMP_TX_FULL            (1<< 1) /* Dump full transaction */
-#define DUMP_TX_AGGRESSIVE      (1<< 2) /* Aggressive transaction dump */
-#define DUMP_USER_AGENT         (1<< 3) /* Dump user agent data */
-#define DUMP_GEOIP              (1<< 4) /* Dump GeoIP data */
+#define DUMP_USER_AGENT         (1<< 2) /* Dump user agent data */
+#define DUMP_GEOIP              (1<< 3) /* Dump GeoIP data */
 
 /* Runtime settings */
 typedef struct {
@@ -262,7 +261,7 @@ static void help(void)
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
     print_option("trace", NULL, "Enable tracing", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
-                 "tx, tx-full, tx-aggressive, user-agent, geoip");
+                 "tx, tx-full, user-agent, geoip");
     print_option("request-header", "name: value",
                  "Specify request field & value", 0, NULL );
     print_option("request-header", "-name:",
@@ -464,10 +463,6 @@ static ib_status_t command_line(int argc, char *argv[])
             }
             else if (strcasecmp(optarg, "tx-full") == 0) {
                 settings.dump_flags |= (DUMP_TX|DUMP_TX_FULL);
-            }
-            else if (strcasecmp(optarg, "tx-aggressive") == 0) {
-                settings.dump_flags |=
-                    (DUMP_TX|DUMP_TX_FULL|DUMP_TX_AGGRESSIVE);
             }
             else {
                 fprintf(stderr, "Unknown dump: %s", optarg);
@@ -834,58 +829,6 @@ static const char *build_path( const char *path, ib_field_t *field )
     return fullpath;
 }
 
-/* Crude ugly hack */
-static int valid_dptr( void *p)
-{
-    static void *minptr = (void*)0xff;
-    static void *maxptr = (void*)0xffffff;
-    return (p >= minptr) && (p <= maxptr);
-}
-
-static ib_status_t print_list(const char *path, ib_list_t *lst);
-static void print_other(const char *path, void *data)
-{
-    ib_list_t *lst;
-    ib_field_t *field;
-    uint8_t *p;
-    unsigned i;
-
-    /* Try to treat @a data as an ib_list_t pointer */
-    lst = (ib_list_t *)data;
-    if ( (lst->nelts < 100) &&
-         (valid_dptr(lst->head) != 0) &&
-         (valid_dptr(lst->tail) != 0) )
-    {
-        if (settings.verbose > 2) {
-            printf("  ->Treating %p as a list\n", data);
-        }
-        print_list(path, lst);
-        return;
-    }
-
-    /* Try to treat @a data as an ib_field_t pointer */
-    field = (ib_field_t *)data;
-    if (field->nlen <= 32) {
-        if (settings.verbose > 2) {
-            printf("  ->Treating %p as a field\n", data);
-        }
-        print_field(path, field);
-        return;
-    }
-
-    /* No idea what this thing is. */
-    if (settings.verbose > 2) {
-        printf("I have no idea what %p is:", data);
-        for (i = 0, p = (uint8_t *)data;  i < 32;  ++i, ++p) {
-            if ( (i & 0x7) == 0) {
-                printf("%02x:", i);
-            }
-            printf("%02x ", (unsigned int)(*p & 0xff) );
-        }
-        printf("\n");
-    }
-}
-
 /**
  * @internal
  * Print transaction details.
@@ -914,18 +857,15 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
             case IB_FTYPE_UNUM:
             case IB_FTYPE_NULSTR:
             case IB_FTYPE_BYTESTR:
-                fullpath = build_path( path, field );
+                fullpath = build_path(path, field);
                 print_field(fullpath, field);
                 break;
             case IB_FTYPE_LIST:
-                fullpath = build_path( path, field );
+                fullpath = build_path(path, field);
                 print_field(fullpath, field);
                 print_list(fullpath, ib_field_value_list(field) );
                 break;
             default :
-                if (test_dump_flags(DUMP_TX_AGGRESSIVE) != 0) {
-                    print_other(path, data);
-                }
                 break;
         }
         free( (char *)fullpath );
