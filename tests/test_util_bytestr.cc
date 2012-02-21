@@ -24,155 +24,133 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/mpool.h>
+#include <ironbee/util.h>
+#include <ironbee/bytestr.h>
+
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#include "util/util.c"
-#include "util/mpool.c"
-#include "util/bytestr.c"
-#include "util/debug.c"
+#include <stdexcept>
 
+class TestIBUtilByteStr : public ::testing::Test
+{
+public:
+    TestIBUtilByteStr()
+    {
+        ib_status_t rc;
+        
+        ib_initialize();
+        rc = ib_mpool_create(&m_pool, NULL, NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not create mpool.");
+        }
+    }
+    
+    ~TestIBUtilByteStr()
+    {
+        ib_shutdown();        
+    }
+    
+protected:
+    ib_mpool_t* m_pool;
+};
 
 /* -- Tests -- */
 
 /// @test Test util bytestr library - ib_bytestr_create() and ib_bytestr_destroy()
-TEST(TestIBUtilByteStr, test_bytestr_create_and_destroy)
+TEST_F(TestIBUtilByteStr, test_bytestr_create_and_destroy)
 {
-    ib_mpool_t *mp;
     ib_bytestr_t *bs;
     ib_status_t rc;
     
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-    
-    rc = ib_bytestr_create(&bs, mp, 10);
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_create() failed - rc != IB_OK";
-    ASSERT_TRUE(bs != NULL) << "ib_bytestr_create() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs) == 0) << "ib_bytestr_create() failed - wrong length ";
-    ASSERT_TRUE(ib_bytestr_size(bs) == 10) << "ib_bytestr_create() failed - wrong size";
-
-    ib_mpool_destroy(mp);
+    rc = ib_bytestr_create(&bs, m_pool, 10);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs);
+    ASSERT_EQ(0UL, ib_bytestr_length(bs));
+    ASSERT_EQ(10UL, ib_bytestr_size(bs));
 }
 
 /// @test Test util bytestr library - ib_bytestr_dup_mem()
-TEST(TestIBUtilByteStr, test_bytestr_dup_mem)
+TEST_F(TestIBUtilByteStr, test_bytestr_dup_mem)
 {
-    ib_mpool_t *mp;
     ib_bytestr_t *bs;
     ib_status_t rc;
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     uint8_t *ptr;
-    
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-    
-    rc = ib_bytestr_dup_mem(&bs, mp, data, sizeof(data));
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_dup_mem() failed - rc != IB_OK";
-    ASSERT_TRUE(bs != NULL) << "ib_bytestr_dup_mem() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs) == 6) << "ib_bytestr_dup_mem() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs) == 6) << "ib_bytestr_dup_mem() failed - wrong size";
+        
+    rc = ib_bytestr_dup_mem(&bs, m_pool, data, sizeof(data));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs);
+    ASSERT_EQ(6UL, ib_bytestr_length(bs));
+    ASSERT_EQ(6UL, ib_bytestr_size(bs));
     ptr = ib_bytestr_ptr(bs);
-    ASSERT_TRUE(ptr != data) << "ib_bytestr_dup_mem() failed - not a copy";
-    ASSERT_TRUE(strncmp("abcdef", (char *)ptr, 6) == 0) << "ib_bytestr_dup_mem() failed - wrong data";
-
-    ib_mpool_destroy(mp);
+    ASSERT_NE(data, ptr);
+    ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 }
 
 /// @test Test util bytestr library - ib_bytestr_dup_nulstr()
-TEST(TestIBUtilByteStr, test_bytestr_dup_nulstr)
+TEST_F(TestIBUtilByteStr, test_bytestr_dup_nulstr)
 {
-    ib_mpool_t *mp;
     ib_bytestr_t *bs;
     ib_status_t rc;
     char data[] = "abcdef";
     uint8_t *ptr;
-    
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-    
-    rc = ib_bytestr_dup_nulstr(&bs, mp, data);
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_dup_nulstr() failed - rc != IB_OK";
-    ASSERT_TRUE(bs != NULL) << "ib_bytestr_dup_nulstr() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs) == 6) << "ib_bytestr_dup_nulstr() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs) == 6) << "ib_bytestr_dup_nulstr() failed - wrong size";
+        
+    rc = ib_bytestr_dup_nulstr(&bs, m_pool, data);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs);
+    ASSERT_EQ(6UL, ib_bytestr_length(bs));
+    ASSERT_EQ(6UL, ib_bytestr_size(bs));
     ptr = ib_bytestr_ptr(bs);
-    ASSERT_TRUE(ptr != (uint8_t *)data) << "ib_bytestr_dup_nulstr() failed - not a copy";
-    ASSERT_TRUE(strncmp("abcdef", (char *)ptr, 6) == 0) << "ib_bytestr_dup_nulstr() failed - wrong data: " << ptr;
-
-    ib_mpool_destroy(mp);
+    ASSERT_NE(data, ptr);
+    ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 }
 
 /// @test Test util bytestr library - ib_bytestr_alias_mem()
-TEST(TestIBUtilByteStr, test_bytestr_alias_mem)
+TEST_F(TestIBUtilByteStr, test_bytestr_alias_mem)
 {
-    ib_mpool_t *mp;
     ib_bytestr_t *bs;
     ib_status_t rc;
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     uint8_t *ptr;
     
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-    
-    rc = ib_bytestr_alias_mem(&bs, mp, data, sizeof(data));
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_alias_mem() failed - rc != IB_OK";
-    ASSERT_TRUE(bs != NULL) << "ib_bytestr_alias_mem() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs) == 6) << "ib_bytestr_alias_mem() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs) == 6) << "ib_bytestr_alias_mem() failed - wrong size";
+    rc = ib_bytestr_alias_mem(&bs, m_pool, data, sizeof(data));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs);
+    ASSERT_EQ(6UL, ib_bytestr_length(bs));
+    ASSERT_EQ(6UL, ib_bytestr_size(bs));
     ptr = ib_bytestr_ptr(bs);
-    ASSERT_TRUE(ptr == data) << "ib_bytestr_alias_mem() failed - copied";
-    ASSERT_TRUE(strncmp("abcdef", (char *)ptr, 6) == 0) << "ib_bytestr_alias_mem() failed - wrong data";
+    ASSERT_EQ(data, ptr);
+    ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
     rc = ib_bytestr_append_nulstr(bs, "foo");
-    ASSERT_TRUE(rc == IB_EINVAL) << "ib_bytestr_alias_mem() failed - read/write";
-
-    ib_mpool_destroy(mp);
+    ASSERT_EQ(IB_EINVAL, rc);
 }
 
 /// @test Test util bytestr library - ib_bytestr_alias_nulstr()
-TEST(TestIBUtilByteStr, test_bytestr_alias_nulstr)
+TEST_F(TestIBUtilByteStr, test_bytestr_alias_nulstr)
 {
-    ib_mpool_t *mp;
+    ib_mpool_t *m_pool;
     ib_bytestr_t *bs;
     ib_status_t rc;
     char data[] = "abcdef";
     uint8_t *ptr;
-    
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-    
-    rc = ib_bytestr_alias_nulstr(&bs, mp, data);
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_alias_nulstr() failed - rc != IB_OK";
-    ASSERT_TRUE(bs != NULL) << "ib_bytestr_alias_nulstr() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs) == 6) << "ib_bytestr_alias_nulstr() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs) == 6) << "ib_bytestr_alias_nulstr() failed - wrong size";
+        
+    rc = ib_bytestr_alias_nulstr(&bs, m_pool, data);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs);
+    ASSERT_EQ(6UL, ib_bytestr_length(bs));
+    ASSERT_EQ(6UL, ib_bytestr_size(bs));
     ptr = ib_bytestr_ptr(bs);
-    ASSERT_TRUE(ptr == (uint8_t *)data) << "ib_bytestr_alias_nulstr() failed - copied";
-    ASSERT_TRUE(strncmp("abcdef", (char *)ptr, 6) == 0) << "ib_bytestr_alias_nulstr() failed - wrong data";
+    ASSERT_EQ((uint8_t *, ptr);
+    ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
     rc = ib_bytestr_append_nulstr(bs, "foo");
-    ASSERT_TRUE(rc == IB_EINVAL) << "ib_bytestr_alias_nulstr() failed - read/write";
-
-    ib_mpool_destroy(mp);
+    ASSERT_EQ(IB_EINVAL, rc);
 }
 
 /// @test Test util bytestr library - ib_bytestr_append_*()
-TEST(TestIBUtilByteStr, test_bytestr_append)
+TEST_F(TestIBUtilByteStr, test_bytestr_append)
 {
-    ib_mpool_t *mp;
     ib_bytestr_t *bs1;
     ib_bytestr_t *bs2;
     ib_status_t rc;
@@ -181,52 +159,44 @@ TEST(TestIBUtilByteStr, test_bytestr_append)
     char data3[] = "foo";
     uint8_t data4[] = { 'b', 'a', 'r' };
     uint8_t *ptr;
-    
-    atexit(ib_shutdown);
-    rc = ib_initialize();
-    ASSERT_TRUE(rc == IB_OK) << "ib_initialize() failed - rc != IB_OK";
-    rc = ib_mpool_create(&mp, NULL);
-    ASSERT_TRUE(rc == IB_OK) << "ib_mpool_create() failed - rc != IB_OK";
-    
-    rc = ib_bytestr_dup_nulstr(&bs1, mp, data1);
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_append() failed - rc != IB_OK";
-    ASSERT_TRUE(bs1 != NULL) << "ib_bytestr_append() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs1) == 6) << "ib_bytestr_append() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs1) == 6) << "ib_bytestr_append() failed - wrong size";
+        
+    rc = ib_bytestr_dup_nulstr(&bs1, m_pool, data1);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs1);
+    ASSERT_EQ(6UL, ib_bytestr_length(bs1));
+    ASSERT_EQ(6UL, ib_bytestr_size(bs1));
     ptr = ib_bytestr_ptr(bs1);
-    ASSERT_TRUE(strncmp("abcdef", (char *)ptr, 6) == 0) << "ib_bytestr_append() failed - wrong data";
+    ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 
-    rc = ib_bytestr_dup_nulstr(&bs2, mp, data2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_append() failed - rc != IB_OK";
-    ASSERT_TRUE(bs2 != NULL) << "ib_bytestr_append() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs2) == 6) << "ib_bytestr_append() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs2) == 6) << "ib_bytestr_append() failed - wrong size";
+    rc = ib_bytestr_dup_nulstr(&bs2, m_pool, data2);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs2);
+    ASSERT_EQ(6UL, ib_bytestr_length(bs2));
+    ASSERT_EQ(6UL, ib_bytestr_size(bs2));
     ptr = ib_bytestr_ptr(bs2);
-    ASSERT_TRUE(strncmp("ghijkl", (char *)ptr, 6) == 0) << "ib_bytestr_append() failed - wrong data";
+    ASSERT_EQ(0, strncmp("ghijkl", (char *)ptr, 6));
 
     rc = ib_bytestr_append(bs1, bs2);
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_append() failed - rc != IB_OK";
-    ASSERT_TRUE(bs1 != NULL) << "ib_bytestr_append() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs1) == 12) << "ib_bytestr_append() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs1) == 12) << "ib_bytestr_append() failed - wrong size";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs1);
+    ASSERT_EQ(12UL, ib_bytestr_length(bs1));
+    ASSERT_EQ(12UL, ib_bytestr_size(bs1));
     ptr = ib_bytestr_ptr(bs1);
-    ASSERT_TRUE(strncmp("abcdefghijkl", (char *)ptr, 12) == 0) << "ib_bytestr_append() failed - wrong data";
+    ASSERT_EQ(0, strncmp("abcdefghijkl", (char *)ptr, 12));
 
     rc = ib_bytestr_append_nulstr(bs1, data3);
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_append() failed - rc != IB_OK";
-    ASSERT_TRUE(bs1 != NULL) << "ib_bytestr_append() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs1) == 15) << "ib_bytestr_append() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs1) == 15) << "ib_bytestr_append() failed - wrong size";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs1);
+    ASSERT_EQ(15UL, ib_bytestr_length(bs1));
+    ASSERT_EQ(15UL, ib_bytestr_size(bs1));
     ptr = ib_bytestr_ptr(bs1);
-    ASSERT_TRUE(strncmp("abcdefghijklfoo", (char *)ptr, 15) == 0) << "ib_bytestr_append() failed - wrong data";
+    ASSERT_EQ(0, strncmp("abcdefghijklfoo", (char *)ptr, 15));
 
     rc = ib_bytestr_append_mem(bs1, data4, sizeof(data4));
-    ASSERT_TRUE(rc == IB_OK) << "ib_bytestr_append() failed - rc != IB_OK";
-    ASSERT_TRUE(bs1 != NULL) << "ib_bytestr_append() failed - NULL value";
-    ASSERT_TRUE(ib_bytestr_length(bs1) == 18) << "ib_bytestr_append() failed - wrong length";
-    ASSERT_TRUE(ib_bytestr_size(bs1) == 18) << "ib_bytestr_append() failed - wrong size";
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(bs1);
+    ASSERT_EQ(18UL, ib_bytestr_length(bs1));
+    ASSERT_EQ(18UL, ib_bytestr_size(bs1));
     ptr = ib_bytestr_ptr(bs1);
-    ASSERT_TRUE(strncmp("abcdefghijklfoobar", (char *)ptr, 18) == 0) << "ib_bytestr_append() failed - wrong data";
-
-    ib_mpool_destroy(mp);
+    ASSERT_EQ(0, strncmp("abcdefghijklfoobar", (char *)ptr, 18));
 }
