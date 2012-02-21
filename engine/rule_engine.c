@@ -155,7 +155,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         ib_list_t *vlist = ib_field_value_list(value);
         ib_list_node_t *node = NULL;
         ib_num_t n = 0;
-        
+
         ib_log_debug(ib, 9, "Value field is a list: looping %zd", vlist->nelts);
         IB_LIST_LOOP(vlist, node) {
             ib_field_t   *nvalue = (ib_field_t *)ib_list_node_data(node);
