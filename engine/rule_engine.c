@@ -59,6 +59,13 @@ static rule_cbdata_t rule_cbdata[] = {
 #define IB_RULES_INIT_RULESET     (1 << 0)   /**< Initialize the ruleset */
 #define IB_RULES_INIT_CALLBACKS   (1 << 1)   /**< Initialize the callbacks */
 
+/**
+ * The rule engine uses recursion to walk through lists and chains.  These
+ * define the limits to the depth of those recursions.
+ **/
+#define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
+#define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
+
 
 /**
  * @internal
@@ -132,10 +139,11 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
  * Execute a rule on a list of values
  *
  * @param[in] ib Engine
- * @param[in] fvalues List of field values
+ * @param[in] tx Transaction
  * @param[in] opinst Operator instance
  * @param[in] fname Field name
- * @param[in] tx Transaction
+ * @param[in] value Field value to operate on
+ * @param[in] recursion Recursion limit -- won't recurse if recursion is zero
  * @param[out] rule_result Pointer to number in which to store the result
  *
  * @returns Status code
@@ -145,10 +153,17 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
                                          ib_operator_inst_t *opinst,
                                          const char *fname,
                                          ib_field_t *value,
+                                         ib_num_t recursion,
                                          ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
+
+    /* Limit recursion */
+    if (--recursion <= 0) {
+        ib_log_error(ib, 4, "Rule engine: List recursion limit reached");
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
 
     /* Handle a list by looping through it */
     if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
@@ -161,7 +176,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
             ++n;
 
             rc = execute_rule_operator(
-                ib, tx, opinst, fname, nvalue, rule_result);
+                ib, tx, opinst, fname, nvalue, recursion, rule_result);
             if (rc != IB_OK) {
                 ib_log_debug(ib, 4,
                              "Error executing %s on list element #%d: %d",
@@ -267,7 +282,13 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         }
 
         /* Execute the rule operator */
-        rc = execute_rule_operator(ib, tx, opinst, fname, fopvalue, &result);
+        rc = execute_rule_operator(ib,
+                                   tx,
+                                   opinst,
+                                   fname,
+                                   fopvalue,
+                                   MAX_LIST_RECURSION,
+                                   &result);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Operator %s returned an error for field %s: %d",
@@ -392,6 +413,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
  * @param[in] ib Engine
  * @param[in] event Event type
  * @param[in,out] tx Transaction
+ * @param[in] recursion Recursion limit
  * @param[in,out] rule_result Result of rule execution
  *
  * @returns Status code
@@ -399,12 +421,19 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 static ib_status_t execute_rule_all(ib_engine_t *ib,
                                     ib_rule_t *rule,
                                     ib_tx_t *tx,
+                                    ib_num_t recursion,
                                     ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     ib_list_t   *actions;
     ib_status_t  rc = IB_OK;
     ib_status_t  trc;         /* Temporary status code */
+
+    /* Limit recursion */
+    if (--recursion <= 0) {
+        ib_log_error(ib, 4, "Rule engine: Chain recursion limit reached");
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
 
     /* Initialize the rule result */
     *rule_result = 0;
@@ -452,7 +481,11 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
         ib_log_debug(ib, 9,
                      "Chaining to rule %s",
                      rule->chained_rule->meta.id);
-        trc = execute_rule_all(ib, rule->chained_rule, tx, rule_result);
+        trc = execute_rule_all(ib,
+                               rule->chained_rule,
+                               tx,
+                               recursion,
+                               rule_result);
         if (trc != IB_OK) {
             ib_log_error(ib, 4, "Error executing chained rule %s",
                          rule->chained_rule->meta.id);
@@ -518,7 +551,11 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
         ib_status_t  rule_rc;
 
         /* Execute the rule, it's actions and chains */
-        rule_rc = execute_rule_all(ib, rule, tx, &rule_result);
+        rule_rc = execute_rule_all(ib,
+                                   rule,
+                                   tx,
+                                   MAX_CHAIN_RECURSION,
+                                   &rule_result);
         if (rule_rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Error executing rule %s: %d",
