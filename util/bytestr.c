@@ -353,11 +353,9 @@ ib_status_t ib_bytestr_append_mem(
     new_length = dst_length + data_length;
 
     if (new_length > dst->size) {
-        if (new_length != 0) {
-            new_data = (uint8_t *)ib_mpool_alloc(dst->mp, new_length);
-            if (new_data == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
-            }
+        new_data = (uint8_t *)ib_mpool_alloc(dst->mp, new_length);
+        if (new_data == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
         if (dst_length > 0) {
             memcpy(
