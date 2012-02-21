@@ -24,10 +24,12 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/util.h>
+
+#include "ironbee_private.h"
+
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
-
-#include "util/uuid.c"
 
 struct testval {
     const char    *str;
@@ -77,11 +79,9 @@ TEST(TestIBUtilUUID, test_field_create)
     for (rec = &uuidstr[0];rec->str != NULL; ++rec) {
         ib_uuid_t uuid = { { 0 } };
         rc = ib_uuid_ascii_to_bin(&uuid, rec->str);
-        ASSERT_TRUE(rc == rec->ret) << "ib_uuid_ascii_to_bin() failed - bad return code: " << rec->str;
+        ASSERT_EQ(rec->ret, rc);
         if (rc == IB_OK) {
-            ASSERT_TRUE(memcmp(&rec->val, &uuid, 16) == 0) <<
-                "ib_uuid_ascii_to_bin() failed: " <<
-                rec->str << " - wrong binary value";
+            ASSERT_EQ(0, memcmp(&rec->val, &uuid, 16));
         }
     }
 }
