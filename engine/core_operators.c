@@ -110,7 +110,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
         size_t        len = ib_bytestr_length(value);
 
         if (len == strlen(cstr)) {
-            *result = (memcmp(ib_bytestr_ptr(value), cstr, len) == 0);
+            *result = (memcmp(ib_bytestr_const_ptr(value), cstr, len) == 0);
         }
         else {
             *result = 0;
@@ -400,7 +400,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
 
         /* Get the bytestr's length and pointer */
         iplen = ib_bytestr_length(bs);
-        ipstr = (char *)ib_bytestr_ptr(bs);
+        ipstr = (const char*)ib_bytestr_const_ptr(bs);
     }
     else {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -514,7 +514,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
                 if (len >= (MAX_FIELD_NUM_BUF - 1)) {
                     len = (MAX_FIELD_NUM_BUF - 1);
                 }
-                memcpy(buf, ib_bytestr_ptr(value), len);
+                memcpy(buf, ib_bytestr_const_ptr(value), len);
                 buf[len+1] = '\0';
                 if ( (isdigit(buf[0]) == 0) || (buf[0] == '-') ) {
                     IB_FTRACE_RET_STATUS(IB_EINVAL);

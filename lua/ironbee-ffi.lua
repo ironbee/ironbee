@@ -441,9 +441,10 @@ ffi.cdef [[
 
 
     /* Byte String */
-    size_t ib_bytestr_length(ib_bytestr_t *bs);
-    size_t ib_bytestr_size(ib_bytestr_t *bs);
+    size_t ib_bytestr_length(const ib_bytestr_t *bs);
+    size_t ib_bytestr_size(const ib_bytestr_t *bs);
     uint8_t *ib_bytestr_ptr(ib_bytestr_t *bs);
+    const uint8_t *ib_bytestr_const_ptr(const ib_bytestr_t *bs);
 
     /* Data Access */
     ib_status_t ib_data_get_all(ib_provider_inst_t *dpi, ib_list_t* ib_list);
@@ -751,8 +752,8 @@ function newField(val)
     -- TODO: Add metatable w/__tostring for each sub-type
     if c_val.type == c.IB_FTYPE_BYTESTR then
         t["value"] = function()
-            c_fval = ffi.cast("ib_bytestr_t *", c.ib_field_value(c_val))
-            return ffi.string(c.ib_bytestr_ptr(c_fval), c.ib_bytestr_length(c_fval))
+            c_fval = ffi.cast("const ib_bytestr_t *", c.ib_field_value(c_val))
+            return ffi.string(c.ib_bytestr_const_ptr(c_fval), c.ib_bytestr_length(c_fval))
         end
     elseif c_val.type == c.IB_FTYPE_LIST then
         c_list = ffi.cast("ib_list_t *", c.ib_field_value(c_val))

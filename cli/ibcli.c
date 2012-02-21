@@ -766,7 +766,7 @@ static void print_field(const char *label,
                 }
                 else {
                     printf( "  %s: '%.*s'\n",
-                            label, (int)len, ib_bytestr_ptr(bs) );
+                            label, (int)len, ib_bytestr_const_ptr(bs) );
                 }
             }
             break;

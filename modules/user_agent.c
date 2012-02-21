@@ -403,7 +403,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     }
 
     /* Copy the string out */
-    memcpy(buf, ib_bytestr_ptr(bs), len);
+    memcpy(buf, ib_bytestr_const_ptr(bs), len);
     buf[len] = '\0';
     ib_log_debug(ib, 4, "Found user agent: '%s'", buf);
 
@@ -552,7 +552,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     ib_field_t    *field = NULL;
     ib_status_t    rc = IB_OK;
     ib_bytestr_t  *bs;
-    uint8_t       *data;
+    const uint8_t *data;
     unsigned       len;
     char          *buf;
     uint8_t       *comma;
@@ -572,7 +572,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     len = ib_bytestr_length(bs);
-    data = ib_bytestr_ptr(bs);
+    data = ib_bytestr_const_ptr(bs);
 
     /* Search for a comma in the buffer */
     comma = memchr(data, ',', len);

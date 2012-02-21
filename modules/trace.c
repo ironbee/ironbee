@@ -460,7 +460,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
         if (len > ib_bytestr_length(bs) ) {
             len = ib_bytestr_length(bs);
         }
-        memcpy(buf, ib_bytestr_ptr(bs), len);
+        memcpy(buf, ib_bytestr_const_ptr(bs), len);
 
         /* And, log it
          * Note: field->name is not always a null ('\0') terminated string,

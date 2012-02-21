@@ -466,7 +466,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     ib_ac_context_t ac_ctx;
     ib_status_t rc;
 
-    char* subject;
+    const char* subject;
     size_t subject_len;
     ib_bytestr_t* bytestr;
 
@@ -477,7 +477,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     else if (field->type == IB_FTYPE_BYTESTR) {
         bytestr = ib_field_value_bytestr(field);
         subject_len = ib_bytestr_length(bytestr);
-        subject = (char*) ib_bytestr_ptr(bytestr);
+        subject = (const char*)ib_bytestr_const_ptr(bytestr);
     }
     else {
         IB_FTRACE_RET_STATUS(IB_EALLOC);

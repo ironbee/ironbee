@@ -67,7 +67,7 @@ extern "C" {
  * @param bs Bytestring
  */
 #define IB_BYTESTR_FMT_PARAM(bs) \
-  (int)ib_bytestr_length(bs), (const char *)ib_bytestr_ptr(bs)
+  (int)ib_bytestr_length(bs), (const char *)ib_bytestr_const_ptr(bs)
 
 /** Printf style format string for bytestr. */
 #define IB_BYTESTR_FMT         ".*s"
@@ -182,15 +182,28 @@ ib_status_t DLL_PUBLIC ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
 /**
  * Set the value of the bytestring.
  *
- * @param dst Bytestring which will have data appended
+ * @param dst Bytestring which will have data set
  * @param data New data
  * @param dlen New data length
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_bytestr_setv(ib_bytestr_t *dst,
-                                       const uint8_t *data,
+                                       uint8_t *data,
                                        size_t dlen);
+
+/**
+ * Set the value of the bytestring, const version.
+ *
+ * @param dst Bytestring which will have data set
+ * @param data New data
+ * @param dlen New data length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_bytestr_setv_const(ib_bytestr_t *dst,
+                                             const uint8_t *data,
+                                             size_t dlen);
 
 /**
  * Extend a bytestring by appending the data from another bytestring.
@@ -237,7 +250,7 @@ ib_status_t DLL_PUBLIC ib_bytestr_append_nulstr(ib_bytestr_t *dst,
  *
  * @returns Length of data in bytestring.
  */
-size_t DLL_PUBLIC ib_bytestr_length(ib_bytestr_t *bs);
+size_t DLL_PUBLIC ib_bytestr_length(const ib_bytestr_t *bs);
 
 /**
  * Allocated size of the data in a byte string.
@@ -246,16 +259,25 @@ size_t DLL_PUBLIC ib_bytestr_length(ib_bytestr_t *bs);
  *
  * @returns Allocated size of data in bytestring.
  */
-size_t DLL_PUBLIC ib_bytestr_size(ib_bytestr_t *bs);
+size_t DLL_PUBLIC ib_bytestr_size(const ib_bytestr_t *bs);
 
 /**
  * Raw buffer containing data in a byte string.
  *
  * @param bs Byte string
  *
- * @returns Address of byte string buffer
+ * @returns Address of byte string buffer or NULL if bs is read only.
  */
 uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
+
+/**
+ * Const raw buffer containing data in a byte string.
+ *
+ * @param bs Byte string
+ *
+ * @returns Address of byte string buffer
+ */
+const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(const ib_bytestr_t *bs);
 
 /**
  * Search for a c string in a byte string.
@@ -265,7 +287,7 @@ uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
  *
  * @returns position of the match, or -1 if there is no match
  */
-int DLL_PUBLIC ib_bytestr_index_of_c(ib_bytestr_t *haystack, char *needle);
+int DLL_PUBLIC ib_bytestr_index_of_c(const ib_bytestr_t *haystack, const char *needle);
 
 
 /** @} IronBeeUtilByteStr */

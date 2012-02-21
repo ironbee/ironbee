@@ -77,9 +77,9 @@ ibapi.new = function(ib_engine, ib_tx)
         -- Byte String
         elseif field.type == 4 then
             self:log(7, "[fieldToLua]", "Casting field to byte string.")
-            value = ffi.cast("ib_bytestr_t*", value)
+            value = ffi.cast("const ib_bytestr_t*", value)
 
-            return ffi.string(ffi.C.ib_bytestr_ptr(value),
+            return ffi.string(ffi.C.ib_bytestr_const_ptr(value),
                               ffi.C.ib_bytestr_length(value))
 
         -- Lists - not handled.

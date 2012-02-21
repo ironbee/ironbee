@@ -84,7 +84,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_mem)
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
     ASSERT_EQ(6UL, ib_bytestr_size(bs));
-    ptr = ib_bytestr_ptr(bs);
+    ptr = ib_bytestr_const_ptr(bs);
     ASSERT_NE(data, ptr);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 }
@@ -102,7 +102,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_nulstr)
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
     ASSERT_EQ(6UL, ib_bytestr_size(bs));
-    ptr = ib_bytestr_ptr(bs);
+    ptr = ib_bytestr_const_ptr(bs);
     ASSERT_NE(data, ptr);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 }
@@ -120,7 +120,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_mem)
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
     ASSERT_EQ(6UL, ib_bytestr_size(bs));
-    ptr = ib_bytestr_ptr(bs);
+    ptr = ib_bytestr_const_ptr(bs);
     ASSERT_EQ(data, ptr);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
     rc = ib_bytestr_append_nulstr(bs, "foo");
@@ -141,7 +141,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_nulstr)
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
     ASSERT_EQ(6UL, ib_bytestr_size(bs));
-    ptr = ib_bytestr_ptr(bs);
+    ptr = ib_bytestr_const_ptr(bs);
     ASSERT_EQ((uint8_t *, ptr);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
     rc = ib_bytestr_append_nulstr(bs, "foo");
@@ -165,7 +165,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     ASSERT_TRUE(bs1);
     ASSERT_EQ(6UL, ib_bytestr_length(bs1));
     ASSERT_EQ(6UL, ib_bytestr_size(bs1));
-    ptr = ib_bytestr_ptr(bs1);
+    ptr = ib_bytestr_const_ptr(bs1);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 
     rc = ib_bytestr_dup_nulstr(&bs2, m_pool, data2);
@@ -173,7 +173,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     ASSERT_TRUE(bs2);
     ASSERT_EQ(6UL, ib_bytestr_length(bs2));
     ASSERT_EQ(6UL, ib_bytestr_size(bs2));
-    ptr = ib_bytestr_ptr(bs2);
+    ptr = ib_bytestr_const_ptr(bs2);
     ASSERT_EQ(0, strncmp("ghijkl", (char *)ptr, 6));
 
     rc = ib_bytestr_append(bs1, bs2);
@@ -181,7 +181,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     ASSERT_TRUE(bs1);
     ASSERT_EQ(12UL, ib_bytestr_length(bs1));
     ASSERT_EQ(12UL, ib_bytestr_size(bs1));
-    ptr = ib_bytestr_ptr(bs1);
+    ptr = ib_bytestr_const_ptr(bs1);
     ASSERT_EQ(0, strncmp("abcdefghijkl", (char *)ptr, 12));
 
     rc = ib_bytestr_append_nulstr(bs1, data3);
@@ -189,7 +189,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     ASSERT_TRUE(bs1);
     ASSERT_EQ(15UL, ib_bytestr_length(bs1));
     ASSERT_EQ(15UL, ib_bytestr_size(bs1));
-    ptr = ib_bytestr_ptr(bs1);
+    ptr = ib_bytestr_const_ptr(bs1);
     ASSERT_EQ(0, strncmp("abcdefghijklfoo", (char *)ptr, 15));
 
     rc = ib_bytestr_append_mem(bs1, data4, sizeof(data4));
@@ -197,6 +197,6 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     ASSERT_TRUE(bs1);
     ASSERT_EQ(18UL, ib_bytestr_length(bs1));
     ASSERT_EQ(18UL, ib_bytestr_size(bs1));
-    ptr = ib_bytestr_ptr(bs1);
+    ptr = ib_bytestr_const_ptr(bs1);
     ASSERT_EQ(0, strncmp("abcdefghijklfoobar", (char *)ptr, 18));
 }

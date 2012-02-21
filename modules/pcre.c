@@ -363,7 +363,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     ib_status_t ib_rc;
     const int ovecsize = 30;
     int *ovector = (int *)calloc(ovecsize, sizeof(*ovector));
-    char* subject;
+    const char* subject;
     size_t subject_len;
     ib_bytestr_t* bytestr;
     pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
@@ -377,7 +377,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     else if (field->type == IB_FTYPE_BYTESTR) {
         bytestr = ib_field_value_bytestr(field);
         subject_len = ib_bytestr_length(bytestr);
-        subject = (char*) ib_bytestr_ptr(bytestr);
+        subject = (const char*) ib_bytestr_const_ptr(bytestr);
     }
     else {
         free(ovector);

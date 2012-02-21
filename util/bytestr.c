@@ -19,6 +19,7 @@
  * @file
  * @brief IronBee - Utility Byte String Functions
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -26,61 +27,72 @@
 #include <ironbee/bytestr.h>
 
 #include <ironbee/debug.h>
+#include <ironbee/mpool.h>
 
-#include <bstr.h>
-
-#include "ironbee_util_private.h"
+#include <assert.h>
 
 struct ib_bytestr_t {
-    ib_mpool_t       *mp;
-    ib_flags_t        flags;
-    bstr             *data;
+    ib_mpool_t *mp;
+    ib_flags_t  flags;
+    uint8_t    *data;
+    size_t      length;
+    size_t      size;
 };
 
-static ib_status_t bytestr_cleanup(void *data)
-{
+size_t ib_bytestr_length(
+    const ib_bytestr_t *bs
+) {
     IB_FTRACE_INIT();
-    ib_bytestr_t *bs = (ib_bytestr_t *)data;
-    bstr_free(&bs->data);
-    IB_FTRACE_RET_STATUS(IB_OK);
+
+    assert(bs != NULL);
+
+    IB_FTRACE_RET_SIZET(bs->length);
 }
 
-
-size_t ib_bytestr_length(ib_bytestr_t *bs)
-{
+size_t ib_bytestr_size(
+    const ib_bytestr_t *bs
+) {
     IB_FTRACE_INIT();
-    if ((bs == NULL) || (bs->data == NULL)) {
-        IB_FTRACE_RET_SIZET(0);
-    }
-    /* bstr_len is a macro, so can go in the FTRACE return wrapper. */
-    IB_FTRACE_RET_SIZET(bstr_len(bs->data));
+
+    assert(bs != NULL);
+
+    IB_FTRACE_RET_SIZET(bs->size);
 }
 
-size_t ib_bytestr_size(ib_bytestr_t *bs)
-{
+uint8_t *ib_bytestr_ptr(
+    ib_bytestr_t *bs
+) {
     IB_FTRACE_INIT();
-    if ((bs == NULL) || (bs->data == NULL)) {
-        IB_FTRACE_RET_SIZET(0);
-    }
-    /* bstr_len is a macro, so can go in the FTRACE return wrapper. */
-    IB_FTRACE_RET_SIZET(bstr_size(bs->data));
-}
 
-uint8_t *ib_bytestr_ptr(ib_bytestr_t *bs)
-{
-    IB_FTRACE_INIT();
-    if ((bs == NULL) || (bs->data == NULL)) {
+    if (bs == NULL || IB_BYTESTR_CHECK_FREADONLY(bs->flags)) {
         IB_FTRACE_RET_PTR(uint8_t, NULL);
     }
-    /* bstr_len is a macro, so can go in the FTRACE return wrapper. */
-    IB_FTRACE_RET_PTR(uint8_t, (uint8_t *)bstr_ptr(bs->data));
+
+    IB_FTRACE_RET_PTR(uint8_t, bs->data);
 }
 
-ib_status_t ib_bytestr_create(ib_bytestr_t **pdst,
-                              ib_mpool_t *pool,
-                              size_t size)
-{
+const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(
+    const ib_bytestr_t *bs
+) {
     IB_FTRACE_INIT();
+
+    if (bs == NULL) {
+        IB_FTRACE_RET_PTR(const uint8_t, NULL);
+    }
+
+    IB_FTRACE_RET_PTR(const uint8_t, bs->data);
+}
+
+ib_status_t ib_bytestr_create(
+    ib_bytestr_t **pdst,
+    ib_mpool_t    *pool,
+    size_t         size
+) {
+    IB_FTRACE_INIT();
+
+    assert(pdst != NULL);
+    assert(pool != NULL);
+
     ib_status_t rc;
 
     /* Create the structure. */
@@ -89,113 +101,151 @@ ib_status_t ib_bytestr_create(ib_bytestr_t **pdst,
         rc = IB_EALLOC;
         goto failed;
     }
-    (*pdst)->data = (bstr *)bstr_alloc(size);
-    if ((*pdst)->data == NULL) {
-        rc = IB_EALLOC;
-        goto failed;
-    }
-    (*pdst)->mp = pool;
-    (*pdst)->flags = 0;
 
-    rc = ib_mpool_cleanup_register((*pdst)->mp, bytestr_cleanup, *pdst);
-    if (rc != IB_OK) {
-        goto failed;
+    (*pdst)->data   = NULL;
+    (*pdst)->mp     = pool;
+    (*pdst)->flags  = 0;
+    (*pdst)->size   = size;
+    (*pdst)->length = 0;
+
+    if (size != 0) {
+        (*pdst)->data = (uint8_t *)ib_mpool_alloc(pool, size);
+        if ((*pdst)->data == NULL) {
+            rc = IB_EALLOC;
+            goto failed;
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
-    /* Make sure everything is cleaned up on failure */
-    if ((*pdst != NULL) &&((*pdst)->data != NULL)) {
-        bstr_free(&(*pdst)->data);
-    }
     *pdst = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_bytestr_dup(ib_bytestr_t **pdst,
-                           ib_mpool_t *pool,
-                           const ib_bytestr_t *src)
-{
+ib_status_t ib_bytestr_dup(
+    ib_bytestr_t       **pdst,
+    ib_mpool_t          *pool,
+    const ib_bytestr_t  *src
+) {
     IB_FTRACE_INIT();
+
+    assert(pdst != NULL);
+    assert(pool != NULL);
+
     ib_status_t rc;
+    rc = ib_bytestr_dup_mem(
+        pdst,
+        pool,
+        ib_bytestr_const_ptr(src),
+        ib_bytestr_length(src)
+    );
 
-    if ((src == NULL) || (src->data == NULL)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    rc = ib_bytestr_create(pdst, pool, bstr_len(src->data));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    (*pdst)->data = bstr_add_noex((bstr *)(*pdst)->data, src->data);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_bytestr_dup_mem(ib_bytestr_t **pdst,
-                               ib_mpool_t *pool,
-                               const uint8_t *data,
-                               size_t dlen)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc = ib_bytestr_create(pdst, pool, dlen);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    (*pdst)->data = bstr_add_mem_noex((bstr *)(*pdst)->data, (char *)data, dlen);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_bytestr_dup_nulstr(ib_bytestr_t **pdst,
-                                     ib_mpool_t *pool,
-                                     const char *data)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc = ib_bytestr_dup_mem(pdst, pool, (uint8_t *)data, strlen(data));
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_bytestr_alias(ib_bytestr_t **pdst,
-                             ib_mpool_t *pool,
-                             const ib_bytestr_t *src)
+ib_status_t ib_bytestr_dup_mem(
+    ib_bytestr_t  **pdst,
+    ib_mpool_t     *pool,
+    const uint8_t  *data,
+    size_t          data_length
+) {
+    IB_FTRACE_INIT();
+
+    assert(pdst != NULL);
+    assert(pool != NULL);
+
+    if (data == NULL && data_length == 0) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ib_status_t rc = ib_bytestr_create(pdst, pool, data_length);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (data != NULL) {
+        assert((*pdst)->size >= data_length);
+
+        memcpy(ib_bytestr_ptr(*pdst), data, data_length);
+        (*pdst)->length = data_length;
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_bytestr_dup_nulstr(
+    ib_bytestr_t **pdst,
+    ib_mpool_t *pool,
+    const char *data
+) {
+    IB_FTRACE_INIT();
+
+    assert(pdst != NULL);
+    assert(pool != NULL);
+    assert(data != NULL);
+
+    ib_status_t rc = ib_bytestr_dup_mem(
+        pdst,
+        pool,
+        (uint8_t *)data,
+        strlen(data)
+    );
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_bytestr_alias(
+    ib_bytestr_t       **pdst,
+    ib_mpool_t          *pool,
+    const ib_bytestr_t  *src
+)
 {
     IB_FTRACE_INIT();
+
+    assert(pdst != NULL);
+    assert(pool != NULL);
+
     ib_status_t rc;
 
     if ((src == NULL) || (src->data == NULL)) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_bytestr_create(pdst, pool, 0);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    rc = ib_bytestr_alias_mem(
+        pdst,
+        pool,
+        ib_bytestr_const_ptr(src),
+        src->length
+    );
 
-    (*(bstr_t *)((*pdst)->data)).ptr = bstr_ptr(src->data);
-    (*(bstr_t *)((*pdst)->data)).len = bstr_len(src->data);
-    (*(bstr_t *)((*pdst)->data)).size = bstr_size(src->data);
-    (*pdst)->flags |= IB_BYTESTR_FREADONLY;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_bytestr_alias_mem(ib_bytestr_t **pdst,
-                                 ib_mpool_t *pool,
-                                 const uint8_t *data,
-                                 size_t dlen)
+ib_status_t ib_bytestr_alias_mem(
+    ib_bytestr_t   **pdst,
+    ib_mpool_t      *pool,
+    const uint8_t   *data,
+    size_t           data_length
+)
 {
     IB_FTRACE_INIT();
+
+    if (data == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
     ib_status_t rc = ib_bytestr_create(pdst, pool, 0);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    (*(bstr_t *)((*pdst)->data)).ptr = (char *)data;
-    (*(bstr_t *)((*pdst)->data)).len = dlen;
-    (*(bstr_t *)((*pdst)->data)).size = dlen;
+    /* We use flags to enforce that the user can not recover an unconst
+     * pointer.
+     */
+    (*pdst)->data   = (uint8_t*)data;
+    (*pdst)->length = data_length;
+    (*pdst)->size   = data_length;
     (*pdst)->flags |= IB_BYTESTR_FREADONLY;
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -206,64 +256,180 @@ ib_status_t ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
                                     const char *data)
 {
     IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(ib_bytestr_alias_mem(pdst, pool, (uint8_t *)data, strlen(data)));
+
+    assert(pdst != NULL);
+    assert(pool != NULL);
+
+    ib_status_t rc;
+    rc = ib_bytestr_alias_mem(pdst, pool, (uint8_t *)data, strlen(data));
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_bytestr_setv(ib_bytestr_t *dst,
-                            const uint8_t *data,
-                            size_t dlen)
-{
+ib_status_t ib_bytestr_setv(
+    ib_bytestr_t *dst,
+    uint8_t      *data,
+    size_t        data_length
+) {
     IB_FTRACE_INIT();
+
     if (dst == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-
-    (*(bstr_t *)(dst->data)).ptr = (char *)data;
-    (*(bstr_t *)(dst->data)).len = dlen;
-    (*(bstr_t *)(dst->data)).size = dlen;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_bytestr_append(ib_bytestr_t *dst,
-                              const ib_bytestr_t *src)
-{
-    IB_FTRACE_INIT();
-    if (IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
+    if (data == NULL && data_length != 0) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    bstr_add(dst->data, src->data);
+    dst->data   = data;
+    dst->length = data_length;
+    dst->size   = data_length;
+    dst->flags  = 0;
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_bytestr_append_mem(ib_bytestr_t *dst,
-                                  const uint8_t *data,
-                                  size_t dlen)
+ib_status_t DLL_PUBLIC ib_bytestr_setv_const(
+    ib_bytestr_t  *dst,
+    const uint8_t *data,
+    size_t         data_length
+)
 {
     IB_FTRACE_INIT();
-    if (IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
+
+    ib_status_t rc;
+
+    /* Use flags to enforce const. */
+    rc = ib_bytestr_setv(dst, (uint8_t*)data, data_length);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    dst->flags |= IB_BYTESTR_FREADONLY;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_bytestr_append(
+    ib_bytestr_t *dst,
+    const ib_bytestr_t *src
+)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    if ( src == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    bstr_add_mem(dst->data, (char *)data, dlen);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    rc = ib_bytestr_append_mem(
+        dst,
+        ib_bytestr_const_ptr(src),
+        ib_bytestr_length(src)
+    );
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_bytestr_append_nulstr(ib_bytestr_t *dst,
-                                     const char *data)
+ib_status_t ib_bytestr_append_mem(
+    ib_bytestr_t  *dst,
+    const uint8_t *data,
+    size_t         data_length
+)
 {
     IB_FTRACE_INIT();
-    if (IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
+
+    size_t dst_length = ib_bytestr_length(dst);
+    size_t new_length;
+    uint8_t *new_data;
+
+    if (dst == NULL || IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (data == NULL && data_length != 0) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    bstr_add_mem(dst->data, (char *)data, strlen(data));
+    new_length = dst_length + data_length;
+
+    if (new_length > dst->size) {
+        if (new_length != 0) {
+            new_data = (uint8_t *)ib_mpool_alloc(dst->mp, new_length);
+            if (new_data == NULL) {
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+        }
+        if (dst_length > 0) {
+            memcpy(
+                new_data,
+                ib_bytestr_const_ptr(dst),
+                ib_bytestr_length(dst)
+            );
+        }
+        dst->data = new_data;
+        dst->size = new_length;
+    }
+    assert(new_length <= dst->size);
+
+    if (data_length > 0) {
+        memcpy(dst->data + dst_length, data, data_length);
+        dst->length = new_length;
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-int ib_bytestr_index_of_c(ib_bytestr_t *haystack, char *needle)
+ib_status_t ib_bytestr_append_nulstr(
+    ib_bytestr_t *dst,
+    const char *data
+)
 {
     IB_FTRACE_INIT();
-    IB_FTRACE_RET_INT(bstr_index_of_c(haystack->data, needle));
+
+    ib_status_t rc;
+
+    if (data == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rc = ib_bytestr_append_mem(dst, (const uint8_t*)data, strlen(data));
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+int ib_bytestr_index_of_c(
+    const ib_bytestr_t *haystack,
+    const char   *needle
+)
+{
+    IB_FTRACE_INIT();
+
+    size_t i = 0;
+    size_t j = 0;
+    size_t haystack_length = ib_bytestr_length(haystack);
+    size_t needle_length = strlen(needle);
+    const uint8_t* haystack_data = ib_bytestr_const_ptr(haystack);
+    int result = -1;
+
+    if (
+        haystack == NULL || needle == NULL ||
+        needle_length == 0 || haystack_length == 0
+    ) {
+        IB_FTRACE_RET_INT(-1);
+    }
+
+    for (i = 0; i < haystack_length - (needle_length-1); ++i) {
+        result = i;
+        for (j = 0; j < needle_length; ++j) {
+            if (haystack_data[i+j] != needle[j]) {
+                result = -1;
+                break;
+            }
+        }
+        if (result != -1) {
+            IB_FTRACE_RET_INT(result);
+        }
+    }
+
+    IB_FTRACE_RET_INT(-1);
 }

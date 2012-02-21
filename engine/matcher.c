@@ -157,7 +157,7 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
         case IB_FTYPE_BYTESTR:
             bs = ib_field_value_bytestr(f);
             rc = iface->match_compiled(m->mpr, cpatt, flags,
-                                       ib_bytestr_ptr(bs),
+                                       ib_bytestr_const_ptr(bs),
                                        ib_bytestr_length(bs), ctx);
             break;
         case IB_FTYPE_NULSTR:
@@ -239,7 +239,7 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
         case IB_FTYPE_BYTESTR:
             bs = ib_field_value_bytestr(f);
             rc = iface->match(m->mpi, flags,
-                              ib_bytestr_ptr(bs),
+                              ib_bytestr_const_ptr(bs),
                               ib_bytestr_length(bs), ctx);
             break;
         case IB_FTYPE_NULSTR:
