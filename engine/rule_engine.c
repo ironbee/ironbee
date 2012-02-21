@@ -158,7 +158,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         
         ib_log_debug(ib, 9, "Value field is a list: looping %zd", vlist->nelts);
         IB_LIST_LOOP(vlist, node) {
-            ib_field_t   *nvalue = ib_list_node_data(node);
+            ib_field_t   *nvalue = (ib_field_t *)ib_list_node_data(node);
             ++n;
 
             ib_log_debug(ib, 9, "Element #%d..", n);
