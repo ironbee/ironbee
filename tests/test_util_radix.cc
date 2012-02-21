@@ -79,6 +79,7 @@ void printKey(ib_radix_prefix_t *prefix)
     printBin(prefix->rawbits, prefix->prefixlen);
 }
 
+#if 0
 /* 
  * @internal
  * Helper function, prints user data recursively with indentation accumulated
@@ -124,14 +125,6 @@ static void ib_radix_node_print_ud(ib_radix_t *radix,
  * @internal
  * Helper function, prints user data
  */
- /* Might no be used */
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
-#elif defined(__GNUC__) && __GNUC__ >= 4 && __GNUC_MINOR__ >= 6 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
-#endif
 static void ib_radix_print(ib_radix_t *radix,
                            uint8_t ud)
 {
@@ -162,8 +155,6 @@ static void ib_radix_print(ib_radix_t *radix,
                            level + 4, radix->start->prefix->prefixlen, ud);
   printf("\n");
 }
-#if defined(__clang__)
-#pragma clang diagnostic pop
 #endif
 
 /* -- Tests -- */
