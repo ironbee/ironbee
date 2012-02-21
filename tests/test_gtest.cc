@@ -25,8 +25,7 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#include "util/util.c"
-#include "util/debug.c"
+#include <ironbee/util.h>
 
 // Allow testing a test-failure
 static void TestFailure()
