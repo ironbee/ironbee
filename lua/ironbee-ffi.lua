@@ -281,7 +281,6 @@ ffi.cdef [[
         ib_flags_t          flags;
     };
 
-
     /* Data Field Structure */
     struct ib_field_t {
         ib_mpool_t         *mp;
@@ -354,6 +353,7 @@ ffi.cdef [[
                                  const char *name,
                                  size_t nlen,
                                  ib_field_t *src);
+    ib_status_t ib_field_list_add(ib_field_t *f, ib_field_t *val);
     void *ib_field_value(ib_field_t *f);
 
     /* Context */
@@ -446,6 +446,7 @@ ffi.cdef [[
     uint8_t *ib_bytestr_ptr(ib_bytestr_t *bs);
 
     /* Data Access */
+    ib_status_t ib_data_get_all(ib_provider_inst_t *dpi, ib_list_t* ib_list);
     ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
                                const char *name,
                                size_t nlen,
@@ -461,6 +462,11 @@ ffi.cdef [[
                                       size_t nlen,
                                       char *val,
                                       ib_field_t **pf);
+
+    ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
+                                 const char *name,
+                                 size_t nlen,
+                                 ib_field_t **pf);
 
     /* Transformations */
     ib_status_t ib_tfn_lookup(ib_engine_t *ib,
@@ -549,6 +555,7 @@ ffi.cdef [[
 
     /* Mpool */
     char * ib_mpool_strdup(ib_mpool_t * mp, const char * src);
+    char * ib_mpool_alloc(ib_mpool_t * mp, size_t size);
 ]]
 
 -- Cache lookup of ffi.C

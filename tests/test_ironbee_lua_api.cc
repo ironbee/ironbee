@@ -210,3 +210,67 @@ TEST_F(IronBeeLuaApi, get_string)
 
 }
 
+TEST_F(IronBeeLuaApi, list_fields)
+{
+  eval("t = ib:listFields()");
+
+  eval("for k,v in pairs(t) do\n"
+       "  print(string.format(\"%s=%s\", k, v))\n"
+       "end");
+}
+
+TEST_F(IronBeeLuaApi, list_fields_types)
+{
+  eval("t = ib:fieldTypes()");
+
+  eval("for k,v in pairs(t) do\n"
+       "  print(string.format(\"%s=%s\", k, v))\n"
+       "end");
+}
+
+TEST_F(IronBeeLuaApi, request_headers)
+{
+  eval("return ib:getList(\"request_headers\")[1]");
+
+  ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
+
+  lua_pop(L, 1);
+}
+
+TEST_F(IronBeeLuaApi, request_headers_table)
+{
+  eval("return ib:getTable(\"request_headers\")[\"Host\"]");
+
+  ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
+
+  lua_pop(L, 1);
+}
+
+TEST_F(IronBeeLuaApi, add_list)
+{
+  eval("ib:addList(\"MyList\")");
+
+  ib_field_t* ib_field;
+  ib_field_t* list_field;
+  const char *a = "a string";
+  ib_field_create_ex(&ib_field,
+                     ib_tx->mp,
+                     "a",
+                     1,
+                     IB_FTYPE_NULSTR,
+                     &a);
+
+  ib_data_get(ib_tx->dpi, "MyList", &list_field);
+
+  // Adding a list worked.
+  ASSERT_TRUE(NULL!=list_field);
+}
+
+TEST_F(IronBeeLuaApi, append_list)
+{
+  eval("ib:appendList(\"request_headers\", \"X-Test-Header\", \"Test 321\")");
+  eval("return ib:getTable(\"request_headers\")[\"X-Test-Header\"]");
+
+  ASSERT_STREQ("Test 321", lua_tostring(L, -1));
+  lua_pop(L, 1);
+}
