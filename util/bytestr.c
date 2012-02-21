@@ -341,7 +341,7 @@ ib_status_t ib_bytestr_append_mem(
 
     size_t dst_length = ib_bytestr_length(dst);
     size_t new_length;
-    uint8_t *new_data;
+    uint8_t *new_data = NULL;
 
     if (dst == NULL || IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
