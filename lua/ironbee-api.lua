@@ -224,6 +224,8 @@ ibapi.new = function(ib_engine, ib_tx)
     end
 
     -- Convert a list in the transaction's DPI into a table of key, values.
+    -- If a name appears twice, the table returned will have a list of values
+    -- for that entry.
     ib_obj.getTable = function(self, listName)
         local list = {}
         local ib_field = self.private:getDpiField(listName)
@@ -237,8 +239,14 @@ ibapi.new = function(ib_engine, ib_tx)
 
             local name = ffi.string(data.name, data.nlen)
 
-            -- Convert it to lua and append it to the table.
-            list[name] = self.private:fieldToLua(data)
+            if list[name] == nil then
+                -- Convert it to lua and append it to the table.
+                list[name] = self.private:fieldToLua(data)
+            else
+                -- Convert it to lua and append it to the table.
+                list[name] = { [1] = list[name],
+                               [2] = self.private:fieldToLua(data) }
+            end
 
             -- Next item.
             ib_list_node = ffi.C.ib_list_node_next(ib_list_node);
