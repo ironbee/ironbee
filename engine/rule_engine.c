@@ -156,12 +156,10 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         ib_list_node_t *node = NULL;
         ib_num_t n = 0;
 
-        ib_log_debug(ib, 9, "Value field is a list: looping %zd", vlist->nelts);
         IB_LIST_LOOP(vlist, node) {
             ib_field_t   *nvalue = (ib_field_t *)ib_list_node_data(node);
             ++n;
 
-            ib_log_debug(ib, 9, "Element #%d..", n);
             rc = execute_rule_operator(
                 ib, tx, opinst, fname, nvalue, rule_result);
             if (rc != IB_OK) {
@@ -169,10 +167,9 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
                              "Error executing %s on list element #%d: %d",
                              opinst->op->name, n, rc);
             }
-            ib_log_debug(ib, 9, "Element %d -> %d", n, (int)*rule_result);
         }
-        ib_log_debug(ib, 9, "Operator %s, field %s (list) => %d",
-                     opinst->op->name, fname, *rule_result);
+        ib_log_debug(ib, 9, "Operator %s, field %s (list %zd) => %d",
+                     opinst->op->name, fname, vlist->nelts, *rule_result);
     }
     else {
         /* Execute the operator */
@@ -1331,15 +1328,6 @@ static ib_status_t parse_field_ops(ib_engine_t *ib,
             ib_log_debug(ib, 9, "parens >= next_sep");
             cur = next_sep + 1;
         }
-
-#if 1
-        ib_log_debug(ib, 9,
-                     "cur='%s', opname='%s' sep=%p/'%s' next=%p/'%s' p=%p/'%s'",
-                     cur, opname,
-                     (void*)separator, separator,
-                     (void*)next_sep, next_sep,
-                     (void*)parens, parens);
-#endif
 
         /* Skip to top of loop if there's no operator */
         if (opname == NULL) {
