@@ -29,8 +29,6 @@ extern "C" {
 #include "rules_lua.h"
 }
 
-#define TESTING
-
 #include "ibtest_util.hh"
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>

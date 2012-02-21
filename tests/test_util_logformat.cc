@@ -27,8 +27,6 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#define TESTING
-
 #include "util/util.c"
 #include "util/logformat.c"
 #include "util/mpool.c"

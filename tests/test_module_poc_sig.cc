@@ -25,8 +25,6 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#define TESTING
-
 #include "ibtest_util.hh"
 
 /// @test Test poc_sig module - load module programatically

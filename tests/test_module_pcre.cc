@@ -25,8 +25,6 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#define TESTING
-
 #include "base_fixture.h"
 #include <ironbee/operator.h>
 #include <ironbee/hash.h>

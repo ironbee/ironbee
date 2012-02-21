@@ -27,8 +27,6 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#define TESTING
-
 #include "util/field.c"
 
 

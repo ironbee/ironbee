@@ -25,8 +25,6 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
-#define TESTING
-
 #include "engine/engine.c"
 #include "engine/logger.c"
 #include "engine/provider.c"
