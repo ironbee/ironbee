@@ -62,9 +62,8 @@ local ibutil = {
     end
 }
 
--- Iterate through each list node and pass the node data to
--- then function as the only argument.
--- NOTE: The first argument of this is NOT self.
+-- Iterate over the ib_list (of type ib_list_t*) calling the 
+-- function func on each ib_field_t* contained in the elements of ib_list.
 ibapi.each_list_node = function(ib_list, func)
     local ib_list_node = ffi.cast("ib_list_node_t*", 
                                   ffi.C.ib_list_first(ib_list))
