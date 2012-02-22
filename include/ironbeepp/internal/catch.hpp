@@ -106,7 +106,6 @@ ib_status_t ibpp_caught_std_exception(
  * ib_log_error().  Otherwise, does nothing.
  *
  * @param[in] engine Engine to use for logging; may be null.
- * @param[in] e      Exception caught.
  **/
 ib_status_t ibpp_caught_unknown_exception(
     ib_engine_t* engine
