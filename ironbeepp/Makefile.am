@@ -5,4 +5,5 @@ SUBDIRS = tests
 lib_LTLIBRARIES = libibpp.la
 libibpp_la_SOURCES = \
     catch.cpp \
-    engine.cpp
+    engine.cpp \
+    data.cpp
