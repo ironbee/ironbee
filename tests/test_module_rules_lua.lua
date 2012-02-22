@@ -12,10 +12,10 @@ if t == nil then
   log("T is null. No action")
 else
 
-  t.ib:log_debug("Starting rule.")
+  t.ib:logDebug("Starting rule.")
 
   if t.ib_tx == nil then
-    t.ib:log_debug("T.ib_tx is null. Failing.")
+    t.ib:logDebug("T.ib_tx is null. Failing.")
     tx = nil
   else
     log(string.format("T is %s.", tostring(t)))
@@ -25,7 +25,7 @@ else
     log(string.format("tx.id is %s.", tostring(tx.id)))
   end
 
-  t.ib:log_debug("TX id value is \"" .. ffi.string(tx.id) .. "\"")
+  t.ib:logDebug("TX id value is \"" .. ffi.string(tx.id) .. "\"")
 end
 
 -- Return 5

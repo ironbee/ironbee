@@ -163,14 +163,14 @@ public:
     }
 };
 
-TEST_F(IronBeeLuaApi, log_error)
+TEST_F(IronBeeLuaApi, logError)
 {
-    eval("ib:log_error(\"======== Test Log Message %d ========\", 100)");
+    eval("ib:logError(\"======== Test Log Message %d ========\", 100)");
 }
 
-TEST_F(IronBeeLuaApi, log_debug)
+TEST_F(IronBeeLuaApi, logDebug)
 {
-    eval("ib:log_debug(\"======== Test Log Message %d ========\", 100)");
+    eval("ib:logDebug(\"======== Test Log Message %d ========\", 100)");
 }
 
 TEST_F(IronBeeLuaApi, add_and_get)
@@ -196,13 +196,13 @@ TEST_F(IronBeeLuaApi, get)
     eval("t = ib:get(\"request_headers\")");
 
     eval("for k,v in pairs(t) do\n"
-         "  ib:log_debug(\"IronBeeLuaApi.get: %s=%s\", v[1], v[2])"
+         "  ib:logDebug(\"IronBeeLuaApi.get: %s=%s\", v[1], v[2])"
          "end");
 }
 
-TEST_F(IronBeeLuaApi, get_field_list)
+TEST_F(IronBeeLuaApi, getFieldList)
 {
-  eval("t = ib:get_field_list()");
+  eval("t = ib:getFieldList()");
 
   eval("for k,v in pairs(t) do\n"
        "  print(string.format(\"%s=%s\", k, v))\n"
@@ -217,6 +217,25 @@ TEST_F(IronBeeLuaApi, request_headers)
 
   lua_pop(L, 1);
 }
+
+TEST_F(IronBeeLuaApi, get_names_request_headers)
+{
+  eval("return ib:getNames(\"request_headers\")[1]");
+
+  ASSERT_STREQ("Host", lua_tostring(L, -1));
+
+  lua_pop(L, 1);
+}
+
+TEST_F(IronBeeLuaApi, get_values_request_headers)
+{
+  eval("return ib:getValues(\"request_headers\")[1]");
+
+  ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
+
+  lua_pop(L, 1);
+}
+
 
 TEST_F(IronBeeLuaApi, add_list)
 {
@@ -246,7 +265,7 @@ TEST_F(IronBeeLuaApi, set)
     eval("ib:add(\"MyString\", \"my string\")");
     eval("ib:add(\"MyTable\", { { \"a\", \"b\" } })");
 
-    eval("ib:log_info(ib:get(\"MyInt\")+1)");
+    eval("ib:logInfo(ib:get(\"MyInt\")+1)");
     eval("ib:set(\"MyInt\", ib:get(\"MyInt\")+1)");
     eval("ib:set(\"MyString\", \"my other string\")");
     eval("ib:set(\"MyTable\", { { \"c\", \"d\" } })");
@@ -261,5 +280,16 @@ TEST_F(IronBeeLuaApi, set)
     ASSERT_STREQ("c", lua_tostring(L, -2));
     ASSERT_STREQ("d", lua_tostring(L, -1));
     lua_pop(L, 4);
+
+    eval("return ib:getValues(\"MyInt\")[1]");
+    eval("return ib:getNames(\"MyInt\")[1]");
+    ASSERT_EQ(5, lua_tonumber(L, -2));
+    ASSERT_STREQ("MyInt", lua_tostring(L, -1));
+    lua_pop(L, 2);
 }
 
+TEST_F(IronBeeLuaApi, add_event)
+{
+    eval("ib:addEvent(\"Saw some failure\")");
+    eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");
+}

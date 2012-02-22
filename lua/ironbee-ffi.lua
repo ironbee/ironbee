@@ -627,6 +627,7 @@ IB_EOTHER        = ffi.cast("int", c.IB_EOTHER)
 -- ===============================================
 IB_FTYPE_GENERIC = ffi.cast("int", c.IB_FTYPE_GENERIC)
 IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
+IB_FTYPE_UNUM    = ffi.cast("int", c.IB_FTYPE_UNUM)
 IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
 IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)
 IB_FTYPE_LIST    = ffi.cast("int", c.IB_FTYPE_LIST)
