@@ -26,9 +26,12 @@
 -- Data Access
 --
 -- add(name, value) - add a string, number or table.
+-- addEvent([msg], options) - Add a new event.
 -- appendToList(list_name, name, value) - append a value to a list.
 -- get(name) - return a string, number or table.
 -- getFieldList() - Return a list of defined fields.
+-- getNames(field) - Returns a list of names in this field.
+-- getValues(field) - Returns a list of values in this field.
 -- set(name, value) - set a string, number or table.
 --
 -- Logging
