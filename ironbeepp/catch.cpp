@@ -38,7 +38,7 @@ namespace Internal {
 
 ib_status_t ibpp_caught_ib_exception(
     ib_engine_t* engine,
-    ib_status_t  which,
+    ib_status_t  status,
     const error& e
 )
 {
@@ -46,7 +46,7 @@ ib_status_t ibpp_caught_ib_exception(
         std::string message;
         int level = 1;
 
-        message = std::string( ib_status_to_string( which ) ) + ":";
+        message = std::string( ib_status_to_string( status ) ) + ":";
         if ( boost::get_error_info<errinfo_what>( e ) ) {
             message += *boost::get_error_info<errinfo_what>( e );
         } else {
@@ -63,7 +63,7 @@ ib_status_t ibpp_caught_ib_exception(
             diagnostic_information( e ).c_str()
         );
     }
-    return which;
+    return status;
 }
 
 ib_status_t ibpp_caught_boost_exception(
@@ -97,13 +97,13 @@ ib_status_t ibpp_caught_boost_exception(
 
 ib_status_t ibpp_caught_std_exception(
     ib_engine_t*          engine,
-    ib_status_t           which,
+    ib_status_t           status,
     const std::exception& e
 )
 {
-    if ( engine && which != IB_EALLOC ) {
+    if ( engine && status != IB_EALLOC ) {
         std::string message;
-        if ( which == IB_EINVAL ) {
+        if ( status == IB_EINVAL ) {
             message = "Invalid argument: ";
         } else {
             message = "Unknown std::exception thrown: ";
@@ -113,7 +113,7 @@ ib_status_t ibpp_caught_std_exception(
         ib_log_error( engine, 1, "%s", message.c_str() );
     }
 
-    return which;
+    return status;
 }
 
 ib_status_t ibpp_caught_unknown_exception(

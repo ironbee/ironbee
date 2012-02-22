@@ -53,14 +53,14 @@ namespace Internal {
  * ib_log_error().  Otherwise, does nothing.
  *
  * @param[in] engine Engine to use for logging; may be null.
- * @param[in] which  Which error occurred.
+ * @param[in] status Which error occurred.
  * @param[in] e      Exception caught.
  *
  * @returns Appropriate ib_status_t.
  **/
 ib_status_t ibpp_caught_ib_exception(
      ib_engine_t* engine,
-     ib_status_t  which,
+     ib_status_t  status,
      const error& e
 );
 
@@ -77,7 +77,7 @@ ib_status_t ibpp_caught_ib_exception(
  * @returns Appropriate ib_status_t.
  **/
 ib_status_t ibpp_caught_boost_exception(
-    ib_engine_t*        engine,
+    ib_engine_t*            engine,
     const boost::exception& e
 );
 
@@ -89,12 +89,12 @@ ib_status_t ibpp_caught_boost_exception(
  * ib_log_error().  Otherwise, does nothing.
  *
  * @param[in] engine Engine to use for logging; may be null.
- * @param[in] which  Which error occurred.
+ * @param[in] status Which error occurred.
  * @param[in] e      Exception caught.
  **/
 ib_status_t ibpp_caught_std_exception(
     ib_engine_t*          engine,
-    ib_status_t           which,
+    ib_status_t           status,
     const std::exception& e
 );
 
