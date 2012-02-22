@@ -176,7 +176,7 @@ ibapi.new = function(ib_engine, ib_tx)
             return ffi.string(ffi.C.ib_bytestr_const_ptr(value),
                               ffi.C.ib_bytestr_length(value))
 
-        -- Lists - not handled.
+        -- Lists
         elseif field.type == ffi.C.IB_FTYPE_LIST then
             local t = {}
 

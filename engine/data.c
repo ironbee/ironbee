@@ -24,6 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -50,6 +51,10 @@ ib_status_t ib_data_add(ib_provider_inst_t *dpi,
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
 
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
     rc = api->add(dpi, f, f->name, f->nlen);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -63,6 +68,10 @@ ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
 
     rc = api->add(dpi, f, key, klen);
     IB_FTRACE_RET_STATUS(rc);
@@ -79,6 +88,10 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
 
     if (pf != NULL) {
         *pf = NULL;
@@ -108,6 +121,10 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
 
     if (pf != NULL) {
         *pf = NULL;
@@ -139,6 +156,10 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
     ib_field_t *f;
     ib_status_t rc;
 
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
     if (pf != NULL) {
         *pf = NULL;
     }
@@ -167,6 +188,10 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
     ib_field_t *f;
     ib_status_t rc;
 
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
     if (pf != NULL) {
         *pf = NULL;
     }
@@ -194,6 +219,10 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
 
     if (pf != NULL) {
         *pf = NULL;
@@ -224,6 +253,10 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
 
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
     rc = api->get(dpi, name, nlen, pf);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -235,6 +268,10 @@ ib_status_t ib_data_get_all(ib_provider_inst_t *dpi,
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_status_t rc;
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
 
     rc = api->get_all(dpi, list);
     IB_FTRACE_RET_STATUS(rc);
@@ -249,11 +286,16 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+
     ib_engine_t *ib = dpi->pr->ib;
     char *fullname;
     size_t fnlen;
     size_t tlen;
     ib_status_t rc;
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
 
     /* No tfn just means a normal get. */
     if (tfn == NULL) {
@@ -361,6 +403,10 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf)
 {
     IB_FTRACE_INIT();
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
 
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;

@@ -1718,6 +1718,7 @@ ib_status_t DLL_PUBLIC ib_data_tfn_get(ib_provider_inst_t *dpi,
  * Remove a data field.
  * @param dpi Data provider instance
  * @param name Name as NUL terminated string
+ * @param nllen Length of @a name.
  * @param pf Pointer where old field is written if non-NULL
  */
 ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
