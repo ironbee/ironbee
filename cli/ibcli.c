@@ -740,21 +740,21 @@ static void print_field(const char *label,
      * Note: field->name is not always a null ('\0') terminated string */
     switch (field->type) {
         case IB_FTYPE_GENERIC :      /**< Generic data */
-            printf( "  %s: %p\n",
+            printf( "  %s = %p\n",
                     label, ib_field_value(field) );
             break;
         case IB_FTYPE_NUM :          /**< Numeric value */
-            printf( "  %s: %jd\n",
+            printf( "  %s = %jd\n",
                     label, *(intmax_t *)ib_field_value_num(field) );
             break;
         case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
-            printf( "  %s: %ju\n",
+            printf( "  %s = %ju\n",
                     label, *(uintmax_t *)ib_field_value_unum(field) );
             break;
         case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
             {
                 const char *s = ib_field_value_nulstr(field);
-                printf( "  %s: '%s'\n", label, s );
+                printf( "  %s = '%s'\n", label, s );
             }
             break;
         case IB_FTYPE_BYTESTR :      /**< Byte string value */
@@ -762,10 +762,10 @@ static void print_field(const char *label,
                 ib_bytestr_t *bs = ib_field_value_bytestr(field);
                 size_t len = ib_bytestr_length(bs);
                 if (len == 0) {
-                    printf("  %s: ''\n", label);
+                    printf("  %s = ''\n", label);
                 }
                 else {
-                    printf( "  %s: '%.*s'\n",
+                    printf( "  %s = '%.*s'\n",
                             label, (int)len, ib_bytestr_const_ptr(bs) );
                 }
             }
@@ -774,7 +774,7 @@ static void print_field(const char *label,
             {
                 ib_list_t *lst = ib_field_value_list(field);
                 size_t len = IB_LIST_ELEMENTS(lst);
-                printf( "  %s: list:len=%d\n", label, (int)len);
+                printf( "  %s = list:len=%d\n", label, (int)len);
             }
             break;
     }
@@ -821,7 +821,7 @@ static const char *build_path( const char *path, ib_field_t *field )
 
     /* Copy in the base path */
     strcpy(fullpath, path);
-    strcat(fullpath, "/");
+    strcat(fullpath, ":");
 
     /* Append the field's name */
     memcpy(fullpath+pathlen+1, field->name, nlen);
@@ -912,14 +912,14 @@ static ib_status_t print_tx( ib_engine_t *ib,
         ib_log_debug(ib, 4, "print_tx: Failed to get ARGS: %d", rc);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
-    print_field("tx/ARGS", field);
+    print_field("tx:ARGS", field);
     lst = ib_field_value_list(field);
     if (lst == NULL) {
         printf("print_tx: Failed ARGS is not a list\n");
         ib_log_debug(ib, 4, "print_tx: ARGS is not a list");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
-    print_list("tx/ARGS", lst);
+    print_list("tx:ARGS", lst);
 
     /* Not doing a full dump?  Done */
     if (test_dump_flags(DUMP_TX_FULL) == 0) {

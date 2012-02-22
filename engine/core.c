@@ -946,14 +946,14 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
     const char *subkey;
     ib_status_t rc;
 
-    /* Allow "key.subkey" syntax, but still fall through
+    /* Allow "key:subkey" syntax, but still fall through
      * to a full key lookup if that fails.
      */
-    if ((subkey = strchr(name, '.')) != NULL) {
+    if ((subkey = strchr(name, ':')) != NULL) {
         size_t klen;
         size_t sklen;
 
-        subkey += 1; /* skip over "." */
+        subkey += 1; /* skip over ":" */
         klen = (subkey - name) - 1;
         sklen = nlen - klen - 1;
 

@@ -187,7 +187,7 @@ TEST(TestIronBee, test_dpi)
     ASSERT_EQ(dynf, f);
 
     /* Fetch a dynamic field from the data store */
-    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf.dyn_subkey", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey", &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(10UL, f->nlen);
 
@@ -195,7 +195,7 @@ TEST(TestIronBee, test_dpi)
     ASSERT_EQ(5, *ib_field_value_num(f));
 
     /* Fetch another dynamic field from the data store */
-    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf.dyn_subkey2", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey2", &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(11UL, f->nlen);
     ASSERT_MEMEQ("dyn_subkey2", f->name, 11);

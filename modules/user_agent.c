@@ -509,7 +509,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     ib_bytestr_t *bs;
 
     /* Extract the request headers field from the provider instance */
-    rc = ib_data_get(tx->dpi, "request_headers.User-Agent", &req_agent);
+    rc = ib_data_get(tx->dpi, "request_headers:User-Agent", &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4, "request_headers_event: No user agent");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
