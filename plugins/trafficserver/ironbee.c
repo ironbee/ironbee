@@ -488,10 +488,6 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     (TS_VERSION_MINOR >= 2))
     if (ibd->dir == IBD_RESP) {
         char *head_buf;
-#if 0
-        char *head_ptr;
-        void *head_start;
-#endif
 
         /* before the HTTP headers comes the request line / response code */
         rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
@@ -511,39 +507,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         len = TSIOBufferBlockReadAvail(blockp, readerp);
         head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
-#if 0
-        /* Workaround:
-         * Search for and remove the extra "http://" in the path by
-         * advancing the bytes preceding the extra string forward.
-         *
-         * EX: Here 1 would become 2 (x are removed bytes)
-         *  1) "GET http:///foo HTTP/1.0"
-         *  2) "xxxxxxxGET /foo HTTP/1.0"
-         */
-        head_ptr = (char *)memchr(head_buf, ' ', len);
-        if ((head_ptr != NULL) &&
-            (len - (head_ptr - head_buf) >= 9) &&
-            (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
-            (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
-            (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
-            (head_ptr[7] = '/') && (head_ptr[8] = '/'))
-        {
-            TSDebug("ironbee", "Workaround - Removing http:// from path");
-            while (head_ptr > head_buf) {
-                *(head_ptr + 7) = *head_ptr;
-                --head_ptr;
-            }
-            head_start = head_buf + 7;
-            len -= 7;
-        }
-        else {
-            head_start = head_buf;
-        }
-
-        icdata.data = head_start;
-#else
         icdata.data = (void *)head_buf;
-#endif
         icdata.dlen = icdata.dalloc = len;
 
         (*ibd->ib_notify)(ironbee, &icdata);
@@ -552,21 +516,53 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     }
     else {
-        rv = TSHttpTxnClientDataGet(txnp, &icdata.data, &icdata.dlen);
+        void *head_buf;
+        char *head_ptr;
+
+        rv = TSHttpTxnClientDataGet(txnp, &head_buf, &icdata.dlen);
         if (rv) {
             TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
             return;
         }
+
+        /* Workaround:
+         * Search for and remove the extra "http://" in the path by
+         * advancing the bytes preceding the extra string forward.
+         *
+         * EX: Here 1 would become 2 (x are removed bytes)
+         *  1) "GET http:///foo HTTP/1.0"
+         *  2) "xxxxxxxGET /foo HTTP/1.0"
+         */
+        head_ptr = (char *)memchr(head_buf, ' ', icdata.dlen);
+        if ((head_ptr != NULL) &&
+            (icdata.dlen - (head_ptr - (char *)head_buf) >= 9) &&
+            (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
+            (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
+            (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
+            (head_ptr[7] = '/') && (head_ptr[8] = '/'))
+        {
+            TSError("ATS Workaround - Removing http:// from request line\n");
+            while (head_ptr >= (char *)head_buf) {
+                *(head_ptr + 7) = *head_ptr;
+                --head_ptr;
+            }
+            icdata.data = (void *)(((char *)head_buf) + 7);
+            icdata.dlen -= 7;
+            TSError("ATS Workaround DATA[%d]: %.*s ...\n", (int)icdata.dlen, 25, (char *)icdata.data);
+        }
+        else {
+            icdata.data = head_buf;
+        }
+
         (*ibd->ib_notify)(ironbee, &icdata);
     }
+
 #else
     /* We'll get a bogus URL from TS-998 */
 
     char *head_buf;
-#if 0
     char *head_ptr;
     void *head_start;
-#endif
 
     /* before the HTTP headers comes the request line / response code */
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
@@ -589,39 +585,42 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
-#if 0
-    /* Workaround:
-     * Search for and remove the extra "http://" in the path by
-     * advancing the bytes preceding the extra string forward.
-     *
-     * EX: Here 1 would become 2 (x are removed bytes)
-     *  1) "GET http:///foo HTTP/1.0"
-     *  2) "xxxxxxxGET /foo HTTP/1.0"
-     */
-    head_ptr = (char *)memchr(head_buf, ' ', len);
-    if ((head_ptr != NULL) &&
-        (len - (head_ptr - head_buf) >= 9) &&
-        (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
-        (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
-        (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
-        (head_ptr[7] = '/') && (head_ptr[8] = '/'))
-    {
-        TSDebug("ironbee", "Workaround - Removing http:// from path");
-        while (head_ptr > head_buf) {
-            *(head_ptr + 7) = *head_ptr;
-            --head_ptr;
+    if (ibd->dir == IBD_REQ) {
+        /* Workaround:
+         * Search for and remove the extra "http://" in the path by
+         * advancing the bytes preceding the extra string forward.
+         *
+         * EX: Here 1 would become 2 (x are removed bytes)
+         *  1) "GET http:///foo HTTP/1.0"
+         *  2) "xxxxxxxGET /foo HTTP/1.0"
+         */
+        head_ptr = (char *)memchr(head_buf, ' ', len);
+        if ((head_ptr != NULL) &&
+            (len - (head_ptr - head_buf) >= 9) &&
+            (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
+            (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
+            (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
+            (head_ptr[7] = '/') && (head_ptr[8] = '/'))
+        {
+            TSError("ATS Workaround - Removing http:// from request line\n");
+            while (head_ptr >= head_buf) {
+                *(head_ptr + 7) = *head_ptr;
+                --head_ptr;
+            }
+            head_start = head_buf + 7;
+            len -= 7;
+            TSError("ATS Workaround DATA[%d]: %.*s ...\n", (int)len, 25, (char *)head_start);
         }
-        head_start = head_buf + 7;
-        len -= 7;
+        else {
+            head_start = head_buf;
+        }
+
+        icdata.data = head_start;
     }
     else {
-        head_start = head_buf;
+        icdata.data = (void *)head_buf;
     }
 
-    icdata.data = head_start;
-#else
-    icdata.data = (void *)head_buf;
-#endif
     icdata.dlen = icdata.dalloc = len;
 
     (*ibd->ib_notify)(ironbee, &icdata);
