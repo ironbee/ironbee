@@ -88,6 +88,7 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
     ib_num_t        n = 0;
     ib_list_node_t *node = NULL;
     ib_field_t     *in_field;
+    ib_field_t     *out = NULL;
 
     /* No functions?  Do nothing. */
     if (IB_LIST_ELEMENTS(target->field_ops) == 0) {
@@ -108,7 +109,6 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
     in_field = value;
     IB_LIST_LOOP(target->field_ops, node) {
         ib_field_op_fn_t  fn = (ib_field_op_fn_t)node->data;
-        ib_field_t       *out;
 
         /* Run it */
         ++n;
@@ -123,13 +123,22 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* The output of the operator is now the result */
-        *result = out;
+        /* Verify that out isn't NULL */
+        if (out == NULL) {
+            ib_log_error(ib, 4,
+                         "Field operator #%d field %s returned NULL",
+                         n, target->field_name);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
 
         /* The output of the operator is now input for the next field op. */
         in_field = out;
     }
 
+    /* The output of the final operator is the result */
+    *result = out;
+
+    /* Done. */
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -248,7 +257,8 @@ static ib_status_t execute_rule(ib_engine_t *ib,
      * Loop through all of the fields.
      *
      * @todo The current behavior is to keep running even after an operator
-     * returns an error.
+     * returns an error.  This needs further discussion to determine what the
+     * correct behaior should be.
      */
     IB_LIST_LOOP(rule->target_fields, node) {
         ib_rule_target_t *target = (ib_rule_target_t *)node->data;
@@ -382,7 +392,8 @@ static ib_status_t execute_actions(ib_engine_t *ib,
      * Loop through all of the fields
      *
      * @todo The current behavior is to keep running even after an action
-     * returns an error.
+     * returns an error.  This needs further discussion to determine what the
+     * correct behaior should be.
      */
     IB_LIST_LOOP(actions, node) {
         ib_status_t       arc;     /* Action's return code */
@@ -443,7 +454,8 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      * Execute the rule
      *
      * @todo The current behavior is to keep running even after an operator
-     * returns an error.
+     * returns an error.  This needs further discussion to determine what the
+     * correct behaior should be.
      */
     trc = execute_rule(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
@@ -455,7 +467,8 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      * Execute the actions.
      *
      * @todo The current behavior is to keep running even after action(s)
-     * returns an error.
+     * returns an error.  This needs further discussion to determine what the
+     * correct behaior should be.
      */
     if (*rule_result != 0) {
         actions = rule->true_actions;
@@ -474,7 +487,8 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      * Execute chained rule
      *
      * @todo The current behavior is to keep running even after a chained rule
-     * rule returns an error.
+     * returns an error.  This needs further discussion to determine what
+     * the correct behaior should be.
      *
      * @note Chaining is currently done via recursion.
      */
@@ -544,7 +558,8 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
      * Loop through all of the rules for this phase, execute them.
      *
      * @todo The current behavior is to keep running even after rule execution
-     * returns an error.
+     * returns an error.  This needs further discussion to determine what the
+     * correct behaior should be.
      */
     IB_LIST_LOOP(rules, node) {
         ib_rule_t   *rule = (ib_rule_t*)node->data;
