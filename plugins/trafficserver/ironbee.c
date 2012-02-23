@@ -488,8 +488,10 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     (TS_VERSION_MINOR >= 2))
     if (ibd->dir == IBD_RESP) {
         char *head_buf;
+#if 0
         char *head_ptr;
         void *head_start;
+#endif
 
         /* before the HTTP headers comes the request line / response code */
         rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
@@ -509,6 +511,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         len = TSIOBufferBlockReadAvail(blockp, readerp);
         head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
+#if 0
         /* Workaround:
          * Search for and remove the extra "http://" in the path by
          * advancing the bytes preceding the extra string forward.
@@ -538,6 +541,9 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         }
 
         icdata.data = head_start;
+#else
+        icdata.data = (void *)head_buf;
+#endif
         icdata.dlen = icdata.dalloc = len;
 
         (*ibd->ib_notify)(ironbee, &icdata);
@@ -557,8 +563,10 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     /* We'll get a bogus URL from TS-998 */
 
     char *head_buf;
+#if 0
     char *head_ptr;
     void *head_start;
+#endif
 
     /* before the HTTP headers comes the request line / response code */
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
@@ -581,6 +589,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
+#if 0
     /* Workaround:
      * Search for and remove the extra "http://" in the path by
      * advancing the bytes preceding the extra string forward.
@@ -610,6 +619,9 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     }
 
     icdata.data = head_start;
+#else
+    icdata.data = (void *)head_buf;
+#endif
     icdata.dlen = icdata.dalloc = len;
 
     (*ibd->ib_notify)(ironbee, &icdata);
