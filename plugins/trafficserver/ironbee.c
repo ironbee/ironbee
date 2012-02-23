@@ -517,8 +517,14 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
          *  1) "GET http:///foo HTTP/1.0"
          *  2) "xxxxxxxGET /foo HTTP/1.0"
          */
-        head_ptr = strnstr(head_buf, " http:///", len);
-        if (head_ptr != NULL) {
+        head_ptr = (char *)memchr(head_buf, ' ', len);
+        if ((head_ptr != NULL) &&
+            (len - (head_ptr - head_buf) >= 9) &&
+            (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
+            (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
+            (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
+            (head_ptr[7] = '/') && (head_ptr[8] = '/'))
+        {
             TSDebug("ironbee", "Workaround - Removing http:// from path");
             while (head_ptr > head_buf) {
                 *(head_ptr + 7) = *head_ptr;
@@ -583,8 +589,14 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
      *  1) "GET http:///foo HTTP/1.0"
      *  2) "xxxxxxxGET /foo HTTP/1.0"
      */
-    head_ptr = strnstr(head_buf, " http:///", len);
-    if (head_ptr != NULL) {
+    head_ptr = (char *)memchr(head_buf, ' ', len);
+    if ((head_ptr != NULL) &&
+        (len - (head_ptr - head_buf) >= 9) &&
+        (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
+        (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
+        (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
+        (head_ptr[7] = '/') && (head_ptr[8] = '/'))
+    {
         TSDebug("ironbee", "Workaround - Removing http:// from path");
         while (head_ptr > head_buf) {
             *(head_ptr + 7) = *head_ptr;
