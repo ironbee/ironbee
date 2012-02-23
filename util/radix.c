@@ -17,11 +17,9 @@
 
 /**
  * @file
- * @brief IronBee - Utility Radix functions
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
- */
-
-/**
+ * @brief IronBee - Utility Radix functions
+ *
  * This is a radix tree bitwise implementation initially designed for
  * IP / CIDR addresses.
  */
@@ -39,14 +37,6 @@
 #include <sys/socket.h> /* For FreeBSD */
 #include <stdlib.h>
 
-/**
- * Creates a new prefix instance
- *
- * @param prefix reference to a pointer that will link to the allocated prefix
- * @param pool memory pool that the allocation should use
- *
- * @returns Status code
- */
 ib_status_t ib_radix_prefix_new(ib_radix_prefix_t **prefix,
                                 ib_mpool_t *pool)
 {
@@ -63,16 +53,6 @@ ib_status_t ib_radix_prefix_new(ib_radix_prefix_t **prefix,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Creates a new prefix instance
- *
- * @param prefix reference to a pointer that will link to the allocated prefix
- * @param rawbits sequence of bytes representing the key prefix
- * @param prefixlen size in bits with the len of the prefix
- * @param pool memory pool that the allocation should use
- *
- * @returns Status code
- */
 ib_status_t ib_radix_prefix_create(ib_radix_prefix_t **prefix,
                                    uint8_t *rawbits,
                                    uint8_t prefixlen,
@@ -95,15 +75,6 @@ ib_status_t ib_radix_prefix_create(ib_radix_prefix_t **prefix,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * creates a clone of the prefix instance
- *
- * @param orig pointer to the original prefix
- * @param new_prefix reference to a pointer to the allocated prefix
- * @param mp memory pool that the allocation should use
- *
- * @returns Status code
- */
 ib_status_t ib_radix_clone_prefix(ib_radix_prefix_t *orig,
                                   ib_radix_prefix_t **new_prefix,
                                   ib_mpool_t *mp)
@@ -137,14 +108,6 @@ ib_status_t ib_radix_clone_prefix(ib_radix_prefix_t *orig,
 }
 
 
-/**
- * destroy a prefix
- *
- * @param prefix to destroy
- * @param pool memory of the prefix
- *
- * @returns Status code
- */
 ib_status_t ib_radix_prefix_destroy(ib_radix_prefix_t **prefix,
                                     ib_mpool_t *pool)
 {
@@ -156,14 +119,6 @@ ib_status_t ib_radix_prefix_destroy(ib_radix_prefix_t **prefix,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Creates a new node instance
- *
- * @param node reference to a pointer that will link to the allocated node
- * @param pool memory pool that the allocation should use
- *
- * @returns Status code
- */
 ib_status_t ib_radix_node_new(ib_radix_node_t **node,
                               ib_mpool_t *pool)
 {
@@ -180,15 +135,6 @@ ib_status_t ib_radix_node_new(ib_radix_node_t **node,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * creates a clone of the node instance
- *
- * @param orig pointer to the original node
- * @param new_node reference to a pointer that will link to the allocated node
- * @param mp memory pool that the allocation should use
- *
- * @returns Status code
- */
 ib_status_t ib_radix_clone_node(ib_radix_node_t *orig,
                                 ib_radix_node_t **new_node,
                                 ib_mpool_t *mp)
@@ -227,15 +173,6 @@ ib_status_t ib_radix_clone_node(ib_radix_node_t *orig,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Destroy a node and its children (this includes prefix and userdata)
- *
- * @param radix the radix of the node
- * @param node the node to destroy
- * @param pool memory pool of the node
- *
- * @returns Status code
- */
 ib_status_t ib_radix_node_destroy(ib_radix_t *radix,
                                   ib_radix_node_t **node,
                                   ib_mpool_t *pool)
@@ -270,21 +207,6 @@ ib_status_t ib_radix_node_destroy(ib_radix_t *radix,
 }
 
 
-/**
- * Creates a new radix tree registering functions to update, free and print
- * associated to each prefix it also register the memory pool it should use
- * for new allocations
- *
- * @param radix pointer to link the instance of the new radix
- * @param free_data pointer to the function that will be used to
- * free the userdata entries
- * @param update_data pointer to the function that knows how to update a node
- * with new user data
- * @param print_data pointer to a helper function that print_datas a userdata
- * @param pool memory pool that the allocation should use
- *
- * @returns Status code
- */
 ib_status_t ib_radix_new(ib_radix_t **radix,
                          ib_radix_free_fn_t free_data,
                          ib_radix_print_fn_t print_data,
@@ -308,16 +230,6 @@ ib_status_t ib_radix_new(ib_radix_t **radix,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * creates a clone of the tree, allocating memory from mp
- *
- * @param orig pointer to the original pool
- * @param new_radix reference to a pointer that will link to the allocated
- *                  radix
- * @param mp memory pool that the allocation should use
- *
- * @returns Status code
- */
 ib_status_t ib_radix_clone_radix(ib_radix_t *orig,
                                  ib_radix_t **new_radix,
                                  ib_mpool_t *mp)
@@ -354,19 +266,6 @@ size_t ib_radix_elements(ib_radix_t *radix)
     IB_FTRACE_RET_SIZET(radix->data_cnt);
 }
 
-/*
- * Inserts a new user data associated to the prefix passed. The prefix is not
- * used, so developers are responsible to free that prefixes
- * Keys can be of "any size" but this will be probably used for
- * CIDR data prefixes only (from 0 to 32 ~ 128 depending on IPv4
- * or IPv6 respectively)
- *
- * @param radix the radix of the node
- * @param prefix the prefix to use as index
- * @param prefix_data, the data to store under that prefix
- *
- * @returns Status code
- */
 ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                                  ib_radix_prefix_t *prefix,
                                  void *prefix_data)
@@ -826,8 +725,7 @@ ib_status_t ib_radix_destroy(ib_radix_t **radix)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
- *
+/**
  * Recursive function that return the data associated to prefix
  * This function should not be called directly
  *
