@@ -532,7 +532,6 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     ib_rule_phase_data_t *phase = &(ctx->rules->ruleset.phases[rdata->phase]);
     ib_list_t            *rules = phase->rules.rule_list;
     ib_list_node_t       *node = NULL;
-    ib_status_t           rc = IB_OK;
 
     /* Sanity check */
     if (phase->phase != rdata->phase) {
@@ -575,11 +574,15 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
             ib_log_error(ib, 4,
                          "Error executing rule %s: %d",
                          rule->meta.id, rule_rc);
-            rc = rule_rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    /*
+     * @todo Eat errors for now.  Unless something Really Bad(TM) has
+     * occurred, return IB_OK to the engine.  A bigger discussion of if / how
+     * such errors should be propogated needs to occur.
+     */
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
