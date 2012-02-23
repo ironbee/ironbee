@@ -40,9 +40,12 @@
 #include "ironbee_core_private.h"
 
 
+/* Size of buffer used to convert a bytestr to an int */
+#define MAX_FIELD_NUM_BUF    128
+
 /**
- * @internal
  * Create function for the "str" family of operators
+ * @internal
  *
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
@@ -75,8 +78,8 @@ static ib_status_t strop_create(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "streq" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -124,8 +127,8 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "contains" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
@@ -176,8 +179,8 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "exists" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
@@ -201,8 +204,8 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "checkflag" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator.
@@ -235,8 +238,8 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "true" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
@@ -258,8 +261,8 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "false" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
@@ -281,8 +284,8 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Create function for the "ipmatch" operator
+ * @internal
  *
  * @param[in] ib The IronBee engine
  * @param[in] ctx The current IronBee context (unused)
@@ -352,8 +355,8 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "ipmatch" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -433,8 +436,8 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Create function for the numeric comparison operators
+ * @internal
  *
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
@@ -471,8 +474,8 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Get integer representation of a field
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] field Field value
@@ -480,7 +483,6 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-#define MAX_FIELD_NUM_BUF    128
 static ib_status_t field_to_num(ib_engine_t *ib,
                                 ib_field_t *field,
                                 ib_num_t *result)
@@ -531,12 +533,12 @@ static ib_status_t field_to_num(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the numeric "equal" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
+ * @param[in] data Pointer to number to compare to
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -565,8 +567,8 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the numeric "not equal" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -599,12 +601,12 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "gt" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
+ * @param[in] data Pointer to number to compare to
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -633,8 +635,8 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the numeric "less-than" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
@@ -667,12 +669,12 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the numeric "greater than or equal to" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
+ * @param[in] data Pointer to number to compare to
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -701,12 +703,12 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "less than or equal to" operator
+ * @internal
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
- * @param[in] data C-style string to compare to
+ * @param[in] data Pointer to number to compare to
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
