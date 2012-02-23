@@ -541,14 +541,14 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
             (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
             (head_ptr[7] = '/') && (head_ptr[8] = '/'))
         {
-            TSError("ATS Workaround - Removing http:// from request line\n");
+            TSError("ATS Workaround - Removing extra http:// from request line: %.*s\n", 50, (char *)head_buf);
             while (head_ptr >= (char *)head_buf) {
                 *(head_ptr + 7) = *head_ptr;
                 --head_ptr;
             }
             icdata.data = (void *)(((char *)head_buf) + 7);
             icdata.dlen -= 7;
-            TSError("ATS Workaround DATA[%d]: %.*s ...\n", (int)icdata.dlen, 25, (char *)icdata.data);
+            TSError("ATS Workaround - DATA[%d]: %.*s ...\n", (int)icdata.dlen, 25, (char *)icdata.data);
         }
         else {
             icdata.data = head_buf;
@@ -602,14 +602,14 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
             (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
             (head_ptr[7] = '/') && (head_ptr[8] = '/'))
         {
-            TSError("ATS Workaround - Removing http:// from request line\n");
+            TSError("ATS Workaround - Removing extra http:// from request line: %.*s\n", 50, (char *)head_buf);
             while (head_ptr >= head_buf) {
                 *(head_ptr + 7) = *head_ptr;
                 --head_ptr;
             }
             head_start = head_buf + 7;
             len -= 7;
-            TSError("ATS Workaround DATA[%d]: %.*s ...\n", (int)len, 25, (char *)head_start);
+            TSError("ATS Workaround - DATA[%d]: %.*s ...\n", (int)len, 25, (char *)head_start);
         }
         else {
             head_start = head_buf;
