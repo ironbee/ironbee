@@ -59,21 +59,20 @@ static rule_cbdata_t rule_cbdata[] = {
 #define IB_RULES_INIT_RULESET     (1 << 0)   /**< Initialize the ruleset */
 #define IB_RULES_INIT_CALLBACKS   (1 << 1)   /**< Initialize the callbacks */
 
-/**
- * The rule engine uses recursion to walk through lists and chains.  These
- * define the limits to the depth of those recursions.
- **/
+/* The rule engine uses recursion to walk through lists and chains.  These
+ * define the limits to the depth of those recursions. */
 #define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
 #define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
 
 
 /**
- * @internal
  * Execute a single rule's operator
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction
  * @param[in] target Target field
+ * @param[in] value Initial value of the target field
  * @param[out] result Pointer to field in which to store the result
  *
  * @returns Status code
@@ -103,7 +102,7 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
                  IB_LIST_ELEMENTS(target->field_ops), target->field_name);
 
 
-    /**
+    /*
      * Loop through all of the field operators.
      */
     in_field = value;
@@ -135,8 +134,8 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute a rule on a list of values
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction
@@ -160,7 +159,8 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Limit recursion */
-    if (--recursion <= 0) {
+    --recursion;
+    if (recursion <= 0) {
         ib_log_error(ib, 4, "Rule engine: List recursion limit reached");
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
@@ -172,7 +172,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         ib_num_t n = 0;
 
         IB_LIST_LOOP(vlist, node) {
-            ib_field_t   *nvalue = (ib_field_t *)ib_list_node_data(node);
+            ib_field_t *nvalue = (ib_field_t *)ib_list_node_data(node);
             ++n;
 
             rc = execute_rule_operator(
@@ -207,8 +207,8 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute a single rule's operator
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
@@ -244,7 +244,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /**
+    /*
      * Loop through all of the fields.
      *
      * @todo The current behavior is to keep running even after an operator
@@ -316,8 +316,8 @@ static ib_status_t execute_rule(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute a single rule action
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
@@ -354,8 +354,8 @@ static ib_status_t execute_action(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute a rule's actions
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
@@ -378,7 +378,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "Executing %s rule %s actions", rule->meta.id, name);
 
-    /**
+    /*
      * Loop through all of the fields
      *
      * @todo The current behavior is to keep running even after an action
@@ -407,8 +407,8 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute a single rule, it's actions, and it's chained rules.
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] event Event type
@@ -430,7 +430,8 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
     ib_status_t  trc;         /* Temporary status code */
 
     /* Limit recursion */
-    if (--recursion <= 0) {
+    --recursion;
+    if (recursion <= 0) {
         ib_log_error(ib, 4, "Rule engine: Chain recursion limit reached");
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
@@ -497,8 +498,8 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Run a set of rules.
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] event Event type
@@ -568,8 +569,8 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Initialize a rule engine object.
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in,out] mp Memory pool to use for allocations
@@ -1244,7 +1245,6 @@ static ib_status_t fieldop_max(ib_engine_t *ib,
 
         case IB_FTYPE_LIST:
             IB_FTRACE_RET_STATUS(fieldop_max_list(ib, mp, field, result));
-            break;
 
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1278,7 +1278,6 @@ static ib_status_t fieldop_min(ib_engine_t *ib,
 
         case IB_FTYPE_LIST:
             IB_FTRACE_RET_STATUS(fieldop_min_list(ib, mp, field, result));
-            break;
 
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1288,8 +1287,8 @@ static ib_status_t fieldop_min(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute a single rule's operator
+ * @internal
  *
  * @param[in] ib Engine
  * @param[in] target_str Target field string

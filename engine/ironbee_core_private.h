@@ -45,15 +45,16 @@ extern "C" {
  * Field operator function type.
  *
  * @param[in] ib Ironbee engine.
+ * @param[in] mp Memory pool to use.
  * @param[in] field The field to operate on.
  * @param[out] result The result of the operator 1=true 0=false.
  *
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_field_op_fn_t)(ib_engine_t *ib,
-                                               ib_mpool_t *mp,
-                                               ib_field_t *field,
-                                               ib_field_t **result);
+                                         ib_mpool_t *mp,
+                                         ib_field_t *field,
+                                         ib_field_t **result);
 
 /**
  * Rule engine: Rule meta data
@@ -94,7 +95,7 @@ struct ib_rule_t {
     ib_list_t             *true_actions;  /**< Actions if condition True */
     ib_list_t             *false_actions; /**< Actions if condition False */
     ib_rulelist_t         *parent_rlist;  /**< Parent rule list */
-    ib_rule_t             *chained_rule;  /**< Next rule in the chained */
+    ib_rule_t             *chained_rule;  /**< Next rule in the chain */
     ib_flags_t             flags;         /**< External, etc. */
 };
 
