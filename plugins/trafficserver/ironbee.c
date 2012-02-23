@@ -519,6 +519,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
          */
         head_ptr = strnstr(head_buf, " http:///", len);
         if (head_ptr != NULL) {
+            TSDebug("ironbee", "Workaround - Removing http:// from path");
             while (head_ptr > head_buf) {
                 *(head_ptr + 7) = *head_ptr;
                 --head_ptr;
@@ -549,6 +550,10 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 #else
     /* We'll get a bogus URL from TS-998 */
 
+    char *head_buf;
+    char *head_ptr;
+    void *head_start;
+
     /* before the HTTP headers comes the request line / response code */
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv) {
@@ -567,7 +572,32 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     len = TSIOBufferBlockReadAvail(blockp, readerp);
     ib_log_debug(ironbee, 9,
                  "ts/ironbee/process_header: len=%ld", len );
-    icdata.data = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+
+    head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+
+    /* Workaround:
+     * Search for and remove the extra "http://" in the path by
+     * advancing the bytes preceding the extra string forward.
+     *
+     * EX: Here 1 would become 2 (x are removed bytes)
+     *  1) "GET http:///foo HTTP/1.0"
+     *  2) "xxxxxxxGET /foo HTTP/1.0"
+     */
+    head_ptr = strnstr(head_buf, " http:///", len);
+    if (head_ptr != NULL) {
+        TSDebug("ironbee", "Workaround - Removing http:// from path");
+        while (head_ptr > head_buf) {
+            *(head_ptr + 7) = *head_ptr;
+            --head_ptr;
+        }
+        head_start = head_buf + 7;
+        len -= 7;
+    }
+    else {
+        head_start = head_buf;
+    }
+
+    icdata.data = head_start;
     icdata.dlen = icdata.dalloc = len;
 
     (*ibd->ib_notify)(ironbee, &icdata);
