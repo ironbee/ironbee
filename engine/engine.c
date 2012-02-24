@@ -1235,6 +1235,23 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Notify any pending transaction events on connection close event. */
+    if (conn->tx != NULL) {
+        ib_tx_t *tx = conn->tx;
+
+        if ((tx->flags & IB_TX_FREQ_FINISHED) == 0) {
+            ib_log_debug(ib, 9, "Automatically triggering %s",
+                         ib_state_event_name(request_finished_event));
+            ib_state_notify_request_finished(ib, tx);
+        }
+
+        if ((tx->flags & IB_TX_FRES_FINISHED) == 0) {
+            ib_log_debug(ib, 9, "Automatically triggering %s",
+                         ib_state_event_name(response_finished_event));
+            ib_state_notify_response_finished(ib, tx);
+        }
+    }
+
     ib_conn_flags_set(conn, IB_CONN_FCLOSED);
 
     rc = ib_state_notify_conn(ib, conn_closed_event, conn);
