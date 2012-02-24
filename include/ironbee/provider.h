@@ -444,6 +444,11 @@ IB_PROVIDER_DECLARE_IFACE(data) {
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
+        expand_string,
+        (ib_provider_inst_t *pi, const char *str, char **result)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
         clear,
         (ib_provider_inst_t *pi)
     );
@@ -481,6 +486,11 @@ IB_PROVIDER_DECLARE_API(data) {
         ib_status_t,
         remove,
         (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        expand_string,
+        (ib_provider_inst_t *pi, const char *str, char **result)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,

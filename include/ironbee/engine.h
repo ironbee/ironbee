@@ -1730,6 +1730,27 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf);
 
 /**
+ * Expand a string using fields from the data store.
+ *
+ * This function looks through @a str for instances of
+ * "%{"+<name>+"}" (i.e. "%{FOO}"), then attempts to look up
+ * each of such name found in the data provider @a dpi.  If <name> is not
+ * found in the @a dpi, the "%{<name>}" sub-string is replaced with an empty
+ * string.  If the name is found, the associated field value is used to
+ * replace "%{<name>}" sub-string for string and numeric types (numbers are
+ * converted to strings); for others, the replacement is an empty string.
+ *
+ * @param[in] dpi Data provider instance
+ * @param[in] str NUL-terminated string to expand
+ * @param[out] result Pointer to the expanded string.
+ *
+ * @returns Status code
+ */
+ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
+                               const char *str,
+                               char **result);
+
+/**
  * Remove a data field.
  * @param dpi Data provider instance
  * @param name Name as NUL terminated string

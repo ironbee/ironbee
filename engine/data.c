@@ -417,3 +417,23 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
 
     IB_FTRACE_RET_STATUS(rc);
 }
+
+ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
+                               const char *str,
+                               char **result)
+{
+    IB_FTRACE_INIT();
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+
+    ib_status_t rc;
+
+    rc = api->expand_string(dpi, str, result);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
