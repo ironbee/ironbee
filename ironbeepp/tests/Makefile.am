@@ -6,7 +6,8 @@ LDADD = \
     $(top_builddir)/tests/gtest/libgtest.la \
     $(top_builddir)/tests/test_main.o \
     $(builddir)/../libibpp.la \
-    $(top_builddir)/util/libibutil.la
+    $(top_builddir)/util/libibutil.la \
+    $(top_builddir)/engine/libironbee.la
     
 LDFLAGS = \
     -lstdc++
@@ -15,11 +16,13 @@ include $(top_srcdir)/build/tests.mk
 
 check_PROGRAMS = \
     test_catch \
-    test_data
+    test_data \
+    test_module
 TESTS=$(check_PROGRAMS)
 
 test_catch_SOURCES = test_catch.cpp
 test_data_SOURCES = test_data.cpp
+test_module_SOURCES = test_module.cpp
 
 check-local: $(check_PROGRAMS)
 	for cp in $(check_PROGRAMS); do \

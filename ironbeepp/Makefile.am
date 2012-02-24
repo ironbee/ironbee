@@ -6,4 +6,7 @@ lib_LTLIBRARIES = libibpp.la
 libibpp_la_SOURCES = \
     catch.cpp \
     engine.cpp \
-    data.cpp
+    data.cpp \
+    module.cpp \
+    context.cpp \
+    builder.cpp
