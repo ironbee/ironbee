@@ -161,15 +161,15 @@ ibapi.new = function(ib_engine, ib_tx)
 
         -- Number
         if field.type == ffi.C.IB_FTYPE_NUM then
-            return tonumber(ffi.cast("ib_num_t*", value)[0])
+            return tonumber(ffi.cast("const ib_num_t*", value)[0])
 
         -- Unsigned Number
         elseif field.type == ffi.C.IB_FTYPE_UNUM then
-            return tonumber(ffi.cast("ib_unum_t*", value)[0])
+            return tonumber(ffi.cast("const ib_unum_t*", value)[0])
 
         -- String
         elseif field.type == ffi.C.IB_FTYPE_NULSTR then
-            return ffi.string(ffi.cast("char*", value))
+            return ffi.string(ffi.cast("const char*", value))
 
         -- Byte String
         elseif field.type == ffi.C.IB_FTYPE_BYTESTR then
