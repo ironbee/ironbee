@@ -17,12 +17,17 @@ include $(top_srcdir)/build/tests.mk
 check_PROGRAMS = \
     test_catch \
     test_data \
-    test_module
+    test_module \
+    test_module_bootstrap_a \
+    test_module_bootstrap_b
+    
 TESTS=$(check_PROGRAMS)
 
-test_catch_SOURCES = test_catch.cpp
-test_data_SOURCES = test_data.cpp
-test_module_SOURCES = test_module.cpp
+test_catch_SOURCES              = test_catch.cpp
+test_data_SOURCES               = test_data.cpp
+test_module_SOURCES             = test_module.cpp fixture.cpp
+test_module_bootstrap_a_SOURCES = test_module_bootstrap_a.cpp fixture.cpp
+test_module_bootstrap_b_SOURCES = test_module_bootstrap_b.cpp fixture.cpp
 
 check-local: $(check_PROGRAMS)
 	for cp in $(check_PROGRAMS); do \

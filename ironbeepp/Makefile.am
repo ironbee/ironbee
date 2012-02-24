@@ -9,4 +9,5 @@ libibpp_la_SOURCES = \
     data.cpp \
     module.cpp \
     context.cpp \
-    builder.cpp
+    builder.cpp \
+    module_bootstrap.cpp
