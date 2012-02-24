@@ -1,4 +1,4 @@
-personal_ws-1.1 en 961 
+personal_ws-1.1 en 974 
 cfg
 api
 IronBee
@@ -97,6 +97,7 @@ IronBeeEngineTfn
 ibd
 dyn
 msec
+MyInt
 apis
 APIs
 blen
@@ -227,6 +228,7 @@ abcdex
 IronBeeConfig
 LSL
 ERRGCMM
+getFieldList
 AuditLogIndex
 erroffset
 requestmetadata
@@ -263,6 +265,7 @@ fname
 pib
 ENOTIMPL
 pid
+getValues
 ConnDataIn
 php
 Accessors
@@ -354,6 +357,7 @@ onEventHandleContextConn
 AhoCorasickModuleTest
 onEventHandleConnect
 SQL
+logError
 trimLeft
 ConnDataOut
 connp
@@ -424,6 +428,7 @@ ptfn
 params
 Rincon
 vernum
+getNames
 subclasses
 lauxlib
 stype
@@ -503,6 +508,7 @@ lookups
 RelevantOnly
 ju
 struct
+MyString
 TxProcess
 PocSigReqHead
 nd
@@ -602,6 +608,7 @@ xname
 subpools
 Alfeld
 errinfo
+setvar
 dequeuing
 AuditLogGenerator
 ModuleDelegate
@@ -663,6 +670,7 @@ goto
 todo
 Finalizer
 precompilation
+logDebug
 DelegateType
 malloced
 listFields
@@ -735,6 +743,7 @@ pchunk
 IronBeeEngineLogEvent
 programatically
 unshift
+MyTable
 apache
 IronBeeCore
 noKey
@@ -840,6 +849,7 @@ KLen
 IronBeeUtilStream
 nResponse
 multi
+recurse
 onEventRequestHeaders
 psite
 IronBeeOperators
@@ -864,6 +874,7 @@ AuditLogSubDirFormat
 frule
 Sosospider
 icdata
+logInfo
 IronBeeHash
 lookup
 bitmask
@@ -887,6 +898,7 @@ IronBeeModule
 CTYPE
 pconndata
 HandleDisconnect
+FreeBSD
 EUNKNOWN
 IronBeeFilter
 appendList
@@ -957,6 +969,7 @@ async
 binget
 BinGet
 firefox
+addEvent
 unescaped
 defval
 EOTHER

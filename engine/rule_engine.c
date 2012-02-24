@@ -258,7 +258,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
      *
      * @todo The current behavior is to keep running even after an operator
      * returns an error.  This needs further discussion to determine what the
-     * correct behaior should be.
+     * correct behavior should be.
      */
     IB_LIST_LOOP(rule->target_fields, node) {
         ib_rule_target_t *target = (ib_rule_target_t *)node->data;
@@ -392,7 +392,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
      *
      * @todo The current behavior is to keep running even after an action
      * returns an error.  This needs further discussion to determine what the
-     * correct behaior should be.
+     * correct behavior should be.
      */
     IB_LIST_LOOP(actions, node) {
         ib_status_t       arc;     /* Action's return code */
@@ -454,7 +454,7 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      *
      * @todo The current behavior is to keep running even after an operator
      * returns an error.  This needs further discussion to determine what the
-     * correct behaior should be.
+     * correct behavior should be.
      */
     trc = execute_rule(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
@@ -467,7 +467,7 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      *
      * @todo The current behavior is to keep running even after action(s)
      * returns an error.  This needs further discussion to determine what the
-     * correct behaior should be.
+     * correct behavior should be.
      */
     if (*rule_result != 0) {
         actions = rule->true_actions;
@@ -487,7 +487,7 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      *
      * @todo The current behavior is to keep running even after a chained rule
      * returns an error.  This needs further discussion to determine what
-     * the correct behaior should be.
+     * the correct behavior should be.
      *
      * @note Chaining is currently done via recursion.
      */
@@ -557,7 +557,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
      *
      * @todo The current behavior is to keep running even after rule execution
      * returns an error.  This needs further discussion to determine what the
-     * correct behaior should be.
+     * correct behavior should be.
      */
     IB_LIST_LOOP(rules, node) {
         ib_rule_t   *rule = (ib_rule_t*)node->data;
@@ -580,7 +580,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     /*
      * @todo Eat errors for now.  Unless something Really Bad(TM) has
      * occurred, return IB_OK to the engine.  A bigger discussion of if / how
-     * such errors should be propogated needs to occur.
+     * such errors should be propagated needs to occur.
      */
     IB_FTRACE_RET_STATUS(IB_OK);
 }

@@ -240,7 +240,7 @@ ib_status_t ib_bytestr_alias_mem(
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* We use flags to enforce that the user can not recover an unconst
+    /* We use flags to enforce that the user can not recover an non-const
      * pointer.
      */
     (*pdst)->data   = (uint8_t*)data;
