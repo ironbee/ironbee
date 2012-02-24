@@ -53,21 +53,21 @@
  * @returns status code
  */
 static ib_status_t join2(ib_mpool_t *mp,
-                         const uint8_t *p1,
+                         const char *p1,
                          size_t l1,
-                         const uint8_t *p2,
+                         const char *p2,
                          size_t l2,
                          int nul,
-                         uint8_t **out,
+                         char **out,
                          size_t *olen)
 {
     IB_FTRACE_INIT();
     size_t buflen = l1 + l2 + nul;
-    uint8_t *buf;
-    uint8_t *p;
+    char *buf;
+    char *p;
 
     /* Allocate the buffer */
-    buf = (uint8_t *)ib_mpool_alloc(mp, buflen);
+    buf = (char *)ib_mpool_alloc(mp, buflen);
     if (buf == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -106,23 +106,23 @@ static ib_status_t join2(ib_mpool_t *mp,
  * @returns status code
  */
 static ib_status_t join3(ib_mpool_t *mp,
-                         const uint8_t *p1,
+                         const char *p1,
                          size_t l1,
-                         const uint8_t *p2,
+                         const char *p2,
                          size_t l2,
-                         const uint8_t *p3,
+                         const char *p3,
                          size_t l3,
                          int nul,
-                         uint8_t **out,
+                         char **out,
                          size_t *olen)
 {
     IB_FTRACE_INIT();
     size_t buflen = l1 + l2 + l3 + nul;
-    uint8_t *buf;
-    uint8_t *p;
+    char *buf;
+    char *p;
 
     /* Allocate the buffer */
-    buf = ib_mpool_alloc(mp, buflen);
+    buf = (char *)ib_mpool_alloc(mp, buflen);
     if (buf == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -215,10 +215,10 @@ ib_status_t expand_str(ib_mpool_t *mp,
         if (rc == IB_ENOENT) {
             /* Not in the hash; replace with "" */
             rc = join2(mp,
-                       (const uint8_t *)iptr, ilen,
-                       (const uint8_t *)fptr, flen,
+                       iptr, ilen,
+                       fptr, flen,
                        1,
-                       (uint8_t **)&new, &newlen);
+                       &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -237,11 +237,11 @@ ib_status_t expand_str(ib_mpool_t *mp,
             const char *s = ib_field_value_nulstr(f);
             size_t slen = strlen(s);
             rc = join3(mp,
-                       (const uint8_t *)iptr, ilen,
-                       (const uint8_t *)s, slen,
-                       (const uint8_t *)fptr, flen,
+                       iptr, ilen,
+                       s, slen,
+                       fptr, flen,
                        1,
-                       (uint8_t **)&new, &newlen);
+                       &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -250,11 +250,11 @@ ib_status_t expand_str(ib_mpool_t *mp,
             /* Field is a byte string */
             ib_bytestr_t *bs = ib_field_value_bytestr(f);
             rc = join3(mp,
-                       (const uint8_t *)iptr, ilen,
-                       ib_bytestr_ptr(bs), ib_bytestr_length(bs),
-                       (const uint8_t *)fptr, flen,
+                       iptr, ilen,
+                       (char *)ib_bytestr_ptr(bs), ib_bytestr_length(bs),
+                       fptr, flen,
                        1,
-                       (uint8_t **)&new, &newlen);
+                       &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -264,11 +264,11 @@ ib_status_t expand_str(ib_mpool_t *mp,
             ib_num_t *n = ib_field_value_num(f);
             snprintf(numbuf, NUM_BUF_LEN, "%ld", (long int)(*n) );
             rc = join3(mp,
-                       (const uint8_t *)iptr, ilen,
-                       (const uint8_t *)numbuf, strlen(numbuf),
-                       (const uint8_t *)fptr, flen,
+                       iptr, ilen,
+                       numbuf, strlen(numbuf),
+                       fptr, flen,
                        1,
-                       (uint8_t **)&new, &newlen);
+                       &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -278,11 +278,11 @@ ib_status_t expand_str(ib_mpool_t *mp,
             ib_unum_t *n = ib_field_value_unum(f);
             snprintf(numbuf, NUM_BUF_LEN, "%lu", (unsigned long)(*n) );
             rc = join3(mp,
-                       (const uint8_t *)iptr, ilen,
-                       (const uint8_t *)numbuf, strlen(numbuf),
-                       (const uint8_t *)fptr, flen,
+                       iptr, ilen,
+                       numbuf, strlen(numbuf),
+                       fptr, flen,
                        1,
-                       (uint8_t **)&new, &newlen);
+                       &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -290,10 +290,10 @@ ib_status_t expand_str(ib_mpool_t *mp,
         else {
             /* Something else: replace with "" */
             rc = join2(mp,
-                       (const uint8_t *)iptr, ilen,
-                       (const uint8_t *)fptr, flen,
+                       iptr, ilen,
+                       fptr, flen,
                        1,
-                       (uint8_t **)&new, &newlen);
+                       &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
