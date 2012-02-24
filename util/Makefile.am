@@ -6,7 +6,7 @@ lib_LTLIBRARIES = libibutil.la
 libibutil_la_SOURCES = lock.c util.c logformat.c \
                        debug.c mpool.c dso.c uuid.c \
                        array.c list.c stream.c hash.c bytestr.c field.c \
-                       cfgmap.c radix.c ahocorasick.c \
+                       cfgmap.c radix.c ahocorasick.c expand.c \
                        ironbee_util_private.h types.c
 libibutil_la_CFLAGS = @HTP_CFLAGS@
 libibutil_la_CPPFLAGS = @HTP_CPPFLAGS@
