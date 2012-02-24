@@ -345,6 +345,7 @@ static ib_status_t act_setvar_execute(void *data,
     IB_FTRACE_INIT();
     ib_field_t *cur = NULL;
     ib_field_t *new;
+    char *expanded = NULL;
     ib_status_t rc;
 
     /* Data should be a setvar_data_t created in our create function */
@@ -353,6 +354,16 @@ static ib_status_t act_setvar_execute(void *data,
     /* Get the current value */
     ib_data_get(tx->dpi, svdata->name, &cur);
 
+    /* Expand the string */
+    if (svdata->type == IB_FTYPE_NULSTR) {
+        rc = ib_data_expand_str(tx->dpi, svdata->value.str, &expanded);
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4,
+                         "setvar: Failed to expand string '%s': %d",
+                         svdata->value.str, rc);
+        }
+    }
+
     /* What we depends on the operation */
     if (svdata->op == SETVAR_SET) {
         if (cur != NULL) {
@@ -360,8 +371,14 @@ static ib_status_t act_setvar_execute(void *data,
         }
 
         /* Create the new field */
-        rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
-                             (void *)&(svdata->value) );
+        if (expanded == NULL) {
+            rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
+                                 (void *)&(svdata->value) );
+        }
+        else {
+            rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
+                                 (void *)&expanded );
+        }
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
                          "setvar: Failed to create field %s: %d",
