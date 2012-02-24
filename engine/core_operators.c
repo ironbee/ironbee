@@ -517,7 +517,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
                     len = (MAX_FIELD_NUM_BUF - 1);
                 }
                 memcpy(buf, ib_bytestr_const_ptr(value), len);
-                buf[len+1] = '\0';
+                buf[len] = '\0';
                 if ( (isdigit(buf[0]) == 0) || (buf[0] == '-') ) {
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }
