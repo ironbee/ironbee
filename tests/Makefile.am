@@ -17,7 +17,7 @@ LDADD = $(LIBUTIL_LDADD)
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
-	LDFLAGS+=-fstack-protector
+LDFLAGS+=-fstack-protector
 endif
 
 if DARWIN
@@ -72,8 +72,8 @@ $(abs_builddir)/%: $(srcdir)/%
 # TODO: Get libhtp working w/C++
 # test_util_bytestr
 test_util_unescape_string_SOURCES = test_util_unescape_string.cc \
-									test_gtest.cc \
-									test_main.cc
+                                    test_gtest.cc \
+                                    test_main.cc
 
 test_gtest_SOURCES = test_gtest.cc test_main.cc
 
