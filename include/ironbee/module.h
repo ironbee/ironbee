@@ -116,9 +116,10 @@ extern "C" {
  * name (IB_MODULE_SYM) when the module is loaded and called to fetch
  * the address of the module structure built with IB_MODULE_INIT.
  *
+ * @param ib Engine handle
  * @returns Address of the module structure
  */
-typedef ib_module_t *(*ib_module_sym_fn)(void);
+typedef ib_module_t *(*ib_module_sym_fn)(ib_engine_t* ib);
 
 /**
  * Function to initialize a module.

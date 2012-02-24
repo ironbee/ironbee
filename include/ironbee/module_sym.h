@@ -116,11 +116,11 @@
 #ifdef __cplusplus
 /* C++ cannot do forward declarations for IB_MODULE_STRUCT. */
 #define IB_MODULE_DECLARE() \
-    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(void); \
+    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(ib_engine_t* ib); \
     extern ib_module_t IB_MODULE_STRUCT
 #else
 #define IB_MODULE_DECLARE() \
-    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(void); \
+    ib_module_t DLL_PUBLIC *IB_MODULE_SYM(ib_engine_t* ib); \
     static ib_module_t IB_MODULE_STRUCT
 #endif
 
@@ -138,14 +138,14 @@
     ib_module_t IB_MODULE_STRUCT = { \
         __VA_ARGS__ \
     }; \
-    ib_module_t *IB_MODULE_SYM(void) { return IB_MODULE_STRUCT_PTR; } \
+    ib_module_t *IB_MODULE_SYM(ib_engine_t* ib) { return IB_MODULE_STRUCT_PTR; } \
     typedef int ib_require_semicolon_hack_
 #else
 #define IB_MODULE_INIT(...) \
     static ib_module_t IB_MODULE_STRUCT = { \
         __VA_ARGS__ \
     }; \
-    ib_module_t *IB_MODULE_SYM(void) { return IB_MODULE_STRUCT_PTR; } \
+    ib_module_t *IB_MODULE_SYM(ib_engine_t* ib) { return IB_MODULE_STRUCT_PTR; } \
     typedef int ib_require_semicolon_hack_
 #endif
 

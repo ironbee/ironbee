@@ -131,7 +131,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     }
 
     /* Fetch the module structure. */
-    *pm = sym.fn_sym();
+    *pm = sym.fn_sym(ib);
     if (*pm == NULL) {
         ib_log_error(ib, 1, "Failed to load module %s: no module structure",
                      file);

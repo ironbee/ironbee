@@ -138,7 +138,7 @@ extern ib_plugin_t ibt_ibplugin;
 #define ibtest_engine_module_init(e,pm) \
     do { \
         ib_module_t **ibt_pm = (pm); \
-        *ibt_pm = IB_MODULE_SYM(); \
+        *ibt_pm = IB_MODULE_SYM(e); \
         ASSERT_TRUE(*ibt_pm); \
         ASSERT_EQ(IB_OK, ib_module_init(*ibt_pm,(e))); \
     } while(0)
