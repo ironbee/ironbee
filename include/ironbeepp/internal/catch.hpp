@@ -30,8 +30,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_INTERNAL_CATCH__
-#define __IBPP_INTERNAL_CATCH__
+#ifndef __IBPP__INTERNAL__CATCH__
+#define __IBPP__INTERNAL__CATCH__
 
 #include <ironbeepp/exception.hpp>
 

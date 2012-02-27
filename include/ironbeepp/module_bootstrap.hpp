@@ -94,8 +94,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#ifndef __IBPP_MODULE_BOOTSTRAP__
-#define __IBPP_MODULE_BOOTSTRAP__
+#ifndef __IBPP__MODULE_BOOTSTRAP__
+#define __IBPP__MODULE_BOOTSTRAP__
 
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>

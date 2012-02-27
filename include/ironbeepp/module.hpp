@@ -24,8 +24,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_MODULE__
-#define __IBPP_MODULE__
+#ifndef __IBPP__MODULE__
+#define __IBPP__MODULE__
 
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/engine.hpp>
@@ -173,4 +173,4 @@ std::ostream& operator<<( std::ostream& o, const Module& module );
 
 } // IronBee
 
-#endif // __IBPP_MODULE__
+#endif

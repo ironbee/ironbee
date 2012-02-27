@@ -24,8 +24,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_CONTEXT__
-#define __IBPP_CONTEXT__
+#ifndef __IBPP__CONTEXT__
+#define __IBPP__CONTEXT__
 
 #include <boost/shared_ptr.hpp>
 

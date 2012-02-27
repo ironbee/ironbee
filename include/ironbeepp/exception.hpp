@@ -48,8 +48,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_EXCEPTION__
-#define __IBPP_EXCEPTION__
+#ifndef __IBPP__EXCEPTION__
+#define __IBPP__EXCEPTION__
 
 #include <boost/exception/all.hpp>
 

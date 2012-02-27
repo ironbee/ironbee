@@ -26,8 +26,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_BUILDER__
-#define __IBPP_BUILDER__
+#ifndef __IBPP__INTERNAL__BUILDER__
+#define __IBPP__INTERNAL__BUILDER__
 
 struct ib_module_t;
 struct ib_engine_t;

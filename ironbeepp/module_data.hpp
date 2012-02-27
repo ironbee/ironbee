@@ -25,8 +25,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_MODULE_DATA__
-#define __IBPP_MODULE_DATA__
+#ifndef __IBPP__MODULE_DATA__
+#define __IBPP__MODULE_DATA__
 
 #include <ironbeepp/engine.hpp>
 

@@ -24,8 +24,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_ENGINE__
-#define __IBPP_ENGINE__
+#ifndef __IBPP__ENGINE__
+#define __IBPP__ENGINE__
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"

@@ -39,8 +39,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP_INTERNAL_DATA__
-#define __IBPP_INTERNAL_DATA__
+#ifndef __IBPP__INTERNAL__DATA__
+#define __IBPP__INTERNAL__DATA__
 
 #include <ironbeepp/exception.hpp>
 
