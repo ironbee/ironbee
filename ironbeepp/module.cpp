@@ -30,9 +30,9 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/internal/catch.hpp>
+#include <ironbeepp/internal/builder.hpp>
 #include "module_data.hpp"
 #include "data.hpp"
-#include "builder.hpp"
 
 #include <ironbee/module.h>
 #include <ironbee/engine.h>

@@ -1,4 +1,4 @@
-#include "builder.hpp"
+#include <ironbeepp/internal/builder.hpp>
 
 #define IBPP_EXPOSE_C
 #include <ironbeepp/engine.hpp>
