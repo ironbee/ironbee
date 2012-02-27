@@ -52,18 +52,19 @@ check_PROGRAMS = test_gtest \
                  test_module_rules_lua \
                  test_operator \
                  test_action \
-                 test_luajit
+                 test_luajit \
+		 test_config
 
 TESTS=$(check_PROGRAMS)
 
 BUILT_SOURCES = \
-	$(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
-	$(abs_builddir)/AhoCorasickModuleTest.config \
-	$(abs_builddir)/ahocorasick.patterns \
-	$(abs_builddir)/PcreModuleTest.test_load_module.config \
-	$(abs_builddir)/test_module_rules_lua.lua \
+    $(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
+    $(abs_builddir)/AhoCorasickModuleTest.config \
+    $(abs_builddir)/ahocorasick.patterns \
+    $(abs_builddir)/PcreModuleTest.test_load_module.config \
+    $(abs_builddir)/test_module_rules_lua.lua \
     $(abs_builddir)/test_ironbee_lua_api.conf
-	
+
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
     	cp -f $< $@; \
@@ -102,6 +103,9 @@ endif
 
 test_engine_SOURCES = test_engine.cc test_main.cc ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
+
+test_config_SOURCES = test_config.cc test_main.cc 
+test_config_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_trace_SOURCES = test_module_trace.cc test_main.cc ibtest_util.hh ibtest_util.cc
 test_module_trace_LDADD = $(MODULE_TEST_LDADD) 

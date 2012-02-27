@@ -33,6 +33,8 @@
 
 #include <stdexcept>
 
+#define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
+
 class BaseFixture : public ::testing::Test {
 public:
     virtual void SetUp() {

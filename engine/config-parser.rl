@@ -37,26 +37,26 @@
 #include "config-parser.h"
 #include "ironbee_private.h"
 
+/**
+ * Finite state machine type.
+ * @internal
+ * Contains state information for Ragel's parser.
+ * Many of these values and names come from the Ragel documentation, section 
+ * 5.1 Variable Used by Ragel. p53 of The Ragel Guide 6.7 found at
+ * http://www.complang.org/ragel/ragel-guide-6.7.pdf
+ */
 typedef struct {
-    char    *p;
-    char    *pe;
-    char    *eof;
-    char    *ts;
-    char    *te;
-    int      cs;
-    int      top;
-    int      act;
-    int      stack[1024];
+    const char    *p;     /**< Pointer to the chunk being parsed. */
+    const char    *pe;    /**< Pointer past the end of p (p+length(p)). */
+    const char    *eof;   /**< eof==p==pe on last chunk. NULL otherwise. */
+    const char    *ts;    /**< Pointer to character data for Ragel. */
+    const char    *te;    /**< Pointer to character data for Ragel. */
+    int      cs;          /**< Current state. */
+    int      top;         /**< Top of the stack. */
+    int      act;         /**< Used to track the last successful match. */
+    int      stack[1024]; /**< Stack of states. */
 } fsm_t;
 
-static char *dirname = NULL;
-static char *blkname = NULL;
-static char *pval = NULL;
-
-/* Store the start of a string to act on.
-   fpc - mark is the string length when processing after
-   a mark action. */
-static char *mark = NULL;
 
 /**
  * @brief Malloc and unescape into that buffer the marked string.
@@ -68,12 +68,13 @@ static char *mark = NULL;
  *         larger than the string stored in it if the length of the string is
  *         reduced by Javascript unescaping.
  */
-static char* alloc_cpy_marked_string(char *fpc_mark,
-                                     char *fpc,
+static char* alloc_cpy_marked_string(const char *fpc_mark,
+                                     const char *fpc,
                                      ib_mpool_t* mp)
 {
-  char *afpc = fpc;
+  const char *afpc = fpc;
   size_t pvallen;
+  char* pval;
   /* Adjust for quoted value. */
   if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc-2)) {
       fpc_mark++;
@@ -119,7 +120,7 @@ static char* alloc_cpy_marked_string(char *fpc_mark,
     action push_dir {
         rc = ib_config_directive_process(cp, dirname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to process directive \"%s\": %d", dirname, rc);
+            ib_log_error(ib_engine, 1, "Failed to process directive \"%s\": %d", dirname, rc);
         }
         if (dirname != NULL) {
             free(dirname);
@@ -136,14 +137,14 @@ static char* alloc_cpy_marked_string(char *fpc_mark,
     action push_block {
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to start block \"%s\": %d", blkname, rc);
+            ib_log_error(ib_engine, 1, "Failed to start block \"%s\": %d", blkname, rc);
         }
     }
     action pop_block {
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to process block \"%s\": %d", blkname, rc);
+            ib_log_error(ib_engine, 1, "Failed to process block \"%s\": %d", blkname, rc);
         }
         if (blkname != NULL) {
             free(blkname);
@@ -202,21 +203,41 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            size_t blen,
                                            int is_last_chunk)
 {
-    ib_engine_t *ib = cp->ib;
-    ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib);
-    ib_mpool_t *mpcfg = ib_engine_pool_config_get(ib);
-    ib_status_t rc;
+    ib_engine_t *ib_engine = cp->ib;
+
+    /* Temporary memory pool. */
+    ib_mpool_t *mptmp = ib_engine_pool_temp_get(ib_engine);
+
+    /* Configuration memory pool. */
+    ib_mpool_t *mpcfg = ib_engine_pool_config_get(ib_engine);
+
+    /* Error actions will update this. */
+    ib_status_t rc = IB_OK;
+
+    /* Directive name being parsed. */
+    char *dirname = NULL;
+
+    /* Block name being parsed. */
+    char *blkname = NULL;
+
+    /* Parameter value being added to the plist. */
+    char *pval = NULL;
+
+    /* Store the start of a string to act on.
+     * fpc - mark is the string length when processing after
+     * a mark action. */
+    const char *mark = buf;
+
+    /* Temporary list for storing values before they are committed to the
+     * configuration. */
     ib_list_t *plist;
-    /// @todo Which should be in cp???
-    char *data = (char *)buf;
+
+    /* Create a finite state machine type. */
     fsm_t fsm;
 
-    fsm.p = data;
-    fsm.pe = data + blen;
+    fsm.p = buf;
+    fsm.pe = buf + blen;
     fsm.eof = (is_last_chunk ? fsm.pe : NULL);
-
-    /* Init */
-    mark = fsm.p;
     memset(fsm.stack, 0, sizeof(fsm.stack));
 
     /* Create a temporary list for storing parameter values. */
@@ -234,6 +255,6 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     %% write init;
     %% write exec;
 
-    return IB_OK;
+    return rc;
 }
 
