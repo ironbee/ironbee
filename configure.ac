@@ -295,11 +295,19 @@ sinclude(acinclude/ax_pthread.m4)
 CHECK_HTP()
 CHECK_PCRE()
 CHECK_XML2()
-AX_PTHREAD([LIBS="$LIBS $PTHREAD_LIBS"
-            CFLAGS="${CFLAGS} ${PTHREAD_CFLAGS}"
-            CXXFLAGS="${CXXFLAGS} ${PTHREAD_CFLAGS}"
-            AC_MSG_RESULT([yes])],
-           [AC_MSG_ERROR([Pthreads is required])])
+
+# Clang does not support -pthread or variants.
+if test "$cc_is_clang" = "yes"; then
+    AX_PTHREAD([LIBS="$LIBS $PTHREAD_LIBS"
+                AC_MSG_RESULT([yes])],
+               [AC_MSG_ERROR([Pthreads is required])])
+else
+    AX_PTHREAD([LIBS="$LIBS $PTHREAD_LIBS"
+                CFLAGS="${CFLAGS} ${PTHREAD_CFLAGS}"
+                CXXFLAGS="${CXXFLAGS} ${PTHREAD_CFLAGS}"
+                AC_MSG_RESULT([yes])],
+               [AC_MSG_ERROR([Pthreads is required])])
+fi
 dnl TODO: These need to be optional (only if building apache httpd plugin)
 CHECK_APXS()
 CHECK_APR()
