@@ -44,6 +44,7 @@ check_PROGRAMS = test_gtest \
                  test_util_logformat \
                  test_util_ahocorasick \
                  test_util_mpool \
+                 test_util_expand \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_trace \
@@ -67,7 +68,7 @@ BUILT_SOURCES = \
 
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
-    	cp -f $< $@; \
+	cp -f $< $@; \
     fi
 
 # TODO: Get libhtp working w/C++
@@ -89,6 +90,8 @@ test_util_list_SOURCES = test_util_list.cc test_main.cc
 test_util_radix_SOURCES = test_util_radix.cc test_main.cc
 
 test_util_field_SOURCES = test_util_field.cc test_main.cc
+
+test_util_expand_SOURCES = test_util_expand.cc test_main.cc
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 
