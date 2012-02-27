@@ -82,6 +82,7 @@ if test "$GCC" = "yes"; then
         CFLAGS="${CFLAGS} -std=c99"
     fi
 fi
+AM_CONDITIONAL([CC_IS_CLANG], [test "$cc_is_clang" = "yes"])
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
