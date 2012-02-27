@@ -11,7 +11,9 @@ def spell_check(path)
   system(
     'aspell',
     '--add-filter',
-    'cccpp',
+    'ccpp',
+    '--mode',
+    'ccpp',
     '--home-dir',
     ASPELL_DIR,
     '-c',
@@ -21,5 +23,7 @@ end
 
 
 all_ironbee_code do |path|
-  spell_check(path)
+  if ! spell_check(path)
+    puts path
+  end
 end
