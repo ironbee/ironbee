@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ -- Context (PLACEHOLDER)
+ * @brief IronBee++ &mdash; Context (PLACEHOLDER)
  *
  * This is a placeholder for future functionality.  Do not use.
  *
@@ -36,10 +36,12 @@ struct ib_context_t;
 namespace IronBee {
 
 namespace Internal {
+/// @cond Internal
 
 struct ContextData;
 class Builder;
 
+/// @endcond
 };
 
 class Context
