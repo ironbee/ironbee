@@ -27,8 +27,8 @@
 
 namespace IronBee {
 
-ModuleDelegate::ModuleDelegate( Module module ) :
-    m_module( module )
+ModuleDelegate::ModuleDelegate( Module m ) :
+    m_module( m )
 {
     // nop
 }

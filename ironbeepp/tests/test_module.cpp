@@ -58,7 +58,7 @@ template <typename ExceptionClass = no_throw_tag>
 class test_callback
 {
 public:
-    test_callback<>(
+    test_callback(
         ib_module_t*&  out_ib_module,
         ib_context_t*& out_ib_context
     ) :

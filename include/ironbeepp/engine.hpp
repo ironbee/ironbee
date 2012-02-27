@@ -27,10 +27,14 @@
 #ifndef __IBPP__ENGINE__
 #define __IBPP__ENGINE__
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
 #include <boost/shared_ptr.hpp>
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 #ifdef IBPP_EXPOSE_C
 struct ib_engine_t;
