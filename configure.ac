@@ -213,7 +213,7 @@ AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
 ### CPP
 AC_ARG_ENABLE(cpp,
               AS_HELP_STRING([--enable-cpp],
-                             [Enabel C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
+                             [Enable C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
 AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
 
 ### Ragel
@@ -337,6 +337,11 @@ if test "$util_cli" != 0; then
     TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} cli"
 fi
 
+dnl Enable ironbeepp subdir if enabled
+if test "$cpp_code" != 0; then
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp"
+fi
+
 dnl Make sure abs_top_builddir is available
 AC_MSG_CHECKING([abs_top_builddir is available])
 if test -z "$abs_top_builddir"; then
@@ -388,6 +393,8 @@ fi
 
 if test "$cpp_code" != 0; then
 AC_CONFIG_FILES([cpp/Makefile])
+AC_CONFIG_FILES([ironbeepp/Makefile])
+AC_CONFIG_FILES([ironbeepp/tests/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])
