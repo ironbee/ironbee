@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <ironbee/expand.h>
 #include <ironbee/types.h>
@@ -35,7 +36,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>
 
-#define NUM_BUF_LEN 128
+#define NUM_BUF_LEN 64
 
 /**
  * Join 2 memory blocks into a single buffer
@@ -157,13 +158,24 @@ ib_status_t expand_str(ib_mpool_t *mp,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    size_t pslen = SIZE_MAX;           /**< Start pattern length */
-    size_t pelen = SIZE_MAX;           /**< End pattern length */
-    const char *buf = str;             /**< Current buffer */
+    char numbuf[NUM_BUF_LEN+1]; /**< Buffer used to convert number to str */
+    size_t pslen = SIZE_MAX;    /**< Start pattern length */
+    size_t pelen = SIZE_MAX;    /**< End pattern length */
+    const char *buf = str;      /**< Current buffer */
+
+    /* Sanity checks */
+    assert(mp != NULL);
+    assert(str != NULL);
+    assert(startpat != NULL);
+    assert(endpat != NULL);
+    assert(hash != NULL);
+    assert(result != NULL);
+
+    /* Initialize the result to NULL */
+    *result = NULL;
 
     /* Loop til the cows come home */
     while (1) {
-        static char numbuf[NUM_BUF_LEN+1];
         const char *start;      /* Pointer to found start pattern */
         const char *end;        /* Pointer to found end pattern */
         const char *name;       /* Pointer to the name between start and end */
@@ -185,6 +197,9 @@ ib_status_t expand_str(ib_mpool_t *mp,
         /* Lazy compute pslen */
         if (pslen == SIZE_MAX) {
             pslen = strlen(startpat);
+            if (pslen == 0) {
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
         }
 
         /* And the next matching end pattern. */
@@ -196,6 +211,9 @@ ib_status_t expand_str(ib_mpool_t *mp,
         /* Lazy compute pelen */
         if (pelen == SIZE_MAX) {
             pelen = strlen(endpat);
+            if (pelen == 0) {
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
         }
 
         /* The name is the block between the two */
@@ -209,6 +227,20 @@ ib_status_t expand_str(ib_mpool_t *mp,
         /* The final block */
         fptr = (end + pelen);
         flen = strlen(fptr);
+
+        /* Zero length name? Expand it to "" */
+        if (namelen == 0) {
+            rc = join2(mp,
+                       iptr, ilen,
+                       fptr, flen,
+                       1,
+                       &new, &newlen);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            buf = new;
+            continue;
+        }
 
         /* Search the hash */
         rc = ib_hash_get_ex(hash, &f, (void *)name, namelen);
