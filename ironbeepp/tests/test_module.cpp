@@ -1,42 +1,15 @@
 #define IBPP_EXPOSE_C
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
-#include "builder.hpp"
-
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
-#include "ironbee_private.h"
+#include <ironbeepp/internal/builder.hpp>
+#include "fixture.hpp"
 
 #include "gtest/gtest.h"
 
 #include <ironbee/debug.h>
 
-#include <stdexcept>
-
-class TestModule : public ::testing::Test
+class TestModule : public ::testing::Test, public IBPPTestFixture
 {
-public:
-    TestModule()
-    {
-        m_ib_plugin.vernum = IB_VERNUM;
-        m_ib_plugin.abinum = IB_ABINUM;
-        m_ib_plugin.version = IB_VERSION;
-        m_ib_plugin.filename = __FILE__;
-        m_ib_plugin.name = "TestModule";
-
-        ib_initialize();
-        ib_engine_create(&m_ib_engine, &m_ib_plugin);
-        ib_engine_init(m_ib_engine);
-    }
-
-    ~TestModule()
-    {
-        ib_shutdown();
-    }
-
-protected:
-    ib_engine_t* m_ib_engine;
-    ib_plugin_t  m_ib_plugin;
 };
 
 struct no_throw_tag {};
