@@ -48,16 +48,6 @@ typedef struct
     ib_unum_t       vunum;
 } field_def_t;
 
-// Used to define test cases
-typedef struct
-{
-    ib_num_t        lineno;
-    const char     *text;
-    const char     *start;
-    const char     *end;
-    const char     *expected;
-} test_data_t;
-
 class TestIBUtilExpandStr : public testing::Test
 {
 public:
@@ -157,34 +147,37 @@ public:
         return ::expand_str(m_pool, str, start, end, m_hash, result);
     }
 
-    bool IsExpected(const test_data_t *test, const char *value)
+    bool IsExpected(ib_num_t lineno,
+                    const char *text,
+                    const char *start,
+                    const char *end,
+                    const char *expected,
+                    const char *value)
     {
-        if (strcmp(value, test->expected) == 0) {
+        if (strcmp(value, expected) == 0) {
             return true;
         }
         else {
-            std::cout << "Test defined on line " << test->lineno << " failed"
+            std::cout << "Test defined on line " << lineno << " failed"
                       << std::endl;
-            std::cout << "'" << test->text << "' expanded using '"
-                      << test->start << test->end
-                      << "' -> '" << value << "' expected '" << test->expected
+            std::cout << "'" << text << "' expanded using '" << start << end
+                      << "' -> '" << value << "' expected '" << expected
                       << "'" << std::endl;
             return false;
         }
     }
 
-    void RunTests( const test_data_t tests[] )
+    void RunTest( ib_num_t lineno,
+                  const char *text,
+                  const char *start,
+                  const char *end,
+                  const char *expected )
     {
-        const test_data_t *test;
-        ib_num_t n;
+        char *expanded;
         ib_status_t rc;
-
-        for (n = 1, test = &tests[0];  test->text != NULL;  ++test, ++n) {
-            char *expanded;
-            rc = ExpandStr(test->text, test->start, test->end, &expanded);
-            ASSERT_EQ(IB_OK, rc);
-            EXPECT_TRUE(IsExpected(test, expanded));
-        }
+        rc = ExpandStr(text, start, end, &expanded);
+        ASSERT_EQ(IB_OK, rc);
+        EXPECT_TRUE(IsExpected(lineno, text, start, end, expected, expanded));
     }
 
     ~TestIBUtilExpandStr()
@@ -205,85 +198,69 @@ TEST_F(TestIBUtilExpandStr, test_expand_errors)
     char *expanded;
     rc = ExpandStr("%{foo}", "", "}", &expanded);
     ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ( (char *)NULL, expanded );
 
     rc = ExpandStr("%{foo}", "{", "}", &expanded);
     ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE( (char *)NULL, expanded);
 
     rc = ExpandStr("%{foo}", "{", "", &expanded);
     ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ( (char *)NULL, expanded);
 }
 
 TEST_F(TestIBUtilExpandStr, test_expand_basics)
 {
-    const test_data_t test_data [] = {
-        { __LINE__, "simple text",      "%{", "}",  "simple text" },
-        { __LINE__, "simple text",      "$(", ")",  "simple text" },
-        { __LINE__, "text:%{Key1}",     "%{", "}",  "text:Value1" },
-        { __LINE__, "text:%{Key1}",     "$(", ")",  "text:%{Key1}" },
-        { __LINE__, "text:{Key1}",      "{",  "}",  "text:Value1" },
-        { __LINE__, "text:<<Key1>>",    "<<", ">>", "text:Value1" },
-        { __LINE__, "text:$(Key1)",     "%{", "}",  "text:$(Key1)" },
-        { __LINE__, "text:$(Key1)",     "$(", ")",  "text:Value1" },
-        { __LINE__, "text:${Key1}",     "%{", "}",  "text:${Key1}" },
-        { __LINE__, "text:${Key1}",     "$(", ")",  "text:${Key1}" },
-        { __LINE__, "text:${Key1}",     "${", "}",  "text:Value1" },
-        { __LINE__, "text:%{Key2}",     "%{", "}",  "text:Value2" },
-        { __LINE__, NULL,               NULL, NULL, NULL },
-    };
-
-    RunTests( test_data );
+    RunTest(__LINE__, "simple text",      "%{", "}",  "simple text");
+    RunTest(__LINE__, "simple text",      "$(", ")",  "simple text");
+    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  "text:Value1");
+    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  "text:%{Key1}");
+    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  "text:Value1");
+    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", "text:Value1");
+    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  "text:$(Key1)");
+    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  "text:Value1");
+    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  "text:${Key1}");
+    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  "text:${Key1}");
+    RunTest(__LINE__, "text:${Key1}",     "${", "}",  "text:Value1");
+    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  "text:Value2");
 }
 
 TEST_F(TestIBUtilExpandStr, test_expand_corner_cases)
 {
-    const test_data_t test_data [] = {
-        { __LINE__, "%{}",              "%{", "}",  "" },
-        { __LINE__, "%{}%" ,            "%{", "}",  "%" },
-        { __LINE__, "%{}%{",            "%{", "}",  "%{" },
-        { __LINE__, "%{}}",             "%{", "}",  "}" },
-        { __LINE__, "%{foo}",           "%{", "}",  "" },
-        { __LINE__, "%%{foo}",          "%{", "}",  "%" },
-        { __LINE__, "%{%{foo}",         "%{", "}",  "" },
-        { __LINE__, "text:%{Key11}",    "%{", "}",  "text:" },
-        { __LINE__, "text:%{Key 1}",    "%{", "}",  "text:" },
-        { __LINE__, "text:%{Key*1}",    "%{", "}",  "text:" },
-        { __LINE__, "text:%{Key1 }",    "%{", "}",  "text:" },
-        { __LINE__, "%{Key9}",          "%{", "}",  "" },
-        { __LINE__, NULL,               NULL, NULL, NULL },
-    };
-
-    RunTests( test_data );
+    RunTest(__LINE__, "%{}",              "%{", "}",  "");
+    RunTest(__LINE__, "%{}",              "{",  "}",  "%");
+    RunTest(__LINE__, "%{}%" ,            "%{", "}",  "%");
+    RunTest(__LINE__, "%{}%{",            "%{", "}",  "%{");
+    RunTest(__LINE__, "%{}}",             "%{", "}",  "}");
+    RunTest(__LINE__, "%{foo}",           "%{", "}",  "");
+    RunTest(__LINE__, "%%{foo}",          "%{", "}",  "%");
+    RunTest(__LINE__, "%{%{foo}",         "%{", "}",  "");
+    RunTest(__LINE__, "text:%{Key11}",    "%{", "}",  "text:");
+    RunTest(__LINE__, "text:%{Key 1}",    "%{", "}",  "text:");
+    RunTest(__LINE__, "text:%{Key*1}",    "%{", "}",  "text:");
+    RunTest(__LINE__, "text:%{Key1 }",    "%{", "}",  "text:");
+    RunTest(__LINE__, "%{Key9}",          "%{", "}",  "");
 }
 
 TEST_F(TestIBUtilExpandStr, test_expand_complex)
 {
-    const test_data_t test_data [] = {
-        { __LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2" },
-        { __LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2" },
-        { __LINE__, "%{Key3}:%{Key1}",  "%{", "}",  "Value3:Value1" },
-        { __LINE__, "%{Key1}:%{Key2}==${Key3}", "%{", "}",
-          "Value1:Value2==${Key3}" },
-        { __LINE__, "%{Key1}:%{Key2}==%{Key3}", "%{", "}",
-          "Value1:Value2==Value3" },
-        { __LINE__, NULL,               NULL, NULL, NULL },
-    };
-
-    RunTests( test_data );
+    RunTest(__LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2");
+    RunTest(__LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2");
+    RunTest(__LINE__, "%{Key3}:%{Key1}",  "%{", "}",  "Value3:Value1");
+    RunTest(__LINE__, "%{Key1}:%{Key2}==${Key3}", "%{", "}",
+            "Value1:Value2==${Key3}");
+    RunTest(__LINE__, "%{Key1}:%{Key2}==%{Key3}", "%{", "}",
+             "Value1:Value2==Value3");
 }
 
 TEST_F(TestIBUtilExpandStr, test_expand_numbers)
 {
-    const test_data_t test_data [] = {
-        { __LINE__, "%{Key4}",          "%{", "}",  "0" },
-        { __LINE__, "%{Key5}",          "%{", "}",  "1" },
-        { __LINE__, "%{Key6}",          "%{", "}",  "-1" },
-        { __LINE__, "%{Key7}",          "%{", "}",  "0" },
-        { __LINE__, "%{Key8}",          "%{", "}",  "1" },
-        { __LINE__, "%{Key4}-%{Key8}",  "%{", "}",  "0-1" },
-        { __LINE__, "%{Key4}-%{Key6}",  "%{", "}",  "0--1" },
-        { __LINE__, "%{Key4}+%{Key8}",  "%{", "}",  "0+1" },
-        { __LINE__, NULL,               NULL, NULL, NULL },
-    };
-
-    RunTests( test_data );
+    RunTest(__LINE__, "%{Key4}",          "%{", "}",  "0");
+    RunTest(__LINE__, "%{Key5}",          "%{", "}",  "1");
+    RunTest(__LINE__, "%{Key6}",          "%{", "}",  "-1");
+    RunTest(__LINE__, "%{Key7}",          "%{", "}",  "0");
+    RunTest(__LINE__, "%{Key8}",          "%{", "}",  "1");
+    RunTest(__LINE__, "%{Key4}-%{Key8}",  "%{", "}",  "0-1");
+    RunTest(__LINE__, "%{Key4}-%{Key6}",  "%{", "}",  "0--1");
+    RunTest(__LINE__, "%{Key4}+%{Key8}",  "%{", "}",  "0+1");
 }
