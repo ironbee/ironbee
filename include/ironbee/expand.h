@@ -48,10 +48,10 @@ extern "C" {
  * Expand a NUL-terminated string using the given hash.
  *
  * This function looks through @a str for instances of
- * @a startpat + <name> + @a endpat (i.e. "%{FOO}"), then attempts to look up
+ * @a startpat + _name_ + @a endpat (i.e. "%{FOO}"), then attempts to look up
  * each of such name found in @a hash.  If the name is not found in @a hash,
- * the "%{<name>}" sub-string is replaced with an empty string.  If the
- * name is found, the associated field value is used to replace "%{<name>}"
+ * the "%{_name_}" sub-string is replaced with an empty string.  If the
+ * name is found, the associated field value is used to replace "%{_name_}"
  * sub-string for string and numeric types (numbers are converted to strings);
  * for others, the replacement is an empty string.
  *
