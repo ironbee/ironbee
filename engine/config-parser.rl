@@ -24,6 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -96,8 +97,9 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
 
     # Mark the start of a string.
     action mark { mark = fpc; }
-    action error {
-        ib_log_debug(ib, 4, "ERROR: parser error before \"%.*s\"", (int)(fpc - mark), mark);
+    action error_action {
+        rc = IB_EOTHER;
+        ib_log_debug(ib_engine, 4, "ERROR: parser error before \"%.*s\"", (int)(fpc - mark), mark);
     }
 
     # Parameter
@@ -177,20 +179,20 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
     *|;
 
     newblock := |*
-        WS* token >mark %start_block { fcall block_parameters; };
-        EOL { fret; };
+        WS* token >mark %start_block $!error_action { fcall block_parameters; };
+        EOL $!error_action { fret; };
     *|;
 
     endblock := |*
-        WS* token >mark %pop_block;
-        WS* ">" EOL { fret; };
+        WS* token >mark $!error_action %pop_block;
+        WS* ">" EOL $!error_action { fret; };
     *|;
 
     main := |*
         WS* comment;
         WS* token >mark %start_dir { fcall parameters; };
-        "</" { fcall endblock; };
         "<" { fcall newblock; };
+        "</" { fcall endblock; };
         WS+;
         EOL;
     *|;
@@ -200,8 +202,8 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
-                                           size_t blen,
-                                           int is_last_chunk)
+                                           const size_t blen,
+                                           const int is_last_chunk)
 {
     ib_engine_t *ib_engine = cp->ib;
 
@@ -254,6 +256,11 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     %% write init;
     %% write exec;
+
+    /* Ensure that our block is always empty on last chunk. */
+    if ( is_last_chunk && blkname != NULL ) {
+        return IB_EINVAL;
+    }
 
     return rc;
 }
