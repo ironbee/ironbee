@@ -215,7 +215,6 @@ AC_ARG_ENABLE(cpp,
               AS_HELP_STRING([--enable-cpp],
                              [Enable C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
 AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
-AM_CONDITIONAL([CPP_CODE], [test "$cpp_code" = "1"])
 
 ### Ragel
 AC_ARG_WITH([ragel],
@@ -336,6 +335,11 @@ PLUGINS_SUBDIRS="apache_httpd2 trafficserver"
 dnl Enable cli subdir if enabled
 if test "$util_cli" != 0; then
     TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} cli"
+fi
+
+dnl Enable ironbeepp subdir if enabled
+if test "$cpp_code" != 0; then
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp"
 fi
 
 dnl Make sure abs_top_builddir is available

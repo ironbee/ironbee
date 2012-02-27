@@ -1,8 +1,5 @@
 ACLOCAL_AMFLAGS = -I acinclude
 SUBDIRS = @TOPLEVEL_SUBDIRS@
-if CPP_CODE
-SUBDIRS += ironbeepp
-endif
 
 include $(top_srcdir)/build/common.mk
 EXTRA_DIST = include ironbee_config_auto.h
