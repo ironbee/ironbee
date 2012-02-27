@@ -64,9 +64,7 @@ dnl if we have clang use the CFLAGS set by autoconf macros.
 dnl if not clang assume gcc and use the CFLAGS set by our macro.
 if test "$GCC" = "yes"; then
     AC_TRY_COMPILE(,
-                   [#ifdef __clang__
-                       int x = 1;
-                    #else
+                   [#ifndef __clang__
                        something invalid
                     #endif
                   return 0;],
