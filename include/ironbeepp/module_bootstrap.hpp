@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ -- Module Bootstrap
+ * @brief IronBee++ &mdash; Module Bootstrap
  *
  * This file defines macros to aid in building an IronBee module using
  * IronBee++.  If you are interested in IronBee::Module, the analogue to
@@ -111,6 +111,7 @@
 
 namespace IronBee {
 namespace Internal {
+/// @cond Internal
 
 /**
  * Context open handler for delegate.  Forwards to delegate.
@@ -261,8 +262,8 @@ void bootstrap_module(
     const char*  filename
 );
 
+/// @endcond
 } // Internal
-
 } // IronBee
 
 /**

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ -- Module Delegate
+ * @brief IronBee++ &mdash; Module Delegate
  *
  * @sa ModuleDelegate
  * @sa module_bootstrap.hpp
@@ -59,13 +59,13 @@ public:
     ModuleDelegate( Module module );
 
     //! Context Open Handler.  Nop.
-    void context_open( Context context );
+    void context_open( Context context ) const;
 
     //! Context close Handler.  Nop.
-    void context_close( Context context );
+    void context_close( Context context ) const;
 
     //! Context destroy Handler.  Nop.
-    void context_destroy( Context context );
+    void context_destroy( Context context ) const;
 
     //! Module accessor.
     Module& module() { return m_module; };

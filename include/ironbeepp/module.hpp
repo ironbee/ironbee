@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ -- Module
+ * @brief IronBee++ &mdash; Module
  *
  * This file defines Module, a wrapper for ib_module_t.
  *
@@ -42,10 +42,12 @@ struct ib_module_t;
 namespace IronBee {
 
 namespace Internal {
+/// @cond Internal
 
 struct ModuleData;
 class Builder;
 
+/// @endcond
 };
 
 class Context;

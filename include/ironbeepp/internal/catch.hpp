@@ -46,7 +46,7 @@ class Engine;
 namespace Internal {
 
 /**
- * Handle a IronBee++ exception.
+ * Handle an IronBee++ exception.
  * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via

@@ -38,6 +38,9 @@
  * - Plugin writers: plugin.h
  * - Everyone: types.h, mpool.h, debug.h
  *
+ * If you are interested in developing the above in C++, see @ref
+ * ironbeepp page.
+ *
  * If you are an IronBee developer, you may be interested in the private API.
  * First, make sure you are viewing the internal version of this
  * documentation.  That version includes all internal modules, functions,

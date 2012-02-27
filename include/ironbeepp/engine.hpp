@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ -- Engine (PLACEHOLDER)
+ * @brief IronBee++ &mdash; Engine (PLACEHOLDER)
  *
  * This is a placeholder for future functionality.  Do not use.
  *
@@ -43,10 +43,12 @@ struct ib_engine_t;
 namespace IronBee {
 
 namespace Internal {
+/// @cond Internal
 
 struct EngineData;
 class Builder;
 
+/// @endcond
 };
 
 class Engine
