@@ -916,7 +916,7 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
     assert(rule != NULL);
-    IB_FTRACE_RET_STATUS(rule->meta.id);
+    IB_FTRACE_RET_CONSTSTR(rule->meta.id);
 }
 
 ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
