@@ -1751,6 +1751,20 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
                                char **result);
 
 /**
+ * Determine if a string would be expanded by @sa ib_data_expand_str().
+ *
+ * This function looks through @a str for instances of
+ * @a startpat + _name_ + @a endpat (i.e. "%{FOO}").
+ *
+ * @param[in] str String to check for expansion
+ * @param[out] result 1 if @a str would be expanded by @sa expand_str().
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
+                                               ib_num_t *result);
+
+/**
  * Remove a data field.
  * @param dpi Data provider instance
  * @param name Name as NUL terminated string
