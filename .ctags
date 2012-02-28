@@ -1,0 +1,4 @@
+--exclude=luajit-2.0-ironbee
+--exclude=gtest
+--exclude=manual
+
