@@ -37,7 +37,7 @@
  *
  * IBPP_BOOTSTRAP_MODULE_DELEGATE() supports an object oriented approach.
  * Instead of a function, it takes the name of a class.  An instance of the
- * class is constructed on module initialization and destructed on module
+ * class is constructed on module *loading* and destructed on module
  * destruction.  The module hooks are automatically mapped to methods of the
  * class.  Any class with the correct constructor and methods can be used.  A
  * class, ModuleDelegate, is provided with default nop behavior for all hooks.
@@ -51,16 +51,23 @@
  *   should be passed to the parent constructor which will make it available
  *   via ModuleDelegate::module().  If not subclassing, you should store it
  *   in a member variable if needed later.  The lifetime of @a module will
- *   exceed that of the delegate.
+ *   exceed that of the delegate.  Use the constructor to call any methods
+ *   of module that you need to, e.g., to set up a configuration map.  Use
+ *   @c initialize() (see below) to interact with the engine, e.g., to set
+ *   up hooks.
  * - @c destructor &mdash; The destructor will be called when the module is
  *   destroyed.  A default destructor is acceptable.
- * - @c context_open( @c IronBee::Context @a context ) &mdash; @c context_open is
- *   called whenever a new context is opened.  The lifetime of @a context is
- *   until just after the corresponding @c context_destroy is called.
- * - @c context_close( @c IronBee::Context @a context ) &mdash; As above, but for
- *   the context closing.
- * - @c context_destroy( @c IronBee::Context @a context ) &mdash; As above, but
- *   for the context being destroyed.
+ * - @c initialize() &mdash; @c initialize is called when the engine
+ *   initializes the module.  This is where you should set up hooks or
+ *   otherwise do initial interaction with the engine.
+ * - @c context_open( @c IronBee::Context @a context ) &mdash; @c
+ *   context_open is called whenever a new context is opened.  The lifetime
+ *   of @a context is until just after the corresponding @c context_destroy
+ *   is called.
+ * - @c context_close( @c IronBee::Context @a context ) &mdash; As above, but
+ *   for the context closing.
+ * - @c context_destroy( @c IronBee::Context @a context ) &mdash; As above,
+ *   but for the context being destroyed.
  *
  * Any exceptions thrown in your code, will be translated into, when possible,
  * log error message, and appropriate ib_status_t values.  To assist and
@@ -177,7 +184,7 @@ void delegate_context_destroy(
  * This is called at module finalization.  It destroys the delegate causing
  * the destructor to be called.
  *
- * @tparam DelegateType Type of delegate.
+ * @tparam DelegateType Type of @a *delegate.
  * @param[in,out] delegate Delegate to destroy.
  * @param[in]     module   Ignored.
  **/
@@ -191,22 +198,43 @@ void delegate_finalize(
 }
 
 /**
- * Initializer for delegates &mdash; constructs delegate.
+ * Initialize handler for delegate.  Forwards to delegate.
  * @internal
  *
- * Constructs the delegate and binds the hooks to the appropriate member
- * functions.
- *
- * @tparam DelegateType Type of delegate.
- * @param[in] module Module.
+ * @tparam DelegateType Type of @a *delegate.
+ * @param[in] delegate Pointer to delegate.
+ * @param[in] module   Ignored.
  **/
 template <typename DelegateType>
 void delegate_initialize(
+    DelegateType* delegate,
+    Module        module
+)
+{
+    delegate->initialize();
+}
+
+/**
+ * @c on_load handlers for delegates.
+ * @internal
+ *
+ * Constructs delegate and connects hooks to delegate.
+ *
+ * @tparam DelegateType Type of module delegate.
+ * @param[in] module Module being loaded.
+ **/
+template <typename DelegateType>
+void delegate_on_load(
     Module module
 )
 {
     DelegateType* delegate = new DelegateType( module );
 
+    module.set_initialize( boost::bind(
+        delegate_initialize<DelegateType>,
+        delegate,
+        _1
+    ) );
     module.set_context_open( boost::bind(
         delegate_context_open<DelegateType>,
         delegate,
@@ -232,23 +260,7 @@ void delegate_initialize(
         delegate,
         _1
     ) );
-}
 
-/**
- * @c on_load handlers for delegates.
- * @internal
- *
- * Sets up an initializer which will do everything else.
- *
- * @tparam DelegateType Type of module delegate.
- * @param[in] module Module being loaded.
- **/
-template <typename DelegateType>
-void delegate_on_load(
-    Module module
-)
-{
-    module.set_initialize( delegate_initialize<DelegateType> );
 }
 
 /**

@@ -36,6 +36,7 @@ class TestModuleBootstrapB : public ::testing::Test, public IBPPTestFixture
 
 static bool          s_delegate_constructed;
 static bool          s_delegate_destructed;
+static bool          s_delegate_initialized;
 static bool          s_delegate_context_open;
 static bool          s_delegate_context_close;
 static bool          s_delegate_context_destroy;
@@ -53,6 +54,11 @@ struct Delegate
     ~Delegate()
     {
         s_delegate_destructed = true;
+    }
+
+    void initialize()
+    {
+        s_delegate_initialized = true;
     }
 
     void context_open( IronBee::Context c )
@@ -82,6 +88,7 @@ TEST_F( TestModuleBootstrapB, basic )
 {
     s_delegate_constructed     = false;
     s_delegate_destructed      = false;
+    s_delegate_initialized     = false;
     s_delegate_context_open    = false;
     s_delegate_context_close   = false;
     s_delegate_context_destroy = false;
@@ -90,7 +97,8 @@ TEST_F( TestModuleBootstrapB, basic )
 
     ib_module_t* m = IB_MODULE_SYM( m_ib_engine );
 
-    EXPECT_FALSE( s_delegate_constructed );
+    EXPECT_TRUE( s_delegate_constructed );
+    EXPECT_EQ( m, s_ib_module );
     EXPECT_EQ( s_module_name,         m->name       );
     EXPECT_EQ( std::string(__FILE__), m->filename   );
     EXPECT_EQ( m_ib_engine,           m->ib         );
@@ -98,14 +106,14 @@ TEST_F( TestModuleBootstrapB, basic )
     ib_context_t c;
     ib_status_t rc;
 
+    s_delegate_initialized = false;
     rc = m->fn_init(
         m_ib_engine,
         m,
         m->cbdata_init
     );
     EXPECT_EQ( IB_OK, rc );
-    EXPECT_TRUE( s_delegate_constructed );
-    EXPECT_EQ( m, s_ib_module );
+    EXPECT_TRUE( s_delegate_initialized );
 
     s_delegate_context_open = false;
     s_ib_context = NULL;

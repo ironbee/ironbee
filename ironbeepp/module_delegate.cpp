@@ -33,6 +33,11 @@ ModuleDelegate::ModuleDelegate( Module m ) :
     // nop
 }
 
+void ModuleDelegate::initialize() const
+{
+    // nop
+}
+
 void ModuleDelegate::context_open( Context context ) const
 {
     // nop
