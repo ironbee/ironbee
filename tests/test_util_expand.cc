@@ -53,16 +53,6 @@ class TestIBUtilExpandStr : public testing::Test
 public:
     TestIBUtilExpandStr() 
     {
-        ib_status_t rc;
-
-        rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not initialize mpool.");
-        }
-        rc = ib_hash_create(&m_hash, m_pool);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not initialize hash.");
-        }
     }
 
     virtual void SetUp()
@@ -78,11 +68,25 @@ public:
             { "Key8", IB_FTYPE_UNUM,    NULL,     0,  1 },
             { NULL,   IB_FTYPE_GENERIC, NULL,     0,  0 },
         };
+        ib_status_t rc;
+
+        rc = ib_mpool_create(&m_pool, NULL, NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not initialize mpool.");
+        }
+        rc = ib_hash_create(&m_hash, m_pool);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not initialize hash.");
+        }
         PopulateHash( field_defs );
     }
 
     virtual void TearDown()
     {
+        if (m_pool != NULL) {
+            ib_mpool_destroy(m_pool);
+        }
+        m_pool = NULL;
     }
 
     virtual void PopulateHash( const field_def_t field_defs[] )
@@ -182,7 +186,10 @@ public:
 
     ~TestIBUtilExpandStr()
     {
-        ib_mpool_destroy(m_pool);
+        if (m_pool != NULL) {
+            ib_mpool_destroy(m_pool);
+        }
+        m_pool = NULL;
     }
     
 protected:
