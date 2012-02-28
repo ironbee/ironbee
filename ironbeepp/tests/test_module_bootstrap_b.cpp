@@ -90,14 +90,22 @@ TEST_F( TestModuleBootstrapB, basic )
 
     ib_module_t* m = IB_MODULE_SYM( m_ib_engine );
 
-    EXPECT_TRUE( s_delegate_constructed );
-    EXPECT_EQ( m,                     s_ib_module   );
+    EXPECT_FALSE( s_delegate_constructed );
     EXPECT_EQ( s_module_name,         m->name       );
     EXPECT_EQ( std::string(__FILE__), m->filename   );
     EXPECT_EQ( m_ib_engine,           m->ib         );
 
     ib_context_t c;
     ib_status_t rc;
+
+    rc = m->fn_init(
+        m_ib_engine,
+        m,
+        m->cbdata_init
+    );
+    EXPECT_EQ( IB_OK, rc );
+    EXPECT_TRUE( s_delegate_constructed );
+    EXPECT_EQ( m, s_ib_module );
 
     s_delegate_context_open = false;
     s_ib_context = NULL;

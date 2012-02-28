@@ -46,20 +46,20 @@
  *
  * The methods a delegate must define are:
  *
- * - @c constructor( @c IronBee::Module @a module ) -- The constructor is
+ * - @c constructor( @c IronBee::Module @a module ) &mdash; The constructor is
  *   the only time the module is provided.  If subclassing ModuleDelegate, it
  *   should be passed to the parent constructor which will make it available
  *   via ModuleDelegate::module().  If not subclassing, you should store it
  *   in a member variable if needed later.  The lifetime of @a module will
  *   exceed that of the delegate.
- * - @c destructor -- The destructor will be called when the module is
+ * - @c destructor &mdash; The destructor will be called when the module is
  *   destroyed.  A default destructor is acceptable.
- * - @c context_open( @c IronBee::Context @a context ) -- @c context_open is
+ * - @c context_open( @c IronBee::Context @a context ) &mdash; @c context_open is
  *   called whenever a new context is opened.  The lifetime of @a context is
  *   until just after the corresponding @c context_destroy is called.
- * - @c context_close( @c IronBee::Context @a context ) -- As above, but for
+ * - @c context_close( @c IronBee::Context @a context ) &mdash; As above, but for
  *   the context closing.
- * - @c context_destroy( @c IronBee::Context @a context ) -- As above, but
+ * - @c context_destroy( @c IronBee::Context @a context ) &mdash; As above, but
  *   for the context being destroyed.
  *
  * Any exceptions thrown in your code, will be translated into, when possible,
@@ -171,7 +171,7 @@ void delegate_context_destroy(
 }
 
 /**
- * Finalizer for delegates -- destroys delegate.
+ * Finalizer for delegates &mdash; destroys delegate.
  * @internal
  *
  * This is called at module finalization.  It destroys the delegate causing
@@ -191,17 +191,17 @@ void delegate_finalize(
 }
 
 /**
- * @c on_load handlers for delegates.
+ * Initializer for delegates &mdash; constructs delegate.
  * @internal
  *
  * Constructs the delegate and binds the hooks to the appropriate member
  * functions.
  *
- * @tparam DelegateType Type of module delegate.
- * @param[in] module Module being loaded.
+ * @tparam DelegateType Type of delegate.
+ * @param[in] module Module.
  **/
 template <typename DelegateType>
-void delegate_on_load(
+void delegate_initialize(
     Module module
 )
 {
@@ -232,6 +232,23 @@ void delegate_on_load(
         delegate,
         _1
     ) );
+}
+
+/**
+ * @c on_load handlers for delegates.
+ * @internal
+ *
+ * Sets up an initializer which will do everything else.
+ *
+ * @tparam DelegateType Type of module delegate.
+ * @param[in] module Module being loaded.
+ **/
+template <typename DelegateType>
+void delegate_on_load(
+    Module module
+)
+{
+    module.set_initialize( delegate_initialize<DelegateType> );
 }
 
 /**
