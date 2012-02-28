@@ -157,7 +157,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
         alen = strlen(args);
         if (alen > 0) {
             char *end = args+alen-1;
-            while( (end > args) && ( *end == ' ') ) {
+            while( (end > args) && (*end == ' ') ) {
                 *end = '\0';
                 --end;
             }

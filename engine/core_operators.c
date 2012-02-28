@@ -102,18 +102,27 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
      * that data is assumed to be a NUL terminated string (because our
      * configuration parser can't produce anything else).
      **/
-    const char *cstr = (const char *)data;
+    ib_status_t  rc;
+    const char  *cstr = (const char *)data;
+    char        *expanded;
+
+    /* Expand the string */
+    rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Handle NUL-terminated strings and byte strigns */
     if (field->type==IB_FTYPE_NULSTR) {
         const char *fval = ib_field_value_nulstr( field );
-        *result = (strcmp(fval,cstr) == 0);
-        ib_log_debug(ib,9,"streq '%s' '%s' -> %d", fval, cstr, *result);
+        *result = (strcmp(fval,expanded) == 0);
     }
     else if (field->type==IB_FTYPE_BYTESTR) {
         ib_bytestr_t *value = ib_field_value_bytestr(field);
         size_t        len = ib_bytestr_length(value);
 
-        if (len == strlen(cstr)) {
-            *result = (memcmp(ib_bytestr_const_ptr(value), cstr, len) == 0);
+        if (len == strlen(expanded)) {
+            *result = (memcmp(ib_bytestr_const_ptr(value), expanded, len) == 0);
         }
         else {
             *result = 0;
@@ -145,9 +154,15 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
                                        ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    /* 'searchstr' should be const, but the bytestr index fn takes a char* */
-    char *searchstr = (char *)data;
-    ib_status_t rc = IB_OK;
+    ib_status_t  rc = IB_OK;
+    const char  *cstr = (char *)data;
+    char        *expanded;
+
+    /* Expand the string */
+    rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -155,7 +170,7 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
      * configuration parser can't produce anything else).
      **/
     if (field->type == IB_FTYPE_NULSTR) {
-        if (strstr(ib_field_value_nulstr(field), searchstr) == NULL) {
+        if (strstr(ib_field_value_nulstr(field), expanded) == NULL) {
             *result = 0;
         }
         else {
@@ -164,7 +179,7 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
         ib_bytestr_t *str = ib_field_value_bytestr(field);
-        if (ib_bytestr_index_of_c(str, searchstr) == -1) {
+        if (ib_bytestr_index_of_c(str, expanded) == -1) {
             *result = 0;
         }
         else {
