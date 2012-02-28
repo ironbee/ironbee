@@ -166,7 +166,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, field1, &result));
+        ib_engine, &tx, op_inst->data, op_inst->flags, field1, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

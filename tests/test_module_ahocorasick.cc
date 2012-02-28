@@ -90,14 +90,14 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, field1, &result));
+        ib_engine, &tx, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, field2, &result));
+        ib_engine, &tx, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -145,14 +145,14 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, field1, &result));
+        ib_engine, &tx, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_TRUE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, field2, &result));
+        ib_engine, &tx, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

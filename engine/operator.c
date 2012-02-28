@@ -139,8 +139,10 @@ ib_status_t ib_operator_execute(ib_engine_t *ib,
     ib_status_t rc;
 
     if ((op_inst != NULL) && (op_inst->op != NULL)
-        && (op_inst->op->fn_execute != NULL)) {
-        rc = op_inst->op->fn_execute(ib, tx, op_inst->data, field, result);
+        && (op_inst->op->fn_execute != NULL))
+    {
+        rc = op_inst->op->fn_execute(
+            ib, tx, op_inst->data, op_inst->flags, field, result);
     }
     else {
         *result = 1;

@@ -62,6 +62,8 @@ static ib_status_t strop_create(ib_engine_t *ib,
                                 ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_num_t expand;
     char *str;
 
     if (parameters == NULL) {
@@ -71,6 +73,14 @@ static ib_status_t strop_create(ib_engine_t *ib,
     str = ib_mpool_strdup(mp, parameters);
     if (str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_data_expand_test_str(str, &expand);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (expand) {
+        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
     }
 
     op_inst->data = str;
@@ -84,6 +94,7 @@ static ib_status_t strop_create(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data C-style string to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -92,6 +103,7 @@ static ib_status_t strop_create(ib_engine_t *ib,
 static ib_status_t op_streq_execute(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     void *data,
+                                    ib_flags_t flags,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
@@ -107,7 +119,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
     char        *expanded;
 
     /* Expand the string */
-    if (tx != NULL) {
+    if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
         rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -147,6 +159,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
  * @param[in] data C-style string to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -155,6 +168,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 static ib_status_t op_contains_execute(ib_engine_t *ib,
                                        ib_tx_t *tx,
                                        void *data,
+                                       ib_flags_t flags,
                                        ib_field_t *field,
                                        ib_num_t *result)
 {
@@ -164,7 +178,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
     char        *expanded;
 
     /* Expand the string */
-    if (tx != NULL) {
+    if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
         rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -210,6 +224,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
  * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -218,6 +233,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
 static ib_status_t op_exists_execute(ib_engine_t *ib,
                                      ib_tx_t *tx,
                                      void *data,
+                                     ib_flags_t flags,
                                      ib_field_t *field,
                                      ib_num_t *result)
 {
@@ -235,6 +251,7 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator.
  * @param[in] data Name of the flag to check.
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -243,6 +260,7 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
 static ib_status_t op_checkflag_execute(ib_engine_t *ib,
                                         ib_tx_t *tx,
                                         void *data,
+                                        ib_flags_t flags,
                                         ib_field_t *field,
                                         ib_num_t *result)
 {
@@ -269,6 +287,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
  * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
  * @param[out] result Pointer to number in which to store the result
  *
@@ -277,6 +296,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
 static ib_status_t op_true_execute(ib_engine_t *ib,
                                    ib_tx_t *tx,
                                    void *data,
+                                   ib_flags_t flags,
                                    ib_field_t *field,
                                    ib_num_t *result)
 {
@@ -292,6 +312,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
  * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
  * @param[out] result Pointer to number in which to store the result
  *
@@ -300,6 +321,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
 static ib_status_t op_false_execute(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     void *data,
+                                    ib_flags_t flags,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
@@ -386,6 +408,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data C-style string to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -394,6 +417,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
 static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
                                       ib_tx_t *tx,
                                       void *data,
+                                      ib_flags_t flags,
                                       ib_field_t *field,
                                       ib_num_t *result)
 {
@@ -564,6 +588,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data Pointer to number to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -572,6 +597,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
 static ib_status_t op_eq_execute(ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  void *data,
+                                 ib_flags_t flags,
                                  ib_field_t *field,
                                  ib_num_t *result)
 {
@@ -598,6 +624,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data C-style string to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -606,6 +633,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
 static ib_status_t op_ne_execute(ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  void *data,
+                                 ib_flags_t flags,
                                  ib_field_t *field,
                                  ib_num_t *result)
 {
@@ -632,6 +660,7 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data Pointer to number to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -640,6 +669,7 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
 static ib_status_t op_gt_execute(ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  void *data,
+                                 ib_flags_t flags,
                                  ib_field_t *field,
                                  ib_num_t *result)
 {
@@ -666,6 +696,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data C-style string to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -674,6 +705,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
 static ib_status_t op_lt_execute(ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  void *data,
+                                 ib_flags_t flags,
                                  ib_field_t *field,
                                  ib_num_t *result)
 {
@@ -700,6 +732,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data Pointer to number to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -708,6 +741,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
 static ib_status_t op_ge_execute(ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  void *data,
+                                 ib_flags_t flags,
                                  ib_field_t *field,
                                  ib_num_t *result)
 {
@@ -734,6 +768,7 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data Pointer to number to compare to
+ * @param[in] flags Operator instance flags
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
@@ -742,6 +777,7 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
 static ib_status_t op_le_execute(ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  void *data,
+                                 ib_flags_t flags,
                                  ib_field_t *field,
                                  ib_num_t *result)
 {

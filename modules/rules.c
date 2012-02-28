@@ -589,6 +589,7 @@ static ib_status_t lua_operator_create(ib_engine_t *ib,
 static ib_status_t lua_operator_execute(ib_engine_t *ib,
                                         ib_tx_t *tx,
                                         void *data,
+                                        ib_flags_t flags,
                                         ib_field_t *field,
                                         ib_num_t *result)
 {

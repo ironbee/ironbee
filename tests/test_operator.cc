@@ -54,12 +54,15 @@ ib_status_t test_create_fn(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst) {
+ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst)
+{
     return IB_OK;
 }
 
 ib_status_t test_execute_fn(ib_engine_t *ib, ib_tx_t *tx,
-                            void *data, ib_field_t *field, ib_num_t *result) {
+                            void *data, ib_flags_t flags,
+                            ib_field_t *field, ib_num_t *result)
+{
     char *searchstr = (char *)data;
 
     if (field->type != IB_FTYPE_NULSTR) {
@@ -79,7 +82,8 @@ ib_status_t test_execute_fn(ib_engine_t *ib, ib_tx_t *tx,
 class OperatorTest : public BaseFixture {
 };
 
-TEST_F(OperatorTest, OperatorCallTest) {
+TEST_F(OperatorTest, OperatorCallTest)
+{
     ib_status_t status;
     ib_num_t call_result;
     status = ib_operator_register(ib_engine,
@@ -123,7 +127,8 @@ TEST_F(OperatorTest, OperatorCallTest) {
 class CoreOperatorsTest : public BaseFixture {
 };
 
-TEST_F(CoreOperatorsTest, ContainsTest) {
+TEST_F(CoreOperatorsTest, ContainsTest)
+{
     ib_status_t status;
     ib_num_t call_result;
     ib_operator_inst_t *op;

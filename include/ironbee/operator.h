@@ -78,6 +78,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
  * @param[in] data Instance data needed for execution.
+ * @param[in] flags Operator instance flags.
  * @param[in] field The field to operate on.
  * @param[out] result The result of the operator 1=true 0=false.
  *
@@ -86,6 +87,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
 typedef ib_status_t (* ib_operator_execute_fn_t)(ib_engine_t *ib,
                                                  ib_tx_t *tx,
                                                  void *data,
+                                                 ib_flags_t flags,
                                                  ib_field_t *field,
                                                  ib_num_t *result);
 
@@ -113,6 +115,7 @@ struct ib_operator_inst_t {
 /** Operator instance flags */
 #define IB_OPINST_FLAG_NONE    (0x0)      /**< No flags */
 #define IB_OPINST_FLAG_INVERT  (1 << 0)   /**< Invert the operator */
+#define IB_OPINST_FLAG_EXPAND  (1 << 1)   /**< Expand data at runtime */
 
 /**
  * Register an operator.
