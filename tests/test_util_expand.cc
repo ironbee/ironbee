@@ -48,11 +48,18 @@ typedef struct
     ib_unum_t       vunum;
 } field_def_t;
 
-class TestIBUtilExpandStr : public testing::Test
+class TestIBUtilExpand : public testing::Test
 {
 public:
-    TestIBUtilExpandStr() 
+    TestIBUtilExpand() 
     {
+        m_pool = NULL;
+        m_hash = NULL;
+    }
+
+    ~TestIBUtilExpand()
+    {
+        TearDown( );
     }
 
     virtual void SetUp()
@@ -143,12 +150,49 @@ public:
         }
     }
 
-    ib_status_t ExpandStr(const char *str,
+    void PrintError(ib_num_t lineno,
+                    const char *text,
+                    const char *start,
+                    const char *end,
+                    const char *expected,
+                    const char *value)
+    {
+        std::cout << "Test defined on line " << lineno << " failed"
+                  << std::endl;
+        std::cout << "'" << text << "' expanded using '" << start << end
+                  << "' -> '" << value << "' expected '" << expected
+                  << "'" << std::endl;
+    }
+
+    void PrintError(ib_num_t lineno,
+                    const char *text,
+                    const char *start,
+                    const char *end,
+                    ib_num_t expected,
+                    ib_num_t value)
+    {
+        std::cout << "Test defined on line " << lineno << " failed"
+                  << std::endl;
+        std::cout << "'" << text << "' expanded using '" << start << end
+                  << "' -> '" << value << "' expected '" << expected
+                  << "'" << std::endl;
+    }
+    
+protected:
+    ib_mpool_t *m_pool;
+    ib_hash_t  *m_hash;
+};
+
+class TestIBUtilExpandStr : public TestIBUtilExpand
+{
+public:
+
+    ib_status_t ExpandStr(const char *text,
                           const char *start,
                           const char *end,
                           char **result)
     {
-        return ::expand_str(m_pool, str, start, end, m_hash, result);
+        return ::expand_str(m_pool, text, start, end, m_hash, result);
     }
 
     bool IsExpected(ib_num_t lineno,
@@ -162,11 +206,7 @@ public:
             return true;
         }
         else {
-            std::cout << "Test defined on line " << lineno << " failed"
-                      << std::endl;
-            std::cout << "'" << text << "' expanded using '" << start << end
-                      << "' -> '" << value << "' expected '" << expected
-                      << "'" << std::endl;
+            PrintError(lineno, text, start, end, expected, value);
             return false;
         }
     }
@@ -177,25 +217,48 @@ public:
                   const char *end,
                   const char *expected )
     {
-        char *expanded;
+        char *result;
         ib_status_t rc;
-        rc = ExpandStr(text, start, end, &expanded);
+        rc = ExpandStr(text, start, end, &result);
         ASSERT_EQ(IB_OK, rc);
-        EXPECT_TRUE(IsExpected(lineno, text, start, end, expected, expanded));
+        EXPECT_TRUE(IsExpected(lineno, text, start, end, expected, result));
+    }
+};
+
+class TestIBUtilExpandTestStr : public TestIBUtilExpand
+{
+public:
+
+    bool IsExpected(ib_num_t lineno,
+                    const char *text,
+                    const char *start,
+                    const char *end,
+                    ib_num_t expected,
+                    ib_num_t value)
+    {
+        if (value == expected) {
+            return true;
+        }
+        else {
+            PrintError(lineno, text, start, end, expected, value);
+            return false;
+        }
     }
 
-    ~TestIBUtilExpandStr()
+    void RunTest( ib_num_t lineno,
+                  const char *text,
+                  const char *start,
+                  const char *end,
+                  ib_num_t expected )
     {
-        if (m_pool != NULL) {
-            ib_mpool_destroy(m_pool);
-        }
-        m_pool = NULL;
+        ib_num_t result;
+        ib_status_t rc;
+        rc = ::expand_test_str(text, start, end, &result);
+        ASSERT_EQ(IB_OK, rc);
+        EXPECT_TRUE(IsExpected(lineno, text, start, end, expected, result));
     }
-    
-protected:
-    ib_mpool_t *m_pool;
-    ib_hash_t  *m_hash;
 };
+
 
 /* -- Tests -- */
 
@@ -216,6 +279,24 @@ TEST_F(TestIBUtilExpandStr, test_expand_errors)
     ASSERT_EQ( (char *)NULL, expanded);
 }
 
+TEST_F(TestIBUtilExpandTestStr, test_expand_test_str)
+{
+    RunTest(__LINE__, "simple text",      "%{", "}",  0);
+    RunTest(__LINE__, "simple text",      "$(", ")",  0);
+    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  1);
+    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  0);
+    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  1);
+    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", 0);
+    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", 1);
+    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  0);
+    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  0);
+    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  1);
+    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  0);
+    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  0);
+    RunTest(__LINE__, "text:${Key1}",     "${", "}",  1);
+    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  1);
+}
+
 TEST_F(TestIBUtilExpandStr, test_expand_basics)
 {
     RunTest(__LINE__, "simple text",      "%{", "}",  "simple text");
@@ -223,7 +304,9 @@ TEST_F(TestIBUtilExpandStr, test_expand_basics)
     RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  "text:Value1");
     RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  "text:%{Key1}");
     RunTest(__LINE__, "text:{Key1}",      "{",  "}",  "text:Value1");
+    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", "text:%{Key1}");
     RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", "text:Value1");
+    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  "text:<<Key1>>");
     RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  "text:$(Key1)");
     RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  "text:Value1");
     RunTest(__LINE__, "text:${Key1}",     "%{", "}",  "text:${Key1}");

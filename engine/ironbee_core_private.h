@@ -42,6 +42,12 @@ extern "C" {
 #endif
 
 /**
+ * Parameters used for variable expansion in rules.
+ */
+#define IB_VARIABLE_EXPANSION_PREFIX  "%{"  /**< Variable prefix */
+#define IB_VARIABLE_EXPANSION_POSTFIX "}"   /**< Variable postfix */
+
+/**
  * Field operator function type.
  *
  * @param[in] ib Ironbee engine.

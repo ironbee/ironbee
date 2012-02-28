@@ -57,8 +57,8 @@ extern "C" {
  *
  * @param[in] mp Memory pool
  * @param[in] str String to expand
- * @param[in] startpat Starting pattern (i.e. "%{")
- * @param[in] endpat Starting pattern (i.e. "}")
+ * @param[in] prefix Prefix string (i.e. "%{")
+ * @param[in] postfix Postfix string (i.e. "}")
  * @param[in] hash Hash from which to lookup and expand names in @a str
  * @param[out] result Resulting string
  *
@@ -66,10 +66,29 @@ extern "C" {
  */
 ib_status_t DLL_PUBLIC expand_str(ib_mpool_t *mp,
                                   const char *str,
-                                  const char *startpat,
-                                  const char *endpat,
+                                  const char *prefix,
+                                  const char *postfix,
                                   ib_hash_t *hash,
                                   char **result);
+
+/**
+ * Determine if a string would be expanded by @sa expand_str().
+ *
+ * This function looks through @a str for instances of
+ * @a startpat + _name_ + @a endpat (i.e. "%{FOO}").
+ *
+ * @param[in] str String to check for expansion
+ * @param[in] prefix Prefix string (i.e. "%{")
+ * @param[in] postfix Postfix string (i.e. "}")
+ * @param[out] result 1 if @a str would be expanded by @sa expand_str().
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC expand_test_str(const char *str,
+                                       const char *prefix,
+                                       const char *postfix,
+                                       ib_num_t *result);
+
 
 /** @} IronBeeUtilExpand */
 

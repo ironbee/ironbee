@@ -1091,8 +1091,8 @@ static ib_status_t core_data_expand_str(ib_provider_inst_t *dpi,
 
     rc = expand_str(dpi->mp,
                     str,
-                    "%{",
-                    "}",
+                    IB_VARIABLE_EXPANSION_PREFIX,
+                    IB_VARIABLE_EXPANSION_POSTFIX,
                     (ib_hash_t *)dpi->data,
                     result);
 

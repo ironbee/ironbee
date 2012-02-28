@@ -107,9 +107,14 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
     char        *expanded;
 
     /* Expand the string */
-    rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+    if (tx != NULL) {
+        rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else {
+        expanded = (char *)cstr;
     }
 
     /* Handle NUL-terminated strings and byte strigns */
@@ -159,9 +164,14 @@ static ib_status_t contains_execute_fn(ib_engine_t *ib,
     char        *expanded;
 
     /* Expand the string */
-    rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+    if (tx != NULL) {
+        rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else {
+        expanded = (char *)cstr;
     }
 
     /**

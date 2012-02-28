@@ -151,23 +151,23 @@ static ib_status_t join3(ib_mpool_t *mp,
  */
 ib_status_t expand_str(ib_mpool_t *mp,
                        const char *str,
-                       const char *startpat,
-                       const char *endpat,
+                       const char *prefix,
+                       const char *postfix,
                        ib_hash_t *hash,
                        char **result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
     char numbuf[NUM_BUF_LEN+1]; /**< Buffer used to convert number to str */
-    size_t pslen = SIZE_MAX;    /**< Start pattern length */
-    size_t pelen = SIZE_MAX;    /**< End pattern length */
+    size_t prelen = SIZE_MAX;   /**< Prefix string length */
+    size_t postlen = SIZE_MAX;  /**< Postfix string length */
     const char *buf = str;      /**< Current buffer */
 
     /* Sanity checks */
     assert(mp != NULL);
     assert(str != NULL);
-    assert(startpat != NULL);
-    assert(endpat != NULL);
+    assert(prefix != NULL);
+    assert(postfix != NULL);
     assert(hash != NULL);
     assert(result != NULL);
 
@@ -176,56 +176,56 @@ ib_status_t expand_str(ib_mpool_t *mp,
 
     /* Loop til the cows come home */
     while (1) {
-        const char *start;      /* Pointer to found start pattern */
-        const char *end;        /* Pointer to found end pattern */
-        const char *name;       /* Pointer to the name between start and end */
+        const char *pre;        /* Pointer to found prefix string */
+        const char *post;       /* Pointer to found postfix string */
+        const char *name;       /* Pointer to the name between pre and post */
         size_t namelen;         /* Length of the name */
         char *new;              /* New buffer */
         size_t newlen;          /* Length of new buffer */
-        const char *iptr;       /* Initial block (up to the start pattern) */
+        const char *iptr;       /* Initial block (up to the prefix) */
         size_t ilen;            /* Length of the initial block */
-        const char *fptr;       /* Final block (after the end pattern) */
+        const char *fptr;       /* Final block (after the postfix) */
         size_t flen;            /* Length of the final block */
         ib_field_t *f;
 
-        /* Look for the start pattern */
-        start = strstr(buf, startpat);
-        if (start == NULL) {
+        /* Look for the prefix in the string */
+        pre = strstr(buf, prefix);
+        if (pre == NULL) {
             break;
         }
 
-        /* Lazy compute pslen */
-        if (pslen == SIZE_MAX) {
-            pslen = strlen(startpat);
-            if (pslen == 0) {
+        /* Lazy compute prelen */
+        if (prelen == SIZE_MAX) {
+            prelen = strlen(prefix);
+            if (prelen == 0) {
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
 
-        /* And the next matching end pattern. */
-        end = strstr(start+pslen, endpat);
-        if (end == NULL) {
+        /* And the next matching postfix */
+        post = strstr(pre+prelen, postfix);
+        if (post == NULL) {
             break;
         }
 
-        /* Lazy compute pelen */
-        if (pelen == SIZE_MAX) {
-            pelen = strlen(endpat);
-            if (pelen == 0) {
+        /* Lazy compute postlen */
+        if (postlen == SIZE_MAX) {
+            postlen = strlen(postfix);
+            if (postlen == 0) {
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
 
         /* The name is the block between the two */
-        name = (start + pslen);
-        namelen = (end - start) - pslen;
+        name = (pre + prelen);
+        namelen = (post - pre) - prelen;
 
         /* Length of the initial block */
         iptr = buf;
-        ilen = (start - buf);
+        ilen = (pre - buf);
 
         /* The final block */
-        fptr = (end + pelen);
+        fptr = (post + postlen);
         flen = strlen(fptr);
 
         /* Zero length name? Expand it to "" */
@@ -334,5 +334,43 @@ ib_status_t expand_str(ib_mpool_t *mp,
     }
 
     *result = (char *)buf;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/*
+ * Test whether a given string would be expanded.
+ */
+ib_status_t expand_test_str(const char *str,
+                            const char *prefix,
+                            const char *postfix,
+                            ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    const char *pre;      /* Pointer to found prefix pattern */
+    const char *post;     /* Pointer to found postfix pattern */
+
+    /* Sanity checks */
+    assert(str != NULL);
+    assert(prefix != NULL);
+    assert(postfix != NULL);
+    assert(result != NULL);
+
+    /* Initialize the result to no */
+    *result = 0;
+
+    /* Look for the prefix pattern */
+    pre = strstr(str, prefix);
+    if (pre == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* And the next matching postfix pattern. */
+    post = strstr(pre+strlen(prefix), postfix);
+    if (post == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Yes, it looks expandable.  Done */
+    *result = 1;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
