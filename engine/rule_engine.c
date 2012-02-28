@@ -24,6 +24,8 @@
 
 #include "ironbee_config_auto.h"
 
+#include <assert.h>
+
 #include <ironbee/bytestr.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/field.h>
@@ -533,6 +535,10 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     ib_list_t            *rules = phase->rules.rule_list;
     ib_list_node_t       *node = NULL;
 
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(cbdata != NULL);
+
     /* Sanity check */
     if (phase->phase != rdata->phase) {
         ib_log_error(ib, 4, "Rule engine: Phase %d (%s) is %d",
@@ -715,6 +721,9 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     ib_list_t   *lst;
     ib_mpool_t  *mp = ib_rule_mpool(ib);
 
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
     /* Allocate the rule */
     rule = (ib_rule_t *)ib_mpool_calloc(mp, sizeof(ib_rule_t), 1);
     if (rule == NULL) {
@@ -777,6 +786,10 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     ib_list_t            *rules;
     ib_rule_engine_t     *rule_engine;
     ib_rule_t            *chain_rule;
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(rule != NULL);
 
     /* Sanity checks */
     if ( (phase <= PHASE_NONE) || (phase > PHASE_MAX) ) {
@@ -886,6 +899,8 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
                                       const char *id)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(rule != NULL);
 
     if ( (rule == NULL) || (id == NULL) ) {
         ib_log_error(ib, 4, "Can't set rule id: Invalid rule or id");
@@ -899,7 +914,9 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
 
 const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
 {
-    return rule->meta.id;
+    IB_FTRACE_INIT();
+    assert(rule != NULL);
+    IB_FTRACE_RET_STATUS(rule->meta.id);
 }
 
 ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
@@ -908,6 +925,8 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
                                             ib_flags_t flags)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(rule != NULL);
 
     if (rule == NULL) {
         ib_log_error(ib, 4, "Can't update rule flags: Invalid rule");
@@ -956,6 +975,10 @@ static ib_status_t fieldop_length(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
+
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(field != NULL);
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -1034,6 +1057,10 @@ static ib_status_t fieldop_count(ib_engine_t *ib,
     ib_status_t rc = IB_OK;
     ib_num_t value = 0;
 
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(field != NULL);
+
     /* If this is a list, return it's count */
     if (field->type == IB_FTYPE_LIST) {
         ib_list_t *lst = ib_field_value_list(field);
@@ -1071,6 +1098,10 @@ static ib_status_t fieldop_max_list(ib_engine_t *ib,
     ib_num_t        maxvalue = 0;
     ib_num_t        n = 0;
     ib_list_t      *lst;
+
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(field != NULL);
 
     /* Get the incoming list */
     lst = ib_field_value_list(field);
@@ -1166,6 +1197,10 @@ static ib_status_t fieldop_min_list(ib_engine_t *ib,
     ib_num_t        n = 0;
     ib_list_t      *lst;
 
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(field != NULL);
+
     /* Get the incoming list */
     lst = ib_field_value_list(field);
     if (lst == NULL) {
@@ -1254,6 +1289,10 @@ static ib_status_t fieldop_max(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(field != NULL);
+
     switch (field->type) {
         case IB_FTYPE_NUM:
         case IB_FTYPE_UNUM:
@@ -1286,6 +1325,9 @@ static ib_status_t fieldop_min(ib_engine_t *ib,
                                ib_field_t **result)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(field != NULL);
 
     switch (field->type) {
         case IB_FTYPE_NUM:
@@ -1321,6 +1363,10 @@ static ib_status_t parse_field_ops(ib_engine_t *ib,
     char             *cur;               /* Current position */
     char             *opname;            /* Operator name */
     char             *dup_str;           /* Duplicate string */
+
+    assert(ib != NULL);
+    assert(target_str != NULL);
+    assert(target_field != NULL);
 
     /* No parens?  Just store the target string as the field name & return. */
     if (strstr(target_str, "()") == NULL) {
@@ -1433,6 +1479,8 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
     ib_rule_target_t *target = NULL;
     ib_status_t rc = IB_OK;
 
+    assert(ib != NULL);
+
     /* Basic checks */
     if ( (rule == NULL) || (name == NULL) ) {
         ib_log_error(ib, 4,
@@ -1482,6 +1530,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
+    assert(ib != NULL);
 
     if ( (rule == NULL) || (action == NULL) ) {
         ib_log_error(ib, 4,
