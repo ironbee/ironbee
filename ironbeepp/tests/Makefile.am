@@ -20,7 +20,8 @@ check_PROGRAMS = \
     test_module \
     test_module_bootstrap_a \
     test_module_bootstrap_b \
-    test_module_delegate
+    test_module_delegate \
+    test_throw
     
 TESTS=$(check_PROGRAMS)
 
@@ -30,6 +31,7 @@ test_module_SOURCES             = test_module.cpp fixture.cpp
 test_module_bootstrap_a_SOURCES = test_module_bootstrap_a.cpp fixture.cpp
 test_module_bootstrap_b_SOURCES = test_module_bootstrap_b.cpp fixture.cpp
 test_module_delegate_SOURCES    = test_module_delegate.cpp fixture.cpp
+test_throw_SOURCES              = test_throw
 
 check-local: $(check_PROGRAMS)
 	for cp in $(check_PROGRAMS); do \
