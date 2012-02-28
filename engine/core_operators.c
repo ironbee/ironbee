@@ -152,7 +152,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t contains_execute_fn(ib_engine_t *ib,
+static ib_status_t op_contains_execute(ib_engine_t *ib,
                                        ib_tx_t *tx,
                                        void *data,
                                        ib_field_t *field,
@@ -791,7 +791,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               IB_OP_FLAG_NONE,
                               strop_create,
                               NULL, /* no destroy function */
-                              contains_execute_fn);
+                              op_contains_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
