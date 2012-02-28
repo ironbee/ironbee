@@ -58,6 +58,9 @@ public:
     explicit
     ModuleDelegate( Module module );
 
+    //! Initialize handler.  Nop.
+    void initialize() const;
+
     //! Context Open Handler.  Nop.
     void context_open( Context context ) const;
 

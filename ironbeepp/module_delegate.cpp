@@ -33,17 +33,22 @@ ModuleDelegate::ModuleDelegate( Module m ) :
     // nop
 }
 
-void ModuleDelegate::context_open( Context context )
+void ModuleDelegate::initialize() const
 {
     // nop
 }
 
-void ModuleDelegate::context_close( Context context )
+void ModuleDelegate::context_open( Context context ) const
 {
     // nop
 }
 
-void ModuleDelegate::context_destroy( Context context )
+void ModuleDelegate::context_close( Context context ) const
+{
+    // nop
+}
+
+void ModuleDelegate::context_destroy( Context context ) const
 {
     // nop
 }
