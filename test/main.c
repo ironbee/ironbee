@@ -640,6 +640,39 @@ int test_compressed_response_deflate(htp_cfg_t *cfg) {
     return 1;
 }
 
+int test_ambiguous_host(htp_cfg_t *cfg) {
+    htp_connp_t *connp = NULL;
+    
+    int rc = test_run(home, "20-ambiguous-host.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) htp_connp_destroy_all(connp);
+        return -1;
+    }
+    if (list_size(connp->conn->transactions) != 2) {
+        htp_connp_destroy_all(connp);
+        return -1;
+    }
+        
+    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
+    // First transaction has unambiguous host
+    if (tx->flags & HTP_AMBIGUOUS_HOST) {
+        htp_connp_destroy_all(connp);
+        return -1;
+    }
+        
+
+    tx = list_get(connp->conn->transactions, 1);
+    // Second transaction has ambiguous host
+    if (!(tx->flags & HTP_AMBIGUOUS_HOST)) {
+        htp_connp_destroy_all(connp);
+        return -1;
+    }
+
+    htp_connp_destroy_all(connp);
+
+    return 1;
+}
+
 int test_urlencoded_test(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
@@ -884,39 +917,39 @@ int main(int argc, char** argv) {
 
     home = NULL;
 
-		if ( argc == 2 ) {
-			home = argv[1];
-		} else {
-	    // Try the current working directory first
-	    int fd = open("./files/anchor.empty", 0, O_RDONLY);
-	    if (fd != -1) {
-	        close(fd);
-	        home = "./files";
-	    } else {
-	        // Try the directory in which the executable resides
-	        strncpy(buf, argv[0], 1024);
-	        strncat(buf, "/../files/anchor.empty", 1024 - strlen(buf));
-	        fd = open(buf, 0, O_RDONLY);
-	        if (fd != -1) {
-	            close(fd);
-	            strncpy(buf, argv[0], 1024);
-	            strncat(buf, "/../files", 1024 - strlen(buf));
-	            home = buf;
-	        } else {
-	            // Try the directory in which the executable resides
-	            strncpy(buf, argv[0], 1024);
-	            strncat(buf, "/../../files/anchor.empty", 1024 - strlen(buf));
-	            fd = open(buf, 0, O_RDONLY);
-	            if (fd != -1) {
-	                close(fd);
-	                strncpy(buf, argv[0], 1024);
-	                strncat(buf, "/../../files", 1024 - strlen(buf));
-	                home = buf;
-	            }
-	        }
-	    }
-		}
-		
+    if ( argc == 2 ) {
+        home = argv[1];
+    } else {
+        // Try the current working directory first
+        int fd = open("./files/anchor.empty", 0, O_RDONLY);
+        if (fd != -1) {
+            close(fd);
+            home = "./files";
+        } else {
+            // Try the directory in which the executable resides
+            strncpy(buf, argv[0], 1024);
+            strncat(buf, "/../files/anchor.empty", 1024 - strlen(buf));
+            fd = open(buf, 0, O_RDONLY);
+            if (fd != -1) {
+                close(fd);
+                strncpy(buf, argv[0], 1024);
+                strncat(buf, "/../files", 1024 - strlen(buf));
+                home = buf;
+            } else {
+                // Try the directory in which the executable resides
+                strncpy(buf, argv[0], 1024);
+                strncat(buf, "/../../files/anchor.empty", 1024 - strlen(buf));
+                fd = open(buf, 0, O_RDONLY);
+                if (fd != -1) {
+                    close(fd);
+                    strncpy(buf, argv[0], 1024);
+                    strncat(buf, "/../../files", 1024 - strlen(buf));
+                    home = buf;
+                }
+            }
+        }
+    }
+
     if (home == NULL) {
         printf("Failed to find test files.");
         exit(-1);
@@ -966,22 +999,23 @@ int main(int argc, char** argv) {
     RUN_TEST(test_response_stream_closure, cfg);
     RUN_TEST(test_host_in_headers, cfg);
     RUN_TEST(test_compressed_response_gzip_ct, cfg);
-    RUN_TEST(test_compressed_response_gzip_chunked, cfg);    
+    RUN_TEST(test_compressed_response_gzip_chunked, cfg);
     RUN_TEST(test_connect, cfg);
     RUN_TEST(test_connect_complete, cfg);
     RUN_TEST(test_connect_extra, cfg);
-    RUN_TEST(test_compressed_response_deflate, cfg);    
+    RUN_TEST(test_compressed_response_deflate, cfg);
+    RUN_TEST(test_ambiguous_host, cfg);
 
     //RUN_TEST(test_misc, cfg);
     //RUN_TEST(test_multipart_1, cfg);
-    //RUN_TEST(test_post_urlencoded, cfg);    
+    //RUN_TEST(test_post_urlencoded, cfg);
 
     printf("Tests: %i\n", tests);
     printf("Failures: %i\n", failures);
 
     htp_config_destroy(cfg);
 
-    return (EXIT_SUCCESS);
+    return (failures > 0) ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 int main_path_decoding_tests(int argc, char** argv) {
