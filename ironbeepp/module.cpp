@@ -249,7 +249,7 @@ const ib_module_t* Module::ib() const
     return m_data->ib_module;
 }
 
-Module Module::create_from_ib( ib_module_t* ib_module )
+Module Module::from_ib( ib_module_t* ib_module )
 {
     return Internal::Builder::module( ib_module );
 }

@@ -168,7 +168,7 @@ public:
     //! Const ib_module_t accessor.
     const ib_module_t* ib() const;
     //! Construct Module from ib_module_t.
-    static Module create_from_ib( ib_module_t* ib_module );
+    static Module from_ib( ib_module_t* ib_module );
     ///@}
 #endif
 

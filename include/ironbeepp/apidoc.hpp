@@ -144,10 +144,10 @@
  * classes can provide the underlying C pointer.  This is done via an @c ib()
  * method.  E.g., IronBee::Module::ib() returns the @c ib_module_t*
  * pointing to the underlying ib_module_t.  Symmetrically, an IronBee++
- * object can be created from an IronBee object via create_from_ib(), e.g.,
- * IronBee::Module::create_from_ib().
+ * object can be created from an IronBee object via from_ib(), e.g.,
+ * IronBee::Module::from_ib().
  *
- * The @c ib() and @c create_from_ib() methods are only available if
+ * The @c ib() and @c from_ib() methods are only available if
  * IBPP_EXPOSE_C is defined when the header file is included.  This
  * preprocessor macro adds the appropriate global symbols (e.g., ib_module_t)
  * and methods.
