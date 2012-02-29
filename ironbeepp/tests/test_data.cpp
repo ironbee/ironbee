@@ -42,7 +42,7 @@ struct destruction_registerer
 
 typedef boost::shared_ptr<destruction_registerer> destruction_registerer_p;
 
-TEST( TestCatch, ironbeepp_exception )
+TEST( TestData, ironbeepp_exception )
 {
     using namespace IronBee::Internal;
 

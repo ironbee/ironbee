@@ -33,7 +33,7 @@
 using namespace IronBee;
 using IronBee::Internal::throw_if_error;
 
-TEST(TestThrow, basic)
+TEST( TestThrow, basic )
 {
     EXPECT_NO_THROW( throw_if_error( IB_OK ) );
     EXPECT_THROW( throw_if_error( IB_DECLINED  ), declined  );
