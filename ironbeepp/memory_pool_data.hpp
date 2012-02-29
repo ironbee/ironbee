@@ -17,54 +17,28 @@
 
 /**
  * @file
- * @brief IronBee++ Internals -- Builder
+ * @brief IronBee++ Internals &mdash; MemoryPoolData
  * @internal
  *
- * This file defines Internal::Builder, a proxy for constructing objects
- * from C objects.
+ * @sa memory_pool.hpp
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP__INTERNAL__BUILDER__
-#define __IBPP__INTERNAL__BUILDER__
+#ifndef __IBPP__MEMORY_POOL_DATA__
+#define __IBPP__MEMORY_POOL_DATA__
 
-struct ib_module_t;
-struct ib_engine_t;
-struct ib_context_t;
 struct ib_mpool_t;
 
 namespace IronBee {
-
-class Module;
-class Engine;
-class Context;
-class MemoryPool;
-
 namespace Internal {
 
-/**
- * Construct various IronBee++ objects from IronBee pointers.
- * @internal
- *
- * The purpose of this class is to isolate the C details of constructing
- * objects, allowing the public header files that define these objects to
- * avoid C details.
- **/
-class Builder
+struct MemoryPoolData
 {
-public:
-    //! Construct Engine.
-    static Engine engine(   ib_engine_t*  ib_engine  );
-    //! Construct Module.
-    static Module  module(  ib_module_t*  ib_module  );
-    //! Construct Context.
-    static Context context( ib_context_t* ib_context );
-    //! Construct MemoryPool.
-    static MemoryPool memory_pool( ib_mpool_t* ib_mpool );
+    ib_mpool_t* ib_mpool;
 };
 
-} // Internal
+} // Impl
 } // IronBee
 
 #endif

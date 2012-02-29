@@ -12,5 +12,6 @@ libibpp_la_SOURCES = \
     builder.cpp \
     module_bootstrap.cpp \
     module_delegate.cpp \
-    throw.cpp
+    throw.cpp \
+    memory_pool.cpp
 

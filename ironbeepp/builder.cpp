@@ -29,10 +29,12 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
+#include <ironbeepp/memory_pool.hpp>
 
 #include "module_data.hpp"
 #include "engine_data.hpp"
 #include "context_data.hpp"
+#include "memory_pool_data.hpp"
 
 #include <boost/make_shared.hpp>
 
@@ -60,6 +62,13 @@ Context Builder::context( ib_context_t* ib_context )
     Context::data_t data = make_shared<ContextData>();
     data->ib_context = ib_context;
     return Context( data );
+}
+
+MemoryPool Builder::memory_pool( ib_mpool_t* ib_memory_pool )
+{
+    MemoryPool::data_t data = make_shared<MemoryPoolData>();
+    data->ib_mpool = ib_memory_pool;
+    return MemoryPool( data );
 }
 
 } // Internal
