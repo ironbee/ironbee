@@ -498,7 +498,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
  * @param[in,out] mp Memory pool to use for allocation
- * @param[in] parameters Constant parameters
+ * @param[in] params Constant parameters
  * @param[in,out] op_inst Instance operator
  *
  * @returns Status code
@@ -506,38 +506,92 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
 static ib_status_t op_numcmp_create(ib_engine_t *ib,
                                     ib_context_t *ctx,
                                     ib_mpool_t *mp,
-                                    const char *parameters,
+                                    const char *params,
                                     ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
-    ib_num_t *vptr;
+    numop_params_t *vptr;
     ib_status_t rc;
     ib_bool_t expandable;
+    ib_num_t value;
+    size_t plen;
 
-    if (parameters == NULL) {
+    if (params == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    plen = strlen(params);
+
+    /* Is the string expandable? */
+    rc = ib_data_expand_test_str(params, &expandable);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (expandable) {
+        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
+    }
+    else {
+        rc = string_to_num_ex(params, plen, IB_FALSE, &value);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Allocate storage for the value */
-    vptr = (ib_num_t *)ib_mpool_alloc(mp, sizeof(*vptr));
+    vptr = (numop_params_t *)ib_mpool_alloc(mp, sizeof(*vptr));
     if (vptr == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+    /* Fill in the parameters */
+    if (expandable) {
+        vptr->str = ib_mpool_strdup(mp, params);
+        if (vptr->str == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
     }
-    if (expand) {
-        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
-        
+    else {
+        vptr->num = value;
+        vptr->str = NULL;
     }
-
-    /* Convert the parameter string to an integer */
-    *vptr = strtol(parameters, NULL, 0);
 
     op_inst->data = vptr;
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Get expanded numberic value of a string
+ * @internal
+ *
+ * @param[in] tx Transaction
+ * @param[in] pdata Parameter data
+ * @param[in] flags Operator instance flags
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t get_num_value(ib_tx_t *tx,
+                                 const numop_params_t *pdata,
+                                 ib_flags_t flags,
+                                 ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    ib_num_t rc;
+    char *expanded;
+
+    /* Easy case: just return the number from the pdata structure */
+    if ( (flags & IB_OPINST_FLAG_EXPAND) == 0) {
+        *result = pdata->num;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Expand the string */
+    rc = ib_data_expand_str(tx->dpi, pdata->str, &expanded);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Convert string the expanded string to a number */
+    IB_FTRACE_RET_STATUS(string_to_num(expanded, IB_TRUE, result) );
 }
 
 /**
@@ -620,9 +674,10 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const ib_num_t *vptr = (const ib_num_t *)data;
-    ib_num_t        value;
-    ib_status_t     rc;
+    const numop_params_t *pdata = (const numop_params_t *)data;
+    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              value;
+    ib_status_t           rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(ib, field, &value);
@@ -630,8 +685,14 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Expand the data value? */
+    rc = get_num_value(tx, pdata, flags, &pvalue);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Do the comparison */
-    *result = (value == *vptr);
+    *result = (value == pvalue);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -656,9 +717,10 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const ib_num_t *vptr = (const ib_num_t *)data;
-    ib_num_t        value;
-    ib_status_t     rc;
+    const numop_params_t *pdata = (const numop_params_t *)data;
+    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              value;
+    ib_status_t           rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(ib, field, &value);
@@ -666,8 +728,14 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Expand the data value? */
+    rc = get_num_value(tx, pdata, flags, &pvalue);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Do the comparison */
-    *result = (value != *vptr);
+    *result = (value != pvalue);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -692,9 +760,10 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const ib_num_t *vptr = (const ib_num_t *)data;
-    ib_num_t        value;
-    ib_status_t     rc;
+    const numop_params_t *pdata = (const numop_params_t *)data;
+    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              value;
+    ib_status_t           rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(ib, field, &value);
@@ -702,8 +771,14 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Expand the data value? */
+    rc = get_num_value(tx, pdata, flags, &pvalue);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Do the comparison */
-    *result = (value > *vptr);
+    *result = (value > pvalue);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -728,9 +803,10 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const ib_num_t *vptr = (const ib_num_t *)data;
-    ib_num_t        value;
-    ib_status_t     rc;
+    const numop_params_t *pdata = (const numop_params_t *)data;
+    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              value;
+    ib_status_t           rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(ib, field, &value);
@@ -738,8 +814,14 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Expand the data value? */
+    rc = get_num_value(tx, pdata, flags, &pvalue);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Do the comparison */
-    *result = (value < *vptr);
+    *result = (value < pvalue);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -764,9 +846,10 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const ib_num_t *vptr = (const ib_num_t *)data;
-    ib_num_t        value;
-    ib_status_t     rc;
+    const numop_params_t *pdata = (const numop_params_t *)data;
+    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              value;
+    ib_status_t           rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(ib, field, &value);
@@ -774,8 +857,14 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Expand the data value? */
+    rc = get_num_value(tx, pdata, flags, &pvalue);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Do the comparison */
-    *result = (value >= *vptr);
+    *result = (value >= pvalue);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -800,9 +889,10 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const ib_num_t *vptr = (const ib_num_t *)data;
-    ib_num_t        value;
-    ib_status_t     rc;
+    const numop_params_t *pdata = (const numop_params_t *)data;
+    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              value;
+    ib_status_t           rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(ib, field, &value);
@@ -810,8 +900,14 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Expand the data value? */
+    rc = get_num_value(tx, pdata, flags, &pvalue);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Do the comparison */
-    *result = (value <= *vptr);
+    *result = (value <= pvalue);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
