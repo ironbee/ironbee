@@ -35,6 +35,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/operator.h>
 #include <ironbee/field.h>
+#include <ironbee/string.h>
 
 #include "ironbee_private.h"
 #include "ironbee_core_private.h"
@@ -42,6 +43,12 @@
 
 /* Size of buffer used to convert a bytestr to an int */
 #define MAX_FIELD_NUM_BUF    128
+
+/* Numeric operator params */
+typedef struct {
+    const char *str;
+    ib_num_t    num;
+} numop_params_t;
 
 /**
  * Create function for the "str" family of operators
@@ -63,7 +70,7 @@ static ib_status_t strop_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_num_t expand;
+    ib_bool_t expand;
     char *str;
 
     if (parameters == NULL) {
@@ -504,6 +511,8 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_num_t *vptr;
+    ib_status_t rc;
+    ib_bool_t expandable;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -513,6 +522,15 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     vptr = (ib_num_t *)ib_mpool_alloc(mp, sizeof(*vptr));
     if (vptr == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_data_expand_test_str(str, &expand);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (expand) {
+        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
+        
     }
 
     /* Convert the parameter string to an integer */

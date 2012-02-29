@@ -343,7 +343,7 @@ ib_status_t expand_str(ib_mpool_t *mp,
 ib_status_t expand_test_str(const char *str,
                             const char *prefix,
                             const char *postfix,
-                            ib_num_t *result)
+                            ib_bool_t *result)
 {
     IB_FTRACE_INIT();
     const char *pre;      /* Pointer to found prefix pattern */
@@ -356,7 +356,7 @@ ib_status_t expand_test_str(const char *str,
     assert(result != NULL);
 
     /* Initialize the result to no */
-    *result = 0;
+    *result = IB_FALSE;
 
     /* Look for the prefix pattern */
     pre = strstr(str, prefix);
@@ -371,6 +371,6 @@ ib_status_t expand_test_str(const char *str,
     }
 
     /* Yes, it looks expandable.  Done */
-    *result = 1;
+    *result = IB_TRUE;
     IB_FTRACE_RET_STATUS(IB_OK);
 }

@@ -447,15 +447,13 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
  * @a startpat + _name_ + @a endpat (i.e. "%{FOO}").
  *
  * @param[in] str String to check for expansion
- * @param[in] prefix Prefix string (i.e. "%{")
- * @param[in] postfix Postfix string (i.e. "}")
- * @param[out] result 1 if @a str would be expanded by @sa
+ * @param[out] result IB_TRUE if @a str would be expanded by @sa
  *             ib_data_expand_str().
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
-                                               ib_num_t *result)
+                                               ib_bool_t *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = expand_test_str(

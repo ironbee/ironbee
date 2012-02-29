@@ -233,8 +233,8 @@ public:
                     const char *text,
                     const char *start,
                     const char *end,
-                    ib_num_t expected,
-                    ib_num_t value)
+                    ib_bool_t expected,
+                    ib_bool_t value)
     {
         if (value == expected) {
             return true;
@@ -249,9 +249,9 @@ public:
                   const char *text,
                   const char *start,
                   const char *end,
-                  ib_num_t expected )
+                  ib_bool_t expected )
     {
-        ib_num_t result;
+        ib_bool_t result;
         ib_status_t rc;
         rc = ::expand_test_str(text, start, end, &result);
         ASSERT_EQ(IB_OK, rc);
@@ -281,20 +281,20 @@ TEST_F(TestIBUtilExpandStr, test_expand_errors)
 
 TEST_F(TestIBUtilExpandTestStr, test_expand_test_str)
 {
-    RunTest(__LINE__, "simple text",      "%{", "}",  0);
-    RunTest(__LINE__, "simple text",      "$(", ")",  0);
-    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  1);
-    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  0);
-    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  1);
-    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", 0);
-    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", 1);
-    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  0);
-    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  0);
-    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  1);
-    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  0);
-    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  0);
-    RunTest(__LINE__, "text:${Key1}",     "${", "}",  1);
-    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  1);
+    RunTest(__LINE__, "simple text",      "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "simple text",      "$(", ")",  IB_FALSE);
+    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  IB_TRUE);
+    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  IB_FALSE);
+    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  IB_TRUE);
+    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", IB_FALSE);
+    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", IB_TRUE);
+    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  IB_TRUE);
+    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  IB_FALSE);
+    RunTest(__LINE__, "text:${Key1}",     "${", "}",  IB_TRUE);
+    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  IB_TRUE);
 }
 
 TEST_F(TestIBUtilExpandStr, test_expand_basics)
