@@ -32,6 +32,7 @@
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/operators.hpp>
 
 #include <ostream>
 
@@ -67,7 +68,9 @@ class Context;
  * @sa module_bootstrap.hpp
  * @sa ib_module_t
  **/
-class Module
+class Module :
+    boost::less_than_comparable<Module>,
+    boost::equality_comparable<Module>
 {
 public:
     //! Construct singular module.
@@ -153,6 +156,17 @@ public:
      * @return true iff other.ib() == ib().
      **/
     bool operator==( const Module& other ) const;
+
+    /**
+     * Less than operator.
+     *
+     * Modules are totally ordered with all singular Modules as the minimal
+     * element.
+     *
+     * @param[in] other Module to compare to.
+     * @return true iff this and other are singular or  ib() < other.ib().
+     **/
+    bool operator<( const Module& other ) const;
 
 #ifdef IBPP_EXPOSE_C
     /**

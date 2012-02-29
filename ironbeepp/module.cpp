@@ -236,7 +236,16 @@ void Module::set_context_destroy( context_destroy_t f )
 
 bool Module::operator==( const Module& other ) const
 {
-    return m_data->ib_module == other.m_data->ib_module;
+    return ( ! *this && ! other ) || ( ib() == other.ib() );
+}
+
+bool Module::operator<( const Module& other ) const
+{
+    if ( ! *this ) {
+        return ! other;
+    } else {
+        return ib() < other.ib();
+    }
 }
 
 ib_module_t* Module::ib()

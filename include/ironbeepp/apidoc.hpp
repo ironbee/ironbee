@@ -52,6 +52,11 @@
  * With a few exceptions (notably module_bootstrap.hpp), all IronBee++ API is
  * defined in the IronBee namespace.
  *
+ * Most IronBee++ objects (those that directly correspond to IronBee objects)
+ * are default constructable, copyable, assignable, totally ordered (<, <=,
+ * >, >=), equality comparable (==, !=), and evaluatable as a predicate.
+ * For more details, see @ref pointer_semantics.
+ *
  * \section quick_start Quick Start
  *
  * IronBee++ is currently oriented at module writers.  Below is the complete
