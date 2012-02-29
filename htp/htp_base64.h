@@ -48,7 +48,7 @@ int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const in
     char* plaintext_out, const int length_out);
 
 bstr *htp_base64_decode_bstr(bstr *input);
-bstr *htp_base64_decode_mem(char *data, size_t len);
+bstr *htp_base64_decode_mem(const char *data, size_t len);
 
 #ifdef __cplusplus
 }

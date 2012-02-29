@@ -155,7 +155,7 @@ bstr *htp_base64_decode_bstr(bstr *input) {
  * @param len
  * @return new base64-decoded bstring
  */
-bstr *htp_base64_decode_mem(char *data, size_t len) {
+bstr *htp_base64_decode_mem(const char *data, size_t len) {
     htp_base64_decoder decoder;
     bstr *r = NULL;
 
