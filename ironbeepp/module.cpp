@@ -143,6 +143,11 @@ ib_status_t context_destroy(
 } // Hooks
 } // Anonymous
 
+Module::Module()
+{
+    // nop
+}
+
 Module::Module( const data_t& data ) :
     m_data( data )
 {
@@ -242,6 +247,11 @@ ib_module_t* Module::ib()
 const ib_module_t* Module::ib() const
 {
     return m_data->ib_module;
+}
+
+Module::operator unspecified_bool_type() const
+{
+    return m_data ? unspecified_bool : 0;
 }
 
 std::ostream& operator<<( std::ostream& o, const Module& module )

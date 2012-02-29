@@ -282,3 +282,16 @@ TEST_F( TestModule, callbacks )
     EXPECT_EQ( &ib_context, out_ib_context );
 }
 
+TEST_F( TestModule, boolness )
+{
+    IronBee::Module singular;
+
+    EXPECT_FALSE( singular );
+
+    ib_module_t ib_module;
+    ib_module.ib = m_ib_engine;
+    IronBee::Module nonsingular =
+        IronBee::Internal::Builder::module( &ib_module );
+
+    EXPECT_TRUE( nonsingular );
+}

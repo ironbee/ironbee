@@ -53,21 +53,26 @@ class Builder;
 class Context;
 
 /**
- * Module information; equivalent to ib_module_t.
+ * Module information; equivalent to a pointer to ib_module_t.
  *
  * An IronBee Module adds functionality to IronBee.  This class represents
- * the information each module provides to the engine.  It acts as a wrapper
- * and reference to an ib_module_t, a structure in the C API.  Two Module
- * classes are considered equal if they refer to the same ib_module_t.
+ * the information each module provides to the engine.
+ *
+ * This class behaves similiar to @c ib_module_t*.  In particular, it can
+ * be singular (equivalent to NULL).  See object semantics in @ref ironbeepp.
  *
  * If you are interested in writing a module in C++, see module_bootstrap.hpp.
  *
+ * @sa ironbeepp
  * @sa module_bootstrap.hpp
  * @sa ib_module_t
  **/
 class Module
 {
 public:
+    //! Construct singular module.
+    Module();
+
     //! Associated Engine.
     Engine        engine()         const;
 
@@ -125,6 +130,19 @@ public:
     void set_context_destroy( context_destroy_t f );
     //@}
 
+    /// @cond Internal
+    typedef void ( *unspecified_bool_type )( Module*** );
+    /// @endcond
+    /**
+     * Is not singular?
+     *
+     * This operator returns a type that converts to bool in appropriate
+     * circumstances and is true iff this object is not singular.
+     *
+     * @returns true iff is not singular.
+     **/
+    operator unspecified_bool_type() const;
+
     /**
      * Equality operator.  Do they refer to the same underlying module.
      *
@@ -159,6 +177,8 @@ private:
     Module( const data_t& data );
 
     data_t m_data;
+    // Used for unspecified_bool_type.
+    static void unspecified_bool( Module*** ) {};
 };
 
 /**

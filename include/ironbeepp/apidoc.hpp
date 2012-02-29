@@ -109,17 +109,28 @@
  * appropriate log messages and ib_status_t returns.  See exception.hpp for
  * details including how to control the log message and log level.
  *
- * \section reference_semantics Reference Semantics
+ * \section pointer_semantics Pointer Semantics
  *
  * There is generally a one-to-one relationship between the C API structures
  * and the C++ classes.  E.g., ib_module_t and IronBee::Module.  The C++
- * classes are, semantically, references to internal object.  As such, it is
+ * classes are, semantically, pointers to internal object.  As such, it is
  * better to think of the relationship as being between pointers and classes.
  * E.g., @c ib_module_t* and IronBee::Module.
  *
  * As the classes simply refer to an internal object, they can be cheaply
  * copied, constructed, and destructed.  It also enables pass-by-copy, greatly
  * simplifying lifetime concerns.
+ *
+ * It is also possible to construct singular (equivalent to NULL) objects that
+ * do not refer to any actual object.  This is useful, e.g., for enabling
+ * storage of IronBee++ objects in standard containers.  You can test if an
+ * object is singular by evaluating it in a boolean context, e.g.,
+ * @code
+ * if ( module ) { ... }
+ * @endcode
+ * All behavior of singular objects is undefined except for evaluating as
+ * bool, copying, comparison, and assignment.  Singular objects are equal
+ * to each other and less than all other objects.
  *
  * \section cpp_c C++/C Interoperability
  *
