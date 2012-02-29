@@ -295,3 +295,16 @@ TEST_F( TestModule, boolness )
 
     EXPECT_TRUE( nonsingular );
 }
+
+TEST_F( TestModule, expose_c )
+{
+    ib_module_t ib_module;
+    IronBee::Module m = IronBee::Module::create_from_ib( &ib_module );
+
+    ASSERT_TRUE( m );
+    EXPECT_EQ( &ib_module, m.ib() );
+
+    const IronBee::Module& cm = m;
+    ASSERT_TRUE( cm );
+    EXPECT_EQ( &ib_module, cm.ib() );
+}

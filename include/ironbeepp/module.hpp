@@ -162,10 +162,14 @@ public:
      * These methods are only available if IBPP_EXPOSE_C is defined.  This is
      * to avoid polluting the global namespace if they are not needed.
      **/
+    ///@{
     //! Non-const ib_module_t accessor.
     ib_module_t*       ib();
     //! Const ib_module_t accessor.
     const ib_module_t* ib() const;
+    //! Construct Module from ib_module_t.
+    static Module create_from_ib( ib_module_t* ib_module );
+    ///@}
 #endif
 
 private:

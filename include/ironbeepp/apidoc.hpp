@@ -143,11 +143,14 @@
  * need to, at times, make use of the C API.  To facilitate this, the IronBee
  * classes can provide the underlying C pointer.  This is done via an @c ib()
  * method.  E.g., IronBee::Module::ib() returns the @c ib_module_t*
- * pointing to the underlying ib_module_t.
+ * pointing to the underlying ib_module_t.  Symmetrically, an IronBee++
+ * object can be created from an IronBee object via create_from_ib(), e.g.,
+ * IronBee::Module::create_from_ib().
  *
- * The @c ib() methods are only available if IBPP_EXPOSE_C is defined when
- * the header file is included.  This preprocessor macro adds the appropriate
- * global symbols (e.g., ib_module_t) and the @c ib() method.
+ * The @c ib() and @c create_from_ib() methods are only available if
+ * IBPP_EXPOSE_C is defined when the header file is included.  This
+ * preprocessor macro adds the appropriate global symbols (e.g., ib_module_t)
+ * and methods.
  *
  * It is important to note that, even with IBPP_EXPOSE_C defined, the C
  * header files will not be included.  E.g., for IronBee::Module you will
