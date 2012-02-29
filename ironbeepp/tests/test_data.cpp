@@ -42,7 +42,7 @@ struct destruction_registerer
 
 typedef boost::shared_ptr<destruction_registerer> destruction_registerer_p;
 
-TEST( TestData, ironbeepp_exception )
+TEST( TestData, basic )
 {
     using namespace IronBee::Internal;
 
@@ -80,4 +80,26 @@ TEST( TestData, ironbeepp_exception )
     ib_mpool_destroy( mp );
 
     ASSERT_TRUE( flag );
+}
+
+TEST( TestData, NoPool )
+{
+    using namespace IronBee::Internal;
+
+    bool flag = false;
+    destruction_registerer_p it =
+        boost::make_shared<destruction_registerer>( &flag );
+
+    void* data;
+
+    data = value_to_data( it, NULL );
+    ASSERT_TRUE( data );
+
+    destruction_registerer_p other;
+
+    ASSERT_NO_THROW(
+        other = data_to_value<destruction_registerer_p>( data )
+    );
+
+    ASSERT_EQ( it, other );
 }
