@@ -31,7 +31,7 @@ test_module_SOURCES             = test_module.cpp fixture.cpp
 test_module_bootstrap_a_SOURCES = test_module_bootstrap_a.cpp fixture.cpp
 test_module_bootstrap_b_SOURCES = test_module_bootstrap_b.cpp fixture.cpp
 test_module_delegate_SOURCES    = test_module_delegate.cpp fixture.cpp
-test_throw_SOURCES              = test_throw
+test_throw_SOURCES              = test_throw.cpp
 
 check-local: $(check_PROGRAMS)
 	for cp in $(check_PROGRAMS); do \
