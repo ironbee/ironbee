@@ -91,6 +91,14 @@ ib_status_t DLL_PUBLIC ib_mpool_create_ex(ib_mpool_t **pmp,
 void DLL_PUBLIC ib_mpool_setname(ib_mpool_t *mp, const char *name);
 
 /**
+ * Get the name of a memory pool.
+ *
+ * @param mp Memory pool.
+ * @returns name
+ */
+const char DLL_PUBLIC *ib_mpool_name(const ib_mpool_t* mp);
+
+/**
  * Allocate memory from a memory pool.
  *
  * @param mp Memory pool

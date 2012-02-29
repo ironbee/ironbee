@@ -126,6 +126,14 @@ void ib_mpool_setname(ib_mpool_t *mp, const char *name)
     }
 }
 
+const char *ib_mpool_name(const ib_mpool_t* mp)
+{
+    if ( mp == NULL ) {
+        return NULL;
+    }
+    return mp->name;
+}
+
 void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
 {
     IB_FTRACE_INIT();
