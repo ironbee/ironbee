@@ -28,8 +28,6 @@
 #ifndef __IBPP__MODULE_DATA__
 #define __IBPP__MODULE_DATA__
 
-#include <ironbeepp/engine.hpp>
-
 struct ib_module_t;
 
 namespace IronBee {
