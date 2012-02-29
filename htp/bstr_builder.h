@@ -44,8 +44,8 @@ size_t bstr_builder_size(bstr_builder_t *bb);
 void bstr_builder_clear(bstr_builder_t *bb);
 
 int bstr_builder_append(bstr_builder_t *bb, bstr *b);
-int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len);
-int bstr_builder_append_c(bstr_builder_t *bb, char *str);
+int bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len);
+int bstr_builder_append_c(bstr_builder_t *bb, const char *str);
 bstr * bstr_builder_to_str(bstr_builder_t *bb);
 
 #ifdef __cplusplus

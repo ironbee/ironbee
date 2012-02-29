@@ -119,7 +119,7 @@ int bstr_builder_append(bstr_builder_t *bb, bstr *b) {
  * @param len
  * @return Success indication
  */
-int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len) {
+int bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len) {
     bstr *b = bstr_dup_mem(data, len);
     if (b == NULL) return -1;
     return list_push(bb->pieces, b);
@@ -133,7 +133,7 @@ int bstr_builder_append_mem(bstr_builder_t *bb, char *data, size_t len) {
  * @param cstr
  * @return Success indication
  */
-int bstr_builder_append_c(bstr_builder_t *bb, char *cstr) {
+int bstr_builder_append_c(bstr_builder_t *bb, const char *cstr) {
     bstr *b = bstr_dup_c(cstr);
     if (b == NULL) return -1;
     return list_push(bb->pieces, b);
