@@ -358,8 +358,8 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
             // There is no host information in the URI. Place the
             // hostname from the headers into the parsed_uri structure.
             htp_replace_hostname(connp, connp->in_tx->parsed_uri, h->value);
-        } else {
-            // The host information is present both in the
+        } else if (bstr_cmp_nocase(h->value, connp->in_tx->parsed_uri->hostname) != 0) {
+            // The host information is different in the
             // headers and the URI. The HTTP RFC states that
             // we should ignore the headers copy.
             connp->in_tx->flags |= HTP_AMBIGUOUS_HOST;
