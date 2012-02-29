@@ -52,7 +52,7 @@ TEST(Base64, Single) {
 }
 
 TEST(Base64, Decode) {
-    char *input ="dGhpcyBpcyBhIHRlc3QuLg==";
+    const char *input ="dGhpcyBpcyBhIHRlc3QuLg==";
     bstr *out = htp_base64_decode_mem(input, strlen(input));
     EXPECT_EQ(0, bstr_cmp_c(out, "this is a test.."));
     bstr_free(&out);
