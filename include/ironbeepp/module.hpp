@@ -46,7 +46,6 @@ namespace Internal {
 /// @cond Internal
 
 struct ModuleData;
-class Builder;
 
 /// @endcond
 };
@@ -182,17 +181,13 @@ public:
     //! Const ib_module_t accessor.
     const ib_module_t* ib() const;
     //! Construct Module from ib_module_t.
-    static Module from_ib( ib_module_t* ib_module );
+    explicit
+    Module( ib_module_t* ib_module );
     ///@}
 #endif
 
 private:
-    friend class Internal::Builder;
-
     typedef boost::shared_ptr<Internal::ModuleData> data_t;
-
-    explicit
-    Module( const data_t& data );
 
     data_t m_data;
     // Used for unspecified_bool_type.

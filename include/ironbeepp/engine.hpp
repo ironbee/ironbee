@@ -46,7 +46,6 @@ namespace Internal {
 /// @cond Internal
 
 struct EngineData;
-class Builder;
 
 /// @endcond
 };
@@ -57,15 +56,14 @@ public:
 
 #ifdef IBPP_EXPOSE_C
     ib_engine_t* ib();
+    const ib_engine_t* ib() const;
+
+    explicit
+    Engine( ib_engine_t* ib_engine );
 #endif
 
 private:
-    friend class Internal::Builder;
-
     typedef boost::shared_ptr<Internal::EngineData> data_t;
-
-    explicit
-    Engine( const data_t& data );
 
     data_t m_data;
 };

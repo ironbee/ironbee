@@ -104,11 +104,12 @@
 #ifndef __IBPP__MODULE_BOOTSTRAP__
 #define __IBPP__MODULE_BOOTSTRAP__
 
+// Needed at C++/C boundary.
+#define IBPP_EXPOSE_C
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/builder.hpp>
 
 #include <ironbee/module.h>
 
@@ -318,7 +319,7 @@ ib_module_t* IB_MODULE_SYM( ib_engine_t* ib ) \
             name, \
             __FILE__ \
         ); \
-        on_load( ::IronBee::Internal::Builder::module( &ib_module ) ); \
+        on_load( ::IronBee::Module( &ib_module ) ); \
     } ); \
     assert( rc == IB_OK ); \
     return &ib_module; \

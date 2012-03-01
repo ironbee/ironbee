@@ -26,7 +26,6 @@
 #define IBPP_EXPOSE_C
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
-#include <ironbeepp/internal/builder.hpp>
 #include "fixture.hpp"
 
 #include "gtest/gtest.h"
@@ -91,7 +90,7 @@ TEST_F( TestModule, basic )
 {
     ib_module_t ib_module;
     ib_module.ib = m_ib_engine;
-    IronBee::Module module = IronBee::Internal::Builder::module( &ib_module );
+    IronBee::Module module( &ib_module );
 
     ASSERT_EQ( &ib_module, module.ib() );
     ASSERT_EQ( m_ib_engine, module.engine().ib() );
@@ -114,8 +113,8 @@ TEST_F( TestModule, basic )
 TEST_F( TestModule, equality )
 {
     ib_module_t ib_module;
-    IronBee::Module a = IronBee::Internal::Builder::module( &ib_module );
-    IronBee::Module b = IronBee::Internal::Builder::module( &ib_module );
+    IronBee::Module a( &ib_module );
+    IronBee::Module b( &ib_module );
 
     ASSERT_EQ( a, b );
 }
@@ -124,7 +123,7 @@ TEST_F( TestModule, callbacks )
 {
     ib_module_t ib_module;
     ib_module.ib = m_ib_engine;
-    IronBee::Module module = IronBee::Internal::Builder::module( &ib_module );
+    IronBee::Module module( &ib_module );
 
     ib_module_t*  out_ib_module;
     ib_context_t* out_ib_context;
@@ -290,8 +289,7 @@ TEST_F( TestModule, boolness )
 
     ib_module_t ib_module;
     ib_module.ib = m_ib_engine;
-    IronBee::Module nonsingular =
-        IronBee::Internal::Builder::module( &ib_module );
+    IronBee::Module nonsingular( &ib_module );
 
     EXPECT_TRUE( nonsingular );
 }
@@ -299,7 +297,7 @@ TEST_F( TestModule, boolness )
 TEST_F( TestModule, expose_c )
 {
     ib_module_t ib_module;
-    IronBee::Module m = IronBee::Module::from_ib( &ib_module );
+    IronBee::Module m( &ib_module );
 
     ASSERT_TRUE( m );
     EXPECT_EQ( &ib_module, m.ib() );

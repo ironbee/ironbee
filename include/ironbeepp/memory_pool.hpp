@@ -52,7 +52,6 @@ namespace Internal {
 /// @cond Internal
 
 struct MemoryPoolData;
-class Builder;
 
 /// @endcond
 };
@@ -303,17 +302,13 @@ public:
     //! Const ib_mpool_t accessor.
     const ib_mpool_t* ib() const;
     //! Construct MemoryPools from ib_mpool_t.
-    static MemoryPool from_ib( ib_mpool_t* ib_mpool );
+    explicit
+    MemoryPool( ib_mpool_t* ib_mpool );
     ///@}
 #endif
 
 private:
-    friend class Internal::Builder;
-
     typedef boost::shared_ptr<Internal::MemoryPoolData> data_t;
-
-    explicit
-    MemoryPool( const data_t& data );
 
     data_t m_data;
     // Used for unspecified_bool_type.

@@ -133,8 +133,7 @@ TEST_F( TestMemoryPool, boolness )
     EXPECT_FALSE( singular );
 
     ib_mpool_t* ib_memory_pool = reinterpret_cast<ib_mpool_t*>(1);
-    IronBee::MemoryPool nonsingular =
-        IronBee::MemoryPool::from_ib( ib_memory_pool );
+    IronBee::MemoryPool nonsingular( ib_memory_pool );
 
     EXPECT_TRUE( nonsingular );
 }
@@ -142,7 +141,7 @@ TEST_F( TestMemoryPool, boolness )
 TEST_F( TestMemoryPool, expose_c )
 {
     ib_mpool_t* ib_memory_pool = reinterpret_cast<ib_mpool_t*>(1);
-    IronBee::MemoryPool m = IronBee::MemoryPool::from_ib( ib_memory_pool );
+    IronBee::MemoryPool m( ib_memory_pool );
 
     ASSERT_TRUE( m );
     EXPECT_EQ( ib_memory_pool, m.ib() );

@@ -25,19 +25,34 @@
 
 #define IBPP_EXPOSE_C
 #include <ironbeepp/engine.hpp>
-#include "engine_data.hpp"
 
 #include <ironbee/engine.h>
 
+#include <boost/make_shared.hpp>
+
 namespace IronBee {
 
-Engine::Engine( const Engine::data_t& data ) :
-    m_data( data )
+namespace Internal {
+
+struct EngineData
 {
-    // nop
+    ib_engine_t* ib_engine;
+};
+
+} // Internal
+
+Engine::Engine( ib_engine_t* ib_engine ) :
+    m_data( boost::make_shared<Internal::EngineData>() )
+{
+    m_data->ib_engine = ib_engine;
 }
 
 ib_engine_t* Engine::ib()
+{
+    return m_data->ib_engine;
+}
+
+const ib_engine_t* Engine::ib() const
 {
     return m_data->ib_engine;
 }

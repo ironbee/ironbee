@@ -39,7 +39,6 @@ namespace Internal {
 /// @cond Internal
 
 struct ContextData;
-class Builder;
 
 /// @endcond
 };
@@ -50,15 +49,14 @@ public:
 
 #ifdef IBPP_EXPOSE_C
     ib_context_t* ib();
+    const ib_context_t* ib() const;
+
+    explicit
+    Context( ib_context_t* ib_context );
 #endif
 
 private:
-    friend class Internal::Builder;
-
     typedef boost::shared_ptr<Internal::ContextData> data_t;
-
-    explicit
-    Context( const data_t& data );
 
     data_t m_data;
 };

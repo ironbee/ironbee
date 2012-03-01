@@ -28,16 +28,25 @@
 #define IBPP_EXPOSE_C
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/builder.hpp>
-#include "memory_pool_data.hpp"
 #include "data.hpp"
 #include "throw.hpp"
 
 #include <ironbee/mpool.h>
 
+#include <boost/make_shared.hpp>
+
 #include <cassert>
 
 namespace IronBee {
+
+namespace Internal {
+
+struct MemoryPoolData
+{
+    ib_mpool_t* ib_mpool;
+};
+
+} // Internal
 
 namespace Hooks {
 namespace {
@@ -83,19 +92,13 @@ MemoryPool create_memory_pool(
     Internal::throw_if_error( rc );
     assert( ib_mpool != NULL );
 
-    return Internal::Builder::memory_pool( ib_mpool );
+    return MemoryPool( ib_mpool );
 }
 
 }
 } // Internal
 
 MemoryPool::MemoryPool()
-{
-    // nop
-}
-
-MemoryPool::MemoryPool( const data_t& data ) :
-    m_data( data )
 {
     // nop
 }
@@ -229,9 +232,10 @@ const ib_mpool_t* MemoryPool::ib() const
     return m_data->ib_mpool;
 }
 
-MemoryPool MemoryPool::from_ib( ib_mpool_t* ib_mpool )
+MemoryPool::MemoryPool( ib_mpool_t* ib_mpool ) :
+    m_data( boost::make_shared<Internal::MemoryPoolData>() )
 {
-    return Internal::Builder::memory_pool( ib_mpool );
+    m_data->ib_mpool = ib_mpool;
 }
 
 MemoryPool::operator unspecified_bool_type() const

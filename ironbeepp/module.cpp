@@ -30,16 +30,25 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/builder.hpp>
-#include "module_data.hpp"
 #include "data.hpp"
 
 #include <ironbee/module.h>
 #include <ironbee/engine.h>
 
+#include <boost/make_shared.hpp>
+
 #include <cassert>
 
 namespace IronBee {
+
+namespace Internal {
+
+struct ModuleData
+{
+    ib_module_t* ib_module;
+};
+
+} // Internal
 
 namespace {
 namespace Hooks {
@@ -58,7 +67,7 @@ ib_status_t initialize(
 
     IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
         Internal::data_to_value<Module::initialize_t>( cbdata )(
-          Internal::Builder::module( ib_module )
+            Module( ib_module )
         )
     ) );
 }
@@ -76,7 +85,7 @@ ib_status_t finalize(
 
     IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
         Internal::data_to_value<Module::finalize_t>( cbdata )(
-            Internal::Builder::module( ib_module )
+            Module( ib_module )
         )
     ) );
 }
@@ -94,8 +103,8 @@ ib_status_t context_open(
 
     IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
         Internal::data_to_value<Module::context_open_t>( cbdata )(
-            Internal::Builder::module(  ib_module  ),
-            Internal::Builder::context( ib_context )
+            Module(  ib_module  ),
+            Context( ib_context )
         )
     ) );
 }
@@ -113,8 +122,8 @@ ib_status_t context_close(
 
     IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
         Internal::data_to_value<Module::context_close_t>( cbdata )(
-            Internal::Builder::module(  ib_module  ),
-            Internal::Builder::context( ib_context )
+            Module(  ib_module  ),
+            Context( ib_context )
         )
     ) );
 }
@@ -132,8 +141,8 @@ ib_status_t context_destroy(
 
     IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
         Internal::data_to_value<Module::context_destroy_t>( cbdata )(
-            Internal::Builder::module(  ib_module  ),
-            Internal::Builder::context( ib_context )
+            Module(  ib_module  ),
+            Context( ib_context )
         )
     ) );
 }
@@ -148,15 +157,9 @@ Module::Module()
     // nop
 }
 
-Module::Module( const data_t& data ) :
-    m_data( data )
-{
-    // nop
-}
-
 Engine Module::engine() const
 {
-    return Internal::Builder::engine( m_data->ib_module->ib );
+    return Engine( m_data->ib_module->ib );
 }
 
 uint32_t Module::version_number() const
@@ -258,9 +261,10 @@ const ib_module_t* Module::ib() const
     return m_data->ib_module;
 }
 
-Module Module::from_ib( ib_module_t* ib_module )
+Module::Module( ib_module_t* ib_module ) :
+    m_data( boost::make_shared<Internal::ModuleData>() )
 {
-    return Internal::Builder::module( ib_module );
+    m_data->ib_module = ib_module;
 }
 
 Module::operator unspecified_bool_type() const
