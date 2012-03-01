@@ -70,6 +70,8 @@ static ib_status_t act_log_create(ib_engine_t *ib,
                                   ib_action_inst_t *inst)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_bool_t expand;
     char *str;
 
     if (parameters == NULL) {
@@ -79,6 +81,15 @@ static ib_status_t act_log_create(ib_engine_t *ib,
     str = ib_mpool_strdup(mp, parameters);
     if (str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Do we need expansion? */
+    rc = ib_data_expand_test_str(str, &expand);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (expand == IB_TRUE) {
+        inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
     inst->data = str;
@@ -104,8 +115,23 @@ static ib_status_t act_log_execute(void *data,
 
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
+    char *expanded = NULL;
+    ib_status_t rc;
 
-    ib_log_debug(tx->ib, 9, "LOG: %s", cstr);
+    /* Expand the string */
+    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
+        rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4,
+                         "log_execute: Failed to expand string '%s': %d",
+                         cstr, rc);
+        }
+    }
+    else {
+        expanded = (char *)cstr;
+    }
+
+    ib_log_debug(tx->ib, 9, "LOG: %s", expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
