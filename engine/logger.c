@@ -293,6 +293,16 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
     va_end(ap);
 }
 
+int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT();
+    ib_core_cfg_t *corecfg = NULL;
+    ib_context_module_config(ib_context_main(ib),
+                             ib_core_module(),
+                             (void *)&corecfg);
+    IB_FTRACE_RET_INT(corecfg->log_level);
+}
+
 void ib_clog_ex(ib_context_t *ctx, int level,
                 const char *prefix, const char *file, int line,
                 const char *fmt, ...)

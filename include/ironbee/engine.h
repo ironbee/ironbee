@@ -1949,6 +1949,17 @@ void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
                             VPRINTF_ATTRIBUTE(6);
 
 /**
+ * Return the configured logging level.
+ *
+ * This is used to determine if optional complex processing should be
+ * performed to log possibly option information.
+ *
+ * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
+ * @return The log level configured.
+ */
+int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib);
+
+/**
  * Add an event to be logged.
  *
  * @param pi Provider instance
