@@ -74,7 +74,9 @@ struct modpcre_cfg_t {
  */
 struct modpcre_cpatt_t {
     pcre          *cpatt;                 /**< Compiled pattern */
+    size_t        cpatt_sz;               /**< Size of cpatt. */
     pcre_extra    *edata;                 /**< PCRE Study data */
+    size_t        edata_sz;               /**< Size of edata. */
     const char    *patt;                  /**< Regex pattern text */
 };
 
@@ -84,6 +86,17 @@ static modpcre_cfg_t modpcre_global_cfg;
 
 /* -- Matcher Interface -- */
 
+/**
+ * @param[in] mpr Provider object. This is unused.
+ * @param[in] pool The memory pool to allocate memory out of.
+ * @param[out] pcpatt When the pattern is successfully compiled
+ *             a modpcre_cpatt_t* is stored in *pcpatt.
+ * @param[in] patt The uncompiled pattern to match.
+ * @param[out] errptr Pointer to an error message describing the failure.
+ * @param[out] errorffset The location of the failure, if this fails.
+ * @returns IronBee status. IB_EINVAL if the pattern is invalid,
+ *          IB_EALLOC if memory allocation fails or IB_OK.
+ */
 static ib_status_t modpcre_compile(ib_provider_t *mpr,
                                    ib_mpool_t *pool,
                                    void *pcpatt,
@@ -92,8 +105,10 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
                                    int *erroffset)
 {
     IB_FTRACE_INIT();
-    pcre *cpatt;
+    pcre *cpatt = NULL;
+    pcre_extra *edata = NULL;
     modpcre_cpatt_t *pcre_cpatt;
+
 #ifdef PCRE_HAVE_JIT
     int pcre_fullinfo_ret;
     int pcre_jit_ret;
@@ -103,26 +118,21 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
                          errptr, erroffset, NULL);
 
     if (cpatt == NULL) {
-        *(void **)pcpatt = NULL;
         ib_util_log_error(4, "PCRE compile error for \"%s\": %s at offset %d",
             patt, *errptr, *erroffset);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    pcre_cpatt = (modpcre_cpatt_t *)ib_mpool_alloc(mpr->mp,
-                                                   sizeof(*pcre_cpatt));
+    pcre_cpatt = (modpcre_cpatt_t *)ib_mpool_alloc(pool, sizeof(*pcre_cpatt));
     if (pcre_cpatt == NULL) {
-        *(void **)pcpatt = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    pcre_cpatt->patt = patt; /// @todo Copy
-    pcre_cpatt->cpatt = cpatt;
 
 #ifdef PCRE_HAVE_JIT
-    pcre_cpatt->edata =
-        pcre_study(pcre_cpatt->cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
+    edata = pcre_study(cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
     if(*errptr != NULL)  {
+        pcre_free(cpatt);
         ib_util_log_error(4,"PCRE-JIT study failed : %s", *errptr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -130,7 +140,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
     /* The check to see if JIT compilation was a success changed in 8.20RC1
        now uses pcre_fullinfo see doc/pcrejit.3 */
     pcre_fullinfo_ret = pcre_fullinfo(
-        pcre_cpatt->cpatt, pcre_cpatt->edata, PCRE_INFO_JIT, &pcre_jit_ret);
+        cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
     if (pcre_fullinfo_ret != 0) {
         ib_util_log_error(4,"PCRE-JIT failed to get pcre_fullinfo");
     }
@@ -138,18 +148,53 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
         ib_util_log_error(4,
             "PCRE-JIT compiler does not support: %s. "
             "It will fallback to the normal PCRE",
-            pcre_cpatt->patt);
+            patt);
     }
 #else
-    pcre_cpatt->edata = pcre_study(pcre_cpatt->cpatt, 0, errptr);
+    edata = pcre_study(cpatt, 0, errptr);
     if(*errptr != NULL)  {
+        pcre_free(cpatt);
         ib_util_log_error(4,"PCRE study failed : %s", *errptr);
     }
 #endif /*PCRE_HAVE_JIT*/
 
+
+    /* Compute the size of the populated values of cpatt. */
+    pcre_fullinfo(cpatt, edata, PCRE_INFO_SIZE, &pcre_cpatt->cpatt_sz);
+
+    /* Copy pattern. */
+    pcre_cpatt->patt  = ib_mpool_strdup(pool, patt);
+    if (pcre_cpatt->patt == NULL) {
+        pcre_free(cpatt);
+        pcre_free(edata);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Copy compiled pattern. */
+    pcre_cpatt->cpatt = ib_mpool_memdup(pool, cpatt, pcre_cpatt->cpatt_sz);
+    pcre_free(cpatt);
+    if (pcre_cpatt->cpatt == NULL) {
+        pcre_free(edata);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Copy extra data (study data). */
+    if (edata!=NULL) {
+
+        /* Compute the size of the populated values of edata. */
+        pcre_fullinfo(cpatt, edata, PCRE_INFO_STUDYSIZE, &pcre_cpatt->edata_sz);
+        pcre_cpatt->edata = ib_mpool_memdup(pool, edata, pcre_cpatt->edata_sz);
+        pcre_free(edata);
+        if (pcre_cpatt->edata == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+    }
+
+    /* Return the allocated structure. */
     *(void **)pcpatt = (void *)pcre_cpatt;
 
     IB_FTRACE_RET_STATUS(IB_OK);
+
 }
 
 static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
