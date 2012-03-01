@@ -97,7 +97,8 @@ static ib_status_t act_log_create(ib_engine_t *ib,
  */
 static ib_status_t act_log_execute(void *data,
                                    ib_rule_t *rule,
-                                   ib_tx_t *tx)
+                                   ib_tx_t *tx,
+                                   ib_flags_t flags)
 {
     IB_FTRACE_INIT();
 
@@ -149,12 +150,14 @@ static ib_status_t act_setflags_create(ib_engine_t *ib,
  * @param[in] data Name of the flag to set
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
+ * @param[in] flags Action instance flags
  *
  * @returns Status code
  */
 static ib_status_t act_setflag_execute(void *data,
                                        ib_rule_t *rule,
-                                       ib_tx_t *tx)
+                                       ib_tx_t *tx,
+                                       ib_flags_t flags)
 {
     IB_FTRACE_INIT();
 
@@ -182,12 +185,14 @@ static ib_status_t act_setflag_execute(void *data,
  * @param[in] data Instance data needed for execution.
  * @param[in] rule The rule executing this action.
  * @param[in] tx The transaction for this action.
+ * @param[in] flags Action instance flags
  *
  * @returns IB_OK if successful.
  */
 static ib_status_t act_event_execute(void *data,
                                      ib_rule_t *rule,
-                                     ib_tx_t *tx)
+                                     ib_tx_t *tx,
+                                     ib_flags_t flags)
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
@@ -310,6 +315,15 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
         data->value.num = (ib_num_t) strtol(value, NULL, 0);
     }
     else {
+        ib_bool_t expand = IB_FALSE;
+        ib_status_t rc;
+        rc = ib_data_expand_test_str(value, &expand);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else if (expand == IB_TRUE) {
+            inst->flags |= IB_ACTINST_FLAG_EXPAND;
+        }
         data->value.str = ib_mpool_strdup(mp, value);
         if (data->value.str == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -335,12 +349,14 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
  * @param[in] data Name of the flag to set
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
+ * @param[in] flags Action instance flags
  *
  * @returns Status code
  */
 static ib_status_t act_setvar_execute(void *data,
                                       ib_rule_t *rule,
-                                      ib_tx_t *tx)
+                                      ib_tx_t *tx,
+                                      ib_flags_t flags)
 {
     IB_FTRACE_INIT();
     ib_field_t *cur = NULL;
@@ -355,7 +371,9 @@ static ib_status_t act_setvar_execute(void *data,
     ib_data_get(tx->dpi, svdata->name, &cur);
 
     /* Expand the string */
-    if (svdata->type == IB_FTYPE_NULSTR) {
+    if ( (svdata->type == IB_FTYPE_NULSTR) &&
+         ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) )
+    {
         rc = ib_data_expand_str(tx->dpi, svdata->value.str, &expanded);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,

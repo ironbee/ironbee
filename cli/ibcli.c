@@ -1090,6 +1090,8 @@ static ib_status_t action_print_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     char *str;
+    ib_status_t rc;
+    ib_bool_t expand;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1098,6 +1100,15 @@ static ib_status_t action_print_create(ib_engine_t *ib,
     str = ib_mpool_strdup(mp, parameters);
     if (str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Do we need expansion? */
+    rc = ib_data_expand_test_str(str, &expand);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (expand == IB_TRUE) {
+        inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
     inst->data = str;
@@ -1111,19 +1122,102 @@ static ib_status_t action_print_create(ib_engine_t *ib,
  * @param[in] data C-style string to log
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
+ * @param[in] flags Action instance flags
  *
  * @returns Status code
  */
 static ib_status_t action_print_execute(void *data,
                                         ib_rule_t *rule,
-                                        ib_tx_t *tx)
+                                        ib_tx_t *tx,
+                                        ib_flags_t flags)
 {
     IB_FTRACE_INIT();
-
-    /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
+    char *expanded = NULL;
+    ib_status_t rc;
 
-    printf( "Rule %s => %s\n", ib_rule_id(rule), cstr);
+    /* Expand the string */
+    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
+        rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4,
+                         "print: Failed to expand string '%s': %d",
+                         cstr, rc);
+        }
+    }
+    else {
+        expanded = (char *)cstr;
+    }
+
+    printf( "Rule %s => %s\n", ib_rule_id(rule), expanded);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Create function for the 'printvar' action.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx Current IronBee context
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ *
+ * @returns Status code
+ */
+static ib_status_t action_printvar_create(ib_engine_t *ib,
+                                          ib_context_t *ctx,
+                                          ib_mpool_t *mp,
+                                          const char *parameters,
+                                          ib_action_inst_t *inst)
+{
+    IB_FTRACE_INIT();
+    char *varname;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    varname = ib_mpool_strdup(mp, parameters);
+    if (varname == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    inst->data = varname;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * @internal
+ * Execute function for the "print" action
+ *
+ * @param[in] data C-style string to log
+ * @param[in] rule The matched rule
+ * @param[in] tx IronBee transaction
+ * @param[in] flags Action instance flags
+ *
+ * @returns Status code
+ */
+static ib_status_t action_printvar_execute(void *data,
+                                           ib_rule_t *rule,
+                                           ib_tx_t *tx,
+                                           ib_flags_t flags)
+{
+    IB_FTRACE_INIT();
+    const char *varname = (const char *)data;
+    ib_field_t *field;
+    ib_status_t rc;
+    static char buf[128];
+
+    /* Lookup the variable in the DPI */
+    rc = ib_data_get(tx->dpi, varname, &field);
+    if (rc != IB_OK) {
+        ib_log_error(tx->ib, 4,
+                     "setvar: Failed to lookup '%s': %d", varname, rc);
+    }
+
+    snprintf(buf, sizeof(buf), "Var %s", varname);
+    print_field( buf, field);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1208,6 +1302,18 @@ static ib_status_t register_handlers(ib_engine_t* ib)
                             action_print_execute);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register print action: %d\n", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the print action */
+    rc = ib_action_register(ib,
+                            "printvar",
+                            IB_ACT_FLAG_NONE,
+                            action_printvar_create,
+                            NULL, /* no destroy function */
+                            action_printvar_execute);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to register printvar action: %d\n", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 

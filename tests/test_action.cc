@@ -87,3 +87,57 @@ TEST_F(ActionTest, CallAction) {
     status = ib_action_execute(act, NULL, NULL);
     ASSERT_EQ(IB_OK, status);
 }
+
+static bool action_executed = false;
+static ib_flags_t action_flags = IB_ACTINST_FLAG_NONE;
+static const char *action_str = NULL;
+
+static ib_status_t create_fn(ib_engine_t *ib,
+                             ib_context_t *ctx,
+                             ib_mpool_t *mp,
+                             const char *params,
+                             ib_action_inst_t *inst)
+{
+    inst->data = ib_mpool_strdup(mp, params);
+    return IB_OK;
+}
+
+static ib_status_t execute_fn(void *data,
+                              ib_rule_t *rule,
+                              ib_tx_t *tx,
+                              ib_flags_t flags)
+{
+    action_executed = true;
+    action_str = (const char *)data;
+    action_flags = flags;
+    return IB_OK;
+}
+
+TEST_F(ActionTest, ExecuteAction) {
+    ib_status_t status;
+    ib_action_inst_t *act;
+    const char *params = "parameters";
+    ib_flags_t flags = (1 << 10);
+    status = ib_action_register(ib_engine,
+                                "test_action",
+                                IB_ACT_FLAG_NONE,
+                                create_fn,
+                                NULL,
+                                execute_fn);
+    ASSERT_EQ(IB_OK, status);
+
+    status = ib_action_inst_create(ib_engine,
+                                   NULL,
+                                   "test_action",
+                                   params,
+                                   flags,
+                                   &act);
+    ASSERT_EQ(IB_OK, status);
+
+    action_executed = false;
+    status = ib_action_execute(act, NULL, NULL);
+    ASSERT_EQ(IB_OK, status);
+    ASSERT_TRUE(action_executed);
+    EXPECT_STREQ(action_str, params);
+    EXPECT_EQ(action_flags, flags);
+}

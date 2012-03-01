@@ -78,12 +78,14 @@ typedef ib_status_t (* ib_action_destroy_fn_t)(ib_action_inst_t *act_inst);
  * @param[in] data Instance data needed for execution.
  * @param[in] rule The rule executing this action.
  * @param[in] tx The transaction for this action.
+ * @param[in] flags The action instance flags
  *
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_action_execute_fn_t)(void *data,
                                                ib_rule_t *rule,
-                                               ib_tx_t *tx);
+                                               ib_tx_t *tx,
+                                               ib_flags_t flags);
 
 /** Action Structure */
 typedef struct ib_action_t ib_action_t;
@@ -107,6 +109,7 @@ struct ib_action_inst_t {
 
 /** Action instance flags */
 #define IB_ACTINST_FLAG_NONE     (0x0)      /**< No flags */
+#define IB_ACTINST_FLAG_EXPAND   (1 << 0)   /**< Expand data at runtime */
 
 /**
  * Register an action.

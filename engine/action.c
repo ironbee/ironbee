@@ -132,7 +132,10 @@ ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
 
     if (act_inst != NULL && act_inst->action != NULL
         && act_inst->action->fn_execute != NULL) {
-        rc = act_inst->action->fn_execute(act_inst->data, rule, tx);
+        rc = act_inst->action->fn_execute(act_inst->data,
+                                          rule,
+                                          tx,
+                                          act_inst->flags);
     } else {
         rc = IB_OK;
     }
