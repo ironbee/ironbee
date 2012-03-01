@@ -401,6 +401,24 @@ ib_status_t ib_bytestr_append_nulstr(
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_num_t ib_bytestr_read_only( const ib_bytestr_t *bs )
+{
+    IB_FTRACE_INIT();
+
+    assert(bs != NULL);
+
+    IB_FTRACE_RET_INT(IB_BYTESTR_CHECK_FREADONLY(bs->flags));
+}
+
+void ib_bytestr_make_read_only( ib_bytestr_t *bs )
+{
+    IB_FTRACE_INIT();
+
+    bs->flags |= IB_BYTESTR_FREADONLY;
+
+    IB_FTRACE_RET_VOID();
+}
+
 int ib_bytestr_index_of_c(
     const ib_bytestr_t *haystack,
     const char   *needle

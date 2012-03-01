@@ -268,7 +268,7 @@ size_t DLL_PUBLIC ib_bytestr_size(const ib_bytestr_t *bs);
  *
  * @returns Memory pool associated with @a bs.
  */
-ib_mpool_t* DLL_PUBLIC ib_bytestr_mpool(const ib_bytestr_t *bs);
+ib_mpool_t DLL_PUBLIC *ib_bytestr_mpool(const ib_bytestr_t *bs);
 
 /**
  * Raw buffer containing data in a byte string.
@@ -278,6 +278,24 @@ ib_mpool_t* DLL_PUBLIC ib_bytestr_mpool(const ib_bytestr_t *bs);
  * @returns Address of byte string buffer or NULL if bs is read only.
  */
 uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
+
+/**
+ * Is byte string read only?
+ *
+ * @param bs Byte string.
+ *
+ * @returns 1 if @a bs is read-only and 0 otherwise.
+ **/
+ib_num_t ib_bytestr_read_only( const ib_bytestr_t *bs );
+
+/**
+ * Make byte string read only.
+ *
+ * Does nothing if @a bs is already read only.
+ *
+ * @param bs Byte string.
+ **/
+void ib_bytestr_make_read_only( ib_bytestr_t *bs );
 
 /**
  * Const raw buffer containing data in a byte string.
