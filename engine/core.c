@@ -5619,11 +5619,14 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
 
     // Get the current logger
     lpi = corecfg->pi.logger;
+    if (lpi == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
     lp  = lpi->pr;
 
     // If it's not the core log provider, we're done: we know nothing
     // about it's data, so don't try to treat it as a file handle!
-    if ( main_lp != lp ) {
+    if (main_lp != lp) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (  (main_ctx == ctx) && (ib_context_engine(ib) == ctx)  ) {
@@ -5633,7 +5636,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     /* Close our file handle */
     fp = (FILE *) lpi->data;
     if (fp != NULL) {
-        if (fclose( fp ) < 0) {
+        if (fclose(fp) < 0) {
             fprintf( stderr,
                      "core_ctx_destroy:Failed closing our fp %p: %s\n",
                      (void*)fp, strerror(errno) );
