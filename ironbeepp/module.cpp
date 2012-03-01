@@ -239,13 +239,15 @@ void Module::set_context_destroy( context_destroy_t f )
 
 bool Module::operator==( const Module& other ) const
 {
-    return ( ! *this && ! other ) || ( ib() == other.ib() );
+    return ( ! *this && ! other ) || ( *this && other && ib() == other.ib() );
 }
 
 bool Module::operator<( const Module& other ) const
 {
     if ( ! *this ) {
-        return ! other;
+        return other;
+    } else if ( ! other ) {
+        return this;
     } else {
         return ib() < other.ib();
     }
@@ -274,7 +276,11 @@ Module::operator unspecified_bool_type() const
 
 std::ostream& operator<<( std::ostream& o, const Module& module )
 {
-    o << "IronBee::Module[" << module.name() << "]";
+    if ( ! module ) {
+        o << "IronBee::Module[!singular!]";
+    } else {
+        o << "IronBee::Module[" << module.name() << "]";
+    }
 
     return o;
 }

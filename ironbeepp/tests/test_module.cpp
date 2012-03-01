@@ -281,17 +281,29 @@ TEST_F( TestModule, callbacks )
     EXPECT_EQ( &ib_context, out_ib_context );
 }
 
-TEST_F( TestModule, boolness )
+TEST_F( TestModule, operators )
 {
-    IronBee::Module singular;
+    IronBee::Module singular1;
+    IronBee::Module singular2;
 
-    EXPECT_FALSE( singular );
+    ib_module_t ib_module1;
+    ib_module_t ib_module2;
+    ib_module1.ib = m_ib_engine;
+    ib_module2.ib = m_ib_engine;
+    IronBee::Module nonsingular1( &ib_module1 );
+    IronBee::Module nonsingular2( &ib_module2 );
 
-    ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
-    IronBee::Module nonsingular( &ib_module );
+    EXPECT_FALSE( singular1 );
+    EXPECT_FALSE( singular2 );
+    EXPECT_TRUE( nonsingular1 );
+    EXPECT_TRUE( nonsingular2 );
 
-    EXPECT_TRUE( nonsingular );
+    EXPECT_EQ( singular1, singular2 );
+    EXPECT_NE( nonsingular1, nonsingular2 );
+    EXPECT_NE( singular1, nonsingular1 );
+
+    EXPECT_LT( singular1, nonsingular1 );
+    EXPECT_FALSE( singular1 < singular2 );
 }
 
 TEST_F( TestModule, expose_c )
