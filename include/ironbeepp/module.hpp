@@ -58,7 +58,7 @@ class Context;
  * An IronBee Module adds functionality to IronBee.  This class represents
  * the information each module provides to the engine.
  *
- * This class behaves similiar to @c ib_module_t*.  In particular, it can
+ * This class behaves similar to @c ib_module_t*.  In particular, it can
  * be singular (equivalent to NULL).  See object semantics in @ref ironbeepp.
  *
  * If you are interested in writing a module in C++, see module_bootstrap.hpp.

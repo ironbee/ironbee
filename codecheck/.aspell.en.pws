@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1001 
+personal_ws-1.1 en 1034 
 cfg
 api
 IronBee
@@ -11,6 +11,7 @@ obigo
 arg
 apr
 modlua
+postfix
 CCCC
 ConnFinished
 DBs
@@ -97,13 +98,16 @@ IronBeeEngineTfn
 ibd
 dyn
 msec
+printvar
 MyInt
+postlen
 apis
 APIs
 blen
 Functionals
 parr
 internalhash
+MemoryPool
 ETRUNC
 PocACSigPreTx
 abcdefghijklfoobar
@@ -197,6 +201,7 @@ lld
 Javascript
 nbe
 nsec
+bool
 ibconfig
 PocACSigReqHead
 enoent
@@ -223,6 +228,7 @@ cpath
 linelen
 cpart
 addList
+preprocessing
 lua
 Uninitialize
 nPipeline
@@ -253,6 +259,7 @@ msg
 pcm
 pcp
 lwp
+NULLs
 pfc
 msn
 fvalues
@@ -301,6 +308,7 @@ abcdxf
 resizing
 ppi
 fndata
+allocators
 conn
 ploc
 req
@@ -347,6 +355,7 @@ HandleResponse
 Wunused
 GeoIPRecord
 xxxxxxxxxxxx
+copyable
 fdopen
 nused
 facebook
@@ -359,6 +368,7 @@ MyModule
 mymodule
 AdsBot
 src
+other's
 onEventHandleContextConn
 AhoCorasickModuleTest
 onEventHandleConnect
@@ -377,13 +387,13 @@ ssl
 ssn
 cbdata
 onEventConnStarted
-reqs
 PRED
+reqs
 FFFF
 fctl
-WAM
-str
 ver
+str
+WAM
 WAP
 metatypes
 cfgmap
@@ -416,8 +426,10 @@ mpools
 priv
 utf
 pipelined
+prelen
 xdm
 txn
+xff
 DebugLog
 ntype
 FULLWIDTH
@@ -517,6 +529,7 @@ lf
 ResponseFinished
 resized
 lookups
+evaluatable
 RelevantOnly
 ju
 struct
@@ -547,6 +560,7 @@ pI
 regex
 rb
 rc
+allocator
 config
 sa
 SimplePie
@@ -556,11 +570,13 @@ runtime
 rl
 createn
 Shsf
+abcdefABCDEF
 PocACSigPostTx
 IronBeeBuild
 BaiDuSpider
 Baiduspider
 UA
+uastring
 luarule
 UD
 unparsed
@@ -578,11 +594,13 @@ IronBeeBufferFlushSize
 mpool
 tx
 getList
+xf
 onEventHandleResponseHeaders
 IronBeeUtilDebug
 param
 zd
 VX
+slen
 sive
 setflag
 pabsfile
@@ -591,6 +609,7 @@ paren
 ibapi
 unshifts
 xcbdata
+inlined
 aggregators
 pdata
 eval
@@ -599,6 +618,7 @@ YahooSeeker
 yahooseeker
 Deallocate
 dynf
+SubPool
 subpool
 testval
 RuleBasePath
@@ -626,13 +646,16 @@ dequeuing
 AuditLogGenerator
 ModuleDelegate
 omgilibot
-Interoperability
+interoperability
 ConnClosed
 dequeue
 libloader
+MemoryPools
 psdata
+Mutators
 vconnection
 dmode
+RULENUM
 iostream
 IBPP
 ourself
@@ -651,6 +674,7 @@ nagios
 ConnOpened
 unhandled
 logfile
+ScopedMemoryPool
 startpat
 DebugLogLevel
 ruleset
@@ -665,6 +689,7 @@ initializations
 responseheaders
 ResponseHeaders
 IronBeeUtilAhoCorasick
+constructable
 memdup
 hardcode
 fennec
@@ -756,8 +781,8 @@ maincfg
 HandleResponseHeaders
 corecfg
 sogou
-uptimemonkey
 UptimeMonkey
+uptimemonkey
 pchunk
 IronBeeEngineLogEvent
 programatically
@@ -783,11 +808,13 @@ nextents
 TSIOBufferSizedCreate
 vlen
 unum
+ByteStrings
 auditlog
 AuditLog
 wget
 HandleContextTx
 onEventRequestFinished
+constness
 InspectionEngine
 calloc
 xdata
@@ -797,6 +824,7 @@ onEventResponseStarted
 wildcard
 IronBeeUtilUUID
 bytestring
+ByteString
 alexia
 html
 IronBeeEnable
@@ -826,7 +854,8 @@ nasyncronous
 xxxxxxxx
 trafficserver's
 tavail
-EALLOC
+cstring
+ealloc
 configfile
 Hostnames
 util
@@ -871,6 +900,7 @@ IronBeeUtilStream
 nResponse
 multi
 recurse
+destructors
 onEventRequestHeaders
 psite
 IronBeeOperators
@@ -890,6 +920,7 @@ LoadModule
 endif
 maui
 EINCOMPAT
+ScopedMemoryPools
 iobufp
 IronBeeUtilDso
 ahrefs
@@ -941,6 +972,7 @@ prule
 Builtin
 mutex
 pevents
+xffff
 onEventRequestStarted
 modbinradix
 doxygen
@@ -948,6 +980,7 @@ incutio
 facebookexternalhit
 xgclen
 fileno
+boolean
 IronBeeUtilString
 bytestr
 MIDP

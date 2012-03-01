@@ -34,7 +34,7 @@
 
 ib_status_t string_to_num(const char *s, ib_bool_t allow_hex, ib_num_t *result)
 {
-    IB_FTRACE_INIT()
+    IB_FTRACE_INIT();
     size_t slen = strlen(s);
     ib_status_t rc = string_to_num_ex(s, slen, allow_hex, result);
     IB_FTRACE_RET_STATUS(rc);

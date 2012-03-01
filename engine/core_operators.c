@@ -136,7 +136,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
         expanded = (char *)cstr;
     }
 
-    /* Handle NUL-terminated strings and byte strigns */
+    /* Handle NUL-terminated strings and byte strings */
     if (field->type==IB_FTYPE_NULSTR) {
         const char *fval = ib_field_value_nulstr( field );
         *result = (strcmp(fval,expanded) == 0);
@@ -559,7 +559,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 }
 
 /**
- * Get expanded numberic value of a string
+ * Get expanded numeric value of a string
  * @internal
  *
  * @param[in] tx Transaction

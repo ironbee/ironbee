@@ -74,7 +74,7 @@ char DLL_PUBLIC *ib_strchr(const char *s, size_t l, int c);
  *
  * @param[in] s String to convert
  * @param[in] allow_hex Allow string to be a hex string?
- * @param[out] result Resultint number.
+ * @param[out] result Resulting number.
  *
  * @returns Status code.
  */
@@ -88,7 +88,7 @@ ib_status_t DLL_PUBLIC string_to_num(const char *s,
  * @param[in] s String to convert
  * @param[in] slen Length of string
  * @param[in] allow_hex Allow string to be a hex string?
- * @param[out] result Resultint number.
+ * @param[out] result Resulting number.
  *
  * @returns Status code.
  */
