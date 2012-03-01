@@ -262,6 +262,15 @@ size_t DLL_PUBLIC ib_bytestr_length(const ib_bytestr_t *bs);
 size_t DLL_PUBLIC ib_bytestr_size(const ib_bytestr_t *bs);
 
 /**
+ * Memory pool associated with byte string.
+ *
+ * @param bs Byte string.
+ *
+ * @returns Memory pool associated with @a bs.
+ */
+ib_mpool_t* DLL_PUBLIC ib_bytestr_mpool(const ib_bytestr_t *bs);
+
+/**
  * Raw buffer containing data in a byte string.
  *
  * @param bs Byte string
@@ -288,7 +297,6 @@ const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(const ib_bytestr_t *bs);
  * @returns position of the match, or -1 if there is no match
  */
 int DLL_PUBLIC ib_bytestr_index_of_c(const ib_bytestr_t *haystack, const char *needle);
-
 
 /** @} IronBeeUtilByteStr */
 

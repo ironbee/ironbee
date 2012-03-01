@@ -59,6 +59,12 @@ size_t ib_bytestr_size(
     IB_FTRACE_RET_SIZET(bs->size);
 }
 
+ib_mpool_t* ib_bytestr_mpool(const ib_bytestr_t *bs)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_PTR(ib_mpool_t, bs->mp);
+}
+
 uint8_t *ib_bytestr_ptr(
     ib_bytestr_t *bs
 ) {
