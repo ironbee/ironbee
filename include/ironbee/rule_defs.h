@@ -88,6 +88,13 @@ typedef enum {
 #define IB_RULE_FLAG_CHAINED_TO  (1 << 4)  /**< Rule is target of a chain */
 
 /**
+ * Rule meta-data flags
+ */
+#define IB_RULEMD_FLAG_NONE        (0x0)     /**< No flags */
+#define IB_RULEMD_FLAG_EXPAND_MSG  (1 << 0)  /**< Expand rule message */
+#define IB_RULEMD_FLAG_EXPAND_DATA (1 << 1)  /**< Expand rule logdata */
+
+/**
  * Rule engine: Basic rule type
  */
 typedef struct ib_rule_t ib_rule_t;

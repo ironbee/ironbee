@@ -229,7 +229,7 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
 }
 
 ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
-                                            void *data,
+                                            const void *data,
                                             size_t dlen)
 {
     IB_FTRACE_INIT();

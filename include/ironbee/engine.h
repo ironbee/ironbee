@@ -1973,7 +1973,7 @@ struct ib_logevent_t {
     ib_logevent_type_t       type;       /**< Event type */
     ib_logevent_action_t     rec_action; /**< Recommended action */
     ib_logevent_action_t     action;     /**< Action taken */
-    void                    *data;       /**< Event data */
+    const void              *data;       /**< Event data */
     size_t                   data_len;   /**< Event data size */
     uint8_t                  confidence; /**< Event confidence (percent) */
     uint8_t                  severity;   /**< Event severity (0-100?) */
@@ -2037,7 +2037,7 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
-                                            void *data,
+                                            const void *data,
                                             size_t dlen);
 
 /**

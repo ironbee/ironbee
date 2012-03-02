@@ -47,10 +47,12 @@ typedef enum {
     SETVAR_NUMSET,               /**< Set to a constant number */
     SETVAR_NUMADD,               /**< Add to a value (counter) */
 } setvar_op_t;
+
 typedef union {
     ib_num_t         num;        /**< Numeric value */
     ib_bytestr_t    *bstr;       /**< String value */
 } setvar_value_t;
+
 typedef struct {
     setvar_op_t      op;         /**< Setvar operation */
     char            *name;       /**< Field name */
@@ -110,6 +112,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
  * @param[in] data C-style string to log
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
+ * @param[in] flags Action instance flags
  *
  * @returns Status code
  */
@@ -229,12 +232,33 @@ static ib_status_t act_event_execute(void *data,
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
-    ib_logevent_t *e;
+    ib_logevent_t *event;
+    const char *expanded;
 
     ib_log_debug(tx->ib, 4, "Creating event via action");
 
+    /* Expand the message string */
+    if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_MSG) != 0) {
+        char *tmp;
+        rc = ib_data_expand_str(tx->dpi, rule->meta.msg, &tmp);
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4,
+                         "event: Failed to expand string '%s': %s",
+                         rule->meta.msg, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        expanded = tmp;
+    }
+    else if (rule->meta.msg != NULL) {
+        expanded = rule->meta.msg;
+    }
+    else {
+        expanded = "";
+    }
+
+    /* Create the event */
     rc = ib_logevent_create(
-        &e,
+        &event,
         tx->mp,
         ib_rule_id(rule),
         IB_LEVENT_TYPE_OBSERVATION,
@@ -242,18 +266,37 @@ static ib_status_t act_event_execute(void *data,
         IB_LEVENT_ACTION_UNKNOWN,
         rule->meta.confidence,
         rule->meta.severity,
-        (rule->meta.msg ? rule->meta.msg : "")
+        expanded
     );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Set the data */
+    if (rule->meta.data != NULL) {
+        if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_DATA) != 0) {
+            char *tmp;
+            rc = ib_data_expand_str(tx->dpi, rule->meta.data, &tmp);
+            if (rc != IB_OK) {
+                ib_log_error(tx->ib, 4,
+                             "event: Failed to expand data '%s': %s",
+                             rule->meta.data, ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            expanded = tmp;
+        }
+        else {
+            expanded = rule->meta.data;
+        }
+        rc = ib_logevent_data_set(event, expanded, strlen(expanded));
+    }
+
     /* Link to rule tags. */
     /// @todo Probably need to copy here
-    e->tags = rule->meta.tags;
+    event->tags = rule->meta.tags;
 
     /* Log the event. */
-    rc = ib_event_add(tx->epi, e);
+    rc = ib_event_add(tx->epi, event);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

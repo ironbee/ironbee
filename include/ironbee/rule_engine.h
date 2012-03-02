@@ -58,12 +58,14 @@ typedef enum {
 typedef struct {
     const char            *id;            /**< Rule ID */
     const char            *msg;           /**< Rule message */
+    const char            *data;          /**< Rule logdata */
     ib_list_t             *tags;          /**< Rule tags */
     ib_rule_type_t         type;          /**< Rule type (phase/stream) */
     ib_rule_phase_t        phase;         /**< Rule execution phase */
     ib_rule_stream_t       stream;        /**< Rule execution stream */
     uint8_t                severity;      /**< Rule severity */
     uint8_t                confidence;    /**< Rule confidence */
+    ib_flags_t             flags;         /**< Rule meta-data flags */
 } ib_rule_meta_t;
 
 /**

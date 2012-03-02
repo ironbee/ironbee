@@ -2105,6 +2105,21 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
     return strlen(*(const char **)chunk);
 }
 
+/**
+ * Placeholder function to escape data.
+ *
+ * @todo This is a placeholder!
+ *
+ * @param[in] data Data to escape
+ * @param[in] dlen Length of data
+ *
+ * @returns Escaped string form of data
+ */
+static const char *ib_data_escape(const void *data, size_t dlen)
+{
+    return (const char *) data;
+}
+
 static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                           const uint8_t **chunk)
 {
@@ -2205,7 +2220,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"fields\": [],\r\n"
                         "      \"msg\": \"%s\",\r\n"
                         // TODO Add properly escaped (binary) data
-                        "      \"data\": \"\"\r\n"
+                        "      \"data\": \"%s\"\r\n"
                         "    }",
                         (list_first == part->gen_data ? "" : ",\r\n"),
                         e->event_id,
@@ -2216,7 +2231,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         e->confidence,
                         e->severity,
                         tags,
-                        e->msg ? e->msg : "-");
+                        e->msg ? e->msg : "-",
+                        ib_data_escape(e->data, e->data_len));
 
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_REC_LEN) {
