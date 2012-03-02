@@ -3919,6 +3919,36 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Initialize the DPI in the given transaction.
+ *
+ * @param[in] ib IronBee object.
+ * @param[in,out] tx The transaction whose tx->dpi will be populated wit
+ *                default values.
+ *
+ * @returns IB_OK on success or the failure of ib_data_add_list(...).
+ */
+static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    assert(ib!=NULL);
+    assert(tx!=NULL);
+    assert(tx->dpi!=NULL);
+
+    rc = ib_data_add_list_ex(tx->dpi, "TX", 2, NULL);
+
+    if (rc!=IB_OK) {
+        ib_log_debug(ib, 7, "Unable to add list \"TX\".");
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 /* -- Core Hook Handlers -- */
 
 /**
@@ -3961,6 +3991,13 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to create tx data provider instance: %d",
                      rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Data Provider Default Initialization */
+    rc = dpi_default_init(ib, tx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize data provider instance.");
         IB_FTRACE_RET_STATUS(rc);
     }
 
