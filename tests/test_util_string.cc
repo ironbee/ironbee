@@ -37,13 +37,6 @@
 class TestIBUtilStringToNum : public ::testing::Test
 {
 public:
-    TestIBUtilStringToNum()
-    {
-    }
-    
-    ~TestIBUtilStringToNum()
-    {
-    }
 
     const char *BoolStr(ib_bool_t b)
     {
@@ -95,8 +88,6 @@ public:
                 << " expected value=" << expected << " result="<<result;
         }
     }
-
-protected:
 };
 
 /* -- Tests -- */

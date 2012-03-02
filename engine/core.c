@@ -1068,13 +1068,8 @@ static ib_status_t core_data_clear(ib_provider_inst_t *dpi)
  * Core data provider implementation to expand a string using the data store.
  * @internal
  *
- * This function looks through @a str for instances of
- * "%{"+<name>+"}" (i.e. "%{FOO}"), then attempts to look up
- * each of such name found in the data provider @a dpi.  If <name> is not
- * found in the @a dpi, the "%{<name>}" sub-string is replaced with an empty
- * string.  If the name is found, the associated field value is used to
- * replace "%{<name>}" sub-string for string and numeric types (numbers are
- * converted to strings); for others, the replacement is an empty string.
+ * This function looks through @a str for instances of "%{"+<name>+"}"
+ * (e.g. "%{FOO}").  @sa ib_data_expand_str().
  *
  * @param[in] dpi Data provider instance
  * @param[in] str NUL-terminated string to expand

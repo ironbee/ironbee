@@ -1734,7 +1734,7 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
  * Expand a string using fields from the data store.
  *
  * This function looks through @a str for instances of
- * "%{"+_name_+"}" (i.e. "%{FOO}"), then attempts to look up
+ * "%{"+_name_+"}" (e.g. "%{FOO}"), then attempts to look up
  * each of such name found in the data provider @a dpi.  If _name_ is not
  * found in the @a dpi, the "%{_name_}" sub-string is replaced with an empty
  * string.  If the name is found, the associated field value is used to
@@ -1752,13 +1752,12 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
                                char **result);
 
 /**
- * Determine if a string would be expanded by @sa ib_data_expand_str().
+ * Determine if a string would be expanded by ib_data_expand_str().
  *
- * This function looks through @a str for instances of
- * @a startpat + _name_ + @a endpat (i.e. "%{FOO}").
+ * This function looks through @a str for instances of "%{.+}".
  *
  * @param[in] str String to check for expansion
- * @param[out] result IB_TRUE if @a str would be expanded by @sa expand_str().
+ * @param[out] result IB_TRUE if @a str would be expanded by expand_str().
  *
  * @returns Status code
  */

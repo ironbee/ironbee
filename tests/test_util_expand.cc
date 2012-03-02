@@ -152,28 +152,28 @@ public:
 
     void PrintError(ib_num_t lineno,
                     const char *text,
-                    const char *start,
-                    const char *end,
+                    const char *prefix,
+                    const char *suffix,
                     const char *expected,
                     const char *value)
     {
         std::cout << "Test defined on line " << lineno << " failed"
                   << std::endl;
-        std::cout << "'" << text << "' expanded using '" << start << end
+        std::cout << "'" << text << "' expanded using '" << prefix << suffix
                   << "' -> '" << value << "' expected '" << expected
                   << "'" << std::endl;
     }
 
     void PrintError(ib_num_t lineno,
                     const char *text,
-                    const char *start,
-                    const char *end,
+                    const char *prefix,
+                    const char *suffix,
                     ib_num_t expected,
                     ib_num_t value)
     {
         std::cout << "Test defined on line " << lineno << " failed"
                   << std::endl;
-        std::cout << "'" << text << "' expanded using '" << start << end
+        std::cout << "'" << text << "' expanded using '" << prefix << suffix
                   << "' -> '" << value << "' expected '" << expected
                   << "'" << std::endl;
     }
@@ -188,17 +188,17 @@ class TestIBUtilExpandStr : public TestIBUtilExpand
 public:
 
     ib_status_t ExpandStr(const char *text,
-                          const char *start,
-                          const char *end,
+                          const char *prefix,
+                          const char *suffix,
                           char **result)
     {
-        return ::expand_str(m_pool, text, start, end, m_hash, result);
+        return ::expand_str(m_pool, text, prefix, suffix, m_hash, result);
     }
 
     bool IsExpected(ib_num_t lineno,
                     const char *text,
-                    const char *start,
-                    const char *end,
+                    const char *prefix,
+                    const char *suffix,
                     const char *expected,
                     const char *value)
     {
@@ -206,33 +206,40 @@ public:
             return true;
         }
         else {
-            PrintError(lineno, text, start, end, expected, value);
+            PrintError(lineno, text, prefix, suffix, expected, value);
             return false;
         }
     }
 
     void RunTest( ib_num_t lineno,
                   const char *text,
-                  const char *start,
-                  const char *end,
+                  const char *prefix,
+                  const char *suffix,
                   const char *expected )
     {
         char *result;
         ib_status_t rc;
-        rc = ExpandStr(text, start, end, &result);
+        rc = ExpandStr(text, prefix, suffix, &result);
         ASSERT_EQ(IB_OK, rc);
-        EXPECT_TRUE(IsExpected(lineno, text, start, end, expected, result));
+        EXPECT_TRUE(IsExpected(lineno, text, prefix, suffix, expected, result));
     }
 };
 
 class TestIBUtilExpandTestStr : public TestIBUtilExpand
 {
 public:
+    ib_status_t ExpandTestStr(const char *text,
+                              const char *prefix,
+                              const char *suffix,
+                              ib_bool_t *result)
+    {
+        return ::expand_test_str(text, prefix, suffix, result);
+    }
 
     bool IsExpected(ib_num_t lineno,
                     const char *text,
-                    const char *start,
-                    const char *end,
+                    const char *prefix,
+                    const char *suffix,
                     ib_bool_t expected,
                     ib_bool_t value)
     {
@@ -240,22 +247,22 @@ public:
             return true;
         }
         else {
-            PrintError(lineno, text, start, end, expected, value);
+            PrintError(lineno, text, prefix, suffix, expected, value);
             return false;
         }
     }
 
     void RunTest( ib_num_t lineno,
                   const char *text,
-                  const char *start,
-                  const char *end,
+                  const char *prefix,
+                  const char *suffix,
                   ib_bool_t expected )
     {
         ib_bool_t result;
         ib_status_t rc;
-        rc = ::expand_test_str(text, start, end, &result);
+        rc = ExpandTestStr(text, prefix, suffix, &result);
         ASSERT_EQ(IB_OK, rc);
-        EXPECT_TRUE(IsExpected(lineno, text, start, end, expected, result));
+        EXPECT_TRUE(IsExpected(lineno, text, prefix, suffix, expected, result));
     }
 };
 
@@ -266,35 +273,30 @@ TEST_F(TestIBUtilExpandStr, test_expand_errors)
 {
     ib_status_t rc;
     char *expanded;
+
     rc = ExpandStr("%{foo}", "", "}", &expanded);
     ASSERT_EQ(IB_EINVAL, rc);
     ASSERT_EQ( (char *)NULL, expanded );
+
+    rc = ExpandStr("%{foo}", "{", "", &expanded);
+    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ( (char *)NULL, expanded);
 
     rc = ExpandStr("%{foo}", "{", "}", &expanded);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_NE( (char *)NULL, expanded);
 
-    rc = ExpandStr("%{foo}", "{", "", &expanded);
+    rc = ExpandStr("%{foo}", "(", "", &expanded);
     ASSERT_EQ(IB_EINVAL, rc);
     ASSERT_EQ( (char *)NULL, expanded);
-}
 
-TEST_F(TestIBUtilExpandTestStr, test_expand_test_str)
-{
-    RunTest(__LINE__, "simple text",      "%{", "}",  IB_FALSE);
-    RunTest(__LINE__, "simple text",      "$(", ")",  IB_FALSE);
-    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  IB_TRUE);
-    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  IB_FALSE);
-    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  IB_TRUE);
-    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", IB_FALSE);
-    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", IB_TRUE);
-    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  IB_FALSE);
-    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  IB_FALSE);
-    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  IB_TRUE);
-    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  IB_FALSE);
-    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  IB_FALSE);
-    RunTest(__LINE__, "text:${Key1}",     "${", "}",  IB_TRUE);
-    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  IB_TRUE);
+    rc = ExpandStr("%{foo}", "", ")", &expanded);
+    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ( (char *)NULL, expanded);
+
+    rc = ExpandStr("%{foo}", "(", ")", &expanded);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_NE( (char *)NULL, expanded);
 }
 
 TEST_F(TestIBUtilExpandStr, test_expand_basics)
@@ -324,7 +326,10 @@ TEST_F(TestIBUtilExpandStr, test_expand_corner_cases)
     RunTest(__LINE__, "%{}}",             "%{", "}",  "}");
     RunTest(__LINE__, "%{foo}",           "%{", "}",  "");
     RunTest(__LINE__, "%%{foo}",          "%{", "}",  "%");
+    RunTest(__LINE__, "%%{Key1}",         "%{", "}",  "%Value1");
     RunTest(__LINE__, "%{%{foo}",         "%{", "}",  "");
+    RunTest(__LINE__, "%{%{Key1}",        "%{", "}",  "");
+    RunTest(__LINE__, "%{%{Key1}}",       "%{", "}",  "}");
     RunTest(__LINE__, "text:%{Key11}",    "%{", "}",  "text:");
     RunTest(__LINE__, "text:%{Key 1}",    "%{", "}",  "text:");
     RunTest(__LINE__, "text:%{Key*1}",    "%{", "}",  "text:");
@@ -353,4 +358,51 @@ TEST_F(TestIBUtilExpandStr, test_expand_numbers)
     RunTest(__LINE__, "%{Key4}-%{Key8}",  "%{", "}",  "0-1");
     RunTest(__LINE__, "%{Key4}-%{Key6}",  "%{", "}",  "0--1");
     RunTest(__LINE__, "%{Key4}+%{Key8}",  "%{", "}",  "0+1");
+}
+
+TEST_F(TestIBUtilExpandTestStr, test_expand_test_errors)
+{
+    ib_status_t rc;
+    ib_bool_t expand;
+    rc = ExpandTestStr("%{foo}", "", "}", &expand);
+    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ(IB_FALSE, expand);
+
+    rc = ExpandTestStr("%{foo}", "{", "}", &expand);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_TRUE, expand);
+
+    rc = ExpandTestStr("%{foo}", "{", "", &expand);
+    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ(IB_FALSE, expand);
+
+    rc = ExpandTestStr("%{foo}", "(", ")", &expand);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_FALSE, expand);
+
+    rc = ExpandTestStr("%{foo}", "(", "", &expand);
+    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ(IB_FALSE, expand);
+
+    rc = ExpandTestStr("%{foo}", "", ")", &expand);
+    ASSERT_EQ(IB_EINVAL, rc);
+    ASSERT_EQ(IB_FALSE, expand);
+}
+
+TEST_F(TestIBUtilExpandTestStr, test_expand_test_str)
+{
+    RunTest(__LINE__, "simple text",      "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "simple text",      "$(", ")",  IB_FALSE);
+    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  IB_TRUE);
+    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  IB_FALSE);
+    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  IB_TRUE);
+    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", IB_FALSE);
+    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", IB_TRUE);
+    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  IB_TRUE);
+    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  IB_FALSE);
+    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  IB_FALSE);
+    RunTest(__LINE__, "text:${Key1}",     "${", "}",  IB_TRUE);
+    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  IB_TRUE);
 }
