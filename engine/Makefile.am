@@ -15,7 +15,6 @@ libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c tfn.c \
                         rule_engine.c \
                         config-parser.h \
                         ironbee_private.h \
-                        ironbee_core_private.h \
                         $(top_builddir)/lua/ironbee.h
 libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la
 
