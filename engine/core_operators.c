@@ -38,7 +38,6 @@
 #include <ironbee/string.h>
 
 #include "ironbee_private.h"
-#include "ironbee_core_private.h"
 
 
 /* Size of buffer used to convert a bytestr to an int */

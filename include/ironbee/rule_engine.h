@@ -53,6 +53,96 @@ typedef enum {
 } ib_rule_action_t;
 
 /**
+ * Field operator function type.
+ *
+ * @param[in] ib Ironbee engine.
+ * @param[in] mp Memory pool to use.
+ * @param[in] field The field to operate on.
+ * @param[out] result The result of the operator 1=true 0=false.
+ *
+ * @returns IB_OK if successful.
+ */
+typedef ib_status_t (* ib_field_op_fn_t)(ib_engine_t *ib,
+                                         ib_mpool_t *mp,
+                                         ib_field_t *field,
+                                         ib_field_t **result);
+
+/**
+ * Rule engine: Rule meta data
+ */
+typedef struct {
+    const char            *id;            /**< Rule ID */
+    const char            *msg;           /**< Rule message */
+    ib_list_t             *tags;          /**< Rule tags */
+    ib_rule_phase_t        phase;         /**< Rule execution phase */
+    uint8_t                severity;      /**< Rule severity */
+    uint8_t                confidence;    /**< Rule confidence */
+} ib_rule_meta_t;
+
+/**
+ * Rule engine: Rule list
+ */
+typedef struct {
+    ib_list_t             *rule_list;     /**< List of rules */
+} ib_rulelist_t;
+
+/**
+ * Rule engine: Target fields
+ */
+typedef struct {
+    const char            *field_name;    /**< The field name */
+    ib_list_t             *field_ops;     /**< List of field operators */
+} ib_rule_target_t;
+
+/**
+ * Rule engine: Rule
+ *
+ * The typedef of ib_rule_t is done in ironbee/rule_engine.h
+ */
+struct ib_rule_t {
+    ib_rule_meta_t         meta;          /**< Rule meta data */
+    ib_operator_inst_t    *opinst;        /**< Rule operator */
+    ib_list_t             *target_fields; /**< List of target fields */
+    ib_list_t             *true_actions;  /**< Actions if condition True */
+    ib_list_t             *false_actions; /**< Actions if condition False */
+    ib_rulelist_t         *parent_rlist;  /**< Parent rule list */
+    ib_rule_t             *chained_rule;  /**< Next rule in the chain */
+    ib_flags_t             flags;         /**< External, etc. */
+};
+
+/**
+ * Rule engine: List of rules to execute during a phase
+ */
+typedef struct {
+    ib_rule_phase_t        phase;         /**< Phase number */
+    ib_rulelist_t          rules;         /**< Rules to execute in phase */
+} ib_rule_phase_data_t;
+
+/**
+ * Rule engine: Set of rules for all phases
+ */
+typedef struct {
+    ib_rule_phase_data_t  phases[IB_RULE_PHASE_COUNT];
+} ib_ruleset_t;
+
+
+/**
+ * Rule engine parser data
+ */
+typedef struct {
+    ib_rule_t         *previous;     /**< Previous rule parsed */
+} ib_rule_parser_data_t;
+
+/**
+ * Rule engine data; typedef in ironbee_private.h
+ */
+struct ib_rule_engine_t {
+    ib_ruleset_t          ruleset;     /**< Rules to exec */
+    ib_rulelist_t         rule_list;   /**< All rules owned by this context */
+    ib_rule_parser_data_t parser_data; /**< Rule parser specific data */
+};
+
+/**
  * Create a rule.
  *
  * Allocates a rule for the rule engine, initializes it.

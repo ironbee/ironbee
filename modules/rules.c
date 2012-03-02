@@ -33,9 +33,6 @@
 #include "rules_lua.h"
 #include "lua/ironbee.h"
 
-/// @todo Here until rule structures are public
-#include "ironbee_core_private.h"
-
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>

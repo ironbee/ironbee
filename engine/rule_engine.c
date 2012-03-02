@@ -36,7 +36,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
-#include "ironbee_core_private.h"
+#include "ironbee_private.h"
 
 /* Callback data */
 typedef struct {

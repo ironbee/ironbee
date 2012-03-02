@@ -36,8 +36,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/field.h>
 #include <ironbee/expand.h>
-
-#include "ironbee_core_private.h"
+#include <ironbee_private.h>
 
 #include <errno.h>
 #include <ctype.h>

@@ -40,7 +40,6 @@
 #include <ironbee/expand.h>
 
 #include "ironbee_private.h"
-#include "ironbee_core_private.h"
 
 
 /* -- Exported Data Access Routines -- */

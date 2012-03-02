@@ -22,6 +22,9 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
+#include <stdlib.h>
+#include <strings.h>
+
 #include "ironbee_config_auto.h"
 #include <ironbee/debug.h>
 #include <ironbee/types.h>
@@ -29,8 +32,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
-
-#include "ironbee_core_private.h"
+#include <ironbee_private.h>
 
 
 /**

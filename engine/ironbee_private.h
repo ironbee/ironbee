@@ -159,4 +159,61 @@ struct ib_matcher_t {
     const char              *key;         /**< Matcher key */
 };
 
+/**
+ * Parameters used for variable expansion in rules.
+ */
+#define IB_VARIABLE_EXPANSION_PREFIX  "%{"  /**< Variable prefix */
+#define IB_VARIABLE_EXPANSION_POSTFIX "}"   /**< Variable postfix */
+
+/**
+ * @internal
+ * Initialize the rule engine.
+ *
+ * Called when the rule engine is loaded, registers event handlers.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ */
+ib_status_t ib_rule_engine_init(ib_engine_t *ib,
+                                ib_module_t *mod);
+
+/**
+ * @internal
+ * Initialize a context the rule engine.
+ *
+ * Called when a context is initialized, performs rule engine initialization.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ * @param[in,out] ctx IronBee context
+ */
+ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
+                                    ib_module_t *mod,
+                                    ib_context_t *ctx);
+
+/**
+ * @internal
+ * Initialize the core operators.
+ *
+ * Called when the rule engine is loaded, registers the core operators.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ */
+ib_status_t ib_core_operators_init(ib_engine_t *ib,
+                                   ib_module_t *mod);
+
+/**
+ * @internal
+ * Initialize the core actions.
+ *
+ * Called when the rule engine is loaded, registers the core actions.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ */
+ib_status_t ib_core_actions_init(ib_engine_t *ib,
+                                 ib_module_t *mod);
+
+
 #endif /* IB_PRIVATE_H_ */
