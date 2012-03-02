@@ -737,6 +737,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     struct timeval tv;
     ib_status_t rc;
     char namebuf[64];
+    ib_tx_t *tx = NULL;
 
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
@@ -748,79 +749,86 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         rc = IB_EALLOC;
         goto failed;
     }
-    *ptx = (ib_tx_t *)ib_mpool_calloc(pool, 1, sizeof(**ptx));
-    if ((*ptx) == NULL) {
+    tx = (ib_tx_t *)ib_mpool_calloc(pool, 1, sizeof(*tx));
+    if (tx == NULL) {
         ib_log_error(ib, 0, "Failed to allocate memory for transaction");
         rc = IB_EALLOC;
         goto failed;
     }
 
     /* Name the transaction pool */
-    snprintf(namebuf, sizeof(namebuf), "TX/%p", (void*)(*ptx));
+    snprintf(namebuf, sizeof(namebuf), "TX/%p", (void*)tx);
     ib_mpool_setname(pool, namebuf);
 
     /// @todo Need to avoid gettimeofday and set from parser tx time, but
     ///       it currently only has second accuracy.
     gettimeofday(&tv, NULL);
-    (*ptx)->started.tv_sec = (uint32_t)tv.tv_sec;
-    (*ptx)->started.tv_usec = (uint32_t)tv.tv_usec;
+    tx->started.tv_sec = (uint32_t)tv.tv_sec;
+    tx->started.tv_usec = (uint32_t)tv.tv_usec;
 
-    (*ptx)->ib = ib;
-    (*ptx)->mp = pool;
-    (*ptx)->ctx = ib->ctx;
-    (*ptx)->pctx = pctx;
-    (*ptx)->conn = conn;
-    (*ptx)->er_ipstr = conn->remote_ipstr;
-    (*ptx)->hostname = IB_DSTR_EMPTY;
-    (*ptx)->path = IB_DSTR_URI_ROOT_PATH;
+    tx->ib = ib;
+    tx->mp = pool;
+    tx->ctx = ib->ctx;
+    tx->pctx = pctx;
+    tx->conn = conn;
+    tx->er_ipstr = conn->remote_ipstr;
+    tx->hostname = IB_DSTR_EMPTY;
+    tx->path = IB_DSTR_URI_ROOT_PATH;
 
     conn->tx_count++;
-    ib_tx_generate_id(*ptx);
+    ib_tx_generate_id(tx);
 
     /* Create the generic data store. */
-    rc = ib_hash_create_nocase(&((*ptx)->data), (*ptx)->mp);
+    rc = ib_hash_create_nocase(&(tx->data), tx->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
     }
 
     /* Create a filter controller. */
-    rc = ib_fctl_tx_create(&((*ptx)->fctl), *ptx, (*ptx)->mp);
+    rc = ib_fctl_tx_create(&(tx->fctl), tx, tx->mp);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        goto failed;
     }
+
+    /**
+     * After this, we have generally succeeded and are now outputting
+     * the transaction to the conn object and the ptx pointer.
+     */
 
     /* Add transaction to the connection list */
     if (conn->tx_first == NULL) {
-        conn->tx_first = *ptx;
-        conn->tx = *ptx;
-        conn->tx_last = *ptx;
-        ib_log_debug(ib, 9, "First transaction: %p", *ptx);
+        conn->tx_first = tx;
+        conn->tx = tx;
+        conn->tx_last = tx;
+        ib_log_debug(ib, 9, "First transaction: %p", tx);
     }
     else {
-        conn->tx = *ptx;
-        conn->tx_last->next = *ptx;
-        conn->tx_last = *ptx;
+        conn->tx = tx;
+        conn->tx_last->next = tx;
+        conn->tx_last = tx;
 
         /* If there are more than one transactions, then this is a pipeline
          * request and needs to be marked as such.
          */
-        if (conn->tx_first->next == *ptx) {
+        if (conn->tx_first->next == tx) {
             ib_tx_flags_set(conn->tx_first, IB_TX_FPIPELINED);
         }
-        ib_tx_flags_set(*ptx, IB_TX_FPIPELINED);
+        ib_tx_flags_set(tx, IB_TX_FPIPELINED);
 
-        ib_log_debug(ib, 9, "Found a pipelined transaction: %p", *ptx);
+        ib_log_debug(ib, 9, "Found a pipelined transaction: %p", tx);
     }
 
+    /* Only when we are successful, commit changes to output variable. */
+    *ptx = tx;
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    if (*ptx != NULL) {
-        ib_mpool_destroy((*ptx)->mp);
+    if (tx != NULL) {
+        ib_mpool_destroy(tx->mp);
     }
-    *ptx = NULL;
+    tx = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
 }
