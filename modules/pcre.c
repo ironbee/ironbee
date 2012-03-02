@@ -52,6 +52,9 @@
 #define MODULE_NAME        pcre
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
+/* How many matches will PCRE find and populate. */
+#define MATCH_MAX 10
+
 typedef struct modpcre_cfg_t modpcre_cfg_t;
 typedef struct modpcre_cpatt_t modpcre_cpatt_t;
 
@@ -386,6 +389,142 @@ static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+//! Ensure that the given field name exists in tx->dpi.
+static ib_status_t ensure_field_exists(ib_engine_t *ib,
+                                       ib_tx_t *tx,
+                                       const char *field_name)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    assert(ib!=NULL);
+    assert(tx!=NULL);
+    assert(tx->dpi!=NULL);
+    assert(field_name!=NULL);
+
+    ib_field_t *ib_field;
+
+    rc = ib_data_get(tx->dpi, field_name, &ib_field);
+
+    if (rc == IB_ENOENT) {
+        ib_data_add_list(tx->dpi, field_name, NULL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Set the matches into the given field name as .0, .1, .2 ... .9. 
+ *
+ * @param[in] ib The IronBee engine to log to.
+ * @param[in] tx The transaction to store the values into (tx->dpi).
+ * @param[in] field_name The field to populate with Regex matches.
+ * @param[in] ovector The vector of integer pairs of matches from PCRE.
+ * @param[in] matches The number of matches.
+ * @param[in] subject The matched-against string data.
+ *
+ * @returns IB_OK or IB_EALLOC.
+ */
+static ib_status_t pcre_set_matches(ib_engine_t *ib,
+                                    ib_tx_t *tx,
+                                    const char* field_name,
+                                    int *ovector,
+                                    int matches,
+                                    const char *subject)
+{
+    IB_FTRACE_INIT();
+
+    /* IronBee status. */
+    ib_status_t rc;
+
+    /* Iterator. */
+    int i;
+
+    /* Length of field_name. */
+    const int field_name_sz = strlen(field_name);
+
+    /* The length of the match. */
+    size_t match_len;
+
+    /* The first character in the match. */
+    const char* match_start;
+
+    /* +3 = '.', [digit], and \0. */
+    char *full_field_name = malloc(field_name_sz+3);
+
+    /* Holder to build an optional debug message in. */
+    char *debug_msg;
+
+    /* Holder for a copy of the field value when creating a new field. */
+    ib_bytestr_t *field_value;
+
+    /* Field holder. */
+    ib_field_t *ib_field;
+
+    /* Ensure the above allocations happened. */
+    if (full_field_name==NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ensure_field_exists(ib, tx, field_name);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Could not ensure that field %s was a list.", 
+            field_name);
+        free(full_field_name);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* We have a match! Now populate TX.0-9 in tx->dpi. */
+    for (i=0; i<matches; i++)
+    {
+        /* Build the field name. Typically TX.0, TX.1 ... TX.9 */
+        sprintf(full_field_name, "%s.%d", field_name, i);
+
+        /* Readability. Mark the start and length of the string. */
+        match_start = subject+ovector[i*2];
+        match_len = ovector[i*2+1] - ovector[i*2];
+
+        /* If debugging this, copy the string value out and print it to the
+         * log. This could be dangerous as there could be non-character
+         * values in the match. */
+        if (ib_log_get_level(ib) >= 7) {
+            debug_msg = malloc(match_len+1);
+
+            /* Notice: Don't provoke a crash if malloc fails. */
+            if (debug_msg != NULL) {
+                memcpy(debug_msg, match_start, match_len);
+                debug_msg[match_len] = '\0';
+
+                ib_log_debug(ib, 7, "REGEX Setting %s=%s.",
+                            full_field_name,
+                            debug_msg);
+
+                free(debug_msg);
+            }
+        }
+
+        ib_data_get(tx->dpi, full_field_name, &ib_field);
+
+        if (ib_field == NULL) {
+            ib_data_add_bytestr(tx->dpi,
+                                full_field_name,
+                                (uint8_t*)subject+ovector[i*2],
+                                match_len,
+                                NULL);
+        }
+        else {
+            ib_bytestr_dup_mem(&field_value,
+                               tx->mp,
+                               (const uint8_t*)match_start,
+                               match_len);
+            ib_field_setv(ib_field, &field_value);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /**
  * @brief Execute the rule.
  *
@@ -406,9 +545,13 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    int pcre_rc;
+    assert(ib!=NULL);
+    assert(tx!=NULL);
+    assert(tx->dpi!=NULL);
+
+    int matches;
     ib_status_t ib_rc;
-    const int ovecsize = 30;
+    const int ovecsize = 3 * MATCH_MAX;
     int *ovector = (int *)calloc(ovecsize, sizeof(*ovector));
     const char* subject;
     size_t subject_len;
@@ -446,14 +589,14 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                rule_data->regex_extra,
                rule_data->regex_extra_sz);
         /* Put some modest limits on our regex. */
-        regex_extra->match_limit = 100;
-        regex_extra->match_limit_recursion = 100;
+        regex_extra->match_limit = 1000;
+        regex_extra->match_limit_recursion = 1000;
         regex_extra->flags = regex_extra->flags |
                             PCRE_EXTRA_MATCH_LIMIT |
                             PCRE_EXTRA_MATCH_LIMIT_RECURSION;
     }
 
-    pcre_rc = pcre_exec(regex,
+    matches = pcre_exec(regex,
                         regex_extra,
                         subject,
                         subject_len,
@@ -462,11 +605,12 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                         ovector,
                         ovecsize);
 
-    if (pcre_rc > 0) {
+    if (matches > 0) {
+        pcre_set_matches(ib, tx, "TX", ovector, matches, subject);
         ib_rc = IB_OK;
         *result = 1;
     }
-    else if (pcre_rc == PCRE_ERROR_NOMATCH) {
+    else if (matches == PCRE_ERROR_NOMATCH) {
         /* No match. Return false to the caller (*result = 0). */
         ib_rc = IB_OK;
         *result = 0;
@@ -516,15 +660,14 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
 
     /* Register operators. */
-    ib_operator_register(ib, "pcre", 0,
-                                      pcre_operator_create,
+    ib_operator_register(ib, "pcre", 0, pcre_operator_create,
+                                        pcre_operator_destroy,
+                                        pcre_operator_execute);
+
+    /* An alias of pcre. The same callbacks are registered. */
+    ib_operator_register(ib, "rx", 0, pcre_operator_create,
                                       pcre_operator_destroy,
                                       pcre_operator_execute);
-    /* An alias of pcre. The same callbacks are registered. */
-    ib_operator_register(ib, "rx", 0,
-                                    pcre_operator_create,
-                                    pcre_operator_destroy,
-                                    pcre_operator_execute);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

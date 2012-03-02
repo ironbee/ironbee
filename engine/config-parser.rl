@@ -82,9 +82,9 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
       afpc--;
   }
   pvallen = (size_t)(afpc - fpc_mark);
-  pval = (char *)ib_mpool_alloc(mp, (pvallen + 1) * sizeof(*pval));
+  pval = (char *)ib_mpool_memdup(mp, fpc_mark, (pvallen + 1) * sizeof(*pval));
 
-  ib_util_unescape_string(pval, &pvallen, fpc_mark, pvallen);
+  pval[pvallen] = '\0';
 
   /* At this point the buffer i pvallen+1 in size, but we cannot shrink it. */
   /* This is not considered a problem for configuration parsing and it is

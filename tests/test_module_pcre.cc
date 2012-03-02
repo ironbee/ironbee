@@ -30,6 +30,7 @@
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
+#include <ironbee/bytestr.h>
 
 class PcreModuleTest : public BaseModuleFixture {
 public:
@@ -49,8 +50,19 @@ public:
         ib_conn = buildIronBeeConnection();
 
         // Create the transaction.
-        sendDataIn(ib_conn, "GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
-        sendDataOut(ib_conn, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
+        sendDataIn(ib_conn,
+                   "GET / HTTP/1.1\r\n"
+                   "Host: UnitTest\r\n"
+                   "X-MyHeader: header1\r\n"
+                   "X-MyHeader: header2\r\n"
+                   "\r\n");
+
+        sendDataOut(ib_conn,
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/html\r\n"
+                    "X-MyHeader: header3\r\n"
+                    "X-MyHeader: header4\r\n"
+                    "\r\n");
 
         assert(ib_conn->tx!=NULL);
         ib_tx = ib_conn->tx;
@@ -95,17 +107,57 @@ TEST_F(PcreModuleTest, test_load_module)
                                       &op_inst));
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, ib_conn->tx, op_inst->data, op_inst->flags, field1, &result));
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
+                                             ib_conn->tx,
+                                             op_inst->data,
+                                             op_inst->flags,
+                                             field1,
+                                             &result));
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, ib_conn->tx, op_inst->data, op_inst->flags, field2, &result));
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
+                                             ib_conn->tx,
+                                             op_inst->data,
+                                             op_inst->flags,
+                                             field2,
+                                             &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
+}
+
+TEST_F(PcreModuleTest, matches)
+{
+    ib_field_t *ib_field;
+    ib_bytestr_t *ib_bytestr;
+    char* s;
+    size_t s_sz;
+
+    ib_data_get(ib_tx->dpi, "TX.0", &ib_field);
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
+
+    ib_data_get(ib_tx->dpi, "TX.1", &ib_field);
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
+
+    ib_data_get(ib_tx->dpi, "TX.2", &ib_field);
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
+
+    ib_bytestr = (ib_bytestr_t*) ib_field_value(ib_field);
+
+    /* Check that a value is over written correctly. */
+    s_sz = ib_bytestr_length(ib_bytestr);
+    s = (char*) malloc(s_sz+1);
+    memcpy(s, ib_bytestr_const_ptr(ib_bytestr), s_sz);
+    s[s_sz] = '\0';
+    ASSERT_STREQ("header4", s);
+
+    ib_data_get(ib_tx->dpi, "TX.3", &ib_field);
+    ASSERT_EQ(static_cast<ib_field_t*>(NULL), ib_field);
 }
 
