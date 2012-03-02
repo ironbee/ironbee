@@ -1558,9 +1558,10 @@ ib_status_t DLL_PUBLIC ib_data_add_stream_ex(ib_provider_inst_t *dpi,
  * @param dpi Data provider instance
  * @param name Name as byte string
  * @param nlen Name length
- * @param pf Pointer where new field is written if non-NULL
+ * @param pf Pointer where new field is written. Unlike other calls,
+ *           this must not be NULL.
  *
- * @returns Status code
+ * @returns IB_OK on success or IB_ENOENT if the element is not found.
  */
 ib_status_t DLL_PUBLIC ib_data_get_ex(ib_provider_inst_t *dpi,
                                       const char *name,
