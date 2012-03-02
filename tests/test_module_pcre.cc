@@ -33,13 +33,28 @@
 
 class PcreModuleTest : public BaseModuleFixture {
 public:
+
+    ib_conn_t *ib_conn;
+    ib_tx_t *ib_tx;
+
     PcreModuleTest() : BaseModuleFixture("ibmod_pcre.so") 
     {
     }
 
     virtual void SetUp() {
         BaseModuleFixture::SetUp();
+
         configureIronBee();
+
+        ib_conn = buildIronBeeConnection();
+
+        // Create the transaction.
+        sendDataIn(ib_conn, "GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
+        sendDataOut(ib_conn, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
+
+        assert(ib_conn->tx!=NULL);
+        ib_tx = ib_conn->tx;
+
     }
 };
 
@@ -81,14 +96,14 @@ TEST_F(PcreModuleTest, test_load_module)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, NULL, op_inst->data, op_inst->flags, field1, &result));
+        ib_engine, ib_conn->tx, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, NULL, op_inst->data, op_inst->flags, field2, &result));
+        ib_engine, ib_conn->tx, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

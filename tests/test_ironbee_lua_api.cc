@@ -51,12 +51,7 @@ public:
         configureIronBee("test_ironbee_lua_api.conf");
         assert(IB_OK == ib_state_notify_cfg_finished(ib_engine));
 
-        ib_conn_create(ib_engine, &ib_conn, NULL);
-        ib_conn->local_ipstr = "1.0.0.1";
-        ib_conn->remote_ipstr = "1.0.0.2";
-        ib_conn->remote_port = 65534;
-        ib_conn->local_port = 80;
-        ib_state_notify_conn_opened(ib_engine, ib_conn);
+        ib_conn = buildIronBeeConnection();
 
         sendDataIn("GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
         sendDataOut("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
@@ -87,20 +82,12 @@ public:
         eval("ib = ibapi.new(ib_engine, ib_tx)");
     }
 
-    void sendDataIn(const string& req) {
-        ib_conndata_t *ib_conndata;
-        ib_conn_data_create(ib_conn, &ib_conndata, req.size());
-        ib_conndata->dlen = req.size();
-        memcpy(ib_conndata->data, req.data(), req.size());
-        ib_state_notify_conn_data_in(ib_engine, ib_conndata);
+    virtual void sendDataIn(const string& req) {
+        BaseFixture::sendDataIn(ib_conn, req);
     }
 
-    void sendDataOut(const string& req) {
-        ib_conndata_t *ib_conndata;
-        ib_conn_data_create(ib_conn, &ib_conndata, req.size());
-        ib_conndata->dlen = req.size();
-        memcpy(ib_conndata->data, req.data(), req.size());
-        ib_state_notify_conn_data_out(ib_engine, ib_conndata);
+    virtual void sendDataOut(const string& req) {
+        BaseFixture::sendDataOut(ib_conn, req);
     }
 
     void require(const string& name, const string& module)

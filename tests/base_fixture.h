@@ -32,6 +32,7 @@
 #include "gtest/gtest.h"
 
 #include <stdexcept>
+#include <string>
 
 #define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
 
@@ -113,6 +114,15 @@ public:
         }
     }
 
+    /**
+     * Configure IronBee using the file <testName>.<testCase>.config.
+     *
+     * This is done by using the GTest api to get the current test name
+     * and case and building the string <testName>.<testCase>.config and
+     * passing that to configureIronBee(string).
+     *
+     * @throws std::runtime_error(std::string) if any error occures.
+     */
     virtual void configureIronBee()
     {
         using ::testing::TestInfo;
@@ -128,6 +138,52 @@ public:
             ".config";
 
         configureIronBee(configFile);
+    }
+
+    virtual void sendDataIn(ib_conn_t *ib_conn, const std::string& req)
+    {
+        ib_conndata_t *ib_conndata;
+        ib_conn_data_create(ib_conn, &ib_conndata, req.size());
+        ib_conndata->dlen = req.size();
+        memcpy(ib_conndata->data, req.data(), req.size());
+        ib_state_notify_conn_data_in(ib_engine, ib_conndata);
+    }
+
+    virtual void sendDataOut(ib_conn_t *ib_conn, const std::string& req)
+    {
+        ib_conndata_t *ib_conndata;
+        ib_conn_data_create(ib_conn, &ib_conndata, req.size());
+        ib_conndata->dlen = req.size();
+        memcpy(ib_conndata->data, req.data(), req.size());
+        ib_state_notify_conn_data_out(ib_engine, ib_conndata);
+    }
+
+
+    /**
+     * Build an IronBee connection and call ib_state_notify_conn_opened on it.
+     *
+     * You should call ib_state_notify_conn_closed(ib_engine, ib_conn) 
+     * when done.
+     *
+     * The connection will be initialzed with a local address of 
+     * 1.0.0.1:80 and a remote address of 1.0.0.2:65534.
+     *
+     * @param[in] ib_engine The engine (and associated memory pool) from which
+     *            the connection will be allocated, initialized, and returned.
+     *
+     * @returns The Initialized IronbeeConnection.
+     */
+    virtual ib_conn_t* buildIronBeeConnection()
+    {
+        ib_conn_t* ib_conn;
+        ib_conn_create(ib_engine, &ib_conn, NULL);
+        ib_conn->local_ipstr = "1.0.0.1";
+        ib_conn->remote_ipstr = "1.0.0.2";
+        ib_conn->remote_port = 65534;
+        ib_conn->local_port = 80;
+        ib_state_notify_conn_opened(ib_engine, ib_conn);
+
+        return ib_conn;
     }
 
     virtual void loadModule(ib_module_t **ib_module,
