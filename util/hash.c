@@ -33,6 +33,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <time.h>
 
 /* Internal Declarations */
 
@@ -118,6 +119,8 @@ struct ib_hash_t {
     ib_hash_entry_t     *free;
     /** Number of entries. */
     size_t               size;
+    /** Randomizer value. */
+    uint32_t             randomizer;
 };
 
 /**
@@ -272,7 +275,7 @@ ib_status_t ib_hash_find_entry(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    hash_value = hash->hash_function(key, key_length);
+    hash_value = hash->hash_function(key, key_length, hash->randomizer);
 
     current_slot = hash->slots[hash_value % hash->num_slots];
     current_entry = ib_hash_find_htentry(
@@ -362,13 +365,14 @@ ib_status_t ib_hash_resize_slots(
 
 uint32_t ib_hashfunc_djb2(
     const void *key,
-    size_t      key_length
+    size_t      key_length,
+    uint32_t    randomizer
 ) {
     IB_FTRACE_INIT();
 
     assert(key != NULL);
 
-    uint32_t      hash  = 0;
+    uint32_t      hash  = randomizer;
     const char   *key_s = (const char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
@@ -380,13 +384,14 @@ uint32_t ib_hashfunc_djb2(
 
 uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     const void *key,
-    size_t      key_length
+    size_t      key_length,
+    uint32_t    randomizer
 ) {
     IB_FTRACE_INIT();
 
     assert(key != NULL);
 
-    uint32_t             hash  = 0;
+    uint32_t             hash  = randomizer;
     const unsigned char *key_s = (const unsigned char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
@@ -482,6 +487,7 @@ ib_status_t ib_hash_create_ex(
     new_hash->pool            = pool;
     new_hash->free            = NULL;
     new_hash->size            = 0;
+    new_hash->randomizer      = (uint32_t)clock();
 
     *hash = new_hash;
 
@@ -645,7 +651,7 @@ ib_status_t ib_hash_set_ex(
     /* Points to pointer that points to current_entry */
     ib_hash_entry_t **current_entry_handle  = NULL;
 
-    hash_value = hash->hash_function(key, key_length);
+    hash_value = hash->hash_function(key, key_length, hash->randomizer);
     slot_index = (hash_value % hash->num_slots);
 
     current_entry_handle = &hash->slots[slot_index];

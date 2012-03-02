@@ -169,14 +169,28 @@ TEST_F(TestIBUtilHash, test_hashfunc_djb2)
     uint32_t hash2 = 0;
 
     // Test with no case sensitive
-    hash1 = ib_hashfunc_djb2_nocase("Key", 3);
-    hash2 = ib_hashfunc_djb2_nocase("kEY", 3);
+    hash1 = ib_hashfunc_djb2_nocase("Key", 3, 17);
+    hash2 = ib_hashfunc_djb2_nocase("kEY", 3, 17);
     EXPECT_EQ(hash2, hash1);
     // Test with case sensitive
     hash1 = 0;
     hash2 = 0;
-    hash1 = ib_hashfunc_djb2("Key", 3);
-    hash2 = ib_hashfunc_djb2("kEY", 3);
+    hash1 = ib_hashfunc_djb2("Key", 3, 17);
+    hash2 = ib_hashfunc_djb2("kEY", 3, 17);
+    EXPECT_NE(hash2, hash1);
+}
+
+TEST_F(TestIBUtilHash, test_hashfunc_randomizer)
+{
+    uint32_t hash1 = 0;
+    uint32_t hash2 = 0;
+
+    // Different randomizers means different values.
+    hash1 = ib_hashfunc_djb2_nocase("Key", 3, 17);
+    hash2 = ib_hashfunc_djb2_nocase("Key", 3, 23);
+    EXPECT_NE(hash2, hash1);
+    hash1 = ib_hashfunc_djb2("Key", 3, 17);
+    hash2 = ib_hashfunc_djb2("Key", 3, 23);
     EXPECT_NE(hash2, hash1);
 }
 
@@ -343,7 +357,8 @@ TEST_F(TestIBUtilHash, test_hash_clear)
 
 static uint32_t test_hash_delete_hashfunc(
     const void* key,
-    size_t      key_length
+    size_t      key_length,
+    uint32_t    randomzier
 )
 {
     return 1234;

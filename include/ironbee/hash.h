@@ -60,15 +60,20 @@ typedef struct ib_hash_t ib_hash_t;
  *
  * A hash function converts keys (byte sequences) into hash values (unsigned
  * integers).  A good hash function is vital to the performance of a hash.
+ * The @a randomizer parameter is provided to the hash function to allow the
+ * hash function to vary from hash to hash and thus avoid collision attacks.
+ * The @a randomizer parameter will always be the same for a given hash.
  *
  * @param[in] key        Key to hash.
  * @param[in] key_length Length of @a key.
+ * @param[in] randomizer Value to randomize hash function.
  *
  * @returns Hash value of @a key.
  **/
 typedef uint32_t (*ib_hash_function_t)(
     const void *key,
-    size_t      key_length
+    size_t      key_length,
+    uint32_t    randomizer
 );
 
 /**
@@ -100,49 +105,54 @@ typedef int (*ib_hash_equal_t)(
 /*@{*/
 
 /**
- * DJB2 Hash Function (Dan Bernstein).
+ * DJB2 Hash Function (Dan Bernstein) plus randomizer.
  *
  * This is the default hash function for ib_hash_create().
  *
  * @sa ib_hashfunc_djb2_nocase().
  *
  * @code
- * hash = 5381
+ * hash = randomizer
  * for c in ckey
  *   hash = hash * 33 + c
  * @endcode
  *
  * @param[in] key        The key to hash.
  * @param[in] key_length Length of @a key.
+ * @param[in] randomizer Value to randomize hash function.
  *
  * @returns Hash value of @a key.
  */
 uint32_t DLL_PUBLIC ib_hashfunc_djb2(
     const void *key,
-    size_t      key_length
+    size_t      key_length,
+    uint32_t    randomizer
 );
 
 /**
- * DJB2 Hash Function (Dan Bernstein).  Case insensitive version.
+ * DJB2 Hash Function (Dan Bernstein) plus randomizer.  Case insensitive
+ * version.
  *
  * This is the default hash function for ib_hash_create_nocase().
  *
  * @sa ib_hashfunc_djb2().
  *
  * @code
- * hash = 5381
+ * hash = randomizer
  * for c in ckey
  *   hash = hash * 33 + tolower(c)
  * @endcode
  *
  * @param[in] key        The key to hash.
  * @param[in] key_length Length of @a key.
+ * @param[in] randomizer Value to randomize hash function.
  *
  * @returns Hash value of @a key.
  */
 uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     const void *key,
-    size_t      key_length
+    size_t      key_length,
+    uint32_t    randomizer
 );
 
 /**
