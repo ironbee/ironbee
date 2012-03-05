@@ -99,7 +99,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
 }
 
 /**
- * Execute function for the "log" action
+ * Execute function for the "debuglog" action
  * @internal
  *
  * @param[in] data C-style string to log
@@ -108,10 +108,10 @@ static ib_status_t act_log_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t act_log_execute(void *data,
-                                   ib_rule_t *rule,
-                                   ib_tx_t *tx,
-                                   ib_flags_t flags)
+static ib_status_t act_debuglog_execute(void *data,
+                                        ib_rule_t *rule,
+                                        ib_tx_t *tx,
+                                        ib_flags_t flags)
 {
     IB_FTRACE_INIT();
 
@@ -485,13 +485,22 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     IB_FTRACE_INIT();
     ib_status_t  rc;
 
-    /* Register the log action */
+    /* Register the debuglog action */
     rc = ib_action_register(ib,
-                            "log",
+                            "debuglog",
                             IB_ACT_FLAG_NONE,
                             act_log_create,
                             NULL, /* no destroy function */
-                            act_log_execute);
+                            act_debuglog_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_action_register(ib,
+                            "dlog",
+                            IB_ACT_FLAG_NONE,
+                            act_log_create,
+                            NULL, /* no destroy function */
+                            act_debuglog_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
