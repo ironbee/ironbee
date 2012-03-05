@@ -128,9 +128,11 @@ ibapi.secondaryClassMap = {
 setmetatable(ibapi.secondaryClassMap, { __index = ibutil.returnUnknown })
 
 -- Create an new ironbee object using the given engine and transaction.
-ibapi.new = function(ib_engine, ib_tx)
+ibapi.new = function(self, ib_engine, ib_tx)
     -- Basic object
     ib_obj = {}
+
+    setmetatable(ib_obj, { __index = self })
 
     -- The private API goes here. Users should not call these functions
     -- directly.

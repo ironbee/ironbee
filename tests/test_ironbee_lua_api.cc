@@ -79,7 +79,7 @@ public:
         lua_setglobal(L, "ib_tx");
     
         /* Construct an IB value. */
-        eval("ib = ibapi.new(ib_engine, ib_tx)");
+        eval("ib = ibapi:new(ib_engine, ib_tx)");
     }
 
     virtual void sendDataIn(const string& req) {

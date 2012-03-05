@@ -145,9 +145,10 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     lua_pushstring(L, "ib");  /* Push the key we will store the result at. */
     lua_pushstring(L, "new"); /* Push the name of the function. */
     lua_gettable(L, -3);      /* Get the ib.new function. */
+    lua_getglobal(L, "ibapi");/* Push ib table (module) onto stack for self. */
     lua_pushlightuserdata(L, ib); /* Push ib_engine argument to new. */
     lua_pushlightuserdata(L, tx); /* Push ib_tx argument to new. */
-    lua_rc = lua_pcall(L, 2, 1, 0); /* Make new ib api object. */
+    lua_rc = lua_pcall(L, 3, 1, 0); /* Make new ib api object. */
 
     if (lua_rc != 0) {
         ib_log_error(ib, 1,
