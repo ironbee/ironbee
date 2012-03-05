@@ -74,7 +74,7 @@ AC_SUBST(OSSP_UUID_LIBS)
 
 if test -z "${OSSP_UUID}"; then
     AC_MSG_NOTICE([*** ossp-uuid utility not found.])
-    ifelse([$2], , AC_MSG_ERR([ossp-uuid library is required]), $2)
+    ifelse([$2], , AC_MSG_ERROR([ossp-uuid library is required]), $2)
 else
     AC_MSG_NOTICE([using ossp-uuid ${OSSP_UUID}])
     ifelse([$1], , , $1) 
