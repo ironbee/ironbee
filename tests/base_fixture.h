@@ -121,7 +121,7 @@ public:
      * and case and building the string <testName>.<testCase>.config and
      * passing that to configureIronBee(string).
      *
-     * @throws std::runtime_error(std::string) if any error occures.
+     * @throws std::runtime_error(std::string) if any error occurs.
      */
     virtual void configureIronBee()
     {
@@ -162,10 +162,10 @@ public:
     /**
      * Build an IronBee connection and call ib_state_notify_conn_opened on it.
      *
-     * You should call ib_state_notify_conn_closed(ib_engine, ib_conn) 
+     * You should call ib_state_notify_conn_closed(ib_engine, ib_conn)
      * when done.
      *
-     * The connection will be initialzed with a local address of 
+     * The connection will be initialized with a local address of
      * 1.0.0.1:80 and a remote address of 1.0.0.2:65534.
      *
      * @param[in] ib_engine The engine (and associated memory pool) from which

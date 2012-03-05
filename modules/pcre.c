@@ -415,7 +415,7 @@ static ib_status_t ensure_field_exists(ib_engine_t *ib,
 }
 
 /**
- * Set the matches into the given field name as .0, .1, .2 ... .9. 
+ * Set the matches into the given field name as .0, .1, .2 ... .9.
  *
  * @param[in] ib The IronBee engine to log to.
  * @param[in] tx The transaction to store the values into (tx->dpi).
@@ -469,7 +469,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
 
     rc = ensure_field_exists(ib, tx, field_name);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Could not ensure that field %s was a list.", 
+        ib_log_error(ib, 0, "Could not ensure that field %s was a list.",
             field_name);
         free(full_field_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
