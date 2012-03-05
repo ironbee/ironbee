@@ -229,7 +229,6 @@ struct ib_conn_t {
 //    struct sockaddr_storage local_addr;  /**< Local address */
     uint16_t            local_port;      /**< Local port */
 
-    ib_uuid_t           base_uuid;       /**< UUID to base tx ID */
     size_t              tx_count;        /**< Transaction count */
 
     ib_tx_t            *tx_first;        /**< First transaction in the list */

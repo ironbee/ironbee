@@ -561,7 +561,6 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
     struct timeval tv;
-    uint16_t pid16 = (uint16_t)(getpid() & 0xffff);
     ib_status_t rc;
     char namebuf[64];
 
@@ -593,24 +592,6 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     gettimeofday(&tv, NULL);
     (*pconn)->started.tv_sec = (uint32_t)tv.tv_sec;
     (*pconn)->started.tv_usec = (uint32_t)tv.tv_usec;
-
-    /* Setup the base uuid structure which is used to generate
-     * transaction IDs.
-     */
-    (*pconn)->base_uuid.st.time_low = 0;
-    (*pconn)->base_uuid.st.time_mid = 0;
-    (*pconn)->base_uuid.st.time_hi_and_ver = 0;
-
-    /// @todo These two need set to thread ID or some other identifier
-    (*pconn)->base_uuid.st.clk_seq_hi_res = 0x8f;
-    (*pconn)->base_uuid.st.clk_seq_low = 0xff;
-
-    (*pconn)->base_uuid.st.node[0] = (pid16 >> 8) & 0xff;
-    (*pconn)->base_uuid.st.node[1] = (pid16 & 0xff);
-    (*pconn)->base_uuid.st.node[2] = ib->sensor_id_hash & 0xff;
-    (*pconn)->base_uuid.st.node[3] = (ib->sensor_id_hash >> 8) & 0xff;
-    (*pconn)->base_uuid.st.node[4] = (ib->sensor_id_hash >> 16) & 0xff;
-    (*pconn)->base_uuid.st.node[5] = (ib->sensor_id_hash >> 24) & 0xff;
 
     rc = ib_hash_create_nocase(&((*pconn)->data), (*pconn)->mp);
     if (rc != IB_OK) {
@@ -693,38 +674,32 @@ void ib_conn_destroy(ib_conn_t *conn)
  * @internal
  * Merge the base_uuid with tx data and generate the tx id string.
  */
-static void ib_tx_generate_id(ib_tx_t *tx)
+static ib_status_t ib_tx_generate_id(ib_tx_t *tx)
 {
+    IB_FTRACE_INIT();
+
     ib_uuid_t uuid;
+    ib_status_t rc;
+    char *str;
 
-    /* Start with the base values. */
-    uuid.st = tx->conn->base_uuid.st;
-
-    /* Set the tx specific values */
-    uuid.st.time_low = tx->started.tv_sec;
-    uuid.st.time_mid = tx->conn->started.tv_usec + tx->conn->tx_count;
-    uuid.st.time_hi_and_ver = (uint16_t)tx->started.tv_usec & 0x0fff;
-    uuid.st.time_hi_and_ver |= (4 << 12);
-
-    /* Convert to a hex-string representation */
-    tx->id = (const char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
-    if (tx->id == NULL) {
-        return;
+    rc = ib_uuid_create_v4(&uuid);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    snprintf((char *)tx->id, IB_UUID_HEX_SIZE,
-            "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-            uuid.st.time_low,
-            uuid.st.time_mid,
-            uuid.st.time_hi_and_ver,
-            uuid.st.clk_seq_hi_res,
-            uuid.st.clk_seq_low,
-            uuid.st.node[0],
-            uuid.st.node[1],
-            uuid.st.node[2],
-            uuid.st.node[3],
-            uuid.st.node[4],
-            uuid.st.node[5]);
+    /* Convert to a hex-string representation */
+    str = (char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
+    if (str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    tx->id = str;
+
+    rc = ib_uuid_bin_to_ascii(str, &uuid);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_tx_create(ib_engine_t *ib,
@@ -2379,5 +2354,3 @@ ib_status_t ib_context_site_lookup(ib_context_t *ctx,
 
     IB_FTRACE_RET_STATUS(IB_ENOENT);
 }
-
-

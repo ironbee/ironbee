@@ -316,6 +316,9 @@ CHECK_HTTPD()
 CHECK_TS()
 CHECK_GEOIP()
 
+AC_SEARCH_LIBS(uuid_create, [ossp-uuid uuid], [], [
+             AC_MSG_ERROR("Requires ossp-uuid library.")])
+
 #If we are not building plugins bail
 if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
     echo "**********************************************"

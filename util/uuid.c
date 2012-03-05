@@ -18,7 +18,7 @@
 /**
  * @file
  * @brief UUID helper functions
- * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  * @todo Add bin to ascii
  */
 
@@ -29,66 +29,127 @@
 #include <ironbee/debug.h>
 
 #include <string.h>
+#include <ossp/uuid.h>
+#include <assert.h>
 
-ib_status_t ib_uuid_ascii_to_bin(ib_uuid_t *uuid,
-                                 const char *str)
+ib_status_t ib_uuid_ascii_to_bin(
+     ib_uuid_t *uuid,
+     const char *str
+)
 {
     IB_FTRACE_INIT();
-    int i;
-    int j;
 
-    // Some format checks
-    if (uuid == NULL ||
-        strlen(str) != 36 ||
-        str[8] != '-' ||
-        str[13] != '-' ||
-        str[18] != '-' ||
-        str[23] != '-' )
-    {
+    uuid_t *ossp_uuid;
+    uuid_rc_t uuid_rc;
+    size_t uuid_len = UUID_LEN_BIN;
+    size_t str_len;
+
+    if (uuid == NULL || str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    str_len = strlen(str);
+    if (str_len != UUID_LEN_STR) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Store the sensor id as ib_uuid_t */
-    for (i = 0, j = 0; i < 36; ++i) {
-        int byteval;
-
-        /* Skip the following positions ('-'). */
-        if (i == 8 || i == 13 || i == 18 || i == 23) {
-            i++;
-        }
-
-        /* First hex char in the two digit byte. */
-        if (str[i] >= '0' && str[i] <= '9') {
-            byteval = (str[i] - '0') << 4;
-        }
-        else if (str[i] >= 'A' && str[i] <= 'F') {
-            byteval = (str[i] - 'A' + 10) << 4;
-        }
-        else if (str[i] >= 'a' && str[i] <= 'f') {
-            byteval = (str[i] - 'a' + 10) << 4;
-        }
-        else {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        /* Second hex char in the two digit byte. */
-        ++i;
-        if (str[i] >= '0' && str[i] <= '9') {
-            byteval += str[i] - '0';
-        }
-        else if (str[i] >= 'A' && str[i] <= 'F') {
-            byteval += str[i] - 'A' + 10;
-        }
-        else if (str[i] >= 'a' && str[i] <= 'f') {
-            byteval += str[i] - 'a' + 10;
-        }
-        else {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        uuid->byte[j++] = byteval & 0xff;
+    uuid_rc = uuid_create(&ossp_uuid);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
+
+    assert(str_len == UUID_LEN_STR);
+    uuid_rc = uuid_import(ossp_uuid, UUID_FMT_STR, str, str_len);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    uuid_rc = uuid_export(ossp_uuid, UUID_FMT_BIN, &uuid, &uuid_len);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_BIN) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    uuid_destroy(ossp_uuid);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+ib_status_t ib_uuid_bin_to_ascii(
+    char *str,
+    const ib_uuid_t *uuid
+)
+{
+    IB_FTRACE_INIT();
+
+    uuid_t *ossp_uuid;
+    uuid_rc_t uuid_rc;
+    size_t uuid_len = UUID_LEN_STR+1;
+
+    if (uuid == NULL || str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    uuid_rc = uuid_create(&ossp_uuid);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    uuid_rc = uuid_import(ossp_uuid, UUID_FMT_BIN, uuid, UUID_LEN_BIN);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    uuid_rc = uuid_export(ossp_uuid, UUID_FMT_STR, &str, &uuid_len);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_STR+1) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    uuid_destroy(ossp_uuid);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid)
+{
+    IB_FTRACE_INIT();
+
+    uuid_t *ossp_uuid;
+    uuid_rc_t uuid_rc;
+    size_t uuid_len = UUID_LEN_BIN;
+
+    uuid_rc = uuid_create(&ossp_uuid);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    uuid_rc = uuid_make(ossp_uuid, UUID_MAKE_V4);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    uuid_rc = uuid_export(ossp_uuid, UUID_FMT_BIN, &uuid, &uuid_len);
+    if (uuid_rc == UUID_RC_MEM) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    } else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_BIN) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    uuid_destroy(ossp_uuid);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
