@@ -129,7 +129,7 @@ TEST_F(TestIBUtilHash, test_hash_ex)
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
         &hash, 
         m_pool, 
-        17, 
+        32, 
         ib_hashfunc_djb2,
         ib_hashequal_default
     ));
@@ -376,7 +376,7 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
         &hash, 
         m_pool,
-        17,
+        32,
         test_hash_delete_hashfunc,
         ib_hashequal_default
     ));
@@ -440,4 +440,15 @@ TEST_F(TestIBUtilHash, test_hash_remove)
     );
     EXPECT_EQ(b, value);
     EXPECT_EQ(1UL, ib_hash_size(hash));
+}
+
+TEST_F(TestIBUtilHash, bad_size) {
+    ib_hash_t *hash = NULL;
+    ASSERT_EQ(IB_EINVAL, ib_hash_create_ex(
+        &hash, 
+        m_pool, 
+        3,         
+        ib_hashfunc_djb2,
+        ib_hashequal_default
+    ));
 }

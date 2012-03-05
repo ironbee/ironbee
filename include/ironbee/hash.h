@@ -216,12 +216,14 @@ int DLL_PUBLIC ib_hashequal_nocase(
  * @param[out] hash            The newly created hash table.
  * @param[in]  pool            Memory pool to use.
  * @param[in]  size            The number of slots in the hash table.
+ *                             Must be a power of 2.
  * @param[in]  hash_function   Hash function to use, e.g., ib_hashfunc_djb2().
  * @param[in]  equal_predicate Predicate to use for key equality.
  *
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if @a size is not a power of 2, or pointers are NULL.
  */
 ib_status_t DLL_PUBLIC ib_hash_create_ex(
     ib_hash_t          **hash,
