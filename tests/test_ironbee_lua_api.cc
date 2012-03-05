@@ -38,7 +38,7 @@ public:
      * loads ffi, ironbee-ffi, and ironbee-api, and then sets ib_engine
      * to a copy of the ironbee engine.
      */
-    virtual void SetUp()
+    void SetUp()
     {
         BaseFixture::SetUp();
 
@@ -82,11 +82,11 @@ public:
         eval("ib = ibapi:new(ib_engine, ib_tx)");
     }
 
-    virtual void sendDataIn(const string& req) {
+    void sendDataIn(const string& req) {
         BaseFixture::sendDataIn(ib_conn, req);
     }
 
-    virtual void sendDataOut(const string& req) {
+    void sendDataOut(const string& req) {
         BaseFixture::sendDataOut(ib_conn, req);
     }
 
@@ -140,7 +140,7 @@ public:
     /**
      * Close the lua stack and call BaseFixture::TearDown().
      */
-    virtual void TearDown()
+    void TearDown()
     {
         lua_close(L);
 

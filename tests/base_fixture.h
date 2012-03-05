@@ -38,7 +38,7 @@
 
 class BaseFixture : public ::testing::Test {
 public:
-    virtual void SetUp() {
+    void SetUp() {
         ibt_ibplugin.vernum = IB_VERNUM;
         ibt_ibplugin.abinum = IB_ABINUM;
         ibt_ibplugin.version = IB_VERSION;
@@ -54,12 +54,12 @@ public:
         resetModuleBasePath();
     }
 
-    virtual void resetRuleBasePath()
+    void resetRuleBasePath()
     {
         setRuleBasePath(IB_XSTRINGIFY(RULE_BASE_PATH));
     }
 
-    virtual void setRuleBasePath(const char* path)
+    void setRuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
         ib_context_module_config(ib_engine->ctx,
@@ -68,12 +68,12 @@ public:
         corecfg->rule_base_path = path;
     }
 
-    virtual void resetModuleBasePath()
+    void resetModuleBasePath()
     {
         setModuleBasePath(IB_XSTRINGIFY(MODULE_BASE_PATH));
     }
 
-    virtual void setModuleBasePath(const char* path)
+    void setModuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
         ib_context_module_config(ib_engine->ctx,
@@ -95,7 +95,7 @@ public:
      * Realize, though, that nothing prevents the tester from using the
      * LoadModule directive in their configuration.
      */
-    virtual void configureIronBee(const std::string& configFile) {
+    void configureIronBee(const std::string& configFile) {
 
         ib_status_t rc;
         ib_cfgparser_t *p;
@@ -123,7 +123,7 @@ public:
      *
      * @throws std::runtime_error(std::string) if any error occurs.
      */
-    virtual void configureIronBee()
+    void configureIronBee()
     {
         using ::testing::TestInfo;
         using ::testing::UnitTest;
@@ -140,7 +140,7 @@ public:
         configureIronBee(configFile);
     }
 
-    virtual void sendDataIn(ib_conn_t *ib_conn, const std::string& req)
+    void sendDataIn(ib_conn_t *ib_conn, const std::string& req)
     {
         ib_conndata_t *ib_conndata;
         ib_conn_data_create(ib_conn, &ib_conndata, req.size());
@@ -149,7 +149,7 @@ public:
         ib_state_notify_conn_data_in(ib_engine, ib_conndata);
     }
 
-    virtual void sendDataOut(ib_conn_t *ib_conn, const std::string& req)
+    void sendDataOut(ib_conn_t *ib_conn, const std::string& req)
     {
         ib_conndata_t *ib_conndata;
         ib_conn_data_create(ib_conn, &ib_conndata, req.size());
@@ -173,7 +173,7 @@ public:
      *
      * @returns The Initialized IronbeeConnection.
      */
-    virtual ib_conn_t* buildIronBeeConnection()
+    ib_conn_t* buildIronBeeConnection()
     {
         ib_conn_t* ib_conn;
         ib_conn_create(ib_engine, &ib_conn, NULL);
@@ -186,7 +186,7 @@ public:
         return ib_conn;
     }
 
-    virtual void loadModule(ib_module_t **ib_module,
+    void loadModule(ib_module_t **ib_module,
                             const std::string& module_file)
     {
         ib_status_t rc;
@@ -209,7 +209,7 @@ public:
         }
     }
 
-    virtual void TearDown() {
+    void TearDown() {
         ib_engine_destroy(ib_engine);
     }
 
@@ -249,14 +249,14 @@ public:
         ib_module(NULL)
     {}
 
-    virtual void SetUp()
+    void SetUp()
     {
         BaseFixture::SetUp();
 
         loadModule(&ib_module, m_module_file);
     }
 
-    virtual void TearDown() {
+    void TearDown() {
         ib_status_t rc;
         rc = ib_module_unload(ib_module);
 
