@@ -69,7 +69,7 @@ ib_status_t ib_uuid_ascii_to_bin(
 );
 
 /**
- * Outputs a UUID to a stirng.
+ * Outputs a UUID to a string.
  *
  * @param str Pointer to already allocated buffer to hold string (37 bytes)
  * @param uuid UUID to write to @a str.
