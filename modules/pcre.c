@@ -57,6 +57,7 @@
 
 typedef struct modpcre_cfg_t modpcre_cfg_t;
 typedef struct modpcre_cpatt_t modpcre_cpatt_t;
+typedef struct modpcre_cpatt_t pcre_rule_data_t;
 
 /* Define the public module symbol. */
 IB_MODULE_DECLARE();
@@ -79,12 +80,156 @@ struct modpcre_cpatt_t {
     pcre          *cpatt;                 /**< Compiled pattern */
     size_t        cpatt_sz;               /**< Size of cpatt. */
     pcre_extra    *edata;                 /**< PCRE Study data */
-    size_t        edata_sz;               /**< Size of edata. */
+    size_t        study_data_sz;          /**< Size of edata->study_data. */
     const char    *patt;                  /**< Regex pattern text */
+    int           is_jit;                 /**< Is this JIT compiled? */
 };
 
 /* Instantiate a module global configuration. */
 static modpcre_cfg_t modpcre_global_cfg;
+
+/**
+ * Internal compilation of the modpcre pattern.
+ *
+ * @param[in] pool The memory pool to allocate memory out of.
+ * @param[out] pcre_cpatt Struct containing the compilation.
+ * @param[in] patt The uncompiled pattern to match.
+ * @param[out] errptr Pointer to an error message describing the failure.
+ * @param[out] errorffset The location of the failure, if this fails.
+ * @returns IronBee status. IB_EINVAL if the pattern is invalid,
+ *          IB_EALLOC if memory allocation fails or IB_OK.
+ */
+static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
+                                            modpcre_cpatt_t **pcre_cpatt,
+                                            const char *patt,
+                                            const char **errptr,
+                                            int *erroffset)
+{
+    IB_FTRACE_INIT();
+    pcre *cpatt = NULL;
+    size_t cpatt_sz;
+    pcre_extra *edata = NULL;
+    size_t study_data_sz;
+    int is_jit;
+    const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
+#ifdef PCRE_HAVE_JIT
+    int rc;
+    int pcre_jit_ret;
+    const int study_flags = PCRE_STUDY_JIT_COMPILE;
+#else
+    const int study_flags = 0;
+#endif /*PCRE_HAVE_JIT*/
+
+    cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
+
+    if (*errptr != NULL) {
+        ib_util_log_error(4, "PCRE compile error for \"%s\": %s at offset %d",
+            patt, *errptr, *erroffset);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    edata = pcre_study(cpatt, study_flags, errptr);
+
+#ifdef PCRE_HAVE_JIT
+    if(*errptr != NULL)  {
+        pcre_free(cpatt);
+        ib_util_log_error(4,"PCRE-JIT study failed : %s", *errptr);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* The check to see if JIT compilation was a success changed in 8.20RC1
+       now uses pcre_fullinfo see doc/pcrejit.3 */
+    rc = pcre_fullinfo(cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
+    if (rc != 0) {
+        ib_util_log_error(4,"PCRE-JIT failed to get pcre_fullinfo");
+        is_jit = 0;
+    }
+    else if (pcre_jit_ret != 1) {
+        ib_util_log_error(4,
+            "PCRE-JIT compiler does not support: %s. "
+            "It will fallback to the normal PCRE",
+            patt);
+        is_jit = 0;
+    }
+    else {
+        is_jit = 1;
+    }
+#else
+    if(*errptr != NULL)  {
+        pcre_free(cpatt);
+        ib_util_log_error(4,"PCRE study failed : %s", *errptr);
+    }
+    is_jit = 0;
+#endif /*PCRE_HAVE_JIT*/
+
+    /* Compute the size of the populated values of cpatt. */
+    pcre_fullinfo(cpatt, edata, PCRE_INFO_SIZE, &cpatt_sz);
+
+    if (edata!=NULL) {
+        pcre_fullinfo(cpatt, edata, PCRE_INFO_STUDYSIZE, &study_data_sz);
+    }
+    else {
+        study_data_sz = 0;
+    }
+
+    /**
+     * Below is only allocation and copy operations to pass the PCRE results
+     * back to the output variable pcre_cpatt.
+     */
+
+    *pcre_cpatt = (modpcre_cpatt_t *)ib_mpool_alloc(pool, sizeof(**pcre_cpatt));
+    if (*pcre_cpatt == NULL) {
+        pcre_free(cpatt);
+        pcre_free(edata);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    (*pcre_cpatt)->is_jit = is_jit;
+    (*pcre_cpatt)->cpatt_sz = cpatt_sz;
+    (*pcre_cpatt)->study_data_sz = study_data_sz;
+
+    /* Copy pattern. */
+    (*pcre_cpatt)->patt  = ib_mpool_strdup(pool, patt);
+    if ((*pcre_cpatt)->patt == NULL) {
+        pcre_free(cpatt);
+        pcre_free(edata);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Copy compiled pattern. */
+    (*pcre_cpatt)->cpatt = ib_mpool_memdup(pool, cpatt, cpatt_sz);
+    pcre_free(cpatt);
+    if ((*pcre_cpatt)->cpatt == NULL) {
+        pcre_free(edata);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Copy extra data (study data). */
+    if (edata!=NULL) {
+
+        /* Copy edata. */
+        (*pcre_cpatt)->edata = ib_mpool_memdup(pool, edata, sizeof(*edata));
+
+        if ((*pcre_cpatt)->edata == NULL) {
+            pcre_free(edata);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        /* Copy edata->study_data. */
+        (*pcre_cpatt)->edata->study_data = ib_mpool_memdup(pool,
+                                                           edata->study_data,
+                                                           study_data_sz);
+        pcre_free(edata);
+        if ((*pcre_cpatt)->edata->study_data == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+    }
+    else {
+        (*pcre_cpatt)->edata = NULL;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 
 /* -- Matcher Interface -- */
@@ -108,95 +253,16 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
                                    int *erroffset)
 {
     IB_FTRACE_INIT();
-    pcre *cpatt = NULL;
-    pcre_extra *edata = NULL;
-    modpcre_cpatt_t *pcre_cpatt;
 
-#ifdef PCRE_HAVE_JIT
-    int pcre_fullinfo_ret;
-    int pcre_jit_ret;
-#endif /*PCRE_HAVE_JIT*/
-    cpatt = pcre_compile(patt,
-                         PCRE_DOTALL | PCRE_DOLLAR_ENDONLY,
-                         errptr, erroffset, NULL);
+    ib_status_t rc;
 
-    if (cpatt == NULL) {
-        ib_util_log_error(4, "PCRE compile error for \"%s\": %s at offset %d",
-            patt, *errptr, *erroffset);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+    rc = modpcre_compile_internal(pool,
+                                  (modpcre_cpatt_t **)pcpatt,
+                                  patt,
+                                  errptr,
+                                  erroffset);
 
-    pcre_cpatt = (modpcre_cpatt_t *)ib_mpool_alloc(pool, sizeof(*pcre_cpatt));
-    if (pcre_cpatt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-
-#ifdef PCRE_HAVE_JIT
-    edata = pcre_study(cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
-    if(*errptr != NULL)  {
-        pcre_free(cpatt);
-        ib_util_log_error(4,"PCRE-JIT study failed : %s", *errptr);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* The check to see if JIT compilation was a success changed in 8.20RC1
-       now uses pcre_fullinfo see doc/pcrejit.3 */
-    pcre_fullinfo_ret = pcre_fullinfo(
-        cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
-    if (pcre_fullinfo_ret != 0) {
-        ib_util_log_error(4,"PCRE-JIT failed to get pcre_fullinfo");
-    }
-    else if (pcre_jit_ret != 1) {
-        ib_util_log_error(4,
-            "PCRE-JIT compiler does not support: %s. "
-            "It will fallback to the normal PCRE",
-            patt);
-    }
-#else
-    edata = pcre_study(cpatt, 0, errptr);
-    if(*errptr != NULL)  {
-        pcre_free(cpatt);
-        ib_util_log_error(4,"PCRE study failed : %s", *errptr);
-    }
-#endif /*PCRE_HAVE_JIT*/
-
-
-    /* Compute the size of the populated values of cpatt. */
-    pcre_fullinfo(cpatt, edata, PCRE_INFO_SIZE, &pcre_cpatt->cpatt_sz);
-
-    /* Copy pattern. */
-    pcre_cpatt->patt  = ib_mpool_strdup(pool, patt);
-    if (pcre_cpatt->patt == NULL) {
-        pcre_free(cpatt);
-        pcre_free(edata);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Copy compiled pattern. */
-    pcre_cpatt->cpatt = ib_mpool_memdup(pool, cpatt, pcre_cpatt->cpatt_sz);
-    pcre_free(cpatt);
-    if (pcre_cpatt->cpatt == NULL) {
-        pcre_free(edata);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Copy extra data (study data). */
-    if (edata!=NULL) {
-
-        /* Compute the size of the populated values of edata. */
-        pcre_fullinfo(cpatt, edata, PCRE_INFO_STUDYSIZE, &pcre_cpatt->edata_sz);
-        pcre_cpatt->edata = ib_mpool_memdup(pool, edata, pcre_cpatt->edata_sz);
-        pcre_free(edata);
-        if (pcre_cpatt->edata == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-    }
-
-    /* Return the allocated structure. */
-    *(void **)pcpatt = (void *)pcre_cpatt;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 
 }
 
@@ -266,15 +332,6 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
     modpcre_match
 };
 
-struct pcre_rule_data {
-    pcre *regex;
-    size_t regex_sz;
-    pcre_extra *regex_extra;
-    size_t regex_extra_sz;
-};
-
-typedef struct pcre_rule_data pcre_rule_data_t;
-
 /**
  * @brief Create the PCRE operator.
  * @param[in] ib The IronBee engine (unused)
@@ -295,83 +352,20 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
     IB_FTRACE_INIT();
     const char* errptr;
     int erroffset;
-    int pcre_rc;
-    pcre_rule_data_t *rule_data;
-    pcre *regex;
-    pcre_extra *regex_extra;
+    pcre_rule_data_t *rule_data = NULL;
+    ib_status_t rc;
 
-    rule_data = (pcre_rule_data_t*) ib_mpool_alloc(pool, sizeof(*rule_data));
+    rc = modpcre_compile_internal(pool,
+                                  &rule_data,
+                                  pattern,
+                                  &errptr,
+                                  &erroffset);
 
-    if (rule_data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    if (rc==IB_OK) {
+        op_inst->data = rule_data;
     }
 
-    /* Build the regular expression. */
-    regex = pcre_compile(pattern,
-                         0,
-                         &errptr,
-                         &erroffset,
-                         (const unsigned char*)NULL);
-
-    if (errptr != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    assert(regex != NULL);
-
-    /* Attempt to optimize execution of the regular expression at rule
-       evaluation time. */
-    regex_extra = pcre_study(regex, 0, &errptr);
-
-    if (regex_extra == NULL && errptr != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    pcre_rc = pcre_fullinfo(regex,
-                            NULL,
-                            PCRE_INFO_SIZE,
-                            &rule_data->regex_sz);
-
-    if (pcre_rc != 0) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    pcre_rc = pcre_fullinfo(regex,
-                            NULL,
-                            PCRE_INFO_STUDYSIZE,
-                            &rule_data->regex_extra_sz);
-
-    if (pcre_rc != 0) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Allocate data to copy regex into. */
-    rule_data->regex =
-        (pcre*) ib_mpool_alloc(pool, rule_data->regex_sz);
-
-    if (rule_data->regex == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-
-    /* Copy regex and regex_extra into rule_data. */
-    memcpy(rule_data->regex, regex, rule_data->regex_sz);
-    pcre_free(regex);
-    if (regex_extra != NULL) {
-        /* Allocate data to copy regex_extra into. */
-        rule_data->regex_extra =
-            (pcre_extra*) ib_mpool_alloc(pool, rule_data->regex_extra_sz);
-        if (rule_data->regex_extra == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-        memcpy(rule_data->regex_extra, regex_extra, rule_data->regex_extra_sz);
-    } else {
-        rule_data->regex_extra = NULL;
-    }
-
-    op_inst->data = rule_data;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -548,17 +542,20 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     assert(ib!=NULL);
     assert(tx!=NULL);
     assert(tx->dpi!=NULL);
+    assert(data!=NULL);
 
     int matches;
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
-    int *ovector = (int *)calloc(ovecsize, sizeof(*ovector));
+    int *ovector = (int *)ib_mpool_alloc(tx->mp, ovecsize*sizeof(*ovector));
     const char* subject;
     size_t subject_len;
     ib_bytestr_t* bytestr;
     pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
-    pcre_extra *regex_extra;
     pcre *regex;
+    pcre_extra *regex_extra;
+
+    memset((void*)ovector, 0, ovecsize*(*ovector));
 
     if (field->type == IB_FTYPE_NULSTR) {
         subject = ib_field_value_nulstr(field);
@@ -570,24 +567,36 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         subject = (const char*) ib_bytestr_const_ptr(bytestr);
     }
     else {
-        free(ovector);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Alloc space to copy regex. */
-    regex = (pcre*)malloc(rule_data->regex_sz);
+    regex = (pcre*)ib_mpool_memdup(tx->mp,
+                                   rule_data->cpatt,
+                                   rule_data->cpatt_sz);
+    if (regex == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
-    /* Copy rules for parallel execution. */
-    memcpy(regex, rule_data->regex, rule_data->regex_sz);
-
-    if (rule_data->regex_extra_sz == 0 ) {
+    if (rule_data->study_data_sz == 0 ) {
         regex_extra = NULL;
     }
     else {
-        regex_extra = (pcre_extra*)malloc(rule_data->regex_extra_sz);
-        memcpy(regex_extra,
-               rule_data->regex_extra,
-               rule_data->regex_extra_sz);
+        regex_extra = (pcre_extra*)ib_mpool_memdup(tx->mp,
+                                                   rule_data->edata,
+                                                   sizeof(*regex_extra));
+        if (regex_extra == NULL ) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        regex_extra->study_data = ib_mpool_memdup(tx->mp,
+                                                  rule_data->edata->study_data,
+                                                  rule_data->study_data_sz);
+
+        if (regex_extra->study_data == NULL ) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
         /* Put some modest limits on our regex. */
         regex_extra->match_limit = 1000;
         regex_extra->match_limit_recursion = 1000;
@@ -595,6 +604,10 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                             PCRE_EXTRA_MATCH_LIMIT |
                             PCRE_EXTRA_MATCH_LIMIT_RECURSION;
     }
+
+#ifdef PCRE_HAVE_JIT
+    // FIXME - init an allocate a stack. Then destroy the stack.
+#endif
 
     matches = pcre_exec(regex,
                         regex_extra,
@@ -611,7 +624,19 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         *result = 1;
     }
     else if (matches == PCRE_ERROR_NOMATCH) {
-        /* No match. Return false to the caller (*result = 0). */
+
+        if (ib_log_get_level(ib) >= 7) {
+            char* tmp_c = malloc(subject_len+1);
+            memcpy(tmp_c, subject, subject_len);
+            tmp_c[subject_len] = '\0';
+            /* No match. Return false to the caller (*result = 0). */
+            ib_log_debug(ib, 7, "No match for [%s] using pattern [%s].",
+                        tmp_c,
+                        rule_data->patt);
+            free(tmp_c);
+        }
+
+
         ib_rc = IB_OK;
         *result = 0;
     }
@@ -620,13 +645,6 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         report the error. */
         ib_rc = IB_EUNKNOWN;
         *result = 0;
-    }
-
-    free(ovector);
-    free(regex);
-
-    if (regex_extra != NULL ) {
-        free(regex_extra);
     }
 
     IB_FTRACE_RET_STATUS(ib_rc);
