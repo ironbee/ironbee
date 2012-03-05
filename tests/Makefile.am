@@ -99,6 +99,8 @@ test_util_string_SOURCES = test_util_string.cc test_main.cc
 test_util_expand_SOURCES = test_util_expand.cc test_main.cc
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
+test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)
+test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
 
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
 

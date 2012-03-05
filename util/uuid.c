@@ -29,7 +29,7 @@
 #include <ironbee/debug.h>
 
 #include <string.h>
-#include <ossp/uuid.h>
+#include <uuid.h>
 #include <assert.h>
 
 ib_status_t ib_uuid_ascii_to_bin(

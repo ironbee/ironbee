@@ -291,6 +291,7 @@ sinclude(acinclude/httpd.m4)
 sinclude(acinclude/trafficserver.m4)
 sinclude(acinclude/geoip.m4)
 sinclude(acinclude/ax_pthread.m4)
+sinclude(acinclude/ossp-uuid.m4)
 # Required libs
 CHECK_HTP()
 CHECK_PCRE()
@@ -315,9 +316,7 @@ CHECK_APU()
 CHECK_HTTPD()
 CHECK_TS()
 CHECK_GEOIP()
-
-AC_SEARCH_LIBS(uuid_create, [ossp-uuid uuid], [], [
-             AC_MSG_ERROR("Requires ossp-uuid library.")])
+CHECK_OSSP_UUID()
 
 #If we are not building plugins bail
 if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
