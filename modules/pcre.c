@@ -55,6 +55,14 @@
 /* How many matches will PCRE find and populate. */
 #define MATCH_MAX 10
 
+/* PCRE can use an independent stack or the machine stack.
+ * If PCRE_JIT_STACK is true (conditional on PCRE_HAVE_JIT being true)
+ * then pcrejit will use an independent stack. If PCRE_JIT_STACK is not
+ * defined then the machine stack will be used.  */
+#ifdef PCRE_HAVE_JIT
+#define PCRE_JIT_STACK
+#endif
+
 typedef struct modpcre_cfg_t modpcre_cfg_t;
 typedef struct modpcre_cpatt_t modpcre_cpatt_t;
 typedef struct modpcre_cpatt_t pcre_rule_data_t;
@@ -554,6 +562,9 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
     pcre *regex;
     pcre_extra *regex_extra;
+#ifdef PCRE_JIT_STACK
+    pcre_jit_stack *jit_stack = pcre_jit_stack_alloc(32*1024, 512*1024);
+#endif
 
     memset((void*)ovector, 0, ovecsize*(*ovector));
 
@@ -605,8 +616,12 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                             PCRE_EXTRA_MATCH_LIMIT_RECURSION;
     }
 
-#ifdef PCRE_HAVE_JIT
-    // FIXME - init an allocate a stack. Then destroy the stack.
+#ifdef PCRE_JIT_STACK
+    if (jit_stack == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    pcre_assign_jit_stack(regex_extra, NULL, jit_stack);
 #endif
 
     matches = pcre_exec(regex,
@@ -617,6 +632,10 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                         0, /* Options. */
                         ovector,
                         ovecsize);
+
+#ifdef PCRE_JIT_STACK
+    pcre_jit_stack_free(jit_stack);
+#endif
 
     if (matches > 0) {
         pcre_set_matches(ib, tx, "TX", ovector, matches, subject);
