@@ -103,7 +103,7 @@ TEST_F(TestIBUtilField, test_field_create)
     ASSERT_TRUE(f);
 }
 
-// Globals used to test if dyn_get caching is working
+// Globals used to test if dyn_* caching is working
 static int g_dyn_call_count;
 static char g_dyn_call_val[1024];
 
@@ -134,9 +134,23 @@ static void *dyn_get_cached(ib_field_t *f,
     void *cval = dyn_get(f, arg, alen, data);
 
     /* Cache the value */
-    ib_field_setv(f, &cval);
-
+    ib_field_setv_static(f, &cval);
+    
     return (void *)cval;
+}
+
+static ib_status_t dyn_set(
+    ib_field_t *field,
+    const void *arg, size_t alen,
+    void *val, 
+    void *data
+)
+{
+    ++g_dyn_call_count;
+    
+    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_%s_call%02d", (const char *)data, (int)alen, (const char *)arg, (const char*)val, g_dyn_call_count);
+    
+    return IB_OK;
 }
 
 ///@test Test util field library - ib_field_dyn_register_get()
@@ -154,17 +168,29 @@ TEST_F(TestIBUtilField, test_dyn_field)
     ASSERT_EQ(9UL, dynf->nlen);
     ASSERT_EQ(0, memcmp("test_dynf", dynf->name, 9));
 
-    /* Make it a dynamic field which calls dyn_get() with "dynf" as the data. */
-    ib_field_dyn_register_get(dynf, dyn_get);
-    ib_field_dyn_set_data(dynf, (void *)"dynf");
+    ib_field_dyn_register_get(dynf, dyn_get, (void*)"dynf_get");
+    ib_field_dyn_register_set(dynf, dyn_set, (void*)"dynf_set");
 
     /* Get the value from the dynamic field. */
     fval = ib_field_value_nulstr_ex(dynf, (void *)"fetch1", 6);
-    ASSERT_TRUE((fval != NULL) && (strcmp("testval_dynf_fetch1_call01", fval) == 0));
+    ASSERT_TRUE(fval);
+    ASSERT_EQ(
+        std::string("testval_dynf_get_fetch1_call01"), 
+        fval
+    );
 
     /* Get the value from the dynamic field again. */
     fval = ib_field_value_nulstr_ex(dynf, (void *)"fetch2", 6);
-    ASSERT_TRUE( (fval != NULL) && (strcmp("testval_dynf_fetch2_call02", fval)) == 0);
+    ASSERT_TRUE(fval);
+    ASSERT_EQ(
+        std::string("testval_dynf_get_fetch2_call02"),
+        fval
+    );
+    
+    /* Set */
+    rc = ib_field_setv_ex(dynf, (void*)"val1", (void*)"set1", 4);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(std::string("testval_dynf_set_set1_val1_call03"), g_dyn_call_val);
 
     /* Reset call counter. */
     g_dyn_call_count = 0;
@@ -177,14 +203,21 @@ TEST_F(TestIBUtilField, test_dyn_field)
     ASSERT_EQ(0, memcmp("test_cdynf", cdynf->name, 10));
 
     /* Make it a dynamic field which calls dyn_get_cached() with "cdynf" as the data. */
-    ib_field_dyn_register_get(cdynf, dyn_get_cached);
-    ib_field_dyn_set_data(cdynf, (void *)"cdynf");
+    ib_field_dyn_register_get(cdynf, dyn_get_cached, (void *)"cdynf_get");
 
     /* Get the value from the dynamic field. */
     fval = ib_field_value_nulstr_ex(cdynf, (void *)"fetch1", 6);
-    ASSERT_TRUE((fval != NULL) && (strcmp("testval_cdynf_fetch1_call01", fval) == 0));
+    ASSERT_TRUE(fval);
+    ASSERT_EQ(
+        std::string("testval_cdynf_get_fetch1_call01"),
+        fval
+    );
 
     /* Get the value from the dynamic field again. */
-    fval = ib_field_value_nulstr_ex(cdynf, (void *)"fetch2", 6);
-    ASSERT_TRUE((fval != NULL) && (strcmp("testval_cdynf_fetch1_call01", fval) == 0));
+    fval = ib_field_value_nulstr_ex(cdynf, NULL, 0);
+    ASSERT_TRUE(fval);
+    ASSERT_EQ(
+        std::string("testval_cdynf_get_fetch1_call01"),
+        fval
+    );
 }

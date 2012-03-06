@@ -262,11 +262,9 @@ ib_status_t ib_field_copy_ex(ib_field_t **pf,
 
     /* Copy over dynamic fields */
     (*pf)->val->fn_get = src->val->fn_get;
-#if 0
     (*pf)->val->fn_set = src->val->fn_set;
-    (*pf)->val->fn_rset = src->val->fn_rset;
-#endif
-    (*pf)->val->fndata = src->val->fndata;
+    (*pf)->val->cbdata_get = src->val->cbdata_get;
+    (*pf)->val->cbdata_set = src->val->cbdata_set;
 
     IB_FTRACE_RET_STATUS(rc);
 
@@ -338,10 +336,10 @@ ib_status_t ib_field_list_add(ib_field_t *f,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
-                                        int dtype,
-                                        uint8_t *buf,
-                                        size_t blen)
+ib_status_t ib_field_buf_add(ib_field_t *f,
+                             int dtype,
+                             uint8_t *buf,
+                             size_t blen)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -354,10 +352,11 @@ ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_field_setv(ib_field_t *f,
-                          void *pval)
+ib_status_t ib_field_setv_static(ib_field_t *f,
+                                 void *pval)
 {
     IB_FTRACE_INIT();
+
     /* Set the value based on the field type. */
     switch (f->type) {
         case IB_FTYPE_BYTESTR:
@@ -416,13 +415,49 @@ ib_status_t ib_field_setv(ib_field_t *f,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+ib_status_t ib_field_setv_ex(
+    ib_field_t *f,
+    void *pval,
+    const void* arg,
+    size_t alen
+)
+{
+    IB_FTRACE_INIT();
+
+    if (f->val->pval == NULL) {
+        if (f->val->fn_set == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        return f->val->fn_set(f, arg, alen, pval, f->val->cbdata_set);
+    }
+
+    if (arg != NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    return ib_field_setv_static(f, pval);
+}
+
+ib_status_t ib_field_setv(
+    ib_field_t *f,
+    void *pval
+)
+{
+    IB_FTRACE_INIT();
+
+    IB_FTRACE_RET_STATUS(ib_field_setv_ex(f, pval, NULL, 0));
+}
+
 void *ib_field_value_ex(ib_field_t *f, const void *arg, size_t alen)
 {
     /* If there is not a stored value, then attempt to use the
      * fn_get call to retrieve the value.
      */
     if ((f->val->pval == NULL) && (f->val->fn_get != NULL)) {
-        return f->val->fn_get(f, arg, alen, f->val->fndata);
+        return f->val->fn_get(f, arg, alen, f->val->cbdata_get);
+    }
+
+    if (arg != NULL) {
+        return NULL;
     }
 
     /* Non-pointer values are returned as pointers to those values. */
@@ -468,37 +503,25 @@ int ib_field_is_dynamic(ib_field_t *f)
     return f->val->pval ? 0 : 1;
 }
 
-void ib_field_dyn_set_data(ib_field_t *f,
-                           void *data)
-{
-    IB_FTRACE_INIT();
-    f->val->fndata = data;
-    IB_FTRACE_RET_VOID();
-}
-
 void ib_field_dyn_register_get(ib_field_t *f,
-                               ib_field_get_fn_t fn_get)
+                               ib_field_get_fn_t fn_get,
+                               void *cbdata_get)
 {
     IB_FTRACE_INIT();
     f->val->fn_get = fn_get;
+    f->val->cbdata_get = cbdata_get;
     f->val->pval = NULL;
     IB_FTRACE_RET_VOID();
 }
 
-#if 0
 void ib_field_dyn_register_set(ib_field_t *f,
-                               ib_field_set_fn_t fn_set)
+                               ib_field_set_fn_t fn_set,
+                               void *cbdata_set)
 {
     IB_FTRACE_INIT();
     f->val->fn_set = fn_set;
+    f->val->cbdata_set = cbdata_set;
+    f->val->pval = NULL;
     IB_FTRACE_RET_VOID();
 }
 
-void ib_field_dyn_register_rset(ib_field_t *f,
-                                ib_field_rset_fn_t fn_rset)
-{
-    IB_FTRACE_INIT();
-    f->val->fn_rset = fn_rset;
-    IB_FTRACE_RET_VOID();
-}
-#endif

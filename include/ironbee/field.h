@@ -54,42 +54,36 @@ extern "C" {
 /**
  * Dynamic field get function.
  *
- * @param f Field
- * @param data Userdata
+ * @param field Field in question; use to access type.
+ * @param arg   Optional argument (e.g., subkey).
+ * @param alen  Length of @a arg.
+ * @param data  Callback data.
  *
- * @returns Value
+ * @returns Value.
  */
-typedef void *(*ib_field_get_fn_t)(ib_field_t *f,
-                                   const void *arg, size_t alen,
-                                   void *data);
+typedef void *(*ib_field_get_fn_t)(
+    ib_field_t *field,
+    const void *arg, size_t alen,
+    void *data
+);
 
-#if 0
 /**
  * Dynamic field set function.
  *
- * @param f Field
- * @param val Value to set
- * @param data Userdata
+ * @param field Field in question; use to access type.
+ * @param arg   Optional argument (e.g., subkey).
+ * @param alen  Length of @a arg.
+ * @param val   Value to set.
+ * @param data  Callback data.
  *
- * @returns Old value
+ * @returns Status code
  */
-typedef void *(*ib_field_set_fn_t)(ib_field_t *f,
-                                   void *arg, size_t alen,
-                                   void *val, void *data);
-
-/**
- * Dynamic field relative set function.
- *
- * @param f Field
- * @param val Numeric incrementor value
- * @param data Userdata
- *
- * @returns Old value
- */
-typedef void *(*ib_field_rset_fn_t)(ib_field_t *f,
-                                    void *arg, size_t alen,
-                                    intmax_t val, void *data);
-#endif
+typedef ib_status_t (*ib_field_set_fn_t)(
+    ib_field_t *field,
+    const void *arg, size_t alen,
+    void *val,
+    void *data
+);
 
 
 /** Field Structure */
@@ -281,6 +275,17 @@ ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
                                         size_t blen);
 
 /**
+ * Set a field value, skipping dynamic setter.
+ *
+ * @param f Field to add
+ * @param pval Pointer to value to store in field (based on type)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_setv_static(ib_field_t *f,
+                                            void *pval);
+
+/**
  * Set a field value.
  *
  * @param f Field to add
@@ -292,10 +297,25 @@ ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
                                      void *pval);
 
 /**
+ * Set a field value, passing the argument on to dynamic fields.
+ *
+ * @param f Field to add
+ * @param pval Pointer to value to store in field (based on type)
+ * @param[in] arg Arbitrary argument.  Use NULL for non-dynamic fields.
+ * @param[in] alen Argument length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_setv_ex(ib_field_t *f,
+                                        void *pval,
+                                        const void* arg,
+                                        size_t alen);
+
+/**
  * Get the value stored in the field, passing the argument on to dynamic fields.
  *
  * @param[in] f Field
- * @param[in] arg Arbitrary argument
+ * @param[in] arg Arbitrary argument.  Use NULL for non-dynamic fields.
  * @param[in] alen Argument length
  *
  * @returns Value stored in the field
@@ -310,10 +330,10 @@ void DLL_PUBLIC *ib_field_value_ex(ib_field_t *f,
  *
  * @param[in] f Field
  * @param[in] t Field type number
- * @param[in] arg Arbitrary argument
+ * @param[in] arg Arbitrary argument.  Use NULL for non-dynamic fields.
  * @param[in] alen Argument length
  *
- * @returns Value stored in the field
+ * @returns Value stored in the field.
  */
 void DLL_PUBLIC *ib_field_value_type_ex(ib_field_t *f,
                                         ib_ftype_t t,
@@ -401,43 +421,26 @@ void DLL_PUBLIC *ib_field_value_type(ib_field_t *f, ib_ftype_t t);
 int ib_field_is_dynamic(ib_field_t *f);
 
 /**
- * Set userdata for dynamic field access.
- *
- * @param f Field
- * @param data Userdata
- */
-void DLL_PUBLIC ib_field_dyn_set_data(ib_field_t *f,
-                                      void *data);
-
-/**
  * Register dynamic get function.
  *
- * @param f Field
- * @param fn_get Userdata
+ * @param f          Field.
+ * @param fn_get     Get function.
+ * @param cbdata_get Callback data for @a fn_get.
  */
 void DLL_PUBLIC ib_field_dyn_register_get(ib_field_t *f,
-                                          ib_field_get_fn_t fn_get);
+                                          ib_field_get_fn_t fn_get,
+                                          void *cbdata_get);
 
-#if 0
 /**
  * Register dynamic set function.
  *
- * @param f Field
- * @param fn_set Userdata
+ * @param f          Field.
+ * @param fn_set     set function.
+ * @param cbdata_set Callback data for @a fn_set.
  */
 void DLL_PUBLIC ib_field_dyn_register_set(ib_field_t *f,
-                                          ib_field_set_fn_t fn_set);
-
-/**
- * Register dynamic rset function.
- *
- * @param f Field
- * @param fn_rset Userdata
- */
-void DLL_PUBLIC ib_field_dyn_register_rset(ib_field_t *f,
-                                           ib_field_rset_fn_t fn_rset);
-#endif
-
+                                          ib_field_set_fn_t fn_set,
+                                          void *cbdata_set);
 /**
  * @} IronBeeUtilField
  */

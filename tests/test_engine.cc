@@ -177,8 +177,8 @@ TEST(TestIronBee, test_dpi)
     ASSERT_MEMEQ("test_dynf", dynf->name, 9);
 
     /* Make it a dynamic field which calls dyn_get() with "dynf" as the data. */
-    ib_field_dyn_register_get(dynf, (ib_field_get_fn_t)dyn_get);
-    ib_field_dyn_set_data(dynf, (void *)ib_engine_pool_main_get(ib));
+    ib_field_dyn_register_get(dynf, (ib_field_get_fn_t)dyn_get, 
+        (void *)ib_engine_pool_main_get(ib));
 
     /* Add the field to the data store. */
     ASSERT_EQ(IB_OK, ib_data_add(dpi, dynf));
