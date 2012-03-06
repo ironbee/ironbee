@@ -491,7 +491,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     if (rc == IB_ENOENT) {
         *result = 0;
         IB_FTRACE_RET_STATUS(IB_OK);
-    } 
+    }
     else if (rc == IB_OK) {
         *result = (ac_ctx.match_cnt > 0) ? 1 : 0;
         IB_FTRACE_RET_STATUS(IB_OK);

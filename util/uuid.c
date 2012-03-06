@@ -55,7 +55,7 @@ ib_status_t ib_uuid_ascii_to_bin(
     uuid_rc = uuid_create(&ossp_uuid);
     if (uuid_rc == UUID_RC_MEM) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
-    } 
+    }
     else if (uuid_rc != UUID_RC_OK) {
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
@@ -64,7 +64,7 @@ ib_status_t ib_uuid_ascii_to_bin(
     uuid_rc = uuid_import(ossp_uuid, UUID_FMT_STR, str, str_len);
     if (uuid_rc == UUID_RC_MEM) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
-    } 
+    }
     else if (uuid_rc != UUID_RC_OK) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -72,7 +72,7 @@ ib_status_t ib_uuid_ascii_to_bin(
     uuid_rc = uuid_export(ossp_uuid, UUID_FMT_BIN, (void *)&uuid, &uuid_len);
     if (uuid_rc == UUID_RC_MEM) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
-    } 
+    }
     else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_BIN) {
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
