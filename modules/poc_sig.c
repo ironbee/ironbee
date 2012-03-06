@@ -258,7 +258,8 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     if (current_arg == NULL) {
         ib_log_debug(ib, 4, "No PocSig action");
         action = "";
-    } else {
+    } 
+    else {
         action = (const char*)ib_list_node_data_const(current_arg);
     }
 

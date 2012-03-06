@@ -101,7 +101,8 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
 
     if (action->fn_create != NULL) {
         rc = action->fn_create(ib, ctx, pool, parameters, *act_inst);
-    } else {
+    } 
+    else {
         rc = IB_OK;
     }
 
@@ -116,7 +117,8 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
     if (act_inst != NULL && act_inst->action != NULL
         && act_inst->action->fn_destroy != NULL) {
         rc = act_inst->action->fn_destroy(act_inst);
-    } else {
+    } 
+    else {
         rc = IB_OK;
     }
 
@@ -136,7 +138,8 @@ ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
                                           rule,
                                           tx,
                                           act_inst->flags);
-    } else {
+    } 
+    else {
         rc = IB_OK;
     }
 

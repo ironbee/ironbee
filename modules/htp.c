@@ -244,7 +244,8 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
             ib_log_debug(ib, 9, "Failed to add %s field: %s",
                          collection_name, flag);
         }
-    } else {
+    } 
+    else {
         ib_log_debug(ib, 9, "Failed to add flag collection: %s",
                      collection_name);
     }
