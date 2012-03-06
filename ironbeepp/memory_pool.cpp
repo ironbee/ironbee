@@ -60,12 +60,12 @@ ib_status_t cleanup(
     IB_FTRACE_INIT();
 
     // We have no engine...
-    IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( NULL,
-        Internal::data_to_value<MemoryPool::cleanup_t>( cbdata )()
-    ) );
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(NULL,
+        Internal::data_to_value<MemoryPool::cleanup_t>(cbdata)()
+    ));
 
     // Now we need to clear our own callback data.
-    delete reinterpret_cast<boost::any*>( cbdata );
+    delete reinterpret_cast<boost::any*>(cbdata);
 }
 
 } // extern "C"
@@ -86,13 +86,13 @@ MemoryPool create_memory_pool(
         &ib_mpool,
         name,
         parent,
-        ( size != 0 ? size : 1024 )
+        (size != 0 ? size : 1024)
     );
 
-    Internal::throw_if_error( rc );
-    assert( ib_mpool != NULL );
+    Internal::throw_if_error(rc);
+    assert(ib_mpool != NULL);
 
-    return MemoryPool( ib_mpool );
+    return MemoryPool(ib_mpool);
 }
 
 }
@@ -105,7 +105,7 @@ MemoryPool::MemoryPool()
 
 MemoryPool MemoryPool::create()
 {
-    return create( "MemoryPool" );
+    return create("MemoryPool");
 }
 
 MemoryPool MemoryPool::create(
@@ -113,7 +113,7 @@ MemoryPool MemoryPool::create(
     size_t      size
 )
 {
-    return Internal::create_memory_pool( name, NULL, size );
+    return Internal::create_memory_pool(name, NULL, size);
 }
 
 MemoryPool MemoryPool::create(
@@ -122,7 +122,7 @@ MemoryPool MemoryPool::create(
     size_t      size
 )
 {
-    if ( ! parent ) {
+    if (! parent) {
         BOOST_THROW_EXCEPTION(
           einval() << errinfo_what(
             "Singular parent provided to memory pool."
@@ -130,12 +130,12 @@ MemoryPool MemoryPool::create(
         );
 
     }
-    return Internal::create_memory_pool( name, parent.ib(), size );
+    return Internal::create_memory_pool(name, parent.ib(), size);
 }
 
 MemoryPool MemoryPool::create_subpool()
 {
-    return create( "SubPool", *this );
+    return create("SubPool", *this);
 }
 
 MemoryPool MemoryPool::create_subpool(
@@ -143,18 +143,18 @@ MemoryPool MemoryPool::create_subpool(
     size_t      size
 )
 {
-    return create( subpool_name, *this, size );
+    return create(subpool_name, *this, size);
 }
 
 const char* MemoryPool::name() const
 {
-    return ib_mpool_name( ib() );
+    return ib_mpool_name(ib());
 }
 
-void* MemoryPool::alloc( size_t size )
+void* MemoryPool::alloc(size_t size)
 {
-    void* memory = ib_mpool_alloc( ib(), size );
-    if ( ! memory ) {
+    void* memory = ib_mpool_alloc(ib(), size);
+    if (! memory) {
         BOOST_THROW_EXCEPTION(
           ealloc() << errinfo_what(
             "ib_mpool_alloc() returned NULL"
@@ -164,10 +164,10 @@ void* MemoryPool::alloc( size_t size )
     return memory;
 }
 
-void* MemoryPool::calloc( size_t count, size_t size )
+void* MemoryPool::calloc(size_t count, size_t size)
 {
-    void* memory = ib_mpool_calloc( ib(), count, size );
-    if ( ! memory ) {
+    void* memory = ib_mpool_calloc(ib(), count, size);
+    if (! memory) {
         BOOST_THROW_EXCEPTION(
           ealloc() << errinfo_what(
             "ib_mpool_calloc() returned NULL"
@@ -177,22 +177,22 @@ void* MemoryPool::calloc( size_t count, size_t size )
     return memory;
 }
 
-void* MemoryPool::calloc( size_t size )
+void* MemoryPool::calloc(size_t size)
 {
-    return calloc( 1, size );
+    return calloc(1, size);
 }
 
 void MemoryPool::clear()
 {
-    ib_mpool_clear( ib() );
+    ib_mpool_clear(ib());
 }
 
 void MemoryPool::destroy()
 {
-    ib_mpool_destroy( ib() );
+    ib_mpool_destroy(ib());
 }
 
-void MemoryPool::register_cleanup( cleanup_t f )
+void MemoryPool::register_cleanup(cleanup_t f)
 {
     // We can't use this as the memory pool for value_to_data because then
     // the callback would be deleted before it is called.  The callback
@@ -205,19 +205,20 @@ void MemoryPool::register_cleanup( cleanup_t f )
             NULL // See above
         )
     );
-    Internal::throw_if_error( rc );
+    Internal::throw_if_error(rc);
 }
 
-bool MemoryPool::operator==( const MemoryPool& other ) const
+bool MemoryPool::operator==(const MemoryPool& other) const
 {
-    return ( ! *this && ! other ) || ( ib() == other.ib() );
+    return (! *this && ! other) || (ib() == other.ib());
 }
 
-bool MemoryPool::operator<( const MemoryPool& other ) const
+bool MemoryPool::operator<(const MemoryPool& other) const
 {
-    if ( ! *this ) {
+    if (! *this) {
         return ! other;
-    } else {
+    } 
+    else {
         return ib() < other.ib();
     }
 }
@@ -232,8 +233,8 @@ const ib_mpool_t* MemoryPool::ib() const
     return m_data->ib_mpool;
 }
 
-MemoryPool::MemoryPool( ib_mpool_t* ib_mpool ) :
-    m_data( boost::make_shared<Internal::MemoryPoolData>() )
+MemoryPool::MemoryPool(ib_mpool_t* ib_mpool) :
+    m_data(boost::make_shared<Internal::MemoryPoolData>())
 {
     m_data->ib_mpool = ib_mpool;
 }
@@ -243,7 +244,7 @@ MemoryPool::operator unspecified_bool_type() const
     return m_data ? unspecified_bool : 0;
 }
 
-std::ostream& operator<<( std::ostream& o, const MemoryPool& memory_pool )
+std::ostream& operator<<(std::ostream& o, const MemoryPool& memory_pool)
 {
     o << "IronBee::MemoryPool[" << memory_pool.name() << "]";
 
@@ -251,13 +252,13 @@ std::ostream& operator<<( std::ostream& o, const MemoryPool& memory_pool )
 }
 
 ScopedMemoryPool::ScopedMemoryPool() :
-    m_pool( MemoryPool::create( "ScopedMemoryPool" ) )
+    m_pool(MemoryPool::create("ScopedMemoryPool"))
 {
     // nop
 }
 
-ScopedMemoryPool::ScopedMemoryPool( const char* name, size_t size ) :
-    m_pool( MemoryPool::create( name, size ) )
+ScopedMemoryPool::ScopedMemoryPool(const char* name, size_t size) :
+    m_pool(MemoryPool::create(name, size))
 {
     // nop
 }

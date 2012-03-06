@@ -33,9 +33,9 @@
  * @code
  * BOOST_THROW_EXCEPTION(
  *     IronBee::enoent
- *         << errinfo_what( "Entry not found " )
- *         << errinfo_level( 3 )
- * );
+ *         << errinfo_what("Entry not found ")
+ *         << errinfo_level(3)
+ *);
  * @endcode
  *
  * The boost::diagnostic_information() of an exception is also logged to the

@@ -49,7 +49,7 @@ public:
   );
 
   //! Produce an input.  See input_t and input_generator_t.
-  bool operator()( input_t& out_input );
+  bool operator()(input_t& out_input);
 
 private:
   on_error_t                      m_on_error;

@@ -119,7 +119,7 @@ ib_status_t ibpp_caught_unknown_exception(
  *
  * @returns ib_engine_t* form of @a engine.
  **/
-ib_engine_t* normalize_engine( Engine& engine );
+ib_engine_t* normalize_engine(Engine& engine);
 
 /**
  * Overload of previous function to handle trivial case.
@@ -129,7 +129,7 @@ ib_engine_t* normalize_engine( Engine& engine );
  *
  * @returns @a engine
  **/
-ib_engine_t* normalize_engine( ib_engine_t* engine );
+ib_engine_t* normalize_engine(ib_engine_t* engine);
 
 } // Internal
 } // IronBee
@@ -144,11 +144,11 @@ ib_engine_t* normalize_engine( ib_engine_t* engine );
  * @param[in] exception_type The type of the exception to catch.
  * @param[in] ib_status      The return value to return.
  **/
-#define IBPP_CATCH_IB(  ib_engine, exception_type, ib_status ) \
-    catch ( const exception_type& e ) { \
+#define IBPP_CATCH_IB(ib_engine, exception_type, ib_status) \
+    catch (const exception_type& e) { \
         ibpp_try_catch_status = \
-            ::IronBee::Internal::ibpp_caught_ib_exception( \
-                ::IronBee::Internal::normalize_engine( ib_engine ), \
+            ::IronBee::Internal::ibpp_caught_ib_exception(\
+                ::IronBee::Internal::normalize_engine(ib_engine), \
                 ib_status, \
                 e \
             ); \
@@ -164,11 +164,11 @@ ib_engine_t* normalize_engine( ib_engine_t* engine );
  * @param[in] exception_type The type of the exception to catch.
  * @param[in] ib_status      The return value to return.
  **/
-#define IBPP_CATCH_STD(  ib_engine, exception_type, ib_status ) \
-    catch ( const exception_type& e ) { \
+#define IBPP_CATCH_STD(ib_engine, exception_type, ib_status) \
+    catch (const exception_type& e) { \
         ibpp_try_catch_status = \
-            ::IronBee::Internal::ibpp_caught_std_exception( \
-                ::IronBee::Internal::normalize_engine( ib_engine ), \
+            ::IronBee::Internal::ibpp_caught_std_exception(\
+                ::IronBee::Internal::normalize_engine(ib_engine), \
                 ib_status, \
                 e \
             ); \
@@ -185,7 +185,7 @@ ib_engine_t* normalize_engine( ib_engine_t* engine );
  *
  * E.g.,
  * @code
- * IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine, my_cpp_func() ) );
+ * IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine, my_cpp_func()));
  * @endcode
  *
  * If @a ib_engine is non-NULL, an error log message will be logged via
@@ -216,43 +216,43 @@ ib_engine_t* normalize_engine( ib_engine_t* engine );
  *                      ib_engine_t*, or an IronBee::Engine&.
  * @param[in] statement The statement to evaluate.
  **/
-#define IBPP_TRY_CATCH( ib_engine, statement) \
+#define IBPP_TRY_CATCH(ib_engine, statement) \
      ({ \
         ib_status_t ibpp_try_catch_status = IB_OK; \
         try { (statement); } \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::declined,     IB_DECLINED  ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::eunknown,     IB_EUNKNOWN  ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::enotimpl,     IB_ENOTIMPL  ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::eincompat,    IB_EINCOMPAT ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::ealloc,       IB_EALLOC    ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::einval,       IB_EINVAL    ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::enoent,       IB_ENOENT    ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::etrunc,       IB_ETRUNC    ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::etimedout,    IB_ETIMEDOUT ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::eagain,       IB_EAGAIN    ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::eother,       IB_EOTHER    ) \
-        IBPP_CATCH_IB(  (ib_engine), ::IronBee::error,        IB_EUNKNOWN  ) \
-        IBPP_CATCH_STD( (ib_engine), ::std::invalid_argument, IB_EINVAL    ) \
-        IBPP_CATCH_STD( (ib_engine), ::std::bad_alloc,        IB_EALLOC    ) \
-        catch ( const boost::exception& e ) {\
+        IBPP_CATCH_IB((ib_engine), ::IronBee::declined,     IB_DECLINED) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::eunknown,     IB_EUNKNOWN) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::enotimpl,     IB_ENOTIMPL) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::eincompat,    IB_EINCOMPAT) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::ealloc,       IB_EALLOC) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::einval,       IB_EINVAL) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::enoent,       IB_ENOENT) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::etrunc,       IB_ETRUNC) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::etimedout,    IB_ETIMEDOUT) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::eagain,       IB_EAGAIN) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::eother,       IB_EOTHER) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::error,        IB_EUNKNOWN) \
+        IBPP_CATCH_STD((ib_engine), ::std::invalid_argument, IB_EINVAL) \
+        IBPP_CATCH_STD((ib_engine), ::std::bad_alloc,        IB_EALLOC) \
+        catch (const boost::exception& e) {\
             ibpp_try_catch_status = \
-                ::IronBee::Internal::ibpp_caught_boost_exception( \
-                    ::IronBee::Internal::normalize_engine( (ib_engine) ), \
+                ::IronBee::Internal::ibpp_caught_boost_exception(\
+                    ::IronBee::Internal::normalize_engine((ib_engine)), \
                     e \
                 ); \
         } \
-        catch ( const std::exception& e ) {\
+        catch (const std::exception& e) {\
             ibpp_try_catch_status = \
-                ::IronBee::Internal::ibpp_caught_std_exception( \
-                    ::IronBee::Internal::normalize_engine( (ib_engine) ), \
+                ::IronBee::Internal::ibpp_caught_std_exception(\
+                    ::IronBee::Internal::normalize_engine((ib_engine)), \
                     IB_EUNKNOWN, \
                     e \
                 ); \
         } \
-        catch( ... ) {\
+        catch(...) {\
             ibpp_try_catch_status = \
-                ::IronBee::Internal::ibpp_caught_unknown_exception( \
-                    ::IronBee::Internal::normalize_engine( (ib_engine) ) \
+                ::IronBee::Internal::ibpp_caught_unknown_exception(\
+                    ::IronBee::Internal::normalize_engine((ib_engine)) \
                 ); \
         } \
         ibpp_try_catch_status; \

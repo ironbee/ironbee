@@ -62,7 +62,7 @@ extern "C" {
  * @param[in] data Data to clean up (delete).
  * @returns IB_OK
  **/
-ib_status_t data_cleanup( void* data );
+ib_status_t data_cleanup(void* data);
 
 } // extern "C"
 
@@ -80,16 +80,16 @@ ib_status_t data_cleanup( void* data );
  * @throw einval if @a ValueType is incorrect.
  **/
 template <typename ValueType>
-ValueType data_to_value( void* data )
+ValueType data_to_value(void* data)
 {
     IB_FTRACE_INIT();
 
-    boost::any* data_any = reinterpret_cast<boost::any*>( data );
+    boost::any* data_any = reinterpret_cast<boost::any*>(data);
 
     try {
-        return boost::any_cast<ValueType>( *data_any );
+        return boost::any_cast<ValueType>(*data_any);
     }
-    catch ( boost::bad_any_cast ) {
+    catch (boost::bad_any_cast) {
         BOOST_THROW_EXCEPTION(
           einval() << errinfo_what(
             "Stored type mismatch."
@@ -120,17 +120,17 @@ void* value_to_data(
     ib_mpool_t* mpool
 )
 {
-    boost::any* value_any = new boost::any( value );
+    boost::any* value_any = new boost::any(value);
 
-    if ( mpool ) {
+    if (mpool) {
         ib_mpool_cleanup_register(
             mpool,
             data_cleanup,
-            reinterpret_cast<void*>( value_any )
+            reinterpret_cast<void*>(value_any)
         );
     }
 
-    return reinterpret_cast<void*>( value_any );
+    return reinterpret_cast<void*>(value_any);
 }
 
 } // Internal

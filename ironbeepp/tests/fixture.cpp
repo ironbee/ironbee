@@ -38,11 +38,11 @@ IBPPTestFixture::IBPPTestFixture()
     ib_initialize();
 
     ib_status_t rc = ib_engine_create(&m_ib_engine, &m_ib_plugin);
-    if ( rc != IB_OK ) {
+    if (rc != IB_OK) {
         throw std::runtime_error("ib_engine_create failed.");
     }
     rc = ib_engine_init(m_ib_engine);
-    if ( rc != IB_OK ) {
+    if (rc != IB_OK) {
         throw std::runtime_error("ib_engine_init failed.");
     }
 }

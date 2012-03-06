@@ -42,25 +42,26 @@ ib_status_t ibpp_caught_ib_exception(
     const error& e
 )
 {
-    if ( engine ) {
+    if (engine) {
         std::string message;
         int level = 1;
 
-        message = std::string( ib_status_to_string( status ) ) + ":";
-        if ( boost::get_error_info<errinfo_what>( e ) ) {
-            message += *boost::get_error_info<errinfo_what>( e );
-        } else {
+        message = std::string(ib_status_to_string(status)) + ":";
+        if (boost::get_error_info<errinfo_what>(e)) {
+            message += *boost::get_error_info<errinfo_what>(e);
+        } 
+        else {
             message += "IronBee++ Exception but no explanation provided.  "
                        "Please report as bug.";
         }
 
-        if ( boost::get_error_info<errinfo_level>( e ) ) {
-            level = *boost::get_error_info<errinfo_level>( e );
+        if (boost::get_error_info<errinfo_level>(e)) {
+            level = *boost::get_error_info<errinfo_level>(e);
         }
 
-        ib_log_error( engine, level, "%s", message.c_str() );
-        ib_log_debug( engine, level, "%s",
-            diagnostic_information( e ).c_str()
+        ib_log_error(engine, level, "%s", message.c_str());
+        ib_log_debug(engine, level, "%s",
+            diagnostic_information(e).c_str()
         );
     }
     return status;
@@ -71,24 +72,25 @@ ib_status_t ibpp_caught_boost_exception(
     const boost::exception& e
 )
 {
-    if ( engine ) {
+    if (engine) {
         std::string message;
         int level = 1;
 
         message = "Unknown boost::exception thrown: ";
-        if ( boost::get_error_info<boost::throw_function>( e ) ) {
-            message += *boost::get_error_info<boost::throw_function>( e );
-        } else {
+        if (boost::get_error_info<boost::throw_function>(e)) {
+            message += *boost::get_error_info<boost::throw_function>(e);
+        } 
+        else {
             message += "No information provided.  Please report as bug.";
         }
 
-        if ( boost::get_error_info<errinfo_level>( e ) ) {
-            level = *boost::get_error_info<errinfo_level>( e );
+        if (boost::get_error_info<errinfo_level>(e)) {
+            level = *boost::get_error_info<errinfo_level>(e);
         }
 
-        ib_log_error( engine, level, "%s", message.c_str() );
-        ib_log_debug( engine, level, "%s",
-            diagnostic_information( e ).c_str()
+        ib_log_error(engine, level, "%s", message.c_str());
+        ib_log_debug(engine, level, "%s",
+            diagnostic_information(e).c_str()
         );
     }
 
@@ -101,16 +103,17 @@ ib_status_t ibpp_caught_std_exception(
     const std::exception& e
 )
 {
-    if ( engine && status != IB_EALLOC ) {
+    if (engine && status != IB_EALLOC) {
         std::string message;
-        if ( status == IB_EINVAL ) {
+        if (status == IB_EINVAL) {
             message = "Invalid argument: ";
-        } else {
+        } 
+        else {
             message = "Unknown std::exception thrown: ";
         }
         message += e.what();
 
-        ib_log_error( engine, 1, "%s", message.c_str() );
+        ib_log_error(engine, 1, "%s", message.c_str());
     }
 
     return status;
@@ -120,8 +123,8 @@ ib_status_t ibpp_caught_unknown_exception(
     ib_engine_t* engine
 )
 {
-    if ( engine ) {
-        ib_log_error( engine, 1, "%s",
+    if (engine) {
+        ib_log_error(engine, 1, "%s",
             "Completely unknown exception thrown.  "
             "Please report as bug."
         );
@@ -130,12 +133,12 @@ ib_status_t ibpp_caught_unknown_exception(
     return IB_EUNKNOWN;
 }
 
-ib_engine_t* normalize_engine( Engine& engine )
+ib_engine_t* normalize_engine(Engine& engine)
 {
     return engine.ib();
 }
 
-ib_engine_t* normalize_engine( ib_engine_t* engine )
+ib_engine_t* normalize_engine(ib_engine_t* engine)
 {
     return engine;
 }

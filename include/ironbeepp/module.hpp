@@ -76,25 +76,25 @@ public:
     Module();
 
     //! Associated Engine.
-    Engine        engine()         const;
+    Engine engine() const;
 
     //! Version number.
-    uint32_t      version_number() const;
+    uint32_t version_number() const;
 
     //! ABI number.
-    uint32_t      abi_number()     const;
+    uint32_t abi_number() const;
 
     //! Version string.
-    const char*   version()        const;
+    const char* version() const;
 
     //! Filename.
-    const char*   filename()       const;
+    const char* filename() const;
 
     //! Index.
-    size_t        index()          const;
+    size_t index() const;
 
     //! Name.
-    const char*   name()           const;
+    const char* name() const;
 
     /**
      * @name Callbacks
@@ -110,30 +110,30 @@ public:
      */
     //@{
     //! Called on module initialization.
-    typedef boost::function<void ( Module )>          initialize_t;
+    typedef boost::function<void (Module)>          initialize_t;
      //! Called on module finalization.
-    typedef boost::function<void ( Module )>          finalize_t;
+    typedef boost::function<void (Module)>          finalize_t;
     //! Called on context open.
-    typedef boost::function<void ( Module, Context )> context_open_t;
+    typedef boost::function<void (Module, Context)> context_open_t;
     //! Called on context close.
-    typedef boost::function<void ( Module, Context )> context_close_t;
+    typedef boost::function<void (Module, Context)> context_close_t;
     //! Called on context destroy.
-    typedef boost::function<void ( Module, Context )> context_destroy_t;
+    typedef boost::function<void (Module, Context)> context_destroy_t;
 
     //! Set initialization function.
-    void set_initialize(      initialize_t      f );
+    void set_initialize(initialize_t f);
     //! Set finalize function.
-    void set_finalize(        finalize_t        f );
+    void set_finalize(finalize_t f);
     //! Set context open function.
-    void set_context_open(    context_open_t    f );
+    void set_context_open(context_open_t f);
     //! Set context close function.
-    void set_context_close(   context_close_t   f );
+    void set_context_close(context_close_t f);
     //! Set context destroy function.
-    void set_context_destroy( context_destroy_t f );
+    void set_context_destroy(context_destroy_t f);
     //@}
 
     /// @cond Internal
-    typedef void ( *unspecified_bool_type )( Module*** );
+    typedef void (*unspecified_bool_type)(Module***);
     /// @endcond
     /**
      * Is not singular?
@@ -154,7 +154,7 @@ public:
      * @param[in] other Module to compare to.
      * @return true iff other.ib() == ib().
      **/
-    bool operator==( const Module& other ) const;
+    bool operator==(const Module& other) const;
 
     /**
      * Less than operator.
@@ -165,7 +165,7 @@ public:
      * @param[in] other Module to compare to.
      * @return true iff this and other are singular or  ib() < other.ib().
      **/
-    bool operator<( const Module& other ) const;
+    bool operator<(const Module& other) const;
 
 #ifdef IBPP_EXPOSE_C
     /**
@@ -182,7 +182,7 @@ public:
     const ib_module_t* ib() const;
     //! Construct Module from ib_module_t.
     explicit
-    Module( ib_module_t* ib_module );
+    Module(ib_module_t* ib_module);
     ///@}
 #endif
 
@@ -191,7 +191,7 @@ private:
 
     data_t m_data;
     // Used for unspecified_bool_type.
-    static void unspecified_bool( Module*** ) {};
+    static void unspecified_bool(Module***) {};
 };
 
 /**
@@ -204,7 +204,7 @@ private:
  * @param[in] module Module to output.
  * @return @a o
  **/
-std::ostream& operator<<( std::ostream& o, const Module& module );
+std::ostream& operator<<(std::ostream& o, const Module& module);
 
 } // IronBee
 

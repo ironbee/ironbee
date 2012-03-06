@@ -11,27 +11,27 @@ namespace CLI {
 namespace  {
 
 //! Remaining bytes in \a f.
-size_t remaining( ifstream& f )
+size_t remaining(ifstream& f)
 {
   size_t length;
   auto current = f.tellg();
-  f.seekg( 0, ios::end );
+  f.seekg(0, ios::end);
   length = f.tellg();
-  f.seekg( current, ios::beg );
+  f.seekg(current, ios::beg);
 
   return length - current;
 }
 
 //! Load \a file into \a buffer.
-void load( vector<char>& buffer, const string& file )
+void load(vector<char>& buffer, const string& file)
 {
-  ifstream in( file.c_str() );
-  if ( ! in ) {
-    throw runtime_error( "Could not read " + file );
+  ifstream in(file.c_str());
+  if (! in) {
+    throw runtime_error("Could not read " + file);
   }
-  auto length = remaining( in );
-  buffer = vector<char>( length );
-  in.read( &*buffer.begin(), length );
+  auto length = remaining(in);
+  buffer = vector<char>(length);
+  in.read(&*buffer.begin(), length);
 }
 
 }
@@ -40,20 +40,20 @@ RawGenerator::RawGenerator(
   const std::string& request_path,
   const std::string& response_path
 ) :
-  m_produced_input( false )
+  m_produced_input(false)
 {
-  load( m_request_buffer,  request_path  );
-  load( m_response_buffer, response_path );
+  load(m_request_buffer,  request_path);
+  load(m_response_buffer, response_path);
 }
 
-bool RawGenerator::operator()( input_t& out_input )
+bool RawGenerator::operator()(input_t& out_input)
 {
-  if ( m_produced_input ) {
+  if (m_produced_input) {
     return false;
   }
 
-  out_input.local_ip          = buffer_t( local_ip );
-  out_input.remote_ip         = buffer_t( remote_ip );
+  out_input.local_ip          = buffer_t(local_ip);
+  out_input.remote_ip         = buffer_t(remote_ip);
   out_input.local_port        = local_port;
   out_input.remote_port       = remote_port;
   out_input.transactions.clear();

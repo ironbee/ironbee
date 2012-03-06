@@ -52,7 +52,7 @@ public:
     const ib_context_t* ib() const;
 
     explicit
-    Context( ib_context_t* ib_context );
+    Context(ib_context_t* ib_context);
 #endif
 
 private:

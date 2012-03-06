@@ -46,7 +46,7 @@
  *
  * The methods a delegate must define are:
  *
- * - @c constructor( @c IronBee::Module @a module ) &mdash; The constructor is
+ * - @c constructor(@c IronBee::Module @a module) &mdash; The constructor is
  *   the only time the module is provided.  If subclassing ModuleDelegate, it
  *   should be passed to the parent constructor which will make it available
  *   via ModuleDelegate::module().  If not subclassing, you should store it
@@ -60,13 +60,13 @@
  * - @c initialize() &mdash; @c initialize is called when the engine
  *   initializes the module.  This is where you should set up hooks or
  *   otherwise do initial interaction with the engine.
- * - @c context_open( @c IronBee::Context @a context ) &mdash; @c
+ * - @c context_open(@c IronBee::Context @a context) &mdash; @c
  *   context_open is called whenever a new context is opened.  The lifetime
  *   of @a context is until just after the corresponding @c context_destroy
  *   is called.
- * - @c context_close( @c IronBee::Context @a context ) &mdash; As above, but
+ * - @c context_close(@c IronBee::Context @a context) &mdash; As above, but
  *   for the context closing.
- * - @c context_destroy( @c IronBee::Context @a context ) &mdash; As above,
+ * - @c context_destroy(@c IronBee::Context @a context) &mdash; As above,
  *   but for the context being destroyed.
  *
  * Any exceptions thrown in your code, will be translated into, when possible,
@@ -83,7 +83,7 @@
  * #include "my_module_delegate.hpp"
  * #include <ironbeepp/module_bootstrap.hpp>
  *
- * IBPP_BOOTSTRAP_MODULE_DELEGATE( "my_module", MyModuleDelegate );
+ * IBPP_BOOTSTRAP_MODULE_DELEGATE("my_module", MyModuleDelegate);
  * @endcode
  *
  * Example file using an on load function:
@@ -91,7 +91,7 @@
  * #include "my_module_implementation.hpp"
  * #include <ironbeepp/module_bootstrap.hpp>
  *
- * IBPP_BOOTSTRAP_MODULE( "my_module", MyModule::on_load );
+ * IBPP_BOOTSTRAP_MODULE("my_module", MyModule::on_load);
  * @endcode
  *
  * @sa exception.hpp
@@ -137,7 +137,7 @@ void delegate_context_open(
     Context       context
 )
 {
-    delegate->context_open( context );
+    delegate->context_open(context);
 }
 
 /**
@@ -156,7 +156,7 @@ void delegate_context_close(
     Context       context
 )
 {
-    delegate->context_close( context );
+    delegate->context_close(context);
 }
 
 /**
@@ -175,7 +175,7 @@ void delegate_context_destroy(
     Context       context
 )
 {
-    delegate->context_destroy( context );
+    delegate->context_destroy(context);
 }
 
 /**
@@ -229,38 +229,38 @@ void delegate_on_load(
     Module module
 )
 {
-    DelegateType* delegate = new DelegateType( module );
+    DelegateType* delegate = new DelegateType(module);
 
-    module.set_initialize( boost::bind(
+    module.set_initialize(boost::bind(
         delegate_initialize<DelegateType>,
         delegate,
         _1
-    ) );
-    module.set_context_open( boost::bind(
+    ));
+    module.set_context_open(boost::bind(
         delegate_context_open<DelegateType>,
         delegate,
         _1,
         _2
-    ) );
-    module.set_context_close( boost::bind(
+    ));
+    module.set_context_close(boost::bind(
         delegate_context_close<DelegateType>,
         delegate,
         _1,
         _2
-    ) );
-    module.set_context_destroy( boost::bind(
+    ));
+    module.set_context_destroy(boost::bind(
         delegate_context_destroy<DelegateType>,
         delegate,
         _1,
         _2
-    ) );
+    ));
 
     // Note this one is different!
-    module.set_finalize( boost::bind(
+    module.set_finalize(boost::bind(
         delegate_finalize<DelegateType>,
         delegate,
         _1
-    ) );
+    ));
 
 }
 
@@ -306,22 +306,22 @@ void bootstrap_module(
  *
  * @param[in] name    Name of module.  String literal.
  * @param[in] on_load Name of function to call on module load.  Should be
- *                    @c void(  @c IronBee::Module )
+ *                    @c void(@c IronBee::Module)
  **/
-#define IBPP_BOOTSTRAP_MODULE( name, on_load ) \
-ib_module_t* IB_MODULE_SYM( ib_engine_t* ib ) \
+#define IBPP_BOOTSTRAP_MODULE(name, on_load) \
+ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
 { \
     static ib_module_t ib_module; \
-    ib_status_t rc = IBPP_TRY_CATCH( ib, { \
-        ::IronBee::Internal::bootstrap_module( \
+    ib_status_t rc = IBPP_TRY_CATCH(ib, { \
+        ::IronBee::Internal::bootstrap_module(\
             ib, \
             ib_module, \
             name, \
             __FILE__ \
         ); \
-        on_load( ::IronBee::Module( &ib_module ) ); \
-    } ); \
-    assert( rc == IB_OK ); \
+        on_load(::IronBee::Module(&ib_module)); \
+    }); \
+    assert(rc == IB_OK); \
     return &ib_module; \
 }
 
@@ -341,8 +341,8 @@ ib_module_t* IB_MODULE_SYM( ib_engine_t* ib ) \
  * @param[in] delegate_type Name of a child class of ModuleDelegate to use
  *                          for hooks.
  **/
-#define IBPP_BOOTSTRAP_MODULE_DELEGATE( name, delegate_type ) \
-    IBPP_BOOTSTRAP_MODULE( \
+#define IBPP_BOOTSTRAP_MODULE_DELEGATE(name, delegate_type) \
+    IBPP_BOOTSTRAP_MODULE(\
         (name), \
         ::IronBee::Internal::delegate_on_load<delegate_type> \
     )

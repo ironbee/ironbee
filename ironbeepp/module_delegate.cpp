@@ -27,8 +27,8 @@
 
 namespace IronBee {
 
-ModuleDelegate::ModuleDelegate( Module m ) :
-    m_module( m )
+ModuleDelegate::ModuleDelegate(Module m) :
+    m_module(m)
 {
     // nop
 }
@@ -38,17 +38,17 @@ void ModuleDelegate::initialize() const
     // nop
 }
 
-void ModuleDelegate::context_open( Context context ) const
+void ModuleDelegate::context_open(Context context) const
 {
     // nop
 }
 
-void ModuleDelegate::context_close( Context context ) const
+void ModuleDelegate::context_close(Context context) const
 {
     // nop
 }
 
-void ModuleDelegate::context_destroy( Context context ) const
+void ModuleDelegate::context_destroy(Context context) const
 {
     // nop
 }

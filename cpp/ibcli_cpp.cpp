@@ -21,12 +21,12 @@ using input_factory_t     = boost::function<input_generator_t(const string&)>;
 //! A map of command line argument to factory.
 using input_factory_map_t = map<string,input_factory_t>;
 
-input_generator_t init_audit_input( const string& arg );
-input_generator_t init_raw_input(   const string& arg );
+input_generator_t init_audit_input(const string& arg);
+input_generator_t init_raw_input(const string& arg);
 
-bool on_error( const string& message );
+bool on_error(const string& message);
 
-int main( int argc, char** argv )
+int main(int argc, char** argv)
 {
   namespace po = boost::program_options;
 
@@ -38,38 +38,38 @@ int main( int argc, char** argv )
     "order listed."
   );
 
-  po::options_description general_desc( "General:" );
+  po::options_description general_desc("General:");
   general_desc.add_options()
-    ( "help", po::bool_switch( &show_help ), "Output help message." )
-    ( "config,C", po::value<string>( &config_path ),
+    ("help", po::bool_switch(&show_help), "Output help message.")
+    ("config,C", po::value<string>(&config_path),
       "IronBee config file.  REQUIRED"
     )
     ;
 
-  po::options_description input_desc( "Input Options:" );
+  po::options_description input_desc("Input Options:");
   input_desc.add_options()
-    ( "audit,A", po::value<vector<string>>(),
+    ("audit,A", po::value<vector<string>>(),
       "Mod Security Audit Log"
     )
-    ( "raw,R", po::value<vector<string>>(),
+    ("raw,R", po::value<vector<string>>(),
       "Raw inputs.  Use comma separated pair: request path,response path.  "
       "Raw input will use bogus connection information."
     )
     ;
-  desc.add( general_desc ).add( input_desc );
+  desc.add(general_desc).add(input_desc);
 
-  auto options = po::parse_command_line( argc, argv, desc );
+  auto options = po::parse_command_line(argc, argv, desc);
 
   po::variables_map vm;
-  po::store( options, vm );
-  po::notify( vm );
+  po::store(options, vm);
+  po::notify(vm);
 
-  if ( show_help ) {
+  if (show_help) {
     cerr << desc << endl;
     return 1;
   }
 
-  if ( config_path.empty() ) {
+  if (config_path.empty()) {
     cerr << "Config required." << endl;
     cout << desc << endl;
     return 1;
@@ -82,23 +82,24 @@ int main( int argc, char** argv )
 
   // Initialize IronBee.
   IronBee::IronBee ib;
-  ib.load_config( config_path );
+  ib.load_config(config_path);
 
   // We loop through the options, generating and processing input generators
   // as needed to limit the scope of each input generator.  As input
   // generators can make use of significant memory, it is good to only have
   // one around at a time.
-  for ( const auto& option : options.options ) {
+  for (const auto& option : options.options) {
     input_generator_t generator;
     try {
-      auto i = input_factory_map.find( option.string_key );
-      if ( i != input_factory_map.end() ) {
-        generator = i->second( option.value[0] );
-      } else {
+      auto i = input_factory_map.find(option.string_key);
+      if (i != input_factory_map.end()) {
+        generator = i->second(option.value[0]);
+      } 
+      else {
         continue;
       }
     }
-    catch ( const exception& e ) {
+    catch (const exception& e) {
       cerr << "Error initializing "
            << option.string_key << " " << option.value[0] << ".  "
            << "Message = " << e.what()
@@ -108,11 +109,11 @@ int main( int argc, char** argv )
 
     // Process inputs.
     input_t input;
-    while ( generator( input ) ) {
-      auto connection = ib.open_connection( input );
-      for ( const auto& transaction : input.transactions ) {
-        connection->data_in( transaction.request );
-        connection->data_out( transaction.response );
+    while (generator(input)) {
+      auto connection = ib.open_connection(input);
+      for (const auto& transaction : input.transactions) {
+        connection->data_in(transaction.request);
+        connection->data_out(transaction.response);
       }
       connection->close();
     }
@@ -121,25 +122,25 @@ int main( int argc, char** argv )
   return 0;
 }
 
-input_generator_t init_audit_input( const string& str )
+input_generator_t init_audit_input(const string& str)
 {
-  return ModSecAuditLogGenerator( str, on_error );
+  return ModSecAuditLogGenerator(str, on_error);
 }
 
-input_generator_t init_raw_input( const string& arg )
+input_generator_t init_raw_input(const string& arg)
 {
-  auto comma_i = arg.find_first_of( ',' );
-  if ( comma_i == string::npos ) {
-    throw runtime_error( "Raw inputs must be _request_,_response_." );
+  auto comma_i = arg.find_first_of(',');
+  if (comma_i == string::npos) {
+    throw runtime_error("Raw inputs must be _request_,_response_.");
   }
 
   return RawGenerator(
-    arg.substr( 0, comma_i ),
-    arg.substr( comma_i+1 )
+    arg.substr(0, comma_i),
+    arg.substr(comma_i+1)
   );
 }
 
-bool on_error( const string& message )
+bool on_error(const string& message)
 {
   cerr << "ERROR: " << message << endl;
   return true;

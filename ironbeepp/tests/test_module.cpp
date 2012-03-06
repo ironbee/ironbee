@@ -38,13 +38,13 @@ class TestModule : public ::testing::Test, public IBPPTestFixture
 
 struct no_throw_tag {};
 
-void test_callback_helper( no_throw_tag )
+void test_callback_helper(no_throw_tag)
 {
     // nop
 }
 
 template <typename ExceptionClass>
-void test_callback_helper( ExceptionClass )
+void test_callback_helper(ExceptionClass)
 {
     BOOST_THROW_EXCEPTION(
         ExceptionClass() << IronBee::errinfo_what(
@@ -61,24 +61,24 @@ public:
         ib_module_t*&  out_ib_module,
         ib_context_t*& out_ib_context
     ) :
-        m_out_ib_module( out_ib_module ),
-        m_out_ib_context( out_ib_context )
+        m_out_ib_module(out_ib_module),
+        m_out_ib_context(out_ib_context)
     {
         // nop
     }
 
-    void operator()( IronBee::Module module, IronBee::Context context )
+    void operator()(IronBee::Module module, IronBee::Context context)
     {
         m_out_ib_module  = module.ib();
         m_out_ib_context = context.ib();
-        test_callback_helper( ExceptionClass() );
+        test_callback_helper(ExceptionClass());
     }
 
-    void operator()( IronBee::Module module )
+    void operator()(IronBee::Module module)
     {
         m_out_ib_module  = module.ib();
         m_out_ib_context = NULL;
-        test_callback_helper( ExceptionClass() );
+        test_callback_helper(ExceptionClass());
     }
 
 private:
@@ -86,14 +86,14 @@ private:
     ib_context_t*& m_out_ib_context;
 };
 
-TEST_F( TestModule, basic )
+TEST_F(TestModule, basic)
 {
     ib_module_t ib_module;
     ib_module.ib = m_ib_engine;
-    IronBee::Module module( &ib_module );
+    IronBee::Module module(&ib_module);
 
-    ASSERT_EQ( &ib_module, module.ib() );
-    ASSERT_EQ( m_ib_engine, module.engine().ib() );
+    ASSERT_EQ(&ib_module, module.ib());
+    ASSERT_EQ(m_ib_engine, module.engine().ib());
 
     ib_module.vernum   = 1;
     ib_module.abinum   = 2;
@@ -102,28 +102,28 @@ TEST_F( TestModule, basic )
     ib_module.idx      = 3;
     ib_module.name     = "IAmModule";
 
-    ASSERT_EQ( ib_module.vernum,   module.version_number() );
-    ASSERT_EQ( ib_module.abinum,   module.abi_number()     );
-    ASSERT_EQ( ib_module.version,  module.version()        );
-    ASSERT_EQ( ib_module.filename, module.filename()       );
-    ASSERT_EQ( ib_module.idx,      module.index()          );
-    ASSERT_EQ( ib_module.name,     module.name()           );
+    ASSERT_EQ(ib_module.vernum,   module.version_number());
+    ASSERT_EQ(ib_module.abinum,   module.abi_number());
+    ASSERT_EQ(ib_module.version,  module.version());
+    ASSERT_EQ(ib_module.filename, module.filename());
+    ASSERT_EQ(ib_module.idx,      module.index());
+    ASSERT_EQ(ib_module.name,     module.name());
 }
 
-TEST_F( TestModule, equality )
+TEST_F(TestModule, equality)
 {
     ib_module_t ib_module;
-    IronBee::Module a( &ib_module );
-    IronBee::Module b( &ib_module );
+    IronBee::Module a(&ib_module);
+    IronBee::Module b(&ib_module);
 
-    ASSERT_EQ( a, b );
+    ASSERT_EQ(a, b);
 }
 
-TEST_F( TestModule, callbacks )
+TEST_F(TestModule, callbacks)
 {
     ib_module_t ib_module;
     ib_module.ib = m_ib_engine;
-    IronBee::Module module( &ib_module );
+    IronBee::Module module(&ib_module);
 
     ib_module_t*  out_ib_module;
     ib_context_t* out_ib_context;
@@ -132,7 +132,7 @@ TEST_F( TestModule, callbacks )
     ib_status_t rc;
 
     module.set_initialize(
-        test_callback<>( out_ib_module, out_ib_context )
+        test_callback<>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -141,12 +141,12 @@ TEST_F( TestModule, callbacks )
         &ib_module,
         ib_module.cbdata_init
     );
-    EXPECT_EQ( IB_OK, rc );
-    EXPECT_EQ( &ib_module, out_ib_module );
-    EXPECT_FALSE( out_ib_context );
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_EQ(&ib_module, out_ib_module);
+    EXPECT_FALSE(out_ib_context);
 
     module.set_initialize(
-        test_callback<IronBee::einval>( out_ib_module, out_ib_context )
+        test_callback<IronBee::einval>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -155,12 +155,12 @@ TEST_F( TestModule, callbacks )
         &ib_module,
         ib_module.cbdata_init
     );
-    EXPECT_EQ( IB_EINVAL, rc );
-    EXPECT_EQ( &ib_module, out_ib_module );
-    EXPECT_FALSE( out_ib_context );
+    EXPECT_EQ(IB_EINVAL, rc);
+    EXPECT_EQ(&ib_module, out_ib_module);
+    EXPECT_FALSE(out_ib_context);
 
     module.set_finalize(
-        test_callback<>( out_ib_module, out_ib_context )
+        test_callback<>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -169,12 +169,12 @@ TEST_F( TestModule, callbacks )
         &ib_module,
         ib_module.cbdata_fini
     );
-    EXPECT_EQ( IB_OK, rc );
-    EXPECT_EQ( &ib_module, out_ib_module );
-    EXPECT_FALSE( out_ib_context );
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_EQ(&ib_module, out_ib_module);
+    EXPECT_FALSE(out_ib_context);
 
     module.set_finalize(
-        test_callback<IronBee::einval>( out_ib_module, out_ib_context )
+        test_callback<IronBee::einval>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -183,12 +183,12 @@ TEST_F( TestModule, callbacks )
         &ib_module,
         ib_module.cbdata_fini
     );
-    EXPECT_EQ( IB_EINVAL, rc );
-    EXPECT_EQ( &ib_module, out_ib_module );
-    EXPECT_FALSE( out_ib_context );
+    EXPECT_EQ(IB_EINVAL, rc);
+    EXPECT_EQ(&ib_module, out_ib_module);
+    EXPECT_FALSE(out_ib_context);
 
     module.set_context_open(
-        test_callback<>( out_ib_module, out_ib_context )
+        test_callback<>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -198,12 +198,12 @@ TEST_F( TestModule, callbacks )
         &ib_context,
         ib_module.cbdata_ctx_open
     );
-    EXPECT_EQ( IB_OK, rc );
-    EXPECT_EQ( &ib_module,  out_ib_module  );
-    EXPECT_EQ( &ib_context, out_ib_context );
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_EQ(&ib_module,  out_ib_module);
+    EXPECT_EQ(&ib_context, out_ib_context);
 
     module.set_context_open(
-        test_callback<IronBee::einval>( out_ib_module, out_ib_context )
+        test_callback<IronBee::einval>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -213,12 +213,12 @@ TEST_F( TestModule, callbacks )
         &ib_context,
         ib_module.cbdata_ctx_open
     );
-    EXPECT_EQ( IB_EINVAL, rc );
-    EXPECT_EQ( &ib_module,  out_ib_module  );
-    EXPECT_EQ( &ib_context, out_ib_context );
+    EXPECT_EQ(IB_EINVAL, rc);
+    EXPECT_EQ(&ib_module,  out_ib_module);
+    EXPECT_EQ(&ib_context, out_ib_context);
 
     module.set_context_close(
-        test_callback<>( out_ib_module, out_ib_context )
+        test_callback<>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -228,12 +228,12 @@ TEST_F( TestModule, callbacks )
         &ib_context,
         ib_module.cbdata_ctx_close
     );
-    EXPECT_EQ( IB_OK, rc );
-    EXPECT_EQ( &ib_module,  out_ib_module  );
-    EXPECT_EQ( &ib_context, out_ib_context );
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_EQ(&ib_module,  out_ib_module);
+    EXPECT_EQ(&ib_context, out_ib_context);
 
     module.set_context_close(
-        test_callback<IronBee::einval>( out_ib_module, out_ib_context )
+        test_callback<IronBee::einval>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -243,12 +243,12 @@ TEST_F( TestModule, callbacks )
         &ib_context,
         ib_module.cbdata_ctx_close
     );
-    EXPECT_EQ( IB_EINVAL, rc );
-    EXPECT_EQ( &ib_module,  out_ib_module  );
-    EXPECT_EQ( &ib_context, out_ib_context );
+    EXPECT_EQ(IB_EINVAL, rc);
+    EXPECT_EQ(&ib_module,  out_ib_module);
+    EXPECT_EQ(&ib_context, out_ib_context);
 
     module.set_context_destroy(
-        test_callback<>( out_ib_module, out_ib_context )
+        test_callback<>(out_ib_module, out_ib_context)
     );
     out_ib_module = NULL;
     out_ib_context = NULL;
@@ -258,9 +258,9 @@ TEST_F( TestModule, callbacks )
         &ib_context,
         ib_module.cbdata_ctx_destroy
     );
-    EXPECT_EQ( IB_OK, rc );
-    EXPECT_EQ( &ib_module,  out_ib_module  );
-    EXPECT_EQ( &ib_context, out_ib_context );
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_EQ(&ib_module,  out_ib_module);
+    EXPECT_EQ(&ib_context, out_ib_context);
 
     module.set_context_destroy(
         test_callback<IronBee::einval>(
@@ -276,12 +276,12 @@ TEST_F( TestModule, callbacks )
         &ib_context,
         ib_module.cbdata_ctx_destroy
     );
-    EXPECT_EQ( IB_EINVAL, rc );
-    EXPECT_EQ( &ib_module,  out_ib_module  );
-    EXPECT_EQ( &ib_context, out_ib_context );
+    EXPECT_EQ(IB_EINVAL, rc);
+    EXPECT_EQ(&ib_module,  out_ib_module);
+    EXPECT_EQ(&ib_context, out_ib_context);
 }
 
-TEST_F( TestModule, operators )
+TEST_F(TestModule, operators)
 {
     IronBee::Module singular1;
     IronBee::Module singular2;
@@ -290,31 +290,31 @@ TEST_F( TestModule, operators )
     ib_module_t ib_module2;
     ib_module1.ib = m_ib_engine;
     ib_module2.ib = m_ib_engine;
-    IronBee::Module nonsingular1( &ib_module1 );
-    IronBee::Module nonsingular2( &ib_module2 );
+    IronBee::Module nonsingular1(&ib_module1);
+    IronBee::Module nonsingular2(&ib_module2);
 
-    EXPECT_FALSE( singular1 );
-    EXPECT_FALSE( singular2 );
-    EXPECT_TRUE( nonsingular1 );
-    EXPECT_TRUE( nonsingular2 );
+    EXPECT_FALSE(singular1);
+    EXPECT_FALSE(singular2);
+    EXPECT_TRUE(nonsingular1);
+    EXPECT_TRUE(nonsingular2);
 
-    EXPECT_EQ( singular1, singular2 );
-    EXPECT_NE( nonsingular1, nonsingular2 );
-    EXPECT_NE( singular1, nonsingular1 );
+    EXPECT_EQ(singular1, singular2);
+    EXPECT_NE(nonsingular1, nonsingular2);
+    EXPECT_NE(singular1, nonsingular1);
 
-    EXPECT_LT( singular1, nonsingular1 );
-    EXPECT_FALSE( singular1 < singular2 );
+    EXPECT_LT(singular1, nonsingular1);
+    EXPECT_FALSE(singular1 < singular2);
 }
 
-TEST_F( TestModule, expose_c )
+TEST_F(TestModule, expose_c)
 {
     ib_module_t ib_module;
-    IronBee::Module m( &ib_module );
+    IronBee::Module m(&ib_module);
 
-    ASSERT_TRUE( m );
-    EXPECT_EQ( &ib_module, m.ib() );
+    ASSERT_TRUE(m);
+    EXPECT_EQ(&ib_module, m.ib());
 
     const IronBee::Module& cm = m;
-    ASSERT_TRUE( cm );
-    EXPECT_EQ( &ib_module, cm.ib() );
+    ASSERT_TRUE(cm);
+    EXPECT_EQ(&ib_module, cm.ib());
 }

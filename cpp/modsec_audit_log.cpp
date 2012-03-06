@@ -15,9 +15,9 @@ namespace ModSecAuditLog {
 
 const std::string& Entry::operator[](const std::string& section) const
 {
-  auto i = m_sections.find( section );
-  if ( i == m_sections.end() ) {
-    throw runtime_error( "No such section: " + section );
+  auto i = m_sections.find(section);
+  if (i == m_sections.end()) {
+    throw runtime_error("No such section: " + section);
   }
   return i->second;
 }
@@ -33,16 +33,16 @@ static const boost::regex re_boundary("^--([0-9a-z]+)-([A-Z])--$");
 
 }
 
-Parser::Parser( std::istream& in ) :
-  m_in( in )
+Parser::Parser(std::istream& in) :
+  m_in(in)
 {
   // Find first entry.
   m_have_entry = recover();
 }
 
-bool Parser::operator()( Entry& out_entry )
+bool Parser::operator()(Entry& out_entry)
 {
-  if ( ! m_have_entry ) {
+  if (! m_have_entry) {
     return false;
   }
 
@@ -57,27 +57,29 @@ bool Parser::operator()( Entry& out_entry )
   string        b;
   string        s;
 
-  while ( m_in.good() ) {
-    getline( m_in, line );
-    if ( regex_match( line, match, re_boundary ) ) {
+  while (m_in.good()) {
+    getline(m_in, line);
+    if (regex_match(line, match, re_boundary)) {
       b = match[1];
       s = match[2];
-      if ( b != m_boundary || s == "A" ) {
+      if (b != m_boundary || s == "A") {
         // new record
         m_boundary = b;
         m_section  = s;
         return true;
       }
-      if ( out_entry.m_sections.count( s ) != 0 ) {
+      if (out_entry.m_sections.count(s) != 0) {
         throw runtime_error(
           "Duplicate section " + s + " for boundary " + b + "."
         );
       }
       out_entry.m_sections[s] = "";
       m_section = s;
-    } else if ( ! m_section.empty() ) {
+    } 
+    else if (! m_section.empty()) {
       out_entry.m_sections[m_section] += line + "\n";
-    } else if ( ! line.empty() ) {
+    } 
+    else if (! line.empty()) {
       throw runtime_error(
         "Data found outside of section: " + line
       );
@@ -96,12 +98,12 @@ bool Parser::recover()
   string        b;
   string        s;
 
-  while ( m_in.good() ) {
-    getline( m_in, line );
-    if ( regex_match( line, match, re_boundary ) ) {
+  while (m_in.good()) {
+    getline(m_in, line);
+    if (regex_match(line, match, re_boundary)) {
       b = match[1];
       s = match[2];
-      if ( s == "A" ) {
+      if (s == "A") {
         m_boundary   = b;
         m_section    = s;
         m_have_entry = true;

@@ -32,8 +32,8 @@ public:
   {
     friend class IronBee;
   public:
-    Connection( const Connection& ) = delete;
-    Connection& operator=( const Connection& ) = delete;
+    Connection(const Connection&) = delete;
+    Connection& operator=(const Connection&) = delete;
 
     // Calls close().
     ~Connection();
@@ -49,14 +49,14 @@ public:
      * \param[in] data Data to send to IronBee.  Copied in.
      * \throw runtime_error on any error.
      **/
-    void data_in(  const buffer_t& data );
+    void data_in(const buffer_t& data);
 
     //! Send remote->local \a data to ironbee.
     /**
      * \param[in] data Data to send to IronBee.  Copied in.
      * \throw runtime_error on any error.
      **/
-    void data_out( const buffer_t& data );
+    void data_out(const buffer_t& data);
 
   private:
     Connection(
@@ -93,15 +93,15 @@ public:
   IronBee();
 
   // Noncopyable.
-  IronBee( const IronBee& ) = delete;
-  IronBee& operator=( const IronBee& ) = delete;
+  IronBee(const IronBee&) = delete;
+  IronBee& operator=(const IronBee&) = delete;
 
   //! Load a config file.
   /**
    * \param[in] config_path Path to file to load.
    * \throw runtime_error on any error.
    **/
-  void load_config( const std::string& config_path );
+  void load_config(const std::string& config_path);
 
   //! Open a connection.
   /**
@@ -126,7 +126,7 @@ public:
    * \param[in] input Input with connection information.
    * \return Connection.
    **/
-  connection_p open_connection( const input_t& input );
+  connection_p open_connection(const input_t& input);
 
 private:
   ib_plugin_t                    m_plugin;

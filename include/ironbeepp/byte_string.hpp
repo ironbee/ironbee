@@ -112,7 +112,7 @@ public:
      * @returns New empty byte string.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create( MemoryPool pool );
+    static ByteString create(MemoryPool pool);
 
     /**
      * Create copy of @a data using @a pool.
@@ -143,7 +143,7 @@ public:
      * @returns New byte string with copy of @a cstring.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create( MemoryPool pool, const char *cstring );
+    static ByteString create(MemoryPool pool, const char *cstring);
 
     /**
      * Create copy of @a s using @a pool.
@@ -156,7 +156,7 @@ public:
      * @returns New byte string with copy of @a s.
      * @throws IronBee++ exception on any error.
      **/
-    static ByteString create( MemoryPool pool, const std::string& s );
+    static ByteString create(MemoryPool pool, const std::string& s);
 
     /**
      * Create a byte string pointing to @a data.
@@ -224,7 +224,7 @@ public:
      * @param[in] pool  Memory pool to allocate memory from.
      * @returns Alias
      **/
-    ByteString alias( MemoryPool pool ) const;
+    ByteString alias(MemoryPool pool) const;
     //! As above, but use same memory pool.
     ByteString alias() const;
 
@@ -238,7 +238,7 @@ public:
      * @returns New byte string with copy of @a other's data.
      * @throws IronBee++ exception on any error.
      **/
-    ByteString dup( MemoryPool pool ) const;
+    ByteString dup(MemoryPool pool) const;
     //! As above, but use same memory pool.
     ByteString dup() const;
     /// @}
@@ -356,15 +356,15 @@ public:
      *
      * @sa create_alias()
      **/
-    void set( char* data, size_t length );
+    void set(char* data, size_t length);
     //! As above, but result is read only.
-    void set( const char* data, size_t length );
+    void set(const char* data, size_t length);
     //! As above, but for null terminated string.
-    void set( char* cstring );
+    void set(char* cstring);
     //! As above, but result is read only.
-    void set( const char* cstring );
+    void set(const char* cstring);
     //! As above, but for string.  There is no non-read-only version.
-    void set( const std::string& s );
+    void set(const std::string& s);
 
     /**
      * Append the data in @a tail to byte string.
@@ -372,13 +372,13 @@ public:
      * @param[in] tail Data to append.
      * @throws einval if read-only; ealloc on allocation failure.
      **/
-    void append( const ByteString& tail );
+    void append(const ByteString& tail);
     //! As above, but for data and length.
-    void append( const char* data, size_t length );
+    void append(const char* data, size_t length);
     //! As above, but for NULL terminated string.
-    void append( const char* cstring );
+    void append(const char* cstring);
     //! As above, but for string.
-    void append( const std::string& s );
+    void append(const std::string& s);
     /// @}
 
     /**
@@ -397,15 +397,15 @@ public:
      * @param[in] cstring String to search for.
      * @returns index of @a cstring or -1 if not a substring.
      **/
-    int index_of( const char* cstring );
+    int index_of(const char* cstring);
 
     //! As above, but for a string.
-    int index_of( const std::string& s );
+    int index_of(const std::string& s);
 
     /// @}
 
     /// @cond Internal
-    typedef void ( *unspecified_bool_type )( ByteString*** );
+    typedef void (*unspecified_bool_type)(ByteString***);
     /// @endcond
     /**
      * Is not singular?
@@ -426,7 +426,7 @@ public:
      * @param[in] other ByteString to compare to.
      * @return true iff other.ib() == ib().
      **/
-    bool operator==( const ByteString& other ) const;
+    bool operator==(const ByteString& other) const;
 
     /**
      * Less than operator.
@@ -437,7 +437,7 @@ public:
      * @param[in] other ByteString to compare to.
      * @return true iff this and other are singular or  ib() < other.ib().
      **/
-    bool operator<( const ByteString& other ) const;
+    bool operator<(const ByteString& other) const;
 
  #ifdef IBPP_EXPOSE_C
     /**
@@ -455,7 +455,7 @@ public:
 
     //! Construct ByteString from ib_bytestr.
     explicit
-    ByteString( ib_bytestr_t* ib_module );
+    ByteString(ib_bytestr_t* ib_module);
     ///@}
  #endif
 
@@ -465,7 +465,7 @@ private:
     data_t m_data;
 
     // Used for unspecified_bool_type.
-    static void unspecified_bool( ByteString*** ) {};
+    static void unspecified_bool(ByteString***) {};
 };
 
 /**
@@ -478,7 +478,7 @@ private:
  * @param[in] byte_string ByteString to output.
  * @return @a o
  **/
-std::ostream& operator<<( std::ostream& o, const ByteString& byte_string );
+std::ostream& operator<<(std::ostream& o, const ByteString& byte_string);
 
 } // IronBee
 

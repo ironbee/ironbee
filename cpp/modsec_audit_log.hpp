@@ -57,7 +57,7 @@ public:
    * \param[in,out] in The input stream to parse.
    **/
   explicit
-  Parser( std::istream& in );
+  Parser(std::istream& in);
 
   //! Fetch next entry.
   /**
@@ -71,7 +71,7 @@ public:
    *
    * \throw runtime_exception on parse error.
    **/
-  bool operator()( Entry& out_entry );
+  bool operator()(Entry& out_entry);
 
   //! Recover from an error.
   /**

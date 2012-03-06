@@ -33,18 +33,18 @@
 using namespace IronBee;
 using IronBee::Internal::throw_if_error;
 
-TEST( TestThrow, basic )
+TEST(TestThrow, basic)
 {
-    EXPECT_NO_THROW( throw_if_error( IB_OK ) );
-    EXPECT_THROW( throw_if_error( IB_DECLINED  ), declined  );
-    EXPECT_THROW( throw_if_error( IB_EUNKNOWN  ), eunknown  );
-    EXPECT_THROW( throw_if_error( IB_ENOTIMPL  ), enotimpl  );
-    EXPECT_THROW( throw_if_error( IB_EINCOMPAT ), eincompat );
-    EXPECT_THROW( throw_if_error( IB_EALLOC    ), ealloc    );
-    EXPECT_THROW( throw_if_error( IB_EINVAL    ), einval    );
-    EXPECT_THROW( throw_if_error( IB_ENOENT    ), enoent    );
-    EXPECT_THROW( throw_if_error( IB_ETRUNC    ), etrunc    );
-    EXPECT_THROW( throw_if_error( IB_ETIMEDOUT ), etimedout );
-    EXPECT_THROW( throw_if_error( IB_EAGAIN    ), eagain    );
-    EXPECT_THROW( throw_if_error( IB_EOTHER    ), eother    );
+    EXPECT_NO_THROW(throw_if_error(IB_OK));
+    EXPECT_THROW(throw_if_error(IB_DECLINED), declined);
+    EXPECT_THROW(throw_if_error(IB_EUNKNOWN), eunknown);
+    EXPECT_THROW(throw_if_error(IB_ENOTIMPL), enotimpl);
+    EXPECT_THROW(throw_if_error(IB_EINCOMPAT), eincompat);
+    EXPECT_THROW(throw_if_error(IB_EALLOC), ealloc);
+    EXPECT_THROW(throw_if_error(IB_EINVAL), einval);
+    EXPECT_THROW(throw_if_error(IB_ENOENT), enoent);
+    EXPECT_THROW(throw_if_error(IB_ETRUNC), etrunc);
+    EXPECT_THROW(throw_if_error(IB_ETIMEDOUT), etimedout);
+    EXPECT_THROW(throw_if_error(IB_EAGAIN), eagain);
+    EXPECT_THROW(throw_if_error(IB_EOTHER), eother);
 }

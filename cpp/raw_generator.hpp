@@ -46,7 +46,7 @@ public:
   );
 
   //! Produce an input.  See input_t and input_generator_t.
-  bool operator()( input_t& out_input );
+  bool operator()(input_t& out_input);
 
 private:
   bool               m_produced_input;

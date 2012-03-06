@@ -63,13 +63,13 @@ ib_status_t initialize(
 {
     IB_FTRACE_INIT();
 
-    assert( ib_engine = ib_module->ib );
+    assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
-        Internal::data_to_value<Module::initialize_t>( cbdata )(
-            Module( ib_module )
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+        Internal::data_to_value<Module::initialize_t>(cbdata)(
+            Module(ib_module)
         )
-    ) );
+    ));
 }
 
 ib_status_t finalize(
@@ -81,13 +81,13 @@ ib_status_t finalize(
 {
     IB_FTRACE_INIT();
 
-    assert( ib_engine = ib_module->ib );
+    assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
-        Internal::data_to_value<Module::finalize_t>( cbdata )(
-            Module( ib_module )
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+        Internal::data_to_value<Module::finalize_t>(cbdata)(
+            Module(ib_module)
         )
-    ) );
+    ));
 }
 
 ib_status_t context_open(
@@ -99,14 +99,14 @@ ib_status_t context_open(
 {
     IB_FTRACE_INIT();
 
-    assert( ib_engine = ib_module->ib );
+    assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
-        Internal::data_to_value<Module::context_open_t>( cbdata )(
-            Module(  ib_module  ),
-            Context( ib_context )
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+        Internal::data_to_value<Module::context_open_t>(cbdata)(
+            Module(ib_module),
+            Context(ib_context)
         )
-    ) );
+    ));
 }
 
 ib_status_t context_close(
@@ -118,14 +118,14 @@ ib_status_t context_close(
 {
     IB_FTRACE_INIT();
 
-    assert( ib_engine = ib_module->ib );
+    assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
-        Internal::data_to_value<Module::context_close_t>( cbdata )(
-            Module(  ib_module  ),
-            Context( ib_context )
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+        Internal::data_to_value<Module::context_close_t>(cbdata)(
+            Module(ib_module),
+            Context(ib_context)
         )
-    ) );
+    ));
 }
 
 ib_status_t context_destroy(
@@ -137,14 +137,14 @@ ib_status_t context_destroy(
 {
     IB_FTRACE_INIT();
 
-    assert( ib_engine = ib_module->ib );
+    assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS( IBPP_TRY_CATCH( ib_engine,
-        Internal::data_to_value<Module::context_destroy_t>( cbdata )(
-            Module(  ib_module  ),
-            Context( ib_context )
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+        Internal::data_to_value<Module::context_destroy_t>(cbdata)(
+            Module(ib_module),
+            Context(ib_context)
         )
-    ) );
+    ));
 }
 
 } // extern "C"
@@ -159,7 +159,7 @@ Module::Module()
 
 Engine Module::engine() const
 {
-    return Engine( m_data->ib_module->ib );
+    return Engine(m_data->ib_module->ib);
 }
 
 uint32_t Module::version_number() const
@@ -192,63 +192,65 @@ const char* Module::name() const
     return m_data->ib_module->name;
 }
 
-void Module::set_initialize( initialize_t f )
+void Module::set_initialize(initialize_t f)
 {
     m_data->ib_module->cbdata_init = Internal::value_to_data(
         f,
-        ib_engine_pool_main_get( m_data->ib_module->ib )
+        ib_engine_pool_main_get(m_data->ib_module->ib)
     );
     m_data->ib_module->fn_init = Hooks::initialize;
 }
 
-void Module::set_finalize( finalize_t f )
+void Module::set_finalize(finalize_t f)
 {
     m_data->ib_module->cbdata_fini = Internal::value_to_data(
         f,
-        ib_engine_pool_main_get( m_data->ib_module->ib )
+        ib_engine_pool_main_get(m_data->ib_module->ib)
     );
     m_data->ib_module->fn_fini = Hooks::finalize;
 }
 
-void Module::set_context_open( context_open_t f )
+void Module::set_context_open(context_open_t f)
 {
     m_data->ib_module->cbdata_ctx_open = Internal::value_to_data(
         f,
-        ib_engine_pool_main_get( m_data->ib_module->ib )
+        ib_engine_pool_main_get(m_data->ib_module->ib)
     );
     m_data->ib_module->fn_ctx_open = Hooks::context_open;
 }
 
-void Module::set_context_close( context_close_t f )
+void Module::set_context_close(context_close_t f)
 {
     m_data->ib_module->cbdata_ctx_close = Internal::value_to_data(
         f,
-        ib_engine_pool_main_get( m_data->ib_module->ib )
+        ib_engine_pool_main_get(m_data->ib_module->ib)
     );
     m_data->ib_module->fn_ctx_close = Hooks::context_close;
 }
 
-void Module::set_context_destroy( context_destroy_t f )
+void Module::set_context_destroy(context_destroy_t f)
 {
     m_data->ib_module->cbdata_ctx_destroy = Internal::value_to_data(
         f,
-        ib_engine_pool_main_get( m_data->ib_module->ib )
+        ib_engine_pool_main_get(m_data->ib_module->ib)
     );
     m_data->ib_module->fn_ctx_destroy = Hooks::context_destroy;
 }
 
-bool Module::operator==( const Module& other ) const
+bool Module::operator==(const Module& other) const
 {
-    return ( ! *this && ! other ) || ( *this && other && ib() == other.ib() );
+    return (! *this && ! other) || (*this && other && ib() == other.ib());
 }
 
-bool Module::operator<( const Module& other ) const
+bool Module::operator<(const Module& other) const
 {
-    if ( ! *this ) {
+    if (! *this) {
         return other;
-    } else if ( ! other ) {
+    } 
+    else if (! other) {
         return this;
-    } else {
+    } 
+    else {
         return ib() < other.ib();
     }
 }
@@ -263,8 +265,8 @@ const ib_module_t* Module::ib() const
     return m_data->ib_module;
 }
 
-Module::Module( ib_module_t* ib_module ) :
-    m_data( boost::make_shared<Internal::ModuleData>() )
+Module::Module(ib_module_t* ib_module) :
+    m_data(boost::make_shared<Internal::ModuleData>())
 {
     m_data->ib_module = ib_module;
 }
@@ -274,11 +276,12 @@ Module::operator unspecified_bool_type() const
     return m_data ? unspecified_bool : 0;
 }
 
-std::ostream& operator<<( std::ostream& o, const Module& module )
+std::ostream& operator<<(std::ostream& o, const Module& module)
 {
-    if ( ! module ) {
+    if (! module) {
         o << "IronBee::Module[!singular!]";
-    } else {
+    } 
+    else {
         o << "IronBee::Module[" << module.name() << "]";
     }
 

@@ -68,8 +68,8 @@
  *
  * class MyModule : public IronBee::ModuleDelegate
  * {
- *     MyModule( IronBee::Module m );
- *     void context_open( IronBee::Context c ) const;
+ *     MyModule(IronBee::Module m);
+ *     void context_open(IronBee::Context c) const;
  * };
  * @endcode
  *
@@ -78,13 +78,13 @@
  * #include "my_module.hpp"
  * #include <iostream>
  *
- * MyModule::MyModule( IronBee::Module m ) :
- *     IronBee::ModuleDelegate( m )
+ * MyModule::MyModule(IronBee::Module m) :
+ *     IronBee::ModuleDelegate(m)
  * {
  *     std::cout << "MyModule Initialized as " << m.name() << std::endl;
  * }
  *
- * void MyModule::context_open( IronBee::Context c ) const
+ * void MyModule::context_open(IronBee::Context c) const
  * {
  *     std::cout << "context_open for module " << module().name() << std::endl;
  * }
@@ -95,7 +95,7 @@
  * #include "my_module.hpp"
  * #include <ironbeepp/module_bootstrap.hpp>
  *
- * IBPP_BOOTSTRAP_MODULE( "MyFirstIronBee++Module", MyModule );
+ * IBPP_BOOTSTRAP_MODULE("MyFirstIronBee++Module", MyModule);
  * @endcode
  *
  * The above code can be compiled into a shared library and then loaded into
@@ -131,7 +131,7 @@
  * storage of IronBee++ objects in standard containers.  You can test if an
  * object is singular by evaluating it in a boolean context, e.g.,
  * @code
- * if ( module ) { ... }
+ * if (module) { ... }
  * @endcode
  * All behavior of singular objects is undefined except for evaluating as
  * bool, copying, comparison, and assignment.  Singular objects are equal

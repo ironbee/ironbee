@@ -35,7 +35,7 @@ struct buffer_t
    * \param[in] data   Pointer to buffer.  Not necessarily null terminated.
    * \param[in] length Length of buffer.
    **/
-  buffer_t( const char* data_, size_t length_ );
+  buffer_t(const char* data_, size_t length_);
 
   //! Construct from string.
   /**
@@ -44,7 +44,7 @@ struct buffer_t
    * \param[in] s String to initialize buffer from.
    **/
   explicit
-  buffer_t( const std::string& s );
+  buffer_t(const std::string& s);
 
   //! Convert to string.  Makes a copy.
   std::string to_s() const;
@@ -55,7 +55,7 @@ struct buffer_t
   size_t      length;
 };
 
-std::ostream& operator<<( std::ostream& out, const buffer_t& buffer );
+std::ostream& operator<<(std::ostream& out, const buffer_t& buffer);
 
 /**
  * \class input_t
@@ -82,7 +82,7 @@ struct input_t
    **/
   struct transaction_t {
     //! Constructor.
-    transaction_t( buffer_t request_, buffer_t response_ );
+    transaction_t(buffer_t request_, buffer_t response_);
 
     //! Request data.  Must outlive input_t.
     buffer_t request;
@@ -95,7 +95,7 @@ struct input_t
 };
 
 //! Ostream output operator for an input.
-std::ostream& operator<<( std::ostream& out, const input_t& input );
+std::ostream& operator<<(std::ostream& out, const input_t& input);
 
 //! A generator of inputs.
 /**

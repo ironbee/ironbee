@@ -41,7 +41,7 @@ IBPP_BOOTSTRAP_MODULE_DELEGATE(
     IronBee::ModuleDelegate
 );
 
-TEST_F( TestModuleDelegate, basic )
+TEST_F(TestModuleDelegate, basic)
 {
-    IB_MODULE_SYM( m_ib_engine );
+    IB_MODULE_SYM(m_ib_engine);
 }

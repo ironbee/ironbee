@@ -56,19 +56,19 @@ public:
      * @param[in] module Module associated with the delegate.
      **/
     explicit
-    ModuleDelegate( Module module );
+    ModuleDelegate(Module module);
 
     //! Initialize handler.  Nop.
     void initialize() const;
 
     //! Context Open Handler.  Nop.
-    void context_open( Context context ) const;
+    void context_open(Context context) const;
 
     //! Context close Handler.  Nop.
-    void context_close( Context context ) const;
+    void context_close(Context context) const;
 
     //! Context destroy Handler.  Nop.
-    void context_destroy( Context context ) const;
+    void context_destroy(Context context) const;
 
     //! Module accessor.
     Module& module() { return m_module; };

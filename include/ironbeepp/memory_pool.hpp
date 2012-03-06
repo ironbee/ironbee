@@ -203,7 +203,7 @@ public:
      * @throw ealloc on failure to allocate.
      **/
     template <typename T>
-    T* allocate( size_t number );
+    T* allocate(size_t number);
 
     /**
      * Allocate @a size bytes of memory.
@@ -212,7 +212,7 @@ public:
      * @returns Pointer to allocated memory.
      * @throw ealloc on failure to allocate.
      **/
-    void* alloc( size_t size );
+    void* alloc(size_t size);
 
     /**
      * Allocate @a count * @a size bytes of memory and sets to 0.
@@ -222,7 +222,7 @@ public:
      * @returns Pointer to allocated memory.
      * @throw ealloc on failure to allocate.
      **/
-    void* calloc( size_t count, size_t size );
+    void* calloc(size_t count, size_t size);
 
     /**
      * Allocate @a size bytes and set to 0.
@@ -230,7 +230,7 @@ public:
      * @returns Pointer to allocated memory.
      * @throw ealloc on failure to allocate.
      **/
-    void* calloc( size_t size );
+    void* calloc(size_t size);
     //@}
 
     /**
@@ -251,10 +251,10 @@ public:
      *
      * @param[in] f Function to call on destruction.
      **/
-    void register_cleanup( cleanup_t f );
+    void register_cleanup(cleanup_t f);
 
     /// @cond Internal
-    typedef void ( *unspecified_bool_type )( MemoryPool*** );
+    typedef void (*unspecified_bool_type)(MemoryPool***);
     /// @endcond
     /**
      * Is not singular?
@@ -275,7 +275,7 @@ public:
      * @param[in] other MemoryPools to compare to.
      * @return true iff other.ib() == ib().
      **/
-    bool operator==( const MemoryPool& other ) const;
+    bool operator==(const MemoryPool& other) const;
 
     /**
      * Less than operator.
@@ -286,7 +286,7 @@ public:
      * @param[in] other MemoryPools to compare to.
      * @return true iff this and other are singular or  ib() < other.ib().
      **/
-    bool operator<( const MemoryPool& other ) const;
+    bool operator<(const MemoryPool& other) const;
 
 #ifdef IBPP_EXPOSE_C
     /**
@@ -303,7 +303,7 @@ public:
     const ib_mpool_t* ib() const;
     //! Construct MemoryPools from ib_mpool_t.
     explicit
-    MemoryPool( ib_mpool_t* ib_mpool );
+    MemoryPool(ib_mpool_t* ib_mpool);
     ///@}
 #endif
 
@@ -312,7 +312,7 @@ private:
 
     data_t m_data;
     // Used for unspecified_bool_type.
-    static void unspecified_bool( MemoryPool*** ) {};
+    static void unspecified_bool(MemoryPool***) {};
 };
 
 /**
@@ -346,7 +346,7 @@ public:
      * @throw Appropriate IronBee++ exception on failure.
      **/
     explicit
-    ScopedMemoryPool( const char* name, size_t size = 0 );
+    ScopedMemoryPool(const char* name, size_t size = 0);
 
     /**
      * Destroy associated pool.
@@ -365,13 +365,13 @@ private:
 };
 
 //! Ostream output for MemoryPool.
-std::ostream& operator<<( std::ostream& o, const MemoryPool& pool );
+std::ostream& operator<<(std::ostream& o, const MemoryPool& pool);
 
 // Template Definition
 template <typename T>
-T* MemoryPool::allocate( size_t number )
+T* MemoryPool::allocate(size_t number)
 {
-    return static_cast<T*>( alloc( number * sizeof(T) ) );
+    return static_cast<T*>(alloc(number * sizeof(T)));
 }
 
 };

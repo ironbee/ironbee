@@ -54,14 +54,14 @@ ByteString::ByteString()
     // nop
 }
 
-ByteString ByteString::create( MemoryPool pool )
+ByteString ByteString::create(MemoryPool pool)
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_create( &bs, pool.ib(), 0 );
-    Internal::throw_if_error( rc );
+    ib_status_t rc = ib_bytestr_create(&bs, pool.ib(), 0);
+    Internal::throw_if_error(rc);
 
-    return ByteString( bs );
+    return ByteString(bs);
 }
 
 ByteString ByteString::create(
@@ -75,27 +75,27 @@ ByteString ByteString::create(
     ib_status_t rc = ib_bytestr_dup_mem(
         &bs,
         pool.ib(),
-        reinterpret_cast<const uint8_t*>( data ),
+        reinterpret_cast<const uint8_t*>(data),
         length
     );
-    Internal::throw_if_error( rc );
+    Internal::throw_if_error(rc);
 
-    return ByteString( bs );
+    return ByteString(bs);
 }
 
-ByteString ByteString::create( MemoryPool pool, const char *cstring )
+ByteString ByteString::create(MemoryPool pool, const char *cstring)
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_dup_nulstr( &bs, pool.ib(), cstring );
-    Internal::throw_if_error( rc );
+    ib_status_t rc = ib_bytestr_dup_nulstr(&bs, pool.ib(), cstring);
+    Internal::throw_if_error(rc);
 
-    return ByteString( bs );
+    return ByteString(bs);
 }
 
-ByteString ByteString::create( MemoryPool pool, const std::string& s )
+ByteString ByteString::create(MemoryPool pool, const std::string& s)
 {
-    return ByteString::create( pool, s.data(), s.length() );
+    return ByteString::create(pool, s.data(), s.length());
 }
 
 ByteString ByteString::create_alias(
@@ -109,12 +109,12 @@ ByteString ByteString::create_alias(
     ib_status_t rc = ib_bytestr_alias_mem(
         &bs,
         pool.ib(),
-        reinterpret_cast<const uint8_t*>( data ),
+        reinterpret_cast<const uint8_t*>(data),
         length
     );
-    Internal::throw_if_error( rc );
+    Internal::throw_if_error(rc);
 
-    return ByteString( bs );
+    return ByteString(bs);
 }
 
 ByteString ByteString::create_alias(
@@ -124,10 +124,10 @@ ByteString ByteString::create_alias(
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_alias_nulstr( &bs, pool.ib(), cstring );
-    Internal::throw_if_error( rc );
+    ib_status_t rc = ib_bytestr_alias_nulstr(&bs, pool.ib(), cstring);
+    Internal::throw_if_error(rc);
 
-    return ByteString( bs );
+    return ByteString(bs);
 }
 
 ByteString ByteString::create_alias(
@@ -135,169 +135,171 @@ ByteString ByteString::create_alias(
     const std::string& s
 )
 {
-    return create_alias( pool, s.data(), s.length() );
+    return create_alias(pool, s.data(), s.length());
 }
 
-ByteString ByteString::alias( MemoryPool pool ) const
+ByteString ByteString::alias(MemoryPool pool) const
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_alias( &bs, pool.ib(), ib() );
-    Internal::throw_if_error( rc );
+    ib_status_t rc = ib_bytestr_alias(&bs, pool.ib(), ib());
+    Internal::throw_if_error(rc);
 
-    return ByteString( bs );
+    return ByteString(bs);
 }
 
 ByteString ByteString::alias() const
 {
-    return alias( memory_pool() );
+    return alias(memory_pool());
 }
 
-ByteString ByteString::dup( MemoryPool pool ) const
+ByteString ByteString::dup(MemoryPool pool) const
 {
     ib_bytestr_t* bs = NULL;
 
-    ib_status_t rc = ib_bytestr_dup( &bs, pool.ib(), ib() );
-    Internal::throw_if_error( rc );
+    ib_status_t rc = ib_bytestr_dup(&bs, pool.ib(), ib());
+    Internal::throw_if_error(rc);
 
-    return ByteString( bs );
+    return ByteString(bs);
 }
 
 ByteString ByteString::dup() const
 {
-    return dup( memory_pool() );
+    return dup(memory_pool());
 }
 
 std::string ByteString::to_s() const
 {
-    return std::string( const_data(), length() );
+    return std::string(const_data(), length());
 }
 
 MemoryPool ByteString::memory_pool() const
 {
-    return MemoryPool( ib_bytestr_mpool( ib() ) );
+    return MemoryPool(ib_bytestr_mpool(ib()));
 }
 
 bool ByteString::read_only() const
 {
-    return ib_bytestr_read_only( ib() ) == 1;
+    return ib_bytestr_read_only(ib()) == 1;
 }
 
 size_t ByteString::length() const
 {
-    return ib_bytestr_length( ib() );
+    return ib_bytestr_length(ib());
 }
 
 size_t ByteString::size() const
 {
-    return ib_bytestr_size( ib() );
+    return ib_bytestr_size(ib());
 }
 
 const char* ByteString::const_data() const
 {
-    return reinterpret_cast<const char*>( ib_bytestr_const_ptr( ib() ) );
+    return reinterpret_cast<const char*>(ib_bytestr_const_ptr(ib()));
 }
 
 char* ByteString::data()
 {
-    return reinterpret_cast<char*>( ib_bytestr_ptr( ib() ) );
+    return reinterpret_cast<char*>(ib_bytestr_ptr(ib()));
 }
 
 void ByteString::make_read_only()
 {
-    ib_bytestr_make_read_only( ib() );
+    ib_bytestr_make_read_only(ib());
 }
 
 void ByteString::clear()
 {
-    set( static_cast<char*>( NULL ), 0 );
+    set(static_cast<char*>(NULL), 0);
 }
 
-void ByteString::set( char* new_data, size_t new_length )
+void ByteString::set(char* new_data, size_t new_length)
 {
     Internal::throw_if_error(
         ib_bytestr_setv(
             ib(),
-            reinterpret_cast<uint8_t*>( new_data ),
+            reinterpret_cast<uint8_t*>(new_data),
             new_length
         )
     );
 }
 
-void ByteString::set( const char* new_data, size_t new_length )
+void ByteString::set(const char* new_data, size_t new_length)
 {
     Internal::throw_if_error(
         ib_bytestr_setv_const(
             ib(),
-            reinterpret_cast<const uint8_t*>( new_data ),
+            reinterpret_cast<const uint8_t*>(new_data),
             new_length
         )
     ) ;
 }
 
-void ByteString::set( char* cstring )
+void ByteString::set(char* cstring)
 {
-    set( cstring, strlen( cstring ) );
+    set(cstring, strlen(cstring));
 }
 
-void ByteString::set( const char* cstring )
+void ByteString::set(const char* cstring)
 {
-    set( cstring, strlen( cstring ) );
+    set(cstring, strlen(cstring));
 }
 
-void ByteString::set( const std::string& s )
+void ByteString::set(const std::string& s)
 {
-    set( s.data(), s.length() );
+    set(s.data(), s.length());
 }
 
-void ByteString::append( const ByteString& tail )
+void ByteString::append(const ByteString& tail)
 {
-    Internal::throw_if_error( ib_bytestr_append( ib(), tail.ib() ) );
+    Internal::throw_if_error(ib_bytestr_append(ib(), tail.ib()));
 }
 
-void ByteString::append( const char* new_data, size_t new_length )
+void ByteString::append(const char* new_data, size_t new_length)
 {
     Internal::throw_if_error(
         ib_bytestr_append_mem(
             ib(),
-            reinterpret_cast<const uint8_t*>( new_data ),
+            reinterpret_cast<const uint8_t*>(new_data),
             new_length
         )
     );
 }
 
-void ByteString::append( const char* cstring )
+void ByteString::append(const char* cstring)
 {
-    Internal::throw_if_error( ib_bytestr_append_nulstr( ib(), cstring ) );
+    Internal::throw_if_error(ib_bytestr_append_nulstr(ib(), cstring));
 }
 
-void ByteString::append( const std::string& s )
+void ByteString::append(const std::string& s)
 {
-    append( s.data(), s.length() );
+    append(s.data(), s.length());
 }
 
-int ByteString::index_of( const char* cstring )
+int ByteString::index_of(const char* cstring)
 {
-    return ib_bytestr_index_of_c( ib(), cstring );
+    return ib_bytestr_index_of_c(ib(), cstring);
 }
 
-int ByteString::index_of( const std::string& s )
+int ByteString::index_of(const std::string& s)
 {
-    return index_of( s.c_str() );
+    return index_of(s.c_str());
 }
 
-bool ByteString::operator==( const ByteString& other ) const
+bool ByteString::operator==(const ByteString& other) const
 {
-    return ( ! *this && ! other ) || ( *this && other && ib() == other.ib() );
+    return (! *this && ! other) || (*this && other && ib() == other.ib());
 }
 
-bool ByteString::operator<( const ByteString& other ) const
+bool ByteString::operator<(const ByteString& other) const
 {
-    if ( ! *this ) {
+    if (! *this) {
         return other;
-    } else if ( ! other ) {
+    } 
+    else if (! other) {
         return this;
-    } else {
+    } 
+    else {
         return ib() < other.ib();
     }
 }
@@ -312,8 +314,8 @@ const ib_bytestr_t* ByteString::ib() const
     return m_data->ib_bytestr;
 }
 
-ByteString::ByteString( ib_bytestr_t* ib_bytestr ) :
-    m_data( boost::make_shared<Internal::ByteStringData>() )
+ByteString::ByteString(ib_bytestr_t* ib_bytestr) :
+    m_data(boost::make_shared<Internal::ByteStringData>())
 {
     m_data->ib_bytestr = ib_bytestr;
 }
@@ -323,11 +325,12 @@ ByteString::operator unspecified_bool_type() const
     return m_data ? unspecified_bool : 0;
 }
 
-std::ostream& operator<<( std::ostream& o, const ByteString& bytestr )
+std::ostream& operator<<(std::ostream& o, const ByteString& bytestr)
 {
-    if ( ! bytestr ) {
+    if (! bytestr) {
         o << "IronBee::ByteString[!singular!]";
-    } else {
+    } 
+    else {
         o << "IronBee::ByteString[" << bytestr.to_s() << "]";
     }
 

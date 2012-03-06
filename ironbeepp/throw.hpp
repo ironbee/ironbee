@@ -47,7 +47,7 @@ namespace Internal {
  *
  * @param[in] status Status code to base exception off of.
  **/
-void throw_if_error( ib_status_t status );
+void throw_if_error(ib_status_t status);
 
 } // Internal
 } // IronBee

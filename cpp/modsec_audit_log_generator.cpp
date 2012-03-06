@@ -22,34 +22,34 @@ ModSecAuditLogGenerator::ModSecAuditLogGenerator(
   const std::string& path,
   on_error_t on_error
  ) :
-  m_on_error( on_error ),
-  m_input( boost::make_shared<ifstream>( path.c_str() ) ),
-  m_parser( *m_input )
+  m_on_error(on_error),
+  m_input(boost::make_shared<ifstream>(path.c_str())),
+  m_parser(*m_input)
 {
-  if ( ! *m_input ) {
-    throw runtime_error( "Error reading " + path );
+  if (! *m_input) {
+    throw runtime_error("Error reading " + path);
   }
 }
 
-bool ModSecAuditLogGenerator::operator()( input_t& out_input )
+bool ModSecAuditLogGenerator::operator()(input_t& out_input)
 {
   ModSecAuditLog::Entry e;
 
   bool have_entry = false;
   bool result;
-  while ( ! have_entry ) {
+  while (! have_entry) {
     try {
-      result = m_parser( e );
+      result = m_parser(e);
     }
-    catch ( const exception& e ) {
-      if ( m_on_error.empty() ) {
+    catch (const exception& e) {
+      if (m_on_error.empty()) {
         throw;
       }
-      if ( m_on_error( e.what() ) ) {
+      if (m_on_error(e.what())) {
         m_parser.recover();
       }
     }
-    if ( ! result ) {
+    if (! result) {
       return false;
     }
     have_entry = true;
@@ -61,26 +61,27 @@ bool ModSecAuditLogGenerator::operator()( input_t& out_input )
   );
   boost::smatch match;
   const auto& A = e["A"];
-  if ( regex_search( A, match, section_a ) ) {
-    out_input.local_ip.data   = A.c_str() + match.position( 1 );
-    out_input.local_ip.length = match.length( 1 );
+  if (regex_search(A, match, section_a)) {
+    out_input.local_ip.data   = A.c_str() + match.position(1);
+    out_input.local_ip.length = match.length(1);
 
-    out_input.local_port = boost::lexical_cast<uint16_t>( match.str( 2 ) );
+    out_input.local_port = boost::lexical_cast<uint16_t>(match.str(2));
 
-    out_input.remote_ip.data   = A.c_str() + match.position( 3 );
-    out_input.remote_ip.length = match.length( 3 );
+    out_input.remote_ip.data   = A.c_str() + match.position(3);
+    out_input.remote_ip.length = match.length(3);
 
-    out_input.remote_port = boost::lexical_cast<uint16_t>( match.str( 4 ) );
-  } else {
+    out_input.remote_port = boost::lexical_cast<uint16_t>(match.str(4));
+  } 
+  else {
     throw runtime_error(
       "Could not parse connection information: " + A
     );
   }
 
   out_input.transactions.clear();
-  out_input.transactions.push_back( input_t::transaction_t(
-    buffer_t( e["B"] ), buffer_t( e["F"] )
-  ) );
+  out_input.transactions.push_back(input_t::transaction_t(
+    buffer_t(e["B"]), buffer_t(e["F"])
+  ));
 
   return true;
 }

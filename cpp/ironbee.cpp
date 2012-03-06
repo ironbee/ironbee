@@ -15,11 +15,11 @@ using namespace std;
 
 namespace  {
 
-void expect_ok( ib_status_t rc, const char* message )
+void expect_ok(ib_status_t rc, const char* message)
 {
-  if ( rc != IB_OK ) {
+  if (rc != IB_OK) {
     throw runtime_error(
-      string( "Error (" ) + ib_status_to_string( rc ) + "): " + message
+      string("Error (") + ib_status_to_string(rc) + "): " + message
     );
   }
 }
@@ -31,13 +31,13 @@ ib_conndata_t* buffer_to_conndata(
 {
   ib_conndata_t* conndata;
   // We hope IronBee eventually destroys this...
-  expect_ok( ib_conn_data_create( conn, &conndata, buffer.length ),
+  expect_ok(ib_conn_data_create(conn, &conndata, buffer.length),
     "Allocating connection data."
   );
   conndata->dlen = buffer.length;
   std::copy(
     buffer.data, buffer.data + buffer.length,
-    reinterpret_cast<char*>( conndata->data )
+    reinterpret_cast<char*>(conndata->data)
   );
 
   return conndata;
@@ -54,46 +54,46 @@ IronBee::IronBee() :
   }
 {
   // Trace to stderr.
-  ib_trace_init( NULL );
+  ib_trace_init(NULL);
 
   // Initialize.
-  expect_ok( ib_initialize(), "Initializing IronBee." );
+  expect_ok(ib_initialize(), "Initializing IronBee.");
   {
     ib_engine_t* engine;
-    expect_ok( ib_engine_create( &engine, &m_plugin ), "Creating engine." );
-    m_ironbee.reset( engine, &ib_engine_destroy );
+    expect_ok(ib_engine_create(&engine, &m_plugin), "Creating engine.");
+    m_ironbee.reset(engine, &ib_engine_destroy);
   }
-  expect_ok( ib_engine_init( m_ironbee.get() ), "Initializing engine." );
+  expect_ok(ib_engine_init(m_ironbee.get()), "Initializing engine.");
 }
 
-void IronBee::load_config( const std::string& config_path )
+void IronBee::load_config(const std::string& config_path)
 {
   boost::shared_ptr<ib_cfgparser_t> parser;
 
-  expect_ok( ib_state_notify_cfg_started( m_ironbee.get() ),
+  expect_ok(ib_state_notify_cfg_started(m_ironbee.get()),
     "Starting config."
   );
   {
     ib_cfgparser_t* cp;
-    expect_ok( ib_cfgparser_create( &cp, m_ironbee.get() ),
+    expect_ok(ib_cfgparser_create(&cp, m_ironbee.get()),
       "Creating config parser."
     );
-    parser.reset( cp, &ib_cfgparser_destroy );
+    parser.reset(cp, &ib_cfgparser_destroy);
   }
 
-  expect_ok( ib_cfgparser_parse( parser.get(), config_path.c_str() ),
+  expect_ok(ib_cfgparser_parse(parser.get(), config_path.c_str()),
     "Parsing config file."
   );
 
-  ib_state_notify_cfg_finished( m_ironbee.get() );
+  ib_state_notify_cfg_finished(m_ironbee.get());
 
   // Do some sanity checks.
-  auto ctx = ib_context_main( m_ironbee.get() );
-  if ( ! ctx ) {
-    throw runtime_error( "IronBee has no main context." );
+  auto ctx = ib_context_main(m_ironbee.get());
+  if (! ctx) {
+    throw runtime_error("IronBee has no main context.");
   }
-  if ( ib_context_get_engine( ctx ) != m_ironbee.get() ) {
-    throw runtime_error( "IronBee has corrupt context." );
+  if (ib_context_get_engine(ctx) != m_ironbee.get()) {
+    throw runtime_error("IronBee has corrupt context.");
   }
 }
 
@@ -104,16 +104,16 @@ IronBee::connection_p IronBee::open_connection(
   uint16_t           remote_port
 )
 {
-  return IronBee::connection_p( new Connection(
+  return IronBee::connection_p(new Connection(
     *this,
     local_ip,
     local_port,
     remote_ip,
     remote_port
-  ) );
+  ));
 }
 
-IronBee::connection_p IronBee::open_connection( const input_t& input )
+IronBee::connection_p IronBee::open_connection(const input_t& input)
 {
   return open_connection(
     input.local_ip,
@@ -130,15 +130,15 @@ IronBee::Connection::Connection(
   const buffer_t&    remote_ip,
   uint16_t           remote_port
 ) :
-  m_ib( ib )
+  m_ib(ib)
 {
   {
     ib_conn_t* conn;
-    expect_ok( ib_conn_create( m_ib.m_ironbee.get(), &conn, NULL ),
+    expect_ok(ib_conn_create(m_ib.m_ironbee.get(), &conn, NULL),
       "Creating connection."
     );
     // This will destroy any existing current connection.
-    m_connection.reset( conn, &ib_conn_destroy );
+    m_connection.reset(conn, &ib_conn_destroy);
   }
 
   m_local_ip                 = local_ip.to_s();
@@ -159,7 +159,7 @@ IronBee::Connection::Connection(
 
 IronBee::Connection::~Connection()
 {
-  if ( m_connection ) {
+  if (m_connection) {
     close();
   }
 }
@@ -167,32 +167,32 @@ IronBee::Connection::~Connection()
 void IronBee::Connection::close()
 {
   expect_ok(
-    ib_state_notify_conn_closed( m_ib.m_ironbee.get(), m_connection.get() ),
+    ib_state_notify_conn_closed(m_ib.m_ironbee.get(), m_connection.get()),
     "Closing connection."
   );
   m_connection.reset();
 }
 
-void IronBee::Connection::data_in( const buffer_t& data )
+void IronBee::Connection::data_in(const buffer_t& data)
 {
   auto conndata = buffer_to_conndata(
     m_connection.get(),
     data
   );
 
-  expect_ok( ib_state_notify_conn_data_in( m_ib.m_ironbee.get(), conndata ),
+  expect_ok(ib_state_notify_conn_data_in(m_ib.m_ironbee.get(), conndata),
     "Connection data in."
   );
 }
 
-void IronBee::Connection::data_out( const buffer_t& data )
+void IronBee::Connection::data_out(const buffer_t& data)
 {
   auto conndata = buffer_to_conndata(
     m_connection.get(),
     data
   );
 
-  expect_ok( ib_state_notify_conn_data_out( m_ib.m_ironbee.get(), conndata ),
+  expect_ok(ib_state_notify_conn_data_out(m_ib.m_ironbee.get(), conndata),
     "Connection data in."
   );
 }

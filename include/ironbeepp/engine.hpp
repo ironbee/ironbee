@@ -59,7 +59,7 @@ public:
     const ib_engine_t* ib() const;
 
     explicit
-    Engine( ib_engine_t* ib_engine );
+    Engine(ib_engine_t* ib_engine);
 #endif
 
 private:

@@ -41,8 +41,8 @@ struct EngineData
 
 } // Internal
 
-Engine::Engine( ib_engine_t* ib_engine ) :
-    m_data( boost::make_shared<Internal::EngineData>() )
+Engine::Engine(ib_engine_t* ib_engine) :
+    m_data(boost::make_shared<Internal::EngineData>())
 {
     m_data->ib_engine = ib_engine;
 }

@@ -41,8 +41,8 @@ struct ContextData
 
 } // Internal
 
-Context::Context( ib_context_t* ib_context ) :
-    m_data( boost::make_shared<Internal::ContextData>() )
+Context::Context(ib_context_t* ib_context) :
+    m_data(boost::make_shared<Internal::ContextData>())
 {
     m_data->ib_context = ib_context;
 }
