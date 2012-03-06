@@ -71,7 +71,7 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
     out_input.remote_ip.length = match.length(3);
 
     out_input.remote_port = boost::lexical_cast<uint16_t>(match.str(4));
-  } 
+  }
   else {
     throw runtime_error(
       "Could not parse connection information: " + A

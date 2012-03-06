@@ -295,10 +295,10 @@ bool ByteString::operator<(const ByteString& other) const
 {
     if (! *this) {
         return other;
-    } 
+    }
     else if (! other) {
         return this;
-    } 
+    }
     else {
         return ib() < other.ib();
     }
@@ -329,7 +329,7 @@ std::ostream& operator<<(std::ostream& o, const ByteString& bytestr)
 {
     if (! bytestr) {
         o << "IronBee::ByteString[!singular!]";
-    } 
+    }
     else {
         o << "IronBee::ByteString[" << bytestr.to_s() << "]";
     }

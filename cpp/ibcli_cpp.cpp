@@ -94,7 +94,7 @@ int main(int argc, char** argv)
       auto i = input_factory_map.find(option.string_key);
       if (i != input_factory_map.end()) {
         generator = i->second(option.value[0]);
-      } 
+      }
       else {
         continue;
       }

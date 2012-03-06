@@ -246,10 +246,10 @@ bool Module::operator<(const Module& other) const
 {
     if (! *this) {
         return other;
-    } 
+    }
     else if (! other) {
         return this;
-    } 
+    }
     else {
         return ib() < other.ib();
     }
@@ -280,7 +280,7 @@ std::ostream& operator<<(std::ostream& o, const Module& module)
 {
     if (! module) {
         o << "IronBee::Module[!singular!]";
-    } 
+    }
     else {
         o << "IronBee::Module[" << module.name() << "]";
     }

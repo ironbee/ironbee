@@ -217,7 +217,7 @@ bool MemoryPool::operator<(const MemoryPool& other) const
 {
     if (! *this) {
         return ! other;
-    } 
+    }
     else {
         return ib() < other.ib();
     }

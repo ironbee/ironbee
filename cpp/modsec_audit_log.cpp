@@ -75,10 +75,10 @@ bool Parser::operator()(Entry& out_entry)
       }
       out_entry.m_sections[s] = "";
       m_section = s;
-    } 
+    }
     else if (! m_section.empty()) {
       out_entry.m_sections[m_section] += line + "\n";
-    } 
+    }
     else if (! line.empty()) {
       throw runtime_error(
         "Data found outside of section: " + line

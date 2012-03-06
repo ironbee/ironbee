@@ -49,7 +49,7 @@ ib_status_t ibpp_caught_ib_exception(
         message = std::string(ib_status_to_string(status)) + ":";
         if (boost::get_error_info<errinfo_what>(e)) {
             message += *boost::get_error_info<errinfo_what>(e);
-        } 
+        }
         else {
             message += "IronBee++ Exception but no explanation provided.  "
                        "Please report as bug.";
@@ -79,7 +79,7 @@ ib_status_t ibpp_caught_boost_exception(
         message = "Unknown boost::exception thrown: ";
         if (boost::get_error_info<boost::throw_function>(e)) {
             message += *boost::get_error_info<boost::throw_function>(e);
-        } 
+        }
         else {
             message += "No information provided.  Please report as bug.";
         }
@@ -107,7 +107,7 @@ ib_status_t ibpp_caught_std_exception(
         std::string message;
         if (status == IB_EINVAL) {
             message = "Invalid argument: ";
-        } 
+        }
         else {
             message = "Unknown std::exception thrown: ";
         }
