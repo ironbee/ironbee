@@ -72,7 +72,7 @@ AC_SUBST(OSSP_UUID_CFLAGS)
 AC_SUBST(OSSP_UUID_LDFLAGS)
 AC_SUBST(OSSP_UUID_LIBS)
 
-if test -z "${OSSP_UUID}"; then
+if test -z "${ossp_uuid_path}"; then
     AC_MSG_NOTICE([*** ossp-uuid utility not found.])
     ifelse([$2], , AC_MSG_ERROR([ossp-uuid library is required]), $2)
 else
