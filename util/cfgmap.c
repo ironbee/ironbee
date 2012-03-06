@@ -65,6 +65,59 @@ failed:
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Translate field getter to cfgmap getter.
+ * @internal
+ *
+ * @sa ib_field_get_fn_t.
+ */
+static void *ib_cfgmap_handle_get(
+    ib_field_t *f,
+    const void *arg,
+    size_t alen,
+    void *data
+)
+{
+    IB_FTRACE_INIT();
+
+    if (arg != NULL) {
+        IB_FTRACE_RET_PTR(void, NULL);
+    }
+
+    ib_cfgmap_init_t *rec = (ib_cfgmap_init_t*)data;
+
+    IB_FTRACE_RET_PTR(
+        void,
+        rec->fn_get(rec->name, rec->type, rec->cbdata_get)
+    );
+}
+
+/**
+ * Translate field setter to cfgmap setter.
+ * @internal
+ *
+ * @sa ib_field_set_fn_t.
+ */
+static ib_status_t ib_cfgmap_handle_set(
+    ib_field_t *field,
+    const void *arg, size_t alen,
+    void *val,
+    void *data
+)
+{
+    IB_FTRACE_INIT();
+
+    if (arg != NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ib_cfgmap_init_t *rec = (ib_cfgmap_init_t*)data;
+
+    IB_FTRACE_RET_STATUS(
+        rec->fn_set(rec->name, rec->type, val, rec->cbdata_get)
+    );
+}
+
 ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                            const void *base,
                            const ib_cfgmap_init_t *init,
@@ -78,21 +131,41 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
     /* Add tree entries that just point into the base structure. */
     ib_util_log_debug(9, "Initializing: t=%p init=%p", cm, init);
     while (rec->name != NULL) {
-        void *val = (void *)(((uint8_t *)base) + rec->offset);
+        if (rec->fn_set != NULL && rec->fn_get != NULL) {
+            ib_util_log_debug(9, "INIT: %s type=%d set=%p/%p get=%p/%p",
+                              rec->name, rec->type,
+                              rec->fn_set, rec->cbdata_set,
+                              rec->fn_get, rec->cbdata_get);
 
-        ib_util_log_debug(9, "INIT: %s type=%d base=%p offset=%d dlen=%d %p",
-                          rec->name, rec->type, base,
-                          (int)rec->offset, (int)rec->dlen, val);
-
-        /* Copy the default value if required. */
-        if (usedefaults) {
-            memcpy(val, &rec->defval, rec->dlen);
+            /* Create a field with data that points to the base+offset. */
+            rc = ib_field_createn(&f, cm->mp, rec->name, rec->type, NULL);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            ib_field_dyn_register_get(f, ib_cfgmap_handle_get, rec);
+            ib_field_dyn_register_set(f, ib_cfgmap_handle_set, rec);
         }
+        else {
+            if (rec->fn_get != NULL || rec->fn_set != NULL) {
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
 
-        /* Create a field with data that points to the base+offset. */
-        rc = ib_field_createn(&f, cm->mp, rec->name, rec->type, val);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            void *val = (void *)(((uint8_t *)base) + rec->offset);
+
+            ib_util_log_debug(9, "INIT: %s type=%d base=%p offset=%d dlen=%d %p",
+                              rec->name, rec->type, base,
+                              (int)rec->offset, (int)rec->dlen, val);
+
+            /* Copy the default value if required. */
+            if (usedefaults) {
+                memcpy(val, &rec->defval, rec->dlen);
+            }
+
+            /* Create a field with data that points to the base+offset. */
+            rc = ib_field_createn(&f, cm->mp, rec->name, rec->type, val);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
         }
 
         /* Add the field. */
@@ -101,7 +174,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        rec++;
+        ++rec;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

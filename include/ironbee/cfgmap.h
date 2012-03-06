@@ -68,13 +68,57 @@ struct ib_cfgmap_t {
     ib_cfgmap_init_t   *data;         /**< Initialization mapping */
 };
 
+/**
+ * Type of a getter for a config map entry.
+ *
+ * @sa IB_CFGMAP_INIT_DYNAMIC_ENTRY()
+ * @sa ib_field_get_fn_t
+ *
+ * @param[in] name Name of field.
+ * @param[in] type Type of field.
+ * @param[in] data Callback data.
+ * @returns Value (numeric) or pointer to value (non-numeric).
+ */
+typedef void *(*ib_cfgmap_get_fn_t)(
+    const char *name,
+    ib_ftype_t  type,
+    void       *data
+);
+
+/**
+ * Type of a setter for a config map entry.
+ *
+ * @sa IB_CFGMAP_INIT_DYNAMIC_ENTRY()
+ * @sa ib_field_set_fn_t
+ *
+ * @param[in] name  Name of field.
+ * @param[in] type  Type of field.
+ * @parma[in] value Value to set to.
+ * @param[in] data  Callback data.
+ * @returns Status code.
+ */
+typedef ib_status_t (*ib_cfgmap_set_fn_t)(
+    const char *name,
+    ib_ftype_t  type,
+    void       *value,
+    void       *data
+);
+
 /** Config map initialization structure. */
 struct ib_cfgmap_init_t {
-    const char          *name;     /**< Field name */
-    ib_ftype_t           type;     /**< Field type */
-    off_t                offset;   /**< Field data offset within base */
-    size_t               dlen;     /**< Field data length (<= uintptr_t) */
-    uintptr_t            defval;   /**< Default value */
+    const char          *name; /**< Field name */
+    ib_ftype_t           type; /**< Field type */
+
+    /* Either this... */
+    ib_cfgmap_get_fn_t   fn_get;     /**< Getter */
+    void                *cbdata_get; /**< Getter data */
+    ib_cfgmap_set_fn_t   fn_set;     /**< Setter */
+    void                *cbdata_set; /**< Setter data */
+
+    /* .. Or this.  Used if fn_get and fn_set are NULL */
+    off_t                offset; /**< Field data offset within base */
+    size_t               dlen;   /**< Field data length (<= uintptr_t) */
+    uintptr_t            defval; /**< Default value */
 };
 
 /**
@@ -108,9 +152,28 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
     { \
         (name), \
         (type), \
+        NULL, NULL, NULL, NULL, \
         offsetof(basetype, field), \
         sizeof(((basetype*)(0))->field), \
         (const uintptr_t)(defval) \
+    }
+
+/**
+ * Defines a dynamic configuration map entry.
+ *
+ * @param name     Configuration entry name
+ * @param type     Configuration entry data type
+ * @param set      Setter function.
+ * @param set_data Setter data.
+ * @param get      Getter function.
+ * @param get_data Getter data.
+ */
+#define IB_CFGMAP_INIT_DYNAMIC_ENTRY(name,type,set,set_data,get,get_data) \
+    { \
+        (name), \
+        (type), \
+        (set), (set_data), \
+        (get), (get_data) \
     }
 
 /**
@@ -122,9 +185,10 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
 /**
  * Initialize a configuration map with entries.
  *
- * @param cm Configuration map
- * @param base Base address of the structure holding the values
- * @param init Configuration map initialization structure
+ * @param cm          Configuration map
+ * @param base        Base address of the structure holding the values.
+ *                    Can be NULL if all entries are dynamic.
+ * @param init        Configuration map initialization structure
  * @param usedefaults If true, use the map default values as base
  *
  * @returns Status code
