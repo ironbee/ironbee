@@ -26,6 +26,8 @@
 #include "data.hpp"
 #include <ironbeepp/internal/catch.hpp>
 
+#include <ironbee/debug.h>
+
 namespace IronBee {
 namespace Internal {
 

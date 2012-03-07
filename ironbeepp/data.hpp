@@ -45,7 +45,6 @@
 #include <ironbeepp/exception.hpp>
 
 #include <ironbee/mpool.h>
-#include <ironbee/debug.h>
 
 #include <boost/any.hpp>
 
@@ -82,8 +81,6 @@ ib_status_t data_cleanup(void* data);
 template <typename ValueType>
 ValueType data_to_value(void* data)
 {
-    IB_FTRACE_INIT();
-
     boost::any* data_any = reinterpret_cast<boost::any*>(data);
 
     try {

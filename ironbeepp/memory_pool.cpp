@@ -32,6 +32,7 @@
 #include "throw.hpp"
 
 #include <ironbee/mpool.h>
+#include <ironbee/debug.h>
 
 #include <boost/make_shared.hpp>
 
@@ -66,6 +67,8 @@ ib_status_t cleanup(
 
     // Now we need to clear our own callback data.
     delete reinterpret_cast<boost::any*>(cbdata);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 } // extern "C"

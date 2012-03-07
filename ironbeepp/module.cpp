@@ -34,6 +34,7 @@
 
 #include <ironbee/module.h>
 #include <ironbee/engine.h>
+#include <ironbee/debug.h>
 
 #include <boost/make_shared.hpp>
 
