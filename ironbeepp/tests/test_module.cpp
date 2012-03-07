@@ -318,3 +318,111 @@ TEST_F(TestModule, expose_c)
     ASSERT_TRUE(cm);
     EXPECT_EQ(&ib_module, cm.ib());
 }
+
+class SimpleTestCallback
+{
+public:
+    SimpleTestCallback(int& id) :
+        m_id( id )
+    {
+        m_id = -1;
+    }
+
+    void operator()(IronBee::Module)
+    {
+        m_id = s_next_id;
+        ++s_next_id;
+    }
+
+    void operator()(IronBee::Module, IronBee::Context)
+    {
+        (*this)(IronBee::Module());
+    }
+
+    static void reset()
+    {
+        s_next_id = 0;
+    }
+
+private:
+    static int s_next_id;
+    int& m_id;
+};
+int SimpleTestCallback::s_next_id = 0;
+
+TEST_F(TestModule, chain)
+{
+    int a;
+    int b;
+    int c;
+
+    ib_module_t ib_module;
+    ib_module.ib = m_ib_engine;
+    IronBee::Module module(&ib_module);
+
+    ib_status_t rc;
+
+    SimpleTestCallback::reset();
+    module.chain_initialize(SimpleTestCallback(a));
+    module.chain_initialize(SimpleTestCallback(b));
+    module.chain_initialize(SimpleTestCallback(c));
+    ASSERT_EQ(-3, a + b + c);
+    rc = ib_module.fn_init(
+        ib_module.ib,
+        &ib_module,
+        ib_module.cbdata_init
+    );
+    EXPECT_EQ(IB_OK, rc);
+    ASSERT_EQ(0, a);
+    ASSERT_EQ(1, b);
+    ASSERT_EQ(2, c);
+
+    SimpleTestCallback::reset();
+    module.set_initialize(SimpleTestCallback(a));
+    module.prechain_initialize(SimpleTestCallback(b));
+    module.chain_initialize(SimpleTestCallback(c));
+    ASSERT_EQ(-3, a + b + c);
+    rc = ib_module.fn_init(
+        ib_module.ib,
+        &ib_module,
+        ib_module.cbdata_init
+    );
+    EXPECT_EQ(IB_OK, rc);
+    ASSERT_EQ(1, a);
+    ASSERT_EQ(0, b);
+    ASSERT_EQ(2, c);
+
+    ib_context_t ib_context;
+
+    SimpleTestCallback::reset();
+    module.chain_context_open(SimpleTestCallback(a));
+    module.chain_context_open(SimpleTestCallback(b));
+    module.chain_context_open(SimpleTestCallback(c));
+    ASSERT_EQ(-3, a + b + c);
+    rc = ib_module.fn_ctx_open(
+        ib_module.ib,
+        &ib_module,
+        &ib_context,
+        ib_module.cbdata_ctx_open
+    );
+    EXPECT_EQ(IB_OK, rc);
+    ASSERT_EQ(0, a);
+    ASSERT_EQ(1, b);
+    ASSERT_EQ(2, c);
+
+    SimpleTestCallback::reset();
+    module.set_context_open(SimpleTestCallback(a));
+    module.prechain_context_open(SimpleTestCallback(b));
+    module.chain_context_open(SimpleTestCallback(c));
+    ASSERT_EQ(-3, a + b + c);
+    rc = ib_module.fn_ctx_open(
+        ib_module.ib,
+        &ib_module,
+        &ib_context,
+        ib_module.cbdata_ctx_open
+    );
+    EXPECT_EQ(IB_OK, rc);
+    ASSERT_EQ(1, a);
+    ASSERT_EQ(0, b);
+    ASSERT_EQ(2, c);
+}

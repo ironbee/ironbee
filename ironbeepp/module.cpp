@@ -48,6 +48,106 @@ struct ModuleData
     ib_module_t* ib_module;
 };
 
+namespace  {
+
+class ModuleHookPreChainModule
+{
+public:
+    ModuleHookPreChainModule(
+        Module::module_callback_t f,
+        Module::module_callback_t next
+    ) :
+        m_f(f),
+        m_next(next)
+    {
+        // nop
+    }
+
+    void operator()(Module m) const
+    {
+        m_f(m);
+        m_next(m);
+    }
+
+private:
+    Module::module_callback_t m_f;
+    Module::module_callback_t m_next;
+};
+
+class ModuleHookPreChainContext
+{
+public:
+    ModuleHookPreChainContext(
+        Module::context_callback_t f,
+        Module::context_callback_t next
+    ) :
+        m_f(f),
+        m_next(next)
+    {
+        // nop
+    }
+
+    void operator()(Module m, Context c) const
+    {
+        m_f(m, c);
+        m_next(m, c);
+    }
+
+private:
+    Module::context_callback_t m_f;
+    Module::context_callback_t m_next;
+};
+
+class ModuleHookChainModule
+{
+public:
+    ModuleHookChainModule(
+        Module::module_callback_t f,
+        Module::module_callback_t prev
+    ) :
+        m_f(f),
+        m_prev(prev)
+    {
+        // nop
+    }
+
+    void operator()(Module m) const
+    {
+        m_prev(m);
+        m_f(m);
+    }
+
+private:
+    Module::module_callback_t m_f;
+    Module::module_callback_t m_prev;
+};
+
+class ModuleHookChainContext
+{
+public:
+    ModuleHookChainContext(
+        Module::context_callback_t f,
+        Module::context_callback_t prev
+    ) :
+        m_f(f),
+        m_prev(prev)
+    {
+        // nop
+    }
+
+    void operator()(Module m, Context c) const
+    {
+        m_prev(m, c);
+        m_f(m, c);
+    }
+
+private:
+    Module::context_callback_t m_f;
+    Module::context_callback_t m_prev;
+};
+
+} // Anonymous
+
 } // Internal
 
 namespace {
@@ -192,6 +292,34 @@ const char* Module::name() const
     return m_data->ib_module->name;
 }
 
+void Module::chain_initialize(initialize_t f)
+{
+    if (! m_data->ib_module->fn_init) {
+        set_initialize(f);
+    } else {
+        set_initialize( Internal::ModuleHookChainModule(
+            f,
+            Internal::data_to_value<Module::initialize_t>(
+                m_data->ib_module->cbdata_init
+            )
+        ) );
+    }
+}
+
+void Module::prechain_initialize(initialize_t f)
+{
+    if (! m_data->ib_module->fn_init) {
+        set_initialize(f);
+    } else {
+        set_initialize( Internal::ModuleHookPreChainModule(
+            f,
+            Internal::data_to_value<Module::initialize_t>(
+                m_data->ib_module->cbdata_init
+            )
+        ) );
+    }
+}
+
 void Module::set_initialize(initialize_t f)
 {
     m_data->ib_module->cbdata_init = Internal::value_to_data(
@@ -199,6 +327,34 @@ void Module::set_initialize(initialize_t f)
         ib_engine_pool_main_get(m_data->ib_module->ib)
     );
     m_data->ib_module->fn_init = Hooks::initialize;
+}
+
+void Module::chain_finalize(finalize_t f)
+{
+    if (! m_data->ib_module->fn_fini) {
+        set_finalize(f);
+    } else {
+        set_finalize( Internal::ModuleHookChainModule(
+            f,
+            Internal::data_to_value<Module::finalize_t>(
+                m_data->ib_module->cbdata_fini
+            )
+        ) );
+    }
+}
+
+void Module::prechain_finalize(finalize_t f)
+{
+    if (! m_data->ib_module->fn_fini) {
+        set_finalize(f);
+    } else {
+        set_finalize( Internal::ModuleHookPreChainModule(
+            f,
+            Internal::data_to_value<Module::finalize_t>(
+                m_data->ib_module->cbdata_fini
+            )
+        ) );
+    }
 }
 
 void Module::set_finalize(finalize_t f)
@@ -210,6 +366,34 @@ void Module::set_finalize(finalize_t f)
     m_data->ib_module->fn_fini = Hooks::finalize;
 }
 
+void Module::chain_context_open(context_open_t f)
+{
+    if (! m_data->ib_module->fn_ctx_open) {
+        set_context_open(f);
+    } else {
+        set_context_open( Internal::ModuleHookChainContext(
+            f,
+            Internal::data_to_value<Module::context_open_t>(
+                m_data->ib_module->cbdata_ctx_open
+            )
+        ) );
+    }
+}
+
+void Module::prechain_context_open(context_open_t f)
+{
+    if (! m_data->ib_module->fn_ctx_open) {
+        set_context_open(f);
+    } else {
+        set_context_open( Internal::ModuleHookPreChainContext(
+            f,
+            Internal::data_to_value<Module::context_open_t>(
+                m_data->ib_module->cbdata_ctx_open
+            )
+        ) );
+    }
+}
+
 void Module::set_context_open(context_open_t f)
 {
     m_data->ib_module->cbdata_ctx_open = Internal::value_to_data(
@@ -219,6 +403,34 @@ void Module::set_context_open(context_open_t f)
     m_data->ib_module->fn_ctx_open = Hooks::context_open;
 }
 
+void Module::chain_context_close(context_close_t f)
+{
+    if (! m_data->ib_module->fn_ctx_close) {
+        set_context_close(f);
+    } else {
+        set_context_close( Internal::ModuleHookChainContext(
+            f,
+            Internal::data_to_value<Module::context_close_t>(
+                m_data->ib_module->cbdata_ctx_close
+            )
+        ) );
+    }
+}
+
+void Module::prechain_context_close(context_close_t f)
+{
+    if (! m_data->ib_module->fn_ctx_close) {
+        set_context_close(f);
+    } else {
+        set_context_close( Internal::ModuleHookPreChainContext(
+            f,
+            Internal::data_to_value<Module::context_close_t>(
+                m_data->ib_module->cbdata_ctx_close
+            )
+        ) );
+    }
+}
+
 void Module::set_context_close(context_close_t f)
 {
     m_data->ib_module->cbdata_ctx_close = Internal::value_to_data(
@@ -226,6 +438,34 @@ void Module::set_context_close(context_close_t f)
         ib_engine_pool_main_get(m_data->ib_module->ib)
     );
     m_data->ib_module->fn_ctx_close = Hooks::context_close;
+}
+
+void Module::chain_context_destroy(context_destroy_t f)
+{
+    if (! m_data->ib_module->fn_ctx_destroy) {
+        set_context_destroy(f);
+    } else {
+        set_context_destroy( Internal::ModuleHookChainContext(
+            f,
+            Internal::data_to_value<Module::context_destroy_t>(
+                m_data->ib_module->cbdata_ctx_destroy
+            )
+        ) );
+    }
+}
+
+void Module::prechain_context_destroy(context_destroy_t f)
+{
+    if (! m_data->ib_module->fn_ctx_destroy) {
+        set_context_destroy(f);
+    } else {
+        set_context_destroy( Internal::ModuleHookPreChainContext(
+            f,
+            Internal::data_to_value<Module::context_destroy_t>(
+                m_data->ib_module->cbdata_ctx_destroy
+            )
+        ) );
+    }
 }
 
 void Module::set_context_destroy(context_destroy_t f)

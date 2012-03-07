@@ -100,6 +100,14 @@ public:
      * @name Callbacks
      * Types and methods associated with callbacks.
      *
+     * Callbacks can be chained.  Usually all callbacks in the chain are
+     * called, but if any throws an exception it will abort the chain.  When
+     * possible, prefer the @c chain_* methods.  Other IronBee++ components
+     * will prechain callbacks to handle their own callbacks.
+     *
+     * @warning The @c set_* callbacks will clear all other chained callbacks.
+     *          Only do this if you are sure of what you are doing.
+     *
      * - An Engine parameter is not provided.  Instead, use Module::engine().
      * - Parameters are passed by copy as they are references to underlying
      *   C objects.  See Module and Context.
@@ -109,26 +117,52 @@ public:
      *   or function object that matches the signature.
      */
     //@{
+    //! Module calback.
+    typedef boost::function<void (Module)> module_callback_t;
+    //! Context callback.
+    typedef boost::function<void (Module, Context)> context_callback_t;
     //! Called on module initialization.
-    typedef boost::function<void (Module)>          initialize_t;
+    typedef module_callback_t initialize_t;
      //! Called on module finalization.
-    typedef boost::function<void (Module)>          finalize_t;
+    typedef module_callback_t finalize_t;
     //! Called on context open.
-    typedef boost::function<void (Module, Context)> context_open_t;
+    typedef context_callback_t context_open_t;
     //! Called on context close.
-    typedef boost::function<void (Module, Context)> context_close_t;
+    typedef context_callback_t context_close_t;
     //! Called on context destroy.
-    typedef boost::function<void (Module, Context)> context_destroy_t;
+    typedef context_callback_t context_destroy_t;
 
-    //! Set initialization function.
+    //! Chain initialization function.
+    void chain_initialize(initialize_t f);
+    //! Chain finalize function.
+    void chain_finalize(finalize_t f);
+    //! Chain context open function.
+    void chain_context_open(context_open_t f);
+    //! Chain context close function.
+    void chain_context_close(context_close_t f);
+    //! Chain context destroy function.
+    void chain_context_destroy(context_destroy_t f);
+
+    //! Prechain initialization function.  Prefer chain_initialize().
+    void prechain_initialize(initialize_t f);
+    //! Prechain finalize function.  Prefer chain_finalize().
+    void prechain_finalize(finalize_t f);
+    //! Prechain context open function.  Prefer chain_context_open().
+    void prechain_context_open(context_open_t f);
+    //! Prechain context close function.  Prefer chain_context_close().
+    void prechain_context_close(context_close_t f);
+    //! Prechain context destroy function.  Prefer chain_context_destroy().
+    void prechain_context_destroy(context_destroy_t f);
+
+    //! Set initialization function.  Prefer chain_initialize().
     void set_initialize(initialize_t f);
-    //! Set finalize function.
+    //! Set finalize function.  Prefer chain_finalize().
     void set_finalize(finalize_t f);
-    //! Set context open function.
+    //! Set context open function.  Prefer chain_context_open().
     void set_context_open(context_open_t f);
-    //! Set context close function.
+    //! Set context close function.  Prefer chain_context_close().
     void set_context_close(context_close_t f);
-    //! Set context destroy function.
+    //! Set context destroy function.  Prefer chain_context_destroy().
     void set_context_destroy(context_destroy_t f);
     //@}
 
