@@ -53,6 +53,8 @@ extern "C" {
  * @param[in] xname               Module name
  * @param[in] xgcdata             Global config data
  * @param[in] xgclen              Global config data length
+ * @param[in] xfn_cfg_copy        Config copy function
+ * @param[in] xcbdata_cfg_copy    Config copy function callback data
  * @param[in] xcm_init            Configuration field map
  * @param[in] xdm_init            Config directive map
  * @param[in] xfn_init            Initialize function
@@ -66,7 +68,7 @@ extern "C" {
  * @param[in] xfn_ctx_destroy     Context destroy function
  * @param[in] xcbdata_ctx_destroy Context destroy function callback data
  */
-#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xcm_init,xdm_init,xfn_init,xcbdata_init,xfn_fini,xcbdata_fini,xfn_ctx_open,xcbdata_ctx_open,xfn_ctx_close,xcbdata_ctx_close,xfn_ctx_destroy,xcbdata_ctx_destroy) \
+#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xfn_cfg_copy,xcbdata_cfg_copy,xcm_init,xdm_init,xfn_init,xcbdata_init,xfn_fini,xcbdata_fini,xfn_ctx_open,xcbdata_ctx_open,xfn_ctx_close,xcbdata_ctx_close,xfn_ctx_destroy,xcbdata_ctx_destroy) \
     do { \
         (m)->vernum             = IB_VERNUM; \
         (m)->abinum             = IB_ABINUM; \
@@ -78,6 +80,8 @@ extern "C" {
         (m)->name               = xname; \
         (m)->gcdata             = xgcdata; \
         (m)->gclen              = xgclen; \
+        (m)->fn_cfg_copy        = xfn_cfg_copy; \
+        (m)->cbdata_cfg_copy    = xcbdata_cfg_copy; \
         (m)->cm_init            = xcm_init; \
         (m)->dm_init            = xdm_init; \
         (m)->fn_init            = xfn_init; \
@@ -101,11 +105,11 @@ extern "C" {
                                       NULL, \
                                       0
 
-/** Module config structure and size */
-#define IB_MODULE_CONFIG(ptr)         (ptr), (sizeof(*(ptr)))
+/** Module config structure, size, and default handlers */
+#define IB_MODULE_CONFIG(ptr)         (ptr), (sizeof(*(ptr))), NULL, NULL
 
 /** Used to signify that there is no config structure for the module. */
-#define IB_MODULE_CONFIG_NULL         NULL, 0
+#define IB_MODULE_CONFIG_NULL         NULL, 0, NULL, NULL
 
 /**
  * Function which is exported in an IronBee module to return the address
@@ -120,6 +124,30 @@ extern "C" {
  * @returns Address of the module structure
  */
 typedef ib_module_t *(*ib_module_sym_fn)(ib_engine_t* ib);
+
+/**
+ * Function to handle copying configuration data.
+ *
+ * This is called when configuration data needs to be copied from a parent
+ * context to a child context.  If NULL, it defaults to memcpy.
+ *
+ * @param[in] ib     Engine handle
+ * @param[in] m      Module
+ * @param[in] dst    Destination of data.
+ * @param[in] src    Source of data.
+ * @param[in] length Length of data.
+ * @param[in] cbdata Callback data
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*ib_module_fn_cfg_copy_t)(
+    ib_engine_t *ib,
+    ib_module_t *m,
+    void        *dst,
+    const void  *src,
+    size_t       length,
+    void        *cbdata
+);
 
 /**
  * Function to initialize a module.
@@ -225,21 +253,25 @@ typedef ib_status_t (*ib_module_fn_ctx_destroy_t)(
  */
 struct ib_module_t {
     /* Header */
-    uint32_t                vernum;           /**< Engine version number */
-    uint32_t                abinum;           /**< Engine ABI Number */
-    const char             *version;          /**< Engine version string */
-    const char             *filename;         /**< Module code filename */
-    void                   *data;             /**< Module data */
-    ib_engine_t            *ib;               /**< Engine */
-    size_t                  idx;              /**< Module index */
+    uint32_t     vernum;           /**< Engine version number */
+    uint32_t     abinum;           /**< Engine ABI Number */
+    const char  *version;          /**< Engine version string */
+    const char  *filename;         /**< Module code filename */
+    void        *data;             /**< Module data */
+    ib_engine_t *ib;               /**< Engine */
+    size_t       idx;              /**< Module index */
 
 
     /* Module Config */
-    const char             *name;             /**< Module name */
-    void                   *gcdata;           /**< Global config data */
-    size_t                  gclen;            /**< Global config data length */
-    const ib_cfgmap_init_t *cm_init;          /**< Module config mapping */
-    const ib_dirmap_init_t *dm_init;          /**< Module directive mapping */
+    const char *name; /**< Module name */
+
+    void                    *gcdata;          /**< Global config data */
+    size_t                   gclen;           /**< Global config data length */
+    ib_module_fn_cfg_copy_t  fn_cfg_copy;     /**< Config copy handler */
+    void                    *cbdata_cfg_copy; /**< Config copy data */
+    const ib_cfgmap_init_t  *cm_init;         /**< Module config mapping */
+
+    const ib_dirmap_init_t *dm_init; /**< Module directive mapping */
 
     /* Functions */
     ib_module_fn_init_t         fn_init;         /**< Module init */

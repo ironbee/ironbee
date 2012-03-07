@@ -45,6 +45,8 @@ void bootstrap_module(
         name,                               // name
         NULL,                               // config data
         0,                                  // config data length
+        NULL,                               // config copier
+        NULL,                               // config copier data
         NULL,                               // config field map
         NULL,                               // config directive map
         NULL,

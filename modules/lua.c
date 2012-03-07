@@ -634,25 +634,27 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     /* Initialize the loaded module. */
     ib_log_debug(ib, 9, "Init lua module structure");
     IB_MODULE_INIT_DYNAMIC(
-        module,                         /**< Module */
-        file,                           /**< Module code filename */
-        chunk,                          /**< Module data */
-        ib,                             /**< Engine */
-        chunk->name,                    /**< Module name */
-        NULL,                           /**< Global config data */
-        0,                              /**< Global config data length */
-        NULL,                           /**< Configuration field map */
-        NULL,                           /**< Config directive map */
-        (use_onload?modlua_init_lua_wrapper:NULL),/**< Initialize function */
-        NULL,                           /**< Callback data */
-        NULL,                           /**< Finish function */
-        NULL,                           /**< Callback data */
-        NULL,                           /**< Context open function */
-        NULL,                           /**< Callback data */
-        NULL,                           /**< Context close function */
-        NULL,                           /**< Callback data */
-        NULL,                           /**< Context destroy function */
-        NULL                            /**< Callback data */
+        module,                         /* Module */
+        file,                           /* Module code filename */
+        chunk,                          /* Module data */
+        ib,                             /* Engine */
+        chunk->name,                    /* Module name */
+        NULL,                           /* Global config data */
+        0,                              /* Global config data length */
+        NULL,                           /* Config copier */
+        NULL,                           /* Config copier data */
+        NULL,                           /* Configuration field map */
+        NULL,                           /* Config directive map */
+        (use_onload?modlua_init_lua_wrapper:NULL),/* Initialize function */
+        NULL,                           /* Callback data */
+        NULL,                           /* Finish function */
+        NULL,                           /* Callback data */
+        NULL,                           /* Context open function */
+        NULL,                           /* Callback data */
+        NULL,                           /* Context close function */
+        NULL,                           /* Callback data */
+        NULL,                           /* Context destroy function */
+        NULL                            /* Callback data */
     );
 
     /* Track loaded lua modules. */
