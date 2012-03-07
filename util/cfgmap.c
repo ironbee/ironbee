@@ -54,6 +54,8 @@ ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
 
     (*pcm)->mp = pool;
     (*pcm)->hash = hash;
+    /* Set by ib_cfgmap_init() */
+    (*pcm)->base = NULL;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -65,6 +67,16 @@ failed:
 }
 
 /**
+ * Holds data for config map setters and getters.
+ **/
+struct ib_cfgmap_handlers_data
+{
+    const ib_cfgmap_init_t *init;
+    void                   *base;
+};
+typedef struct ib_cfgmap_handlers_data ib_cfgmap_handlers_data;
+
+/**
  * Translate field getter to cfgmap getter.
  * @internal
  *
@@ -74,7 +86,7 @@ static void *ib_cfgmap_handle_get(
     ib_field_t *f,
     const void *arg,
     size_t alen,
-    void *data
+    void *cbdata
 )
 {
     IB_FTRACE_INIT();
@@ -83,11 +95,16 @@ static void *ib_cfgmap_handle_get(
         IB_FTRACE_RET_PTR(void, NULL);
     }
 
-    ib_cfgmap_init_t *rec = (ib_cfgmap_init_t*)data;
+    ib_cfgmap_handlers_data *data = (ib_cfgmap_handlers_data*)cbdata;
 
     IB_FTRACE_RET_PTR(
         void,
-        rec->fn_get(rec->name, rec->type, rec->cbdata_get)
+        data->init->fn_get(
+            data->base,
+            data->init->name,
+            data->init->type,
+            data->init->cbdata_get
+        )
     );
 }
 
@@ -101,7 +118,7 @@ static ib_status_t ib_cfgmap_handle_set(
     ib_field_t *field,
     const void *arg, size_t alen,
     void *val,
-    void *data
+    void *cbdata
 )
 {
     IB_FTRACE_INIT();
@@ -110,15 +127,21 @@ static ib_status_t ib_cfgmap_handle_set(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_cfgmap_init_t *rec = (ib_cfgmap_init_t*)data;
+    ib_cfgmap_handlers_data *data = (ib_cfgmap_handlers_data*)cbdata;
 
     IB_FTRACE_RET_STATUS(
-        rec->fn_set(rec->name, rec->type, val, rec->cbdata_get)
+        data->init->fn_set(
+            data->base,
+            data->init->name,
+            data->init->type,
+            val,
+            data->init->cbdata_get
+        )
     );
 }
 
 ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
-                           const void *base,
+                           void *base,
                            const ib_cfgmap_init_t *init,
                            int usedefaults)
 {
@@ -129,6 +152,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
 
     /* Add tree entries that just point into the base structure. */
     ib_util_log_debug(9, "Initializing: t=%p init=%p", cm, init);
+    cm->base = base;
     while (rec->name != NULL) {
         if (rec->fn_set != NULL && rec->fn_get != NULL) {
             ib_util_log_debug(9, "INIT: %s type=%d set=%p/%p get=%p/%p",
@@ -141,8 +165,15 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
-            ib_field_dyn_register_get(f, ib_cfgmap_handle_get, rec);
-            ib_field_dyn_register_set(f, ib_cfgmap_handle_set, rec);
+            ib_cfgmap_handlers_data *data =
+                (ib_cfgmap_handlers_data*)ib_mpool_alloc(
+                    cm->mp,
+                    sizeof(*data)
+                );
+            data->base = base;
+            data->init = init;
+            ib_field_dyn_register_get(f, ib_cfgmap_handle_get, data);
+            ib_field_dyn_register_set(f, ib_cfgmap_handle_set, data);
         }
         else {
             if (rec->fn_get != NULL || rec->fn_set != NULL) {

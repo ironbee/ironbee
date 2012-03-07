@@ -65,6 +65,7 @@ extern "C" {
 struct ib_cfgmap_t {
     ib_mpool_t         *mp;           /**< Memory pool */
     ib_hash_t          *hash;         /**< The underlying hash */
+    void               *base;         /**< Pointer to base of config data. */
 };
 
 /**
@@ -73,12 +74,14 @@ struct ib_cfgmap_t {
  * @sa IB_CFGMAP_INIT_DYNAMIC_ENTRY()
  * @sa ib_field_get_fn_t
  *
+ * @param[in] base Pointer to base of config data.
  * @param[in] name Name of field.
  * @param[in] type Type of field.
  * @param[in] data Callback data.
  * @returns Value (numeric) or pointer to value (non-numeric).
  */
 typedef void *(*ib_cfgmap_get_fn_t)(
+    void       *base,
     const char *name,
     ib_ftype_t  type,
     void       *data
@@ -90,6 +93,7 @@ typedef void *(*ib_cfgmap_get_fn_t)(
  * @sa IB_CFGMAP_INIT_DYNAMIC_ENTRY()
  * @sa ib_field_set_fn_t
  *
+ * @param[in] base  Pointer to base of config data.
  * @param[in] name  Name of field.
  * @param[in] type  Type of field.
  * @parma[in] value Value to set to.
@@ -97,6 +101,7 @@ typedef void *(*ib_cfgmap_get_fn_t)(
  * @returns Status code.
  */
 typedef ib_status_t (*ib_cfgmap_set_fn_t)(
+    void       *base,
     const char *name,
     ib_ftype_t  type,
     void       *value,
@@ -186,14 +191,13 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  *
  * @param cm          Configuration map
  * @param base        Base address of the structure holding the values.
- *                    Can be NULL if all entries are dynamic.
  * @param init        Configuration map initialization structure
  * @param usedefaults If true, use the map default values as base
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_init(ib_cfgmap_t *cm,
-                                      const void *base,
+                                      void *base,
                                       const ib_cfgmap_init_t *init,
                                       int usedefaults);
 
