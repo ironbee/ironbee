@@ -61,6 +61,8 @@
  * defined then the machine stack will be used.  */
 #ifdef PCRE_HAVE_JIT
 #define PCRE_JIT_STACK
+#define PCRE_JIT_MIN_STACK_SZ 32*1024
+#define PCRE_JIT_MAX_STACK_SZ 512*1024
 #endif
 
 typedef struct modpcre_cfg_t modpcre_cfg_t;
@@ -555,7 +557,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     int matches;
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
-    int *ovector = (int *)ib_mpool_alloc(tx->mp, ovecsize*sizeof(*ovector));
+    int *ovector = (int *)malloc(ovecsize*sizeof(*ovector));
     const char* subject;
     size_t subject_len;
     ib_bytestr_t* bytestr;
@@ -563,10 +565,13 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     pcre *regex;
     pcre_extra *regex_extra;
 #ifdef PCRE_JIT_STACK
-    pcre_jit_stack *jit_stack = pcre_jit_stack_alloc(32*1024, 512*1024);
+    pcre_jit_stack *jit_stack = pcre_jit_stack_alloc(PCRE_JIT_MIN_STACK_SZ,
+                                                     PCRE_JIT_MAX_STACK_SZ);
 #endif
 
-    memset((void*)ovector, 0, ovecsize*(*ovector));
+    if (ovector==NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
     if (field->type == IB_FTYPE_NULSTR) {
         subject = ib_field_value_nulstr(field);
@@ -578,35 +583,44 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         subject = (const char*) ib_bytestr_const_ptr(bytestr);
     }
     else {
+        free(ovector);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Alloc space to copy regex. */
-    regex = (pcre*)ib_mpool_memdup(tx->mp,
-                                   rule_data->cpatt,
-                                   rule_data->cpatt_sz);
+    regex = (pcre*)malloc(rule_data->cpatt_sz);
+
     if (regex == NULL ) {
+        free(ovector);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+
+    memcpy(regex, rule_data->cpatt, rule_data->cpatt_sz);
 
     if (rule_data->study_data_sz == 0 ) {
         regex_extra = NULL;
     }
     else {
-        regex_extra = (pcre_extra*)ib_mpool_memdup(tx->mp,
-                                                   rule_data->edata,
-                                                   sizeof(*regex_extra));
+        regex_extra = (pcre_extra*) malloc(sizeof(*regex_extra));
+
         if (regex_extra == NULL ) {
+            free(ovector);
+            free(regex);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
+        *regex_extra = *rule_data->edata;
 
-        regex_extra->study_data = ib_mpool_memdup(tx->mp,
-                                                  rule_data->edata->study_data,
-                                                  rule_data->study_data_sz);
+        regex_extra->study_data = malloc(rule_data->study_data_sz);
 
         if (regex_extra->study_data == NULL ) {
+            free(ovector);
+            free(regex_extra);
+            free(regex);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
+        memcpy(regex_extra->study_data,
+               rule_data->edata->study_data,
+               rule_data->study_data_sz);
 
         /* Put some modest limits on our regex. */
         regex_extra->match_limit = 1000;
@@ -618,6 +632,10 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 
 #ifdef PCRE_JIT_STACK
     if (jit_stack == NULL) {
+        free(ovector);
+        free(regex_extra->study_data);
+        free(regex_extra);
+        free(regex);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -666,6 +684,10 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         *result = 0;
     }
 
+    free(regex_extra->study_data);
+    free(regex_extra);
+    free(ovector);
+    free(regex);
     IB_FTRACE_RET_STATUS(ib_rc);
 }
 
