@@ -54,7 +54,6 @@ ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
 
     (*pcm)->mp = pool;
     (*pcm)->hash = hash;
-    (*pcm)->data = NULL;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 

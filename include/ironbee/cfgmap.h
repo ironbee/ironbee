@@ -65,7 +65,6 @@ extern "C" {
 struct ib_cfgmap_t {
     ib_mpool_t         *mp;           /**< Memory pool */
     ib_hash_t          *hash;         /**< The underlying hash */
-    ib_cfgmap_init_t   *data;         /**< Initialization mapping */
 };
 
 /**
