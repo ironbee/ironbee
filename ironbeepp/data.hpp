@@ -91,9 +91,9 @@ ValueType data_to_value(void* data)
     }
     catch (boost::bad_any_cast) {
         BOOST_THROW_EXCEPTION(
-          einval() << errinfo_what(
-            "Stored type mismatch."
-          )
+            einval() << errinfo_what(
+                "Stored type mismatch."
+            )
         );
     }
 }
