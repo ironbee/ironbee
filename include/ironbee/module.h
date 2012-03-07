@@ -242,16 +242,16 @@ struct ib_module_t {
     const ib_dirmap_init_t *dm_init;          /**< Module directive mapping */
 
     /* Functions */
-    ib_module_fn_init_t        fn_init;          /**< Module init */
-    void*                      cbdata_init;      /**< fn_init callback data */
-    ib_module_fn_fini_t        fn_fini;          /**< Module finish */
-    void*                      cbdata_fini;      /**< fn_init callback data */
-    ib_module_fn_ctx_open_t    fn_ctx_open;      /**< Context open */
-    void*                      cbdata_ctx_open;  /**< fn_init callback data */
-    ib_module_fn_ctx_close_t   fn_ctx_close;     /**< Context close */
-    void*                      cbdata_ctx_close; /**< fn_init callback data */
-    ib_module_fn_ctx_destroy_t fn_ctx_destroy;   /**< Context destroy */
-    void*                      cbdata_ctx_destroy; /**< fn_init callback data */
+    ib_module_fn_init_t         fn_init;         /**< Module init */
+    void                       *cbdata_init;     /**< fn_init callback data */
+    ib_module_fn_fini_t         fn_fini;         /**< Module finish */
+    void                       *cbdata_fini;     /**< fn_init callback data */
+    ib_module_fn_ctx_open_t     fn_ctx_open;     /**< Context open */
+    void                       *cbdata_ctx_open; /**< fn_init callback data */
+    ib_module_fn_ctx_close_t    fn_ctx_close;    /**< Context close */
+    void                       *cbdata_ctx_close;/**< fn_init callback data */
+    ib_module_fn_ctx_destroy_t  fn_ctx_destroy;  /**< Context destroy */
+    void                       *cbdata_ctx_destroy; /**< fn_init callback data */
 };
 
 /**
