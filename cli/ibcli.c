@@ -321,17 +321,17 @@ static ib_status_t add_request_header(const char *str,
     strcpy(buf, str);
     if (delete == 0) {
         strcat(buf, "\r\n");
-        settings.request_headers.headers[num].buf     = buf;
+        settings.request_headers.headers[num].buf = buf;
         settings.request_headers.headers[num].buf_len = buf_len;
     }
     else {
-        settings.request_headers.headers[num].buf     = NULL;
+        settings.request_headers.headers[num].buf = NULL;
         settings.request_headers.headers[num].buf_len = 0;
     }
 
-    settings.request_headers.headers[num].name     = buf;
+    settings.request_headers.headers[num].name = buf;
     settings.request_headers.headers[num].name_len = name_len;
-    settings.request_headers.headers[num].used     = 0;
+    settings.request_headers.headers[num].used = 0;
 
     return IB_OK;
 }
@@ -1468,7 +1468,7 @@ static ib_status_t send_header(ib_engine_t* ib,
         size_t linelen = strlen(linebuf);
 
         /* GET: Parse out the http version */
-        if ( (http_version == 0) && (strncasecmp(linebuf, "GET", 3) == 0) ) {
+        if (http_version == 0) {
             int major;
             int minor;
             const char *http = strstr(linebuf, "HTTP/");
