@@ -115,17 +115,36 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
                                             int *erroffset)
 {
     IB_FTRACE_INIT();
+
+    /* Compiled pattern. */
     pcre *cpatt = NULL;
+
+    /* Compiled pattern size. Used to copy cpatt. */
     size_t cpatt_sz;
+
+    /* Extra data structure. This contains the study_data pointer. */
     pcre_extra *edata = NULL;
+
+    /* Size of edata->study_data. */
     size_t study_data_sz;
+
+    /* Is the compiled regex jit-compiled? This impacts how it is executed. */
     int is_jit;
+
+    /* How cpatt is produced. */
     const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
 #ifdef PCRE_HAVE_JIT
+    /* Determine the success of a call. */
     int rc;
+
+    /* Determines if the pcre compilation was successful with pcre_jit. */
     int pcre_jit_ret;
+
+    /* How edata is produced if we are using JIT. */
     const int study_flags = PCRE_STUDY_JIT_COMPILE;
 #else
+
+    /* How edata is produced if we are not using JIT. */
     const int study_flags = 0;
 #endif /* PCRE_HAVE_JIT */
 
@@ -142,7 +161,7 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
 #ifdef PCRE_HAVE_JIT
     if(*errptr != NULL)  {
         pcre_free(cpatt);
-        ib_util_log_error(4,"PCRE-JIT study failed : %s", *errptr);
+        ib_util_log_error(4,"PCRE-JIT study failed: %s", *errptr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -160,13 +179,13 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
                           patt);
         is_jit = 0;
     }
-    else {
+    else { /* Assume pcre_jit_ret == 0. */
         is_jit = 1;
     }
 #else
     if(*errptr != NULL)  {
         pcre_free(cpatt);
-        ib_util_log_error(4,"PCRE study failed : %s", *errptr);
+        ib_util_log_error(4,"PCRE study failed: %s", *errptr);
     }
     is_jit = 0;
 #endif /*PCRE_HAVE_JIT*/
