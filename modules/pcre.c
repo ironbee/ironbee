@@ -24,13 +24,16 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <assert.h>
+#include <ctype.h>
+#include <pcre.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <strings.h>
 #include <time.h>
-#include <ctype.h>
+
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
@@ -42,10 +45,6 @@
 #include <ironbee/provider.h>
 #include <ironbee/util.h>
 #include <ironbee/field.h>
-
-#include <assert.h>
-
-#include <pcre.h>
 
 
 /* Define the module name as well as a string version of it. */
@@ -128,13 +127,13 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
     const int study_flags = PCRE_STUDY_JIT_COMPILE;
 #else
     const int study_flags = 0;
-#endif /*PCRE_HAVE_JIT*/
+#endif /* PCRE_HAVE_JIT */
 
     cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
 
     if (*errptr != NULL) {
         ib_util_log_error(4, "PCRE compile error for \"%s\": %s at offset %d",
-            patt, *errptr, *erroffset);
+                          patt, *errptr, *erroffset);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -156,9 +155,9 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
     }
     else if (pcre_jit_ret != 1) {
         ib_util_log_error(4,
-            "PCRE-JIT compiler does not support: %s. "
-            "It will fallback to the normal PCRE",
-            patt);
+                          "PCRE-JIT compiler does not support: %s. "
+                          "It will fallback to the normal PCRE",
+                          patt);
         is_jit = 0;
     }
     else {
@@ -175,7 +174,7 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
     /* Compute the size of the populated values of cpatt. */
     pcre_fullinfo(cpatt, edata, PCRE_INFO_SIZE, &cpatt_sz);
 
-    if (edata!=NULL) {
+    if (edata != NULL) {
         pcre_fullinfo(cpatt, edata, PCRE_INFO_STUDYSIZE, &study_data_sz);
     }
     else {
@@ -215,7 +214,7 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
     }
 
     /* Copy extra data (study data). */
-    if (edata!=NULL) {
+    if (edata != NULL) {
 
         /* Copy edata. */
         (*pcre_cpatt)->edata = ib_mpool_memdup(pool, edata, sizeof(*edata));
@@ -285,12 +284,20 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
 {
     IB_FTRACE_INIT();
     modpcre_cpatt_t *pcre_cpatt = (modpcre_cpatt_t *)cpatt;
-    int ovector[30];
     int ec;
+    const int ovector_sz = 30;
+    int *ovector = (int *) malloc(ovector_sz*sizeof(*ovector));
+
+    if (ovector == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
     ec = pcre_exec(pcre_cpatt->cpatt, pcre_cpatt->edata,
                    (const char *)data, dlen,
-                   0, 0, ovector, 30);
+                   0, 0, ovector, ovector_sz);
+
+    free(ovector);
+
     if (ec >= 0) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -563,7 +570,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     ib_bytestr_t* bytestr;
     pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
     pcre *regex;
-    pcre_extra *regex_extra;
+    pcre_extra *regex_extra = NULL;
 #ifdef PCRE_JIT_STACK
     pcre_jit_stack *jit_stack = pcre_jit_stack_alloc(PCRE_JIT_MIN_STACK_SZ,
                                                      PCRE_JIT_MAX_STACK_SZ);
@@ -610,17 +617,24 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         }
         *regex_extra = *rule_data->edata;
 
-        regex_extra->study_data = malloc(rule_data->study_data_sz);
+        if ( rule_data->study_data_sz == 0 ) {
+            regex_extra->study_data = NULL;
+        } else {
+            regex_extra->study_data = malloc(rule_data->study_data_sz);
 
-        if (regex_extra->study_data == NULL ) {
-            free(ovector);
-            free(regex_extra);
-            free(regex);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            if (regex_extra->study_data == NULL ) {
+                free(ovector);
+                if (regex_extra != NULL) {
+                    free(regex_extra);
+                }
+                free(regex);
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+
+            memcpy(regex_extra->study_data,
+                   rule_data->edata->study_data,
+                   rule_data->study_data_sz);
         }
-        memcpy(regex_extra->study_data,
-               rule_data->edata->study_data,
-               rule_data->study_data_sz);
 
         /* Put some modest limits on our regex. */
         regex_extra->match_limit = 1000;
@@ -632,9 +646,14 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 
 #ifdef PCRE_JIT_STACK
     if (jit_stack == NULL) {
+        if ( regex_extra != NULL ) {
+            if ( regex_extra->study_data != NULL ) {
+                free(regex_extra->study_data);
+            }
+
+            free(regex_extra);
+        }
         free(ovector);
-        free(regex_extra->study_data);
-        free(regex_extra);
         free(regex);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -684,8 +703,13 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         *result = 0;
     }
 
-    free(regex_extra->study_data);
-    free(regex_extra);
+    if ( regex_extra != NULL ) {
+        if ( regex_extra->study_data != NULL ) {
+            free(regex_extra->study_data);
+        }
+
+        free(regex_extra);
+    }
     free(ovector);
     free(regex);
     IB_FTRACE_RET_STATUS(ib_rc);
