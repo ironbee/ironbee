@@ -22,7 +22,6 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_user_agent.la \
                      ibmod_trace.la \
                      ibmod_perf_stats.la 
-noinst_PROGRAMS = user_agent
 
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la 
@@ -115,15 +114,6 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  base=`echo $$m | sed 's/\..*//'`; \
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
-
-user_agent_SOURCES = user_agent.c \
-                     user_agent_rules.c \
-                     user_agent_private.h
-user_agent_CFLAGS = $(AM_CFLAGS) -DUSER_AGENT_MAIN
-user_agent_LDFLAGS = $(AM_LDFLAGS) $(top_builddir)/util/libibutil.la -libutil
-if FREEBSD
-user_agent_LDADD = -liconv
-endif
 
 all-local: $(abs_top_srcdir)/lua/ironbee-ffi.lua $(abs_top_srcdir)/lua/ironbee-api.lua
 	mkdir -p $(abs_top_builddir)/modules/.libs
