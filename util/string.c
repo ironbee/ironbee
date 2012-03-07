@@ -23,59 +23,76 @@
 
 #include "ironbee_config_auto.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <assert.h>
+#include <errno.h>
 
 #include <ironbee/types.h>
 #include <ironbee/debug.h>
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 
+/**
+ * Length of the string buffer for converting strings.
+ */
+#define NUM_BUF_LEN 64
 
-ib_status_t string_to_num(const char *s, ib_bool_t allow_hex, ib_num_t *result)
-{
-    IB_FTRACE_INIT();
-    size_t slen = strlen(s);
-    ib_status_t rc = string_to_num_ex(s, slen, allow_hex, result);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
+/**
+ * Convert a string (with length) to a number.
+ */
 ib_status_t string_to_num_ex(const char *s,
                              size_t slen,
                              ib_bool_t allow_hex,
                              ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const char *pat;
-    size_t offset;
-    int base;
+    char buf[NUM_BUF_LEN+1];
+    ib_status_t rc;
 
-    /* Look at the string, does it look like a number */
-    if (  (allow_hex == IB_TRUE) &&
-          ( (*s == '0') && ((*(s+1) == 'x') || (*(s+1) == 'X')) )  ) {
-        pat = "0123456789abcdefABCDEF";
-        offset = 2;
-        base = 16;
-    }
-    else if ( (*s == '-') || (*s == '+') ) {
-        pat = "0123456789";
-        offset = 1;
-        base = 10;
-    }
-    else {
-        pat = "0123456789";
-        offset = 0;
-        base = 10;
-    }
+    assert(slen <= NUM_BUF_LEN);
 
-    if (slen == offset) {
+    /* Check for zero length string */
+    if (slen == 0) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (strspn(s+offset, pat) == (slen - offset) ) {
-        *result = (ib_num_t)strtol(s, NULL, base);
-    }
-    else {
+
+    /* Copy the string to a buffer, let string_to_num() do the real work */
+    memcpy(buf, buf, slen);
+    buf[slen] = '\0';
+    rc = string_to_num(buf, allow_hex, result);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Convert a string (with length) to a number.
+ */
+ib_status_t string_to_num(const char *s, ib_bool_t allow_hex, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    size_t slen = strlen(s);
+    char *end;
+    long int value;
+    size_t vlen;
+
+    /* Check for zero length string */
+    if (*s == '\0') {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+
+    /* Do the conversion, check for errors */
+    value = strtol(s, &end, (allow_hex == IB_FALSE ? 10 : 0) );
+    vlen = (end - s);
+    if (vlen != slen) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    else if ( ((value == LONG_MIN) || (value == LONG_MAX)) &&
+              (errno == ERANGE) )
+    {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    else {
+        *result = value;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 }

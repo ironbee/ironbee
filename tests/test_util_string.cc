@@ -59,7 +59,7 @@ public:
         rc = ::string_to_num(s, allow_hex, &result);
         ASSERT_EQ(rc, estatus)
             << "Conversion of '" << s << "' hex=" << BoolStr(allow_hex)
-            << "failed; rc=" << rc;
+            << " failed; rc=" << rc;
     }
 
     void RunTest(const char *s,
@@ -74,7 +74,7 @@ public:
         if (estatus == IB_OK) {
             EXPECT_EQ(rc, IB_OK)
                 << "Conversion of '" << s << "' hex=" << BoolStr(allow_hex)
-                << "failed; rc=" << rc;
+                << " failed; rc=" << rc;
         }
         else {
             EXPECT_EQ(rc, estatus)
@@ -120,9 +120,9 @@ TEST_F(TestIBUtilStringToNum, test_string_to_num_errors)
     RunTest("01",    IB_TRUE,  IB_OK);
     RunTest("01",    IB_FALSE, IB_OK);
     RunTest("0x100", IB_FALSE, IB_EINVAL);
-    RunTest("-0x1",  IB_TRUE,  IB_EINVAL);
+    RunTest("-0x1",  IB_TRUE,  IB_OK);
     RunTest("-0x1",  IB_FALSE, IB_EINVAL);
-    RunTest("+0x1",  IB_TRUE,  IB_EINVAL);
+    RunTest("+0x1",  IB_TRUE,  IB_OK);
     RunTest("+0x1",  IB_FALSE, IB_EINVAL);
 }
 

@@ -73,20 +73,6 @@ char DLL_PUBLIC *ib_strchr(const char *s, size_t l, int c);
  * Convert a string to a number, with error checking
  *
  * @param[in] s String to convert
- * @param[in] allow_hex Allow string to be a hex string (@a s must start with
- *            a "0x" or "0X" to be considered a hex string).
- * @param[out] result Resulting number.
- *
- * @returns Status code.
- */
-ib_status_t DLL_PUBLIC string_to_num(const char *s,
-                                     ib_bool_t allow_hex,
-                                     ib_num_t *result);
-
-/**
- * Convert a string to a number, with error checking
- *
- * @param[in] s String to convert
  * @param[in] slen Length of string
  * @param[in] allow_hex Allow string to be a hex string (@a s must start with
  *            a "0x" or "0X" to be considered a hex string).
@@ -98,6 +84,20 @@ ib_status_t DLL_PUBLIC string_to_num_ex(const char *s,
                                         size_t slen,
                                         ib_bool_t allow_hex,
                                         ib_num_t *result);
+
+/**
+ * Convert a string to a number, with error checking
+ *
+ * @param[in] s String to convert
+ * @param[in] allow_hex Allow string to be a hex string (@a s must start with
+ *            a "0x" or "0X" to be considered a hex string).
+ * @param[out] result Resulting number.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC string_to_num(const char *s,
+                                     ib_bool_t allow_hex,
+                                     ib_num_t *result);
 
 /**
  * @} IronBeeUtil
