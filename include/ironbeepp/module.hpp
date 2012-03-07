@@ -117,7 +117,7 @@ public:
      *   or function object that matches the signature.
      */
     //@{
-    //! Module calback.
+    //! Module callback.
     typedef boost::function<void (Module)> module_callback_t;
     //! Context callback.
     typedef boost::function<void (Module, Context)> context_callback_t;
