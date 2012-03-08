@@ -23,7 +23,6 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#define IBPP_EXPOSE_C
 #include <ironbeepp/module_bootstrap.hpp>
 
 #include "fixture.hpp"

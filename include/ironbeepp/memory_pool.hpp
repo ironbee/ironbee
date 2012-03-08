@@ -27,34 +27,23 @@
 #ifndef __IBPP__MEMORY_POOL__
 #define __IBPP__MEMORY_POOL__
 
+#include <boost/function.hpp>
+#include <boost/operators.hpp>
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
 #endif
-#include <boost/shared_ptr.hpp>
+#include <boost/utility.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
 
-#include <boost/function.hpp>
-#include <boost/operators.hpp>
-#include <boost/utility.hpp>
-
 #include <ostream>
 
-#ifdef IBPP_EXPOSE_C
+// IronBee C
 typedef struct ib_mpool_t ib_mpool_t;
-#endif
 
 namespace IronBee {
-
-namespace Internal {
-/// @cond Internal
-
-struct MemoryPoolData;
-
-/// @endcond
-};
 
 /**
  * Memory pool; equivalent to ib_mpool_t.
@@ -288,29 +277,27 @@ public:
      **/
     bool operator<(const MemoryPool& other) const;
 
-#ifdef IBPP_EXPOSE_C
     /**
-     * @name Expose C
+     * @name C Interoperability
      * Methods to access underlying C types.
-     *
-     * These methods are only available if IBPP_EXPOSE_C is defined.  This is
-     * to avoid polluting the global namespace if they are not needed.
      **/
     ///@{
+
     //! Non-const ib_mpool_t accessor.
     ib_mpool_t*       ib();
+
     //! Const ib_mpool_t accessor.
     const ib_mpool_t* ib() const;
+
     //! Construct MemoryPools from ib_mpool_t.
     explicit
     MemoryPool(ib_mpool_t* ib_mpool);
+
     ///@}
-#endif
 
 private:
-    typedef boost::shared_ptr<Internal::MemoryPoolData> data_t;
+    ib_mpool_t* m_ib;
 
-    data_t m_data;
     // Used for unspecified_bool_type.
     static void unspecified_bool(MemoryPool***) {};
 };

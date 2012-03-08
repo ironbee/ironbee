@@ -31,24 +31,14 @@
 #include <ironbeepp/engine.hpp>
 
 #include <boost/function.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/operators.hpp>
 
 #include <ostream>
 
-#ifdef IBPP_EXPOSE_C
-struct ib_module_t;
-#endif
+// IronBee C
+typedef struct ib_module_t ib_module_t;
 
 namespace IronBee {
-
-namespace Internal {
-/// @cond Internal
-
-struct ModuleData;
-
-/// @endcond
-};
 
 class Context;
 
@@ -201,29 +191,35 @@ public:
      **/
     bool operator<(const Module& other) const;
 
-#ifdef IBPP_EXPOSE_C
     /**
-     * @name Expose C
+     * @name C Interoperability
      * Methods to access underlying C types.
-     *
-     * These methods are only available if IBPP_EXPOSE_C is defined.  This is
-     * to avoid polluting the global namespace if they are not needed.
      **/
     ///@{
+
     //! Non-const ib_module_t accessor.
-    ib_module_t*       ib();
+    // Intentionally inlined.
+    ib_module_t* ib()
+    {
+        return m_ib;
+    }
+
     //! Const ib_module_t accessor.
-    const ib_module_t* ib() const;
+    // Intentionally inlined.
+    const ib_module_t* ib() const
+    {
+        return m_ib;
+    }
+
     //! Construct Module from ib_module_t.
     explicit
     Module(ib_module_t* ib_module);
+
     ///@}
-#endif
 
 private:
-    typedef boost::shared_ptr<Internal::ModuleData> data_t;
+    ib_module_t* m_ib;
 
-    data_t m_data;
     // Used for unspecified_bool_type.
     static void unspecified_bool(Module***) {};
 };

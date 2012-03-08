@@ -23,38 +23,26 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#define IBPP_EXPOSE_C
 #include <ironbeepp/engine.hpp>
 
 #include <ironbee/engine.h>
 
-#include <boost/make_shared.hpp>
-
 namespace IronBee {
 
-namespace Internal {
-
-struct EngineData
-{
-    ib_engine_t* ib_engine;
-};
-
-} // Internal
-
 Engine::Engine(ib_engine_t* ib_engine) :
-    m_data(boost::make_shared<Internal::EngineData>())
+    m_ib(ib_engine)
 {
-    m_data->ib_engine = ib_engine;
+    // nop
 }
 
 ib_engine_t* Engine::ib()
 {
-    return m_data->ib_engine;
+    return m_ib;
 }
 
 const ib_engine_t* Engine::ib() const
 {
-    return m_data->ib_engine;
+    return m_ib;
 }
 
 } // IronBee

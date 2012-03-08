@@ -30,7 +30,6 @@
 
 #include <ironbeepp/internal/catch.hpp>
 
-#define IBPP_EXPOSE_C
 #include <ironbeepp/engine.hpp>
 
 namespace IronBee {

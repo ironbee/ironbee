@@ -25,7 +25,6 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#define IBPP_EXPOSE_C
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/internal/catch.hpp>
 #include "data.hpp"
@@ -34,20 +33,9 @@
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>
 
-#include <boost/make_shared.hpp>
-
 #include <cassert>
 
 namespace IronBee {
-
-namespace Internal {
-
-struct MemoryPoolData
-{
-    ib_mpool_t* ib_mpool;
-};
-
-} // Internal
 
 namespace Hooks {
 namespace {
@@ -101,7 +89,8 @@ MemoryPool create_memory_pool(
 }
 } // Internal
 
-MemoryPool::MemoryPool()
+MemoryPool::MemoryPool() :
+    m_ib(NULL)
 {
     // nop
 }
@@ -228,23 +217,23 @@ bool MemoryPool::operator<(const MemoryPool& other) const
 
 ib_mpool_t* MemoryPool::ib()
 {
-    return m_data->ib_mpool;
+    return m_ib;
 }
 
 const ib_mpool_t* MemoryPool::ib() const
 {
-    return m_data->ib_mpool;
+    return m_ib;
 }
 
 MemoryPool::MemoryPool(ib_mpool_t* ib_mpool) :
-    m_data(boost::make_shared<Internal::MemoryPoolData>())
+    m_ib(ib_mpool)
 {
-    m_data->ib_mpool = ib_mpool;
+    // nop
 }
 
 MemoryPool::operator unspecified_bool_type() const
 {
-    return m_data ? unspecified_bool : 0;
+    return m_ib ? unspecified_bool : 0;
 }
 
 std::ostream& operator<<(std::ostream& o, const MemoryPool& memory_pool)

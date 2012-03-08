@@ -27,45 +27,23 @@
 #ifndef __IBPP__ENGINE__
 #define __IBPP__ENGINE__
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-#include <boost/shared_ptr.hpp>
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
-#ifdef IBPP_EXPOSE_C
-struct ib_engine_t;
-#endif
+// IronBee C
+typedef struct ib_engine_t ib_engine_t;
 
 namespace IronBee {
-
-namespace Internal {
-/// @cond Internal
-
-struct EngineData;
-
-/// @endcond
-};
 
 class Engine
 {
 public:
 
-#ifdef IBPP_EXPOSE_C
     ib_engine_t* ib();
     const ib_engine_t* ib() const;
 
     explicit
     Engine(ib_engine_t* ib_engine);
-#endif
 
 private:
-    typedef boost::shared_ptr<Internal::EngineData> data_t;
-
-    data_t m_data;
+    ib_engine_t* m_ib;
 };
 
 } // IronBee

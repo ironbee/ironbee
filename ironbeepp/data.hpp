@@ -32,10 +32,6 @@
  * ensure invalid casts are caught (at runtime) and destructors are properly
  * called.
  *
- * @warning Because this file works at the C++/C boundary, it includes some C
- *          IronBee files.  This will greatly pollute the global namespace
- *          and macro space.
- *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 

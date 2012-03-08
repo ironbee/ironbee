@@ -73,11 +73,6 @@
  * log error message, and appropriate ib_status_t values.  To assist and
  * control this process, use the exceptions defined in exception.hpp.
  *
- * @warning Because this file works at the C++/C boundary, it includes some C
- *          IronBee files.  This will greatly pollute the global namespace
- *          and macro space.  It is recommended that your file that uses this
- *          code be minimal.  See examples below.
- *
  * Example file using a delegate:
  * @code
  * #include "my_module_delegate.hpp"
@@ -104,8 +99,6 @@
 #ifndef __IBPP__MODULE_BOOTSTRAP__
 #define __IBPP__MODULE_BOOTSTRAP__
 
-// Needed at C++/C boundary.
-#define IBPP_EXPOSE_C
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>

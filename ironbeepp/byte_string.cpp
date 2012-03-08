@@ -25,7 +25,6 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#define IBPP_EXPOSE_C
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/internal/catch.hpp>
 
@@ -33,23 +32,13 @@
 
 #include <ironbee/bytestr.h>
 
-#include <boost/make_shared.hpp>
-
 #include <cstring>
 #include <cassert>
 
 namespace IronBee {
 
-namespace Internal {
-
-struct ByteStringData
-{
-    ib_bytestr_t* ib_bytestr;
-};
-
-} // Internal
-
-ByteString::ByteString()
+ByteString::ByteString() :
+    m_ib(NULL)
 {
     // nop
 }
@@ -304,25 +293,15 @@ bool ByteString::operator<(const ByteString& other) const
     }
 }
 
-ib_bytestr_t* ByteString::ib()
-{
-    return m_data->ib_bytestr;
-}
-
-const ib_bytestr_t* ByteString::ib() const
-{
-    return m_data->ib_bytestr;
-}
-
 ByteString::ByteString(ib_bytestr_t* ib_bytestr) :
-    m_data(boost::make_shared<Internal::ByteStringData>())
+    m_ib(ib_bytestr)
 {
-    m_data->ib_bytestr = ib_bytestr;
+    // nop
 }
 
 ByteString::operator unspecified_bool_type() const
 {
-    return m_data ? unspecified_bool : 0;
+    return m_ib ? unspecified_bool : 0;
 }
 
 std::ostream& operator<<(std::ostream& o, const ByteString& bytestr)

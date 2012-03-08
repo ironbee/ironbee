@@ -23,38 +23,26 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#define IBPP_EXPOSE_C
 #include <ironbeepp/context.hpp>
 
 #include <ironbee/engine.h>
 
-#include <boost/make_shared.hpp>
-
 namespace IronBee {
 
-namespace Internal {
-
-struct ContextData
-{
-    ib_context_t* ib_context;
-};
-
-} // Internal
-
 Context::Context(ib_context_t* ib_context) :
-    m_data(boost::make_shared<Internal::ContextData>())
+    m_ib(ib_context)
 {
-    m_data->ib_context = ib_context;
+    // Nop
 }
 
 ib_context_t* Context::ib()
 {
-    return m_data->ib_context;
+    return m_ib;
 }
 
 const ib_context_t* Context::ib() const
 {
-    return m_data->ib_context;
+    return m_ib;
 }
 
 

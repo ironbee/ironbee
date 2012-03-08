@@ -27,38 +27,22 @@
 #ifndef __IBPP__CONTEXT__
 #define __IBPP__CONTEXT__
 
-#include <boost/shared_ptr.hpp>
-
-#ifdef IBPP_EXPOSE_C
-struct ib_context_t;
-#endif
+// IronBee C
+typedef struct ib_context_t ib_context_t;
 
 namespace IronBee {
-
-namespace Internal {
-/// @cond Internal
-
-struct ContextData;
-
-/// @endcond
-};
 
 class Context
 {
 public:
-
-#ifdef IBPP_EXPOSE_C
     ib_context_t* ib();
     const ib_context_t* ib() const;
 
     explicit
     Context(ib_context_t* ib_context);
-#endif
 
 private:
-    typedef boost::shared_ptr<Internal::ContextData> data_t;
-
-    data_t m_data;
+    ib_context_t* m_ib;
 };
 
 } // IronBee

@@ -23,10 +23,6 @@
  * This file provides IBPP_TRY_CATCH(), a macro to aid in converting C++
  * exceptions into ib_status_t return values.
  *
- * @warning Because this file works at the C++/C boundary, it includes some C
- *          IronBee files.  This will greatly pollute the global namespace
- *          and macro space.
- *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 

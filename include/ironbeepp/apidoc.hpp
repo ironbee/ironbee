@@ -140,36 +140,16 @@
  * \section cpp_c C++/C Interoperability
  *
  * The long term goal for IronBee++ is to enable IronBee development without
- * ever using the C API.  In particular, it should, eventually, be possible to
- * develop in C++ without polluting the global namespace or macro space with
- * items from the C API.
+ * ever using the C API.  However, due to the use of templates (in particular,
+ * the need to push user type information to the C++/C boundary), portions of
+ * the C API will always be included.
  *
- * At the moment, IronBee++ is too limited to allow this.  As such, you will
- * need to, at times, make use of the C API.  To facilitate this, the IronBee
- * classes can provide the underlying C pointer.  This is done via an @c ib()
- * method.  E.g., IronBee::Module::ib() returns the @c ib_module_t*
- * pointing to the underlying ib_module_t.  Symmetrically, an IronBee++
- * object can be created from an IronBee pointer via a constructor.
- *
- * The @c ib() and constructor methods are only available if
- * IBPP_EXPOSE_C is defined when the header file is included.  This
- * preprocessor macro adds the appropriate global symbols (e.g., ib_module_t)
- * and methods.
- *
- * It is important to note that, even with IBPP_EXPOSE_C defined, the C
- * header files will not be included.  E.g., for IronBee::Module you will
- * likely need to include ironbeepp/module.hpp (with IBPP_EXPOSE_C defined
- * before) and ironbee/module.h.
- *
- * Without IBPP_EXPOSE_C defined, the only names added to the global
- * namespace or the macro space will be (a) the IronBee namespace, (b)
- * from the standard library, and (c) from boost.
- *
- * An important exception to the above is module_bootstrap.hpp which of
- * necessity must work at the C/C++ border and, as such, include some
- * IronBee headers.  It is recommended that you keep your file that includes
- * module_bootstrap.hpp as small as possible.  See module_bootstrap.hpp for
- * details.
+ * At the moment, IronBee++ is limited and you will need to use the C API
+ * for some tasks.  To facilitate this, the IronBee classes provide the
+ * underlying C pointer.  This is done via the @c ib() method.  E.g.,
+ * IronBee::Module::ib() returns the @c ib_module_t* pointing to the
+ * underlying ib_module_t.  Symmetrically, an IronBee++ object can be created
+ * from an IronBee pointer via a constructor.
  **/
 
 /**

@@ -30,24 +30,14 @@
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/operators.hpp>
 
 #include <ostream>
 
-#ifdef IBPP_EXPOSE_C
+// IronBee C
 typedef struct ib_bytestr_t ib_bytestr_t;
-#endif
 
 namespace IronBee {
-
-namespace Internal {
-/// @cond Internal
-
-struct ByteStringData;
-
-/// @endcond
-};
 
 /**
  * Byte String; equivalent to a pointer to ib_bytestr_t.
@@ -439,30 +429,34 @@ public:
      **/
     bool operator<(const ByteString& other) const;
 
- #ifdef IBPP_EXPOSE_C
     /**
-     * @name Expose C
+     * @name C Interoperability
      * Methods to access underlying C types.
-     *
-     * These methods are only available if IBPP_EXPOSE_C is defined.  This is
-     * to avoid polluting the global namespace if they are not needed.
      **/
     ///@{
+
     //! Non-const ib_bytestr_t accessor.
-    ib_bytestr_t*       ib();
+    // Intentionally inlined.
+    ib_bytestr_t* ib()
+    {
+        return m_ib;
+    }
+
     //! Const ib_bytestr_t accessor.
-    const ib_bytestr_t* ib() const;
+    // Intentionally inlined.
+    const ib_bytestr_t* ib() const
+    {
+        return m_ib;
+    }
 
     //! Construct ByteString from ib_bytestr.
     explicit
-    ByteString(ib_bytestr_t* ib_module);
+    ByteString(ib_bytestr_t* ib_bytestr);
+
     ///@}
- #endif
 
 private:
-    typedef boost::shared_ptr<Internal::ByteStringData> data_t;
-
-    data_t m_data;
+    ib_bytestr_t* m_ib;
 
     // Used for unspecified_bool_type.
     static void unspecified_bool(ByteString***) {};

@@ -23,11 +23,6 @@
  * This is the opposite of catch.hpp.  It converts status codes into
  * exceptions.
  *
- * @warning Because this file works at the C++/C boundary, it includes some C
- *          IronBee files.  This will greatly pollute the global namespace
- *          and macro space.
- *
- *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 

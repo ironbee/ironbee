@@ -23,7 +23,6 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#define IBPP_EXPOSE_C
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/exception.hpp>
 #include "fixture.hpp"
