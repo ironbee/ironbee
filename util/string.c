@@ -43,31 +43,31 @@
  */
 ib_status_t string_to_num_ex(const char *s,
                              size_t slen,
-                             ib_bool_t allow_hex,
+                             int base,
                              ib_num_t *result)
 {
     IB_FTRACE_INIT();
     char buf[NUM_BUF_LEN+1];
     ib_status_t rc;
 
-    assert(slen <= NUM_BUF_LEN);
-
     /* Check for zero length string */
-    if (slen == 0) {
+    if ( (slen > NUM_BUF_LEN) || (slen == 0) ) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Copy the string to a buffer, let string_to_num() do the real work */
     memcpy(buf, buf, slen);
     buf[slen] = '\0';
-    rc = string_to_num(buf, allow_hex, result);
+    rc = string_to_num(buf, base, result);
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
  * Convert a string (with length) to a number.
  */
-ib_status_t string_to_num(const char *s, ib_bool_t allow_hex, ib_num_t *result)
+ib_status_t string_to_num(const char *s,
+                          int base,
+                          ib_num_t *result)
 {
     IB_FTRACE_INIT();
     size_t slen = strlen(s);
@@ -81,7 +81,7 @@ ib_status_t string_to_num(const char *s, ib_bool_t allow_hex, ib_num_t *result)
     }
 
     /* Do the conversion, check for errors */
-    value = strtol(s, &end, (allow_hex == IB_FALSE ? 10 : 0) );
+    value = strtol(s, &end, base);
     vlen = (end - s);
     if (vlen != slen) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
