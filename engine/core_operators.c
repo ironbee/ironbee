@@ -608,6 +608,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
                                 ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
 
     switch (field->type) {
         case IB_FTYPE_NUM :
@@ -621,27 +622,24 @@ static ib_status_t field_to_num(ib_engine_t *ib,
         case IB_FTYPE_NULSTR :
             {
                 const char *fval = ib_field_value_nulstr(field);
-                if ( (isdigit(*fval) == 0) || (*fval == '-') ) {
+                rc = string_to_num(fval, IB_TRUE, result);
+                if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }
-                *result = (ib_num_t)strtol(fval, NULL, 0);
             }
             break;
 
         case IB_FTYPE_BYTESTR:
             {
-                ib_bytestr_t *value = ib_field_value_bytestr(field);
-                size_t        len = ib_bytestr_length(value);
-                char          buf[MAX_FIELD_NUM_BUF];
-                if (len >= (MAX_FIELD_NUM_BUF - 1)) {
-                    len = (MAX_FIELD_NUM_BUF - 1);
-                }
-                memcpy(buf, ib_bytestr_const_ptr(value), len);
-                buf[len] = '\0';
-                if ( (isdigit(buf[0]) == 0) || (buf[0] == '-') ) {
+                ib_bytestr_t *bs = ib_field_value_bytestr(field);
+
+                rc = string_to_num_ex((const char *)ib_bytestr_ptr(bs),
+                                      ib_bytestr_length(bs),
+                                      IB_TRUE,
+                                      result);
+                if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }
-                *result = (ib_num_t)strtol(buf, NULL, 0);
             }
             break;
 
