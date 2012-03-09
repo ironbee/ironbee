@@ -30,6 +30,7 @@
 
 #include <ironbee/expand.h>
 #include <ironbee/types.h>
+#include <ironbee/string.h>
 #include <ironbee/hash.h>
 #include <ironbee/field.h>
 #include <ironbee/bytestr.h>
@@ -158,10 +159,30 @@ ib_status_t expand_str(ib_mpool_t *mp,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
+
+    rc = expand_str_ex(mp, str, strlen(str), prefix, suffix, hash, result);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/*
+ * Expand a string from the given hash, ex version.  See expand.h.
+ */
+ib_status_t expand_str_ex(ib_mpool_t *mp,
+                          const char *str,
+                          size_t str_len,
+                          const char *prefix,
+                          const char *suffix,
+                          ib_hash_t *hash,
+                          char **result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
     char numbuf[NUM_BUF_LEN+1]; /* Buffer used to convert number to str */
-    size_t prelen = SIZE_MAX;   /* Prefix string length */
-    size_t postlen = SIZE_MAX;  /* Suffix string length */
+    size_t pre_len;             /* Prefix string length */
+    size_t suf_len = SIZE_MAX;  /* Suffix string length */
     const char *buf = str;      /* Current buffer */
+    size_t buflen = str_len;    /* Length of the buffer */
 
     /* Sanity checks */
     assert(mp != NULL);
@@ -180,9 +201,14 @@ ib_status_t expand_str(ib_mpool_t *mp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Compute prefix length */
+    pre_len = strlen(prefix);
+    assert (pre_len != 0);
+
     /* Loop til the cows come home */
     while (1) {
         const char *pre;        /* Pointer to found prefix string */
+        size_t      pre_off;    /* Offset of prefix in the string */
         const char *post;       /* Pointer to found suffix string */
         const char *name;       /* Pointer to the name between pre and post */
         size_t namelen;         /* Length of the name */
@@ -195,41 +221,38 @@ ib_status_t expand_str(ib_mpool_t *mp,
         ib_field_t *f;
 
         /* Look for the prefix in the string */
-        pre = strstr(buf, prefix);
+        pre = strstr_ex(buf, buflen, prefix, pre_len);
         if (pre == NULL) {
             break;
         }
 
-
-        /* Lazy compute prefix length */
-        if (prelen == SIZE_MAX) {
-            prelen = strlen(prefix);
-            assert (prelen != 0);
+        /* Lazy compute suffix length */
+        if (suf_len == SIZE_MAX) {
+            suf_len = strlen(suffix);
+            assert (suf_len != 0);
         }
 
         /* And the next matching suffix */
-        post = strstr(pre+prelen, suffix);
+        pre_off = pre - buf;
+        post = strstr_ex(pre+pre_len,
+                         buflen - (pre_off + pre_len),
+                         suffix,
+                         suf_len);
         if (post == NULL) {
             break;
         }
 
-        /* Lazy compute suffix length */
-        if (postlen == SIZE_MAX) {
-            postlen = strlen(suffix);
-            assert (postlen != 0);
-        }
-
         /* The name is the block between the two */
-        name = (pre + prelen);
-        namelen = (post - pre) - prelen;
+        name = (pre + pre_len);
+        namelen = (post - pre) - pre_len;
 
         /* Length of the initial block */
         iptr = buf;
         ilen = (pre - buf);
 
         /* The final block */
-        fptr = (post + postlen);
-        flen = strlen(fptr);
+        fptr = (post + suf_len);
+        flen = buflen - (pre_off + pre_len + namelen + suf_len);
 
         /* Zero length name? Expand it to "" */
         if (namelen == 0) {
@@ -349,8 +372,27 @@ ib_status_t expand_test_str(const char *str,
                             ib_bool_t *result)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    rc = expand_test_str_ex(str, strlen(str), prefix, suffix, result);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/*
+ * Test whether a given string would be expanded, ex version.  See expand.h.
+ */
+ib_status_t expand_test_str_ex(const char *str,
+                               size_t str_len,
+                               const char *prefix,
+                               const char *suffix,
+                               ib_bool_t *result)
+{
+    IB_FTRACE_INIT();
     const char *pre;      /* Pointer to found prefix pattern */
     const char *post;     /* Pointer to found suffix pattern */
+    size_t pre_off;       /* Offset of prefix */
+    size_t pre_len;       /* Length of prefix string */
 
     /* Sanity checks */
     assert(str != NULL);
@@ -367,13 +409,18 @@ ib_status_t expand_test_str(const char *str,
     }
 
     /* Look for the prefix pattern */
-    pre = strstr(str, prefix);
+    pre_len = strlen(prefix);
+    pre = strstr_ex(str, str_len, prefix, pre_len);
     if (pre == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* And the next matching suffix pattern. */
-    post = strstr(pre+strlen(prefix), suffix);
+    pre_off = pre - str;
+    post = strstr_ex(pre + pre_len,
+                     str_len - (pre_off + pre_len),
+                     suffix,
+                     strlen(suffix));
     if (post == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
