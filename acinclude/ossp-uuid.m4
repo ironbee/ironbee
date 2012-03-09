@@ -20,7 +20,7 @@ AC_ARG_WITH(
     ossp-uuid,
     [AC_HELP_STRING([--with-ossp-uuid=PATH],[Path to ossp-uuid prefix or script])],
     [test_paths="${with_ossp_uuid}"],
-    [test_paths="/usr/local /usr"])
+    [test_paths="/usr/local /opt/local /opt /usr"])
 
 AC_MSG_CHECKING([for ossp-uuid])
 

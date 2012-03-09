@@ -21,7 +21,7 @@ AC_ARG_WITH(
     htp,
     [AC_HELP_STRING([--with-htp=PATH],[Path to htp prefix or config script])],
     [test_paths="${with_htp}"],
-    [test_paths="/usr/local/libhtp /usr/local/htp /usr/local /opt/libhtp /opt/htp /opt /usr"; ])
+    [test_paths="/usr/local/libhtp /usr/local/htp /usr/local /opt/libhtp /opt/htp /opt/local /opt /usr"; ])
 
 AC_MSG_CHECKING([for libhtp config script])
 

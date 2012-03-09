@@ -17,7 +17,7 @@ AC_ARG_WITH(
     trafficserver,
     [AC_HELP_STRING([--with-trafficserver=PATH],[Path to trafficserver])],
     [test_paths="${with_trafficserver}"],
-    [test_paths="/usr/local/trafficserver /usr/local /usr /opt/local /opt"])
+    [test_paths="/usr/local/trafficserver /usr/local /opt/trafficserver /opt/local /opt /usr"])
 
 AC_MSG_CHECKING([for trafficserver])
 

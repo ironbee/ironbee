@@ -20,7 +20,7 @@ AC_ARG_WITH(
     apxs,
     [AC_HELP_STRING([--with-apxs=PATH],[Path to apxs prefix or script])],
     [test_paths="${with_apxs}"],
-    [test_paths="/usr/local/apache22 /usr/local/apache2 /usr/local/apache /usr/local/httpd /usr/local /opt/apache22 /opt/apache2 /opt/apache /opt/httpd /opt /usr"])
+    [test_paths="/usr/local/apache22 /usr/local/apache2 /usr/local/apache /usr/local/httpd /usr/local /opt/apache22 /opt/apache2 /opt/apache /opt/httpd /opt/local /opt /usr"])
 
 AC_MSG_CHECKING([for apxs])
 

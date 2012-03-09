@@ -18,7 +18,7 @@ AC_ARG_WITH(
     xml2,
     [AC_HELP_STRING([--with-xml2=PATH],[Path to xml2 prefix or config script])],
     [test_paths="${with_xml}"],
-    [test_paths="/usr/local/xml2 /usr/local/xml2 /usr/local/xml /usr/local /opt/xml2 /opt/xml /opt/xml2 /opt/xml /opt /usr"])
+    [test_paths="/usr/local/xml2 /usr/local/xml2 /usr/local/xml /usr/local /opt/xml2 /opt/xml /opt/xml2 /opt/xml /opt/local /opt /usr"])
 
 AC_MSG_CHECKING([for xml2 config script])
 

@@ -18,7 +18,7 @@ AC_ARG_WITH(
     apu,
     [AC_HELP_STRING([--with-apu=PATH],[Path to apu prefix or config script])],
     [test_paths="${with_apu}"],
-    [test_paths="/usr/local/libapr-util /usr/local/apr-util /usr/local/libapu /usr/local/apu /usr/local /opt/libapr-util /opt/apr-util /opt/libapu /opt/apu /opt /usr"])
+    [test_paths="/usr/local/libapr-util /usr/local/apr-util /usr/local/libapu /usr/local/apu /usr/local /opt/libapr-util /opt/apr-util /opt/libapu /opt/apu /opt/local /opt /usr"])
 
 AC_MSG_CHECKING([for libapu config script])
 
