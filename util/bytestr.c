@@ -28,6 +28,7 @@
 
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 
@@ -426,32 +427,20 @@ int ib_bytestr_index_of_c(
 {
     IB_FTRACE_INIT();
 
-    size_t i = 0;
-    size_t j = 0;
-    size_t haystack_length = ib_bytestr_length(haystack);
-    size_t needle_length = strlen(needle);
     const uint8_t* haystack_data = ib_bytestr_const_ptr(haystack);
-    int result = -1;
+    const char *found;
 
-    if (
-        haystack == NULL || needle == NULL ||
-        needle_length == 0 || haystack_length == 0
-    ) {
+    /* Let strstr_ex() do the heavy lifting */
+    found = strstr_ex( (const char *)haystack_data,
+                       ib_bytestr_length(haystack),
+                       needle,
+                       strlen(needle));
+
+    /* Return the offset (or -1) */
+    if (found != NULL) {
+        IB_FTRACE_RET_INT(found - (const char *)haystack_data);
+    }
+    else {
         IB_FTRACE_RET_INT(-1);
     }
-
-    for (i = 0; i < haystack_length - (needle_length-1); ++i) {
-        result = i;
-        for (j = 0; j < needle_length; ++j) {
-            if (haystack_data[i+j] != needle[j]) {
-                result = -1;
-                break;
-            }
-        }
-        if (result != -1) {
-            IB_FTRACE_RET_INT(result);
-        }
-    }
-
-    IB_FTRACE_RET_INT(-1);
 }

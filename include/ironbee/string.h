@@ -100,6 +100,23 @@ ib_status_t DLL_PUBLIC string_to_num(const char *s,
                                      ib_num_t *result);
 
 /**
+ * strstr() clone that works with non-NUL terminated strings.
+ *
+ * @param[in] haystack String to search.
+ * @param[in] haystack_len Length of @a haystack.
+ * @param[in] needle String to search for.
+ * @param[in] needle_len Length of @a needle.
+ *
+ * @returns Pointer to the first match in @a haystack, or NULL if no match
+ * found.
+ */
+const char DLL_PUBLIC *strstr_ex(const char *haystack,
+                                 size_t      hackstack_len,
+                                 const char *needle,
+                                 size_t      needle_len);
+
+
+/**
  * @} IronBeeUtil
  */
 

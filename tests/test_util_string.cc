@@ -316,3 +316,342 @@ TEST_F(TestIBUtilStringToNum, test_string_to_num)
     RunTest(__LINE__, "+99999",  10,  99999);
     RunTest(__LINE__, "+99999",  16,  0x99999);
 }
+
+class TestIBUtilStrStrEx : public ::testing::Test
+{
+public:
+
+    size_t StrLen(const char *s)
+    {
+        if (s == NULL) {
+            return 0;
+        }
+        else {
+            return strlen(s);
+        }
+    }
+
+    const char *Stringize(const char *haystack,
+                          size_t haystack_len,
+                          const char *needle,
+                          size_t needle_len,
+                          char *buf, size_t buflen)
+    {
+        if ( (haystack == NULL) && (needle == NULL) ){
+            snprintf(buf, buflen,
+                     "strstr_ex(NULL,%zd,NULL,%zd)",
+                     haystack_len, needle_len);
+        }
+        else if (haystack == NULL) {
+            snprintf(buf, buflen,
+                     "strstr_ex(NULL,%zd,\"%*s\",%zd)",
+                     haystack_len, (int)needle_len, needle, needle_len);
+        }
+        else if (needle == NULL) {
+            snprintf(buf, buflen,
+                     "strstr_ex(\"%*s\",%zd,NULL,%zd)",
+                     (int)haystack_len, haystack, haystack_len, needle_len);
+        }
+        else {
+            snprintf(buf, buflen,
+                     "strstr_ex(\"%*s\",%zd,\"%*s\",%zd)",
+                     (int)haystack_len, haystack, haystack_len,
+                     (int)needle_len, needle, needle_len);
+        }
+
+        return buf;
+    }
+
+    const char *Stringize(const char *s, char *buf, size_t buflen)
+    {
+        if (s == NULL) {
+            return "NULL";
+        }
+        else {
+            snprintf(buf, buflen, "\"%s\"", s);
+            return buf;
+        }
+    }
+
+    void RunTest(int line,
+                 const char *haystack,
+                 size_t haystack_len,
+                 const char *needle,
+                 size_t needle_len,
+                 const char *expected)
+    {
+        const char *result = strstr_ex(haystack,
+                                       haystack_len,
+                                       needle,
+                                       needle_len);
+        const int blen = 256;
+        char b1[blen];
+        char b2[blen];
+        char b3[blen];
+
+        EXPECT_STREQ(expected, result)
+            << "Line " << line << ": "
+            << Stringize(haystack, haystack_len, needle, needle_len, b1, blen)
+            << " expected " << Stringize(expected, b3, blen)
+            << " returned " << Stringize(result, b2, blen);
+    }
+
+    void RunTest(int line,
+                 const char *haystack,
+                 const char *needle,
+                 const char *expected)
+    {
+        RunTest(line,
+                haystack, StrLen(haystack),
+                needle,   StrLen(needle),
+                expected);
+    }
+
+    void RunTest(int line,
+                 const char *haystack,
+                 size_t haystack_len,
+                 const char *needle,
+                 const char *expected)
+    {
+        RunTest(line,
+                haystack, haystack_len,
+                needle,   StrLen(needle),
+                expected);
+    }
+
+    void RunTest(int line,
+                 const char *haystack,
+                 const char *needle,
+                 size_t needle_len,
+                 const char *expected)
+    {
+        RunTest(line,
+                haystack, StrLen(haystack),
+                needle,   needle_len,
+                expected);
+    }
+};
+
+/// @test Test util string library - strstr_ex()
+TEST_F(TestIBUtilStrStrEx, test_strstr_ex_errors)
+{
+    RunTest(__LINE__, "", "", NULL);
+    RunTest(__LINE__, "abc", "", NULL);
+    RunTest(__LINE__, "", "abc", NULL);
+    RunTest(__LINE__, NULL, "abc", NULL);
+    RunTest(__LINE__, "abc", NULL, NULL);
+    RunTest(__LINE__, NULL, NULL, NULL);
+}
+
+TEST_F(TestIBUtilStrStrEx, test_strstr_ex)
+{
+    const char *haystack;
+
+    haystack = "a";
+    RunTest(__LINE__, haystack, "a",   haystack+0);
+    haystack = "a";
+    RunTest(__LINE__, haystack, "aa",  NULL);
+    haystack = "a";
+    RunTest(__LINE__, haystack, "ab",  NULL);
+
+    haystack = "ab";
+    RunTest(__LINE__, haystack, "a",   haystack+0);
+    haystack = "ab";
+    RunTest(__LINE__, haystack, "aa",  NULL);
+    haystack = "ab";
+    RunTest(__LINE__, haystack, "ab",  haystack+0);
+    haystack = "ab";
+    RunTest(__LINE__, haystack, "b",   haystack+1);
+    haystack = "ab";
+    RunTest(__LINE__, haystack, "ba",  NULL);
+
+    haystack = "aa";
+    RunTest(__LINE__, haystack, "a",   haystack+0);
+    haystack = "aa";
+    RunTest(__LINE__, haystack, "aa",  haystack+0);
+    haystack = "aa";
+    RunTest(__LINE__, haystack, "ab",  NULL);
+
+    haystack = " aa";
+    RunTest(__LINE__, haystack, "a",   haystack+1);
+    haystack = " aa";
+    RunTest(__LINE__, haystack, "aa",  haystack+1);
+    haystack = " aa";
+    RunTest(__LINE__, haystack, "aaa", NULL);
+    haystack = " aa";
+    RunTest(__LINE__, haystack, "ab",  NULL);
+
+    haystack = "abc";
+    RunTest(__LINE__, haystack, "abc", haystack+0);
+    haystack = "abcabc";
+    RunTest(__LINE__, haystack, "abc", haystack+0);
+    haystack = "aabc";
+    RunTest(__LINE__, haystack, "abc", haystack+1);
+    haystack = "ababc";
+    RunTest(__LINE__, haystack, "abc", haystack+2);
+}
+
+TEST_F(TestIBUtilStrStrEx, test_strstr_ex_nul1)
+{
+    const char *haystack;
+
+    haystack = "a\0";
+    RunTest(__LINE__, haystack, 2, "a",   haystack+0);
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "a",   haystack+0);
+    haystack = "\0a\0a";
+    RunTest(__LINE__, haystack, 4, "a",   haystack+1);
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "aa",  NULL);
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "ab",  NULL);
+
+    haystack = "ab\0";
+    RunTest(__LINE__, haystack, 3, "a",   haystack+0);
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "aa",  NULL);
+    haystack = "a\0aa";
+    RunTest(__LINE__, haystack, 4, "aa",  haystack+2);
+    haystack = "\0ab";
+    RunTest(__LINE__, haystack, 3, "ab",  haystack+1);
+    haystack = "a\0b";
+    RunTest(__LINE__, haystack, 3, "b",   haystack+2);
+
+    haystack = "\0aa";
+    RunTest(__LINE__, haystack, 3, "a",   haystack+1);
+    haystack = "\0aa";
+    RunTest(__LINE__, haystack, 3, "aa",  haystack+1);
+    haystack = "\0aa";
+    RunTest(__LINE__, haystack, 3, "ab",  NULL);
+
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "a",   haystack+0);
+    haystack = "\0a\0a";
+    RunTest(__LINE__, haystack, 4, "aa",  NULL);
+    haystack = "\0aa\0";
+    RunTest(__LINE__, haystack, 4, "aa",  haystack+1);
+    haystack = "\0aa\0";
+    RunTest(__LINE__, haystack, 4, "ab",  NULL);
+
+    haystack = "\0 aa";
+    RunTest(__LINE__, haystack, 4, "a",   haystack+2);
+    haystack = "\0 aa";
+    RunTest(__LINE__, haystack, 4, "aa",  haystack+2);
+    haystack = "\0 aa";
+    RunTest(__LINE__, haystack, 4, "ab",  NULL);
+
+    haystack = " a\0a";
+    RunTest(__LINE__, haystack, 4, "a",   haystack+1);
+    haystack = " a\0a";
+    RunTest(__LINE__, haystack, 4, "aa",  NULL);
+    haystack = " a\0a";
+    RunTest(__LINE__, haystack, 4, "ab",  NULL);
+
+    haystack = "\0abc";
+    RunTest(__LINE__, haystack, 4, "abc", haystack+1);
+    haystack = "a\0bc";
+    RunTest(__LINE__, haystack, 4, "abc", NULL);
+    haystack = "ab\0c";
+    RunTest(__LINE__, haystack, 4, "abc", NULL);
+
+    haystack = "abc\0abc";
+    RunTest(__LINE__, haystack, 7, "abc", haystack+0);
+    haystack = "a\0abc";
+    RunTest(__LINE__, haystack, 5, "abc", haystack+2);
+    haystack = "ab\0abc";
+    RunTest(__LINE__, haystack, 6, "abc", haystack+3);
+
+    haystack = "ab\0cabc";
+    RunTest(__LINE__, haystack, 7, "abc", haystack+4);
+    haystack = "aa\0bc";
+    RunTest(__LINE__, haystack, 5, "abc", NULL);
+    haystack = "abab\0c";
+    RunTest(__LINE__, haystack, 5, "abc", NULL);
+}
+
+TEST_F(TestIBUtilStrStrEx, test_strstr_ex_nul2)
+{
+    const char *haystack;
+
+    haystack = "a\0";
+    RunTest(__LINE__, haystack, 2, "a\0",  2,  haystack+0);
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "a\0",  2,  haystack+0);
+    haystack = "\0a\0a";
+    RunTest(__LINE__, haystack, 4, "a\0",  2,  haystack+1);
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "a\0a", 3,  haystack+0);
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "a\0b", 3,  NULL);
+
+    haystack = "ab\0";
+    RunTest(__LINE__, haystack, 3, "\0a",  2,  NULL);
+    haystack = "\0ab\0";
+    RunTest(__LINE__, haystack, 4, "\0a",  2,  haystack+0);
+    haystack = "a\0aa";
+    RunTest(__LINE__, haystack, 4, "a\0a", 3,  haystack+0);
+    haystack = "a\0aa";
+    RunTest(__LINE__, haystack, 4, "\0aa", 3,  haystack+1);
+    haystack = "\0ab";
+    RunTest(__LINE__, haystack, 3, "\0ab", 3,  haystack+0);
+    haystack = "\0ab";
+    RunTest(__LINE__, haystack, 3, "a\0b", 3,  NULL);
+    haystack = "a\0b";
+    RunTest(__LINE__, haystack, 3, "\0b",  2,  haystack+1);
+    haystack = "a\0b";
+    RunTest(__LINE__, haystack, 3, "b\0",  2,  NULL);
+
+    haystack = "\0aa\0";
+    RunTest(__LINE__, haystack, 4, "a\0",  2,  haystack+2);
+    haystack = "\0aa";
+    RunTest(__LINE__, haystack, 3, "\0aa", 3,  haystack+0);
+    haystack = "a\0aa";
+    RunTest(__LINE__, haystack, 4, "a\0a", 3,  haystack+0);
+    haystack = "aa\0aa";
+    RunTest(__LINE__, haystack, 5, "a\0a", 3,  haystack+1);
+
+    haystack = "a\0a";
+    RunTest(__LINE__, haystack, 3, "a\0",  2,  haystack+0);
+    haystack = "\0a\0a";
+    RunTest(__LINE__, haystack, 4, "a\0a", 3,  haystack+1);
+    haystack = "\0aa\0";
+    RunTest(__LINE__, haystack, 4, "aa\0", 3,  haystack+1);
+    haystack = "\0aa\0";
+    RunTest(__LINE__, haystack, 4, "\0ab", 3,  NULL);
+
+    haystack = "\0 aa";
+    RunTest(__LINE__, haystack, 4, "a\0",  2,  NULL);
+    haystack = "\0 aa\0";
+    RunTest(__LINE__, haystack, 5, "aa\0", 3,  haystack+2);
+    haystack = "\0 aa\0";
+    RunTest(__LINE__, haystack, 4, "ab\0", 3,  NULL);
+
+    haystack = " a\0a";
+    RunTest(__LINE__, haystack, 4, "a\0",  2,  haystack+1);
+    haystack = " a\0a";
+    RunTest(__LINE__, haystack, 4, "\0a",  2,  haystack+2);
+
+    haystack = "\0abc";
+    RunTest(__LINE__, haystack, 4, "\0abc", 4, haystack+0);
+    haystack = "a\0bc";
+    RunTest(__LINE__, haystack, 4, "a\0bc", 4, haystack+0);
+    haystack = "ab\0c";
+    RunTest(__LINE__, haystack, 4, "ab\0c", 4, haystack+0);
+
+    haystack = "abc\0abc";
+    RunTest(__LINE__, haystack, 7, "abc\0", 4, haystack+0);
+    haystack = "a\0abc";
+    RunTest(__LINE__, haystack, 5, "\0abc", 4, haystack+1);
+    haystack = "a\0abc";
+    RunTest(__LINE__, haystack, 5, "abc\0", 4, NULL);
+    haystack = "ab\0abc";
+    RunTest(__LINE__, haystack, 6, "\0abc", 4, haystack+2);
+
+    haystack = "ab\0cabc";
+    RunTest(__LINE__, haystack, 7, "\0abc", 4, NULL);
+    haystack = "aa\0bc";
+    RunTest(__LINE__, haystack, 5, "\0abc", 4, NULL);
+    haystack = "abab\0c";
+    RunTest(__LINE__, haystack, 5, "abc\0", 4, NULL);
+}
+

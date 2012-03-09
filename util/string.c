@@ -96,3 +96,41 @@ ib_status_t string_to_num(const char *s,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 }
+
+/**
+ * strstr() clone that works with non-NUL terminated strings
+ */
+const char *strstr_ex(const char *haystack,
+                      size_t      haystack_len,
+                      const char *needle,
+                      size_t      needle_len)
+{
+    IB_FTRACE_INIT();
+    size_t i = 0;
+
+    /* If either pointer is NULL or either length is zero, done */
+    if ( (haystack == NULL) || (haystack_len == 0) ||
+         (needle == NULL) || (needle_len == 0) )
+    {
+        IB_FTRACE_RET_CONSTSTR(NULL);
+    }
+
+    /* Search for the needle */
+    for (i = 0; i < haystack_len - (needle_len-1); ++i) {
+        const char *hp = haystack + i;
+        ib_bool_t found = IB_TRUE;
+        size_t j = 0;
+
+        for (j = 0; j < needle_len; ++j) {
+            if ( *(hp + j) != *(needle + j) ) {
+                found = IB_FALSE;
+                break;
+            }
+        }
+        if (found == IB_TRUE) {
+            IB_FTRACE_RET_CONSTSTR(hp);
+        }
+    }
+
+    IB_FTRACE_RET_CONSTSTR(NULL);
+}
