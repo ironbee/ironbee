@@ -168,9 +168,6 @@ public:
      * The connection will be initialized with a local address of
      * 1.0.0.1:80 and a remote address of 1.0.0.2:65534.
      *
-     * @param[in] ib_engine The engine (and associated memory pool) from which
-     *            the connection will be allocated, initialized, and returned.
-     *
      * @returns The Initialized IronbeeConnection.
      */
     ib_conn_t* buildIronBeeConnection()

@@ -84,9 +84,8 @@ ib_status_t ib_uuid_bin_to_ascii(
 /**
  * Creates a new, random, v4 uuid.
  *
- * @param ibuuid pointer to already allocated ib_uuid_t buffer.
- *
  * @param uuid Pointer to allocated ib_uuid_t to store result in.
+ *
  * @returns Status code
  */
 ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid);

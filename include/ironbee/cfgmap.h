@@ -96,7 +96,7 @@ typedef void *(*ib_cfgmap_get_fn_t)(
  * @param[in] base  Pointer to base of config data.
  * @param[in] name  Name of field.
  * @param[in] type  Type of field.
- * @parma[in] value Value to set to.
+ * @param[in] value Value to set to.
  * @param[in] data  Callback data.
  * @returns Status code.
  */

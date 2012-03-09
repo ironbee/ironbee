@@ -111,7 +111,7 @@ ib_status_t DLL_PUBLIC string_to_num(const char *s,
  * found.
  */
 const char DLL_PUBLIC *strstr_ex(const char *haystack,
-                                 size_t      hackstack_len,
+                                 size_t      haystack_len,
                                  const char *needle,
                                  size_t      needle_len);
 
