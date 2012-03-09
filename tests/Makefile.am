@@ -56,7 +56,7 @@ check_PROGRAMS = test_gtest \
                  test_operator \
                  test_action \
                  test_luajit \
-		 test_config
+                 test_config
 
 TESTS=$(check_PROGRAMS)
 
