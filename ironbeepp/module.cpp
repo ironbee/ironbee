@@ -234,6 +234,35 @@ ib_status_t context_destroy(
     ));
 }
 
+ib_status_t configuration_copy(
+    ib_engine_t* ib_engine,
+    ib_module_t* ib_module,
+    void*        dst,
+    const void*  src,
+    size_t       length,
+    void*        cbdata
+)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib_engine = ib_module->ib);
+    assert(dst != NULL);
+    assert(src != NULL);
+
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+        Internal::data_to_value<
+            boost::function<
+                void(ib_module_t*, void*, const void*, size_t)
+            >
+        >(cbdata)(
+            ib_module,
+            dst,
+            src,
+            length
+        )
+    ));
+};
+
 } // extern "C"
 
 } // Hooks
@@ -464,6 +493,17 @@ void Module::set_context_destroy(context_destroy_t f)
         ib_engine_pool_main_get(ib()->ib)
     );
     ib()->fn_ctx_destroy = Internal::Hooks::context_destroy;
+}
+
+void Module::set_configuration_copier_translator(
+    configuration_copier_translator_t f
+)
+{
+    ib()->cbdata_cfg_copy = Internal::value_to_data(
+        f,
+        ib_engine_pool_main_get(ib()->ib)
+    );
+    ib()->fn_cfg_copy = Internal::Hooks::configuration_copy;
 }
 
 bool Module::operator==(const Module& other) const

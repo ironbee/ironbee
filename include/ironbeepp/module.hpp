@@ -32,15 +32,16 @@
 #include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/internal/data.hpp>
 
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+
 #include <boost/function.hpp>
 #include <boost/operators.hpp>
 
 #include <ostream>
+#include <cassert>
 
-// IronBee C
-typedef struct ib_module_t ib_module_t;
-
-namespace IronBee {
+ namespace IronBee {
 
 class Context;
 
@@ -158,7 +159,73 @@ public:
     void set_context_destroy(context_destroy_t f);
     //@}
 
-    /// @cond Internal
+    /**
+     * Metafunction providing type of configuration data copier.
+     *
+     * Will define @c type to be the the appropriate functional type.
+     *
+     * @warning @a DataType must be POD.  At present, issues with clang and
+     * __is_pod() make it impossible to statically assert podness in a
+     * compatible way.  And such, behavior is undefined if @a DataType is not
+     * POD.
+     *
+     * @sa set_configuration_data()
+     *
+     * @tparam DataType Type of configuration data.
+     * @tparam Enable   Internal use only.
+     **/
+    //! Part of implementation of previous.
+    template <typename DataType>
+    struct configuration_copier_t
+    {
+        //! Type of copier for set_configuration_data().
+        typedef boost::function<
+            void(Module, DataType&, const DataType&)
+        > type;
+    };
+
+    /**
+     * Set configuration data.
+     *
+     * A module can have configuration data.  This data is set as the
+     * "global" configuration data.  Each context then copies the
+     * configuration data of the parent context or the global configuration
+     * data if there is no parent context.  An optional copier functional can
+     * be provided to do this copy.  If the default is provided, then memcpy
+     * is used.
+     *
+     * For type safety, the type of configuration data (@a DataType), global
+     * data (@a global_configuration_data), and any copier function
+     * (@a copier) must be provided simultaneously.
+     *
+     * This is a low level routine and, as such, requires that @a DataType
+     * be POD.  Behavior is undefined if @a DataType is not POD (see
+     * configuration_copier_t for discussion).
+     *
+     * You should strongly consider using the ConfigurationData API instead of
+     * using this directly.  ConfigurationData allows you to use any C++ type
+     * for your configuration data and interfaces nicely with
+     * ConfigurationMap.
+     *
+     * The copier functional must take a Module, a reference to @a DataType
+     * specifying the destination and a const reference to @a DataType
+     * specifying the source.  No assumptions should be made about the
+     * contents of the destination.
+     *
+     * @tparam DataType Type of configuration data.  Must be POD.
+     * @param[in] global_data The global configuration data copied to every
+     *                        top level context.
+     * @param[in] copier      Optional copier functional.  Defaults to
+     *                        memory copy (IB engine default).
+     **/
+    template <typename DataType>
+    void set_configuration_data(
+        const DataType& global_configuration_data,
+        typename configuration_copier_t<DataType>::type copier =
+            typename configuration_copier_t<DataType>::type()
+    );
+
+    /// @ Internal
     typedef void (*unspecified_bool_type)(Module***);
     /// @endcond
     /**
@@ -224,7 +291,83 @@ private:
 
     // Used for unspecified_bool_type.
     static void unspecified_bool(Module***) {};
+
+    // Translator for configuration copier.
+    typedef boost::function<
+        void(ib_module_t*, void*, const void*, size_t)
+    > configuration_copier_translator_t;
+
+    void set_configuration_copier_translator(
+        configuration_copier_translator_t f
+    );
 };
+
+namespace Internal {
+/// @cond Internal
+
+template <typename DataType>
+class configuration_copier_translator
+{
+public:
+    configuration_copier_translator(
+        typename Module::configuration_copier_t<DataType>::type copier
+    ) :
+        m_copier( copier )
+    {
+        // nop
+    }
+
+    void operator()(
+        ib_module_t* ib_module,
+        void*        dst,
+        const void*  src,
+        size_t       length
+    ) const
+    {
+        assert(length == sizeof(DataType));
+        m_copier(
+            Module(ib_module),
+            *reinterpret_cast<DataType*>(dst),
+            *reinterpret_cast<const DataType*>(src)
+        );
+    }
+
+private:
+    typename Module::configuration_copier_t<DataType>::type m_copier;
+};
+
+/// @endcond
+} // Internal
+
+template <typename DataType>
+void Module::set_configuration_data(
+    const DataType& global_configuration_data,
+    typename configuration_copier_t<DataType>::type copier
+)
+{
+    ib()->gclen = sizeof(global_configuration_data);
+    ib()->gcdata = ib_mpool_alloc(
+        ib_engine_pool_main_get(ib()->ib),
+        ib()->gclen
+    );
+    if (ib()->gcdata == NULL) {
+        BOOST_THROW_EXCEPTION(
+          ealloc() << errinfo_what(
+            "Could not allocate memory for configuration data."
+          )
+        );
+    }
+    *reinterpret_cast<DataType*>(ib()->gcdata) = global_configuration_data;
+
+    if (copier.empty()) {
+        ib()->fn_cfg_copy     = NULL;
+        ib()->cbdata_cfg_copy = NULL;
+    } else {
+        set_configuration_copier_translator(
+            Internal::configuration_copier_translator<DataType>(copier)
+        );
+    }
+}
 
 /**
  * Output operator for Module.

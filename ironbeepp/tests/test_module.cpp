@@ -425,3 +425,50 @@ TEST_F(TestModule, chain)
     ASSERT_EQ(0, b);
     ASSERT_EQ(2, c);
 }
+
+struct test_data_t
+{
+    int x;
+};
+
+void test_data_copier(
+    IronBee::Module,
+    test_data_t&       dst,
+    const test_data_t& src
+)
+{
+    dst.x = src.x + 1;
+}
+
+TEST_F(TestModule, Data)
+{
+    test_data_t data;
+    data.x = 17;
+
+    ib_module_t ib_module;
+    ib_module.ib = m_ib_engine;
+    IronBee::Module module(&ib_module);
+
+    module.set_configuration_data(data, test_data_copier);
+
+    test_data_t* other = reinterpret_cast<test_data_t*>(ib_module.gcdata);
+    ASSERT_EQ(data.x, other->x);
+    ASSERT_EQ(sizeof(data), ib_module.gclen);
+
+    ib_status_t rc;
+    test_data_t other2;
+    rc = ib_module.fn_cfg_copy(
+        ib_module.ib,
+        &ib_module,
+        &other2,
+        ib_module.gcdata,
+        ib_module.gclen,
+        ib_module.cbdata_cfg_copy
+    );
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(data.x + 1, other2.x);
+
+    module.set_configuration_data(data);
+    ASSERT_FALSE(ib_module.fn_cfg_copy);
+    ASSERT_FALSE(ib_module.cbdata_cfg_copy);
+}
