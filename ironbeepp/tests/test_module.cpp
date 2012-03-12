@@ -440,7 +440,7 @@ void test_data_copier(
     dst.x = src.x + 1;
 }
 
-TEST_F(TestModule, Data)
+TEST_F(TestModule, DataPOD)
 {
     test_data_t data;
     data.x = 17;
@@ -449,7 +449,7 @@ TEST_F(TestModule, Data)
     ib_module.ib = m_ib_engine;
     IronBee::Module module(&ib_module);
 
-    module.set_configuration_data(data, test_data_copier);
+    module.set_configuration_data_pod(data, test_data_copier);
 
     test_data_t* other = reinterpret_cast<test_data_t*>(ib_module.gcdata);
     ASSERT_EQ(data.x, other->x);
@@ -468,7 +468,43 @@ TEST_F(TestModule, Data)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(data.x + 1, other2.x);
 
-    module.set_configuration_data(data);
+    module.set_configuration_data_pod(data);
     ASSERT_FALSE(ib_module.fn_cfg_copy);
     ASSERT_FALSE(ib_module.cbdata_cfg_copy);
+}
+
+struct test_data_cpp_t
+{
+    test_data_cpp_t() : x(17) {}
+    test_data_cpp_t(const test_data_cpp_t& other) : x(other.x+1) {}
+    
+    int x;
+};
+
+TEST_F(TestModule, DataCPP)
+{
+    test_data_cpp_t data;
+
+    ib_module_t ib_module;
+    ib_module.ib = m_ib_engine;
+    IronBee::Module module(&ib_module);
+
+    module.set_configuration_data(data);
+
+    test_data_cpp_t* other =
+        *reinterpret_cast<test_data_cpp_t**>(ib_module.gcdata);
+    ASSERT_EQ(data.x+1, other->x);
+
+    ib_status_t rc;
+    test_data_cpp_t* other2;
+    rc = ib_module.fn_cfg_copy(
+        ib_module.ib,
+        &ib_module,
+        &other2,
+        ib_module.gcdata,
+        ib_module.gclen,
+        ib_module.cbdata_cfg_copy
+    );
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(data.x + 2, other2->x);
 }

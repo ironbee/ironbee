@@ -29,6 +29,7 @@
 
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/engine.hpp>
+#include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/internal/data.hpp>
 
@@ -41,7 +42,7 @@
 #include <ostream>
 #include <cassert>
 
- namespace IronBee {
+namespace IronBee {
 
 class Context;
 
@@ -185,7 +186,7 @@ public:
     };
 
     /**
-     * Set configuration data.
+     * Set configuration data for POD
      *
      * A module can have configuration data.  This data is set as the
      * "global" configuration data.  Each context then copies the
@@ -194,23 +195,27 @@ public:
      * be provided to do this copy.  If the default is provided, then memcpy
      * is used.
      *
+     * For C++ object semantics with configuration data, see
+     * set_configuration_data().
+     *
      * For type safety, the type of configuration data (@a DataType), global
-     * data (@a global_configuration_data), and any copier function
+     * data (@a global_data), and any copier function
      * (@a copier) must be provided simultaneously.
      *
      * This is a low level routine and, as such, requires that @a DataType
      * be POD.  Behavior is undefined if @a DataType is not POD (see
      * configuration_copier_t for discussion).
      *
-     * You should strongly consider using the ConfigurationData API instead of
-     * using this directly.  ConfigurationData allows you to use any C++ type
-     * for your configuration data and interfaces nicely with
-     * ConfigurationMap.
+     * You should strongly consider using set_configuration_data() instead
+     * of using this directly.
      *
      * The copier functional must take a Module, a reference to @a DataType
      * specifying the destination and a const reference to @a DataType
      * specifying the source.  No assumptions should be made about the
      * contents of the destination.
+     *
+     * @warning Only call one of set_configuration_data() and
+     * set_configuration_data_pod().  They will overwrite each other.
      *
      * @tparam DataType Type of configuration data.  Must be POD.
      * @param[in] global_data The global configuration data copied to every
@@ -219,10 +224,37 @@ public:
      *                        memory copy (IB engine default).
      **/
     template <typename DataType>
-    void set_configuration_data(
-        const DataType& global_configuration_data,
+    void set_configuration_data_pod(
+        const DataType& global_data,
         typename configuration_copier_t<DataType>::type copier =
             typename configuration_copier_t<DataType>::type()
+    );
+
+     /**
+      * Set configuration for C++ objects.
+      *
+      * This is similar to set_configuration_data_pod() except it uses C++
+      * semantics instead of a copier.
+      *
+      * Under the hood, it calls set_configuration_data_pod() with a pointer
+      * to DataType (pointers are POD).  That is, @c gcdata is a pointer to
+      * a pointer to a @a DataType.
+      *
+      * A module can have configuration data.  This data is set as the
+      * "global" configuration data.  Each context then copies the
+      * configuration data of the parent context or the global configuration
+      * data if there is no parent context.
+      *
+      * @warning Only call one of set_configuration_data() and
+      * set_configuration_data_pod().  They will overwrite each other.
+      *
+      * @tparam DataType Type of configuration data.  Must be copyable.
+      * @param[in] global_data The global configuration data copied to
+      *                        every toplevel context.
+      **/
+    template <typename DataType>
+    void set_configuration_data(
+        const DataType& global_data
     );
 
     /// @ Internal
@@ -305,10 +337,31 @@ private:
 namespace Internal {
 /// @cond Internal
 
+/**
+ * Helper functional to translated untyped interface to typed.
+ *
+ * Used by set_configuration_data_pod().
+ *
+ * @tparam DataType DataType of configuration data.
+ **/
 template <typename DataType>
 class configuration_copier_translator
 {
 public:
+    /**
+     * Default constructor.
+     **/
+    configuration_copier_translator()
+    {
+        // nop
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param[in] copier Typed copier to forward to.
+     **/
+    explicit
     configuration_copier_translator(
         typename Module::configuration_copier_t<DataType>::type copier
     ) :
@@ -317,6 +370,11 @@ public:
         // nop
     }
 
+    /**
+     * Call operator.
+     *
+     * Converts arguments to appropriate C++ types and calls copier.
+     **/
     void operator()(
         ib_module_t* ib_module,
         void*        dst,
@@ -336,16 +394,102 @@ private:
     typename Module::configuration_copier_t<DataType>::type m_copier;
 };
 
+/**
+ * Functional to delete a given object.
+ *
+ * Used by set_configuration_data().
+ *
+ * @tparam DataType Type of configuration data.
+ **/
+template <typename DataType>
+class configuration_data_destroy
+{
+public:
+    /**
+     * Default constructor.
+     **/
+    configuration_data_destroy() :
+        m_p(NULL)
+    {
+        // nop
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param[in] p Pointer to object to destroy.
+     **/
+    explicit
+    configuration_data_destroy(DataType* p) :
+        m_p(p)
+    {
+        // nop
+    }
+
+    /**
+     * Destroy object.
+     *
+     * Does nothing if default constructed.
+     **/
+    void operator()()
+    {
+        if (m_p) {
+            delete m_p;
+        }
+    }
+
+private:
+    DataType* m_p;
+};
+
+/**
+ * Functional to copy configuration data when C++.
+ *
+ * Used by set_configuration_data().
+ *
+ * Used copy constructor of @a DataType.
+ *
+ * @tparam DataType Type of configuration data.  Note: C++ type, not POD
+ *         type.  The POD type is @c DataType*.
+ **/
+template <typename DataType>
+class configuration_data_copy
+{
+public:
+    /**
+     * Create copy of @c *src and store in @c *dst.
+     *
+     * Also ensures that copy is properly destroyed.
+     *
+     * @param[in]  module Module involved.
+     * @param[out] dst    Where to store pointer to copy.
+     * @param[in]  src    Pointer to source.
+     **/
+    void operator()(
+        Module           module,
+        DataType*&       dst,
+        DataType* const& src
+    ) const
+    {
+        dst = new DataType(*src);
+        MemoryPool(
+            ib_engine_pool_main_get(module.engine().ib())
+        ).register_cleanup(
+            configuration_data_destroy<DataType>(dst)
+        );
+    }
+};
+
 /// @endcond
 } // Internal
 
 template <typename DataType>
-void Module::set_configuration_data(
-    const DataType& global_configuration_data,
+void Module::set_configuration_data_pod(
+    const DataType& global_data,
     typename configuration_copier_t<DataType>::type copier
 )
 {
-    ib()->gclen = sizeof(global_configuration_data);
+    ib()->gclen = sizeof(global_data);
     ib()->gcdata = ib_mpool_alloc(
         ib_engine_pool_main_get(ib()->ib),
         ib()->gclen
@@ -357,7 +501,7 @@ void Module::set_configuration_data(
           )
         );
     }
-    *reinterpret_cast<DataType*>(ib()->gcdata) = global_configuration_data;
+    *reinterpret_cast<DataType*>(ib()->gcdata) = global_data;
 
     if (copier.empty()) {
         ib()->fn_cfg_copy     = NULL;
@@ -367,6 +511,26 @@ void Module::set_configuration_data(
             Internal::configuration_copier_translator<DataType>(copier)
         );
     }
+}
+
+template <typename DataType>
+void Module::set_configuration_data(
+    const DataType& global_data
+)
+{
+    DataType* global_data_ptr = new DataType(global_data);
+
+    // This will make gcdata a pointer to a pointer.
+    set_configuration_data_pod(
+        global_data_ptr,
+        Internal::configuration_data_copy<DataType>()
+    );
+
+    MemoryPool(
+        ib_engine_pool_main_get(engine().ib())
+    ).register_cleanup(
+        Internal::configuration_data_destroy<DataType>(global_data_ptr)
+    );
 }
 
 /**
