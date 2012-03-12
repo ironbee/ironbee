@@ -356,6 +356,7 @@ TEST_F(TestModule, chain)
     int c;
 
     ib_module_t ib_module;
+    bzero(&ib_module, sizeof(ib_module));
     ib_module.ib = m_ib_engine;
     IronBee::Module module(&ib_module);
 
@@ -477,7 +478,7 @@ struct test_data_cpp_t
 {
     test_data_cpp_t() : x(17) {}
     test_data_cpp_t(const test_data_cpp_t& other) : x(other.x+1) {}
-    
+
     int x;
 };
 
