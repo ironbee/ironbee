@@ -27,21 +27,35 @@ Set your name/email:
 Keep the code up-to-date:
 
   git checkout master
-  git rebase origin
+  git rebase origin master
 
 Make a local branch for your work:
 
   git checkout -b mywork
 
+  NOTE: You can now commit your changes to your local branch.
+
 Keep your local branch up-to-date with changes upstream:
 
   git checkout master
-  git rebase origin
+  git pull origin master
   git checkout mywork
   git rebase master
 
-Submit a patch:
+  NOTE: Do NOT rebase a branch that is remotly tracked - use merge instead.
 
+Generate a patch:
+
+  git format-patch origin/master
+
+
+Coding Style
+============
+
+Please read and understand the coding style from the guide, "CODESTYLE".
+
+Realize that any code submitted MUST abide by this guide or it will be
+rejected.
 
 
 Contributing
@@ -75,6 +89,9 @@ patches which you can email to the team.
    # number to the commit message like this:
    #  [#1234] Fixed foo by doing bar.
    git commit
+
+   # Check the log to make sure it is correct
+   git log
 
 3) Use git-format-patch to generate a set of patches and send upstream to be
    approved/applied.  See also "git-send-email" and "git-imap-send" to make
