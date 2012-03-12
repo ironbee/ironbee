@@ -29,6 +29,8 @@
 
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/engine.hpp>
+#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/internal/data.hpp>
 
 #include <boost/function.hpp>
 #include <boost/operators.hpp>

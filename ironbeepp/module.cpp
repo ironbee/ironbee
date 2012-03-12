@@ -29,7 +29,7 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/internal/catch.hpp>
-#include "data.hpp"
+#include <ironbeepp/internal/data.hpp>
 
 #include <ironbee/module.h>
 #include <ironbee/engine.h>

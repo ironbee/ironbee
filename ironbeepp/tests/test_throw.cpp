@@ -23,7 +23,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "throw.hpp"
+#include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/exception.hpp>
 
 #include <ironbee/types.h>

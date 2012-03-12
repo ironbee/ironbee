@@ -23,7 +23,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include "data.hpp"
+#include <ironbeepp/internal/data.hpp>
 #include <ironbeepp/internal/catch.hpp>
 
 #include <ironbee/debug.h>

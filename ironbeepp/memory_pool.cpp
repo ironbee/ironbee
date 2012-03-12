@@ -27,8 +27,8 @@
 
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/internal/catch.hpp>
-#include "data.hpp"
-#include "throw.hpp"
+#include <ironbeepp/internal/data.hpp>
+#include <ironbeepp/internal/throw.hpp>
 
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>

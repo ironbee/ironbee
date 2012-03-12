@@ -1,4 +1,4 @@
-#include "throw.hpp"
+#include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/exception.hpp>
 
 namespace IronBee {
