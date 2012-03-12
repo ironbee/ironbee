@@ -318,6 +318,11 @@ CHECK_TS()
 CHECK_GEOIP()
 CHECK_OSSP_UUID()
 
+# Workaround for issue with gcc 4.6 and APR on Darwin
+if test "$OS_DARWIN" = true; then
+    APR_CPPFLAGS=`echo "$APR_CPPFLAGS" | sed -e 's/-no-cpp-precomp//'`
+fi
+
 #If we are not building plugins bail
 if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
     echo "**********************************************"
