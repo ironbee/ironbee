@@ -301,7 +301,7 @@ public:
      * ib_module_t.
      *
      * @param[in] other Module to compare to.
-     * @return true iff other.ib() == ib().
+     * @return true iff @c other.ib() == ib().
      **/
     bool operator==(const Module& other) const;
 
@@ -312,7 +312,7 @@ public:
      * element.
      *
      * @param[in] other Module to compare to.
-     * @return true iff this and other are singular or  ib() < other.ib().
+     * @return true iff this and other are singular or  ib() < @c other.ib().
      **/
     bool operator<(const Module& other) const;
 

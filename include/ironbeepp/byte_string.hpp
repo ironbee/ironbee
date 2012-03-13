@@ -117,7 +117,7 @@ public:
      * @throws IronBee++ exception on any error.
      **/
     static ByteString create(
-        MemoryPool pool,
+        MemoryPool  pool,
         const char* data,
         size_t      length
     );
@@ -414,7 +414,7 @@ public:
      * underlying ib_bytestr_t.
      *
      * @param[in] other ByteString to compare to.
-     * @return true iff other.ib() == ib().
+     * @return true iff @c other.ib() == ib().
      **/
     bool operator==(const ByteString& other) const;
 
@@ -425,7 +425,7 @@ public:
      * minimal element.
      *
      * @param[in] other ByteString to compare to.
-     * @return true iff this and other are singular or  ib() < other.ib().
+     * @return true iff this and other are singular or  ib() < @c other.ib().
      **/
     bool operator<(const ByteString& other) const;
 
@@ -449,7 +449,7 @@ public:
         return m_ib;
     }
 
-    //! Construct ByteString from ib_bytestr.
+    //! Construct ByteString from ib_bytestr_t.
     explicit
     ByteString(ib_bytestr_t* ib_bytestr);
 
