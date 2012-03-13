@@ -221,32 +221,34 @@ static void core_logger(FILE *fh, int level,
                         const char *prefix, const char *file, int line,
                         const char *fmt, va_list ap)
 {
-    char fmt2[1024 + 1];
+    int fmt2_sz = 1024;
+    char *fmt2 = (char*)malloc(fmt2_sz+1);
 
     if ((file != NULL) && (line > 0)) {
-        int ec = snprintf(fmt2, 1024,
+        int ec = snprintf(fmt2, fmt2_sz,
                           "%s[%d] (%s:%d) %s\n",
                           (prefix?prefix:""), level, file, line, fmt);
         if (ec > 1024) {
             /// @todo Do something better
-            fprintf(fh, "Formatter too long (>1024): %d\n", (int)ec);
+            fprintf(fh, "Formatter too long (>%d): %d\n", fmt2_sz, (int)ec);
             fflush(fh);
             abort();
         }
     }
     else {
-        int ec = snprintf(fmt2, 1024,
+        int ec = snprintf(fmt2, fmt2_sz,
                           "%s[%d] %s\n",
                           (prefix?prefix:""), level, fmt);
-        if (ec > 1024) {
+        if (ec > fmt2_sz) {
             /// @todo Do something better
-            fprintf(fh, "Formatter too long (>1024): %d\n", (int)ec);
+            fprintf(fh, "Formatter too long (>%d): %d\n", fmt2_sz, (int)ec);
             fflush(fh);
             abort();
         }
     }
 
     vfprintf(fh, fmt2, ap);
+    free(fmt2);
     fflush(fh);
 }
 
