@@ -37,7 +37,7 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
                                const char *name,
                                size_t nlen,
                                ib_ftype_t type,
-                               void *pval)
+                               const void *pval)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;

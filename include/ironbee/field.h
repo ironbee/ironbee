@@ -113,7 +113,7 @@ ib_status_t DLL_PUBLIC ib_field_create_ex(ib_field_t **pf,
                                           const char *name,
                                           size_t nlen,
                                           ib_ftype_t type,
-                                          void *pval);
+                                          const void *pval);
 
 /**
  * Create a field and store data without copying.
@@ -185,7 +185,7 @@ ib_status_t DLL_PUBLIC ib_field_create(ib_field_t **pf,
                                        ib_mpool_t *mp,
                                        const char *name,
                                        ib_ftype_t type,
-                                       void *pval);
+                                       const void *pval);
 
 #define ib_field_create(pf,mp,name,type,pval) \
     ib_field_create_ex(pf,mp,name,strlen(name),type,pval)
