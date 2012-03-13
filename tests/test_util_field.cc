@@ -111,38 +111,40 @@ static char g_dyn_call_val[1024];
 // a global buffer so that the number of calls can be tracked.  One of the
 // tests is to determine if the function was called only once (result
 // cached).
-static void *dyn_get(ib_field_t *f,
-                     const void *arg,
-                     size_t alen,
-                     void *data)
+static const void *dyn_get(const ib_field_t *f,
+                           const void *arg,
+                           size_t alen,
+                           void *data)
 {
     /* Keep track of how many times this was called */
     ++g_dyn_call_count;
 
     snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_call%02d", (const char *)data, (int)alen, (const char *)arg, g_dyn_call_count);
 
-    return (void *)g_dyn_call_val;
+    return (const void *)g_dyn_call_val;
 }
 
 // Cached version of the above dyn_get function.
-static void *dyn_get_cached(ib_field_t *f,
+static const void *dyn_get_cached(const ib_field_t *f,
                             const void *arg,
                             size_t alen,
                             void *data)
 {
     /* Call the get function */
-    void *cval = dyn_get(f, arg, alen, data);
+    const void *cval = dyn_get(f, arg, alen, data);
 
     /* Cache the value */
-    ib_field_setv_static(f, &cval);
+    /* Caching does not semantically change value, so we can safely ignore
+     * the constness of f. */
+    ib_field_setv_static((ib_field_t*)f, &cval);
     
-    return (void *)cval;
+    return (const void *)cval;
 }
 
 static ib_status_t dyn_set(
     ib_field_t *field,
     const void *arg, size_t alen,
-    void *val, 
+    const void *val, 
     void *data
 )
 {

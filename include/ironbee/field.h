@@ -61,8 +61,8 @@ extern "C" {
  *
  * @returns Value.
  */
-typedef void *(*ib_field_get_fn_t)(
-    ib_field_t *field,
+typedef const void *(*ib_field_get_fn_t)(
+    const ib_field_t *field,
     const void *arg, size_t alen,
     void *data
 );
@@ -81,7 +81,7 @@ typedef void *(*ib_field_get_fn_t)(
 typedef ib_status_t (*ib_field_set_fn_t)(
     ib_field_t *field,
     const void *arg, size_t alen,
-    void *val,
+    const void *val,
     void *data
 );
 
@@ -149,7 +149,7 @@ ib_status_t DLL_PUBLIC ib_field_copy_ex(ib_field_t **pf,
                                         ib_mpool_t *mp,
                                         const char *name,
                                         size_t nlen,
-                                        ib_field_t *src);
+                                        const ib_field_t *src);
 
 /**
  * Create a bytestr field which directly aliases a value in memory.
@@ -283,7 +283,7 @@ ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_field_setv_static(ib_field_t *f,
-                                            void *pval);
+                                            const void *pval);
 
 /**
  * Set a field value.
@@ -294,7 +294,7 @@ ib_status_t DLL_PUBLIC ib_field_setv_static(ib_field_t *f,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
-                                     void *pval);
+                                     const void *pval);
 
 /**
  * Set a field value, passing the argument on to dynamic fields.
@@ -307,7 +307,7 @@ ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_field_setv_ex(ib_field_t *f,
-                                        void *pval,
+                                        const void *pval,
                                         const void* arg,
                                         size_t alen);
 
@@ -320,9 +320,9 @@ ib_status_t DLL_PUBLIC ib_field_setv_ex(ib_field_t *f,
  *
  * @returns Value stored in the field
  */
-void DLL_PUBLIC *ib_field_value_ex(ib_field_t *f,
-                                   const void *arg,
-                                   size_t alen);
+const void DLL_PUBLIC *ib_field_value_ex(const ib_field_t *f,
+                                         const void *arg,
+                                         size_t alen);
 
 /**
  * Get the value stored in the field, passing the argument on to dynamic
@@ -335,10 +335,10 @@ void DLL_PUBLIC *ib_field_value_ex(ib_field_t *f,
  *
  * @returns Value stored in the field.
  */
-void DLL_PUBLIC *ib_field_value_type_ex(ib_field_t *f,
-                                        ib_ftype_t t,
-                                        const void *arg,
-                                        size_t alen);
+const void DLL_PUBLIC *ib_field_value_type_ex(const ib_field_t *f,
+                                              ib_ftype_t t,
+                                              const void *arg,
+                                              size_t alen);
 
 /** Return field value for a field as "ib_num_t *" with argument. */
 #define ib_field_value_num_ex(f,arg,alen) \
@@ -372,7 +372,7 @@ void DLL_PUBLIC *ib_field_value_type_ex(ib_field_t *f,
  *
  * @returns Value stored in the field
  */
-void DLL_PUBLIC *ib_field_value(ib_field_t *f);
+const void DLL_PUBLIC *ib_field_value(const ib_field_t *f);
 
 /**
  * Get the value stored in the field, with type checking.
@@ -382,7 +382,7 @@ void DLL_PUBLIC *ib_field_value(ib_field_t *f);
  *
  * @returns Value stored in the field
  */
-void DLL_PUBLIC *ib_field_value_type(ib_field_t *f, ib_ftype_t t);
+const void DLL_PUBLIC *ib_field_value_type(const ib_field_t *f, ib_ftype_t t);
 
 /** Return field value for a field as "ib_num_t *". */
 #define ib_field_value_num(f) \
@@ -418,7 +418,7 @@ void DLL_PUBLIC *ib_field_value_type(ib_field_t *f, ib_ftype_t t);
  *
  * @return true if field is dynamic
  */
-int ib_field_is_dynamic(ib_field_t *f);
+int ib_field_is_dynamic(const ib_field_t *f);
 
 /**
  * Register dynamic get function.

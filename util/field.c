@@ -249,10 +249,10 @@ ib_status_t ib_field_copy_ex(ib_field_t **pf,
                              ib_mpool_t *mp,
                              const char *name,
                              size_t nlen,
-                             ib_field_t *src)
+                             const ib_field_t *src)
 {
     IB_FTRACE_INIT();
-    void *val = ib_field_value(src);
+    const void *val = ib_field_value(src);
     ib_status_t rc;
 
     rc = ib_field_create_ex(pf, mp, name, nlen, src->type, &val);
@@ -353,7 +353,7 @@ ib_status_t ib_field_buf_add(ib_field_t *f,
 }
 
 ib_status_t ib_field_setv_static(ib_field_t *f,
-                                 void *pval)
+                                 const void *pval)
 {
     IB_FTRACE_INIT();
 
@@ -417,7 +417,7 @@ ib_status_t ib_field_setv_static(ib_field_t *f,
 
 ib_status_t ib_field_setv_ex(
     ib_field_t *f,
-    void *pval,
+    const void *pval,
     const void* arg,
     size_t alen
 )
@@ -439,7 +439,7 @@ ib_status_t ib_field_setv_ex(
 
 ib_status_t ib_field_setv(
     ib_field_t *f,
-    void *pval
+    const void *pval
 )
 {
     IB_FTRACE_INIT();
@@ -447,7 +447,8 @@ ib_status_t ib_field_setv(
     IB_FTRACE_RET_STATUS(ib_field_setv_ex(f, pval, NULL, 0));
 }
 
-void *ib_field_value_ex(ib_field_t *f, const void *arg, size_t alen)
+const void *ib_field_value_ex(const ib_field_t *f,
+                              const void *arg, size_t alen)
 {
     /* If there is not a stored value, then attempt to use the
      * fn_get call to retrieve the value.
@@ -470,8 +471,8 @@ void *ib_field_value_ex(ib_field_t *f, const void *arg, size_t alen)
     return f->val->pval ? *(void **)f->val->pval : NULL;
 }
 
-void *ib_field_value_type_ex(ib_field_t *f, ib_ftype_t t,
-                             const void *arg, size_t alen)
+const void *ib_field_value_type_ex(const ib_field_t *f, ib_ftype_t t,
+                                   const void *arg, size_t alen)
 {
     /* Compare the types */
     if (f->type != t) {
@@ -482,12 +483,12 @@ void *ib_field_value_type_ex(ib_field_t *f, ib_ftype_t t,
     return ib_field_value_ex(f, arg, alen);
 }
 
-void *ib_field_value(ib_field_t *f)
+const void *ib_field_value(const ib_field_t *f)
 {
     return ib_field_value_ex(f, NULL, 0);
 }
 
-void *ib_field_value_type(ib_field_t *f, ib_ftype_t t)
+const void *ib_field_value_type(const ib_field_t *f, ib_ftype_t t)
 {
     /* Compare the types */
     if (f->type != t) {
@@ -498,7 +499,7 @@ void *ib_field_value_type(ib_field_t *f, ib_ftype_t t)
     return ib_field_value(f);
 }
 
-int ib_field_is_dynamic(ib_field_t *f)
+int ib_field_is_dynamic(const ib_field_t *f)
 {
     return f->val->pval ? 0 : 1;
 }

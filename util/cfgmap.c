@@ -82,8 +82,8 @@ typedef struct ib_cfgmap_handlers_data ib_cfgmap_handlers_data;
  *
  * @sa ib_field_get_fn_t.
  */
-static void *ib_cfgmap_handle_get(
-    ib_field_t *f,
+static const void *ib_cfgmap_handle_get(
+    const ib_field_t *f,
     const void *arg,
     size_t alen,
     void *cbdata
@@ -117,7 +117,7 @@ static void *ib_cfgmap_handle_get(
 static ib_status_t ib_cfgmap_handle_set(
     ib_field_t *field,
     const void *arg, size_t alen,
-    void *val,
+    const void *val,
     void *cbdata
 )
 {
@@ -282,7 +282,7 @@ ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
             break;
         case IB_FTYPE_GENERIC:
         default:
-            *(void **)pval = ib_field_value(f);
+            *(const void **)pval = ib_field_value(f);
             break;
     }
 

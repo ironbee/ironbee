@@ -104,7 +104,7 @@ typedef ib_status_t (*ib_cfgmap_set_fn_t)(
     void       *base,
     const char *name,
     ib_ftype_t  type,
-    void       *value,
+    const void *value,
     void       *data
 );
 
