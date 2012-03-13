@@ -180,12 +180,12 @@ public:
      *
      * At the lowest level is set_configuration_data_pod() which fairly
      * directly matches the C interface.  It requires that configuration data
-     * by POD (plain old data; essentialy any C type).  POD data is copied
+     * by POD (plain old data; essentially any C type).  POD data is copied
      * either via direct memory copy (default) or a user provided copy
      * functional.
      *
      * At the higher level is set_configuration_data() which uses C++
-     * semantics, i.e., copy constructors, destructors, etc.  To accomodate
+     * semantics, i.e., copy constructors, destructors, etc.  To accommodate
      * the C interface, it stores a pointer to the type rather than the type
      * in the C interface.
      *

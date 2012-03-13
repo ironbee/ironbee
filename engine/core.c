@@ -1498,7 +1498,7 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Open the log if required. This is thead safe. */
+    /* Open the log if required. This is thread safe. */
     if (iface->open != NULL) {
         rc = iface->open(lpi, log);
         if (rc != IB_OK) {

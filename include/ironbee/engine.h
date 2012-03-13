@@ -567,7 +567,7 @@ ib_status_t DLL_PUBLIC ib_context_set(ib_context_t *ctx,
  * index_fp if that FILE* is not NULL.
  *
  * If ctx->auditlog->owner does not match @a ctx then @a ctx is not the
- * owning context and a new auditlog structure is allocated and initialzied.
+ * owning context and a new auditlog structure is allocated and initialized.
  *
  * If ctx->auditlog is NULL a new auditlog structure is also, likewise,
  * allocated and initialized. All of these changes are done with a mutex

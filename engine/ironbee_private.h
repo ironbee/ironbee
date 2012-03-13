@@ -125,7 +125,7 @@ struct ib_context_data_t {
 /**
  * Per-context audit log configuration.
  *
- * This struct is assoicated with an owning context by the ib_context_t*
+ * This struct is associated with an owning context by the ib_context_t*
  * member named "owner."
  * Only the owner context may destroy or edit the logging context.
  * Child contexts that copy from the parent context may have a copy of

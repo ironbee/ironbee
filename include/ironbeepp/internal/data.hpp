@@ -65,7 +65,7 @@ ib_status_t data_cleanup(void* data);
  * Convert a @c void* generated with value_to_data() to a @a ValueType.
  * @internal
  *
- * This attempst to extract the value in @a data, assuming it is of type
+ * This attempts to extract the value in @a data, assuming it is of type
  * @a ValueType.  If @a ValueType does not match the original type stored in
  * data, a einval exception will be thrown.
  *
