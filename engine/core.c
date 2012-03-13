@@ -324,7 +324,7 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
 }
 
 /**
- * If required, open the log files. 
+ * If required, open the log files.
  *
  * There are two files opened. One is a single file to store the audit log.
  * The other is the shared audit log index file. This index file is
@@ -369,8 +369,8 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     else if ((log->ctx->auditlog->index != NULL) && (cfg->index_fp == NULL)) {
 
         /* Lock the auditlog configuration for the context.
-         * We lock up here to ensure that external resources are not 
-         * double-opened instead of locking only the assignment to 
+         * We lock up here to ensure that external resources are not
+         * double-opened instead of locking only the assignment to
          * log->ctx->auditlog->index_fp at the bottom of this block. */
         ib_lock_lock(&log->ctx->auditlog->index_fp_lck);
 

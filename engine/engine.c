@@ -2059,7 +2059,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
 
         ctx->auditlog = (ib_auditlog_cfg_t*)
             ib_mpool_calloc(ctx->mp, 1, sizeof(*ctx->auditlog));
-    
+
         if (ctx->auditlog == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }

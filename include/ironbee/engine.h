@@ -563,7 +563,7 @@ ib_status_t DLL_PUBLIC ib_context_set(ib_context_t *ctx,
 /**
  * Set the index log value for this logging context.
  * This does not simply duplicate @a index. If A logging index already
- * exists in @a ctx and ctx is the owner, that logging context is 
+ * exists in @a ctx and ctx is the owner, that logging context is
  * modified. If the logging context is not owned by @a ctx then a new logging
  * context is constructed with @a ctx as its owner.
  *
