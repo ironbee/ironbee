@@ -77,22 +77,10 @@ ibapi.each_list_node = function(ib_list, func)
     end
 end
 
--- Activity Map used by addEvent.
--- Default values is 'unknown'
-ibapi.activityMap = {
-    reconnaissance    = ffi.C.IB_LEVENT_ACT_RECON,
-    recon             = ffi.C.IB_LEVENT_ACT_RECON,
-    attempted_attack  = ffi.C.IB_LEVENT_ACT_ATTEMPTED_ATTACK,
-    attempt           = ffi.C.IB_LEVENT_ACT_ATTEMPTED_ATTACK,
-    successful_attack = ffi.C.IB_LEVENT_ACT_SUCCESSFUL_ATTACK,
-    success           = ffi.C.IB_LEVENT_ACT_SUCCESSFUL_ATTACK,
-    unknown           = ffi.C.IB_LEVENT_ACT_UNKNOWN
-}
-setmetatable(ibapi.activityMap, { __index = ibutil.returnUnknown })
-
 -- Action Map used by addEvent.
 -- Default values is 'unknown'
 ibapi.actionMap = {
+    allow   = ffi.C.IB_LEVENT_ACTION_ALLOW,
     block   = ffi.C.IB_LEVENT_ACTION_BLOCK,
     ignore  = ffi.C.IB_LEVENT_ACTION_IGNORE,
     log     = ffi.C.IB_LEVENT_ACTION_LOG,
@@ -100,32 +88,13 @@ ibapi.actionMap = {
 }
 setmetatable(ibapi.actionMap, { __index = ibutil.returnUnknown })
 
--- Rule Type Map used by addEvent.
+-- Event Type Map used by addEvent.
 -- Default values is 'unknown'
-ibapi.ruleTypeMap = {
-    alert   = ffi.C.IB_LEVENT_TYPE_ALERT,
-    unknown = ffi.C.IB_LEVENT_TYPE_UNKNOWN
+ibapi.eventTypeMap = {
+    observation = ffi.C.IB_LEVENT_TYPE_OBSERVATION,
+    unknown     = ffi.C.IB_LEVENT_TYPE_UNKNOWN
 }
-setmetatable(ibapi.ruleTypeMap, { __index = ibutil.returnUnknown })
-
--- System Map used by addEvent.
--- Default values is 'unknown'
-ibapi.systemMap = {
-    public  = ffi.C.IB_LEVENT_SYS_PUBLIC,
-    private = ffi.C.IB_LEVENT_SYS_PRIVATE,
-    unknown = ffi.C.IB_LEVENT_SYS_UNKNOWN
-}
-setmetatable(ibapi.systemMap, { __index = ibutil.returnUnknown })
-
-ibapi.primaryClassMap = {
-    unknown = ffi.C.IB_LEVENT_PCLASS_UNKNOWN
-}
-setmetatable(ibapi.primaryClassMap, { __index = ibutil.returnUnknown })
-
-ibapi.secondaryClassMap = {
-    unknown = ffi.C.IB_LEVENT_SCLASS_UNKNOWN
-}
-setmetatable(ibapi.secondaryClassMap, { __index = ibutil.returnUnknown })
+setmetatable(ibapi.eventTypeMap, { __index = ibutil.returnUnknown })
 
 -- Create an new ironbee object using the given engine and transaction.
 ibapi.new = function(self, ib_engine, ib_tx)
@@ -445,7 +414,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
     -- msg is processed as if it were the options argument. Think of this
     -- as the argument msg being optional.
     --
-    -- If msg is omitted, then options should contain a key 'message' that
+    -- If msg is omitted, then options should contain a key 'msg' that
     -- is the message to log.
     --
     -- The options argument should also specify the following (or they will
@@ -457,28 +426,14 @@ ibapi.new = function(self, ib_engine, ib_tx)
     --     - log
     --     - unknown (default)
     -- action - The action to take. Values are the same as recommended_action.
-    -- actvity - The observed activity.
-    --     - reconnaissance
-    --     - recon
-    --     - attempted_attack
-    --     - attempt
-    --     - successful_attack
-    --     - success
-    --     - unknown (default)
     -- type - The rule type that was matched.
-    --     - alert
-    --     - unknown (default)
-    -- system - The class or type of system attacked.
-    --     - public
-    --     - private
-    --     - unknown (default)
-    -- primaryClass - The classification of attack.
-    --     - unknown (default)
-    -- secondaryClass - The classification of attack.
+    --     - observation
     --     - unknown (default)
     -- confidence - An integer. The default is 0.
     -- severity - An integer. The default is 0.
-    -- message - If msg is not given, then this should be the alert message.
+    -- msg - If msg is not given, then this should be the alert message.
+    -- tags - List (table) of tag strings: { 'tag1', 'tag2', ... }
+    -- fields - List (table) of field name strings: { 'ARGS', ... }
     --
     ib_obj.addEvent = function(self, msg, options)
 
@@ -487,7 +442,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         -- If msg is a table, then options are ignored.
         if type(msg) == 'table' then
             options = msg
-            message = ffi.cast("char*", msg['message'] or 'no message')
+            message = ffi.cast("char*", msg['msg'] or '-')
         else
             message = ffi.cast("char*", msg)
         end
@@ -502,11 +457,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         -- Map options
         local rec_action      = ibapi.actionMap[options.recommended_action]
         local action          = ibapi.actionMap[options.action]
-        local activity        = ibapi.activityMap[options.activity]
-        local rule_type       = ibapi.ruleTypeMap[options.type]
-        local system          = ibapi.systemMap[options.system]
-        local primary_class   = ibapi.primaryClassMap[options.primaryClass]
-        local secondary_class = ibapi.secondaryClassMap[options.secondaryClass]
+        local event_type      = ibapi.eventTypeMap[options.type]
         local confidence      = options.confidence or 0
         local severity        = options.severity or 0
 
@@ -514,17 +465,31 @@ ibapi.new = function(self, ib_engine, ib_tx)
         ffi.C.ib_logevent_create(event,
                                  self.private.ib_tx.mp,
                                  rulename,
-                                 rule_type,
-                                 activity,
-                                 primary_class,
-                                 secondary_class,
-                                 ffi.C.IB_LEVENT_SYS_UNKNOWN,
+                                 event_type,
                                  rec_action,
                                  action,
                                  confidence,
                                  severity,
                                  message
                                 )
+
+        -- Add tags
+        if options.tags ~= nil then
+            if type(options.tags) == 'table' then
+                for k,v in ipairs(options.tags) do
+                    ffi.C.ib_logevent_tag_add(event, v[k])
+                end
+            end
+        end
+
+        -- Add field names
+        if options.fields ~= nil then
+            if type(options.fields) == 'table' then
+                for k,v in ipairs(options.fields) do
+                    ffi.C.ib_logevent_field_add(event, v[k])
+                end
+            end
+        end
 
         ffi.C.ib_event_add(self.private.ib_tx.epi, event[0])
     end

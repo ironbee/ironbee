@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 
 #include <sys/time.h> /// @todo Temp for gettimeofday()
 #include <unistd.h>
@@ -94,50 +95,21 @@ static void default_logger(FILE *fp, int level,
 
 /* -- Log Event Routines -- */
 
-/* Log Event Types */
+/** Log Event Types */
 const char *ib_logevent_type_str[] = {
     "Unknown",
-    "Alert",
+    "Observation",
     NULL
 };
 
-/** Log Event Activities */
-static const char *ib_logevent_activity_str[] = {
-    "Unknown",
-    "Recon",
-    "Attempted Attack",
-    "Successful Attack",
-    NULL
-};
 
-/** Log Event Primary Classification */
-static const char *ib_logevent_pri_class_str[] = {
-    "Unknown",
-    "Injection",
-    NULL
-};
-
-/** Log Event Secondary Classification */
-static const char *ib_logevent_sec_class_str[] = {
-    "Unknown",
-    "SQL",
-    NULL
-};
-
-/** Log Event System Environment */
-static const char *ib_logevent_sys_env_str[] = {
-    "Unknown",
-    "Public",
-    "Private",
-    NULL
-};
-
-/** Log Event Recommended Action */
+/** Log Event Action Names */
 static const char *ib_logevent_action_str[] = {
     "Unknown",
     "Log",
     "Block",
     "Ignore",
+    "Allow",
     NULL
 };
 
@@ -149,38 +121,6 @@ const char *ib_logevent_type_name(ib_logevent_type_t num)
     return ib_logevent_type_str[num];
 }
 
-const char *ib_logevent_activity_name(ib_logevent_activity_t num)
-{
-    if (num >= (sizeof(ib_logevent_activity_str) / sizeof(const char *))) {
-        return ib_logevent_activity_str[0];
-    }
-    return ib_logevent_activity_str[num];
-}
-
-const char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num)
-{
-    if (num >= (sizeof(ib_logevent_pri_class_str) / sizeof(const char *))) {
-        return ib_logevent_pri_class_str[0];
-    }
-    return ib_logevent_pri_class_str[num];
-}
-
-const char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num)
-{
-    if (num >= (sizeof(ib_logevent_sec_class_str) / sizeof(const char *))) {
-        return ib_logevent_sec_class_str[0];
-    }
-    return ib_logevent_sec_class_str[num];
-}
-
-const char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num)
-{
-    if (num >= (sizeof(ib_logevent_sys_env_str) / sizeof(const char *))) {
-        return ib_logevent_sys_env_str[0];
-    }
-    return ib_logevent_sys_env_str[num];
-}
-
 const char *ib_logevent_action_name(ib_logevent_action_t num)
 {
     if (num >= (sizeof(ib_logevent_action_str) / sizeof(const char *))) {
@@ -189,25 +129,29 @@ const char *ib_logevent_action_name(ib_logevent_action_t num)
     return ib_logevent_action_str[num];
 }
 
-/// @todo Change this to _ex function with all fields and only use
-///       the required fields here.
-ib_status_t ib_logevent_create(ib_logevent_t **ple,
-                               ib_mpool_t *pool,
-                               const char *rule_id,
-                               ib_logevent_type_t type,
-                               ib_logevent_activity_t activity,
-                               ib_logevent_pri_class_t pri_class,
-                               ib_logevent_sec_class_t sec_class,
-                               ib_logevent_sys_env_t sys_env,
-                               ib_logevent_action_t rec_action,
-                               ib_logevent_action_t action,
-                               uint8_t confidence,
-                               uint8_t severity,
-                               const char *fmt,
-                               ...)
+ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
+                                          ib_mpool_t *pool,
+                                          const char *rule_id,
+                                          ib_logevent_type_t type,
+                                          ib_logevent_action_t rec_action,
+                                          ib_logevent_action_t action,
+                                          uint8_t confidence,
+                                          uint8_t severity,
+                                          const char *fmt,
+                                          ...)
 {
     IB_FTRACE_INIT();
-    char buf[8192];
+
+    /*
+     * Defined so that size_t to int cast is avoided
+     * checking the result of vsnprintf below.
+     * NOTE: This is assumed >3 bytes and should not
+     *       be overly large as it is used as the size
+     *       of a stack buffer.
+     */
+#define IB_LEVENT_MSG_BUF_SIZE 1024
+
+    char buf[IB_LEVENT_MSG_BUF_SIZE];
     struct timeval tv;
     va_list ap;
 
@@ -216,32 +160,89 @@ ib_status_t ib_logevent_create(ib_logevent_t **ple,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /// @todo Need a true unique id generator
+    /// @todo Need a monotonic counter
     gettimeofday(&tv, NULL);
     (*ple)->event_id = (tv.tv_sec << (32-8)) + tv.tv_usec;
 
-    /// @todo Generate the remaining portions of the event
-
     (*ple)->mp = pool;
-    (*ple)->rule_id = rule_id;
+    (*ple)->rule_id = ib_mpool_strdup(pool, rule_id);
     (*ple)->type = type;
-    (*ple)->activity = activity;
-    (*ple)->pri_class = pri_class;
-    (*ple)->sec_class = sec_class;
-    (*ple)->sys_env = sys_env;
     (*ple)->rec_action = rec_action;
     (*ple)->action = action;
     (*ple)->confidence = confidence;
     (*ple)->severity = severity;
 
+    /*
+     * Generate the message, replacing the last three characters
+     * with "..." if truncation is required.
+     */
     va_start(ap, fmt);
-    if (vsnprintf(buf, sizeof(buf), fmt, ap) >= (int)sizeof(buf)) {
-        strcpy(buf, "<msg too long>");
+    if (vsnprintf(buf, IB_LEVENT_MSG_BUF_SIZE, fmt, ap) >= IB_LEVENT_MSG_BUF_SIZE) {
+        memcpy(buf + (IB_LEVENT_MSG_BUF_SIZE - 3), "...", 3);
     }
     va_end(ap);
 
     /* Copy the formatted message. */
     (*ple)->msg = ib_mpool_strdup(pool, buf);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
+                                           const char *tag)
+{
+    IB_FTRACE_INIT();
+    char *tag_copy;
+    ib_status_t rc;
+
+    assert(le != NULL);
+
+    if (le->tags == NULL) {
+        rc = ib_list_create(&le->tags, le->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    tag_copy = ib_mpool_memdup(le->mp, tag, strlen(tag) + 1);
+    rc = ib_list_push(le->tags, tag_copy);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
+                                             const char *name)
+{
+    IB_FTRACE_INIT();
+    char *name_copy;
+    ib_status_t rc;
+
+    assert(le != NULL);
+
+    if (le->fields == NULL) {
+        rc = ib_list_create(&le->fields, le->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    name_copy = ib_mpool_memdup(le->mp, name, strlen(name) + 1);
+    rc = ib_list_push(le->fields, name_copy);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
+                                            void *data,
+                                            size_t dlen)
+{
+    IB_FTRACE_INIT();
+
+    assert(le != NULL);
+
+    // TODO Copy the data???
+    le->data = data;
+    le->data_len = dlen;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

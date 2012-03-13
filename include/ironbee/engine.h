@@ -2015,6 +2015,9 @@ void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
  */
 int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib);
 
+
+// TODO: The ib_event_* functions should be ib_logevent_* below???
+
 /**
  * Add an event to be logged.
  *
@@ -2077,49 +2080,19 @@ ib_status_t DLL_PUBLIC ib_auditlog_write(ib_provider_inst_t *pi);
  * @{
  */
 
-/* Log Event Types */
+/** Log Event Type */
 typedef enum {
     IB_LEVENT_TYPE_UNKNOWN,
-    IB_LEVENT_TYPE_ALERT,
+    IB_LEVENT_TYPE_OBSERVATION,
 } ib_logevent_type_t;
 
-/** Log Event Activities */
-typedef enum {
-    IB_LEVENT_ACT_UNKNOWN,
-    IB_LEVENT_ACT_RECON,
-    IB_LEVENT_ACT_ATTEMPTED_ATTACK,
-    IB_LEVENT_ACT_SUCCESSFUL_ATTACK,
-} ib_logevent_activity_t;
-
-/** Log Event Primary Classification */
-typedef enum {
-    IB_LEVENT_PCLASS_UNKNOWN,
-    /// @todo These are just examples for now
-    IB_LEVENT_PCLASS_INJECTION,
-} ib_logevent_pri_class_t;
-
-/** Log Event Secondary Classification */
-typedef enum {
-    IB_LEVENT_SCLASS_UNKNOWN,
-    /// @todo These are just examples for now
-    IB_LEVENT_SCLASS_SQL,
-} ib_logevent_sec_class_t;
-
-/** Log Event System Environment */
-typedef enum {
-    IB_LEVENT_SYS_UNKNOWN,
-    IB_LEVENT_SYS_PUBLIC,
-    IB_LEVENT_SYS_PRIVATE,
-
-} ib_logevent_sys_env_t;
-
-/** Log Event Recommended Action */
+/** Log Event Action */
 typedef enum {
     IB_LEVENT_ACTION_UNKNOWN,
-    /// @todo These are just examples for now
     IB_LEVENT_ACTION_LOG,
     IB_LEVENT_ACTION_BLOCK,
     IB_LEVENT_ACTION_IGNORE,
+    IB_LEVENT_ACTION_ALLOW,
 } ib_logevent_action_t;
 
 /**
@@ -2132,42 +2105,6 @@ typedef enum {
 const DLL_PUBLIC char *ib_logevent_type_name(ib_logevent_type_t num);
 
 /**
- * Lookup log event activity name.
- *
- * @param num Numeric ID
- *
- * @returns String name
- */
-const DLL_PUBLIC char *ib_logevent_activity_name(ib_logevent_activity_t num);
-
-/**
- * Lookup log event primary classification name.
- *
- * @param num Numeric ID
- *
- * @returns String name
- */
-const DLL_PUBLIC char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num);
-
-/**
- * Lookup log event secondary classification name.
- *
- * @param num Numeric ID
- *
- * @returns String name
- */
-const DLL_PUBLIC char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num);
-
-/**
- * Lookup log event system environment name.
- *
- * @param num Numeric ID
- *
- * @returns String name
- */
-const DLL_PUBLIC char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num);
-
-/**
  * Lookup log event action name.
  *
  * @param num Numeric ID
@@ -2178,43 +2115,33 @@ const DLL_PUBLIC char *ib_logevent_action_name(ib_logevent_action_t num);
 
 /** Log Event Structure */
 struct ib_logevent_t {
-    uint32_t                 event_id;   /**< Event ID */
-    const char              *rule_id;    /**< Rule ID (if any) */
-    const char              *publisher;  /**< Publisher name */
-    const char              *source;     /**< Source identifier */
-    const char              *source_ver; /**< Source version string */
-    const char              *msg;        /**< Event message */
-    size_t                   data_len;   /**< Event data size */
-    ib_list_t               *tags;       /**< List of tags */
-    ib_list_t               *fields;     /**< List of fields */
     ib_mpool_t              *mp;         /**< Memory pool */
-    uint8_t                  confidence; /**< Event confidence (percent) */
-    uint8_t                  severity;   /**< Event severity (0-100?) */
+    const char              *rule_id;    /**< Formatted rule ID */
+    const char              *msg;        /**< Event message */
+    ib_list_t               *tags;       /**< List of tag strings */
+    ib_list_t               *fields;     /**< List of field name strings */
+    uint32_t                 event_id;   /**< Event ID */
     ib_logevent_type_t       type;       /**< Event type */
-    ib_logevent_activity_t   activity;   /**< Event activity (recon/attack) */
-    ib_logevent_pri_class_t  pri_class;  /**< Primary class (ex: INJECTION) */
-    ib_logevent_sec_class_t  sec_class;  /**< Secondary class (ex: SQL) */
-    ib_logevent_sys_env_t    sys_env;    /**< System environment (pub/priv) */
     ib_logevent_action_t     rec_action; /**< Recommended action */
     ib_logevent_action_t     action;     /**< Action taken */
+    void                    *data;       /**< Event data */
+    size_t                   data_len;   /**< Event data size */
+    uint8_t                  confidence; /**< Event confidence (percent) */
+    uint8_t                  severity;   /**< Event severity (0-100?) */
 };
 
 /**
  * Create a logevent.
  *
- * @param[in] ple Address which new logevent is written
- * @param[in] pool Memory pool
- * @param[in] rule_id Rule that fired
- * @param[in] type Event type
- * @param[in] activity Event activity
- * @param[in] pri_class Event primary class
- * @param[in] sec_class Event secondary class
- * @param[in] sys_env Event system environment
- * @param[in] rec_action Event recommended action
- * @param[in] action Event action taken
- * @param[in] confidence Event confidence
- * @param[in] severity Event severity
- * @param[in] fmt Event message format string
+ * @param[out] ple Address which new logevent is written
+ * @param[in]  pool Memory pool to allocate from
+ * @param[in]  rule_id Rule ID string
+ * @param[in]  type Event type
+ * @param[in]  rec_action Event recommended action
+ * @param[in]  action Event action taken
+ * @param[in]  confidence Event confidence
+ * @param[in]  severity Event severity
+ * @param[in]  fmt Event message format string
  *
  * @returns Status code
  */
@@ -2222,16 +2149,47 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
                                           ib_mpool_t *pool,
                                           const char *rule_id,
                                           ib_logevent_type_t type,
-                                          ib_logevent_activity_t activity,
-                                          ib_logevent_pri_class_t pri_class,
-                                          ib_logevent_sec_class_t sec_class,
-                                          ib_logevent_sys_env_t sys_env,
                                           ib_logevent_action_t rec_action,
                                           ib_logevent_action_t action,
                                           uint8_t confidence,
                                           uint8_t severity,
                                           const char *fmt,
                                           ...);
+
+/**
+ * Add a tag to the event.
+ *
+ * @param[in] le Log event
+ * @param[in] tag Tag to add (string will be copied)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
+                                           const char *tag);
+
+/**
+ * Add a field name to the event.
+ *
+ * @param[in] le Log event
+ * @param[in] name Field name to add (string will be copied)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
+                                             const char *name);
+
+/**
+ * Set data for the event.
+ *
+ * @param[in] le Log event
+ * @param[in] data Arbitrary binary data
+ * @param[in] dlen Data length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
+                                            void *data,
+                                            size_t dlen);
 
 /**
  * @} IronBeeEngineLogEvent

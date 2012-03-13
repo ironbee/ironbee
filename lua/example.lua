@@ -319,13 +319,9 @@ function onEventHandleRequestHeaders(ib, tx)
                 ironbee.ib_logevent_create(
                     tx.mp(),
                     "-",
-                    IB_LEVENT_TYPE_ALERT,
-                    IB_LEVENT_ACT_ATTEMPTED_ATTACK,
-                    IB_LEVENT_PCLASS_INJECTION,
-                    IB_LEVENT_SCLASS_SQL,
-                    IB_LEVENT_SYS_PUBLIC,
+                    IB_LEVENT_TYPE_OBSERVATION,
                     IB_LEVENT_ACTION_BLOCK,
-                    IB_LEVENT_ACTION_IGNORED,
+                    IB_LEVENT_ACTION_IGNORE,
                     90, 80,
                     "[TEST Event] Request Line matches: %s", patt
                 )

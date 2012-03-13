@@ -120,32 +120,14 @@ ffi.cdef [[
     } ib_state_event_type_t;
     typedef enum {
         IB_LEVENT_TYPE_UNKNOWN,
-        IB_LEVENT_TYPE_ALERT
+        IB_LEVENT_TYPE_OBSERVATION
     } ib_logevent_type_t;
-    typedef enum {
-        IB_LEVENT_ACT_UNKNOWN,
-        IB_LEVENT_ACT_RECON,
-        IB_LEVENT_ACT_ATTEMPTED_ATTACK,
-        IB_LEVENT_ACT_SUCCESSFUL_ATTACK
-    } ib_logevent_activity_t;
-    typedef enum {
-        IB_LEVENT_PCLASS_UNKNOWN,
-        IB_LEVENT_PCLASS_INJECTION
-    } ib_logevent_pri_class_t;
-    typedef enum {
-        IB_LEVENT_SCLASS_UNKNOWN,
-        IB_LEVENT_SCLASS_SQL
-    } ib_logevent_sec_class_t;
-    typedef enum {
-        IB_LEVENT_SYS_UNKNOWN,
-        IB_LEVENT_SYS_PUBLIC,
-        IB_LEVENT_SYS_PRIVATE
-    } ib_logevent_sys_env_t;
     typedef enum {
         IB_LEVENT_ACTION_UNKNOWN,
         IB_LEVENT_ACTION_LOG,
         IB_LEVENT_ACTION_BLOCK,
-        IB_LEVENT_ACTION_IGNORE
+        IB_LEVENT_ACTION_IGNORE,
+        IB_LEVENT_ACTION_ALLOW
     } ib_logevent_action_t;
 
     /* Engine Types */
@@ -315,31 +297,21 @@ ffi.cdef [[
     };
 
     struct ib_logevent_t {
-        uint32_t                 event_id;
+        ib_mpool_t              *mp;
         const char              *rule_id;
-        const char              *publisher;
-        const char              *source;
-        const char              *source_ver;
         const char              *msg;
-        size_t                   data_len;
         ib_list_t               *tags;
         ib_list_t               *fields;
-        ib_mpool_t              *mp;
-        uint8_t                  confidence;
-        uint8_t                  severity;
+        uint32_t                 event_id;
         ib_logevent_type_t       type;
-        ib_logevent_activity_t   activity;
-        ib_logevent_pri_class_t  pri_class;
-        ib_logevent_sec_class_t  sec_class;
-        ib_logevent_sys_env_t    sys_env;
         ib_logevent_action_t     rec_action;
         ib_logevent_action_t     action;
+        void                    *data;
+        size_t                   data_len;
+        uint8_t                  confidence;
+        uint8_t                  severity;
     };
     const char *ib_logevent_type_name(ib_logevent_type_t num);
-    const char *ib_logevent_activity_name(ib_logevent_activity_t num);
-    const char *ib_logevent_pri_class_name(ib_logevent_pri_class_t num);
-    const char *ib_logevent_sec_class_name(ib_logevent_sec_class_t num);
-    const char *ib_logevent_sys_env_name(ib_logevent_sys_env_t num);
     const char *ib_logevent_action_name(ib_logevent_action_t num);
 
     /* Field */
@@ -423,20 +395,23 @@ ffi.cdef [[
                                    ib_mpool_t *pool,
                                    const char *rule_id,
                                    ib_logevent_type_t type,
-                                   ib_logevent_activity_t activity,
-                                   ib_logevent_pri_class_t pri_class,
-                                   ib_logevent_sec_class_t sec_class,
-                                   ib_logevent_sys_env_t sys_env,
                                    ib_logevent_action_t rec_action,
                                    ib_logevent_action_t action,
                                    uint8_t confidence,
                                    uint8_t severity,
                                    const char *fmt,
                                    ...);
+    ib_status_t ib_logevent_tag_add(ib_logevent_t *le,
+                                    const char *tag);
+    ib_status_t ib_logevent_field_add(ib_logevent_t *le,
+                                      const char *field);
+    ib_status_t ib_logevent_data_set(ib_logevent_t *le,
+                                     void *data,
+                                     size_t dlen);
     ib_status_t ib_event_add(ib_provider_inst_t *pi,
                              ib_logevent_t *e);
     ib_status_t ib_event_remove(ib_provider_inst_t *pi,
-                                uint64_t id);
+                                uint32_t id);
     ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
                                  ib_list_t **pevents);
     ib_status_t ib_event_write_all(ib_provider_inst_t *pi);
@@ -645,22 +620,12 @@ IB_DIRTYPE_SBLK1 = ffi.cast("int", c.IB_DIRTYPE_SBLK1)
 -- Log Event Definitions
 -- ===============================================
 IB_LEVENT_TYPE_UNKNOWN = ffi.cast("int", c.IB_LEVENT_TYPE_UNKNOWN)
-IB_LEVENT_TYPE_ALERT = ffi.cast("int", c.IB_LEVENT_TYPE_ALERT)
-IB_LEVENT_ACT_UNKNOWN = ffi.cast("int", c.IB_LEVENT_ACT_UNKNOWN)
-IB_LEVENT_ACT_RECON = ffi.cast("int", c.IB_LEVENT_ACT_RECON)
-IB_LEVENT_ACT_ATTEMPTED_ATTACK = ffi.cast("int", c.IB_LEVENT_ACT_ATTEMPTED_ATTACK)
-IB_LEVENT_ACT_SUCCESSFUL_ATTACK = ffi.cast("int", c.IB_LEVENT_ACT_SUCCESSFUL_ATTACK)
-IB_LEVENT_PCLASS_UNKNOWN = ffi.cast("int", c.IB_LEVENT_PCLASS_UNKNOWN)
-IB_LEVENT_PCLASS_INJECTION = ffi.cast("int", c.IB_LEVENT_PCLASS_INJECTION)
-IB_LEVENT_SCLASS_UNKNOWN = ffi.cast("int", c.IB_LEVENT_SCLASS_UNKNOWN)
-IB_LEVENT_SCLASS_SQL = ffi.cast("int", c.IB_LEVENT_SCLASS_SQL)
-IB_LEVENT_SYS_UNKNOWN = ffi.cast("int", c.IB_LEVENT_SYS_UNKNOWN)
-IB_LEVENT_SYS_PUBLIC = ffi.cast("int", c.IB_LEVENT_SYS_PUBLIC)
-IB_LEVENT_SYS_PRIVATE = ffi.cast("int", c.IB_LEVENT_SYS_PRIVATE)
+IB_LEVENT_TYPE_OBSERVATION = ffi.cast("int", c.IB_LEVENT_TYPE_OBSERVATION)
 IB_LEVENT_ACTION_UNKNOWN = ffi.cast("int", c.IB_LEVENT_ACTION_UNKNOWN)
 IB_LEVENT_ACTION_LOG = ffi.cast("int", c.IB_LEVENT_ACTION_LOG)
 IB_LEVENT_ACTION_BLOCK = ffi.cast("int", c.IB_LEVENT_ACTION_BLOCK)
 IB_LEVENT_ACTION_IGNORE = ffi.cast("int", c.IB_LEVENT_ACTION_IGNORE)
+IB_LEVENT_ACTION_ALLOW = ffi.cast("int", c.IB_LEVENT_ACTION_ALLOW)
 
 -- ===============================================
 -- Cast a value as a C "ib_conn_t *".
