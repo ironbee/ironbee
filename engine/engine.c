@@ -2051,13 +2051,13 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
 
     ib_status_t rc;
 
-    assert(ctx!=NULL);
-    assert(ctx->ib!=NULL);
-    assert(ctx->mp!=NULL);
-    assert(idx!=NULL);
+    assert(ctx != NULL);
+    assert(ctx->ib != NULL);
+    assert(ctx->mp != NULL);
+    assert(idx != NULL);
 
     /* Null OR we do not own this audit logging context. */
-    if ( ctx->auditlog == NULL || ctx->auditlog->owner != ctx )
+    if (ctx->auditlog == NULL || ctx->auditlog->owner != ctx)
     {
 
         ctx->auditlog = (ib_auditlog_cfg_t*)
@@ -2070,8 +2070,8 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
         /* Set owner. */
         ctx->auditlog->owner = ctx;
 
-        /* Set index_fp_lck. */
-        rc = ib_lock_init(&ctx->auditlog->index_fp_lck);
+        /* Set index_fp_lock. */
+        rc = ib_lock_init(&ctx->auditlog->index_fp_lock);
 
         if (rc!=IB_OK) {
             ib_log_debug(ctx->ib, 5,
@@ -2082,9 +2082,13 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
 
         /* Set index. */
         ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
+
+        if (ctx->auditlog->index == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
     }
     else {
-        rc = ib_lock_lock(&ctx->auditlog->index_fp_lck);
+        rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
 
         if (rc!=IB_OK) {
             ib_log_debug(ctx->ib, 5, "Failed to audit index %s", idx);
@@ -2094,7 +2098,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
         /* Check that we aren't re-setting a value in the same context. */
         if ( ! strcmp(idx, ctx->auditlog->index) ) {
 
-            ib_lock_unlock(&ctx->auditlog->index_fp_lck);
+            ib_lock_unlock(&ctx->auditlog->index_fp_lock);
 
             ib_log_debug(ctx->ib, 5,
                          "Re-setting log same value. No action: %s",
@@ -2106,9 +2110,13 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
         /* Replace the old index value with the new index value. */
         ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
 
+        if (ctx->auditlog->index == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
         /* Fail on alloc error. */
         if (ctx->auditlog->index == NULL) {
-            ib_lock_unlock(&ctx->auditlog->index_fp_lck);
+            ib_lock_unlock(&ctx->auditlog->index_fp_lock);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
@@ -2118,7 +2126,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
             ctx->auditlog->index_fp = NULL;
         }
 
-        ib_lock_unlock(&ctx->auditlog->index_fp_lck);
+        ib_lock_unlock(&ctx->auditlog->index_fp_lock);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

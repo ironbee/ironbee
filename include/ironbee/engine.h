@@ -562,12 +562,16 @@ ib_status_t DLL_PUBLIC ib_context_set(ib_context_t *ctx,
 
 /**
  * Set the index log value for this logging context.
- * This does not simply duplicate @a index. If A logging index already
- * exists in @a ctx and ctx is the owner, that logging context is
- * modified. If the logging context is not owned by @a ctx then a new logging
- * context is constructed with @a ctx as its owner.
  *
- * Further, a lock is initialized to allow safe shareing between threads.
+ * In addition to setting ctx->auditlog->index this will also close
+ * index_fp if that FILE* is not NULL.
+ *
+ * If ctx->auditlog->owner does not match @a ctx then @a ctx is not the
+ * owning context and a new auditlog structure is allocated and initialzied.
+ *
+ * If ctx->auditlog is NULL a new auditlog structure is also, likewise,
+ * allocated and initialized. All of these changes are done with a mutex
+ * that is part of the auditlog initialization.
  *
  * @param[in,out] ctx The context to set the index value in.
  * @param[in] idx The index value to be copied into the context.

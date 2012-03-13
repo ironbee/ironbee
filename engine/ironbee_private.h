@@ -125,15 +125,16 @@ struct ib_context_data_t {
 /**
  * Per-context audit log configuration.
  *
- * This struct is assoicated with an owning context by the owner pointer.
- * Only that context may destroy or edit the logging context. Child contexts
- * that copy from the parent context may have a copy of the pointer to
- * this struct, but may not edit its context.
+ * This struct is assoicated with an owning context by the ib_context_t*
+ * member named "owner."
+ * Only the owner context may destroy or edit the logging context.
+ * Child contexts that copy from the parent context may have a copy of
+ * the pointer to this struct, but may not edit its context.
  *
- * Chlid contexts may, though, lock the index_fp_lock field and write to
+ * Child contexts may, though, lock the index_fp_lock field and write to
  * the index_fp.
  *
- * The owning context should lock index_fp_lck before updating lock_fp and
+ * The owning context should lock index_fp_lock before updating lock_fp and
  * index.
  */
 typedef struct ib_auditlog_cfg_t ib_auditlog_cfg_t;
@@ -142,7 +143,7 @@ typedef struct ib_auditlog_cfg_t ib_auditlog_cfg_t;
 struct ib_auditlog_cfg_t {
     char *index;            /**< Index file. */
     FILE *index_fp;         /**< Index file pointer. */
-    ib_lock_t index_fp_lck; /**< Lock to protect index_fp. */
+    ib_lock_t index_fp_lock; /**< Lock to protect index_fp. */
     ib_context_t *owner;    /**< Owning context. Only owner should edit. */
 };
 
