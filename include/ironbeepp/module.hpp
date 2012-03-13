@@ -60,6 +60,7 @@ class Context;
  * @sa ironbeepp
  * @sa module_bootstrap.hpp
  * @sa ib_module_t
+ * @nosubgrouping
  **/
 class Module :
     boost::less_than_comparable<Module>,
@@ -109,8 +110,9 @@ public:
      *   appropriate status returns.  See exception.hpp.
      * - As boost::function's, these are compatible with any function pointer
      *   or function object that matches the signature.
-     */
-    //@{
+     **/
+    ///@{
+
     //! Module callback.
     typedef boost::function<void (Module)> module_callback_t;
     //! Context callback.
@@ -158,7 +160,35 @@ public:
     void set_context_close(context_close_t f);
     //! Set context destroy function.  Prefer chain_context_destroy().
     void set_context_destroy(context_destroy_t f);
-    //@}
+
+    ///@}
+
+    /**
+     * @name Configuration Data
+     * Types and methods associated with configuration data.
+     *
+     * A module can have configuration data.  This data is set as the
+     * "global" configuration data.  Each context then copies the
+     * configuration data of the parent context or the global configuration
+     * data if there is no parent context.
+     *
+     * There are two levels that Module can handle configuration data:
+     *
+     * At the lowest level is set_configuration_data_pod() which fairly
+     * directly matches the C interface.  It requires that configuration data
+     * by POD (plain old data; essentialy any C type).  POD data is copied
+     * either via direct memory copy (default) or a user provided copy
+     * functional.
+     *
+     * At the higher level is set_configuration_data() which uses C++
+     * semantics, i.e., copy constructors, destructors, etc.  To accomodate
+     * the C interface, it stores a pointer to the type rather than the type
+     * in the C interface.
+     *
+     * It is highly recommended to use set_configuration_data() unless you
+     * need to closely interoperate with the C code.
+     **/
+    ///@{
 
     /**
      * Metafunction providing type of configuration data copier.
@@ -175,7 +205,6 @@ public:
      * @tparam DataType Type of configuration data.
      * @tparam Enable   Internal use only.
      **/
-    //! Part of implementation of previous.
     template <typename DataType>
     struct configuration_copier_t
     {
@@ -188,19 +217,14 @@ public:
     /**
      * Set configuration data for POD
      *
-     * A module can have configuration data.  This data is set as the
-     * "global" configuration data.  Each context then copies the
-     * configuration data of the parent context or the global configuration
-     * data if there is no parent context.  An optional copier functional can
-     * be provided to do this copy.  If the default is provided, then memcpy
-     * is used.
+     * See group member group documentation for details.
      *
      * For C++ object semantics with configuration data, see
      * set_configuration_data().
      *
      * For type safety, the type of configuration data (@a DataType), global
-     * data (@a global_data), and any copier function
-     * (@a copier) must be provided simultaneously.
+     * data (@a global_data), and any copier function (@a copier) must be
+     * provided simultaneously.
      *
      * This is a low level routine and, as such, requires that @a DataType
      * be POD.  Behavior is undefined if @a DataType is not POD (see
@@ -233,17 +257,11 @@ public:
      /**
       * Set configuration for C++ objects.
       *
-      * This is similar to set_configuration_data_pod() except it uses C++
-      * semantics instead of a copier.
+      * See group member group documentation for details.
       *
-      * Under the hood, it calls set_configuration_data_pod() with a pointer
+      * Under the hood, this calls set_configuration_data_pod() with a pointer
       * to DataType (pointers are POD).  That is, @c gcdata is a pointer to
       * a pointer to a @a DataType.
-      *
-      * A module can have configuration data.  This data is set as the
-      * "global" configuration data.  Each context then copies the
-      * configuration data of the parent context or the global configuration
-      * data if there is no parent context.
       *
       * @warning Only call one of set_configuration_data() and
       * set_configuration_data_pod().  They will overwrite each other.
@@ -257,7 +275,9 @@ public:
         const DataType& global_data
     );
 
-    /// @ Internal
+    ///@}
+
+    /// @cond Internal
     typedef void (*unspecified_bool_type)(Module***);
     /// @endcond
     /**
