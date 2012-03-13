@@ -323,6 +323,19 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * If required, open the log files. 
+ *
+ * There are two files opened. One is a single file to store the audit log.
+ * The other is the shared audit log index file. This index file is
+ * protected by a lock during open and close calls but not writes.
+ *
+ * This and core_audit_close are thread-safe.
+ *
+ * @param[in] lpi Log provider API.
+ * @param[in] log The log record.
+ * @return IB_OK or other. See log file for details of failure.
+ */
 static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                    ib_auditlog_t *log)
 {
@@ -334,6 +347,12 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     char *fn;
     int ec;
 
+    assert(NULL!=lpi);
+    assert(NULL!=log);
+    assert(NULL!=log->ctx);
+    assert(NULL!=log->ctx->auditlog);
+    assert(NULL!=log->ctx->auditlog->index);
+
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
@@ -341,34 +360,46 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    if (corecfg->auditlog_index_fp != NULL) {
-        cfg->index_fp = corecfg->auditlog_index_fp;
+    /* Copy the FILE* into the core_audit_cfg_t. */
+    if (log->ctx->auditlog->index_fp != NULL) {
+        cfg->index_fp = log->ctx->auditlog->index_fp;
     }
-    else if ((corecfg->auditlog_index != NULL) && (cfg->index_fp == NULL)) {
-        if (corecfg->auditlog_index[0] == '/') {
-            fnsize = strlen(corecfg->auditlog_index) + 1;
+
+    /* If we have a file name but no file pointer, assign cfg->index_fp. */
+    else if ((log->ctx->auditlog->index != NULL) && (cfg->index_fp == NULL)) {
+
+        /* Lock the auditlog configuration for the context.
+         * We lock up here to ensure that external resources are not 
+         * double-opened instead of locking only the assignment to 
+         * log->ctx->auditlog->index_fp at the bottom of this block. */
+        ib_lock_lock(&log->ctx->auditlog->index_fp_lck);
+
+        if (log->ctx->auditlog->index[0] == '/') {
+            fnsize = strlen(log->ctx->auditlog->index) + 1;
 
             fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
             if (fn == NULL) {
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
 
-            memcpy(fn, corecfg->auditlog_index, fnsize);
+            memcpy(fn, log->ctx->auditlog->index, fnsize);
         }
-        else if (corecfg->auditlog_index[0] == '|') {
+        else if (log->ctx->auditlog->index[0] == '|') {
             /// @todo Probably should skip whitespace???
-            fnsize = strlen(corecfg->auditlog_index + 1) + 1;
+            fnsize = strlen(log->ctx->auditlog->index + 1) + 1;
 
             fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
             if (fn == NULL) {
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
 
-            memcpy(fn, corecfg->auditlog_index + 1, fnsize);
+            memcpy(fn, log->ctx->auditlog->index + 1, fnsize);
         }
         else {
             fnsize = strlen(corecfg->auditlog_dir) +
-                     strlen(corecfg->auditlog_index) + 2;
+                     strlen(log->ctx->auditlog->index) + 2;
 
             rc = ib_util_mkpath(corecfg->auditlog_dir,
                                 corecfg->auditlog_dmode);
@@ -376,26 +407,31 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                 ib_log_error(log->ib, 1,
                              "Could not create audit log dir: %s",
                              corecfg->auditlog_dir);
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(rc);
             }
 
             fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
             if (fn == NULL) {
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
 
             ec = snprintf(fn, fnsize, "%s/%s",
-                              corecfg->auditlog_dir, corecfg->auditlog_index);
+                              corecfg->auditlog_dir,
+                              log->ctx->auditlog->index);
             if (ec >= (int)fnsize) {
                 ib_log_error(log->ib, 1,
-                             "Could not create audit log index filename \"%s/%s\":"
+                             "Could not create audit log index \"%s/%s\":"
                              " too long",
-                             corecfg->auditlog_dir, corecfg->auditlog_index);
+                             corecfg->auditlog_dir,
+                             log->ctx->auditlog->index);
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
 
-        if (corecfg->auditlog_index[0] == '|') {
+        if (log->ctx->auditlog->index[0] == '|') {
             int p[2];
             pid_t pipe_pid;
 
@@ -406,6 +442,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                 ib_log_error(log->ib, 1,
                              "Could not create piped audit log index: %s (%d)",
                              strerror(ec), ec);
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
@@ -443,6 +480,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                 ib_log_error(log->ib, 1,
                              "Could not create piped audit log index process: %s (%d)",
                              strerror(ec), ec);
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
@@ -456,6 +494,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                 ib_log_error(log->ib, 1,
                              "Could not open piped audit log index: %s (%d)",
                              strerror(ec), ec);
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
@@ -467,18 +506,20 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                 ib_log_error(log->ib, 1,
                              "Could not open audit log index \"%s\": %s (%d)",
                              fn, strerror(ec), ec);
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
 
-        /// @todo Need to lock around this as the corecfg is a
-        ///       shared structure.
-        corecfg->auditlog_index_fp = cfg->index_fp;
+        log->ctx->auditlog->index_fp = cfg->index_fp;
+        ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
 
         ib_log_debug(log->ib, 4, "AUDITLOG INDEX%s: %s",
-                     (corecfg->auditlog_index[0] == '|'?" (piped)":""), fn);
+                     (log->ctx->auditlog->index[0] == '|'?" (piped)":""), fn);
     }
 
+    /* Open audit file that contains the record identified by the line
+     * written in index_fp. */
     if (cfg->fp == NULL) {
         char dtmp[64]; /// @todo Allocate size???
         char dn[512]; /// @todo Allocate size???
@@ -517,7 +558,8 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             /// @todo Better error.
             ib_log_error(log->ib, 1,
                          "Could not create audit log directory: too long",
-                         corecfg->auditlog_dir, corecfg->auditlog_index);
+                         corecfg->auditlog_dir,
+                         log->ctx->auditlog->index);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -577,6 +619,14 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Write audit log header. This is not thread-safe and should be protected
+ * with a lock.
+ *
+ * @param[in] lpi Log provider API.
+ * @param[in] log The log record.
+ * @return IB_OK or IB_EUNKNOWN.
+ */
 static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
                                            ib_auditlog_t *log)
 {
@@ -594,6 +644,13 @@ static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Write part of a audit log. This call should be protected by a lock.
+ *
+ * @param[in] lpi Log provider API.
+ * @param[in] log The log record.
+ * @return IB_OK or other. See log file for details of failure.
+ */
 static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
                                          ib_auditlog_part_t *part)
 {
@@ -630,6 +687,13 @@ static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Write an audit log footer. This call should be protected by a lock.
+ *
+ * @param[in] lpi Log provider API.
+ * @param[in] log The log record.
+ * @return IB_OK or other. See log file for details of failure.
+ */
 static ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
                                            ib_auditlog_t *log)
 {
@@ -774,16 +838,17 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
-    ib_status_t rc;
+    ib_status_t ib_rc;
+    int sys_rc;
     char line[IB_LOGFORMAT_MAXLINELEN + 2];
     int line_size = 0;
 
     /* Retrieve corecfg to get the AuditLogIndexFormat */
-    rc = ib_context_module_config(log->ctx, ib_core_module(),
-                                  &corecfg);
-    if (rc != IB_OK) {
-        ib_log_error(log->ib, 0, "Failure accessing core module: %d", rc);
-        IB_FTRACE_RET_STATUS(rc);
+    ib_rc = ib_context_module_config(log->ctx, ib_core_module(),
+                                     &corecfg);
+    if (ib_rc != IB_OK) {
+        ib_log_error(log->ib, 0, "Failure accessing core module: %d", ib_rc);
+        IB_FTRACE_RET_STATUS(ib_rc);
     }
 
     /* Close the audit log. */
@@ -794,32 +859,36 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 
     /* Write to the index file if using one. */
     if ((cfg->index_fp != NULL) && (cfg->parts_written > 0)) {
-        int ec;
 
-        rc = core_audit_get_index_line(lpi, log, line, &line_size);
-        /* @todo: What to do if line is truncated? */
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+        ib_lock_lock(&log->ctx->auditlog->index_fp_lck);
+
+        ib_rc = core_audit_get_index_line(lpi, log, line, &line_size);
+
+        if (ib_rc != IB_OK) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(ib_rc);
         }
-        ec = fwrite(line, line_size, 1, cfg->index_fp);
-        if (ec < 0) {
-            ec = errno;
+
+        sys_rc = fwrite(line, line_size, 1, cfg->index_fp);
+
+        if (sys_rc < 0) {
+            sys_rc = errno;
             ib_log_error(log->ib, 1,
                          "Could not write to audit log index: %s (%d)",
-                         strerror(ec), ec);
+                         strerror(sys_rc), sys_rc);
 
             /// @todo Should retry (a piped logger may have died)
             fclose(cfg->index_fp);
             cfg->index_fp = NULL;
 
-            /// @todo Need to lock around this as the corecfg is a
-            ///       shared structure.
-            corecfg->auditlog_index_fp = cfg->index_fp;
+            log->ctx->auditlog->index_fp = cfg->index_fp;
 
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
             IB_FTRACE_RET_STATUS(IB_OK);
         }
 
         fflush(cfg->index_fp);
+        ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1349,25 +1418,38 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Open the log if required. */
+    /* Open the log if required. This is thead safe. */
     if (iface->open != NULL) {
         rc = iface->open(lpi, log);
         if (rc != IB_OK) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
             IB_FTRACE_RET_STATUS(rc);
         }
+    }
+
+    /* Lock to write. */
+    rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lck);
+
+    if (rc!=IB_OK) {
+        ib_log_error(lpi->pr->ib, 4,
+                     "Cannot lock %s for write.",
+                     log->ctx->auditlog->index);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Write the header if required. */
     if (iface->write_header != NULL) {
         rc = iface->write_header(lpi, log);
         if (rc != IB_OK) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
     /* Write the parts. */
     IB_LIST_LOOP(log->parts, node) {
-        ib_auditlog_part_t *part = (ib_auditlog_part_t *)ib_list_node_data(node);
+        ib_auditlog_part_t *part =
+            (ib_auditlog_part_t *)ib_list_node_data(node);
         rc = iface->write_part(lpi, part);
         if (rc != IB_OK) {
             ib_log_error(log->ib, 4, "Failed to write audit log part: %s",
@@ -1379,9 +1461,13 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     if (iface->write_footer != NULL) {
         rc = iface->write_footer(lpi, log);
         if (rc != IB_OK) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
+
+    /* Writing is done. Unlock. Close is thread-safe. */
+    ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
 
     /* Close the log if required. */
     if (iface->close != NULL) {
@@ -4468,11 +4554,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         /* "None" means do not use the index file at all. */
         if (strcasecmp("None", p1) == 0) {
-            rc = ib_context_set_string(ctx, "auditlog_index", NULL);
+            rc = ib_context_set_auditlog_index(ctx, NULL);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        rc = ib_context_set_string(ctx, "auditlog_index", p1);
+        rc = ib_context_set_auditlog_index(ctx, p1);
+
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogIndexFormat", name) == 0) {
@@ -5424,13 +5511,6 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         ib_core_cfg_t,
         audit_engine,
         0
-    ),
-    IB_CFGMAP_INIT_ENTRY(
-        "auditlog_index",
-        IB_FTYPE_NULSTR,
-        ib_core_cfg_t,
-        auditlog_index,
-        "ironbee-index.log"
     ),
     IB_CFGMAP_INIT_ENTRY(
         "auditlog_dmode",

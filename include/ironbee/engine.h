@@ -559,6 +559,23 @@ ib_status_t DLL_PUBLIC ib_context_set(ib_context_t *ctx,
                                       const char *name,
                                       void *pval);
 
+
+/**
+ * Set the index log value for this logging context.
+ * This does not simply duplicate @a index. If A logging index already
+ * exists in @a ctx and ctx is the owner, that logging context is 
+ * modified. If the logging context is not owned by @a ctx then a new logging
+ * context is constructed with @a ctx as its owner.
+ *
+ * Further, a lock is initialized to allow safe shareing between threads.
+ *
+ * @param[in,out] ctx The context to set the index value in.
+ * @param[in] idx The index value to be copied into the context.
+ *
+ * @returns IB_OK, IB_EALLOC or the status of ib_lock_init.
+ */
+ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx);
+
 /**
  * Set a address value in the config context.
  *

@@ -25,6 +25,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -1971,6 +1972,11 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         goto failed;
     }
 
+    rc = ib_context_set_auditlog_index(*pctx, "ironbee-index.log");
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Register the modules */
     /// @todo Later on this needs to be triggered by ActivateModule or similar
     if (ib->modules) {
@@ -2031,6 +2037,85 @@ ib_status_t ib_context_open(ib_context_t *ctx)
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    assert(ctx!=NULL);
+    assert(ctx->ib!=NULL);
+    assert(ctx->mp!=NULL);
+    assert(idx!=NULL);
+
+    /* Null OR we do not own this audit logging context. */
+    if ( ctx->auditlog == NULL || ctx->auditlog->owner != ctx )
+    {
+
+        ctx->auditlog = (ib_auditlog_cfg_t*)
+            ib_mpool_calloc(ctx->mp, 1, sizeof(*ctx->auditlog));
+    
+        if (ctx->auditlog == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        /* Set owner. */
+        ctx->auditlog->owner = ctx;
+
+        /* Set index_fp_lck. */
+        rc = ib_lock_init(&ctx->auditlog->index_fp_lck);
+
+        if (rc!=IB_OK) {
+            ib_log_debug(ctx->ib, 5,
+                "Failed to initialize lock for audit index %s", idx);
+
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Set index. */
+        ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
+    }
+    else {
+        rc = ib_lock_lock(&ctx->auditlog->index_fp_lck);
+
+        if (rc!=IB_OK) {
+            ib_log_debug(ctx->ib, 5, "Failed to audit index %s", idx);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Check that we aren't re-setting a value in the same context. */
+        if ( ! strcmp(idx, ctx->auditlog->index) ) {
+
+            ib_lock_unlock(&ctx->auditlog->index_fp_lck);
+
+            ib_log_debug(ctx->ib, 5,
+                         "Re-setting log same value. No action: %s",
+                         idx);
+
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+
+        /* Replace the old index value with the new index value. */
+        ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
+
+        /* Fail on alloc error. */
+        if (ctx->auditlog->index == NULL) {
+            ib_lock_unlock(&ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        /* Close the audit log file if it is open. */
+        if (ctx->auditlog->index_fp != NULL) {
+            fclose(ctx->auditlog->index_fp);
+            ctx->auditlog->index_fp = NULL;
+        }
+
+        ib_lock_unlock(&ctx->auditlog->index_fp_lck);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

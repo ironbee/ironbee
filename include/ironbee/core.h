@@ -78,8 +78,6 @@ struct ib_core_cfg_t {
     ib_num_t         auditlog_dmode;    /**< Audit log dir create mode */
     ib_num_t         auditlog_fmode;    /**< Audit log file create mode */
     ib_num_t         auditlog_parts;    /**< Audit log parts */
-    FILE            *auditlog_index_fp; /**< Audit log index file pointer */
-    char            *auditlog_index;    /**< Audit log index filename */
     char            *auditlog_index_fmt;/**< Audit log index format string */
     ib_logformat_t  *auditlog_index_hp; /**< Audit log index format helper */
     char            *auditlog_dir;      /**< Audit log base directory */

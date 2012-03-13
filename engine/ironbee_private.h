@@ -30,10 +30,14 @@
 #include <ironbee/util.h>
 #include <ironbee/debug.h>
 #include <ironbee/plugin.h>
+#include <ironbee/lock.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 #include <ironbee/array.h>
 #include <ironbee/logformat.h>
+
+/* Pull in FILE* for ib_auditlog_cfg_t. */
+#include <stdio.h>
 
 /**
  * @internal
@@ -119,6 +123,30 @@ struct ib_context_data_t {
 };
 
 /**
+ * Per-context audit log configuration.
+ *
+ * This struct is assoicated with an owning context by the owner pointer.
+ * Only that context may destroy or edit the logging context. Child contexts
+ * that copy from the parent context may have a copy of the pointer to
+ * this struct, but may not edit its context.
+ *
+ * Chlid contexts may, though, lock the index_fp_lock field and write to
+ * the index_fp.
+ *
+ * The owning context should lock index_fp_lck before updating lock_fp and
+ * index.
+ */
+typedef struct ib_auditlog_cfg_t ib_auditlog_cfg_t;
+
+//! See typedef for more details.
+struct ib_auditlog_cfg_t {
+    char *index;            /**< Index file. */
+    FILE *index_fp;         /**< Index file pointer. */
+    ib_lock_t index_fp_lck; /**< Lock to protect index_fp. */
+    ib_context_t *owner;    /**< Owning context. Only owner should edit. */
+};
+
+/**
  * @internal
  *
  * Configuration context.
@@ -129,7 +157,7 @@ struct ib_context_t {
     ib_cfgmap_t             *cfg;         /**< Config map */
     ib_array_t              *cfgdata;     /**< Config data */
     ib_context_t            *parent;      /**< Parent context */
-    ib_logformat_t          *index_fmt;   /**< Used to specify the logformat */
+    ib_auditlog_cfg_t       *auditlog;    /**< Per-context audit log cfgs. */
 
     /* Context Selection */
     ib_context_fn_t          fn_ctx;      /**< Context decision function */
