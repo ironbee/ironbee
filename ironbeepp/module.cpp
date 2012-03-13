@@ -340,11 +340,16 @@ void Module::prechain_initialize(initialize_t f)
 
 void Module::set_initialize(initialize_t f)
 {
-    ib()->cbdata_init = Internal::value_to_data(
-        f,
-        ib_engine_pool_main_get(ib()->ib)
-    );
-    ib()->fn_init = Internal::Hooks::initialize;
+    if (f.empty()) {
+        ib()->cbdata_init = NULL;
+        ib()->fn_init     = NULL;
+    } else {
+        ib()->cbdata_init = Internal::value_to_data(
+            f,
+            ib_engine_pool_main_get(ib()->ib)
+        );
+        ib()->fn_init = Internal::Hooks::initialize;
+    }
 }
 
 void Module::chain_finalize(finalize_t f)
@@ -377,11 +382,16 @@ void Module::prechain_finalize(finalize_t f)
 
 void Module::set_finalize(finalize_t f)
 {
-    ib()->cbdata_fini = Internal::value_to_data(
-        f,
-        ib_engine_pool_main_get(ib()->ib)
-    );
-    ib()->fn_fini = Internal::Hooks::finalize;
+    if (f.empty()) {
+        ib()->cbdata_fini = NULL;
+        ib()->fn_fini     = NULL;
+    } else {
+        ib()->cbdata_fini = Internal::value_to_data(
+            f,
+            ib_engine_pool_main_get(ib()->ib)
+        );
+        ib()->fn_fini = Internal::Hooks::finalize;
+    }
 }
 
 void Module::chain_context_open(context_open_t f)
@@ -414,11 +424,16 @@ void Module::prechain_context_open(context_open_t f)
 
 void Module::set_context_open(context_open_t f)
 {
-    ib()->cbdata_ctx_open = Internal::value_to_data(
-        f,
-        ib_engine_pool_main_get(ib()->ib)
-    );
-    ib()->fn_ctx_open = Internal::Hooks::context_open;
+    if (f.empty()) {
+        ib()->cbdata_ctx_open = NULL;
+        ib()->fn_ctx_open     = NULL;
+    } else {
+        ib()->cbdata_ctx_open = Internal::value_to_data(
+            f,
+            ib_engine_pool_main_get(ib()->ib)
+        );
+        ib()->fn_ctx_open = Internal::Hooks::context_open;
+    }
 }
 
 void Module::chain_context_close(context_close_t f)
@@ -451,11 +466,16 @@ void Module::prechain_context_close(context_close_t f)
 
 void Module::set_context_close(context_close_t f)
 {
-    ib()->cbdata_ctx_close = Internal::value_to_data(
-        f,
-        ib_engine_pool_main_get(ib()->ib)
-    );
-    ib()->fn_ctx_close = Internal::Hooks::context_close;
+    if (f.empty()) {
+        ib()->cbdata_ctx_close = NULL;
+        ib()->fn_ctx_close     = NULL;
+    } else {
+        ib()->cbdata_ctx_close = Internal::value_to_data(
+            f,
+            ib_engine_pool_main_get(ib()->ib)
+        );
+        ib()->fn_ctx_close = Internal::Hooks::context_close;
+    }
 }
 
 void Module::chain_context_destroy(context_destroy_t f)
@@ -488,11 +508,16 @@ void Module::prechain_context_destroy(context_destroy_t f)
 
 void Module::set_context_destroy(context_destroy_t f)
 {
-    ib()->cbdata_ctx_destroy = Internal::value_to_data(
-        f,
-        ib_engine_pool_main_get(ib()->ib)
-    );
-    ib()->fn_ctx_destroy = Internal::Hooks::context_destroy;
+    if (f.empty()) {
+        ib()->cbdata_ctx_destroy = NULL;
+        ib()->fn_ctx_destroy     = NULL;
+    } else {
+        ib()->cbdata_ctx_destroy = Internal::value_to_data(
+            f,
+            ib_engine_pool_main_get(ib()->ib)
+        );
+        ib()->fn_ctx_destroy = Internal::Hooks::context_destroy;
+    }
 }
 
 void Module::set_configuration_copier_translator(

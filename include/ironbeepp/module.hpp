@@ -100,6 +100,10 @@ public:
      * possible, prefer the @c chain_* methods.  Other IronBee++ components
      * will prechain callbacks to handle their own callbacks.
      *
+     * All @c set_* callbacks can be passed an empty functional, e.g.,
+     * @c module_callback_t(), to remove the callback (and any chained)
+     * callbacks.
+     *
      * @warning The @c set_* callbacks will clear all other chained callbacks.
      *          Only do this if you are sure of what you are doing.
      *

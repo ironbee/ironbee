@@ -278,6 +278,22 @@ TEST_F(TestModule, callbacks)
     EXPECT_EQ(IB_EINVAL, rc);
     EXPECT_EQ(&ib_module,  out_ib_module);
     EXPECT_EQ(&ib_context, out_ib_context);
+
+    module.set_initialize(IronBee::Module::module_callback_t());
+    EXPECT_FALSE(ib_module.fn_init);
+    EXPECT_FALSE(ib_module.cbdata_init);
+    module.set_finalize(IronBee::Module::module_callback_t());
+    EXPECT_FALSE(ib_module.fn_fini);
+    EXPECT_FALSE(ib_module.cbdata_fini);
+    module.set_context_open(IronBee::Module::context_callback_t());
+    EXPECT_FALSE(ib_module.fn_ctx_open);
+    EXPECT_FALSE(ib_module.cbdata_ctx_open);
+    module.set_context_close(IronBee::Module::context_callback_t());
+    EXPECT_FALSE(ib_module.fn_ctx_close);
+    EXPECT_FALSE(ib_module.cbdata_ctx_close);
+    module.set_context_destroy(IronBee::Module::context_callback_t());
+    EXPECT_FALSE(ib_module.fn_ctx_destroy);
+    EXPECT_FALSE(ib_module.cbdata_ctx_destroy);
 }
 
 TEST_F(TestModule, operators)
