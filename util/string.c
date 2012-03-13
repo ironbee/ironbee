@@ -47,11 +47,13 @@ ib_status_t string_to_num_ex(const char *s,
                              ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(result != NULL);
+
     char buf[NUM_BUF_LEN+1];
     ib_status_t rc;
 
     /* Check for zero length string */
-    if ( (slen > NUM_BUF_LEN) || (slen == 0) ) {
+    if ( (s == NULL) || (slen > NUM_BUF_LEN) || (slen == 0) ) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -70,13 +72,15 @@ ib_status_t string_to_num(const char *s,
                           ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(result != NULL);
+
     size_t slen = strlen(s);
     char *end;
     long int value;
     size_t vlen;
 
     /* Check for zero length string */
-    if (*s == '\0') {
+    if ( (s == NULL) || (*s == '\0') ) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
