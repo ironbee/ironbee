@@ -224,6 +224,12 @@ static void core_logger(FILE *fh, int level,
     int fmt2_sz = 1024;
     char *fmt2 = (char*)malloc(fmt2_sz+1);
 
+    if ( fmt2 == NULL ) {
+        fprintf(fh, "Cannot allocate memory to log.");
+        fflush(fh);
+        abort();
+    }
+
     if ((file != NULL) && (line > 0)) {
         int ec = snprintf(fmt2, fmt2_sz,
                           "%s[%d] (%s:%d) %s\n",
@@ -326,6 +332,285 @@ static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
 }
 
 /**
+ * Set cfg->fn to the file name and cfg->fp to the FILE* of the audit log.
+ *
+ * @param[in] lpi Log provider instance.
+ * @param[in] log Audit Log that will be written. Contains the context and 
+ *            other information.
+ * @param[in] cfg The configuration.
+ * @param[in] corecfg The core configuration.
+ */
+static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
+                                             ib_auditlog_t *log,
+                                             core_audit_cfg_t *cfg,
+                                             ib_core_cfg_t *corecfg)
+{
+    IB_FTRACE_INIT();
+
+    const int dtmp_sz = 64;
+    const int dn_sz = 512;
+    char *dtmp = (char*)malloc(dtmp_sz);
+    char *dn = (char*)malloc(dn_sz);
+    char *audit_filename;
+    int audit_filename_sz;
+    const time_t log_seconds = (time_t)cfg->logtime->tv_sec;
+    int sys_rc;
+    ib_status_t ib_rc;
+    struct tm gmtime_result;
+
+    if (dtmp == NULL || dn == NULL) {
+        ib_log_error(log->ib, 1, "Failed to allocate internal buffers.");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    gmtime_r(&log_seconds, &gmtime_result);
+
+    /* Generate the audit log filename template. */
+    if (*(corecfg->auditlog_sdir_fmt) != 0) {
+        size_t ret = strftime(dtmp, dtmp_sz,
+                       corecfg->auditlog_sdir_fmt, &gmtime_result);
+        if (ret == 0) {
+            /// @todo Better error - probably should validate at cfg time
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log filename template, "
+                         "using default:"
+                         " too long");
+            *dtmp = 0;
+        }
+    }
+    else {
+        *dtmp = 0;
+    }
+
+    /* Generate the full audit log directory name. */
+    sys_rc = snprintf(dn, dn_sz, "%s%s%s",
+                  corecfg->auditlog_dir, (*dtmp)?"/":"", dtmp);
+    if (sys_rc >= dn_sz) {
+        /// @todo Better error.
+        ib_log_error(log->ib, 1,
+                     "Could not create audit log directory: too long",
+                     corecfg->auditlog_dir,
+                     log->ctx->auditlog->index);
+        free(dtmp);
+        free(dn);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Generate the full audit log filename. */
+    audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) + 6;
+    audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
+    sys_rc = snprintf(audit_filename,
+                      audit_filename_sz,
+                      "%s/%s.log", dn, cfg->tx->id);
+    if (sys_rc >= (int)audit_filename_sz) {
+        /// @todo Better error.
+        ib_log_error(log->ib, 1,
+                     "Could not create audit log filename: too long");
+        free(dtmp);
+        free(dn);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ib_rc = ib_util_mkpath(dn, corecfg->auditlog_dmode);
+    if (ib_rc != IB_OK) {
+        ib_log_error(log->ib, 1,
+                     "Could not create audit log dir: %s", dn);
+        free(dtmp);
+        free(dn);
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
+
+    /// @todo Use corecfg->auditlog_fmode as file mode for new file
+    cfg->fp = fopen(audit_filename, "ab");
+    if (cfg->fp == NULL) {
+        sys_rc = errno;
+        /// @todo Better error.
+        ib_log_error(log->ib, 1,
+                     "Could not open audit log \"%s\": %s (%d)",
+                     audit_filename, strerror(sys_rc), sys_rc);
+        free(dtmp);
+        free(dn);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Track the relative audit log filename. */
+    cfg->fn = audit_filename + (strlen(corecfg->auditlog_dir) + 1);
+
+    ib_log_debug(log->ib, 4, "AUDITLOG: %s", audit_filename);
+
+    free(dtmp);
+    free(dn);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
+                                                  ib_auditlog_t *log,
+                                                  core_audit_cfg_t *cfg,
+                                                  ib_core_cfg_t *corecfg)
+{
+    IB_FTRACE_INIT();
+
+    char* index_file;
+    int index_file_sz;
+    ib_status_t ib_rc;
+    int sys_rc;
+
+    /* Lock the auditlog configuration for the context.
+     * We lock up here to ensure that external resources are not 
+     * double-opened instead of locking only the assignment to 
+     * log->ctx->auditlog->index_fp at the bottom of this block. */
+    ib_lock_lock(&log->ctx->auditlog->index_fp_lck);
+
+    if (log->ctx->auditlog->index[0] == '/') {
+        index_file_sz = strlen(log->ctx->auditlog->index) + 1;
+
+        index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
+        if (index_file == NULL) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        memcpy(index_file, log->ctx->auditlog->index, index_file_sz);
+    }
+    else if (log->ctx->auditlog->index[0] == '|') {
+        /// @todo Probably should skip whitespace???
+        index_file_sz = strlen(log->ctx->auditlog->index + 1) + 1;
+
+        index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
+        if (index_file == NULL) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        memcpy(index_file, log->ctx->auditlog->index + 1, index_file_sz);
+    }
+    else {
+        ib_rc = ib_util_mkpath(corecfg->auditlog_dir, corecfg->auditlog_dmode);
+        if (ib_rc != IB_OK) {
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log dir: %s",
+                         corecfg->auditlog_dir);
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(ib_rc);
+        }
+
+        index_file_sz = strlen(corecfg->auditlog_dir) +
+                        strlen(log->ctx->auditlog->index) + 2;
+
+        index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
+        if (index_file == NULL) {
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        sys_rc = snprintf(index_file, index_file_sz, "%s/%s",
+                          corecfg->auditlog_dir,
+                          log->ctx->auditlog->index);
+        if (sys_rc >= index_file_sz) {
+            ib_log_error(log->ib, 1,
+                         "Could not create audit log index \"%s/%s\":"
+                         " too long",
+                         corecfg->auditlog_dir,
+                         log->ctx->auditlog->index);
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+
+    if (log->ctx->auditlog->index[0] == '|') {
+        int p[2];
+        pid_t pipe_pid;
+
+        /// @todo Handle exit of pipe_pid???
+
+        sys_rc = pipe(p);
+        if (sys_rc != 0) {
+            ib_log_error(log->ib, 1,
+                         "Could not create piped audit log index: %s (%d)",
+                         strerror(sys_rc), sys_rc);
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        /* Create a new process for executing the piped command. */
+        pipe_pid = fork();
+        if (pipe_pid == 0) {
+            /* Child - piped audit log index process */
+            char *parg[4];
+
+            /// @todo Reset SIGCHLD in child???
+
+            /* Setup the filehandles to read from pipe. */
+            close(3); /// @todo stderr
+            close(p[1]);
+            dup2(p[0], 0);
+
+            /* Execute piped command. */
+            parg[0] = (char *)ib_pipe_shell;
+            parg[1] = (char *)"-c";
+            parg[2] = index_file;
+            parg[3] = NULL;
+            ib_log_debug(log->ib, 4,
+                         "Executing piped audit log index: %s %s \"%s\"",
+                         parg[0], parg[1], parg[2]);
+            execvp(ib_pipe_shell, (char * const *)parg); /// @todo define shell
+            sys_rc = errno;
+            ib_log_error(log->ib, 1,
+                         "Could not execute piped audit log index "
+                         "\"%s\": %s (%d)",
+                         index_file, strerror(sys_rc), sys_rc);
+            exit(1);
+        }
+        else if (pipe_pid == -1) {
+            /* Error - no process created */
+            sys_rc = errno;
+            ib_log_error(log->ib, 1,
+                         "Could not create piped audit log index process: "
+                         "%s (%d)",
+                         strerror(sys_rc), sys_rc);
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        /* Parent - IronBee process */
+
+        /* Setup the filehandles to write to the pipe. */
+        close(p[0]);
+        cfg->index_fp = fdopen(p[1], "w");
+        if (cfg->index_fp == NULL) {
+            sys_rc = errno;
+            ib_log_error(log->ib, 1,
+                         "Could not open piped audit log index: %s (%d)",
+                         strerror(sys_rc), sys_rc);
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+    else {
+        /// @todo Use corecfg->auditlog_fmode as file mode for new file
+        cfg->index_fp = fopen(index_file, "ab");
+        if (cfg->index_fp == NULL) {
+            sys_rc = errno;
+            ib_log_error(log->ib, 1,
+                         "Could not open audit log index \"%s\": %s (%d)",
+                         index_file, strerror(sys_rc), sys_rc);
+            ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+
+    log->ctx->auditlog->index_fp = cfg->index_fp;
+    ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
+
+    ib_log_debug(log->ib, 4, "AUDITLOG INDEX%s: %s",
+                 (log->ctx->auditlog->index[0] == '|'?" (piped)":""),
+                 index_file);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * If required, open the log files. 
  *
  * There are two files opened. One is a single file to store the audit log.
@@ -345,9 +630,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
-    size_t fnsize;
-    char *fn;
-    int ec;
 
     assert(NULL!=lpi);
     assert(NULL!=log);
@@ -362,6 +644,8 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    assert(NULL!=corecfg);
+
     /* Copy the FILE* into the core_audit_cfg_t. */
     if (log->ctx->auditlog->index_fp != NULL) {
         cfg->index_fp = log->ctx->auditlog->index_fp;
@@ -370,233 +654,27 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     /* If we have a file name but no file pointer, assign cfg->index_fp. */
     else if ((log->ctx->auditlog->index != NULL) && (cfg->index_fp == NULL)) {
 
-        /* Lock the auditlog configuration for the context.
-         * We lock up here to ensure that external resources are not 
-         * double-opened instead of locking only the assignment to 
-         * log->ctx->auditlog->index_fp at the bottom of this block. */
-        ib_lock_lock(&log->ctx->auditlog->index_fp_lck);
+        /**
+         * Open the audit log index file. If the file name starts with
+         * a | a pipe is opened to a subprocess, etc...
+         */
+        rc = core_audit_open_auditindexfile(lpi, log, cfg, corecfg);
 
-        if (log->ctx->auditlog->index[0] == '/') {
-            fnsize = strlen(log->ctx->auditlog->index) + 1;
-
-            fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
-            if (fn == NULL) {
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
-            }
-
-            memcpy(fn, log->ctx->auditlog->index, fnsize);
+        if (rc != IB_OK) { 
+            ib_log_error(log->ib, 1, "Could not open auditlog index.");
+            IB_FTRACE_RET_STATUS(rc);
         }
-        else if (log->ctx->auditlog->index[0] == '|') {
-            /// @todo Probably should skip whitespace???
-            fnsize = strlen(log->ctx->auditlog->index + 1) + 1;
-
-            fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
-            if (fn == NULL) {
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
-            }
-
-            memcpy(fn, log->ctx->auditlog->index + 1, fnsize);
-        }
-        else {
-            fnsize = strlen(corecfg->auditlog_dir) +
-                     strlen(log->ctx->auditlog->index) + 2;
-
-            rc = ib_util_mkpath(corecfg->auditlog_dir,
-                                corecfg->auditlog_dmode);
-            if (rc != IB_OK) {
-                ib_log_error(log->ib, 1,
-                             "Could not create audit log dir: %s",
-                             corecfg->auditlog_dir);
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
-            if (fn == NULL) {
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
-            }
-
-            ec = snprintf(fn, fnsize, "%s/%s",
-                              corecfg->auditlog_dir,
-                              log->ctx->auditlog->index);
-            if (ec >= (int)fnsize) {
-                ib_log_error(log->ib, 1,
-                             "Could not create audit log index \"%s/%s\":"
-                             " too long",
-                             corecfg->auditlog_dir,
-                             log->ctx->auditlog->index);
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-        }
-
-        if (log->ctx->auditlog->index[0] == '|') {
-            int p[2];
-            pid_t pipe_pid;
-
-            /// @todo Handle exit of pipe_pid???
-
-            ec = pipe(p);
-            if (ec != 0) {
-                ib_log_error(log->ib, 1,
-                             "Could not create piped audit log index: %s (%d)",
-                             strerror(ec), ec);
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-
-            /* Create a new process for executing the piped command. */
-            pipe_pid = fork();
-            if (pipe_pid == 0) {
-                /* Child - piped audit log index process */
-                char *parg[4];
-
-                /// @todo Reset SIGCHLD in child???
-
-                /* Setup the filehandles to read from pipe. */
-                close(3); /// @todo stderr
-                close(p[1]);
-                dup2(p[0], 0);
-
-                /* Execute piped command. */
-                parg[0] = (char *)ib_pipe_shell;
-                parg[1] = (char *)"-c";
-                parg[2] = fn;
-                parg[3] = NULL;
-                ib_log_debug(log->ib, 4,
-                             "Executing piped audit log index: %s %s \"%s\"",
-                             parg[0], parg[1], parg[2]);
-                execvp(ib_pipe_shell, (char * const *)parg); /// @todo define shell
-                ec = errno;
-                ib_log_error(log->ib, 1,
-                             "Could not execute piped audit log index \"%s\": %s (%d)",
-                             fn, strerror(ec), ec);
-                exit(1);
-            }
-            else if (pipe_pid == -1) {
-                /* Error - no process created */
-                ec = errno;
-                ib_log_error(log->ib, 1,
-                             "Could not create piped audit log index process: %s (%d)",
-                             strerror(ec), ec);
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-
-            /* Parent - IronBee process */
-
-            /* Setup the filehandles to write to the pipe. */
-            close(p[0]);
-            cfg->index_fp = fdopen(p[1], "w");
-            if (cfg->index_fp == NULL) {
-                ec = errno;
-                ib_log_error(log->ib, 1,
-                             "Could not open piped audit log index: %s (%d)",
-                             strerror(ec), ec);
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-        }
-        else {
-            /// @todo Use corecfg->auditlog_fmode as file mode for new file
-            cfg->index_fp = fopen(fn, "ab");
-            if (cfg->index_fp == NULL) {
-                ec = errno;
-                ib_log_error(log->ib, 1,
-                             "Could not open audit log index \"%s\": %s (%d)",
-                             fn, strerror(ec), ec);
-                ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-        }
-
-        log->ctx->auditlog->index_fp = cfg->index_fp;
-        ib_lock_unlock(&log->ctx->auditlog->index_fp_lck);
-
-        ib_log_debug(log->ib, 4, "AUDITLOG INDEX%s: %s",
-                     (log->ctx->auditlog->index[0] == '|'?" (piped)":""), fn);
     }
 
     /* Open audit file that contains the record identified by the line
      * written in index_fp. */
     if (cfg->fp == NULL) {
-        char dtmp[64]; /// @todo Allocate size???
-        char dn[512]; /// @todo Allocate size???
-        struct tm *tm;
-        time_t t = (time_t)cfg->logtime->tv_sec;
+        rc = core_audit_open_auditfile(lpi, log, cfg, corecfg);
 
-        tm = gmtime(&t);
-        if (tm == 0) {
-            ib_log_error(log->ib, 1,
-                         "Could not create audit log filename template:"
-                         " too long");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        /* Generate the audit log filename template. */
-        if (*(corecfg->auditlog_sdir_fmt) != 0) {
-            size_t ret = strftime(dtmp, sizeof(dtmp),
-                           corecfg->auditlog_sdir_fmt, tm);
-            if (ret == 0) {
-                /// @todo Better error - probably should validate at cfg time
-                ib_log_error(log->ib, 1,
-                             "Could not create audit log filename template, "
-                             "using default:"
-                             " too long");
-                *dtmp = 0;
-            }
-        }
-        else {
-            *dtmp = 0;
-        }
-
-        /* Generate the full audit log directory name. */
-        ec = snprintf(dn, sizeof(dn), "%s%s%s",
-                      corecfg->auditlog_dir, (*dtmp)?"/":"", dtmp);
-        if (ec >= (int)sizeof(dn)) {
-            /// @todo Better error.
-            ib_log_error(log->ib, 1,
-                         "Could not create audit log directory: too long",
-                         corecfg->auditlog_dir,
-                         log->ctx->auditlog->index);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        /* Generate the full audit log filename. */
-        fnsize = strlen(dn) + strlen(cfg->tx->id) + 6;
-        fn = (char *)ib_mpool_alloc(cfg->tx->mp, fnsize);
-        ec = snprintf(fn, fnsize, "%s/%s.log", dn, cfg->tx->id);
-        if (ec >= (int)fnsize) {
-            /// @todo Better error.
-            ib_log_error(log->ib, 1,
-                         "Could not create audit log filename: too long");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        rc = ib_util_mkpath(dn, corecfg->auditlog_dmode);
-        if (rc != IB_OK) {
-            ib_log_error(log->ib, 1,
-                         "Could not create audit log dir: %s", dn);
+        if (rc!=IB_OK) {
+            ib_log_error(log->ib, 1, "Failed to open audit log file.");
             IB_FTRACE_RET_STATUS(rc);
         }
-
-        /// @todo Use corecfg->auditlog_fmode as file mode for new file
-        cfg->fp = fopen(fn, "ab");
-        if (cfg->fp == NULL) {
-            ec = errno;
-            /// @todo Better error.
-            ib_log_error(log->ib, 1, "Could not open audit log \"%s\": %s (%d)",
-                         fn, strerror(ec), ec);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        /* Track the relative audit log filename. */
-        cfg->fn = fn + (strlen(corecfg->auditlog_dir) + 1);
-
-        ib_log_debug(log->ib, 4, "AUDITLOG: %s", fn);
     }
 
     /* Set the Audit Log index format */
