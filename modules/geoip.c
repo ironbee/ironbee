@@ -97,6 +97,14 @@ static ib_status_t geoip_lookup(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    if (geoip_db == NULL) {
+        ib_log_error(ib, 0, 
+                     "GeoIP database was never opened. Perhaps the "
+                     "configuration file needs a GeoIPDatabaseFile "
+                     "\"/usr/share/geoip/GeoLiteCity.dat\" line?");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
     geoip_rec = GeoIP_record_by_addr(geoip_db, ip);
 
     if (geoip_rec != NULL)
@@ -332,9 +340,9 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     ib_log_debug(ib, 4, "Registering handler...");
 
     rc = ib_hook_tx_register(ib,
-                          handle_context_tx_event,
-                          geoip_lookup,
-                          NULL);
+                             handle_context_tx_event,
+                             geoip_lookup,
+                             NULL);
 
     ib_log_debug(ib, 4, "Done registering handler.");
 
