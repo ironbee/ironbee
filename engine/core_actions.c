@@ -24,11 +24,14 @@
 
 #include <stdlib.h>
 #include <strings.h>
+#include <assert.h>
 
 #include "ironbee_config_auto.h"
 #include <ironbee/debug.h>
 #include <ironbee/types.h>
+#include <ironbee/string.h>
 #include <ironbee/field.h>
+#include <ironbee/bytestr.h>
 #include <ironbee/mpool.h>
 #include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
@@ -39,18 +42,19 @@
  * Setvar action data.
  */
 typedef enum {
-    SETVAR_SET,                    /**< Set to a constant value */
-    SETVAR_ADD,                    /**< Add to a value (counter) */
-    SETVAR_SUB,                    /**< Subtract from a value (counter) */
+    SETVAR_STRSET,               /**< Set to a constant string */
+    SETVAR_NUMSET,               /**< Set to a constant number */
+    SETVAR_NUMADD,               /**< Add to a value (counter) */
 } setvar_op_t;
+typedef union {
+    ib_num_t         num;        /**< Numeric value */
+    ib_bytestr_t    *bstr;       /**< String value */
+} setvar_value_t;
 typedef struct {
-    setvar_op_t       op;          /**< Setvar operation */
-    char             *name;        /**< Field name */
-    ib_ftype_t        type;        /**< Data type */
-    union {
-        ib_num_t      num;         /**< Numeric value */
-        const char   *str;         /**< String value */
-    }                 value;       /**< Value */
+    setvar_op_t      op;         /**< Setvar operation */
+    char            *name;       /**< Field name */
+    ib_ftype_t       type;       /**< Data type */
+    setvar_value_t   value;      /**< Value */
 } setvar_data_t;
 
 /**
@@ -280,12 +284,11 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     size_t nlen;                 /* Name length */
-    size_t vlen;                 /* Length of the value */
     const char *eq;              /* '=' character in @a params */
-    const char *value;           /* Value in @a params */
-    int modifier = 0;            /* Modifier character '+' or '-' */
-    ib_ftype_t ftype;            /* Field type */
+    const char *value;           /* Value in params */
+    size_t vlen;                 /* Length of value */
     setvar_data_t *data;         /* Data for the execute function */
+    ib_status_t rc;              /* Status code */
 
     if (params == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -303,33 +306,12 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
     /* Determine the type of the value */
     value = (eq + 1);
     vlen = strlen(value);
-    if ( (*value == '+') || (*value == '-') ) {
-        size_t digits = strspn(value+1, "0123456789");
-        if (vlen == (digits + 1)) {
-            modifier = *value;
-            ftype = IB_FTYPE_NUM;
-            ++value;
-        }
-        else {
-            ftype = IB_FTYPE_NULSTR;
-        }
-    }
-    else {
-        size_t digits = strspn(value, "0123456789");
-        if (vlen == digits) {
-            ftype = IB_FTYPE_NUM;
-        }
-        else {
-            ftype = IB_FTYPE_NULSTR;
-        }
-    }
 
     /* Create the data structure for the execute function */
     data = ib_mpool_alloc(mp, sizeof(*data) );
     if (data == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    data->type = ftype;
 
     /* Copy the name */
     data->name = ib_mpool_calloc(mp, nlen+1, 1);
@@ -339,31 +321,33 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
     memcpy(data->name, params, nlen);
 
     /* Create the value */
-    if (ftype == IB_FTYPE_NUM) {
-        data->value.num = (ib_num_t) strtol(value, NULL, 0);
+    rc = string_to_num_ex(value, vlen, 0, &(data->value.num));
+    if (rc == IB_OK) {
+        data->type = IB_FTYPE_NUM;
+        if ( (*value == '+') || (*value == '-') ) {
+            data->op = SETVAR_NUMADD;
+        }
+        else {
+            data->op = SETVAR_NUMSET;
+        }
     }
     else {
         ib_bool_t expand = IB_FALSE;
-        ib_status_t rc;
-        rc = ib_data_expand_test_str(value, &expand);
+
+        rc = ib_data_expand_test_str_ex(value, vlen, &expand);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
         else if (expand == IB_TRUE) {
             inst->flags |= IB_ACTINST_FLAG_EXPAND;
         }
-        data->value.str = ib_mpool_strdup(mp, value);
-        if (data->value.str == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-    }
 
-    /* Fill in the data structure */
-    if (modifier == 0) {
-        data->op = SETVAR_SET;
-    }
-    else {
-        data->op = (modifier == '+') ? SETVAR_ADD : SETVAR_SUB;
+        rc = ib_bytestr_dup_nulstr(&(data->value.bstr), mp, value);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        data->type = IB_FTYPE_BYTESTR;
+        data->op = SETVAR_STRSET;
     }
 
     inst->data = data;
@@ -381,7 +365,7 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t act_setvar_execute(void *data,
+static ib_status_t act_setvar_execute(void *cbdata,
                                       ib_rule_t *rule,
                                       ib_tx_t *tx,
                                       ib_flags_t flags)
@@ -390,41 +374,68 @@ static ib_status_t act_setvar_execute(void *data,
     ib_field_t *cur = NULL;
     ib_field_t *new;
     char *expanded = NULL;
+    size_t exlen;
     ib_status_t rc;
+    const char *bsdata = NULL;
+    size_t bslen = 0;
 
     /* Data should be a setvar_data_t created in our create function */
-    const setvar_data_t *svdata = (const setvar_data_t *)data;
+    const setvar_data_t *svdata = (const setvar_data_t *)cbdata;
+
+    /* Pull the data out of the bytestr */
+    if (svdata->type == IB_FTYPE_BYTESTR) {
+        bsdata = (const char *)ib_bytestr_ptr(svdata->value.bstr);
+        bslen = ib_bytestr_length(svdata->value.bstr);
+    }
 
     /* Get the current value */
     ib_data_get(tx->dpi, svdata->name, &cur);
 
     /* Expand the string */
-    if ( (svdata->type == IB_FTYPE_NULSTR) &&
-         ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) )
-    {
-        rc = ib_data_expand_str(tx->dpi, svdata->value.str, &expanded);
+    if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) { 
+        assert(svdata->type == IB_FTYPE_BYTESTR);
+
+        rc = ib_data_expand_str_ex(
+            tx->dpi, bsdata, bslen, IB_FALSE, &expanded, &exlen);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to expand string '%s': %d",
-                         svdata->value.str, rc);
+                         "setvar: Failed to expand string '%*s': %d",
+                         (int) bslen, bsdata, rc);
+            IB_FTRACE_RET_STATUS(rc);
         }
     }
+    else if (svdata->type == IB_FTYPE_BYTESTR) {
+        expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
+        if (expanded == NULL) {
+            ib_log_error(tx->ib, 4,
+                         "setvar: Failed to copy string '%*s'",
+                         (int)bslen, bsdata);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        exlen = bslen;
+    }
 
-    /* What we depends on the operation */
-    if (svdata->op == SETVAR_SET) {
+    /* Handle bytestr operations (currently only set) */
+    if (svdata->op == SETVAR_STRSET) {
+        assert(svdata->type == IB_FTYPE_BYTESTR);
+        ib_bytestr_t *bs = NULL;
+
         if (cur != NULL) {
             ib_data_remove(tx->dpi, svdata->name, NULL);
         }
 
+        /* Create a bytestr to hold it. */
+        rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)expanded, exlen);
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4,
+                         "setvar: Failed to bytestring for field %s: %d",
+                         svdata->name, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         /* Create the new field */
-        if (expanded == NULL) {
-            rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
-                                 (void *)&(svdata->value) );
-        }
-        else {
-            rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
-                                 (void *)&expanded );
-        }
+        rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
+                              (void *)&bs );
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
                          "setvar: Failed to create field %s: %d",
@@ -441,40 +452,65 @@ static ib_status_t act_setvar_execute(void *data,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else {
-        const char *opname = (svdata->op == SETVAR_ADD) ? "add" : "subtract";
+
+    /* Numerical operation : Set */
+    else if (svdata->op == SETVAR_NUMSET) {
+        assert(svdata->type == IB_FTYPE_NUM);
+
+        if (cur != NULL) {
+            ib_data_remove(tx->dpi, svdata->name, NULL);
+        }
+
+        /* Create the new field */
+        rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
+                             (void *)&(svdata->value.num) );
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4,
+                         "setvar: Failed to create field %s: %d",
+                         svdata->name, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the field to the DPI */
+        rc = ib_data_add(tx->dpi, new);
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4,
+                         "setvar: Failed to add field %s: %d",
+                         svdata->name, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Numerical operation : Add */
+    else if (svdata->op == SETVAR_NUMADD) {
+        assert(svdata->type == IB_FTYPE_NUM);
         if (cur == NULL) {
             ib_log_error(tx->ib, 4,
-                         "setvar: field %s doesn't exist for %s action",
-                         svdata->name, opname);
+                         "setvar: field %s doesn't exist for NUMADD action",
+                         svdata->name);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
         /* Handle num and unum types */
         if (cur->type == IB_FTYPE_NUM) {
             ib_num_t *num = ib_field_value_num(cur);
-            if (svdata->op == SETVAR_ADD) {
-                *num += svdata->value.num;
-            }
-            else {
-                *num -= svdata->value.num;
-            }
+            *num += svdata->value.num;
         }
         else if (cur->type == IB_FTYPE_UNUM) {
             ib_unum_t *num = ib_field_value_unum(cur);
-            if (svdata->op == SETVAR_ADD) {
-                *num += (ib_unum_t)svdata->value.num;
-            }
-            else {
-                *num -= (ib_unum_t)svdata->value.num;
-            }
+            *num += (ib_unum_t)svdata->value.num;
         }
         else {
             ib_log_error(tx->ib, 4,
-                         "setvar: field %s type %d invalid for %s action",
-                         svdata->name, cur->type, opname);
+                         "setvar: field %s type %d invalid for NUMADD action",
+                         svdata->name, cur->type);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
+    }
+
+    /* Should never get here. */
+    else {
+        assert(0);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

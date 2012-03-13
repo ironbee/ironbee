@@ -1772,6 +1772,27 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
                                char **result);
 
 /**
+ * Expand a string using fields from the data store, ex version.
+ *
+ * @sa ib_data_expand_str()
+ *
+ * @param[in] dpi Data provider instance
+ * @param[in] str String to expand
+ * @param[in] slen Length of string @a str to expand
+ * @param[in] nul Append NUL byte to @a result?
+ * @param[out] result Pointer to the expanded string.
+ * @param[out] result_len Length of @a result.
+ *
+ * @returns Status code
+ */
+ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
+                                  const char *str,
+                                  size_t slen,
+                                  ib_bool_t nul,
+                                  char **result,
+                                  size_t *result_len);
+
+/**
  * Determine if a string would be expanded by ib_data_expand_str().
  *
  * This function looks through @a str for instances of "%{.+}".
@@ -1783,6 +1804,21 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
  */
 ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
                                                ib_bool_t *result);
+
+/**
+ * Determine if a string would be expanded by ib_data_expand_str_ex().
+ *
+ * @sa ib_data_expand_str(),  ib_data_expand_str_ex(), ib_data_test_str().
+ *
+ * @param[in] str String to check for expansion
+ * @param[in] slen Length of string @a str to expand
+ * @param[out] result IB_TRUE if @a str would be expanded by expand_str().
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
+                                                  size_t slen,
+                                                  ib_bool_t *result);
 
 /**
  * Remove a data field.

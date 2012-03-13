@@ -87,8 +87,10 @@ ib_status_t DLL_PUBLIC expand_str(ib_mpool_t *mp,
  * @param[in] str_len Length of @a str
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
+ * @param[in] nul Append a NUL byte to the end of @a result?
  * @param[in] hash Hash from which to lookup and expand names in @a str
  * @param[out] result Resulting string
+ * @param[out] result_len Length of @a result
  *
  * @returns Status code
  */
@@ -97,8 +99,10 @@ ib_status_t DLL_PUBLIC expand_str_ex(ib_mpool_t *mp,
                                      size_t str_len,
                                      const char *prefix,
                                      const char *suffix,
+                                     ib_bool_t nul,
                                      ib_hash_t *hash,
-                                     char **result);
+                                     char **result,
+                                     size_t *result_len);
 
 /**
  * Determine if a string would be expanded by expand_str().
@@ -125,8 +129,9 @@ ib_status_t DLL_PUBLIC expand_test_str(const char *str,
  * @a startpat + _name_ + @a endpat (e.g. "%{FOO}").
  *
  * @param[in] str String to check for expansion
+ * @param[in] str_len Length of @a str 
  * @param[in] str_len Length of @a str
-* @param[in] prefix Prefix string (e.g. "%{")
+ * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
  * @param[out] result IB_TRUE if @a str would be expanded by expand_str().
  *

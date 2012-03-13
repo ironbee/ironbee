@@ -404,6 +404,7 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
@@ -411,8 +412,6 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
 
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-
-    ib_status_t rc;
 
     rc = api->remove(dpi, name, nlen, pf);
 
@@ -424,6 +423,29 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
                                char **result)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
+    size_t len;
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+
+    rc = api->expand_string(dpi, str, strlen(str), IB_TRUE, result, &len);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
+                                  const char *str,
+                                  size_t slen,
+                                  ib_bool_t nul,
+                                  char **result,
+                                  size_t *result_len)
+{
+    IB_FTRACE_INIT();
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
@@ -434,7 +456,7 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
 
     ib_status_t rc;
 
-    rc = api->expand_string(dpi, str, result);
+    rc = api->expand_string(dpi, str, slen, nul, result, result_len);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -443,8 +465,24 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
                                                ib_bool_t *result)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = expand_test_str(
+    ib_status_t rc;
+
+    rc = expand_test_str(
         str,
+        IB_VARIABLE_EXPANSION_PREFIX,
+        IB_VARIABLE_EXPANSION_POSTFIX,
+        result);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
+                                                  size_t slen,
+                                                  ib_bool_t *result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc = expand_test_str_ex(
+        str,
+        slen,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
         result);

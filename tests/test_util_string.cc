@@ -231,6 +231,26 @@ TEST_F(TestIBUtilStringToNum, test_string_to_num)
     RunTest(__LINE__, "1",       10,  1);
     RunTest(__LINE__, "1",       16,  1);
 
+    RunTest(__LINE__, "-1",      0,   -1);
+    RunTest(__LINE__, "-1",      8,   -1);
+    RunTest(__LINE__, "-1",      10,  -1);
+    RunTest(__LINE__, "-1",      16,  -1);
+
+    RunTest(__LINE__, "-10",     0,   -10);
+    RunTest(__LINE__, "-10",     8,   -8);
+    RunTest(__LINE__, "-10",     10,  -10);
+    RunTest(__LINE__, "-10",     16,  -16);
+
+    RunTest(__LINE__, "+1",      0,   1);
+    RunTest(__LINE__, "+1",      8,   1);
+    RunTest(__LINE__, "+1",      10,  1);
+    RunTest(__LINE__, "+1",      16,  1);
+
+    RunTest(__LINE__, "+10",     0,   10);
+    RunTest(__LINE__, "+10",     8,   8);
+    RunTest(__LINE__, "+10",     10,  10);
+    RunTest(__LINE__, "+10",     16,  16);
+
     RunTest(__LINE__, "10",      0,   10);
     RunTest(__LINE__, "10",      8,   010);
     RunTest(__LINE__, "10",      10,  10);

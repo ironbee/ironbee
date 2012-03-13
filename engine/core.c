@@ -1220,24 +1220,33 @@ static ib_status_t core_data_clear(ib_provider_inst_t *dpi)
  * (e.g. "%{FOO}").  @sa ib_data_expand_str().
  *
  * @param[in] dpi Data provider instance
- * @param[in] str NUL-terminated string to expand
+ * @param[in] str String to expand
+ * @param[in] slen Length of @a str
+ * @param[in] nul Append NUL byte to @a result?
  * @param[out] result Pointer to the expanded string.
+ * @param[out] result_len Length of @a result.
  *
  * @returns Status code
  */
 static ib_status_t core_data_expand_str(ib_provider_inst_t *dpi,
                                         const char *str,
-                                        char **result)
+                                        size_t slen,
+                                        ib_bool_t nul,
+                                        char **result,
+                                        size_t *result_len)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = expand_str(dpi->mp,
-                    str,
-                    IB_VARIABLE_EXPANSION_PREFIX,
-                    IB_VARIABLE_EXPANSION_POSTFIX,
-                    (ib_hash_t *)dpi->data,
-                    result);
+    rc = expand_str_ex(dpi->mp,
+                       str,
+                       slen,
+                       IB_VARIABLE_EXPANSION_PREFIX,
+                       IB_VARIABLE_EXPANSION_POSTFIX,
+                       nul,
+                       (ib_hash_t *)dpi->data,
+                       result,
+                       result_len);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3384,13 +3393,19 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
  *
  * @param[in] dpi Data provider instance
  * @param[in] str String to expand
+ * @param[in] slen Length of @a str
+ * @param[in] nul Append NUL byte to @a result?
  * @param[out] result Resulting expanded string
+ * @param[out] result_len Length of @a result
  *
  * @returns Status code
  */
 static ib_status_t data_api_expand_str(ib_provider_inst_t *dpi,
                                        const char *str,
-                                       char **result)
+                                       size_t slen,
+                                       ib_bool_t nul,
+                                       char **result,
+                                       size_t *result_len)
 {
     IB_FTRACE_INIT();
 
@@ -3408,7 +3423,7 @@ static ib_status_t data_api_expand_str(ib_provider_inst_t *dpi,
 
     /* This function is required, so no NULL check. */
 
-    rc = iface->expand_string(dpi, str, result);
+    rc = iface->expand_string(dpi, str, slen, nul, result, result_len);
     IB_FTRACE_RET_STATUS(rc);
 }
 

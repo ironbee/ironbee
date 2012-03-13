@@ -445,7 +445,8 @@ IB_PROVIDER_DECLARE_IFACE(data) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         expand_string,
-        (ib_provider_inst_t *pi, const char *str, char **result)
+        (ib_provider_inst_t *pi, const char *str, size_t slen, ib_bool_t nul,
+         char **result, size_t *result_len)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
@@ -490,7 +491,8 @@ IB_PROVIDER_DECLARE_API(data) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         expand_string,
-        (ib_provider_inst_t *pi, const char *str, char **result)
+        (ib_provider_inst_t *pi, const char *str, size_t slen, ib_bool_t nul,
+         char **result, size_t *result_len)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,

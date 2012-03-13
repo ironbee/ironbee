@@ -23,6 +23,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <assert.h>
@@ -58,7 +59,7 @@ ib_status_t string_to_num_ex(const char *s,
     }
 
     /* Copy the string to a buffer, let string_to_num() do the real work */
-    memcpy(buf, buf, slen);
+    memcpy(buf, s, slen);
     buf[slen] = '\0';
     rc = string_to_num(buf, base, result);
     IB_FTRACE_RET_STATUS(rc);
@@ -111,6 +112,7 @@ const char *strstr_ex(const char *haystack,
 {
     IB_FTRACE_INIT();
     size_t i = 0;
+    size_t imax;
 
     /* If either pointer is NULL or either length is zero, done */
     if ( (haystack == NULL) || (haystack_len == 0) ||
@@ -120,7 +122,8 @@ const char *strstr_ex(const char *haystack,
     }
 
     /* Search for the needle */
-    for (i = 0; i < haystack_len - (needle_len-1); ++i) {
+    imax = haystack_len - (needle_len-1);
+    for (i = 0; i < imax; ++i) {
         const char *hp = haystack + i;
         ib_bool_t found = IB_TRUE;
         size_t j = 0;

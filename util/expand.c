@@ -147,6 +147,92 @@ static ib_status_t join3(ib_mpool_t *mp,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Join three memory blocks into a single buffer
+ * @internal
+ *
+ * @param[in] mp Memory pool
+ * @param[in] p1 Pointer to block 1
+ * @param[in] l1 Length of block 1
+ * @param[in] p2 Pointer to block 2
+ * @param[in] l2 Length of block 2
+ * @param[in] p3 Pointer to block 3
+ * @param[in] l3 Length of block 3
+ * @param[in] nul 1 if NUL byte should be tacked on, 0 if not
+ * @param[out] out Pointer to output block
+ * @param[out] olen Length of the output block
+ *
+ * @returns status code
+ */
+static ib_status_t join_parts(ib_mpool_t *mp,
+                              ib_field_t *f,
+                              const char *iptr,
+                              size_t ilen,
+                              const char *fptr,
+                              size_t flen,
+                              ib_bool_t nul,
+                              char **out,
+                              size_t *olen)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    char numbuf[NUM_BUF_LEN+1]; /* Buffer used to convert number to str */
+    assert(NUM_BUF_LEN <= 256);
+
+    if (f->type == IB_FTYPE_NULSTR) {
+        /* Field is a NUL-terminated string */
+        const char *s = ib_field_value_nulstr(f);
+        size_t slen = strlen(s);
+        rc = join3(mp,
+                   iptr, ilen,
+                   s, slen,
+                   fptr, flen,
+                   nul,
+                   out, olen);
+        }
+    else if (f->type == IB_FTYPE_BYTESTR) {
+        /* Field is a byte string */
+        ib_bytestr_t *bs = ib_field_value_bytestr(f);
+        rc = join3(mp,
+                   iptr, ilen,
+                   (char *)ib_bytestr_ptr(bs), ib_bytestr_length(bs),
+                   fptr, flen,
+                   nul,
+                   out, olen);
+    }
+    else if (f->type == IB_FTYPE_NUM) {
+        /* Field is a number; convert it to a string */
+        ib_num_t *n = ib_field_value_num(f);
+        snprintf(numbuf, NUM_BUF_LEN, "%ld", (long int)(*n) );
+        rc = join3(mp,
+                   iptr, ilen,
+                   numbuf, strlen(numbuf),
+                   fptr, flen,
+                   nul,
+                   out, olen);
+    }
+    else if (f->type == IB_FTYPE_UNUM) {
+        /* Field is an unsigned number; convert it to a string */
+        ib_unum_t *n = ib_field_value_unum(f);
+        snprintf(numbuf, NUM_BUF_LEN, "%lu", (unsigned long)(*n) );
+        rc = join3(mp,
+                   iptr, ilen,
+                   numbuf, strlen(numbuf),
+                   fptr, flen,
+                   nul,
+                   out, olen);
+    }
+    else {
+        /* Something else: replace with "" */
+        rc = join2(mp,
+                   iptr, ilen,
+                   fptr, flen,
+                   nul,
+                   out, olen);
+    }
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 /*
  * Expand a string from the given hash.  See expand.h.
  */
@@ -159,8 +245,18 @@ ib_status_t expand_str(ib_mpool_t *mp,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
+    size_t len;
 
-    rc = expand_str_ex(mp, str, strlen(str), prefix, suffix, hash, result);
+    assert(mp != NULL);
+    assert(str != NULL);
+    assert(prefix != NULL);
+    assert(suffix != NULL);
+    assert(hash != NULL);
+    assert(result != NULL);
+
+    /* Let expand_str_ex() do the heavy lifting */
+    rc = expand_str_ex(
+        mp, str, strlen(str), prefix, suffix, IB_TRUE, hash, result, &len);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -173,12 +269,13 @@ ib_status_t expand_str_ex(ib_mpool_t *mp,
                           size_t str_len,
                           const char *prefix,
                           const char *suffix,
+                          ib_bool_t nul,
                           ib_hash_t *hash,
-                          char **result)
+                          char **result,
+                          size_t *result_len)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    char numbuf[NUM_BUF_LEN+1]; /* Buffer used to convert number to str */
     size_t pre_len;             /* Prefix string length */
     size_t suf_len = SIZE_MAX;  /* Suffix string length */
     const char *buf = str;      /* Current buffer */
@@ -191,10 +288,11 @@ ib_status_t expand_str_ex(ib_mpool_t *mp,
     assert(suffix != NULL);
     assert(hash != NULL);
     assert(result != NULL);
-    assert(NUM_BUF_LEN <= 256);
+    assert(result_len != NULL);
 
     /* Initialize the result to NULL */
     *result = NULL;
+    *result_len = 0;
 
     /* Validate prefix and suffix */
     if ( (*prefix == '\0') || (*suffix == '\0') ) {
@@ -205,20 +303,27 @@ ib_status_t expand_str_ex(ib_mpool_t *mp,
     pre_len = strlen(prefix);
     assert (pre_len != 0);
 
+    /* Check for minimum string length */
+    if (str_len < (pre_len+1) ) {
+        *result = (char *)str;
+        *result_len = str_len;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     /* Loop til the cows come home */
     while (1) {
         const char *pre;        /* Pointer to found prefix string */
         size_t      pre_off;    /* Offset of prefix in the string */
         const char *post;       /* Pointer to found suffix string */
         const char *name;       /* Pointer to the name between pre and post */
-        size_t namelen;         /* Length of the name */
-        char *new;              /* New buffer */
-        size_t newlen;          /* Length of new buffer */
+        size_t      namelen;    /* Length of the name */
+        char       *new;        /* New buffer */
+        size_t      newlen;     /* Length of new buffer */
         const char *iptr;       /* Initial block (up to the prefix) */
-        size_t ilen;            /* Length of the initial block */
+        size_t      ilen;       /* Length of the initial block */
         const char *fptr;       /* Final block (after the suffix) */
-        size_t flen;            /* Length of the final block */
-        ib_field_t *f;
+        size_t      flen;       /* Length of the final block */
+        ib_field_t *f;          /* Field */
 
         /* Look for the prefix in the string */
         pre = strstr_ex(buf, buflen, prefix, pre_len);
@@ -290,76 +395,16 @@ ib_status_t expand_str_ex(ib_mpool_t *mp,
         /*
          *  Found the field in the hash.  What we do depends on it's type.
          */
-        if (f->type == IB_FTYPE_NULSTR) {
-            /* Field is a NUL-terminated string */
-            const char *s = ib_field_value_nulstr(f);
-            size_t slen = strlen(s);
-            rc = join3(mp,
-                       iptr, ilen,
-                       s, slen,
-                       fptr, flen,
-                       IB_TRUE,
-                       &new, &newlen);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-        else if (f->type == IB_FTYPE_BYTESTR) {
-            /* Field is a byte string */
-            ib_bytestr_t *bs = ib_field_value_bytestr(f);
-            rc = join3(mp,
-                       iptr, ilen,
-                       (char *)ib_bytestr_ptr(bs), ib_bytestr_length(bs),
-                       fptr, flen,
-                       IB_TRUE,
-                       &new, &newlen);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-        else if (f->type == IB_FTYPE_NUM) {
-            /* Field is a number; convert it to a string */
-            ib_num_t *n = ib_field_value_num(f);
-            snprintf(numbuf, NUM_BUF_LEN, "%ld", (long int)(*n) );
-            rc = join3(mp,
-                       iptr, ilen,
-                       numbuf, strlen(numbuf),
-                       fptr, flen,
-                       IB_TRUE,
-                       &new, &newlen);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-        else if (f->type == IB_FTYPE_UNUM) {
-            /* Field is an unsigned number; convert it to a string */
-            ib_unum_t *n = ib_field_value_unum(f);
-            snprintf(numbuf, NUM_BUF_LEN, "%lu", (unsigned long)(*n) );
-            rc = join3(mp,
-                       iptr, ilen,
-                       numbuf, strlen(numbuf),
-                       fptr, flen,
-                       IB_TRUE,
-                       &new, &newlen);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-        else {
-            /* Something else: replace with "" */
-            rc = join2(mp,
-                       iptr, ilen,
-                       fptr, flen,
-                       IB_TRUE,
-                       &new, &newlen);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
+        rc = join_parts(mp, f, iptr, ilen, fptr, flen, nul, &new, &newlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
         }
         buf = new;
+        buflen = newlen;
     }
 
     *result = (char *)buf;
+    *result_len = buflen;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
