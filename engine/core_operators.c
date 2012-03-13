@@ -672,7 +672,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              param_value;  /* Parameter value */
     ib_num_t              value;
     ib_status_t           rc;
 
@@ -682,14 +682,14 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &pvalue);
+    /* Get the numeric value (including expansion, etc) */
+    rc = get_num_value(tx, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
-    *result = (value == pvalue);
+    *result = (value == param_value);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -715,7 +715,7 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              param_value;  /* Parameter value */
     ib_num_t              value;
     ib_status_t           rc;
 
@@ -725,14 +725,14 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &pvalue);
+    /* Get the numeric value (including expansion, etc) */
+    rc = get_num_value(tx, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
-    *result = (value != pvalue);
+    *result = (value != param_value);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -758,7 +758,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              param_value;  /* Parameter value */
     ib_num_t              value;
     ib_status_t           rc;
 
@@ -768,14 +768,14 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &pvalue);
+    /* Get the numeric value (including expansion, etc) */
+    rc = get_num_value(tx, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
-    *result = (value > pvalue);
+    *result = (value > param_value);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -801,7 +801,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              param_value;  /* Parameter value */
     ib_num_t              value;
     ib_status_t           rc;
 
@@ -811,14 +811,14 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &pvalue);
+    /* Get the numeric value (including expansion, etc) */
+    rc = get_num_value(tx, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
-    *result = (value < pvalue);
+    *result = (value < param_value);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -844,7 +844,7 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              param_value;  /* Parameter value */
     ib_num_t              value;
     ib_status_t           rc;
 
@@ -855,13 +855,13 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
     }
 
     /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &pvalue);
+    rc = get_num_value(tx, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
-    *result = (value >= pvalue);
+    *result = (value >= param_value);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -887,7 +887,7 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              pvalue;  /* Parameter value */
+    ib_num_t              param_value;  /* Parameter value */
     ib_num_t              value;
     ib_status_t           rc;
 
@@ -898,13 +898,13 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
     }
 
     /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &pvalue);
+    rc = get_num_value(tx, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
-    *result = (value <= pvalue);
+    *result = (value <= param_value);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
