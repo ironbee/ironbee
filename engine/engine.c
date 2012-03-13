@@ -1926,6 +1926,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
     ib_status_t rc;
+    ib_context_t *ctx;
 
     /* Create memory subpool */
     /// @todo Should we be doing this???
@@ -1936,43 +1937,43 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     }
 
     /* Create the main structure */
-    *pctx = (ib_context_t *)ib_mpool_calloc(pool, 1, sizeof(**pctx));
-    if (*pctx == NULL) {
+    ctx = (ib_context_t *)ib_mpool_calloc(pool, 1, sizeof(*ctx));
+    if (ctx == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
 
-    (*pctx)->ib = ib;
-    (*pctx)->mp = pool;
-    (*pctx)->parent = parent;
-    (*pctx)->fn_ctx = fn_ctx;
-    (*pctx)->fn_ctx_site = fn_ctx_site;
-    (*pctx)->fn_ctx_data = fn_ctx_data;
+    ctx->ib = ib;
+    ctx->mp = pool;
+    ctx->parent = parent;
+    ctx->fn_ctx = fn_ctx;
+    ctx->fn_ctx_site = fn_ctx_site;
+    ctx->fn_ctx_data = fn_ctx_data;
 
     /* Create a cfgmap to hold the configuration */
-    rc = ib_cfgmap_create(&((*pctx)->cfg), (*pctx)->mp);
+    rc = ib_cfgmap_create(&(ctx->cfg), ctx->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create an array to hold the module config data */
-    rc = ib_array_create(&((*pctx)->cfgdata), (*pctx)->mp, 16, 8);
+    rc = ib_array_create(&(ctx->cfgdata), ctx->mp, 16, 8);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create a list to hold the enabled filters */
-    rc = ib_list_create(&((*pctx)->filters), (*pctx)->mp);
+    rc = ib_list_create(&(ctx->filters), ctx->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
-    rc = ib_array_appendn(ib->contexts, *pctx);
+    rc = ib_array_appendn(ib->contexts, ctx);
     if (rc != IB_OK) {
         goto failed;
     }
 
-    rc = ib_context_set_auditlog_index(*pctx, "ironbee-index.log");
+    rc = ib_context_set_auditlog_index(ctx, "ironbee-index.log");
     if (rc != IB_OK) {
         goto failed;
     }
@@ -1986,7 +1987,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         IB_ARRAY_LOOP(ib->modules, n, i, m) {
             ib_log_debug(ib, 9, "Registering module=\"%s\" idx=%d",
                          m->name, m->idx);
-            rc = ib_module_register_context(m, *pctx);
+            rc = ib_module_register_context(m, ctx);
             if (rc != IB_OK) {
                 goto failed;
             }
@@ -1994,20 +1995,22 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     }
     else {
         /* Register the core module by default. */
-        rc = ib_module_register_context(ib_core_module(), *pctx);
+        rc = ib_module_register_context(ib_core_module(), ctx);
         if (rc != IB_OK) {
             goto failed;
         }
     }
 
+    /* Commit the new ctx to pctx. */
+    *pctx = ctx;
+
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    if (*pctx != NULL) {
-        ib_mpool_destroy((*pctx)->mp);
+    if (ctx != NULL) {
+        ib_mpool_destroy(ctx->mp);
     }
-    *pctx = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
 }
