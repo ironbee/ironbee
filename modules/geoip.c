@@ -98,7 +98,7 @@ static ib_status_t geoip_lookup(
     }
 
     if (geoip_db == NULL) {
-        ib_log_error(ib, 0, 
+        ib_log_error(ib, 0,
                      "GeoIP database was never opened. Perhaps the "
                      "configuration file needs a GeoIPDatabaseFile "
                      "\"/usr/share/geoip/GeoLiteCity.dat\" line?");
