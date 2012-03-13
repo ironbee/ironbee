@@ -27,7 +27,6 @@
 
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/internal/catch.hpp>
-
 #include <ironbeepp/internal/throw.hpp>
 
 #include <ironbee/bytestr.h>

@@ -225,7 +225,7 @@ public:
      * contents to a copy of byte string.
      *
      * @param[in] pool  Memory pool to allocate memory from.
-     * @returns New byte string with copy of @a other's data.
+     * @returns New byte string with copy of @a this' data.
      * @throws IronBee++ exception on any error.
      **/
     ByteString dup(MemoryPool pool) const;
