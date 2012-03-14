@@ -2163,13 +2163,13 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
  * @param buf Buffer at least 31 bytes in length
  * @param time Epoch time in microseconds
  */
-static void ib_timestamp(char *buf, ib_time_t time)
+static void ib_timestamp(char *buf, ib_time_t tim)
 {
     struct timeval tv;
     time_t t;
     struct tm *tm;
 
-    IB_CLOCK_TIMEVAL(tv, time);
+    IB_CLOCK_TIMEVAL(tv, tim);
     t = (time_t)tv.tv_sec;
     tm = localtime(&t);
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);

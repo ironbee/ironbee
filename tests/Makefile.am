@@ -26,6 +26,10 @@ if DARWIN
 LDFLAGS += -pagezero_size 10000 -image_base 100000000 
 endif
 
+if LINUX
+LDFLAGS += -lrt
+endif
+
 # This is a common set of files for runnign tests of modules.
 MODULE_TEST_LDADD = $(LDADD) \
                     $(top_builddir)/engine/libironbee.la
