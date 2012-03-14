@@ -1658,6 +1658,9 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Mark the time. */
+    tx->t.finished = ib_clock_get_time();
+
     rc = ib_state_notify_tx(ib, tx_finished_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }

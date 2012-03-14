@@ -2189,6 +2189,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_field_t *f;
     ib_list_t *list;
     char *tstamp;
+    char *txtime;
     char *log_format;
     ib_status_t rc;
 
@@ -2198,6 +2199,14 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     ib_timestamp(tstamp, log->tx->t.logtime);
+
+    /* TX Time */
+    txtime = (char *)ib_mpool_alloc(pool, 30);
+    if (txtime == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    snprintf(txtime, 30, "%d",
+             (int)(log->tx->t.response_finished - log->tx->t.request_started));
 
     /* Log Format */
     log_format = ib_mpool_strdup(pool, CORE_AUDITLOG_FORMAT);
@@ -2210,6 +2219,12 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    ib_field_alias_mem(&f, pool,
+                       "tx-time",
+                       (uint8_t *)txtime,
+                       strlen(txtime));
+    ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
                        "log-timestamp",
