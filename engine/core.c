@@ -2329,24 +2329,11 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     char *tstamp;
     ib_status_t rc;
 
-    /* Timestamp */
-    tstamp = (char *)ib_mpool_alloc(pool, 30);
-    if (tstamp == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    ib_timestamp(tstamp, tx->t.request_started);
-
     /* Generate a list of fields in this part. */
     rc = ib_list_create(&list, pool);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-
-    ib_field_alias_mem(&f, pool,
-                       "request-timestamp",
-                       (uint8_t *)tstamp,
-                       strlen(tstamp));
-    ib_list_push(list, f);
 
     ib_field_create(&f, pool,
                     "tx-num",
@@ -2355,6 +2342,19 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     ib_list_push(list, f);
 
     if (tx != NULL) {
+        /* Timestamp */
+        tstamp = (char *)ib_mpool_alloc(pool, 30);
+        if (tstamp == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        ib_timestamp(tstamp, tx->t.request_started);
+
+        ib_field_alias_mem(&f, pool,
+                           "request-timestamp",
+                           (uint8_t *)tstamp,
+                           strlen(tstamp));
+        ib_list_push(list, f);
+
         ib_field_alias_mem(&f, pool,
                            "tx-id",
                            (uint8_t *)tx->id,
