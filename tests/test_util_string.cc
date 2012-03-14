@@ -188,6 +188,12 @@ TEST_F(TestIBUtilStringToNum, test_string_to_num_errors)
     RunTest(__LINE__, "+0x1",  16,  IB_OK);
 }
 
+#if __x86_64__ || __ppc64__
+# define WORDBITS 64
+#else
+# define WORDBITS 32
+#endif
+
 /// @test Test util string library - convert string to number : overflow
 TEST_F(TestIBUtilStringToNum, test_string_to_num_overflow)
 {
@@ -200,22 +206,42 @@ TEST_F(TestIBUtilStringToNum, test_string_to_num_overflow)
     RunTest(__LINE__, "65535",                0,  IB_OK, 0xffff);
     RunTest(__LINE__, "0x10000",              0,  IB_OK, 0x10000);
     RunTest(__LINE__, "65536",                0,  IB_OK, 0x10000);
+
     // 32-bit
     RunTest(__LINE__, "0x7fffffff",           0,  IB_OK, 0x7fffffff);
     RunTest(__LINE__, "2147483647",           0,  IB_OK, 0x7fffffff);
+#if (WORDBITS == 32)
+    RunTest(__LINE__, "0x80000000",           0,  IB_EINVAL);
+    RunTest(__LINE__, "2147483648",           0,  IB_EINVAL);
+    RunTest(__LINE__, "0xffffffff",           0,  IB_EINVAL);
+    RunTest(__LINE__, "4294967295",           0,  IB_EINVAL);
+    RunTest(__LINE__, "0x100000000",          0,  IB_EINVAL);
+    RunTest(__LINE__, "4294967296",           0,  IB_EINVAL);
+#else
     RunTest(__LINE__, "0x80000000",           0,  IB_OK, 0x80000000);
     RunTest(__LINE__, "2147483648",           0,  IB_OK, 0x80000000);
     RunTest(__LINE__, "0xffffffff",           0,  IB_OK, 0xffffffff);
     RunTest(__LINE__, "4294967295",           0,  IB_OK, 0xffffffff);
     RunTest(__LINE__, "0x100000000",          0,  IB_OK, 0x100000000);
     RunTest(__LINE__, "4294967296",           0,  IB_OK, 0x100000000);
+#endif
+
     // 64-bit
+#if (WORDBITS == 32)
+    RunTest(__LINE__, "0x7fffffffffffffff",   0,  IB_EINVAL);
+    RunTest(__LINE__, "9223372036854775807",  0,  IB_EINVAL);
+    RunTest(__LINE__, "0x8000000000000000",   0,  IB_EINVAL);
+    RunTest(__LINE__, "9223372036854775808",  0,  IB_EINVAL);
+    RunTest(__LINE__, "0xffffffffffffffff",   0,  IB_EINVAL);
+    RunTest(__LINE__, "18446744073709551615", 0,  IB_EINVAL);
+#else
     RunTest(__LINE__, "0x7fffffffffffffff",   0,  IB_OK, 0x7fffffffffffffffL);
     RunTest(__LINE__, "9223372036854775807",  0,  IB_OK, 0x7fffffffffffffffL);
     RunTest(__LINE__, "0x8000000000000000",   0,  IB_EINVAL);
     RunTest(__LINE__, "9223372036854775808",  0,  IB_EINVAL);
     RunTest(__LINE__, "0xffffffffffffffff",   0,  IB_EINVAL);
     RunTest(__LINE__, "18446744073709551615", 0,  IB_EINVAL);
+#endif
 }
 
 /// @test Test util string library - convert string to number : error detection
