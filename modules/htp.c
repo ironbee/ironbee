@@ -974,8 +974,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
                    &htv);
 
     /* Record the connection time. */
-    iconn->started.tv_sec = (uint32_t)htv.tv_sec;
-    iconn->started.tv_usec = (uint32_t)htv.tv_usec;
+    iconn->t.started = ib_clock_get_time();
 
     /* Store the context. */
     rc = ib_hash_set(iconn->data, "MODHTP_CTX", modctx);

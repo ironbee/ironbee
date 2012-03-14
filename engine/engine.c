@@ -31,7 +31,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include <sys/time.h> /* gettimeofday */
 #include <sys/types.h> /* getpid */
 #include <arpa/inet.h> /* htonl */
 #include <unistd.h>
@@ -561,7 +560,6 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
-    struct timeval tv;
     ib_status_t rc;
     char namebuf[64];
 
@@ -580,6 +578,9 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
         goto failed;
     }
 
+    /* Mark time. */
+    (*pconn)->t.started = ib_clock_get_time();
+
     /* Name the connection pool */
     snprintf(namebuf, sizeof(namebuf), "Connection/%p", (void*)(*pconn));
     ib_mpool_setname(pool, namebuf);
@@ -588,11 +589,6 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->mp = pool;
     (*pconn)->ctx = ib->ctx;
     (*pconn)->pctx = pctx;
-
-    /// @todo Need to avoid gettimeofday and set from parser
-    gettimeofday(&tv, NULL);
-    (*pconn)->started.tv_sec = (uint32_t)tv.tv_sec;
-    (*pconn)->started.tv_usec = (uint32_t)tv.tv_usec;
 
     rc = ib_hash_create_nocase(&((*pconn)->data), (*pconn)->mp);
     if (rc != IB_OK) {
@@ -710,7 +706,6 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
-    struct timeval tv;
     ib_status_t rc;
     char namebuf[64];
     ib_tx_t *tx = NULL;
@@ -736,12 +731,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     snprintf(namebuf, sizeof(namebuf), "TX/%p", (void*)tx);
     ib_mpool_setname(pool, namebuf);
 
-    /// @todo Need to avoid gettimeofday and set from parser tx time, but
-    ///       it currently only has second accuracy.
-    gettimeofday(&tv, NULL);
-    tx->started.tv_sec = (uint32_t)tv.tv_sec;
-    tx->started.tv_usec = (uint32_t)tv.tv_usec;
-
+    tx->t.started = ib_clock_get_time();
     tx->ib = ib;
     tx->mp = pool;
     tx->ctx = ib->ctx;
@@ -1236,6 +1226,9 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
         }
     }
 
+    /* Mark the time. */
+    conn->t.finished = ib_clock_get_time();
+
     ib_conn_flags_set(conn, IB_CONN_FCLOSED);
 
     rc = ib_state_notify_conn(ib, conn_closed_event, conn);
@@ -1312,6 +1305,9 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Mark the time. */
+    tx->t.request_started = ib_clock_get_time();
+
     rc = ib_state_notify_tx(ib, tx_started_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1353,6 +1349,9 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
                      ib_state_event_name(request_started_event));
         ib_state_notify_request_started(ib, tx);
     }
+
+    /* Mark the time. */
+    tx->t.request_headers = ib_clock_get_time();
 
     /// @todo Seems this gets there too late.
     rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOH);
@@ -1432,6 +1431,9 @@ ib_status_t ib_state_notify_request_body(ib_engine_t *ib,
         ib_state_notify_request_headers(ib, tx);
     }
 
+    /* Mark the time. */
+    tx->t.request_body = ib_clock_get_time();
+
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENBODY);
 
     rc = ib_state_notify_request_body_ex(ib, tx);
@@ -1474,6 +1476,9 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         ib_state_notify_request_body(ib, tx);
     }
 
+    /* Mark the time. */
+    tx->t.request_finished = ib_clock_get_time();
+
     rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOS);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1508,19 +1513,18 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
-    struct timeval tv;
     ib_status_t rc;
 
-    /// @todo Need to avoid gettimeofday and set from parser
-    gettimeofday(&tv, NULL);
-    tx->tv_response.tv_sec = (uint32_t)tv.tv_sec;
-    tx->tv_response.tv_usec = (uint32_t)tv.tv_usec;
+    tx->t.response_started = ib_clock_get_time();
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(response_started_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+
+    /* Mark the time. */
+    tx->t.response_started = ib_clock_get_time();
 
     ib_tx_flags_set(tx, IB_TX_FRES_STARTED);
 
@@ -1557,6 +1561,9 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
                      ib_state_event_name(response_started_event));
         ib_state_notify_response_started(ib, tx);
     }
+
+    /* Mark the time. */
+    tx->t.response_headers = ib_clock_get_time();
 
     ib_tx_flags_set(tx, IB_TX_FRES_SEENHEADERS);
 
@@ -1595,6 +1602,9 @@ ib_status_t ib_state_notify_response_body(ib_engine_t *ib,
         ib_state_notify_response_headers(ib, tx);
     }
 
+    /* Mark the time. */
+    tx->t.response_body = ib_clock_get_time();
+
     ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
 
     rc = ib_state_notify_tx(ib, response_body_event, tx);
@@ -1630,12 +1640,18 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
         ib_state_notify_response_body(ib, tx);
     }
 
+    /* Mark the time. */
+    tx->t.response_finished = ib_clock_get_time();
+
     ib_tx_flags_set(tx, IB_TX_FRES_FINISHED);
 
     rc = ib_state_notify_tx(ib, response_finished_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    /* Mark time. */
+    tx->t.postprocess = ib_clock_get_time();
 
     rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
     if (rc != IB_OK) {

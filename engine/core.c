@@ -64,7 +64,7 @@ static const char * const ib_pipe_shell = "/bin/sh";
 /* The default UUID value */
 static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-000000000000";
 
-static void ib_timestamp(char *, ib_timeval_t *);
+static void ib_timestamp(char *buf, ib_time_t time);
 
 #ifndef MODULE_BASE_PATH
 /* Always define a module base path. */
@@ -298,7 +298,6 @@ struct core_audit_cfg_t {
     int             parts_written;  /**< Parts written so far */
     const char     *boundary;       /**< Audit log boundary */
     ib_tx_t        *tx;             /**< Transaction being logged */
-    ib_timeval_t   *logtime;        /**< Audit log time */
 };
 
 /// @todo Make this public
@@ -353,7 +352,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     char *dn = (char*)malloc(dn_sz);
     char *audit_filename;
     int audit_filename_sz;
-    const time_t log_seconds = (time_t)cfg->logtime->tv_sec;
+    const time_t log_seconds = IB_CLOCK_SECS(log->tx->t.logtime);
     int sys_rc;
     ib_status_t ib_rc;
     struct tm gmtime_result;
@@ -368,7 +367,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     /* Generate the audit log filename template. */
     if (*(corecfg->auditlog_sdir_fmt) != 0) {
         size_t ret = strftime(dtmp, dtmp_sz,
-                       corecfg->auditlog_sdir_fmt, &gmtime_result);
+                              corecfg->auditlog_sdir_fmt, &gmtime_result);
         if (ret == 0) {
             /// @todo Better error - probably should validate at cfg time
             ib_log_error(log->ib, 1,
@@ -868,7 +867,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
 
-                    ib_timestamp(tstamp, &tx->started);
+                    ib_timestamp(tstamp, tx->t.started);
                      aux = tstamp;
                     break;
                 case IB_LOG_FIELD_LOG_FILE:
@@ -2162,16 +2161,19 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
  * Example: 2010-11-04T12:42:36.3874-0800
  *
  * @param buf Buffer at least 31 bytes in length
- * @param sec Epoch time in seconds
- * @param usec Optional microseconds
+ * @param time Epoch time in microseconds
  */
-static void ib_timestamp(char *buf, ib_timeval_t *tv)
+static void ib_timestamp(char *buf, ib_time_t time)
 {
-    time_t t = (time_t)tv->tv_sec;
-    struct tm *tm = localtime(&t);
+    struct timeval tv;
+    time_t t;
+    struct tm *tm;
 
+    IB_CLOCK_TIMEVAL(tv, time);
+    t = (time_t)tv.tv_sec;
+    tm = localtime(&t);
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
-    snprintf(buf + 19, 12, ".%04lu", (unsigned long)tv->tv_usec);
+    snprintf(buf + 19, 12, ".%04lu-0000", (unsigned long)tv.tv_usec);
     strftime(buf + 24, 6, "%z", tm);
 }
 
@@ -2195,7 +2197,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    ib_timestamp(tstamp, &log->logtime);
+    ib_timestamp(tstamp, log->tx->t.logtime);
 
     /* Log Format */
     log_format = ib_mpool_strdup(pool, CORE_AUDITLOG_FORMAT);
@@ -2317,7 +2319,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    ib_timestamp(tstamp, &tx->started);
+    ib_timestamp(tstamp, tx->t.request_started);
 
     /* Generate a list of fields in this part. */
     rc = ib_list_create(&list, pool);
@@ -2430,7 +2432,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    ib_timestamp(tstamp, &tx->tv_response);
+    ib_timestamp(tstamp, tx->t.response_started);
 
     /* Generate a list of fields in this part. */
     rc = ib_list_create(&list, pool);
@@ -2638,7 +2640,6 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     core_audit_cfg_t *cfg;
     ib_provider_inst_t *audit;
     ib_list_t *events;
-    struct timeval tv;
     uint32_t boundary_rand = rand(); /// @todo better random num
     char boundary[46];
     ib_status_t rc;
@@ -2668,8 +2669,8 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* Mark the audit log time. */
-    gettimeofday(&tv, NULL);
+    /* Mark time. */
+    tx->t.logtime = ib_clock_get_time();
 
     /* Auditing */
     /// @todo Only create if needed
@@ -2678,8 +2679,6 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    log->logtime.tv_sec = tv.tv_sec;
-    log->logtime.tv_usec = tv.tv_usec;
     log->ib = ib;
     log->mp = tx->mp;
     log->ctx = tx->ctx;
@@ -2700,7 +2699,6 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    cfg->logtime = &log->logtime;
     cfg->tx = tx;
     cfg->boundary = boundary;
     log->cfg_data = cfg;

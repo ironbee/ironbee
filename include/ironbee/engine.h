@@ -30,6 +30,7 @@
 #include <ironbee/uuid.h>
 #include <ironbee/hash.h>
 #include <ironbee/stream.h>
+#include <ironbee/clock.h>
 
 #include <stdarg.h>
 
@@ -88,14 +89,8 @@ typedef struct ib_site_t ib_site_t;
 typedef struct ib_loc_t ib_loc_t;
 typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
-typedef struct ib_timeval_t ib_timeval_t;
 typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
-
-struct ib_timeval_t {
-    uint32_t   tv_sec;
-    uint32_t   tv_usec;
-};
 
 typedef enum {
     IB_DTYPE_META,
@@ -219,7 +214,10 @@ struct ib_conn_t {
     ib_hash_t          *data;            /**< Generic data store */
 //    ib_filter_ctl_t    *fctl;            /**< Connection filter controller */
 
-    ib_timeval_t        started;         /**< Connection start time */
+    struct {
+        ib_time_t       started;         /**< Connection started time */
+        ib_time_t       finished;        /**< Connection finished time */
+    } t;
 
     const char         *remote_ipstr;    /**< Remote IP as string */
 //    struct sockaddr_storage remote_addr; /**< Remote address */
@@ -250,8 +248,20 @@ struct ib_tx_t {
     ib_provider_inst_t *epi;             /**< Log event provider instance */
     ib_hash_t          *data;            /**< Generic data store */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
-    ib_timeval_t        started;         /**< Tx (request) start time */
-    ib_timeval_t        tv_response;     /**< Response start time */
+    struct {
+        ib_time_t       started;         /**< Tx started time */
+        ib_time_t       request_started; /**< Request started time */
+        ib_time_t       request_headers; /**< Request headers time */
+        ib_time_t       request_body;    /**< Request body time */
+        ib_time_t       request_finished;/**< Request finished time */
+        ib_time_t       response_started;/**< Response started time */
+        ib_time_t       response_headers;/**< Response headers time */
+        ib_time_t       response_body;   /**< Response body time */
+        ib_time_t       response_finished;/**< Response finished time */
+        ib_time_t       postprocess;     /**< Postprocess time */
+        ib_time_t       logtime;         /**< Auditlog time */
+        ib_time_t       finished;        /**< Tx (response) finished time */
+    } t;
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */
     const char         *er_ipstr;        /**< Effective remote IP as string */
@@ -300,7 +310,6 @@ typedef size_t (*ib_auditlog_part_gen_fn_t)(ib_auditlog_part_t *part,
 struct ib_auditlog_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Connection memory pool */
-    ib_timeval_t        logtime;         /**< Auditlog time */
     ib_context_t       *ctx;             /**< Config context */
     ib_tx_t            *tx;              /**< Transaction being logged */
     void               *cfg_data;        /**< Implementation config data */

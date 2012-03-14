@@ -27,31 +27,25 @@
 /* We need this before time.h, so that we get the right prototypes. */
 #include "ironbee_config_auto.h"
 
-#include <time.h>
-
-#include <stdint.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <string.h>
-#include <ctype.h>
-#include <strings.h>
-
 #include <ironbee/engine.h>
 #include <ironbee/debug.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
+#include <ironbee/clock.h>
+
+#include <stdint.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <string.h>
+#include <ctype.h>
+#include <strings.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME               perf_stats
 #define MODULE_NAME_STR           IB_XSTRINGIFY(MODULE_NAME)
-
-#ifdef CLOCK_MONOTONIC_RAW
-#define IB_CLOCK                  CLOCK_MONOTONIC_RAW
-#else
-#define IB_CLOCK                  CLOCK_MONOTONIC
-#endif /* CLOCK_MONOTONIC_RAW */
 
 
 /* Declare the public module symbol. */
@@ -72,10 +66,10 @@ typedef struct {
     int           cbdata_type;
     const char   *name;
     uint64_t      call_cnt;
-    uint64_t      total_usec;
-    uint64_t      max_usec;
-    uint64_t      start_usec;
-    uint64_t      stop_usec;
+    ib_time_t     total_usec;
+    ib_time_t     max_usec;
+    ib_time_t     start_usec;
+    ib_time_t     stop_usec;
 } perf_info_t;
 
 /** Callback Data Type */
@@ -87,47 +81,8 @@ enum cb_data_type {
     IB_CBDATA_NONE,
 };
 
-uint64_t get_time_stamp_us(void);
 int ib_state_event_cbdata_type(ib_state_event_type_t);
 
-/**
- * @internal
- * Get a microsecond ts
- *
- * Returns a timestamp as uint64_t from CLOCK_MONOTONIC_RAW or CLOCK_MONOTONIC.
- *
- */
-uint64_t get_time_stamp_us(void){
-    uint64_t us;
-
-#ifdef _DARWIN_C_SOURCE
-    {
-      struct timeval t;
-
-      gettimeofday(&t, NULL);
-
-      us = t.tv_sec*1e6 + t.tv_usec;
-    }
-#else
-    {
-        struct timespec t;
-
-        /* Ticks seem to be an undesirable due for many reasons.
-         * IB_CLOCK is set to CLOCK_MONOTONIC which is vulnerable to slew or
-         * if available set to CLOCK_MONOTONIC_RAW which does not suffer from slew.
-         *
-         * timespec provides sec and nsec resolution so we have to convert to msec.
-         */
-        clock_gettime(IB_CLOCK,&t);
-
-        /* There are 1 million microsecs in a sec.
-         * There are 1000 nanosecs in a microsec
-         */
-        us = (uint64_t)((t.tv_sec * 1000000) + (t.tv_nsec / 1000));
-    }
-#endif
-    return us;
-}
 
 /**
  * @internal
@@ -224,7 +179,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
              */
             if (event == cevent) {
                 perfp->call_cnt = 1;
-                perfp->start_usec = get_time_stamp_us();
+                perfp->start_usec = ib_clock_get_time();
             }
             else {
                 perfp->call_cnt = 0;
@@ -278,7 +233,7 @@ static void mod_perf_stats_event_start(
         perfp = &perf_info[cevent];
 
         /* Set the start time for event */
-        perfp->start_usec = get_time_stamp_us();
+        perfp->start_usec = ib_clock_get_time();
 
         /* Increment the call counter */
         perfp->call_cnt++;
@@ -321,7 +276,7 @@ static ib_status_t mod_perf_stats_event_stop(
         perfp = &perf_info[cevent];
 
         /* Set the stop time for the event. */
-        perfp->stop_usec = get_time_stamp_us();
+        perfp->stop_usec = ib_clock_get_time();
 
         /* Get the msec the event took. */
         time_taken = (perfp->stop_usec - perfp->start_usec);

@@ -30,13 +30,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include <sys/time.h> /// @todo Temp for gettimeofday()
 #include <unistd.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/core.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
+#include <ironbee/clock.h>
 
 #include "ironbee_private.h"
 
@@ -152,7 +152,6 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
 #define IB_LEVENT_MSG_BUF_SIZE 1024
 
     char buf[IB_LEVENT_MSG_BUF_SIZE];
-    struct timeval tv;
     va_list ap;
 
     *ple = (ib_logevent_t *)ib_mpool_calloc(pool, 1, sizeof(**ple));
@@ -160,10 +159,7 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /// @todo Need a monotonic counter
-    gettimeofday(&tv, NULL);
-    (*ple)->event_id = (tv.tv_sec << (32-8)) + tv.tv_usec;
-
+    (*ple)->event_id = (uint32_t)ib_clock_get_time(); /* truncated */
     (*ple)->mp = pool;
     (*ple)->rule_id = ib_mpool_strdup(pool, rule_id);
     (*ple)->type = type;

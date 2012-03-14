@@ -7,7 +7,8 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        debug.c mpool.c dso.c uuid.c \
                        array.c list.c stream.c hash.c bytestr.c field.c \
                        cfgmap.c radix.c ahocorasick.c string.c expand.c \
-                       ironbee_util_private.h types.c
+                       clock.c types.c \
+                       ironbee_util_private.h
 libibutil_la_CFLAGS = @OSSP_UUID_CFLAGS@
 if FREEBSD
 libibutil_la_LDFLAGS = @OSSP_UUID_LDFLAGS@ -lssp_nonshared @OSSP_UUID_LIBS@ 

@@ -139,7 +139,6 @@ ffi.cdef [[
     typedef struct ib_txdata_t ib_txdata_t;
     typedef struct ib_tfn_t ib_tfn_t;
     typedef struct ib_logevent_t ib_logevent_t;
-    typedef struct ib_timeval_t ib_timeval_t;
     typedef struct ib_uuid_t ib_uuid_t;
     typedef struct ib_plugin_t ib_plugin_t;
     typedef struct ib_provider_def_t ib_provider_def_t;
@@ -151,6 +150,7 @@ ffi.cdef [[
     typedef struct ib_fctl_t ib_fctl_t;
     typedef struct ib_stream_t ib_stream_t;
     typedef struct ib_sdata_t ib_sdata_t;
+    typedef uint64_t ib_time_t;
 
     /** Function called when a provider is registered. */
     typedef ib_status_t (*ib_provider_register_fn_t)(ib_engine_t *ib,
@@ -178,12 +178,6 @@ ffi.cdef [[
         IB_FILTER_TX
     } ib_filter_type_t;
 
-    /* Timeval Structure */
-    struct ib_timeval_t {
-        uint32_t tv_sec;
-        uint32_t tv_usec;
-    };
-
     /* Universal Unique ID Structure */
     struct ib_uuid_t {
         uint32_t  time_low;
@@ -210,7 +204,10 @@ ffi.cdef [[
         void               *pctx;
         ib_provider_inst_t *dpi;
         ib_hash_t          *data;
-        ib_timeval_t        started;
+        struct {
+            ib_time_t       started;
+            ib_time_t       finished;
+        } t;
         const char         *remote_ipstr;
         uint16_t            remote_port;
         const char         *local_ipstr;
@@ -255,8 +252,20 @@ ffi.cdef [[
         ib_provider_inst_t *epi;
         ib_hash_t          *data;
         ib_fctl_t          *fctl;
-        ib_timeval_t        started;
-        ib_timeval_t        tv_request;
+        struct {
+            ib_time_t       started;
+            ib_time_t       request_started;
+            ib_time_t       request_headers;
+            ib_time_t       request_body;
+            ib_time_t       request_finished;
+            ib_time_t       response_started;
+            ib_time_t       response_headers;
+            ib_time_t       response_body;
+            ib_time_t       response_finished;
+            ib_time_t       postprocess;
+            ib_time_t       logtime;
+            ib_time_t       finished;
+        } t;
         ib_tx_t            *next;
         const char         *hostname;
         const char         *er_ipstr;
