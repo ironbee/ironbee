@@ -37,6 +37,7 @@
 
 using namespace std;
 using IronBee::ByteString;
+using IronBee::ConstByteString;
 using IronBee::MemoryPool;
 
 class TestByteString : public ::testing::Test
@@ -250,4 +251,16 @@ TEST_F(TestByteString, ExposeC)
 
     const ByteString& cbs = bs;
     EXPECT_EQ(ib_bs, cbs.ib());
+}
+
+TEST_F(TestByteString, Const)
+{
+    ConstByteString cbs = ByteString::create(m_pool, "data");
+    EXPECT_TRUE(cbs.ib());
+    ByteString bs = cbs.dup();
+    EXPECT_EQ(cbs.to_s(),bs.to_s());
+    ConstByteString cbs2 = bs;
+    EXPECT_EQ(cbs2, bs);
+    ByteString bs2 = ByteString::remove_const(cbs2);
+    EXPECT_EQ(cbs2, bs2);
 }

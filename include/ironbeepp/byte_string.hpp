@@ -19,7 +19,10 @@
  * @file
  * @brief IronBee++ &mdash; ByteString
  *
- * This file defines ByteString, a wrapper for ib_bytestr_t.
+ * This file defines (Const)ByteString, a wrapper for ib_bytestr_t.
+ *
+ * @remark Developers should be familiar with @ref ironbeepp to understand
+ * aspects of this code, e.g., the public/non-virtual inheritance.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -39,8 +42,227 @@ typedef struct ib_bytestr_t ib_bytestr_t;
 
 namespace IronBee {
 
+class ByteString;
+
+/**
+* Const Byte String; equivalent to a const pointer to ib_bytestr_t.
+*
+* See ByteString for discussion of byte strings.
+*
+* @sa ByteString
+* @sa ironbeepp
+* @sa ib_bytestr_t
+**/
+class ConstByteString :
+    boost::less_than_comparable<ConstByteString>,
+    boost::equality_comparable<ConstByteString>
+{
+public:
+   /**
+    * Construct singular ConstByteString.
+    *
+    * All behavior of a singular ConstByteString is undefined except for
+    * assignment, copying, comparison, and evaluate-as-bool.
+    **/
+    ConstByteString();    
+
+    /**
+     * @name Creation
+     * Routines for creating new byte strings.
+     *
+     * These routines create new byte strings.  The byte strings are destroyed
+     * when the corresponding memory pool is cleared or destroyed.
+     **/
+    /// @{        
+           
+    /**
+     * Create a (read-only) alias of @c this.
+     *
+     * This creates a new byte string that is an alias of @c this.  The new
+     * byte string will share the same data as @c this.  As such, any changes
+     * to @c this will be reflected in the alias.
+     *
+     * The alias is read only.
+     *
+     * @param[in] pool  Memory pool to allocate memory from.
+     * @returns Alias
+     **/
+    ByteString alias(MemoryPool pool) const;
+    //! As above, but use same memory pool.
+    ByteString alias() const;
+
+    /**
+     * Create copy using @a pool.
+     *
+     * Creates a new byte string using @a pool to allocate memory and set
+     * contents to a copy of byte string.
+     *
+     * @param[in] pool  Memory pool to allocate memory from.
+     * @returns New byte string with copy of @a this' data.
+     * @throws IronBee++ exception on any error.
+     **/
+    ByteString dup(MemoryPool pool) const;
+    //! As above, but use same memory pool.
+    ByteString dup() const;
+    /// @} 
+    
+    /**
+     * @name Queries
+     * Query aspects of the byte string.
+     **/
+    /// @{
+    /**
+     * Create string version.
+     *
+     * This will create a string that is a copy of the byte string.
+     *
+     * @returns string with same content as @c this.
+     **/
+    std::string to_s() const;
+    
+    /**
+     * Memory pool.
+     *
+     * @returns Memory pool used.
+     **/
+    MemoryPool memory_pool() const;
+    
+    /**
+     * Is read-only?
+     *
+     * Byte strings include a run-time check of mutability.  Read-only byte
+     * strings can not be mutated.  Trying to do so will result in an
+     * exception.
+     *
+     * Note that this is run-time (vs. compile-time) constness.
+     * @returns true iff read-only.
+     **/
+    bool read_only() const;
+    
+    /**
+     * Length of data.
+     *
+     * This is the actual length of the data.  For the amount of memory
+     * allocated, use size().
+     *
+     * @sa size()
+     * @returns Length of data.
+     **/
+    size_t length() const;
+    
+    /**
+     * Amount of memory allocated for data.
+     *
+     * This is the amount of memory currently allocated for data.  It is at
+     * least as large as length() but may be larger.
+     *
+     * @sa length()
+     * @returns Size of data allocation.
+     **/
+    size_t size() const;
+    
+    /**
+     * Underlying data.
+     *
+     * A const pointer to the underlying data.  Always available.
+     *
+     * Zero length byte-strings are allowed to return NULL, but not required
+     * to.
+     *
+     * @returns Pointer to data or, possibly, NULL if zero-length.
+     **/
+    const char* const_data() const;
+    ///@} 
+     
+    /**
+     * @name Algorithms
+     * Algorithms involving the byte string.
+     **/
+    /// @{
+
+    /**
+     * Returns index of @a cstring in byte string.
+     *
+     * This uses a naive algorithm that has no preprocessing time but a large
+     * matching time.  If you will be doing many searches of the byte string,
+     * consider alternatives.
+     *
+     * @param[in] cstring String to search for.
+     * @returns index of @a cstring or -1 if not a substring.
+     **/
+    int index_of(const char* cstring) const;
+
+    //! As above, but for a string.
+    int index_of(const std::string& s) const;
+
+    /// @}
+     
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! const ib_bytestr_t accessor.
+    // Intentionally inlined.
+    const ib_bytestr_t* ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct ByteString from ib_bytestr_t.
+    explicit
+    ConstByteString(const ib_bytestr_t* ib_bytestr);
+
+    ///@}
+
+    /// @cond Internal
+    typedef void (*unspecified_bool_type)(ConstByteString***);
+    /// @endcond
+    /**
+     * Is not singular?
+     *
+     * This operator returns a type that converts to bool in appropriate
+     * circumstances and is true iff this object is not singular.
+     *
+     * @returns true iff is not singular.
+     **/
+    operator unspecified_bool_type() const;
+
+    /**
+     * Equality operator.  Do they refer to the same underlying module.
+     *
+     * Two ByteStrings are considered equal if they refer to the same
+     * underlying ib_bytestr_t.
+     *
+     * @param[in] other ByteString to compare to.
+     * @return true iff @c other.ib() == ib().
+     **/
+    bool operator==(const ConstByteString& other) const;
+
+    /**
+     * Less than operator.
+     *
+     * ByteStrings are totally ordered with all singular ByteStrings as the
+     * minimal element.
+     *
+     * @param[in] other ByteString to compare to.
+     * @return true iff this and other are singular or  ib() < @c other.ib().
+     **/
+    bool operator<(const ConstByteString& other) const;
+     
+private:
+    const ib_bytestr_t* m_ib;
+    
+    // Used for unspecified_bool_type.
+    static void unspecified_bool(ConstByteString***) {};
+};
+
 /**
  * Byte String; equivalent to a pointer to ib_bytestr_t.
+ *
+ * ByteStrings can be treated as ConstByteStrings.  See @ref ironbeepp for
+ * details on IronBee++ object semantics.
  *
  * IronBee uses byte strings to represent sequences of bytes (possibly
  * including NULLs).  They are, fundamentally, a pointer to data and the
@@ -71,10 +293,19 @@ namespace IronBee {
  * @sa ib_bytestr_t
  **/
 class ByteString :
-    boost::less_than_comparable<ByteString>,
-    boost::equality_comparable<ByteString>
+    public ConstByteString
 {
-public:
+public:    
+    /**
+     * Remove the constness of a ConstByteString.
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     * 
+     * @param[in] bs ConstByteString to remove const from.
+     * @returns ByteString pointing to same underlying byte string as @a bs.
+     **/
+    static ByteString remove_const(ConstByteString bs);
+    
     /**
      * Construct singular ByteString.
      *
@@ -201,104 +432,8 @@ public:
         MemoryPool         pool,
         const std::string& s
     );
-
-    /**
-     * Create a (read-only) alias of @c this.
-     *
-     * This creates a new byte string that is an alias of @c this.  The new
-     * byte string will share the same data as @c this.  As such, any changes
-     * to @c this will be reflected in the alias.
-     *
-     * The alias is read only.
-     *
-     * @param[in] pool  Memory pool to allocate memory from.
-     * @returns Alias
-     **/
-    ByteString alias(MemoryPool pool) const;
-    //! As above, but use same memory pool.
-    ByteString alias() const;
-
-    /**
-     * Create copy using @a pool.
-     *
-     * Creates a new byte string using @a pool to allocate memory and set
-     * contents to a copy of byte string.
-     *
-     * @param[in] pool  Memory pool to allocate memory from.
-     * @returns New byte string with copy of @a this' data.
-     * @throws IronBee++ exception on any error.
-     **/
-    ByteString dup(MemoryPool pool) const;
-    //! As above, but use same memory pool.
-    ByteString dup() const;
+     
     /// @}
-
-    /**
-     * @name Queries
-     * Query aspects of the byte string.
-     **/
-    /// @{
-    /**
-     * Create string version.
-     *
-     * This will create a string that is a copy of the byte string.
-     *
-     * @returns string with same content as @c this.
-     **/
-    std::string to_s() const;
-
-    /**
-     * Memory pool.
-     *
-     * @returns Memory pool used.
-     **/
-    MemoryPool memory_pool() const;
-
-    /**
-     * Is read-only?
-     *
-     * Byte strings include a run-time check of mutability.  Read-only byte
-     * strings can not be mutated.  Trying to do so will result in an
-     * exception.
-     *
-     * Note that this is run-time (vs. compile-time) constness.
-     * @returns true iff read-only.
-     **/
-    bool read_only() const;
-
-    /**
-     * Length of data.
-     *
-     * This is the actual length of the data.  For the amount of memory
-     * allocated, use size().
-     *
-     * @sa size()
-     * @returns Length of data.
-     **/
-    size_t length() const;
-
-    /**
-     * Amount of memory allocated for data.
-     *
-     * This is the amount of memory currently allocated for data.  It is at
-     * least as large as length() but may be larger.
-     *
-     * @sa length()
-     * @returns Size of data allocation.
-     **/
-    size_t size() const;
-
-    /**
-     * Underlying data.
-     *
-     * A const pointer to the underlying data.  Always available.
-     *
-     * Zero length byte-strings are allowed to return NULL, but not required
-     * to.
-     *
-     * @returns Pointer to data or, possibly, NULL if zero-length.
-     **/
-    const char* const_data() const;
 
     /**
      * Underlying data (read-write).
@@ -312,9 +447,8 @@ public:
      * - Possibly NULL if zero-length.
      * - Pointer to data, otherwise.
      **/
-    char* data();
-    /// @}
-
+    char* data() const;
+ 
     /**
      * @name Mutators
      * Change the byte string.
@@ -327,7 +461,7 @@ public:
      * This marks the byte string as read only.  If the byte string is already
      * read-only, nothing is done.
      **/
-    void make_read_only();
+    void make_read_only() const;
 
     /**
      * Clear the byte string.
@@ -337,7 +471,7 @@ public:
      *
      * @throws einval if byte string is read only.
      **/
-    void clear();
+    void clear() const;
 
     /**
      * As create_alias() but modifies current byte string.  This will work
@@ -346,15 +480,15 @@ public:
      *
      * @sa create_alias()
      **/
-    void set(char* data, size_t length);
+    void set(char* data, size_t length) const;
     //! As above, but result is read only.
-    void set(const char* data, size_t length);
+    void set(const char* data, size_t length) const;
     //! As above, but for null terminated string.
-    void set(char* cstring);
+    void set(char* cstring) const;
     //! As above, but result is read only.
-    void set(const char* cstring);
+    void set(const char* cstring) const;
     //! As above, but for string.  There is no non-read-only version.
-    void set(const std::string& s);
+    void set(const std::string& s) const;
 
     /**
      * Append the data in @a tail to byte string.
@@ -362,72 +496,14 @@ public:
      * @param[in] tail Data to append.
      * @throws einval if read-only; ealloc on allocation failure.
      **/
-    void append(const ByteString& tail);
+    void append(const ByteString& tail) const;
     //! As above, but for data and length.
-    void append(const char* data, size_t length);
+    void append(const char* data, size_t length) const;
     //! As above, but for NULL terminated string.
-    void append(const char* cstring);
+    void append(const char* cstring) const;
     //! As above, but for string.
-    void append(const std::string& s);
+    void append(const std::string& s) const;
     /// @}
-
-    /**
-     * @name Algorithms
-     * Algorithms involving the byte string.
-     **/
-    /// @{
-
-    /**
-     * Returns index of @a cstring in byte string.
-     *
-     * This uses a naive algorithm that has no preprocessing time but a large
-     * matching time.  If you will be doing many searches of the byte string,
-     * consider alternatives.
-     *
-     * @param[in] cstring String to search for.
-     * @returns index of @a cstring or -1 if not a substring.
-     **/
-    int index_of(const char* cstring);
-
-    //! As above, but for a string.
-    int index_of(const std::string& s);
-
-    /// @}
-
-    /// @cond Internal
-    typedef void (*unspecified_bool_type)(ByteString***);
-    /// @endcond
-    /**
-     * Is not singular?
-     *
-     * This operator returns a type that converts to bool in appropriate
-     * circumstances and is true iff this object is not singular.
-     *
-     * @returns true iff is not singular.
-     **/
-    operator unspecified_bool_type() const;
-
-    /**
-     * Equality operator.  Do they refer to the same underlying module.
-     *
-     * Two ByteStrings are considered equal if they refer to the same
-     * underlying ib_bytestr_t.
-     *
-     * @param[in] other ByteString to compare to.
-     * @return true iff @c other.ib() == ib().
-     **/
-    bool operator==(const ByteString& other) const;
-
-    /**
-     * Less than operator.
-     *
-     * ByteStrings are totally ordered with all singular ByteStrings as the
-     * minimal element.
-     *
-     * @param[in] other ByteString to compare to.
-     * @return true iff this and other are singular or  ib() < @c other.ib().
-     **/
-    bool operator<(const ByteString& other) const;
 
     /**
      * @name C Interoperability
@@ -435,16 +511,9 @@ public:
      **/
     ///@{
 
-    //! Non-const ib_bytestr_t accessor.
+    //! ib_bytestr_t accessor.
     // Intentionally inlined.
-    ib_bytestr_t* ib()
-    {
-        return m_ib;
-    }
-
-    //! Const ib_bytestr_t accessor.
-    // Intentionally inlined.
-    const ib_bytestr_t* ib() const
+    ib_bytestr_t* ib() const
     {
         return m_ib;
     }
@@ -457,9 +526,6 @@ public:
 
 private:
     ib_bytestr_t* m_ib;
-
-    // Used for unspecified_bool_type.
-    static void unspecified_bool(ByteString***) {};
 };
 
 /**
@@ -472,7 +538,7 @@ private:
  * @param[in] byte_string ByteString to output.
  * @return @a o
  **/
-std::ostream& operator<<(std::ostream& o, const ByteString& byte_string);
+std::ostream& operator<<(std::ostream& o, const ConstByteString& byte_string);
 
 } // IronBee
 
