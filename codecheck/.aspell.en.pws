@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1081 
+personal_ws-1.1 en 1087 
 cfg
 api
 IronBee
@@ -144,6 +144,7 @@ geoip
 argv
 iis
 IBUtil
+vsnprintf
 cidr
 IronBeeEngineData
 IronbeeConnection
@@ -236,6 +237,7 @@ lpr
 inttypes
 cpath
 linelen
+IronBeeClock
 cpart
 addList
 preprocessing
@@ -621,6 +623,7 @@ ModSecAuditLogGenerator
 t's
 un
 IronBeeBufferFlushSize
+tv
 mpool
 tx
 getList
@@ -907,6 +910,7 @@ namespace
 kEys
 nocase
 nstate
+IronBeeUtilClock
 onEventHandleContextTx
 inuse
 onEventHandleRequest
@@ -1032,6 +1036,7 @@ charset
 afpc
 onEventConnOpened
 nelts
+timeval
 blkend
 aaa
 xffffffffffffffff
@@ -1047,6 +1052,7 @@ responsebody
 BaseFixture
 semop
 bingbot
+NUMADD
 responsemetadata
 free'ed
 decrement
