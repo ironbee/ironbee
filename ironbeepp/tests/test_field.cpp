@@ -113,7 +113,7 @@ TEST_F(TestField, SetAndGet)
     EXPECT_THROW(f.value_as_null_string(),     IronBee::einval);
     EXPECT_THROW(f.value_as_byte_string(),     IronBee::einval);
     EXPECT_NO_THROW(f.set_unsigned_number(5));
-    EXPECT_EQ(5, f.value_as_unsigned_number());
+    EXPECT_EQ(5UL, f.value_as_unsigned_number());
 
     f = Field::create_null_string(m_pool, "test", 4, "value");
     EXPECT_THROW(f.set_number(1),              IronBee::einval);
@@ -229,8 +229,8 @@ TEST_F(TestField, Dynamic)
         v = 12;
         EXPECT_EQ(v, f.value_as_number());
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         v = 13;
         args.reset();
         EXPECT_EQ(v, f.value_as_number("Hello", 5));
@@ -244,8 +244,8 @@ TEST_F(TestField, Dynamic)
         f.set_number(23);
         EXPECT_EQ(23, v);
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         args.reset();
         v = 0;
         f.set_number(24, "Hello", 5);
@@ -265,8 +265,8 @@ TEST_F(TestField, Dynamic)
         v = 12;
         EXPECT_EQ(v, f.value_as_unsigned_number());
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         v = 13;
         args.reset();
         EXPECT_EQ(v, f.value_as_unsigned_number("Hello", 5));
@@ -278,20 +278,20 @@ TEST_F(TestField, Dynamic)
         args.reset();
         v = 0;
         f.set_unsigned_number(23);
-        EXPECT_EQ(23, v);
+        EXPECT_EQ(23UL, v);
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         args.reset();
         v = 0;
         f.set_unsigned_number(24, "Hello", 5);
-        EXPECT_EQ(24, v);
+        EXPECT_EQ(24UL, v);
         EXPECT_EQ(f, args.field);
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
 
         f.set_static_unsigned_number(123);
         EXPECT_FALSE(f.is_dynamic());
-        EXPECT_EQ(123, f.value_as_unsigned_number());
+        EXPECT_EQ(123UL, f.value_as_unsigned_number());
     }
 
     {
@@ -301,8 +301,8 @@ TEST_F(TestField, Dynamic)
         v = "foo";
         EXPECT_EQ(string(v), f.value_as_null_string());
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         v = "bar";
         args.reset();
         EXPECT_EQ(string(v), f.value_as_null_string("Hello", 5));
@@ -316,8 +316,8 @@ TEST_F(TestField, Dynamic)
         f.set_null_string("abc");
         EXPECT_EQ(string("abc"), v);
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         args.reset();
         v = NULL;
         f.set_null_string("def", "Hello", 5);
@@ -344,8 +344,8 @@ TEST_F(TestField, Dynamic)
         v = ByteString::create(m_pool, "foo");
         EXPECT_EQ(v.to_s(), f.value_as_byte_string().to_s());
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         v = ByteString::create(m_pool, "bar");
         args.reset();
         EXPECT_EQ(v.to_s(), f.value_as_byte_string("Hello", 5).to_s());
@@ -361,8 +361,8 @@ TEST_F(TestField, Dynamic)
         f.set_byte_string(ByteString::create(m_pool, "abc"));
         EXPECT_EQ("abc", v.to_s());
         EXPECT_EQ(f, args.field);
-        EXPECT_EQ(NULL, args.arg);
-        EXPECT_EQ(0, args.arg_length);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
         args.reset();
         v = ByteString();
         f.set_byte_string(ByteString::create(m_pool, "def"), "Hello", 5);
