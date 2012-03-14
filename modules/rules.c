@@ -453,9 +453,9 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         /* Create a new action instance */
         rc = ib_action_inst_create(
             cp->ib, cp->cur_ctx, name, value, IB_ACTINST_FLAG_NONE, &action);
-        if (rc == IB_EINVAL) {
-            ib_log_error(cp->ib, 4, "Unknown modifier: %s", name);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        if (rc == IB_ENOENT) {
+            ib_log_alert(cp->ib, 4, "Ignoring unknown modifier '%s'", name);
+            IB_FTRACE_RET_STATUS(IB_OK);
         }
         else if (rc != IB_OK) {
             ib_log_error(cp->ib, 4,
