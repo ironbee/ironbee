@@ -233,7 +233,6 @@ ffi.cdef [[
         uint16_t            remote_port;
         const char         *local_ipstr;
         uint16_t            local_port;
-        ib_uuid_t           base_uuid;
         size_t              tx_count;
         ib_tx_t            *tx_first;
         ib_tx_t            *tx;
