@@ -33,26 +33,28 @@
 #ifdef CLOCK_MONOTONIC_RAW
 #define IB_CLOCK                  CLOCK_MONOTONIC_RAW
 #else
+#ifdef CLOCK_MONOTONIC
 #define IB_CLOCK                  CLOCK_MONOTONIC
+#endif /* CLOCK_MONOTONIC */
 #endif /* CLOCK_MONOTONIC_RAW */
 
 ib_clock_type_t ib_clock_type(void)
 {
-#if !defined(IB_CLOCK)
-    return IB_CLOCK_TYPE_NONMONOTONIC;
-#elif (IB_CLOCK == CLOCK_MONOTONIC)
-    return IB_CLOCK_TYPE_MONOTONIC;
-#elif (IB_CLOCK == CLOCK_MONOTONIC_RAW)
+#ifdef IB_CLOCK
+#ifdef CLOCK_MONOTONIC_RAW
     return IB_CLOCK_TYPE_MONOTONIC_RAW;
 #else
-    return IB_CLOCK_TYPE_UNKNOWN;
-#endif
+    return IB_CLOCK_TYPE_MONOTONIC;
+#endif /* CLOCK_MONOTONIC_RAW */
+#else
+    return IB_CLOCK_TYPE_NONMONOTONIC;
+#endif /* IB_CLOCK */
 }
 
 ib_time_t ib_clock_get_time(void) {
     uint64_t us;
 
-#if IB_CLOCK
+#ifdef IB_CLOCK
     struct timespec ts;
 
     /* Ticks seem to be an undesirable due for many reasons.
