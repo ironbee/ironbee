@@ -32,6 +32,8 @@
 
 #include "ironbee_util_private.h"
 
+#include <assert.h>
+
 ib_status_t ib_field_create_ex(ib_field_t **pf,
                                ib_mpool_t *mp,
                                const char *name,
@@ -525,4 +527,31 @@ void ib_field_dyn_register_set(ib_field_t *f,
     f->val->pval = NULL;
     IB_FTRACE_RET_VOID();
 }
+
+void *ib_field_dyn_return_num(const ib_field_t *f, ib_num_t value)
+{
+    IB_FTRACE_INIT();
+
+    assert(f != NULL);
+    assert(f->val != NULL);
+    assert(f->val->fn_get != NULL);
+    f->val->u.num = value;
+
+    return &(f->val->u.num);
+}
+
+void *ib_field_dyn_return_unum(const ib_field_t *f, ib_unum_t value)
+{
+    IB_FTRACE_INIT();
+
+    assert(f != NULL);
+    assert(f->val != NULL);
+    assert(f->val->fn_get != NULL);
+    f->val->u.unum = value;
+
+    return &(f->val->u.unum);
+}
+
+void *ib_field_dyn_return_unum(const ib_field_t *f, ib_unum_t value);
+
 

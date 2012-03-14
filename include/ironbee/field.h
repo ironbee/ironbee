@@ -441,6 +441,38 @@ void DLL_PUBLIC ib_field_dyn_register_get(ib_field_t *f,
 void DLL_PUBLIC ib_field_dyn_register_set(ib_field_t *f,
                                           ib_field_set_fn_t fn_set,
                                           void *cbdata_set);
+
+/**
+ * Helper function for returning numbers.
+ *
+ * IB_FTYPE_NUM values need to be returned as ib_num_t*, i.e., pointer to
+ * values.  This can be problemating for dynamic getters that may have
+ * calculated that value on the fly.  This helper function stores the
+ * result in the field (without making it not dynamic) and returns a pointer
+ * to that value.  E.g.,
+ *
+ * @code
+ * IB_FTRACE_RET_PTR(void, ib_field_dyn_return_num(f, 17));
+ * @endcode
+ *
+ * Note that @a field is passed in as a const.  Caching the value does not
+ * semantically change the field (it remains dynamic).
+ *
+ * @sa ib_field_dyn_return_unum()
+ * @param[in] field Field in question.
+ * @param[in] value Value to return.
+ */
+void *ib_field_dyn_return_num(const ib_field_t *f, ib_num_t value);
+
+/**
+ * As ib_field_dyn_return_num(), but for unum.
+ *
+ * @sa ib_field_dyn_return_num()
+ * @param[in] field Field in question.
+ * @param[in] value Value to return.
+ */
+void *ib_field_dyn_return_unum(const ib_field_t *f, ib_unum_t value);
+
 /**
  * @} IronBeeUtilField
  */
