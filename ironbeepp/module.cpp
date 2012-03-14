@@ -269,48 +269,77 @@ ib_status_t configuration_copy(
 } // Anonymous
 } // Internal
 
+/* ConstModule */
+
+ConstModule::ConstModule() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ConstModule::ConstModule(const ib_module_t* ib_module) :
+    m_ib(ib_module)
+{
+    // nop
+}
+
+Engine ConstModule::engine() const
+{
+    return Engine(ib()->ib);
+}
+
+uint32_t ConstModule::version_number() const
+{
+    return ib()->vernum;
+}
+
+uint32_t ConstModule::abi_number() const
+{
+    return ib()->abinum;
+}
+
+const char* ConstModule::version() const
+{
+    return ib()->version;
+}
+
+const char* ConstModule::filename() const
+{
+    return ib()->filename;
+}
+
+size_t ConstModule::index() const
+{
+    return ib()->idx;
+}
+
+const char* ConstModule::name() const
+{
+    return ib()->name;
+}
+
+/* Module */
+
 Module::Module() :
     m_ib(NULL)
 {
     // nop
 }
 
-Engine Module::engine() const
+Module::Module(ib_module_t* ib_module) :
+    ConstModule(ib_module),
+    m_ib(ib_module)
 {
-    return Engine(ib()->ib);
+    // nop
 }
 
-uint32_t Module::version_number() const
+// See api documentation for discussion of remove_const
+Module Module::remove_const(const ConstModule& const_module)
 {
-    return ib()->vernum;
+    return Module(const_cast<ib_module_t*>(const_module.ib()));
 }
 
-uint32_t Module::abi_number() const
-{
-    return ib()->abinum;
-}
-
-const char* Module::version() const
-{
-    return ib()->version;
-}
-
-const char* Module::filename() const
-{
-    return ib()->filename;
-}
-
-size_t Module::index() const
-{
-    return ib()->idx;
-}
-
-const char* Module::name() const
-{
-    return ib()->name;
-}
-
-void Module::chain_initialize(initialize_t f)
+void Module::chain_initialize(initialize_t f) const
 {
     if (! ib()->fn_init) {
         set_initialize(f);
@@ -324,7 +353,7 @@ void Module::chain_initialize(initialize_t f)
     }
 }
 
-void Module::prechain_initialize(initialize_t f)
+void Module::prechain_initialize(initialize_t f) const
 {
     if (! ib()->fn_init) {
         set_initialize(f);
@@ -338,7 +367,7 @@ void Module::prechain_initialize(initialize_t f)
     }
 }
 
-void Module::set_initialize(initialize_t f)
+void Module::set_initialize(initialize_t f) const
 {
     if (f.empty()) {
         ib()->cbdata_init = NULL;
@@ -352,7 +381,7 @@ void Module::set_initialize(initialize_t f)
     }
 }
 
-void Module::chain_finalize(finalize_t f)
+void Module::chain_finalize(finalize_t f) const
 {
     if (! ib()->fn_fini) {
         set_finalize(f);
@@ -366,7 +395,7 @@ void Module::chain_finalize(finalize_t f)
     }
 }
 
-void Module::prechain_finalize(finalize_t f)
+void Module::prechain_finalize(finalize_t f) const
 {
     if (! ib()->fn_fini) {
         set_finalize(f);
@@ -380,7 +409,7 @@ void Module::prechain_finalize(finalize_t f)
     }
 }
 
-void Module::set_finalize(finalize_t f)
+void Module::set_finalize(finalize_t f) const
 {
     if (f.empty()) {
         ib()->cbdata_fini = NULL;
@@ -394,7 +423,7 @@ void Module::set_finalize(finalize_t f)
     }
 }
 
-void Module::chain_context_open(context_open_t f)
+void Module::chain_context_open(context_open_t f) const
 {
     if (! ib()->fn_ctx_open) {
         set_context_open(f);
@@ -408,7 +437,7 @@ void Module::chain_context_open(context_open_t f)
     }
 }
 
-void Module::prechain_context_open(context_open_t f)
+void Module::prechain_context_open(context_open_t f) const
 {
     if (! ib()->fn_ctx_open) {
         set_context_open(f);
@@ -422,7 +451,7 @@ void Module::prechain_context_open(context_open_t f)
     }
 }
 
-void Module::set_context_open(context_open_t f)
+void Module::set_context_open(context_open_t f) const
 {
     if (f.empty()) {
         ib()->cbdata_ctx_open = NULL;
@@ -436,7 +465,7 @@ void Module::set_context_open(context_open_t f)
     }
 }
 
-void Module::chain_context_close(context_close_t f)
+void Module::chain_context_close(context_close_t f) const
 {
     if (! ib()->fn_ctx_close) {
         set_context_close(f);
@@ -450,7 +479,7 @@ void Module::chain_context_close(context_close_t f)
     }
 }
 
-void Module::prechain_context_close(context_close_t f)
+void Module::prechain_context_close(context_close_t f) const
 {
     if (! ib()->fn_ctx_close) {
         set_context_close(f);
@@ -464,7 +493,7 @@ void Module::prechain_context_close(context_close_t f)
     }
 }
 
-void Module::set_context_close(context_close_t f)
+void Module::set_context_close(context_close_t f) const
 {
     if (f.empty()) {
         ib()->cbdata_ctx_close = NULL;
@@ -478,7 +507,7 @@ void Module::set_context_close(context_close_t f)
     }
 }
 
-void Module::chain_context_destroy(context_destroy_t f)
+void Module::chain_context_destroy(context_destroy_t f) const
 {
     if (! ib()->fn_ctx_destroy) {
         set_context_destroy(f);
@@ -492,7 +521,7 @@ void Module::chain_context_destroy(context_destroy_t f)
     }
 }
 
-void Module::prechain_context_destroy(context_destroy_t f)
+void Module::prechain_context_destroy(context_destroy_t f) const
 {
     if (! ib()->fn_ctx_destroy) {
         set_context_destroy(f);
@@ -506,7 +535,7 @@ void Module::prechain_context_destroy(context_destroy_t f)
     }
 }
 
-void Module::set_context_destroy(context_destroy_t f)
+void Module::set_context_destroy(context_destroy_t f) const
 {
     if (f.empty()) {
         ib()->cbdata_ctx_destroy = NULL;
@@ -522,7 +551,7 @@ void Module::set_context_destroy(context_destroy_t f)
 
 void Module::set_configuration_copier_translator(
     configuration_copier_translator_t f
-)
+) const
 {
     ib()->cbdata_cfg_copy = Internal::value_to_data(
         f,
@@ -531,36 +560,7 @@ void Module::set_configuration_copier_translator(
     ib()->fn_cfg_copy = Internal::Hooks::configuration_copy;
 }
 
-bool Module::operator==(const Module& other) const
-{
-    return (! *this && ! other) || (*this && other && ib() == other.ib());
-}
-
-bool Module::operator<(const Module& other) const
-{
-    if (! *this) {
-        return other;
-    }
-    else if (! other) {
-        return this;
-    }
-    else {
-        return ib() < other.ib();
-    }
-}
-
-Module::Module(ib_module_t* ib_module) :
-    m_ib(ib_module)
-{
-    // nop
-}
-
-Module::operator unspecified_bool_type() const
-{
-    return m_ib ? unspecified_bool : 0;
-}
-
-std::ostream& operator<<(std::ostream& o, const Module& module)
+std::ostream& operator<<(std::ostream& o, const ConstModule& module)
 {
     if (! module) {
         o << "IronBee::Module[!singular!]";

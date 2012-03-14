@@ -525,3 +525,19 @@ TEST_F(TestModule, DataCPP)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(data.x + 2, other2->x);
 }
+
+TEST_F(TestModule, Const)
+{
+    ib_module_t ib_module;
+    ib_module.ib = m_ib_engine;
+    IronBee::Module module(&ib_module);
+
+    IronBee::ConstModule cmodule = module;
+
+    EXPECT_EQ(cmodule, module);
+
+    IronBee::Module module2 = IronBee::Module::remove_const(cmodule);
+
+    EXPECT_EQ(cmodule, module2);
+    EXPECT_EQ(module, module2);
+}

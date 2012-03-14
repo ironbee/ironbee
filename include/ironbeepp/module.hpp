@@ -27,6 +27,7 @@
 #ifndef __IBPP__MODULE__
 #define __IBPP__MODULE__
 
+#include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_pool.hpp>
@@ -37,7 +38,6 @@
 #include <ironbee/mpool.h>
 
 #include <boost/function.hpp>
-#include <boost/operators.hpp>
 
 #include <ostream>
 #include <cassert>
@@ -46,29 +46,33 @@ namespace IronBee {
 
 class Context;
 
+class Module;
+
 /**
- * Module information; equivalent to a pointer to ib_module_t.
+ * Const Module; equivalent to a const pointer to ib_module_t
  *
- * An IronBee Module adds functionality to IronBee.  This class represents
- * the information each module provides to the engine.
+ * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
  *
- * This class behaves similar to @c ib_module_t*.  In particular, it can
- * be singular (equivalent to NULL).  See object semantics in @ref ironbeepp.
+ * See Module for discussion of modules
  *
- * If you are interested in writing a module in C++, see module_bootstrap.hpp.
- *
+ * @sa Module
  * @sa ironbeepp
- * @sa module_bootstrap.hpp
  * @sa ib_module_t
  * @nosubgrouping
  **/
-class Module :
-    boost::less_than_comparable<Module>,
-    boost::equality_comparable<Module>
+class ConstModule :
+    public CommonSemantics<ConstModule>
 {
 public:
-    //! Construct singular module.
-    Module();
+    //! Construct singular ConstModule.
+    ConstModule();
+
+    /**
+     * @name Queries
+     * Query aspects of the module.
+     **/
+    ///@{
 
     //! Associated Engine.
     Engine engine() const;
@@ -90,6 +94,67 @@ public:
 
     //! Name.
     const char* name() const;
+
+    ///@}
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! Const ib_module_t accessor.
+    // Intentionally inlined.
+    const ib_module_t* ib() const
+    {
+        return m_ib;
+    }
+
+    explicit
+    ConstModule(const ib_module_t* ib_module);
+
+    ///@}
+
+private:
+    const ib_module_t* m_ib;
+};
+
+/**
+ * Module information; equivalent to a pointer to ib_module_t.
+ *
+ * Modules can be treated as ConstModules.  See @ref ironbeepp for details on
+ * IronBee++ object semantics.
+ *
+ * An IronBee Module adds functionality to IronBee.  This class represents
+ * the information each module provides to the engine.
+ *
+ * This class behaves similar to @c ib_module_t*.  In particular, it can
+ * be singular (equivalent to NULL).  See object semantics in @ref ironbeepp.
+ *
+ * If you are interested in writing a module in C++, see module_bootstrap.hpp.
+ *
+ * @sa ironbeepp
+ * @sa module_bootstrap.hpp
+ * @sa ib_module_t
+ * @sa ConstModule
+ * @nosubgrouping
+ **/
+class Module :
+    public ConstModule // Slicing is intentional; see apidoc.hpp
+{
+public:
+   /**
+    * Remove the constness of a ConstModule
+    *
+    * @warning This is as dangerous as a @c const_cast, use carefully.
+    *
+    * @param[in] const_module ConstModule to remove const from.
+    * @returns Module pointing to same underlying module as @a const_module.
+    **/
+    static Module remove_const(const ConstModule& const_module);
+
+    //! Construct singular module.
+    Module();
 
     /**
      * @name Callbacks
@@ -133,37 +198,37 @@ public:
     typedef context_callback_t context_destroy_t;
 
     //! Chain initialization function.
-    void chain_initialize(initialize_t f);
+    void chain_initialize(initialize_t f) const;
     //! Chain finalize function.
-    void chain_finalize(finalize_t f);
+    void chain_finalize(finalize_t f) const;
     //! Chain context open function.
-    void chain_context_open(context_open_t f);
+    void chain_context_open(context_open_t f) const;
     //! Chain context close function.
-    void chain_context_close(context_close_t f);
+    void chain_context_close(context_close_t f) const;
     //! Chain context destroy function.
-    void chain_context_destroy(context_destroy_t f);
+    void chain_context_destroy(context_destroy_t f) const;
 
     //! Prechain initialization function.  Prefer chain_initialize().
-    void prechain_initialize(initialize_t f);
+    void prechain_initialize(initialize_t f) const;
     //! Prechain finalize function.  Prefer chain_finalize().
-    void prechain_finalize(finalize_t f);
+    void prechain_finalize(finalize_t f) const;
     //! Prechain context open function.  Prefer chain_context_open().
-    void prechain_context_open(context_open_t f);
+    void prechain_context_open(context_open_t f) const;
     //! Prechain context close function.  Prefer chain_context_close().
-    void prechain_context_close(context_close_t f);
+    void prechain_context_close(context_close_t f) const;
     //! Prechain context destroy function.  Prefer chain_context_destroy().
-    void prechain_context_destroy(context_destroy_t f);
+    void prechain_context_destroy(context_destroy_t f) const;
 
     //! Set initialization function.  Prefer chain_initialize().
-    void set_initialize(initialize_t f);
+    void set_initialize(initialize_t f) const;
     //! Set finalize function.  Prefer chain_finalize().
-    void set_finalize(finalize_t f);
+    void set_finalize(finalize_t f) const;
     //! Set context open function.  Prefer chain_context_open().
-    void set_context_open(context_open_t f);
+    void set_context_open(context_open_t f) const;
     //! Set context close function.  Prefer chain_context_close().
-    void set_context_close(context_close_t f);
+    void set_context_close(context_close_t f) const;
     //! Set context destroy function.  Prefer chain_context_destroy().
-    void set_context_destroy(context_destroy_t f);
+    void set_context_destroy(context_destroy_t f) const;
 
     ///@}
 
@@ -256,7 +321,7 @@ public:
         const DataType& global_data,
         typename configuration_copier_t<DataType>::type copier =
             typename configuration_copier_t<DataType>::type()
-    );
+    ) const;
 
      /**
       * Set configuration for C++ objects.
@@ -277,44 +342,9 @@ public:
     template <typename DataType>
     void set_configuration_data(
         const DataType& global_data
-    );
+    ) const;
 
     ///@}
-
-    /// @cond Internal
-    typedef void (*unspecified_bool_type)(Module***);
-    /// @endcond
-    /**
-     * Is not singular?
-     *
-     * This operator returns a type that converts to bool in appropriate
-     * circumstances and is true iff this object is not singular.
-     *
-     * @returns true iff is not singular.
-     **/
-    operator unspecified_bool_type() const;
-
-    /**
-     * Equality operator.  Do they refer to the same underlying module.
-     *
-     * Two Modules are considered equal if they refer to the same underlying
-     * ib_module_t.
-     *
-     * @param[in] other Module to compare to.
-     * @return true iff @c other.ib() == ib().
-     **/
-    bool operator==(const Module& other) const;
-
-    /**
-     * Less than operator.
-     *
-     * Modules are totally ordered with all singular Modules as the minimal
-     * element.
-     *
-     * @param[in] other Module to compare to.
-     * @return true iff this and other are singular or  ib() < @c other.ib().
-     **/
-    bool operator<(const Module& other) const;
 
     /**
      * @name C Interoperability
@@ -324,14 +354,7 @@ public:
 
     //! Non-const ib_module_t accessor.
     // Intentionally inlined.
-    ib_module_t* ib()
-    {
-        return m_ib;
-    }
-
-    //! Const ib_module_t accessor.
-    // Intentionally inlined.
-    const ib_module_t* ib() const
+    ib_module_t* ib() const
     {
         return m_ib;
     }
@@ -345,9 +368,6 @@ public:
 private:
     ib_module_t* m_ib;
 
-    // Used for unspecified_bool_type.
-    static void unspecified_bool(Module***) {};
-
     // Translator for configuration copier.
     typedef boost::function<
         void(ib_module_t*, void*, const void*, size_t)
@@ -355,7 +375,7 @@ private:
 
     void set_configuration_copier_translator(
         configuration_copier_translator_t f
-    );
+    ) const;
 };
 
 namespace Internal {
@@ -511,7 +531,7 @@ template <typename DataType>
 void Module::set_configuration_data_pod(
     const DataType& global_data,
     typename configuration_copier_t<DataType>::type copier
-)
+) const
 {
     ib()->gclen = sizeof(global_data);
     ib()->gcdata = ib_mpool_alloc(
@@ -540,7 +560,7 @@ void Module::set_configuration_data_pod(
 template <typename DataType>
 void Module::set_configuration_data(
     const DataType& global_data
-)
+) const
 {
     DataType* global_data_ptr = new DataType(global_data);
 
@@ -567,7 +587,7 @@ void Module::set_configuration_data(
  * @param[in] module Module to output.
  * @return @a o
  **/
-std::ostream& operator<<(std::ostream& o, const Module& module);
+std::ostream& operator<<(std::ostream& o, const ConstModule& module);
 
 } // IronBee
 
