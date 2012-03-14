@@ -150,6 +150,7 @@ case "$OS" in
                 AC_MSG_RESULT(Linux)
                 AC_CHECK_LIB([dl], [dlopen], [])
                 AC_DEFINE(_GNU_SOURCE, [1], [Enable GNU C source feature test macro])
+                AC_CHECK_LIB(rt, clock_gettime, LIBS="$LIBS -lrt")
                 OS_LINUX="true"
         ;;
         *)
