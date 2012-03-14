@@ -1945,7 +1945,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
     ib_status_t rc;
-    ib_context_t *ctx;
+    ib_context_t *ctx = NULL;
 
     /* Create memory subpool */
     /// @todo Should we be doing this???
