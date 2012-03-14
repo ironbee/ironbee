@@ -469,7 +469,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
 
     const char* subject;
     size_t subject_len;
-    ib_bytestr_t* bytestr;
+    const ib_bytestr_t* bytestr;
 
     if (field->type == IB_FTYPE_NULSTR) {
         subject = ib_field_value_nulstr(field);

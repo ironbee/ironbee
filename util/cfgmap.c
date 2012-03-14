@@ -262,14 +262,14 @@ ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
 
     switch (f->type) {
         case IB_FTYPE_BYTESTR:
-            *(ib_bytestr_t **)pval = ib_field_value_bytestr(f);
+            *(const ib_bytestr_t **)pval = ib_field_value_bytestr(f);
             ib_util_log_debug(8, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)pval), *(void **)pval);
             break;
         case IB_FTYPE_LIST:
-            *(ib_list_t **)pval = ib_field_value_list(f);
+            *(const ib_list_t **)pval = ib_field_value_list(f);
             break;
         case IB_FTYPE_NULSTR:
-            *(char **)pval = ib_field_value_nulstr(f);
+            *(const char **)pval = ib_field_value_nulstr(f);
             ib_util_log_debug(8, "GET FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", f->type, IB_BYTESTRSL_FMT_PARAM(f->name,f->nlen), *(char **)pval, *(void **)pval);
             break;
         case IB_FTYPE_NUM:

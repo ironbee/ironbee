@@ -489,12 +489,14 @@ static ib_status_t act_setvar_execute(void *cbdata,
 
         /* Handle num and unum types */
         if (cur->type == IB_FTYPE_NUM) {
-            ib_num_t *num = ib_field_value_num(cur);
-            *num += svdata->value.num;
+            ib_num_t num = *ib_field_value_num(cur);
+            num += svdata->value.num;
+            ib_field_setv(cur, &num);
         }
         else if (cur->type == IB_FTYPE_UNUM) {
-            ib_unum_t *num = ib_field_value_unum(cur);
-            *num += (ib_unum_t)svdata->value.num;
+            ib_unum_t num = *ib_field_value_unum(cur);
+            num += (ib_unum_t)svdata->value.num;
+            ib_field_setv(cur, &num);
         }
         else {
             ib_log_error(tx->ib, 4,

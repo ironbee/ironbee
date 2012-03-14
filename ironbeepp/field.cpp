@@ -468,24 +468,24 @@ const char* ConstField::value_as_null_string(
     return ib_field_value_nulstr_ex(ib(), arg, arg_length);
 }
 
-ByteString ConstField::value_as_byte_string() const
+ConstByteString ConstField::value_as_byte_string() const
 {
     Internal::check_type(BYTE_STRING, type());
-    return ByteString(ib_field_value_bytestr(ib()));
+    return ConstByteString(ib_field_value_bytestr(ib()));
 }
 
-ByteString ConstField::value_as_byte_string(const std::string& arg) const
+ConstByteString ConstField::value_as_byte_string(const std::string& arg) const
 {
     return value_as_byte_string(arg.data(), arg.length());
 }
 
-ByteString ConstField::value_as_byte_string(
+ConstByteString ConstField::value_as_byte_string(
     const char* arg,
     size_t      arg_length
 ) const
 {
     Internal::check_type(BYTE_STRING, type());
-    return ByteString(ib_field_value_bytestr_ex(ib(), arg, arg_length));
+    return ConstByteString(ib_field_value_bytestr_ex(ib(), arg, arg_length));
 }
 
 /* Field */

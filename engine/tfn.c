@@ -120,7 +120,9 @@ ib_status_t ib_tfn_transform_field(ib_tfn_t *tfn,
 
     switch(f->type) {
         case IB_FTYPE_BYTESTR:
-            bs = ib_field_value_bytestr(f);
+            /* Cast away const to support FINPLACE.  This will do bad things
+               with dynamic fields. */
+            bs = (ib_bytestr_t *)ib_field_value_bytestr(f);
 
             rc = tfn->transform(tfn->fndata,
                                 f->mp,
@@ -149,7 +151,9 @@ ib_status_t ib_tfn_transform_field(ib_tfn_t *tfn,
             IB_FTRACE_RET_STATUS(rc);
 
         case IB_FTYPE_NULSTR:
-            str = ib_field_value_nulstr(f),
+            /* Cast away const to support FINPLACE.  This will do bad things
+               with dynamic fields. */
+            str = (char *)ib_field_value_nulstr(f),
 
             rc = tfn->transform(tfn->fndata,
                                 f->mp,

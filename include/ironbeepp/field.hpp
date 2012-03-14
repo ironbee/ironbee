@@ -206,11 +206,11 @@ public:
     ) const;
 
     //! ByteString value accessor.
-    ByteString value_as_byte_string() const;
+    ConstByteString value_as_byte_string() const;
     //! ByteString value accessor -- dynamic.
-    ByteString value_as_byte_string(const std::string& arg) const;
+    ConstByteString value_as_byte_string(const std::string& arg) const;
     //! ByteString value accessor -- dynamic.
-    ByteString value_as_byte_string(
+    ConstByteString value_as_byte_string(
         const char* arg,
         size_t      arg_length
     ) const;

@@ -192,17 +192,18 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         }
     else if (f->type == IB_FTYPE_BYTESTR) {
         /* Field is a byte string */
-        ib_bytestr_t *bs = ib_field_value_bytestr(f);
+        const ib_bytestr_t *bs = ib_field_value_bytestr(f);
         rc = join3(mp,
                    iptr, ilen,
-                   (char *)ib_bytestr_ptr(bs), ib_bytestr_length(bs),
+                   (const char *)ib_bytestr_const_ptr(bs),
+                   ib_bytestr_length(bs),
                    fptr, flen,
                    nul,
                    out, olen);
     }
     else if (f->type == IB_FTYPE_NUM) {
         /* Field is a number; convert it to a string */
-        ib_num_t *n = ib_field_value_num(f);
+        const ib_num_t *n = ib_field_value_num(f);
         snprintf(numbuf, NUM_BUF_LEN, "%ld", (long int)(*n) );
         rc = join3(mp,
                    iptr, ilen,
@@ -213,7 +214,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
     }
     else if (f->type == IB_FTYPE_UNUM) {
         /* Field is an unsigned number; convert it to a string */
-        ib_unum_t *n = ib_field_value_unum(f);
+        const ib_unum_t *n = ib_field_value_unum(f);
         snprintf(numbuf, NUM_BUF_LEN, "%lu", (unsigned long)(*n) );
         rc = join3(mp,
                    iptr, ilen,

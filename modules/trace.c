@@ -437,7 +437,8 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
     }
 
     /* The field value *should* be a list, extract it as such */
-    lst = ib_field_value_list(req);
+    // @todo Remove const casting once list is const correct.
+    lst = (ib_list_t *)ib_field_value_list(req);
     if (lst == NULL) {
         ib_log_debug(ib, 4, "%s: Field list missing / incorrect type",
                      eventp->name );
@@ -447,7 +448,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
     /* Loop through the list */
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        ib_bytestr_t *bs;
+        const ib_bytestr_t *bs;
         unsigned len;
         char buf[128];
 

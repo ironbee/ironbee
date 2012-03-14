@@ -342,27 +342,27 @@ const void DLL_PUBLIC *ib_field_value_type_ex(const ib_field_t *f,
 
 /** Return field value for a field as "ib_num_t *" with argument. */
 #define ib_field_value_num_ex(f,arg,alen) \
-    (ib_num_t *)ib_field_value_type_ex((f),IB_FTYPE_NUM,(arg),(alen))
+    (const ib_num_t *)ib_field_value_type_ex((f),IB_FTYPE_NUM,(arg),(alen))
 
 /** Return field value for a field as "ib_unum_t * with argument". */
 #define ib_field_value_unum_ex(f,arg,alen) \
-    (ib_unum_t *)ib_field_value_type_ex((f),IB_FTYPE_UNUM,(arg),(alen))
+    (const ib_unum_t *)ib_field_value_type_ex((f),IB_FTYPE_UNUM,(arg),(alen))
 
 /** Return field value for a field as "ib_bytestr_t * with argument". */
 #define ib_field_value_bytestr_ex(f,arg,alen) \
-    (ib_bytestr_t *)ib_field_value_type_ex((f),IB_FTYPE_BYTESTR,(arg),(alen))
+    (const ib_bytestr_t *)ib_field_value_type_ex((f),IB_FTYPE_BYTESTR,(arg),(alen))
 
 /** Return field value for a field as "void * with argument". */
 #define ib_field_value_generic_ex(f,arg,alen) \
-    (void *)ib_field_value_type_ex((f),IB_FTYPE_GENERIC,(arg),(alen))
+    (const void *)ib_field_value_type_ex((f),IB_FTYPE_GENERIC,(arg),(alen))
 
 /** Return field value for a field as "char * with argument". */
 #define ib_field_value_nulstr_ex(f,arg,alen) \
-    (char *)ib_field_value_type_ex((f),IB_FTYPE_NULSTR,(arg),(alen))
+    (const char *)ib_field_value_type_ex((f),IB_FTYPE_NULSTR,(arg),(alen))
 
 /** Return field value for a field as "ib_list_t * with argument". */
 #define ib_field_value_list_ex(f,arg,alen) \
-    (ib_list_t *)ib_field_value_type_ex((f),IB_FTYPE_LIST,(arg),(alen))
+    (const ib_list_t *)ib_field_value_type_ex((f),IB_FTYPE_LIST,(arg),(alen))
 
 
 /**
@@ -386,27 +386,27 @@ const void DLL_PUBLIC *ib_field_value_type(const ib_field_t *f, ib_ftype_t t);
 
 /** Return field value for a field as "ib_num_t *". */
 #define ib_field_value_num(f) \
-    (ib_num_t *)ib_field_value_type((f), IB_FTYPE_NUM)
+    (const ib_num_t *)ib_field_value_type((f), IB_FTYPE_NUM)
 
 /** Return field value for a field as "ib_unum_t *". */
 #define ib_field_value_unum(f) \
-    (ib_unum_t *)ib_field_value_type((f), IB_FTYPE_UNUM)
+    (const ib_unum_t *)ib_field_value_type((f), IB_FTYPE_UNUM)
 
 /** Return field value for a field as "ib_bytestr_t *". */
 #define ib_field_value_bytestr(f) \
-    (ib_bytestr_t *)ib_field_value_type((f), IB_FTYPE_BYTESTR)
+    (const ib_bytestr_t *)ib_field_value_type((f), IB_FTYPE_BYTESTR)
 
 /** Return field value for a field as "void *". */
 #define ib_field_value_generic(f) \
-    (void *)ib_field_value_type((f), IB_FTYPE_GENERIC)
+    (const void *)ib_field_value_type((f), IB_FTYPE_GENERIC)
 
 /** Return field value for a field as "char *". */
 #define ib_field_value_nulstr(f) \
-    (char *)ib_field_value_type((f), IB_FTYPE_NULSTR)
+    (const char *)ib_field_value_type((f), IB_FTYPE_NULSTR)
 
 /** Return field value for a field as "ib_list_t *". */
 #define ib_field_value_list(f) \
-    (ib_list_t *)ib_field_value_type((f), IB_FTYPE_LIST)
+    (const ib_list_t *)ib_field_value_type((f), IB_FTYPE_LIST)
 
 /** Return field value for a field as "ib_stream_t *". */
 #define ib_field_value_stream(f) (ib_stream_t *)ib_field_value(f)

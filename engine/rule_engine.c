@@ -178,7 +178,8 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
 
     /* Handle a list by looping through it */
     if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
-        ib_list_t *vlist = ib_field_value_list(value);
+        // @todo Remove const casting once list is const correct.
+        ib_list_t *vlist = (ib_list_t *)ib_field_value_list(value);
         ib_list_node_t *node = NULL;
         ib_num_t n = 0;
 
@@ -992,7 +993,7 @@ static ib_status_t fieldop_length(ib_engine_t *ib,
             result, mp, "Length", IB_FTYPE_NUM, &len);
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *value = ib_field_value_bytestr(field);
+        const ib_bytestr_t *value = ib_field_value_bytestr(field);
         size_t len = ib_bytestr_length(value);
         rc = ib_field_create(
             result, mp, "Length", IB_FTYPE_NUM, &len);
@@ -1002,7 +1003,8 @@ static ib_status_t fieldop_length(ib_engine_t *ib,
         ib_list_t      *ilist;           /** Incoming list */
 
         /* Get the incoming list */
-        ilist = ib_field_value_list(field);
+        // @todo Remove const casting once list is const correct.
+        ilist = (ib_list_t *)ib_field_value_list(field);
         if (ilist == NULL) {
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
@@ -1063,7 +1065,8 @@ static ib_status_t fieldop_count(ib_engine_t *ib,
 
     /* If this is a list, return it's count */
     if (field->type == IB_FTYPE_LIST) {
-        ib_list_t *lst = ib_field_value_list(field);
+        // @todo Remove const casting once list is const correct.
+        ib_list_t *lst = (ib_list_t *)ib_field_value_list(field);
         value = IB_LIST_ELEMENTS(lst);
     }
     else {
@@ -1104,7 +1107,8 @@ static ib_status_t fieldop_max_list(ib_engine_t *ib,
     assert(field != NULL);
 
     /* Get the incoming list */
-    lst = ib_field_value_list(field);
+    // @todo Remove const casting once list is const correct.
+    lst = (ib_list_t *)ib_field_value_list(field);
     if (lst == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1117,14 +1121,14 @@ static ib_status_t fieldop_max_list(ib_engine_t *ib,
         switch (ifield->type) {
             case IB_FTYPE_NUM:
                 {
-                    ib_num_t *fval = ib_field_value_num(ifield);
+                    const ib_num_t *fval = ib_field_value_num(ifield);
                     value = *fval;
                 }
                 break;
 
             case IB_FTYPE_UNUM:
                 {
-                    ib_unum_t *fval = ib_field_value_unum(ifield);
+                    const ib_unum_t *fval = ib_field_value_unum(ifield);
                     value = (ib_num_t)(*fval);
                 }
                 break;
@@ -1138,7 +1142,7 @@ static ib_status_t fieldop_max_list(ib_engine_t *ib,
 
             case IB_FTYPE_BYTESTR:
                 {
-                    ib_bytestr_t *fval = ib_field_value_bytestr(ifield);
+                    const ib_bytestr_t *fval = ib_field_value_bytestr(ifield);
                     value = (ib_num_t)ib_bytestr_length(fval);
                 }
                 break;
@@ -1146,7 +1150,7 @@ static ib_status_t fieldop_max_list(ib_engine_t *ib,
             case IB_FTYPE_LIST:
                 {
                     ib_field_t *tmp = NULL;
-                    ib_num_t   *nptr = NULL;
+                    const ib_num_t *nptr = NULL;
 
                     rc = fieldop_max_list(ib, mp, ifield, &tmp);
                     if (rc != IB_OK) {
@@ -1202,7 +1206,8 @@ static ib_status_t fieldop_min_list(ib_engine_t *ib,
     assert(field != NULL);
 
     /* Get the incoming list */
-    lst = ib_field_value_list(field);
+    // @todo Remove const casting once list is const correct.
+    lst = (ib_list_t *)ib_field_value_list(field);
     if (lst == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1215,13 +1220,13 @@ static ib_status_t fieldop_min_list(ib_engine_t *ib,
         switch (field->type) {
             case IB_FTYPE_NUM:
                 {
-                    ib_num_t *fval = ib_field_value_num(ifield);
+                    const ib_num_t *fval = ib_field_value_num(ifield);
                     value = *fval;
                 }
                 break;
             case IB_FTYPE_UNUM:
                 {
-                    ib_unum_t *fval = ib_field_value_unum(ifield);
+                    const ib_unum_t *fval = ib_field_value_unum(ifield);
                     value = (ib_num_t)(*fval);
                 }
                 break;
@@ -1235,7 +1240,7 @@ static ib_status_t fieldop_min_list(ib_engine_t *ib,
 
             case IB_FTYPE_BYTESTR:
                 {
-                    ib_bytestr_t *fval = ib_field_value_bytestr(field);
+                    const ib_bytestr_t *fval = ib_field_value_bytestr(field);
                     value = (ib_num_t)ib_bytestr_length(fval);
                 }
                 break;
@@ -1243,7 +1248,7 @@ static ib_status_t fieldop_min_list(ib_engine_t *ib,
             case IB_FTYPE_LIST:
                 {
                     ib_field_t *tmp = NULL;
-                    ib_num_t   *nptr = NULL;
+                    const ib_num_t *nptr = NULL;
 
                     rc = fieldop_min_list(ib, mp, field, &tmp);
                     if (rc != IB_OK) {

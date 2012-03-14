@@ -1046,6 +1046,8 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
     IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
+    ib_num_t num;
+    ib_unum_t unum;
 
     rc = ib_hash_get_ex(
         (ib_hash_t *)dpi->data,
@@ -1060,12 +1062,14 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
         case IB_FTYPE_NUM:
             /// @todo Make sure this is atomic
             /// @todo Check for overflow
-            *(ib_field_value_num(f)) += adjval;
+            num = *(ib_field_value_num(f)) + adjval;
+            ib_field_setv(f, &num);
             break;
         case IB_FTYPE_UNUM:
             /// @todo Make sure this is atomic
             /// @todo Check for overflow
-            *(ib_field_value_unum(f)) += adjval;
+            unum = *(ib_field_value_unum(f)) + adjval;
+            ib_field_setv(f, &unum);
             break;
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1123,7 +1127,8 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                 ib_list_node_t *node;
 
                 /* Lookup the subkey value in the field list. */
-                IB_LIST_LOOP(ib_field_value_list(*pf), node) {
+                // @todo Remove const casting once list is const correct.
+                IB_LIST_LOOP((ib_list_t *)ib_field_value_list(*pf), node) {
                     ib_field_t *sf = (ib_field_t *)ib_list_node_data(node);
 
                     if (   (sf->nlen == sklen)
@@ -2520,7 +2525,8 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_LIST_LOOP(ib_field_value_list(f), node) {
+    // @todo Remove const casting once list is const correct.
+    IB_LIST_LOOP((ib_list_t *)ib_field_value_list(f), node) {
         ib_list_push(list, ib_list_node_data(node));
     }
 
@@ -2591,7 +2597,8 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_LIST_LOOP(ib_field_value_list(f), node) {
+    // @todo Remove const casting once list is const correct.
+    IB_LIST_LOOP((ib_list_t *)ib_field_value_list(f), node) {
         ib_list_push(list, ib_list_node_data(node));
     }
 

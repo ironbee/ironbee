@@ -379,7 +379,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
  */
 static ib_status_t modua_agent_fields(ib_engine_t *ib,
                                       ib_tx_t *tx,
-                                      ib_bytestr_t *bs)
+                                      const ib_bytestr_t *bs)
 {
     IB_FTRACE_INIT();
     const modua_match_rule_t *rule = NULL;
@@ -506,9 +506,9 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 
     assert(event == request_headers_event);
 
-    ib_field_t   *req_agent = NULL;
-    ib_status_t   rc = IB_OK;
-    ib_bytestr_t *bs;
+    ib_field_t         *req_agent = NULL;
+    ib_status_t         rc = IB_OK;
+    const ib_bytestr_t *bs;
 
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers:User-Agent", &req_agent);
@@ -551,13 +551,13 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 
     assert(event == request_headers_event);
 
-    ib_field_t    *field = NULL;
-    ib_status_t    rc = IB_OK;
-    ib_bytestr_t  *bs;
-    const uint8_t *data;
-    unsigned       len;
-    char          *buf;
-    uint8_t       *comma;
+    ib_field_t          *field = NULL;
+    ib_status_t          rc = IB_OK;
+    const ib_bytestr_t  *bs;
+    const uint8_t       *data;
+    unsigned             len;
+    char                *buf;
+    uint8_t             *comma;
 
     /* Extract the X-Forwarded-For from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &field);

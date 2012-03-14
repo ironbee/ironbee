@@ -759,7 +759,7 @@ static void print_field(const char *label,
             break;
         case IB_FTYPE_BYTESTR :      /**< Byte string value */
             {
-                ib_bytestr_t *bs = ib_field_value_bytestr(field);
+                const ib_bytestr_t *bs = ib_field_value_bytestr(field);
                 size_t len = ib_bytestr_length(bs);
                 if (len == 0) {
                     printf("  %s = ''\n", label);
@@ -772,7 +772,8 @@ static void print_field(const char *label,
             break;
         case IB_FTYPE_LIST :         /**< List */
             {
-                ib_list_t *lst = ib_field_value_list(field);
+                // @todo Remove const casting once list is const correct.
+                ib_list_t *lst = (ib_list_t *)ib_field_value_list(field);
                 size_t len = IB_LIST_ELEMENTS(lst);
                 printf( "  %s = list:len=%d\n", label, (int)len);
             }
@@ -863,7 +864,9 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
             case IB_FTYPE_LIST:
                 fullpath = build_path(path, field);
                 print_field(fullpath, field);
-                print_list(fullpath, ib_field_value_list(field) );
+                // @todo Remove const casting once list is const correct.
+                print_list(fullpath,
+                    (ib_list_t *)ib_field_value_list(field));
                 break;
             default :
                 break;
@@ -913,7 +916,8 @@ static ib_status_t print_tx( ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     print_field("tx:ARGS", field);
-    lst = ib_field_value_list(field);
+    // @todo Remove const casting once list is const correct.
+    lst = (ib_list_t *)ib_field_value_list(field);
     if (lst == NULL) {
         printf("print_tx: Failed ARGS is not a list\n");
         ib_log_debug(ib, 4, "print_tx: ARGS is not a list");
@@ -989,7 +993,8 @@ static ib_status_t print_user_agent(
     }
 
     /* The field value *should* be a list, extract it as such */
-    lst = ib_field_value_list(req);
+    // @todo Remove const casting once list is const correct.
+    lst = (ib_list_t *)ib_field_value_list(req);
     if (lst == NULL) {
         ib_log_debug(ib, 4,
                      "print_user_agent: "
@@ -1047,7 +1052,8 @@ static ib_status_t print_geoip(
     }
 
     /* The field value *should* be a list, extract it as such */
-    lst = ib_field_value_list(req);
+    // @todo Remove const casting once list is const correct.
+    lst = (ib_list_t *)ib_field_value_list(req);
     if (lst == NULL) {
         ib_log_debug(ib, 4,
                      "print_geoip: Field list missing / incorrect type" );

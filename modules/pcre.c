@@ -586,7 +586,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     int *ovector = (int *)malloc(ovecsize*sizeof(*ovector));
     const char* subject;
     size_t subject_len;
-    ib_bytestr_t* bytestr;
+    const ib_bytestr_t* bytestr;
     pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
     pcre *regex;
     pcre_extra *regex_extra = NULL;

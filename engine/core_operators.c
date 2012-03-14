@@ -141,8 +141,8 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
         *result = (strcmp(fval,expanded) == 0);
     }
     else if (field->type==IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *value = ib_field_value_bytestr(field);
-        size_t        len = ib_bytestr_length(value);
+        const ib_bytestr_t *value = ib_field_value_bytestr(field);
+        size_t                len = ib_bytestr_length(value);
 
         if (len == strlen(expanded)) {
             *result = (memcmp(ib_bytestr_const_ptr(value), expanded, len) == 0);
@@ -208,7 +208,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
         }
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *str = ib_field_value_bytestr(field);
+        const ib_bytestr_t *str = ib_field_value_bytestr(field);
         if (ib_bytestr_index_of_c(str, expanded) == -1) {
             *result = 0;
         }
@@ -451,7 +451,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
         iplen = strlen(ipstr);
     }
     else if (field->type==IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs = ib_field_value_bytestr(field);
+        const ib_bytestr_t *bs = ib_field_value_bytestr(field);
 
         /* Verify that we got out a bytestr */
         assert(bs != NULL);
@@ -631,9 +631,9 @@ static ib_status_t field_to_num(ib_engine_t *ib,
 
         case IB_FTYPE_BYTESTR:
             {
-                ib_bytestr_t *bs = ib_field_value_bytestr(field);
+                const ib_bytestr_t *bs = ib_field_value_bytestr(field);
 
-                rc = string_to_num_ex((const char *)ib_bytestr_ptr(bs),
+                rc = string_to_num_ex((const char *)ib_bytestr_const_ptr(bs),
                                       ib_bytestr_length(bs),
                                       0,
                                       result);

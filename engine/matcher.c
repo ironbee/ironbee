@@ -147,8 +147,8 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
 {
     IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface;
-    ib_bytestr_t *bs;
-    char *cs;
+    const ib_bytestr_t *bs;
+    const char *cs;
     ib_status_t rc;
 
     iface = (IB_PROVIDER_IFACE_TYPE(matcher) *)m->mpr->iface;
@@ -229,8 +229,8 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
 {
     IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface;
-    ib_bytestr_t *bs;
-    char *cs;
+    const ib_bytestr_t *bs;
+    const char *cs;
     ib_status_t rc;
 
     iface = (IB_PROVIDER_IFACE_TYPE(matcher) *)m->mpr->iface;
