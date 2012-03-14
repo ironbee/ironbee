@@ -240,8 +240,6 @@ private:
     const ib_field_t* m_ib;
 };
 
-// XXX
-
 /**
  * Field; equivalent to a pointer to ib_field_t.
  *

@@ -237,25 +237,28 @@ ib_status_t field_dynamic_set(
                 Internal::data_to_value<Field::number_set_t>(cbdata)(
                     Field(field),
                     carg, arg_length,
-                    reinterpret_cast<int64_t>(value)
+                    *reinterpret_cast<const int64_t*>(value)
                 );
+                break;
             case IB_FTYPE_UNUM:
-            Internal::data_to_value<Field::unsigned_number_set_t>(cbdata)(
-                Field(field),
-                carg, arg_length,
-                reinterpret_cast<uint64_t>(value)
-            );
+                Internal::data_to_value<Field::unsigned_number_set_t>(cbdata)(
+                    Field(field),
+                    carg, arg_length,
+                    *reinterpret_cast<const uint64_t*>(value)
+                );
+                break;
             case IB_FTYPE_NULSTR:
                 Internal::data_to_value<Field::null_string_set_t>(cbdata)(
                     Field(field),
                     carg, arg_length,
-                    reinterpret_cast<const char*>(value)
+                    *reinterpret_cast<const char* const*>(value)
                 );
+                break;
             case IB_FTYPE_BYTESTR: {
                 // Const cast, but then immeidately store as const.
                 const ByteString valuepp(
-                    const_cast<ib_bytestr_t*>(
-                        reinterpret_cast<const ib_bytestr_t*>(value)
+                    *const_cast<ib_bytestr_t**>(
+                        reinterpret_cast<const ib_bytestr_t* const*>(value)
                     )
                 );
                 Internal::data_to_value<Field::byte_string_set_t>(cbdata)(
@@ -263,6 +266,7 @@ ib_status_t field_dynamic_set(
                     carg, arg_length,
                     valuepp
                 );
+                break;
             }
             default:
                 BOOST_THROW_EXCEPTION(
@@ -679,7 +683,11 @@ void Field::set_null_string(
 ) const
 {
     Internal::check_type(NULL_STRING, type());
-    Internal::set_value(ib(), value, arg, arg_length);
+    Internal::set_value(
+        ib(),
+        reinterpret_cast<const void*>(&value),
+        arg, arg_length
+    );
 }
 
 void Field::set_byte_string(ConstByteString value) const
@@ -700,7 +708,8 @@ void Field::set_byte_string(
 ) const
 {
     Internal::check_type(BYTE_STRING, type());
-    Internal::set_value(ib(), value.ib(), arg, arg_length);
+    const ib_bytestr_t* ib_bs = value.ib();
+    Internal::set_value(ib(), &ib_bs, arg, arg_length);
 }
 
 void Field::set_static_number(int64_t value) const
