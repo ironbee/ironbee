@@ -388,7 +388,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
     ib_data_get(tx->dpi, svdata->name, &cur);
 
     /* Expand the string */
-    if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) { 
+    if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) {
         assert(svdata->type == IB_FTYPE_BYTESTR);
 
         rc = ib_data_expand_str_ex(
