@@ -30,10 +30,9 @@
 #ifndef __IBPP__BYTE_STRING__
 #define __IBPP__BYTE_STRING__
 
+#include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>
-
-#include <boost/operators.hpp>
 
 #include <ostream>
 
@@ -45,26 +44,29 @@ namespace IronBee {
 class ByteString;
 
 /**
-* Const Byte String; equivalent to a const pointer to ib_bytestr_t.
-*
-* See ByteString for discussion of byte strings.
-*
-* @sa ByteString
-* @sa ironbeepp
-* @sa ib_bytestr_t
-**/
+ * Const Byte String; equivalent to a const pointer to ib_bytestr_t.
+ *
+ * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
+ *
+ * See ByteString for discussion of byte strings.
+ *
+ * @sa ByteString
+ * @sa ironbeepp
+ * @sa ib_bytestr_t
+ * @nosubgrouping
+ **/
 class ConstByteString :
-    boost::less_than_comparable<ConstByteString>,
-    boost::equality_comparable<ConstByteString>
+    public CommonSemantics<ConstByteString>
 {
 public:
-   /**
-    * Construct singular ConstByteString.
-    *
-    * All behavior of a singular ConstByteString is undefined except for
-    * assignment, copying, comparison, and evaluate-as-bool.
-    **/
-    ConstByteString();    
+    /**
+     * Construct singular ConstByteString.
+     *
+     * All behavior of a singular ConstByteString is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    ConstByteString();
 
     /**
      * @name Creation
@@ -73,8 +75,8 @@ public:
      * These routines create new byte strings.  The byte strings are destroyed
      * when the corresponding memory pool is cleared or destroyed.
      **/
-    /// @{        
-           
+    /// @{
+
     /**
      * Create a (read-only) alias of @c this.
      *
@@ -104,13 +106,13 @@ public:
     ByteString dup(MemoryPool pool) const;
     //! As above, but use same memory pool.
     ByteString dup() const;
-    /// @} 
-    
+    /// @}
+
     /**
      * @name Queries
      * Query aspects of the byte string.
      **/
-    /// @{
+    ///@{
     /**
      * Create string version.
      *
@@ -119,14 +121,14 @@ public:
      * @returns string with same content as @c this.
      **/
     std::string to_s() const;
-    
+
     /**
      * Memory pool.
      *
      * @returns Memory pool used.
      **/
     MemoryPool memory_pool() const;
-    
+
     /**
      * Is read-only?
      *
@@ -138,7 +140,7 @@ public:
      * @returns true iff read-only.
      **/
     bool read_only() const;
-    
+
     /**
      * Length of data.
      *
@@ -149,7 +151,7 @@ public:
      * @returns Length of data.
      **/
     size_t length() const;
-    
+
     /**
      * Amount of memory allocated for data.
      *
@@ -160,7 +162,7 @@ public:
      * @returns Size of data allocation.
      **/
     size_t size() const;
-    
+
     /**
      * Underlying data.
      *
@@ -172,8 +174,8 @@ public:
      * @returns Pointer to data or, possibly, NULL if zero-length.
      **/
     const char* const_data() const;
-    ///@} 
-     
+    ///@}
+
     /**
      * @name Algorithms
      * Algorithms involving the byte string.
@@ -196,7 +198,7 @@ public:
     int index_of(const std::string& s) const;
 
     /// @}
-     
+
     /**
      * @name C Interoperability
      * Methods to access underlying C types.
@@ -216,46 +218,8 @@ public:
 
     ///@}
 
-    /// @cond Internal
-    typedef void (*unspecified_bool_type)(ConstByteString***);
-    /// @endcond
-    /**
-     * Is not singular?
-     *
-     * This operator returns a type that converts to bool in appropriate
-     * circumstances and is true iff this object is not singular.
-     *
-     * @returns true iff is not singular.
-     **/
-    operator unspecified_bool_type() const;
-
-    /**
-     * Equality operator.  Do they refer to the same underlying module.
-     *
-     * Two ByteStrings are considered equal if they refer to the same
-     * underlying ib_bytestr_t.
-     *
-     * @param[in] other ByteString to compare to.
-     * @return true iff @c other.ib() == ib().
-     **/
-    bool operator==(const ConstByteString& other) const;
-
-    /**
-     * Less than operator.
-     *
-     * ByteStrings are totally ordered with all singular ByteStrings as the
-     * minimal element.
-     *
-     * @param[in] other ByteString to compare to.
-     * @return true iff this and other are singular or  ib() < @c other.ib().
-     **/
-    bool operator<(const ConstByteString& other) const;
-     
 private:
     const ib_bytestr_t* m_ib;
-    
-    // Used for unspecified_bool_type.
-    static void unspecified_bool(ConstByteString***) {};
 };
 
 /**
@@ -291,21 +255,23 @@ private:
  *
  * @sa ironbeepp
  * @sa ib_bytestr_t
+ * @sa ConstByteString
+ * @nosubgrouping
  **/
 class ByteString :
-    public ConstByteString
+    public ConstByteString // Slicing is intentional; see apidoc.hpp
 {
-public:    
+public:
     /**
      * Remove the constness of a ConstByteString.
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
-     * 
+     *
      * @param[in] bs ConstByteString to remove const from.
      * @returns ByteString pointing to same underlying byte string as @a bs.
      **/
     static ByteString remove_const(ConstByteString bs);
-    
+
     /**
      * Construct singular ByteString.
      *
@@ -432,7 +398,7 @@ public:
         MemoryPool         pool,
         const std::string& s
     );
-     
+
     /// @}
 
     /**
@@ -448,7 +414,7 @@ public:
      * - Pointer to data, otherwise.
      **/
     char* data() const;
- 
+
     /**
      * @name Mutators
      * Change the byte string.

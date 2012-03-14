@@ -120,29 +120,6 @@ int ConstByteString::index_of(const std::string& s) const
     return index_of(s.c_str());
 }
 
-bool ConstByteString::operator==(const ConstByteString& other) const
-{
-    return (! *this && ! other) || (*this && other && ib() == other.ib());
-}
-
-bool ConstByteString::operator<(const ConstByteString& other) const
-{
-    if (! *this) {
-        return other;
-    }
-    else if (! other) {
-        return this;
-    }
-    else {
-        return ib() < other.ib();
-    }
-}
-
-ConstByteString::operator unspecified_bool_type() const
-{
-    return m_ib ? unspecified_bool : 0;
-}
-
 /* ByteString */
 
 ByteString::ByteString() :

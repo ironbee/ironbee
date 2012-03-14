@@ -122,38 +122,38 @@
  * better to think of the relationship as being between pointers and classes.
  * E.g., @c ib_module_t* and IronBee::Module.
  *
- * These semantics have a const complication analogous to consts with 
+ * These semantics have a const complication analogous to consts with
  * pointers.  A @c const @c ib_module_t* prevents the pointer-to object from
  * being changed, not the pointer.  However, a @c const Module prevents the
  * Module (a "pointer") from being changed, not the underlying ib_module_t.
  * To accomodate this, all such C++ classes come in Const (ConstModule) and
  * Non-Const (Module) versions.  A non-Const object has all the functionality
- * of the Const object (and more).  A non-Const object can also be used 
+ * of the Const object (and more).  A non-Const object can also be used
  * anywhere a Const object can (see remarks below).
  *
  * As an analogy to @c const_cast, each non-Const class defines a static
  * remove_const() method to turn a Const object into a non-Const object.
  *
- * The following table summarizes const semantics with the example of 
+ * The following table summarizes const semantics with the example of
  * Module:
  *
  * <table>
  * <tr>
- *   <th>Type</th> 
- *   <th>Analogous C Type</th> 
- *   <th>Underlying Object</th> 
+ *   <th>Type</th>
+ *   <th>Analogous C Type</th>
+ *   <th>Underlying Object</th>
  *   <th>"Pointer"</th>
  * </tr>
  * <tr>
- *   <td>@c Module</td> 
- *   <td>ib_module_t *</td> 
- *   <td>Mutable</td> 
+ *   <td>@c Module</td>
+ *   <td>ib_module_t *</td>
  *   <td>Mutable</td>
- * </tr> 
+ *   <td>Mutable</td>
+ * </tr>
  * <tr>
  *   <td>@c @c const Module</td>
  *   <td>ib_module_t * @c const</td>
- *   <td>Mutable</td> 
+ *   <td>Mutable</td>
  *   <td>Immutable</td>
  * </tr>
  * <tr>
@@ -185,14 +185,18 @@
  * bool, copying, comparison, and assignment.  Singular objects are equal
  * to each other and less than all other objects.
  *
+ * All pointer like classes support operators <, >, <=, >=, ==, and != as well
+ * as evaluation as a boolean for singularity.  This functionality is provided
+ * via the CommonSemantics template defined in common_semantics.hpp.
+ *
  * @remark Developers: The Const and non-const classes make use of public
- * inheritance, i.e., the non-Const class inherits from the Const class.  
+ * inheritance, i.e., the non-Const class inherits from the Const class.
  * Thus, e.g., Module @e is-a ConstModule.  However, the Const class defines
  * no virtual functions.  This works because the non-Const class overrides no
  * const behavior and because the slicing that occurs when copying a non-Const
  * to a Const is acceptable: the Const version has no need of the data of the
  * non-Const version.  This pattern allows shared code, no runtime cost, and
- * natural interoperability between Const and non-Const classes.  It is, 
+ * natural interoperability between Const and non-Const classes.  It is,
  * however, specific to the circumstances and inappropriate in most other
  * circumstances.
  *
