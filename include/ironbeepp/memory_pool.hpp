@@ -27,8 +27,9 @@
 #ifndef __IBPP__MEMORY_POOL__
 #define __IBPP__MEMORY_POOL__
 
+#include <ironbeepp/common_semantics.hpp>
+
 #include <boost/function.hpp>
-#include <boost/operators.hpp>
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
@@ -46,7 +47,65 @@ typedef struct ib_mpool_t ib_mpool_t;
 namespace IronBee {
 
 /**
+ * Const Memory Pool; equivalent to a const pointer to ib_mpool_t.
+ *
+ * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
+ *
+ * See MemoryPool for discussion of memory pools.
+ *
+ * @sa MemoryPool
+ * @sa ironbeepp
+ * @sa ib_bytestr_t
+ * @nosubgrouping
+ **/
+class ConstMemoryPool :
+    public CommonSemantics<ConstMemoryPool>
+{
+public:
+    /**
+     * Construct singular ConstMemoryPool.
+     *
+     * All behavior of a singular ConstMemoryPool is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    ConstMemoryPool();
+
+    /**
+     * The name of the memory pool.
+     *
+     * @returns Name or NULL if no name is set.
+     **/
+    const char* name() const;
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! Non-const ib_mpool_t accessor.
+    // Intentionally inlined.
+    const ib_mpool_t* ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct MemoryPools from ib_mpool_t.
+    explicit
+    ConstMemoryPool(const ib_mpool_t* ib_mpool);
+
+    ///@}
+
+private:
+    const ib_mpool_t* m_ib;
+};
+
+/**
  * Memory pool; equivalent to ib_mpool_t.
+ *
+ * Memory Pools can be treated as ConstMemoryPools.  See @ref ironbeepp for
+ * details on IronBee++ object semantics.
  *
  * IronBee makes frequent use of memory pools to manage memory and object
  * lifetime.  The engine, each transaction, context, etc. all have associated
@@ -74,12 +133,27 @@ namespace IronBee {
  * conforming standard allocator based on MemoryPool.
  *
  * If you want RAII semantics for creating memory pools, see ScopedMemoryPool.
+ *
+ * @sa ironbeepp
+ * @sa ib_mpool_t
+ * @sa ConstMemoryPool
+ * @nosubgrouping
  **/
 class MemoryPool :
-    boost::less_than_comparable<MemoryPool>,
-    boost::equality_comparable<MemoryPool>
+    public ConstMemoryPool // Slicing is intentional; see apidoc.hpp
 {
 public:
+    /**
+     * Remove the constness of a ConstMemoryPool.
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     *
+     * @param[in] const_pool ConstMemoryPool to remove const from.
+     * @returns MemoryPool pointing to same underlying memory pool as
+     *          @a const_pool.
+     **/
+    static MemoryPool remove_const(const ConstMemoryPool& const_pool);
+
     /**
      * Construct singular MemoryPool.
      *
@@ -138,7 +212,7 @@ public:
      **/
     static MemoryPool create(
         const char* name,
-        MemoryPool& parent,
+        MemoryPool  parent,
         size_t      size = 0
     );
 
@@ -150,7 +224,7 @@ public:
      * @returns Memory pool.
      * @throw Appropriate IronBee++ exception on failure.
      **/
-    MemoryPool create_subpool();
+    MemoryPool create_subpool() const;
 
     /**
      * Create a subpool that will be destroyed when this is destroyed.
@@ -164,15 +238,8 @@ public:
     MemoryPool create_subpool(
         const char* subpool_name,
         size_t      size = 0
-    );
+    ) const;
     //@}
-
-    /**
-     * The name of the memory pool.
-     *
-     * @returns Name or NULL if no name is set.
-     **/
-    const char* name() const;
 
     /**
      * @name Allocation
@@ -192,7 +259,7 @@ public:
      * @throw ealloc on failure to allocate.
      **/
     template <typename T>
-    T* allocate(size_t number);
+    T* allocate(size_t number) const;
 
     /**
      * Allocate @a size bytes of memory.
@@ -201,7 +268,7 @@ public:
      * @returns Pointer to allocated memory.
      * @throw ealloc on failure to allocate.
      **/
-    void* alloc(size_t size);
+    void* alloc(size_t size) const;
 
     /**
      * Allocate @a count * @a size bytes of memory and sets to 0.
@@ -211,7 +278,7 @@ public:
      * @returns Pointer to allocated memory.
      * @throw ealloc on failure to allocate.
      **/
-    void* calloc(size_t count, size_t size);
+    void* calloc(size_t count, size_t size) const;
 
     /**
      * Allocate @a size bytes and set to 0.
@@ -219,18 +286,18 @@ public:
      * @returns Pointer to allocated memory.
      * @throw ealloc on failure to allocate.
      **/
-    void* calloc(size_t size);
+    void* calloc(size_t size) const;
     //@}
 
     /**
      * Deallocate all memory associated with this pool and all child pools.
      **/
-    void clear();
+    void clear() const;
 
     /**
      * Destroy this pool and all child pools.
      **/
-    void destroy();
+    void destroy() const;
 
     //! Type of a cleanup handler.
     typedef boost::function<void()> cleanup_t;
@@ -240,42 +307,7 @@ public:
      *
      * @param[in] f Function to call on destruction.
      **/
-    void register_cleanup(cleanup_t f);
-
-    /// @cond Internal
-    typedef void (*unspecified_bool_type)(MemoryPool***);
-    /// @endcond
-    /**
-     * Is not singular?
-     *
-     * This operator returns a type that converts to bool in appropriate
-     * circumstances and is true iff this object is not singular.
-     *
-     * @returns true iff is not singular.
-     **/
-    operator unspecified_bool_type() const;
-
-    /**
-     * Equality operator.  Do they refer to the same underlying module.
-     *
-     * Two MemoryPools are considered equal if they refer to the same
-     * underlying ib_mpool_t.
-     *
-     * @param[in] other MemoryPools to compare to.
-     * @return true iff other.ib() == ib().
-     **/
-    bool operator==(const MemoryPool& other) const;
-
-    /**
-     * Less than operator.
-     *
-     * MemoryPools are totally ordered with all singular MemoryPools as the
-     * minimal element.
-     *
-     * @param[in] other MemoryPools to compare to.
-     * @return true iff this and other are singular or  ib() < other.ib().
-     **/
-    bool operator<(const MemoryPool& other) const;
+    void register_cleanup(cleanup_t f) const;
 
     /**
      * @name C Interoperability
@@ -284,10 +316,11 @@ public:
     ///@{
 
     //! Non-const ib_mpool_t accessor.
-    ib_mpool_t*       ib();
-
-    //! Const ib_mpool_t accessor.
-    const ib_mpool_t* ib() const;
+    // Intentionally inlined.
+    ib_mpool_t* ib() const
+    {
+        return m_ib;
+    }
 
     //! Construct MemoryPools from ib_mpool_t.
     explicit
@@ -297,9 +330,6 @@ public:
 
 private:
     ib_mpool_t* m_ib;
-
-    // Used for unspecified_bool_type.
-    static void unspecified_bool(MemoryPool***) {};
 };
 
 /**
@@ -352,11 +382,11 @@ private:
 };
 
 //! Ostream output for MemoryPool.
-std::ostream& operator<<(std::ostream& o, const MemoryPool& pool);
+std::ostream& operator<<(std::ostream& o, const ConstMemoryPool& pool);
 
 // Template Definition
 template <typename T>
-T* MemoryPool::allocate(size_t number)
+T* MemoryPool::allocate(size_t number) const
 {
     return static_cast<T*>(alloc(number * sizeof(T)));
 }

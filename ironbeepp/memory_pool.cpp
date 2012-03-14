@@ -89,6 +89,34 @@ MemoryPool create_memory_pool(
 }
 } // Internal
 
+/* ConstMemoryPool */
+
+ConstMemoryPool::ConstMemoryPool() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ConstMemoryPool::ConstMemoryPool(const ib_mpool_t* ib_mpool) :
+    m_ib(ib_mpool)
+{
+    // nop
+}
+
+const char* ConstMemoryPool::name() const
+{
+    return ib_mpool_name(ib());
+}
+
+/* MemoryPool */
+
+// See api documentation for discussion of const_cast.
+
+MemoryPool MemoryPool::remove_const(const ConstMemoryPool& cmp)
+{
+    return MemoryPool(const_cast<ib_mpool_t*>(cmp.ib()));
+}
+
 MemoryPool::MemoryPool() :
     m_ib(NULL)
 {
@@ -110,7 +138,7 @@ MemoryPool MemoryPool::create(
 
 MemoryPool MemoryPool::create(
     const char* name,
-    MemoryPool& parent,
+    MemoryPool  parent,
     size_t      size
 )
 {
@@ -125,7 +153,7 @@ MemoryPool MemoryPool::create(
     return Internal::create_memory_pool(name, parent.ib(), size);
 }
 
-MemoryPool MemoryPool::create_subpool()
+MemoryPool MemoryPool::create_subpool() const
 {
     return create("SubPool", *this);
 }
@@ -133,17 +161,13 @@ MemoryPool MemoryPool::create_subpool()
 MemoryPool MemoryPool::create_subpool(
     const char* subpool_name,
     size_t      size
-)
+) const
 {
     return create(subpool_name, *this, size);
 }
 
-const char* MemoryPool::name() const
-{
-    return ib_mpool_name(ib());
-}
 
-void* MemoryPool::alloc(size_t size)
+void* MemoryPool::alloc(size_t size) const
 {
     void* memory = ib_mpool_alloc(ib(), size);
     if (! memory) {
@@ -156,7 +180,7 @@ void* MemoryPool::alloc(size_t size)
     return memory;
 }
 
-void* MemoryPool::calloc(size_t count, size_t size)
+void* MemoryPool::calloc(size_t count, size_t size) const
 {
     void* memory = ib_mpool_calloc(ib(), count, size);
     if (! memory) {
@@ -169,22 +193,22 @@ void* MemoryPool::calloc(size_t count, size_t size)
     return memory;
 }
 
-void* MemoryPool::calloc(size_t size)
+void* MemoryPool::calloc(size_t size) const
 {
     return calloc(1, size);
 }
 
-void MemoryPool::clear()
+void MemoryPool::clear() const
 {
     ib_mpool_clear(ib());
 }
 
-void MemoryPool::destroy()
+void MemoryPool::destroy() const
 {
     ib_mpool_destroy(ib());
 }
 
-void MemoryPool::register_cleanup(cleanup_t f)
+void MemoryPool::register_cleanup(cleanup_t f) const
 {
     // We can't use this as the memory pool for value_to_data because then
     // the callback would be deleted before it is called.  The callback
@@ -200,48 +224,27 @@ void MemoryPool::register_cleanup(cleanup_t f)
     Internal::throw_if_error(rc);
 }
 
-bool MemoryPool::operator==(const MemoryPool& other) const
-{
-    return (! *this && ! other) || (ib() == other.ib());
-}
-
-bool MemoryPool::operator<(const MemoryPool& other) const
-{
-    if (! *this) {
-        return ! other;
-    }
-    else {
-        return ib() < other.ib();
-    }
-}
-
-ib_mpool_t* MemoryPool::ib()
-{
-    return m_ib;
-}
-
-const ib_mpool_t* MemoryPool::ib() const
-{
-    return m_ib;
-}
-
 MemoryPool::MemoryPool(ib_mpool_t* ib_mpool) :
+    ConstMemoryPool(ib_mpool),
     m_ib(ib_mpool)
 {
     // nop
 }
 
-MemoryPool::operator unspecified_bool_type() const
-{
-    return m_ib ? unspecified_bool : 0;
-}
+/* Global */
 
-std::ostream& operator<<(std::ostream& o, const MemoryPool& memory_pool)
+std::ostream& operator<<(std::ostream& o, const ConstMemoryPool& memory_pool)
 {
-    o << "IronBee::MemoryPool[" << memory_pool.name() << "]";
-
+    if (! memory_pool) {
+        o << "IronBee::MemoryPool[!singular!]";
+    }
+    else {
+        o << "IronBee::MemoryPool[" << memory_pool.name() << "]";
+    }
     return o;
 }
+
+/* ScopedMemoryPool */
 
 ScopedMemoryPool::ScopedMemoryPool() :
     m_pool(MemoryPool::create("ScopedMemoryPool"))

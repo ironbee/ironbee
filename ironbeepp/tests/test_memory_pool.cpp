@@ -176,3 +176,16 @@ TEST_F(TestMemoryPool, scoped)
     }
     EXPECT_TRUE(called_flag);
 }
+
+TEST_F(TestMemoryPool, Const)
+{
+    IronBee::MemoryPool m = IronBee::MemoryPool::create();
+    IronBee::ConstMemoryPool cm = m;
+
+    EXPECT_EQ(cm, m);
+
+    IronBee::MemoryPool m2 = IronBee::MemoryPool::remove_const(cm);
+
+    EXPECT_EQ(cm, m2);
+    EXPECT_EQ(m, m2);
+}
