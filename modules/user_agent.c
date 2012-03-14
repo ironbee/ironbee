@@ -292,6 +292,8 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
     const modua_match_rule_t *rule;
     unsigned int ruleno;
 
+    assert(modua_match_ruleset != NULL);
+
     /* Walk through the rules; the first to match "wins" */
     for (ruleno = 0, rule = modua_match_ruleset->rules;
          ruleno < modua_match_ruleset->num_rules;
@@ -659,6 +661,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     modua_match_ruleset = modua_ruleset_get( );
     if (modua_match_ruleset == NULL) {
         ib_log_error(ib, 4, "Failed to get user agent rule list: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_debug(ib, 4,
                  "Found %d match rules",
