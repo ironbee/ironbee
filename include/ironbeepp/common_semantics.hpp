@@ -22,7 +22,7 @@
  * This file defines the CommonSemantics template that provides common
  * pointer-like semantics for most IronBee++ types.
  *
- * @sa CommmonSemantics
+ * @sa CommonSemantics
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

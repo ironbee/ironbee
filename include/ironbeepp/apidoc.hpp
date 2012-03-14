@@ -126,7 +126,7 @@
  * pointers.  A @c const @c ib_module_t* prevents the pointer-to object from
  * being changed, not the pointer.  However, a @c const Module prevents the
  * Module (a "pointer") from being changed, not the underlying ib_module_t.
- * To accomodate this, all such C++ classes come in Const (ConstModule) and
+ * To accommodate this, all such C++ classes come in Const (ConstModule) and
  * Non-Const (Module) versions.  A non-Const object has all the functionality
  * of the Const object (and more).  A non-Const object can also be used
  * anywhere a Const object can (see remarks below).

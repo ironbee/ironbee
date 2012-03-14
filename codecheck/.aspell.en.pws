@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1087 
+personal_ws-1.1 en 1103 
 cfg
 api
 IronBee
@@ -22,6 +22,7 @@ tokenize
 HandleConnect
 bol
 cplusplus
+ConstMemoryPools
 BlackBerry
 abcabcabc
 pagesize
@@ -69,6 +70,7 @@ eof
 NULLed
 bing
 EOH
+ConstModule
 dso
 plaintext
 eol
@@ -272,6 +274,7 @@ nIncoming
 modua
 msg
 pcm
+ConstByteStrings
 pcp
 lwp
 NULLs
@@ -418,6 +421,7 @@ WAP
 metatypes
 cfgmap
 CfgMap
+CRTP
 undef
 trimRight
 matcher
@@ -485,6 +489,7 @@ semc
 Metafunction
 IronBeeEngineMatcher
 UnitTesting
+ConstFields
 subkey
 aa
 ipmatch
@@ -517,6 +522,7 @@ cp
 RawGenerator
 fc
 toplevel
+ConstModules
 fd
 xfilename
 uZardWeb
@@ -602,6 +608,7 @@ rl
 createn
 Shsf
 abcdefABCDEF
+td
 PocACSigPostTx
 strstr
 IronBeeBuild
@@ -610,6 +617,7 @@ Baiduspider
 UA
 uastring
 luarule
+th
 UD
 unparsed
 va
@@ -635,6 +643,7 @@ param
 zd
 VX
 podness
+ConstField
 slen
 sive
 setflag
@@ -768,6 +777,7 @@ onEventResponseBody
 ascii
 postprocess
 abcabcabcabc
+ConstByteString
 LuaLoadModule
 getTable
 TestValue
@@ -831,6 +841,7 @@ MyTable
 apache
 IronBeeCore
 noKey
+consts
 filehandles
 IronBeeRelease
 ETIMEDOUT
@@ -845,6 +856,7 @@ bytestr's
 ipad
 wildcards
 randomizers
+MyClass
 init
 nextents
 TSIOBufferSizedCreate
@@ -940,6 +952,7 @@ aboundex
 aabc
 automata
 AuditLogBaseDir
+SubclassType
 gcdata
 KLen
 IronBeeUtilStream
@@ -982,6 +995,7 @@ lookup
 bitmask
 nAdditionally
 preload
+CommonSemantics
 cfgparser
 uTorrent
 pflags
@@ -990,6 +1004,7 @@ SiteId
 InkAPI
 LuaPackagePath
 json
+truthy
 pocacsig
 PocACSig
 Hashtable
@@ -1079,6 +1094,7 @@ NetFront
 unescape
 IronBeeUtilCfgMap
 async
+ConstMemoryPool
 binget
 BinGet
 firefox

@@ -446,7 +446,7 @@ void DLL_PUBLIC ib_field_dyn_register_set(ib_field_t *f,
  * Helper function for returning numbers.
  *
  * IB_FTYPE_NUM values need to be returned as ib_num_t*, i.e., pointer to
- * values.  This can be problemating for dynamic getters that may have
+ * values.  This can be problematic for dynamic getters that may have
  * calculated that value on the fly.  This helper function stores the
  * result in the field (without making it not dynamic) and returns a pointer
  * to that value.  E.g.,
