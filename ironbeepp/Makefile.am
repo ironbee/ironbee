@@ -13,5 +13,6 @@ libibpp_la_SOURCES = \
     module_delegate.cpp \
     throw.cpp \
     memory_pool.cpp \
-    byte_string.cpp
+    byte_string.cpp \
+    field.cpp
 
