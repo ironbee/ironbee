@@ -459,7 +459,7 @@ void DLL_PUBLIC ib_field_dyn_register_set(ib_field_t *f,
  * semantically change the field (it remains dynamic).
  *
  * @sa ib_field_dyn_return_unum()
- * @param[in] field Field in question.
+ * @param[in] f     Field in question.
  * @param[in] value Value to return.
  */
 void *ib_field_dyn_return_num(const ib_field_t *f, ib_num_t value);
@@ -468,7 +468,7 @@ void *ib_field_dyn_return_num(const ib_field_t *f, ib_num_t value);
  * As ib_field_dyn_return_num(), but for unum.
  *
  * @sa ib_field_dyn_return_num()
- * @param[in] field Field in question.
+ * @param[in] f     Field in question.
  * @param[in] value Value to return.
  */
 void *ib_field_dyn_return_unum(const ib_field_t *f, ib_unum_t value);
