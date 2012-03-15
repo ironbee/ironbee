@@ -87,7 +87,7 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf);
  *
  * @returns Status code
  */
-ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format);
+ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format);
 /** @} IronBeeUtilLogformat */
 
 

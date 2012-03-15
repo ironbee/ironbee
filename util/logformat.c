@@ -57,7 +57,7 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf) {
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_logformat_set(ib_logformat_t *lf, char *format) {
+ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format) {
     IB_FTRACE_INIT();
     ib_mpool_t *mp = lf->mp;
     char literal[IB_LOGFORMAT_MAXLINELEN + 1];
