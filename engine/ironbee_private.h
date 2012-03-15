@@ -222,6 +222,18 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
 
 /**
  * @internal
+ * Initialize the core transformations.
+ *
+ * Called when the rule engine is loaded, registers the core transformations.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ */
+ib_status_t ib_core_transformations_init(ib_engine_t *ib,
+                                         ib_module_t *mod);
+
+/**
+ * @internal
  * Initialize the core operators.
  *
  * Called when the rule engine is loaded, registers the core operators.

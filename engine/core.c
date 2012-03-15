@@ -3843,142 +3843,6 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
 }
 
 
-/* -- Transformations -- */
-
-/**
- * @internal
- * Simple ASCII lowercase function.
- *
- * @note For non-ASCII (utf8, etc) you should use case folding.
- */
-static ib_status_t core_tfn_lowercase(void *fndata,
-                                      ib_mpool_t *pool,
-                                      uint8_t *data_in,
-                                      size_t dlen_in,
-                                      uint8_t **data_out,
-                                      size_t *dlen_out,
-                                      ib_flags_t *pflags)
-{
-    size_t i = 0;
-    int modified = 0;
-
-    /* This is an in-place transformation which does not change
-     * the data length.
-     */
-    *data_out = data_in;
-    *dlen_out = dlen_in;
-    (*pflags) |= IB_TFN_FINPLACE;
-
-    while(i < dlen_in) {
-        int c = data_in[i];
-        (*data_out)[i] = tolower(c);
-        if (c != (*data_out)[i]) {
-            modified++;
-        }
-        i++;
-    }
-
-    if (modified != 0) {
-        (*pflags) |= IB_TFN_FMODIFIED;
-    }
-
-    return IB_OK;
-}
-
-/**
- * @internal
- * Simple ASCII trimLeft function.
- */
-static ib_status_t core_tfn_trimleft(void *fndata,
-                                     ib_mpool_t *pool,
-                                     uint8_t *data_in,
-                                     size_t dlen_in,
-                                     uint8_t **data_out,
-                                     size_t *dlen_out,
-                                     ib_flags_t *pflags)
-{
-    size_t i = 0;
-
-    /* This is an in-place transformation which may change
-     * the data length.
-     */
-    (*pflags) |= IB_TFN_FINPLACE;
-
-    while(i < dlen_in) {
-        if (isspace(data_in[i]) == 0) {
-            *data_out = data_in + i;
-            *dlen_out = dlen_in - i;
-            (*pflags) |= IB_TFN_FMODIFIED;
-            return IB_OK;
-        }
-        i++;
-    }
-    *dlen_out = 0;
-    *data_out = data_in;
-
-    return IB_OK;
-}
-
-/**
- * @internal
- * Simple ASCII trimRight function.
- */
-static ib_status_t core_tfn_trimright(void *fndata,
-                                      ib_mpool_t *pool,
-                                      uint8_t *data_in,
-                                      size_t dlen_in,
-                                      uint8_t **data_out,
-                                      size_t *dlen_out,
-                                      ib_flags_t *pflags)
-{
-    size_t i = dlen_in - 1;
-
-    /* This is an in-place transformation which may change
-     * the data length.
-     */
-    *data_out = data_in;
-    (*pflags) |= IB_TFN_FINPLACE;
-
-    while(i > 0) {
-        if (isspace(data_in[i]) == 0) {
-            (*pflags) |= IB_TFN_FMODIFIED;
-            (*data_out)[*dlen_out] = '\0';
-            *dlen_out = i + 1;
-            return IB_OK;
-        }
-        i--;
-    }
-    *dlen_out = 0;
-
-    return IB_OK;
-}
-
-/**
- * @internal
- * Simple ASCII trim function.
- */
-static ib_status_t core_tfn_trim(void *fndata,
-                                 ib_mpool_t *pool,
-                                 uint8_t *data_in,
-                                 size_t dlen_in,
-                                 uint8_t **data_out,
-                                 size_t *dlen_out,
-                                 ib_flags_t *pflags)
-{
-    ib_status_t rc;
-
-    /* Just call the other trim functions. */
-    rc = core_tfn_trimleft(fndata, pool, data_in, dlen_in, data_out, dlen_out,
-                           pflags);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = core_tfn_trimleft(fndata, pool, *data_out, *dlen_out, data_out, dlen_out,
-                           pflags);
-    return rc;
-}
-
-
 /* -- Core Data Processors -- */
 
 /**
@@ -5315,12 +5179,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->module_base_path = X_MODULE_BASE_PATH;
     corecfg->rule_base_path = X_RULE_BASE_PATH;
 
-    /* Define transformations. */
-    ib_tfn_create(ib, "lowercase", core_tfn_lowercase, NULL, NULL);
-    ib_tfn_create(ib, "trimLeft", core_tfn_trimleft, NULL, NULL);
-    ib_tfn_create(ib, "trimRight", core_tfn_trimright, NULL, NULL);
-    ib_tfn_create(ib, "trim", core_tfn_trim, NULL, NULL);
-
     /* Define the logger provider API. */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGGER,
                             logger_register, &logger_api);
@@ -5519,6 +5377,13 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_rule_engine_init(ib, m);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to initialize rule engine: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the core operators */
+    rc = ib_core_transformations_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 0, "Failed to initialize core operators: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
