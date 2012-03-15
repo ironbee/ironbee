@@ -630,6 +630,10 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
+    /* Non const struct we will build and then assign to
+     * corecfg->auditlog_index_hp. */
+    ib_logformat_t *auditlog_index_hp;
+
     assert(NULL != lpi);
     assert(NULL != log);
     assert(NULL != log->ctx);
@@ -678,21 +682,23 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 
     /* Set the Audit Log index format */
     if (corecfg->auditlog_index_hp == NULL) {
-        rc = ib_logformat_create(log->ib->mp, &corecfg->auditlog_index_hp);
+        rc = ib_logformat_create(log->ib->mp, &auditlog_index_hp);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
         if (corecfg->auditlog_index_fmt != NULL) {
-            rc = ib_logformat_set(corecfg->auditlog_index_hp,
+            rc = ib_logformat_set(auditlog_index_hp,
                                   corecfg->auditlog_index_fmt);
         }
         else {
-            rc = ib_logformat_set(corecfg->auditlog_index_hp,
-                                  IB_LOGFORMAT_DEFAULT);
+            rc = ib_logformat_set(auditlog_index_hp, IB_LOGFORMAT_DEFAULT);
         }
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
+
+        /* Commit built struct. */
+        corecfg->auditlog_index_hp = auditlog_index_hp;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -809,7 +815,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     ib_tx_t *tx = log->tx;
     ib_conn_t *conn = tx->conn;
     ib_site_t *site = ib_context_site_get(log->ctx);
-    ib_logformat_t *lf;
+    const ib_logformat_t *lf;
     ib_status_t rc;
     char *ptr = line;
     char *tstamp = NULL;
