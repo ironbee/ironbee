@@ -79,7 +79,7 @@ struct ib_core_cfg_t {
     ib_num_t         auditlog_fmode;    /**< Audit log file create mode */
     ib_num_t         auditlog_parts;    /**< Audit log parts */
     const char      *auditlog_index_fmt;/**< Audit log index format string */
-    const ib_logformat_t  *auditlog_index_hp; /**< Audit log index format helper */
+    const ib_logformat_t *auditlog_index_hp; /**< Audit log index fmt hlpr */
     const char      *auditlog_dir;      /**< Audit log base directory */
     const char      *auditlog_sdir_fmt; /**< Audit log sub-directory format */
     const char      *audit;             /**< Active audit provider key */
