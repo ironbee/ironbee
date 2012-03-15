@@ -115,10 +115,10 @@ public:
     }
 
     /**
-     * Configure IronBee using the file <testName>.<testCase>.config.
+     * Configure IronBee using the file @e testName.@e testCase.config.
      *
      * This is done by using the GTest api to get the current test name
-     * and case and building the string <testName>.<testCase>.config and
+     * and case and building the string @e testName.@e testCase.config and
      * passing that to configureIronBee(string).
      *
      * @throws std::runtime_error(std::string) if any error occurs.
