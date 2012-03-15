@@ -2273,8 +2273,7 @@ ib_engine_t *ib_context_get_engine(ib_context_t *ctx)
 
 ib_status_t ib_context_init_cfg(ib_context_t *ctx,
                                 void *base,
-                                const ib_cfgmap_init_t *init,
-                                int usedefaults)
+                                const ib_cfgmap_init_t *init)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -2285,7 +2284,7 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    rc = ib_cfgmap_init(ctx->cfg, base, init, usedefaults);
+    rc = ib_cfgmap_init(ctx->cfg, base, init);
 
     IB_FTRACE_RET_STATUS(rc);
 }

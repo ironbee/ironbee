@@ -142,8 +142,7 @@ static ib_status_t ib_cfgmap_handle_set(
 
 ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                            void *base,
-                           const ib_cfgmap_init_t *init,
-                           int usedefaults)
+                           const ib_cfgmap_init_t *init)
 {
     IB_FTRACE_INIT();
     ib_cfgmap_init_t *rec = (ib_cfgmap_init_t *)init;
@@ -185,11 +184,6 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
             ib_util_log_debug(9, "INIT: %s type=%d base=%p offset=%d dlen=%d %p",
                               rec->name, rec->type, base,
                               (int)rec->offset, (int)rec->dlen, val);
-
-            /* Copy the default value if required. */
-            if (usedefaults) {
-                memcpy(val, &rec->defval, rec->dlen);
-            }
 
             /* Create a field with data that points to the base+offset. */
             rc = ib_field_createn(&f, cm->mp, rec->name, rec->type, val);

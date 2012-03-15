@@ -79,7 +79,9 @@ struct pocsig_cfg_t {
 };
 
 /* Instantiate a module global configuration. */
-static pocsig_cfg_t pocsig_global_cfg;
+static pocsig_cfg_t pocsig_global_cfg = {
+    0 /* trace */
+};
 
 
 /* -- Directive Handlers -- */
@@ -310,8 +312,7 @@ static IB_CFGMAP_INIT_STRUCTURE(pocsig_config_map) = {
         MODULE_NAME_STR ".trace",
         IB_FTYPE_NUM,
         pocsig_cfg_t,
-        trace,
-        0
+        trace
     ),
 
     /* End */

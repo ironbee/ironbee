@@ -121,11 +121,11 @@ struct modlua_runtime_t {
 
 /** Module Configuration Structure */
 struct modlua_cfg_t {
+    char               *pkg_path;
+    char               *pkg_cpath;
     ib_list_t          *lua_modules;
     ib_list_t          *event_reg[IB_STATE_EVENT_NUM + 1];
     lua_State          *Lconfig;
-    char               *pkg_path;
-    char               *pkg_cpath;
 };
 
 /** Lua Wrapper Callback Data Structure */
@@ -143,7 +143,10 @@ ib_void_fn_t modlua_config_wrapper(void);
 ib_config_cb_blkend_fn_t modlua_blkend_wrapper(void);
 
 /* Instantiate a module global configuration. */
-static modlua_cfg_t modlua_global_cfg;
+static modlua_cfg_t modlua_global_cfg = {
+    NULL, /* pkg_path */
+    NULL  /* pkg_cpath */
+};
 
 /* -- Lua Routines -- */
 
@@ -1785,15 +1788,13 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
         MODULE_NAME_STR ".pkg_path",
         IB_FTYPE_NULSTR,
         modlua_cfg_t,
-        pkg_path,
-        NULL
+        pkg_path
     ),
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".pkg_cpath",
         IB_FTYPE_NULSTR,
         modlua_cfg_t,
-        pkg_cpath,
-        NULL
+        pkg_cpath
     ),
 
     IB_CFGMAP_INIT_LAST

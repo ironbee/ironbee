@@ -62,7 +62,9 @@ typedef struct {
 } mpool_usage_t;
 
 /* Allocate our global configuration */
-static modtrace_config_t modtrace_global_config;
+static modtrace_config_t modtrace_global_config = {
+    "no" /* trace_mpools */
+};
 
 /**
  * @internal
@@ -663,8 +665,7 @@ static IB_CFGMAP_INIT_STRUCTURE(modtrace_config_map) = {
         MODULE_NAME_STR ".trace_mpools",
         IB_FTYPE_NULSTR,
         modtrace_config_t,
-        trace_mpools,
-        "no"
+        trace_mpools
     ),
     IB_CFGMAP_INIT_LAST
 };

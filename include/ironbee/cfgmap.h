@@ -122,7 +122,6 @@ struct ib_cfgmap_init_t {
     /* .. Or this.  Used if fn_get and fn_set are NULL */
     off_t                offset; /**< Field data offset within base */
     size_t               dlen;   /**< Field data length (<= uintptr_t) */
-    uintptr_t            defval; /**< Default value */
 };
 
 /**
@@ -150,16 +149,14 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  * @param type Configuration entry data type
  * @param basetype Type of structure holding values
  * @param field Field name in structure holding values
- * @param defval Default value of entry
  */
-#define IB_CFGMAP_INIT_ENTRY(name,type,basetype,field,defval) \
+#define IB_CFGMAP_INIT_ENTRY(name,type,basetype,field) \
     { \
         (name), \
         (type), \
         NULL, NULL, NULL, NULL, \
         offsetof(basetype, field), \
-        sizeof(((basetype*)(0))->field), \
-        (const uintptr_t)(defval) \
+        sizeof(((basetype*)(0))->field) \
     }
 
 /**
@@ -192,14 +189,12 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  * @param cm          Configuration map
  * @param base        Base address of the structure holding the values.
  * @param init        Configuration map initialization structure
- * @param usedefaults If true, use the map default values as base
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_init(ib_cfgmap_t *cm,
                                       void *base,
-                                      const ib_cfgmap_init_t *init,
-                                      int usedefaults);
+                                      const ib_cfgmap_init_t *init);
 
 /**
  * Set a configuration value.

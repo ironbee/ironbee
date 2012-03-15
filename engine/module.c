@@ -246,12 +246,12 @@ ib_status_t ib_module_register_context(ib_module_t *m,
                 } else {
                     memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
                 }
-                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init, 0);
+                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
             }
             else {
                 /* No parent context config, so use globals. */
                 memcpy(cfgdata->data, m->gcdata, m->gclen);
-                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init, 1);
+                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
             }
         }
         else {
@@ -269,7 +269,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
             } else {
                 memcpy(cfgdata->data, m->gcdata, m->gclen);
             }
-            ib_context_init_cfg(ctx, cfgdata->data, m->cm_init, 1);
+            ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
         }
     }
 

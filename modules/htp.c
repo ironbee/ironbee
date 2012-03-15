@@ -77,11 +77,13 @@ struct modhtp_context_t {
 
 /** Module Configuration Structure */
 struct modhtp_cfg_t {
-    char           *personality;  /**< libhtp personality */
+    const char     *personality;  /**< libhtp personality */
 };
 
 /* Instantiate a module global configuration. */
-static modhtp_cfg_t modhtp_global_cfg;
+static modhtp_cfg_t modhtp_global_cfg = {
+    "Apache_2_2" /* personality */
+};
 
 /* -- libhtp Routines -- */
 
@@ -1532,8 +1534,7 @@ static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
         MODULE_NAME_STR ".personality",
         IB_FTYPE_NULSTR,
         modhtp_cfg_t,
-        personality,
-        "Apache_2_2"
+        personality
     ),
     IB_CFGMAP_INIT_LAST
 };

@@ -77,7 +77,10 @@ struct modac_cfg_t {
 };
 
 /* Instantiate a module global configuration. */
-static modac_cfg_t modac_global_cfg;
+static modac_cfg_t modac_global_cfg = {
+    5000, /* match_limit */
+    5000  /* match_limit_recursion */
+};
 
 /**
  * @internal
@@ -554,15 +557,13 @@ static IB_CFGMAP_INIT_STRUCTURE(modac_config_map) = {
         MODULE_NAME_STR ".match_limit",
         IB_FTYPE_NUM,
         modac_cfg_t,
-        match_limit,
-        5000
+        match_limit
     ),
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".match_limit_recursion",
         IB_FTYPE_NUM,
         modac_cfg_t,
-        match_limit_recursion,
-        5000
+        match_limit_recursion
     ),
     IB_CFGMAP_INIT_LAST
 };

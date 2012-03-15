@@ -90,7 +90,9 @@ struct pocacsig_fieldentry_t {
 };
 
 /* Instantiate a module global configuration. */
-static pocacsig_cfg_t pocacsig_global_cfg;
+static pocacsig_cfg_t pocacsig_global_cfg = {
+    0 /* trace */
+};
 
 
 /* -- Directive Handlers -- */
@@ -377,8 +379,7 @@ static IB_CFGMAP_INIT_STRUCTURE(pocacsig_config_map) = {
         MODULE_NAME_STR ".trace",
         IB_FTYPE_NUM,
         pocacsig_cfg_t,
-        trace,
-        0
+        trace
     ),
 
     /* End */
