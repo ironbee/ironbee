@@ -83,7 +83,7 @@ typedef struct ib_cfgmap_handlers_data ib_cfgmap_handlers_data;
  * @sa ib_field_get_fn_t.
  */
 static const void *ib_cfgmap_handle_get(
-    const ib_field_t *f,
+    const ib_field_t *field,
     const void *arg,
     size_t alen,
     void *cbdata
@@ -101,8 +101,7 @@ static const void *ib_cfgmap_handle_get(
         void,
         data->init->fn_get(
             data->base,
-            data->init->name,
-            data->init->type,
+            field,
             data->init->cbdata_get
         )
     );
@@ -132,8 +131,7 @@ static ib_status_t ib_cfgmap_handle_set(
     IB_FTRACE_RET_STATUS(
         data->init->fn_set(
             data->base,
-            data->init->name,
-            data->init->type,
+            field,
             val,
             data->init->cbdata_get
         )
@@ -206,7 +204,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
 
 ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
                           const char *name,
-                          void *pval)
+                          const void *pval)
 {
     IB_FTRACE_INIT();
     ib_field_t *f;
@@ -238,9 +236,9 @@ ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_cfgmap_get(ib_cfgmap_t *cm,
+ib_status_t ib_cfgmap_get(const ib_cfgmap_t *cm,
                           const char *name,
-                          void *pval, ib_ftype_t *ptype)
+                          const void *pval, ib_ftype_t *ptype)
 {
     IB_FTRACE_INIT();
     ib_field_t *f;

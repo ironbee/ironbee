@@ -75,16 +75,14 @@ struct ib_cfgmap_t {
  * @sa ib_field_get_fn_t
  *
  * @param[in] base Pointer to base of config data.
- * @param[in] name Name of field.
- * @param[in] type Type of field.
+ * @param[in] field Field storing value.
  * @param[in] data Callback data.
  * @returns Value (numeric) or pointer to value (non-numeric).
  */
 typedef void *(*ib_cfgmap_get_fn_t)(
-    void       *base,
-    const char *name,
-    ib_ftype_t  type,
-    void       *data
+    const void       *base,
+    const ib_field_t *field,
+    void             *data
 );
 
 /**
@@ -94,16 +92,14 @@ typedef void *(*ib_cfgmap_get_fn_t)(
  * @sa ib_field_set_fn_t
  *
  * @param[in] base  Pointer to base of config data.
- * @param[in] name  Name of field.
- * @param[in] type  Type of field.
+ * @param[in] field Field storing value.
  * @param[in] value Value to set to.
  * @param[in] data  Callback data.
  * @returns Status code.
  */
 typedef ib_status_t (*ib_cfgmap_set_fn_t)(
     void       *base,
-    const char *name,
-    ib_ftype_t  type,
+    ib_field_t *field,
     const void *value,
     void       *data
 );
@@ -207,7 +203,7 @@ ib_status_t DLL_PUBLIC ib_cfgmap_init(ib_cfgmap_t *cm,
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_set(ib_cfgmap_t *cm,
                                      const char *name,
-                                     void *data);
+                                     const void *data);
 
 /**
  * Get a configuration value.
@@ -219,9 +215,9 @@ ib_status_t DLL_PUBLIC ib_cfgmap_set(ib_cfgmap_t *cm,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_cfgmap_get(ib_cfgmap_t *cm,
+ib_status_t DLL_PUBLIC ib_cfgmap_get(const ib_cfgmap_t *cm,
                                      const char *name,
-                                     void *pval, ib_ftype_t *ptype);
+                                     const void *pval, ib_ftype_t *ptype);
 
 
 /** @} IronBeeUtilCfgMap */
