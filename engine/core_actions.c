@@ -317,7 +317,7 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
     memcpy(data->name, params, nlen);
 
     /* Create the value */
-    rc = string_to_num_ex(value, vlen, 0, &(data->value.num));
+    rc = ib_string_to_num_ex(value, vlen, 0, &(data->value.num));
     if (rc == IB_OK) {
         data->type = IB_FTYPE_NUM;
         if ( (*value == '+') || (*value == '-') ) {

@@ -80,10 +80,10 @@ char DLL_PUBLIC *ib_strchr(const char *s, size_t l, int c);
  *
  * @returns Status code.
  */
-ib_status_t DLL_PUBLIC string_to_num_ex(const char *s,
-                                        size_t slen,
-                                        int base,
-                                        ib_num_t *result);
+ib_status_t DLL_PUBLIC ib_string_to_num_ex(const char *s,
+                                           size_t slen,
+                                           int base,
+                                           ib_num_t *result);
 
 /**
  * Convert a string to a number, with error checking
@@ -95,9 +95,9 @@ ib_status_t DLL_PUBLIC string_to_num_ex(const char *s,
  *
  * @returns Status code.
  */
-ib_status_t DLL_PUBLIC string_to_num(const char *s,
-                                     int base,
-                                     ib_num_t *result);
+ib_status_t DLL_PUBLIC ib_string_to_num(const char *s,
+                                        int base,
+                                        ib_num_t *result);
 
 /**
  * strstr() clone that works with non-NUL terminated strings.
@@ -110,10 +110,10 @@ ib_status_t DLL_PUBLIC string_to_num(const char *s,
  * @returns Pointer to the first match in @a haystack, or NULL if no match
  * found.
  */
-const char DLL_PUBLIC *strstr_ex(const char *haystack,
-                                 size_t      haystack_len,
-                                 const char *needle,
-                                 size_t      needle_len);
+const char DLL_PUBLIC *ib_strstr_ex(const char *haystack,
+                                    size_t      haystack_len,
+                                    const char *needle,
+                                    size_t      needle_len);
 
 
 /**

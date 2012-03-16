@@ -58,7 +58,7 @@ public:
     {
         ib_status_t rc;
         ib_num_t result;
-        rc = ::string_to_num(s, base, &result);
+        rc = ::ib_string_to_num(s, base, &result);
         EXPECT_EQ(rc, estatus)
             << "Line " << line << ": Conversion of '" << s
             << "' base10=" << base
@@ -74,7 +74,7 @@ public:
         ib_status_t rc;
         ib_num_t result;
 
-        rc = ::string_to_num(s, base, &result);
+        rc = ::ib_string_to_num(s, base, &result);
         if (estatus == IB_OK) {
             EXPECT_EQ(rc, IB_OK)
                 << "Line " << line << ": "
@@ -426,10 +426,10 @@ public:
                  size_t needle_len,
                  const char *expected)
     {
-        const char *result = strstr_ex(haystack,
-                                       haystack_len,
-                                       needle,
-                                       needle_len);
+        const char *result = ib_strstr_ex(haystack,
+                                          haystack_len,
+                                          needle,
+                                          needle_len);
         const int blen = 256;
         char b1[blen];
         char b2[blen];

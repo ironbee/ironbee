@@ -327,7 +327,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
         ib_field_t *f;          /* Field */
 
         /* Look for the prefix in the string */
-        pre = strstr_ex(buf, buflen, prefix, pre_len);
+        pre = ib_strstr_ex(buf, buflen, prefix, pre_len);
         if (pre == NULL) {
             break;
         }
@@ -340,10 +340,10 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
 
         /* And the next matching suffix */
         pre_off = pre - buf;
-        post = strstr_ex(pre+pre_len,
-                         buflen - (pre_off + pre_len),
-                         suffix,
-                         suf_len);
+        post = ib_strstr_ex(pre+pre_len,
+                            buflen - (pre_off + pre_len),
+                            suffix,
+                            suf_len);
         if (post == NULL) {
             break;
         }
@@ -456,17 +456,17 @@ ib_status_t ib_expand_test_str_ex(const char *str,
 
     /* Look for the prefix pattern */
     pre_len = strlen(prefix);
-    pre = strstr_ex(str, str_len, prefix, pre_len);
+    pre = ib_strstr_ex(str, str_len, prefix, pre_len);
     if (pre == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* And the next matching suffix pattern. */
     pre_off = pre - str;
-    post = strstr_ex(pre + pre_len,
-                     str_len - (pre_off + pre_len),
-                     suffix,
-                     strlen(suffix));
+    post = ib_strstr_ex(pre + pre_len,
+                        str_len - (pre_off + pre_len),
+                        suffix,
+                        strlen(suffix));
     if (post == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }

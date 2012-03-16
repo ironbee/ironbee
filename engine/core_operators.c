@@ -529,7 +529,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
         op_inst->flags |= IB_OPINST_FLAG_EXPAND;
     }
     else {
-        rc = string_to_num_ex(params, plen, 0, &value);
+        rc = ib_string_to_num_ex(params, plen, 0, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -590,7 +590,7 @@ static ib_status_t get_num_value(ib_tx_t *tx,
     }
 
     /* Convert string the expanded string to a number */
-    IB_FTRACE_RET_STATUS(string_to_num(expanded, 0, result) );
+    IB_FTRACE_RET_STATUS(ib_string_to_num(expanded, 0, result) );
 }
 
 /**
@@ -622,7 +622,7 @@ static ib_status_t field_to_num(ib_engine_t *ib,
         case IB_FTYPE_NULSTR :
             {
                 const char *fval = ib_field_value_nulstr(field);
-                rc = string_to_num(fval, 0, result);
+                rc = ib_string_to_num(fval, 0, result);
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }
@@ -633,10 +633,11 @@ static ib_status_t field_to_num(ib_engine_t *ib,
             {
                 const ib_bytestr_t *bs = ib_field_value_bytestr(field);
 
-                rc = string_to_num_ex((const char *)ib_bytestr_const_ptr(bs),
-                                      ib_bytestr_length(bs),
-                                      0,
-                                      result);
+                rc = ib_string_to_num_ex(
+                    (const char *)ib_bytestr_const_ptr(bs),
+                    ib_bytestr_length(bs),
+                    0,
+                    result);
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }

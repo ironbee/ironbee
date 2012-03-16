@@ -42,10 +42,10 @@
 /**
  * Convert a string (with length) to a number.
  */
-ib_status_t string_to_num_ex(const char *s,
-                             size_t slen,
-                             int base,
-                             ib_num_t *result)
+ib_status_t ib_string_to_num_ex(const char *s,
+                                size_t slen,
+                                int base,
+                                ib_num_t *result)
 {
     IB_FTRACE_INIT();
     assert(result != NULL);
@@ -61,16 +61,16 @@ ib_status_t string_to_num_ex(const char *s,
     /* Copy the string to a buffer, let string_to_num() do the real work */
     memcpy(buf, s, slen);
     buf[slen] = '\0';
-    rc = string_to_num(buf, base, result);
+    rc = ib_string_to_num(buf, base, result);
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
  * Convert a string (with length) to a number.
  */
-ib_status_t string_to_num(const char *s,
-                          int base,
-                          ib_num_t *result)
+ib_status_t ib_string_to_num(const char *s,
+                             int base,
+                             ib_num_t *result)
 {
     IB_FTRACE_INIT();
     assert(result != NULL);
@@ -105,10 +105,10 @@ ib_status_t string_to_num(const char *s,
 /**
  * strstr() clone that works with non-NUL terminated strings
  */
-const char *strstr_ex(const char *haystack,
-                      size_t      haystack_len,
-                      const char *needle,
-                      size_t      needle_len)
+const char *ib_strstr_ex(const char *haystack,
+                         size_t      haystack_len,
+                         const char *needle,
+                         size_t      needle_len)
 {
     IB_FTRACE_INIT();
     size_t i = 0;
