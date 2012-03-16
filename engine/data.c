@@ -467,7 +467,7 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = expand_test_str(
+    rc = ib_expand_test_str(
         str,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
@@ -480,7 +480,7 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
                                                   ib_bool_t *result)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = expand_test_str_ex(
+    ib_status_t rc = ib_expand_test_str_ex(
         str,
         slen,
         IB_VARIABLE_EXPANSION_PREFIX,

@@ -64,12 +64,12 @@ extern "C" {
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC expand_str(ib_mpool_t *mp,
-                                  const char *str,
-                                  const char *prefix,
-                                  const char *suffix,
-                                  ib_hash_t *hash,
-                                  char **result);
+ib_status_t DLL_PUBLIC ib_expand_str(ib_mpool_t *mp,
+                                     const char *str,
+                                     const char *prefix,
+                                     const char *suffix,
+                                     ib_hash_t *hash,
+                                     char **result);
 
 /**
  * Expand a NUL-terminated string using the given hash, ex version.
@@ -94,15 +94,15 @@ ib_status_t DLL_PUBLIC expand_str(ib_mpool_t *mp,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC expand_str_ex(ib_mpool_t *mp,
-                                     const char *str,
-                                     size_t str_len,
-                                     const char *prefix,
-                                     const char *suffix,
-                                     ib_bool_t nul,
-                                     ib_hash_t *hash,
-                                     char **result,
-                                     size_t *result_len);
+ib_status_t DLL_PUBLIC ib_expand_str_ex(ib_mpool_t *mp,
+                                        const char *str,
+                                        size_t str_len,
+                                        const char *prefix,
+                                        const char *suffix,
+                                        ib_bool_t nul,
+                                        ib_hash_t *hash,
+                                        char **result,
+                                        size_t *result_len);
 
 /**
  * Determine if a string would be expanded by expand_str().
@@ -117,10 +117,10 @@ ib_status_t DLL_PUBLIC expand_str_ex(ib_mpool_t *mp,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC expand_test_str(const char *str,
-                                       const char *prefix,
-                                       const char *suffix,
-                                       ib_bool_t *result);
+ib_status_t DLL_PUBLIC ib_expand_test_str(const char *str,
+                                          const char *prefix,
+                                          const char *suffix,
+                                          ib_bool_t *result);
 
 /**
  * Determine if a string would be expanded by expand_str(), ex version.
@@ -137,11 +137,11 @@ ib_status_t DLL_PUBLIC expand_test_str(const char *str,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC expand_test_str_ex(const char *str,
-                                          size_t str_len,
-                                          const char *prefix,
-                                          const char *suffix,
-                                          ib_bool_t *result);
+ib_status_t DLL_PUBLIC ib_expand_test_str_ex(const char *str,
+                                             size_t str_len,
+                                             const char *prefix,
+                                             const char *suffix,
+                                             ib_bool_t *result);
 
 
 /** @} IronBeeUtilExpand */

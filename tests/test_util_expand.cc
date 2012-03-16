@@ -192,7 +192,7 @@ public:
                           const char *suffix,
                           char **result)
     {
-        return ::expand_str(m_pool, text, prefix, suffix, m_hash, result);
+        return ::ib_expand_str(m_pool, text, prefix, suffix, m_hash, result);
     }
 
     bool IsExpected(ib_num_t lineno,
@@ -233,7 +233,7 @@ public:
                               const char *suffix,
                               ib_bool_t *result)
     {
-        return ::expand_test_str(text, prefix, suffix, result);
+        return ::ib_expand_test_str(text, prefix, suffix, result);
     }
 
     bool IsExpected(ib_num_t lineno,

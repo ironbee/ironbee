@@ -1248,15 +1248,15 @@ static ib_status_t core_data_expand_str(ib_provider_inst_t *dpi,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = expand_str_ex(dpi->mp,
-                       str,
-                       slen,
-                       IB_VARIABLE_EXPANSION_PREFIX,
-                       IB_VARIABLE_EXPANSION_POSTFIX,
-                       nul,
-                       (ib_hash_t *)dpi->data,
-                       result,
-                       result_len);
+    rc = ib_expand_str_ex(dpi->mp,
+                          str,
+                          slen,
+                          IB_VARIABLE_EXPANSION_PREFIX,
+                          IB_VARIABLE_EXPANSION_POSTFIX,
+                          nul,
+                          (ib_hash_t *)dpi->data,
+                          result,
+                          result_len);
 
     IB_FTRACE_RET_STATUS(rc);
 }

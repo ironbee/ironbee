@@ -237,12 +237,12 @@ static ib_status_t join_parts(ib_mpool_t *mp,
 /*
  * Expand a string from the given hash.  See expand.h.
  */
-ib_status_t expand_str(ib_mpool_t *mp,
-                       const char *str,
-                       const char *prefix,
-                       const char *suffix,
-                       ib_hash_t *hash,
-                       char **result)
+ib_status_t ib_expand_str(ib_mpool_t *mp,
+                          const char *str,
+                          const char *prefix,
+                          const char *suffix,
+                          ib_hash_t *hash,
+                          char **result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -255,8 +255,8 @@ ib_status_t expand_str(ib_mpool_t *mp,
     assert(hash != NULL);
     assert(result != NULL);
 
-    /* Let expand_str_ex() do the heavy lifting */
-    rc = expand_str_ex(
+    /* Let ib_expand_str_ex() do the heavy lifting */
+    rc = ib_expand_str_ex(
         mp, str, strlen(str), prefix, suffix, IB_TRUE, hash, result, &len);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -265,15 +265,15 @@ ib_status_t expand_str(ib_mpool_t *mp,
 /*
  * Expand a string from the given hash, ex version.  See expand.h.
  */
-ib_status_t expand_str_ex(ib_mpool_t *mp,
-                          const char *str,
-                          size_t str_len,
-                          const char *prefix,
-                          const char *suffix,
-                          ib_bool_t nul,
-                          ib_hash_t *hash,
-                          char **result,
-                          size_t *result_len)
+ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
+                             const char *str,
+                             size_t str_len,
+                             const char *prefix,
+                             const char *suffix,
+                             ib_bool_t nul,
+                             ib_hash_t *hash,
+                             char **result,
+                             size_t *result_len)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -412,15 +412,15 @@ ib_status_t expand_str_ex(ib_mpool_t *mp,
 /*
  * Test whether a given string would be expanded.  See expand.h.
  */
-ib_status_t expand_test_str(const char *str,
-                            const char *prefix,
-                            const char *suffix,
-                            ib_bool_t *result)
+ib_status_t ib_expand_test_str(const char *str,
+                               const char *prefix,
+                               const char *suffix,
+                               ib_bool_t *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = expand_test_str_ex(str, strlen(str), prefix, suffix, result);
+    rc = ib_expand_test_str_ex(str, strlen(str), prefix, suffix, result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -428,11 +428,11 @@ ib_status_t expand_test_str(const char *str,
 /*
  * Test whether a given string would be expanded, ex version.  See expand.h.
  */
-ib_status_t expand_test_str_ex(const char *str,
-                               size_t str_len,
-                               const char *prefix,
-                               const char *suffix,
-                               ib_bool_t *result)
+ib_status_t ib_expand_test_str_ex(const char *str,
+                                  size_t str_len,
+                                  const char *prefix,
+                                  const char *suffix,
+                                  ib_bool_t *result)
 {
     IB_FTRACE_INIT();
     const char *pre;      /* Pointer to found prefix pattern */
