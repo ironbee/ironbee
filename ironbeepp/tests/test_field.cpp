@@ -399,3 +399,24 @@ TEST_F(TestField, Const)
     EXPECT_EQ(cf, f2);
     EXPECT_EQ(f, f2);
 }
+
+TEST_F(TestField, TypeForType)
+{
+    EXPECT_EQ(Field::NUMBER, Field::field_type_for_type<int>());
+    EXPECT_EQ(Field::NUMBER, Field::field_type_for_type<int64_t>());
+    EXPECT_EQ(
+        Field::UNSIGNED_NUMBER,
+        Field::field_type_for_type<unsigned int>()
+    );
+    EXPECT_EQ(
+        Field::UNSIGNED_NUMBER,
+        Field::field_type_for_type<uint64_t>()
+    );
+    EXPECT_EQ(Field::NULL_STRING, Field::field_type_for_type<char*>());
+    EXPECT_EQ(Field::NULL_STRING, Field::field_type_for_type<const char*>());
+    EXPECT_EQ(Field::BYTE_STRING, Field::field_type_for_type<ByteString>());
+    EXPECT_EQ(
+        Field::BYTE_STRING,
+        Field::field_type_for_type<ConstByteString>()
+    );
+}

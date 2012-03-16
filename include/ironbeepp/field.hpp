@@ -34,6 +34,11 @@
 
 #include <ironbee/field.h>
 
+#include <boost/mpl/or.hpp>
+#include <boost/type_traits/is_signed.hpp>
+#include <boost/type_traits/is_unsigned.hpp>
+#include <boost/type_traits/is_convertible.hpp>
+
 #include <ostream>
 
 namespace IronBee {
@@ -74,6 +79,47 @@ public:
         //! Stream Buffer &mdash; Currently unsupported in IronBee++
         STREAM_BUFFER   = IB_FTYPE_SBUFFER
     };
+
+    /**
+     * Derive appropriate type_e for @a T.
+     *
+     * This function provides the appropriate type_e value for a given C++
+     * type, @a T.  If no value is appropriate, a compiler error results.
+     *
+     * - Signed integral types result in NUMBER.
+     * - Unsigned integral types result in UNSIGNED_NUMBER.
+     * - Types convertible to @c const @c char* result in NULL_STRING.
+     * - Types convertible to ConstByteString result in BYTE_STRING.
+     * - All other types result in a compiler error.
+     *
+     * @tparam T Type to derive field type for.
+     * @returns Appropriate field type.
+     **/
+    // Intentionally inlined.
+    template <typename T>
+    static type_e field_type_for_type()
+    {
+        BOOST_STATIC_ASSERT((
+            boost::mpl::or_<
+                boost::is_signed<T>,
+                boost::is_unsigned<T>,
+                boost::is_convertible<T,const char*>,
+                boost::is_convertible<T,ConstByteString>
+            >::value
+        ));
+        if (boost::is_signed<T>::value) {
+            return NUMBER;
+        }
+        else if (boost::is_unsigned<T>::value) {
+            return UNSIGNED_NUMBER;
+        }
+        else if (boost::is_convertible<T,const char*>::value) {
+            return NULL_STRING;
+        }
+        else if (boost::is_convertible<T,ConstByteString>::value) {
+            return BYTE_STRING;
+        }
+    }
 
     /**
      * Construct singular ConstField.
