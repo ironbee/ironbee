@@ -41,116 +41,191 @@
 /* -- Transformations -- */
 
 /**
- * @internal
  * Simple ASCII lowercase function.
+ * @internal
  *
  * @note For non-ASCII (utf8, etc) you should use case folding.
  */
-static ib_status_t core_tfn_lowercase(void *fndata,
-                                      ib_mpool_t *pool,
-                                      uint8_t *data_in,
-                                      size_t dlen_in,
-                                      uint8_t **data_out,
-                                      size_t *dlen_out,
-                                      ib_flags_t *pflags)
+static ib_status_t tfn_lowercase(void *fndata,
+                                 ib_mpool_t *mp,
+                                 ib_field_t *fin,
+                                 ib_field_t **fout
+                                 ib_flags_t *pflags)
 {
-    size_t i = 0;
-    int modified = 0;
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_bool_t modified = IB_FALSE;
 
-    /* This is an in-place transformation which does not change
-     * the data length.
-     */
-    *data_out = data_in;
-    *dlen_out = dlen_in;
-    (*pflags) |= IB_TFN_FINPLACE;
-
-    while(i < dlen_in) {
-        int c = data_in[i];
-        (*data_out)[i] = tolower(c);
-        if (c != (*data_out)[i]) {
-            modified++;
-        }
-        i++;
+    /* We only handle bytestr and nulstr non-dynamic fields */
+    if (ib_field_is_dynamic(fin)) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (modified != 0) {
+    if (fin->type == IB_FTYPE_NULSTR) {
+        char *p = ib_field_value_nulstr(fin);
+        assert (p != NULL);
+        *fout = fin;
+        rc = ib_strlower(p, strlen(p), &modified);
+    }
+    else if (fin->type == IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *bs = ib_field_value_bytestr(fin);
+        assert (bs != NULL);
+        *fout = fin;
+        rc = lowercase_data(ib_bytestr_ptr(bs),
+                            ib_bytestr_length(bs),
+                            &modified);
+    }
+    else {
+        rc = IB_EINVAL;
+    }
+
+    if (modified) {
         (*pflags) |= IB_TFN_FMODIFIED;
     }
-
-    return IB_OK;
-}
-
-/**
- * @internal
- * Simple ASCII trimLeft function.
- */
-static ib_status_t core_tfn_trimleft(void *fndata,
-                                     ib_mpool_t *pool,
-                                     uint8_t *data_in,
-                                     size_t dlen_in,
-                                     uint8_t **data_out,
-                                     size_t *dlen_out,
-                                     ib_flags_t *pflags)
-{
-    size_t i = 0;
-
-    /* This is an in-place transformation which may change
-     * the data length.
-     */
-    (*pflags) |= IB_TFN_FINPLACE;
-
-    while(i < dlen_in) {
-        if (isspace(data_in[i]) == 0) {
-            *data_out = data_in + i;
-            *dlen_out = dlen_in - i;
-            (*pflags) |= IB_TFN_FMODIFIED;
-            return IB_OK;
-        }
-        i++;
+    if (rc == IB_OK) {
+        (*pflags) |= IB_TFN_FINPLACE;
     }
-    *dlen_out = 0;
-    *data_out = data_in;
-
-    return IB_OK;
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
+ * Simple ASCII trimLeft function.
  * @internal
+ */
+static ib_status_t tfn_trimleft(void *fndata,
+                                ib_mpool_t *mp,
+                                ib_field_t *fin,
+                                ib_field_t **fout,
+                                ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_bool_t modified = IB_FALSE;
+
+    /* We only handle bytestr and nulstr non-dynamic fields */
+    if (ib_field_is_dynamic(fin)) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if (fin->type == IB_FTYPE_NULSTR) {
+        char *p = ib_field_value_nulstr(fin);
+        char *out;
+        size_t outlen;
+        assert (p != NULL);
+
+        rc = ib_strtrim_left_data(p, strlen(p), &out, &outlen, &modified);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_alias_mem_ex(
+            fout, mp, fin->name, fin->nlen, IB_FTYPE_NULSTR, out, outlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (fin->type == IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *bs = ib_field_value_bytestr(fin);
+        assert (bs != NULL);
+
+        rc = ib_strtrim_left(ib_bytestr_ptr(bs),
+                             ib_bytestr_length(bs),
+                             &out,
+                             &outlen,
+                             &modified);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_bytestr_alias_mem(&bs, mp, out, outlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_createn_ex(
+            fout, mp, fin->name, fin->nlen, IB_FTYPE_BYTESTR, &bs);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+    }
+    else {
+        rc = IB_EINVAL;
+    }
+
+    if (modified) {
+        (*pflags) |= IB_TFN_FMODIFIED;
+    }
+    if (rc == IB_OK) {
+        (*pflags) |= IB_TFN_FINPLACE;
+    }
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * Simple ASCII trimRight function.
+ * @internal
  */
 static ib_status_t core_tfn_trimright(void *fndata,
-                                      ib_mpool_t *pool,
-                                      uint8_t *data_in,
-                                      size_t dlen_in,
-                                      uint8_t **data_out,
-                                      size_t *dlen_out,
+                                      ib_mpool_t *mp,
+                                      ib_field_t *fin,
+                                      ib_field_t **fout,
                                       ib_flags_t *pflags)
 {
-    size_t i = dlen_in - 1;
+    IB_FTRACE_INIT();
+    ib_status_t rc;
 
-    /* This is an in-place transformation which may change
-     * the data length.
-     */
-    *data_out = data_in;
-    (*pflags) |= IB_TFN_FINPLACE;
-
-    while(i > 0) {
-        if (isspace(data_in[i]) == 0) {
-            (*pflags) |= IB_TFN_FMODIFIED;
-            (*data_out)[*dlen_out] = '\0';
-            *dlen_out = i + 1;
-            return IB_OK;
-        }
-        i--;
+    /* We only handle bytestr and nulstr non-dynamic fields */
+    if (ib_field_is_dynamic(fin)) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    *dlen_out = 0;
 
-    return IB_OK;
+    if (fin->type == IB_FTYPE_NULSTR) {
+        char *p = ib_field_value_nulstr(fin);
+        char *out;
+        size_t outlen;
+        assert (p != NULL);
+
+        rc = trimright_data(p, strlen(p), &out, &outlen, pflags);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_alias_mem_ex(
+            fout, mp, fin->name, fin->nlen, IB_FTYPE_NULSTR, out, outlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (fin->type == IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *bs = ib_field_value_bytestr(fin);
+        assert (bs != NULL);
+
+        rc = trimright_data(ib_bytestr_ptr(bs),
+                            ib_bytestr_length(bs),
+                            &out,
+                            &outlen,
+                            pflags);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_bytestr_alias_mem(&bs, mp, out, outlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_createn_ex(
+            fout, mp, fin->name, fin->nlen, IB_FTYPE_BYTESTR, &bs);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+    }
+    else {
+        rc = IB_EINVAL;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
- * @internal
  * Simple ASCII trim function.
+ * @internal
  */
 static ib_status_t core_tfn_trim(void *fndata,
                                  ib_mpool_t *pool,

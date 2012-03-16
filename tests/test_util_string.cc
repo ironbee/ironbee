@@ -700,4 +700,3 @@ TEST_F(TestIBUtilStrStrEx, test_strstr_ex_nul2)
     haystack = "abab\0c";
     RunTest(__LINE__, haystack, 5, "abc\0", 4, NULL);
 }
-

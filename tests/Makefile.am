@@ -53,6 +53,7 @@ check_PROGRAMS = test_gtest \
                  test_util_ahocorasick \
                  test_util_mpool \
                  test_util_string \
+                 test_util_string_trim \
                  test_util_expand \
                  test_engine \
                  test_module_ahocorasick \
@@ -103,6 +104,8 @@ test_util_radix_SOURCES = test_util_radix.cc test_main.cc
 test_util_field_SOURCES = test_util_field.cc test_main.cc
 
 test_util_string_SOURCES = test_util_string.cc test_main.cc
+
+test_util_string_trim_SOURCES = test_util_string_trim.cc test_main.cc
 
 test_util_expand_SOURCES = test_util_expand.cc test_main.cc
 

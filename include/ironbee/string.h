@@ -115,6 +115,120 @@ const char DLL_PUBLIC *ib_strstr_ex(const char *haystack,
                                     const char *needle,
                                     size_t      needle_len);
 
+/**
+ * Simple ASCII lowercase function.
+ *
+ * @param[in] data Data to convert to lower case
+ * @param[in] dlen Length of @a data
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ */
+ib_status_t ib_strlower_ex(uint8_t *data,
+                           size_t dlen,
+                           ib_bool_t *modfied);
+
+/**
+ * Simple ASCII lowercase function.
+ *
+ * @param[in] data Data to convert to lower case
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ */
+ib_status_t ib_strlower(char *data,
+                        ib_bool_t *modfied);
+
+/**
+ * Simple ASCII trim left function.
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[in] dlen_in Lenth of @a data_in
+ * @param[out] data_out Pointer to output data
+ * @param[in] dlen_out Length of @a data_out
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_strtrim_left_ex(uint8_t *data_in,
+                               size_t dlen_in,
+                               uint8_t **data_out,
+                               size_t *dlen_out,
+                               ib_bool_t *modified);
+
+/**
+ * Simple ASCII trim left function.
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[out] data_out Pointer to output data
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_strtrim_left(char *data_in,
+                            char **data_out,
+                            ib_bool_t *modified);
+
+/**
+ * Simple ASCII trim right function.
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[in] dlen_in Lenth of @a data_in
+ * @param[out] data_out Pointer to output data
+ * @param[in] dlen_out Length of @a data_out
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_strtrim_right_ex(uint8_t *data_in,
+                                size_t dlen_in,
+                                uint8_t **data_out,
+                                size_t *dlen_out,
+                                ib_bool_t *modified);
+
+/**
+ * Simple ASCII trim right function.
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[out] data_out Pointer to output data
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_strtrim_right(char *data_in,
+                             char **data_out,
+                             ib_bool_t *modified);
+
+
+/**
+ * Simple ASCII trim left+right function.
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[in] dlen_in Lenth of @a data_in
+ * @param[out] data_out Pointer to output data
+ * @param[in] dlen_out Length of @a data_out
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_strtrim_lr_ex(uint8_t *data_in,
+                             size_t dlen_in,
+                             uint8_t **data_out,
+                             size_t *dlen_out,
+                             ib_bool_t *modified);
+
+/**
+ * Simple ASCII trim left+right function.
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[out] data_out Pointer to output data
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_strtrim_lr(char *data_in,
+                          char **data_out,
+                          ib_bool_t *modified);
 
 /**
  * @} IronBeeUtil
