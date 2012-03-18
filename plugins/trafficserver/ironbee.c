@@ -43,7 +43,7 @@
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
 #include <ironbee/provider.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 #include <ironbee/util.h>
 #include <ironbee/debug.h>
 
@@ -55,12 +55,6 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port);
 ib_engine_t DLL_LOCAL *ironbee = NULL;
 TSTextLogObject ironbee_log;
 #define DEFAULT_LOG "ts-ironbee"
-
-/* Plugin Structure */
-ib_plugin_t DLL_LOCAL ibplugin = {
-    IB_PLUGIN_HEADER_DEFAULTS,
-    "ts-ironbee"
-};
 
 typedef struct {
     ib_conn_t *iconn;
@@ -80,21 +74,38 @@ typedef struct {
     unsigned int buflen;
 } ib_filter_ctx;
 
+#define HDRS_IN 0x01
+#define HDRS_OUT 0x02
+#define DATA 0
+
+typedef struct hdr_do {
+    ib_server_header_action_t action;
+    ib_server_direction_t dir;
+    char *hdr;
+    char *value;
+    struct hdr_do *next;
+} hdr_do;
 typedef struct {
     ib_ssn_ctx *ssn;
     TSHttpTxn txnp;
     ib_filter_ctx in;
     ib_filter_ctx out;
+    int status;
+    int state;
+    //enum { HDRS_IN, HDRS_OUT, DATA } caller;
+    hdr_do *hdr_actions;
 } ib_txn_ctx;
 
 /* mod_ironbee uses ib_state_notify_conn_data_[in|out]
  * for both headers and data
  */
+#define IBD_REQ HDRS_IN
+#define IBD_RESP HDRS_OUT
 typedef struct {
-    enum { IBD_REQ, IBD_RESP } dir;
+    ib_server_direction_t dir;
     const char *word;
     int (*hdr_get)(TSHttpTxn, TSMBuffer*, TSMLoc*);
-    ib_status_t (*ib_notify)(ib_engine_t*, ib_conndata_t*);
+    ib_status_t (*ib_notify)(ib_engine_t*, ib_conndata_t*, void*);
 } ironbee_direction;
 static ironbee_direction ironbee_direction_req = {
     IBD_REQ, "request", TSHttpTxnClientReqGet, ib_state_notify_conn_data_in
@@ -109,6 +120,56 @@ typedef struct {
 } ibd_ctx;
 
 /**
+ * Callback functions for Ironbee to signal to us
+ */
+static ib_server_header_action_t ib_header_callback
+                                          (void *x, ib_server_direction_t dir,
+                                           ib_server_header_action_t action,
+                                           const char *hdr, const char *value)
+{
+    ib_txn_ctx *ctx = x;
+    hdr_do *header;
+    /* Logic for whether we're in time for the requested action */
+    /* Output headers can change any time before they're sent */
+    /* Input headers can only be touched during their read */
+
+    if (ctx->state & HDRS_OUT ||
+        (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
+        return IB_HDR_ERROR;  /* too late for requested op */
+
+    header = TSmalloc(sizeof(hdr_do));
+    header->next = ctx->hdr_actions;
+    ctx->hdr_actions = header;
+    header->dir = dir;
+    /* FIXME: defering merge support - implementing append instead */
+    header->action = action = action == IB_HDR_MERGE ? IB_HDR_APPEND : action;
+    header->hdr = TSstrdup(hdr);
+    header->value = TSstrdup(value);
+
+    return action;
+
+}
+static ib_status_t ib_error_callback(void *x, int status, const void *data)
+{
+    ib_txn_ctx *ctx = x;
+    if (status >= 200 && status < 600) {
+        /* ironbee wants to return an HTTP status.  We'll oblige */
+        /* FIXME: would the semantics work for 1xx?  Do we care? */
+        ctx->status = status;
+        return IB_OK; 
+    }
+    return IB_ENOTIMPL;
+}
+
+/* Plugin Structure */
+ib_server_t DLL_LOCAL ibplugin = {
+    IB_SERVER_HEADER_DEFAULTS,
+    "ts-ironbee",
+    ib_error_callback,
+    ib_header_callback,
+};
+
+/**
  * @internal
  * Handle transaction context destroy.
  *
@@ -120,6 +181,7 @@ typedef struct {
 static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
     if (data) {
+        hdr_do *x;
         if (data->out.output_buffer) {
             TSIOBufferDestroy(data->out.output_buffer);
             data->out.output_buffer = NULL;
@@ -127,6 +189,12 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
         if (data->in.output_buffer) {
             TSIOBufferDestroy(data->in.output_buffer);
             data->in.output_buffer = NULL;
+        }
+        while (x=data->hdr_actions, x != NULL) {
+            data->hdr_actions = x->next;
+            TSfree(x->hdr);
+            TSfree(x->value);
+            TSfree(x);
         }
         TSfree(data);
     }
@@ -203,7 +271,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         icdata.dalloc = ibd->data->buflen;
         icdata.dlen = ibd->data->buflen;
         icdata.data = (uint8_t *)ibd->data->buf;
-        (*ibd->ibd->ib_notify)(ironbee, &icdata);
+        (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
         ibd->data->buflen = 0;
@@ -275,7 +343,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     icdata.dalloc = ilength;
                     icdata.dlen = ilength;
                     icdata.data = (uint8_t *)ibuf;
-                    (*ibd->ibd->ib_notify)(ironbee, &icdata);
+                    (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
                 }
                 //"response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
                 //      ib_state_notify_conn_data_out(ironbee, &icdata);
@@ -470,6 +538,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     TSIOBufferReader readerp;
     TSIOBufferBlock blockp;
     int64_t len;
+    hdr_do *hdr;
 
     TSDebug("ironbee", "process %s headers\n", ibd->word);
 
@@ -563,6 +632,8 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     char *head_buf;
     char *head_ptr;
     void *head_start;
+    int first_time = 0;
+    unsigned char *dptr;
 
     /* before the HTTP headers comes the request line / response code */
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
@@ -583,50 +654,114 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     ib_log_debug(ironbee, 9,
                  "ts/ironbee/process_header: len=%ld", len );
 
-    head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
+    /* if we're going to enable manipulation of headers, we need a copy */
+    icdata.dalloc = icdata.dlen = len;
+    icdata.data = dptr = TSmalloc(len);
+    while (blockp) {
+        head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
-    if (ibd->dir == IBD_REQ) {
-        /* Workaround:
-         * Search for and remove the extra "http://" in the path by
-         * advancing the bytes preceding the extra string forward.
-         *
-         * EX: Here 1 would become 2 (x are removed bytes)
-         *  1) "GET http:///foo HTTP/1.0"
-         *  2) "xxxxxxxGET /foo HTTP/1.0"
-         */
-        head_ptr = (char *)memchr(head_buf, ' ', len);
-        if ((head_ptr != NULL) &&
-            (len - (head_ptr - head_buf) >= 9) &&
-            (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
-            (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
-            (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
-            (head_ptr[7] = '/') && (head_ptr[8] = '/'))
-        {
-            TSError("ATS Workaround - Removing extra http:// from request line: %.*s\n", 50, (char *)head_buf);
-            while (head_ptr >= head_buf) {
-                *(head_ptr + 7) = *head_ptr;
-                --head_ptr;
+        if (first_time && (ibd->dir == IBD_REQ)) {
+            /* Workaround:
+             * Search for and remove the extra "http://" in the path by
+             * advancing the bytes preceding the extra string forward.
+             *
+             * EX: Here 1 would become 2 (x are removed bytes)
+             *  1) "GET http:///foo HTTP/1.0"
+             *  2) "xxxxxxxGET /foo HTTP/1.0"
+             */
+            head_ptr = (char *)memchr(head_buf, ' ', len);
+            if ((head_ptr != NULL) &&
+                (len - (head_ptr - head_buf) >= 9) &&
+                (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
+                (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
+                (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
+                (head_ptr[7] = '/') && (head_ptr[8] = '/'))
+            {
+                TSError("ATS Workaround - Removing extra http:// from request line: %.*s\n", 50, (char *)head_buf);
+                while (head_ptr >= head_buf) {
+                    *(head_ptr + 7) = *head_ptr;
+                    --head_ptr;
+                }
+                head_start = head_buf + 7;
+                len -= 7;
+                icdata.dlen -= 7;
+                TSError("ATS Workaround - DATA[%d]: %.*s ...\n", (int)len, 25, (char *)head_start);
             }
-            head_start = head_buf + 7;
-            len -= 7;
-            TSError("ATS Workaround - DATA[%d]: %.*s ...\n", (int)len, 25, (char *)head_start);
+            else {
+                head_start = head_buf;
+            }
+
+            memcpy(dptr, head_start, len);
+            dptr += len;
         }
         else {
-            head_start = head_buf;
+            memcpy(dptr, head_buf, len);
+            dptr += len;
         }
+        first_time = 0;
 
-        icdata.data = head_start;
+
+        /* if there's more to come, go round again ... */
+        TSIOBufferReaderConsume(readerp, len);
+        blockp = TSIOBufferReaderStart(readerp);
     }
-    else {
-        icdata.data = (void *)head_buf;
+    (*ibd->ib_notify)(ironbee, &icdata, data);
+
+    /* Now manipulate headers as requested by ironbee */
+    for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
+        TSMLoc field_loc;
+        if (hdr->dir != ibd->dir)
+            continue;    /* it's not for us */
+        switch (hdr->action) {
+            case IB_HDR_SET:  /* replace any previous instance == unset + add */
+            case IB_HDR_UNSET:  /* unset it */
+                /* Use a while loop in case there are multiple instances */
+                while (field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, hdr->hdr,
+                                                      strlen(hdr->hdr)),
+                           field_loc != TS_NULL_MLOC) {
+                    TSMimeHdrFieldDestroy(bufp, hdr_loc, field_loc);
+                    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+                }
+                if (hdr->action == IB_HDR_UNSET)
+                    break;
+                /* else fallthrough to ADD */
+            case IB_HDR_ADD:  /* add it in, regardless of whether it exists */
+add_hdr:
+                rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
+                if (rv != TS_SUCCESS)
+                     TSError("Failed to add MIME header field");
+                rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
+                                           hdr->hdr, strlen(hdr->hdr));
+                rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
+                                                  hdr->value, strlen(hdr->value));
+                rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
+                TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+                break;
+            case IB_HDR_MERGE:  /* append UNLESS value already appears */
+                /* FIXME: implement this in full */
+                /* treat this as APPEND */
+            case IB_HDR_APPEND: /* append it to any existing instance */
+                field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, hdr->hdr,
+                                               strlen(hdr->hdr));
+                if (field_loc == TS_NULL_MLOC) {
+                    /* this is identical to IB_HDR_ADD */
+                    goto add_hdr;
+                }
+                /* This header exists, so append to it */
+                rv = TSMimeHdrFieldValueAppend(bufp, hdr_loc, field_loc, -1,
+                                               hdr->value, strlen(hdr->value));
+                TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+                break;
+            default:  /* bug !! */
+                TSDebug("ironbee", "Bogus header action %d", hdr->action);
+                break;
+        }
     }
 
-    icdata.dlen = icdata.dalloc = len;
-
-    (*ibd->ib_notify)(ironbee, &icdata);
-
-    TSIOBufferDestroy(iobufp);
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+    TSIOBufferReaderFree(readerp);
+    TSIOBufferDestroy(iobufp);
+    TSfree(icdata.data);
 #endif
 }
 
@@ -738,6 +873,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
             process_hdr(txndata, txnp, &ironbee_direction_resp);
+            txndata->state |= HDRS_OUT;
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
@@ -765,6 +901,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_PRE_REMAP:
             txndata = TSContDataGet(contp);
             process_hdr(txndata, txnp, &ironbee_direction_req);
+            txndata->state |= HDRS_IN;
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
