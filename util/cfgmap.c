@@ -69,12 +69,12 @@ failed:
 /**
  * Holds data for config map setters and getters.
  **/
-struct ib_cfgmap_handlers_data
+struct ib_cfgmap_handlers_data_t
 {
     const ib_cfgmap_init_t *init;
     void                   *base;
 };
-typedef struct ib_cfgmap_handlers_data ib_cfgmap_handlers_data;
+typedef struct ib_cfgmap_handlers_data_t ib_cfgmap_handlers_data_t;
 
 /**
  * Translate field getter to cfgmap getter.
@@ -95,7 +95,7 @@ static const void *ib_cfgmap_handle_get(
         IB_FTRACE_RET_PTR(void, NULL);
     }
 
-    ib_cfgmap_handlers_data *data = (ib_cfgmap_handlers_data*)cbdata;
+    ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t*)cbdata;
 
     IB_FTRACE_RET_PTR(
         const void,
@@ -126,7 +126,7 @@ static ib_status_t ib_cfgmap_handle_set(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_cfgmap_handlers_data *data = (ib_cfgmap_handlers_data*)cbdata;
+    ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t*)cbdata;
 
     IB_FTRACE_RET_STATUS(
         data->init->fn_set(
@@ -157,13 +157,13 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                               rec->fn_set, rec->cbdata_set,
                               rec->fn_get, rec->cbdata_get);
 
-            /* Create a field with data that points to the base+offset. */
+            /* Create a field without value. */
             rc = ib_field_createn(&f, cm->mp, rec->name, rec->type, NULL);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
-            ib_cfgmap_handlers_data *data =
-                (ib_cfgmap_handlers_data*)ib_mpool_alloc(
+            ib_cfgmap_handlers_data_t *data =
+                (ib_cfgmap_handlers_data_t*)ib_mpool_alloc(
                     cm->mp,
                     sizeof(*data)
                 );
