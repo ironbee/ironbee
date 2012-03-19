@@ -8,6 +8,7 @@ CPPFLAGS += @GCC_CHARACTERISTICS_CPPFLAGS@ \
             -I$(top_srcdir)/util \
             -I$(top_srcdir)/engine \
             -I$(top_srcdir) \
+            -I$(top_builddir) \
             -Wno-unused-parameter
 
 CXXFLAGS += -g
