@@ -1,7 +1,5 @@
 ACLOCAL_AMFLAGS = -I../acinclude
 
-AM_CPPFLAGS += -I$(srcdir)/..
-
 LDADD = \
     $(top_builddir)/tests/gtest/libgtest.la \
     $(top_builddir)/tests/test_main.o \
@@ -24,7 +22,8 @@ check_PROGRAMS = \
     test_throw \
     test_memory_pool \
     test_byte_string \
-    test_field
+    test_field \
+    test_configuration_map
     
 TESTS=$(check_PROGRAMS)
 
@@ -38,6 +37,7 @@ test_throw_SOURCES              = test_throw.cpp
 test_memory_pool_SOURCES        = test_memory_pool.cpp fixture.cpp
 test_byte_string_SOURCES        = test_byte_string.cpp
 test_field_SOURCES              = test_field.cpp
+test_configuration_map_SOURCES  = test_configuration_map.cpp fixture.cpp
 
 check-local: $(check_PROGRAMS)
 	for cp in $(check_PROGRAMS); do \

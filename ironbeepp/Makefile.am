@@ -14,5 +14,6 @@ libibpp_la_SOURCES = \
     throw.cpp \
     memory_pool.cpp \
     byte_string.cpp \
-    field.cpp
+    field.cpp \
+    configuration_map.cpp
 
