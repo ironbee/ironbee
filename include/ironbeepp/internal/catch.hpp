@@ -46,7 +46,7 @@ namespace Internal {
  * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, does nothing.
+ * ib_log_error().  Otherwise, uses ib_util_log_error().
  *
  * @param[in] engine Engine to use for logging; may be null.
  * @param[in] status Which error occurred.
@@ -65,7 +65,7 @@ ib_status_t ibpp_caught_ib_exception(
  * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, does nothing.
+ * ib_log_error().  Otherwise, uses ib_util_log_error().
  *
  * @param[in] engine Engine to use for logging; may be null.
  * @param[in] e      Exception caught.
@@ -82,7 +82,7 @@ ib_status_t ibpp_caught_boost_exception(
  * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, does nothing.
+ * ib_log_error().  Otherwise, uses ib_util_log_error().
  *
  * @param[in] engine Engine to use for logging; may be null.
  * @param[in] status Which error occurred.
@@ -99,7 +99,7 @@ ib_status_t ibpp_caught_std_exception(
  * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, does nothing.
+ * ib_log_error().  Otherwise, uses ib_util_log_error().
  *
  * @param[in] engine Engine to use for logging; may be null.
  **/

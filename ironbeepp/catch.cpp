@@ -27,6 +27,7 @@
 
 #include <ironbee/types.h>  // ib_status_t, ib_status_to_string()
 #include <ironbee/engine.h> // ib_log_*
+#include <ironbee/util.h> // ib_util_log_*
 
 #include <ironbeepp/internal/catch.hpp>
 
@@ -41,25 +42,30 @@ ib_status_t ibpp_caught_ib_exception(
     const error& e
 )
 {
+    std::string message;
+    int level = 1;
+
+    message = std::string(ib_status_to_string(status)) + ":";
+    if (boost::get_error_info<errinfo_what>(e)) {
+        message += *boost::get_error_info<errinfo_what>(e);
+    }
+    else {
+        message += "IronBee++ Exception but no explanation provided.  "
+                   "Please report as bug.";
+    }
+
+    if (boost::get_error_info<errinfo_level>(e)) {
+        level = *boost::get_error_info<errinfo_level>(e);
+    }
+
     if (engine) {
-        std::string message;
-        int level = 1;
-
-        message = std::string(ib_status_to_string(status)) + ":";
-        if (boost::get_error_info<errinfo_what>(e)) {
-            message += *boost::get_error_info<errinfo_what>(e);
-        }
-        else {
-            message += "IronBee++ Exception but no explanation provided.  "
-                       "Please report as bug.";
-        }
-
-        if (boost::get_error_info<errinfo_level>(e)) {
-            level = *boost::get_error_info<errinfo_level>(e);
-        }
-
         ib_log_error(engine, level, "%s", message.c_str());
         ib_log_debug(engine, level, "%s",
+            diagnostic_information(e).c_str()
+        );
+    } else {
+        ib_util_log_error(level, "%s", message.c_str());
+        ib_util_log_debug(level, "%s",
             diagnostic_information(e).c_str()
         );
     }
@@ -71,24 +77,29 @@ ib_status_t ibpp_caught_boost_exception(
     const boost::exception& e
 )
 {
+    std::string message;
+    int level = 1;
+
+    message = "Unknown boost::exception thrown: ";
+    if (boost::get_error_info<boost::throw_function>(e)) {
+        message += *boost::get_error_info<boost::throw_function>(e);
+    }
+    else {
+        message += "No information provided.  Please report as bug.";
+    }
+
+    if (boost::get_error_info<errinfo_level>(e)) {
+        level = *boost::get_error_info<errinfo_level>(e);
+    }
+
     if (engine) {
-        std::string message;
-        int level = 1;
-
-        message = "Unknown boost::exception thrown: ";
-        if (boost::get_error_info<boost::throw_function>(e)) {
-            message += *boost::get_error_info<boost::throw_function>(e);
-        }
-        else {
-            message += "No information provided.  Please report as bug.";
-        }
-
-        if (boost::get_error_info<errinfo_level>(e)) {
-            level = *boost::get_error_info<errinfo_level>(e);
-        }
-
         ib_log_error(engine, level, "%s", message.c_str());
         ib_log_debug(engine, level, "%s",
+            diagnostic_information(e).c_str()
+        );
+    } else {
+        ib_util_log_error(level, "%s", message.c_str());
+        ib_util_log_debug(level, "%s",
             diagnostic_information(e).c_str()
         );
     }
@@ -102,17 +113,23 @@ ib_status_t ibpp_caught_std_exception(
     const std::exception& e
 )
 {
-    if (engine && status != IB_EALLOC) {
-        std::string message;
-        if (status == IB_EINVAL) {
-            message = "Invalid argument: ";
-        }
-        else {
-            message = "Unknown std::exception thrown: ";
-        }
-        message += e.what();
+    if (status == IB_EALLOC) {
+        return status;
+    }
 
+    std::string message;
+    if (status == IB_EINVAL) {
+        message = "Invalid argument: ";
+    }
+    else {
+        message = "Unknown std::exception thrown: ";
+    }
+    message += e.what();
+
+    if (engine) {
         ib_log_error(engine, 1, "%s", message.c_str());
+    } else {
+        ib_util_log_error(1, "%s", message.c_str());
     }
 
     return status;
@@ -124,6 +141,11 @@ ib_status_t ibpp_caught_unknown_exception(
 {
     if (engine) {
         ib_log_error(engine, 1, "%s",
+            "Completely unknown exception thrown.  "
+            "Please report as bug."
+        );
+    } else {
+        ib_util_log_error(1, "%s",
             "Completely unknown exception thrown.  "
             "Please report as bug."
         );
