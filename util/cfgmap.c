@@ -133,7 +133,7 @@ static ib_status_t ib_cfgmap_handle_set(
             data->base,
             field,
             val,
-            data->init->cbdata_get
+            data->init->cbdata_set
         )
     );
 }
