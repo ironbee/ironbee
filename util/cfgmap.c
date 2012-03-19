@@ -168,7 +168,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                     sizeof(*data)
                 );
             data->base = base;
-            data->init = init;
+            data->init = rec;
             ib_field_dyn_register_get(f, ib_cfgmap_handle_get, data);
             ib_field_dyn_register_set(f, ib_cfgmap_handle_set, data);
         }
