@@ -79,7 +79,7 @@ struct ib_cfgmap_t {
  * @param[in] data Callback data.
  * @returns Value (numeric) or pointer to value (non-numeric).
  */
-typedef void *(*ib_cfgmap_get_fn_t)(
+typedef const void *(*ib_cfgmap_get_fn_t)(
     const void       *base,
     const ib_field_t *field,
     void             *data
