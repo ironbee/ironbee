@@ -98,7 +98,7 @@ static const void *ib_cfgmap_handle_get(
     ib_cfgmap_handlers_data *data = (ib_cfgmap_handlers_data*)cbdata;
 
     IB_FTRACE_RET_PTR(
-        void,
+        const void,
         data->init->fn_get(
             data->base,
             field,
