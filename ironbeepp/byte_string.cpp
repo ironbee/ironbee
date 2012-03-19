@@ -277,7 +277,7 @@ void ByteString::set(const std::string& s) const
     set(s.data(), s.length());
 }
 
-void ByteString::append(const ByteString& tail) const
+void ByteString::append(const ConstByteString& tail) const
 {
     Internal::throw_if_error(ib_bytestr_append(ib(), tail.ib()));
 }

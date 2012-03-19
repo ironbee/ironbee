@@ -462,7 +462,7 @@ public:
      * @param[in] tail Data to append.
      * @throws einval if read-only; ealloc on allocation failure.
      **/
-    void append(const ByteString& tail) const;
+    void append(const ConstByteString& tail) const;
     //! As above, but for data and length.
     void append(const char* data, size_t length) const;
     //! As above, but for NULL terminated string.
