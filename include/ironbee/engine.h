@@ -2022,6 +2022,14 @@ void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
  */
 int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib);
 
+/**
+ * Set the IronBee log level.
+ *
+ * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
+ * @param[in] level The new log level.
+ */
+void DLL_PUBLIC ib_log_set_level(ib_engine_t *ib, int level);
+
 
 // TODO: The ib_event_* functions should be ib_logevent_* below???
 
