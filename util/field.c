@@ -80,83 +80,91 @@ ib_status_t ib_field_create_ex(ib_field_t **pf,
     }
 
     /* What and how it is stored depends on the field type. */
-    switch (type) {
-        case IB_FTYPE_BYTESTR:
-            if (pval != NULL) {
-                rc = ib_bytestr_dup(&(*pf)->val->u.bytestr,
-                                    mp,
-                                    *(ib_bytestr_t **)pval);
-                if (rc != IB_OK) {
-                    goto failed;
+    if (pval == NULL) {
+        (*pf)->val->pval = NULL;
+        ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT,
+            type,
+            IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen)
+        );
+    } else {
+        switch (type) {
+            case IB_FTYPE_BYTESTR:
+                if (pval != NULL) {
+                    rc = ib_bytestr_dup(&(*pf)->val->u.bytestr,
+                                        mp,
+                                        *(ib_bytestr_t **)pval);
+                    if (rc != IB_OK) {
+                        goto failed;
+                    }
+                    ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), IB_BYTESTR_FMT_PARAM((*pf)->val->u.bytestr), (*pf)->val->u.bytestr);
                 }
-                ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), IB_BYTESTR_FMT_PARAM((*pf)->val->u.bytestr), (*pf)->val->u.bytestr);
-            }
-            else {
-                (*pf)->val->u.bytestr = NULL;
-            }
-            (*pf)->val->pval = (void *)&((*pf)->val->u.bytestr);
-            break;
-        case IB_FTYPE_LIST:
-            if (pval != NULL) {
-                /// @todo Should do shallow copy
-                (*pf)->val->u.list = *(ib_list_t **)pval;
-            }
-            else {
-                rc = ib_list_create(&(*pf)->val->u.list, mp);
-                if (rc != IB_OK) {
-                    goto failed;
+                else {
+                    (*pf)->val->u.bytestr = NULL;
                 }
-            }
-            (*pf)->val->pval = (void *)&((*pf)->val->u.list);
-            break;
-        case IB_FTYPE_SBUFFER:
-            if (pval != NULL) {
-                /// @todo Should do shallow copy
-                (*pf)->val->u.stream = *(ib_stream_t **)pval;
-            }
-            else {
-                rc = ib_stream_create(&(*pf)->val->u.stream, mp);
-                if (rc != IB_OK) {
-                    goto failed;
+                (*pf)->val->pval = (void *)&((*pf)->val->u.bytestr);
+                break;
+            case IB_FTYPE_LIST:
+                if (pval != NULL) {
+                    /// @todo Should do shallow copy
+                    (*pf)->val->u.list = *(ib_list_t **)pval;
                 }
-            }
-            (*pf)->val->pval = (void *)&((*pf)->val->u.stream);
-            break;
-        case IB_FTYPE_NULSTR:
-            if (pval != NULL) {
-                size_t len = strlen(*(char **)pval) + 1;
+                else {
+                    rc = ib_list_create(&(*pf)->val->u.list, mp);
+                    if (rc != IB_OK) {
+                        goto failed;
+                    }
+                }
+                (*pf)->val->pval = (void *)&((*pf)->val->u.list);
+                break;
+            case IB_FTYPE_SBUFFER:
+                if (pval != NULL) {
+                    /// @todo Should do shallow copy
+                    (*pf)->val->u.stream = *(ib_stream_t **)pval;
+                }
+                else {
+                    rc = ib_stream_create(&(*pf)->val->u.stream, mp);
+                    if (rc != IB_OK) {
+                        goto failed;
+                    }
+                }
+                (*pf)->val->pval = (void *)&((*pf)->val->u.stream);
+                break;
+            case IB_FTYPE_NULSTR:
+                if (pval != NULL) {
+                    size_t len = strlen(*(char **)pval) + 1;
 
-                (*pf)->val->u.nulstr =
-                    (char *)ib_mpool_memdup(mp, *(char **)pval, len);
-                if ((*pf)->val->u.nulstr == NULL) {
-                    rc = IB_EALLOC;
-                    goto failed;
+                    (*pf)->val->u.nulstr =
+                        (char *)ib_mpool_memdup(mp, *(char **)pval, len);
+                    if ((*pf)->val->u.nulstr == NULL) {
+                        rc = IB_EALLOC;
+                        goto failed;
+                    }
                 }
-            }
-            else {
-                (*pf)->val->u.nulstr = NULL;
-            }
-            ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (*pf)->val->u.nulstr, (*pf)->val->u.nulstr);
-            (*pf)->val->pval = (void *)&((*pf)->val->u.nulstr);
-            break;
-        case IB_FTYPE_NUM:
-            (*pf)->val->u.num =
-                (pval != NULL) ? *(ib_num_t *)pval : 0;
-            ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=%d", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (int)(*pf)->val->u.num);
-            (*pf)->val->pval = (void *)&((*pf)->val->u.num);
-            break;
-        case IB_FTYPE_UNUM:
-            (*pf)->val->u.unum =
-                (pval != NULL) ? *(ib_num_t *)pval : 0;
-            ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=%d", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (unsigned int)(*pf)->val->u.unum);
-            (*pf)->val->pval = (void *)&((*pf)->val->u.unum);
-            break;
-        case IB_FTYPE_GENERIC:
-        default:
-            (*pf)->val->u.ptr =
-                (pval != NULL) ? *(void **)pval : NULL;
-            (*pf)->val->pval = (void *)&((*pf)->val->u.ptr);
-            break;
+                else {
+                    (*pf)->val->u.nulstr = NULL;
+                }
+                ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (*pf)->val->u.nulstr, (*pf)->val->u.nulstr);
+                (*pf)->val->pval = (void *)&((*pf)->val->u.nulstr);
+                break;
+            case IB_FTYPE_NUM:
+                (*pf)->val->u.num =
+                    (pval != NULL) ? *(ib_num_t *)pval : 0;
+                ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=%d", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (int)(*pf)->val->u.num);
+                (*pf)->val->pval = (void *)&((*pf)->val->u.num);
+                break;
+            case IB_FTYPE_UNUM:
+                (*pf)->val->u.unum =
+                    (pval != NULL) ? *(ib_num_t *)pval : 0;
+                ib_util_log_debug(9, "CREATE FIELD type=%d %" IB_BYTESTR_FMT "=%d", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), (unsigned int)(*pf)->val->u.unum);
+                (*pf)->val->pval = (void *)&((*pf)->val->u.unum);
+                break;
+            case IB_FTYPE_GENERIC:
+            default:
+                (*pf)->val->u.ptr =
+                    (pval != NULL) ? *(void **)pval : NULL;
+                (*pf)->val->pval = (void *)&((*pf)->val->u.ptr);
+                break;
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -216,27 +224,58 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
         goto failed;
     }
     (*pf)->val->pval = pval;
-    switch (type) {
-        case IB_FTYPE_BYTESTR:
-            ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)((*pf)->val->pval)), (*pf)->val->pval);
-            break;
-        case IB_FTYPE_LIST:
-        case IB_FTYPE_SBUFFER:
-            break;
-        case IB_FTYPE_NULSTR:
-            ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), *(char **)((*pf)->val->pval), (*pf)->val->pval);
-            break;
-        case IB_FTYPE_NUM:
-            ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), *(int **)((*pf)->val->pval), (*pf)->val->pval);
-            break;
-        case IB_FTYPE_UNUM:
-            ib_util_log_debug(9, "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%u (%p)", type, IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen), *(unsigned int **)((*pf)->val->pval), (*pf)->val->pval);
-            break;
-        case IB_FTYPE_GENERIC:
-        default:
-            break;
+    if (pval) {
+        switch (type) {
+            case IB_FTYPE_BYTESTR:
+                ib_util_log_debug(9,
+                    "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)",
+                    type,
+                    IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
+                    IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)((*pf)->val->pval)),
+                    (*pf)->val->pval
+                );
+                break;
+            case IB_FTYPE_LIST:
+            case IB_FTYPE_SBUFFER:
+                break;
+            case IB_FTYPE_NULSTR:
+                ib_util_log_debug(9,
+                    "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)",
+                    type,
+                    IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
+                    *(char **)((*pf)->val->pval),
+                    (*pf)->val->pval
+                );
+                break;
+            case IB_FTYPE_NUM:
+                ib_util_log_debug(9,
+                    "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)",
+                    type,
+                    IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
+                    *(int **)((*pf)->val->pval),
+                    (*pf)->val->pval
+                );
+                break;
+            case IB_FTYPE_UNUM:
+                ib_util_log_debug(9,
+                    "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%u (%p)",
+                    type,
+                    IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
+                    *(unsigned int **)((*pf)->val->pval),
+                    (*pf)->val->pval
+                );
+                break;
+            case IB_FTYPE_GENERIC:
+            default:
+                break;
+        }
+    } else {
+        ib_util_log_debug(9,
+            "CREATEN FIELD type=%d %" IB_BYTESTR_FMT,
+            type,
+            IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen)
+        );
     }
-
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
