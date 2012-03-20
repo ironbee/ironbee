@@ -56,11 +56,11 @@ namespace IronBee {
  *
  * You probably do not want to use this template directly.  Instead, call
  * Module::set_configuration_data() or Module::set_configuration_data_pod(),
- * both of which return this to faciliate configuration map creation.
+ * both of which return this to facilitate configuration map creation.
  *
  * This code is roughly analogous to the IB_CFGMAP_INIT* macros in the C API.
  *
- * This template is instantatied with a specifc @a ConfigurationData type and
+ * This template is instantiated with a specific @a ConfigurationData type and
  * @c ib_cfgmap_init_t* pointer for a initiation structure to fill.  It then
  * provides a variety of API calls for initializing that structure in a
  * natural and typesafe way.
