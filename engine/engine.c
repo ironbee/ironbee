@@ -2078,7 +2078,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
     /* Check if a new audit log structure must be allocated:
      *   1. if auditlog == NULL or
      *   2. if the allocated audit log belongs to another context we may
-     *      not change its auditlog->index value (or auditlog->index_fp). 
+     *      not change its auditlog->index value (or auditlog->index_fp).
      *      We must make a new auditlog that the passed in ib_context_t
      *      ctx owns.  */
     if (ctx->auditlog == NULL || ctx->auditlog->owner != ctx)

@@ -258,7 +258,7 @@ public:
      * It is highly recommended to use set_configuration_data() unless you
      * need to closely interoperate with the C code.
      *
-     * Both methods returns a ConfigurationMapInit object to facilitate 
+     * Both methods returns a ConfigurationMapInit object to facilitate
      * creation of configuration maps.  See configuration_map.hpp for details.
      * E.g.,
      *
@@ -572,7 +572,7 @@ ConfigurationMapInit<DataType> Module::set_configuration_data_pod(
             Internal::configuration_copier_translator<DataType>(copier)
         );
     }
-    
+
     return ConfigurationMapInit<DataType>(ib()->cm_init, mpool);
 }
 

@@ -59,7 +59,7 @@ public:
      * assignment, copying, comparison, and evaluate-as-bool.
      **/
     ConstEngine();
-    
+
     /**
      * @name C Interoperability
      * Methods to access underlying C types.
@@ -80,7 +80,7 @@ public:
     ///@}
 
 private:
-    const ib_engine_t* m_ib; 
+    const ib_engine_t* m_ib;
 };
 
 /**
@@ -117,7 +117,7 @@ public:
      * assignment, copying, comparison, and evaluate-as-bool.
      **/
     Engine();
-     
+
     /**
      * @name C Interoperability
      * Methods to access underlying C types.

@@ -32,7 +32,7 @@
 #include <ironbee/debug.h>
 
 #include <boost/bind.hpp>
-     
+
 using namespace std;
 
 class TestConfigurationMap : public ::testing::Test, public IBPPTestFixture
@@ -483,7 +483,7 @@ TEST_F(TestConfigurationMap, TestHandle)
     IronBee::Module m(&ib_module);
     IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_ib_engine));
 
-    IronBee::ConfigurationMapInit<test_data_t> 
+    IronBee::ConfigurationMapInit<test_data_t>
         cmi(m.ib()->cm_init, mpool, true);
 
     cmi.number("s", &test_data_t::s);
@@ -491,12 +491,12 @@ TEST_F(TestConfigurationMap, TestHandle)
 
     test_data_t data;
     test_data_t* datap = &data;
-    
+
     ib_cfgmap_t* cm = setup_cfgmap(ib_module.cm_init, &datap);
     ASSERT_TRUE(cm);
 
     data.s = 13;
     EXPECT_EQ(data.s, cfgmap_get<ib_num_t>(cm, "s", IB_FTYPE_NUM));
     cfgmap_set<ib_num_t>(cm, "s", 19);
-    EXPECT_EQ(19, data.s);    
+    EXPECT_EQ(19, data.s);
 }

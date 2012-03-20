@@ -109,7 +109,7 @@ ib_status_t cfgmap_handle_set(
 )
 {
     assert(handle != NULL);
-    
+
     return cfgmap_set(
         *reinterpret_cast<void**>(handle),
         field,

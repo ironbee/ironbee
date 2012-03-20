@@ -56,12 +56,12 @@ namespace IronBee {
  * Helper template for Module::set_configuration_data() and
  * Module::set_configuration_data_pod().
  *
- * This general form is to allow cases where @a ConfigurationData is not a 
- * class.  This provides a valid but empty template.  The following 
+ * This general form is to allow cases where @a ConfigurationData is not a
+ * class.  This provides a valid but empty template.  The following
  * specialization is the primary case, when @a ConfigurationData is a class.
  *
  * Future work may expand this code to allow for functional configuration map
- * entries.  This would be useful for modules that want to provide 
+ * entries.  This would be useful for modules that want to provide
  * configuration maps but not make use of the module configuration data
  * support.
  *
@@ -85,7 +85,7 @@ public:
         // nop
     }
 };
- 
+
 /**
  * Helper template for Module::set_configuration_data() and
  * Module::set_configuration_data_pod().
@@ -173,7 +173,7 @@ public:
      *                           structure.
      * @param[in] memory_pool    Memory pool to use as needed.
      * @param[in] data_is_handle If true, configuration data from C API
-     *                           will be treated as handle rather than 
+     *                           will be treated as handle rather than
      *                           pointer.
      **/
     ConfigurationMapInit(
@@ -581,7 +581,7 @@ private:
         Setter        setter,
         Field::type_e field_type
     );
-    
+
     const ib_cfgmap_init_t*&    m_ib_init;
     MemoryPool                  m_memory_pool;
     bool                        m_data_is_handle;
