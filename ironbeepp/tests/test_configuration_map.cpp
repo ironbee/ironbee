@@ -32,7 +32,7 @@
 #include <ironbee/debug.h>
 
 #include <boost/bind.hpp>
-
+     
 using namespace std;
 
 class TestConfigurationMap : public ::testing::Test, public IBPPTestFixture
@@ -84,7 +84,7 @@ struct test_data_t
     unsigned int        u;
     const char*         n;
     IronBee::ByteString b;
-    std::string         ss;
+    string              ss;
 };
 
 TEST_F(TestConfigurationMap, DataMember)
@@ -136,7 +136,7 @@ TEST_F(TestConfigurationMap, DataMember)
     cfgmap_set<IronBee::ConstByteString>(cm, "b", bs2);
     EXPECT_EQ(bs2.to_s(), data.b.to_s());
 
-    data.ss = std::string("abc");
+    data.ss = string("abc");
     EXPECT_EQ(
         data.ss,
         cfgmap_get<IronBee::ConstByteString>(
@@ -150,7 +150,7 @@ TEST_F(TestConfigurationMap, DataMember)
 struct test_data2_t
 {
     static int         s_which;
-    static std::string s_name;
+    static string      s_name;
     static test_data_t s_data;
 
     static void reset()
@@ -159,59 +159,56 @@ struct test_data2_t
         s_name.clear();
     }
 
-    int64_t get_number(const std::string& name) const
+    int64_t get_number(const string& name) const
     {
         s_which = 1;
         s_name = name;
         return s_data.s;
     }
 
-    void set_number(const std::string& name, int64_t v) const
+    void set_number(const string& name, int64_t v) const
     {
         s_which = 1;
         s_name = name;
         s_data.s = v;
     }
 
-    uint64_t get_unsigned_number(const std::string& name) const
+    uint64_t get_unsigned_number(const string& name) const
     {
         s_which = 2;
         s_name = name;
         return s_data.u;
     }
 
-    void set_unsigned_number(const std::string& name, uint64_t v) const
+    void set_unsigned_number(const string& name, uint64_t v) const
     {
         s_which = 2;
         s_name = name;
         s_data.u = v;
     }
 
-    const char* get_null_string(const std::string& name) const
+    const char* get_null_string(const string& name) const
     {
         s_which = 3;
         s_name = name;
         return s_data.n;
     }
 
-    void set_null_string(const std::string& name, const char* v) const
+    void set_null_string(const string& name, const char* v) const
     {
         s_which = 3;
         s_name = name;
         s_data.n = v;
     }
 
-    IronBee::ConstByteString get_byte_string(const std::string& name) const
+    IronBee::ConstByteString get_byte_string(const string& name) const
     {
         s_which = 4;
         s_name = name;
         return s_data.b;
     }
 
-    void set_byte_string(
-        const std::string& name,
-        IronBee::ConstByteString v
-    ) const
+    void set_byte_string(const string& name, IronBee::ConstByteString v) const
     {
         s_which = 4;
         s_name = name;
@@ -219,7 +216,7 @@ struct test_data2_t
         s_data.b.append(v);
     }
 
-    std::string get_string(const std::string& name) const
+    string get_string(const string& name) const
     {
         s_which = 5;
         s_name = name;
@@ -227,8 +224,8 @@ struct test_data2_t
     }
 
     void set_string(
-        const std::string& name,
-        const std::string& v
+        const string& name,
+        const string& v
     ) const
     {
         s_which = 5;
@@ -238,7 +235,7 @@ struct test_data2_t
     }
 };
 int         test_data2_t::s_which;
-std::string test_data2_t::s_name;
+string      test_data2_t::s_name;
 test_data_t test_data2_t::s_data;
 
 TEST_F(TestConfigurationMap, FunctionMember)
@@ -477,4 +474,29 @@ TEST_F(TestConfigurationMap, Functional)
     EXPECT_EQ(bs2.to_s(), test_data2_t::s_data.ss);
     EXPECT_EQ(5,          test_data2_t::s_which);
     EXPECT_EQ("ss",       test_data2_t::s_name);
+}
+
+TEST_F(TestConfigurationMap, TestHandle)
+{
+    ib_module_t ib_module;
+    ib_module.ib = m_ib_engine;
+    IronBee::Module m(&ib_module);
+    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_ib_engine));
+
+    IronBee::ConfigurationMapInit<test_data_t> 
+        cmi(m.ib()->cm_init, mpool, true);
+
+    cmi.number("s", &test_data_t::s);
+    cmi.finish();
+
+    test_data_t data;
+    test_data_t* datap = &data;
+    
+    ib_cfgmap_t* cm = setup_cfgmap(ib_module.cm_init, &datap);
+    ASSERT_TRUE(cm);
+
+    data.s = 13;
+    EXPECT_EQ(data.s, cfgmap_get<ib_num_t>(cm, "s", IB_FTYPE_NUM));
+    cfgmap_set<ib_num_t>(cm, "s", 19);
+    EXPECT_EQ(19, data.s);    
 }

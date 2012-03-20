@@ -84,6 +84,40 @@ ib_status_t cfgmap_set(
     ));
 }
 
+const void* cfgmap_handle_get(
+    const void*       handle,
+    const ib_field_t* field,
+    void*             cbdata
+)
+{
+    IB_FTRACE_INIT();
+
+    assert(handle != NULL);
+
+    return cfgmap_get(
+        *reinterpret_cast<const void* const*>(handle),
+        field,
+        cbdata
+    );
+}
+
+ib_status_t cfgmap_handle_set(
+    void*       handle,
+    ib_field_t* field,
+    const void* value,
+    void*       cbdata
+)
+{
+    assert(handle != NULL);
+    
+    return cfgmap_set(
+        *reinterpret_cast<void**>(handle),
+        field,
+        value,
+        cbdata
+    );
+}
+
 } // extern "C"
 
 } // Hooks
@@ -92,19 +126,26 @@ void set_configuration_map_init_translators(
     ib_cfgmap_init_t& init,
     ib_mpool_t* mpool,
     configuration_map_init_getter_translator_t getter_translator,
-    configuration_map_init_setter_translator_t setter_translator
+    configuration_map_init_setter_translator_t setter_translator,
+    bool data_is_handle
 )
 {
+    if (data_is_handle) {
+        init.fn_get = Hooks::cfgmap_handle_get;
+        init.fn_set = Hooks::cfgmap_handle_set;
+    }
+    else {
+        init.fn_get = Hooks::cfgmap_get;
+        init.fn_set = Hooks::cfgmap_set;
+    }
     init.cbdata_get = Internal::value_to_data(
         getter_translator,
         mpool
     );
-    init.fn_get = Hooks::cfgmap_get;
     init.cbdata_set = Internal::value_to_data(
         setter_translator,
         mpool
     );
-    init.fn_set = Hooks::cfgmap_set;
 }
 
 } // Internal
