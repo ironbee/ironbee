@@ -243,7 +243,8 @@ ib_status_t ib_module_register_context(ib_module_t *m,
                     if (rc != IB_OK) {
                         IB_FTRACE_RET_STATUS(rc);
                     }
-                } else {
+                }
+                else {
                     memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
                 }
                 ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
@@ -266,7 +267,8 @@ ib_status_t ib_module_register_context(ib_module_t *m,
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(rc);
                 }
-            } else {
+            }
+            else {
                 memcpy(cfgdata->data, m->gcdata, m->gclen);
             }
             ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);

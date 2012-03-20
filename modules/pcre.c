@@ -642,7 +642,8 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 
         if ( rule_data->study_data_sz == 0 ) {
             regex_extra->study_data = NULL;
-        } else {
+        }
+        else {
             regex_extra->study_data = malloc(rule_data->study_data_sz);
 
             if (regex_extra->study_data == NULL ) {

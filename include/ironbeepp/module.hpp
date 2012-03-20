@@ -567,7 +567,8 @@ ConfigurationMapInit<DataType> Module::set_configuration_data_pod(
     if (copier.empty()) {
         ib()->fn_cfg_copy     = NULL;
         ib()->cbdata_cfg_copy = NULL;
-    } else {
+    }
+    else {
         set_configuration_copier_translator(
             Internal::configuration_copier_translator<DataType>(copier)
         );

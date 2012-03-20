@@ -116,7 +116,8 @@ public:
     {
         if (static_cast<const SubclassType&>(*this).ib()) {
             return unspecified_bool;
-        } else {
+        }
+        else {
             return NULL;
         }
     }
