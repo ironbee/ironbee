@@ -112,10 +112,10 @@ TEST_F(TestConfigurationMap, DataMember)
     cfgmap_set<ib_num_t>(cm, "s", 19);
     EXPECT_EQ(19, data.s);
 
-    data.u = -13;
+    data.u = 13;
     EXPECT_EQ(data.u, cfgmap_get<ib_unum_t>(cm, "u", IB_FTYPE_UNUM));
-    cfgmap_set<ib_unum_t>(cm, "u", -19);
-    EXPECT_EQ(-19, data.u);
+    cfgmap_set<ib_unum_t>(cm, "u", 19);
+    EXPECT_EQ(19UL, data.u);
 
     const char* s1 = "Hello World";
     const char* s2 = "Foobar";
@@ -292,7 +292,7 @@ TEST_F(TestConfigurationMap, FunctionMember)
     EXPECT_EQ(1,   test_data2_t::s_which);
     EXPECT_EQ("s", test_data2_t::s_name);
 
-    test_data2_t::s_data.u = -13;
+    test_data2_t::s_data.u = 13;
     test_data2_t::reset();
     EXPECT_EQ(
         test_data2_t::s_data.u,
@@ -301,8 +301,8 @@ TEST_F(TestConfigurationMap, FunctionMember)
     EXPECT_EQ(2,   test_data2_t::s_which);
     EXPECT_EQ("u", test_data2_t::s_name);
     test_data2_t::reset();
-    cfgmap_set<ib_unum_t>(cm, "u", -19);
-    EXPECT_EQ(-19, test_data2_t::s_data.u);
+    cfgmap_set<ib_unum_t>(cm, "u", 19);
+    EXPECT_EQ(19UL, test_data2_t::s_data.u);
     EXPECT_EQ(2,   test_data2_t::s_which);
     EXPECT_EQ("u", test_data2_t::s_name);
 
@@ -411,7 +411,7 @@ TEST_F(TestConfigurationMap, Functional)
     EXPECT_EQ(1,   test_data2_t::s_which);
     EXPECT_EQ("s", test_data2_t::s_name);
 
-    test_data2_t::s_data.u = -13;
+    test_data2_t::s_data.u = 13;
     test_data2_t::reset();
     EXPECT_EQ(
         test_data2_t::s_data.u,
@@ -420,8 +420,8 @@ TEST_F(TestConfigurationMap, Functional)
     EXPECT_EQ(2,   test_data2_t::s_which);
     EXPECT_EQ("u", test_data2_t::s_name);
     test_data2_t::reset();
-    cfgmap_set<ib_unum_t>(cm, "u", -19);
-    EXPECT_EQ(-19, test_data2_t::s_data.u);
+    cfgmap_set<ib_unum_t>(cm, "u", 19);
+    EXPECT_EQ(19UL, test_data2_t::s_data.u);
     EXPECT_EQ(2,   test_data2_t::s_which);
     EXPECT_EQ("u", test_data2_t::s_name);
 
