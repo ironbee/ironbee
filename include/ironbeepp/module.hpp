@@ -31,6 +31,7 @@
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/configuration_map.hpp>
 #include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/internal/data.hpp>
 
@@ -256,6 +257,21 @@ public:
      *
      * It is highly recommended to use set_configuration_data() unless you
      * need to closely interoperate with the C code.
+     *
+     * Both methods returns a ConfigurationMapInit object to facilitate 
+     * creation of configuration maps.  See configuration_map.hpp for details.
+     * E.g.,
+     *
+     * @code
+     * module.set_configuration_data_pod(my_global_data)
+     *       .number("num_foos", &my_global_data_t::num_foos)
+     *       .byte_string_s("best_foo_name", &my_global_data_t::best_foo_name)
+     *       ;
+     * @endcode
+     *
+     * If the configuration data is not a class/struct, the return value
+     * is a valid type (ConfigurationMapInit<DataType>) but has no
+     * methods.
      **/
     ///@{
 
@@ -315,32 +331,34 @@ public:
      *                        top level context.
      * @param[in] copier      Optional copier functional.  Defaults to
      *                        memory copy (IB engine default).
+     * @returns ConfigurationMapInit
      **/
     template <typename DataType>
-    void set_configuration_data_pod(
+    ConfigurationMapInit<DataType> set_configuration_data_pod(
         const DataType& global_data,
         typename configuration_copier_t<DataType>::type copier =
             typename configuration_copier_t<DataType>::type()
     ) const;
 
-     /**
-      * Set configuration for C++ objects.
-      *
-      * See group member group documentation for details.
-      *
-      * Under the hood, this calls set_configuration_data_pod() with a pointer
-      * to DataType (pointers are POD).  That is, @c gcdata is a pointer to
-      * a pointer to a @a DataType.
-      *
-      * @warning Only call one of set_configuration_data() and
-      * set_configuration_data_pod().  They will overwrite each other.
-      *
-      * @tparam DataType Type of configuration data.  Must be copyable.
-      * @param[in] global_data The global configuration data copied to
-      *                        every toplevel context.
-      **/
+    /**
+     * Set configuration for C++ objects.
+     *
+     * See group member group documentation for details.
+     *
+     * Under the hood, this calls set_configuration_data_pod() with a pointer
+     * to DataType (pointers are POD).  That is, @c gcdata is a pointer to
+     * a pointer to a @a DataType.
+     *
+     * @warning Only call one of set_configuration_data() and
+     * set_configuration_data_pod().  They will overwrite each other.
+     *
+     * @tparam DataType Type of configuration data.  Must be copyable.
+     * @param[in] global_data The global configuration data copied to
+     *                        every toplevel context.
+     * @returns ConfigurationMapInit
+    **/
     template <typename DataType>
-    void set_configuration_data(
+    ConfigurationMapInit<DataType> set_configuration_data(
         const DataType& global_data
     ) const;
 
@@ -528,16 +546,15 @@ public:
 } // Internal
 
 template <typename DataType>
-void Module::set_configuration_data_pod(
+ConfigurationMapInit<DataType> Module::set_configuration_data_pod(
     const DataType& global_data,
     typename configuration_copier_t<DataType>::type copier
 ) const
 {
+    MemoryPool mpool(ib_engine_pool_main_get(ib()->ib));
     ib()->gclen = sizeof(global_data);
-    ib()->gcdata = ib_mpool_alloc(
-        ib_engine_pool_main_get(ib()->ib),
-        ib()->gclen
-    );
+    ib()->gcdata = mpool.alloc(ib()->gclen);
+
     if (ib()->gcdata == NULL) {
         BOOST_THROW_EXCEPTION(
           ealloc() << errinfo_what(
@@ -555,13 +572,16 @@ void Module::set_configuration_data_pod(
             Internal::configuration_copier_translator<DataType>(copier)
         );
     }
+    
+    return ConfigurationMapInit<DataType>(ib()->cm_init, mpool);
 }
 
 template <typename DataType>
-void Module::set_configuration_data(
+ConfigurationMapInit<DataType> Module::set_configuration_data(
     const DataType& global_data
 ) const
 {
+    MemoryPool mpool(ib_engine_pool_main_get(ib()->ib));
     DataType* global_data_ptr = new DataType(global_data);
 
     // This will make gcdata a pointer to a pointer.
@@ -575,6 +595,8 @@ void Module::set_configuration_data(
     ).register_cleanup(
         Internal::configuration_data_destroy<DataType>(global_data_ptr)
     );
+
+    return ConfigurationMapInit<DataType>(ib()->cm_init, mpool, true);
 }
 
 /**

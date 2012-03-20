@@ -541,3 +541,21 @@ TEST_F(TestModule, Const)
     EXPECT_EQ(cmodule, module2);
     EXPECT_EQ(module, module2);
 }
+
+// Complete ConfigurationMap tests are in test_configuration_map.
+TEST_F(TestModule, ConfigurationMap)
+{
+    ib_module_t ib_module;
+    ib_module.ib = m_ib_engine;
+    IronBee::Module module(&ib_module);
+    
+    test_data_t data;
+    
+    module.set_configuration_data_pod(data)
+          .number("x", &test_data_t::x)
+          ;
+    
+    ASSERT_TRUE(ib_module.cm_init);
+    EXPECT_FALSE(ib_module.cm_init[1].name);
+    EXPECT_EQ(std::string("x"), ib_module.cm_init[0].name);
+}
