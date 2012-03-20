@@ -29,20 +29,47 @@
 
 namespace IronBee {
 
-Engine::Engine(ib_engine_t* ib_engine) :
+ConstEngine::ConstEngine() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ConstEngine::ConstEngine(const ib_engine_t* ib_engine) :
     m_ib(ib_engine)
 {
     // nop
 }
 
-ib_engine_t* Engine::ib()
+Engine::Engine() :
+    m_ib(NULL)
 {
-    return m_ib;
+    // nop
 }
 
-const ib_engine_t* Engine::ib() const
+Engine::Engine(ib_engine_t* ib_engine) :
+    ConstEngine(ib_engine),
+    m_ib(ib_engine)
 {
-    return m_ib;
+    // nop
+}
+
+Engine Engine::remove_const(ConstEngine engine)
+{
+    // See API documentation for discussion of const_cast.
+    return Engine(const_cast<ib_engine_t*>(engine.ib()));
+}
+
+std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)
+{
+    if (! engine) {
+        o << "IronBee::Engine[!singular!]";
+    }
+    else {
+        o << "IronBee::Engine[" << engine.ib() << "]";
+    }
+
+    return o;
 }
 
 } // IronBee

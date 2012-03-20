@@ -27,24 +27,131 @@
 #ifndef __IBPP__ENGINE__
 #define __IBPP__ENGINE__
 
+#include <ironbeepp/common_semantics.hpp>
+#include <iostream>
+
 // IronBee C
 typedef struct ib_engine_t ib_engine_t;
 
 namespace IronBee {
 
-class Engine
+/**
+ * Const Engine; equivalent to a const pointer to ib_engine_t.
+ *
+ * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
+ *
+ * See Engine for discussion of the engine.
+ *
+ * @sa Engine
+ * @sa ironbeepp
+ * @sa ib_engine_t
+ * @nosubgrouping
+ **/
+class ConstEngine :
+    public CommonSemantics<ConstEngine>
 {
 public:
+    /**
+     * Construct singular ConstEngine.
+     *
+     * All behavior of a singular ConstEngine is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    ConstEngine();
+    
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
 
-    ib_engine_t* ib();
-    const ib_engine_t* ib() const;
+    //! const ib_engine_t accessor.
+    // Intentionally inlined.
+    const ib_engine_t* ib() const
+    {
+        return m_ib;
+    }
 
+    //! Construct Engine from ib_engine_t.
+    explicit
+    ConstEngine(const ib_engine_t* ib_engine);
+
+    ///@}
+
+private:
+    const ib_engine_t* m_ib; 
+};
+
+/**
+ * Engine; equivalent to a pointer to ib_engine_t.
+ *
+ * An Engine can be treated as a ConstEngine.  See @ref ironbeepp for
+ * details on IronBee++ object semantics.
+ *
+ * XXX
+ *
+ * @sa ironbeepp
+ * @sa ib_engine_t
+ * @sa ConstEngine
+ * @nosubgrouping
+ **/
+class Engine :
+    public ConstEngine
+{
+public:
+    /**
+     * Remove the constness of a ConstEngine.
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     *
+     * @param[in] bs ConstEngine to remove const from.
+     * @returns Engine pointing to same underlying byte string as @a bs.
+     **/
+    static Engine remove_const(ConstEngine engine);
+
+    /**
+     * Construct singular Engine.
+     *
+     * All behavior of a singular Engine is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    Engine();
+     
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! const ib_engine_t accessor.
+    // Intentionally inlined.
+    ib_engine_t* ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct Engine from ib_engine_t.
     explicit
     Engine(ib_engine_t* ib_engine);
+
+    ///@}
 
 private:
     ib_engine_t* m_ib;
 };
+
+/**
+ * Output operator for Engine.
+ *
+ * Outputs Engine[@e value] to @a o where @e value is replaced with
+ * the value of the bytestring.
+ *
+ * @param[in] o           Ostream to output to.
+ * @param[in] byte_string Engine to output.
+ * @return @a o
+ **/
+std::ostream& operator<<(std::ostream& o, const ConstEngine& engine);
 
 } // IronBee
 
