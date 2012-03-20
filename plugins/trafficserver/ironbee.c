@@ -723,7 +723,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     char *head_buf;
     char *head_ptr;
     void *head_start;
-    int first_time = 0;
+    int first_time = 1;
     unsigned char *dptr;
 
     /* before the HTTP headers comes the request line / response code */
@@ -748,8 +748,11 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     /* if we're going to enable manipulation of headers, we need a copy */
     icdata.dalloc = icdata.dlen = len;
     icdata.data = dptr = TSmalloc(len);
-    while (blockp) {
-        head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+    head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+    for (head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+         len > 0;
+         head_buf = (void*)TSIOBufferBlockReadStart(
+                        TSIOBufferReaderStart(readerp), readerp, &len)) {
 
         if (first_time && (ibd->dir == IBD_REQ)) {
             /* Workaround:
@@ -794,7 +797,6 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
         /* if there's more to come, go round again ... */
         TSIOBufferReaderConsume(readerp, len);
-        blockp = TSIOBufferReaderStart(readerp);
     }
     (*ibd->ib_notify)(ironbee, &icdata, data);
 
