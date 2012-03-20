@@ -618,7 +618,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
  *
  * This and core_audit_close are thread-safe.
  *
- * @param[in] lpi Log provider API.
+ * @param[in] lpi Log provider interface.
  * @param[in] log The log record.
  * @return IB_OK or other. See log file for details of failure.
  */
@@ -708,7 +708,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
  * Write audit log header. This is not thread-safe and should be protected
  * with a lock.
  *
- * @param[in] lpi Log provider API.
+ * @param[in] lpi Log provider interface.
  * @param[in] log The log record.
  * @return IB_OK or IB_EUNKNOWN.
  */
@@ -732,7 +732,7 @@ static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
 /**
  * Write part of a audit log. This call should be protected by a lock.
  *
- * @param[in] lpi Log provider API.
+ * @param[in] lpi Log provider interface.
  * @param[in] log The log record.
  * @return IB_OK or other. See log file for details of failure.
  */
@@ -775,7 +775,7 @@ static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
 /**
  * Write an audit log footer. This call should be protected by a lock.
  *
- * @param[in] lpi Log provider API.
+ * @param[in] lpi Log provider interface.
  * @param[in] log The log record.
  * @return IB_OK or other. See log file for details of failure.
  */

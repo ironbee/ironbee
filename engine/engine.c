@@ -2075,7 +2075,12 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
     assert(ctx->mp != NULL);
     assert(idx != NULL);
 
-    /* Null OR we do not own this audit logging context. */
+    /* Check if a new audit log structure must be allocated:
+     *   1. if auditlog == NULL or
+     *   2. if the allocated audit log belongs to another context we may
+     *      not change its auditlog->index value (or auditlog->index_fp). 
+     *      We must make a new auditlog that the passed in ib_context_t
+     *      ctx owns.  */
     if (ctx->auditlog == NULL || ctx->auditlog->owner != ctx)
     {
 
@@ -2106,11 +2111,12 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
     }
+    /* Else the auditlog struct is initialized and owned by this ctx. */
     else {
         rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
 
         if (rc!=IB_OK) {
-            ib_log_debug(ctx->ib, 5, "Failed to audit index %s", idx);
+            ib_log_debug(ctx->ib, 5, "Failed lock to audit index %s", idx);
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -2119,7 +2125,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
 
             ib_lock_unlock(&ctx->auditlog->index_fp_lock);
 
-            ib_log_debug(ctx->ib, 5,
+            ib_log_debug(ctx->ib, 7,
                          "Re-setting log same value. No action: %s",
                          idx);
 
