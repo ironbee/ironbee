@@ -76,6 +76,7 @@ typedef struct {
 
 #define HDRS_IN 0x01
 #define HDRS_OUT 0x02
+#define START_RESPONSE 0x04
 #define DATA 0
 
 typedef struct hdr_do {
@@ -85,15 +86,30 @@ typedef struct hdr_do {
     char *value;
     struct hdr_do *next;
 } hdr_do;
+
+typedef struct hdr_list {
+    char *hdr;
+    char *value;
+    struct hdr_list *next;
+} hdr_list;
+
+typedef struct {
+    const char *ctype;
+    const char *redirect;
+    const char *authn;
+    const char *body;
+} error_resp_t;
+
 typedef struct {
     ib_ssn_ctx *ssn;
     TSHttpTxn txnp;
     ib_filter_ctx in;
     ib_filter_ctx out;
-    int status;
     int state;
-    //enum { HDRS_IN, HDRS_OUT, DATA } caller;
+    int status;
     hdr_do *hdr_actions;
+    hdr_list *err_hdrs;
+    char *err_body;    /* this one can't be const */
 } ib_txn_ctx;
 
 /* mod_ironbee uses ib_state_notify_conn_data_[in|out]
@@ -149,10 +165,56 @@ static ib_server_header_action_t ib_header_callback
     return action;
 
 }
-static ib_status_t ib_error_callback(void *x, int status, const void *data)
+
+/**
+ * Handler function to generate an error response
+ */
+static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
+{
+    const char *reason = TSHttpHdrReasonLookup(txndata->status);
+    TSMBuffer bufp;
+    TSMLoc hdr_loc, field_loc;
+    hdr_list *hdrs;
+    int rv;
+
+    if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
+        TSError("couldn't retrieve client response header\n");
+        TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+        return;
+    }
+    TSHttpHdrStatusSet(bufp, hdr_loc, txndata->status);
+    TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
+
+    /* FIXME - generalise this lot */
+    while (hdrs = txndata->err_hdrs, hdrs != 0) {
+        txndata->err_hdrs = hdrs->next;
+        rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
+        rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
+                                   hdrs->hdr, strlen(hdrs->hdr));
+        TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
+                                        hdrs->value, strlen(hdrs->value));
+        TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
+        TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+        TSfree(hdrs->hdr);
+        TSfree(hdrs->value);
+        TSfree(hdrs);
+        hdrs = txndata->err_hdrs;
+    }
+    if (txndata->err_body) {
+        /* this will free the body, so copy it first! */
+        TSHttpTxnErrorBodySet(txnp, txndata->err_body, strlen(txndata->err_body), NULL);
+    }
+    TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+}
+
+static ib_status_t ib_error_callback(void *x, int status)
 {
     ib_txn_ctx *ctx = x;
     if (status >= 200 && status < 600) {
+        /* We can't return an error after the response has started */
+        if (ctx->state & START_RESPONSE)
+            return IB_DECLINED;
         /* ironbee wants to return an HTTP status.  We'll oblige */
         /* FIXME: would the semantics work for 1xx?  Do we care? */
         ctx->status = status;
@@ -160,13 +222,42 @@ static ib_status_t ib_error_callback(void *x, int status, const void *data)
     }
     return IB_ENOTIMPL;
 }
+static ib_status_t ib_errhdr_callback(void *x, const char *hdr, const char *val)
+{
+    ib_txn_ctx *ctx = x;
+    hdr_list *hdrs;
+    /* We can't return an error after the response has started */
+    if (ctx->state & START_RESPONSE)
+        return IB_DECLINED;
+    if (!hdr || !val)
+        return IB_EINVAL;
+    hdrs = TSmalloc(sizeof(hdr_list));
+    hdrs->hdr = TSstrdup(hdr);
+    hdrs->value = TSstrdup(val);
+    hdrs->next = ctx->err_hdrs;
+    ctx->err_hdrs = hdrs;
+    return IB_OK;
+}
+static ib_status_t ib_errdata_callback(void *x, const char *data)
+{
+    ib_txn_ctx *ctx = x;
+    /* We can't return an error after the response has started */
+    if (ctx->state & START_RESPONSE)
+        return IB_DECLINED;
+    if (!data)
+        return IB_EINVAL;
+    ctx->err_body = TSstrdup(data);
+    return IB_OK;
+}
 
 /* Plugin Structure */
 ib_server_t DLL_LOCAL ibplugin = {
     IB_SERVER_HEADER_DEFAULTS,
     "ts-ironbee",
-    ib_error_callback,
     ib_header_callback,
+    ib_error_callback,
+    ib_errhdr_callback,
+    ib_errdata_callback,
 };
 
 /**
@@ -527,8 +618,8 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
  * @param[in,out] txnp ATS transaction pointer
  * @param[in,out] ibd unknown
  */
-static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
-                        ironbee_direction *ibd)
+static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
+                       ironbee_direction *ibd)
 {
     ib_conndata_t icdata;
     int rv;
@@ -639,7 +730,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv) {
         TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
-        return;
+        return 0;
     }
 
     /* Get the data into an IOBuffer so we can access them! */
@@ -762,6 +853,8 @@ add_hdr:
     TSIOBufferReaderFree(readerp);
     TSIOBufferDestroy(iobufp);
     TSfree(icdata.data);
+
+    return data->status;
 #endif
 }
 
@@ -785,6 +878,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     TSHttpSsn ssnp = (TSHttpSsn) edata;
     ib_txn_ctx *txndata;
     ib_ssn_ctx *ssndata;
+    int status = 0;
 
     TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
     switch (event) {
@@ -866,14 +960,26 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSContDataSet(connp, txndata);
             TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK, connp);
 
+            txndata->state |= START_RESPONSE;
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
             /* hook for processing response headers */
+            /* If ironbee has sent us into an error response then
+             * we came here in our error path, with nonzero status
+             * FIXME: tests
+             */
         case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
-            process_hdr(txndata, txnp, &ironbee_direction_resp);
-            txndata->state |= HDRS_OUT;
+            if (txndata->status == 0) {
+                status = process_hdr(txndata, txnp, &ironbee_direction_resp);
+                txndata->state |= HDRS_OUT;
+                if (status >= 200 && status < 600)
+                    TSError("IB Error response %d ignored (too late)", status);
+            }
+            else {
+                error_response(txnp, txndata);
+            }
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
@@ -900,9 +1006,16 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* hook for processing incoming request/headers */
         case TS_EVENT_HTTP_PRE_REMAP:
             txndata = TSContDataGet(contp);
-            process_hdr(txndata, txnp, &ironbee_direction_req);
+            status = process_hdr(txndata, txnp, &ironbee_direction_req);
             txndata->state |= HDRS_IN;
-            TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+            if (status >= 200 && status < 600) {
+                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
+            }
+            else {
+                /* Other nonzero statuses not supported */
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+            }
             break;
 
 
