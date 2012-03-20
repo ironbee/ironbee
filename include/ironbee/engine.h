@@ -1131,22 +1131,26 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_opened(ib_engine_t *ib,
  *
  * @param ib Engine handle
  * @param conndata Connection data
+ * @param ctx Data to pass back to callback functions
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_conn_data_in(ib_engine_t *ib,
-                                                    ib_conndata_t *conndata);
+                                                    ib_conndata_t *conndata,
+                                                    void *ctx);
 
 /**
  * Notify the state machine that connection data is headed out.
  *
  * @param ib Engine handle
  * @param conndata Connection data
+ * @param ctx Data to pass back to callback functions
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_conn_data_out(ib_engine_t *ib,
-                                                     ib_conndata_t *conndata);
+                                                     ib_conndata_t *conndata,
+                                                     void *ctx);
 
 /**
  * Notify the state machine that a connection finished.
