@@ -218,13 +218,22 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
     (*pf)->val->pval = pval;
     switch (type) {
         case IB_FTYPE_BYTESTR:
-            ib_util_log_debug(9,
-                "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)",
-                type,
-                IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
-                IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)((*pf)->val->pval)),
-                (*pf)->val->pval
-            );
+            if ((*pf)->val->pval) {
+                ib_util_log_debug(9,
+                    "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%" IB_BYTESTR_FMT "\" (%p)",
+                    type,
+                    IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
+                    IB_BYTESTR_FMT_PARAM(*(ib_bytestr_t **)((*pf)->val->pval)),
+                    (*pf)->val->pval
+                );
+            }
+            else {
+                ib_util_log_debug(9,
+                    "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"\" (NULL)",
+                    type,
+                    IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen)
+                );
+            }
             break;
         case IB_FTYPE_LIST:
         case IB_FTYPE_SBUFFER:
@@ -234,7 +243,7 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
                 "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=\"%s\" (%p)",
                 type,
                 IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
-                *(char **)((*pf)->val->pval),
+                (*pf)->val->pval ? *(char **)((*pf)->val->pval) : "",
                 (*pf)->val->pval
             );
             break;
@@ -243,7 +252,7 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
                 "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%d (%p)",
                 type,
                 IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
-                *(int **)((*pf)->val->pval),
+                (*pf)->val->pval ? *(int **)((*pf)->val->pval) : 0,
                 (*pf)->val->pval
             );
             break;
@@ -252,7 +261,7 @@ ib_status_t ib_field_createn_ex(ib_field_t **pf,
                 "CREATEN FIELD type=%d %" IB_BYTESTR_FMT "=%u (%p)",
                 type,
                 IB_BYTESTRSL_FMT_PARAM((*pf)->name,(*pf)->nlen),
-                *(unsigned int **)((*pf)->val->pval),
+                (*pf)->val->pval ? *(unsigned int **)((*pf)->val->pval) : 0,
                 (*pf)->val->pval
             );
             break;
