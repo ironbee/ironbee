@@ -105,6 +105,9 @@ module CodeFix
 
         # This file is auto generated.
         fl.exclude('./engine/config-parser.c')
+
+        # Autogen .h files
+        fl.exclude('./**/*_auto_gen*')
       end
     end.each { |f| yield f }
   end
