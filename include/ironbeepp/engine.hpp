@@ -17,9 +17,9 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Engine (PLACEHOLDER)
+ * @brief IronBee++ &mdash; Engine
  *
- * This is a placeholder for future functionality.  Do not use.
+ * This code is under construction.  Do not use yet.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -89,9 +89,16 @@ private:
  * An Engine can be treated as a ConstEngine.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * XXX
+ * The IronBee Engine is the central component of IronBee that processes
+ * inputs and calls hooks.  It is a complex state machine.  See
+ * IronBeeEngineState.
+ *
+ * This class provides some of the C API functionality.  In particular, it
+ * allows module writers to register hooks with the engine and provides
+ * logging functionality.
  *
  * @sa ironbeepp
+ * @sa IronBeeEngineState
  * @sa ib_engine_t
  * @sa ConstEngine
  * @nosubgrouping
@@ -117,6 +124,16 @@ public:
      * assignment, copying, comparison, and evaluate-as-bool.
      **/
     Engine();
+
+    /**
+     * @name Hooks
+     * Methods to register hooks.
+     *
+     * See IronBeeEngineState for details on the states and transitions.
+     **/
+    ///@{
+
+    ///@}
 
     /**
      * @name C Interoperability
