@@ -69,11 +69,11 @@ module CodeFix
   def self.remove_trailing_ws!(str, options = {})
     if options[:python]
       # In "python" mode we require a \S char be on the line to trim it.
-      str.gsub!(/^(.*\S)[ \t]+$/, '\1')
+      str.gsub!(/(\S)[ \t]+$/, '\1')
     else
       # In normal mode allow for there to be no .*\S pattern (an empty capture)
       # which results in empty strings being trimmed to 0 length.
-      str.gsub!(/^(.*\S|)[ \t]+$/, '\1')
+      str.gsub!(/[ \t]+$/, '')
     end
   end
 
@@ -212,4 +212,8 @@ OptionParser.new do |op|
 end.parse!
 
 cm.call
-exit 1 if cm.errors > 0 
+
+if cm.errors > 0 
+  print "#{cm.errors} errors.\n"
+  exit 1
+end
