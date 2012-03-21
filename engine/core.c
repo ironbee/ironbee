@@ -726,7 +726,7 @@ static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
                        "This is a multi-part message in MIME format.\r\n"
                        "\r\n",
                        cfg->boundary);
-    if (ret >= sizeof(header)) {
+    if ((size_t)ret >= sizeof(header)) {
         /* Did not fit in buffer.  Since this is currently a more-or-less
          * fixed size, we abort here as this is a programming error.
          */
