@@ -35,7 +35,7 @@ module CodeFix
 
   # Return true if no license text is found in the string.
   def self.license?(str)
-    Util::normalize_string(str).index(@@LICENSE_COMPRESSED).nil?
+    Util::normalize_string(str).index(@@LICENSE_COMPRESSED) != nil
   end
 
   # Modify the passed in string to contain the license. This is almost always
@@ -82,35 +82,95 @@ module CodeFix
         
 end
 
-CodeFix::each_file do |f|
+# This class will use the utility functions in CodeFix to 
+# fix or detect code problems. Those problems are reported and tracked.
+class CodeMangler
 
-  # Options used in the below call to indent.
-  #   This is the apache indent line: 
-  #     http://httpd.apache.org/dev/styleguide.html
-  #   -i4 - Indent 4
-  #   -npsl - No proc names starting lines
-  #   -di0 - Delcarations go in column 0.
-  #   -br - Put braces on the same line as an if.
-  #   -nce - No cuddle else
-  #   -d0  - Comments are indented to column 0.
-  #   -cli0 - Case labels are indented 0 spaces.
-  #   -npcs - No space after function calls.
-  #   -nfc1 - Do not touch first-column comments. Leaves our license alone.
-  #   -nut - Do not use tabs.
-  system("indent -i4 -npsl -di0 -br -nce -d0 -cli0 -npcs -nfc1 -nut %s"%[f])
+  # By default 0, this is the number of errors produced analzing code.
+  attr_accessor :errors
 
-  # Read in text.
-  txt = File.open(f) { |io| io.read } 
+  # Similar to errors, but less severe.
+  attr_accessor :warnings
 
-  # Update licensing.
-  CodeFix::add_license!(txt) if CodeFix::license?(txt)
+  def initialize(srcdir='.')
+    @srcdir = srcdir
 
-  if f =~ /.py$/
-    CodeFix::remove_trailing_ws!(txt, :python => true)
-  else
-    CodeFix::remove_trailing_ws!(txt, :python => nil)
+    @indent_opts = [
+      # Options used in the below call to indent.
+      #   This is the apache indent line: 
+      #     http://httpd.apache.org/dev/styleguide.html
+      '-i4',   # - Indent 4
+      '-npsl', # - No proc names starting lines
+      '-di0',  # - Delcarations go in column 0.
+      '-br',   # - Put braces on the same line as an if.
+      '-nce',  # - No cuddle else
+      '-d0',   # - Comments are indented to column 0.
+      '-cli0', # - Case labels are indented 0 spaces.
+      '-npcs', # - No space after function calls.
+      '-nfc1', # - Do not touch first-column comments. Leaves our license alone.
+      '-nut'   # - Do not use tabs.
+    ]
+
+    @errors = 0
+    @warnings = 0
   end
 
-  # Write resultant file.
-  File.open(f, 'w') { |io| write(txt) }
+  def log(level, file, line, msg = nil)
+    # Are we missing the optional line argument?
+    if msg.nil?
+      msg = line
+      loc = file
+    else
+      loc = "%s:%s"[ file, line.to_s ]
+    end
+
+    print "[%s] %s %s\n"%[ level, loc, msg ]
+  end
+
+      
+
+  # Report a warning and increment @warnings. Line is an optional parameter.
+  def report_warning(file, line, msg=nil)
+    @warnings += 1
+    log('WARN', file, line, msg)
+  end
+
+  # Report an error and increment @errors. Line is an optional parameter.
+  def report_error(file, line, msg=nil)
+    @errors += 1
+    log('ERROR', file, line, msg)
+  end
+
+  def indent(file)
+    unless system("indent",  *(@indent_opts + [ file ]))
+      report_error(file, "The indent command exited non-zero.")
+    end
+  end
+
+  # Run the CodeMangler.
+  def call()
+    CodeFix::each_file do |f|
+
+      indent(f)
+
+      # Read in text.
+      txt = File.open(f) { |io| io.read } 
+
+      report_error(f, 1, "License not detected.") unless CodeFix::license?(txt)
+
+      CodeFix::remove_trailing_ws!(txt, :python => (f=~/.py$/))
+
+      # Write resultant file.
+      File.open(f, 'w') { |io| io.write(txt) }
+    end
+  end
 end
+
+
+########################################################################
+# Main
+########################################################################
+#
+cm = CodeMangler.new
+cm.call
+exit 1 if cm.errors > 0 
