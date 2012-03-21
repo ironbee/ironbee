@@ -39,9 +39,22 @@ module CodeFix
   # whitespace. This makes comparision more reliable.
   @@LICENSE_COMPRESSED = Util::normalize_string(@@LICENSE)
 
-  # Return true if no license text is found in the string.
+  # Return 1 if a perfect match, 2 if a near match, or nil otherwise.
   def self.license?(str)
-    ! Util::normalize_string(str).index(@@LICENSE_COMPRESSED).nil?
+    verbatim_license =
+      ! Util::normalize_string(str).index(@@LICENSE_COMPRESSED).nil?
+
+    # A perfect match? STOP!
+    return 1 if verbatim_license
+
+    heuristic_license = 
+      ! ( str.index('http://www.apache.org/licenses/LICENSE-2.0') &&
+          str.index('Licensed to Qualys') ).nil?
+
+    return 2 if heuristic_license
+
+    nil
+
   end
 
   # Return true if the doxygen tag @file appears in the string.
@@ -185,7 +198,10 @@ class CodeMangler
       CodeFix::remove_trailing_ws!(txt, :python => (f=~/.py$/)
         ) unless @no_trimws
 
-      report_error(f, "License not detected.") unless CodeFix::license?(txt)
+      case CodeFix::license?(txt)
+        when 2: report_warning(f, "Verbatim license not detected.")
+        when nil: report_error(f, "License not detected.")
+      end
 
       if f =~ /\.h$/
         report_error(f, "@author not found.") unless CodeFix::doxy_author?(txt)
@@ -212,6 +228,10 @@ OptionParser.new do |op|
 end.parse!
 
 cm.call
+
+if cm.warnings > 0 
+  print "#{cm.warnings} warnings.\n" 
+end
 
 if cm.errors > 0 
   print "#{cm.errors} errors.\n"
