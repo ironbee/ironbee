@@ -5059,6 +5059,7 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         "Site",
         core_dir_site_start,
         core_dir_site_end,
+        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
@@ -5070,6 +5071,7 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         "Location",
         core_dir_loc_start,
         core_dir_loc_end,
+        NULL,
         NULL
     ),
     IB_DIRMAP_INIT_LIST(

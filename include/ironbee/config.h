@@ -144,7 +144,9 @@ struct ib_dirmap_init_t {
         ib_config_cb_sblk1_fn_t   fn_sblk1;  /**< 1 param subblock directive */
     } cb;
     ib_config_cb_blkend_fn_t      fn_blkend; /**< Called when block ends */
-    void                         *cbdata;    /**< Arbitrary callback data */
+    void                         *cbdata_cb; /**< Callback data for cb. */
+    /*! Callback data for blkend. */
+    void                         *cbdata_blkend;
     ib_strval_t                  *valmap;    /**< Value map */
     /// @todo Do we need help text or error messages???
 };
@@ -178,7 +180,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_ONOFF(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_ONOFF, IB_DIRMAP_INIT_CB_HELPER(fn_onoff,(cb)), NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_ONOFF, IB_DIRMAP_INIT_CB_HELPER(fn_onoff,(cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with a single string parameter.
@@ -188,7 +190,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_PARAM1(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_PARAM1, IB_DIRMAP_INIT_CB_HELPER(fn_param1,(cb)), NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_PARAM1, IB_DIRMAP_INIT_CB_HELPER(fn_param1,(cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with two string parameters.
@@ -198,7 +200,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_PARAM2(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_PARAM2, IB_DIRMAP_INIT_CB_HELPER(fn_param2,(cb)), NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_PARAM2, IB_DIRMAP_INIT_CB_HELPER(fn_param2,(cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with list of string parameters.
@@ -208,7 +210,7 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  */
 #define IB_DIRMAP_INIT_LIST(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_LIST, IB_DIRMAP_INIT_CB_HELPER(fn_list,(cb)), NULL, (cbdata), NULL }
+    { (name), IB_DIRTYPE_LIST, IB_DIRMAP_INIT_CB_HELPER(fn_list,(cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with list of unique options string parameters which are
@@ -225,7 +227,7 @@ struct ib_dirmap_init_t {
  * @param valmap Array of @ref ib_strval_t structures mapping options to values
  */
 #define IB_DIRMAP_INIT_OPFLAGS(name,cb,cbdata,valmap) \
-    { (name), IB_DIRTYPE_OPFLAGS, IB_DIRMAP_INIT_CB_HELPER(fn_opflags,(cb)), NULL, (cbdata), (valmap) }
+    { (name), IB_DIRTYPE_OPFLAGS, IB_DIRMAP_INIT_CB_HELPER(fn_opflags,(cb)), NULL, (cbdata), NULL, (valmap) }
 
 /**
  * Block with single parameter enclosing more directives.
@@ -237,8 +239,8 @@ struct ib_dirmap_init_t {
  * @param blkend Block end callback
  * @param cbdata Callback data
  */
-#define IB_DIRMAP_INIT_SBLK1(name,cb,blkend,cbdata) \
-    { (name), IB_DIRTYPE_SBLK1, IB_DIRMAP_INIT_CB_HELPER(fn_sblk1,(cb)), (blkend), (cbdata), NULL }
+#define IB_DIRMAP_INIT_SBLK1(name,cb,blkend,cbdata,blkenddata) \
+    { (name), IB_DIRTYPE_SBLK1, IB_DIRMAP_INIT_CB_HELPER(fn_sblk1,(cb)), (blkend), (cbdata), (blkenddata), NULL }
 
 /** Required last entry. */
 #define IB_DIRMAP_INIT_LAST { NULL }
@@ -347,7 +349,8 @@ ib_status_t DLL_PUBLIC ib_config_register_directives(ib_engine_t *ib,
  * @param type Directive type
  * @param fn_config Callback function handling the config
  * @param fn_blkend Callback function called at the end of a block (or NULL)
- * @param cbdata Data passed to the callback functions
+ * @param cbdata_config Data passed to @a fn_config
+ * @param cbdata_blkend Data passed to @a fn_blkend
  *
  * @returns Status code
  */
@@ -356,7 +359,8 @@ ib_status_t DLL_PUBLIC ib_config_register_directive(ib_engine_t *ib,
                                                     ib_dirtype_t type,
                                                     ib_void_fn_t fn_config,
                                                     ib_config_cb_blkend_fn_t fn_blkend,
-                                                    void *cbdata);
+                                                    void *cbdata_config,
+                                                    void *cbdata_blkend);
 
 /**
  * Process a directive.

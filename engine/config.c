@@ -399,7 +399,8 @@ ib_status_t ib_config_register_directive(ib_engine_t *ib,
                                          ib_dirtype_t type,
                                          ib_void_fn_t fn_config,
                                          ib_config_cb_blkend_fn_t fn_blkend,
-                                         void *cbdata)
+                                         void *cbdata_config,
+                                         void *cbdata_blkend)
 {
     IB_FTRACE_INIT();
     ib_dirmap_init_t *rec;
@@ -413,7 +414,8 @@ ib_status_t ib_config_register_directive(ib_engine_t *ib,
     rec->type = type;
     rec->cb._init = fn_config;
     rec->fn_blkend = fn_blkend;
-    rec->cbdata = cbdata;
+    rec->cbdata_cb = cbdata_config;
+    rec->cbdata_blkend = cbdata_blkend;
 
     rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
 
@@ -454,10 +456,10 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 || (strcasecmp("yes", p1) == 0)
                 || (strcasecmp("true", p1) == 0))
             {
-                rc = rec->cb.fn_onoff(cp, name, 1, rec->cbdata);
+                rc = rec->cb.fn_onoff(cp, name, 1, rec->cbdata_cb);
             }
             else {
-                rc = rec->cb.fn_onoff(cp, name, 0, rec->cbdata);
+                rc = rec->cb.fn_onoff(cp, name, 0, rec->cbdata_cb);
             }
             break;
         case IB_DIRTYPE_PARAM1:
@@ -468,7 +470,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 break;
             }
             ib_list_shift(args, &p1);
-            rc = rec->cb.fn_param1(cp, name, p1, rec->cbdata);
+            rc = rec->cb.fn_param1(cp, name, p1, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_PARAM2:
             if (nargs != 2) {
@@ -479,10 +481,10 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             }
             ib_list_shift(args, &p1);
             ib_list_shift(args, &p2);
-            rc = rec->cb.fn_param2(cp, name, p1, p2, rec->cbdata);
+            rc = rec->cb.fn_param2(cp, name, p1, p2, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_LIST:
-            rc = rec->cb.fn_list(cp, name, args, rec->cbdata);
+            rc = rec->cb.fn_list(cp, name, args, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_OPFLAGS:
             i = 0;
@@ -531,7 +533,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 i++;
             }
 
-            rc = rec->cb.fn_opflags(cp, name, flags, fmask, rec->cbdata);
+            rc = rec->cb.fn_opflags(cp, name, flags, fmask, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_SBLK1:
             if (nargs != 1) {
@@ -541,7 +543,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 break;
             }
             ib_list_shift(args, &p1);
-            rc = rec->cb.fn_sblk1(cp, name, p1, rec->cbdata);
+            rc = rec->cb.fn_sblk1(cp, name, p1, rec->cbdata_cb);
             break;
         default:
             rc = IB_EINVAL;
@@ -584,7 +586,7 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     switch (rec->type) {
         case IB_DIRTYPE_SBLK1:
             if (rec->fn_blkend != NULL) {
-                rc = rec->fn_blkend(cp, name, rec->cbdata);
+                rc = rec->fn_blkend(cp, name, rec->cbdata_blkend);
             }
             break;
         default:
