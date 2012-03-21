@@ -13,7 +13,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ****************************************************************************/
+ *****************************************************************************/
+
+/**
+ * @file
+ * @brief Base IronBee C header data for Lua Integration.
+ *
+ * @author Brian Rectanus <brectanus@qualys.com>
+ */
+
 
 #if defined(__cplusplus) && !defined(__STDC_CONSTANT_MACROS)
 /* C99 7.18.4 requires that stdint.h only exposes INT64_C

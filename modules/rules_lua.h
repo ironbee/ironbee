@@ -14,6 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *****************************************************************************/
+
+/**
+ * @file
+ * @brief IronBee Lua Rule Integration.
+ *
+ * @author Sam Baskinger <basking2@yahoo.com>
+ */
 #ifndef __MODULES__RULES_LUA_H
 #define __MODULES__RULES_LUA_H
 
