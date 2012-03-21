@@ -717,9 +717,23 @@ static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
 {
     IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
-    const char *header = "\r\nThis is a multi-part message in MIME format.\r\n\r\n";
-    size_t hlen = strlen(header);
+    char header[256];
+    size_t hlen;
+    int ret = snprintf(header, sizeof(header),
+                       "MIME-Version: 1.0\r\n"
+                       "Content-Type: multipart/mixed; boundary=%s\r\n"
+                       "\r\n"
+                       "This is a multi-part message in MIME format.\r\n"
+                       "\r\n",
+                       cfg->boundary);
+    if (ret >= sizeof(header)) {
+        /* Did not fit in buffer.  Since this is currently a more-or-less
+         * fixed size, we abort here as this is a programming error.
+         */
+        abort();
+    }
 
+    hlen = strlen(header);
     if (fwrite(header, hlen, 1, cfg->fp) != 1) {
         ib_log_error(lpi->pr->ib, 1, "Failed to write audit log header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
