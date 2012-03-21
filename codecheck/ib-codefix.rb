@@ -2,14 +2,20 @@
 
 require 'rubygems'
 require 'rake'
+require 'optparse'
 
+# General utility methods.
 module Util
+  # Return a string with all white space reduced to a single space character.
   def self.normalize_string(str)
-    str.gsub(/\s+/m, ' ')
+    str.gsub(/\s+/, ' ')
   end
 end
 
+# Code fixing (and checking) routines and constants.
 module CodeFix
+
+  # Official IronBee license from website.
   @@LICENSE = <<-EOF
 /*****************************************************************************
  * Licensed to Qualys, Inc. (QUALYS) under one or more
@@ -35,7 +41,17 @@ module CodeFix
 
   # Return true if no license text is found in the string.
   def self.license?(str)
-    Util::normalize_string(str).index(@@LICENSE_COMPRESSED) != nil
+    ! Util::normalize_string(str).index(@@LICENSE_COMPRESSED).nil?
+  end
+
+  # Return true if the doxygen tag @file appears in the string.
+  def self.doxy_file?(str)
+    ! str.index(' @file').nil?
+  end
+
+  # Return true if the doxygen tag @author appears in the string.
+  def self.doxy_author?(str)
+    ! str.index(' @author ').nil?
   end
 
   # Modify the passed in string to contain the license. This is almost always
@@ -72,7 +88,7 @@ module CodeFix
         fl.exclude('./libs/**/*')
 
         # We do not own the GTest code, so don't update it.
-        fl.exclude('./test/gtest/**/*')
+        fl.exclude('./tests/gtest/**/*')
 
         # This file is auto generated.
         fl.exclude('./engine/config-parser.c')
@@ -91,6 +107,16 @@ class CodeMangler
 
   # Similar to errors, but less severe.
   attr_accessor :warnings
+
+
+  # If set, no file will be rewritten.
+  attr_accessor :check_only
+
+  # If set, files will not be indented with the indent cmd.
+  attr_accessor :no_indent
+
+  # If set, whitespace will not be trimmed.
+  attr_accessor :no_trimws
 
   def initialize(srcdir='.')
     @srcdir = srcdir
@@ -121,7 +147,7 @@ class CodeMangler
       msg = line
       loc = file
     else
-      loc = "%s:%s"[ file, line.to_s ]
+      loc = "%s:%s"%[ file, line.to_s ]
     end
 
     print "[%s] %s %s\n"%[ level, loc, msg ]
@@ -151,17 +177,23 @@ class CodeMangler
   def call()
     CodeFix::each_file do |f|
 
-      indent(f)
+      indent(f) unless @check_only || @no_indent
 
       # Read in text.
       txt = File.open(f) { |io| io.read } 
 
-      report_error(f, 1, "License not detected.") unless CodeFix::license?(txt)
+      CodeFix::remove_trailing_ws!(txt, :python => (f=~/.py$/)
+        ) unless @no_trimws
 
-      CodeFix::remove_trailing_ws!(txt, :python => (f=~/.py$/))
+      report_error(f, "License not detected.") unless CodeFix::license?(txt)
+
+      if f =~ /\.h$/
+        report_error(f, "@author not found.") unless CodeFix::doxy_author?(txt)
+        report_error(f, "@file not found.") unless CodeFix::doxy_file?(txt)
+      end
 
       # Write resultant file.
-      File.open(f, 'w') { |io| io.write(txt) }
+      File.open(f, 'w') { |io| io.write(txt) } unless @check_only
     end
   end
 end
@@ -172,5 +204,12 @@ end
 ########################################################################
 #
 cm = CodeMangler.new
+
+OptionParser.new do |op|
+  op.on('--check-only') { |val| cm.check_only = true }
+  op.on('--no-indent') { |val| cm.no_indent = true }
+  op.on('--no-trimws') { |val| cm.no_trimws = true }
+end.parse!
+
 cm.call
 exit 1 if cm.errors > 0 
