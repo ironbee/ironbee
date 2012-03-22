@@ -137,7 +137,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 
     /* Handle NUL-terminated strings and byte strings */
     if (field->type==IB_FTYPE_NULSTR) {
-        const char *fval = ib_field_value_nulstr( field );
+        const char *fval = ib_field_value_nulstr(field);
         *result = (strcmp(fval,expanded) == 0);
     }
     else if (field->type==IB_FTYPE_BYTESTR) {

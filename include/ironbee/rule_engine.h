@@ -91,7 +91,7 @@ typedef struct {
  */
 typedef struct {
     const char            *field_name;    /**< The field name */
-    ib_list_t             *field_ops;     /**< List of field operators */
+    ib_list_t             *tfn_list;      /**< List of transformations */
 } ib_rule_target_t;
 
 /**
@@ -217,17 +217,60 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
 ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule);
 
 /**
- * Add an target field to a rule.
+ * Create a rule target.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] name Target name
+ * @param[in] tfn_names List of transformations to add (or NULL)
+ * @param[in,out] target Pointer to new target
+ * @param[in] tfns_not_found Count of tfns names with no registered tfn
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
+                                             const char *name,
+                                             ib_list_t *tfn_names,
+                                             ib_rule_target_t **target,
+                                             ib_num_t *tfns_not_found);
+
+/**
+ * Add a target field to a rule.
  *
  * @param[in] ib IronBee engine
  * @param[in,out] rule Rule to operate on
- * @param[in] name target field name.
+ * @param[in] target Target object to add
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
                                           ib_rule_t *rule,
-                                          const char *name);
+                                          ib_rule_target_t *target);
+
+/**
+ * Add a transformation to all target fields of a rule.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] name Name of the transformation to add.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
+                                       ib_rule_t *rule,
+                                       const char *name);
+
+/**
+ * Add an transformation to a target field.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] target Target field
+ * @param[in] name Transformation name
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
+                                              ib_rule_target_t *target,
+                                              const char *name);
 
 /**
  * Add a modifier to a rule.

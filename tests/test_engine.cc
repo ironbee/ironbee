@@ -26,6 +26,8 @@
 #include "gtest/gtest-spi.h"
 
 #include <ironbee/field.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/transformation.h>
 
 #include "config-parser.h"
 #include "ibtest_util.hh"
@@ -76,19 +78,47 @@ TEST(TestIronBee, test_engine_config_basic)
     ibtest_engine_destroy(ib);
 }
 
-static ib_status_t foo2bar(void *fndata,
-                           ib_mpool_t *pool,
-                           uint8_t *data_in, size_t dlen_in,
-                           uint8_t **data_out, size_t *dlen_out,
+static ib_status_t foo2bar(ib_engine_t *ib,
+                           ib_mpool_t *mp,
+                           void *fndata,
+                           ib_field_t *fin,
+                           ib_field_t **fout,
                            ib_flags_t *pflags)
 {
-    if (data_in && dlen_in == 3 && strncmp("foo", (char *)data_in, 3) == 0) {
-        *data_out = data_in;
-        *dlen_out = dlen_in;
-        *pflags = IB_TFN_FMODIFIED | IB_TFN_FINPLACE;
-        (*data_out)[0] = 'b';
-        (*data_out)[1] = 'a';
-        (*data_out)[2] = 'r';
+    if (fin->type == IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *ibs =
+            const_cast<ib_bytestr_t *>(ib_field_value_bytestr(fin));
+        char *data_in;
+        size_t dlen_in;
+
+        assert (ibs != NULL);
+
+        data_in = (char *)ib_bytestr_ptr(ibs);
+        dlen_in = ib_bytestr_length(ibs);
+
+        if ( (data_in != NULL) &&
+             (dlen_in == 3) &&
+             (strncmp("foo", (char *)data_in, 3) == 0) )
+        {
+            *pflags = IB_TFN_FMODIFIED | IB_TFN_FINPLACE;
+            *(data_in+0) = 'b';
+            *(data_in+1) = 'a';
+            *(data_in+2) = 'r';
+        }
+        *fout = fin;
+    }
+    else if (fin->type == IB_FTYPE_NULSTR) {
+        char *data = const_cast<char *>(ib_field_value_nulstr(fin));
+        if ( (data != NULL) && (strncmp(data, "foo", 3) == 0) ) {
+            *pflags = IB_TFN_FMODIFIED | IB_TFN_FINPLACE;
+            *(data+0) = 'b';
+            *(data+1) = 'a';
+            *(data+2) = 'r';
+        }
+        *fout = fin;
+    }
+    else {
+        return IB_EINVAL;
     }
 
     return IB_OK;
@@ -98,31 +128,42 @@ static ib_status_t foo2bar(void *fndata,
 TEST(TestIronBee, test_tfn)
 {
     ib_engine_t *ib;
+    ib_status_t rc;
     ib_tfn_t *tfn = (ib_tfn_t *)-1;
-    size_t dlen_in;
-    size_t dlen_out;
     ib_flags_t flags;
     uint8_t data_in[128];
-    uint8_t data_out[128];
+    ib_field_t *fin;
+    ib_field_t *fout;
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(IB_OK, ib_tfn_create(ib, "foo2bar", foo2bar, NULL, NULL));
+    ASSERT_EQ(IB_OK, ib_tfn_register(ib, "foo2bar", foo2bar, NULL));
     ASSERT_EQ(IB_OK, ib_tfn_lookup(ib, "foo2bar", &tfn));
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(tfn);
 
-    memcpy(data_in, "foo", 4);
-    dlen_in = 3;
-
-    ASSERT_EQ(
-        IB_OK,
-        ib_tfn_transform(tfn, ib->mp, data_in, dlen_in,
-                         (uint8_t **)&data_out, &dlen_out, &flags)
-    );
+    memcpy(data_in, "foo", 3);
+    fin = NULL;
+    ib_field_alias_mem(&fin, ib->mp, "ByteStr", data_in, 3);
+    fout = NULL;
+    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
+    ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
     ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags));
+    ASSERT_EQ(fin, fout);
+
+    strcpy((char *)data_in, "foo");
+    fin = NULL;
+    void *p = &data_in;
+    ib_field_create(&fin, ib->mp, "NulStr", IB_FTYPE_NULSTR, &p);
+    fout = NULL;
+    rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
+    ASSERT_EQ(rc, IB_OK);
+    ASSERT_NE((ib_tfn_t *)-1, tfn);
+    ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
+    ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags));
+    ASSERT_EQ(fin, fout);
 
     ibtest_engine_destroy(ib);
 }

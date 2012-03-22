@@ -33,6 +33,7 @@
 #include "rules_lua.h"
 #include "lua/ironbee.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
@@ -77,8 +78,8 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*,
 
 
 /**
- * @internal
  * Parse rule's operator.
+ * @internal
  *
  * Parses the rule's operator string @a str and, stores the results in the
  * rule object @a rule.
@@ -140,6 +141,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     space = strchr(copy, ' ');
     if (space != NULL) {
         size_t  alen;
+        ib_bool_t empty = IB_FALSE;
 
         /* Find the first non-whitespace */
         args = space;
@@ -158,10 +160,24 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                 *end = '\0';
                 --end;
             }
+
+            /* Allow for quoting with single quotes */
+            if ( (*args == '\'') && (*end == '\'') ) {
+                if (end == args+1) {
+                    *args = '\0';
+                    empty = IB_TRUE;
+                }
+                else if (args != end) {
+                    ++args;
+                    *end = '\0';
+                    --end;
+                }
+            }
+
         }
 
         /* Is args an empty string? */
-        if (*args == '\0') {
+        if ( (*args == '\0') && (empty == IB_FALSE) ) {
             args = NULL;
         }
     }
@@ -190,8 +206,8 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Rewrite the target string if required
+ * @internal
  *
  * Parses the rule's target field list string @a target_str, looking for
  * the '#' and '&' tokens at the start of it.
@@ -202,58 +218,59 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-#define MAX_FIELD_OPS 5
-static ib_status_t rewrite_target(ib_cfgparser_t *cp,
-                                  const char *target_str,
-                                  char **rewritten)
+#define MAX_TFN_TOKENS 10
+static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
+                                         const char *target_str,
+                                         const char **rewritten)
 {
     IB_FTRACE_INIT();
-    char const *ops[MAX_FIELD_OPS];
+    char const *ops[MAX_TFN_TOKENS];
     const char *cur = target_str;
     char *new;
     int count = 0;
     int n;
-    int target_len = strlen(target_str);
-    int length = target_len + 1;
+    int target_len = strlen(target_str) + 1;
 
     /**
      * Loop 'til we reach max count
      */
-    while ( (*cur != '\0') && (count < MAX_FIELD_OPS) ) {
+    while ( (*cur != '\0') && (count < MAX_TFN_TOKENS) ) {
         if (*cur == '&') {
-            ops[count] = ".Count()";
+            ops[count] = ".count()";
         }
         else if (*cur == '#') {
-            ops[count] = ".Length()";
+            ops[count] = ".length()";
         }
         else {
             break;
         }
 
         /* Update the required length */
-        length += strlen(ops[count]) - 1;
+        target_len += strlen(ops[count]) - 1;
         ++count;
         ++cur;
     }
 
     /* No rewrites?  Done */
     if (count == 0) {
-        *rewritten = NULL;
+        *rewritten = target_str;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /**
      * Allocate & build the new string
      */
-    new = ib_mpool_alloc(cp->mp, length);
+    new = ib_mpool_alloc(cp->mp, target_len);
     if (new == NULL) {
         ib_log_error(cp->ib, 4,
                      "Failed to duplicate target field string '%s'",
                      target_str);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+
+    /* Add the funtions in reverse order */
     strcpy(new, target_str+count);
-    for (n = 0;  n < count;  n++) {
+    for (n = count-1;  n >= 0;  --n) {
         strcat(new, ops[n] );
     }
 
@@ -266,8 +283,128 @@ static ib_status_t rewrite_target(ib_cfgparser_t *cp,
 }
 
 /**
+ * Parse the transformations from a target string
  * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] str Target field string to parse
+ * @param[out] target Target name
+ * @param[out] tfns List of transformation names
+ *
+ * @returns Status code
+ */
+static ib_status_t parse_target_string(ib_engine_t *ib,
+                                       const char *str,
+                                       const char **target,
+                                       ib_list_t **tfns)
+{
+    IB_FTRACE_INIT();
+    ib_status_t  rc;
+    char        *cur;                /* Current position */
+    char        *dup_str;            /* Duplicate string */
+
+    assert(ib != NULL);
+    assert(str != NULL);
+    assert(target != NULL);
+
+    /* Start with a known state */
+    *target = NULL;
+    *tfns = NULL;
+
+    /* No parens?  Just store the target string as the field name & return. */
+    if (strstr(str, "()") == NULL) {
+        *target = str;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Make a duplicate of the target string to work on */
+    dup_str = ib_mpool_strdup(ib_rule_mpool(ib), str);
+    if (dup_str == NULL) {
+        ib_log_error(ib, 4, "Error duplicating target string '%s'", str);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Walk through the string */
+    cur = dup_str;
+    while (cur != NULL) {
+        char  *separator;       /* Current separator */
+        char  *parens = NULL;   /* Paren pair '()' */
+        char  *pdot = NULL;     /* Paren pair + dot '().' */
+        char  *tfn = NULL;      /* Transformation name */
+
+        /* First time through the loop? */
+        if (cur == dup_str) {
+            separator = strchr(cur, '.');
+            if (separator == NULL) {
+                break;
+            }
+            *separator = '\0';
+            tfn = separator + 1;
+        }
+        else {
+            separator = cur;
+            tfn = separator;
+        }
+
+        /* Find the next separator and paren set */
+        parens = strstr(separator+1, "()");
+        pdot = strstr(separator+1, "().");
+        
+        /* Parens + dot: intermediate transformation */
+        if (pdot != NULL) {
+            *pdot = '\0';
+            *(pdot+2) = '\0';
+            cur = pdot + 3;
+        }
+        /* Parens but no dot: last tranformation */
+        else if (parens != NULL) {
+            *parens = '\0';
+            cur = NULL;
+        }
+        /* Finally, no parens: done */
+        else {
+            cur = NULL;
+            tfn = NULL;
+        }
+
+        /* Skip to top of loop if there's no operator */
+        if (tfn == NULL) {
+            continue;
+        }
+
+        /* Create the transformation list if required. */
+        if (*tfns == NULL) {
+            rc = ib_list_create(tfns, ib_rule_mpool(ib));
+            if (rc != IB_OK) {
+                ib_log_error(ib, 4,
+                             "Error creating transformation list: %d", rc);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+
+        /* Add the name to the list */
+        rc = ib_list_push(*tfns, tfn);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "Error adding transformation %s to list: %d",
+                         tfn, rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /**
+     * The field name is the start of the duplicate string, even after
+     * it's been chopped up into pieces.
+     */
+    *target = dup_str;
+    ib_log_debug(ib, 9, "Final target field name is '%s'", *target);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Parse a rule's target string.
+ * @internal
  *
  * Parses the rule's target field list string @a target_str, and stores the
  * results in the rule object @a rule.
@@ -286,6 +423,7 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
     ib_status_t rc = IB_OK;
     const char *cur;
     char *copy;
+    ib_num_t num_targets = 0;
 
     /* Copy the target string */
     while(isspace(*target_str)) {
@@ -302,38 +440,63 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
     }
 
     /* Split it up */
-    for (cur = strtok(copy, "|,");
-         cur != NULL;
-         cur = strtok(NULL, "|,") )
-    {
-        char *rewritten = NULL;
-        rc = rewrite_target(cp, cur, &rewritten);
+    for (cur = strtok(copy, "|,");  cur != NULL;  cur = strtok(NULL, "|,") ) {
+        const char *rewritten = NULL;
+        const char *tstr;
+        ib_list_t *tfns;
+        ib_rule_target_t *target;
+        ib_num_t not_found = 0;
+
+        rc = rewrite_target_tokens(cp, cur, &rewritten);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 4, "Error rewriting target '%s'", cur);
-            IB_FTRACE_RET_STATUS(rc);
+            continue;
+        }
+
+        /* Parse the target string */
+        rc = parse_target_string(cp->ib, rewritten, &tstr, &tfns);
+        if (rc != IB_OK) {
+            ib_log_error(cp->ib, 4, "Error parsing target string '%s'", cur);
+            continue;
+        }
+
+        /* Create the target object */
+        rc = ib_rule_create_target(cp->ib, tstr, tfns, &target, &not_found);
+        if (rc != IB_OK) {
+            ib_log_error(cp->ib, 4,
+                         "Error creating rule target '%s': %d", tstr, rc);
+            continue;
+
+        }
+        else if (not_found != 0) {
+            ib_log_alert(cp->ib, 4,
+                         "Rule target '%s': %d transformations not found",
+                         tstr, not_found);
         }
 
         /* Add the target to the rule */
-        if (rewritten == NULL) {
-            rc = ib_rule_add_target(cp->ib, rule, cur);
-        }
-        else {
-            rc = ib_rule_add_target(cp->ib, rule, rewritten);
-        }
+        rc = ib_rule_add_target(cp->ib, rule, target);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 4, "Failed to add rule target '%s'", cur);
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_log_debug(cp->ib, 9,
                      "Added rule target '%s' to rule %p", cur, (void*)rule);
+        ++num_targets;
+    }
+
+    /* Make sure we have at least one successful target */
+    if (num_targets == 0) {
+        ib_log_error(cp->ib, 4, "No targets for rule %s", rule->meta.id);
+        rc = IB_EINVAL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
- * @internal
  * Parse a rule's modifier string.
+ * @internal
  *
  * Parses the rule's modifier string @a modifier_str, and stores the results
  * in the rule object @a rule.
@@ -438,6 +601,12 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             ib_log_error(cp->ib, 4, "Invalid modifier: %s:%s", name, value);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
+    }
+    else if (strcasecmp(name,"REQHDR") == 0) {
+        *phase = PHASE_REQUEST_HEADER;
+    }
+    else if (strcasecmp(name,"RSPHDR") == 0) {
+        *phase = PHASE_RESPONSE_HEADER;
     }
     else if (strcasecmp(name, "chain") == 0) {
         ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_CHAIN);

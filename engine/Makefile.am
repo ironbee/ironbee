@@ -5,10 +5,10 @@ include $(top_srcdir)/build/common.mk
 
 EXTRA_DIST =  config-parser.rl
 lib_LTLIBRARIES = libironbee.la
-libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c tfn.c \
+libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
                         config.c config-parser.c config-parser.h core.c \
                         matcher.c filter.c \
-                        operator.c action.c \
+                        operator.c action.c transformation.c \
                         module.c \
                         core_tfns.c \
                         core_operators.c \

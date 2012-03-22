@@ -103,17 +103,6 @@ struct ib_engine_t {
 /**
  * @internal
  *
- * Transformation.
- */
-struct ib_tfn_t {
-    const char         *name;              /**< Tfn name */
-    ib_tfn_fn_t         transform;         /**< Tfn function */
-    void               *fndata;            /**< Tfn function data */
-};
-
-/**
- * @internal
- *
  * Configuration context data.
  */
 typedef struct ib_context_data_t ib_context_data_t;

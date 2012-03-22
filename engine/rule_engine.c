@@ -31,6 +31,9 @@
 #include <ironbee/field.h>
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
+#include <ironbee/transformation.h>
+#include <ironbee/operator.h>
+#include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
 
 #include <ironbee/debug.h>
@@ -68,7 +71,7 @@ static rule_cbdata_t rule_cbdata[] = {
 
 
 /**
- * Execute a single rule's operator
+ * Execute a field's transformations.
  * @internal
  *
  * @param[in] ib Engine
@@ -79,11 +82,11 @@ static rule_cbdata_t rule_cbdata[] = {
  *
  * @returns Status code
  */
-static ib_status_t execute_field_operators(ib_engine_t *ib,
-                                           ib_tx_t *tx,
-                                           ib_rule_target_t *target,
-                                           ib_field_t *value,
-                                           ib_field_t **result)
+static ib_status_t execute_field_tfns(ib_engine_t *ib,
+                                      ib_tx_t *tx,
+                                      ib_rule_target_t *target,
+                                      ib_field_t *value,
+                                      ib_field_t **result)
 {
     IB_FTRACE_INIT();
     ib_status_t     rc;
@@ -92,32 +95,40 @@ static ib_status_t execute_field_operators(ib_engine_t *ib,
     ib_field_t     *in_field;
     ib_field_t     *out = NULL;
 
-    /* No functions?  Do nothing. */
-    if (IB_LIST_ELEMENTS(target->field_ops) == 0) {
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(target != NULL);
+    assert(result != NULL);
+
+    /* No transformations?  Do nothing. */
+    if (IB_LIST_ELEMENTS(target->tfn_list) == 0) {
         *result = value;
         ib_log_debug(ib, 9,
-                     "No field operators for field %s", target->field_name);
+                     "No transformations for field %s", target->field_name);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (value == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     ib_log_debug(ib, 9,
-                 "Executing %d field operators for field %s",
-                 IB_LIST_ELEMENTS(target->field_ops), target->field_name);
-
+                 "Executing %d transformations on field %s",
+                 IB_LIST_ELEMENTS(target->tfn_list), target->field_name);
 
     /*
      * Loop through all of the field operators.
      */
     in_field = value;
-    IB_LIST_LOOP(target->field_ops, node) {
-        ib_field_op_fn_t  fn = (ib_field_op_fn_t)node->data;
+    IB_LIST_LOOP(target->tfn_list, node) {
+        ib_tfn_t  *tfn = (ib_tfn_t *)node->data;
+        ib_flags_t flags = 0;
 
         /* Run it */
         ++n;
         ib_log_debug(ib, 9,
-                     "Executing field operator #%d field %s",
-                     n, target->field_name);
-        rc = fn(ib, tx->mp, in_field, &out);
+                     "Executing field transformation #%d '%s' on '%s'",
+                     n, tfn->name, target->field_name);
+        rc = ib_tfn_transform(ib, tx->mp, tfn, in_field, &out, &flags);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Error executing field operator #%d field %s: %d",
@@ -235,6 +246,10 @@ static ib_status_t execute_rule(ib_engine_t *ib,
                                 ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(rule != NULL);
+    assert(tx != NULL);
+    assert(rule_result != NULL);
     ib_list_node_t      *node = NULL;
     ib_operator_inst_t  *opinst = rule->opinst;
 
@@ -265,7 +280,9 @@ static ib_status_t execute_rule(ib_engine_t *ib,
      */
     IB_LIST_LOOP(rule->target_fields, node) {
         ib_rule_target_t *target = (ib_rule_target_t *)node->data;
+        assert(target != NULL);
         const char       *fname = target->field_name;
+        assert(fname != NULL);
         ib_field_t       *value = NULL;     /* Value from the DPI */
         ib_field_t       *fopvalue = NULL;  /* Value after field operators */
         ib_num_t          result = 0;
@@ -284,11 +301,10 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         }
 
         /* Execute the field operators */
-        rc = execute_field_operators(
-            ib, tx, target, value, &fopvalue);
+        rc = execute_field_tfns(ib, tx, target, value, &fopvalue);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error executing field operators for %s on %s: %d",
+                         "Error executing transformation for %s on %s: %d",
                          opinst->op->name, fname, rc);
             continue;
         }
@@ -959,551 +975,43 @@ ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule)
     return rule->flags;
 }
 
-/**
- * Field operator function: Length
- *
- * @param[in] ib Ironbee engine.
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] field The field to operate on.
- * @param[out] result The result of the operator.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t fieldop_length(ib_engine_t *ib,
-                                  ib_mpool_t *mp,
-                                  ib_field_t *field,
-                                  ib_field_t **result)
+ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
+                                             const char *name,
+                                             ib_list_t *tfn_names,
+                                             ib_rule_target_t **target,
+                                             ib_num_t *tfns_not_found)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = IB_OK;
+    ib_status_t rc;
 
     assert(ib != NULL);
-    assert(mp != NULL);
-    assert(field != NULL);
-
-    /**
-     * This works on C-style (NUL terminated) and byte strings.  Note
-     * that data is assumed to be a NUL terminated string (because our
-     * configuration parser can't produce anything else).
-     **/
-    if (field->type == IB_FTYPE_NULSTR) {
-        const char *fval = ib_field_value_nulstr( field );
-        size_t      len = strlen(fval);
-        rc = ib_field_create(
-            result, mp, "Length", IB_FTYPE_NUM, &len);
-    }
-    else if (field->type == IB_FTYPE_BYTESTR) {
-        const ib_bytestr_t *value = ib_field_value_bytestr(field);
-        size_t len = ib_bytestr_length(value);
-        rc = ib_field_create(
-            result, mp, "Length", IB_FTYPE_NUM, &len);
-    }
-    else if (field->type == IB_FTYPE_LIST) {
-        ib_list_node_t *node = NULL;
-        ib_list_t      *ilist;           /** Incoming list */
-
-        /* Get the incoming list */
-        // @todo Remove const casting once list is const correct.
-        ilist = (ib_list_t *)ib_field_value_list(field);
-        if (ilist == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-        }
-
-        /* Create the outgoing list field */
-        rc = ib_field_create(
-            result, mp, "Length", IB_FTYPE_LIST, NULL);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Walk through the incoming fields */
-        IB_LIST_LOOP(ilist, node) {
-            ib_field_t *ifield = (ib_field_t*)node->data;
-            ib_field_t *ofield = NULL;
-
-            rc = fieldop_length(ib, mp, ifield, &ofield);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-            rc = ib_field_list_add(*result, ofield);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-    }
-    else {
-        size_t len = 1;
-        rc = ib_field_create_ex(
-            result, mp, field->name, field->nlen, IB_FTYPE_NUM, &len);
-    }
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Field operator function: Count
- *
- * @param[in] ib Ironbee engine.
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] field The field to operate on.
- * @param[out] result The result of the operator.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t fieldop_count(ib_engine_t *ib,
-                                 ib_mpool_t *mp,
-                                 ib_field_t *field,
-                                 ib_field_t **result)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc = IB_OK;
-    ib_num_t value = 0;
-
-    assert(ib != NULL);
-    assert(mp != NULL);
-    assert(field != NULL);
-
-    /* If this is a list, return it's count */
-    if (field->type == IB_FTYPE_LIST) {
-        // @todo Remove const casting once list is const correct.
-        ib_list_t *lst = (ib_list_t *)ib_field_value_list(field);
-        value = IB_LIST_ELEMENTS(lst);
-    }
-    else {
-        value = 1;
-    }
-
-    /* Create the output field */
-    rc = ib_field_create_ex(
-        result, mp, field->name, field->nlen, IB_FTYPE_NUM, &value);
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Field operator function: Max (list version)
- *
- * @param[in] ib Ironbee engine.
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] field The field to operate on.
- * @param[out] result The result of the operator.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t fieldop_max_list(ib_engine_t *ib,
-                                    ib_mpool_t *mp,
-                                    ib_field_t *field,
-                                    ib_field_t **result)
-{
-    IB_FTRACE_INIT();
-    ib_status_t     rc = IB_OK;
-    ib_list_node_t *node = NULL;
-    ib_num_t        maxvalue = 0;
-    ib_num_t        n = 0;
-    ib_list_t      *lst;
-
-    assert(ib != NULL);
-    assert(mp != NULL);
-    assert(field != NULL);
-
-    /* Get the incoming list */
-    // @todo Remove const casting once list is const correct.
-    lst = (ib_list_t *)ib_field_value_list(field);
-    if (lst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Walk through the incoming fields */
-    IB_LIST_LOOP(lst, node) {
-        ib_field_t *ifield = (ib_field_t*)node->data;
-        ib_num_t value;
-
-        switch (ifield->type) {
-            case IB_FTYPE_NUM:
-                {
-                    const ib_num_t *fval = ib_field_value_num(ifield);
-                    value = *fval;
-                }
-                break;
-
-            case IB_FTYPE_UNUM:
-                {
-                    const ib_unum_t *fval = ib_field_value_unum(ifield);
-                    value = (ib_num_t)(*fval);
-                }
-                break;
-
-            case IB_FTYPE_NULSTR:
-                {
-                    const char *fval = ib_field_value_nulstr(ifield);
-                    value = (ib_num_t)strlen(fval);
-                }
-                break;
-
-            case IB_FTYPE_BYTESTR:
-                {
-                    const ib_bytestr_t *fval = ib_field_value_bytestr(ifield);
-                    value = (ib_num_t)ib_bytestr_length(fval);
-                }
-                break;
-
-            case IB_FTYPE_LIST:
-                {
-                    ib_field_t *tmp = NULL;
-                    const ib_num_t *nptr = NULL;
-
-                    rc = fieldop_max_list(ib, mp, ifield, &tmp);
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-                    nptr = ib_field_value_num(tmp);
-                    if (nptr == NULL) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
-                    }
-                    value = *nptr;
-                }
-                break;
-
-            default:
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-        if ( (n == 0) || (value > maxvalue) ) {
-            maxvalue = value;
-        }
-    }
-
-    /* Create the output field */
-    rc = ib_field_create_ex(
-        result, mp, field->name, field->nlen, IB_FTYPE_NUM, &maxvalue);
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Field operator function: Min (list version)
- *
- * @param[in] ib Ironbee engine.
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] field The field to operate on.
- * @param[out] result The result of the operator.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t fieldop_min_list(ib_engine_t *ib,
-                                    ib_mpool_t *mp,
-                                    ib_field_t *field,
-                                    ib_field_t **result)
-{
-    IB_FTRACE_INIT();
-    ib_status_t     rc = IB_OK;
-    ib_list_node_t *node = NULL;
-    ib_num_t        minvalue = 0;
-    ib_num_t        n = 0;
-    ib_list_t      *lst;
-
-    assert(ib != NULL);
-    assert(mp != NULL);
-    assert(field != NULL);
-
-    /* Get the incoming list */
-    // @todo Remove const casting once list is const correct.
-    lst = (ib_list_t *)ib_field_value_list(field);
-    if (lst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Walk through the incoming fields */
-    IB_LIST_LOOP(lst, node) {
-        ib_field_t *ifield = (ib_field_t*)node->data;
-        ib_num_t value;
-
-        switch (field->type) {
-            case IB_FTYPE_NUM:
-                {
-                    const ib_num_t *fval = ib_field_value_num(ifield);
-                    value = *fval;
-                }
-                break;
-            case IB_FTYPE_UNUM:
-                {
-                    const ib_unum_t *fval = ib_field_value_unum(ifield);
-                    value = (ib_num_t)(*fval);
-                }
-                break;
-
-            case IB_FTYPE_NULSTR:
-                {
-                    const char *fval = ib_field_value_nulstr(field);
-                    value = (ib_num_t)strlen(fval);
-                }
-                break;
-
-            case IB_FTYPE_BYTESTR:
-                {
-                    const ib_bytestr_t *fval = ib_field_value_bytestr(field);
-                    value = (ib_num_t)ib_bytestr_length(fval);
-                }
-                break;
-
-            case IB_FTYPE_LIST:
-                {
-                    ib_field_t *tmp = NULL;
-                    const ib_num_t *nptr = NULL;
-
-                    rc = fieldop_min_list(ib, mp, field, &tmp);
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-                    nptr = ib_field_value_num(tmp);
-                    if (nptr == NULL) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
-                    }
-                    value = *nptr;
-                }
-                break;
-
-            default:
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-        if ( (n == 0) || (value < minvalue) ) {
-            minvalue = value;
-        }
-    }
-
-    /* Create the output field */
-    rc = ib_field_create_ex(
-        result, mp, field->name, field->nlen, IB_FTYPE_NUM, &minvalue);
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Field operator function: Max
- *
- * @param[in] ib Ironbee engine.
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] field The field to operate on.
- * @param[out] result The result of the operator.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t fieldop_max(ib_engine_t *ib,
-                               ib_mpool_t *mp,
-                               ib_field_t *field,
-                               ib_field_t **result)
-{
-    IB_FTRACE_INIT();
-
-    assert(ib != NULL);
-    assert(mp != NULL);
-    assert(field != NULL);
-
-    switch (field->type) {
-        case IB_FTYPE_NUM:
-        case IB_FTYPE_UNUM:
-            *result = field;
-            IB_FTRACE_RET_STATUS(IB_OK);
-
-        case IB_FTYPE_LIST:
-            IB_FTRACE_RET_STATUS(fieldop_max_list(ib, mp, field, result));
-
-        default:
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
-}
-
-/**
- * Field operator function: Min
- *
- * @param[in] ib Ironbee engine.
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] field The field to operate on.
- * @param[out] result The result of the operator.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t fieldop_min(ib_engine_t *ib,
-                               ib_mpool_t *mp,
-                               ib_field_t *field,
-                               ib_field_t **result)
-{
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
-    assert(mp != NULL);
-    assert(field != NULL);
-
-    switch (field->type) {
-        case IB_FTYPE_NUM:
-        case IB_FTYPE_UNUM:
-            *result = field;
-            IB_FTRACE_RET_STATUS(IB_OK);
-
-        case IB_FTYPE_LIST:
-            IB_FTRACE_RET_STATUS(fieldop_min_list(ib, mp, field, result));
-
-        default:
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
-}
-
-/**
- * Execute a single rule's operator
- * @internal
- *
- * @param[in] ib Engine
- * @param[in] target_str Target field string
- * @param[in,out] target_field Rule target structure
- *
- * @returns Status code
- */
-static ib_status_t parse_field_ops(ib_engine_t *ib,
-                                   const char *target_str,
-                                   ib_rule_target_t *target_field)
-{
-    IB_FTRACE_INIT();
-    char             *cur;               /* Current position */
-    char             *opname;            /* Operator name */
-    char             *dup_str;           /* Duplicate string */
-
-    assert(ib != NULL);
-    assert(target_str != NULL);
-    assert(target_field != NULL);
-
-    /* No parens?  Just store the target string as the field name & return. */
-    if (strstr(target_str, "()") == NULL) {
-        target_field->field_name = target_str;
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-
-    /* Make a duplicate of the target string to work on */
-    dup_str = ib_mpool_strdup(ib->mp, target_str);
-    if (dup_str == NULL) {
-        ib_log_error(ib, 4, "Error duplicating target string '%s'", target_str);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Walk through the string */
-    cur = dup_str;
-    while (cur != NULL) {
-        ib_field_op_fn_t  opfn = NULL;  /* Operator function */
-        char             *separator;    /* Current separator */
-        char             *next_sep;     /* Next separator */
-        char             *parens;       /* Paren pair '()' */
-
-        opname = NULL;
-
-        /* First time through the loop? */
-        if (cur == dup_str) {
-            separator = strchr(cur, '.');
-            if (separator == NULL) {
-                break;
-            }
-        }
-        else {
-            separator = cur;
-        }
-
-        /* Find the next separator and paren set */
-        next_sep = strchr(separator+1, '.');
-        parens   = strstr(separator+1, "()");
-
-        /* No parens?  We're done. */
-        if (parens == NULL) {
-            ib_log_debug(ib, 9, "parens == NULL");
-            cur = NULL;
-        }
-        else if (next_sep == NULL) {
-            ib_log_debug(ib, 9, "next_sep == NULL");
-            *separator = '\0';
-            opname = separator + 1;
-            cur = NULL;
-        }
-        else if (parens < next_sep) {
-            ib_log_debug(ib, 9, "parens < next_sep");
-            *separator = '\0';
-            opname = separator + 1;
-            cur = next_sep;
-        }
-        else {
-            ib_log_debug(ib, 9, "parens >= next_sep");
-            cur = next_sep + 1;
-        }
-
-        /* Skip to top of loop if there's no operator */
-        if (opname == NULL) {
-            continue;
-        }
-
-        /* Lookup the function name */
-        if (strncasecmp(opname, "length", 6) == 0) {
-            ib_log_debug(ib, 9, "Length field operator found");
-            opfn = fieldop_length;
-        }
-        else if (strncasecmp(opname, "count", 5) == 0) {
-            ib_log_debug(ib, 9, "Count field operator found");
-            opfn = fieldop_count;
-        }
-        else if (strncasecmp(opname, "max", 3) == 0) {
-            ib_log_debug(ib, 9, "Max field operator found");
-            opfn = fieldop_max;
-        }
-        else if (strncasecmp(opname, "min", 3) == 0) {
-            ib_log_debug(ib, 9, "Min field operator found");
-            opfn = fieldop_min;
-        }
-        else {
-            ib_log_error(ib, 4, "Unknown field operator: '%s'", opname);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        /* Add the function to the list. */
-        if (opfn != NULL) {
-            ib_list_push(target_field->field_ops, (void *)opfn);
-        }
-    }
-
-    /**
-     * The field name is the start of the duplicate string, even after
-     * it's been chopped up into pieces.
-     */
-    target_field->field_name = dup_str;
-    ib_log_debug(ib, 9, "Final target field name is '%s'", dup_str);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
-                                          ib_rule_t *rule,
-                                          const char *name)
-{
-    IB_FTRACE_INIT();
-    ib_rule_target_t *target = NULL;
-    ib_status_t rc = IB_OK;
-
-    assert(ib != NULL);
+    assert(target != NULL);
 
     /* Basic checks */
-    if ( (rule == NULL) || (name == NULL) ) {
+    if (name == NULL) {
         ib_log_error(ib, 4,
                      "Can't add rule target: Invalid rule or target");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Allocate a rule field structure */
-    target = (ib_rule_target_t *)
-        ib_mpool_calloc(ib_rule_mpool(ib), sizeof(*target), 1);
+    *target = (ib_rule_target_t *)
+        ib_mpool_calloc(ib_rule_mpool(ib), sizeof(**target), 1);
     if (target == NULL) {
         ib_log_error(ib, 4,
-                     "Error allocating rule field for '%s': %d", name, rc);
+                     "Error allocating rule target object '%s'", name);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /* Create the field operator list */
-    rc = ib_list_create(&(target->field_ops), ib_rule_mpool(ib));
+    /* Copy the name */
+    (*target)->field_name = (char *)ib_mpool_strdup(ib_rule_mpool(ib), name);
+    if ((*target)->field_name == NULL) {
+        ib_log_error(ib, 4, "Error copying target field name '%s'", name);
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Create the field transformation list */
+    rc = ib_list_create(&((*target)->tfn_list), ib_rule_mpool(ib));
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Error creating field operator list for target '%s': %d",
@@ -1511,23 +1019,128 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Parse out the calls */
-    rc = parse_field_ops(ib, name, target);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Error splitting rule target '%s': %d", name, rc);
-        IB_FTRACE_RET_STATUS(rc);
+    /* Add the transformations in the list (if provided) */
+    *tfns_not_found = 0;
+    if (tfn_names != NULL) {
+        ib_list_node_t *node = NULL;
+
+        IB_LIST_LOOP(tfn_names, node) {
+            const char *tfn = (const char *)ib_list_node_data(node);
+            rc = ib_rule_target_add_tfn(ib, *target, tfn);
+            if (rc == IB_ENOENT) {
+                ++(*tfns_not_found);
+            }
+            else if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
     }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/* Add a target to a rule */
+ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
+                                          ib_rule_t *rule,
+                                          ib_rule_target_t *target)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc = IB_OK;
+
+    assert(ib != NULL);
+    assert(rule != NULL);
+    assert(target != NULL);
 
     /* Push the field */
     rc = ib_list_push(rule->target_fields, (void*)target);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to add rule target '%s': %d", name, rc);
+        ib_log_error(ib, 4, "Failed to add target '%s' to rule '%s': %d",
+                     target->field_name, rule->meta.id, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/* Add a transformation to a target */
+ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
+                                              ib_rule_target_t *target,
+                                              const char *name)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_tfn_t *tfn;
+
+    assert(ib != NULL);
+    assert(target != NULL);
+    assert(name != NULL);
+
+    /* Lookup the transformation by name */
+    rc = ib_tfn_lookup(ib, name, &tfn);
+    if (rc == IB_ENOENT) {
+        ib_log_alert(ib, 4, "Transformation '%s' not found", name);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Error looking up trans '%s' for target '%s': %d",
+                     name, target->field_name, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Add the transformation to the list */
+    rc = ib_list_push(target->tfn_list, tfn);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, 4,
+                     "Error adding transformation '%s' to list: %d", name, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/* Add a transformation to all targets of a rule */
+ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
+                                       ib_rule_t *rule,
+                                       const char *name)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_tfn_t *tfn;
+    ib_list_node_t *node = NULL;
+
+    assert(ib != NULL);
+    assert(rule != NULL);
+    assert(name != NULL);
+
+    /* Lookup the transformation by name */
+    rc = ib_tfn_lookup(ib, name, &tfn);
+    if (rc == IB_ENOENT) {
+        ib_log_alert(ib, 4, "Transformation '%s' not found", name);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else {
+        ib_log_error(ib, 4,
+                     "Error looking up trans '%s' for rule '%s': %d",
+                     name, rule->meta.id, rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Walk through the list of targets, add the transformation to it */
+    IB_LIST_LOOP(rule->target_fields, node) {
+        ib_rule_target_t *target = (ib_rule_target_t *)ib_list_node_data(node);
+        rc = ib_rule_target_add_tfn(ib, target, name);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "Error adding tfn '%s' to target '%s' rule '%s':%d",
+                         name, target->field_name, rule->meta.id);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/* Add an action to a rule */
 ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
                                           ib_rule_t *rule,
                                           ib_action_inst_t *action,

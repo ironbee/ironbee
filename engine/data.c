@@ -38,6 +38,7 @@
 #include <ironbee/provider.h>
 #include <ironbee/field.h>
 #include <ironbee/expand.h>
+#include <ironbee/transformation.h>
 
 #include "ironbee_private.h"
 
@@ -363,7 +364,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                                  IB_BYTESTRSL_FMT_PARAM(name, nlen),
                                  IB_BYTESTRSL_FMT_PARAM(tname, len));
 
-                    rc = ib_tfn_transform_field(t, *pf, &flags);
+                    rc = ib_tfn_transform(ib, dpi->mp, t, *pf, pf, &flags);
                     if (rc != IB_OK) {
                         /// @todo What to do here?  Fail or ignore?
                         ib_log_error(ib, 3,
