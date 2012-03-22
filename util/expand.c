@@ -48,7 +48,7 @@
  * @param[in] l1 Length of block 1
  * @param[in] p2 Pointer to block 2
  * @param[in] l2 Length of block 2
- * @param[in] nul 1 if NUL byte should be tacked on, 0 if not
+ * @param[in] nul IB_TRUE if NUL byte should be tacked on, IB_FALSE if not
  * @param[out] out Pointer to output block
  * @param[out] olen Length of the output block
  *
@@ -80,7 +80,7 @@ static ib_status_t join2(ib_mpool_t *mp,
     p += l1;
     memcpy(p, p2, l2);
     p += l2;
-    if (nul) {
+    if (nul == IB_TRUE) {
         *p = '\0';
     }
 
@@ -101,7 +101,7 @@ static ib_status_t join2(ib_mpool_t *mp,
  * @param[in] l2 Length of block 2
  * @param[in] p3 Pointer to block 3
  * @param[in] l3 Length of block 3
- * @param[in] nul 1 if NUL byte should be tacked on, 0 if not
+ * @param[in] nul IB_TRUE if NUL byte should be tacked on, IB_FALSE if not
  * @param[out] out Pointer to output block
  * @param[out] olen Length of the output block
  *
@@ -137,7 +137,7 @@ static ib_status_t join3(ib_mpool_t *mp,
     p += l2;
     memcpy(p, p3, l3);
     p += l3;
-    if (nul) {
+    if (nul == IB_TRUE) {
         *p = '\0';
     }
 
@@ -148,17 +148,16 @@ static ib_status_t join3(ib_mpool_t *mp,
 }
 
 /**
- * Join three memory blocks into a single buffer
+ * Join a field with strings before and after it
  * @internal
  *
  * @param[in] mp Memory pool
- * @param[in] p1 Pointer to block 1
- * @param[in] l1 Length of block 1
- * @param[in] p2 Pointer to block 2
- * @param[in] l2 Length of block 2
- * @param[in] p3 Pointer to block 3
- * @param[in] l3 Length of block 3
- * @param[in] nul 1 if NUL byte should be tacked on, 0 if not
+ * @param[in] f Field to join
+ * @param[in] iptr Pointer to initial string
+ * @param[in] ilen Length of @a iptr
+ * @param[in] fptr Pointer to final string
+ * @param[in] flen Length of @a fptr
+ * @param[in] nul IB_TRUE if NUL byte should be tacked on, IB_FALSE if not
  * @param[out] out Pointer to output block
  * @param[out] olen Length of the output block
  *
