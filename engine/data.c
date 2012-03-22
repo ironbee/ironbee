@@ -424,16 +424,17 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    size_t len;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-
-    rc = api->expand_string(dpi, str, strlen(str), IB_TRUE, result, &len);
+    rc = ib_expand_str(dpi->mp,
+                       str, 
+                       IB_VARIABLE_EXPANSION_PREFIX,
+                       IB_VARIABLE_EXPANSION_POSTFIX,
+                       (ib_hash_t *)(dpi->data),
+                       result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -446,17 +447,21 @@ ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
                                   size_t *result_len)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-
-    ib_status_t rc;
-
-    rc = api->expand_string(dpi, str, slen, nul, result, result_len);
+    rc = ib_expand_str_ex(dpi->mp,
+                          str,
+                          slen,
+                          IB_VARIABLE_EXPANSION_PREFIX,
+                          IB_VARIABLE_EXPANSION_POSTFIX,
+                          nul,
+                          (ib_hash_t *)dpi->data,
+                          result,
+                          result_len);
 
     IB_FTRACE_RET_STATUS(rc);
 }

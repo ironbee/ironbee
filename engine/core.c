@@ -35,7 +35,6 @@
 #include <ironbee/string.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/field.h>
-#include <ironbee/expand.h>
 #include <ironbee_private.h>
 
 #include <errno.h>
@@ -1237,45 +1236,6 @@ static ib_status_t core_data_clear(ib_provider_inst_t *dpi)
 }
 
 /**
- * Core data provider implementation to expand a string using the data store.
- * @internal
- *
- * This function looks through @a str for instances of "%{"+<name>+"}"
- * (e.g. "%{FOO}").  @sa ib_data_expand_str().
- *
- * @param[in] dpi Data provider instance
- * @param[in] str String to expand
- * @param[in] slen Length of @a str
- * @param[in] nul Append NUL byte to @a result?
- * @param[out] result Pointer to the expanded string.
- * @param[out] result_len Length of @a result.
- *
- * @returns Status code
- */
-static ib_status_t core_data_expand_str(ib_provider_inst_t *dpi,
-                                        const char *str,
-                                        size_t slen,
-                                        ib_bool_t nul,
-                                        char **result,
-                                        size_t *result_len)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-
-    rc = ib_expand_str_ex(dpi->mp,
-                          str,
-                          slen,
-                          IB_VARIABLE_EXPANSION_PREFIX,
-                          IB_VARIABLE_EXPANSION_POSTFIX,
-                          nul,
-                          (ib_hash_t *)dpi->data,
-                          result,
-                          result_len);
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
  * @internal
  * Data provider interface mapping for the core module.
  */
@@ -1287,7 +1247,6 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
     core_data_get,
     core_data_get_all,
     core_data_remove,
-    core_data_expand_str,
     core_data_clear
 };
 
@@ -3416,47 +3375,6 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
 }
 
 /**
- * Calls a registered provider interface to expand a string using a
- * provider instance.
- * @internal
- *
- * @param[in] dpi Data provider instance
- * @param[in] str String to expand
- * @param[in] slen Length of @a str
- * @param[in] nul Append NUL byte to @a result?
- * @param[out] result Resulting expanded string
- * @param[out] result_len Length of @a result
- *
- * @returns Status code
- */
-static ib_status_t data_api_expand_str(ib_provider_inst_t *dpi,
-                                       const char *str,
-                                       size_t slen,
-                                       ib_bool_t nul,
-                                       char **result,
-                                       size_t *result_len)
-{
-    IB_FTRACE_INIT();
-
-    assert(dpi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->expand_string(dpi, str, slen, nul, result, result_len);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
  * @internal
  * Calls a registered provider interface to clear all fields from a
  * provider instance.
@@ -3492,7 +3410,6 @@ static IB_PROVIDER_API_TYPE(data) data_api = {
     data_api_get,
     data_api_get_all,
     data_api_remove,
-    data_api_expand_str,
     data_api_clear,
 };
 
