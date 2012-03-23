@@ -34,7 +34,7 @@
 
 #include <assert.h>
 
-ib_status_t ib_field_create_ex(ib_field_t **pf,
+ib_status_t ib_field_create(ib_field_t **pf,
                                ib_mpool_t *mp,
                                const char *name,
                                size_t nlen,
@@ -168,12 +168,14 @@ failed:
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_field_createn_ex(ib_field_t **pf,
-                                ib_mpool_t *mp,
-                                const char *name,
-                                size_t nlen,
-                                ib_ftype_t type,
-                                void *pval)
+ib_status_t ib_field_createn(
+    ib_field_t **pf,
+    ib_mpool_t *mp,
+    const char *name,
+    size_t nlen,
+    ib_ftype_t type,
+    void *pval
+)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -279,7 +281,7 @@ failed:
 }
 
 
-ib_status_t ib_field_copy_ex(ib_field_t **pf,
+ib_status_t ib_field_copy(ib_field_t **pf,
                              ib_mpool_t *mp,
                              const char *name,
                              size_t nlen,
@@ -289,7 +291,7 @@ ib_status_t ib_field_copy_ex(ib_field_t **pf,
     const void *val = ib_field_value(src);
     ib_status_t rc;
 
-    rc = ib_field_create_ex(pf, mp, name, nlen, src->type, &val);
+    rc = ib_field_create(pf, mp, name, nlen, src->type, &val);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -304,7 +306,7 @@ ib_status_t ib_field_copy_ex(ib_field_t **pf,
 
 }
 
-ib_status_t ib_field_alias_mem_ex(ib_field_t **pf,
+ib_status_t ib_field_alias_mem(ib_field_t **pf,
                                   ib_mpool_t *mp,
                                   const char *name,
                                   size_t nlen,

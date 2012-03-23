@@ -108,8 +108,13 @@ public:
             ib_bytestr_t *bs;
             switch( fdef->type ) {
                 case IB_FTYPE_NULSTR:
-                    rc = ib_field_create(&field, m_pool, fdef->key,
-                                         fdef->type, (void *)&(fdef->vstr));
+                    rc = ib_field_create(
+                        &field, 
+                        m_pool, 
+                        IB_FIELD_NAME(fdef->key),
+                        fdef->type, 
+                        (void *)&(fdef->vstr)
+                    );
                     break;
                 case IB_FTYPE_BYTESTR:
                     rc = ib_bytestr_dup_nulstr(&bs, m_pool, fdef->vstr);
@@ -120,16 +125,31 @@ public:
                         msg += rc;
                         throw std::runtime_error(msg);
                     }
-                    rc = ib_field_create(&field, m_pool, fdef->key,
-                                         fdef->type, (void *)&bs);
+                    rc = ib_field_create(
+                        &field, 
+                        m_pool, 
+                        IB_FIELD_NAME(fdef->key),
+                        fdef->type, 
+                        (void *)&bs
+                    );
                     break;
                 case IB_FTYPE_NUM:
-                    rc = ib_field_create(&field, m_pool, fdef->key,
-                                         fdef->type, (void *)&(fdef->vnum));
+                    rc = ib_field_create(
+                        &field, 
+                        m_pool, 
+                        IB_FIELD_NAME(fdef->key),
+                        fdef->type, 
+                        (void *)&(fdef->vnum)
+                    );
                     break;
                 case IB_FTYPE_UNUM:
-                    rc = ib_field_create(&field, m_pool, fdef->key,
-                                         fdef->type, (void *)&(fdef->vunum));
+                    rc = ib_field_create(
+                        &field, 
+                        m_pool, 
+                        IB_FIELD_NAME(fdef->key),
+                        fdef->type, 
+                        (void *)&(fdef->vunum)
+                    );
                     break;
                 default:
                     throw std::logic_error("Unsupported field type.");

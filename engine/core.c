@@ -2249,49 +2249,49 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     }
 
     ib_field_alias_mem(&f, pool,
-                       "tx-time",
+                       IB_FIELD_NAME("tx-time"),
                        (uint8_t *)txtime,
                        strlen(txtime));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "log-timestamp",
+                       IB_FIELD_NAME("log-timestamp"),
                        (uint8_t *)tstamp,
                        strlen(tstamp));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "log-format",
+                       IB_FIELD_NAME("log-format"),
                        (uint8_t *)log_format,
                        strlen(log_format));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "log-id",
+                       IB_FIELD_NAME("log-id"),
                        (uint8_t *)cfg->boundary,
                        strlen(cfg->boundary));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "sensor-id",
+                       IB_FIELD_NAME("sensor-id"),
                        (uint8_t *)ib->sensor_id_str,
                        strlen(ib->sensor_id_str));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "sensor-name",
+                       IB_FIELD_NAME("sensor-name"),
                        (uint8_t *)ib->sensor_name,
                        strlen(ib->sensor_name));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "sensor-version",
+                       IB_FIELD_NAME("sensor-version"),
                        (uint8_t *)ib->sensor_version,
                        strlen(ib->sensor_version));
     ib_list_push(list, f);
 
     ib_field_alias_mem(&f, pool,
-                       "sensor-hostname",
+                       IB_FIELD_NAME("sensor-hostname"),
                        (uint8_t *)ib->sensor_hostname,
                        strlen(ib->sensor_hostname));
     ib_list_push(list, f);
@@ -2299,13 +2299,13 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     site = ib_context_site_get(log->ctx);
     if (site != NULL) {
         ib_field_alias_mem(&f, pool,
-                           "site-id",
+                           IB_FIELD_NAME("site-id"),
                            (uint8_t *)site->id_str,
                            strlen(site->id_str));
         ib_list_push(list, f);
 
         ib_field_alias_mem(&f, pool,
-                           "site-name",
+                           IB_FIELD_NAME("site-name"),
                            (uint8_t *)site->name,
                            strlen(site->name));
         ib_list_push(list, f);
@@ -2364,7 +2364,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     }
 
     ib_field_create(&f, pool,
-                    "tx-num",
+                    IB_FIELD_NAME("tx-num"),
                     IB_FTYPE_UNUM,
                     &tx_num);
     ib_list_push(list, f);
@@ -2378,37 +2378,37 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_timestamp(tstamp, tx->t.request_started);
 
         ib_field_alias_mem(&f, pool,
-                           "request-timestamp",
+                           IB_FIELD_NAME("request-timestamp"),
                            (uint8_t *)tstamp,
                            strlen(tstamp));
         ib_list_push(list, f);
 
         ib_field_alias_mem(&f, pool,
-                           "tx-id",
+                           IB_FIELD_NAME("tx-id"),
                            (uint8_t *)tx->id,
                            strlen(tx->id));
         ib_list_push(list, f);
 
         ib_field_alias_mem(&f, pool,
-                           "remote-addr",
+                           IB_FIELD_NAME("remote-addr"),
                            (uint8_t *)tx->conn->remote_ipstr,
                            strlen(tx->conn->remote_ipstr));
         ib_list_push(list, f);
 
         ib_field_create(&f, pool,
-                        "remote-port",
+                        IB_FIELD_NAME("remote-port"),
                         IB_FTYPE_UNUM,
                         &tx->conn->remote_port);
         ib_list_push(list, f);
 
         ib_field_alias_mem(&f, pool,
-                           "local-addr",
+                           IB_FIELD_NAME("local-addr"),
                            (uint8_t *)tx->conn->local_ipstr,
                            strlen(tx->conn->local_ipstr));
         ib_list_push(list, f);
 
         ib_field_create(&f, pool,
-                        "local-port",
+                        IB_FIELD_NAME("local-port"),
                         IB_FTYPE_UNUM,
                         &tx->conn->local_port);
         ib_list_push(list, f);
@@ -2416,7 +2416,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->path != NULL) {
             ib_field_alias_mem(&f, pool,
-                               "request-uri-path",
+                               IB_FIELD_NAME("request-uri-path"),
                                (uint8_t *)tx->path,
                                strlen(tx->path));
             ib_list_push(list, f);
@@ -2441,7 +2441,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->hostname != NULL) {
             ib_field_alias_mem(&f, pool,
-                               "request-hostname",
+                               IB_FIELD_NAME("request-hostname"),
                                (uint8_t *)tx->hostname,
                                strlen(tx->hostname));
             ib_list_push(list, f);
@@ -2484,7 +2484,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     }
 
     ib_field_alias_mem(&f, pool,
-                       "response-timestamp",
+                       IB_FIELD_NAME("response-timestamp"),
                        (uint8_t *)tstamp,
                        strlen(tstamp));
     ib_list_push(list, f);

@@ -158,7 +158,13 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                               rec->fn_get, rec->cbdata_get);
 
             /* Create a field without value. */
-            rc = ib_field_createn(&f, cm->mp, rec->name, rec->type, NULL);
+            rc = ib_field_createn(
+                &f,
+                cm->mp,
+                rec->name, strlen(rec->name),
+                rec->type,
+                NULL
+            );
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -184,7 +190,13 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                               (int)rec->offset, (int)rec->dlen, val);
 
             /* Create a field with data that points to the base+offset. */
-            rc = ib_field_createn(&f, cm->mp, rec->name, rec->type, val);
+            rc = ib_field_createn(
+                &f,
+                cm->mp,
+                rec->name, strlen(rec->name),
+                rec->type,
+                val
+            );
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }

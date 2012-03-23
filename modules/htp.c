@@ -243,7 +243,7 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
         int value = 1;
         ib_field_create(&lf,
                         itx->mp,
-                        flag,
+                        IB_FIELD_NAME(flag),
                         IB_FTYPE_NUM,
                         &value);
         rc = ib_field_list_add(f, lf);
@@ -1277,7 +1277,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem_ex(&lf,
+                rc = ib_field_alias_mem(&lf,
                                            itx->mp,
                                            bstr_ptr(h->name),
                                            bstr_len(h->name),
@@ -1319,7 +1319,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem_ex(&lf,
+                rc = ib_field_alias_mem(&lf,
                                            itx->mp,
                                            bstr_ptr(key),
                                            bstr_len(key),
@@ -1360,7 +1360,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem_ex(&lf,
+                rc = ib_field_alias_mem(&lf,
                                            itx->mp,
                                            bstr_ptr(key),
                                            bstr_len(key),
@@ -1460,7 +1460,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem_ex(&lf,
+                rc = ib_field_alias_mem(&lf,
                                            itx->mp,
                                            bstr_ptr(h->name),
                                            bstr_len(h->name),

@@ -241,7 +241,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
             local fieldValue_p = ffi.new("char*[1]", 
                                          ffi.cast("char*", fieldValue))
             -- Create the field
-            ffi.C.ib_field_create_ex(field,
+            ffi.C.ib_field_create(field,
                                      self.private.ib_tx.mp,
                                      ffi.cast("char*", fieldName),
                                      #fieldName,
@@ -251,7 +251,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         elseif type(fieldValue) == 'number' then
             local fieldValue_p = ffi.new("ib_num_t[1]", fieldValue)
 
-            ffi.C.ib_field_create_ex(field,
+            ffi.C.ib_field_create(field,
                                      self.private.ib_tx.mp,
                                      ffi.cast("char*", fieldName),
                                      #fieldName,

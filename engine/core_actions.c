@@ -430,8 +430,13 @@ static ib_status_t act_setvar_execute(void *cbdata,
         }
 
         /* Create the new field */
-        rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
-                              (void *)&bs );
+        rc = ib_field_create(
+            &new,
+            tx->mp,
+            IB_FIELD_NAME(svdata->name),
+            svdata->type,
+            (void *)&bs
+        );
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
                          "setvar: Failed to create field %s: %d",
@@ -458,8 +463,13 @@ static ib_status_t act_setvar_execute(void *cbdata,
         }
 
         /* Create the new field */
-        rc = ib_field_create(&new, tx->mp, svdata->name, svdata->type,
-                             (void *)&(svdata->value.num) );
+        rc = ib_field_create(
+            &new,
+            tx->mp,
+            IB_FIELD_NAME(svdata->name),
+            svdata->type,
+            (void *)&(svdata->value.num)
+        );
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
                          "setvar: Failed to create field %s: %d",

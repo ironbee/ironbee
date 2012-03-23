@@ -343,7 +343,7 @@ public:
     * The lifetime of the value must be a superset of the lifetime of the
     * field.
     *
-    * Note: There is no equivalent to ib_field_alias_mem_ex() as this is
+    * Note: There is no equivalent to ib_field_alias_mem() as this is
     * easily replaced with, e.g.,
     * @code
     * Field::create(pool, name, name_length, ByteString::create_alias(...))

@@ -344,7 +344,13 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     }
 
     /* Create the field */
-    rc = ib_field_create(&tmp_field, mp, name, IB_FTYPE_NULSTR, &value);
+    rc = ib_field_create(
+        &tmp_field,
+        mp,
+        IB_FIELD_NAME(name),
+        IB_FTYPE_NULSTR,
+        &value
+    );
     if (rc != IB_OK) {
         ib_log_error(ib, 0,
                      "Error creating user agent %s field: %d", name, rc);

@@ -181,7 +181,7 @@ static ib_field_t *dyn_get(ib_field_t *f,
     ib_field_t *newf;
     ib_status_t rc;
 
-    rc = ib_field_create_ex(&newf, mp, arg, alen, IB_FTYPE_NUM, &numval);
+    rc = ib_field_create(&newf, mp, arg, alen, IB_FTYPE_NUM, &numval);
     if (rc != IB_OK) {
         return NULL;
     }
@@ -213,8 +213,13 @@ TEST(TestIronBee, test_dpi)
     /* Create a field with no initial value. */
     ASSERT_EQ(
         IB_OK,
-        ib_field_create(&dynf, ib_engine_pool_main_get(ib),
-                        "test_dynf", IB_FTYPE_GENERIC, NULL)
+        ib_field_create(
+            &dynf, 
+            ib_engine_pool_main_get(ib),
+            IB_FIELD_NAME("test_dynf"), 
+            IB_FTYPE_GENERIC, 
+            NULL
+        )
     );
     ASSERT_TRUE(dynf);
     ASSERT_EQ(9UL, dynf->nlen);

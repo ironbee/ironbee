@@ -87,15 +87,14 @@ typedef ib_status_t (*ib_field_set_fn_t)(
     void *data
 );
 
-
 /** Field Structure */
 struct ib_field_t {
-    ib_mpool_t      *mp;        /**< Memory pool */
-    ib_ftype_t       type;      /**< Field type */
-    const char      *name;      /**< Field name; not '\0' terminated! */
-    size_t           nlen;      /**< Field name length */
-    const char      *tfn;       /**< Transformations performed */
-    ib_field_val_t  *val;       /**< Private value store */
+    ib_mpool_t     *mp;        /**< Memory pool */
+    ib_ftype_t      type;      /**< Field type */
+    const char     *name;      /**< Field name; not '\0' terminated! */
+    size_t          nlen;      /**< Field name length */
+    const char     *tfn;       /**< Transformations performed */
+    ib_field_val_t *val;       /**< Private value store */
 };
 
 /**
@@ -110,12 +109,14 @@ struct ib_field_t {
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_create_ex(ib_field_t **pf,
-                                          ib_mpool_t *mp,
-                                          const char *name,
-                                          size_t nlen,
-                                          ib_ftype_t type,
-                                          const void *pval);
+ib_status_t DLL_PUBLIC ib_field_create(
+    ib_field_t **pf,
+    ib_mpool_t  *mp,
+    const char  *name,
+    size_t       nlen,
+    ib_ftype_t   type,
+    const void  *pval
+);
 
 /**
  * Create a field and store data without copying.
@@ -129,12 +130,14 @@ ib_status_t DLL_PUBLIC ib_field_create_ex(ib_field_t **pf,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_createn_ex(ib_field_t **pf,
-                                           ib_mpool_t *mp,
-                                           const char *name,
-                                           size_t nlen,
-                                           ib_ftype_t type,
-                                           void *pval);
+ib_status_t DLL_PUBLIC ib_field_createn(
+    ib_field_t **pf,
+    ib_mpool_t  *mp,
+    const char  *name,
+    size_t       nlen,
+    ib_ftype_t   type,
+    void        *pval
+);
 
 /**
  * Make a copy of a field.
@@ -147,11 +150,13 @@ ib_status_t DLL_PUBLIC ib_field_createn_ex(ib_field_t **pf,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_copy_ex(ib_field_t **pf,
-                                        ib_mpool_t *mp,
-                                        const char *name,
-                                        size_t nlen,
-                                        const ib_field_t *src);
+ib_status_t DLL_PUBLIC ib_field_copy(
+    ib_field_t       **pf,
+    ib_mpool_t        *mp,
+    const char        *name,
+    size_t             nlen,
+    const ib_field_t  *src
+);
 
 /**
  * Create a bytestr field which directly aliases a value in memory.
@@ -165,90 +170,14 @@ ib_status_t DLL_PUBLIC ib_field_copy_ex(ib_field_t **pf,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_alias_mem_ex(ib_field_t **pf,
-                                             ib_mpool_t *mp,
-                                             const char *name,
-                                             size_t nlen,
-                                             uint8_t *val,
-                                             size_t vlen);
-
-/**
- * Create a field, copying data into the field.
- *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as string
- * @param type Field type
- * @param pval Pointer to value to store in field (based on type)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_field_create(ib_field_t **pf,
-                                       ib_mpool_t *mp,
-                                       const char *name,
-                                       ib_ftype_t type,
-                                       const void *pval);
-
-#define ib_field_create(pf,mp,name,type,pval) \
-    ib_field_create_ex(pf,mp,name,strlen(name),type,pval)
-
-/**
- * Create a field and store data without making a copy.
- *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as string
- * @param type Field type
- * @param pval Pointer to value to store in field (based on type)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_field_createn(ib_field_t **pf,
-                                        ib_mpool_t *mp,
-                                        const char *name,
-                                        ib_ftype_t type,
-                                        void *pval);
-
-#define ib_field_createn(pf,mp,name,type,pval) \
-    ib_field_createn_ex(pf,mp,name,strlen(name),type,pval)
-
-/**
- * Make a copy of a field.
- *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as byte string
- * @param src Source field to copy
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_field_copy(ib_field_t **pf,
-                                     ib_mpool_t *mp,
-                                     const char *name,
-                                     ib_field_t *src);
-
-#define ib_field_copy(pf,mp,name,type,src) \
-    ib_field_copy(pf,mp,name,strlen(name),type,src)
-
-/**
- * Create a bytestr field which directly aliases a value in memory.
- *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as byte string
- * @param val Value
- * @param vlen Value length
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_field_alias_mem(ib_field_t **pf,
-                                          ib_mpool_t *mp,
-                                          const char *name,
-                                          uint8_t *val,
-                                          size_t vlen);
-
-#define ib_field_alias_mem(pf,mp,name,val,vlen) \
-    ib_field_alias_mem_ex(pf,mp,name,strlen(name),val,vlen)
+ib_status_t DLL_PUBLIC ib_field_alias_mem(
+    ib_field_t **pf,
+    ib_mpool_t  *mp,
+    const char  *name,
+    size_t       nlen,
+    uint8_t     *val,
+    size_t       vlen
+);
 
 /**
  * Add a field to a IB_FTYPE_LIST field.
@@ -258,8 +187,10 @@ ib_status_t DLL_PUBLIC ib_field_alias_mem(ib_field_t **pf,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
-                                         ib_field_t *val);
+ib_status_t DLL_PUBLIC ib_field_list_add(
+    ib_field_t *f,
+    ib_field_t *val
+);
 
 /**
  * Add a buffer to a @ref IB_FTYPE_SBUFFER type field.
@@ -271,10 +202,12 @@ ib_status_t DLL_PUBLIC ib_field_list_add(ib_field_t *f,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
-                                        int dtype,
-                                        uint8_t *buf,
-                                        size_t blen);
+ib_status_t DLL_PUBLIC ib_field_buf_add(
+    ib_field_t *f,
+    int         dtype,
+    uint8_t    *buf,
+    size_t      blen
+);
 
 /**
  * Set a field value, skipping dynamic setter.
@@ -284,8 +217,10 @@ ib_status_t DLL_PUBLIC ib_field_buf_add(ib_field_t *f,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_setv_static(ib_field_t *f,
-                                            const void *pval);
+ib_status_t DLL_PUBLIC ib_field_setv_static(
+    ib_field_t *f,
+    const void *pval
+);
 
 /**
  * Set a field value.
@@ -295,8 +230,10 @@ ib_status_t DLL_PUBLIC ib_field_setv_static(ib_field_t *f,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
-                                     const void *pval);
+ib_status_t DLL_PUBLIC ib_field_setv(
+    ib_field_t *f,
+    const void *pval
+);
 
 /**
  * Set a field value, passing the argument on to dynamic fields.
@@ -308,10 +245,12 @@ ib_status_t DLL_PUBLIC ib_field_setv(ib_field_t *f,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_setv_ex(ib_field_t *f,
-                                        const void *pval,
-                                        const void* arg,
-                                        size_t alen);
+ib_status_t DLL_PUBLIC ib_field_setv_ex(
+    ib_field_t *f,
+    const void *pval,
+    const void *arg,
+    size_t      alen
+);
 
 /**
  * Get the value stored in the field, passing the argument on to dynamic fields.
@@ -322,9 +261,11 @@ ib_status_t DLL_PUBLIC ib_field_setv_ex(ib_field_t *f,
  *
  * @returns Value stored in the field
  */
-const void DLL_PUBLIC *ib_field_value_ex(const ib_field_t *f,
-                                         const void *arg,
-                                         size_t alen);
+const void DLL_PUBLIC *ib_field_value_ex(
+    const ib_field_t *f,
+    const void       *arg,
+    size_t            alen
+);
 
 /**
  * Get the value stored in the field, passing the argument on to dynamic
@@ -337,10 +278,12 @@ const void DLL_PUBLIC *ib_field_value_ex(const ib_field_t *f,
  *
  * @returns Value stored in the field.
  */
-const void DLL_PUBLIC *ib_field_value_type_ex(const ib_field_t *f,
-                                              ib_ftype_t t,
-                                              const void *arg,
-                                              size_t alen);
+const void DLL_PUBLIC *ib_field_value_type_ex(
+     const ib_field_t *f,
+     ib_ftype_t        t,
+     const void       *arg,
+     size_t            alen
+);
 
 /** Return field value for a field as "ib_num_t *" with argument. */
 #define ib_field_value_num_ex(f,arg,alen) \
@@ -429,9 +372,10 @@ int ib_field_is_dynamic(const ib_field_t *f);
  * @param fn_get     Get function.
  * @param cbdata_get Callback data for @a fn_get.
  */
-void DLL_PUBLIC ib_field_dyn_register_get(ib_field_t *f,
-                                          ib_field_get_fn_t fn_get,
-                                          void *cbdata_get);
+void DLL_PUBLIC ib_field_dyn_register_get(
+    ib_field_t        *f,
+    ib_field_get_fn_t  fn_get,
+    void              *cbdata_get);
 
 /**
  * Register dynamic set function.
@@ -440,9 +384,11 @@ void DLL_PUBLIC ib_field_dyn_register_get(ib_field_t *f,
  * @param fn_set     set function.
  * @param cbdata_set Callback data for @a fn_set.
  */
-void DLL_PUBLIC ib_field_dyn_register_set(ib_field_t *f,
-                                          ib_field_set_fn_t fn_set,
-                                          void *cbdata_set);
+void DLL_PUBLIC ib_field_dyn_register_set(
+    ib_field_t        *f,
+    ib_field_set_fn_t  fn_set,
+    void              *cbdata_set
+);
 
 /**
  * Helper function for returning numbers.
@@ -474,6 +420,13 @@ void *ib_field_dyn_return_num(const ib_field_t *f, ib_num_t value);
  * @param[in] value Value to return.
  */
 void *ib_field_dyn_return_unum(const ib_field_t *f, ib_unum_t value);
+
+/**
+ * Helper function for providing nullt terminated strings.
+ *
+ * @param[in] name Null terminated field name.
+ **/
+#define IB_FIELD_NAME(name) (name), strlen(name)
 
 /**
  * @} IronBeeUtilField

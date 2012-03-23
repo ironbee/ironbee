@@ -106,8 +106,13 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_field_t *field;
     const char *matching = "data matching string";
     const char *nonmatching = "non matching string";
-    ib_field_create(&field, ib_engine_pool_main_get(ib_engine),
-                    "testfield", IB_FTYPE_NULSTR, NULL);
+    ib_field_create(
+        &field,
+        ib_engine_pool_main_get(ib_engine),
+        IB_FIELD_NAME("testfield"),
+        IB_FTYPE_NULSTR,
+        NULL
+    );
 
     ib_field_setv(field, &matching);
     status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
@@ -145,8 +150,13 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     ib_field_t *field;
     const char *matching = "data with needle in it";
     const char *nonmatching = "non matching string";
-    ib_field_create(&field, ib_engine_pool_main_get(ib_engine),
-                    "testfield", IB_FTYPE_NULSTR, NULL);
+    ib_field_create(
+        &field, 
+        ib_engine_pool_main_get(ib_engine),
+        IB_FIELD_NAME("testfield"), 
+        IB_FTYPE_NULSTR, 
+        NULL
+    );
 
     ib_field_setv(field, &matching);
     status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);

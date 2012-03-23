@@ -118,7 +118,7 @@ static ib_status_t geoip_lookup(
         latitude = lround(geoip_rec->latitude);
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "latitude",
+                        IB_FIELD_NAME("latitude"),
                         IB_FTYPE_NUM,
                         &latitude);
         ib_field_list_add(geoip_lst, tmp_field);
@@ -126,7 +126,7 @@ static ib_status_t geoip_lookup(
         longitude = lround(geoip_rec->longitude);
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "longitude",
+                        IB_FIELD_NAME("longitude"),
                         IB_FTYPE_NUM,
                         &longitude);
         ib_field_list_add(geoip_lst, tmp_field);
@@ -136,13 +136,13 @@ static ib_status_t geoip_lookup(
 
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "area_code",
+                        IB_FIELD_NAME("area_code"),
                         IB_FTYPE_NUM,
                         &geoip_rec->area_code);
         ib_field_list_add(geoip_lst, tmp_field);
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "charset",
+                        IB_FIELD_NAME("charset"),
                         IB_FTYPE_NUM,
                         &geoip_rec->charset);
         ib_field_list_add(geoip_lst, tmp_field);
@@ -152,7 +152,7 @@ static ib_status_t geoip_lookup(
         {
             ib_field_create(&tmp_field,
                             tx->mp,
-                            "country_code",
+                            IB_FIELD_NAME("country_code"),
                             IB_FTYPE_NULSTR,
                             &geoip_rec->country_code);
             ib_field_list_add(geoip_lst, tmp_field);
@@ -162,7 +162,7 @@ static ib_status_t geoip_lookup(
         {
             ib_field_create(&tmp_field,
                             tx->mp,
-                            "country_code3",
+                            IB_FIELD_NAME("country_code3"),
                             IB_FTYPE_NULSTR,
                             &geoip_rec->country_code3);
             ib_field_list_add(geoip_lst, tmp_field);
@@ -172,7 +172,7 @@ static ib_status_t geoip_lookup(
         {
             ib_field_create(&tmp_field,
                             tx->mp,
-                            "country_name",
+                            IB_FIELD_NAME("country_name"),
                             IB_FTYPE_NULSTR,
                             &geoip_rec->country_name);
             ib_field_list_add(geoip_lst, tmp_field);
@@ -182,7 +182,7 @@ static ib_status_t geoip_lookup(
         {
             ib_field_create(&tmp_field,
                             tx->mp,
-                            "region",
+                            IB_FIELD_NAME("region"),
                             IB_FTYPE_NULSTR,
                             &geoip_rec->region);
             ib_field_list_add(geoip_lst, tmp_field);
@@ -192,7 +192,7 @@ static ib_status_t geoip_lookup(
         {
             ib_field_create(&tmp_field,
                             tx->mp,
-                            "city",
+                            IB_FIELD_NAME("city"),
                             IB_FTYPE_NULSTR,
                             &geoip_rec->city);
             ib_field_list_add(geoip_lst, tmp_field);
@@ -202,7 +202,7 @@ static ib_status_t geoip_lookup(
         {
             ib_field_create(&tmp_field,
                             tx->mp,
-                            "postal_code",
+                            IB_FIELD_NAME("postal_code"),
                             IB_FTYPE_NULSTR,
                             &geoip_rec->postal_code);
             ib_field_list_add(geoip_lst, tmp_field);
@@ -212,7 +212,7 @@ static ib_status_t geoip_lookup(
         {
             ib_field_create(&tmp_field,
                             tx->mp,
-                            "continent_code",
+                            IB_FIELD_NAME("continent_code"),
                             IB_FTYPE_NULSTR,
                             &geoip_rec->continent_code);
             ib_field_list_add(geoip_lst, tmp_field);
@@ -221,14 +221,14 @@ static ib_status_t geoip_lookup(
 #ifdef GEOIP_HAVE_VERSION
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "accuracy_radius",
+                        IB_FIELD_NAME("accuracy_radius"),
                         IB_FTYPE_NUM,
                         &geoip_rec->accuracy_radius);
         ib_field_list_add(geoip_lst, tmp_field);
 
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "metro_code",
+                        IB_FIELD_NAME("metro_code"),
                         IB_FTYPE_NUM,
                         &geoip_rec->metro_code);
         ib_field_list_add(geoip_lst, tmp_field);
@@ -237,7 +237,7 @@ static ib_status_t geoip_lookup(
         one_char_str[0] = geoip_rec->country_conf;
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "country_conf",
+                        IB_FIELD_NAME("country_conf"),
                         IB_FTYPE_NULSTR,
                         &one_char_str);
         ib_field_list_add(geoip_lst, tmp_field);
@@ -245,7 +245,7 @@ static ib_status_t geoip_lookup(
         one_char_str[0] = geoip_rec->region_conf;
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "region_conf",
+                        IB_FIELD_NAME("region_conf"),
                         IB_FTYPE_NULSTR,
                         &one_char_str);
         ib_field_list_add(geoip_lst, tmp_field);
@@ -253,7 +253,7 @@ static ib_status_t geoip_lookup(
         one_char_str[0] = geoip_rec->city_conf;
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "city_conf",
+                        IB_FIELD_NAME("city_conf"),
                         IB_FTYPE_NULSTR,
                         &one_char_str);
         ib_field_list_add(geoip_lst, tmp_field);
@@ -261,7 +261,7 @@ static ib_status_t geoip_lookup(
         one_char_str[0] = geoip_rec->postal_conf;
         ib_field_create(&tmp_field,
                         tx->mp,
-                        "postal_conf",
+                        IB_FIELD_NAME("postal_conf"),
                         IB_FTYPE_NULSTR,
                         &one_char_str);
         ib_field_list_add(geoip_lst, tmp_field);

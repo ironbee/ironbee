@@ -325,13 +325,13 @@ ffi.cdef [[
     const char *ib_logevent_action_name(ib_logevent_action_t num);
 
     /* Field */
-    ib_status_t ib_field_create_ex(ib_field_t **pf,
+    ib_status_t ib_field_create(ib_field_t **pf,
                                    ib_mpool_t *mp,
                                    const char *name,
                                    size_t nlen,
                                    ib_ftype_t type,
                                    void *pval);
-    ib_status_t ib_field_copy_ex(ib_field_t **pf,
+    ib_status_t ib_field_copy(ib_field_t **pf,
                                  ib_mpool_t *mp,
                                  const char *name,
                                  size_t nlen,

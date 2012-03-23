@@ -147,7 +147,13 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field1, ib_engine->mp, "field1", IB_FTYPE_NULSTR, &str1));
+            &field1,
+            ib_engine->mp,
+            IB_FIELD_NAME("field1"),
+            IB_FTYPE_NULSTR,
+            &str1
+        )
+    );
 
     /* Configure the operator. */
     configureIronBee();

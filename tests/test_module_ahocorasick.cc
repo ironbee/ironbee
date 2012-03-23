@@ -69,12 +69,24 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field1, ib_engine->mp, "field1", IB_FTYPE_NULSTR, &str1));
+            &field1, 
+            ib_engine->mp, 
+            IB_FIELD_NAME("field1"), 
+            IB_FTYPE_NULSTR, 
+            &str1
+        )
+    );
 
     // Create field 2.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field2, ib_engine->mp, "field2", IB_FTYPE_NULSTR, &str2));
+            &field2, 
+            ib_engine->mp,
+            IB_FIELD_NAME("field2"), 
+            IB_FTYPE_NULSTR, 
+            &str2
+        )
+    );
 
     // Ensure that the operator exists.
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, &op, "pm"));
@@ -124,12 +136,24 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field1, ib_engine->mp, "field1", IB_FTYPE_NULSTR, &str1));
+            &field1, 
+            ib_engine->mp, 
+            IB_FIELD_NAME("field1"), 
+            IB_FTYPE_NULSTR, 
+            &str1
+        )
+    );
 
     // Create field 2.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field2, ib_engine->mp, "field2", IB_FTYPE_NULSTR, &str2));
+            &field2,
+            ib_engine->mp,
+            IB_FIELD_NAME("field2"),
+            IB_FTYPE_NULSTR,
+            &str2
+        )
+    );
 
     // Ensure that the operator exists.
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, &op, "pmf"));

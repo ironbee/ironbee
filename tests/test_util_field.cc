@@ -59,7 +59,7 @@ protected:
 
 /* -- Tests -- */
 
-/// @test Test util field library - ib_field_create() ib_field_create_ex()
+/// @test Test util field library - ib_field_create() ib_field_create()
 TEST_F(TestIBUtilField, test_field_create)
 {
     ib_field_t *f;
@@ -68,13 +68,13 @@ TEST_F(TestIBUtilField, test_field_create)
     ib_num_t numval = 5;
     ib_bytestr_t *bytestrval;
 
-    rc = ib_field_create(&f, m_pool, "test_nulstr", IB_FTYPE_NULSTR, &nulstrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr"), IB_FTYPE_NULSTR, &nulstrval);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(11UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_nulstr", f->name, 11));
 
-    rc = ib_field_create(&f, m_pool, "test_num", IB_FTYPE_NUM, &numval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num"), IB_FTYPE_NUM, &numval);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(8UL, f->nlen);
@@ -84,21 +84,21 @@ TEST_F(TestIBUtilField, test_field_create)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, m_pool, "test_bytestr", IB_FTYPE_BYTESTR, &bytestrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr"), IB_FTYPE_BYTESTR, &bytestrval);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(12UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_bytestr", f->name, 12));
 
-    rc = ib_field_create_ex(&f, m_pool, "test_nulstr_ex", 14, IB_FTYPE_NULSTR, &nulstrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr_ex"),  IB_FTYPE_NULSTR, &nulstrval);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create_ex(&f, m_pool, "test_num_ex", 11, IB_FTYPE_NUM, &numval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num_ex"),  IB_FTYPE_NUM, &numval);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create_ex(&f, m_pool, "test_bytestr_ex", 15, IB_FTYPE_BYTESTR, &bytestrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr_ex"),  IB_FTYPE_BYTESTR, &bytestrval);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 }
@@ -164,7 +164,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     const char *fval;
 
     /* Create a field with no initial value. */
-    rc = ib_field_create(&dynf, m_pool, "test_dynf", IB_FTYPE_NULSTR, NULL);
+    rc = ib_field_create(&dynf, m_pool, IB_FIELD_NAME("test_dynf"), IB_FTYPE_NULSTR, NULL);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(dynf);
     ASSERT_EQ(9UL, dynf->nlen);
@@ -198,7 +198,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     g_dyn_call_count = 0;
 
     /* Create another field with no initial value. */
-    rc = ib_field_create(&cdynf, m_pool, "test_cdynf", IB_FTYPE_NULSTR, NULL);
+    rc = ib_field_create(&cdynf, m_pool, IB_FIELD_NAME("test_cdynf"), IB_FTYPE_NULSTR, NULL);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(cdynf);
     ASSERT_EQ(10UL, cdynf->nlen);

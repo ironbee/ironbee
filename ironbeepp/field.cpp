@@ -53,7 +53,7 @@ Field create_field(
 {
     ib_field_t* f = NULL;
 
-    ib_status_t rc = ib_field_create_ex(
+    ib_status_t rc = ib_field_create(
         &f,
         pool.ib(),
         name, name_length,
@@ -75,7 +75,7 @@ Field create_alias(
 {
     ib_field_t* f = NULL;
 
-    ib_status_t rc = ib_field_createn_ex(
+    ib_status_t rc = ib_field_createn(
         &f,
         pool.ib(),
         name, name_length,
@@ -344,7 +344,7 @@ Field ConstField::dup(
 {
     ib_field_t* f = NULL;
 
-    ib_status_t rc = ib_field_copy_ex(
+    ib_status_t rc = ib_field_copy(
         &f,
         pool.ib(),
         new_name, new_name_length,
