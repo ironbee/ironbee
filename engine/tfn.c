@@ -34,6 +34,7 @@
 
 #include "ironbee_private.h"
 
+#include <assert.h>
 
 /* -- Transformation Routines -- */
 
@@ -177,9 +178,11 @@ ib_status_t ib_tfn_transform_field(ib_tfn_t *tfn,
             }
 
             IB_FTRACE_RET_STATUS(rc);
+
+        default:
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    assert(! "unreachable");
 }
 

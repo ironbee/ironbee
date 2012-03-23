@@ -29,6 +29,7 @@
 #include <ironbee/build.h>
 #include <ironbee/uuid.h>
 #include <ironbee/hash.h>
+#include <ironbee/field.h>
 #include <ironbee/stream.h>
 #include <ironbee/clock.h>
 

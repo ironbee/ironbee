@@ -1818,7 +1818,7 @@ void ConfigurationMapInit<
     ib_cfgmap_init_t& init = m_inits.back();
 
     init.name = name;
-    init.type = field_type;
+    init.type = static_cast<ib_ftype_t>(field_type);
 
     set_configuration_map_init_translators(
         init,

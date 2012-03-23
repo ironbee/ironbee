@@ -131,6 +131,8 @@ public:
                     rc = ib_field_create(&field, m_pool, fdef->key,
                                          fdef->type, (void *)&(fdef->vunum));
                     break;
+                default:
+                    throw std::logic_error("Unsupported field type.");
             }
             if (rc != IB_OK) {
                 msg  = "Error creating field '";

@@ -496,10 +496,8 @@ const void *ib_field_value_ex(const ib_field_t *f,
     }
 
     /* Non-pointer values are returned as pointers to those values. */
-    switch (f->type) {
-        case IB_FTYPE_NUM:
-        case IB_FTYPE_UNUM:
-            return (void *)f->val->pval;
+    if (f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_UNUM) {
+        return (void *)f->val->pval;
     }
 
     return f->val->pval ? *(void **)f->val->pval : NULL;

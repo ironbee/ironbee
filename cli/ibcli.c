@@ -778,6 +778,10 @@ static void print_field(const char *label,
                 printf( "  %s = list:len=%d\n", label, (int)len);
             }
             break;
+        case IB_FTYPE_SBUFFER :
+            // @todo Implement if needed.
+            printf("  %s = sbuffer", label);
+            break;
     }
 }
 

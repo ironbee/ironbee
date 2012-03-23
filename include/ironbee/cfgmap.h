@@ -27,6 +27,7 @@
 
 #include <ironbee/types.h>
 #include <ironbee/build.h>
+#include <ironbee/field.h>
 #include <ironbee/hash.h>
 
 #include <stddef.h>

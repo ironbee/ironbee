@@ -43,13 +43,15 @@ extern "C" {
  * @{
  */
 
-#define IB_FTYPE_GENERIC      0          /**< Generic pointer value */
-#define IB_FTYPE_NUM          1          /**< Numeric value */
-#define IB_FTYPE_UNUM         2          /**< Unsigned numeric value */
-#define IB_FTYPE_NULSTR       3          /**< NUL terminated string value */
-#define IB_FTYPE_BYTESTR      4          /**< Binary data value */
-#define IB_FTYPE_LIST         5          /**< List of fields */
-#define IB_FTYPE_SBUFFER      6          /**< Stream buffer */
+typedef enum {
+    IB_FTYPE_GENERIC = 0, /**< Generic pointer value */
+    IB_FTYPE_NUM,         /**< Numeric value */
+    IB_FTYPE_UNUM,        /**< Unsigned numeric value */
+    IB_FTYPE_NULSTR,      /**< NUL terminated string value */
+    IB_FTYPE_BYTESTR,     /**< Binary data value */
+    IB_FTYPE_LIST,        /**< List of fields */
+    IB_FTYPE_SBUFFER      /**< Stream buffer */
+} ib_ftype_t;
 
 /**
  * Dynamic field get function.

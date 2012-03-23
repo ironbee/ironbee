@@ -57,7 +57,7 @@ Field create_field(
         &f,
         pool.ib(),
         name, name_length,
-        type,
+        static_cast<ib_ftype_t>(type),
         value
     );
     Internal::throw_if_error(rc);
@@ -79,7 +79,7 @@ Field create_alias(
         &f,
         pool.ib(),
         name, name_length,
-        type,
+        static_cast<ib_ftype_t>(type),
         value
     );
     Internal::throw_if_error(rc);
