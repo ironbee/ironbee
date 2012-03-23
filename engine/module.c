@@ -247,13 +247,26 @@ ib_status_t ib_module_register_context(ib_module_t *m,
                 else {
                     memcpy(cfgdata->data, p_cfgdata->data, m->gclen);
                 }
-                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
             }
             else {
                 /* No parent context config, so use globals. */
-                memcpy(cfgdata->data, m->gcdata, m->gclen);
-                ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
+                if (m->fn_cfg_copy) {
+                    rc = m->fn_cfg_copy(
+                        m->ib, m,
+                        cfgdata->data,
+                        m->gcdata,
+                        m->gclen,
+                        m->cbdata_cfg_copy
+                    );
+                    if (rc != IB_OK) {
+                        IB_FTRACE_RET_STATUS(rc);
+                    }
+                }
+                else {
+                    memcpy(cfgdata->data, m->gcdata, m->gclen);
+                }
             }
+            ib_context_init_cfg(ctx, cfgdata->data, m->cm_init);
         }
         else {
             if (m->fn_cfg_copy) {
