@@ -43,6 +43,9 @@ extern "C" {
  * @{
  */
 
+/**
+ * Field type.
+ */
 typedef enum {
     IB_FTYPE_GENERIC = 0, /**< Generic pointer value */
     IB_FTYPE_NUM,         /**< Numeric value */
