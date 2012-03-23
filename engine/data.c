@@ -430,7 +430,7 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
     assert(dpi->pr->api != NULL);
 
     rc = ib_expand_str(dpi->mp,
-                       str, 
+                       str,
                        IB_VARIABLE_EXPANSION_PREFIX,
                        IB_VARIABLE_EXPANSION_POSTFIX,
                        (ib_hash_t *)(dpi->data),
