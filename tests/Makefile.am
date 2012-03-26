@@ -8,7 +8,8 @@ EXTRA_DIST = gtest \
        test_module_rules_lua.lua \
        base_fixture.h \
        test_ironbee_lua_api.conf \
-       PcreModuleTest.matches.config
+       PcreModuleTest.matches.config \
+       gtest_executor.sh
  
 include $(top_srcdir)/build/tests.mk
 
