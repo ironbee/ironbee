@@ -113,12 +113,15 @@ TEST(TestIBUtilUnescapeString, nochange01) {
 TEST(TestIBUtilUnescapeString, nullsInString) {
   const char *src1 = "hi\\x00hello";
   const char *src2 = "hi\\u0000hello";
-  char dst[9];
+  const char *src3 = "hi\\u0100hello";
+  const char *src4 = "hi\\u0001hello";
+  char dst[10];
   size_t len;
 
   /* \u0000 test. */
   ASSERT_EQ(IB_OK, ib_util_unescape_string(dst, &len, src1, strlen(src1), 0));
-  ASSERT_STREQ("hi\0hellow", dst);
+  ASSERT_STREQ("hi", dst);
+  ASSERT_STREQ("hello", dst+3);
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src1,
@@ -127,11 +130,24 @@ TEST(TestIBUtilUnescapeString, nullsInString) {
 
   /* \x00 test. */
   ASSERT_EQ(IB_OK, ib_util_unescape_string(dst, &len, src2, strlen(src2), 0));
-  ASSERT_STREQ("hi\0hellow", dst);
+  ASSERT_STREQ("hi", dst);
+  ASSERT_STREQ("hello", dst+4);
   ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src2,
                                                strlen(src2),
+                                               IB_UTIL_UNESCAPE_NONULL));
+
+  ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
+                                               &len,
+                                               src3,
+                                               strlen(src3),
+                                               IB_UTIL_UNESCAPE_NONULL));
+
+  ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
+                                               &len,
+                                               src4,
+                                               strlen(src4),
                                                IB_UTIL_UNESCAPE_NONULL));
 }
 
