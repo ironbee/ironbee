@@ -100,7 +100,7 @@ static ib_status_t foo2bar(ib_engine_t *ib,
              (dlen_in == 3) &&
              (strncmp("foo", (char *)data_in, 3) == 0) )
         {
-            *pflags = IB_TFN_FMODIFIED | IB_TFN_FINPLACE;
+            *pflags = (IB_TFN_FMODIFIED | IB_TFN_FINPLACE);
             *(data_in+0) = 'b';
             *(data_in+1) = 'a';
             *(data_in+2) = 'r';
@@ -110,7 +110,7 @@ static ib_status_t foo2bar(ib_engine_t *ib,
     else if (fin->type == IB_FTYPE_NULSTR) {
         char *data = const_cast<char *>(ib_field_value_nulstr(fin));
         if ( (data != NULL) && (strncmp(data, "foo", 3) == 0) ) {
-            *pflags = IB_TFN_FMODIFIED | IB_TFN_FINPLACE;
+            *pflags = (IB_TFN_FMODIFIED | IB_TFN_FINPLACE);
             *(data+0) = 'b';
             *(data+1) = 'a';
             *(data+2) = 'r';
@@ -134,6 +134,7 @@ TEST(TestIronBee, test_tfn)
     uint8_t data_in[128];
     ib_field_t *fin;
     ib_field_t *fout;
+    ib_bytestr_t *bs;
 
     ibtest_engine_create(&ib);
 
@@ -142,10 +143,11 @@ TEST(TestIronBee, test_tfn)
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(tfn);
 
-    memcpy(data_in, "foo", 3);
+    ib_bytestr_dup_nulstr(&bs, ib->mp, "foo");
     fin = NULL;
-    ib_field_alias_mem(&fin, ib->mp, "ByteStr", data_in, 3);
+    ib_field_create(&fin, ib->mp, "ByteStr", IB_FTYPE_BYTESTR, &bs);
     fout = NULL;
+    flags = 0;
     rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
@@ -158,6 +160,7 @@ TEST(TestIronBee, test_tfn)
     void *p = &data_in;
     ib_field_create(&fin, ib->mp, "NulStr", IB_FTYPE_NULSTR, &p);
     fout = NULL;
+    flags = 0;
     rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
