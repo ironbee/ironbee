@@ -220,7 +220,9 @@ static inline char hex_to_int(char high, char low) {
 ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                                                size_t* dst_len,
                                                const char* src,
-                                               size_t src_len) {
+                                               size_t src_len,
+                                               uint32_t flags)
+{
   size_t dst_i = 0;
   size_t src_i = 0;
 
@@ -277,18 +279,25 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
             }
 
             src_i+=2;
-            dst[dst_i++] = hex_to_int(src[src_i-1], src[src_i]);
+            dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
+
+            /* UNESCAPE_NONULL flags prohibits nulls appearing mid-string. */
+            if (flags & IB_UTIL_UNESCAPE_NONULL && dst[dst_i] == 0) {
+                return IB_EINVAL;
+            }
+
+            ++dst_i;
             break;
           case 'u':
             /* Hex Hex Hex Hex decode */
 
             /* Protect against array out of bounds dereferencing. */
-            if (src_i+4>=src_len) {
+            if ( src_i+4>=src_len ) {
               return IB_EINVAL;
             }
 
             /* Ensure that the next 4 characters are hex digits. */
-            for (i=1; i <= 4; i++) {
+            for ( i=1; i <= 4; i++ ) {
               if ( ! isxdigit(src[src_i + i]) ) {
                 return IB_EINVAL;
               }
@@ -300,8 +309,16 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
 
             /* Convert the second byte. */
             src_i+=2;
-            dst[dst_i++] = hex_to_int(src[src_i-1], src[src_i]);
+            dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
 
+            /* UNESCAPE_NONULL flags prohibits nulls appearing mid-string. */
+            if ( flags & IB_UTIL_UNESCAPE_NONULL && 
+                 dst[dst_i-1] == 0 && dst[dst_i] == 0 )
+            {
+                return IB_EINVAL;
+            }
+
+            ++dst_i;
             break;
           default:
             dst[dst_i++] = src[src_i];

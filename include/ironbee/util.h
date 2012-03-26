@@ -76,6 +76,13 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
 #define ib_util_log_debug(lvl,...) \
   ib_util_log_ex((lvl),"IronBeeUtil DBG: ",__FILE__,__LINE__,__VA_ARGS__)
 
+
+/**
+ * When passed to @ref ib_util_unescape_string an escaped null character will
+ * results in the string not being parsed and IB_EINVAL being returned.
+ */
+#define IB_UTIL_UNESCAPE_NONULL 0x0001
+
 /**
  * Set the logger level.
  *
@@ -124,28 +131,39 @@ void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
 ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 
 /**
- * @brief Unescape a Javascript-escaped string into the @a dst string buffer.
- * @details The end of the @a dst buffer is marked with \0.
- *          Because @a src may be a segment in a larger character buffer,
- *          @a src is not treated as a \0 terminated string, but is
- *          processed using the given @a src_len.
- *          An unescaped string will always be shorter than or equal to
- *          the original string. For this reason @a dst_len
- *          is populated with the resulting string's length not including the
- *          \0 termination.
+ * Unescape a Javascript-escaped string into the @a dst string buffer.
+ *
+ * Decode the contents of @a str into @a dst. Then terminate @dst with \0.
+ * This means @a dst must be @a src_len+1 in size.
+ *
+ * Because @a src may be a segment in a larger character buffer,
+ * @a src is not treated as a \0 terminated string, but is
+ * processed using the given @a src_len.
+ *
+ * The resultant buffer @a dst should also not be treated as a typical string
+ * because a \0 character could appear in the middle of the buffer.
+ *
+ * If IB_OK is not returned then @a dst and @a dst_len are left in an
+ * inconsistent state.
+ *
  * @param[out] dst string buffer that should be at least as long as
  *             @a src_len+1.
- * @param[out] dst_len the length of the decoded string. This will be
- *             equal or shorter than @a src_len.
+ * @param[out] dst_len the length of the decoded byte array. This will be
+ *             equal to or shorter than @a src_len. Note that srclen(dst)
+ *             could result in a smaller value than @a dst_len because of
+ *             a \0 character showing up in the middle of the array.
  * @param[in] src source string that is encoded.
  * @param[in] src_len the length of @a src.
+ * @param[in] flags Flags that affect how the string is processed.
  *
- * @returns Status code
+ * @returns IB_OK or IB_EINVAL if there is an error. On error @a dst and
+ * @dst_len are left in an inconsistent state.
  */
 ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
                                                size_t *dst_len,
                                                const char *src,
-                                               size_t src_len);
+                                               size_t src_len,
+                                               uint32_t flags);
 
 /**
  * Initialize the IB lib.
