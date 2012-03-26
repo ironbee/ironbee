@@ -223,117 +223,119 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                                                size_t src_len,
                                                uint32_t flags)
 {
-  size_t dst_i = 0;
-  size_t src_i = 0;
+    size_t dst_i = 0;
+    size_t src_i = 0;
 
-  /* For loop variables. */
-  int i;
+    /* For loop variables. */
+    int i;
 
-  for (src_i=0; src_i<src_len; ++src_i) {
-    switch (src[src_i]) {
-      case '\\':
-        ++src_i;
-
-        if (src_i>=src_len) {
-          return IB_EINVAL;
-        }
-
+    for (src_i=0; src_i<src_len; ++src_i) {
         switch (src[src_i]) {
+            case '\\':
+                ++src_i;
 
-          case 'b':
-            dst[dst_i++] = '\b';
-            break;
-          case 'f':
-            dst[dst_i++] = '\f';
-            break;
-          case 'n':
-            dst[dst_i++] = '\n';
-            break;
-          case 'r':
-            dst[dst_i++] = '\r';
-            break;
-          case 't':
-            dst[dst_i++] = '\t';
-            break;
-          case 'v':
-            dst[dst_i++] = '\v';
-            break;
-          case '\'':
-          case '\"':
-          case '\\':
-            dst[dst_i++] = src[src_i];
-            break;
-          case 'x':
-            /* Hex Hex decode */
+                if (src_i>=src_len) {
+                    return IB_EINVAL;
+                }
 
-            /* Protect against array out of bounds dereferencing. */
-            if (src_i+2>=src_len) {
-              return IB_EINVAL;
-            }
+                switch (src[src_i]) {
+                    case 'b':
+                        dst[dst_i++] = '\b';
+                        break;
+                    case 'f':
+                        dst[dst_i++] = '\f';
+                        break;
+                    case 'n':
+                        dst[dst_i++] = '\n';
+                        break;
+                    case 'r':
+                        dst[dst_i++] = '\r';
+                        break;
+                    case 't':
+                        dst[dst_i++] = '\t';
+                        break;
+                    case 'v':
+                        dst[dst_i++] = '\v';
+                        break;
+                    case '\'':
+                    case '\"':
+                    case '\\':
+                        dst[dst_i++] = src[src_i];
+                        break;
+                    case 'x':
+                        /* Hex Hex decode */
 
-            /* Ensure that the next 2 characters are hex digits. */
-            for (i=1; i <= 2; i++) {
-              if ( ! isxdigit(src[src_i + i]) ) {
-                return IB_EINVAL;
-              }
-            }
+                        /* Protect against array out of bounds. */
+                        if (src_i+2>=src_len) {
+                            return IB_ETRUNC;
+                        }
 
-            src_i+=2;
-            dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
+                        /* Ensure that the next 2 characters are hex digits. */
+                        for (i=1; i <= 2; i++) {
+                            if ( ! isxdigit(src[src_i + i]) ) {
+                                return IB_EINVAL;
+                            }
+                        }
 
-            /* UNESCAPE_NONULL flags prohibits nulls appearing mid-string. */
-            if (flags & IB_UTIL_UNESCAPE_NONULL && dst[dst_i] == 0) {
-                return IB_EINVAL;
-            }
+                        src_i+=2;
+                        dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
 
-            ++dst_i;
-            break;
-          case 'u':
-            /* Hex Hex Hex Hex decode */
+                        /* UNESCAPE_NONULL flags prohibits nulls appearing
+                         * mid-string. */
+                        if (flags & IB_UTIL_UNESCAPE_NONULL && 
+                            dst[dst_i] == 0)
+                        {
+                            return IB_EINVAL;
+                        }
 
-            /* Protect against array out of bounds dereferencing. */
-            if ( src_i+4>=src_len ) {
-              return IB_EINVAL;
-            }
+                        ++dst_i;
+                        break;
+                    case 'u':
+                        /* Hex Hex Hex Hex decode */
 
-            /* Ensure that the next 4 characters are hex digits. */
-            for ( i=1; i <= 4; i++ ) {
-              if ( ! isxdigit(src[src_i + i]) ) {
-                return IB_EINVAL;
-              }
-            }
+                        /* Protect against array out of bounds. */
+                        if ( src_i+4>=src_len ) {
+                            return IB_ETRUNC;
+                        }
 
-            /* Convert the first byte. */
-            src_i+=2;
-            dst[dst_i++] = hex_to_int(src[src_i-1], src[src_i]);
+                        /* Ensure that the next 4 characters are hex digits. */
+                        for ( i=1; i <= 4; i++ ) {
+                            if ( ! isxdigit(src[src_i + i]) ) {
+                                return IB_EINVAL;
+                            }
+                        }
 
-            /* Convert the second byte. */
-            src_i+=2;
-            dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
+                        /* Convert the first byte. */
+                        src_i+=2;
+                        dst[dst_i++] = hex_to_int(src[src_i-1], src[src_i]);
 
-            /* UNESCAPE_NONULL flags prohibits nulls appearing mid-string. */
-            if ( flags & IB_UTIL_UNESCAPE_NONULL && 
-                 dst[dst_i-1] == 0 && dst[dst_i] == 0 )
-            {
-                return IB_EINVAL;
-            }
+                        /* Convert the second byte. */
+                        src_i+=2;
+                        dst[dst_i] = hex_to_int(src[src_i-1], src[src_i]);
 
-            ++dst_i;
-            break;
-          default:
-            dst[dst_i++] = src[src_i];
+                        /* UNESCAPE_NONULL flags prohibits nulls appearing
+                         * mid-string. */
+                        if ( flags & IB_UTIL_UNESCAPE_NONULL && 
+                             dst[dst_i-1] == 0 && dst[dst_i] == 0 )
+                        {
+                            return IB_EINVAL;
+                        }
+
+                        ++dst_i;
+                        break;
+                    default:
+                        dst[dst_i++] = src[src_i];
+                }
+                break;
+            default:
+                dst[dst_i++] = src[src_i];
         }
-
-        break;
-      default:
-        dst[dst_i++] = src[src_i];
     }
-  }
 
-  dst[dst_i] = '\0';
-  *dst_len = dst_i;
+    dst[dst_i] = '\0';
+    *dst_len = dst_i;
 
-  return IB_OK;
+    return IB_OK;
 }
 /* -- Library Setup -- */
 

@@ -73,7 +73,7 @@ TEST(TestIBUtilUnescapeString, shortSingleBytesEndOfLine) {
   const char *str = "\\x01\\x0";
   char str2[3];
   size_t len;
-  ASSERT_EQ(IB_EINVAL,
+  ASSERT_EQ(IB_ETRUNC,
             ib_util_unescape_string(str2, &len, str, strlen(str), 0));
 }
 
@@ -97,7 +97,7 @@ TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
   const char *str = "\\u0001\\u431";
   char str2[5];
   size_t len;
-  ASSERT_EQ(IB_EINVAL,
+  ASSERT_EQ(IB_ETRUNC,
             ib_util_unescape_string(str2, &len, str, strlen(str), 0));
 }
 
@@ -142,3 +142,4 @@ TEST(TestIBUtilUnescapeString, removesQuotes) {
     ASSERT_EQ(IB_OK, ib_util_unescape_string(dst, &len, src, strlen(src), 0));
     ASSERT_STREQ("\"hi\'", dst);
 }
+

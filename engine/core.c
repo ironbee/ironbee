@@ -170,6 +170,50 @@ static FILE *fdup( FILE *fh )
     return new_fh;
 }
 
+/**
+ * Unescape a value using ref ib_util_unescape_string.
+ *
+ * It is guaranteed that @a dst will not be populated with a string
+ * containing a premature EOL.
+ *
+ * @param[in,out] ib The ib->mp will be used to allocated @a *dst. Logging
+ *                will also be done through this.
+ * @param[out] dst The resultant unescaped string will be stored at @a *dst.
+ * @param[in] src The source string to be escaped
+ * @return IB_OK, IB_EALLOC on malloc failures, or IB_EINVAL or IB_ETRUNC on
+ *         unescaping failures.
+ */
+static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
+{
+    IB_FTRACE_INIT();
+    char *dst_tmp = ib_mpool_alloc(ib->mp, strlen(src)+1);
+    size_t len;
+    ib_status_t rc;
+
+    if ( dst_tmp == NULL ) {
+        ib_log_debug(ib, 0, "Failed to allocate memory for unescapeing.");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_util_unescape_string(dst_tmp,
+                                 &len,
+                                 src,
+                                 strlen(src),
+                                 IB_UTIL_UNESCAPE_NONULL);
+
+    if ( rc != IB_OK) {
+        ib_log_debug(ib, 3,
+                     "Failed to unescape string. "
+                     "Is there a NULL (\\x00 or \\u0000) in it?");
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Success! */
+    *dst = dst_tmp;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /* Placeholder for as-of-yet-initialized bytestring fields. */
 static const uint8_t core_placeholder_value[] = {
     '_', '_', 'c', 'o', 'r', 'e', '_', '_',
@@ -4177,31 +4221,56 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
                                        void *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert( cp != NULL );
+
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_site_t *site;
     ib_loc_t *loc;
     ib_status_t rc;
+    char *p1_escaped;
 
-    ib_log_debug(ib, 6, "Creating site \"%s\"", p1);
-    rc = ib_site_create(&site, ib, p1);
+    assert( ib != NULL );
+    assert( ib->mp != NULL );
+    assert( name != NULL );
+    assert( p1 != NULL );
+
+    rc = core_unescape(ib, &p1_escaped, p1);
+
+    if ( rc != IB_OK ) {
+        ib_log_debug(ib, 7, "Could not unescape confiuration %s=%s", name, p1);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug(ib, 6, "Creating site \"%s\"", p1_escaped);
+    rc = ib_site_create(&site, ib, p1_escaped);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Failed to create site \"%s\": %d", rc);
     }
 
-    ib_log_debug(ib, 6, "Creating default location for site \"%s\"", p1);
+    ib_log_debug(ib, 6,
+                 "Creating default location for site \"%s\"", p1_escaped);
     rc = ib_site_loc_create_default(site, &loc);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to create default location for site \"%s\": %d", p1, rc);
+        ib_log_error(ib, 4,
+                     "Failed to create default location for site \"%s\": %d",
+                     p1_escaped,
+                     rc);
     }
 
-    ib_log_debug(ib, 6, "Creating context for \"%s:%s\"", p1, loc->path);
+    ib_log_debug(ib, 6,
+                 "Creating context for \"%s:%s\"", p1_escaped, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            ib_context_siteloc_chooser,
                            ib_context_site_lookup,
                            loc);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to create context for \"%s:%s\": %d", p1, loc->path, rc);
+        ib_log_error(ib, 4,
+                     "Failed to create context for \"%s:%s\": %d",
+                     p1_escaped,
+                     loc->path,
+                     rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_cfgparser_context_push(cp, ctx);
@@ -4235,6 +4304,11 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
                                      void *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert( cp != NULL );
+    assert( cp->ib != NULL );
+    assert( name != NULL );
+
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_status_t rc;
@@ -4278,25 +4352,55 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                                       void *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert( cp != NULL );
+    assert( cp->ib != NULL );
+
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx;
     ib_site_t *site = cp->cur_site;
     ib_loc_t *loc;
     ib_status_t rc;
+    char *p1_unescaped;
 
-    ib_log_debug(ib, 6, "Creating location \"%s\" for site \"%s\"", p1, site->name);
-    rc = ib_site_loc_create(site, &loc, p1);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to create location \"%s:%s\": %d", site->name, p1, rc);
+    assert( site != NULL );
+    assert( name != NULL );
+    assert( p1 != NULL );
+
+    rc = core_unescape(ib, &p1_unescaped, p1);
+    if ( rc != IB_OK ) {
+        ib_log_debug(ib, 7,
+                     "Failed to unescape parameter %s=%s.", name, p1);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 6, "Creating context for \"%s:%s\"", site->name, loc->path);
+    ib_log_debug(ib, 6,
+                 "Creating location \"%s\" for site \"%s\"",
+                 p1_unescaped,
+                 site->name);
+    rc = ib_site_loc_create(site, &loc, p1_unescaped);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Failed to create location \"%s:%s\": %d",
+                     site->name,
+                     p1_unescaped,
+                     rc);
+    }
+
+    ib_log_debug(ib, 6,
+                 "Creating context for \"%s:%s\"",
+                 site->name,
+                 loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            ib_context_siteloc_chooser,
                            ib_context_site_lookup,
                            loc);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 6, "Failed to create context for \"%s:%s\": %d", site->name, loc->path, rc);
+        ib_log_debug(ib, 6,
+                     "Failed to create context for \"%s:%s\": %d",
+                     site->name,
+                     loc->path,
+                     rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_cfgparser_context_push(cp, ctx);
@@ -4304,8 +4408,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     ib_log_debug(ib, 8, "Opening context %p for \"%s\"", ctx, name);
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Error opening context for \"%s\": %d",
-                     name, rc);
+        ib_log_error(ib, 1, "Error opening context for \"%s\": %d", name, rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -4371,39 +4474,54 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                                      void *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert( cp != NULL );
+    assert( cp->ib != NULL );
+
     ib_engine_t *ib = cp->ib;
     const ib_list_node_t *node;
     ib_status_t rc = IB_EINVAL;
 
+    assert( name != NULL );
+    assert( args != NULL );
+
     IB_LIST_LOOP_CONST(args, node) {
         const char *p = (const char *)ib_list_node_data_const(node);
+        char *p_unescaped;
 
-        if (strncasecmp("ip=", p, 3) == 0) {
-            p += 3; /* Skip over ip= */
+        rc = core_unescape(ib, &p_unescaped, p);
+
+        if ( rc != IB_OK ) {
+            ib_log_debug(ib, 3, "Failed to unescape %s=%s", name, p);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        if (strncasecmp("ip=", p_unescaped, 3) == 0) {
+            p_unescaped += 3; /* Skip over ip= */
             ib_log_debug(ib, 7, "Adding IP \"%s\" to site \"%s\"",
-                         p, cp->cur_site->name);
-            rc = ib_site_address_add(cp->cur_site, p);
+                         p_unescaped, cp->cur_site->name);
+            rc = ib_site_address_add(cp->cur_site, p_unescaped);
         }
-        else if (strncasecmp("path=", p, 5) == 0) {
-            //p += 5; /* Skip over path= */
-            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p);
+        else if (strncasecmp("path=", p_unescaped, 5) == 0) {
+            //p_unescaped += 5; /* Skip over path= */
+            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p_unescaped);
         }
-        else if (strncasecmp("port=", p, 5) == 0) {
-            //p += 5; /* Skip over port= */
-            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p);
+        else if (strncasecmp("port=", p_unescaped, 5) == 0) {
+            //p_unescaped += 5; /* Skip over port= */
+            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p_unescaped);
         }
         else {
             /// @todo Handle full wildcards
-            if (*p == '*') {
+            if (*p_unescaped == '*') {
                 /* Currently we do a match on the end of the host, so
                  * just skipping over the wildcard (assuming only one)
                  * for now.
                  */
-                p++;
+                p_unescaped++;
             }
             ib_log_debug(ib, 7, "Adding host \"%s\" to site \"%s\"",
-                         p, cp->cur_site->name);
-            rc = ib_site_hostname_add(cp->cur_site, p);
+                         p_unescaped, cp->cur_site->name);
+            rc = ib_site_hostname_add(cp->cur_site, p_unescaped);
         }
     }
 
@@ -4427,92 +4545,111 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                                    void *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert( cp != NULL );
+    assert( cp->ib != NULL );
+
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
     ib_core_cfg_t *corecfg;
+    const char *p1_unescaped;
+
+    assert( name != NULL );
+    assert( p1 != NULL );
+
+    /* We remove constness to populate this buffer. */
+    rc = core_unescape(ib, (char**)&p1_unescaped, p1);
+    if ( rc != IB_OK ) {
+        ib_log_debug(ib, 5, "Failed to unescape %s=%s", name, p1);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     if (strcasecmp("InspectionEngine", name) == 0) {
-        ib_log_debug(ib, 4, "TODO: Handle Directive: %s \"%s\"", name, p1);
+        ib_log_debug(ib, 4,
+                    "TODO: Handle Directive: %s \"%s\"", name, p1_unescaped);
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
-        if (strcasecmp("RelevantOnly", p1) == 0) {
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "audit_engine", 2);
             IB_FTRACE_RET_STATUS(rc);
         }
-        else if (strcasecmp("On", p1) == 0) {
+        else if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "audit_engine", 1);
             IB_FTRACE_RET_STATUS(rc);
         }
-        else if (strcasecmp("Off", p1) == 0) {
+        else if (strcasecmp("Off", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "audit_engine", 0);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_error(ib, 1, "Failed to parse directive: %s \"%s\"", name, p1);
+        ib_log_error(ib, 1,
+                     "Failed to parse directive: %s \"%s\"",
+                     name,
+                     p1_unescaped);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     else if (strcasecmp("AuditLogIndex", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
 
         /* "None" means do not use the index file at all. */
-        if (strcasecmp("None", p1) == 0) {
+        if (strcasecmp("None", p1_unescaped) == 0) {
             rc = ib_context_set_auditlog_index(ctx, NULL);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        rc = ib_context_set_auditlog_index(ctx, p1);
+        rc = ib_context_set_auditlog_index(ctx, p1_unescaped);
 
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogIndexFormat", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
-        rc = ib_context_set_string(ctx, "auditlog_index_fmt", p1);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        rc = ib_context_set_string(ctx, "auditlog_index_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogDirMode", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        long lmode = strtol(p1, NULL, 0);
+        long lmode = strtol(p1_unescaped, NULL, 0);
 
         if ((lmode > 0777) || (lmode <= 0)) {
-            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1);
+            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_num(ctx, "auditlog_dmode", lmode);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogFileMode", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        long lmode = strtol(p1, NULL, 0);
+        long lmode = strtol(p1_unescaped, NULL, 0);
 
         if ((lmode > 0777) || (lmode <= 0)) {
-            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1);
+            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_num(ctx, "auditlog_fmode", lmode);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
-        rc = ib_context_set_string(ctx, "auditlog_dir", p1);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        rc = ib_context_set_string(ctx, "auditlog_dir", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogSubDirFormat", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
-        rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("DebugLogLevel", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: %d", name, atol(p1));
-        rc = ib_context_set_num(ctx, "logger.log_level", atol(p1));
+        ib_log_debug(ib, 7, "%s: %d", name, atol(p1_unescaped));
+        rc = ib_context_set_num(ctx, "logger.log_level", atol(p1_unescaped));
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("DebugLog", name) == 0) {
@@ -4520,24 +4657,24 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
         const char   *uri = NULL;
 
-        ib_log_debug(ib, 7, "%s: \"%s\"", name, p1);
+        ib_log_debug(ib, 7, "%s: \"%s\"", name, p1_unescaped);
 
         // Create a file URI from the file path, using memory
         // from the context's mem pool.
-        if ( strstr(p1, "://") == NULL )  {
-            char *buf = (char *)ib_mpool_alloc( mp, 8+strlen(p1) );
+        if ( strstr(p1_unescaped, "://") == NULL )  {
+            char *buf = (char *)ib_mpool_alloc( mp, 8+strlen(p1_unescaped) );
             strcpy( buf, "file://" );
-            strcat( buf, p1 );
+            strcat( buf, p1_unescaped );
             uri = buf;
         }
-        else if ( strncmp(p1, "file://", 7) != 0 ) {
+        else if ( strncmp(p1_unescaped, "file://", 7) != 0 ) {
             ib_log_error(ib, 3,
                          "Unsupported URI in %s: \"%s\"",
-                         name, p1);
+                         name, p1_unescaped);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         else {
-            uri = p1;
+            uri = p1_unescaped;
         }
         ib_log_debug(ib, 7, "%s: URI=\"%s\"", name, uri);
         rc = ib_context_set_string(ctx, "logger.log_uri", uri);
@@ -4545,8 +4682,8 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("DebugLogHandler", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
-        rc = ib_context_set_string(ctx, "logger.log_handler", p1);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
@@ -4554,8 +4691,8 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         char *absfile;
         ib_module_t *m;
 
-        if (*p1 == '/') {
-            absfile = (char *)p1;
+        if (*p1_unescaped == '/') {
+            absfile = (char *)p1_unescaped;
         }
         else {
             rc = ib_context_module_config(ctx,
@@ -4566,7 +4703,9 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                 IB_FTRACE_RET_STATUS(rc);
             }
 
-            rc = core_abs_module_path(ib, corecfg->module_base_path, p1, &absfile);
+            rc = core_abs_module_path(ib,
+                                      corecfg->module_base_path,
+                                      p1_unescaped, &absfile);
 
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
@@ -4575,15 +4714,16 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         rc = ib_module_load(&m, ib, absfile);
         if (rc != IB_OK) {
-            ib_log_error(ib, 2, "Failed to load module \"%s\": %d", p1, rc);
+            ib_log_error(ib, 2,
+                         "Failed to load module \"%s\": %d", p1_unescaped, rc);
         }
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("RequestBuffering", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
 
-        ib_log_debug(ib, 7, "%s: %s", name, p1);
-        if (strcasecmp("On", p1) == 0) {
+        ib_log_debug(ib, 7, "%s: %s", name, p1_unescaped);
+        if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_req", 1);
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -4594,8 +4734,8 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("ResponseBuffering", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
 
-        ib_log_debug(ib, 7, "%s: %s", name, p1);
-        if (strcasecmp("On", p1) == 0) {
+        ib_log_debug(ib, 7, "%s: %s", name, p1_unescaped);
+        if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_res", 1);
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -4610,16 +4750,17 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         } reduce;
 
         /* Store the ASCII version for logging */
-        ib->sensor_id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
+        ib->sensor_id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib),
+                                            p1_unescaped);
 
         /* Calculate the binary version. */
-        rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1);
+        rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1_unescaped);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
                             "UUID format "
                             "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
                             " hex values)",
-                            name, p1);
+                            name, p1_unescaped);
 
             /* Use the default id. */
             ib->sensor_id_str = (const char *)ib_uuid_default_str;
@@ -4640,13 +4781,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorName", name) == 0) {
-        ib->sensor_name = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
+        ib->sensor_name = ib_mpool_strdup(ib_engine_pool_config_get(ib),
+                                          p1_unescaped);
         ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
         ib->sensor_hostname =
-            ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
+            ib_mpool_strdup(ib_engine_pool_config_get(ib), p1_unescaped);
         ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_hostname);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -4654,16 +4796,17 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_site_t *site = cp->cur_site;
 
         /* Store the ASCII version for logging */
-        site->id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib), p1);
+        site->id_str = ib_mpool_strdup(ib_engine_pool_config_get(ib),
+                                       p1_unescaped);
 
         /* Calculate the binary version. */
-        rc = ib_uuid_ascii_to_bin(&site->id, (const char *)p1);
+        rc = ib_uuid_ascii_to_bin(&site->id, (const char *)p1_unescaped);
         if (rc != IB_OK) {
             ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
                             "UUID format "
                             "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
                             " hex values)",
-                            name, p1);
+                            name, p1_unescaped);
 
             /* Use the default id. */
             site->id_str = (const char *)ib_uuid_default_str;
@@ -4681,12 +4824,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Could not set ModuleBasePath %s", p1);
+            ib_log_error(ib, 3,
+                         "Could not set ModuleBasePath %s", p1_unescaped);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        corecfg->module_base_path = p1;
-        ib_log_debug(ib, 7, "ModuleBasePath: %s", p1);
+        corecfg->module_base_path = p1_unescaped;
+        ib_log_debug(ib, 7, "ModuleBasePath: %s", p1_unescaped);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("RuleBasePath", name) == 0) {
@@ -4695,17 +4839,17 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Could not set RuleBasePath %s", p1);
+            ib_log_error(ib, 3, "Could not set RuleBasePath %s", p1_unescaped);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        corecfg->rule_base_path = p1;
-        ib_log_debug(ib, 7, "RuleBasePath: %s", p1);
+        corecfg->rule_base_path = p1_unescaped;
+        ib_log_debug(ib, 7, "RuleBasePath: %s", p1_unescaped);
         IB_FTRACE_RET_STATUS(IB_OK);
 
     }
 
-    ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
+    ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1_unescaped);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
