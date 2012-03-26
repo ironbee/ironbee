@@ -46,9 +46,11 @@ extern "C" {
 typedef struct ib_server_t ib_server_t;
 
 /* Request vs Response, for functions likely to share code */
+//#define IB_SERVER_REQUEST 0x01
+//#define IB_SERVER_RESPONSE 0x02
 typedef enum {
-    IB_SERVER_REQUEST,
-    IB_SERVER_RESPONSE
+    IB_SERVER_REQUEST = 0x01,
+    IB_SERVER_RESPONSE = 0x02
 } ib_server_direction_t;
 
 /* Functions to modify HTTP Request/Response Headers
