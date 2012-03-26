@@ -74,7 +74,8 @@ BUILT_SOURCES = \
     $(abs_builddir)/PcreModuleTest.test_load_module.config \
     $(abs_builddir)/test_module_rules_lua.lua \
     $(abs_builddir)/test_ironbee_lua_api.conf \
-    $(abs_builddir)/PcreModuleTest.matches.config
+    $(abs_builddir)/PcreModuleTest.matches.config \
+    $(abs_builddir)/gtest_executor.sh
 
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
