@@ -31,7 +31,7 @@
 #include <http_log.h>
 #include <http_protocol.h>
 
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 
 #ifdef __cplusplus
 extern "C" {

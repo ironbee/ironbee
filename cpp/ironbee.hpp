@@ -4,7 +4,7 @@
 #include "input.hpp"
 
 #include <ironbee/engine.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>

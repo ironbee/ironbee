@@ -29,8 +29,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/debug.h>
-#include <ironbee/plugin.h>
 #include <ironbee/lock.h>
+#include <ironbee/server.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 #include <ironbee/array.h>
@@ -87,7 +87,7 @@ struct ib_engine_t {
     const char         *sensor_hostname;  /**< Sensor hostname */
 
     /// @todo Only these should be private
-    ib_plugin_t        *plugin;           /**< Info about the server plugin */
+    ib_server_t        *plugin;           /**< Info about the server plugin */
     ib_array_t         *modules;          /**< Array tracking modules */
     ib_array_t         *filters;          /**< Array tracking filters */
     ib_array_t         *contexts;         /**< Configuration contexts */

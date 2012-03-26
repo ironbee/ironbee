@@ -30,7 +30,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
 #include <ironbee/module.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 
 #include "ironbee_private.h"
 

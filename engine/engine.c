@@ -42,7 +42,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/module.h>
 #include <ironbee/core.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 
 #include "ironbee_private.h"
 
@@ -285,7 +285,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 {
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
-    ib_plugin_t *p = (ib_plugin_t *)plugin;
+    ib_server_t *p = (ib_server_t *)plugin;
     ib_status_t rc;
 
     /* Create primary memory pool */

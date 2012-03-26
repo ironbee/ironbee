@@ -24,7 +24,7 @@
 
 #include "base_fixture.h"
 #include <ironbee/operator.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>

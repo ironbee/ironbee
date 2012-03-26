@@ -44,7 +44,7 @@
 #include <assert.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
 #include <ironbee/core.h>   /* Only needed while config is in here. */
@@ -107,6 +107,12 @@ typedef struct ironbee_tx_context ironbee_tx_context;
 struct ironbee_conn_context {
     int                      direction;
     ib_conn_t               *iconn;
+    int                      status;
+};
+typedef struct mod_ib_conn_ctx mod_ib_conn_ctx;
+struct mod_ib_conn_ctx {
+    int status;
+    const char *errordoc;
 };
 
 /**
@@ -118,10 +124,76 @@ struct ironbee_tx_context {
     ib_tx_t                 *itx;
 };
 
-/* Plugin Structure */
-ib_plugin_t DLL_LOCAL ibplugin = {
-    IB_PLUGIN_HEADER_DEFAULTS,
-    "apache_2"
+static ib_status_t ib_error_callback(void *vf, int status)
+{
+    /* We're being called from a connection filter here.
+     * So on input we have to anticipate the Request
+     * while on output we're too late to do anything very interesting.
+     */
+    ap_filter_t *f = vf;
+    mod_ib_conn_ctx *ctx = ap_get_module_config(f->c->conn_config,
+                                                &ironbee_module);
+    if (ctx == NULL) {
+        ctx = apr_pcalloc(f->c->pool, sizeof(mod_ib_conn_ctx));
+        ap_set_module_config(f->c->conn_config, &ironbee_module, ctx);
+    }
+    if (ap_is_HTTP_VALID_RESPONSE(status)) {
+        /* Ironbee wants us to return an HTTP error */
+        ctx->status = status;
+    }
+    else if (status == DONE) {
+        /* Ironbee wants us to return an HTTP error */
+        ctx->status = status;
+    }
+    else {
+        ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, f->c,
+                     IB_PRODUCT_NAME ": requested unsupported action %d",
+                     status);
+        return IB_ENOTIMPL;
+    }
+
+    return IB_ENOTIMPL;
+}
+static ib_status_t ib_errdata_callback(void *vf, const char *data)
+{
+    return IB_ENOTIMPL;
+}
+static ib_status_t ib_errhdr_callback(void *vf, const char *hdr, const char *val)
+{
+    return IB_ENOTIMPL;
+}
+static ib_server_header_action_t ib_header_callback
+                                          (void *ctx, ib_server_direction_t dir,
+                                           ib_server_header_action_t action,
+                                           const char *hdr, const char *value)
+{
+    //ap_filter_t *f = ctx;
+    return IB_ENOTIMPL;
+}
+#ifdef HAVE_FILTER_DATA_API
+static ib_status_t ib_filter_init_callback(void *ctx, ib_server_direction_t dir)
+{
+    return IB_OK;
+}
+static ib_status_t ib_filter_data_callback(void *ctx, ib_server_direction_t dir,
+                                           const char *block, size_t len)
+{
+    return IB_OK;
+}
+#endif
+
+/* Plugin Structure with placeholders */
+ib_server_t DLL_LOCAL ibplugin = {
+    IB_SERVER_HEADER_DEFAULTS,
+    "apache_2",
+    &ib_header_callback,
+    &ib_error_callback,
+    &ib_errhdr_callback,
+    &ib_errdata_callback,
+#ifdef HAVE_FILTER_DATA_API
+    &ib_filter_init_callback,
+    &ib_filter_data_callback,
+#endif
 };
 
 /* IronBee Handle */
@@ -231,10 +303,15 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
 
 
     if (ctx->direction == IRONBEE_REQUEST) {
-        ib_state_notify_conn_data_in(ironbee, &icdata);
+        ctx->status = ib_state_notify_conn_data_in(ironbee, &icdata, &ibplugin, f);
     }
     else {
-        ib_state_notify_conn_data_out(ironbee, &icdata);
+        ctx->status = ib_state_notify_conn_data_out(ironbee, &icdata, &ibplugin, f);
+    }
+    if (ctx->status != IB_OK) {
+        ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, c,
+                     IB_PRODUCT_NAME ": signalled error in %s",
+                     ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
     }
 }
 

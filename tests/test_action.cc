@@ -23,7 +23,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <ironbee/action.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 

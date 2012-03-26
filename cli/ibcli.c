@@ -38,7 +38,7 @@
 #include <libgen.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/plugin.h>
+#include <ironbee/server.h>
 #include <ironbee/provider.h>
 #include <ironbee/module.h>
 #include <ironbee/config.h>
@@ -165,9 +165,13 @@ typedef struct {
 #define MAX_LINE_BUF (16*1024)
 
 /* Plugin Structure */
-ib_plugin_t ibplugin = {
-    IB_PLUGIN_HEADER_DEFAULTS,
-    "ibcli"
+ib_server_t ibplugin = {
+    IB_SERVER_HEADER_DEFAULTS,
+    "ibcli",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 
@@ -1607,7 +1611,7 @@ static ib_status_t send_header(ib_engine_t* ib,
     icdata->dalloc = rbuf.size;
     icdata->dlen   = rbuf.len;
     icdata->data   = (uint8_t *)rbuf.buf;
-    rc = ib_state_notify_conn_data_in(ib, icdata);
+    rc = ib_state_notify_conn_data_in(ib, icdata, NULL, NULL);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to send header: %d\n", rc);
     }
@@ -1654,10 +1658,10 @@ static ib_status_t send_file(ib_engine_t* ib,
         icdata->data = (uint8_t *)buf;
 
         if (direction == DATA_IN) {
-            rc = ib_state_notify_conn_data_in(ib, icdata);
+            rc = ib_state_notify_conn_data_in(ib, icdata, NULL, NULL);
         }
         else {
-            rc = ib_state_notify_conn_data_out(ib, icdata);
+            rc = ib_state_notify_conn_data_out(ib, icdata, NULL, NULL);
         }
         if (rc != IB_OK) {
             fprintf(stderr,
