@@ -1611,7 +1611,7 @@ static ib_status_t send_header(ib_engine_t* ib,
     icdata->dalloc = rbuf.size;
     icdata->dlen   = rbuf.len;
     icdata->data   = (uint8_t *)rbuf.buf;
-    rc = ib_state_notify_conn_data_in(ib, icdata, NULL, NULL);
+    rc = ib_state_notify_conn_data_in(ib, icdata, NULL);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to send header: %d\n", rc);
     }
@@ -1658,10 +1658,10 @@ static ib_status_t send_file(ib_engine_t* ib,
         icdata->data = (uint8_t *)buf;
 
         if (direction == DATA_IN) {
-            rc = ib_state_notify_conn_data_in(ib, icdata, NULL, NULL);
+            rc = ib_state_notify_conn_data_in(ib, icdata, NULL);
         }
         else {
-            rc = ib_state_notify_conn_data_out(ib, icdata, NULL, NULL);
+            rc = ib_state_notify_conn_data_out(ib, icdata, NULL);
         }
         if (rc != IB_OK) {
             fprintf(stderr,
