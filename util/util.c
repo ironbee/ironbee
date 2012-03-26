@@ -316,7 +316,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                         /* UNESCAPE_NONULL flags prohibits nulls appearing
                          * mid-string. */
                         if ( flags & IB_UTIL_UNESCAPE_NONULL && 
-                             dst[dst_i-1] == 0 && dst[dst_i] == 0 )
+                             ( dst[dst_i-1] == 0 || dst[dst_i] == 0 ) )
                         {
                             return IB_EINVAL;
                         }
