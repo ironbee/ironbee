@@ -611,6 +611,22 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     else if (strcasecmp(name, "chain") == 0) {
         ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_CHAIN);
     }
+    else if (strcasecmp(name, "t") == 0) {
+        if (value == NULL) {
+            ib_log_error(cp->ib, 4, "Modifier transformation with no value");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        rc = ib_rule_add_tfn(cp->ib, rule, value);
+        if (rc == IB_ENOENT) {
+            ib_log_error(cp->ib, 4, "Unknown transformation: %s", value);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else if (rc != IB_OK) {
+            ib_log_error(cp->ib, 4, "Error adding transformation '%s': %d",
+                         value, rc);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
     else {
         ib_action_inst_t  *action;
         ib_rule_action_t   atype = RULE_ACTION_TRUE;
