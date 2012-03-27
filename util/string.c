@@ -33,6 +33,7 @@
 #include <ironbee/types.h>
 #include <ironbee/debug.h>
 #include <ironbee/types.h>
+#include <ironbee/mpool.h>
 #include <ironbee/string.h>
 
 /**
@@ -408,4 +409,189 @@ ib_status_t ib_strtrim_lr(char *data_in,
         *((*data_out)+len) = '\0';
     }
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/*
+ * Delete all whitespace from a string (extended version)
+ */
+ib_status_t ib_str_wspc_remove_ex(ib_mpool_t *mp,
+                                  const uint8_t *data_in,
+                                  size_t dlen_in,
+                                  uint8_t **data_out,
+                                  size_t *dlen_out,
+                                  ib_bool_t *modified)
+{
+    IB_FTRACE_INIT();
+    const uint8_t *iend;
+    uint8_t *optr;
+
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+    assert(dlen_out != NULL);
+    assert(modified != NULL);
+
+    /* Allocate the output buffer */
+    optr = (uint8_t *)ib_mpool_alloc(mp, dlen_in+1);
+    if (optr == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    *data_out = optr;
+
+    /* Special case zero length string */
+    if (dlen_in == 0) {
+        *dlen_out = 0;
+        *modified = IB_FALSE;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Loop through all of the input */
+    iend = data_in + dlen_in;
+    while (data_in < iend) {
+        uint8_t c = *data_in;
+        if (isspace(c) == 0) {
+            *optr = c;
+            ++optr;
+        }
+        ++data_in;
+    }
+
+    /* Store the output length & modified flag */
+    *dlen_out = (optr - (*data_out));
+    *modified = (*dlen_out != dlen_in) ? IB_TRUE : IB_FALSE;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/*
+ * Delete all whitespace from a string (NUL terminated string version)
+ */
+ib_status_t ib_str_wspc_remove(ib_mpool_t *mp,
+                               const char *data_in,
+                               char **data_out,
+                               ib_bool_t *modified)
+{
+    IB_FTRACE_INIT();
+    size_t len;
+    ib_status_t rc;
+
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+    assert(modified != NULL);
+
+    *modified = IB_FALSE;
+
+    len = strlen(data_in);
+    if (len == 0) {
+        *data_out = strdup(data_in);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Let the _ex version do the real work */
+    rc = ib_str_wspc_remove_ex(mp,
+                               (uint8_t *)data_in, len,
+                               (uint8_t **)data_out, &len,
+                               modified);
+    if (rc == IB_OK) {
+        *((*data_out)+len) = '\0';
+    }
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/*
+ * Compress whitespace in a string (extended version)
+ */
+ib_status_t ib_str_wspc_compress_ex(ib_mpool_t *mp,
+                                    const uint8_t *data_in,
+                                    size_t dlen_in,
+                                    uint8_t **data_out,
+                                    size_t *dlen_out,
+                                    ib_bool_t *modified)
+{
+    IB_FTRACE_INIT();
+    const uint8_t *iend;
+    uint8_t *optr;
+    ib_bool_t in_wspc = IB_FALSE;
+    ib_bool_t mod = IB_FALSE;
+
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+    assert(dlen_out != NULL);
+    assert(modified != NULL);
+
+    /* Allocate the output buffer */
+    optr = (uint8_t *)ib_mpool_alloc(mp, dlen_in+1);
+    if (optr == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    *data_out = optr;
+
+    /* Special case zero length string */
+    if (dlen_in == 0) {
+        *dlen_out = 0;
+        *modified = IB_FALSE;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Loop through all of the input */
+    iend = data_in + dlen_in;
+    while (data_in < iend) {
+        uint8_t c = *data_in;
+        if (isspace(c) == 0) {
+            *optr = c;
+            ++optr;
+            in_wspc = IB_FALSE;
+        }
+        else if (in_wspc == IB_TRUE) {
+            mod = IB_TRUE;
+        }
+        else {
+            *optr = ' ';
+            ++optr;
+            in_wspc = IB_TRUE;
+            if (c != ' ') {
+                mod = IB_TRUE;
+            }
+        }
+        ++data_in;
+    }
+
+    /* Store the output length & modified flag */
+    *dlen_out = (optr - (*data_out));
+    *modified = mod;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/*
+ * Compress whitespace in a string (NUL terminated string version)
+ */
+ib_status_t ib_str_wspc_compress(ib_mpool_t *mp,
+                                 const char *data_in,
+                                 char **data_out,
+                                 ib_bool_t *modified)
+{
+    IB_FTRACE_INIT();
+    size_t len;
+    ib_status_t rc;
+
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+    assert(modified != NULL);
+
+    *modified = IB_FALSE;
+
+    len = strlen(data_in);
+    if (len == 0) {
+        *data_out = strdup(data_in);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Let the _ex version do the real work */
+    rc = ib_str_wspc_compress_ex(mp,
+                                 (uint8_t *)data_in, len,
+                                 (uint8_t **)data_out, &len,
+                                 modified);
+    if (rc == IB_OK) {
+        *((*data_out)+len) = '\0';
+    }
+    IB_FTRACE_RET_STATUS(rc);
 }
