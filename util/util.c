@@ -53,11 +53,6 @@ static void _builtin_logger(FILE *fh, int level,
 {
     char fmt2[1024 + 1];
 
-    /// @todo Builtin logger only logs level<4
-    if (level > 4) {
-        return;
-    }
-
     if ((file != NULL) && (line > 0)) {
         int ec = snprintf(fmt2, 1024,
                           "%s[%d] (%s:%d) %s\n",
