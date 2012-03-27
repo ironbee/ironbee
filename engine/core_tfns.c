@@ -338,6 +338,160 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
 }
 
 /**
+ * Remove all whitespace from a string
+ * @internal
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
+                                   ib_mpool_t *mp,
+                                   void *fndata,
+                                   ib_field_t *fin,
+                                   ib_field_t **fout,
+                                   ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_bool_t modified = IB_FALSE;
+
+    /* We only handle bytestr and nulstr non-dynamic fields */
+    if (ib_field_is_dynamic(fin)) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if (fin->type == IB_FTYPE_NULSTR) {
+        char *p = (char *)ib_field_value_nulstr(fin);
+        char *out;
+        assert (p != NULL);
+
+        rc = ib_str_wspc_remove(mp, p, &out, &modified);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create_ex(
+            fout, mp, fin->name, fin->nlen, IB_FTYPE_NULSTR, &out);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (fin->type == IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *bs = (ib_bytestr_t *)ib_field_value_bytestr(fin);
+        uint8_t *out;
+        size_t outlen;
+        assert (bs != NULL);
+
+        rc = ib_str_wspc_remove_ex(mp,
+                                   ib_bytestr_ptr(bs),
+                                   ib_bytestr_length(bs),
+                                   &out,
+                                   &outlen,
+                                   &modified);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_alias_mem_ex(fout, mp, fin->name, fin->nlen, out, outlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else {
+        rc = IB_EINVAL;
+    }
+
+    if (modified) {
+        (*pflags) |= IB_TFN_FMODIFIED;
+    }
+    if (rc == IB_OK) {
+        (*pflags) |= IB_TFN_FINPLACE;
+    }
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Compress whitespace in a string
+ * @internal
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
+                                     ib_mpool_t *mp,
+                                     void *fndata,
+                                     ib_field_t *fin,
+                                     ib_field_t **fout,
+                                     ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_bool_t modified = IB_FALSE;
+
+    /* We only handle bytestr and nulstr non-dynamic fields */
+    if (ib_field_is_dynamic(fin)) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if (fin->type == IB_FTYPE_NULSTR) {
+        char *p = (char *)ib_field_value_nulstr(fin);
+        char *out;
+        assert (p != NULL);
+
+        rc = ib_str_wspc_compress(mp, p, &out, &modified);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create_ex(
+            fout, mp, fin->name, fin->nlen, IB_FTYPE_NULSTR, &out);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (fin->type == IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *bs = (ib_bytestr_t *)ib_field_value_bytestr(fin);
+        uint8_t *out;
+        size_t outlen;
+        assert (bs != NULL);
+
+        rc = ib_str_wspc_compress_ex(mp,
+                                     ib_bytestr_ptr(bs),
+                                     ib_bytestr_length(bs),
+                                     &out,
+                                     &outlen,
+                                     &modified);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_alias_mem_ex(fout, mp, fin->name, fin->nlen, out, outlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else {
+        rc = IB_EINVAL;
+    }
+
+    if (modified) {
+        (*pflags) |= IB_TFN_FMODIFIED;
+    }
+    if (rc == IB_OK) {
+        (*pflags) |= IB_TFN_FINPLACE;
+    }
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * Length transformation
  * @internal
  *
@@ -785,6 +939,26 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     rc = ib_tfn_register(ib, "trim", tfn_trim, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "removeWhitespace", tfn_wspc_remove, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "wspc_rm", tfn_wspc_remove, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "compressWhitespace", tfn_wspc_compress, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "wspc_comp", tfn_wspc_compress, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
