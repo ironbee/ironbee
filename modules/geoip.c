@@ -15,6 +15,7 @@
  * limitations under the License.
  *****************************************************************************/
 
+#include <assert.h>
 #include <math.h>
 #include <strings.h>
 
@@ -283,6 +284,35 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT();
 
+    assert(cp!=NULL);
+    assert(name!=NULL);
+    assert(p1!=NULL);
+
+    ib_status_t rc;
+    size_t p1_len = strlen(p1);
+    size_t p1_unescaped_len;
+    char *p1_unescaped = malloc(p1_len+1);
+
+    if ( p1_unescaped == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_util_unescape_string(p1_unescaped,
+                                 &p1_unescaped_len,
+                                 p1,
+                                 p1_len,
+                                 IB_UTIL_UNESCAPE_NONULL);
+
+    if (rc != IB_OK ) {
+        const char *msg = ( rc == IB_EBADVAL )?
+                        "GeoIP Database File \"%s\" contains nulls." :
+                        "GeoIP Database File \"%s\" is an invalid string.";
+
+        ib_log_debug(cp->ib, 3, msg, p1);
+        free(p1_unescaped);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     if (geoip_db != NULL)
     {
         GeoIP_delete(geoip_db);
@@ -290,9 +320,11 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
     }
 
     IB_FTRACE_MSG("Initializing custom GeoIP database...");
-    IB_FTRACE_MSG(p1);
+    IB_FTRACE_MSG(p1_unescaped);
 
-    geoip_db = GeoIP_open(p1, GEOIP_MMAP_CACHE);
+    geoip_db = GeoIP_open(p1_unescaped, GEOIP_MMAP_CACHE);
+
+    free(p1_unescaped);
 
     if (geoip_db == NULL)
     {
