@@ -231,6 +231,68 @@ ib_status_t ib_strtrim_lr(char *data_in,
                           ib_bool_t *modified);
 
 /**
+ * Delete all whitespace from a string (extended version)
+ *
+ * @param[in] mp Memory pool
+ * @param[in] data_in Pointer to input data
+ * @param[in] dlen_in Lenth of @a data_in
+ * @param[out] data_out Pointer to output data
+ * @param[in] dlen_out Length of @a data_out
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ */
+ib_status_t ib_str_wspc_remove_ex(ib_mpool_t *mp,
+                                  const uint8_t *data_in,
+                                  size_t dlen_in,
+                                  uint8_t **data_out,
+                                  size_t *dlen_out,
+                                  ib_bool_t *modified);
+
+/**
+ * Delete all whitespace from a string (NUL terminated string version)
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[out] data_out Pointer to output data
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_str_wspc_remove(ib_mpool_t *mp,
+                               const char *data_in,
+                               char **data_out,
+                               ib_bool_t *modified);
+
+/**
+ * Compress whitespace in a string (extended version)
+ *
+ * @param[in] mp Memory pool
+ * @param[in] data_in Pointer to input data
+ * @param[in] dlen_in Lenth of @a data_in
+ * @param[out] data_out Pointer to output data
+ * @param[in] dlen_out Length of @a data_out
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ */
+ib_status_t ib_str_wspc_compress_ex(ib_mpool_t *mp,
+                                    const uint8_t *data_in,
+                                    size_t dlen_in,
+                                    uint8_t **data_out,
+                                    size_t *dlen_out,
+                                    ib_bool_t *modified);
+
+/**
+ * Compress whitespace in a string (NUL terminated string version)
+ *
+ * @param[in] data_in Pointer to input data
+ * @param[out] data_out Pointer to output data
+ * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ *
+ * @note: This is an in-place operation which may change the data length.
+ */
+ib_status_t ib_str_wspc_compress(ib_mpool_t *mp,
+                                 const char *data_in,
+                                 char **data_out,
+                                 ib_bool_t *modified);
+
+/**
  * @} IronBeeUtil
  */
 
