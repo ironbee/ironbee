@@ -47,6 +47,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
 #include <ironbee/types.h>
+#include <ironbee/util.h>
 #include <ironbee/field.h>
 
 /* Define the module name as well as a string version of it. */
@@ -341,7 +342,7 @@ static ib_status_t readfile(const char* filename, char **buffer)
         }
 
         total_bytes_read += bytes_read;
-    } while(total_bytes_read < len);
+    } while ( total_bytes_read < len );
 
     /* Null terminate the buffer */
     (*buffer)[total_bytes_read] = '\0';
@@ -363,8 +364,34 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
 
     char* file = NULL;
     char* line = NULL;
+    size_t pattern_file_len = strlen(pattern_file);
 
-    rc = readfile(pattern_file, &file);
+    /* Escaped directive and length. */
+    char *pattern_file_escaped;
+    size_t pattern_file_escaped_len;
+
+    pattern_file_escaped = malloc(pattern_file_len+1);
+
+    if ( pattern_file_escaped == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_util_unescape_string(pattern_file_escaped,
+                                 &pattern_file_escaped_len,
+                                 pattern_file,
+                                 pattern_file_len,
+                                 IB_UTIL_UNESCAPE_NONULL);
+    if ( rc != IB_OK ) {
+        free(pattern_file_escaped);
+        ib_log_debug(ib, 3,
+                     "Failed to unescape file name \"%s\".", pattern_file);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Populate file. This data must be free'ed. */
+    rc = readfile(pattern_file_escaped, &file);
+
+    free(pattern_file_escaped);
 
     if (rc != IB_OK) {
         if (file != NULL) {
@@ -381,12 +408,37 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Iterate through the file contents, one line at a time.
+     * Each line is unescaped (allowing null characters) into line_unescaped
+     * and added to the ahocorasic object as a pattern. */
     for (line=strtok(file, "\n"); line != NULL; line=strtok(NULL, "\n")) {
-        rc = ib_ac_add_pattern (ac, line, &nop_ac_match, NULL, 0);
+        size_t line_len = strlen(line);
 
-        if (rc != IB_OK) {
-            free(file);
-            IB_FTRACE_RET_STATUS(rc);
+        if ( line_len > 0 ) {
+            size_t line_unescaped_len;
+            char *line_unescaped = malloc(line_len+1);
+
+            if ( line_unescaped == NULL ) {
+                free(file);
+                free(line_unescaped);
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+
+            /* Escape a pattern, allowing nulls in the line. */
+            ib_util_unescape_string(line_unescaped,
+                                    &line_unescaped_len,
+                                    line,
+                                    line_len,
+                                    0);
+
+            rc = ib_ac_add_pattern (ac, line_unescaped, &nop_ac_match, NULL, 0);
+
+            free(line_unescaped);
+
+            if (rc != IB_OK) {
+                free(file);
+                IB_FTRACE_RET_STATUS(rc);
+            }
         }
     }
 
@@ -415,13 +467,21 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
 
     ib_ac_t *ac;
 
-    size_t tok_buffer_sz = strlen(pattern)+1;
+    const size_t pattern_len = strlen(pattern);
+    size_t tok_buffer_sz = pattern_len+1;
     char* tok_buffer = malloc(tok_buffer_sz);
     char* tok;
 
     if (tok_buffer == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+
+    ib_util_unescape_string(tok_buffer,
+                            &tok_buffer_sz,
+                            pattern,
+                            pattern_len,
+                            0);
+                            
 
     memcpy(tok_buffer, pattern, tok_buffer_sz);
 
@@ -434,8 +494,8 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
 
     for (tok = strtok(tok_buffer, " "); tok != NULL; tok = strtok(NULL, " "))
     {
-        if (strlen(tok) > 0 ) {
-            rc = ib_ac_add_pattern (ac, tok, &nop_ac_match, NULL, 0);
+        if (strlen(tok) > 0) {
+            rc = ib_ac_add_pattern(ac, tok, &nop_ac_match, NULL, 0);
 
             if (rc != IB_OK) {
                 free(tok_buffer);
