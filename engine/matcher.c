@@ -154,24 +154,32 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
     iface = (IB_PROVIDER_IFACE_TYPE(matcher) *)m->mpr->iface;
 
     switch (f->type) {
-        case IB_FTYPE_BYTESTR:
-            bs = ib_field_value_bytestr(f);
-            rc = iface->match_compiled(m->mpr, cpatt, flags,
-                                       ib_bytestr_const_ptr(bs),
-                                       ib_bytestr_length(bs), ctx);
-            break;
-        case IB_FTYPE_NULSTR:
-            cs = ib_field_value_nulstr(f);
-            rc = iface->match_compiled(m->mpr, cpatt, flags,
-                                       (uint8_t *)cs,
-                                       strlen(cs), ctx);
-            break;
-        /// @todo How to handle numeric fields???
-        default:
-            rc = IB_EINVAL;
-            ib_log_error(m->ib, 3, "Not matching against field type=%d",
-                         f->type);
-            break;
+    case IB_FTYPE_BYTESTR:
+        rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = iface->match_compiled(m->mpr, cpatt, flags,
+                                   ib_bytestr_const_ptr(bs),
+                                   ib_bytestr_length(bs), ctx);
+        break;
+    case IB_FTYPE_NULSTR:
+        rc = ib_field_value(f, ib_ftype_nulstr_out(&cs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = iface->match_compiled(m->mpr, cpatt, flags,
+                                   (uint8_t *)cs,
+                                   strlen(cs), ctx);
+        break;
+    /// @todo How to handle numeric fields???
+    default:
+        rc = IB_EINVAL;
+        ib_log_error(m->ib, 3, "Not matching against field type=%d",
+                     f->type);
+        break;
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -236,27 +244,33 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
     iface = (IB_PROVIDER_IFACE_TYPE(matcher) *)m->mpr->iface;
 
     switch (f->type) {
-        case IB_FTYPE_BYTESTR:
-            bs = ib_field_value_bytestr(f);
-            rc = iface->match(m->mpi, flags,
-                              ib_bytestr_const_ptr(bs),
-                              ib_bytestr_length(bs), ctx);
-            break;
-        case IB_FTYPE_NULSTR:
-            cs = ib_field_value_nulstr(f);
-            rc = iface->match(m->mpi, flags,
-                                       (uint8_t *)cs,
-                                       strlen(cs), ctx);
-            break;
-        /// @todo How to handle numeric fields???
-        default:
-            rc = IB_EINVAL;
-            ib_log_error(m->ib, 3, "Not matching against field type=%d",
-                         f->type);
-            break;
+    case IB_FTYPE_BYTESTR:
+        rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = iface->match(m->mpi, flags,
+                          ib_bytestr_const_ptr(bs),
+                          ib_bytestr_length(bs), ctx);
+        break;
+    case IB_FTYPE_NULSTR:
+        rc = ib_field_value(f, ib_ftype_nulstr_out(&cs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = iface->match(m->mpi, flags,
+                                   (uint8_t *)cs,
+                                   strlen(cs), ctx);
+        break;
+    /// @todo How to handle numeric fields???
+    default:
+        rc = IB_EINVAL;
+        ib_log_error(m->ib, 3, "Not matching against field type=%d",
+                     f->type);
+        break;
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
-
-

@@ -735,53 +735,69 @@ static ib_status_t trace_tx_response(
 static void print_field(const char *label,
                         ib_field_t *field)
 {
-
     /* Check the field name
      * Note: field->name is not always a null ('\0') terminated string */
     switch (field->type) {
-        case IB_FTYPE_GENERIC :      /**< Generic data */
-            printf( "  %s = %p\n",
-                    label, ib_field_value(field) );
-            break;
-        case IB_FTYPE_NUM :          /**< Numeric value */
-            printf( "  %s = %jd\n",
-                    label, *(intmax_t *)ib_field_value_num(field) );
-            break;
-        case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
-            printf( "  %s = %ju\n",
-                    label, *(uintmax_t *)ib_field_value_unum(field) );
-            break;
-        case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
-            {
-                const char *s = ib_field_value_nulstr(field);
-                printf( "  %s = '%s'\n", label, s );
-            }
-            break;
-        case IB_FTYPE_BYTESTR :      /**< Byte string value */
-            {
-                const ib_bytestr_t *bs = ib_field_value_bytestr(field);
-                size_t len = ib_bytestr_length(bs);
-                if (len == 0) {
-                    printf("  %s = ''\n", label);
-                }
-                else {
-                    printf( "  %s = '%.*s'\n",
-                            label, (int)len, ib_bytestr_const_ptr(bs) );
-                }
-            }
-            break;
-        case IB_FTYPE_LIST :         /**< List */
-            {
-                // @todo Remove const casting once list is const correct.
-                ib_list_t *lst = (ib_list_t *)ib_field_value_list(field);
-                size_t len = IB_LIST_ELEMENTS(lst);
-                printf( "  %s = list:len=%d\n", label, (int)len);
-            }
-            break;
-        case IB_FTYPE_SBUFFER :
-            // @todo Implement if needed.
-            printf("  %s = sbuffer", label);
-            break;
+    case IB_FTYPE_GENERIC :      /**< Generic data */
+    {
+        void *v;
+        ib_field_value(field, ib_ftype_generic_out(&v));
+        printf( "  %s = %p\n",
+                label, v );
+        break;
+    }
+    case IB_FTYPE_NUM :          /**< Numeric value */
+    {
+        ib_num_t n;
+        ib_field_value(field, ib_ftype_num_out(&n));
+        printf( "  %s = %lld\n",
+                label, n );
+        break;
+    }
+    case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
+    {
+        ib_unum_t u;
+        ib_field_value(field, ib_ftype_unum_out(&u));
+        printf( "  %s = %llu\n",
+                label, u );
+        break;
+    }
+    case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
+    {
+        const char *s;
+        ib_field_value(field, ib_ftype_nulstr_out(&s));
+        printf( "  %s = '%s'\n", label, s );
+        break;
+    }
+    case IB_FTYPE_BYTESTR :      /**< Byte string value */
+    {
+        const ib_bytestr_t *bs;
+        ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        size_t len = ib_bytestr_length(bs);
+        if (len == 0) {
+            printf("  %s = ''\n", label);
+        }
+        else {
+            printf( "  %s = '%.*s'\n",
+                    label, (int)len, ib_bytestr_const_ptr(bs) );
+        }
+        break;
+    }
+    case IB_FTYPE_LIST :         /**< List */
+        {
+            // @todo Remove mutable once list is const correct.
+            ib_list_t *lst;
+            ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
+            size_t len = IB_LIST_ELEMENTS(lst);
+            printf( "  %s = list:len=%d\n", label, (int)len);
+        }
+        break;
+    case IB_FTYPE_SBUFFER :
+        // @todo Implement if needed.
+        printf("  %s = sbuffer", label);
+        break;
+    default:
+        printf("  Unknown field type.");
     }
 }
 
@@ -849,6 +865,7 @@ static const char *build_path( const char *path, ib_field_t *field )
 static ib_status_t print_list(const char *path, ib_list_t *lst)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
     ib_list_node_t *node = NULL;
 
     /* Loop through the list & print everything */
@@ -866,12 +883,19 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
                 print_field(fullpath, field);
                 break;
             case IB_FTYPE_LIST:
+            {
+                ib_list_t *v;
+                // @todo Remove mutable once list is const correct.
+                rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&v));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+
                 fullpath = build_path(path, field);
                 print_field(fullpath, field);
-                // @todo Remove const casting once list is const correct.
-                print_list(fullpath,
-                    (ib_list_t *)ib_field_value_list(field));
+                print_list(fullpath, v);
                 break;
+            }
             default :
                 break;
         }
@@ -920,8 +944,12 @@ static ib_status_t print_tx( ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     print_field("tx:ARGS", field);
-    // @todo Remove const casting once list is const correct.
-    lst = (ib_list_t *)ib_field_value_list(field);
+    // @todo Remove mutable once list is const correct.
+    rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     if (lst == NULL) {
         printf("print_tx: Failed ARGS is not a list\n");
         ib_log_debug(ib, 4, "print_tx: ARGS is not a list");
@@ -997,8 +1025,12 @@ static ib_status_t print_user_agent(
     }
 
     /* The field value *should* be a list, extract it as such */
-    // @todo Remove const casting once list is const correct.
-    lst = (ib_list_t *)ib_field_value_list(req);
+    // @todo Remove mutable once list is const correct.
+    rc = ib_field_mutable_value(req, ib_ftype_list_mutable_out(&lst));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     if (lst == NULL) {
         ib_log_debug(ib, 4,
                      "print_user_agent: "
@@ -1056,8 +1088,12 @@ static ib_status_t print_geoip(
     }
 
     /* The field value *should* be a list, extract it as such */
-    // @todo Remove const casting once list is const correct.
-    lst = (ib_list_t *)ib_field_value_list(req);
+    // @todo Remove mutable once list is const correct.
+    rc = ib_field_mutable_value(req, ib_ftype_list_mutable_out(&lst));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     if (lst == NULL) {
         ib_log_debug(ib, 4,
                      "print_geoip: Field list missing / incorrect type" );

@@ -23,10 +23,12 @@
  * @brief IronBee - Field Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <ironbee/build.h>
 #include <ironbee/types.h>
+#include <ironbee/list.h>
 
 #include <string.h>
 
@@ -38,7 +40,136 @@ extern "C" {
  * @defgroup IronBeeUtilField Field
  * @ingroup IronBeeUtil
  *
- * A field is arbitrary data with a given type and length.
+ * A field is a name and a value.  The values can be one of several types.
+ * Values can be stored in the field or they can alias another location in
+ * memory.  Fields can also be 'dynamic' where set/get operations are passed
+ * to functions.
+ *
+ * As fields can have various types, the field code constitutes a run-time
+ * typing system.  In order to avoid large number of functions, it uses
+ * @c void *in many places.  To avoid bugs, it provides a number of helper
+ * functions that have no runtime effect but act as a compile time assertions
+ * on the type of the inputs.  For example, to extra a null string value from
+ * a null string field:
+ *
+ * @code
+ * const char *v;
+ * ib_status_t rc;
+ *
+ * rc = ib_field_value(f, ib_ftype_nulstr_out(&v));
+ * @endcode
+ *
+ * In the above example, ib_field_value() is the general function to access
+ * the value of a field.  It takes a @c void *as the second parameter.
+ * The ib_ftype_nulstr_out() function takes the appropriate type (@c const
+ * @c char @c **) and returns its argument cast to @c void*.  In this way, if
+ * you provide the wrong type to ib_ftype_nulstr_out(), the compiler will
+ * warn you.
+ *
+ * There are @c ib_ftype_* functions for every field type and every needed
+ * passing convention.  The @c void *arguments are all named by passing
+ * convention.  Thus:
+ *
+ * - @a in_pval &mdash; @c ib_ftype_X_in
+ * - @a out_pval &mdash; @c ib_ftype_X_out
+ * - @a mutable_in_pval &mdash; @c ib_ftype_X_mutable_in
+ * - @a mutable_out_pval &mdash; @c ib_ftype_X_mutable_out
+ * - @a storage_pval &mdash; @c ib_ftype_X_storage
+ *
+ * The storage type is used by ib_field_create_alias() and is the way to
+ * pass the location to use for field storage.
+ *
+ * The following table describes the types for every field type.
+ *
+ * <table>
+ *     <tr>
+ *         <th>Field Type</th>
+ *         <th>Value</th>
+ *         <th>In</th>
+ *         <th>Mutable In</th>
+ *         <th>Out</th>
+ *         <th>Mutable Out</th>
+ *         <th>Storage</th>
+ *     </tr>
+ *
+ *     <tr>
+ *         <td>@c IB_FTYPE_GENERIC</td>
+ *         <td>@c void*</td>
+ *         <td>@c void*</td>
+ *         <td>@c void**</td>
+ *         <td>@c void**</td>
+ *         <td>@c void**</td>
+ *     </tr>
+ *
+ *     <tr>
+ *         <td>@c IB_FTYPE_NUM</td>
+ *         <td>@c ib_num_t</td>
+ *         <td>@c const @c ib_num_t*</td>
+ *         <td>@c ib_num_t*</td>
+ *         <td>@c const @c ib_num_t*</td>
+ *         <td>@c ib_num_t**</td>
+ *         <td>@c ib_num_t*</td>
+ *     </tr>
+ *
+ *     <tr>
+ *         <td>@c IB_FTYPE_UNUM</td>
+ *         <td>@c ib_unum_t</td>
+ *         <td>@c const @c ib_unum_t*</td>
+ *         <td>@c ib_unum_t*</td>
+ *         <td>@c const @c ib_unum_t*</td>
+ *         <td>@c ib_unum_t**</td>
+ *         <td>@c ib_unum_t*</td>
+ *     </tr>
+ *
+ *     <tr>
+ *         <td>@c IB_FTYPE_NULSTR</td>
+ *         <td>@c char*</td>
+ *         <td>@c const @c char*</td>
+ *         <td>@c char*</td>
+ *         <td>@c const @c char**</td>
+ *         <td>@c char**</td>
+ *         <td>@c char**</td>
+ *     <td>
+ *
+ *     <tr>
+ *         <td>@c IB_FTYPE_BYTESTR</td>
+ *         <td>@c ib_bytestr_t*</td>
+ *         <td>@c const @c ib_bytestr_t*</td>
+ *         <td>@c ib_bytestr_t*</td>
+ *         <td>@c const @c ib_bytestr_t**</td>
+ *         <td>@c ib_bytestr_t**</td>
+ *         <td>@c ib_bytestr_t**</td>
+ *     <td>
+ *
+ *     <tr>
+ *         <td>@c IB_FTYPE_LIST</td>
+ *         <td>@c ib_list_t*</td>
+ *         <td>@c const @c ib_list_t*</td>
+ *         <td>@c ib_list_t*</td>
+ *         <td>@c const @c ib_list_t**</td>
+ *         <td>@c ib_list_t**</td>
+ *         <td>@c ib_list_t**</td>
+ *     <td>
+ *
+ *     <tr>
+ *         <td>@c IB_FTYPE_SBUFFER</td>
+ *         <td>@c ib_stream_t*</td>
+ *         <td>@c const @c ib_stream_t*</td>
+ *         <td>@c ib_stream_t*</td>
+ *         <td>@c const @c ib_stream_t**</td>
+ *         <td>@c ib_stream_t**</td>
+ *         <td>@c ib_stream_t**</td>
+ *     <td>
+ * </table>
+ *
+ * Notes:
+ * - The in type for IB_FTYPE_NUM is @c ib_num_t* instead of ib_num_t because
+ *   an ib_num_t will not fit in a @c void *parameter on 32 bit architectures.
+ *   The same applies to IB_FTYPE_UNUM.
+ * - The mutable out types for IB_FTYPE_NUM is @c ib_num_t** so that a pointer
+ *   to the value can be passed out.  This allows the caller to mutate the
+ *   actual number as expected for a mutale value.  The same applies to
+ *   IB_FTYPE_UNUM.
  *
  * @{
  */
@@ -56,38 +187,262 @@ typedef enum {
     IB_FTYPE_SBUFFER      /**< Stream buffer */
 } ib_ftype_t;
 
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_generic_mutable_in(void *v)
+{
+    return (void*)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_generic_in(void *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_generic_out(void **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_generic_mutable_out(void **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_generic_storage(void **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_num_mutable_in(ib_num_t *v)
+{
+    return (void*)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_num_in(const ib_num_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_num_out(ib_num_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_num_mutable_out(ib_num_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_num_storage(ib_num_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_unum_mutable_in(ib_unum_t *v)
+{
+    return (void*)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_unum_in(const ib_unum_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_unum_out(ib_unum_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_unum_mutable_out(ib_unum_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_unum_storage(ib_unum_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_nulstr_mutable_in(char *v)
+{
+    return (void*)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_nulstr_in(const char *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_nulstr_out(const char **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_nulstr_mutable_out(char **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_nulstr_storage(char **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_bytestr_mutable_in(ib_bytestr_t *v)
+{
+    return (void*)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_bytestr_in(const ib_bytestr_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_bytestr_out(const ib_bytestr_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_bytestr_mutable_out(ib_bytestr_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_bytestr_storage(ib_bytestr_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_list_mutable_in(ib_list_t *v)
+{
+    return (void*)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_list_in(const ib_list_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_list_out(const ib_list_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_list_mutable_out(ib_list_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_list_storage(ib_list_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_sbuffer_mutable_in(ib_stream_t *v)
+{
+    return (void*)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_sbuffer_in(const ib_stream_t *v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_sbuffer_out(const ib_stream_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_sbuffer_mutable_out(ib_stream_t **v)
+{
+    return (void *)(v);
+}
+
+/** Assert @a v is proper type. */
+static inline void *ib_ftype_sbuffer_storage(ib_stream_t **v)
+{
+    return (void *)(v);
+}
+
 /**
- * Dynamic field get function.
+ * Dynamic field get function type.
  *
- * @param field Field in question; use to access type.
- * @param arg   Optional argument (e.g., subkey).
- * @param alen  Length of @a arg.
- * @param data  Callback data.
+ * Note that @a out_pval is an out value not a mutable out value.  Dynamic
+ * fields do not support mutable values.
  *
- * @returns Value.
+ * The field type is available via @c field->type.
+ *
+ * @param[in]  field    Field in question.
+ * @param[out] out_pval Where to write value.
+ * @param[in]  arg      Optional argument.
+ * @param[in]  alen     Length of @a arg.
+ * @param[in]  data     Callback data.
+ *
+ * @returns Status cde
  */
-typedef const void *(*ib_field_get_fn_t)(
+typedef ib_status_t (*ib_field_get_fn_t)(
     const ib_field_t *field,
-    const void *arg, size_t alen,
-    void *data
+    void             *out_pval,
+    const void       *arg,
+    size_t            alen,
+    void             *data
 );
 
 /**
  * Dynamic field set function.
  *
- * @param field Field in question; use to access type.
- * @param arg   Optional argument (e.g., subkey).
- * @param alen  Length of @a arg.
- * @param val   Value to set.
- * @param data  Callback data.
+ * Note that @a in_pval is an in value not a mutable in value.  Dynamic
+ * fields do not support mutable values.
+ *
+ * The field type is available via @c field->type.
+ *
+ * @param[in] field   Field in question.
+ * @param[in] arg     Optional argument.
+ * @param[in] alen    Length of @a arg.
+ * @param[in] in_pval Value to set.
+ * @param[in] data    Callback data.
  *
  * @returns Status code
  */
 typedef ib_status_t (*ib_field_set_fn_t)(
     ib_field_t *field,
-    const void *arg, size_t alen,
-    const void *val,
-    void *data
+    const void *arg,
+    size_t      alen,
+    void       *in_pval,
+    void       *data
 );
 
 /** Field Structure */
@@ -103,12 +458,17 @@ struct ib_field_t {
 /**
  * Create a field, copying name/data into the field.
  *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as byte string
- * @param nlen Field name length
- * @param type Field type
- * @param pval Pointer to value to store in field (based on type)
+ * @warning At present, this function will create copies of integral types,
+ * null strings, and byte strings.  However, for lists and streams it will
+ * act the same as ib_field_create_no_copy(), casting away the const of
+ * @a in_pval.  This will be fixed in a future version.
+ *
+ * @param[out] pf      Address to write new field to.
+ * @param[in]  mp      Memory pool.
+ * @param[in]  name    Field name.
+ * @param[in]  nlen    Field name length.
+ * @param[in]  type    Field type.
+ * @param[in]  in_pval Value to store in field.
  *
  * @returns Status code
  */
@@ -118,38 +478,124 @@ ib_status_t DLL_PUBLIC ib_field_create(
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
-    const void  *pval
+    void        *in_pval
 );
 
 /**
- * Create a field and store data without copying.
+ * Create a field without copying data.
  *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as byte string
- * @param nlen Field name length
- * @param type Field type
- * @param pval Pointer to value to store in field (based on type)
+ * This will place @a mutable_in_pval directly into the field value  without
+ * creating any copying.  This is different than ib_field_create_alias() which
+ * uses a user provided pointer for where to store the field value.
+ *
+ * @param[out] pf              Address to write new field to.
+ * @param[in]  mp              Memory pool.
+ * @param[in]  name            Field name.
+ * @param[in]  nlen            Field name length.
+ * @param[in]  type            Field type.
+ * @param[in]  mutable_in_pval Value to store in field.
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_createn(
+ib_status_t DLL_PUBLIC ib_field_create_no_copy(
     ib_field_t **pf,
     ib_mpool_t  *mp,
     const char  *name,
     size_t       nlen,
     ib_ftype_t   type,
-    void        *pval
+    void        *mutable_in_pval
+);
+
+/**
+ * Create a field but use @a *mutable_out_pval as the storage.
+ *
+ * When the field is set @a *storage_pval is changed and any get
+ * reflects the value of @a *storage_pval.
+ *
+ * @param[out] pf           Address to write new field to.
+ * @param[in]  mp           Memory pool.
+ * @param[in]  name         Field name.
+ * @param[in]  nlen         Field name length.
+ * @param[in]  type         Field type.
+ * @param[in]  storage_pval Where to store field value.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_create_alias(
+    ib_field_t **pf,
+    ib_mpool_t  *mp,
+    const char  *name,
+    size_t       nlen,
+    ib_ftype_t   type,
+    void        *storage_pval
+);
+
+/**
+ * Create a dynamic field.
+ *
+ * Dynamic fields only support non-mutable values.
+ *
+ * @param[out] pf         Address to write new field to.
+ * @param[in]  mp         Memory pool.
+ * @param[in]  name       Field name..
+ * @param[in]  nlen       Field name length.
+ * @param[in]  type       Field type.
+ * @param[in]  fn_get     Getter.
+ * @param[in]  cbdata_get Getter data.
+ * @param[in]  fn_set     Setter.
+ * @param[in]  cbdata_set Setter data.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_create_dynamic(
+    ib_field_t        **pf,
+    ib_mpool_t         *mp,
+    const char         *name,
+    size_t              nlen,
+    ib_ftype_t          type,
+    ib_field_get_fn_t   fn_get,
+    void               *cbdata_get,
+    ib_field_set_fn_t   fn_set,
+    void               *cbdata_set
+);
+
+/**
+ * Make a copy of a field, aliasing data.
+ *
+ * The new field will use the same value storage as @a src.  Any changes to
+ * one will be reflected in the other and in the underlying storage.
+ *
+ * @param[out] pf   Address to write new field to.
+ * @param[in]  mp   Memory pool.
+ * @param[in]  name Field name.
+ * @param[in]  nlen Field name length.
+ * @param[in]  src  Source field.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_field_alias(
+    ib_field_t **pf,
+    ib_mpool_t  *mp,
+    const char  *name,
+    size_t       nlen,
+    ib_field_t  *src
 );
 
 /**
  * Make a copy of a field.
  *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as byte string
- * @param nlen Field name length
- * @param src Source field to copy
+ * This makes a copy of the field.  The new field will have separate
+ * storage.
+ *
+ * @warning For number and string fields, the underlying data will also be
+ * duplicated.  For list and stream fields, the data will not be duplicated.
+ * This may be fixed in the future.
+ *
+ * @param[out] pf   Address to write new field to.
+ * @param[in]  mp   Memory pool.
+ * @param[in]  name Field name.
+ * @param[in]  nlen Field name length.
+ * @param[in]  src  Source field.
  *
  * @returns Status code
  */
@@ -164,16 +610,19 @@ ib_status_t DLL_PUBLIC ib_field_copy(
 /**
  * Create a bytestr field which directly aliases a value in memory.
  *
- * @param pf Address which new field is written
- * @param mp Memory pool
- * @param name Field name as byte string
- * @param nlen Field name length
- * @param val Value
- * @param vlen Value length
+ * This is a equivalent to create a byte string alias of @a val and @a vlen
+ * and passing it ib_field_create_no_copy().
+ *
+ * @param[out] pf   Address to write new field to.
+ * @param[in]  mp   Memory pool.
+ * @param[in]  name Field name.
+ * @param[in]  nlen Field name length.
+ * @param[in]  val  Value.
+ * @param[in]  vlen Value length.
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_field_alias_mem(
+ib_status_t DLL_PUBLIC ib_field_create_bytestr_alias(
     ib_field_t **pf,
     ib_mpool_t  *mp,
     const char  *name,
@@ -185,8 +634,8 @@ ib_status_t DLL_PUBLIC ib_field_alias_mem(
 /**
  * Add a field to a IB_FTYPE_LIST field.
  *
- * @param f Field list
- * @param val Field to add to the list
+ * @param[in] f   Field.
+ * @param[in] val Field to add to the list.
  *
  * @returns Status code
  */
@@ -196,12 +645,12 @@ ib_status_t DLL_PUBLIC ib_field_list_add(
 );
 
 /**
- * Add a buffer to a @ref IB_FTYPE_SBUFFER type field.
+ * Add a buffer to a IB_FTYPE_SBUFFER type field.
  *
- * @param f Field list
- * @param dtype Data type
- * @param buf Buffer
- * @param blen Buffer length
+ * @param[in] f     Field.
+ * @param[in] dtype Data type.
+ * @param[in] buf   Buffer.
+ * @param[in] blen  Length of @a buf.
  *
  * @returns Status code
  */
@@ -213,59 +662,91 @@ ib_status_t DLL_PUBLIC ib_field_buf_add(
 );
 
 /**
- * Set a field value, skipping dynamic setter.
+ * Turn a dynamic field, @a f into a static field.
  *
- * @param f Field to add
- * @param pval Pointer to value to store in field (based on type)
+ * This call should immediately be followed by a @c setv call to set a
+ * (static) value.
  *
- * @returns Status code
+ * This method removes the setter and getters and sets up internal storage for
+ * the field value.  The actual value is undefined, hence the need to follow
+ * up with a set.
+ *
+ * Returns IB_EINVAL if @a f is not dynamic.
+ *
+ * @param[in] f Field to make static.
+ *
+ * @returns Status code.
  */
-ib_status_t DLL_PUBLIC ib_field_setv_static(
-    ib_field_t *f,
-    const void *pval
-);
+ib_status_t DLL_PUBLIC ib_field_make_static(
+    ib_field_t* f
+ );
 
 /**
- * Set a field value.
+ * Set a field value, copying.
  *
- * @param f Field to add
- * @param pval Pointer to value to store in field (based on type)
+ * @warning This function will not actually copy lists or streams.  It
+ * behaves as ib_field_setv_no_copy() for those types.  This may be fixed in
+ * the future.
+ *
+ * @param[in] f       Field to set value of.
+ * @param[in] in_pval Pointer to value to store in field (based on type)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_field_setv(
     ib_field_t *f,
-    const void *pval
+    void       *in_pval
+);
+
+/**
+ * Set a field directly without copying.
+ *
+ * Can not be called on dynamic fields.
+ * @param[in] f               Field to set value.
+ * @param[in] mutable_in_pval Pointer to store in field.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_field_setv_no_copy(
+    ib_field_t *f,
+    void *mutable_in_pval
 );
 
 /**
  * Set a field value, passing the argument on to dynamic fields.
  *
- * @param f Field to add
- * @param pval Pointer to value to store in field (based on type)
- * @param[in] arg Arbitrary argument.  Use NULL for non-dynamic fields.
- * @param[in] alen Argument length
+ * This will result in an error if @a f is not dynamic.
+ *
+ * @param[in] f       Field.
+ * @param[in] in_pval Pointer to value to store in field (based on type).
+ * @param[in] arg     Arbitrary argument.
+ * @param[in] alen    Argument length.
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_field_setv_ex(
     ib_field_t *f,
-    const void *pval,
+    void       *in_pval,
     const void *arg,
     size_t      alen
 );
 
 /**
- * Get the value stored in the field, passing the argument on to dynamic fields.
+ * Get the value stored in the field, passing the argument on to dynamic
+ * fields.
  *
- * @param[in] f Field
- * @param[in] arg Arbitrary argument.  Use NULL for non-dynamic fields.
- * @param[in] alen Argument length
+ * This will result in an error if @a f is not dynamic.
  *
- * @returns Value stored in the field
+ * @param[in]  f        Field.
+ * @param[out] out_pval Where to write value.
+ * @param[in]  arg      Arbitrary argument.
+ * @param[in]  alen     Argument length
+ *
+ * @returns Status code
  */
-const void DLL_PUBLIC *ib_field_value_ex(
+ib_status_t DLL_PUBLIC ib_field_value_ex(
     const ib_field_t *f,
+    void             *out_pval,
     const void       *arg,
     size_t            alen
 );
@@ -274,155 +755,88 @@ const void DLL_PUBLIC *ib_field_value_ex(
  * Get the value stored in the field, passing the argument on to dynamic
  * fields, with type checking.
  *
- * @param[in] f Field
- * @param[in] t Field type number
- * @param[in] arg Arbitrary argument.  Use NULL for non-dynamic fields.
- * @param[in] alen Argument length
+ * @param[in]  f        Field.
+ * @param[out] out_pval Where to write value.
+ * @param[in]  t        Field type number.
+ * @param[in]  arg      Arbitrary argument.  Use NULL for non-dynamic fields.
+ * @param[in]  alen     Argument length.
  *
- * @returns Value stored in the field.
+ * @returns Status code
  */
-const void DLL_PUBLIC *ib_field_value_type_ex(
-     const ib_field_t *f,
-     ib_ftype_t        t,
-     const void       *arg,
-     size_t            alen
+ib_status_t DLL_PUBLIC ib_field_value_type_ex(
+    const ib_field_t *f,
+    void             *out_pval,
+    ib_ftype_t        t,
+    const void       *arg,
+    size_t            alen
 );
-
-/** Return field value for a field as "ib_num_t *" with argument. */
-#define ib_field_value_num_ex(f,arg,alen) \
-    (const ib_num_t *)ib_field_value_type_ex((f),IB_FTYPE_NUM,(arg),(alen))
-
-/** Return field value for a field as "ib_unum_t * with argument". */
-#define ib_field_value_unum_ex(f,arg,alen) \
-    (const ib_unum_t *)ib_field_value_type_ex((f),IB_FTYPE_UNUM,(arg),(alen))
-
-/** Return field value for a field as "ib_bytestr_t * with argument". */
-#define ib_field_value_bytestr_ex(f,arg,alen) \
-    (const ib_bytestr_t *)ib_field_value_type_ex((f),IB_FTYPE_BYTESTR,(arg),(alen))
-
-/** Return field value for a field as "void * with argument". */
-#define ib_field_value_generic_ex(f,arg,alen) \
-    (const void *)ib_field_value_type_ex((f),IB_FTYPE_GENERIC,(arg),(alen))
-
-/** Return field value for a field as "char * with argument". */
-#define ib_field_value_nulstr_ex(f,arg,alen) \
-    (const char *)ib_field_value_type_ex((f),IB_FTYPE_NULSTR,(arg),(alen))
-
-/** Return field value for a field as "ib_list_t * with argument". */
-#define ib_field_value_list_ex(f,arg,alen) \
-    (const ib_list_t *)ib_field_value_type_ex((f),IB_FTYPE_LIST,(arg),(alen))
-
 
 /**
  * Get the value stored in the field.
  *
- * @param[in] f Field
+ * @param[in]  f        Field.
+ * @param[out] out_pval Where to store value.
  *
- * @returns Value stored in the field
+ * @returns Status code.
  */
-const void DLL_PUBLIC *ib_field_value(const ib_field_t *f);
+ib_status_t DLL_PUBLIC ib_field_value(
+    const ib_field_t *f,
+    void             *out_pval
+);
 
 /**
  * Get the value stored in the field, with type checking.
  *
- * @param[in] f Field
- * @param[in] t Expected type
+ * @param[in]  f        Field.
+ * @param[out] out_pval Where to store value.
+ * @param[in]  t        Expected type.
  *
- * @returns Value stored in the field
+ * @returns Status code.
  */
-const void DLL_PUBLIC *ib_field_value_type(const ib_field_t *f, ib_ftype_t t);
+ib_status_t DLL_PUBLIC ib_field_value_type(
+    const ib_field_t *f,
+    void             *out_pval,
+    ib_ftype_t        t
+);
 
-/** Return field value for a field as "ib_num_t *". */
-#define ib_field_value_num(f) \
-    (const ib_num_t *)ib_field_value_type((f), IB_FTYPE_NUM)
+/**
+ * Get the value stored in the field.  Non-dynamic only.
+ *
+ * @param[in]  f                Field.
+ * @param[out] mutable_out_pval Where to store value.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_field_mutable_value(
+    ib_field_t *f,
+    void       *mutable_out_pval
+);
 
-/** Return field value for a field as "ib_unum_t *". */
-#define ib_field_value_unum(f) \
-    (const ib_unum_t *)ib_field_value_type((f), IB_FTYPE_UNUM)
-
-/** Return field value for a field as "ib_bytestr_t *". */
-#define ib_field_value_bytestr(f) \
-    (const ib_bytestr_t *)ib_field_value_type((f), IB_FTYPE_BYTESTR)
-
-/** Return field value for a field as "void *". */
-#define ib_field_value_generic(f) \
-    (const void *)ib_field_value_type((f), IB_FTYPE_GENERIC)
-
-/** Return field value for a field as "char *". */
-#define ib_field_value_nulstr(f) \
-    (const char *)ib_field_value_type((f), IB_FTYPE_NULSTR)
-
-/** Return field value for a field as "ib_list_t *". */
-#define ib_field_value_list(f) \
-    (const ib_list_t *)ib_field_value_type((f), IB_FTYPE_LIST)
-
-/** Return field value for a field as "ib_stream_t *". */
-#define ib_field_value_stream(f) (ib_stream_t *)ib_field_value(f)
+/**
+ * Get the value stored in the field, with type checking.  Non-dynamic only.
+ *
+ * @param[in]  f                Field.
+ * @param[out] mutable_out_pval Where to store value.
+ * @param[in]  t                Expected type
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_field_mutable_value_type(
+    ib_field_t *f,
+    void       *mutable_out_pval,
+    ib_ftype_t  t
+);
 
 /**
  * Determine if a field is dynamic.
  *
- * @param f Field
+ * @param[in] f Field
  *
- * @return true if field is dynamic
+ * @return true iff field is dynamic
  */
-int ib_field_is_dynamic(const ib_field_t *f);
-
-/**
- * Register dynamic get function.
- *
- * @param f          Field.
- * @param fn_get     Get function.
- * @param cbdata_get Callback data for @a fn_get.
- */
-void DLL_PUBLIC ib_field_dyn_register_get(
-    ib_field_t        *f,
-    ib_field_get_fn_t  fn_get,
-    void              *cbdata_get);
-
-/**
- * Register dynamic set function.
- *
- * @param f          Field.
- * @param fn_set     set function.
- * @param cbdata_set Callback data for @a fn_set.
- */
-void DLL_PUBLIC ib_field_dyn_register_set(
-    ib_field_t        *f,
-    ib_field_set_fn_t  fn_set,
-    void              *cbdata_set
+int ib_field_is_dynamic(
+     const ib_field_t *f
 );
-
-/**
- * Helper function for returning numbers.
- *
- * IB_FTYPE_NUM values need to be returned as ib_num_t*, i.e., pointer to
- * values.  This can be problematic for dynamic getters that may have
- * calculated that value on the fly.  This helper function stores the
- * result in the field (without making it not dynamic) and returns a pointer
- * to that value.  E.g.,
- *
- * @code
- * IB_FTRACE_RET_PTR(void, ib_field_dyn_return_num(f, 17));
- * @endcode
- *
- * Note that @a field is passed in as a const.  Caching the value does not
- * semantically change the field (it remains dynamic).
- *
- * @sa ib_field_dyn_return_unum()
- * @param[in] f     Field in question.
- * @param[in] value Value to return.
- */
-void *ib_field_dyn_return_num(const ib_field_t *f, ib_num_t value);
-
-/**
- * As ib_field_dyn_return_num(), but for unum.
- *
- * @sa ib_field_dyn_return_num()
- * @param[in] f     Field in question.
- * @param[in] value Value to return.
- */
-void *ib_field_dyn_return_unum(const ib_field_t *f, ib_unum_t value);
 
 /**
  * Helper function for providing nullt terminated strings.
@@ -430,6 +844,19 @@ void *ib_field_dyn_return_unum(const ib_field_t *f, ib_unum_t value);
  * @param[in] name Null terminated field name.
  **/
 #define IB_FIELD_NAME(name) (name), strlen(name)
+
+/**
+ * Output debugging information of a field.
+ *
+ * @param[in] level  Log level.
+ * @param[in] prefix Prefix message.
+ * @param[in] f      Field to output.
+ */
+void ib_field_util_log_debug(
+    int               level,
+    const char       *prefix,
+    const ib_field_t *f
+);
 
 /**
  * @} IronBeeUtilField

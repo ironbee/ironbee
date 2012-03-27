@@ -85,9 +85,14 @@ static ib_status_t foo2bar(ib_engine_t *ib,
                            ib_field_t **fout,
                            ib_flags_t *pflags)
 {
+    ib_status_t rc;
     if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *ibs =
-            const_cast<ib_bytestr_t *>(ib_field_value_bytestr(fin));
+        ib_bytestr_t *ibs;
+        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&ibs));
+        if (rc != IB_OK) {
+            return rc;
+        }
+        
         char *data_in;
         size_t dlen_in;
 
@@ -108,7 +113,11 @@ static ib_status_t foo2bar(ib_engine_t *ib,
         *fout = fin;
     }
     else if (fin->type == IB_FTYPE_NULSTR) {
-        char *data = const_cast<char *>(ib_field_value_nulstr(fin));
+        char *data;
+        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&data));
+        if (rc != IB_OK) {
+            return rc;
+        }
         if ( (data != NULL) && (strncmp(data, "foo", 3) == 0) ) {
             *pflags = (IB_TFN_FMODIFIED | IB_TFN_FINPLACE);
             *(data+0) = 'b';
@@ -145,7 +154,10 @@ TEST(TestIronBee, test_tfn)
 
     ib_bytestr_dup_nulstr(&bs, ib->mp, "foo");
     fin = NULL;
-    ib_field_create(&fin, ib->mp, "ByteStr", IB_FTYPE_BYTESTR, &bs);
+    ib_field_create(
+        &fin, ib->mp, IB_FIELD_NAME("ByteStr"), 
+        IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
+    );
     fout = NULL;
     flags = 0;
     rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
@@ -157,8 +169,11 @@ TEST(TestIronBee, test_tfn)
 
     strcpy((char *)data_in, "foo");
     fin = NULL;
-    void *p = &data_in;
-    ib_field_create(&fin, ib->mp, "NulStr", IB_FTYPE_NULSTR, &p);
+    ib_field_create(
+        &fin, ib->mp, IB_FIELD_NAME("NulStr"), 
+        IB_FTYPE_NULSTR, 
+        ib_ftype_nulstr_in((char *)data_in)
+    );
     fout = NULL;
     flags = 0;
     rc = ib_tfn_transform(ib, ib->mp, tfn, fin, &fout, &flags);
@@ -171,22 +186,30 @@ TEST(TestIronBee, test_tfn)
     ibtest_engine_destroy(ib);
 }
 
-static ib_field_t *dyn_get(ib_field_t *f,
-                           const char *arg,
-                           size_t alen,
-                           void *data)
+static ib_status_t dyn_get(
+    const ib_field_t *f,
+    void *out_value,
+    const void *arg,
+    size_t alen,
+    void *data
+)
 {
     ib_mpool_t *mp = (ib_mpool_t *)data;
     ib_num_t numval = 5;
     ib_field_t *newf;
     ib_status_t rc;
+    
+    const char* carg = (const char*)arg;
 
-    rc = ib_field_create(&newf, mp, arg, alen, IB_FTYPE_NUM, &numval);
+    rc = ib_field_create(&newf, mp, carg, alen, IB_FTYPE_NUM, 
+        ib_ftype_num_in(&numval));
     if (rc != IB_OK) {
-        return NULL;
+        return rc;
     }
 
-    return newf;
+    *(void**)out_value = newf;
+    
+    return IB_OK;
 }
 
 /// @test Test ironbee library - data provider
@@ -196,6 +219,8 @@ TEST(TestIronBee, test_dpi)
     ib_provider_inst_t *dpi;
     ib_field_t *dynf;
     ib_field_t *f;
+    ib_status_t rc;
+    ib_num_t n;
 
     ibtest_engine_create(&ib);
 
@@ -213,21 +238,18 @@ TEST(TestIronBee, test_dpi)
     /* Create a field with no initial value. */
     ASSERT_EQ(
         IB_OK,
-        ib_field_create(
+        ib_field_create_dynamic(
             &dynf, 
             ib_engine_pool_main_get(ib),
             IB_FIELD_NAME("test_dynf"), 
             IB_FTYPE_GENERIC, 
-            NULL
+            dyn_get, (void*)ib_engine_pool_main_get(ib),
+            NULL, NULL
         )
     );
     ASSERT_TRUE(dynf);
     ASSERT_EQ(9UL, dynf->nlen);
     ASSERT_MEMEQ("test_dynf", dynf->name, 9);
-
-    /* Make it a dynamic field which calls dyn_get() with "dynf" as the data. */
-    ib_field_dyn_register_get(dynf, (ib_field_get_fn_t)dyn_get, 
-        (void *)ib_engine_pool_main_get(ib));
 
     /* Add the field to the data store. */
     ASSERT_EQ(IB_OK, ib_data_add(dpi, dynf));
@@ -243,7 +265,9 @@ TEST(TestIronBee, test_dpi)
     ASSERT_EQ(10UL, f->nlen);
 
     /* Get the value from the dynamic field. */
-    ASSERT_EQ(5, *ib_field_value_num(f));
+    rc = ib_field_value(f, ib_ftype_num_out(&n));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(5, n);
 
     /* Fetch another dynamic field from the data store */
     ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey2", &f));
@@ -252,7 +276,9 @@ TEST(TestIronBee, test_dpi)
     ASSERT_MEMEQ("dyn_subkey2", f->name, 11);
 
     /* Get the value from the dynamic field. */
-    ASSERT_EQ(5, *ib_field_value_num(f));
+    rc = ib_field_value(f, ib_ftype_num_out(&n));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(5, n);
 
     ibtest_engine_destroy(ib);
 }

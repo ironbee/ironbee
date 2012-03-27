@@ -30,6 +30,7 @@
 #include "gtest/gtest.h"
 
 #include <ironbee/debug.h>
+#include <ironbee/util.h>
 
 #include <string>
 
@@ -224,8 +225,11 @@ TEST_F(TestField, Dynamic)
 
     {
         int64_t v;
-        f = Field::create_number(m_pool, "test", 4, 7);
-        f.register_dynamic_get_number(test_getter<int64_t>(v, args));
+        f = Field::create_dynamic_number(
+            m_pool, "test", 4,
+            test_getter<int64_t>(v, args),
+            test_setter<int64_t>(v, args)
+        );
         v = 12;
         EXPECT_EQ(v, f.value_as_number());
         EXPECT_EQ(f, args.field);
@@ -238,7 +242,6 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
         EXPECT_TRUE(f.is_dynamic());
 
-        f.register_dynamic_set_number(test_setter<int64_t>(v,args));
         args.reset();
         v = 0;
         f.set_number(23);
@@ -253,15 +256,18 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ(f, args.field);
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
 
-        f.set_static_number(123);
+        f.make_static();
+        f.set_number(123);
         EXPECT_FALSE(f.is_dynamic());
         EXPECT_EQ(123, f.value_as_number());
     }
 
     {
         uint64_t v;
-        f = Field::create_unsigned_number(m_pool, "test", 4, 7);
-        f.register_dynamic_get_unsigned_number(test_getter<uint64_t>(v, args));
+        f = Field::create_dynamic_unsigned_number(m_pool, "test", 4,
+            test_getter<uint64_t>(v, args),
+            test_setter<uint64_t>(v, args)
+        );
         v = 12;
         EXPECT_EQ(v, f.value_as_unsigned_number());
         EXPECT_EQ(f, args.field);
@@ -274,7 +280,6 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
         EXPECT_TRUE(f.is_dynamic());
 
-        f.register_dynamic_set_unsigned_number(test_setter<uint64_t>(v,args));
         args.reset();
         v = 0;
         f.set_unsigned_number(23);
@@ -289,15 +294,19 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ(f, args.field);
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
 
-        f.set_static_unsigned_number(123);
+        f.make_static();
+        f.set_unsigned_number(123);
         EXPECT_FALSE(f.is_dynamic());
         EXPECT_EQ(123UL, f.value_as_unsigned_number());
     }
 
     {
         const char* v;
-        f = Field::create_null_string(m_pool, "test", 4, "hello");
-        f.register_dynamic_get_null_string(test_getter<const char *>(v, args));
+        f = Field::create_dynamic_null_string(
+            m_pool, "test", 4,
+            test_getter<const char*>(v, args),
+            test_setter<const char*>(v, args)
+        );
         v = "foo";
         EXPECT_EQ(string(v), f.value_as_null_string());
         EXPECT_EQ(f, args.field);
@@ -310,7 +319,6 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
         EXPECT_TRUE(f.is_dynamic());
 
-        f.register_dynamic_set_null_string(test_setter<const char *>(v,args));
         args.reset();
         v = NULL;
         f.set_null_string("abc");
@@ -325,7 +333,8 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ(f, args.field);
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
 
-        f.set_static_null_string("123");
+        f.make_static();
+        f.set_null_string("123");
         EXPECT_FALSE(f.is_dynamic());
         EXPECT_EQ(string("123"), f.value_as_null_string());
     }
@@ -333,13 +342,11 @@ TEST_F(TestField, Dynamic)
     {
         ByteString v;
 
-        f = Field::create_byte_string(
+        f = Field::create_dynamic_byte_string(
             m_pool,
             "test", 4,
-            ByteString::create(m_pool, "hello")
-        );
-        f.register_dynamic_get_byte_string(
-            test_getter<ConstByteString>(v, args)
+            test_getter<ConstByteString>(v, args),
+            test_setter<ConstByteString>(v, args)
         );
         v = ByteString::create(m_pool, "foo");
         EXPECT_EQ(v.to_s(), f.value_as_byte_string().to_s());
@@ -353,9 +360,6 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
         EXPECT_TRUE(f.is_dynamic());
 
-        f.register_dynamic_set_byte_string(
-            test_setter<ConstByteString>(v,args)
-        );
         args.reset();
         v = ByteString();
         f.set_byte_string(ByteString::create(m_pool, "abc"));
@@ -370,7 +374,8 @@ TEST_F(TestField, Dynamic)
         EXPECT_EQ(f, args.field);
         EXPECT_EQ("Hello", string(args.arg, args.arg_length));
 
-        f.set_static_byte_string(ByteString::create(m_pool, "123"));
+        f.make_static();
+        f.set_byte_string(ByteString::create(m_pool, "123"));
         EXPECT_FALSE(f.is_dynamic());
         EXPECT_EQ("123", f.value_as_byte_string().to_s());
     }
@@ -419,4 +424,98 @@ TEST_F(TestField, TypeForType)
         Field::BYTE_STRING,
         Field::field_type_for_type<ConstByteString>()
     );
+}
+
+TEST_F(TestField, CreateNoCopy)
+{
+    char s[100];
+    Field f = Field::create_no_copy_null_string(m_pool, "foo", 3, s);
+    std::string v("Hello World");
+    std::copy(v.begin(), v.end(), s);
+    EXPECT_EQ(std::string(s), f.value_as_null_string());
+
+    ByteString b = ByteString::create(m_pool, "Test2");
+    Field f2 = Field::create_no_copy_byte_string(m_pool, "foo", 3, b);
+    b.set("Test4");
+    EXPECT_EQ(b.to_s(), f2.value_as_byte_string().to_s());
+}
+
+TEST_F(TestField, CreateAlias)
+{
+    {
+        int64_t n = 0;
+        Field f = Field::create_alias_number(m_pool, "foo", 3, n);
+
+        f.set_number(8);
+
+        EXPECT_EQ(n, 8);
+    }
+    {
+        uint64_t n = 0;
+        Field f = Field::create_alias_unsigned_number(m_pool, "foo", 3, n);
+
+        f.set_unsigned_number(8);
+
+        EXPECT_EQ(n, 8UL);
+    }
+    {
+        char *s = NULL;
+        Field f = Field::create_alias_null_string(m_pool, "foo", 3, s);
+
+        f.set_null_string("Hello");
+
+        EXPECT_EQ(string("Hello"), s);
+    }
+    {
+        ib_bytestr_t* b = NULL;
+        Field f = Field::create_alias_byte_string(m_pool, "foo", 3, b);
+
+        f.set_byte_string(ByteString::create(m_pool, "Hello"));
+
+        EXPECT_EQ("Hello", ByteString(b).to_s());
+    }
+}
+
+TEST_F(TestField, Mutable)
+{
+    {
+        Field f = Field::create_number(m_pool, "foo", 3, 7);
+        f.mutable_value_as_number() = 9;
+        EXPECT_EQ(9, f.value_as_number());
+    }
+    {
+        Field f = Field::create_unsigned_number(m_pool, "foo", 3, 7);
+        f.mutable_value_as_unsigned_number() = 9;
+        EXPECT_EQ(9UL, f.value_as_unsigned_number());
+    }
+    {
+        Field f = Field::create_null_string(m_pool, "foo", 3, "Hello");
+        f.mutable_value_as_null_string()[0] = 'g';
+        EXPECT_EQ(string("gello"), f.value_as_null_string());
+    }
+    {
+        Field f = Field::create_byte_string(m_pool, "foo", 3,
+            ByteString::create(m_pool, "Hello"));
+        f.mutable_value_as_byte_string().set("ABC");
+        EXPECT_EQ("ABC", f.value_as_byte_string().to_s());
+    }
+}
+
+TEST_F(TestField, set_no_copy)
+{
+    {
+        Field f = Field::create_null_string(m_pool, "foo", 3, "ABC");
+        char s[] = "Hello";
+        f.set_no_copy_null_string(s);
+        s[0] = 'g';
+        EXPECT_EQ(string("gello"), f.value_as_null_string());
+    }
+    {
+        Field f = Field::create_byte_string(m_pool, "foo", 3,
+            ByteString::create(m_pool, "Hello"));
+        ByteString b = ByteString::create(m_pool, "Foo");
+        f.set_no_copy_byte_string(b);
+        b.set("ABC");
+        EXPECT_EQ("ABC", f.value_as_byte_string().to_s());
+    }
 }

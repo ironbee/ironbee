@@ -99,7 +99,7 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_NUM, &val);
+    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_NUM, ib_ftype_num_in(&val));
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -132,7 +132,7 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_NULSTR, &val);
+    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_NULSTR, ib_ftype_nulstr_in(val));
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -166,7 +166,7 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_alias_mem(&f, dpi->mp, name, nlen, val, vlen);
+    rc = ib_field_create_bytestr_alias(&f, dpi->mp, name, nlen, val, vlen);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

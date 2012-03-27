@@ -552,7 +552,10 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
                                tx->mp,
                                (const uint8_t*)match_start,
                                match_len);
-            ib_field_setv(ib_field, &field_value);
+            ib_field_setv_no_copy(
+                ib_field,
+                ib_ftype_bytestr_mutable_in(field_value)
+            );
         }
     }
 
@@ -604,11 +607,19 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     }
 
     if (field->type == IB_FTYPE_NULSTR) {
-        subject = ib_field_value_nulstr(field);
+        ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
+        if (ib_rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(ib_rc);
+        }
+
         subject_len = strlen(subject);
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
-        bytestr = ib_field_value_bytestr(field);
+        ib_rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
+        if (ib_rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(ib_rc);
+        }
+
         subject_len = ib_bytestr_length(bytestr);
         subject = (const char*) ib_bytestr_const_ptr(bytestr);
     }

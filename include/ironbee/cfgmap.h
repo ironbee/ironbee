@@ -75,13 +75,15 @@ struct ib_cfgmap_t {
  * @sa IB_CFGMAP_INIT_DYNAMIC_ENTRY()
  * @sa ib_field_get_fn_t
  *
- * @param[in] base Pointer to base of config data.
- * @param[in] field Field storing value.
- * @param[in] data Callback data.
- * @returns Value (numeric) or pointer to value (non-numeric).
+ * @param[in]  base Pointer to base of config data.
+ * @param[out] pval Where to store value.
+ * @param[in]  field Field storing value.
+ * @param[in]  data Callback data.
+ * @return Status code.
  */
-typedef const void *(*ib_cfgmap_get_fn_t)(
+typedef ib_status_t (*ib_cfgmap_get_fn_t)(
     const void       *base,
+    void             *pval,
     const ib_field_t *field,
     void             *data
 );
@@ -101,7 +103,7 @@ typedef const void *(*ib_cfgmap_get_fn_t)(
 typedef ib_status_t (*ib_cfgmap_set_fn_t)(
     void       *base,
     ib_field_t *field,
-    const void *value,
+    void       *value,
     void       *data
 );
 
@@ -198,27 +200,27 @@ ib_status_t DLL_PUBLIC ib_cfgmap_init(ib_cfgmap_t *cm,
  *
  * @param cm Configuration map
  * @param name Configuration entry name
- * @param data Data to assign to entry
+ * @param in_val Value to assign to entry
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_set(ib_cfgmap_t *cm,
                                      const char *name,
-                                     const void *data);
+                                     void *in_val);
 
 /**
  * Get a configuration value.
  *
  * @param cm Configuration map
  * @param name Configuration entry name
- * @param pval Address which the value is written
+ * @param out_val Address which the value is written
  * @param ptype Address which the value type is written if non-NULL
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgmap_get(const ib_cfgmap_t *cm,
                                      const char *name,
-                                     const void *pval, ib_ftype_t *ptype);
+                                     void *out_val, ib_ftype_t *ptype);
 
 
 /** @} IronBeeUtilCfgMap */

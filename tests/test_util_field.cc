@@ -20,6 +20,7 @@
 /// @brief IronBee - Field Test Functions
 /// 
 /// @author Brian Rectanus <brectanus@qualys.com>
+/// @author Christopher Alfeld <calfeld@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
 #include "ironbee_config_auto.h"
@@ -46,6 +47,7 @@ public:
         if (rc != IB_OK) {
             throw std::runtime_error("Could not create mpool.");
         }
+        ib_util_log_level(1000); // XXX
     }
     
     ~TestIBUtilField()
@@ -68,13 +70,13 @@ TEST_F(TestIBUtilField, test_field_create)
     ib_num_t numval = 5;
     ib_bytestr_t *bytestrval;
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr"), IB_FTYPE_NULSTR, &nulstrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr"), IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulstrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(11UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_nulstr", f->name, 11));
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num"), IB_FTYPE_NUM, &numval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num"), IB_FTYPE_NUM, ib_ftype_num_in(&numval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(8UL, f->nlen);
@@ -84,21 +86,21 @@ TEST_F(TestIBUtilField, test_field_create)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr"), IB_FTYPE_BYTESTR, &bytestrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr"), IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(12UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_bytestr", f->name, 12));
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr_ex"),  IB_FTYPE_NULSTR, &nulstrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr_ex"),  IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulstrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num_ex"),  IB_FTYPE_NUM, &numval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num_ex"),  IB_FTYPE_NUM, ib_ftype_num_in(&numval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr_ex"),  IB_FTYPE_BYTESTR, &bytestrval);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr_ex"),  IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 }
@@ -111,40 +113,52 @@ static char g_dyn_call_val[1024];
 // a global buffer so that the number of calls can be tracked.  One of the
 // tests is to determine if the function was called only once (result
 // cached).
-static const void *dyn_get(const ib_field_t *f,
-                           const void *arg,
-                           size_t alen,
-                           void *data)
+static ib_status_t dyn_get(
+    const ib_field_t *f,
+    void *out_value,
+    const void *arg,
+    size_t alen,
+    void *data
+)
 {
     /* Keep track of how many times this was called */
     ++g_dyn_call_count;
 
     snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_call%02d", (const char *)data, (int)alen, (const char *)arg, g_dyn_call_count);
-
-    return (const void *)g_dyn_call_val;
+    
+    *reinterpret_cast<const char**>(out_value) = g_dyn_call_val;
+    
+    return IB_OK;
 }
 
 // Cached version of the above dyn_get function.
-static const void *dyn_get_cached(const ib_field_t *f,
-                            const void *arg,
-                            size_t alen,
-                            void *data)
+static ib_status_t dyn_get_cached(
+    const ib_field_t *f,
+    void *out_value,
+    const void *arg,
+    size_t alen,
+    void *data
+)
 {
     /* Call the get function */
-    const void *cval = dyn_get(f, arg, alen, data);
+    const char* cval;
+    dyn_get(f, &cval, arg, alen, data);
 
     /* Cache the value */
     /* Caching does not semantically change value, so we can safely ignore
      * the constness of f. */
-    ib_field_setv_static((ib_field_t*)f, &cval);
+    ib_field_make_static((ib_field_t*)f);
+    ib_field_setv((ib_field_t*)f, ib_ftype_nulstr_in(cval));
     
-    return (const void *)cval;
+    *reinterpret_cast<const char**>(out_value) = cval;
+    
+    return IB_OK;
 }
 
 static ib_status_t dyn_set(
     ib_field_t *field,
     const void *arg, size_t alen,
-    const void *val, 
+    void *val, 
     void *data
 )
 {
@@ -164,17 +178,23 @@ TEST_F(TestIBUtilField, test_dyn_field)
     const char *fval;
 
     /* Create a field with no initial value. */
-    rc = ib_field_create(&dynf, m_pool, IB_FIELD_NAME("test_dynf"), IB_FTYPE_NULSTR, NULL);
+    rc = ib_field_create_dynamic(
+        &dynf, m_pool, 
+        IB_FIELD_NAME("test_dynf"), IB_FTYPE_NULSTR, 
+        dyn_get, (void*)"dynf_get",
+        dyn_set, (void*)"dynf_set"
+    );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(dynf);
     ASSERT_EQ(9UL, dynf->nlen);
     ASSERT_EQ(0, memcmp("test_dynf", dynf->name, 9));
 
-    ib_field_dyn_register_get(dynf, dyn_get, (void*)"dynf_get");
-    ib_field_dyn_register_set(dynf, dyn_set, (void*)"dynf_set");
-
     /* Get the value from the dynamic field. */
-    fval = ib_field_value_nulstr_ex(dynf, (void *)"fetch1", 6);
+    rc = ib_field_value_ex(dynf, 
+        ib_ftype_nulstr_out(&fval),
+        (void*)"fetch1", 6
+    );
+    ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(fval);
     ASSERT_EQ(
         std::string("testval_dynf_get_fetch1_call01"), 
@@ -182,7 +202,11 @@ TEST_F(TestIBUtilField, test_dyn_field)
     );
 
     /* Get the value from the dynamic field again. */
-    fval = ib_field_value_nulstr_ex(dynf, (void *)"fetch2", 6);
+    rc = ib_field_value_ex(dynf, 
+        ib_ftype_nulstr_out(&fval),
+        (void*)"fetch2", 6
+    );
+    ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(fval);
     ASSERT_EQ(
         std::string("testval_dynf_get_fetch2_call02"),
@@ -198,17 +222,23 @@ TEST_F(TestIBUtilField, test_dyn_field)
     g_dyn_call_count = 0;
 
     /* Create another field with no initial value. */
-    rc = ib_field_create(&cdynf, m_pool, IB_FIELD_NAME("test_cdynf"), IB_FTYPE_NULSTR, NULL);
+    rc = ib_field_create_dynamic(
+        &cdynf, m_pool, 
+        IB_FIELD_NAME("test_cdynf"), IB_FTYPE_NULSTR, 
+        dyn_get_cached, (void*)("cdynf_get"),
+        dyn_set, NULL
+    );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(cdynf);
     ASSERT_EQ(10UL, cdynf->nlen);
     ASSERT_EQ(0, memcmp("test_cdynf", cdynf->name, 10));
 
-    /* Make it a dynamic field which calls dyn_get_cached() with "cdynf" as the data. */
-    ib_field_dyn_register_get(cdynf, dyn_get_cached, (void *)"cdynf_get");
-
     /* Get the value from the dynamic field. */
-    fval = ib_field_value_nulstr_ex(cdynf, (void *)"fetch1", 6);
+    rc = ib_field_value_ex(cdynf, 
+        ib_ftype_nulstr_out(&fval),
+        (void*)"fetch1", 6
+    );
+    ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(fval);
     ASSERT_EQ(
         std::string("testval_cdynf_get_fetch1_call01"),
@@ -216,10 +246,30 @@ TEST_F(TestIBUtilField, test_dyn_field)
     );
 
     /* Get the value from the dynamic field again. */
-    fval = ib_field_value_nulstr_ex(cdynf, NULL, 0);
+    rc = ib_field_value_ex(cdynf, 
+        ib_ftype_nulstr_out(&fval),
+        NULL, 0
+    );
+    ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(fval);
     ASSERT_EQ(
         std::string("testval_cdynf_get_fetch1_call01"),
         fval
     );
+}
+
+TEST_F(TestIBUtilField, Alias)
+{
+    char *s = NULL;
+    const char *v;
+    ib_field_t *f;
+    ib_status_t rc;
+    
+    rc = ib_field_create_alias(&f, m_pool, "foo", 3, IB_FTYPE_NULSTR, 
+        ib_ftype_nulstr_mutable_out(&s));
+    ASSERT_EQ(IB_OK, rc);
+    v = "hello";
+    rc = ib_field_setv(f, ib_ftype_nulstr_in(v));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(std::string(v), std::string(s));
 }

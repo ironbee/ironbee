@@ -199,11 +199,12 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
     if (rc == IB_OK) {
         ib_log_debug(dpi->pr->ib, 9,
                      "Setting bytestr value for \"%s\" field", name);
-        /* This is sort of hackish but allows us to update the bytestr
-         * in place.
-         */
-        assert(! ib_field_is_dynamic(f));
-        ibs = (ib_bytestr_t*)ib_field_value_bytestr(f);
+
+        rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
         rc = ib_bytestr_setv_const(ibs, (const uint8_t *)bstr_ptr(bs), bstr_len(bs));
 
         return rc;
@@ -240,12 +241,12 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
     }
     if (rc == IB_OK && f != NULL) {
         ib_field_t *lf;
-        int value = 1;
+        ib_num_t value = 1;
         ib_field_create(&lf,
                         itx->mp,
                         IB_FIELD_NAME(flag),
                         IB_FTYPE_NUM,
-                        &value);
+                        ib_ftype_num_in(&value));
         rc = ib_field_list_add(f, lf);
         if (rc != IB_OK) {
             ib_log_debug(ib, 9, "Failed to add %s field: %s",
@@ -1277,7 +1278,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem(&lf,
+                rc = ib_field_create_bytestr_alias(&lf,
                                            itx->mp,
                                            bstr_ptr(h->name),
                                            bstr_len(h->name),
@@ -1319,7 +1320,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem(&lf,
+                rc = ib_field_create_bytestr_alias(&lf,
                                            itx->mp,
                                            bstr_ptr(key),
                                            bstr_len(key),
@@ -1360,7 +1361,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem(&lf,
+                rc = ib_field_create_bytestr_alias(&lf,
                                            itx->mp,
                                            bstr_ptr(key),
                                            bstr_len(key),
@@ -1460,7 +1461,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                 ib_field_t *lf;
 
                 /* Create a list field as an alias into htp memory. */
-                rc = ib_field_alias_mem(&lf,
+                rc = ib_field_create_bytestr_alias(&lf,
                                            itx->mp,
                                            bstr_ptr(h->name),
                                            bstr_len(h->name),

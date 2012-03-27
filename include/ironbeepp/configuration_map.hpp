@@ -595,7 +595,7 @@ namespace Internal {
 
 //! Type of getter translator.
 typedef boost::function<
-    const void*(const void*, const ib_field_t*)
+    void(const void*, void*, const ib_field_t*)
 > configuration_map_init_getter_translator_t;
 
 //! Type of setter translator.
@@ -859,20 +859,21 @@ public:
     }
 
     //! Translate parameters and call getter.
-    const void* operator()(
+    void operator()(
         const void*       base,
+        void*             out_value,
         const ib_field_t* field
     ) const
     {
         assert(base != NULL);
         assert(field != NULL);
         assert(field->type == IB_FTYPE_NUM);
+        assert(out_value != NULL);
 
-        return ib_field_dyn_return_num(field,
-            m_getter(
-                *reinterpret_cast<const ConfigurationData*>(base),
-                std::string(field->name, field->nlen)
-            )
+        ib_num_t* n = reinterpret_cast<ib_num_t*>(out_value);
+        *n = m_getter(
+            *reinterpret_cast<const ConfigurationData*>(base),
+            std::string(field->name, field->nlen)
         );
     }
 
@@ -962,20 +963,21 @@ public:
     }
 
     //! Translate parameters and call getter.
-    const void* operator()(
+    void operator()(
         const void*       base,
+        void*             out_value,
         const ib_field_t* field
     ) const
     {
         assert(base != NULL);
         assert(field != NULL);
         assert(field->type == IB_FTYPE_UNUM);
+        assert(out_value != NULL);
 
-        return ib_field_dyn_return_unum(field,
-            m_getter(
-                *reinterpret_cast<const ConfigurationData*>(base),
-                std::string(field->name, field->nlen)
-            )
+        ib_unum_t* n = reinterpret_cast<ib_unum_t*>(out_value);
+        *n = m_getter(
+            *reinterpret_cast<const ConfigurationData*>(base),
+            std::string(field->name, field->nlen)
         );
     }
 
@@ -1063,16 +1065,19 @@ public:
     }
 
     //! Translate parameters and call getter.
-    const void* operator()(
+    void operator()(
         const void*       base,
+        void*             out_value,
         const ib_field_t* field
     ) const
     {
         assert(base != NULL);
         assert(field != NULL);
         assert(field->type == IB_FTYPE_NULSTR);
+        assert(out_value != NULL);
 
-        return m_getter(
+        const char** c = reinterpret_cast<const char**>(out_value);
+        *c = m_getter(
             *reinterpret_cast<const ConfigurationData*>(base),
             std::string(field->name, field->nlen)
         );
@@ -1162,16 +1167,20 @@ public:
     }
 
     //! Translate parameters and call getter.
-    const void* operator()(
+    void operator()(
         const void*       base,
+        void*             out_value,
         const ib_field_t* field
     ) const
     {
         assert(base != NULL);
         assert(field != NULL);
         assert(field->type == IB_FTYPE_BYTESTR);
+        assert(out_value != NULL);
 
-        return m_getter(
+        const ib_bytestr_t** b =
+            reinterpret_cast<const ib_bytestr_t**>(out_value);
+        *b = m_getter(
             *reinterpret_cast<const ConfigurationData*>(base),
             std::string(field->name, field->nlen)
         ).ib();
@@ -1267,16 +1276,20 @@ public:
     }
 
     //! Translate parameters and call getter.
-    const void* operator()(
+    void operator()(
         const void*       base,
+        void*             out_value,
         const ib_field_t* field
     ) const
     {
         assert(base != NULL);
         assert(field != NULL);
         assert(field->type == IB_FTYPE_BYTESTR);
+        assert(out_value != NULL);
 
-        return ByteString::create(m_mpool,
+        const ib_bytestr_t** b =
+            reinterpret_cast<const ib_bytestr_t**>(out_value);
+        *b = ByteString::create(m_mpool,
             m_getter(
                 *reinterpret_cast<const ConfigurationData*>(base),
                 std::string(field->name, field->nlen)

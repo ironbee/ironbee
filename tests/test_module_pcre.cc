@@ -91,7 +91,7 @@ TEST_F(PcreModuleTest, test_load_module)
             ib_engine->mp,
             IB_FIELD_NAME("field1"),
             IB_FTYPE_NULSTR,
-            &str1
+            ib_ftype_nulstr_in(str1)
         )
     );
 
@@ -102,7 +102,7 @@ TEST_F(PcreModuleTest, test_load_module)
             ib_engine->mp,
             IB_FIELD_NAME("field2"),
             IB_FTYPE_NULSTR,
-            &str2
+            ib_ftype_nulstr_in(str2)
         )
     );
 
@@ -144,9 +144,10 @@ TEST_F(PcreModuleTest, test_load_module)
 TEST_F(PcreModuleTest, matches)
 {
     ib_field_t *ib_field;
-    ib_bytestr_t *ib_bytestr;
+    const ib_bytestr_t *ib_bytestr;
     char* s;
     size_t s_sz;
+    ib_status_t rc;
 
     ib_data_get(ib_tx->dpi, "TX.0", &ib_field);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
@@ -160,7 +161,8 @@ TEST_F(PcreModuleTest, matches)
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
-    ib_bytestr = (ib_bytestr_t*) ib_field_value(ib_field);
+    rc = ib_field_value(ib_field, ib_ftype_bytestr_out(&ib_bytestr));
+    ASSERT_EQ(IB_OK, rc);
 
     /* Check that a value is over written correctly. */
     s_sz = ib_bytestr_length(ib_bytestr);

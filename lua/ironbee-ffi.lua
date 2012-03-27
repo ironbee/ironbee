@@ -326,19 +326,21 @@ ffi.cdef [[
 
     /* Field */
     ib_status_t ib_field_create(ib_field_t **pf,
-                                   ib_mpool_t *mp,
-                                   const char *name,
-                                   size_t nlen,
-                                   ib_ftype_t type,
-                                   void *pval);
+                                ib_mpool_t *mp,
+                                const char *name,
+                                size_t nlen,
+                                ib_ftype_t type,
+                                void *in_pval);
     ib_status_t ib_field_copy(ib_field_t **pf,
-                                 ib_mpool_t *mp,
-                                 const char *name,
-                                 size_t nlen,
-                                 ib_field_t *src);
+                              ib_mpool_t *mp,
+                              const char *name,
+                              size_t nlen,
+                              const ib_field_t *src);
     ib_status_t ib_field_list_add(ib_field_t *f, ib_field_t *val);
-    void *ib_field_value(ib_field_t *f);
-    ib_status_t ib_field_setv(ib_field_t *f, void *pval);
+    ib_status_t ib_field_value(const ib_field_t *f, void *out_val);
+    ib_status_t ib_field_mutable_value(const ib_field_t *f, 
+                                       void *out_val);
+    ib_status_t ib_field_setv(ib_field_t *f, void *in_pval);
 
     /* Context */
     ib_context_t *ib_context_engine(ib_engine_t *ib);

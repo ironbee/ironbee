@@ -193,13 +193,25 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
     }
 
     /* Handle NUL-terminated strings and byte strings */
-    if (field->type==IB_FTYPE_NULSTR) {
-        const char *fval = ib_field_value_nulstr(field);
+    if (field->type == IB_FTYPE_NULSTR) {
+        const char *fval;
+        rc = ib_field_value(field, ib_ftype_nulstr_out(&fval));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         *result = (strcmp(fval,expanded) == 0);
     }
-    else if (field->type==IB_FTYPE_BYTESTR) {
-        const ib_bytestr_t *value = ib_field_value_bytestr(field);
-        size_t                len = ib_bytestr_length(value);
+    else if (field->type == IB_FTYPE_BYTESTR) {
+        const ib_bytestr_t *value;
+        size_t                len;
+
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&value));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        len = ib_bytestr_length(value);
 
         if (len == strlen(expanded)) {
             *result = (memcmp(ib_bytestr_const_ptr(value), expanded, len) == 0);
@@ -257,7 +269,13 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
      * configuration parser can't produce anything else).
      **/
     if (field->type == IB_FTYPE_NULSTR) {
-        if (strstr(ib_field_value_nulstr(field), expanded) == NULL) {
+        const char *s;
+        rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        if (strstr(s, expanded) == NULL) {
             *result = 0;
         }
         else {
@@ -265,7 +283,12 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
         }
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
-        const ib_bytestr_t *str = ib_field_value_bytestr(field);
+        const ib_bytestr_t *str;
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&str));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         if (ib_bytestr_index_of_c(str, expanded) == -1) {
             *result = 0;
         }
@@ -500,7 +523,10 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
      * configuration parser can't produce anything else).
      **/
     if (field->type==IB_FTYPE_NULSTR) {
-        ipstr = ib_field_value_nulstr( field );
+        rc = ib_field_value(field, ib_ftype_nulstr_out(&ipstr));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
 
         /* Verify that we got out a string */
         if (ipstr == NULL) {
@@ -510,7 +536,11 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
         iplen = strlen(ipstr);
     }
     else if (field->type==IB_FTYPE_BYTESTR) {
-        const ib_bytestr_t *bs = ib_field_value_bytestr(field);
+        const ib_bytestr_t *bs;
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
 
         /* Verify that we got out a bytestr */
         assert(bs != NULL);
@@ -677,17 +707,36 @@ static ib_status_t field_to_num(ib_engine_t *ib,
     ib_status_t rc;
 
     switch (field->type) {
-        case IB_FTYPE_NUM :
-            *result = *ib_field_value_num(field);
+        case IB_FTYPE_NUM:
+            rc = ib_field_value(field, ib_ftype_num_out(result));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
             break;
 
         case IB_FTYPE_UNUM :
-            *result = * (ib_num_t*)(ib_field_value_num(field));
-            break;
+            {
+                ib_unum_t n;
+                rc = ib_field_value(field, ib_ftype_unum_out(&n));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
 
+                if (n > INT64_MAX) {
+                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                }
+
+                *result = (ib_num_t)n;
+                break;
+            }
         case IB_FTYPE_NULSTR :
             {
-                const char *fval = ib_field_value_nulstr(field);
+                const char *fval;
+                rc = ib_field_value(field, ib_ftype_nulstr_out(&fval));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+
                 rc = ib_string_to_num(fval, 0, result);
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -697,7 +746,11 @@ static ib_status_t field_to_num(ib_engine_t *ib,
 
         case IB_FTYPE_BYTESTR:
             {
-                const ib_bytestr_t *bs = ib_field_value_bytestr(field);
+                const ib_bytestr_t *bs;
+                rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
 
                 rc = ib_string_to_num_ex(
                     (const char *)ib_bytestr_const_ptr(bs),

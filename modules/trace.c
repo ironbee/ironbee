@@ -439,8 +439,12 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
     }
 
     /* The field value *should* be a list, extract it as such */
-    // @todo Remove const casting once list is const correct.
-    lst = (ib_list_t *)ib_field_value_list(req);
+    // @todo Remove mutable once list is const correct.
+    rc = ib_field_mutable_value(req, ib_ftype_list_mutable_out(&lst));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     if (lst == NULL) {
         ib_log_debug(ib, 4, "%s: Field list missing / incorrect type",
                      eventp->name );
@@ -455,7 +459,10 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
         char buf[128];
 
         /* Get the bytestr that's the field value */
-        bs = ib_field_value_bytestr(field);
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
 
         /* Copy the value into a buffer */
         memset(buf, 0, sizeof(buf));

@@ -435,7 +435,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
             tx->mp,
             IB_FIELD_NAME(svdata->name),
             svdata->type,
-            (void *)&bs
+            ib_ftype_bytestr_in(bs)
         );
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
@@ -468,7 +468,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
             tx->mp,
             IB_FIELD_NAME(svdata->name),
             svdata->type,
-            (void *)&(svdata->value.num)
+            ib_ftype_num_in(&svdata->value.num)
         );
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
@@ -499,14 +499,24 @@ static ib_status_t act_setvar_execute(void *cbdata,
 
         /* Handle num and unum types */
         if (cur->type == IB_FTYPE_NUM) {
-            ib_num_t num = *ib_field_value_num(cur);
+            ib_num_t num;
+            rc = ib_field_value(cur, ib_ftype_num_out(&num));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
             num += svdata->value.num;
-            ib_field_setv(cur, &num);
+            ib_field_setv(cur, ib_ftype_num_in(&num));
         }
         else if (cur->type == IB_FTYPE_UNUM) {
-            ib_unum_t num = *ib_field_value_unum(cur);
+            ib_unum_t num;
+            rc = ib_field_setv(cur, ib_ftype_unum_out(&num));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
             num += (ib_unum_t)svdata->value.num;
-            ib_field_setv(cur, &num);
+            ib_field_setv(cur, ib_ftype_unum_in(&num));
         }
         else {
             ib_log_error(tx->ib, 4,

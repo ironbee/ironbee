@@ -39,8 +39,9 @@ namespace Hooks {
 
 extern "C" {
 
-const void* cfgmap_get(
+ib_status_t cfgmap_get(
     const void*       base,
+    void*             out_value,
     const ib_field_t* field,
     void*             cbdata
 )
@@ -49,25 +50,20 @@ const void* cfgmap_get(
 
     assert(base != NULL);
 
-    const void* result;
     ib_status_t rc = IBPP_TRY_CATCH(NULL,(
-        result = Internal::data_to_value<
+        Internal::data_to_value<
             configuration_map_init_getter_translator_t
         >(cbdata)(
-            base, field
+            base, out_value, field
         )
     ));
-    if (rc == IB_OK) {
-        return result;
-    } else {
-        return NULL;
-    }
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t cfgmap_set(
     void*       base,
     ib_field_t* field,
-    const void* value,
+    void*       in_value,
     void*       cbdata
 )
 {
@@ -79,13 +75,14 @@ ib_status_t cfgmap_set(
         Internal::data_to_value<
             configuration_map_init_setter_translator_t
         >(cbdata)(
-            base, field, value
+            base, field, in_value
         )
     ));
 }
 
-const void* cfgmap_handle_get(
+ib_status_t cfgmap_handle_get(
     const void*       handle,
+    void*             out_value,
     const ib_field_t* field,
     void*             cbdata
 )
@@ -94,17 +91,20 @@ const void* cfgmap_handle_get(
 
     assert(handle != NULL);
 
-    return cfgmap_get(
-        *reinterpret_cast<const void* const*>(handle),
-        field,
-        cbdata
+    IB_FTRACE_RET_STATUS(
+        cfgmap_get(
+            *reinterpret_cast<const void* const*>(handle),
+            out_value,
+            field,
+            cbdata
+        )
     );
 }
 
 ib_status_t cfgmap_handle_set(
     void*       handle,
     ib_field_t* field,
-    const void* value,
+    void*       value,
     void*       cbdata
 )
 {

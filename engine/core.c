@@ -1125,20 +1125,28 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
         case IB_FTYPE_NUM:
             /// @todo Make sure this is atomic
             /// @todo Check for overflow
-            num = *(ib_field_value_num(f)) + adjval;
-            ib_field_setv(f, &num);
+            rc = ib_field_value(f, ib_ftype_num_out(&num));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            num += adjval;
+            rc = ib_field_setv(f, ib_ftype_num_in(&num));
             break;
         case IB_FTYPE_UNUM:
             /// @todo Make sure this is atomic
             /// @todo Check for overflow
-            unum = *(ib_field_value_unum(f)) + adjval;
-            ib_field_setv(f, &unum);
+            rc = ib_field_value(f, ib_ftype_unum_out(&unum));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            unum += adjval;
+            rc = ib_field_setv(f, ib_ftype_unum_in(&unum));
             break;
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -1180,7 +1188,10 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
         if (rc == IB_OK) {
             /* Try dynamic lookup. */
             if(ib_field_is_dynamic(*pf)) {
-                *pf = (ib_field_t *)ib_field_value_ex(*pf, (void *)subkey, sklen);
+                rc = ib_field_value_ex(*pf, pf, (void *)subkey, sklen);
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
                 if (*pf == NULL) {
                     IB_FTRACE_RET_STATUS(IB_ENOENT);
                 }
@@ -1188,10 +1199,15 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
             }
             else if ((*pf)->type == IB_FTYPE_LIST) {
                 ib_list_node_t *node;
+                ib_list_t *list;
+                // @todo Remove mutable once list is const correct.
+                rc = ib_field_value(*pf, ib_ftype_list_mutable_out(&list));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
 
                 /* Lookup the subkey value in the field list. */
-                // @todo Remove const casting once list is const correct.
-                IB_LIST_LOOP((ib_list_t *)ib_field_value_list(*pf), node) {
+                IB_LIST_LOOP(list, node) {
                     ib_field_t *sf = (ib_field_t *)ib_list_node_data(node);
 
                     if (   (sf->nlen == sklen)
@@ -1791,6 +1807,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     ib_engine_t *ib = part->log->ib;
     ib_field_t *f;
     uint8_t *rec;
+    ib_status_t rc;
 
 #define CORE_JSON_MAX_FIELD_LEN 256
 
@@ -1836,49 +1853,81 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /// @todo Quote values
         switch(f->type) {
-            case IB_FTYPE_NULSTR:
-                rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                                "  \"%" IB_BYTESTR_FMT "\": \"%s\"%s\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                ib_field_value_nulstr(f),
-                                comma);
-                break;
-            case IB_FTYPE_BYTESTR:
-                rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                                "  \"%" IB_BYTESTR_FMT "\": "
-                                "\"%" IB_BYTESTR_FMT "\"%s\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                IB_BYTESTR_FMT_PARAM(ib_field_value_bytestr(f)),
-                                comma);
-                break;
-            case IB_FTYPE_NUM:
-                rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                                "  \"%" IB_BYTESTR_FMT "\": "
-                                "%" PRIdMAX "%s\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                *(intmax_t *)ib_field_value_num(f),
-                                comma);
-                break;
-            case IB_FTYPE_UNUM:
-                rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                                "  \"%" IB_BYTESTR_FMT "\": "
-                                "%" PRIuMAX "%s\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                *(uintmax_t *)ib_field_value_unum(f),
-                                comma);
-                break;
-            case IB_FTYPE_LIST:
-                rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                                "  \"%" IB_BYTESTR_FMT "\": [ \"TODO: Handle lists in json conversion\" ]%s\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                comma);
-                break;
-            default:
-                rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                                "  \"%" IB_BYTESTR_FMT "\": \"-\"%s\r\n",
-                                IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                                comma);
-                break;
+        case IB_FTYPE_NULSTR:
+        {
+            const char *ns;
+            rc = ib_field_value(f, ib_ftype_nulstr_out(&ns));
+            if (rc != IB_OK) {
+                return 0;
+            }
+
+            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
+                            "  \"%" IB_BYTESTR_FMT "\": \"%s\"%s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            ns,
+                            comma);
+            break;
+        }
+        case IB_FTYPE_BYTESTR:
+        {
+            const ib_bytestr_t *bs;
+            rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
+            if (rc != IB_OK) {
+                return 0;
+            }
+
+            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
+                            "  \"%" IB_BYTESTR_FMT "\": "
+                            "\"%" IB_BYTESTR_FMT "\"%s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            IB_BYTESTR_FMT_PARAM(bs),
+                            comma);
+            break;
+        }
+        case IB_FTYPE_NUM:
+        {
+            ib_num_t n;
+            rc = ib_field_value(f, ib_ftype_num_out(&n));
+            if (rc != IB_OK) {
+                return 0;
+            }
+
+            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
+                            "  \"%" IB_BYTESTR_FMT "\": "
+                            "%" PRIdMAX "%s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            *(intmax_t *)n,
+                            comma);
+            break;
+        }
+        case IB_FTYPE_UNUM:
+        {
+            ib_unum_t u;
+            rc = ib_field_value(f, ib_ftype_unum_out(&u));
+            if (rc != IB_OK) {
+                return 0;
+            }
+
+            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
+                            "  \"%" IB_BYTESTR_FMT "\": "
+                            "%" PRIuMAX "%s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            *(uintmax_t *)u,
+                            comma);
+            break;
+        }
+        case IB_FTYPE_LIST:
+            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
+                            "  \"%" IB_BYTESTR_FMT "\": [ \"TODO: Handle lists in json conversion\" ]%s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            comma);
+            break;
+        default:
+            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
+                            "  \"%" IB_BYTESTR_FMT "\": \"-\"%s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            comma);
+            break;
         }
 
         /* Verify size. */
@@ -1918,6 +1967,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
     ib_field_t *f;
     uint8_t *rec;
     size_t rlen;
+    ib_status_t rc;
 
 #define CORE_HEADER_MAX_FIELD_LEN 8192
 
@@ -1939,10 +1989,17 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
         part->gen_data = ib_list_first(list);
         f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
         if ((f != NULL) && (f->type == IB_FTYPE_BYTESTR)) {
+            const ib_bytestr_t *bs;
             rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_HEADER_MAX_FIELD_LEN);
+
+            rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
+            if (rc != IB_OK) {
+                return 0;
+            }
+
             rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
                             "%" IB_BYTESTR_FMT "\r\n",
-                            IB_BYTESTR_FMT_PARAM(ib_field_value_bytestr(f)));
+                            IB_BYTESTR_FMT_PARAM(bs));
 
             /* Verify size. */
             if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
@@ -1986,25 +2043,40 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
 
     /// @todo Quote values
     switch(f->type) {
-        case IB_FTYPE_NULSTR:
-            rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
-                            "%" IB_BYTESTR_FMT ": %s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            ib_field_value_nulstr(f));
-            break;
-        case IB_FTYPE_BYTESTR:
-            rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
-                            "%" IB_BYTESTR_FMT ": "
-                            "%" IB_BYTESTR_FMT "\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            IB_BYTESTR_FMT_PARAM(ib_field_value_bytestr(f)));
-            break;
-        default:
-            rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
-                            "%" IB_BYTESTR_FMT ": IronBeeError - unhandled header type %d\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            f->type);
-            break;
+    case IB_FTYPE_NULSTR:
+    {
+        const char *s;
+        rc = ib_field_value(f, ib_ftype_nulstr_out(&s));
+        if (rc != IB_OK) {
+            return 0;
+        }
+
+        rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
+                        "%" IB_BYTESTR_FMT ": %s\r\n",
+                        IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                        s);
+        break;
+    }
+    case IB_FTYPE_BYTESTR:
+    {
+        const ib_bytestr_t *bs;
+        rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            return 0;
+        }
+        rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
+                        "%" IB_BYTESTR_FMT ": "
+                        "%" IB_BYTESTR_FMT "\r\n",
+                        IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                        IB_BYTESTR_FMT_PARAM(bs));
+        break;
+    }
+    default:
+        rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
+                        "%" IB_BYTESTR_FMT ": IronBeeError - unhandled header type %d\r\n",
+                        IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                        f->type);
+        break;
     }
 
     /* Verify size. */
@@ -2248,49 +2320,49 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("tx-time"),
                        (uint8_t *)txtime,
                        strlen(txtime));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("log-timestamp"),
                        (uint8_t *)tstamp,
                        strlen(tstamp));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("log-format"),
                        (uint8_t *)log_format,
                        strlen(log_format));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("log-id"),
                        (uint8_t *)cfg->boundary,
                        strlen(cfg->boundary));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("sensor-id"),
                        (uint8_t *)ib->sensor_id_str,
                        strlen(ib->sensor_id_str));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("sensor-name"),
                        (uint8_t *)ib->sensor_name,
                        strlen(ib->sensor_name));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("sensor-version"),
                        (uint8_t *)ib->sensor_version,
                        strlen(ib->sensor_version));
     ib_list_push(list, f);
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("sensor-hostname"),
                        (uint8_t *)ib->sensor_hostname,
                        strlen(ib->sensor_hostname));
@@ -2298,13 +2370,13 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
     site = ib_context_site_get(log->ctx);
     if (site != NULL) {
-        ib_field_alias_mem(&f, pool,
+        ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("site-id"),
                            (uint8_t *)site->id_str,
                            strlen(site->id_str));
         ib_list_push(list, f);
 
-        ib_field_alias_mem(&f, pool,
+        ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("site-name"),
                            (uint8_t *)site->name,
                            strlen(site->name));
@@ -2366,7 +2438,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     ib_field_create(&f, pool,
                     IB_FIELD_NAME("tx-num"),
                     IB_FTYPE_UNUM,
-                    &tx_num);
+                    ib_ftype_unum_in(&tx_num));
     ib_list_push(list, f);
 
     if (tx != NULL) {
@@ -2377,19 +2449,19 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         }
         ib_timestamp(tstamp, tx->t.request_started);
 
-        ib_field_alias_mem(&f, pool,
+        ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("request-timestamp"),
                            (uint8_t *)tstamp,
                            strlen(tstamp));
         ib_list_push(list, f);
 
-        ib_field_alias_mem(&f, pool,
+        ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("tx-id"),
                            (uint8_t *)tx->id,
                            strlen(tx->id));
         ib_list_push(list, f);
 
-        ib_field_alias_mem(&f, pool,
+        ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("remote-addr"),
                            (uint8_t *)tx->conn->remote_ipstr,
                            strlen(tx->conn->remote_ipstr));
@@ -2398,10 +2470,10 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_field_create(&f, pool,
                         IB_FIELD_NAME("remote-port"),
                         IB_FTYPE_UNUM,
-                        &tx->conn->remote_port);
+                        ib_ftype_unum_in((ib_unum_t *)&tx->conn->remote_port));
         ib_list_push(list, f);
 
-        ib_field_alias_mem(&f, pool,
+        ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("local-addr"),
                            (uint8_t *)tx->conn->local_ipstr,
                            strlen(tx->conn->local_ipstr));
@@ -2410,12 +2482,12 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_field_create(&f, pool,
                         IB_FIELD_NAME("local-port"),
                         IB_FTYPE_UNUM,
-                        &tx->conn->local_port);
+                        ib_ftype_unum_in((ib_unum_t *)&tx->conn->local_port));
         ib_list_push(list, f);
 
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->path != NULL) {
-            ib_field_alias_mem(&f, pool,
+            ib_field_create_bytestr_alias(&f, pool,
                                IB_FIELD_NAME("request-uri-path"),
                                (uint8_t *)tx->path,
                                strlen(tx->path));
@@ -2440,7 +2512,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->hostname != NULL) {
-            ib_field_alias_mem(&f, pool,
+            ib_field_create_bytestr_alias(&f, pool,
                                IB_FIELD_NAME("request-hostname"),
                                (uint8_t *)tx->hostname,
                                strlen(tx->hostname));
@@ -2483,7 +2555,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_field_alias_mem(&f, pool,
+    ib_field_create_bytestr_alias(&f, pool,
                        IB_FIELD_NAME("response-timestamp"),
                        (uint8_t *)tstamp,
                        strlen(tstamp));
@@ -2548,8 +2620,12 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    // @todo Remove const casting once list is const correct.
-    IB_LIST_LOOP((ib_list_t *)ib_field_value_list(f), node) {
+    // @todo Remove mutable once list is const correct.
+    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&list));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    IB_LIST_LOOP(list, node) {
         ib_list_push(list, ib_list_node_data(node));
     }
 
@@ -2570,6 +2646,7 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
     ib_tx_t *tx = log->tx;
     ib_field_t *f;
     ib_status_t rc;
+    ib_stream_t *s;
 
     /* Get the field storing the raw body via stream buffer. */
     rc = ib_data_get(tx->dpi, "request_body", &f);
@@ -2578,10 +2655,16 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
     }
 
     /* Add the part to the auditlog. */
+    /// @todo Remove mutable once stream is const aware.
+    rc = ib_field_mutable_value(f, ib_ftype_sbuffer_mutable_out(&s));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = ib_auditlog_part_add(log,
                               "http-request-body",
                               "application/octet-stream",
-                              ib_field_value_stream(f),
+                              s,
                               ib_auditlog_gen_raw_stream,
                               NULL);
 
@@ -2620,8 +2703,13 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    // @todo Remove const casting once list is const correct.
-    IB_LIST_LOOP((ib_list_t *)ib_field_value_list(f), node) {
+    // @todo Remove mutable once list is const correct.
+    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&list));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_LIST_LOOP(list, node) {
         ib_list_push(list, ib_list_node_data(node));
     }
 
@@ -2642,6 +2730,7 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
     ib_tx_t *tx = log->tx;
     ib_field_t *f;
     ib_status_t rc;
+    ib_stream_t *s;
 
     /* Get the field storing the raw body via stream buffer. */
     rc = ib_data_get(tx->dpi, "response_body", &f);
@@ -2650,10 +2739,16 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
     }
 
     /* Add the part to the auditlog. */
+    /// @todo Remove mutable once stream is const aware.
+    rc = ib_field_mutable_value(f, ib_ftype_sbuffer_mutable_out(&s));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = ib_auditlog_part_add(log,
                               "http-response-body",
                               "application/octet-stream",
-                              ib_field_value_stream(f),
+                              s,
                               ib_auditlog_gen_raw_stream,
                               NULL);
 
@@ -4877,7 +4972,7 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
     ib_num_t parts;
     ib_status_t rc;
 
-    rc = ib_context_get(ctx, "auditlog_parts", &parts, NULL);
+    rc = ib_context_get(ctx, "auditlog_parts", ib_ftype_num_out(&parts), NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

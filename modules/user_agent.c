@@ -349,7 +349,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
         mp,
         IB_FIELD_NAME(name),
         IB_FTYPE_NULSTR,
-        &value
+        ib_ftype_nulstr_in(value)
     );
     if (rc != IB_OK) {
         ib_log_error(ib, 0,
@@ -524,7 +524,10 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     }
 
     /* Found it: copy the data into a newly allocated string buffer */
-    bs = ib_field_value_bytestr(req_agent);
+    rc = ib_field_value_type(req_agent, ib_ftype_bytestr_out(&bs), IB_FTYPE_BYTESTR);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Finally, split it up & store the components */
     rc = modua_agent_fields(ib, tx, bs);
@@ -574,7 +577,11 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 
 
     /* Found it: copy the data into a newly allocated string buffer */
-    bs = ib_field_value_bytestr(field);
+    rc = ib_field_value_type(field, ib_ftype_bytestr_out(&bs), IB_FTYPE_BYTESTR);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     if (bs == NULL) {
         ib_log_debug(ib, 4, "Forward header not a bytestr");
         IB_FTRACE_RET_STATUS(IB_EINVAL);

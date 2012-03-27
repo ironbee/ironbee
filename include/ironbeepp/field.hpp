@@ -343,7 +343,7 @@ public:
     * The lifetime of the value must be a superset of the lifetime of the
     * field.
     *
-    * Note: There is no equivalent to ib_field_alias_mem() as this is
+    * Note: There is no equivalent to ib_field_create_bytestr_alias() as this is
     * easily replaced with, e.g.,
     * @code
     * Field::create(pool, name, name_length, ByteString::create_alias(...))
@@ -354,7 +354,7 @@ public:
     /**
      * Create (signed) number field.
      *
-     * @param[in] pool Pool to use for memory allocation.
+     * @param[in] pool        Pool to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
@@ -370,7 +370,7 @@ public:
     /**
      * Create unsigned number field.
      *
-     * @param[in] pool Pool to use for memory allocation.
+     * @param[in] pool        Pool to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
@@ -386,7 +386,7 @@ public:
     /**
      * Create null string number field.
      *
-     * @param[in] pool Pool to use for memory allocation.
+     * @param[in] pool        Pool to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
@@ -402,7 +402,7 @@ public:
     /**
      * Create ByteString field.
      *
-     * @param[in] pool Pool to use for memory allocation.
+     * @param[in] pool        Pool to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
@@ -416,72 +416,189 @@ public:
     );
 
     /**
-     * Create (signed) number alias field.
+     * Create null string field without copy.
      *
-     * @param[in] pool Pool to use for memory allocation.
+     * @param[in] pool        Pool to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_alias_number(
+    static Field create_no_copy_null_string(
         MemoryPool  pool,
         const char* name,
         size_t      name_length,
-        int64_t&    value
+        char*       value
     );
 
     /**
-     * Create unsigned number alias field.
-     *
-     * @param[in] pool Pool to use for memory allocation.
-     * @param[in] name        Name of key.
-     * @param[in] name_length Length of @a name.
-     * @param[in] value       Value of field.
-     * @throws IronBee++ exception on any error.
-     **/
-    static Field create_alias_unsigned_number(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        uint64_t&   value
-    );
-
-    /**
-     * Create null string alias field.
-     *
-     * @param[in] pool Pool to use for memory allocation.
-     * @param[in] name        Name of key.
-     * @param[in] name_length Length of @a name.
-     * @param[in] value       Value of field.
-     * @throws IronBee++ exception on any error.
-     **/
-    static Field create_alias_null_string(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        const char* value
-    );
-
-    /**
-     * Create ByteString alias field.
+     * Create ByteString field without copy.
      *
      * @sa create_bytestr_alias()
      *
-     * @param[in] pool Pool to use for memory allocation.
+     * @param[in] pool        Pool to use for memory allocation.
      * @param[in] name        Name of key.
      * @param[in] name_length Length of @a name.
      * @param[in] value       Value of field.
      * @throws IronBee++ exception on any error.
      **/
-    static Field create_alias_byte_string(
-        MemoryPool      pool,
-        const char*     name,
-        size_t          name_length,
-        ConstByteString value
+    static Field create_no_copy_byte_string(
+        MemoryPool  pool,
+        const char* name,
+        size_t      name_length,
+        ByteString  value
     );
 
+    /**
+     * Create Number alias.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Where to store value.
+     **/
+    static Field create_alias_number(
+         MemoryPool  pool,
+         const char* name,
+         size_t      name_length,
+         int64_t&    value
+    );
+
+    /**
+     * Create Unsigned Number alias.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Where to store value.
+     **/
+    static Field create_alias_unsigned_number(
+         MemoryPool  pool,
+         const char* name,
+         size_t      name_length,
+         uint64_t&   value
+    );
+
+    /**
+     * Create null string alias.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Where to store value.
+     **/
+    static Field create_alias_null_string(
+         MemoryPool  pool,
+         const char* name,
+         size_t      name_length,
+         char*&      value
+    );
+
+    /**
+     * Create ByteString alias.
+     *
+     * Note that this uses the C type, ib_bytestr_t, instead of ByteString.
+     * This is because @a value represents a location to store the field
+     * value which is a C type.  You can turn that into a ByteString when you
+     * use it via @c ByteString(value).
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Where to store value.
+     **/
+    static Field create_alias_byte_string(
+         MemoryPool     pool,
+         const char*    name,
+         size_t         name_length,
+         ib_bytestr_t*& value
+    );
+
+    /**
+     * @name Dynamic Fields
+     * Methods relating to dynamic fields.
+     **/
+    /// @{
+
+    //! (Signed) Number field getter.
+    typedef boost::function<
+        int64_t(ConstField, const char*, size_t)
+    > number_get_t;
+    //! Unsigned Number field getter.
+    typedef boost::function<
+        uint64_t(ConstField, const char*, size_t)
+    > unsigned_number_get_t;
+    //! Null string field getter.
+    typedef boost::function<
+        const char*(ConstField, const char*, size_t)
+    > null_string_get_t;
+    //! ByteString field getter.
+    typedef boost::function<
+        ConstByteString(ConstField, const char*, size_t)
+    > byte_string_get_t;
+
+    //! (Signed) Number field setter.
+    typedef boost::function<
+        void(Field, const char*, size_t, int64_t)
+    > number_set_t;
+    //! Unsigned Number field setter.
+    typedef boost::function<
+        void(Field, const char*, size_t, uint64_t)
+    > unsigned_number_set_t;
+    //! Null string field setter.
+    typedef boost::function<
+        void(Field, const char*, size_t, const char*)
+    > null_string_set_t;
+    //! ByteString field setter.
+    typedef boost::function<
+        void(Field, const char*, size_t, ConstByteString)
+    > byte_string_set_t;
+
+    //! As create_number() but with dynamic setter/getter.
+    static Field create_dynamic_number(
+        MemoryPool   pool,
+        const char*  name,
+        size_t       name_length,
+        number_get_t get,
+        number_set_t set
+    );
+
+    //! As create_unsigned_number() but with dynamic setter/getter.
+    static Field create_dynamic_unsigned_number(
+        MemoryPool            pool,
+        const char*           name,
+        size_t                name_length,
+        unsigned_number_get_t get,
+        unsigned_number_set_t set
+    );
+
+    //! As create_null_string() but with dynamic setter/getter.
+    static Field create_dynamic_null_string(
+        MemoryPool        pool,
+        const char*       name,
+        size_t            name_length,
+        null_string_get_t get,
+        null_string_set_t set
+    );
+
+    //! As create_byte_string() but with dynamic setter/getter.
+    static Field create_dynamic_byte_string(
+        MemoryPool        pool,
+        const char*       name,
+        size_t            name_length,
+        byte_string_get_t get,
+        byte_string_set_t set
+    );
     ///@}
+    ///@}
+
+    /**
+     * Make field static.
+     *
+     * This should be immediately followed by a @c set_* call.  Will throw
+     * an einval if field is not dynamic.
+     **/
+    void make_static() const;
 
     /**
      * @name Value Setters
@@ -535,76 +652,33 @@ public:
         const char* arg, size_t arg_length
     ) const;
 
-    //! Set (signed) number value statically.
-    void set_static_number(int64_t value) const;
-    //! Set unsigned number value statically.
-    void set_static_unsigned_number(uint64_t value) const;
-    //! Set null string value statically.
-    void set_static_null_string(const char* value) const;
-    //! Set ByteString value statically.
-    void set_static_byte_string(ConstByteString value) const;
+    //! Set null string without copy.
+    void set_no_copy_null_string(char* value) const;
+    //! Set byte string without copy..
+    void set_no_copy_byte_string(ByteString value) const;
+
     ///@}
 
     /**
-     * @name Dynamic Fields
-     * Methods relating to dynamic fields.
+     * @name Mutable Value Getters
+     * Query the value.
      *
-     * Calling a @c register_ method with a functional that does not match
-     * the field type will result in an einval exception.
+     * Only the methods that correspond to type() will return the value.
+     * Others will throw einval.  Similarly, the forms that take an argument
+     * will throw einval if the field is not dynamic.
+     *
+     * Can not be used with dynamic fields.
      **/
-    /// @{
+    ///@{
 
-    //! (Signed) Number field getter.
-    typedef boost::function<
-        int64_t(ConstField, const char*, size_t)
-    > number_get_t;
-    //! Unsigned Number field getter.
-    typedef boost::function<
-        uint64_t(ConstField, const char*, size_t)
-    > unsigned_number_get_t;
-    //! Null string field getter.
-    typedef boost::function<
-        const char*(ConstField, const char*, size_t)
-    > null_string_get_t;
-    //! ByteString field getter.
-    typedef boost::function<
-        ConstByteString(ConstField, const char*, size_t)
-    > byte_string_get_t;
-
-    //! Register getter.
-    void register_dynamic_get_number(number_get_t                   f) const;
-    //! Register getter.
-    void register_dynamic_get_unsigned_number(unsigned_number_get_t f) const;
-    //! Register getter.
-    void register_dynamic_get_null_string(null_string_get_t         f) const;
-    //! Register getter.
-    void register_dynamic_get_byte_string(byte_string_get_t         f) const;
-
-    //! (Signed) Number field setter.
-    typedef boost::function<
-        void(Field, const char*, size_t, int64_t)
-    > number_set_t;
-    //! Unsigned Number field setter.
-    typedef boost::function<
-        void(Field, const char*, size_t, uint64_t)
-    > unsigned_number_set_t;
-    //! Null string field setter.
-    typedef boost::function<
-        void(Field, const char*, size_t, const char*)
-    > null_string_set_t;
-    //! ByteString field setter.
-    typedef boost::function<
-        void(Field, const char*, size_t, ConstByteString)
-    > byte_string_set_t;
-
-    //! Register setter.
-    void register_dynamic_set_number(number_set_t                   f) const;
-    //! Register setter.
-    void register_dynamic_set_unsigned_number(unsigned_number_set_t f) const;
-    //! Register setter.
-    void register_dynamic_set_null_string(null_string_set_t         f) const;
-    //! Register setter.
-    void register_dynamic_set_byte_string(byte_string_set_t         f) const;
+    //! Number mutable value accessor.
+    int64_t& mutable_value_as_number() const;
+    //! Unsigned number mutable value accessor.
+    uint64_t& mutable_value_as_unsigned_number() const;
+    //! Null string mutable value accessor.
+    char* mutable_value_as_null_string() const;
+    //! ByteString mutable value accessor.
+    ByteString mutable_value_as_byte_string() const;
 
     ///@}
 

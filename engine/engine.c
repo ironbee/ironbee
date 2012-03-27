@@ -2333,7 +2333,7 @@ ib_status_t ib_context_set_num(ib_context_t *ctx,
                                ib_num_t val)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, (void *)&val);
+    ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, ib_ftype_num_in(&val));
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -2342,7 +2342,7 @@ ib_status_t ib_context_set_string(ib_context_t *ctx,
                                   const char *val)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, (void *)&val);
+    ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, ib_ftype_nulstr_in(val));
     IB_FTRACE_RET_STATUS(rc);
 }
 

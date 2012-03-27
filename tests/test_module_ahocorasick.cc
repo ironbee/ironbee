@@ -73,7 +73,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
             ib_engine->mp, 
             IB_FIELD_NAME("field1"), 
             IB_FTYPE_NULSTR, 
-            &str1
+            ib_ftype_nulstr_in(str1)
         )
     );
 
@@ -84,7 +84,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
             ib_engine->mp,
             IB_FIELD_NAME("field2"), 
             IB_FTYPE_NULSTR, 
-            &str2
+            ib_ftype_nulstr_in(str2)
         )
     );
 
@@ -140,7 +140,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
             ib_engine->mp, 
             IB_FIELD_NAME("field1"), 
             IB_FTYPE_NULSTR, 
-            &str1
+            ib_ftype_nulstr_in(str1)
         )
     );
 
@@ -151,7 +151,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
             ib_engine->mp,
             IB_FIELD_NAME("field2"),
             IB_FTYPE_NULSTR,
-            &str2
+            ib_ftype_nulstr_in(str2)
         )
     );
 

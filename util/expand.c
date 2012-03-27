@@ -180,7 +180,11 @@ static ib_status_t join_parts(ib_mpool_t *mp,
 
     if (f->type == IB_FTYPE_NULSTR) {
         /* Field is a NUL-terminated string */
-        const char *s = ib_field_value_nulstr(f);
+        const char *s;
+        rc = ib_field_value(f, ib_ftype_nulstr_out(&s));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
         size_t slen = strlen(s);
         rc = join3(mp,
                    iptr, ilen,
@@ -188,10 +192,14 @@ static ib_status_t join_parts(ib_mpool_t *mp,
                    fptr, flen,
                    nul,
                    out, olen);
-        }
+    }
     else if (f->type == IB_FTYPE_BYTESTR) {
         /* Field is a byte string */
-        const ib_bytestr_t *bs = ib_field_value_bytestr(f);
+        const ib_bytestr_t *bs;
+        rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
         rc = join3(mp,
                    iptr, ilen,
                    (const char *)ib_bytestr_const_ptr(bs),
@@ -202,8 +210,12 @@ static ib_status_t join_parts(ib_mpool_t *mp,
     }
     else if (f->type == IB_FTYPE_NUM) {
         /* Field is a number; convert it to a string */
-        const ib_num_t *n = ib_field_value_num(f);
-        snprintf(numbuf, NUM_BUF_LEN, "%ld", (long int)(*n) );
+        ib_num_t n;
+        rc = ib_field_value(f, ib_ftype_num_out(&n));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        snprintf(numbuf, NUM_BUF_LEN, "%lld", n);
         rc = join3(mp,
                    iptr, ilen,
                    numbuf, strlen(numbuf),
@@ -213,8 +225,12 @@ static ib_status_t join_parts(ib_mpool_t *mp,
     }
     else if (f->type == IB_FTYPE_UNUM) {
         /* Field is an unsigned number; convert it to a string */
-        const ib_unum_t *n = ib_field_value_unum(f);
-        snprintf(numbuf, NUM_BUF_LEN, "%lu", (unsigned long)(*n) );
+        ib_unum_t n;
+        rc = ib_field_value(f, ib_ftype_unum_out(&n));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        snprintf(numbuf, NUM_BUF_LEN, "%llu", n);
         rc = join3(mp,
                    iptr, ilen,
                    numbuf, strlen(numbuf),

@@ -127,34 +127,39 @@ ibapi.new = function(self, ib_engine, ib_tx)
     -- nil if the value is not supported.
     ib_obj.private.fieldToLua = function(self, field)
 
-        -- Get the value of the field. But we must cast and convert it.
-        local value = ffi.C.ib_field_value(field)
-
         -- Number
         if field.type == ffi.C.IB_FTYPE_NUM then
-            return tonumber(ffi.cast("const ib_num_t*", value)[0])
+            local value = ffi.new("ib_num_t[1]")
+            ffi.C.ib_field_value(field, value)
+            return tonumber(value[0])
 
         -- Unsigned Number
         elseif field.type == ffi.C.IB_FTYPE_UNUM then
-            return tonumber(ffi.cast("const ib_unum_t*", value)[0])
+            local value = ffi.new("ib_unum_t[1]")
+            ffi.C.ib_field_value(field, value)
+            return tonumber(value[0])
 
         -- String
         elseif field.type == ffi.C.IB_FTYPE_NULSTR then
-            return ffi.string(ffi.cast("const char*", value))
+            local value = ffi.new("const char*[1]")
+            ffi.C.ib_field_value(field, value)
+            return ffi.string(value[0])
 
         -- Byte String
         elseif field.type == ffi.C.IB_FTYPE_BYTESTR then
-            value = ffi.cast("const ib_bytestr_t*", value)
-
-            return ffi.string(ffi.C.ib_bytestr_const_ptr(value),
-                              ffi.C.ib_bytestr_length(value))
+            local value = ffi.new("const ib_bytestr_t*[1]")
+            ffi.C.ib_field_value(field, value)
+            return ffi.string(ffi.C.ib_bytestr_const_ptr(value[0]),
+                              ffi.C.ib_bytestr_length(value[0]))
 
         -- Lists
         elseif field.type == ffi.C.IB_FTYPE_LIST then
             local t = {}
-
+            local value = ffi.new("ib_list_t*[1]")
+            
+            ffi.C.ib_field_mutable_value(field, value)
             ibapi.each_list_node(
-                ffi.cast("ib_list_t*", value),
+                value[0],
                 function(data)
                     t[#t+1] = { ffi.string(data.name, data.nlen),
                                 self:fieldToLua(data) }
@@ -238,15 +243,13 @@ ibapi.new = function(self, ib_engine, ib_tx)
 
         -- This if block must define fieldType and cfieldValue
         if type(fieldValue) == 'string' then
-            local fieldValue_p = ffi.new("char*[1]", 
-                                         ffi.cast("char*", fieldValue))
             -- Create the field
             ffi.C.ib_field_create(field,
                                      self.private.ib_tx.mp,
                                      ffi.cast("char*", fieldName),
                                      #fieldName,
                                      ffi.C.IB_FTYPE_NULSTR,
-                                     fieldValue_p)
+                                     ffi.cast("char*", fieldValue))
 
         elseif type(fieldValue) == 'number' then
             local fieldValue_p = ffi.new("ib_num_t[1]", fieldValue)
@@ -332,8 +335,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
             -- Set a string.
             local nval = ffi.C.ib_mpool_strdup(self.private.ib_tx.mp,
                                                ffi.cast("char*", value))
-            local nval_p = ffi.new("char*[1]", nval)
-            ffi.C.ib_field_setv(ib_field, nval_p)
+            ffi.C.ib_field_setv(ib_field, nval)
         elseif type(value) == 'number' then
             -- Set a number.
             local src = ffi.new("ib_num_t[1]", value)
@@ -373,7 +375,9 @@ ibapi.new = function(self, ib_engine, ib_tx)
         -- To speed things up, we handle a list directly
         if ib_field.type == ffi.C.IB_FTYPE_LIST then
             local t = {}
-            local ib_list = ffi.C.ib_field_value(ib_field)
+            local value = ffi.new("ib_list_t*[1]")
+            ffi.C.ib_field_mutable_value(ib_field, value)
+            local ib_list = value[0]
 
             ibapi.each_list_node(ib_list, function(data)
                 t[#t+1] = ffi.string(data.name, data.nlen)
@@ -394,7 +398,9 @@ ibapi.new = function(self, ib_engine, ib_tx)
         -- To speed things up, we handle a list directly
         if ib_field.type == ffi.C.IB_FTYPE_LIST then
             local t = {}
-            local ib_list = ffi.C.ib_field_value(ib_field)
+            local value =  ffi.new("ib_list_t*[1]")
+            ffi.C.ib_field_mutable_value(ib_field, value)
+            local ib_list = value[0]
 
             ibapi.each_list_node(ib_list, function(data)
                 t[#t+1] = self.private:fieldToLua(data)

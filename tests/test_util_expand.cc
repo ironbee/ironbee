@@ -113,7 +113,7 @@ public:
                         m_pool, 
                         IB_FIELD_NAME(fdef->key),
                         fdef->type, 
-                        (void *)&(fdef->vstr)
+                        ib_ftype_nulstr_in(fdef->vstr)
                     );
                     break;
                 case IB_FTYPE_BYTESTR:
@@ -129,8 +129,8 @@ public:
                         &field, 
                         m_pool, 
                         IB_FIELD_NAME(fdef->key),
-                        fdef->type, 
-                        (void *)&bs
+                        fdef->type,
+                        ib_ftype_bytestr_in(bs) 
                     );
                     break;
                 case IB_FTYPE_NUM:
@@ -139,7 +139,7 @@ public:
                         m_pool, 
                         IB_FIELD_NAME(fdef->key),
                         fdef->type, 
-                        (void *)&(fdef->vnum)
+                        ib_ftype_num_in(&(fdef->vnum))
                     );
                     break;
                 case IB_FTYPE_UNUM:
@@ -148,7 +148,7 @@ public:
                         m_pool, 
                         IB_FIELD_NAME(fdef->key),
                         fdef->type, 
-                        (void *)&(fdef->vunum)
+                        ib_ftype_unum_in(&(fdef->vunum))
                     );
                     break;
                 default:

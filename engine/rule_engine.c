@@ -84,16 +84,26 @@ static void log_field(ib_engine_t *ib,
                       const char *label,
                       const ib_field_t *f)
 {
+    ib_status_t rc;
+
     if (f->type == IB_FTYPE_NULSTR) {
-        char *p = (char *)ib_field_value_nulstr(f);
-        ib_log_debug(ib, n, "%s = '%s'", label, p);
+        const char *s;
+        rc = ib_field_value(f, ib_ftype_nulstr_out(&s));
+        if (rc != IB_OK) {
+            return;
+        }
+        ib_log_debug(ib, n, "%s = '%s'", label, s);
     }
     else if (f->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs = (ib_bytestr_t *)ib_field_value_bytestr(f);
+        const ib_bytestr_t *bs;
+        rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            return;
+        }
         ib_log_debug(ib, n, "%s = '%*s'",
                      label,
                      (int)ib_bytestr_length(bs),
-                     (char *)ib_bytestr_ptr(bs));
+                     (const char *)ib_bytestr_const_ptr(bs));
     }
     else {
         ib_log_debug(ib, n, "%s type = %d\n", label, f->type);
@@ -221,8 +231,13 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
 
     /* Handle a list by looping through it */
     if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
-        // @todo Remove const casting once list is const correct.
-        ib_list_t *vlist = (ib_list_t *)ib_field_value_list(value);
+        // @todo Remove mutable once list is const correct.
+        ib_list_t *vlist;
+        rc = ib_field_mutable_value(value, ib_ftype_list_mutable_out(&vlist));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         ib_list_node_t *node = NULL;
         ib_num_t n = 0;
 

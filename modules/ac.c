@@ -520,11 +520,18 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     const ib_bytestr_t* bytestr;
 
     if (field->type == IB_FTYPE_NULSTR) {
-        subject = ib_field_value_nulstr(field);
+        rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
         subject_len = strlen(subject);
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
-        bytestr = ib_field_value_bytestr(field);
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
         subject_len = ib_bytestr_length(bytestr);
         subject = (const char*)ib_bytestr_const_ptr(bytestr);
     }
