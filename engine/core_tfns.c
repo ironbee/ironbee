@@ -948,17 +948,7 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "wspc_rm", tfn_wspc_remove, NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     rc = ib_tfn_register(ib, "compressWhitespace", tfn_wspc_compress, NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_tfn_register(ib, "wspc_comp", tfn_wspc_compress, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
