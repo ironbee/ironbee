@@ -44,6 +44,7 @@
 #include <ironbee/provider.h>
 #include <ironbee/array.h>
 #include <ironbee/field.h>
+#include <ironbee/util.h>
 
 #include "lua/ironbee.h"
 
@@ -1997,6 +1998,29 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     ib_core_cfg_t *corecfg = NULL;
     const size_t pathmax = 512;
     char *path = NULL;
+    size_t p1_len = strlen(p1);
+    size_t p1_unescaped_len;
+    char *p1_unescaped = malloc(p1_len);
+
+    if ( p1_unescaped == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_util_unescape_string(p1_unescaped,
+                                 &p1_unescaped_len,
+                                 p1,
+                                 p1_len,
+                                 IB_UTIL_UNESCAPE_NONULL);
+
+    if (rc != IB_OK) {
+        const char *msg = (rc == IB_EBADVAL)? 
+            "Value for parameter \"%s\" may not contain NULL bytes: %s":
+            "Value for parameter \"%s\" could not be unescaped: %s";
+        ib_log_debug(ib, 3, msg, name, p1);
+        free(p1_unescaped);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
 
     rc = ib_context_module_config(ib_context_main(ib),
                                   ib_core_module(),
@@ -2008,25 +2032,27 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     }
 
     if (strcasecmp("LuaLoadModule", name) == 0) {
-        if (*p1 == '/') {
-            modlua_module_load(ib, p1);
+        if (*p1_unescaped == '/') {
+            modlua_module_load(ib, p1_unescaped);
         }
         else {
             path = malloc(pathmax);
 
             if (path==NULL) {
                 ib_log_error(ib, 1, "Cannot allocate memory for module path.");
+                free(p1_unescaped);
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
 
             size_t len = snprintf(path, pathmax, "%s/%s",
                                   corecfg->module_base_path,
-                                  p1);
+                                  p1_unescaped);
 
             if (len >= pathmax) {
-                ib_log_error(ib, 1, "Filename too long: %s %s", name, p1);
+                ib_log_error(ib, 1, "Filename too long: %s %s", name, p1_unescaped);
                 free(path);
                 path = NULL;
+                free(p1_unescaped);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
 
@@ -2037,21 +2063,25 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("LuaPackagePath", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
-        rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_path", p1);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_path", p1_unescaped);
+        free(p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LuaPackageCPath", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
-        rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_cpath", p1);
+        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_cpath", p1_unescaped);
+        free(p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else {
-        ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1);
+        ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1_unescaped);
+        free(p1_unescaped);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    free(p1_unescaped);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
