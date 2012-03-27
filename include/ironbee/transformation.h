@@ -26,7 +26,7 @@
  */
 
 /**
- * @defgroup IronBeeOperators Tranformations
+ * @defgroup IronBeeOperators Transformations
  * @ingroup IronBee
  * @{
  */

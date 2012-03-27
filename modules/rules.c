@@ -268,7 +268,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /* Add the funtions in reverse order */
+    /* Add the functions in reverse order */
     strcpy(new, target_str+count);
     for (n = count-1;  n >= 0;  --n) {
         strcat(new, ops[n] );
@@ -356,7 +356,7 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
             *(pdot+2) = '\0';
             cur = pdot + 3;
         }
-        /* Parens but no dot: last tranformation */
+        /* Parens but no dot: last transformation */
         else if (parens != NULL) {
             *parens = '\0';
             cur = NULL;

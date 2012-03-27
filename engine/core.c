@@ -191,7 +191,7 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     ib_status_t rc;
 
     if ( dst_tmp == NULL ) {
-        ib_log_debug(ib, 0, "Failed to allocate memory for unescapeing.");
+        ib_log_debug(ib, 0, "Failed to allocate memory for unescaping.");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -4239,7 +4239,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     rc = core_unescape(ib, &p1_escaped, p1);
 
     if ( rc != IB_OK ) {
-        ib_log_debug(ib, 7, "Could not unescape confiuration %s=%s", name, p1);
+        ib_log_debug(ib, 7, "Could not unescape configuration %s=%s", name, p1);
         IB_FTRACE_RET_STATUS(rc);
     }
 

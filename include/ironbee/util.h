@@ -157,7 +157,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  * @param[in] flags Flags that affect how the string is processed.
  *
  * @returns IB_OK. If an escape sequence does not have enough characters to be
- *          decoded IB_ETRUNC is returned. If another failure occures
+ *          decoded IB_ETRUNC is returned. If another failure occurs
  *          IB_EINVAL is returned.
  *          On a failure @dst_len are left in an inconsistent state.
  */

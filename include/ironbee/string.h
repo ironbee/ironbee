@@ -143,7 +143,7 @@ ib_status_t ib_strlower(char *data,
  * Simple ASCII trim left function.
  *
  * @param[in] data_in Pointer to input data
- * @param[in] dlen_in Lenth of @a data_in
+ * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
  * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
@@ -173,7 +173,7 @@ ib_status_t ib_strtrim_left(char *data_in,
  * Simple ASCII trim right function.
  *
  * @param[in] data_in Pointer to input data
- * @param[in] dlen_in Lenth of @a data_in
+ * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
  * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
@@ -204,7 +204,7 @@ ib_status_t ib_strtrim_right(char *data_in,
  * Simple ASCII trim left+right function.
  *
  * @param[in] data_in Pointer to input data
- * @param[in] dlen_in Lenth of @a data_in
+ * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
  * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
@@ -235,7 +235,7 @@ ib_status_t ib_strtrim_lr(char *data_in,
  *
  * @param[in] mp Memory pool
  * @param[in] data_in Pointer to input data
- * @param[in] dlen_in Lenth of @a data_in
+ * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
  * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
@@ -266,7 +266,7 @@ ib_status_t ib_str_wspc_remove(ib_mpool_t *mp,
  *
  * @param[in] mp Memory pool
  * @param[in] data_in Pointer to input data
- * @param[in] dlen_in Lenth of @a data_in
+ * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
  * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
