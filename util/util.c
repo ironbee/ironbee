@@ -262,7 +262,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
 
                         /* Protect against array out of bounds. */
                         if (src_i+2>=src_len) {
-                            return IB_ETRUNC;
+                            return IB_EINVAL;
                         }
 
                         /* Ensure that the next 2 characters are hex digits. */
@@ -280,7 +280,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                         if (flags & IB_UTIL_UNESCAPE_NONULL &&
                             dst[dst_i] == 0)
                         {
-                            return IB_EINVAL;
+                            return IB_EBADVAL;
                         }
 
                         ++dst_i;
@@ -290,7 +290,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
 
                         /* Protect against array out of bounds. */
                         if ( src_i+4>=src_len ) {
-                            return IB_ETRUNC;
+                            return IB_EINVAL;
                         }
 
                         /* Ensure that the next 4 characters are hex digits. */
@@ -313,7 +313,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                         if ( flags & IB_UTIL_UNESCAPE_NONULL &&
                              ( dst[dst_i-1] == 0 || dst[dst_i] == 0 ) )
                         {
-                            return IB_EINVAL;
+                            return IB_EBADVAL;
                         }
 
                         ++dst_i;

@@ -350,31 +350,33 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
     size_t pattern_file_len = strlen(pattern_file);
 
     /* Escaped directive and length. */
-    char *pattern_file_escaped;
-    size_t pattern_file_escaped_len;
+    char *pattern_file_unescaped;
+    size_t pattern_file_unescaped_len;
 
-    pattern_file_escaped = malloc(pattern_file_len+1);
+    pattern_file_unescaped = malloc(pattern_file_len+1);
 
-    if ( pattern_file_escaped == NULL ) {
+    if ( pattern_file_unescaped == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_util_unescape_string(pattern_file_escaped,
-                                 &pattern_file_escaped_len,
+    rc = ib_util_unescape_string(pattern_file_unescaped,
+                                 &pattern_file_unescaped_len,
                                  pattern_file,
                                  pattern_file_len,
                                  IB_UTIL_UNESCAPE_NONULL);
     if ( rc != IB_OK ) {
-        free(pattern_file_escaped);
-        ib_log_debug(ib, 3,
-                     "Failed to unescape file name \"%s\".", pattern_file);
+        const char *msg = (rc==IB_EBADVAL)?
+            "Cannot unescape file \"%s\" because it contains NULLs." :
+            "Cannot unescape file \"%s\".";
+        free(pattern_file_unescaped);
+        ib_log_debug(ib, 3, msg, pattern_file);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Populate file. This data must be free'ed. */
-    rc = readfile(pattern_file_escaped, &file);
+    rc = readfile(pattern_file_unescaped, &file);
 
-    free(pattern_file_escaped);
+    free(pattern_file_unescaped);
 
     if (rc != IB_OK) {
         if (file != NULL) {

@@ -73,7 +73,7 @@ TEST(TestIBUtilUnescapeString, shortSingleBytesEndOfLine) {
   const char *str = "\\x01\\x0";
   char str2[3];
   size_t len;
-  ASSERT_EQ(IB_ETRUNC,
+  ASSERT_EQ(IB_EINVAL,
             ib_util_unescape_string(str2, &len, str, strlen(str), 0));
 }
 
@@ -97,7 +97,7 @@ TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
   const char *str = "\\u0001\\u431";
   char str2[5];
   size_t len;
-  ASSERT_EQ(IB_ETRUNC,
+  ASSERT_EQ(IB_EINVAL,
             ib_util_unescape_string(str2, &len, str, strlen(str), 0));
 }
 
@@ -122,7 +122,7 @@ TEST(TestIBUtilUnescapeString, nullsInString) {
   ASSERT_EQ(IB_OK, ib_util_unescape_string(dst, &len, src1, strlen(src1), 0));
   ASSERT_STREQ("hi", dst);
   ASSERT_STREQ("hello", dst+3);
-  ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
+  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src1,
                                                strlen(src1),
@@ -132,19 +132,19 @@ TEST(TestIBUtilUnescapeString, nullsInString) {
   ASSERT_EQ(IB_OK, ib_util_unescape_string(dst, &len, src2, strlen(src2), 0));
   ASSERT_STREQ("hi", dst);
   ASSERT_STREQ("hello", dst+4);
-  ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
+  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src2,
                                                strlen(src2),
                                                IB_UTIL_UNESCAPE_NONULL));
 
-  ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
+  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src3,
                                                strlen(src3),
                                                IB_UTIL_UNESCAPE_NONULL));
 
-  ASSERT_EQ(IB_EINVAL, ib_util_unescape_string(dst,
+  ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src4,
                                                strlen(src4),

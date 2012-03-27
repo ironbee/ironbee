@@ -80,6 +80,7 @@ typedef enum ib_status_t {
     IB_ETIMEDOUT,               /**<  9: Operation timed out */
     IB_EAGAIN,                  /**< 10: Not ready, try again later */
     IB_EOTHER,                  /**< 11: Other error */
+    IB_EBADVAL,                 /**< 12: A value outside the allowed range */
 } ib_status_t;
 
 /**

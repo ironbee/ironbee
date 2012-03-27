@@ -156,9 +156,13 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  * @param[in] src_len the length of @a src.
  * @param[in] flags Flags that affect how the string is processed.
  *
- * @returns IB_OK. If an escape sequence does not have enough characters to be
- *          decoded IB_ETRUNC is returned. If another failure occurs
- *          IB_EINVAL is returned.
+ * @returns IB_OK if successful. IB_EINVAL if the string cannot be unescaped
+ *          because of short escape codes or non-hex values being passed
+ *          to escape codes.
+ *
+ *          IB_EBADVAL is returned if a flag is set and the string cannot
+ *          be decoded because of the flag settings.
+ *
  *          On a failure @dst_len are left in an inconsistent state.
  */
 ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
