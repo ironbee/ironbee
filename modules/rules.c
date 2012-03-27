@@ -349,7 +349,7 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
         /* Find the next separator and paren set */
         parens = strstr(separator+1, "()");
         pdot = strstr(separator+1, "().");
-        
+
         /* Parens + dot: intermediate transformation */
         if (pdot != NULL) {
             *pdot = '\0';

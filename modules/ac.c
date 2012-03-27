@@ -481,7 +481,7 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
                             pattern,
                             pattern_len,
                             0);
-                            
+
 
     memcpy(tok_buffer, pattern, tok_buffer_sz);
 

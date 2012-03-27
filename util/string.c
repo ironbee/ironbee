@@ -283,7 +283,7 @@ ib_status_t ib_strtrim_right_ex(uint8_t *data_in,
      */
     *modified = IB_FALSE;
     *data_out = data_in;
-    
+
     for(cp = ep = data_in + (dlen_in - 1);  cp >= data_in;  --cp) {
         if (isspace(*cp) == 0) {
             break;
