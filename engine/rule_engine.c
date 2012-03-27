@@ -71,6 +71,36 @@ static rule_cbdata_t rule_cbdata[] = {
 
 
 /**
+ * Log a field's value
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] n Log level
+ * @param[in] label Label string
+ * @param[in] f Field
+ */
+static void log_field(ib_engine_t *ib,
+                      ib_num_t n,
+                      const char *label,
+                      const ib_field_t *f)
+{
+    if (f->type == IB_FTYPE_NULSTR) {
+        char *p = (char *)ib_field_value_nulstr(f);
+        ib_log_debug(ib, n, "%s = '%s'", label, p);
+    }
+    else if (f->type == IB_FTYPE_BYTESTR) {
+        ib_bytestr_t *bs = (ib_bytestr_t *)ib_field_value_bytestr(f);
+        ib_log_debug(ib, n, "%s = '%*s'",
+                     label,
+                     (int)ib_bytestr_length(bs),
+                     (char *)ib_bytestr_ptr(bs));
+    }
+    else {
+        ib_log_debug(ib, n, "%s type = %d\n", label, f->type);
+    }
+}
+
+/**
  * Execute a field's transformations.
  * @internal
  *
@@ -128,6 +158,7 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
         ib_log_debug(ib, 9,
                      "Executing field transformation #%d '%s' on '%s'",
                      n, tfn->name, target->field_name);
+        log_field(ib, 7, "before tfn", in_field);
         rc = ib_tfn_transform(ib, tx->mp, tfn, in_field, &out, &flags);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
@@ -135,6 +166,7 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
                          n, target->field_name, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
+        log_field(ib, 7, "after tfn", out);
 
         /* Verify that out isn't NULL */
         if (out == NULL) {
