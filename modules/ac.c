@@ -68,23 +68,6 @@ IB_MODULE_DECLARE();
 
 /**
  * @internal
- * Module Configuration Structure.
- */
-struct modac_cfg_t {
-/* @todo: implement limits on ahocorasick to support this options:
-    match_limit and match_limit_recursion */
-    ib_num_t       match_limit;           /**< Match limit */
-    ib_num_t       match_limit_recursion; /**< Match recursion depth limit */
-};
-
-/* Instantiate a module global configuration. */
-static modac_cfg_t modac_global_cfg = {
-    5000, /* match_limit */
-    5000  /* match_limit_recursion */
-};
-
-/**
- * @internal
  * Internal representation of AC compiled patterns.
  */
 struct modac_provider_data_t {
@@ -612,22 +595,6 @@ static ib_status_t modac_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static IB_CFGMAP_INIT_STRUCTURE(modac_config_map) = {
-    IB_CFGMAP_INIT_ENTRY(
-        MODULE_NAME_STR ".match_limit",
-        IB_FTYPE_NUM,
-        modac_cfg_t,
-        match_limit
-    ),
-    IB_CFGMAP_INIT_ENTRY(
-        MODULE_NAME_STR ".match_limit_recursion",
-        IB_FTYPE_NUM,
-        modac_cfg_t,
-        match_limit_recursion
-    ),
-    IB_CFGMAP_INIT_LAST
-};
-
 /**
  * @internal
  * Module structure.
@@ -637,8 +604,8 @@ static IB_CFGMAP_INIT_STRUCTURE(modac_config_map) = {
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,            /**< Default metadata */
     MODULE_NAME_STR,                      /**< Module name */
-    IB_MODULE_CONFIG(&modac_global_cfg),  /**< Global config data */
-    modac_config_map,                     /**< Configuration field map */
+    IB_MODULE_CONFIG_NULL,                /* Global config data */
+    NULL,                                 /**< Configuration field map */
     NULL,                                 /**< Config directive map */
     modac_init,                           /**< Initialize function */
     NULL,                                 /**< Callback data */
