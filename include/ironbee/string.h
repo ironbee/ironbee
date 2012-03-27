@@ -126,7 +126,7 @@ const char DLL_PUBLIC *ib_strstr_ex(const char *haystack,
  */
 ib_status_t ib_strlower_ex(uint8_t *data,
                            size_t dlen,
-                           ib_bool_t *modfied);
+                           ib_bool_t *modified);
 
 /**
  * Simple ASCII lowercase function.
@@ -137,7 +137,7 @@ ib_status_t ib_strlower_ex(uint8_t *data,
  * @note For non-ASCII (utf8, etc) you should use case folding.
  */
 ib_status_t ib_strlower(char *data,
-                        ib_bool_t *modfied);
+                        ib_bool_t *modified);
 
 /**
  * Simple ASCII trim left function.
@@ -250,6 +250,7 @@ ib_status_t ib_str_wspc_remove_ex(ib_mpool_t *mp,
 /**
  * Delete all whitespace from a string (NUL terminated string version)
  *
+ * @param[in] mp Memory pool
  * @param[in] data_in Pointer to input data
  * @param[out] data_out Pointer to output data
  * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
@@ -281,6 +282,7 @@ ib_status_t ib_str_wspc_compress_ex(ib_mpool_t *mp,
 /**
  * Compress whitespace in a string (NUL terminated string version)
  *
+ * @param[in] mp Memory pool
  * @param[in] data_in Pointer to input data
  * @param[out] data_out Pointer to output data
  * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
