@@ -46,7 +46,7 @@ extern "C" {
 
 /* Version definitions */
 #define IB_VERSION_MAJOR        0 /**< Major version */
-#define IB_VERSION_MINOR        3 /**< Minor version */
+#define IB_VERSION_MINOR        4 /**< Minor version */
 #define IB_VERSION_MAINT        0 /**< Maintenance version */
 #define IB_VERSION_BUILD_EXTRA  0 /**< Extra build number (normally 0) */
 

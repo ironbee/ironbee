@@ -4,7 +4,7 @@ dnl
 
 AC_PREREQ(2.59)
 
-AC_INIT([ironbee], [0.3], [ironbee-team@ironbee.com])
+AC_INIT([ironbee], [0.4], [ironbee-team@ironbee.com])
 
 AC_CONFIG_MACRO_DIR([acinclude]) AC_CONFIG_SRCDIR([README])
 AC_CONFIG_HEADERS([ironbee_config_auto_gen.h])
