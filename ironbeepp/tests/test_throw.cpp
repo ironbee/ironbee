@@ -46,5 +46,6 @@ TEST(TestThrow, basic)
     EXPECT_THROW(throw_if_error(IB_ETRUNC), etrunc);
     EXPECT_THROW(throw_if_error(IB_ETIMEDOUT), etimedout);
     EXPECT_THROW(throw_if_error(IB_EAGAIN), eagain);
+    EXPECT_THROW(throw_if_error(IB_EBADVAL), ebadval);
     EXPECT_THROW(throw_if_error(IB_EOTHER), eother);
 }

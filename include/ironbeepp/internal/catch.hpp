@@ -227,6 +227,7 @@ ib_engine_t* normalize_engine(ib_engine_t* engine);
         IBPP_CATCH_IB((ib_engine), ::IronBee::etimedout,    IB_ETIMEDOUT) \
         IBPP_CATCH_IB((ib_engine), ::IronBee::eagain,       IB_EAGAIN) \
         IBPP_CATCH_IB((ib_engine), ::IronBee::eother,       IB_EOTHER) \
+        IBPP_CATCH_IB((ib_engine), ::IronBee::ebadval,      IB_EBADVAL) \
         IBPP_CATCH_IB((ib_engine), ::IronBee::error,        IB_EUNKNOWN) \
         IBPP_CATCH_STD((ib_engine), ::std::invalid_argument, IB_EINVAL) \
         IBPP_CATCH_STD((ib_engine), ::std::bad_alloc,        IB_EALLOC) \

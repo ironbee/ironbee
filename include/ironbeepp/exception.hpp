@@ -89,6 +89,8 @@ struct etimedout : public error {};
 struct eagain    : public error {};
 //! Translates to IB_EOTHER.  See exception.hpp
 struct eother    : public error {};
+//! Translates to IB_EBADVAL.  See exception.hpp
+struct ebadval   : public error {};
 
 /**
  * String exception info explaining what happened.

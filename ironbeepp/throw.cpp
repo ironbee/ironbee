@@ -33,6 +33,8 @@ void throw_if_error(ib_status_t status)
             BOOST_THROW_EXCEPTION(eagain() << errinfo_what(message));
         case IB_EOTHER:
             BOOST_THROW_EXCEPTION(eother() << errinfo_what(message));
+        case IB_EBADVAL:
+            BOOST_THROW_EXCEPTION(ebadval() << errinfo_what(message));
         default:
             BOOST_THROW_EXCEPTION(
               eother() << errinfo_what(
