@@ -1151,7 +1151,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
         ib_log_alert(ib, 4, "Transformation '%s' not found", name);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else {
+    else if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Error looking up trans '%s' for rule '%s': %d",
                      name, rule->meta.id, rc);
