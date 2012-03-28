@@ -37,7 +37,7 @@ extern "C" {
 
 
 /**
- * @defgroup IronBeeUtilAhoCorasick AhoCorasick Utilities
+ * @defgroup IronBeeUtilAhoCorasick AhoCorasick String Matching
  * @ingroup IronBeeUtil
  * @{
  */

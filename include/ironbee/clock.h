@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeClock Clock and Timing Functions
+ * @defgroup IronBeeClock Clock and Timing
  * @ingroup IronBeeUtil
  * @{
  */

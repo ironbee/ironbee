@@ -68,12 +68,6 @@ struct ib_tfn_t {
     void               *fndata;            /**< Tfn function data */
 };
 
-
-/**
- * @defgroup IronBeeEngineTfn Transformations
- * @{
- */
-
 /** Set if transformation modified the value. */
 #define IB_TFN_FMODIFIED          (1<<0)
 /** Set if transformation performed an in-place operation. */
@@ -164,11 +158,6 @@ ib_status_t DLL_PUBLIC ib_tfn_transform(ib_engine_t *ib,
                                         ib_field_t *fin,
                                         ib_field_t **fout,
                                         ib_flags_t *pflags);
-
-/**
- * @} IronBeeEngineTfn
- */
-
 
 #ifdef __cplusplus
 }

@@ -35,7 +35,7 @@ extern "C" {
 
 
 /**
- * @defgroup IronBeeUtilUUID UUID Utility
+ * @defgroup IronBeeUtilUUID UUID
  * @ingroup IronBeeUtil
  * @{
  */

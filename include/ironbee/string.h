@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeUtilString String Utilities
+ * @defgroup IronBeeUtilString String
  * @ingroup IronBeeUtil
  * @{
  */
