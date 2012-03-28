@@ -2442,6 +2442,8 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     ib_list_push(list, f);
 
     if (tx != NULL) {
+        ib_unum_t unum;
+
         /* Timestamp */
         tstamp = (char *)ib_mpool_alloc(pool, 30);
         if (tstamp == NULL) {
@@ -2467,10 +2469,11 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                            strlen(tx->conn->remote_ipstr));
         ib_list_push(list, f);
 
+        unum = tx->conn->remote_port;
         ib_field_create(&f, pool,
                         IB_FIELD_NAME("remote-port"),
                         IB_FTYPE_UNUM,
-                        ib_ftype_unum_in((ib_unum_t *)&tx->conn->remote_port));
+                        ib_ftype_unum_in(&unum));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
@@ -2479,10 +2482,11 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                            strlen(tx->conn->local_ipstr));
         ib_list_push(list, f);
 
+        unum = tx->conn->local_port;
         ib_field_create(&f, pool,
                         IB_FIELD_NAME("local-port"),
                         IB_FTYPE_UNUM,
-                        ib_ftype_unum_in((ib_unum_t *)&tx->conn->local_port));
+                        ib_ftype_unum_in(&unum));
         ib_list_push(list, f);
 
         /// @todo If this is NULL, parser failed - what to do???
