@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <assert.h>
 
 #include <ironbee/expand.h>
@@ -215,7 +216,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        snprintf(numbuf, NUM_BUF_LEN, "%lld", n);
+        snprintf(numbuf, NUM_BUF_LEN, "%"PRId64, n);
         rc = join3(mp,
                    iptr, ilen,
                    numbuf, strlen(numbuf),
@@ -230,7 +231,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        snprintf(numbuf, NUM_BUF_LEN, "%llu", n);
+        snprintf(numbuf, NUM_BUF_LEN, "%"PRIu64, n);
         rc = join3(mp,
                    iptr, ilen,
                    numbuf, strlen(numbuf),

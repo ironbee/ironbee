@@ -750,7 +750,7 @@ static void print_field(const char *label,
     {
         ib_num_t n;
         ib_field_value(field, ib_ftype_num_out(&n));
-        printf( "  %s = %lld\n",
+        printf( "  %s = %"PRId64"\n",
                 label, n );
         break;
     }
@@ -758,7 +758,7 @@ static void print_field(const char *label,
     {
         ib_unum_t u;
         ib_field_value(field, ib_ftype_unum_out(&u));
-        printf( "  %s = %llu\n",
+        printf( "  %s = %"PRIu64"\n",
                 label, u );
         break;
     }
