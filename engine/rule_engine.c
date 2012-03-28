@@ -106,7 +106,7 @@ static void log_field(ib_engine_t *ib,
                      (const char *)ib_bytestr_const_ptr(bs));
     }
     else {
-        ib_log_debug(ib, n, "%s type = %d\n", label, f->type);
+        ib_log_debug(ib, n, "%s type = %d", label, f->type);
     }
 }
 
@@ -343,7 +343,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
             }
         }
         else if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Error getting field %s: %d\n", fname, rc);
+            ib_log_error(ib, 4, "Error getting field %s: %d", fname, rc);
             continue;
         }
 
@@ -1009,7 +1009,7 @@ ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
             break;
         default:
             ib_log_error(ib, 4,
-                         "Can't update rule flags: Invalid operation %d\n",
+                         "Can't update rule flags: Invalid operation %d",
                          (int)op);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
