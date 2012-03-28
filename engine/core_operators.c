@@ -50,6 +50,62 @@ typedef struct {
 } numop_params_t;
 
 /**
+ * Allocate a buffer and unescape operator arguments.
+ * @param[in] ib IronBee engine used for logging.
+ * @param[in] mp Memory pool that @a str_unesc will be allocated out of.
+ * @param[in] str The parameter string to be unescaped.
+ * @param[out] str_unesc On a successful unescaping, a new buffer allocated
+ *             out of @a mp will be assigned to @a *str_unesc with the
+ *             unescaped string in it.
+ * @param[out] str_unesc_len On success *str_unesc_len is assigned the length
+ *             of the unescaped string. Note that this may be different
+ *             that strlen(*str_unesc) because \x00 will place a NULL
+ *             in the middle of @a *str_unesc.
+ *             This string should be wrapped in an ib_bytestr_t.
+ * @returns IB_OK on success. IB_EALLOC on error. IB_EINVAL if @a str
+ *          was unable to be unescaped.
+ */
+static ib_status_t unescape_op_args(ib_engine_t *ib,
+                                    ib_mpool_t *mp,
+                                    char **str_unesc,
+                                    size_t *str_unesc_len,
+                                    const char *str)
+{
+    IB_FTRACE_INIT();
+
+    assert(mp!=NULL);
+    assert(ib!=NULL);
+    assert(str!=NULL);
+    assert(str_unesc!=NULL);
+    assert(str_unesc_len!=NULL);
+
+    ib_status_t rc;
+    const size_t str_len = strlen(str);
+
+    /* Temporary unescaped string holder. */
+    char* tmp_unesc = ib_mpool_alloc(mp, str_len+1);
+    size_t tmp_unesc_len;
+
+    if ( tmp_unesc == NULL ) {
+        ib_log_debug(ib, 3, "Failed to allocate unescape string buffer.");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_util_unescape_string(tmp_unesc, &tmp_unesc_len, str, str_len, 0);
+
+    if ( rc != IB_OK ) {
+        ib_log_debug(ib, 3, "Failed to unescape string: %s", str);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Commit changes on success. */
+    *str_unesc = tmp_unesc;
+    *str_unesc_len = tmp_unesc_len;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Create function for the "str" family of operators
  * @internal
  *
@@ -71,14 +127,15 @@ static ib_status_t strop_create(ib_engine_t *ib,
     ib_status_t rc;
     ib_bool_t expand;
     char *str;
+    size_t str_len;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    rc = unescape_op_args(ib, mp, &str, &str_len, parameters);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     rc = ib_data_expand_test_str(str, &expand);
@@ -357,6 +414,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_status_t rc;
     char *copy;
+    size_t copy_len;
     char *p;
     ib_radix_t *radix;
 
@@ -365,9 +423,10 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     }
 
     /* Make a copy of the parameters to operate on */
-    copy = ib_mpool_strdup(mp, parameters);
-    if (copy == NULL) {
-        ib_log_error(ib, 4, "Error coping rule parameters '%s'", parameters);
+    rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, 
+                     "Error unescaping rule parameters '%s'", parameters);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -513,15 +572,22 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     ib_status_t rc;
     ib_bool_t expandable;
     ib_num_t value;
-    size_t plen;
 
-    if (params == NULL) {
+    char *params_unesc;
+    size_t params_unesc_len;
+
+    rc = unescape_op_args(ib, mp, &params_unesc, &params_unesc_len, params);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, 3, "Unable to unescape parameter: %s", params);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (params_unesc == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    plen = strlen(params);
 
     /* Is the string expandable? */
-    rc = ib_data_expand_test_str(params, &expandable);
+    rc = ib_data_expand_test_str(params_unesc, &expandable);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -529,7 +595,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
         op_inst->flags |= IB_OPINST_FLAG_EXPAND;
     }
     else {
-        rc = ib_string_to_num_ex(params, plen, 0, &value);
+        rc = ib_string_to_num_ex(params_unesc, params_unesc_len, 0, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -543,7 +609,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 
     /* Fill in the parameters */
     if (expandable) {
-        vptr->str = ib_mpool_strdup(mp, params);
+        vptr->str = ib_mpool_strdup(mp, params_unesc);
         if (vptr->str == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
