@@ -46,8 +46,6 @@ extern "C" {
 typedef struct ib_server_t ib_server_t;
 
 /* Request vs Response, for functions likely to share code */
-//#define IB_SERVER_REQUEST 0x01
-//#define IB_SERVER_RESPONSE 0x02
 typedef enum {
     IB_SERVER_REQUEST = 0x01,
     IB_SERVER_RESPONSE = 0x02
@@ -134,11 +132,36 @@ struct ib_server_t {
  * @param svr[in] The ib_server_t
  * @param ctx[in] Application pointer from the server
  * @param status[in] Action requested
- * @param data[in] Data field associated with the action
  * @return indication of whether the requested error action is supported
  */
-ib_status_t ib_server_error_response(ib_server_t *svr, void *ctx,
-                                     int status, const void *data);
+ib_status_t ib_server_error_response(ib_server_t *svr, void *ctx, int status);
+
+/**
+ * Function to set an HTTP header in an error response.
+ * Any values set here will only take effect if an HTTP response
+ * code is also set using ib_server_error_response.
+ *
+ * @param svr[in] The ib_server_t
+ * @param ctx[in] Application pointer from the server
+ * @param hdr[in] Header to set
+ * @param value[in] Value to set header to.
+ * @return indication of whether the requested error action is supported
+ */
+ib_status_t ib_server_error_header(ib_server_t *svr, void *ctx,
+                                   const char *hdr, const char *value);
+
+/**
+ * Function to set an error response body.
+ * Any values set here will only take effect if an HTTP response
+ * code is also set using ib_server_error_response.
+ *
+ * @param svr[in] The ib_server_t
+ * @param ctx[in] Application pointer from the server
+ * @param data[in] Response to set
+ * @return indication of whether the requested error action is supported
+ */
+ib_status_t ib_server_error_header(ib_server_t *svr, void *ctx,
+                                   const char *data);
 
 /**
  * Function to modify HTTP Request/Response Headers
@@ -221,4 +244,4 @@ ib_status_t ib_server_filter_data(ib_server_t *svr, void *ctx,
 }
 #endif
 
-#endif /* _IB_PLUGINS_H_ */
+#endif /* _IB_SERVER_H_ */
