@@ -57,6 +57,8 @@ public:
         SetText(text, len);
     };
 
+    virtual ~TextBuf(){}
+
     size_t SetNull( bool is_bytestr )
     {
         m_buf[0] = '\0';
