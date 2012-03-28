@@ -188,211 +188,281 @@ typedef enum {
     IB_FTYPE_SBUFFER      /**< Stream buffer */
 } ib_ftype_t;
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_generic_mutable_in(void *v)
 {
     return (void*)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_generic_in(void *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_generic_out(void **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_generic_mutable_out(void **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_generic_storage(void **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_num_mutable_in(ib_num_t *v)
 {
     return (void*)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_num_in(const ib_num_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_num_out(ib_num_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_num_mutable_out(ib_num_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_num_storage(ib_num_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_unum_mutable_in(ib_unum_t *v)
 {
     return (void*)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_unum_in(const ib_unum_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_unum_out(ib_unum_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_unum_mutable_out(ib_unum_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_unum_storage(ib_unum_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_nulstr_mutable_in(char *v)
 {
     return (void*)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_nulstr_in(const char *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_nulstr_out(const char **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_nulstr_mutable_out(char **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_nulstr_storage(char **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_bytestr_mutable_in(ib_bytestr_t *v)
 {
     return (void*)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_bytestr_in(const ib_bytestr_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_bytestr_out(const ib_bytestr_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_bytestr_mutable_out(ib_bytestr_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_bytestr_storage(ib_bytestr_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_list_mutable_in(ib_list_t *v)
 {
     return (void*)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_list_in(const ib_list_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_list_out(const ib_list_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_list_mutable_out(ib_list_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_list_storage(ib_list_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_sbuffer_mutable_in(ib_stream_t *v)
 {
     return (void*)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_sbuffer_in(const ib_stream_t *v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_sbuffer_out(const ib_stream_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_sbuffer_mutable_out(ib_stream_t **v)
 {
     return (void *)(v);
 }
 
-/** Assert @a v is proper type. */
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_sbuffer_storage(ib_stream_t **v)
 {
     return (void *)(v);
