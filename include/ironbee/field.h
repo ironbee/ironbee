@@ -169,7 +169,7 @@ extern "C" {
  *   The same applies to IB_FTYPE_UNUM.
  * - The mutable out types for IB_FTYPE_NUM is @c ib_num_t** so that a pointer
  *   to the value can be passed out.  This allows the caller to mutate the
- *   actual number as expected for a mutale value.  The same applies to
+ *   actual number as expected for a mutable value.  The same applies to
  *   IB_FTYPE_UNUM.
  *
  * @{
@@ -412,7 +412,7 @@ static inline void *ib_ftype_sbuffer_storage(ib_stream_t **v)
  * @param[in]  alen     Length of @a arg.
  * @param[in]  data     Callback data.
  *
- * @returns Status cde
+ * @returns Status code
  */
 typedef ib_status_t (*ib_field_get_fn_t)(
     const ib_field_t *field,
@@ -840,7 +840,7 @@ int ib_field_is_dynamic(
 );
 
 /**
- * Helper function for providing nullt terminated strings.
+ * Helper function for providing null terminated strings.
  *
  * @param[in] name Null terminated field name.
  **/
