@@ -437,6 +437,9 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
     else if (fin->type == IB_FTYPE_BYTESTR) {
         ib_bytestr_t *bs;
         rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
 
         uint8_t *out;
         size_t outlen;
