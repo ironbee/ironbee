@@ -96,6 +96,7 @@ extern "C" {
  *         <td>@c IB_FTYPE_GENERIC</td>
  *         <td>@c void*</td>
  *         <td>@c void*</td>
+ *         <td>@c void*</td>
  *         <td>@c void**</td>
  *         <td>@c void**</td>
  *         <td>@c void**</td>
@@ -129,7 +130,7 @@ extern "C" {
  *         <td>@c const @c char**</td>
  *         <td>@c char**</td>
  *         <td>@c char**</td>
- *     <td>
+ *     </tr>
  *
  *     <tr>
  *         <td>@c IB_FTYPE_BYTESTR</td>
@@ -139,7 +140,7 @@ extern "C" {
  *         <td>@c const @c ib_bytestr_t**</td>
  *         <td>@c ib_bytestr_t**</td>
  *         <td>@c ib_bytestr_t**</td>
- *     <td>
+ *     </tr>
  *
  *     <tr>
  *         <td>@c IB_FTYPE_LIST</td>
@@ -149,7 +150,7 @@ extern "C" {
  *         <td>@c const @c ib_list_t**</td>
  *         <td>@c ib_list_t**</td>
  *         <td>@c ib_list_t**</td>
- *     <td>
+ *     </tr>
  *
  *     <tr>
  *         <td>@c IB_FTYPE_SBUFFER</td>
@@ -159,7 +160,7 @@ extern "C" {
  *         <td>@c const @c ib_stream_t**</td>
  *         <td>@c ib_stream_t**</td>
  *         <td>@c ib_stream_t**</td>
- *     <td>
+ *     </tr>
  * </table>
  *
  * Notes:
