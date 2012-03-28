@@ -1894,7 +1894,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
                             "  \"%" IB_BYTESTR_FMT "\": "
-                            "%" PRIdMAX "%s\r\n",
+                            "%" PRId64 "%s\r\n",
                             IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
                             n,
                             comma);
@@ -1910,7 +1910,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
                             "  \"%" IB_BYTESTR_FMT "\": "
-                            "%" PRIuMAX "%s\r\n",
+                            "%" PRIu64 "%s\r\n",
                             IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
                             u,
                             comma);
