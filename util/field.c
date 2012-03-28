@@ -35,6 +35,11 @@
 
 #include <assert.h>
 
+#if ((__GNUC__==4) && (__GNUC_MINOR__==4))
+#pragma GCC optimize ("O0")
+#pragma message "Warning: GCC optimization turned on off GCC 4.4"
+#endif
+
 void ib_field_util_log_debug(
     int               level,
     const char       *prefix,
@@ -461,7 +466,7 @@ ib_status_t ib_field_list_add(
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_list_t *l;
+    ib_list_t *l = NULL;
 
     rc = ib_field_mutable_value_type(
         f,
@@ -485,7 +490,7 @@ ib_status_t ib_field_buf_add(
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_stream_t *s;
+    ib_stream_t *s = NULL;
 
     rc = ib_field_mutable_value_type(
         f,
@@ -773,9 +778,10 @@ ib_status_t ib_field_mutable_value(
     }
 
     if (f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_UNUM) {
-        *(void **)mutable_out_pval = f->val->pval;
-    } else {
-        *(void **)mutable_out_pval = *(void **)f->val->pval;
+        *(void**)mutable_out_pval = f->val->pval;
+    }
+    else {
+        *(void**)mutable_out_pval = *(void **)f->val->pval;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
