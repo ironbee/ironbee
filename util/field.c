@@ -594,10 +594,10 @@ ib_status_t ib_field_setv_ex(
         ib_list_t *l = (ib_list_t *)in_pval;
         if (l != NULL) {
             /// @todo Should do shallow copy
-            f->val->pval = l;
+            *(ib_list_t **)f->val->pval = l;
         }
         else {
-            rc = ib_list_create((ib_list_t**)f->val->pval, f->mp);
+            rc = ib_list_create((ib_list_t **)f->val->pval, f->mp);
             if (rc != IB_OK) {
                 goto failed;
             }
@@ -610,10 +610,10 @@ ib_status_t ib_field_setv_ex(
         ib_stream_t *s = (ib_stream_t *)in_pval;
         if (s != NULL) {
             /// @todo Should do shallow copy
-            f->val->pval = s;
+            *(ib_stream_t **)f->val->pval = s;
         }
         else {
-            rc = ib_stream_create((ib_stream_t**)f->val->pval, f->mp);
+            rc = ib_stream_create((ib_stream_t **)f->val->pval, f->mp);
             if (rc != IB_OK) {
                 goto failed;
             }
