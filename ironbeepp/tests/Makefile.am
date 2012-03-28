@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I../acinclude
 
+EXTRA_DIST = gtest_executor.sh
+
 LDADD = \
     $(top_builddir)/tests/gtest/libgtest.la \
     $(top_builddir)/tests/test_main.o \
@@ -16,6 +18,11 @@ TESTS_ENVIRONMENT = ./gtest_executor.sh
 
 BUILT_SOURCES= \
     $(abs_builddir)/gtest_executor.sh
+
+$(abs_builddir)/%: $(srcdir)/%
+	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
+	cp -f $< $@; \
+    fi
 
 check_PROGRAMS = \
     test_catch \
