@@ -133,7 +133,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 /**
  * Unescape a Javascript-escaped string into the @a dst string buffer.
  *
- * Decode the contents of @a str into @a dst. Then terminate @dst with \0.
+ * Decode the contents of @a str into @a dst. Then terminate @a dst with \0.
  * This means @a dst must be @a src_len+1 in size.
  *
  * Because @a src may be a segment in a larger character buffer,
@@ -163,7 +163,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  *          IB_EBADVAL is returned if a flag is set and the string cannot
  *          be decoded because of the flag settings.
  *
- *          On a failure @dst_len are left in an inconsistent state.
+ *          On a failure @a dst_len are left in an inconsistent state.
  */
 ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
                                                size_t *dst_len,

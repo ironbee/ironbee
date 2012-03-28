@@ -237,7 +237,8 @@ struct ib_dirmap_init_t {
  * @param name Directive name
  * @param cb Callback
  * @param blkend Block end callback
- * @param cbdata Callback data
+ * @param cbdata Callback data for @a cb
+ * @param blkenddata Callback data for @a blkend
  */
 #define IB_DIRMAP_INIT_SBLK1(name,cb,blkend,cbdata,blkenddata) \
     { (name), IB_DIRTYPE_SBLK1, IB_DIRMAP_INIT_CB_HELPER(fn_sblk1,(cb)), (blkend), (cbdata), (blkenddata), NULL }

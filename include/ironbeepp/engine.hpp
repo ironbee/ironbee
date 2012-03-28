@@ -112,7 +112,7 @@ public:
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
-     * @param[in] bs ConstEngine to remove const from.
+     * @param[in] engine ConstEngine to remove const from.
      * @returns Engine pointing to same underlying byte string as @a bs.
      **/
     static Engine remove_const(ConstEngine engine);
@@ -164,8 +164,8 @@ private:
  * Outputs Engine[@e value] to @a o where @e value is replaced with
  * the value of the bytestring.
  *
- * @param[in] o           Ostream to output to.
- * @param[in] byte_string Engine to output.
+ * @param[in] o      Ostream to output to.
+ * @param[in] engine Engine to output.
  * @return @a o
  **/
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine);
