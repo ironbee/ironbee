@@ -425,7 +425,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     /* Make a copy of the parameters to operate on */
     rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, 
+        ib_log_error(ib, 4,
                      "Error unescaping rule parameters '%s'", parameters);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }

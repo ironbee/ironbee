@@ -2013,7 +2013,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                  IB_UTIL_UNESCAPE_NONULL);
 
     if (rc != IB_OK) {
-        const char *msg = (rc == IB_EBADVAL)? 
+        const char *msg = (rc == IB_EBADVAL)?
             "Value for parameter \"%s\" may not contain NULL bytes: %s":
             "Value for parameter \"%s\" could not be unescaped: %s";
         ib_log_debug(ib, 3, msg, name, p1);
