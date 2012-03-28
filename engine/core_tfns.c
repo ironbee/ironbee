@@ -601,12 +601,12 @@ static ib_status_t tfn_length(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        size_t      len = strlen(fval);
+        const ib_unum_t len = strlen(fval);
         rc = ib_field_create(
             fout, mp,
             IB_FIELD_NAME("Length"),
             IB_FTYPE_UNUM,
-            ib_ftype_unum_in((ib_unum_t *)&len)
+            ib_ftype_unum_in(&len)
         );
     }
     else if (fin->type == IB_FTYPE_BYTESTR) {
@@ -616,12 +616,12 @@ static ib_status_t tfn_length(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        size_t len = ib_bytestr_length(value);
+        const ib_unum_t len = ib_bytestr_length(value);
         rc = ib_field_create(
             fout, mp,
             IB_FIELD_NAME("Length"),
             IB_FTYPE_UNUM,
-            ib_ftype_unum_in((ib_unum_t *)&len)
+            ib_ftype_unum_in(&len)
         );
     }
     else if (fin->type == IB_FTYPE_LIST) {
@@ -666,10 +666,10 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         }
     }
     else {
-        size_t len = 1;
+        const ib_unum_t len = 1;
         rc = ib_field_create(
             fout, mp, fin->name, fin->nlen, IB_FTYPE_UNUM,
-            ib_ftype_unum_in((ib_unum_t *)&len)
+            ib_ftype_unum_in(&len)
         );
     }
 

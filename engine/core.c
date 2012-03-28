@@ -1896,7 +1896,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                             "  \"%" IB_BYTESTR_FMT "\": "
                             "%" PRIdMAX "%s\r\n",
                             IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            *(intmax_t *)n,
+                            n,
                             comma);
             break;
         }
@@ -1912,7 +1912,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                             "  \"%" IB_BYTESTR_FMT "\": "
                             "%" PRIuMAX "%s\r\n",
                             IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            *(uintmax_t *)u,
+                            u,
                             comma);
             break;
         }
