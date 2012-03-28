@@ -12,6 +12,11 @@ LDFLAGS = \
 
 include $(top_srcdir)/build/tests.mk
 
+TESTS_ENVIRONMENT = ./gtest_executor.sh
+
+BUILT_SOURCES= \
+    $(abs_builddir)/gtest_executor.sh
+
 check_PROGRAMS = \
     test_catch \
     test_data \
@@ -39,10 +44,3 @@ test_byte_string_SOURCES        = test_byte_string.cpp
 test_field_SOURCES              = test_field.cpp
 test_configuration_map_SOURCES  = test_configuration_map.cpp fixture.cpp
 
-check-local: $(check_PROGRAMS)
-	for cp in $(check_PROGRAMS); do \
-		./$${cp} --gtest_output=xml:$${cp}_details.xml 2> $${cp}_stderr.log; \
-		if test -n "$(VALGRIND)"; then \
-		 $(VALGRIND) --xml=yes --xml-file=$${cp}_valgrind_memcheck.xml ./$${cp}; \
-		fi; \
-	done
