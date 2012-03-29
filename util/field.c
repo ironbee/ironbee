@@ -66,7 +66,7 @@ void ib_field_util_log_debug(
     );
 
     if (ib_field_is_dynamic(f)) {
-        return;
+        IB_FTRACE_RET_VOID();
     }
 
     assert(f->val->pval);

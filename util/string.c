@@ -356,8 +356,8 @@ ib_status_t ib_strtrim_lr_ex(uint8_t *data_in,
     }
 
     *modified = ((lmod == IB_TRUE) || (rmod == IB_TRUE)) ? IB_TRUE : IB_FALSE;
-    return rc;
-
+    
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /*
