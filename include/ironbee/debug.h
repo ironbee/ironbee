@@ -26,6 +26,7 @@
  */
 
 #include <ironbee/build.h>
+#include <ironbee/types.h>
 
 #include <stdint.h>
 
@@ -79,6 +80,22 @@ void DLL_PUBLIC ib_trace_num(const char *file,
                              const char *func,
                              const char *msg,
                              intmax_t num);
+
+/**
+ * @internal
+ * Log a status code.
+ *
+ * @param file Source filename (typically __FILE__)
+ * @param line Source line (typically __LINE__)
+ * @param func Source function name
+ * @param msg Message to log
+ * @param rc  Status code.
+ */
+void DLL_PUBLIC ib_trace_status(const char *file,
+                                int line,
+                                const char *func,
+                                const char *msg,
+                                ib_status_t rc);
 
 /**
  * @internal
@@ -194,10 +211,10 @@ void DLL_PUBLIC ib_trace_str(const char *file,
     do { \
         ib_status_t __ib_ft_rv = rv; \
         if (__ib_ft_rv != IB_OK) { \
-            ib_trace_num(__FILE__, __LINE__, __ib_fname__, "returned error", (intmax_t)__ib_ft_rv); \
+            ib_trace_status(__FILE__, __LINE__, __ib_fname__, "returned error", __ib_ft_rv); \
         } \
         else { \
-            ib_trace_num(__FILE__, __LINE__, __ib_fname__, "returned success", (intmax_t)__ib_ft_rv); \
+            ib_trace_status(__FILE__, __LINE__, __ib_fname__, "returned success", __ib_ft_rv); \
         } \
         return __ib_ft_rv; \
     } while(0)
@@ -279,6 +296,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 #define ib_trace_init(fn)
 #define ib_trace_msg(file,line,func,msg)
 #define ib_trace_num(file,line,func,msg,num)
+#define ib_trace_status(file,line,func,msg,rc)
 #define ib_trace_unum(file,line,func,msg,unum)
 #define ib_trace_ptr(file,line,func,msg,ptr)
 #define ib_trace_str(file,line,func,msg,str)

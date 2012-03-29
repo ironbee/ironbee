@@ -130,5 +130,22 @@ void ib_trace_str(const char *file,
     fflush(ib_trace_fh);
 }
 
+void ib_trace_status(const char *file,
+                     int line,
+                     const char *func,
+                     const char *msg,
+                     ib_status_t rc)
+{
+    const char *sep = func?"() - ":"";
+    const char *sep2 = msg?" ":"";
+
+    fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s%s%s)\n",
+            file, line,
+            (func?func:""), sep,
+            (msg?msg:""), sep2,
+            ib_status_to_string(rc));
+    fflush(ib_trace_fh);
+}
+
 #endif /* IB_DEBUG */
 
