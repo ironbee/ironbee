@@ -363,6 +363,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
                                  &pattern_file_unescaped_len,
                                  pattern_file,
                                  pattern_file_len,
+                                 IB_UTIL_UNESCAPE_TERMINATE |
                                  IB_UTIL_UNESCAPE_NONULL);
     if ( rc != IB_OK ) {
         const char *msg = (rc==IB_EBADVAL)?
@@ -414,7 +415,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
                                     &line_unescaped_len,
                                     line,
                                     line_len,
-                                    0);
+                                    IB_UTIL_UNESCAPE_TERMINATE);
 
             rc = ib_ac_add_pattern (ac, line_unescaped, &nop_ac_match, NULL, 0);
 
@@ -465,7 +466,7 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
                             &tok_buffer_sz,
                             pattern,
                             pattern_len,
-                            0);
+                            IB_UTIL_UNESCAPE_TERMINATE);
 
 
     memcpy(tok_buffer, pattern, tok_buffer_sz);
