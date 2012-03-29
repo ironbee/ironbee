@@ -17,6 +17,9 @@ core
 # Git files
 *.patch
 
+# Doxygen files.
+/docs/*.doxy
+
 # Autotools generated files:
 *_config_auto_gen.h
 *_config_auto_gen.h.in
@@ -44,22 +47,24 @@ autom4te.cache/
 build/config.rpath
 
 # Build Generated files:
-tests/test_gtest
-tests/test_daemon
-tests/test_engine
-tests/test_util_*
-tests/test_module_*
-tests/test_action
-tests/test_operator
-tests/test_luajit
-!tests/test_util_*.cc
-tests/*_details.xml
-tests/*_memcheck.xml
-tests/*_stderr.log
-docs/doxygen/
-docs/doxygen_internal/
-docs/doxygen_external/
-docs/docbook/manual/output/
+/ironbeepp/tests/**details.xml
+/ironbeepp/tests/**stderr.log
+/tests/test_gtest
+/tests/test_daemon
+/tests/test_engine
+/tests/test_util_*
+/tests/test_module_*
+/tests/test_action
+/tests/test_operator
+/tests/test_luajit
+!/tests/test_util_*.cc
+/tests/*_details.xml
+/tests/*_memcheck.xml
+/tests/*_stderr.log
+/docs/doxygen/
+/docs/doxygen_internal/
+/docs/doxygen_external/
+/docs/docbook/manual/output/
 libs/luajit-2.0-ironbee/
 libs/libhtp/
 ironbee.pc
@@ -67,4 +72,16 @@ libs/.build-luajit
 cli/ibcli
 cpp/ibcli_cpp
 
-
+/ironbeepp/tests/test_byte_string
+/ironbeepp/tests/test_catch
+/ironbeepp/tests/test_configuration_map
+/ironbeepp/tests/test_data
+/ironbeepp/tests/test_field
+/ironbeepp/tests/test_memory_pool
+/ironbeepp/tests/test_module
+/ironbeepp/tests/test_module_bootstrap_a
+/ironbeepp/tests/test_module_bootstrap_b
+/ironbeepp/tests/test_module_delegate
+/ironbeepp/tests/test_throw
+/modules/user_agent
+/tests/test_config
