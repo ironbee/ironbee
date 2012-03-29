@@ -1137,7 +1137,6 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_opened(ib_engine_t *ib,
  */
 ib_status_t DLL_PUBLIC ib_state_notify_conn_data_in(ib_engine_t *ib,
                                                     ib_conndata_t *conndata,
-                                                    ib_server_t *server,
                                                     void *ctx);
 
 /**
@@ -1151,7 +1150,6 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_data_in(ib_engine_t *ib,
  */
 ib_status_t DLL_PUBLIC ib_state_notify_conn_data_out(ib_engine_t *ib,
                                                      ib_conndata_t *conndata,
-                                                     ib_server_t *server,
                                                      void *ctx);
 
 /**
