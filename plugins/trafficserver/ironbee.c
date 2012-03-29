@@ -39,7 +39,6 @@
 # include <inttypes.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/plugin.h>
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
 #include <ironbee/provider.h>
@@ -121,7 +120,7 @@ typedef struct {
     ib_server_direction_t dir;
     const char *word;
     int (*hdr_get)(TSHttpTxn, TSMBuffer*, TSMLoc*);
-    ib_status_t (*ib_notify)(ib_engine_t*, ib_conndata_t*, ib_server_t*, void*);
+    ib_status_t (*ib_notify)(ib_engine_t*, ib_conndata_t*, void*);
 } ironbee_direction;
 static ironbee_direction ironbee_direction_req = {
     IBD_REQ, "request", TSHttpTxnClientReqGet, ib_state_notify_conn_data_in
@@ -360,7 +359,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         icdata.dalloc = ibd->data->buflen;
         icdata.dlen = ibd->data->buflen;
         icdata.data = (uint8_t *)ibd->data->buf;
-        (*ibd->ibd->ib_notify)(ironbee, &icdata, &ibplugin, data);
+        (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
         ibd->data->buflen = 0;
@@ -432,7 +431,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     icdata.dalloc = ilength;
                     icdata.dlen = ilength;
                     icdata.data = (uint8_t *)ibuf;
-                    (*ibd->ibd->ib_notify)(ironbee, &icdata, &ibplugin, data);
+                    (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
                 }
                 //"response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
                 //      ib_state_notify_conn_data_out(ironbee, &icdata);
@@ -796,7 +795,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         /* if there's more to come, go round again ... */
         TSIOBufferReaderConsume(readerp, len);
     }
-    (*ibd->ib_notify)(ironbee, &icdata, &ibplugin, data);
+    (*ibd->ib_notify)(ironbee, &icdata, data);
 
     /* Now manipulate headers as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
