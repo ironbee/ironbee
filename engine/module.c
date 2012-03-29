@@ -205,12 +205,8 @@ ib_status_t ib_module_register_context(ib_module_t *m,
 
     /* Set default values from parent values. */
 
-    /* Add module config entries to config context, first copying the
-     * parent/global values, then overriding using default values from
-     * the configuration mapping.
-     *
-     * NOTE: Not all configuration data is required to be in the
-     * mapping, which is why the initial memcpy is required.
+    /* Add module config entries to config context, copying the
+     * parent/global values.
      */
     if (m->gclen > 0) {
         ib_context_t *p_ctx = ctx->parent;
