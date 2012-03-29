@@ -328,7 +328,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
     }
 
     /* Terminate the string. */
-    if ( flags &&  IB_UTIL_UNESCAPE_TERMINATE ) {
+    if ( flags & IB_UTIL_UNESCAPE_TERMINATE ) {
         dst[dst_i] = '\0';
     }
 
