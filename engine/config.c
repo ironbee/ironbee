@@ -153,7 +153,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    buf = (char*)malloc(sizeof(*buf)*bufsz);
+    buf = (char *)malloc(sizeof(*buf)*bufsz);
 
     if (buf==NULL){
         ib_log_error(cp->ib, 1,
@@ -187,7 +187,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
 
             /* The first line always begins at buf[0]. */
             bol = buf;
-            eol = (char*)memchr(bol, '\n', buflen);
+            eol = (char *)memchr(bol, '\n', buflen);
 
             /* Check that we found at least 1 end-of-line in this file. */
             if (eol == NULL) {
@@ -217,7 +217,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                 do {
                     ib_cfgparser_ragel_parse_chunk(cp, bol, eol-bol+1, 0);
                     bol = eol+1;
-                    eol = (char*)memchr(bol, '\n', buf+buflen-bol);
+                    eol = (char *)memchr(bol, '\n', buf+buflen-bol);
                 } while (eol != NULL);
 
                 /* There are no more end-of-line opportunities.

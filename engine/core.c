@@ -269,7 +269,7 @@ static void core_logger(FILE *fh, int level,
                         const char *fmt, va_list ap)
 {
     int fmt2_sz = 1024;
-    char *fmt2 = (char*)malloc(fmt2_sz+1);
+    char *fmt2 = (char *)malloc(fmt2_sz+1);
 
     if ( fmt2 == NULL ) {
         fprintf(fh, "Cannot allocate memory to log.");
@@ -395,8 +395,8 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
 
     const int dtmp_sz = 64;
     const int dn_sz = 512;
-    char *dtmp = (char*)malloc(dtmp_sz);
-    char *dn = (char*)malloc(dn_sz);
+    char *dtmp = (char *)malloc(dtmp_sz);
+    char *dn = (char *)malloc(dn_sz);
     char *audit_filename;
     int audit_filename_sz;
     const time_t log_seconds = IB_CLOCK_SECS(log->tx->t.logtime);
@@ -5905,7 +5905,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
         if (fclose(fp) < 0) {
             fprintf( stderr,
                      "core_ctx_destroy:Failed closing our fp %p: %s\n",
-                     (void*)fp, strerror(errno) );
+                     (void *)fp, strerror(errno) );
         }
         lpi->data = NULL;
     }

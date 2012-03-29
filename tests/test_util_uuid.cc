@@ -98,7 +98,7 @@ TEST(TestIBUtilUUID, random)
     ib_uuid_t uuid;
     ib_uuid_t uuid2;
     ib_status_t rc;
-    char *str = (char*)malloc(UUID_LEN_STR+1);
+    char *str = (char *)malloc(UUID_LEN_STR+1);
     int i;
     
     for (i=0; i<100; ++i) {

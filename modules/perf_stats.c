@@ -646,7 +646,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
             rc = ib_hook_conn_register(
                 ib, (ib_state_event_type_t)event,
                 mod_perf_stats_reg_conn_counter,
-                (void*)eventp
+                (void *)eventp
             );
         }
         else if ((eventp->cbdata_type == IB_CBDATA_NONE) ||
@@ -665,7 +665,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_conn_callback,
-                        (void*)eventp
+                        (void *)eventp
                     );
                     break;
                 case IB_STATE_HOOK_CONNDATA:
@@ -673,7 +673,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_conndata_callback,
-                        (void*)eventp
+                        (void *)eventp
                     );
                     break;
                 case IB_STATE_HOOK_TX:
@@ -681,7 +681,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_tx_callback,
-                        (void*)eventp
+                        (void *)eventp
                     );
                     break;
                 case IB_STATE_HOOK_TXDATA:
@@ -689,7 +689,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_start_txdata_callback,
-                        (void*)eventp
+                        (void *)eventp
                     );
                     break;
                 default:
@@ -757,7 +757,7 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_conn_callback,
-                        (void*)eventp
+                        (void *)eventp
                                                );
                     break;
                 case IB_STATE_HOOK_CONNDATA:
@@ -765,7 +765,7 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_conndata_callback,
-                        (void*)eventp
+                        (void *)eventp
                                                    );
                     break;
                 case IB_STATE_HOOK_TX:
@@ -773,7 +773,7 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_tx_callback,
-                        (void*)eventp
+                        (void *)eventp
                                              );
                     break;
                 case IB_STATE_HOOK_TXDATA:
@@ -781,7 +781,7 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
                         ib,
                         (ib_state_event_type_t)event,
                         mod_perf_stats_event_stop_txdata_callback,
-                        (void*)eventp
+                        (void *)eventp
                                                  );
                     break;
                 default:

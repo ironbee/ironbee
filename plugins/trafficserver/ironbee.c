@@ -505,7 +505,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         blockp = TSIOBufferReaderStart(readerp);
 
         len = TSIOBufferBlockReadAvail(blockp, readerp);
-        head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+        head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
         icdata.data = (void *)head_buf;
         icdata.dlen = icdata.dalloc = len;
@@ -583,7 +583,7 @@ static void process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     ib_log_debug(ironbee, 9,
                  "ts/ironbee/process_header: len=%ld", len );
 
-    head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+    head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
     if (ibd->dir == IBD_REQ) {
         /* Workaround:
@@ -852,8 +852,8 @@ static void ironbee_logger(void *dummy, int level,
 
     /* Write it to the ironbee log. */
     /* FIXME: why is the format arg's prototype not const char* ? */
-    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char*)"%s: %s", prefix, buf)
-        : TSTextLogObjectWrite(ironbee_log, (char*)"%s", buf);
+    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char *)"%s: %s", prefix, buf)
+        : TSTextLogObjectWrite(ironbee_log, (char *)"%s", buf);
     if (rc != TS_SUCCESS) {
         errmsg = "Data logging failed!";
     }

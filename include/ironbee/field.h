@@ -193,7 +193,7 @@ typedef enum {
  */
 static inline void *ib_ftype_generic_mutable_in(void *v)
 {
-    return (void*)(v);
+    return (void *)(v);
 }
 
 /**
@@ -233,7 +233,7 @@ static inline void *ib_ftype_generic_storage(void **v)
  */
 static inline void *ib_ftype_num_mutable_in(ib_num_t *v)
 {
-    return (void*)(v);
+    return (void *)(v);
 }
 
 /**
@@ -273,7 +273,7 @@ static inline void *ib_ftype_num_storage(ib_num_t *v)
  */
 static inline void *ib_ftype_unum_mutable_in(ib_unum_t *v)
 {
-    return (void*)(v);
+    return (void *)(v);
 }
 
 /**
@@ -313,7 +313,7 @@ static inline void *ib_ftype_unum_storage(ib_unum_t *v)
  */
 static inline void *ib_ftype_nulstr_mutable_in(char *v)
 {
-    return (void*)(v);
+    return (void *)(v);
 }
 
 /**
@@ -353,7 +353,7 @@ static inline void *ib_ftype_nulstr_storage(char **v)
  */
 static inline void *ib_ftype_bytestr_mutable_in(ib_bytestr_t *v)
 {
-    return (void*)(v);
+    return (void *)(v);
 }
 
 /**
@@ -393,7 +393,7 @@ static inline void *ib_ftype_bytestr_storage(ib_bytestr_t **v)
  */
 static inline void *ib_ftype_list_mutable_in(ib_list_t *v)
 {
-    return (void*)(v);
+    return (void *)(v);
 }
 
 /**
@@ -433,7 +433,7 @@ static inline void *ib_ftype_list_storage(ib_list_t **v)
  */
 static inline void *ib_ftype_sbuffer_mutable_in(ib_stream_t *v)
 {
-    return (void*)(v);
+    return (void *)(v);
 }
 
 /**

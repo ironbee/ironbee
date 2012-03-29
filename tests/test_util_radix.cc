@@ -65,7 +65,7 @@ void printBin(uint8_t *prefix,
 }
 
 void pdata(void* d) {
-    char *data = (char*)d;
+    char *data = (char *)d;
     printf("%s", data);
 }
 
@@ -592,7 +592,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix1*/
-    rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
+    rc = ib_radix_insert_data(radix, prefix1, (void *)ascii1);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
@@ -604,7 +604,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix2*/
-    rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
+    rc = ib_radix_insert_data(radix, prefix2, (void *)ascii2);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
@@ -615,7 +615,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix3*/
-    rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
+    rc = ib_radix_insert_data(radix, prefix3, (void *)ascii3);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
@@ -626,7 +626,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix4*/
-    rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
+    rc = ib_radix_insert_data(radix, prefix4, (void *)ascii4);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5. We are not going to insert this one! */
@@ -646,7 +646,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix4*/
-    rc = ib_radix_insert_data(radix, prefix6, (void*)ascii6);
+    rc = ib_radix_insert_data(radix, prefix6, (void *)ascii6);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix7 (127.0.0.2) Not added */
@@ -664,7 +664,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix4*/
-    rc = ib_radix_insert_data(radix, prefix8, (void*)ascii8);
+    rc = ib_radix_insert_data(radix, prefix8, (void *)ascii8);
     ASSERT_EQ(IB_OK, rc);
 
 
@@ -818,7 +818,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix1*/
-    rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
+    rc = ib_radix_insert_data(radix, prefix1, (void *)ascii1);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
@@ -830,7 +830,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix2*/
-    rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
+    rc = ib_radix_insert_data(radix, prefix2, (void *)ascii2);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
@@ -842,7 +842,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix3*/
-    rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
+    rc = ib_radix_insert_data(radix, prefix3, (void *)ascii3);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
@@ -854,7 +854,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix4*/
-    rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
+    rc = ib_radix_insert_data(radix, prefix4, (void *)ascii4);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5. We are not going to insert this one! */
@@ -994,7 +994,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix1*/
-    rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
+    rc = ib_radix_insert_data(radix, prefix1, (void *)ascii1);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
@@ -1005,7 +1005,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix2*/
-    rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
+    rc = ib_radix_insert_data(radix, prefix2, (void *)ascii2);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
@@ -1016,7 +1016,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix3*/
-    rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
+    rc = ib_radix_insert_data(radix, prefix3, (void *)ascii3);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
@@ -1027,7 +1027,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix4*/
-    rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
+    rc = ib_radix_insert_data(radix, prefix4, (void *)ascii4);
     ASSERT_EQ(IB_OK, rc);
 
 
@@ -1175,7 +1175,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix1*/
-    rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
+    rc = ib_radix_insert_data(radix, prefix1, (void *)ascii1);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
@@ -1186,7 +1186,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix2*/
-    rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
+    rc = ib_radix_insert_data(radix, prefix2, (void *)ascii2);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
@@ -1197,7 +1197,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix3*/
-    rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
+    rc = ib_radix_insert_data(radix, prefix3, (void *)ascii3);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
@@ -1208,7 +1208,7 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix4*/
-    rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
+    rc = ib_radix_insert_data(radix, prefix4, (void *)ascii4);
     ASSERT_EQ(IB_OK, rc);
 
 
@@ -1365,7 +1365,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix1*/
-    rc = ib_radix_insert_data(radix, prefix1, (void*)ascii1);
+    rc = ib_radix_insert_data(radix, prefix1, (void *)ascii1);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix2 */
@@ -1377,7 +1377,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix2*/
-    rc = ib_radix_insert_data(radix, prefix2, (void*)ascii2);
+    rc = ib_radix_insert_data(radix, prefix2, (void *)ascii2);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix3 */
@@ -1389,7 +1389,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix3*/
-    rc = ib_radix_insert_data(radix, prefix3, (void*)ascii3);
+    rc = ib_radix_insert_data(radix, prefix3, (void *)ascii3);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix4 */
@@ -1401,7 +1401,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ASSERT_EQ(IB_OK, rc);
 
     /* We are going to link it to the const ascii representation of the prefix4*/
-    rc = ib_radix_insert_data(radix, prefix4, (void*)ascii4);
+    rc = ib_radix_insert_data(radix, prefix4, (void *)ascii4);
     ASSERT_EQ(IB_OK, rc);
 
     /* IPV4 prefix5. We are not going to insert this one */

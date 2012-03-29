@@ -59,8 +59,8 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     ib_field_t* field1;
     ib_field_t* field2;
 
-    char* str1 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string1")+1));
-    char* str2 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string2")+1));
+    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string1")+1));
+    char* str2 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string2")+1));
     strcpy(str1, "string1");
     strcpy(str2, "string2");
 
@@ -126,8 +126,8 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     ib_field_t* field1;
     ib_field_t* field2;
 
-    char* str1 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string1")+1));
-    char* str2 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string2")+1));
+    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string1")+1));
+    char* str2 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string2")+1));
     strcpy(str1, "string1");
     strcpy(str2, "string2");
 

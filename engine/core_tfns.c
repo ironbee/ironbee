@@ -651,7 +651,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 
         /* Walk through the incoming fields */
         IB_LIST_LOOP(ilist, node) {
-            ib_field_t *ifield = (ib_field_t*)node->data;
+            ib_field_t *ifield = (ib_field_t *)node->data;
             ib_field_t *ofield = NULL;
             ib_flags_t flags = 0;
 
@@ -769,7 +769,7 @@ static ib_status_t max_list(ib_mpool_t *mp,
 
     /* Walk through the incoming fields */
     IB_LIST_LOOP(lst, node) {
-        ib_field_t *ifield = (ib_field_t*)node->data;
+        ib_field_t *ifield = (ib_field_t *)node->data;
         ib_num_t value;
 
         switch (ifield->type) {
@@ -896,7 +896,7 @@ static ib_status_t min_list(ib_mpool_t *mp,
 
     /* Walk through the incoming fields */
     IB_LIST_LOOP(lst, node) {
-        ib_field_t *ifield = (ib_field_t*)node->data;
+        ib_field_t *ifield = (ib_field_t *)node->data;
         ib_num_t value;
 
         switch (ifield->type) {

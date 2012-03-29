@@ -88,16 +88,16 @@ TEST_F(TestIBUtilAhoCorasick, generic_ac_test)
     rc = ib_ac_create(&ac_tree, 0, m_pool);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void*)"he", 0);
+    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void *)"he", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void*)"she", 0);
+    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void *)"she", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void*)"his", 0);
+    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void *)"his", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void*)"hers", 0);
+    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void *)"hers", 0);
     ASSERT_EQ(IB_OK, rc);
 
     /* Create links and init the matching context */
@@ -167,16 +167,16 @@ TEST_F(TestIBUtilAhoCorasick, test_ib_ac_consume)
     rc = ib_ac_create(&ac_tree, 0, m_pool);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void*)"he", 0);
+    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void *)"he", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void*)"she", 0);
+    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void *)"she", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void*)"his", 0);
+    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void *)"his", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void*)"hers", 0);
+    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void *)"hers", 0);
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_ac_build_links(ac_tree);
@@ -249,16 +249,16 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_case_sensitive)
     rc = ib_ac_create(&ac_tree, 0, m_pool);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void*)"he", 0);
+    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void *)"he", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void*)"she", 0);
+    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void *)"she", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void*)"his", 0);
+    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void *)"his", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void*)"hers", 0);
+    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void *)"hers", 0);
     ASSERT_EQ(IB_OK, rc);
 
     /* Create links and init the matching context */
@@ -294,16 +294,16 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_nocase)
     rc = ib_ac_create(&ac_tree, IB_AC_FLAG_PARSER_NOCASE, m_pool);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void*)"he", 0);
+    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void *)"he", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void*)"she", 0);
+    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void *)"she", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void*)"his", 0);
+    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void *)"his", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void*)"hers", 0);
+    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void *)"hers", 0);
     ASSERT_EQ(IB_OK, rc);
 
     /* Create links and init the matching context */
@@ -380,19 +380,19 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_multiple_common_prefix)
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_ac_add_pattern(ac_tree, "Expensive", callback,
-                           (void*)"Expensive", 0);
+                           (void *)"Expensive", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "Expen", callback, (void*)"Expen", 0);
+    rc = ib_ac_add_pattern(ac_tree, "Expen", callback, (void *)"Expen", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "pen", callback, (void*)"pen", 0);
+    rc = ib_ac_add_pattern(ac_tree, "pen", callback, (void *)"pen", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "sive", callback, (void*)"sive", 0);
+    rc = ib_ac_add_pattern(ac_tree, "sive", callback, (void *)"sive", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "ve", callback, (void*)"ve", 0);
+    rc = ib_ac_add_pattern(ac_tree, "ve", callback, (void *)"ve", 0);
     ASSERT_EQ(IB_OK, rc);
 
 
@@ -426,16 +426,16 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_check_list)
     rc = ib_ac_create(&ac_tree, 0, m_pool);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void*)"he", 0);
+    rc = ib_ac_add_pattern(ac_tree, "he", callback, (void *)"he", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void*)"she", 0);
+    rc = ib_ac_add_pattern(ac_tree, "she", callback, (void *)"she", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void*)"his", 0);
+    rc = ib_ac_add_pattern(ac_tree, "his", callback, (void *)"his", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void*)"hers", 0);
+    rc = ib_ac_add_pattern(ac_tree, "hers", callback, (void *)"hers", 0);
     ASSERT_EQ(IB_OK, rc);
 
     /* Create links and init the matching context */
@@ -518,13 +518,13 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_contained_patterns)
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_ac_add_pattern(ac_tree, "abcabcabc", callback,
-                           (void*)"abcabcabc", 0);
+                           (void *)"abcabcabc", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "abcabc", callback, (void*)"abcabc", 0);
+    rc = ib_ac_add_pattern(ac_tree, "abcabc", callback, (void *)"abcabc", 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_ac_add_pattern(ac_tree, "abc", callback, (void*)"abc", 0);
+    rc = ib_ac_add_pattern(ac_tree, "abc", callback, (void *)"abc", 0);
     ASSERT_EQ(IB_OK, rc);
 
 

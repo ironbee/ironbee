@@ -139,7 +139,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     const char* op_name = "lua:test_module_rules_lua.lua";
     const char* rule_name = "luarule001";
 
-    char* str1 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
+    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
     strcpy(str1, "string 1");
 
     tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
@@ -168,7 +168,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
                                              0,
                                              &op_inst));
 
-    op_inst->data = (void*) rule_name;
+    op_inst->data = (void *) rule_name;
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(

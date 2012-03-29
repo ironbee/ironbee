@@ -481,7 +481,7 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_log_debug(cp->ib, 9,
-                     "Added rule target '%s' to rule %p", cur, (void*)rule);
+                     "Added rule target '%s' to rule %p", cur, (void *)rule);
         ++num_targets;
     }
 
@@ -777,7 +777,7 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t ib_rc;
-    const char *func_name = (char*) data;
+    const char *func_name = (char *) data;
 
     ib_log_debug(ib, 9, "Calling lua function %s.", func_name);
 
@@ -822,7 +822,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     /* Get the targets string */
     targets = ib_list_first_const(vars);
 
-    file_name = (const char*)ib_list_node_data_const(targets);
+    file_name = (const char *)ib_list_node_data_const(targets);
 
     if ( file_name == NULL ) {
         ib_log_error(cp->ib, 1, "No targets for rule");
@@ -890,7 +890,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         }
 
         /* The data is then name of the function. */
-        op_inst->data = (void*)ib_rule_id(rule);
+        op_inst->data = (void *)ib_rule_id(rule);
 
         rc = ib_rule_set_operator(cp->ib, rule, op_inst);
 

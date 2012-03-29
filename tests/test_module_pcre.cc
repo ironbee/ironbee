@@ -79,8 +79,8 @@ TEST_F(PcreModuleTest, test_load_module)
     ib_field_t* field1;
     ib_field_t* field2;
 
-    char* str1 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
-    char* str2 = (char*) ib_mpool_alloc(ib_engine->mp, (strlen("string 2")+1));
+    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
+    char* str2 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 2")+1));
     strcpy(str1, "string 1");
     strcpy(str2, "string 2");
     
@@ -166,7 +166,7 @@ TEST_F(PcreModuleTest, matches)
 
     /* Check that a value is over written correctly. */
     s_sz = ib_bytestr_length(ib_bytestr);
-    s = (char*) malloc(s_sz+1);
+    s = (char *) malloc(s_sz+1);
     memcpy(s, ib_bytestr_const_ptr(ib_bytestr), s_sz);
     s[s_sz] = '\0';
     ASSERT_STREQ("header4", s);

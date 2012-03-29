@@ -104,7 +104,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_ac_t *ac_tree = (ib_ac_t *)((modac_provider_data_t*)mpi->data)->ac_tree;
+    ib_ac_t *ac_tree = (ib_ac_t *)((modac_provider_data_t *)mpi->data)->ac_tree;
 
     /* If the ac_tree doesn't exist, create it before adding the pattern */
     if (ac_tree == NULL) {
@@ -114,7 +114,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
                          "Unable to create the AC tree at modac");
             IB_FTRACE_RET_STATUS(rc);
         }
-        ((modac_provider_data_t*)mpi->data)->ac_tree = ac_tree;
+        ((modac_provider_data_t *)mpi->data)->ac_tree = ac_tree;
     }
 
     rc = ib_ac_add_pattern(ac_tree, patt, (ib_ac_callback_t)callback, arg, 0);
@@ -512,7 +512,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    ib_ac_t *ac = (ib_ac_t*)data;
+    ib_ac_t *ac = (ib_ac_t *)data;
     ib_ac_context_t ac_ctx;
     ib_status_t rc;
 
@@ -534,7 +534,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
         }
 
         subject_len = ib_bytestr_length(bytestr);
-        subject = (const char*)ib_bytestr_const_ptr(bytestr);
+        subject = (const char *)ib_bytestr_const_ptr(bytestr);
     }
     else {
         IB_FTRACE_RET_STATUS(IB_EALLOC);

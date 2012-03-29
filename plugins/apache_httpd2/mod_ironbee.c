@@ -961,28 +961,28 @@ static const command_rec ironbee_cmds[] = {
     AP_INIT_FLAG(
       "IronBeeEnable",
       ironbee_cmd_ibenable,
-      (void*)APR_OFFSETOF(ironbee_config_t, enabled),
+      (void *)APR_OFFSETOF(ironbee_config_t, enabled),
       RSRC_CONF,
       "enable ironbee module"
     ),
     AP_INIT_TAKE1(
       "IronBeeConfig",
       ironbee_cmd_ibconfig,
-      (void*)APR_OFFSETOF(ironbee_config_t, config),
+      (void *)APR_OFFSETOF(ironbee_config_t, config),
       RSRC_CONF,
       "specify ironbee configuration file"
     ),
     AP_INIT_TAKE1(
       "IronBeeBufferSize",
       ironbee_cmd_sz,
-      (void*)APR_OFFSETOF(ironbee_config_t, buf_size),
+      (void *)APR_OFFSETOF(ironbee_config_t, buf_size),
       RSRC_CONF,
       "specify buffer size (bytes)"
     ),
     AP_INIT_TAKE1(
       "IronBeeBufferFlushSize",
       ironbee_cmd_sz,
-      (void*)APR_OFFSETOF(ironbee_config_t, flush_size),
+      (void *)APR_OFFSETOF(ironbee_config_t, flush_size),
       RSRC_CONF,
       "specify buffer size (bytes) to trigger a flush"
     ),

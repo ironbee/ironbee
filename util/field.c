@@ -76,7 +76,7 @@ void ib_field_util_log_debug(
             "%s has no value.",
             prefix
         );
-    } 
+    }
     else {
         switch (f->type) {
         case IB_FTYPE_GENERIC:
@@ -363,7 +363,7 @@ ib_status_t ib_field_copy(
             src->val->fn_set,
             src->val->cbdata_set
         );
-    } 
+    }
     else {
         switch (src->type) {
         case IB_FTYPE_NUM:

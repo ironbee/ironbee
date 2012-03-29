@@ -551,7 +551,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
 
         /* Get the bytestr's length and pointer */
         iplen = ib_bytestr_length(bs);
-        ipstr = (const char*)ib_bytestr_const_ptr(bs);
+        ipstr = (const char *)ib_bytestr_const_ptr(bs);
     }
     else {
         IB_FTRACE_RET_STATUS(IB_EINVAL);

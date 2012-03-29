@@ -433,8 +433,8 @@ int DLL_PUBLIC ib_hashequal_nocase(
     assert(a != NULL);
     assert(b != NULL);
 
-    const unsigned char *a_s = (const unsigned char*)a;
-    const unsigned char *b_s = (const unsigned char*)b;
+    const unsigned char *a_s = (const unsigned char *)a;
+    const unsigned char *b_s = (const unsigned char *)b;
 
     if (a_length != b_length) {
         IB_FTRACE_RET_INT(0);
@@ -835,7 +835,7 @@ ib_status_t ib_hash_remove(
     assert(key  != NULL);
 
     IB_FTRACE_RET_STATUS(
-        ib_hash_remove_ex(hash, value, (void*)key, strlen(key))
+        ib_hash_remove_ex(hash, value, (void *)key, strlen(key))
     );
 }
 

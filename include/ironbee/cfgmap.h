@@ -155,7 +155,7 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
         (type), \
         NULL, NULL, NULL, NULL, \
         offsetof(basetype, field), \
-        sizeof(((basetype*)(0))->field) \
+        sizeof(((basetype *)(0))->field) \
     }
 
 /**

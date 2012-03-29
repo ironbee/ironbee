@@ -195,7 +195,7 @@ ib_status_t ib_radix_node_destroy(ib_radix_t *radix,
     }
 
     if ((*node)->data != NULL && radix->free_data != NULL) {
-        radix->free_data((void*)(*node)->data);
+        radix->free_data((void *)(*node)->data);
         radix->data_cnt--;
     }
 
@@ -296,7 +296,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                 radix->update_data(radix->start, prefix_data);
             }
             else if (radix->free_data != NULL) {
-                radix->free_data((void*)radix->start->data);
+                radix->free_data((void *)radix->start->data);
                 radix->start->data = prefix_data;
             }
             else {
@@ -491,7 +491,7 @@ ib_status_t ib_radix_insert_data(ib_radix_t *radix,
                     radix->update_data(cur_node, prefix_data);
                 }
                 else if (radix->free_data != NULL) {
-                    radix->free_data((void*)prefix_data);
+                    radix->free_data((void *)prefix_data);
                     cur_node->data = prefix_data;
                 }
                 else {

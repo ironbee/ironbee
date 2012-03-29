@@ -50,7 +50,7 @@
 #define AC_MINOR           1
 
 typedef struct modbinradix_content_t modbinradix_content_t;
-typedef ib_status_t (*modbinradix_callback_t)(void*);
+typedef ib_status_t (*modbinradix_callback_t)(void *);
 
 /* Instantiate a module global configuration. */
 typedef struct modbinradix_provider_data_t modbinradix_provider_data_t;
@@ -111,7 +111,7 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
     ib_radix_t *binradix_tree = (ib_radix_t *)mpi->data;
 
     modbinradix_content_t *mrc = NULL;
-    mrc = (modbinradix_content_t*)ib_mpool_calloc(mpi->pr->mp, 1,
+    mrc = (modbinradix_content_t *)ib_mpool_calloc(mpi->pr->mp, 1,
                                                sizeof(modbinradix_content_t));
     if (mrc == NULL) {
         ib_log_error(mpi->pr->ib, 4, "Failed to allocate modbinradix_content_t"

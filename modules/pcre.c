@@ -594,7 +594,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     const char* subject;
     size_t subject_len;
     const ib_bytestr_t* bytestr;
-    pcre_rule_data_t *rule_data = (pcre_rule_data_t*)data;
+    pcre_rule_data_t *rule_data = (pcre_rule_data_t *)data;
     pcre *regex;
     pcre_extra *regex_extra = NULL;
 #ifdef PCRE_JIT_STACK
@@ -621,7 +621,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         }
 
         subject_len = ib_bytestr_length(bytestr);
-        subject = (const char*) ib_bytestr_const_ptr(bytestr);
+        subject = (const char *) ib_bytestr_const_ptr(bytestr);
     }
     else {
         free(ovector);
@@ -629,7 +629,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     }
 
     /* Alloc space to copy regex. */
-    regex = (pcre*)malloc(rule_data->cpatt_sz);
+    regex = (pcre *)malloc(rule_data->cpatt_sz);
 
     if (regex == NULL ) {
         free(ovector);
@@ -642,7 +642,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         regex_extra = NULL;
     }
     else {
-        regex_extra = (pcre_extra*) malloc(sizeof(*regex_extra));
+        regex_extra = (pcre_extra *) malloc(sizeof(*regex_extra));
 
         if (regex_extra == NULL ) {
             free(ovector);

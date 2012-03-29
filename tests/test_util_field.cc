@@ -147,8 +147,8 @@ static ib_status_t dyn_get_cached(
     /* Cache the value */
     /* Caching does not semantically change value, so we can safely ignore
      * the constness of f. */
-    ib_field_make_static((ib_field_t*)f);
-    ib_field_setv((ib_field_t*)f, ib_ftype_nulstr_in(cval));
+    ib_field_make_static((ib_field_t *)f);
+    ib_field_setv((ib_field_t *)f, ib_ftype_nulstr_in(cval));
     
     *reinterpret_cast<const char**>(out_value) = cval;
     
@@ -164,7 +164,7 @@ static ib_status_t dyn_set(
 {
     ++g_dyn_call_count;
     
-    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_%s_call%02d", (const char *)data, (int)alen, (const char *)arg, (const char*)val, g_dyn_call_count);
+    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_%s_call%02d", (const char *)data, (int)alen, (const char *)arg, (const char *)val, g_dyn_call_count);
     
     return IB_OK;
 }
@@ -181,8 +181,8 @@ TEST_F(TestIBUtilField, test_dyn_field)
     rc = ib_field_create_dynamic(
         &dynf, m_pool, 
         IB_FIELD_NAME("test_dynf"), IB_FTYPE_NULSTR, 
-        dyn_get, (void*)"dynf_get",
-        dyn_set, (void*)"dynf_set"
+        dyn_get, (void *)"dynf_get",
+        dyn_set, (void *)"dynf_set"
     );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(dynf);
@@ -192,7 +192,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     /* Get the value from the dynamic field. */
     rc = ib_field_value_ex(dynf, 
         ib_ftype_nulstr_out(&fval),
-        (void*)"fetch1", 6
+        (void *)"fetch1", 6
     );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(fval);
@@ -204,7 +204,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     /* Get the value from the dynamic field again. */
     rc = ib_field_value_ex(dynf, 
         ib_ftype_nulstr_out(&fval),
-        (void*)"fetch2", 6
+        (void *)"fetch2", 6
     );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(fval);
@@ -214,7 +214,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     );
     
     /* Set */
-    rc = ib_field_setv_ex(dynf, (void*)"val1", (void*)"set1", 4);
+    rc = ib_field_setv_ex(dynf, (void *)"val1", (void *)"set1", 4);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(std::string("testval_dynf_set_set1_val1_call03"), g_dyn_call_val);
 
@@ -225,7 +225,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     rc = ib_field_create_dynamic(
         &cdynf, m_pool, 
         IB_FIELD_NAME("test_cdynf"), IB_FTYPE_NULSTR, 
-        dyn_get_cached, (void*)("cdynf_get"),
+        dyn_get_cached, (void *)("cdynf_get"),
         dyn_set, NULL
     );
     ASSERT_EQ(IB_OK, rc);
@@ -236,7 +236,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
     /* Get the value from the dynamic field. */
     rc = ib_field_value_ex(cdynf, 
         ib_ftype_nulstr_out(&fval),
-        (void*)"fetch1", 6
+        (void *)"fetch1", 6
     );
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(fval);

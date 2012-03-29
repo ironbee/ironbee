@@ -228,7 +228,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
  */
 static inline void sprint_threadname(char *thread_name, lua_State *L)
 {
-    sprintf(thread_name, "t_%p", (void*)L);
+    sprintf(thread_name, "t_%p", (void *)L);
 }
 
 ib_status_t ib_lua_new_thread(ib_engine_t *ib,
@@ -236,7 +236,7 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
                               lua_State **thread)
 {
     IB_FTRACE_INIT();
-    char *thread_name = (char*)malloc(THREAD_NAME_BUFFER_SZ);
+    char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
 
     ib_log_debug(ib, 1, "Setting up new Lua thread.");
 
@@ -264,7 +264,7 @@ ib_status_t ib_lua_join_thread(ib_engine_t *ib,
                                lua_State **thread)
 {
     IB_FTRACE_INIT();
-    char *thread_name = (char*)malloc(THREAD_NAME_BUFFER_SZ);
+    char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
     sprint_threadname(thread_name, *thread);
 
     ib_log_debug(ib, 1, "Tearing down Lua thread %s.", thread_name);

@@ -263,7 +263,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         ib_log_error(ib, 1, "No PocACSig target");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    target = (const char*)ib_list_node_data_const(current_arg);
+    target = (const char *)ib_list_node_data_const(current_arg);
     current_arg = ib_list_node_next_const(current_arg);
 
     /* Prequal (The AC pattern) */
@@ -271,7 +271,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         ib_log_error(ib, 1, "No PocACSig operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    prequal = (const char*)ib_list_node_data_const(current_arg);
+    prequal = (const char *)ib_list_node_data_const(current_arg);
     current_arg = ib_list_node_next_const(current_arg);
 
     /* An extra Pcre */
@@ -279,7 +279,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         ib_log_error(ib, 1, "No PocACSig operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    op = (const char*)ib_list_node_data_const(current_arg);
+    op = (const char *)ib_list_node_data_const(current_arg);
     current_arg = ib_list_node_next_const(current_arg);
 
     /* Action */
@@ -288,7 +288,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         action = "";
     }
     else {
-        action = (const char*)ib_list_node_data_const(current_arg);
+        action = (const char *)ib_list_node_data_const(current_arg);
     }
 
     /* Signature */

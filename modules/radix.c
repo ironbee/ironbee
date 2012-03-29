@@ -50,7 +50,7 @@
 #define RADIX_DATE            20110812
 
 typedef struct modradix_content_t modradix_content_t;
-typedef ib_status_t (*modradix_callback_t)(void*);
+typedef ib_status_t (*modradix_callback_t)(void *);
 
 /* Instantiate a module global configuration. */
 typedef struct modradix_provider_data_t modradix_provider_data_t;
@@ -111,7 +111,7 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
     ib_radix_t *radix_tree = (ib_radix_t *)mpi->data;
 
     modradix_content_t *mrc = NULL;
-    mrc = (modradix_content_t*)ib_mpool_calloc(mpi->pr->mp, 1,
+    mrc = (modradix_content_t *)ib_mpool_calloc(mpi->pr->mp, 1,
                                                sizeof(modradix_content_t));
     if (mrc == NULL) {
         ib_log_error(mpi->pr->ib, 4, "Failed to allocate modradix_content_t"

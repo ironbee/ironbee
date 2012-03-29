@@ -46,8 +46,8 @@ typedef struct ib_radix_prefix_t ib_radix_prefix_t;
 typedef struct ib_radix_node_t ib_radix_node_t;
 
 typedef void (*ib_radix_update_fn_t)(ib_radix_node_t*, void*);
-typedef void (*ib_radix_print_fn_t)(void*);
-typedef void (*ib_radix_free_fn_t)(void*);
+typedef void (*ib_radix_print_fn_t)(void *);
+typedef void (*ib_radix_free_fn_t)(void *);
 
 /**
  * Creates a new prefix instance

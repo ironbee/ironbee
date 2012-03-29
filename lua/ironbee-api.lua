@@ -62,7 +62,7 @@ local ibutil = {
     end
 }
 
--- Iterate over the ib_list (of type ib_list_t*) calling the 
+-- Iterate over the ib_list (of type ib_list_t *) calling the 
 -- function func on each ib_field_t* contained in the elements of ib_list.
 ibapi.each_list_node = function(ib_list, func)
     local ib_list_node = ffi.cast("ib_list_node_t*", 

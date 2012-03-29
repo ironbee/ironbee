@@ -252,7 +252,7 @@ static ib_status_t modtrace_handle_tx(
     const event_info_t *eventp = (const event_info_t *)cbdata;
 
     ib_log_debug(ib, 4, "handle_tx [%s]: data=%p tx->dpi=%p",
-                 eventp->name, (void*)tx->data, (void*)tx->dpi);
+                 eventp->name, (void *)tx->data, (void *)tx->dpi);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -281,7 +281,7 @@ static ib_status_t modtrace_handle_txdata(
     const ib_tx_t *tx = txdata->tx;
 
     ib_log_debug(ib, 4, "handle_txdata [%s]: data=%p tx=%p dpi=%p",
-                 eventp->name, (void*)txdata->data, (void*)tx, (void*)tx->dpi);
+                 eventp->name, (void *)txdata->data, (void *)tx, (void *)tx->dpi);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -516,7 +516,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_conn_data,
-                    (void*)eventp
+                    (void *)eventp
                 );
                 break;
 
@@ -525,7 +525,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_txdata,
-                    (void*)eventp
+                    (void *)eventp
                 );
                 break;
 
@@ -535,7 +535,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_tx_mem,
-                    (void*)eventp
+                    (void *)eventp
                 );
                 break;
 
@@ -544,7 +544,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_req_headers,
-                    (void*)eventp
+                    (void *)eventp
                 );
                 break;
 
@@ -555,7 +555,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_conn_event_callback,
-                            (void*)eventp
+                            (void *)eventp
                         );
                         break;
                     case IB_STATE_HOOK_CONNDATA:
@@ -563,7 +563,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_conndata_event_callback,
-                            (void*)eventp
+                            (void *)eventp
                         );
                         break;
                     case IB_STATE_HOOK_TX:
@@ -571,7 +571,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_tx_event_callback,
-                            (void*)eventp
+                            (void *)eventp
                         );
                         break;
                     case IB_STATE_HOOK_TXDATA:
@@ -579,7 +579,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_txdata_event_callback,
-                            (void*)eventp
+                            (void *)eventp
                         );
                         break;
                     case IB_STATE_HOOK_NULL:
@@ -587,7 +587,7 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                             ib,
                             (ib_state_event_type_t)event,
                             modtrace_null_event_callback,
-                            (void*)eventp
+                            (void *)eventp
                         );
                         break;
                     default:

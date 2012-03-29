@@ -199,7 +199,7 @@ static ib_status_t dyn_get(
     ib_field_t *newf;
     ib_status_t rc;
     
-    const char* carg = (const char*)arg;
+    const char* carg = (const char *)arg;
 
     rc = ib_field_create(&newf, mp, carg, alen, IB_FTYPE_NUM, 
         ib_ftype_num_in(&numval));
@@ -243,7 +243,7 @@ TEST(TestIronBee, test_dpi)
             ib_engine_pool_main_get(ib),
             IB_FIELD_NAME("test_dynf"), 
             IB_FTYPE_GENERIC, 
-            dyn_get, (void*)ib_engine_pool_main_get(ib),
+            dyn_get, (void *)ib_engine_pool_main_get(ib),
             NULL, NULL
         )
     );

@@ -468,7 +468,7 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
         }
     }
 
-    state->bintree = (ib_ac_bintree_t*)ib_mpool_calloc(ac_tree->mp,
+    state->bintree = (ib_ac_bintree_t *)ib_mpool_calloc(ac_tree->mp,
                                                 1, sizeof(ib_ac_bintree_t));
 
     if (state->bintree == NULL) {

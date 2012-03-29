@@ -614,13 +614,13 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug(ib, 9,
                      "No rules rules for phase %d/%s in context p=%p",
-                     rdata->phase, rdata->name, (void*)ctx);
+                     rdata->phase, rdata->name, (void *)ctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug(ib, 9,
                  "Executing %d rules for phase %d/%s in context %p",
                  IB_LIST_ELEMENTS(rules),
-                 rdata->phase, rdata->name, (void*)ctx);
+                 rdata->phase, rdata->name, (void *)ctx);
 
     /**
      * Loop through all of the rules for this phase, execute them.
@@ -630,7 +630,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
      * correct behavior should be.
      */
     IB_LIST_LOOP(rules, node) {
-        ib_rule_t   *rule = (ib_rule_t*)node->data;
+        ib_rule_t   *rule = (ib_rule_t *)node->data;
         ib_num_t     rule_result = 0;
         ib_status_t  rule_rc;
 
@@ -718,7 +718,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
             rc = ib_hook_tx_register(ib,
                                      cbdata->event,
                                      ib_rule_engine_execute,
-                                     (void*)cbdata);
+                                     (void *)cbdata);
             if (rc != IB_OK) {
                 ib_log_error(ib, 4, "Hook register for %d/%d/%s returned %d",
                              cbdata->phase, cbdata->event, cbdata->name, ib_status_to_string(rc));
@@ -884,7 +884,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         rc = ib_rules_init(ib, ctx->mp, IB_RULES_INIT_RULESET, &ctx->rules);
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Failed to initialize rules for context %p",
-                         (void*)ctx);
+                         (void *)ctx);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -923,17 +923,17 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         rules = phasep->rules.rule_list;
 
         /* Add it to the list */
-        rc = ib_list_push(rules, (void*)rule);
+        rc = ib_list_push(rules, (void *)rule);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Failed to add rule phase=%d context=%p: %s",
-                         phase, (void*)ctx, ib_status_to_string(rc));
+                         phase, (void *)ctx, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
         ib_log_debug(ib, 7,
                      "Registered rule %s for phase %d of context %p",
-                     rule->meta.id, phase, (void*)ctx);
+                     rule->meta.id, phase, (void *)ctx);
     }
 
     /* Store off this rule for chaining */
@@ -1099,7 +1099,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
     assert(target != NULL);
 
     /* Push the field */
-    rc = ib_list_push(rule->target_fields, (void*)target);
+    rc = ib_list_push(rule->target_fields, (void *)target);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Failed to add target '%s' to rule '%s': %s",
                      target->field_name, rule->meta.id, ib_status_to_string(rc));
@@ -1205,10 +1205,10 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
 
     /* Add the rule to the appropriate action list */
     if (which == RULE_ACTION_TRUE) {
-        rc = ib_list_push(rule->true_actions, (void*)action);
+        rc = ib_list_push(rule->true_actions, (void *)action);
     }
     else if (which == RULE_ACTION_FALSE) {
-        rc = ib_list_push(rule->false_actions, (void*)action);
+        rc = ib_list_push(rule->false_actions, (void *)action);
     }
     else {
         rc = IB_EINVAL;

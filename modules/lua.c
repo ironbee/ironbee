@@ -162,7 +162,7 @@ static modlua_cfg_t modlua_global_cfg = {
  *                also contains the current index in that list of chunks
  *                that is next to be delivered to the Lua runtime.
  * @param[in] size The size of the char* returned by this function.
- * @returns The memory pointed to by ((modlua_chunk_tracker_t*)udata)->part
+ * @returns The memory pointed to by ((modlua_chunk_tracker_t *)udata)->part
  *          with a size of @a size. This represents a chunk of Lua bytecode
  *          that, when assembled with all the other chunks, will be a Lua
  *          function placed on top of @a L.

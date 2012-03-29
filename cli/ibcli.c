@@ -1043,7 +1043,7 @@ static ib_status_t print_user_agent(
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         const char *path = build_path( "tx/User-Agent", field );
         print_field( path, field );
-        free((char*)path);
+        free((char *)path);
     }
 
     /* Done */
@@ -1861,7 +1861,7 @@ static void clean_up( void )
 
     /* Free request header buffers */
     for (num = 0; num < settings.request_headers.num_headers; ++num) {
-        free((void*)settings.request_headers.headers[num].buf);
+        free((void *)settings.request_headers.headers[num].buf);
         settings.request_headers.headers[num].buf = NULL;
     }
 }

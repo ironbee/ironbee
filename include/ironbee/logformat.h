@@ -39,7 +39,7 @@ extern "C" {
  */
 #define IB_LOGFORMAT_MAXFIELDS 128
 #define IB_LOGFORMAT_MAXLINELEN 8192
-#define IB_LOGFORMAT_DEFAULT ((char*)"%T %h %a %S %s %t %f")
+#define IB_LOGFORMAT_DEFAULT ((char *)"%T %h %a %S %s %t %f")
 
 typedef struct ib_logformat_t ib_logformat_t;
 

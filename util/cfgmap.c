@@ -96,7 +96,7 @@ static ib_status_t ib_cfgmap_handle_get(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t*)cbdata;
+    ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t *)cbdata;
 
     IB_FTRACE_RET_STATUS(
         data->init->fn_get(
@@ -128,7 +128,7 @@ static ib_status_t ib_cfgmap_handle_set(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t*)cbdata;
+    ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t *)cbdata;
 
     IB_FTRACE_RET_STATUS(
         data->init->fn_set(
@@ -160,7 +160,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                               rec->fn_get, rec->cbdata_get);
 
             ib_cfgmap_handlers_data_t *data =
-                (ib_cfgmap_handlers_data_t*)ib_mpool_alloc(
+                (ib_cfgmap_handlers_data_t *)ib_mpool_alloc(
                     cm->mp,
                     sizeof(*data)
                 );

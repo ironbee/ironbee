@@ -582,7 +582,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->t.started = ib_clock_get_time();
 
     /* Name the connection pool */
-    snprintf(namebuf, sizeof(namebuf), "Connection/%p", (void*)(*pconn));
+    snprintf(namebuf, sizeof(namebuf), "Connection/%p", (void *)(*pconn));
     ib_mpool_setname(pool, namebuf);
 
     (*pconn)->ib = ib;
@@ -728,7 +728,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     }
 
     /* Name the transaction pool */
-    snprintf(namebuf, sizeof(namebuf), "TX/%p", (void*)tx);
+    snprintf(namebuf, sizeof(namebuf), "TX/%p", (void *)tx);
     ib_mpool_setname(pool, namebuf);
 
     tx->t.started = ib_clock_get_time();
@@ -2084,7 +2084,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
     if (ctx->auditlog == NULL || ctx->auditlog->owner != ctx)
     {
 
-        ctx->auditlog = (ib_auditlog_cfg_t*)
+        ctx->auditlog = (ib_auditlog_cfg_t *)
             ib_mpool_calloc(ctx->mp, 1, sizeof(*ctx->auditlog));
 
         if (ctx->auditlog == NULL) {
