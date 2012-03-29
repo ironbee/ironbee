@@ -134,21 +134,24 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 /**
  * Unescape a Javascript-escaped string into the @a dst string buffer.
  *
- * Decode the contents of @a str into @a dst. Then terminate @a dst with \0.
- * This means @a dst must be @a src_len+1 in size.
+ * Decode the contents of @a str into @a dst. Then terminate @a dst with \0
+ * if @a flags includes IB_UTIL_UNESCAPE_TERMINATE. In this case
+ * @a dst must be @a src_len+1 in size.
  *
  * Because @a src may be a segment in a larger character buffer,
  * @a src is not treated as a \0 terminated string, but is
  * processed using the given @a src_len.
  *
  * The resultant buffer @a dst should also not be treated as a typical string
- * because a \0 character could appear in the middle of the buffer.
+ * because a \0 character could appear in the middle of the buffer unless
+ * IB_UTIL_UNESCAPE_NONULL is set in @a flags.
  *
  * If IB_OK is not returned then @a dst and @a dst_len are left in an
  * inconsistent state.
  *
  * @param[out] dst string buffer that should be at least as long as
- *             @a src_len+1.
+ *             @a src_len or @a src_len+1 if IB_UTIL_UNESCAPE_TERMINATE
+ *             is set.
  * @param[out] dst_len the length of the decoded byte array. This will be
  *             equal to or shorter than @a src_len. Note that srclen(dst)
  *             could result in a smaller value than @a dst_len because of
