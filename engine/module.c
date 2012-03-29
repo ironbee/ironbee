@@ -44,11 +44,6 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     ib_log_debug(ib, 7, "Initializing module %s (%d): %s",
                  m->name, m->idx, m->filename);
 
-    /* Zero the config structure if there is one. */
-    if (m->gclen > 0) {
-        memset(m->gcdata, 0, m->gclen);
-    }
-
     /* Register directives */
     if (m->dm_init != NULL) {
         ib_config_register_directives(ib, m->dm_init);
