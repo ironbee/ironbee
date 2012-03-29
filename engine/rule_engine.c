@@ -473,7 +473,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
         }
         else if (arc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Action %s/%s returned an error: %s",
+                         "Action %s/%s returned an error: %d",
                          name, action->action->name, arc);
             rc = arc;
         }
