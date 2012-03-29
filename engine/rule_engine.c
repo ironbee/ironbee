@@ -643,7 +643,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
         if (rule_rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Error executing rule %s: %s",
-                         rule->meta.id, rule_rc);
+                         rule->meta.id, ib_status_to_string(rule_rc));
         }
     }
 
