@@ -40,7 +40,7 @@ const char *ib_status_to_string(ib_status_t status)
     case IB_ETIMEDOUT: return "ETIMEDOUT";
     case IB_EAGAIN: return "EAGAIN";
     case IB_EOTHER: return "EOTHER";
-    case IB_EBADVAL: return "BADVAL";
+    case IB_EBADVAL: return "EBADVAL";
     default: return "Unknown Status Code";
   }
 }
