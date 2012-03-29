@@ -5583,7 +5583,7 @@ static ib_status_t core_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Initialize the core operators */
+    /* Initialize the core transformations */
     rc = ib_core_transformations_init(ib, m);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to initialize core operators: %d", rc);
@@ -5597,7 +5597,7 @@ static ib_status_t core_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Initialize the core operators */
+    /* Initialize the core actions */
     rc = ib_core_actions_init(ib, m);
     if (rc != IB_OK) {
         ib_log_error(ib, 0, "Failed to initialize core actions: %d", rc);
