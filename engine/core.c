@@ -171,7 +171,7 @@ static FILE *fdup( FILE *fh )
 }
 
 /**
- * Unescape a value using ref ib_util_unescape_string.
+ * Unescape a value using ib_util_unescape_string.
  *
  * It is guaranteed that @a dst will not be populated with a string
  * containing a premature EOL.
