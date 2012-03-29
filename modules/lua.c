@@ -2000,7 +2000,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     char *path = NULL;
     size_t p1_len = strlen(p1);
     size_t p1_unescaped_len;
-    char *p1_unescaped = malloc(p1_len);
+    char *p1_unescaped = malloc(p1_len+1);
 
     if ( p1_unescaped == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -2010,6 +2010,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                  &p1_unescaped_len,
                                  p1,
                                  p1_len,
+                                 IB_UTIL_UNESCAPE_TERMINATE |
                                  IB_UTIL_UNESCAPE_NONULL);
 
     if (rc != IB_OK) {

@@ -186,8 +186,9 @@ static FILE *fdup( FILE *fh )
 static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
 {
     IB_FTRACE_INIT();
-    char *dst_tmp = ib_mpool_alloc(ib->mp, strlen(src)+1);
-    size_t len;
+    size_t src_len = strlen(src);
+    char *dst_tmp = ib_mpool_alloc(ib->mp, src_len+1);
+    size_t dst_len;
     ib_status_t rc;
 
     if ( dst_tmp == NULL ) {
@@ -196,9 +197,10 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     }
 
     rc = ib_util_unescape_string(dst_tmp,
-                                 &len,
+                                 &dst_len,
                                  src,
-                                 strlen(src),
+                                 src_len,
+                                 IB_UTIL_UNESCAPE_TERMINATE |
                                  IB_UTIL_UNESCAPE_NONULL);
 
     if ( rc != IB_OK) {

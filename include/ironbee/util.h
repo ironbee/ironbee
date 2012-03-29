@@ -81,7 +81,8 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  * When passed to @ref ib_util_unescape_string an escaped null character will
  * results in the string not being parsed and IB_EINVAL being returned.
  */
-#define IB_UTIL_UNESCAPE_NONULL 0x0001
+#define IB_UTIL_UNESCAPE_NONULL    0x0001
+#define IB_UTIL_UNESCAPE_TERMINATE 0x0002
 
 /**
  * Set the logger level.
