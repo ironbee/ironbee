@@ -4751,7 +4751,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("DebugLogLevel", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: %s", name, atol(p1_unescaped));
+        ib_log_debug(ib, 7, "%s: %d", name, atol(p1_unescaped));
         rc = ib_context_set_num(ctx, "logger.log_level", atol(p1_unescaped));
         IB_FTRACE_RET_STATUS(rc);
     }
