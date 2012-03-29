@@ -134,17 +134,21 @@ static ib_status_t geoip_lookup(
         /* Add integers. */
         tmp_field = NULL;
 
+        /* Avoids type-punning errors on gcc 4.2.4 with holder values. */
+        const ib_num_t charset = geoip_rec->charset;
+        const ib_num_t area_code = geoip_rec->area_code;;
+
         ib_field_create(&tmp_field,
                         tx->mp,
                         IB_FIELD_NAME("area_code"),
                         IB_FTYPE_NUM,
-                        ib_ftype_num_in((ib_num_t*)&geoip_rec->area_code));
+                        ib_ftype_num_in(&area_code));
         ib_field_list_add(geoip_lst, tmp_field);
         ib_field_create(&tmp_field,
                         tx->mp,
                         IB_FIELD_NAME("charset"),
                         IB_FTYPE_NUM,
-                        ib_ftype_num_in((ib_num_t*)&geoip_rec->charset));
+                        ib_ftype_num_in(&charset));
         ib_field_list_add(geoip_lst, tmp_field);
 
         /* Add strings. */
