@@ -22,11 +22,12 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 #include <stdlib.h>
 #include <strings.h>
 #include <assert.h>
 
-#include "ironbee_config_auto.h"
 #include <ironbee/debug.h>
 #include <ironbee/types.h>
 #include <ironbee/string.h>
