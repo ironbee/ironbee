@@ -5359,7 +5359,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Set defaults */
-    corecfg->log_handler        = MODULE_NAME_STR;
     corecfg->log_level          = 4;
     corecfg->log_uri            = "";
     corecfg->log_handler        = MODULE_NAME_STR;
@@ -5630,7 +5629,7 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     ),
     IB_CFGMAP_INIT_ENTRY(
         IB_PROVIDER_TYPE_LOGGER ".log_handler",
-        IB_FTYPE_NUM,
+        IB_FTYPE_NULSTR,
         ib_core_cfg_t,
         log_handler
     ),
