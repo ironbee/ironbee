@@ -343,7 +343,8 @@ static ib_status_t execute_rule(ib_engine_t *ib,
             }
         }
         else if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Error getting field %s: %s", fname, ib_status_to_string(rc));
+            ib_log_error(ib, 4, "Error getting field %s: %s",
+                         fname, ib_status_to_string(rc));
             continue;
         }
 
@@ -524,7 +525,8 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      */
     trc = execute_rule(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
-        ib_log_error(ib, 4, "Error executing rule %s: %s", rule->meta.id, ib_status_to_string(trc));
+        ib_log_error(ib, 4, "Error executing rule %s: %s",
+                     rule->meta.id, ib_status_to_string(trc));
         rc = trc;
     }
 
@@ -689,7 +691,8 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
     rc = ib_list_create(&(rule_engine->rule_list.rule_list), mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Rule engine failed to initialize rule list: %s", ib_status_to_string(rc));
+                     "Rule engine failed to initialize rule list: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -721,7 +724,8 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
                                      (void *)cbdata);
             if (rc != IB_OK) {
                 ib_log_error(ib, 4, "Hook register for %d/%d/%s returned %d",
-                             cbdata->phase, cbdata->event, cbdata->name, ib_status_to_string(rc));
+                             cbdata->phase, cbdata->event, cbdata->name,
+                             ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -739,7 +743,8 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
 
     rc = ib_rules_init(ib, ib->mp, IB_RULES_INIT_CALLBACKS, &(ib->rules) );
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize rule engine: %s", ib_status_to_string(rc));
+        ib_log_error(ib, 4, "Failed to initialize rule engine: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -760,7 +765,8 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
     /* Call the init function */
     rc = ib_rules_init(ib, ctx->mp, IB_RULES_INIT_RULESET, &(ctx->rules));
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize context rules: %s", ib_status_to_string(rc));
+        ib_log_error(ib, 4, "Failed to initialize context rules: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -801,7 +807,8 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* meta tags list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule meta tags list: %s", ib_status_to_string(rc));
+        ib_log_error(ib, 1, "Failed to create rule meta tags list: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->meta.tags = lst;
@@ -809,7 +816,8 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* Target list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule target field list: %s", ib_status_to_string(rc));
+        ib_log_error(ib, 1, "Failed to create rule target field list: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->target_fields = lst;
@@ -817,7 +825,8 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* True Action list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule true action list: %s", ib_status_to_string(rc));
+        ib_log_error(ib, 1, "Failed to create rule true action list: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->true_actions = lst;
@@ -825,7 +834,8 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* False Action list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule false action list: %s", ib_status_to_string(rc));
+        ib_log_error(ib, 1, "Failed to create rule false action list: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->false_actions = lst;
@@ -1102,7 +1112,8 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
     rc = ib_list_push(rule->target_fields, (void *)target);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Failed to add target '%s' to rule '%s': %s",
-                     target->field_name, rule->meta.id, ib_status_to_string(rc));
+                     target->field_name, rule->meta.id,
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1139,7 +1150,8 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
     rc = ib_list_push(target->tfn_list, tfn);
     if (rc != IB_OK) {
         ib_log_alert(ib, 4,
-                     "Error adding transformation '%s' to list: %s", name, ib_status_to_string(rc));
+                     "Error adding transformation '%s' to list: %s",
+                     name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
