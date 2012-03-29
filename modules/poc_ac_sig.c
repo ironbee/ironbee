@@ -91,7 +91,9 @@ struct pocacsig_fieldentry_t {
 
 /* Instantiate a module global configuration. */
 static pocacsig_cfg_t pocacsig_global_cfg = {
-    0 /* trace */
+    0, /* trace */
+    {0},
+    NULL
 };
 
 

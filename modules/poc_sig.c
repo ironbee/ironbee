@@ -80,7 +80,9 @@ struct pocsig_cfg_t {
 
 /* Instantiate a module global configuration. */
 static pocsig_cfg_t pocsig_global_cfg = {
-    0 /* trace */
+    0 /* trace */,
+    {0},
+    NULL
 };
 
 

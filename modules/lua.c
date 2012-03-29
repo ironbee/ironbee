@@ -1624,6 +1624,15 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     ib_list_t *mlist;
     ib_status_t rc;
 
+    /* Set up defaults */
+    modlua_global_cfg.lua_modules = NULL;
+    memset(
+        &modlua_global_cfg.event_reg,
+        0,
+        sizeof(modlua_global_cfg.event_reg)
+    );
+    modlua_global_cfg.Lconfig = NULL;
+
     /* Setup a list to track loaded lua modules. */
     rc = ib_list_create(&mlist, ib_engine_pool_config_get(ib));
     if (rc != IB_OK) {
