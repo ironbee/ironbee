@@ -203,10 +203,12 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
                                  IB_UTIL_UNESCAPE_TERMINATE |
                                  IB_UTIL_UNESCAPE_NONULL);
 
-    if ( rc != IB_OK) {
-        ib_log_debug(ib, 3,
-                     "Failed to unescape string. "
-                     "Is there a NULL (\\x00 or \\u0000) in it?");
+    if (rc != IB_OK) {
+        const char *msg = (rc == IB_EBADVAL) ?
+            "Failed to unescape string \"%s\" because resultant unescaped "
+                "string contains a NULL character." :
+            "Failed to unescape string \"%s\"";
+        ib_log_debug(ib, 3, msg, src);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4330,38 +4332,38 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     ib_site_t *site;
     ib_loc_t *loc;
     ib_status_t rc;
-    char *p1_escaped;
+    char *p1_unescaped;
 
     assert( ib != NULL );
     assert( ib->mp != NULL );
     assert( name != NULL );
     assert( p1 != NULL );
 
-    rc = core_unescape(ib, &p1_escaped, p1);
+    rc = core_unescape(ib, &p1_unescaped, p1);
 
     if ( rc != IB_OK ) {
         ib_log_debug(ib, 7, "Could not unescape configuration %s=%s", name, p1);
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 6, "Creating site \"%s\"", p1_escaped);
-    rc = ib_site_create(&site, ib, p1_escaped);
+    ib_log_debug(ib, 6, "Creating site \"%s\"", p1_unescaped);
+    rc = ib_site_create(&site, ib, p1_unescaped);
     if (rc != IB_OK) {
         ib_log_error(ib, 4, "Failed to create site \"%s\": %d", rc);
     }
 
     ib_log_debug(ib, 6,
-                 "Creating default location for site \"%s\"", p1_escaped);
+                 "Creating default location for site \"%s\"", p1_unescaped);
     rc = ib_site_loc_create_default(site, &loc);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Failed to create default location for site \"%s\": %d",
-                     p1_escaped,
+                     p1_unescaped,
                      rc);
     }
 
     ib_log_debug(ib, 6,
-                 "Creating context for \"%s:%s\"", p1_escaped, loc->path);
+                 "Creating context for \"%s:%s\"", p1_unescaped, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            ib_context_siteloc_chooser,
                            ib_context_site_lookup,
@@ -4369,7 +4371,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Failed to create context for \"%s:%s\": %d",
-                     p1_escaped,
+                     p1_unescaped,
                      loc->path,
                      rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
