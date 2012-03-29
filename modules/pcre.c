@@ -770,7 +770,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         ib_log_error(ib, 3,
                      MODULE_NAME_STR
                      ": Error registering pcre matcher provider: "
-                     "%d", rc);
+                     "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 

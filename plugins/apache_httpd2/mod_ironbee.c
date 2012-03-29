@@ -655,8 +655,8 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
         }
         else if (rc != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         IB_PRODUCT_NAME ": %s returned %d (0x%08x) - %s",
-                         f->frec->name, rc, rc, strerror(apr_get_os_error()));
+                         IB_PRODUCT_NAME ": %s returned %s (0x%08x) - %s",
+                         f->frec->name, ib_status_to_string(rc), rc, strerror(apr_get_os_error()));
 
             return rc;
         }
@@ -821,7 +821,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     rc = ib_engine_create(&ironbee, &ibplugin);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Error creating engine: %d", rc);
+                     IB_PRODUCT_NAME ": Error creating engine: %s", ib_status_to_string(rc));
         return OK;
     }
 
@@ -832,7 +832,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
                               NULL);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Error registering log provider: %d", rc);
+                     IB_PRODUCT_NAME ": Error registering log provider: %s", ib_status_to_string(rc));
         return OK;
     }
     ib_provider_data_set(lpr, (void *)s);
@@ -850,7 +850,7 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Error initializing engine: %d", rc);
+                     IB_PRODUCT_NAME ": Error initializing engine: %s", ib_status_to_string(rc));
         return OK;
     }
 

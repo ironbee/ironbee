@@ -115,7 +115,7 @@ void *ib_matcher_compile(ib_matcher_t *m,
                                errptr, erroffset);
     if (rc != IB_OK) {
         ib_log_debug(m->ib, 4, "Failed to compile %s patt: (%d) %s at "
-                     "offset %d", rc, errptr, erroffset);
+                     "offset %s", ib_status_to_string(rc), errptr, erroffset);
         IB_FTRACE_RET_PTR(void, NULL);
     }
 
@@ -208,8 +208,8 @@ ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
     rc = mapi->add_pattern_ex(m->mpi, &m->mpr->data, patt, callback, arg,
                                errptr, erroffset);
     if (rc != IB_OK) {
-        ib_log_debug(m->mpr->ib, 4, "Failed to add pattern %s patt: (%d) %s at "
-                               "offset %d", patt, rc, errptr, erroffset);
+        ib_log_debug(m->mpr->ib, 4, "Failed to add pattern %s patt: (%s) %s at "
+                               "offset %d", patt, ib_status_to_string(rc), errptr, erroffset);
     }
     IB_FTRACE_RET_STATUS(rc);
 

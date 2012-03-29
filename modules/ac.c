@@ -586,7 +586,7 @@ static ib_status_t modac_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, 3,
                      MODULE_NAME_STR ": Error registering ac matcher provider: "
-                     "%d", rc);
+                     "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 

@@ -460,7 +460,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     /* Create the radix matcher */
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to allocate a radix matcher: %d", rc);
+        ib_log_error(ib, 4, "Failed to allocate a radix matcher: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -472,7 +472,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         rc = ib_radix_ip_to_prefix(p, &prefix, mp);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error created radix prefix for %s: %d", p, rc);
+                         "Error created radix prefix for %s: %s", p, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -480,8 +480,8 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         rc = ib_radix_insert_data(radix, prefix, NULL);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error loading prefix %s to the radix tree: %d",
-                         p, rc);
+                         "Error loading prefix %s to the radix tree: %s",
+                         p, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -561,8 +561,8 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     rc = ib_radix_ip_to_prefix_ex(ipstr, iplen, &prefix, tx->mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Error created radix prefix for %*s: %d",
-                     iplen, ipstr, rc);
+                     "Error created radix prefix for %*s: %s",
+                     iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -576,8 +576,8 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     }
     else {
         ib_log_error(ib, 4,
-                     "Radix matcher failed matching for %*s: %d",
-                     iplen, ipstr, rc);
+                     "Radix matcher failed matching for %*s: %s",
+                     iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     IB_FTRACE_RET_STATUS(IB_OK);

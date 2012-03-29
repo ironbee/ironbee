@@ -464,7 +464,7 @@ _eof_trans:
 	{
         rc = ib_config_directive_process(cp, dirname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine, 1, "Failed to process directive \"%s\": %d", dirname, rc);
+            ib_log_error(ib_engine, 1, "Failed to process directive \"%s\": %s", dirname, ib_status_to_string(rc));
         }
         if (dirname != NULL) {
             free(dirname);
@@ -485,7 +485,7 @@ _eof_trans:
 	{
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine, 1, "Failed to start block \"%s\": %d", blkname, rc);
+            ib_log_error(ib_engine, 1, "Failed to start block \"%s\": %s", blkname, ib_status_to_string(rc));
         }
     }
 	break;
@@ -495,7 +495,7 @@ _eof_trans:
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine, 1, "Failed to process block \"%s\": %d", blkname, rc);
+            ib_log_error(ib_engine, 1, "Failed to process block \"%s\": %s", blkname, ib_status_to_string(rc));
         }
         if (blkname != NULL) {
             free(blkname);
@@ -705,7 +705,7 @@ _again:
 	{
         rc = ib_config_directive_process(cp, dirname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine, 1, "Failed to process directive \"%s\": %d", dirname, rc);
+            ib_log_error(ib_engine, 1, "Failed to process directive \"%s\": %s", dirname, ib_status_to_string(rc));
         }
         if (dirname != NULL) {
             free(dirname);

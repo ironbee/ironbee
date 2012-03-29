@@ -138,8 +138,8 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
             if (rc != IB_OK) {
                 /// @todo Handle errors
                 ib_log_error(ib, 3,
-                             "Error processing filter idx=%d \"%s\": %d",
-                             f->idx, f->name, rc);
+                             "Error processing filter idx=%d \"%s\": %s",
+                             f->idx, f->name, ib_status_to_string(rc));
             }
         }
     }
@@ -245,7 +245,7 @@ ib_status_t ib_filter_register(ib_filter_t **pf,
 
     rc = ib_array_setn(ib->filters, (*pf)->idx, *pf);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to register filter %s %d", (*pf)->name, rc);
+        ib_log_error(ib, 1, "Failed to register filter %s %s", (*pf)->name, ib_status_to_string(rc));
         *pf = NULL;
         IB_FTRACE_RET_STATUS(rc);
     }

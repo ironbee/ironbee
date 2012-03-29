@@ -187,7 +187,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
         cp->ib, cp->cur_ctx, op, args, flags, &operator);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 4,
-                     "Failed to create operator instance '%s': %d", op, rc);
+                     "Failed to create operator instance '%s': %s", op, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -195,7 +195,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     rc = ib_rule_set_operator(cp->ib, rule, operator);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 4,
-                     "Failed to set operator for rule: %d", rc);
+                     "Failed to set operator for rule: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_debug(cp->ib, 9,
@@ -377,7 +377,7 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
             rc = ib_list_create(tfns, ib_rule_mpool(ib));
             if (rc != IB_OK) {
                 ib_log_error(ib, 4,
-                             "Error creating transformation list: %d", rc);
+                             "Error creating transformation list: %s", ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -386,8 +386,8 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
         rc = ib_list_push(*tfns, tfn);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error adding transformation %s to list: %d",
-                         tfn, rc);
+                         "Error adding transformation %s to list: %s",
+                         tfn, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -464,7 +464,7 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
         rc = ib_rule_create_target(cp->ib, tstr, tfns, &target, &not_found);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 4,
-                         "Error creating rule target '%s': %d", tstr, rc);
+                         "Error creating rule target '%s': %s", tstr, ib_status_to_string(rc));
             continue;
 
         }
@@ -622,8 +622,8 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             IB_FTRACE_RET_STATUS(rc);
         }
         else if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Error adding transformation '%s': %d",
-                         value, rc);
+            ib_log_error(cp->ib, 4, "Error adding transformation '%s': %s",
+                         value, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
@@ -644,7 +644,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         }
         else if (rc != IB_OK) {
             ib_log_error(cp->ib, 4,
-                         "Failed to create action instance '%s': %d", name, rc);
+                         "Failed to create action instance '%s': %s", name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -652,8 +652,8 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_rule_add_action(cp->ib, rule, action, atype);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 4,
-                         "Failed to add action '%s' to rule '%s': %d",
-                         name, ib_rule_id(rule), rc);
+                         "Failed to add action '%s' to rule '%s': %s",
+                         name, ib_rule_id(rule), ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -699,7 +699,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
     ib_rc = ib_lock_unlock(&g_lua_lock);
 
     if (critical_rc != IB_OK) {
-        ib_log_error(ib, 1, "Critical call failed: %d", critical_rc);
+        ib_log_error(ib, 1, "Critical call failed: %s", ib_status_to_string(critical_rc));
     }
 
     /* Report semop error and return. */
@@ -834,7 +834,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx, &rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Failed to create rule: %d", rc);
+        ib_log_error(cp->ib, 1, "Failed to create rule: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_EXTERNAL);
@@ -916,7 +916,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, phase);
 
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Error registering rule: %d", rc);
+        ib_log_error(cp->ib, 1, "Error registering rule: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -970,7 +970,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx, &rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Failed to allocate rule: %d", rc);
+        ib_log_error(cp->ib, 1, "Failed to allocate rule: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -978,7 +978,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     rc = parse_targets(cp, rule, targets->data);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1,
-                     "Error parsing rule targets: %d", rc);
+                     "Error parsing rule targets: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -986,7 +986,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     rc = parse_operator(cp, rule, op->data);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1,
-                     "Error parsing rule targets: %d", rc);
+                     "Error parsing rule targets: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1005,7 +1005,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Finally, register the rule */
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule, phase);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Error registering rule: %d", rc);
+        ib_log_error(cp->ib, 1, "Error registering rule: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 

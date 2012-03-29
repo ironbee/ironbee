@@ -353,7 +353,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     );
     if (rc != IB_OK) {
         ib_log_error(ib, 0,
-                     "Error creating user agent %s field: %d", name, rc);
+                     "Error creating user agent %s field: %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -361,7 +361,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     rc = ib_field_list_add(agent_list, tmp_field);
     if (rc != IB_OK) {
         ib_log_error(ib, 0,
-                     "Error adding user agent %s field: %d", name, rc);
+                     "Error adding user agent %s field: %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -619,7 +619,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     rc = ib_data_add_bytestr(tx->dpi, "remote_addr", (uint8_t*)buf, len, NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Failed to create remote address TX field: %d", rc);
+                     "Failed to create remote address TX field: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -650,7 +650,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                              modua_user_agent,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Hook register returned %d", rc);
+        ib_log_error(ib, 4, "Hook register returned %s", ib_status_to_string(rc));
     }
 
     /* Register the remote address callback */
@@ -658,7 +658,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                              modua_remoteip,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Hook register returned %d", rc);
+        ib_log_error(ib, 4, "Hook register returned %s", ib_status_to_string(rc));
     }
 
     /* Initializations */
@@ -666,14 +666,14 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "User agent rule initialization failed"
-                     " on rule %s field rule #%d: %d",
-                     failed_rule->label, failed_frule_num, rc);
+                     " on rule %s field rule #%d: %s",
+                     failed_rule->label, failed_frule_num, ib_status_to_string(rc));
     }
 
     /* Get the rules */
     modua_match_ruleset = modua_ruleset_get( );
     if (modua_match_ruleset == NULL) {
-        ib_log_error(ib, 4, "Failed to get user agent rule list: %d", rc);
+        ib_log_error(ib, 4, "Failed to get user agent rule list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_log_debug(ib, 4,

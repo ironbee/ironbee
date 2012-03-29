@@ -51,7 +51,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     rc = ib_array_setn(ib->modules, m->idx, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to register module %s %d", m->name, rc);
+        ib_log_error(ib, 1, "Failed to register module %s: %s", m->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -69,8 +69,8 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     if (m->fn_init != NULL) {
         rc = m->fn_init(ib, m, m->cbdata_init);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to initialize module %s %d",
-                         m->name, rc);
+            ib_log_error(ib, 1, "Failed to initialize module %s: %s",
+                         m->name, ib_status_to_string(rc));
             /// @todo Need to be able to delete the entry???
             ib_array_setn(ib->modules, m->idx, NULL);
             IB_FTRACE_RET_STATUS(rc);
@@ -114,7 +114,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     ib_log_debug(ib, 7, "Loading module: %s", file);
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load module %s: %d", file, rc);
+        ib_log_error(ib, 1, "Failed to load module %s: %s", file, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -177,8 +177,8 @@ ib_status_t ib_module_unload(ib_module_t *m)
     if (m->fn_fini != NULL) {
         rc = m->fn_fini(ib, m, m->cbdata_fini);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to finish module %s %d",
-                         m->name, rc);
+            ib_log_error(ib, 1, "Failed to finish module %s: %s",
+                         m->name, ib_status_to_string(rc));
         }
     }
 

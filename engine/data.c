@@ -232,12 +232,12 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
 
     rc = ib_field_create(&f, dpi->mp, IB_S2SL(name), IB_FTYPE_SBUFFER, NULL);
     if (rc != IB_OK) {
-        ib_util_log_debug(9, "SBUFFER field creation failed: %d", rc);
+        ib_util_log_debug(9, "SBUFFER field creation failed: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     rc = api->add(dpi, f, f->name, f->nlen);
-    ib_util_log_debug(9, "SBUFFER field creation returned: %d", rc);
+    ib_util_log_debug(9, "SBUFFER field creation returned: %s", ib_status_to_string(rc));
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -325,7 +325,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
         /* Get the non-tfn field. */
         rc = api->get(dpi, name, nlen, pf);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4, "Failed to fetch field: %p (%d)", *pf, rc);
+            ib_log_debug(ib, 4, "Failed to fetch field: %p (%s)", *pf, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -387,10 +387,10 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
         rc = ib_data_add_named(dpi, *pf, fullname, fnlen);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Cannot store field \"%.*s\" type=%d: %d",
+                         "Cannot store field \"%.*s\" type=%d: %s",
                          (int)fnlen, fullname,
                          (int)(*pf)->type,
-                         rc);
+                         ib_status_to_string(rc));
 
             IB_FTRACE_RET_STATUS(rc);
         }

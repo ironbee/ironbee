@@ -192,7 +192,7 @@ static const char *modlua_data_reader(lua_State *L, void *udata, size_t *size)
     /* Get the Lua byte code from the list. */
     rc = ib_array_get(chunk->cparts, tracker->part, &cpart);
     if (rc != IB_OK) {
-        ib_log_error(ib_engine, 4, "No more chunk parts to read: %d", rc);
+        ib_log_error(ib_engine, 4, "No more chunk parts to read: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_CONSTSTR(NULL);
     }
 
@@ -292,8 +292,8 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib_engine, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib_engine, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -519,8 +519,8 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s main config: %d",
-                     module->name, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s main config: %s",
+                     module->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -595,8 +595,8 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s main config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s main config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -613,7 +613,7 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     /* Load the lua file. */
     rc = modlua_load_lua_file(ib, L, file, &chunk);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3, "Ignoring failed lua module \"%s\": %d", file, rc);
+        ib_log_error(ib, 3, "Ignoring failed lua module \"%s\": %s", file, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -699,16 +699,16 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s main config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s main config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -799,8 +799,8 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                         if (rc != IB_OK) {
                             ib_log_error(ib, 3,
                                          "Failed to register "
-                                         "lua event handler \"%s\": %d",
-                                         key, rc);
+                                         "lua event handler \"%s\": %s",
+                                         key, ib_status_to_string(rc));
                             IB_FTRACE_RET_STATUS(rc);
                         }
                     }
@@ -975,8 +975,8 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1020,8 +1020,8 @@ static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1061,8 +1061,8 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
     /* Get the module config. */
     rc = ib_context_module_config(conn->ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1081,7 +1081,7 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
     rc = ib_hash_set(conn->data, MODLUA_CONN_KEY, lua);
     ib_log_debug(ib, 7, "Setting lua runtime for conn=%p lua=%p L=%p", conn, lua, L);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 3, "Failed to set lua runtime: %d", rc);
+        ib_log_debug(ib, 3, "Failed to set lua runtime: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1341,8 +1341,8 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1417,8 +1417,8 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1493,8 +1493,8 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1568,8 +1568,8 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1636,7 +1636,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     /* Setup a list to track loaded lua modules. */
     rc = ib_list_create(&mlist, ib_engine_pool_config_get(ib));
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create lua module list: %d", rc);
+        ib_log_error(ib, 0, "Failed to create lua module list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     m->data = mlist;
@@ -1769,8 +1769,8 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1834,7 +1834,7 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module main config: %d", rc);
+        ib_log_error(ib, 0, "Failed to fetch module main config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1920,7 +1920,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module main config: %d", rc);
+        ib_log_error(ib, 0, "Failed to fetch module main config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 

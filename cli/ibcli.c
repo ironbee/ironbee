@@ -940,7 +940,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     rc = ib_data_get(tx->dpi, "ARGS", &field);
     if (rc != IB_OK) {
         printf("print_tx: Failed to get ARGS: %d\n", rc);
-        ib_log_debug(ib, 4, "print_tx: Failed to get ARGS: %d", rc);
+        ib_log_debug(ib, 4, "print_tx: Failed to get ARGS: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     print_field("tx:ARGS", field);
@@ -965,21 +965,21 @@ static ib_status_t print_tx( ib_engine_t *ib,
     /* Build the list */
     rc = ib_list_create(&lst, ib->mp);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "print_tx: Failed to create tx list: %d", rc);
+        ib_log_debug(ib, 4, "print_tx: Failed to create tx list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get_all(tx->dpi, lst);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "print_tx: Failed to get all headers: %d", rc);
+        ib_log_debug(ib, 4, "print_tx: Failed to get all headers: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     /* Print it all */
     rc = print_list("tx", lst);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "print_tx: Failed printing headers: %d", rc);
+        ib_log_debug(ib, 4, "print_tx: Failed printing headers: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 

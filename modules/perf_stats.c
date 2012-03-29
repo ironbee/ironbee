@@ -201,7 +201,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
 
     rc = ib_hash_set(connp->data, "MOD_PERF_STATS" ,perf_info);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 3, "Failed to store perf stats in connection data: %d", rc);
+        ib_log_debug(ib, 3, "Failed to store perf stats in connection data: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -702,9 +702,9 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
 
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Hook register for"
-                         "event:%d name:%s cbdata_type: %d returned %d",
+                         "event:%d name:%s cbdata_type: %d returned %s",
                          eventp->number, eventp->name,
-                         eventp->cbdata_type, rc);
+                         eventp->cbdata_type, ib_status_to_string(rc));
         }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -794,9 +794,9 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
 
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Hook register for "
-                         "event:%d name:%s cbdata_type: %d returned %d",
+                         "event:%d name:%s cbdata_type: %d returned %s",
                          eventp->number, eventp->name,
-                         eventp->cbdata_type, rc);
+                         eventp->cbdata_type, ib_status_to_string(rc));
         }
     }
 

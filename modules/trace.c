@@ -380,8 +380,8 @@ static ib_status_t modtrace_handle_tx_mem(
                                   IB_MODULE_STRUCT_PTR,
                                   (void *)&config);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -598,8 +598,8 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                 }
         }
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Hook register for %d/%s returned %d",
-                         eventp->number, eventp->name, rc);
+            ib_log_error(ib, 4, "Hook register for %d/%s returned %s",
+                         eventp->number, eventp->name, ib_status_to_string(rc));
         }
     }
 

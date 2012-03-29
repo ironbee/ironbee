@@ -257,8 +257,8 @@ static ib_status_t ib_unregister_hook(
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
             ib_status_t rc_ = hook_->callback.whicb((ib), (event), (param), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((ib), 4, "Hook returned error: %s=%d", \
-                             ib_state_event_name((event)), rc_); \
+                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
                 (*out_rc) = rc_; \
                 break; \
              } \
@@ -271,8 +271,8 @@ static ib_status_t ib_unregister_hook(
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
             ib_status_t rc_ = hook_->callback.whicb((ib), (event), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((ib), 4, "Hook returned error: %s=%d", \
-                             ib_state_event_name((event)), rc_); \
+                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
                 (*out_rc) = rc_; \
                 break; \
              } \
@@ -567,7 +567,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     /// @todo Need to tune the pool size
     rc = ib_mpool_create_ex(&pool, "Connection", ib->mp, 2048);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create connection memory pool: %d", rc);
+        ib_log_error(ib, 0, "Failed to create connection memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;
         goto failed;
     }
@@ -622,7 +622,7 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
         ib_log_error(ib, 0,
-                     "Failed to create connection data memory pool: %d", rc);
+                     "Failed to create connection data memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;
         goto failed;
     }
@@ -716,7 +716,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     /// @todo Need to tune the pool size
     rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create transaction memory pool: %d", rc);
+        ib_log_error(ib, 0, "Failed to create transaction memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;
         goto failed;
     }
@@ -2055,7 +2055,7 @@ ib_status_t ib_context_open(ib_context_t *ctx)
             rc = m->fn_ctx_open(ib, m, ctx, m->cbdata_ctx_open);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, 4, "Failed to call context open: %d", rc);
+                ib_log_error(ib, 4, "Failed to call context open: %s", ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -2178,7 +2178,7 @@ ib_status_t ib_context_close(ib_context_t *ctx)
             rc = m->fn_ctx_close(ib, m, ctx, m->cbdata_ctx_close);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, 4, "Failed to call context init: %d", rc);
+                ib_log_error(ib, 4, "Failed to call context init: %s", ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -2252,7 +2252,7 @@ void ib_context_destroy(ib_context_t *ctx)
             rc = m->fn_ctx_destroy(ib, m, ctx, m->cbdata_ctx_destroy);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, 4, "Failed to call context fini: %d", rc);
+                ib_log_error(ib, 4, "Failed to call context fini: %s", ib_status_to_string(rc));
             }
         }
     }

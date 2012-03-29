@@ -173,8 +173,8 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
     /* Get the pocacsig configuration for this context. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to fetch %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 1, "Failed to fetch %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
     }
 
     /* Setup the PCRE matcher. */
@@ -182,7 +182,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         rc = ib_matcher_create(ib, ib_engine_pool_config_get(ib),
                                "pcre", &cfg->pcre);
         if (rc != IB_OK) {
-            ib_log_error(ib, 2, "Could not create a PCRE matcher: %d", rc);
+            ib_log_error(ib, 2, "Could not create a PCRE matcher: %s", ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -348,7 +348,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         rc = ib_matcher_instance_create(ib, mp,
                                "ac", &pfe->ac_matcher);
         if (rc != IB_OK) {
-            ib_log_error(ib, 2, "Could not create an AC matcher: %d", rc);
+            ib_log_error(ib, 2, "Could not create an AC matcher: %s", ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -359,7 +359,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         rc = ib_list_push(sigs, pfe);
         if (rc != IB_OK) {
             ib_log_error(ib, 2, "Could not add an entry to the phase %d"
-                                " (ret: %d)", phase, rc);
+                                " (ret: %d)", phase, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -465,8 +465,8 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
     /* Get the pocacsig configuration for this context. */
     rc = ib_context_module_config(tx->ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to fetch %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 1, "Failed to fetch %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
     }
 
     /* If tracing is enabled, lower the log level. */
@@ -547,7 +547,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
 
                     if (rc != IB_OK) {
                         ib_log_error(ib, 3, "PocACSig: Error generating "
-                                     "event: %d", rc);
+                                     "event: %s", ib_status_to_string(rc));
                         continue;
                     }
 

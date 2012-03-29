@@ -129,8 +129,8 @@ static ib_status_t act_debuglog_execute(void *data,
         rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "log_execute: Failed to expand string '%s': %d",
-                         cstr, rc);
+                         "log_execute: Failed to expand string '%s': %s",
+                         cstr, ib_status_to_string(rc));
         }
     }
     else {
@@ -395,8 +395,8 @@ static ib_status_t act_setvar_execute(void *cbdata,
             tx->dpi, bsdata, bslen, IB_FALSE, &expanded, &exlen);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to expand string '%*s': %d",
-                         (int) bslen, bsdata, rc);
+                         "setvar: Failed to expand string '%*s': %s",
+                         (int) bslen, bsdata, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -424,8 +424,8 @@ static ib_status_t act_setvar_execute(void *cbdata,
         rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)expanded, exlen);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to bytestring for field %s: %d",
-                         svdata->name, rc);
+                         "setvar: Failed to bytestring for field %s: %s",
+                         svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -439,8 +439,8 @@ static ib_status_t act_setvar_execute(void *cbdata,
         );
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to create field %s: %d",
-                         svdata->name, rc);
+                         "setvar: Failed to create field %s: %s",
+                         svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -448,8 +448,8 @@ static ib_status_t act_setvar_execute(void *cbdata,
         rc = ib_data_add(tx->dpi, new);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to add field %s: %d",
-                         svdata->name, rc);
+                         "setvar: Failed to add field %s: %s",
+                         svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -472,8 +472,8 @@ static ib_status_t act_setvar_execute(void *cbdata,
         );
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to create field %s: %d",
-                         svdata->name, rc);
+                         "setvar: Failed to create field %s: %s",
+                         svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -481,8 +481,8 @@ static ib_status_t act_setvar_execute(void *cbdata,
         rc = ib_data_add(tx->dpi, new);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to add field %s: %d",
-                         svdata->name, rc);
+                         "setvar: Failed to add field %s: %s",
+                         svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }

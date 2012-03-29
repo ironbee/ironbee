@@ -216,7 +216,7 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
                                 bstr_len(bs), pf);
     if (rc != IB_OK) {
         ib_log_error(dpi->pr->ib, 4,
-                     "Failed to generate \"%s\" field: %d", name, rc);
+                     "Failed to generate \"%s\" field: %s", name, ib_status_to_string(rc));
     }
 
     return rc;
@@ -929,8 +929,8 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1078,11 +1078,11 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
             /* Let the parser see the data. */
             ec = htp_connp_req_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
-                ib_log_error(ib, 4, "LibHTP parser blocked: %d", ec);
+                ib_log_error(ib, 4, "LibHTP parser blocked: %s", ec);
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
-                ib_log_error(ib, 4, "LibHTP request parsing error: %d", ec);
+                ib_log_error(ib, 4, "LibHTP request parsing error: %s", ec);
             }
             break;
         case STREAM_STATE_ERROR:
@@ -1136,11 +1136,11 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
             /* Let the parser see the data. */
             ec = htp_connp_res_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
-                ib_log_error(ib, 4, "LibHTP parser blocked: %d", ec);
+                ib_log_error(ib, 4, "LibHTP parser blocked: %s", ec);
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
-                ib_log_error(ib, 4, "LibHTP response parsing error: %d", ec);
+                ib_log_error(ib, 4, "LibHTP response parsing error: %s", ec);
             }
             break;
         case STREAM_STATE_ERROR:
@@ -1173,8 +1173,8 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1285,13 +1285,13 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(h->value),
                                            bstr_len(h->value));
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to create field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to create field: %s", ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to add field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to add field: %s", ib_status_to_string(rc));
                 }
             }
         }
@@ -1300,7 +1300,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             ib_log_debug(ib, 9, "No request headers");
         }
         else {
-            ib_log_error(ib, 4, "Failed to create request headers list: %d", rc);
+            ib_log_error(ib, 4, "Failed to create request headers list: %s", ib_status_to_string(rc));
         }
 
         rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
@@ -1327,13 +1327,13 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(value),
                                            bstr_len(value));
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to create field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to create field: %s", ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to add field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to add field: %s", ib_status_to_string(rc));
                 }
             }
         }
@@ -1341,7 +1341,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             ib_log_debug(ib, 9, "No request cookies");
         }
         else {
-            ib_log_error(ib, 4, "Failed to create request cookies list: %d", rc);
+            ib_log_error(ib, 4, "Failed to create request cookies list: %s", ib_status_to_string(rc));
         }
 
         rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
@@ -1368,13 +1368,13 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(value),
                                            bstr_len(value));
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to create field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to create field: %s", ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to add field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to add field: %s", ib_status_to_string(rc));
                 }
             }
         }
@@ -1382,7 +1382,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             ib_log_debug(ib, 9, "No request URI parameters");
         }
         else {
-            ib_log_error(ib, 4, "Failed to create request URI parameters: %d", rc);
+            ib_log_error(ib, 4, "Failed to create request URI parameters: %s", ib_status_to_string(rc));
         }
     }
 
@@ -1405,8 +1405,8 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1414,8 +1414,8 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     /// @todo Move this into a ib_conn_t field
     rc = ib_hash_get(iconn->data, &modctx, "MODHTP_CTX");
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s context: %d",
-                     MODULE_NAME_STR, rc);
+        ib_log_error(ib, 0, "Failed to fetch module %s context: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1468,13 +1468,13 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                                            (uint8_t *)bstr_ptr(h->value),
                                            bstr_len(h->value));
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to create field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to create field: %s", ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to add field: %d", rc);
+                    ib_log_debug(ib, 9, "Failed to add field: %s", ib_status_to_string(rc));
                 }
             }
         }
@@ -1483,7 +1483,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
             ib_log_debug(ib, 9, "No response headers");
         }
         else {
-            ib_log_error(ib, 4, "Failed to create response headers list: %d", rc);
+            ib_log_error(ib, 4, "Failed to create response headers list: %s", ib_status_to_string(rc));
         }
     }
 
@@ -1523,7 +1523,7 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, 3,
                      MODULE_NAME_STR ": Error registering htp parser provider: "
-                     "%d", rc);
+                     "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 

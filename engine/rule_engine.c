@@ -172,8 +172,8 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
         rc = ib_tfn_transform(ib, tx->mp, tfn, in_field, &out, &flags);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error executing field operator #%d field %s: %d",
-                         n, target->field_name, rc);
+                         "Error executing field operator #%d field %s: %s",
+                         n, target->field_name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         log_field(ib, 7, "after tfn", out);
@@ -249,8 +249,8 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
                 ib, tx, opinst, fname, nvalue, recursion, rule_result);
             if (rc != IB_OK) {
                 ib_log_debug(ib, 4,
-                             "Error executing %s on list element #%d: %d",
-                             opinst->op->name, n, rc);
+                             "Error executing %s on list element #%d: %s",
+                             opinst->op->name, n, ib_status_to_string(rc));
             }
         }
         ib_log_debug(ib, 9, "Operator %s, field %s (list %zd) => %d",
@@ -262,8 +262,8 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         rc = ib_operator_execute(ib, tx, opinst, value, &result);
         if (rc != IB_OK) {
             ib_log_debug(ib, 4,
-                         "Operator %s returned an error for field %s: %d",
-                         opinst->op->name, fname, rc);
+                         "Operator %s returned an error for field %s: %s",
+                         opinst->op->name, fname, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -312,8 +312,8 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "External operator %s returned an error: %d",
-                         opinst->op->name, rc);
+                         "External operator %s returned an error: %s",
+                         opinst->op->name, ib_status_to_string(rc));
         }
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -343,7 +343,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
             }
         }
         else if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Error getting field %s: %d", fname, rc);
+            ib_log_error(ib, 4, "Error getting field %s: %s", fname, ib_status_to_string(rc));
             continue;
         }
 
@@ -351,8 +351,8 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         rc = execute_field_tfns(ib, tx, target, value, &fopvalue);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error executing transformation for %s on %s: %d",
-                         opinst->op->name, fname, rc);
+                         "Error executing transformation for %s on %s: %s",
+                         opinst->op->name, fname, ib_status_to_string(rc));
             continue;
         }
 
@@ -366,8 +366,8 @@ static ib_status_t execute_rule(ib_engine_t *ib,
                                    &result);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Operator %s returned an error for field %s: %d",
-                         opinst->op->name, fname, rc);
+                         "Operator %s returned an error for field %s: %s",
+                         opinst->op->name, fname, ib_status_to_string(rc));
             continue;
         }
         ib_log_debug(ib, 9, "Operator %s, field %s => %d",
@@ -420,8 +420,8 @@ static ib_status_t execute_action(ib_engine_t *ib,
     rc = ib_action_execute(action, rule, tx);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Action %s returned an error: %d",
-                     action->action->name, rc);
+                     "Action %s returned an error: %s",
+                     action->action->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -473,7 +473,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
         }
         else if (arc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Action %s/%s returned an error: %d",
+                         "Action %s/%s returned an error: %s",
                          name, action->action->name, arc);
             rc = arc;
         }
@@ -524,7 +524,7 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
      */
     trc = execute_rule(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
-        ib_log_error(ib, 4, "Error executing rule %s: %d", rule->meta.id, trc);
+        ib_log_error(ib, 4, "Error executing rule %s: %s", rule->meta.id, ib_status_to_string(trc));
         rc = trc;
     }
 
@@ -642,7 +642,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
                                    &rule_result);
         if (rule_rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error executing rule %s: %d",
+                         "Error executing rule %s: %s",
                          rule->meta.id, rule_rc);
         }
     }
@@ -689,7 +689,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
     rc = ib_list_create(&(rule_engine->rule_list.rule_list), mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Rule engine failed to initialize rule list: %d", rc);
+                     "Rule engine failed to initialize rule list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -704,7 +704,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
             rc = ib_list_create(&(p->rules.rule_list), mp);
             if (rc != IB_OK) {
                 ib_log_error(ib, 4,
-                             "Rule engine failed to create ruleset list: %d",
+                             "Rule engine failed to create ruleset list: %s",
                              rc);
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
@@ -721,7 +721,7 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
                                      (void*)cbdata);
             if (rc != IB_OK) {
                 ib_log_error(ib, 4, "Hook register for %d/%d/%s returned %d",
-                             cbdata->phase, cbdata->event, cbdata->name, rc);
+                             cbdata->phase, cbdata->event, cbdata->name, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -739,7 +739,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
 
     rc = ib_rules_init(ib, ib->mp, IB_RULES_INIT_CALLBACKS, &(ib->rules) );
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize rule engine: %d", rc);
+        ib_log_error(ib, 4, "Failed to initialize rule engine: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -760,7 +760,7 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
     /* Call the init function */
     rc = ib_rules_init(ib, ctx->mp, IB_RULES_INIT_RULESET, &(ctx->rules));
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize context rules: %d", rc);
+        ib_log_error(ib, 4, "Failed to initialize context rules: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -791,7 +791,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* Allocate the rule */
     rule = (ib_rule_t *)ib_mpool_calloc(mp, sizeof(ib_rule_t), 1);
     if (rule == NULL) {
-        ib_log_error(ib, 1, "Failed to allocate rule: %d");
+        ib_log_error(ib, 1, "Failed to allocate rule: %s");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -801,7 +801,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* meta tags list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule meta tags list: %d", rc);
+        ib_log_error(ib, 1, "Failed to create rule meta tags list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->meta.tags = lst;
@@ -809,7 +809,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* Target list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule target field list: %d", rc);
+        ib_log_error(ib, 1, "Failed to create rule target field list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->target_fields = lst;
@@ -817,7 +817,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* True Action list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule true action list: %d", rc);
+        ib_log_error(ib, 1, "Failed to create rule true action list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->true_actions = lst;
@@ -825,7 +825,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* False Action list */
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to create rule false action list: %d", rc);
+        ib_log_error(ib, 1, "Failed to create rule false action list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     rule->false_actions = lst;
@@ -926,8 +926,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         rc = ib_list_push(rules, (void*)rule);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Failed to add rule phase=%d context=%p: %d",
-                         phase, (void*)ctx, rc);
+                         "Failed to add rule phase=%d context=%p: %s",
+                         phase, (void*)ctx, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -1061,8 +1061,8 @@ ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
     rc = ib_list_create(&((*target)->tfn_list), ib_rule_mpool(ib));
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Error creating field operator list for target '%s': %d",
-                     name, rc);
+                     "Error creating field operator list for target '%s': %s",
+                     name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1101,8 +1101,8 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
     /* Push the field */
     rc = ib_list_push(rule->target_fields, (void*)target);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to add target '%s' to rule '%s': %d",
-                     target->field_name, rule->meta.id, rc);
+        ib_log_error(ib, 4, "Failed to add target '%s' to rule '%s': %s",
+                     target->field_name, rule->meta.id, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1130,8 +1130,8 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
     }
     else if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Error looking up trans '%s' for target '%s': %d",
-                     name, target->field_name, rc);
+                     "Error looking up trans '%s' for target '%s': %s",
+                     name, target->field_name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1139,7 +1139,7 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
     rc = ib_list_push(target->tfn_list, tfn);
     if (rc != IB_OK) {
         ib_log_alert(ib, 4,
-                     "Error adding transformation '%s' to list: %d", name, rc);
+                     "Error adding transformation '%s' to list: %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1168,8 +1168,8 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
     }
     else if (rc != IB_OK) {
         ib_log_error(ib, 4,
-                     "Error looking up trans '%s' for rule '%s': %d",
-                     name, rule->meta.id, rc);
+                     "Error looking up trans '%s' for rule '%s': %s",
+                     name, rule->meta.id, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1216,8 +1216,8 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
 
     /* Problems? */
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to add rule action '%s': %d",
-                     action->action->name, rc);
+        ib_log_error(ib, 4, "Failed to add rule action '%s': %s",
+                     action->action->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
