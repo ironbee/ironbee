@@ -27,20 +27,20 @@
 
 const char *ib_status_to_string(ib_status_t status)
 {
-  switch (status) {
-    case IB_OK: return "OK";
-    case IB_DECLINED: return "DECLINED";
-    case IB_EUNKNOWN: return "EUNKNOWN";
-    case IB_ENOTIMPL: return "ENOTIMPL";
+    switch (status) {
+    case IB_OK:        return "OK";
+    case IB_DECLINED:  return "DECLINED";
+    case IB_EUNKNOWN:  return "EUNKNOWN";
+    case IB_ENOTIMPL:  return "ENOTIMPL";
     case IB_EINCOMPAT: return "EINCOMPAT";
-    case IB_EALLOC: return "EALLOC";
-    case IB_EINVAL: return "EINVAL";
-    case IB_ENOENT: return "ENOENT";
-    case IB_ETRUNC: return "ETRUNC";
+    case IB_EALLOC:    return "EALLOC";
+    case IB_EINVAL:    return "EINVAL";
+    case IB_ENOENT:    return "ENOENT";
+    case IB_ETRUNC:    return "ETRUNC";
     case IB_ETIMEDOUT: return "ETIMEDOUT";
-    case IB_EAGAIN: return "EAGAIN";
-    case IB_EOTHER: return "EOTHER";
-    case IB_EBADVAL: return "EBADVAL";
-    default: return "Unknown Status Code";
-  }
+    case IB_EAGAIN:    return "EAGAIN";
+    case IB_EOTHER:    return "EOTHER";
+    case IB_EBADVAL:   return "EBADVAL";
+    default:           return "Unknown Status Code";
+    }
 }
