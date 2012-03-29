@@ -25,8 +25,13 @@
 
 #include <ironbee/types.h>
 
+#include <stdio.h>
+
 const char *ib_status_to_string(ib_status_t status)
 {
+    /* Allocate static buffer so we can avoid memory allocations. */
+    static char buffer[100];
+
     switch (status) {
     case IB_OK:        return "OK";
     case IB_DECLINED:  return "DECLINED";
@@ -41,6 +46,8 @@ const char *ib_status_to_string(ib_status_t status)
     case IB_EAGAIN:    return "EAGAIN";
     case IB_EOTHER:    return "EOTHER";
     case IB_EBADVAL:   return "EBADVAL";
-    default:           return "Unknown Status Code";
+    default:
+        sprintf(buffer, "Uknown Status Code: %d", status);
+        return buffer;
     }
 }
