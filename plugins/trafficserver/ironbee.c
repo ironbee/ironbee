@@ -119,18 +119,25 @@ typedef struct {
 typedef struct {
     ib_server_direction_t dir;
     const char *word;
-    int (*hdr_get)(TSHttpTxn, TSMBuffer*, TSMLoc*);
-    ib_status_t (*ib_notify)(ib_engine_t*, ib_conndata_t*, void*);
-} ironbee_direction;
-static ironbee_direction ironbee_direction_req = {
-    IBD_REQ, "request", TSHttpTxnClientReqGet, ib_state_notify_conn_data_in
+    TSReturnCode (*hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
+    ib_status_t (*ib_notify)(ib_engine_t *, ib_conndata_t *, void *);
+} ironbee_direction_t;
+
+static ironbee_direction_t ironbee_direction_req = {
+    IBD_REQ,
+    "request",
+    TSHttpTxnClientReqGet,
+    ib_state_notify_conn_data_in
 };
-static ironbee_direction ironbee_direction_resp = {
-    IBD_RESP, "response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
+static ironbee_direction_t ironbee_direction_resp = {
+    IBD_RESP,
+    "response",
+    TSHttpTxnClientRespGet,
+    ib_state_notify_conn_data_out
 };
 
 typedef struct {
-    ironbee_direction *ibd;
+    ironbee_direction_t *ibd;
     ib_filter_ctx *data;
 } ibd_ctx;
 
@@ -173,7 +180,7 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     TSMBuffer bufp;
     TSMLoc hdr_loc, field_loc;
     hdr_list *hdrs;
-    int rv;
+    TSReturnCode rv;
 
     if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
         TSError("couldn't retrieve client response header\n");
@@ -187,8 +194,14 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     while (hdrs = txndata->err_hdrs, hdrs != 0) {
         txndata->err_hdrs = hdrs->next;
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
+        if (rv != TS_SUCCESS) {
+            // TODO
+        }
         rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
                                    hdrs->hdr, strlen(hdrs->hdr));
+        if (rv != TS_SUCCESS) {
+            // TODO
+        }
         TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
                                         hdrs->value, strlen(hdrs->value));
         TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
@@ -616,7 +629,7 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
  * @param[in,out] ibd unknown
  */
 static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
-                       ironbee_direction *ibd)
+                       ironbee_direction_t *ibd)
 {
     ib_conndata_t icdata;
     int rv;
