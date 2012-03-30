@@ -168,7 +168,7 @@ static ib_server_header_action_t ib_header_callback
                                            const char *hdr, const char *value)
 {
     //ap_filter_t *f = ctx;
-    return IB_ENOTIMPL;
+    return IB_HDR_NOTIMPL;
 }
 #ifdef HAVE_FILTER_DATA_API
 static ib_status_t ib_filter_init_callback(void *ctx, ib_server_direction_t dir)
