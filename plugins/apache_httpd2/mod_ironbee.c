@@ -124,6 +124,11 @@ struct ironbee_tx_context {
     ib_tx_t                 *itx;
 };
 
+#ifndef ap_is_HTTP_VALID_RESPONSE
+/* Pulled from apache source. */
+#define ap_is_HTTP_VALID_RESPONSE(x) (((x) >= 100)&&((x) < 600))
+#endif
+
 static ib_status_t ib_error_callback(void *vf, int status)
 {
     /* We're being called from a connection filter here.
