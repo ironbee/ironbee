@@ -96,7 +96,7 @@ struct ib_server_t {
 
     const char              *name;     /**< Unique plugin name */
 
-    ib_server_header_fn     hdr_fn;    /** 
+    ib_server_header_fn     hdr_fn;    /**
                                         * Function to tell host server
                                         * to do something to an HTTP header.
                                         */

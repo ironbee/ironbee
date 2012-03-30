@@ -228,7 +228,7 @@ static ib_status_t ib_error_callback(void *x, int status)
         /* ironbee wants to return an HTTP status.  We'll oblige */
         /* FIXME: would the semantics work for 1xx?  Do we care? */
         ctx->status = status;
-        return IB_OK; 
+        return IB_OK;
     }
     return IB_ENOTIMPL;
 }
