@@ -310,7 +310,7 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
     }
     if (ctx->status != IB_OK) {
         ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, c,
-                     IB_PRODUCT_NAME ": signalled error in %s",
+                     IB_PRODUCT_NAME ": signaled error in %s",
                      ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
     }
 }

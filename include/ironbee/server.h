@@ -113,7 +113,7 @@ struct ib_server_t {
                                         * response body to host server.
                                         */
 #ifdef HAVE_FILTER_DATA_API
-    ib_server_filter_init_fn init_fn;  /** Initialise data filtering */
+    ib_server_filter_init_fn init_fn;  /** Initialize data filtering */
     ib_server_filter_data_fn data_fn;  /** Pass filtered data chunk to caller */
 #endif
 };

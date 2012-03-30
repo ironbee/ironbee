@@ -163,7 +163,7 @@ static ib_server_header_action_t ib_header_callback
     header->next = ctx->hdr_actions;
     ctx->hdr_actions = header;
     header->dir = dir;
-    /* FIXME: defering merge support - implementing append instead */
+    /* FIXME: deferring merge support - implementing append instead */
     header->action = action = action == IB_HDR_MERGE ? IB_HDR_APPEND : action;
     header->hdr = TSstrdup(hdr);
     header->value = TSstrdup(value);
@@ -190,7 +190,7 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     TSHttpHdrStatusSet(bufp, hdr_loc, txndata->status);
     TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
 
-    /* FIXME - generalise this lot */
+    /* FIXME - generalize this lot */
     while (hdrs = txndata->err_hdrs, hdrs != 0) {
         txndata->err_hdrs = hdrs->next;
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
