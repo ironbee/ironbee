@@ -95,7 +95,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_num_t call_result;
     status = ib_operator_register(ib_engine,
                                   "test_op",
-                                  IB_OP_FLAG_NONE,
+                                  IB_OP_FLAG_PHASE,
                                   test_create_fn,
                                   test_destroy_fn,
                                   test_execute_fn);
@@ -104,6 +104,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_operator_inst_t *op;
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
+                                     IB_OP_FLAG_PHASE,
                                      "test_op",
                                      "data",
                                      IB_OPINST_FLAG_NONE,
@@ -147,6 +148,7 @@ TEST_F(CoreOperatorsTest, ContainsTest)
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
+                                     IB_OP_FLAG_PHASE,
                                      "contains",
                                      "needle",
                                      IB_OPINST_FLAG_NONE,

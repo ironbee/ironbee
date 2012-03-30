@@ -590,17 +590,22 @@ static ib_status_t modac_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_operator_register(ib, "pm", 0,
+    ib_operator_register(ib,
+                         "pm",
+                         IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
                          &pm_operator_create,
                          &pm_operator_destroy,
                          &pm_operator_execute);
-    ib_operator_register(ib, "pmf", 0,
+    ib_operator_register(ib,
+                         "pmf",
+                         IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
                          &pmf_operator_create,
                          &pm_operator_destroy,
                          &pm_operator_execute);
 
-    ib_log_debug(ib, 4, "AC Status: compiled=\"%d.%d %s\" AC Matcher"
-                        " registered", AC_MAJOR, AC_MINOR, IB_XSTRINGIFY(AC_DATE));
+    ib_log_debug(ib, 4,
+                 "AC Status: compiled=\"%d.%d %s\" AC Matcher registered",
+                 AC_MAJOR, AC_MINOR, IB_XSTRINGIFY(AC_DATE));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

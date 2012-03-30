@@ -78,6 +78,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
 
 ib_status_t ib_operator_inst_create(ib_engine_t *ib,
                                     ib_context_t *ctx,
+                                    ib_flags_t required_op_flags,
                                     const char *name,
                                     const char *parameters,
                                     ib_flags_t flags,
@@ -95,8 +96,13 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    *op_inst = (ib_operator_inst_t *)ib_mpool_alloc(pool,
-                                                    sizeof(ib_operator_inst_t));
+    /* Verify that this operator is valid for this rule type */
+    if ( (op->flags & required_op_flags) != required_op_flags) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    *op_inst = (ib_operator_inst_t *)
+        ib_mpool_alloc(pool, sizeof(ib_operator_inst_t));
     if (*op_inst == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }

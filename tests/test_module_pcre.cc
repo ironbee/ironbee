@@ -113,9 +113,10 @@ TEST_F(PcreModuleTest, test_load_module)
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
                                       NULL,
+                                      IB_OP_FLAG_PHASE,
                                       "pcre",
                                       "string\\s2",
-                                      0,
+                                      IB_OPINST_FLAG_NONE,
                                       &op_inst));
 
     // Attempt to match.

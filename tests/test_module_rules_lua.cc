@@ -163,9 +163,10 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
 
     ASSERT_EQ(IB_OK, ib_operator_inst_create(ib_engine,
                                              NULL,
+                                             IB_OP_FLAG_PHASE,
                                              op_name,
                                              "unused parameter.",
-                                             0,
+                                             IB_OPINST_FLAG_NONE,
                                              &op_inst));
 
     op_inst->data = (void *) rule_name;

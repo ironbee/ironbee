@@ -95,9 +95,10 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
                                       NULL,
+                                      IB_OP_FLAG_PHASE,
                                       "pm",
                                       "string2",
-                                      0,
+                                      IB_OPINST_FLAG_NONE,
                                       &op_inst));
 
     // Attempt to match.
@@ -162,9 +163,10 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
                                       NULL,
+                                      IB_OP_FLAG_PHASE,
                                       "pmf",
                                       "ahocorasick.patterns",
-                                      0,
+                                      IB_OPINST_FLAG_NONE,
                                       &op_inst));
 
     // Attempt to match.

@@ -53,28 +53,15 @@ typedef enum {
 } ib_rule_action_t;
 
 /**
- * Field operator function type.
- *
- * @param[in] ib Ironbee engine.
- * @param[in] mp Memory pool to use.
- * @param[in] field The field to operate on.
- * @param[out] result The result of the operator 1=true 0=false.
- *
- * @returns IB_OK if successful.
- */
-typedef ib_status_t (* ib_field_op_fn_t)(ib_engine_t *ib,
-                                         ib_mpool_t *mp,
-                                         ib_field_t *field,
-                                         ib_field_t **result);
-
-/**
  * Rule engine: Rule meta data
  */
 typedef struct {
     const char            *id;            /**< Rule ID */
     const char            *msg;           /**< Rule message */
     ib_list_t             *tags;          /**< Rule tags */
+    ib_rule_type_t         type;          /**< Rule type (phase/stream) */
     ib_rule_phase_t        phase;         /**< Rule execution phase */
+    ib_rule_stream_t       stream;        /**< Rule execution stream */
     uint8_t                severity;      /**< Rule severity */
     uint8_t                confidence;    /**< Rule confidence */
 } ib_rule_meta_t;
@@ -111,7 +98,7 @@ struct ib_rule_t {
 };
 
 /**
- * Rule engine: List of rules to execute during a phase
+ * List of rules to execute during a phase
  */
 typedef struct {
     ib_rule_phase_t        phase;         /**< Phase number */
@@ -119,12 +106,20 @@ typedef struct {
 } ib_rule_phase_data_t;
 
 /**
- * Rule engine: Set of rules for all phases
+ * List of rules to execute during on a stream
+ */
+typedef struct {
+    ib_rule_stream_t       stream;        /**< Rule stream */
+    ib_rulelist_t          rules;         /**< Rules to execute for stream */
+} ib_rule_stream_data_t;
+
+/**
+ * Set of rules for all phases
  */
 typedef struct {
     ib_rule_phase_data_t  phases[IB_RULE_PHASE_COUNT];
+    ib_rule_stream_data_t streams[IB_RULE_STREAM_COUNT];
 } ib_ruleset_t;
-
 
 /**
  * Rule engine parser data
@@ -149,13 +144,50 @@ struct ib_rule_engine_t {
  *
  * @param[in] ib IronBee engine
  * @param[in] ctx Current IronBee context
+ * @param[in] type Rule type (RULE_TYPE_PHASE / RULE_TYPE_STREAM)
  * @param[out] prule Address which new rule is written
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
+                                      ib_rule_type_t type,
                                       ib_rule_t **prule);
+
+/**
+ * Set the execution phase of a rule (for phase rules).
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] phase Rule execution phase
+ *
+ * @returns Status code
+ */
+ib_status_t ib_rule_set_phase(ib_engine_t *ib,
+                              ib_rule_t *rule,
+                              ib_rule_phase_t phase);
+
+/**
+ * Set the execution stream of a rule (for stream rules).
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ * @param[in] stream Rule execution stream
+ *
+ * @returns Status code
+ */
+ib_status_t ib_rule_set_stream(ib_engine_t *ib,
+                               ib_rule_t *rule,
+                               ib_rule_stream_t stream);
+
+/**
+ * Get the operator flags required for this rule.
+ *
+ * @param[in] rule Rule to get flags for.
+ *
+ * @returns Required operator flags
+ */
+ib_flags_t ib_rule_required_op_flags(const ib_rule_t *rule);
 
 /**
  * Set a rule's operator.
@@ -308,14 +340,12 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
  * @param[in] ib IronBee engine
  * @param[in,out] ctx Context in which to execute the rule
  * @param[in,out] rule Rule to register
- * @param[in] phase Phase number in which to execute the rule
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
                                         ib_context_t *ctx,
-                                        ib_rule_t *rule,
-                                        ib_rule_phase_t phase);
+                                        ib_rule_t *rule);
 
 /**
  * Get the memory pool to use for rule allocations.

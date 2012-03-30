@@ -105,6 +105,8 @@ struct ib_operator_t {
 /** Operator flags */
 #define IB_OP_FLAG_NONE        (0x0)      /**< No flags */
 #define IB_OP_FLAG_ALLOW_NULL  (1 << 0)   /**< Op. accepts NULL fields */
+#define IB_OP_FLAG_PHASE       (1 << 1)   /**< Op works with phase rules */
+#define IB_OP_FLAG_STREAM      (1 << 2)   /**< Op works with stream rules */
 
 struct ib_operator_inst_t {
     struct ib_operator_t *op;    /**< Pointer to the operator type */
@@ -151,15 +153,20 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine
  * @param[in] ctx Current IronBee context
+ * @param[in] required_op_flags Required operator flags
+ *            (IB_OP_FLAG_{PHASE,STREAM})
  * @param[in] name The name of the operator to create.
  * @param[in] parameters Parameters used to create the instance.
  * @param[in] flags Operator instance flags (i.e. IB_OPINST_FLAG_INVERT)
  * @param[out] op_inst The resulting instance.
  *
- * @returns IB_OK on success, IB_EINVAL if the named operator does not exist.
+ * @returns IB_OK on success,
+ *          IB_EINVAL if the required operator flags do not match,
+ *          IB_ENOENT if the named operator does not exist
  */
 ib_status_t DLL_PUBLIC ib_operator_inst_create(ib_engine_t *ib,
                                                ib_context_t *ctx,
+                                               ib_flags_t required_op_flags,
                                                const char *name,
                                                const char *parameters,
                                                ib_flags_t flags,
