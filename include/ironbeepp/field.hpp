@@ -62,6 +62,9 @@ class ConstField :
     public CommonSemantics<ConstField>
 {
 public:
+    //! C Type.
+    typedef const ib_field_t* ib_type;
+
     //! Types of field values.
     enum type_e {
         //! Generic &mdash; Currently unsupported in IronBee++
@@ -312,6 +315,9 @@ class Field :
     public ConstField
 {
 public:
+    //! C Type.
+    typedef ib_field_t* ib_type;
+
     /**
      * Remove the constness of a ConstField
      *

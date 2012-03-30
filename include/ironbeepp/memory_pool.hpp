@@ -63,6 +63,9 @@ class ConstMemoryPool :
     public CommonSemantics<ConstMemoryPool>
 {
 public:
+    //! C Type.
+    typedef const ib_mpool_t* ib_type;
+
     /**
      * Construct singular ConstMemoryPool.
      *
@@ -143,6 +146,9 @@ class MemoryPool :
     public ConstMemoryPool // Slicing is intentional; see apidoc.hpp
 {
 public:
+    //! C Type.
+    typedef ib_mpool_t* ib_type;
+
     /**
      * Remove the constness of a ConstMemoryPool.
      *

@@ -60,6 +60,9 @@ class ConstByteString :
     public CommonSemantics<ConstByteString>
 {
 public:
+    //! C Type.
+    typedef const ib_bytestr_t* ib_type;
+
     /**
      * Construct singular ConstByteString.
      *
@@ -262,6 +265,9 @@ class ByteString :
     public ConstByteString // Slicing is intentional; see apidoc.hpp
 {
 public:
+    //! C Type.
+    typedef ib_bytestr_t* ib_type;
+
     /**
      * Remove the constness of a ConstByteString.
      *

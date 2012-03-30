@@ -66,6 +66,9 @@ class ConstModule :
     public CommonSemantics<ConstModule>
 {
 public:
+    //! C Type.
+    typedef const ib_module_t* ib_type;
+
     //! Construct singular ConstModule.
     ConstModule();
 
@@ -144,6 +147,9 @@ class Module :
     public ConstModule // Slicing is intentional; see apidoc.hpp
 {
 public:
+    //! C Type.
+    typedef ib_module_t* ib_type;
+
    /**
     * Remove the constness of a ConstModule
     *

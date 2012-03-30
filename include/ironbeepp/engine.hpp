@@ -52,6 +52,9 @@ class ConstEngine :
     public CommonSemantics<ConstEngine>
 {
 public:
+    //! C Type.
+    typedef const ib_engine_t* ib_type;
+
     /**
      * Construct singular ConstEngine.
      *
@@ -107,6 +110,9 @@ class Engine :
     public ConstEngine
 {
 public:
+    //! C Type.
+    typedef ib_engine_t* ib_type;
+
     /**
      * Remove the constness of a ConstEngine.
      *
