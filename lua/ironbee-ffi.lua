@@ -141,7 +141,7 @@ ffi.cdef [[
     typedef struct ib_tfn_t ib_tfn_t;
     typedef struct ib_logevent_t ib_logevent_t;
     typedef struct ib_uuid_t ib_uuid_t;
-    typedef struct ib_plugin_t ib_plugin_t;
+    typedef struct ib_server_t ib_server_t;
     typedef struct ib_provider_def_t ib_provider_def_t;
     typedef struct ib_provider_t ib_provider_t;
     typedef struct ib_provider_inst_t ib_provider_inst_t;
@@ -189,7 +189,7 @@ ffi.cdef [[
         uint8_t   node[6];
     };
 
-    struct ib_plugin_t {
+    struct ib_server_t {
         uint32_t                 vernum;
         uint32_t                 abinum;
         const char              *version;

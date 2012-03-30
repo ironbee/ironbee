@@ -29,15 +29,15 @@
 
 IBPPTestFixture::IBPPTestFixture()
 {
-    m_ib_plugin.vernum   = IB_VERNUM;
-    m_ib_plugin.abinum   = IB_ABINUM;
-    m_ib_plugin.version  = IB_VERSION;
-    m_ib_plugin.filename = __FILE__;
-    m_ib_plugin.name     = "IBPPTest";
+    m_ib_server.vernum   = IB_VERNUM;
+    m_ib_server.abinum   = IB_ABINUM;
+    m_ib_server.version  = IB_VERSION;
+    m_ib_server.filename = __FILE__;
+    m_ib_server.name     = "IBPPTest";
 
     ib_initialize();
 
-    ib_status_t rc = ib_engine_create(&m_ib_engine, &m_ib_plugin);
+    ib_status_t rc = ib_engine_create(&m_ib_engine, &m_ib_server);
     if (rc != IB_OK) {
         throw std::runtime_error("ib_engine_create failed.");
     }

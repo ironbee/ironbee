@@ -129,7 +129,7 @@ public:
   connection_p open_connection(const input_t& input);
 
 private:
-  ib_plugin_t                    m_plugin;
+  ib_server_t                    m_server;
   boost::shared_ptr<ib_engine_t> m_ironbee;
 };
 

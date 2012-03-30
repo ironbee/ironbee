@@ -38,7 +38,7 @@ public:
 
 protected:
     ib_engine_t* m_ib_engine;
-    ib_plugin_t  m_ib_plugin;
+    ib_server_t  m_ib_server;
 };
 
 #endif
