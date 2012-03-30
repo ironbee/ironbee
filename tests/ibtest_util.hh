@@ -43,7 +43,7 @@
  * @{
  */
 
-extern ib_plugin_t ibt_ibplugin;
+extern ib_server_t ibt_ibserver;
 
 /**
  * Create and initialize a new engine, asserting correctness.
@@ -56,7 +56,7 @@ extern ib_plugin_t ibt_ibplugin;
         atexit(ib_shutdown); \
         ib_trace_init(NULL); \
         ASSERT_EQ(IB_OK, ib_initialize()); \
-        ASSERT_EQ(IB_OK, ib_engine_create(ibt_pib, &ibt_ibplugin)); \
+        ASSERT_EQ(IB_OK, ib_engine_create(ibt_pib, &ibt_ibserver)); \
         ASSERT_TRUE(*ibt_pib); \
         ASSERT_TRUE((*ibt_pib)->mp); \
         ASSERT_EQ(IB_OK, ib_engine_init(*ibt_pib)); \

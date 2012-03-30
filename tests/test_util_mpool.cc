@@ -136,14 +136,14 @@ TEST_F(MpoolTest, TwoAllocs) {
 
 TEST_F(MpoolTest, EngineTest) {
     ib_engine_t *ib_engine;
-    ib_plugin_t ibt_ibplugin;
-    ibt_ibplugin.vernum = IB_VERNUM;
-    ibt_ibplugin.abinum = IB_ABINUM;
-    ibt_ibplugin.version = IB_VERSION;
-    ibt_ibplugin.filename = __FILE__;
-    ibt_ibplugin.name = "unit_tests";
+    ib_server_t ibt_ibserver;
+    ibt_ibserver.vernum = IB_VERNUM;
+    ibt_ibserver.abinum = IB_ABINUM;
+    ibt_ibserver.version = IB_VERSION;
+    ibt_ibserver.filename = __FILE__;
+    ibt_ibserver.name = "unit_tests";
 
-    ib_engine_create(&ib_engine, &ibt_ibplugin);
+    ib_engine_create(&ib_engine, &ibt_ibserver);
     check_for_leaks();
     ib_engine_destroy(ib_engine);
     check_for_leaks();

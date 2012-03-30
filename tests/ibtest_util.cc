@@ -25,8 +25,8 @@
 
 #include "ibtest_util.hh"
    
-ib_plugin_t ibt_ibplugin = {
-   IB_PLUGIN_HEADER_DEFAULTS,
+ib_server_t ibt_ibserver = {
+   IB_SERVER_HEADER_DEFAULTS,
    "unit_tests"
 };
 

@@ -39,15 +39,15 @@
 class BaseFixture : public ::testing::Test {
 public:
     void SetUp() {
-        ibt_ibplugin.vernum = IB_VERNUM;
-        ibt_ibplugin.abinum = IB_ABINUM;
-        ibt_ibplugin.version = IB_VERSION;
-        ibt_ibplugin.filename = __FILE__;
-        ibt_ibplugin.name = "unit_tests";
+        ibt_ibserver.vernum = IB_VERNUM;
+        ibt_ibserver.abinum = IB_ABINUM;
+        ibt_ibserver.version = IB_VERSION;
+        ibt_ibserver.filename = __FILE__;
+        ibt_ibserver.name = "unit_tests";
 
         atexit(ib_shutdown);
         ib_initialize();
-        ib_engine_create(&ib_engine, &ibt_ibplugin);
+        ib_engine_create(&ib_engine, &ibt_ibserver);
         ib_engine_init(ib_engine);
 
         resetRuleBasePath();
@@ -146,7 +146,7 @@ public:
         ib_conn_data_create(ib_conn, &ib_conndata, req.size());
         ib_conndata->dlen = req.size();
         memcpy(ib_conndata->data, req.data(), req.size());
-        ib_state_notify_conn_data_in(ib_engine, ib_conndata);
+        ib_state_notify_conn_data_in(ib_engine, ib_conndata, NULL);
     }
 
     void sendDataOut(ib_conn_t *ib_conn, const std::string& req)
@@ -155,7 +155,7 @@ public:
         ib_conn_data_create(ib_conn, &ib_conndata, req.size());
         ib_conndata->dlen = req.size();
         memcpy(ib_conndata->data, req.data(), req.size());
-        ib_state_notify_conn_data_out(ib_engine, ib_conndata);
+        ib_state_notify_conn_data_out(ib_engine, ib_conndata, NULL);
     }
 
 
@@ -211,7 +211,7 @@ public:
     }
 
     ib_engine_t *ib_engine;
-    ib_plugin_t ibt_ibplugin;
+    ib_server_t ibt_ibserver;
 };
 
 /**

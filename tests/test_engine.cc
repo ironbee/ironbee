@@ -33,7 +33,7 @@
 #include "ibtest_util.hh"
 
 /// @test Test ironbee library - ib_engine_create()
-TEST(TestIronBee, test_engine_create_null_plugin)
+TEST(TestIronBee, test_engine_create_null_server)
 {
     ib_engine_t *ib;
     ib_status_t rc;
