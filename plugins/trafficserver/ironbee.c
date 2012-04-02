@@ -759,9 +759,9 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     icdata.dalloc = icdata.dlen = len;
     icdata.data = dptr = TSmalloc(len);
 
-    for (head_buf = (void*)TSIOBufferBlockReadStart(blockp, readerp, &len);
+    for (head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
          len > 0;
-         head_buf = (void*)TSIOBufferBlockReadStart(
+         head_buf = (void *)TSIOBufferBlockReadStart(
                         TSIOBufferReaderStart(readerp), readerp, &len)) {
 
         if (first_time && (ibd->dir == IBD_REQ)) {
