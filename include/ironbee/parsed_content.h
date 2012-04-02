@@ -29,6 +29,9 @@ extern "C" {
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+//#include <ironbee/build.h>
+//#include <ironbee_config_auto.h>
+#include <ironbee/bytestr.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/types.h>
@@ -66,6 +69,7 @@ typedef ib_bytestr_t ib_parsed_data_t;
 ///! Opaque transaction representation.
 typedef struct ib_parsed_tx_t {
     ib_engine_t *ib_engine; /**< The engine handling this transaction. */
+    void        *user_data; /**< Opaque pointer containing user data. */
 } ib_parsed_tx_t;
 
 /**
@@ -73,11 +77,15 @@ typedef struct ib_parsed_tx_t {
  *
  * @param[in] ib_engine The IronBee engine that will manage the transaction.
  * @param[out] transaction The new transaction to be created.
+ * @param[in] user_data A void* that is carried by the transaction for
+ *            the user. It is never accessed or free'ed by this 
+ *            code. See ib_parsed_tx_get_user_data for accessing @a user_data.
  *
  * @returns IB_OK on success or other status on failure.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_create(ib_engine_t *ib_engine,
-                                           ib_parsed_tx_t **transaction);
+DLL_PUBLIC ib_status_t ib_parsed_tx_create(ib_engine_t *ib_engine,
+                                           ib_parsed_tx_t **transaction,
+                                           void *user_data);
 
 /**
  * Signal that the transaction has begun.
@@ -91,7 +99,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_create(ib_engine_t *ib_engine,
  *
  * @returns IB_OK.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_req_begin(
+DLL_PUBLIC ib_status_t ib_parsed_tx_req_begin(
     ib_parsed_tx_t *transaction,
     ib_parsed_req_method_t *method,
     ib_parsed_req_path_t *path,
@@ -106,7 +114,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_req_begin(
  *
  * @returns IB_OK or IB_EALLOC if the values cannot be copied.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_req_header(
+DLL_PUBLIC ib_status_t ib_parsed_tx_req_header(
     ib_parsed_tx_t *transaction,
     ib_parsed_header_name_t *name,
     ib_parsed_header_value_t *value);
@@ -120,7 +128,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_req_header(
  *
  * @returns IB_OK or IB_EALLOC if the values cannot be copied.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_resp_header(
+DLL_PUBLIC ib_status_t ib_parsed_tx_resp_header(
     ib_parsed_tx_t *transaction,
     ib_parsed_header_name_t *name,
     ib_parsed_header_value_t *value);
@@ -132,7 +140,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_resp_header(
  *
  * @returns IB_OK.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_req_end(ib_parsed_tx_t *transaction);
+DLL_PUBLIC ib_status_t ib_parsed_tx_req_end(ib_parsed_tx_t *transaction);
 
 /**
  * Signal that the response portion of the transaction has begun.
@@ -143,10 +151,10 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_req_end(ib_parsed_tx_t *transaction);
  *
  * @returns IB_OK.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_resp_begin(
+DLL_PUBLIC ib_status_t ib_parsed_tx_resp_begin(
     ib_parsed_tx_t *transaction,
-    ib_parsed_resp_status_code_t code,
-    ib_parsed_resp_status_msg_t msg);
+    ib_parsed_resp_status_code_t *code,
+    ib_parsed_resp_status_msg_t *msg);
 
 /**
  * Handle a chunk of body data.
@@ -154,7 +162,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_resp_begin(
  * @param[in] data The data being sent.
  * @return IB_OK.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_resp_body(ib_parsed_tx_t *transaction,
+DLL_PUBLIC ib_status_t ib_parsed_tx_resp_body(ib_parsed_tx_t *transaction,
                                               ib_parsed_data_t *data);
 
 /**
@@ -163,7 +171,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_resp_body(ib_parsed_tx_t *transaction,
  * @param[in] data The data being sent.
  * @return IB_OK.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_req_body(ib_parsed_tx_t *transaction,
+DLL_PUBLIC ib_status_t ib_parsed_tx_req_body(ib_parsed_tx_t *transaction,
                                              ib_parsed_data_t *data);
 
 /**
@@ -173,14 +181,14 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_req_body(ib_parsed_tx_t *transaction,
  *
  * @returns IB_OK.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_resp_end(ib_parsed_tx_t *transaction);
+DLL_PUBLIC ib_status_t ib_parsed_tx_resp_end(ib_parsed_tx_t *transaction);
 
 /**
  * The trailer version of ib_parsed_tx_res_header.
  *
  * @see ib_parsed_tx_res_header.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_req_trailer(
+DLL_PUBLIC ib_status_t ib_parsed_tx_req_trailer(
     ib_parsed_tx_t *transaction,
     ib_parsed_trailer_name_t *name,
     ib_parsed_trailer_value_t *value);
@@ -190,11 +198,17 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_req_trailer(
  *
  * @see ib_parsed_tx_resp_header.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_resp_trailer(
+DLL_PUBLIC ib_status_t ib_parsed_tx_resp_trailer(
     ib_parsed_tx_t *transaction,
     ib_parsed_trailer_name_t *name,
     ib_parsed_trailer_value_t *value);
 
+
+/**
+ * @param[in] transaction The transaction that contains the user data pointer.
+ * @returns The user data pointer in the @a transcation structure.
+ */
+DLL_PUBLIC void* ib_parsed_tx_get_user_data(const ib_parsed_tx_t *transaction);
 
 /**
  * Destroy a transaction, releasing any held resources.
@@ -203,7 +217,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_resp_trailer(
  *                this returns.
  * @returns IB_OK.
  */
-ib_status_t DLL_PUBLIC ib_parsed_tx_destroy(ib_parsed_tx_t *transaction);
+DLL_PUBLIC ib_status_t ib_parsed_tx_destroy(const ib_parsed_tx_t *transaction);
 
 #ifdef __cplusplus
 } // extern "C"
