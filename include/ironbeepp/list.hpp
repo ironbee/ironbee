@@ -393,7 +393,7 @@ public:
      * for iterators that do not refer to actual list nodes, e.g., end().
      **/
     ///@{
-    //! Iterator; bidrectional input iterator.
+    //! Iterator; bidirectional input iterator.
     typedef typename Internal::make_list_const_iterator<T>::type iterator;
     //! Const iterator; same as iterator.
     typedef iterator const_iterator;
@@ -498,7 +498,7 @@ private:
 };
 
 /**
- * List; equivalent to a pointer to ib_list_t..
+ * List; equivalent to a pointer to ib_list_t.
  *
  * Lists can be treated as ConstLists.  See @ref ironbeepp for
  * details on IronBee++ object semantics.

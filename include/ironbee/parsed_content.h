@@ -206,7 +206,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_resp_trailer(
 
 /**
  * @param[in] transaction The transaction that contains the user data pointer.
- * @returns The user data pointer in the @a transcation structure.
+ * @returns The user data pointer in the @a transaction structure.
  */
 DLL_PUBLIC void* ib_parsed_tx_get_user_data(const ib_parsed_tx_t *transaction);
 
