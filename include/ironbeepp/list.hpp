@@ -282,6 +282,181 @@ struct make_list_const_iterator<Base*>
 } // Internal
 /// @endcond
 
+
+/**
+ * Const List; equivalent to a const pointer to ib_list_t.
+ *
+ * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
+ *
+ * See List for discussion of lists.
+ *
+ * @tparam T Value type for list.
+ *
+ * @sa List
+ * @sa ironbeepp
+ * @sa ib_list_t
+ * @nosubgrouping
+ **/
+template <typename T>
+class ConstList :
+    public CommonSemantics<ConstList<T> >
+{
+public:
+    //! C Type.
+    typedef const ib_list_t* ib_type;
+
+    /**
+     * Construct singular ConstList.
+     *
+     * All behavior of a singular ConstList is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    ConstList() :
+        m_ib(NULL)
+    {
+        // nop
+    }
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! const ib_list_t accessor.
+    // Intentionally inlined.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct List from ib_list_t.
+    explicit
+    ConstList(ib_type ib_list) :
+        m_ib(ib_list)
+    {
+        // nop
+    }
+
+    ///@}
+
+
+    /**
+     * @name STL types.
+     *
+     * These typedefs provide useful information and compatibility with STL
+     * oriented code.
+     *
+     * Note that iterator and const_iterator are identical (similar to
+     * std::set) and that reference is the same as value_type (i.e., iterators
+     * dereference to copy).
+     **/
+    ///@{
+    //! Iterator; bidrectional input iterator.
+    typedef typename Internal::make_list_const_iterator<T>::type iterator;
+    //! Const iterator; same as iterator.
+    typedef iterator const_iterator;
+    //! Reference; same as value_type.
+    typedef typename iterator::reference reference;
+    //! Const reference; same as reference, i.e., value_type.
+    typedef reference const_reference;
+    //! Size type.
+    typedef size_t size_type;
+    //! Different type.
+    typedef typename iterator::difference_type difference_type;
+    //! Value type, i.e., @a T.
+    typedef T value_type;
+    //! Reverse iterator; bidirectional input iterator.
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    //! Const reverse iterator; same as reverse_iterator.
+    typedef reverse_iterator const_reverse_iterator;
+    ///@}
+
+    //! Iterator to beginning of list.
+    iterator begin() const
+    {
+        return iterator(IB_LIST_FIRST(ib()));
+    }
+
+    //! Iterator just past end of list.
+    iterator end() const
+    {
+        return boost::next(iterator(IB_LIST_LAST(ib())));
+    }
+
+    //! Reverse iterator at last element of list.
+    reverse_iterator rbegin() const
+    {
+        return reverse_iterator(end());
+    }
+
+    //! Reverse iterator just past beginning of list.
+    reverse_iterator rend() const
+    {
+        return reverse_iterator(begin());
+    }
+
+    //! True iff list is empty.
+    bool empty() const
+    {
+        return ! IB_LIST_FIRST(ib());
+    }
+
+    //! Number of elements in list. O(1)
+    size_type size() const
+    {
+        return ib_list_elements(ib());
+    }
+
+    /**
+     * Front element of list.
+     *
+     * @return Front element of list.
+     * @throw enoent if list is empty.
+     **/
+    T front() const
+    {
+        if (empty()) {
+            BOOST_THROW_EXCEPTION(
+              enoent() << errinfo_what(
+                "Trying to fetch front of empty list."
+              )
+            );
+
+        }
+        return *begin();
+    }
+
+    /**
+     * Back element of list.
+     *
+     * @return  Back element of list.
+     * @throw enoent if list is empty.
+     **/
+    T back() const
+    {
+        if (empty()) {
+            BOOST_THROW_EXCEPTION(
+              enoent() << errinfo_what(
+                "Trying to fetch back of empty list."
+              )
+            );
+
+        }
+        return *rbegin();
+    }
+
+    //! Memory pool used by list.
+    MemoryPool memory_pool() const
+    {
+        return ib()->m_pool;
+    }
+
+private:
+    ib_type m_ib;
+};
+
 } // IronBee
 
 #endif

@@ -130,3 +130,71 @@ TEST_F(TestList, list_const_iterator)
     --n_i;
     EXPECT_TRUE(b_i == n_i);
 }
+
+TEST_F(TestList, ConstList)
+{
+    static const char* a = "a";
+    static const char* b = "b";
+    static const char* c = "c";
+
+    namespace I = Internal;
+    ib_list_t* l;
+
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+
+    ib_list_push(l, (void*)a);
+    ib_list_push(l, (void*)b);
+    ib_list_push(l, (void*)c);
+
+    ConstList<const char*> L(l);
+
+    EXPECT_TRUE(L);
+    EXPECT_EQ(l, L.ib());
+    EXPECT_EQ(3UL, L.size());
+    EXPECT_NE(ConstList<const char*>(), L);
+    EXPECT_EQ(a, L.front());
+    EXPECT_EQ(c, L.back());
+
+    std::vector<const char*> v;
+    std::copy(L.begin(), L.end(), std::back_inserter(v));
+
+    ASSERT_EQ(3UL, v.size());
+    EXPECT_EQ(a, v[0]);
+    EXPECT_EQ(b, v[1]);
+    EXPECT_EQ(c, v[2]);
+
+    v.clear();
+    std::copy(L.rbegin(), L.rend(), std::back_inserter(v));
+
+    ASSERT_EQ(3UL, v.size());
+    EXPECT_EQ(c, v[0]);
+    EXPECT_EQ(b, v[1]);
+    EXPECT_EQ(a, v[2]);
+}
+
+TEST_F(TestList, ConstListIBIteration)
+{
+    static const ConstByteString a = ByteString::create(m_pool, "a");
+    static const ConstByteString b = ByteString::create(m_pool, "b");
+    static const ConstByteString c = ByteString::create(m_pool, "c");
+
+    namespace I = Internal;
+    ib_list_t* l;
+
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+
+    ib_list_push(l, (void*)a.ib());
+    ib_list_push(l, (void*)b.ib());
+    ib_list_push(l, (void*)c.ib());
+
+    ConstList<ConstByteString> L(l);
+
+    std::vector<ConstByteString> v;
+
+    std::copy(L.begin(), L.end(), std::back_inserter(v));
+
+    ASSERT_EQ(3UL, v.size());
+    EXPECT_EQ(a, v[0]);
+    EXPECT_EQ(b, v[1]);
+    EXPECT_EQ(c, v[2]);
+}
