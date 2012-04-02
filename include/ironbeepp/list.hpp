@@ -109,7 +109,8 @@ public:
         else if (other.m_node == & other.m_past_the_end) {
             m_past_the_end.prev = other.m_past_the_end.prev;
             m_node = &m_past_the_end;
-        } else {
+        }
+        else {
             m_node = other.m_node;
         }
     }
@@ -142,7 +143,8 @@ private:
         if (m_node != &m_past_the_end) {
             if (m_node->next) {
                 m_node = m_node->next;
-            } else {
+            }
+            else {
                 // moving past end
                 m_past_the_end.prev = m_node;
                 m_node = &m_past_the_end;
@@ -156,7 +158,8 @@ private:
         if (m_node != &m_before_the_beginning) {
             if (m_node->prev) {
                 m_node = m_node->prev;
-            } else {
+            }
+            else {
                 // moving before beginning
                 m_before_the_beginning.next = m_node;
                 m_node = &m_before_the_beginning;
