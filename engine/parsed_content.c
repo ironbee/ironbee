@@ -22,6 +22,8 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 /* System includes. */
 #include <assert.h>
 
