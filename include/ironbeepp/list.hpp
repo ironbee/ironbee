@@ -33,11 +33,13 @@
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/internal/throw.hpp>
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 #include <ostream>
 
@@ -77,8 +79,8 @@ class pointer_list_const_iterator :
 public:
     //! Construct from ib_list_node_t.
     explicit
-    pointer_list_const_iterator(ib_list_node_t* node) :
-        m_node(node)
+    pointer_list_const_iterator(ib_list_node_t* n) :
+        m_node(n)
     {
         init_node(m_past_the_end);
         init_node(m_before_the_beginning);
@@ -109,6 +111,17 @@ public:
             m_node = &m_past_the_end;
         } else {
             m_node = other.m_node;
+        }
+    }
+
+    //! Provide underlying ib_list_node_t.
+    ib_list_node_t* node() const
+    {
+        if (m_node != &m_past_the_end && m_node != &m_before_the_beginning) {
+            return m_node;
+        }
+        else {
+            return NULL;
         }
     }
 
@@ -222,10 +235,10 @@ public:
     //! Construct from ib_list_node_t.
     explicit
     list_const_iterator(
-        ib_list_node_t* node
+        ib_list_node_t* n
     )  :
         list_const_iterator::iterator_adaptor_(
-            pointer_list_const_iterator<typename T::ib_type>(node)
+            pointer_list_const_iterator<typename T::ib_type>(n)
         )
     {
         // nop
@@ -238,6 +251,12 @@ public:
         list_const_iterator::iterator_adaptor_(other.base())
     {
         // nop
+    }
+
+    //! Provide underlying ib_list_node_t.
+    ib_list_node_t* node() const
+    {
+        return this->base().node();
     }
 
 private:
@@ -278,6 +297,24 @@ struct make_list_const_iterator<Base*>
 {
     typedef pointer_list_const_iterator<Base*> type;
 };
+
+/**
+ * Converts pointers to themselves and IronBee objects to their ib().
+ **/
+template <typename T>
+void* value_as_void(T v)
+{
+    return v.ib();
+}
+
+//! Overload of previous to make it work for pointers.
+template <typename Base>
+void* value_as_void(Base* v)
+{
+    return reinterpret_cast<void*>(
+        const_cast<typename boost::remove_const<Base>::type*>(v)
+    );
+}
 
 } // Internal
 /// @endcond
@@ -341,7 +378,6 @@ public:
 
     ///@}
 
-
     /**
      * @name STL types.
      *
@@ -351,6 +387,10 @@ public:
      * Note that iterator and const_iterator are identical (similar to
      * std::set) and that reference is the same as value_type (i.e., iterators
      * dereference to copy).
+     *
+     * In addition to the usual iterator operations, all iterators provide a
+     * node() method that returns the underlying @c ib_list_node_t* or NULL
+     * for iterators that do not refer to actual list nodes, e.g., end().
      **/
     ///@{
     //! Iterator; bidrectional input iterator.
@@ -451,6 +491,143 @@ public:
     MemoryPool memory_pool() const
     {
         return ib()->m_pool;
+    }
+
+private:
+    ib_type m_ib;
+};
+
+/**
+ * List; equivalent to a pointer to ib_list_t..
+ *
+ * Lists can be treated as ConstLists.  See @ref ironbeepp for
+ * details on IronBee++ object semantics.
+ *
+ * IronBee lists are lists of generic pointers (@c void*).  This template
+ * provides an interface to an IronBee list that assumes all values are the
+ * same actual type, @a T.
+ *
+ * Only a subset of the C API operations are provided.  Additional operations
+ * may be added in the future as needed.  Of that subset, many operations are
+ * renamed.  In general, this template and ConstList attempt to provide a
+ * std::list like interface rather than the ib_list_t interface.
+ *
+ * @sa ironbeepp
+ * @sa ib_list_t
+ * @sa ConstList
+ * @nosubgrouping
+ **/
+template <typename T>
+class List :
+    public ConstList<T>
+{
+public:
+    typedef ib_list_t* ib_type;
+
+    /**
+     * Remove the constness of a ConstList
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     *
+     * @param[in] list ConstList to remove const from.
+     * @returns List pointing to same underlying list as @a list.
+     **/
+    static List remove_const(ConstList<T> list)
+    {
+        return List(const_cast<ib_type>(list.ib()));
+    }
+
+    /**
+     * Construct singular List.
+     *
+     * All behavior of a singular List is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    List() :
+        m_ib(NULL)
+    {
+        // nop
+    }
+
+    /**
+     * Create new list.
+     *
+     * Creates a new empty list using @a memory_pool for memory.
+     *
+     * @param[in] memory_pool Memory pool to use.
+     * @return Empty List.
+     **/
+    static List create(MemoryPool memory_pool)
+    {
+        ib_list_t* ib_list;
+        Internal::throw_if_error(ib_list_create(&ib_list, memory_pool.ib()));
+        return List(ib_list);
+    }
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! ib_list_t accessor.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct List from ib_list_t.
+    explicit
+    List(ib_type ib_list) :
+        ConstList<T>(ib_list),
+        m_ib(ib_list)
+    {
+        // nop
+    }
+
+    ///@}
+
+    /**
+     * Push @a value to back of list.
+     *
+     * @param[in] value Value to push to back of list.
+     **/
+    void push_back(T value) const
+    {
+        Internal::throw_if_error(
+            ib_list_push(m_ib, Internal::value_as_void(value))
+        );
+    }
+
+    /**
+     * Push @a value to front of list.
+     *
+     * @param[in] value Value to push to back of list.
+     **/
+    void push_front(T value) const
+    {
+        Internal::throw_if_error(
+            ib_list_enqueue(m_ib, Internal::value_as_void(value))
+        );
+    }
+
+
+    //! Pop last element off list.
+    void pop_back() const
+    {
+        Internal::throw_if_error(ib_list_pop(m_ib, NULL));
+    }
+
+    //! Pop first element off list.
+    void pop_front() const
+    {
+        Internal::throw_if_error(ib_list_shift(m_ib, NULL));
+    }
+
+    //! Clear list.
+    void clear() const
+    {
+        ib_list_clear(m_ib);
     }
 
 private:

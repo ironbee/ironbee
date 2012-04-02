@@ -155,8 +155,8 @@ TEST_F(TestList, ConstList)
     EXPECT_EQ(a, L.front());
     EXPECT_EQ(c, L.back());
 
-    std::vector<const char*> v;
-    std::copy(L.begin(), L.end(), std::back_inserter(v));
+    vector<const char*> v;
+    copy(L.begin(), L.end(), back_inserter(v));
 
     ASSERT_EQ(3UL, v.size());
     EXPECT_EQ(a, v[0]);
@@ -164,7 +164,7 @@ TEST_F(TestList, ConstList)
     EXPECT_EQ(c, v[2]);
 
     v.clear();
-    std::copy(L.rbegin(), L.rend(), std::back_inserter(v));
+    copy(L.rbegin(), L.rend(), back_inserter(v));
 
     ASSERT_EQ(3UL, v.size());
     EXPECT_EQ(c, v[0]);
@@ -189,12 +189,49 @@ TEST_F(TestList, ConstListIBIteration)
 
     ConstList<ConstByteString> L(l);
 
-    std::vector<ConstByteString> v;
+    vector<ConstByteString> v;
 
-    std::copy(L.begin(), L.end(), std::back_inserter(v));
+    copy(L.begin(), L.end(), back_inserter(v));
 
     ASSERT_EQ(3UL, v.size());
     EXPECT_EQ(a, v[0]);
     EXPECT_EQ(b, v[1]);
     EXPECT_EQ(c, v[2]);
+}
+
+TEST_F(TestList, List)
+{
+    static const char* a = "a";
+    static const char* b = "b";
+    static const char* c = "c";
+
+    typedef List<const char*> list_t;
+    list_t L = list_t::create(m_pool);
+
+    ASSERT_TRUE(L);
+    EXPECT_NE(list_t(), L);
+    ASSERT_TRUE(L.empty());
+
+    L.push_back(a); // a
+    EXPECT_EQ(a, L.back());
+    EXPECT_EQ(a, L.front());
+    EXPECT_EQ(1UL, L.size());
+    EXPECT_FALSE(L.empty());
+    L.push_back(b); // a b
+    EXPECT_EQ(a, L.front());
+    EXPECT_EQ(b, L.back());
+    EXPECT_EQ(2UL, L.size());
+    L.push_front(c); // c a b
+    EXPECT_EQ(c, L.front());
+    EXPECT_EQ(b, L.back());
+
+    L.pop_back(); // c a
+    EXPECT_EQ(c, L.front());
+    EXPECT_EQ(a, L.back());
+    L.pop_front(); // a
+    EXPECT_EQ(a, L.front());
+    EXPECT_EQ(a, L.back());
+
+    L.clear();
+    EXPECT_TRUE(L.empty());
 }
