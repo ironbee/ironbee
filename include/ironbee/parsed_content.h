@@ -78,7 +78,7 @@ typedef struct ib_parsed_tx_t {
  * @param[in] ib_engine The IronBee engine that will manage the transaction.
  * @param[out] transaction The new transaction to be created.
  * @param[in] user_data A void* that is carried by the transaction for
- *            the user. It is never accessed or free'ed by this 
+ *            the user. It is never accessed or free'ed by this
  *            code. See ib_parsed_tx_get_user_data for accessing @a user_data.
  *
  * @returns IB_OK on success or other status on failure.
