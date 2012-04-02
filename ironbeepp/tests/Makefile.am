@@ -35,7 +35,8 @@ check_PROGRAMS = \
     test_memory_pool \
     test_byte_string \
     test_field \
-    test_configuration_map
+    test_configuration_map \
+    test_list
     
 TESTS=$(check_PROGRAMS)
 
@@ -50,4 +51,5 @@ test_memory_pool_SOURCES        = test_memory_pool.cpp fixture.cpp
 test_byte_string_SOURCES        = test_byte_string.cpp
 test_field_SOURCES              = test_field.cpp
 test_configuration_map_SOURCES  = test_configuration_map.cpp fixture.cpp
+test_list_SOURCES               = test_list.cpp fixture.cpp
 
