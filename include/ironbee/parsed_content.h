@@ -78,6 +78,7 @@ typedef struct ib_parsed_data_t ib_parsed_data_t;
  */
 typedef struct ib_parsed_tx_t {
     ib_engine_t *ib_engine; /**< The engine handling this transaction. */
+    ib_mpool_t *mpool;      /**< The pool that allocation is done from. */
 } ib_parsed_tx_t;
 
 /**
@@ -93,16 +94,20 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
 /**
  * Create a new IronBee Parsed Transaction.
  *
- * @param[in] ib_engine The IronBee engine that will manage the transaction.
+ * Other structures created using the resultant @a transaction will
+ * allocate those structures out of the specified memory pool. The
+ * @a ib_engine memory pool is not used.
+ *
+ * @param[in] tx_mpool The memory pool that @a transaction should use
+ *            to allocate new data.
  * @param[out] transaction The new transaction to be created.
- * @param[in] user_data A void* that is carried by the transaction for
- *            the user. It is never accessed or free'ed by this
- *            code. See ib_parsed_tx_get_user_data for accessing @a user_data.
+ * @param[in] ib_engine The IronBee engine that will manage the transaction.
  *
  * @returns IB_OK on success or other status on failure.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_create(ib_engine_t *ib_engine,
-                                           ib_parsed_tx_t **transaction);
+DLL_PUBLIC ib_status_t ib_parsed_tx_create(ib_mpool_t *tx_mpool,
+                                           ib_parsed_tx_t **transaction,
+                                           ib_engine_t *ib_engine);
 
 /**
  * Signal that the transaction has begun.
@@ -291,6 +296,81 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
     ib_parsed_header_t *headers,
     ib_parsed_tx_each_header_callback callback,
     void* user_data);
+
+/**
+ * Create a data chunk representation that lines to the read only @a buffer.
+ *
+ * Notice that this creates a struct that links the input char* 
+ * components. Be sure to call the relavant *_notify(...) function to
+ * send this data to the IronBee Engine before the buffer in which the
+ * arguments reside is invalidated.
+ *
+ * @param[in] tx The transaction whose memory pool will be used to create
+ *            the object.
+ * @param[out] data The resultant object will be placed here if IB_OK is
+ *             returned.
+ * @param[in] buffer The buffer that will be linked into @a data.
+ * @param[in] start The buffer that will be linked into @a data.
+ * @param[in] offset The offset from start.
+ * @returns IB_OK. IB_EALLOC if memory allocation fails. 
+ */
+DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
+                                             ib_parsed_data_t **data,
+                                             const char *buffer,
+                                             size_t start,
+                                             size_t offset);
+
+/**
+ * Create a struct to link the response line componenets.
+ *
+ * Notice that this creates a struct that links the input char* 
+ * components. Be sure to call the relavant *_notify(...) function to
+ * send this data to the IronBee Engine before the buffer in which the
+ * arguments reside is invalidated.
+ *
+ * @param[in] tx The transaction whose memory pool will be used.
+ * @param[out] line The resultant object will be stored here.
+ * @param[in] code The HTTP status code.
+ * @param[in] code_len The length of @a code.
+ * @param[in] msg The message describing @a code.
+ * @param[in] msg_len The length of @msg.
+ * @returns IB_OK or IB_EALLOC.
+ */
+DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
+    ib_parsed_tx_t *tx,
+    ib_parsed_resp_line_t **line,
+    const char *code,
+    size_t code_len,
+    const char *msg,
+    size_t msg_len);
+
+/**
+ * Create a struct to link the request line components.
+ *
+ * Notice that this creates a struct that links the input char* 
+ * components. Be sure to call the relavant *_notify(...) function to
+ * send this data to the IronBee Engine before the buffer in which the
+ * arguments reside is invalidated.
+ *
+ * @param[in] tx The transaction whose memory pool is used.
+ * @param[out] line The resultant object is placed here.
+ * @param[in] method The method.
+ * @param[in] method_len The length of @a method.
+ * @param[in] path The path component of the request.
+ * @param[in] path_len The length of @a path.
+ * @param[in] version The HTTP version.
+ * @param[in] version_len The length of @a version.
+ * @returns IB_OK or IB_EALLOC.
+ */
+DLL_PUBLIC ib_status_t ib_parsed_req_line_create(
+    ib_parsed_tx_t *tx,
+    ib_parsed_req_line_t **line,
+    const char *method,
+    size_t method_len,
+    const char *path,
+    size_t path_len,
+    const char *version,
+    size_t version_len);
 
 /**
  * @} IronBeeParsedContent

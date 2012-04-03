@@ -32,6 +32,20 @@
 #include <list>
 
 class ParsedContentTest : public BaseFixture {
+    protected:
+    ib_mpool_t *tx_mpool;
+
+    public:
+
+    virtual void SetUp() {
+        ib_mpool_create(&tx_mpool, "HI", NULL);
+    }
+
+    virtual void TearDown() {
+        ib_mpool_destroy(tx_mpool);
+    }
+
+    virtual ~ParsedContentTest(){}
 };
 
 class ParsedContentHeaderTest : public ParsedContentTest {
@@ -49,14 +63,14 @@ class ParsedContentHeaderTest : public ParsedContentTest {
     virtual ~ParsedContentHeaderTest(){}
 
     virtual void SetUp() {
-        ib_mpool_create(&mp, "HI", NULL);
+        ParsedContentTest::SetUp();
         names.clear();
         values.clear();
         count = 0;
     }
 
     virtual void TearDown() {
-        ib_mpool_destroy(mp);
+        ParsedContentTest::TearDown();
     }
 
     protected:
@@ -64,7 +78,6 @@ class ParsedContentHeaderTest : public ParsedContentTest {
     std::list<const char*> values;
     int count;
 
-    ib_mpool_t *mp;
     ib_parsed_header_t *headers;
 
     const char *name1;
@@ -114,7 +127,7 @@ TEST_F(ParsedContentTest, create_destroy)
 {
     ib_parsed_tx_t *t;
 
-    ASSERT_IB_OK(ib_parsed_tx_create(ib_engine, &t));
+    ASSERT_IB_OK(ib_parsed_tx_create(tx_mpool, &t, ib_engine));
     ASSERT_TRUE(t!=NULL);
 
     ib_parsed_tx_destroy(t);
@@ -125,7 +138,7 @@ TEST_F(ParsedContentHeaderTest, list_err)
 {
     ib_status_t rc;
 
-    ASSERT_IB_OK(ib_parsed_header_create(&headers, mp));
+    ASSERT_IB_OK(ib_parsed_header_create(&headers, tx_mpool));
     ASSERT_TRUE(headers!=NULL);
 
     ASSERT_IB_OK(ib_parsed_header_add(headers,
@@ -158,7 +171,7 @@ TEST_F(ParsedContentHeaderTest, list_ok)
 {
     ib_status_t rc;
 
-    ASSERT_IB_OK(ib_parsed_header_create(&headers, mp));
+    ASSERT_IB_OK(ib_parsed_header_create(&headers, tx_mpool));
     ASSERT_TRUE(headers!=NULL);
 
     ASSERT_IB_OK(ib_parsed_header_add(headers,

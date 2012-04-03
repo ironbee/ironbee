@@ -68,9 +68,12 @@ struct ib_parsed_name_value_pair_list_t {
  * This is typedef'ed to useful types in parsed_content.h.
  */
 struct ib_parsed_req_line_t {
-    ib_bytestr_t *method;  /**< HTTP Method. */
-    ib_bytestr_t *path;    /**< Path request method is against. */
-    ib_bytestr_t *version; /**< HTTP Version. */
+    const char *method;  /**< HTTP Method. */
+    size_t method_len;   /**< Length of method. */
+    const char *path;    /**< Path request method is against. */
+    size_t path_len;     /**< Length of path. */
+    const char *version; /**< HTTP Version. */
+    size_t version_len;  /**< Length of version. */
 };
 
 /**
@@ -79,8 +82,10 @@ struct ib_parsed_req_line_t {
  * This is typedef'ed to useful types inparsed_content.h.
  */
 struct ib_parsed_resp_line_t {
-    ib_bytestr_t *code; /**< The status code. */
-    ib_bytestr_t *msg;  /**< The message to the user. */
+    const char *code; /**< The status code. */
+    size_t code_len;  /**< Length of code. */
+    const char *msg;  /**< The message to the user. */
+    size_t msg_len;   /**< Length of the msg. */
 };
 
 /**
@@ -88,8 +93,8 @@ struct ib_parsed_resp_line_t {
  */
 struct ib_parsed_data_t {
     const char *buffer;
-    ib_unum_t start;
-    ib_unum_t offset;
+    size_t start;
+    size_t offset;
 };
 
 #ifdef __cplusplus
