@@ -831,6 +831,148 @@ void ib_tx_destroy(ib_tx_t *tx)
 }
 
 
+ib_status_t ib_site_create(ib_site_t **psite,
+                           ib_engine_t *ib,
+                           const char *name)
+{
+    IB_FTRACE_INIT();
+    ib_mpool_t *pool = ib->config_mp;
+    ib_status_t rc;
+
+    /* Create the main structure in the config memory pool */
+    *psite = (ib_site_t *)ib_mpool_calloc(pool, 1, sizeof(**psite));
+    if (*psite == NULL) {
+        rc = IB_EALLOC;
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    (*psite)->ib = ib;
+    (*psite)->mp = pool;
+    (*psite)->name = ib_mpool_strdup(pool, name);
+
+
+    /* Remaining fields are NULL via calloc. */
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_site_address_add(ib_site_t *site,
+                                const char *ip)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    /* Create a list if this is the first item. */
+    if (site->ips == NULL) {
+        rc = ib_list_create(&site->ips, site->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /// @todo: use regex
+    rc = ib_list_push(site->ips, (void *)ip);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_site_address_validate(ib_site_t *site,
+                                     const char *ip)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+}
+
+ib_status_t ib_site_hostname_add(ib_site_t *site,
+                                 const char *host)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    /* Create a list if this is the first item. */
+    if (site->hosts == NULL) {
+        rc = ib_list_create(&site->hosts, site->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /// @todo: use regex
+    rc = ib_list_push(site->hosts, (void *)host);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_site_hostname_validate(ib_site_t *site,
+                                      const char *host)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+}
+
+ib_status_t ib_site_loc_create(ib_site_t *site,
+                               ib_loc_t **ploc,
+                               const char *path)
+{
+    IB_FTRACE_INIT();
+    ib_loc_t *loc;
+    ib_status_t rc;
+
+    if (ploc != NULL) {
+        *ploc = NULL;
+    }
+
+    /* Create a list if this is the first item. */
+    if (site->locations == NULL) {
+        rc = ib_list_create(&site->locations, site->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Create the location structure in the site memory pool */
+    loc = (ib_loc_t *)ib_mpool_calloc(site->mp, 1, sizeof(*loc));
+    if (loc == NULL) {
+        rc = IB_EALLOC;
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    loc->site = site;
+    loc->path = path;
+    loc->path = ib_mpool_strdup(site->mp, path);
+
+    if (ploc != NULL) {
+        *ploc = loc;
+    }
+
+    rc = ib_list_push(site->locations, (void *)loc);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_site_loc_create_default(ib_site_t *site,
+                                       ib_loc_t **ploc)
+{
+    IB_FTRACE_INIT();
+    ib_loc_t *loc;
+    ib_status_t rc;
+
+    if (ploc != NULL) {
+        *ploc = NULL;
+    }
+
+    /* Create the location structure in the site memory pool */
+    loc = (ib_loc_t *)ib_mpool_calloc(site->mp, 1, sizeof(*loc));
+    if (loc == NULL) {
+        rc = IB_EALLOC;
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    loc->site = site;
+    loc->path = IB_DSTR_URI_ROOT_PATH;
+
+    if (ploc != NULL) {
+        *ploc = loc;
+    }
+
+    site->default_loc = loc;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /* -- State Routines -- */
 
 /**
