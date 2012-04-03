@@ -394,13 +394,16 @@ ib_status_t ib_config_register_directives(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_config_register_directive(ib_engine_t *ib,
-                                         const char *name,
-                                         ib_dirtype_t type,
-                                         ib_void_fn_t fn_config,
-                                         ib_config_cb_blkend_fn_t fn_blkend,
-                                         void *cbdata_config,
-                                         void *cbdata_blkend)
+ib_status_t ib_config_register_directive(
+    ib_engine_t              *ib,
+    const char               *name,
+    ib_dirtype_t              type,
+    ib_void_fn_t              fn_config,
+    ib_config_cb_blkend_fn_t  fn_blkend,
+    void                     *cbdata_config,
+    void                     *cbdata_blkend,
+    ib_strval_t              *valmap
+)
 {
     IB_FTRACE_INIT();
     ib_dirmap_init_t *rec;
@@ -416,6 +419,7 @@ ib_status_t ib_config_register_directive(ib_engine_t *ib,
     rec->fn_blkend = fn_blkend;
     rec->cbdata_cb = cbdata_config;
     rec->cbdata_blkend = cbdata_blkend;
+    rec->valmap = valmap;
 
     rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
 

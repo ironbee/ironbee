@@ -352,16 +352,20 @@ ib_status_t DLL_PUBLIC ib_config_register_directives(ib_engine_t *ib,
  * @param fn_blkend Callback function called at the end of a block (or NULL)
  * @param cbdata_config Data passed to @a fn_config
  * @param cbdata_blkend Data passed to @a fn_blkend
+ * @param valmap        Value map for opflags directives.
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_config_register_directive(ib_engine_t *ib,
-                                                    const char *name,
-                                                    ib_dirtype_t type,
-                                                    ib_void_fn_t fn_config,
-                                                    ib_config_cb_blkend_fn_t fn_blkend,
-                                                    void *cbdata_config,
-                                                    void *cbdata_blkend);
+ib_status_t DLL_PUBLIC ib_config_register_directive(
+     ib_engine_t              *ib,
+     const char               *name,
+     ib_dirtype_t              type,
+     ib_void_fn_t              fn_config,
+     ib_config_cb_blkend_fn_t  fn_blkend,
+     void                     *cbdata_config,
+     void                     *cbdata_blkend,
+     ib_strval_t              *valmap
+);
 
 /**
  * Process a directive.
