@@ -55,6 +55,48 @@
 IB_MODULE_DECLARE();
 
 /**
+ * Phase lookup table.
+ */
+typedef struct {
+    const char       *str;
+    ib_rule_phase_t   phase;
+} phase_lookup_t;
+static phase_lookup_t phase_lookup_table[] = {
+    { "REQUEST_HEADER",  PHASE_REQUEST_HEADER },
+    { "REQUEST",         PHASE_REQUEST_BODY },
+    { "RESPONSE_HEADER", PHASE_RESPONSE_HEADER },
+    { "RESPONSE",        PHASE_RESPONSE_BODY },
+    { "POSTPROCESS",     PHASE_POSTPROCESS },
+    /* Shortcuts */
+    { "REQHDR",          PHASE_REQUEST_HEADER },
+    { "RSPHDR",          PHASE_RESPONSE_HEADER },
+    /* List terminator */
+    { "NONE",            PHASE_NONE },
+    { NULL,              PHASE_INVALID },
+};
+
+/**
+ * Stream lookup table.
+ */
+typedef struct {
+    const char       *str;
+    ib_rule_stream_t  stream;
+} stream_lookup_t;
+static stream_lookup_t stream_lookup_table[] = {
+    { "REQUEST_HEADER_STREAM",  STREAM_REQUEST_HEADER },
+    { "REQUEST_BODY_STREAM",    STREAM_REQUEST_BODY },
+    { "RESPONSE_HEADER_STREAM", STREAM_RESPONSE_HEADER },
+    { "RESPONSE_BODY_STREAM",   STREAM_RESPONSE_BODY },
+    /* Shortcuts */
+    { "STRREQHDR",              STREAM_REQUEST_HEADER },
+    { "STRREQBODY",             STREAM_REQUEST_BODY },
+    { "STRRSPHDR",              STREAM_RESPONSE_HEADER },
+    { "STRRSPBODY",             STREAM_RESPONSE_BODY }, 
+    /* List terminator */
+    { NULL,                     STREAM_INVALID },
+};
+
+/**
  * Ironbee's root rule state.
  */
 static lua_State *g_ironbee_rules_lua;
@@ -64,6 +106,52 @@ static lua_State *g_ironbee_rules_lua;
  */
 static ib_lock_t g_lua_lock;
 
+
+/**
+ * Lookup a phase name in the phase name table.
+ * @internal
+ *
+ * @param[in] str Phase name string to lookup
+ * @param[out] phase Phase number
+ *
+ * @returns Status code
+ */
+static ib_status_t lookup_phase(const char *str, ib_rule_phase_t *phase)
+{
+    IB_FTRACE_INIT();
+    const phase_lookup_t *item;
+
+    for (item = phase_lookup_table;  item->str != NULL;  ++item) {
+         if (strcasecmp(str, item->str) == 0) {
+             *phase = item->phase;
+             IB_FTRACE_RET_STATUS(IB_OK);
+         }
+    }
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}
+
+/**
+ * Lookup a stream name in the stream name table.
+ * @internal
+ *
+ * @param[in] str Stream name string to lookup
+ * @param[out] stream Stream number
+ *
+ * @returns Status code
+ */
+static ib_status_t lookup_stream(const char *str, ib_rule_stream_t *stream)
+{
+    IB_FTRACE_INIT();
+    const stream_lookup_t *item;
+
+    for (item = stream_lookup_table;  item->str != NULL;  ++item) {
+         if (strcasecmp(str, item->str) == 0) {
+             *stream = item->stream;
+             IB_FTRACE_RET_STATUS(IB_OK);
+         }
+    }
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}
 
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
@@ -665,34 +753,18 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
                 ib_log_error(cp->ib, 4, "Modifier PHASE with no value");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
-            else if (strcasecmp(value,"REQUEST_HEADER") == 0) {
-                phase = PHASE_REQUEST_HEADER;
-            }
-            else if (strcasecmp(value,"REQUEST") == 0) {
-                phase = PHASE_REQUEST_BODY;
-            }
-            else if (strcasecmp(value,"RESPONSE_HEADER") == 0) {
-                phase = PHASE_RESPONSE_HEADER;
-            }
-            else if (strcasecmp(value,"RESPONSE") == 0) {
-                phase = PHASE_RESPONSE_BODY;
-            }
-            else if (strcasecmp(value,"POSTPROCESS") == 0) {
-                phase = PHASE_POSTPROCESS;
-            }
-            else if (strcasecmp(value,"NONE") == 0) {
-                phase = PHASE_NONE;
-            }
-            else {
+            rc = lookup_phase(value, &phase);
+            if (rc != IB_OK) {
                 ib_log_error(cp->ib, 4, "Invalid phase: %s", value);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
-        else if (strcasecmp(name,"REQHDR") == 0) {
-            phase = PHASE_REQUEST_HEADER;
-        }
-        else if (strcasecmp(name,"RSPHDR") == 0) {
-            phase = PHASE_REQUEST_HEADER;
+        else {
+            ib_rule_phase_t tphase;
+            rc = lookup_phase(name, &tphase);
+            if (rc == IB_OK) {
+                phase = tphase;
+            }
         }
 
         /* If we encountered a phase modifier, set it */
@@ -710,13 +782,15 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Chain modifier */
-    if (strcasecmp(name, "chain") == 0) {
+    if ( ((rule->flags & IB_RULE_FLAG_ALLOW_CHAIN) != 0) &&
+         (strcasecmp(name, "chain") == 0) )
+    {
         rc = ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_CHAIN);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Transformation modifiers */
-    if ( (rule->flags & IB_RULE_FLAG_TFNS) &&
+    if ( ((rule->flags & IB_RULE_FLAG_ALLOW_TFNS) != 0) &&
          (strcasecmp(name, "t") == 0) )
     {
         if (value == NULL) {
@@ -1150,19 +1224,9 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     }
     str = node->data;
 
-    if (strcasecmp(str, "REQUEST_HEADER_STREAM") == 0) {
-        stream = STREAM_REQUEST_HEADER;
-    }
-    else if (strcasecmp(str, "REQUEST_BODY_STREAM") == 0) {
-        stream = STREAM_REQUEST_BODY;
-    }
-    else if (strcasecmp(str, "RESPONSE_HEADER_STREAM") == 0) {
-        stream = PHASE_RESPONSE_HEADER;
-    }
-    else if (strcasecmp(str, "RESPONSE_BODY_STREAM") == 0) {
-        stream = PHASE_RESPONSE_BODY;
-    }
-    else {
+    /* Lookup the stream name */
+    rc = lookup_stream(str, &stream);
+    if (rc != IB_OK) {
         ib_log_error(cp->ib, 4, "Invalid stream: %s", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }

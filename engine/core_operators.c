@@ -460,7 +460,8 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     /* Create the radix matcher */
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to allocate a radix matcher: %s", ib_status_to_string(rc));
+        ib_log_error(ib, 4, "Failed to allocate a radix matcher: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -472,7 +473,8 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         rc = ib_radix_ip_to_prefix(p, &prefix, mp);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
-                         "Error created radix prefix for %s: %s", p, ib_status_to_string(rc));
+                         "Error created radix prefix for %s: %s",
+                         p, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 

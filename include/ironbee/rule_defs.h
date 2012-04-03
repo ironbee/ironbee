@@ -80,11 +80,12 @@ typedef enum {
  * operator, passing NULL in as the field pointer.  The external rule is
  * expected to extract whatever fields, etc. it requires itself.
  */
-#define IB_RULE_FLAG_NONE       (0x0)     /**< No flags */
-#define IB_RULE_FLAG_EXTERNAL   (1 << 0)  /**< External rule */
-#define IB_RULE_FLAG_CHAIN      (1 << 1)  /**< Rule is part of a chain */
-#define IB_RULE_FLAG_CHAINED_TO (1 << 2)  /**< Rule is target of a chain */
-#define IB_RULE_FLAG_TFNS       (1 << 3)  /**< Rule allows transformations */
+#define IB_RULE_FLAG_NONE        (0x0)     /**< No flags */
+#define IB_RULE_FLAG_EXTERNAL    (1 << 0)  /**< External rule */
+#define IB_RULE_FLAG_ALLOW_CHAIN (1 << 1)  /**< Rule allows chaining */
+#define IB_RULE_FLAG_ALLOW_TFNS  (1 << 2)  /**< Rule allows transformations */
+#define IB_RULE_FLAG_CHAIN       (1 << 3)  /**< Rule is part of a chain */
+#define IB_RULE_FLAG_CHAINED_TO  (1 << 4)  /**< Rule is target of a chain */
 
 /**
  * Rule engine: Basic rule type

@@ -41,14 +41,24 @@
 
 #include "ironbee_private.h"
 
-/* Callback data */
+/* Phase rule callback data */
 typedef struct {
     ib_rule_phase_t         phase;
     const char             *name;
     ib_state_event_type_t   event;
-} rule_cbdata_t;
+} phase_rule_cbdata_t;
 
-static rule_cbdata_t rule_cbdata[] = {
+/* Stream rule callback data */
+#define MAX_DATA_TYPES 4
+typedef struct {
+    ib_rule_stream_t        stream;
+    const char             *name;
+    ib_state_event_type_t   event;
+    ib_data_type_t          dtypes[MAX_DATA_TYPES];
+    ib_num_t                num_dtypes;
+} stream_rule_cbdata_t;
+
+static phase_rule_cbdata_t phase_rule_cbdata[] = {
     {PHASE_REQUEST_HEADER,  "Request Header",  handle_request_headers_event},
     {PHASE_REQUEST_BODY,    "Request Body",    handle_request_event},
     {PHASE_RESPONSE_HEADER, "Response Header", handle_response_headers_event},
@@ -57,12 +67,38 @@ static rule_cbdata_t rule_cbdata[] = {
     {PHASE_INVALID,         NULL,              (ib_state_event_type_t) -1}
 };
 
-/**
- * Init rule flags.  Used to specify which parts of the rules object
- * will be initialized by ib_rules_init()
- **/
-#define IB_RULES_INIT_RULESET     (1 << 0)   /**< Initialize the ruleset */
-#define IB_RULES_INIT_CALLBACKS   (1 << 1)   /**< Initialize the callbacks */
+static stream_rule_cbdata_t stream_rule_cbdata[] = {
+    {
+        STREAM_REQUEST_HEADER,
+        "Request Header",
+        tx_data_in_event,
+        { IB_DTYPE_HTTP_HEADER }, 1
+    },
+    {
+        STREAM_REQUEST_BODY,
+        "Request Body",
+        tx_data_in_event,
+        { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
+    },
+    {
+        STREAM_RESPONSE_HEADER,
+        "Response Header",
+        tx_data_out_event,
+        { IB_DTYPE_HTTP_HEADER }, 1
+    },
+    {
+        STREAM_RESPONSE_BODY,
+        "Response Body",
+        tx_data_out_event,
+        { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
+    },
+    {
+        STREAM_INVALID,
+        NULL,
+        (ib_state_event_type_t) -1,
+        { }, 0
+    }
+};
 
 /* The rule engine uses recursion to walk through lists and chains.  These
  * define the limits to the depth of those recursions. */
@@ -277,7 +313,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
 }
 
 /**
- * Execute a single rule's operator
+ * Execute a single rule's operator on all target fields.
  * @internal
  *
  * @param[in] ib Engine
@@ -287,10 +323,10 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t execute_rule(ib_engine_t *ib,
-                                ib_rule_t *rule,
-                                ib_tx_t *tx,
-                                ib_num_t *rule_result)
+static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
+                                              ib_rule_t *rule,
+                                              ib_tx_t *tx,
+                                              ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
@@ -331,7 +367,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         const char       *fname = target->field_name;
         assert(fname != NULL);
         ib_field_t       *value = NULL;     /* Value from the DPI */
-        ib_field_t       *fopvalue = NULL;  /* Value after field operators */
+        ib_field_t       *tfnvalue = NULL;  /* Value after transformations */
         ib_num_t          result = 0;
         ib_status_t       rc = IB_OK;
 
@@ -349,7 +385,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
         }
 
         /* Execute the field operators */
-        rc = execute_field_tfns(ib, tx, target, value, &fopvalue);
+        rc = execute_field_tfns(ib, tx, target, value, &tfnvalue);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Error executing transformation for %s on %s: %s",
@@ -362,7 +398,7 @@ static ib_status_t execute_rule(ib_engine_t *ib,
                                    tx,
                                    opinst,
                                    fname,
-                                   fopvalue,
+                                   tfnvalue,
                                    MAX_LIST_RECURSION,
                                    &result);
         if (rc != IB_OK) {
@@ -484,7 +520,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 }
 
 /**
- * Execute a single rule, it's actions, and it's chained rules.
+ * Execute a single phase rule, it's actions, and it's chained rules.
  * @internal
  *
  * @param[in] ib Engine
@@ -495,21 +531,27 @@ static ib_status_t execute_actions(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t execute_rule_all(ib_engine_t *ib,
-                                    ib_rule_t *rule,
-                                    ib_tx_t *tx,
-                                    ib_num_t recursion,
-                                    ib_num_t *rule_result)
+static ib_status_t execute_phase_rule(ib_engine_t *ib,
+                                      ib_rule_t *rule,
+                                      ib_tx_t *tx,
+                                      ib_num_t recursion,
+                                      ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
     ib_list_t   *actions;
     ib_status_t  rc = IB_OK;
     ib_status_t  trc;         /* Temporary status code */
 
+    assert(ib != NULL);
+    assert(rule != NULL);
+    assert(rule->meta.type == RULE_TYPE_PHASE);
+    assert(tx != NULL);
+    assert(rule_result != NULL);
+
     /* Limit recursion */
     --recursion;
     if (recursion <= 0) {
-        ib_log_error(ib, 4, "Rule engine: Chain recursion limit reached");
+        ib_log_error(ib, 4, "Rule engine: Phase chain recursion limit reached");
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
@@ -517,13 +559,13 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
     *rule_result = 0;
 
     /**
-     * Execute the rule
+     * Execute the rule operator on the target fields.
      *
      * @todo The current behavior is to keep running even after an operator
      * returns an error.  This needs further discussion to determine what the
      * correct behavior should be.
      */
-    trc = execute_rule(ib, rule, tx, rule_result);
+    trc = execute_phase_rule_targets(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
         ib_log_error(ib, 4, "Error executing rule %s: %s",
                      rule->meta.id, ib_status_to_string(trc));
@@ -563,11 +605,11 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
         ib_log_debug(ib, 9,
                      "Chaining to rule %s",
                      rule->chained_rule->meta.id);
-        trc = execute_rule_all(ib,
-                               rule->chained_rule,
-                               tx,
-                               recursion,
-                               rule_result);
+        trc = execute_phase_rule(ib,
+                                 rule->chained_rule,
+                                 tx,
+                                 recursion,
+                                 rule_result);
         if (trc != IB_OK) {
             ib_log_error(ib, 4, "Error executing chained rule %s",
                          rule->chained_rule->meta.id);
@@ -579,23 +621,23 @@ static ib_status_t execute_rule_all(ib_engine_t *ib,
 }
 
 /**
- * Run a set of rules.
+ * Run a set of phase rules.
  * @internal
  *
  * @param[in] ib Engine
  * @param[in] event Event type
  * @param[in,out] tx Transaction
- * @param[in] cbdata Callback data (actually rule_cbdata_t *)
+ * @param[in] cbdata Callback data (actually phase_rule_cbdata_t *)
  *
  * @returns Status code
  */
-static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
-                                          ib_state_event_type_t event,
-                                          ib_tx_t *tx,
-                                          void *cbdata)
+static ib_status_t run_phase_rules(ib_engine_t *ib,
+                                   ib_state_event_type_t event,
+                                   ib_tx_t *tx,
+                                   void *cbdata)
 {
     IB_FTRACE_INIT();
-    const rule_cbdata_t  *rdata = (const rule_cbdata_t *) cbdata;
+    const phase_rule_cbdata_t *rdata = (const phase_rule_cbdata_t *) cbdata;
     ib_context_t         *ctx = tx->ctx;
     ib_rule_phase_data_t *phase = &(ctx->rules->ruleset.phases[rdata->phase]);
     ib_list_t            *rules = phase->rules.rule_list;
@@ -615,7 +657,7 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
     /* Walk through the rules & execute them */
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug(ib, 9,
-                     "No rules rules for phase %d/%s in context p=%p",
+                     "No rules for phase %d/%s in context p=%p",
                      rdata->phase, rdata->name, (void *)ctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -637,11 +679,11 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
         ib_status_t  rule_rc;
 
         /* Execute the rule, it's actions and chains */
-        rule_rc = execute_rule_all(ib,
-                                   rule,
-                                   tx,
-                                   MAX_CHAIN_RECURSION,
-                                   &rule_result);
+        rule_rc = execute_phase_rule(ib,
+                                     rule,
+                                     tx,
+                                     MAX_CHAIN_RECURSION,
+                                     &rule_result);
         if (rule_rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Error executing rule %s: %s",
@@ -658,29 +700,363 @@ static ib_status_t ib_rule_engine_execute(ib_engine_t *ib,
 }
 
 /**
+ * Execute a single stream rule, and it's actions
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] event Event type
+ * @param[in,out] txdata Transaction data
+ * @param[in,out] rule_result Result of rule execution
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_stream_rule(ib_engine_t *ib,
+                                       ib_rule_t *rule,
+                                       ib_txdata_t *txdata,
+                                       ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t          rc = IB_OK;
+    ib_operator_inst_t  *opinst = rule->opinst;
+    ib_field_t          *value = NULL;
+
+    assert(ib != NULL);
+    assert(rule != NULL);
+    assert(rule->meta.type == RULE_TYPE_STREAM);
+    assert(txdata != NULL);
+    assert(result != NULL);
+
+
+    /**
+     * Execute the rule operator.
+     *
+     * @todo The current behavior is to keep running even after action(s)
+     * returns an error.  This needs further discussion to determine what the
+     * correct behavior should be.
+     */
+
+    /* Create a field to hold the data */
+    rc = ib_field_create_bytestr_alias(&value,
+                                       txdata->mp,
+                                       "tmp", 3,
+                                       txdata->data, txdata->dlen);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Error creating field for stream rule data: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Execute the rule operator */
+    rc = ib_operator_execute(ib, txdata->tx, opinst, value, result);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Operator %s returned an error: %s",
+                     opinst->op->name, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_log_debug(ib, 9, "Operator %s => %d", opinst->op->name, *result);
+
+    /* Invert? */
+    if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
+        *result = ( (*result) == 0);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Run a set of stream rules.
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] event Event type
+ * @param[in,out] txdata Transaction
+ * @param[in] cbdata Callback data (actually phase_rule_cbdata_t *)
+ *
+ * @returns Status code
+ */
+static ib_status_t run_stream_rules(ib_engine_t *ib,
+                                    ib_state_event_type_t event,
+                                    ib_txdata_t *txdata,
+                                    void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(txdata != NULL);
+    assert(cbdata != NULL);
+
+    const stream_rule_cbdata_t *rdata = (const stream_rule_cbdata_t *) cbdata;
+    ib_context_t               *ctx = txdata->tx->ctx;
+    ib_rule_stream_data_t      *stream =
+        &(ctx->rules->ruleset.streams[rdata->stream]);
+    ib_list_t                  *rules = stream->rules.rule_list;
+    ib_list_node_t             *node = NULL;
+
+    /* Sanity check */
+    if (stream->stream != rdata->stream) {
+        ib_log_error(ib, 4, "Rule engine: Stream %d (%s) is %d",
+                     rdata->stream, rdata->name, stream->stream );
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Walk through the rules & execute them */
+    if (IB_LIST_ELEMENTS(rules) == 0) {
+        ib_log_debug(ib, 9,
+                     "No rules for stream %d/%s in context p=%p",
+                     rdata->stream, rdata->name, (void *)ctx);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    ib_log_debug(ib, 9,
+                 "Executing %d rules for stream %d/%s in context %p",
+                 IB_LIST_ELEMENTS(rules),
+                 rdata->stream, rdata->name, (void *)ctx);
+
+    /**
+     * Loop through all of the rules for this phase, execute them.
+     *
+     * @todo The current behavior is to keep running even after rule execution
+     * returns an error.  This needs further discussion to determine what the
+     * correct behavior should be.
+     */
+    IB_LIST_LOOP(rules, node) {
+        ib_rule_t   *rule = (ib_rule_t *)node->data;
+        ib_list_t   *actions;
+        ib_num_t     result = 0;
+        ib_num_t     dtype_num;
+        ib_bool_t    dtype_found = IB_FALSE;
+        ib_status_t  rc;
+
+        /*
+         * Determine if this event applies to this rule
+         */
+        assert(rdata->event == event);
+        for (dtype_num = 0;  dtype_num < rdata->num_dtypes;  ++dtype_num) {
+            if (txdata->dtype == rdata->dtypes[dtype_num]) {
+                dtype_found = IB_TRUE;
+                break;
+            }
+        }
+        if (dtype_found == IB_FALSE) {
+            continue;
+        }
+
+        /*
+         * Execute the rule
+         *
+         * @todo The current behavior is to keep running even after an
+         * operator returns an error.  This needs further discussion to
+         * determine what the correct behavior should be.
+         */
+        rc = execute_stream_rule(ib, rule, txdata, &result);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Error executing rule %s: %s",
+                         rule->meta.id, ib_status_to_string(rc));
+        }
+
+        /*
+         * Execute the actions.
+         *
+         * @todo The current behavior is to keep running even after action(s)
+         * returns an error.  This needs further discussion to determine what
+         * the correct behavior should be.
+         */
+        if (result != 0) {
+            actions = rule->true_actions;
+        }
+        else {
+            actions = rule->false_actions;
+        }
+        rc = execute_actions(ib, rule, txdata->tx, result, actions);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "Error executing action for rule %s: %s",
+                         rule->meta.id, ib_status_to_string(rc));
+        }
+    }
+
+    /*
+     * @todo Eat errors for now.  Unless something Really Bad(TM) has
+     * occurred, return IB_OK to the engine.  A bigger discussion of if / how
+     * such errors should be propagated needs to occur.
+     */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Initialize phase rule set.
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in,out] rule_engine Rule engine
+ *
+ * @returns Status code
+ */
+static ib_status_t init_phase_ruleset(ib_engine_t *ib,
+                                      ib_mpool_t *mp,
+                                      ib_rule_engine_t *rule_engine)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_num_t    phase_num;
+
+    /* Initialize the phase rules */
+    for (phase_num = (ib_num_t)PHASE_NONE;
+         phase_num <= (ib_num_t)PHASE_MAX;
+         ++phase_num)
+    {
+        ib_rule_phase_data_t *phase =
+            &(rule_engine->ruleset.phases[phase_num]);
+        phase->phase = (ib_rule_phase_t)phase_num;
+        rc = ib_list_create(&(phase->rules.rule_list), mp);
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib, 4,
+                "Rule engine failed to create phase ruleset list: %s",
+                rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Register phase rules callbacks
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in,out] rule_engine Rule engine
+ *
+ * @returns Status code
+ */
+static ib_status_t register_phase_callbacks(ib_engine_t *ib,
+                                            ib_mpool_t *mp,
+                                            ib_rule_engine_t *rule_engine)
+{
+    IB_FTRACE_INIT();
+    phase_rule_cbdata_t *cbdata;
+    ib_status_t          rc;
+
+    /* Register specific handlers for specific events, and a
+     * generic handler for the rest */
+    for (cbdata = phase_rule_cbdata; cbdata->phase != PHASE_INVALID; ++cbdata)
+    {
+        rc = ib_hook_tx_register(ib,
+                                 cbdata->event,
+                                 run_phase_rules,
+                                 (void *)cbdata);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Hook register for phase %d/%d/%s returned %d",
+                         cbdata->phase, cbdata->event, cbdata->name,
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Initialize stream rule set.
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in,out] rule_engine Rule engine
+ *
+ * @returns Status code
+ */
+static ib_status_t init_stream_ruleset(ib_engine_t *ib,
+                                       ib_mpool_t *mp,
+                                       ib_rule_engine_t *rule_engine)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_num_t    stream_num;
+
+    /* Initialize the stream rules */
+    for (stream_num = (ib_num_t)STREAM_NONE;
+         stream_num <= (ib_num_t)STREAM_MAX;
+         ++stream_num)
+    {
+        ib_rule_stream_data_t *stream =
+            &(rule_engine->ruleset.streams[stream_num]);
+        stream->stream = (ib_rule_stream_t)stream_num;
+        rc = ib_list_create(&(stream->rules.rule_list), mp);
+        if (rc != IB_OK) {
+            ib_log_error(
+                ib, 4,
+                "Rule engine failed to create stream ruleset list: %s",
+                rc);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Register stream rules callbacks
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in,out] rule_engine Rule engine
+ *
+ * @returns Status code
+ */
+static ib_status_t register_stream_callbacks(ib_engine_t *ib,
+                                             ib_mpool_t *mp,
+                                             ib_rule_engine_t *rule_engine)
+{
+    IB_FTRACE_INIT();
+    stream_rule_cbdata_t *cbdata;
+    ib_status_t           rc;
+
+    /* Register specific handlers for specific events, and a
+     * generic handler for the rest */
+    for (cbdata = stream_rule_cbdata;
+         cbdata->stream != STREAM_INVALID;
+         ++cbdata)
+    {
+        rc = ib_hook_txdata_register(ib,
+                                     cbdata->event,
+                                     run_stream_rules,
+                                     (void *)cbdata);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4, "Hook register for stream %d/%d/%s returned %d",
+                         cbdata->stream, cbdata->event, cbdata->name,
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Initialize a rule engine object.
  * @internal
  *
  * @param[in] ib Engine
  * @param[in,out] mp Memory pool to use for allocations
- * @param[in] flags Initialization flags (IB_RULES_INIT_*)
  * @param[out] p_rule_engine Pointer to new rule engine object
  *
  * @returns Status code
  */
-static ib_status_t ib_rules_init(ib_engine_t *ib,
-                                 ib_mpool_t *mp,
-                                 ib_flags_t flags,
-                                 ib_rule_engine_t **p_rule_engine)
+static ib_status_t create_rule_engine(ib_engine_t *ib,
+                                      ib_mpool_t *mp,
+                                      ib_rule_engine_t **p_rule_engine)
 {
     IB_FTRACE_INIT();
-    rule_cbdata_t    *cbdata;
     ib_rule_engine_t *rule_engine;
     ib_status_t       rc;
 
     /* Create the rule object */
-    rule_engine = (ib_rule_engine_t *)
-        ib_mpool_calloc(mp, 1, sizeof(*rule_engine));
+    rule_engine =
+        (ib_rule_engine_t *)ib_mpool_calloc(mp, 1, sizeof(*rule_engine));
     if (rule_engine == NULL) {
         ib_log_error(ib, 4,
                      "Rule engine failed to allocate rule engine object");
@@ -696,41 +1072,6 @@ static ib_status_t ib_rules_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Initialize the rule set */
-    if (flags & IB_RULES_INIT_RULESET) {
-        ib_num_t phase;
-        for (phase = (ib_num_t)PHASE_NONE;
-             phase <= (ib_num_t)PHASE_MAX;
-             ++phase) {
-            ib_rule_phase_data_t *p = &(rule_engine->ruleset.phases[phase]);
-            p->phase = (ib_rule_phase_t)phase;
-            rc = ib_list_create(&(p->rules.rule_list), mp);
-            if (rc != IB_OK) {
-                ib_log_error(ib, 4,
-                             "Rule engine failed to create ruleset list: %s",
-                             rc);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
-            }
-        }
-    }
-
-    /* Register specific handlers for specific events, and a
-     * generic handler for the rest */
-    if (flags & IB_RULES_INIT_CALLBACKS) {
-        for (cbdata = rule_cbdata; cbdata->phase != PHASE_INVALID; ++cbdata) {
-            rc = ib_hook_tx_register(ib,
-                                     cbdata->event,
-                                     ib_rule_engine_execute,
-                                     (void *)cbdata);
-            if (rc != IB_OK) {
-                ib_log_error(ib, 4, "Hook register for %d/%d/%s returned %d",
-                             cbdata->phase, cbdata->event, cbdata->name,
-                             ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-    }
-
     *p_rule_engine = rule_engine;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -741,12 +1082,33 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = ib_rules_init(ib, ib->mp, IB_RULES_INIT_CALLBACKS, &(ib->rules) );
+    /* Create the rule engine object */
+    rc = create_rule_engine(ib, ib->mp, &(ib->rules));
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize rule engine: %s",
+        ib_log_error(ib, 4,
+                     "Rule engine failed to create rule engine: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    /* Register the phase rule callbacks */
+    rc = register_phase_callbacks(ib, ib->mp, ib->rules);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Rule engine failed to register phase callbacks: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the stream rule callbacks */
+    rc = register_stream_callbacks(ib, ib->mp, ib->rules);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Rule engine failed to register stream callbacks: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -755,17 +1117,36 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                                     ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
-    ib_status_t  rc;
+    ib_status_t rc;
 
     /* If the rules are already initialized, do nothing */
     if (ctx->rules != NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* Call the init function */
-    rc = ib_rules_init(ib, ctx->mp, IB_RULES_INIT_RULESET, &(ctx->rules));
+    /* Create the rule engine object */
+    rc = create_rule_engine(ib, ctx->mp, &(ctx->rules));
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize context rules: %s",
+        ib_log_error(ib, 4,
+                     "Rule engine failed to initialize context rules: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the phase rule sets */
+    rc = init_phase_ruleset(ib, ctx->mp, ctx->rules);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Rule engine failed to initialize phase ruleset: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the stream rule sets */
+    rc = init_stream_ruleset(ib, ctx->mp, ctx->rules);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4,
+                     "Rule engine failed to initialize stream ruleset: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -807,7 +1188,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     rule->meta.type = type;
     rule->flags = IB_RULE_FLAG_NONE;
     if (rule->meta.type == RULE_TYPE_PHASE) {
-        rule->flags |= IB_RULE_FLAG_TFNS;
+        rule->flags |= (IB_RULE_FLAG_ALLOW_TFNS | IB_RULE_FLAG_ALLOW_CHAIN);
     }
 
     /* meta tags list */
@@ -953,13 +1334,11 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, 4, "Can't register rule: No ID");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (ctx->rules == NULL){
-        rc = ib_rules_init(ib, ctx->mp, IB_RULES_INIT_RULESET, &ctx->rules);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Failed to initialize rules for context %p",
-                         (void *)ctx);
-            IB_FTRACE_RET_STATUS(rc);
-        }
+    rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, "Failed to initialize rules for context %p",
+                     (void *)ctx);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the rule engine and previous rule */
@@ -970,33 +1349,16 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     if ( (chain_rule != NULL)
          && ((chain_rule->flags & IB_RULE_FLAG_CHAIN) != 0) )
     {
+        assert(chain_rule->meta.type == RULE_TYPE_PHASE);
+        assert(rule->meta.type == RULE_TYPE_PHASE);
 
         /* Verify that the rule phase's match */
-        if (chain_rule->meta.type != rule->meta.type) {
-            ib_log_error(ib, 4,
-                         "Chained rule '%s' type %d != rule type %d",
-                         chain_rule->meta.id,
-                         chain_rule->meta.type,
-                         rule->meta.type);
-        }
-        else if ( (rule->meta.type == RULE_TYPE_PHASE) &&
-                  (chain_rule->meta.phase != rule->meta.phase) )
-        {
+        if (chain_rule->meta.phase != rule->meta.phase) {
             ib_log_error(ib, 4,
                          "Chained rule '%s' phase %d != rule phase %d",
                          chain_rule->meta.id,
                          chain_rule->meta.phase,
                          rule->meta.phase);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-        else if ( (rule->meta.type == RULE_TYPE_STREAM) &&
-                  (chain_rule->meta.stream != rule->meta.stream) )
-        {
-            ib_log_error(ib, 4,
-                         "Chained rule '%s' stream %d != rule stream %d",
-                         chain_rule->meta.id,
-                         chain_rule->meta.stream,
-                         rule->meta.stream);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -1030,7 +1392,6 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                          "Registered rule %s for phase %d of context %p",
                          rule->meta.id, phase, (void *)ctx);
         }
-
         else if (rule->meta.type == RULE_TYPE_STREAM) {
             ib_rule_stream_t stream = rule->meta.stream;
             ib_rule_stream_data_t *streamp =
@@ -1050,7 +1411,12 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                          "Registered rule %s for stream %d of context %p",
                          rule->meta.id, stream, (void *)ctx);
         }
+        else {
+            assert(0);
+        }
     }
+
+
 
     /* Store off this rule for chaining */
     rule_engine->parser_data.previous = rule;
