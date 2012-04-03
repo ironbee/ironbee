@@ -36,7 +36,8 @@ check_PROGRAMS = \
     test_byte_string \
     test_field \
     test_configuration_map \
-    test_list
+    test_list \
+    test_site
     
 TESTS=$(check_PROGRAMS)
 
@@ -52,4 +53,5 @@ test_byte_string_SOURCES        = test_byte_string.cpp
 test_field_SOURCES              = test_field.cpp
 test_configuration_map_SOURCES  = test_configuration_map.cpp fixture.cpp
 test_list_SOURCES               = test_list.cpp fixture.cpp
+test_site_SOURCES               = test_site.cpp fixture.cpp
 

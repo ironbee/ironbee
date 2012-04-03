@@ -15,5 +15,6 @@ libibpp_la_SOURCES = \
     memory_pool.cpp \
     byte_string.cpp \
     field.cpp \
-    configuration_map.cpp
+    configuration_map.cpp \
+    site.cpp
 
