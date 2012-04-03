@@ -184,7 +184,7 @@ DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
     assert(headers != NULL);
     assert(mp != NULL);
 
-    ib_parsed_header_t *headers_tmp = 
+    ib_parsed_header_t *headers_tmp =
         ib_mpool_calloc(mp, 1, sizeof(*headers_tmp));
 
     if ( headers_tmp == NULL ) {

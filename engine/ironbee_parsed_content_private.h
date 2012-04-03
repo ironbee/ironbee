@@ -39,14 +39,6 @@ extern "C" {
 /* Pull in partially defined headers we will more fully define in this .h. */
 #include <ironbee/parsed_content.h>
 
-
-/**
- * Empty forward declaration to let us use the typedef as a member of the
- * struct ib_parsed_name_value_pair_list_element_t.
- */
-typedef struct ib_parsed_name_value_pair_list_element_t
-    ib_parsed_name_value_pair_list_element_t;
-
 /**
  * An opaque link list element representing HTTP headers.
  */

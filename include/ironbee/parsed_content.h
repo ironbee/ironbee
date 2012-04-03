@@ -215,7 +215,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_trailer(
 /**
  * Destroy a transaction, releasing any held resources.
  *
- * @param[in,out] transaction The transaction that will no longer 
+ * @param[in,out] transaction The transaction that will no longer
  *                be valid after this returns.
  * @returns IB_OK.
  */
@@ -224,7 +224,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_destroy(const ib_parsed_tx_t *transaction);
 /**
  * Construct a headers (or trailers) object.
  *
- * This calloc's @a **headers from @a mp. 
+ * This calloc's @a **headers from @a mp.
  * Then @a mp is stored in @a **headers so that all future list elements
  * are allocated from the same memory pool and all released when the pool
  * is released.
@@ -239,12 +239,12 @@ DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
 /**
  * Link the arguments to a new list element and append it to this list.
  *
- * It is important to note that the arguments are linked to the list, 
+ * It is important to note that the arguments are linked to the list,
  * not copied. If you have a mutable buffer you must copy the values,
  * peferably out of @a mp. If this is done, then all related memory
  * will be released when the list elements allocated out of @a mp are
  * released.
- * 
+ *
  * @param[out] headers The list the the header object will be stored in.
  * @param[in] name The char* that will be stored as the start of the name.
  * @param[in] name_len The length of the string starting at @a name.
@@ -268,7 +268,7 @@ DLL_PUBLIC size_t ib_parsed_header_list_size(const ib_parsed_header_t *headers);
 /**
  * Apply @a callback to each name-value header pair in @a headers.
  *
- * This function may also be used for ib_parsed_trailer_t* objects as 
+ * This function may also be used for ib_parsed_trailer_t* objects as
  * they are typedefs of the same struct.
  *
  * This function will forward the @a user_data value to the callback for
