@@ -27,50 +27,68 @@ extern "C" {
  * @brief IronBee interface for handling parsed content.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
+ *
+ * @defgroup IronBee IronBee
+ * @{
+ * @defgroup IronBeeEngine IronBee Engine
+ * @{
+ * @defgroup IronBeeParsedContent Parsed Content
+ *
+ * API For passing parsed or partially parsed content to the IronBee Engine.
+ *
+ * @{
  */
 
-//#include <ironbee/build.h>
-//#include <ironbee_config_auto.h>
+#include <ironbee/build.h>
+#include <ironbee_config_auto.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/types.h>
 
-///! The HTTP request version, typically HTTP/1.1.
-typedef ib_bytestr_t ib_parsed_req_version_t;
+/**
+ * An opaque representation of the first line of an HTTP request.
+ */
+typedef struct ib_parsed_req_line_t ib_parsed_req_line_t;
 
-///! The HTTP request path, such as /index.php?arg1=var1.
-typedef ib_bytestr_t ib_parsed_req_path_t;
+/**
+ * An opaque list representation of a header list.
+ */
+typedef struct ib_parsed_name_value_pair_list_t ib_parsed_header_t;
 
-///! The HTTP request method, such as GET or PUT.
-typedef ib_bytestr_t ib_parsed_req_method_t;
+/**
+ * A trailer is structurally identical to an ib_parsed_header_t.
+ */
+typedef struct ib_parsed_name_value_pair_list ib_parsed_trailer_t;
 
-///! An HTTP header name.
-typedef ib_bytestr_t ib_parsed_header_name_t;
+/**
+ * Parsed response line.
+ *
+ * This is the first line in the server response to the user.
+ */
+typedef struct ib_parsed_resp_line_t ib_parsed_resp_line_t;
 
-///! An HTTP header value.
-typedef ib_bytestr_t ib_parsed_header_value_t;
+/**
+ * A pointer into a read-only buffer with a begin and offset value.
+ */
+typedef struct ib_parsed_data_t ib_parsed_data_t;
 
-///! An HTTP trailer name.
-typedef ib_bytestr_t ib_parsed_trailer_name_t;
-
-///! An HTTP trailer value.
-typedef ib_bytestr_t ib_parsed_trailer_value_t;
-
-///! Response status code.
-typedef ib_bytestr_t ib_parsed_resp_status_code_t;
-
-///! Response status message.
-typedef ib_bytestr_t ib_parsed_resp_status_msg_t;
-
-///! Bulk data, such as the body of an HTTP GET request.
-typedef ib_bytestr_t ib_parsed_data_t;
-
-///! Opaque transaction representation.
+/**
+ * Opaque transaction representation.
+ */
 typedef struct ib_parsed_tx_t {
     ib_engine_t *ib_engine; /**< The engine handling this transaction. */
-    void        *user_data; /**< Opaque pointer containing user data. */
 } ib_parsed_tx_t;
+
+/**
+ * Callback for iterating through a list of headers.
+ * IB_OK must be returned. Otherwise the loop will terminate prematurely.
+ */
+typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
+                                                         size_t name_len,
+                                                         const char *value,
+                                                         size_t value_len,
+                                                         void* user_data);
 
 /**
  * Create a new IronBee Parsed Transaction.
@@ -84,8 +102,7 @@ typedef struct ib_parsed_tx_t {
  * @returns IB_OK on success or other status on failure.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_create(ib_engine_t *ib_engine,
-                                           ib_parsed_tx_t **transaction,
-                                           void *user_data);
+                                           ib_parsed_tx_t **transaction);
 
 /**
  * Signal that the transaction has begun.
@@ -93,45 +110,37 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_create(ib_engine_t *ib_engine,
  * Any deferred allocation of resources is completed.
  *
  * @param[in,out] transaction The transaction.
- * @param[in] method The HTTP method.
- * @param[in] path The HTTP request path.
- * @param[in] version The HTTP version.
+ * @param[in] line The HTTP status line.
  *
  * @returns IB_OK.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_req_begin(
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_begin(
     ib_parsed_tx_t *transaction,
-    ib_parsed_req_method_t *method,
-    ib_parsed_req_path_t *path,
-    ib_parsed_req_version_t *version);
+    ib_parsed_req_line_t *req_line);
 
 /**
  * Process @a name and @a value as coming from the client.
  *
  * @param[in] transaction The transaction.
- * @param[in] name The name of the HTTP header.
- * @param[in] value The value of the HTTP header.
+ * @param[in] headers List of HTTP headers.
  *
  * @returns IB_OK or IB_EALLOC if the values cannot be copied.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_req_header(
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_header(
     ib_parsed_tx_t *transaction,
-    ib_parsed_header_name_t *name,
-    ib_parsed_header_value_t *value);
+    ib_parsed_header_t *headers);
 
 /**
  * Process @a name and @a value as coming from the server.
  *
  * @param[in] transaction The transaction.
- * @param[in] name The name of the HTTP header.
- * @param[in] value The value of the HTTP header.
+ * @param[in] headers List of HTTP headers.
  *
  * @returns IB_OK or IB_EALLOC if the values cannot be copied.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_resp_header(
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_header(
     ib_parsed_tx_t *transaction,
-    ib_parsed_header_name_t *name,
-    ib_parsed_header_value_t *value);
+    ib_parsed_header_t *headers);
 
 /**
  * Signal that the request portion of the transaction has completed.
@@ -140,21 +149,20 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_resp_header(
  *
  * @returns IB_OK.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_req_end(ib_parsed_tx_t *transaction);
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_end(
+    ib_parsed_tx_t *transaction);
 
 /**
  * Signal that the response portion of the transaction has begun.
  *
  * @param[in] transaction The transaction.
- * @param[in] code HTTP Response code.
- * @param[in] msg HTTP Response message.
+ * @param[in] line The HTTP response line.
  *
  * @returns IB_OK.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_resp_begin(
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_begin(
     ib_parsed_tx_t *transaction,
-    ib_parsed_resp_status_code_t *code,
-    ib_parsed_resp_status_msg_t *msg);
+    ib_parsed_resp_line_t *line);
 
 /**
  * Handle a chunk of body data.
@@ -162,8 +170,9 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_resp_begin(
  * @param[in] data The data being sent.
  * @return IB_OK.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_resp_body(ib_parsed_tx_t *transaction,
-                                              ib_parsed_data_t *data);
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_body(
+    ib_parsed_tx_t *transaction,
+    ib_parsed_data_t *data);
 
 /**
  * Handle a chunk of body data.
@@ -171,8 +180,9 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_resp_body(ib_parsed_tx_t *transaction,
  * @param[in] data The data being sent.
  * @return IB_OK.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_req_body(ib_parsed_tx_t *transaction,
-                                             ib_parsed_data_t *data);
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_body(
+    ib_parsed_tx_t *transaction,
+    ib_parsed_data_t *data);
 
 /**
  * Signal that the response portion of the transaction has begun.
@@ -181,43 +191,112 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_req_body(ib_parsed_tx_t *transaction,
  *
  * @returns IB_OK.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_resp_end(ib_parsed_tx_t *transaction);
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_end(
+    ib_parsed_tx_t *transaction);
 
 /**
  * The trailer version of ib_parsed_tx_res_header.
  *
  * @see ib_parsed_tx_res_header.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_req_trailer(
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_trailer(
     ib_parsed_tx_t *transaction,
-    ib_parsed_trailer_name_t *name,
-    ib_parsed_trailer_value_t *value);
+    ib_parsed_trailer_t *trailers);
 
 /**
  * The trailer version of ib_parsed_tx_resp_header.
  *
  * @see ib_parsed_tx_resp_header.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_resp_trailer(
+DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_trailer(
     ib_parsed_tx_t *transaction,
-    ib_parsed_trailer_name_t *name,
-    ib_parsed_trailer_value_t *value);
-
-
-/**
- * @param[in] transaction The transaction that contains the user data pointer.
- * @returns The user data pointer in the @a transaction structure.
- */
-DLL_PUBLIC void* ib_parsed_tx_get_user_data(const ib_parsed_tx_t *transaction);
+    ib_parsed_trailer_t *trailers);
 
 /**
  * Destroy a transaction, releasing any held resources.
  *
- * @param[in,out] transaction The transaction that will no longer be valid after
- *                this returns.
+ * @param[in,out] transaction The transaction that will no longer 
+ *                be valid after this returns.
  * @returns IB_OK.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_destroy(const ib_parsed_tx_t *transaction);
+
+/**
+ * Construct a headers (or trailers) object.
+ *
+ * This calloc's @a **headers from @a mp. 
+ * Then @a mp is stored in @a **headers so that all future list elements
+ * are allocated from the same memory pool and all released when the pool
+ * is released.
+ *
+ * @param[out] headers The headers object that will be constructed.
+ * @param[in,out] mp The memory pool that will allcoate the headers object.
+ * @returns IB_OK or IB_EALLOC if mp could not allocate memory.
+ */
+DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
+                                               ib_mpool_t *mp);
+
+/**
+ * Link the arguments to a new list element and append it to this list.
+ *
+ * It is important to note that the arguments are linked to the list, 
+ * not copied. If you have a mutable buffer you must copy the values,
+ * peferably out of @a mp. If this is done, then all related memory
+ * will be released when the list elements allocated out of @a mp are
+ * released.
+ * 
+ * @param[out] headers The list the the header object will be stored in.
+ * @param[in] name The char* that will be stored as the start of the name.
+ * @param[in] name_len The length of the string starting at @a name.
+ * @param[in] value The char* that will be stored as the start of the value.
+ * @param[in] value_len The length of the string starting at @a value.
+ * @returns IB_OK on success. IB_EALLOC if the list element could not be
+ *          allocated.
+ */
+DLL_PUBLIC ib_status_t ib_parsed_header_add(ib_parsed_header_t *headers,
+                                            const char *name,
+                                            size_t name_len,
+                                            const char *value,
+                                            size_t value_len);
+
+/**
+ * Return the size of the headers (or trailers) list.
+ * @param[in] headers The list to extract the current size of.
+ */
+DLL_PUBLIC size_t ib_parsed_header_list_size(const ib_parsed_header_t *headers);
+
+/**
+ * Apply @a callback to each name-value header pair in @a headers.
+ *
+ * This function may also be used for ib_parsed_trailer_t* objects as 
+ * they are typedefs of the same struct.
+ *
+ * This function will forward the @a user_data value to the callback for
+ * use by the user's code.
+ *
+ * This function will prematurly terminate iteration if @a callback does not
+ * return IB_OK. The last return code from @a callback is the return code
+ * of this function.
+ *
+ * @param[in] headers The list to be iterated through.
+ * @param[in] callback The function supplied by the caller to process the
+ *            name-value pairs.
+ * @param[in] user_data A pointer that is forwarded to the callback so
+ *            the user can pass some context around.
+ * @returns The last return code of @a callback. If @a callback returns
+ *          a value that is not IB_OK iteration is prematurely terminated
+ *          and that return code is returned.
+ */
+DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
+    ib_parsed_header_t *headers,
+    ib_parsed_tx_each_header_callback callback,
+    void* user_data);
+
+/**
+ * @} IronBeeParsedContent
+ * @} IronBeeEngine
+ * @} IronBee
+ */
 
 #ifdef __cplusplus
 } // extern "C"

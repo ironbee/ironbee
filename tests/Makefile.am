@@ -125,7 +125,9 @@ if HAVE_NO_UNUSED_BUT_SET_VARIABLE
 test_util_mpool_CPPFLAGS = $(CPPFLAGS) -Wno-unused-but-set-variable
 endif
 
-test_engine_SOURCES = test_engine.cc test_main.cc ibtest_util.cc
+test_engine_SOURCES = test_engine.cc test_main.cc \
+                      test_parsed_content.cc \
+                      ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
 
 test_config_SOURCES = test_config.cc test_main.cc 
