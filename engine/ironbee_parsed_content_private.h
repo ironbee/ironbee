@@ -47,7 +47,7 @@ typedef struct ib_parsed_name_value_pair_list_element_t {
     size_t name_len;
     const char *value;
     size_t value_len;
-    ib_parsed_name_value_pair_list_element_t *next; /**< The next header. */
+    struct ib_parsed_name_value_pair_list_element_t *next; /**< The next header. */
 } ib_parsed_name_value_pair_list_element_t;
 
 /**
