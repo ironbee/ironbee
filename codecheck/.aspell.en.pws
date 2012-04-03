@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1162 
+personal_ws-1.1 en 1168 
 cfg
 api
 IronBee
@@ -241,6 +241,7 @@ ostream
 parsers
 abcdef
 lpi
+FirstConfig
 ababc
 neq
 onEventTxDataOut
@@ -412,6 +413,7 @@ AhoCorasickModuleTest
 onEventHandleConnect
 SQL
 logError
+ConfigurationDirectivesRegistrar
 trimLeft
 ConnDataOut
 connp
@@ -759,8 +761,10 @@ IronBeePlugins
 webserver
 nagios
 ConnOpened
+ConfigurationParser
 unhandled
 logfile
+SecondConfig
 ScopedMemoryPool
 startpat
 DebugLogLevel
@@ -776,6 +780,7 @@ subblock
 initializations
 ResponseHeaders
 responseheaders
+Opflag
 IronBeeUtilAhoCorasick
 constructable
 memdup
@@ -1075,7 +1080,7 @@ nselected
 PocSigPreTx
 substring
 DirectiveName
-OPFLAGS
+opflags
 onEventConnClosed
 deallocations
 dorothy
@@ -1158,6 +1163,7 @@ binget
 BinGet
 firefox
 addEvent
+ConstConfigurationParser
 unescaped
 defval
 EOTHER
