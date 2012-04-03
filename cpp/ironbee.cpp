@@ -48,8 +48,8 @@ ib_conndata_t* buffer_to_conndata(
 namespace IronBee {
 
 IronBee::IronBee() :
-  m_plugin {
-    IB_PLUGIN_HEADER_DEFAULTS,
+  m_server {
+    IB_SERVER_HEADER_DEFAULTS,
     "cpp_ironbee"
   }
 {
@@ -60,7 +60,7 @@ IronBee::IronBee() :
   expect_ok(ib_initialize(), "Initializing IronBee.");
   {
     ib_engine_t* engine;
-    expect_ok(ib_engine_create(&engine, &m_plugin), "Creating engine.");
+    expect_ok(ib_engine_create(&engine, &m_server), "Creating engine.");
     m_ironbee.reset(engine, &ib_engine_destroy);
   }
   expect_ok(ib_engine_init(m_ironbee.get()), "Initializing engine.");

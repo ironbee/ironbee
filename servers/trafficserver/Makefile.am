@@ -1,10 +1,10 @@
 ACLOCAL_AMFLAGS = -I ../../acinclude
 
 include $(top_srcdir)/build/common.mk
-include $(top_srcdir)/build/plugins.mk
+include $(top_srcdir)/build/servers.mk
 
 pkglibdir = $(libdir)
-if BUILD_TS_PLUGIN
+if BUILD_TS_SERVER
 pkglib_LTLIBRARIES = libloader.la ironbee.la
 
 libloader_la_SOURCES = libloader.c

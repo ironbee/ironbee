@@ -244,7 +244,7 @@ fi
 DOXYGEN=$doxygen
 
 dnl TODO: Use these to gen doxygen configs
-DOXYGEN_INPUT="include util engine modules plugins tests"
+DOXYGEN_INPUT="include util engine modules servers tests"
 DOXYGEN_FILES=`find $DOXYGEN_INPUT -type f -regex '.*\.\(h\|c\|cc\)$' | grep -v 'tests/gtest/\|libs/'`
 DOXYGEN_DEPS=""
 dnl Make deps into a single line with relative path from docs dir
@@ -310,7 +310,7 @@ else
                 AC_MSG_RESULT([yes])],
                [AC_MSG_ERROR([Pthreads is required])])
 fi
-dnl TODO: These need to be optional (only if building apache httpd plugin)
+dnl TODO: These need to be optional (only if building apache httpd server module)
 CHECK_APXS()
 CHECK_APR()
 CHECK_APU()
@@ -324,10 +324,10 @@ if test "$OS_DARWIN" = true; then
     APR_CPPFLAGS=`echo "$APR_CPPFLAGS" | sed -e 's/-no-cpp-precomp//'`
 fi
 
-#If we are not building plugins bail
+#If we are not building servers bail
 if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
     echo "**********************************************"
-    echo "* Warning! No plugins enabled!               *"
+    echo "* Warning! No servers enabled!               *"
     echo "* We will only be building the cli test tool.*"
     echo "**********************************************"
 fi
@@ -336,9 +336,9 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="libs util engine plugins lua modules etc docs tests"
+TOPLEVEL_SUBDIRS="libs util engine servers lua modules etc docs tests"
 LIBS_SUBDIRS=""
-PLUGINS_SUBDIRS="apache_httpd2 trafficserver"
+SERVERS_SUBDIRS="apache_httpd2 trafficserver"
 
 dnl Enable cli subdir if enabled
 if test "$util_cli" != 0; then
@@ -375,7 +375,7 @@ AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(CONFIG_MACRO_DIR)
 AC_SUBST(TOPLEVEL_SUBDIRS)
 AC_SUBST(LIBS_SUBDIRS)
-AC_SUBST(PLUGINS_SUBDIRS)
+AC_SUBST(SERVERS_SUBDIRS)
 AC_SUBST(RAGEL)
 AC_SUBST(DOXYGEN)
 AC_SUBST(DOXYGEN_INPUT)
@@ -391,9 +391,9 @@ AC_CONFIG_FILES([libs/Makefile])
 AC_CONFIG_FILES([util/Makefile])
 AC_CONFIG_FILES([engine/Makefile])
 
-AC_CONFIG_FILES([plugins/Makefile])
-AC_CONFIG_FILES([plugins/apache_httpd2/Makefile])
-AC_CONFIG_FILES([plugins/trafficserver/Makefile])
+AC_CONFIG_FILES([servers/Makefile])
+AC_CONFIG_FILES([servers/apache_httpd2/Makefile])
+AC_CONFIG_FILES([servers/trafficserver/Makefile])
 
 if test "$util_cli" != 0; then
 AC_CONFIG_FILES([cli/Makefile])

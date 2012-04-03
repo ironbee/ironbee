@@ -1,10 +1,10 @@
 ACLOCAL_AMFLAGS = -I ../../acinclude
 
 include $(top_srcdir)/build/common.mk
-include $(top_srcdir)/build/plugins.mk
+include $(top_srcdir)/build/servers.mk
 
 pkglibdir = $(libdir)
-if BUILD_HTTPD_PLUGIN
+if BUILD_HTTPD_SERVER
 pkglib_LTLIBRARIES = mod_ironbee.la
 
 mod_ironbee_la_SOURCES = mod_ironbee.c apache_httpd2.h

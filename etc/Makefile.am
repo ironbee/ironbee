@@ -6,11 +6,11 @@ etcdir = $(sysconfdir)
 
 etc_DATA = ironbee-cli.conf.example
 
-if BUILD_HTTPD_PLUGIN
+if BUILD_HTTPD_SERVER
 etc_DATA += ironbee-httpd.conf.example
 endif
 
-if BUILD_TS_PLUGIN
+if BUILD_TS_SERVER
 etc_DATA += ironbee-trafficserver.conf.example
 endif
 
