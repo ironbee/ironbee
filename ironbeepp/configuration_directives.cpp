@@ -374,7 +374,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
     typedef std::map<std::string, int64_t>::value_type value_type;
 
     MemoryPool mp(ib_engine_pool_main_get(m_engine.ib()));
-    ib_strval_t* valmap = mp.allocate<ib_strval_t>(value_map.size());
+    ib_strval_t* valmap = mp.allocate<ib_strval_t>(value_map.size()+1);
 
     int i = 0;
     BOOST_FOREACH(const value_type& v, value_map) {
@@ -382,7 +382,10 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
         std::copy(v.first.begin(), v.first.end(), buf);
         valmap[i].str = buf;
         valmap[i].val = v.second;
+        ++i;
     }
+    valmap[i].str = NULL;
+    valmap[i].val = 0;
 
     Internal::throw_if_error(ib_config_register_directive(
         m_engine.ib(),
