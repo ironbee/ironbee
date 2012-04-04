@@ -246,4 +246,15 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib,
                                  ib_module_t *mod);
 
 
+/**
+ * Check that @a event is appropriate for @a hook_type.
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] event The event type.
+ * @param[in] hook_type The hook that is proposed to matche the @a event.
+ * @returns IB_OK or IB_EINVAL if @a event is not suitable for @a hook_type.
+ */
+ib_status_t ib_check_hook(ib_engine_t* ib,
+                          ib_state_event_type_t event,
+                          ib_state_hook_type_t hook_type);
 #endif /* IB_PRIVATE_H_ */
