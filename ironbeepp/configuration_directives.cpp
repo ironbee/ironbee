@@ -401,21 +401,22 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::list(
 }
 
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
-    const char*                    name,
-    op_flags_t                     function,
-    std::map<std::string, int64_t> value_map
+    const char*          name,
+    op_flags_t           function,
+    map<string, int64_t> value_map
 )
 {
     typedef List<ib_strval_t*> list_t;
-    typedef std::map<std::string, int64_t>::value_type value_type;
+    typedef map<string, int64_t>::value_type value_type;
 
     MemoryPool mp(ib_engine_pool_main_get(m_engine.ib()));
     ib_strval_t* valmap = mp.allocate<ib_strval_t>(value_map.size()+1);
 
     int i = 0;
     BOOST_FOREACH(const value_type& v, value_map) {
-        char* buf = mp.allocate<char>(v.first.size());
-        std::copy(v.first.begin(), v.first.end(), buf);
+        char* buf = mp.allocate<char>(v.first.size()+1);
+        copy(v.first.begin(), v.first.end(), buf);
+        buf[v.first.size()] = '\0';
         valmap[i].str = buf;
         valmap[i].val = v.second;
         ++i;
@@ -426,7 +427,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
     Internal::throw_if_error(ib_config_register_directive(
         m_engine.ib(),
         name,
-        IB_DIRTYPE_LIST,
+        IB_DIRTYPE_OPFLAGS,
         reinterpret_cast<ib_void_fn_t>(&Internal::Hooks::config_op_flags),
         NULL,
         Internal::value_to_data(
