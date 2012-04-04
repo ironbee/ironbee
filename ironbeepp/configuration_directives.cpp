@@ -278,6 +278,14 @@ ib_status_t config_op_flags(
 } // Hooks
 } // Internal
 
+ConfigurationDirectivesRegistrar::ConfigurationDirectivesRegistrar(
+    Engine engine
+) :
+    m_engine(engine)
+{
+    // nop
+}
+
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::block(
     const char*   name,
     start_block_t start_function,
