@@ -11,6 +11,8 @@
 
 #include <boost/foreach.hpp>
 
+using namespace std;
+
 namespace IronBee {
 
 // ConstConfigurationParser
@@ -82,8 +84,34 @@ ConfigurationParser::ConfigurationParser(ib_type ib_configuration_parser) :
     // nop
 }
 
-std::ostream& operator<<(
-    std::ostream& o,
+void ConfigurationParser::parse_file(const string& path) const
+{
+    Internal::throw_if_error(
+        ib_cfgparser_parse(ib(), path.c_str())
+    );
+}
+void ConfigurationParser::parse_buffer(
+    const char* buffer,
+    size_t      length,
+    bool        more
+) const
+{
+    Internal::throw_if_error(
+        ib_cfgparser_parse_buffer(
+            ib(),
+            buffer, length,
+            (more ? IB_TRUE : IB_FALSE)
+        )
+    );
+}
+
+void ConfigurationParser::parse_buffer(const string& s, bool more) const
+{
+    parse_buffer(s.data(), s.length(), more);
+}
+
+ostream& operator<<(
+    ostream& o,
     const ConstConfigurationParser& configuration_parser
 )
 {

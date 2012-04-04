@@ -130,9 +130,8 @@ private:
  * ConfigurationParser can be treated as ConstConfigurationParser.  See @ref
  * ironbeepp for details on IronBee++ object semantics.
  *
- * At present, ConfigurationParser provides no additional functionality over
- * ConstConfigurationParser except providing a non-const @c ib_cfgparser_t*
- * via ib().
+ * ConfigurationParsers connect configuration text to engines.  It provides
+ * methods for parsing a buffer or a file.
  *
  * @sa ConstConfigurationParser
  * @sa ironbeepp
@@ -185,6 +184,31 @@ public:
     ConfigurationParser(ib_type ib_configuration_parser);
 
     ///@}
+
+    /**
+     * Parse file at @a path.
+     *
+     * @param[in] path Path to parse.
+     * @throw IronBee++ exception on error.
+     **/
+    void parse_file(const std::string& path) const;
+
+    /**
+     * Parse @a buffer.
+     *
+     * @param[in] buffer Buffer to parse.
+     * @param[in] length Length of @a buffer.
+     * @param[in] more   True iff more input in future.
+     * @throw IronBee++ exception on error.
+     **/
+    void parse_buffer(
+        const char* buffer,
+        size_t      length,
+        bool        more
+    ) const;
+
+    //! As above, but for string.
+    void parse_buffer(const std::string& s, bool more) const;
 
 private:
     ib_type m_ib;
