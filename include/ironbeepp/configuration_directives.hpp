@@ -375,7 +375,11 @@ public:
      *
      * @param[in] name      Name of directive.
      * @param[in] function  Function to call when directive given.
-     * @param[in] value_map Map of flag name to bit index.
+     * @param[in] value_map Map of flag name to flag bits.  If a flag name
+     *                      is specified in the configuration, the bits in
+     *                      its value are set to 1 in the mask and either
+     *                      set to 1 or 0 in the value, depending on the
+     *                      operation.
      * @returns *this
      **/
     ConfigurationDirectivesRegistrar& op_flags(
