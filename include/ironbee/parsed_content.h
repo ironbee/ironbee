@@ -235,7 +235,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_destroy(const ib_parsed_tx_t *transaction);
  * is released.
  *
  * @param[out] headers The headers object that will be constructed.
- * @param[in,out] mp The memory pool that will allcoate the headers object.
+ * @param[in,out] mp The memory pool that will allocate the headers object.
  * @returns IB_OK or IB_EALLOC if mp could not allocate memory.
  */
 DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
@@ -246,7 +246,7 @@ DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
  *
  * It is important to note that the arguments are linked to the list,
  * not copied. If you have a mutable buffer you must copy the values,
- * peferably out of @a mp. If this is done, then all related memory
+ * preferably out of @a mp. If this is done, then all related memory
  * will be released when the list elements allocated out of @a mp are
  * released.
  *
@@ -279,7 +279,7 @@ DLL_PUBLIC size_t ib_parsed_header_list_size(const ib_parsed_header_t *headers);
  * This function will forward the @a user_data value to the callback for
  * use by the user's code.
  *
- * This function will prematurly terminate iteration if @a callback does not
+ * This function will prematurely terminate iteration if @a callback does not
  * return IB_OK. The last return code from @a callback is the return code
  * of this function.
  *
@@ -301,7 +301,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
  * Create a data chunk representation that lines to the read only @a buffer.
  *
  * Notice that this creates a struct that links the input char*
- * components. Be sure to call the relavant *_notify(...) function to
+ * components. Be sure to call the relevant *_notify(...) function to
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
  *
@@ -321,10 +321,10 @@ DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
                                              size_t offset);
 
 /**
- * Create a struct to link the response line componenets.
+ * Create a struct to link the response line components.
  *
  * Notice that this creates a struct that links the input char*
- * components. Be sure to call the relavant *_notify(...) function to
+ * components. Be sure to call the relevant *_notify(...) function to
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
  *
@@ -348,7 +348,7 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
  * Create a struct to link the request line components.
  *
  * Notice that this creates a struct that links the input char*
- * components. Be sure to call the relavant *_notify(...) function to
+ * components. Be sure to call the relevant *_notify(...) function to
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
  *

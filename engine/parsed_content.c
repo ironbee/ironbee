@@ -207,9 +207,9 @@ DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
     }
 
     headers_tmp->mp = mp;
-    /* headers_tmp->head = initialzed by calloc */
-    /* headers_tmp->tail = initialzed by calloc */
-    /* headers_tmp->size = initialzed by calloc */
+    /* headers_tmp->head = initialized by calloc */
+    /* headers_tmp->tail = initialized by calloc */
+    /* headers_tmp->size = initialized by calloc */
 
     /* Commit back successful object. */
     *headers = headers_tmp;

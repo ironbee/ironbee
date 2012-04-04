@@ -79,7 +79,7 @@ struct ib_parsed_req_line_t {
 /**
  * The first line returned to a user from the server.
  *
- * This is typedef'ed to useful types inparsed_content.h.
+ * This is typedef'ed to useful types in parsed_content.h.
  */
 struct ib_parsed_resp_line_t {
     const char *code; /**< The status code. */

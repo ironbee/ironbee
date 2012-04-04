@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1168 
+personal_ws-1.1 en 1171 
 cfg
 api
 IronBee
@@ -193,6 +193,7 @@ Googlebot
 DEFS
 strchr
 IUC
+IronBeeParsedContent
 perf
 timestamp
 VirtualHost
@@ -540,6 +541,7 @@ Unlink
 PocSigTrace
 ec
 br
+typedef'ed
 bs
 RuleExt
 EF
@@ -852,6 +854,7 @@ trie
 SymbianOS
 txdata
 transactions's
+calloc's
 testfield
 unuseful
 rsize
