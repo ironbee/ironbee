@@ -171,14 +171,10 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
             buflen);
 
         if ( nbytes == 0 ) { /* EOF */
-                rc = ib_cfgparser_ragel_parse_chunk(cp, buf, nbytes, 1);
+                rc = ib_cfgparser_parse_buffer(cp, buf, nbytes, 1);
 
                 if (rc != IB_OK) {
-                    ib_log_error(cp->ib, 1,
-                        "Error parsing config file: %s", ib_status_to_string(rc));
-                    free(buf);
-                    close(fd);
-                    IB_FTRACE_RET_STATUS(rc);
+                    goto failure;
                 }
 
                 break;
@@ -213,9 +209,14 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
             else {
                 /* We have found at least one end-of-line character.
                  * Iterate through it and all others, passing each line to
-                 * ib_cfgparser_ragel_parse_chunk */
+                 * ib_cfgparser_parse_buffer */
                 do {
-                    ib_cfgparser_ragel_parse_chunk(cp, bol, eol-bol+1, 0);
+                    rc = ib_cfgparser_parse_buffer(
+                        cp, bol, eol-bol+1, 0
+                    );
+                    if (rc != IB_OK) {
+                        goto failure;
+                    }
                     bol = eol+1;
                     eol = (char *)memchr(bol, '\n', buf+buflen-bol);
                 } while (eol != NULL);
@@ -251,6 +252,30 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
     ib_log_debug(cp->ib, 9, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
 
     IB_FTRACE_RET_STATUS(IB_OK);
+
+failure:
+    ib_log_error(cp->ib, 1,
+        "Error parsing config file: %s", ib_status_to_string(rc));
+    free(buf);
+    close(fd);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
+                                      const char     *buffer,
+                                      size_t          length,
+                                      ib_bool_t       more)
+{
+    IB_FTRACE_INIT();
+
+    IB_FTRACE_RET_STATUS(
+        ib_cfgparser_ragel_parse_chunk(
+            cp,
+            buffer,
+            length,
+            (more == IB_TRUE ? 1 : 0)
+        )
+    );
 }
 
 static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
