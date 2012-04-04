@@ -23,7 +23,7 @@ ConstConfigurationParser::ConstConfigurationParser() :
 ConstConfigurationParser::ConstConfigurationParser(
     ib_type ib_configuration_parser
 ) :
-    m_ib(NULL)
+    m_ib(ib_configuration_parser)
 {
     // nop
 }
