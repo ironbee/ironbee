@@ -30,7 +30,7 @@ extern "C" {
  *
  * @defgroup IronBee IronBee
  * @{
- * @defgroup IronBeeEngine IronBee Engine
+ * @defgroup IronBeeEngine Engine
  * @{
  * @defgroup IronBeeParsedContent Parsed Content
  *
@@ -115,7 +115,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_create(ib_mpool_t *tx_mpool,
  * Any deferred allocation of resources is completed.
  *
  * @param[in,out] transaction The transaction.
- * @param[in] line The HTTP status line.
+ * @param[in] req_line The HTTP status line.
  *
  * @returns IB_OK.
  */
@@ -333,7 +333,7 @@ DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
  * @param[in] code The HTTP status code.
  * @param[in] code_len The length of @a code.
  * @param[in] msg The message describing @a code.
- * @param[in] msg_len The length of @msg.
+ * @param[in] msg_len The length of @a msg.
  * @returns IB_OK or IB_EALLOC.
  */
 DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
