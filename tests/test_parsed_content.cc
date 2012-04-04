@@ -38,11 +38,13 @@ class ParsedContentTest : public BaseFixture {
     public:
 
     virtual void SetUp() {
+        BaseFixture::SetUp();
         ib_mpool_create(&tx_mpool, "HI", NULL);
     }
 
     virtual void TearDown() {
         ib_mpool_destroy(tx_mpool);
+        BaseFixture::TearDown();
     }
 
     virtual ~ParsedContentTest(){}
