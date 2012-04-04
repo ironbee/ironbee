@@ -24,6 +24,7 @@
  **/
 
 #include <ironbeepp/engine.hpp>
+#include <ironbeepp/configuration_directives.hpp>
 
 #include <ironbee/engine.h>
 
@@ -58,6 +59,12 @@ Engine Engine::remove_const(ConstEngine engine)
 {
     // See API documentation for discussion of const_cast.
     return Engine(const_cast<ib_engine_t*>(engine.ib()));
+}
+
+ConfigurationDirectivesRegistrar
+     Engine::register_configuration_directives() const
+{
+    return ConfigurationDirectivesRegistrar(*this);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)

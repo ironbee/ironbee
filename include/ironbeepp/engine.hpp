@@ -35,6 +35,8 @@ typedef struct ib_engine_t ib_engine_t;
 
 namespace IronBee {
 
+class ConfigurationDirectivesRegistrar;
+
 /**
  * Const Engine; equivalent to a const pointer to ib_engine_t.
  *
@@ -159,6 +161,18 @@ public:
     Engine(ib_engine_t* ib_engine);
 
     ///@}
+
+    /**
+     * Register configuration directives.
+     *
+     * This method returns a ConfigurationDirectivesRegistrar, a helper class
+     * to assist registering configuration directives.  See
+     * ConfigurationDirectivesRegistrar for details on how to use it.
+     *
+     * @return ConfigurationDirectivesRegistrar
+     **/
+    ConfigurationDirectivesRegistrar
+         register_configuration_directives() const;
 
 private:
     ib_engine_t* m_ib;
