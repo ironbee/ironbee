@@ -99,7 +99,7 @@ void ConfigurationParser::parse_buffer(
     );
 }
 
-void ConfigurationParser::parse_buffer(const string& s, bool more) const
+void ConfigurationParser::parse_buffer(const std::string& s, bool more) const
 {
     parse_buffer(s.data(), s.length(), more);
 }
