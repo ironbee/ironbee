@@ -26,6 +26,7 @@
 #include "gtest/gtest-spi.h"
 
 #include <ironbee/field.h>
+#include <ironbee/state_notify.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/transformation.h>
 

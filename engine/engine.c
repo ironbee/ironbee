@@ -43,6 +43,7 @@
 #include <ironbee/module.h>
 #include <ironbee/core.h>
 #include <ironbee/server.h>
+#include <ironbee/state_notify.h>
 
 #include "ironbee_private.h"
 

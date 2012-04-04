@@ -51,6 +51,7 @@
 #include <ironbee/provider.h>
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
+#include <ironbee/state_notify.h>
 
 #include <apache_httpd2.h>
 

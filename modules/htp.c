@@ -33,6 +33,7 @@
 #include <ctype.h>
 
 #include <ironbee/engine.h>
+#include <ironbee/state_notify.h>
 #include <ironbee/debug.h>
 #include <ironbee/field.h>
 #include <ironbee/string.h>

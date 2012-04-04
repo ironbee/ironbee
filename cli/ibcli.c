@@ -38,6 +38,7 @@
 #include <libgen.h>
 
 #include <ironbee/engine.h>
+#include <ironbee/state_notify.h>
 #include <ironbee/server.h>
 #include <ironbee/provider.h>
 #include <ironbee/module.h>

@@ -27,6 +27,7 @@
 
 #include <ironbee/release.h>
 #include <ironbee/core.h>
+#include <ironbee/state_notify.h>
 #include "ironbee_private.h"
 
 #include "gtest/gtest.h"
