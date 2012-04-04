@@ -222,7 +222,7 @@ TEST_F(TestConfigurationDirectives, Registrar)
     EXPECT_EQ(5,      info.which);
     EXPECT_EQ(P,      info.parser);
     EXPECT_EQ("List", info.name);
-    EXPECT_EQ(4,      info.nparam.size());
+    EXPECT_EQ(4UL,    info.nparam.size());
     EXPECT_EQ("a",    info.nparam[0]);
     EXPECT_EQ("b",    info.nparam[1]);
     EXPECT_EQ("c",    info.nparam[2]);
