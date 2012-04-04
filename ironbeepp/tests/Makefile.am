@@ -38,6 +38,7 @@ check_PROGRAMS = \
     test_configuration_map \
     test_list \
     test_site \
+    test_configuration_parser \
     test_configuration_directives
     
 TESTS=$(check_PROGRAMS)
@@ -55,6 +56,8 @@ test_field_SOURCES              = test_field.cpp
 test_configuration_map_SOURCES  = test_configuration_map.cpp fixture.cpp
 test_list_SOURCES               = test_list.cpp fixture.cpp
 test_site_SOURCES               = test_site.cpp fixture.cpp
+test_configuration_parser_SOURCES = \
+    test_configuration_parser.cpp fixture.cpp
 test_configuration_directives_SOURCES = \
     test_configuration_directives.cpp fixture.cpp
 
