@@ -891,7 +891,8 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
             {
                 ib_list_t *v;
                 // @todo Remove mutable once list is const correct.
-                rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&v));
+                rc = ib_field_mutable_value(field,
+                                            ib_ftype_list_mutable_out(&v));
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(rc);
                 }
@@ -945,7 +946,8 @@ static ib_status_t print_tx( ib_engine_t *ib,
     rc = ib_data_get(tx->dpi, "ARGS", &field);
     if (rc != IB_OK) {
         printf("print_tx: Failed to get ARGS: %d\n", rc);
-        ib_log_debug(ib, 4, "print_tx: Failed to get ARGS: %s", ib_status_to_string(rc));
+        ib_log_debug(ib, 4, "print_tx: Failed to get ARGS: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     print_field("tx:ARGS", field);
@@ -970,21 +972,24 @@ static ib_status_t print_tx( ib_engine_t *ib,
     /* Build the list */
     rc = ib_list_create(&lst, ib->mp);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "print_tx: Failed to create tx list: %s", ib_status_to_string(rc));
+        ib_log_debug(ib, 4, "print_tx: Failed to create tx list: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get_all(tx->dpi, lst);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "print_tx: Failed to get all headers: %s", ib_status_to_string(rc));
+        ib_log_debug(ib, 4, "print_tx: Failed to get all headers: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     /* Print it all */
     rc = print_list("tx", lst);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "print_tx: Failed printing headers: %s", ib_status_to_string(rc));
+        ib_log_debug(ib, 4, "print_tx: Failed printing headers: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1273,47 +1278,55 @@ static ib_status_t action_printvar_execute(void *data,
 }
 
 /**
+ * Execute function for the "print true" operator
  * @internal
- * Add a line to the request header buffer.
  *
- * This function adds a line to header.  This function uses malloc() &
- * realloc() instead of the IronBee memory pool because the memory pool
- * currently doesn't provide a realloc() equivalent.
+ * @param[in] ib Ironbee engine (unused)
+ * @param[in] tx The transaction for this operator (unused)
+ * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
+ * @param[in] field Field value (unused)
+ * @param[out] result Pointer to number in which to store the result
  *
- * @param[in] buf Request header buffer
- * @param[in] linebuf Line to copy in
- * @param[in] linelen Length of line
- *
- * @returns status
+ * @returns Status code
  */
-static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
-                                      const char *linebuf,
-                                      size_t linelen)
+static ib_status_t op_ptrue_execute(ib_engine_t *ib,
+                                    ib_tx_t *tx,
+                                    void *data,
+                                    ib_flags_t flags,
+                                    ib_field_t *field,
+                                    ib_num_t *result)
 {
+    IB_FTRACE_INIT();
+    print_field("@ptrue", field);
+    *result = 1;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
-    /* Allocate a buffer or increase our allocation as required */
-    if (buf->buf == NULL) {
-        buf->buf  = malloc(MAX_LINE_BUF);
-        buf->size = MAX_LINE_BUF;
-        buf->len  = 0;
-    }
-    else if ((buf->len + linelen) > buf->size) {
-        buf->size *= 2;
-        buf->buf   = realloc(buf, buf->size);
-    }
-
-    /* Allocation failed? */
-    if (buf->buf == NULL) {
-        fprintf(stderr,
-                "Failed to allocate request buffer of size %zd", buf->size);
-        return IB_EALLOC;
-    }
-
-    /* Copy the line into the buffer */
-    memcpy(buf->buf+buf->len, linebuf, linelen);
-    buf->len += linelen;
-
-    return IB_OK;
+/**
+ * Execute function for the "pfalse" operator
+ * @internal
+ *
+ * @param[in] ib Ironbee engine (unused)
+ * @param[in] tx The transaction for this operator (unused)
+ * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
+ * @param[in] field Field value (unused)
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_pfalse_execute(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     void *data,
+                                     ib_flags_t flags,
+                                     ib_field_t *field,
+                                     ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    print_field("@pfalse", field);
+    *result = 0;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -1367,6 +1380,30 @@ static ib_status_t register_handlers(ib_engine_t* ib)
         fprintf(stderr, "Failed to register printvar action: %d\n", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
+
+
+    /* Register the true operator */
+    rc = ib_operator_register(ib,
+                              "ptrue",
+                              IB_OP_FLAG_ALLOW_NULL,
+                              NULL, /* No create function */
+                              NULL, /* no destroy function */
+                              op_ptrue_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the false operator */
+    rc = ib_operator_register(ib,
+                              "pfalse",
+                              IB_OP_FLAG_ALLOW_NULL,
+                              NULL, /* No create function */
+                              NULL, /* no destroy function */
+                              op_pfalse_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1476,6 +1513,50 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
     }
 
     IB_FTRACE_RET_STATUS(status);
+}
+
+/**
+ * @internal
+ * Add a line to the request header buffer.
+ *
+ * This function adds a line to header.  This function uses malloc() &
+ * realloc() instead of the IronBee memory pool because the memory pool
+ * currently doesn't provide a realloc() equivalent.
+ *
+ * @param[in] buf Request header buffer
+ * @param[in] linebuf Line to copy in
+ * @param[in] linelen Length of line
+ *
+ * @returns status
+ */
+static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
+                                      const char *linebuf,
+                                      size_t linelen)
+{
+
+    /* Allocate a buffer or increase our allocation as required */
+    if (buf->buf == NULL) {
+        buf->buf  = malloc(MAX_LINE_BUF);
+        buf->size = MAX_LINE_BUF;
+        buf->len  = 0;
+    }
+    else if ((buf->len + linelen) > buf->size) {
+        buf->size *= 2;
+        buf->buf   = realloc(buf, buf->size);
+    }
+
+    /* Allocation failed? */
+    if (buf->buf == NULL) {
+        fprintf(stderr,
+                "Failed to allocate request buffer of size %zd", buf->size);
+        return IB_EALLOC;
+    }
+
+    /* Copy the line into the buffer */
+    memcpy(buf->buf+buf->len, linebuf, linelen);
+    buf->len += linelen;
+
+    return IB_OK;
 }
 
 /**
