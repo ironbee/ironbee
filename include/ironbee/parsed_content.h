@@ -300,7 +300,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
 /**
  * Create a data chunk representation that lines to the read only @a buffer.
  *
- * Notice that this creates a struct that links the input char* 
+ * Notice that this creates a struct that links the input char*
  * components. Be sure to call the relavant *_notify(...) function to
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
@@ -312,7 +312,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
  * @param[in] buffer The buffer that will be linked into @a data.
  * @param[in] start The buffer that will be linked into @a data.
  * @param[in] offset The offset from start.
- * @returns IB_OK. IB_EALLOC if memory allocation fails. 
+ * @returns IB_OK. IB_EALLOC if memory allocation fails.
  */
 DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
                                              ib_parsed_data_t **data,
@@ -323,7 +323,7 @@ DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
 /**
  * Create a struct to link the response line componenets.
  *
- * Notice that this creates a struct that links the input char* 
+ * Notice that this creates a struct that links the input char*
  * components. Be sure to call the relavant *_notify(...) function to
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
@@ -347,7 +347,7 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
 /**
  * Create a struct to link the request line components.
  *
- * Notice that this creates a struct that links the input char* 
+ * Notice that this creates a struct that links the input char*
  * components. Be sure to call the relavant *_notify(...) function to
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
