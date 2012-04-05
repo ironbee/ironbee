@@ -1249,7 +1249,7 @@ ib_flags_t ib_rule_required_op_flags(const ib_rule_t *rule)
     else if (rule->meta.type == RULE_TYPE_STREAM) {
         IB_FTRACE_RET_UINT(IB_OP_FLAG_STREAM);
     }
-    assert(0);
+    assert(0 && "Rule type not PHASE or STREAM");
 }
 
 ib_status_t ib_rule_set_phase(ib_engine_t *ib,
@@ -1412,7 +1412,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                          rule->meta.id, stream, (void *)ctx);
         }
         else {
-            assert(0);
+            assert(0 && "Rule type not PHASE or STREAM");
         }
     }
 

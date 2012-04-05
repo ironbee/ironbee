@@ -493,7 +493,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
         assert(svdata->type == IB_FTYPE_NUM);
         if (cur == NULL) {
             ib_log_error(tx->ib, 4,
-                         "setvar: field %s doesn't exist for NUMADD action",
+                         "setvar: field %s does not exist for NUMADD action",
                          svdata->name);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
@@ -529,7 +529,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
 
     /* Should never get here. */
     else {
-        assert(0);
+        assert(0 && "Invalid setvar operator");
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
