@@ -39,7 +39,12 @@ check_PROGRAMS = \
     test_list \
     test_site \
     test_configuration_parser \
-    test_configuration_directives
+    test_configuration_directives \
+    test_clock \
+    test_connection \
+    test_connection_data \
+    test_transaction \
+    test_transaction_data
     
 TESTS=$(check_PROGRAMS)
 
@@ -60,4 +65,8 @@ test_configuration_parser_SOURCES = \
     test_configuration_parser.cpp fixture.cpp
 test_configuration_directives_SOURCES = \
     test_configuration_directives.cpp fixture.cpp
-
+test_clock_SOURCES              = test_clock.cpp
+test_connection_SOURCES         = test_connection.cpp
+test_connection_data_SOURCES    = test_connection_data.cpp
+test_transaction_SOURCES        = test_transaction.cpp
+test_transaction_data_SOURCES   = test_transaction_data.cpp
