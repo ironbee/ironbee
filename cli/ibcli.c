@@ -88,6 +88,7 @@ typedef struct {
 typedef struct {
     ib_num_t    result;
     size_t      maxlen;
+    const char *text;
 } printop_params_t;
 
 /* Dump flags */
@@ -1344,6 +1345,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
     const char *space;
     ib_num_t result;
     ib_num_t maxlen = 0;
+    const char *text = NULL;
 
     assert(ib != NULL);
     assert(ctx != NULL);
@@ -1372,6 +1374,14 @@ static ib_status_t op_print_create(ib_engine_t *ib,
         ib_string_to_num(space + 1, 0, &maxlen);
     }
 
+    /* Finally, everything else is "text" */
+    if (space != NULL) {
+        space = strchr(space+1, ' ');
+        if ( (space != NULL) && (*(space+1) != '\0') ) {
+            text = space+1;
+        }
+    }
+
     /* Allocate storage for the value */
     vptr = (printop_params_t *)ib_mpool_alloc(mp, sizeof(*vptr));
     if (vptr == NULL) {
@@ -1381,6 +1391,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
     /* Fill in the parameters */
     vptr->result = result;
     vptr->maxlen = (size_t)maxlen;
+    vptr->text   = text;
 
     op_inst->data = vptr;
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1408,8 +1419,10 @@ static ib_status_t op_print_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const printop_params_t *pdata = (const printop_params_t *)data;
+    const char *text;
 
-    print_field("@print", field, pdata->maxlen);
+    text = (pdata->text != NULL) ? pdata->text : "print";
+    print_field(text, field, pdata->maxlen);
     *result = pdata->result;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
