@@ -137,7 +137,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_tx_data_out(ib_engine_t *ib,
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction data
- * @param[in] req The parsed request object. If this is null the hooks for 
+ * @param[in] req The parsed request object. If this is null the hooks for
  *            parsed content are not fired.
  *
  * @returns Status code
