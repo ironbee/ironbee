@@ -1,4 +1,5 @@
-personal_ws-1.1 en 1173 
+personal_ws-1.1 en 1180 
+refactor
 cfg
 api
 IronBee
@@ -346,6 +347,7 @@ allocators
 conn
 ploc
 req
+sam
 pos
 AuditLogParts
 textbuf
@@ -932,8 +934,10 @@ realloc'ed
 sbuffer
 IronBeeTransformations
 onEventResponseStarted
+ResponseHeadersData
 wildcard
 IronBeeUtilUUID
+RequestHeadersData
 ByteString
 bytestring
 alexia
@@ -951,6 +955,7 @@ IronBeeUtilTypes
 IronBeeLuaApi
 Noncopyable
 dalloc
+onEventRequestHeadersData
 htonl
 destructor
 iface
@@ -1070,6 +1075,7 @@ PocACSig
 pocacsig
 Hashtable
 IEMobile
+onEventResponseDataHeaders
 abinum
 nelem
 IronBeeModule
@@ -1094,6 +1100,7 @@ BBBB
 prule
 Builtin
 mutex
+maxlen
 pevents
 xffff
 onEventRequestStarted
