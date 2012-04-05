@@ -359,7 +359,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
 
         ibd->data->output_buffer = TSIOBufferCreate();
         ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
-        TSDebug("ironbee", "\tWriting %lld bytes on VConn", TSVIONBytesGet(input_vio));
+        TSDebug("ironbee", "\tWriting %"PRId64" bytes on VConn", TSVIONBytesGet(input_vio));
         ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
     }
     if (ibd->data->buf) {
@@ -664,7 +664,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
         if (rv) {
             TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
-            return;
+            return 0;
         }
 
         /* Get the data into an IOBuffer so we can access them! */
@@ -693,7 +693,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         rv = TSHttpTxnClientDataGet(txnp, &head_buf, &icdata.dlen);
         if (rv) {
             TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
-            return;
+            return 0;
         }
 
         /* Workaround:
