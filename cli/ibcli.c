@@ -1371,7 +1371,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
     /* Second parameter: max string length */
     space = strchr(params, ' ');
     if (space != NULL) {
-        ib_string_to_num(space + 1, 0, &maxlen);
+        maxlen = strtol(space+1, NULL, 0);
     }
 
     /* Finally, everything else is "text" */
