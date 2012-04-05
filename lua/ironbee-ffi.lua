@@ -111,11 +111,11 @@ ffi.cdef [[
         tx_data_out_event,
         request_started_event,
         request_headers_event,
-        request_body_event,
+        request_body_data_event,
         request_finished_event,
         response_started_event,
         response_headers_event,
-        response_body_event,
+        response_body_data_event,
         response_finished_event,
         IB_STATE_EVENT_NUM
     } ib_state_event_type_t;
@@ -1231,7 +1231,7 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newTx(arg)
     elseif c_event == c.request_headers_event then
         l_arg = newTx(arg)
-    elseif c_event == c.request_body_event then
+    elseif c_event == c.request_body_data_event then
         l_arg = newTx(arg)
     elseif c_event == c.request_finished_event then
         l_arg = newTx(arg)
@@ -1239,7 +1239,7 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newTx(arg)
     elseif c_event == c.response_headers_event then
         l_arg = newTx(arg)
-    elseif c_event == c.response_body_event then
+    elseif c_event == c.response_body_data_event then
         l_arg = newTx(arg)
     elseif c_event == c.response_finished_event then
         l_arg = newTx(arg)

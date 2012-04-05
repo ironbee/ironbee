@@ -771,7 +771,7 @@ ib_status_t ib_state_notify_request_headers(
 }
 
 /**
- * @ref request_body_event occurs.
+ * @ref request_body_data_event occurs.
  *
  * When the event is notified, additional events are notified immediately
  * following it:
@@ -835,7 +835,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
  * When the event is notified, additional events are notified
  * immediately prior to it:
  *
- *  - @ref request_body_event (only if not already notified)
+ *  - @ref request_body_data_event (only if not already notified)
  *
  * And immediately following it:
  *
@@ -875,7 +875,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
 
-    /* Still need to notify request_body_event, if it has not yet
+    /* Still need to notify request_body_data_event, if it has not yet
      * been triggered, however, it is an error if it was not
      * triggered for a request that should have had a body.
      */
@@ -981,7 +981,7 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
 }
 
 /**
- * @ref response_body_event  occurs.
+ * @ref response_body_data_event occurs.
  *
  * When the event is notified, additional events are notified
  * immediately following it:

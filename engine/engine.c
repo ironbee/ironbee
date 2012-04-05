@@ -922,12 +922,12 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(request_started_event),
     IB_STRINGIFY(request_headers_event),
     IB_STRINGIFY(request_headers_data_event),
-    IB_STRINGIFY(request_body_event),
+    IB_STRINGIFY(request_body_data_event),
     IB_STRINGIFY(request_finished_event),
     IB_STRINGIFY(response_started_event),
     IB_STRINGIFY(response_headers_event),
     IB_STRINGIFY(response_headers_data_event),
-    IB_STRINGIFY(response_body_event),
+    IB_STRINGIFY(response_body_data_event),
     IB_STRINGIFY(response_finished_event),
 
     NULL

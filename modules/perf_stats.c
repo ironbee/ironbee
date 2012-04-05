@@ -120,11 +120,11 @@ static int ib_state_event_name_cbdata_type_list[] = {
     IB_CBDATA_TX_DATA_T,   /**< tx_data_out_event */
     IB_CBDATA_TX_T,        /**< request_started_event */
     IB_CBDATA_TX_T,        /**< request_headers_event */
-    IB_CBDATA_TX_T,        /**< request_body_event */
+    IB_CBDATA_TX_T,        /**< request_body_data_event */
     IB_CBDATA_TX_T,        /**< request_finished_event */
     IB_CBDATA_TX_T,        /**< response_started_event */
     IB_CBDATA_TX_T,        /**< response_headers_event */
-    IB_CBDATA_TX_T,        /**< response_body_event */
+    IB_CBDATA_TX_T,        /**< response_body_data_event */
     IB_CBDATA_TX_T,        /**< response_finished_event */
 
     IB_CBDATA_NONE
