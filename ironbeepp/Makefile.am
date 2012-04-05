@@ -18,5 +18,6 @@ libibpp_la_SOURCES = \
     configuration_map.cpp \
     site.cpp \
     configuration_directives.cpp \
-    configuration_parser.cpp
+    configuration_parser.cpp \
+    connection_data.hpp
 
