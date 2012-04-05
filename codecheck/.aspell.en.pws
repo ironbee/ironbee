@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1180 
+personal_ws-1.1 en 1185 
 refactor
 cfg
 api
@@ -25,6 +25,7 @@ bol
 cplusplus
 ConstMemoryPools
 BlackBerry
+STRRSPBODY
 abcabcabc
 pagesize
 edata
@@ -83,12 +84,14 @@ OnOff
 setString
 epi
 dst
+STRREQHDR
 env
 geq
 microsec
 maemo
 EOS
 modsec
+STRREQBODY
 dup
 radix
 compressWhitespace
@@ -866,6 +869,7 @@ ModuleBasePath
 Undefine
 uintptr
 subpatterns
+STRRSPHDR
 getnameinfo
 ibmod
 ResponseStarted
@@ -914,6 +918,7 @@ ipad
 wildcards
 randomizers
 MyClass
+StreamInspect
 init
 nextents
 TSIOBufferSizedCreate
