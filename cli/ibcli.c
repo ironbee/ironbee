@@ -1451,7 +1451,9 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     /* Register the print operator */
     rc = ib_operator_register(ib,
                               "print",
-                              IB_OP_FLAG_NONE,
+                              (IB_OP_FLAG_ALLOW_NULL|
+                               IB_OP_FLAG_PHASE|
+                               IB_OP_FLAG_STREAM),
                               op_print_create,
                               NULL,                  /* no destroy function */
                               op_print_execute);
