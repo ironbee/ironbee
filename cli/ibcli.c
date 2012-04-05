@@ -803,11 +803,29 @@ static void print_field(const char *label,
             printf("  %s = ''\n", label);
         }
         else {
+            const uint8_t *s = ib_bytestr_const_ptr(bs);
+            ib_bool_t cropped = IB_FALSE;
             if ( (maxlen > 0) && (len > maxlen) ) {
                 len = maxlen;
+                cropped = IB_TRUE;
             }
-            printf("  %s = '%.*s'\n",
-                   label, (int)len, ib_bytestr_const_ptr(bs) );
+            while (len > 0) {
+                uint8_t c = *(s+len-1);
+                if ( (c == '\n') || (c == '\r') ) {
+                    --len;
+                }
+                else {
+                    break;
+                }
+            }
+            if (cropped) {
+                printf( "  %s = '%.*s...'\n",
+                        label, (int)len, ib_bytestr_const_ptr(bs) );
+            }
+            else {
+                printf( "  %s = '%.*s'\n",
+                        label, (int)len, ib_bytestr_const_ptr(bs) );
+            }
         }
         break;
     }
