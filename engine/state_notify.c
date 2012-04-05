@@ -1,9 +1,9 @@
+#include "ironbee_config_auto.h"
+
 #include <ironbee/state_notify.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
-
-#include "ironbee_config_auto.h"
 
 #include "ironbee_private.h"
 #include "ironbee_parsed_content_private.h"
