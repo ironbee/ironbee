@@ -127,12 +127,15 @@ class ParsedContentHeaderTest : public ParsedContentTest {
 
 TEST_F(ParsedContentTest, create_destroy)
 {
-    ib_parsed_tx_t *t;
+    ib_conn_t *c = buildIronBeeConnection();
+    ib_tx_t *tx;
 
-    ASSERT_IB_OK(ib_parsed_tx_create(tx_mpool, &t, ib_engine));
-    ASSERT_TRUE(t!=NULL);
 
-    ib_parsed_tx_destroy(t);
+    ASSERT_IB_OK(ib_tx_create(ib_engine, &tx, c, NULL));
+    ASSERT_TRUE(tx!=NULL);
+
+    ib_tx_destroy(tx);
+    ib_conn_destroy(c);
 }
 
 

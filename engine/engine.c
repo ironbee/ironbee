@@ -99,13 +99,15 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
     /* Parser States */
     IB_STATE_HOOK_TXDATA,   /**< tx_data_in_event */
     IB_STATE_HOOK_TXDATA,   /**< tx_data_out_event */
-    IB_STATE_HOOK_TX,       /**< request_started_event */
+    IB_STATE_HOOK_REQLINE,  /**< request_started_event */
     IB_STATE_HOOK_TX,       /**< request_headers_event */
-    IB_STATE_HOOK_TX,       /**< request_body_event */
+    IB_STATE_HOOK_HEADER,   /**< request_headers_data_event */
+    IB_STATE_HOOK_TXDATA,   /**< request_body_data_event */
     IB_STATE_HOOK_TX,       /**< request_finished_event */
-    IB_STATE_HOOK_TX,       /**< response_started_event */
+    IB_STATE_HOOK_RESPLINE, /**< response_started_event */
     IB_STATE_HOOK_TX,       /**< response_headers_event */
-    IB_STATE_HOOK_TX,       /**< response_body_event */
+    IB_STATE_HOOK_HEADER,   /**< response_headers_data_event */
+    IB_STATE_HOOK_TXDATA,   /**< response_body_data_event */
     IB_STATE_HOOK_TX        /**< response_finished_event */
 };
 
@@ -881,7 +883,11 @@ ib_status_t ib_site_loc_create_default(ib_site_t *site,
 
 /**
  * @internal
+ *
  * List of state names for id to name lookups.
+ *
+ * @warning Remember to update ib_state_event_type_t.
+ *
  */
 static const char *ib_state_event_name_list[] = {
     /* Engine States */
@@ -915,10 +921,12 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(tx_data_out_event),
     IB_STRINGIFY(request_started_event),
     IB_STRINGIFY(request_headers_event),
+    IB_STRINGIFY(request_headers_data_event),
     IB_STRINGIFY(request_body_event),
     IB_STRINGIFY(request_finished_event),
     IB_STRINGIFY(response_started_event),
     IB_STRINGIFY(response_headers_event),
+    IB_STRINGIFY(response_headers_data_event),
     IB_STRINGIFY(response_body_event),
     IB_STRINGIFY(response_finished_event),
 

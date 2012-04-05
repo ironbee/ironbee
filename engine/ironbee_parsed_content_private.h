@@ -31,7 +31,6 @@ extern "C" {
 
 #include <ironbee/build.h>
 #include <ironbee_config_auto.h>
-#include <ironbee/bytestr.h>
 #include <ironbee/field.h>
 #include <ironbee/types.h>
 #include <ironbee/mpool.h>
@@ -59,6 +58,7 @@ struct ib_parsed_name_value_pair_list_t {
     ib_parsed_name_value_pair_list_element_t *head;
     ib_parsed_name_value_pair_list_element_t *tail;
     ib_unum_t size;
+    ib_tx_t *tx;
     ib_mpool_t *mp; /**< The memory pool to allocate all elements from. */
 };
 
@@ -68,6 +68,7 @@ struct ib_parsed_name_value_pair_list_t {
  * This is typedef'ed to useful types in parsed_content.h.
  */
 struct ib_parsed_req_line_t {
+    ib_tx_t *tx;
     const char *method;  /**< HTTP Method. */
     size_t method_len;   /**< Length of method. */
     const char *path;    /**< Path request method is against. */
@@ -82,6 +83,7 @@ struct ib_parsed_req_line_t {
  * This is typedef'ed to useful types in parsed_content.h.
  */
 struct ib_parsed_resp_line_t {
+    ib_tx_t *tx;
     const char *code; /**< The status code. */
     size_t code_len;  /**< Length of code. */
     const char *msg;  /**< The message to the user. */
@@ -92,6 +94,7 @@ struct ib_parsed_resp_line_t {
  * A pointer into an existing buffer of data.
  */
 struct ib_parsed_data_t {
+    ib_tx_t *tx;
     const char *buffer;
     size_t start;
     size_t offset;

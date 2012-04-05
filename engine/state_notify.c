@@ -6,6 +6,7 @@
 #include "ironbee_config_auto.h"
 
 #include "ironbee_private.h"
+#include "ironbee_parsed_content_private.h"
 
 #define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, param) \
     do { \
@@ -111,7 +112,8 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
 /**
  * @internal
- * Notify the engine that a transaction data event has occurred.
+ *
+ * FIXME - sam
  *
  * @param ib Engine
  * @param event Event
@@ -119,6 +121,111 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
  *
  * @returns Status code
  */
+static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
+                                             ib_state_event_type_t event,
+                                             ib_parsed_resp_line_t *line)
+{
+    IB_FTRACE_INIT();
+
+    ib_tx_t *tx = line->tx;
+
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug(ib, 9, "RESP LINE EVENT: %s", ib_state_event_name(event));
+
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, responseline, ib, line);
+
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (tx->ctx != ib->ctx) {
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, responseline, ib, line);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
+ *
+ * FIXME - sam
+ *
+ * @param ib Engine
+ * @param event Event
+ * @param txdata Connection data
+ *
+ * @returns Status code
+ */
+static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
+                                            ib_state_event_type_t event,
+                                            ib_parsed_req_line_t *line)
+{
+    IB_FTRACE_INIT();
+
+    ib_tx_t *tx = line->tx;
+
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug(ib, 9, "REQ LINE EVENT: %s", ib_state_event_name(event));
+
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, requestline, ib, line);
+
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (tx->ctx != ib->ctx) {
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, requestline, ib, line);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @internal
+ *
+ * FIXME - sam
+ *
+ * @param ib Engine
+ * @param event Event
+ * @param txdata Connection data
+ *
+ * @returns Status code
+ */
+static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
+                                           ib_state_event_type_t event,
+                                           ib_parsed_header_t *headers)
+{
+    IB_FTRACE_INIT();
+    ib_tx_t *tx = headers->tx;
+
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug(ib, 9, "HEADER EVENT: %s", ib_state_event_name(event));
+
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, headersdata, ib, headers);
+
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (tx->ctx != ib->ctx) {
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, headersdata, ib, headers);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                                           ib_state_event_type_t event,
                                           ib_txdata_t *txdata)
@@ -516,8 +623,10 @@ ib_status_t ib_state_notify_tx_data_out(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
-                                            ib_tx_t *tx)
+ib_status_t ib_state_notify_request_started(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_req_line_t *req)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -538,9 +647,65 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
 
-    rc = ib_state_notify_tx(ib, request_started_event, tx);
+    if ( req != NULL ) {
+        rc = ib_state_notify_req_line(ib, request_started_event, req);
+    }
+
     IB_FTRACE_RET_STATUS(rc);
 }
+
+ib_status_t ib_state_notify_request_headers_data(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_header_t *headers)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    /* Mark the time. */
+    tx->t.request_started = ib_clock_get_time();
+
+    /* Mark the time. */
+    tx->t.request_started = ib_clock_get_time();
+
+    headers->tx = tx;
+
+    if ( headers != NULL ) {
+        rc = ib_state_notify_headers(ib, request_headers_data_event, headers);
+    }
+    else {
+        rc = IB_OK;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_state_notify_response_headers_data(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_header_t *headers)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    /* Mark the time. */
+    tx->t.request_started = ib_clock_get_time();
+
+    headers->tx = tx;
+
+
+    if ( headers != NULL ) {
+        rc = ib_state_notify_headers(ib, response_headers_data_event, headers);
+    }
+    else {
+        rc = IB_OK;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 
 /**
  * @ref request_headers_event occurs.
@@ -555,8 +720,9 @@ ib_status_t ib_state_notify_request_started(ib_engine_t *ib,
  *  - @ref handle_context_tx_event
  *  - @ref handle_request_headers_event
  */
-ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
-                                            ib_tx_t *tx)
+ib_status_t ib_state_notify_request_headers(
+    ib_engine_t *ib,
+    ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -570,7 +736,7 @@ ib_status_t ib_state_notify_request_headers(ib_engine_t *ib,
     if ((tx->flags & IB_TX_FREQ_STARTED) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering optional %s",
                      ib_state_event_name(request_started_event));
-        ib_state_notify_request_started(ib, tx);
+        ib_state_notify_request_started(ib, tx, NULL);
     }
 
     /* Mark the time. */
@@ -623,7 +789,7 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_state_notify_tx(ib, request_body_event, tx);
+    rc = ib_state_notify_tx(ib, request_body_data_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -636,15 +802,15 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_state_notify_request_body(ib_engine_t *ib,
-                                         ib_tx_t *tx)
+ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
+                                              ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY)) {
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(request_body_event));
+                     ib_state_event_name(request_body_data_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -695,8 +861,8 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering %s",
-                     ib_state_event_name(request_body_event));
-        ib_state_notify_request_body(ib, tx);
+                     ib_state_event_name(request_body_data_event));
+        ib_state_notify_request_body_data(ib, tx);
     }
 
     /* Mark the time. */
@@ -733,7 +899,8 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 }
 
 ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
-                                             ib_tx_t *tx)
+                                             ib_tx_t *tx,
+                                             ib_parsed_resp_line_t *resp)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -752,6 +919,14 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     ib_tx_flags_set(tx, IB_TX_FRES_STARTED);
 
     rc = ib_state_notify_tx(ib, response_started_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if ( resp != NULL ) {
+        rc = ib_state_notify_resp_line(ib, response_started_event, resp);
+    }
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -782,7 +957,7 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
     if ((tx->flags & IB_TX_FRES_STARTED) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering optional %s",
                      ib_state_event_name(response_started_event));
-        ib_state_notify_response_started(ib, tx);
+        ib_state_notify_response_started(ib, tx, NULL);
     }
 
     /* Mark the time. */
@@ -795,7 +970,13 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    rc = ib_state_notify_tx(ib, response_headers_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = ib_state_notify_tx(ib, handle_response_headers_event, tx);
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -807,15 +988,15 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
  *
  *  - @ref handle_response_event
  */
-ib_status_t ib_state_notify_response_body(ib_engine_t *ib,
-                                          ib_tx_t *tx)
+ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
+                                               ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENBODY)) {
         ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(response_body_event));
+                     ib_state_event_name(response_body_data_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -830,7 +1011,7 @@ ib_status_t ib_state_notify_response_body(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
 
-    rc = ib_state_notify_tx(ib, response_body_event, tx);
+    rc = ib_state_notify_tx(ib, response_body_data_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -859,8 +1040,8 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENBODY) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering %s",
-                     ib_state_event_name(response_body_event));
-        ib_state_notify_response_body(ib, tx);
+                     ib_state_event_name(response_body_data_event));
+        ib_state_notify_response_body_data(ib, tx);
     }
 
     /* Mark the time. */

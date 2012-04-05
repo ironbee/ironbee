@@ -406,7 +406,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     htp_tx_set_user_data(tx, itx);
 
     /* Tell the engine that the request started. */
-    ib_state_notify_request_started(ib, itx);
+    ib_state_notify_request_started(ib, itx, NULL);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -586,7 +586,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
             ///       have body, not if it did have a body.
             ib_tx_mark_nobody(itx);
         }
-        ib_state_notify_request_body(ib, itx);
+        ib_state_notify_request_body_data(ib, itx);
         IB_FTRACE_RET_INT(HTP_OK);
     }
 
@@ -706,7 +706,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
-    ib_state_notify_response_started(ib, itx);
+    ib_state_notify_response_started(ib, itx, NULL);
 
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
@@ -816,7 +816,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
 
     /* Check for the "end-of-response" indicator. */
     if (txdata->data == NULL) {
-        ib_state_notify_response_body(ib, itx);
+        ib_state_notify_response_body_data(ib, itx);
         IB_FTRACE_RET_INT(HTP_OK);
     }
 

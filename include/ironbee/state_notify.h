@@ -19,12 +19,13 @@
 #define _IB_STATE_NOTIFY_H_
 
 #include <ironbee/engine.h>
+#include <ironbee/field.h>
 #include <ironbee/types.h>
+#include <ironbee/parsed_content.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /* File tag is intentionally omitted. */
 /**
@@ -134,13 +135,36 @@ ib_status_t DLL_PUBLIC ib_state_notify_tx_data_out(ib_engine_t *ib,
  *       headers are received which will automatically notify that the
  *       request has started.
  *
- * @param ib Engine handle
- * @param tx Transaction data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction data
+ * @param[in] req The parsed request object. If this is null the hooks for 
+ *            parsed content are not fired.
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_state_notify_request_started(ib_engine_t *ib,
-                                                       ib_tx_t *tx);
+ib_status_t DLL_PUBLIC ib_state_notify_request_started(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_req_line_t *req);
+
+
+/**
+ * FIXME - sam
+ * @param[in] headers If NULL, the callbacks are not fired.
+ */
+ib_status_t ib_state_notify_request_headers_data(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_header_t *headers);
+
+/**
+ * FIXME - sam
+ * @param[in] headers If NULL, the callbacks are not fired.
+ */
+ib_status_t ib_state_notify_response_headers_data(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_header_t *headers);
 
 /**
  * Notify the state machine that request headers are available.
@@ -150,8 +174,9 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_state_notify_request_headers(ib_engine_t *ib,
-                                                       ib_tx_t *tx);
+ib_status_t DLL_PUBLIC ib_state_notify_request_headers(
+    ib_engine_t *ib,
+    ib_tx_t *tx);
 
 /**
  * Notify the state machine that the request body is available.
@@ -161,8 +186,8 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_headers(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_state_notify_request_body(ib_engine_t *ib,
-                                                    ib_tx_t *tx);
+ib_status_t DLL_PUBLIC ib_state_notify_request_body_data(ib_engine_t *ib,
+                                                         ib_tx_t *tx);
 
 /**
  * Notify the state machine that a request finished.
@@ -184,13 +209,17 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_finished(ib_engine_t *ib,
  *       headers are received which will automatically notify that the
  *       request has started.
  *
- * @param ib Engine handle
- * @param tx Transaction data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction data
+ * @param[in] resp The parsed response line. If this is null the call backs
+ *            to handle the parsed content are not fired.
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_state_notify_response_started(ib_engine_t *ib,
-                                                        ib_tx_t *tx);
+ib_status_t DLL_PUBLIC ib_state_notify_response_started(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_resp_line_t *resp);
 
 /**
  * Notify the state machine that the response headers are available.
@@ -211,8 +240,8 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_headers(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_state_notify_response_body(ib_engine_t *ib,
-                                                     ib_tx_t *tx);
+ib_status_t DLL_PUBLIC ib_state_notify_response_body_data(ib_engine_t *ib,
+                                                          ib_tx_t *tx);
 
 /**
  * Notify the state machine that a response finished.

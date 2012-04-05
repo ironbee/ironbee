@@ -32,6 +32,7 @@
 #include <ironbee/field.h>
 #include <ironbee/stream.h>
 #include <ironbee/clock.h>
+#include <ironbee/parsed_content.h>
 
 #include <stdarg.h>
 
@@ -1066,11 +1067,13 @@ typedef enum {
     tx_data_out_event,             /**< Parser notified of response data */
     request_started_event,         /**< Parser notified request has started */
     request_headers_event,         /**< Parser notified of request headers */
-    request_body_event,            /**< Parser notified of request body */
+    request_headers_data_event,    /**< Parser notified of request headers data */
+    request_body_data_event,       /**< Parser notified of request body */
     request_finished_event,        /**< Parser notified request finished */
     response_started_event,        /**< Parser notified response started */
     response_headers_event,        /**< Parser notified of response headers */
-    response_body_event,           /**< Parser notified of response body */
+    response_headers_data_event,   /**< Parser notified of response headers data*/
+    response_body_data_event,      /**< Parser notified of response body */
     response_finished_event,       /**< Parser notified response finished */
 
     /* Not an event, but keeps track of the number of events. */
@@ -1085,6 +1088,9 @@ typedef enum {
     IB_STATE_HOOK_CONNDATA, /**< Hook received ib_conndata_t */
     IB_STATE_HOOK_TX,       /**< Hook received ib_tx_t */
     IB_STATE_HOOK_TXDATA,   /**< Hook received ib_txdata_t */
+    IB_STATE_HOOK_REQLINE,  /**< Hook received ib_parsed_req_t. */
+    IB_STATE_HOOK_RESPLINE, /**< Hook received ib_parsed_resp_t. */
+    IB_STATE_HOOK_HEADER,   /**< Hook received ib_parsed_header_t. */
     IB_STATE_HOOK_NULL,     /**< Hook has no parameter */
     IB_STATE_HOOK_INVALID   /**< Something went wrong. */
 } ib_state_hook_type_t;
@@ -1109,6 +1115,46 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
     ib_state_event_type_t event,
     void *cbdata
 );
+
+
+/**
+ * FIXME - sam
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param conn Connection.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_headers_data_fn_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_parsed_header_t *headers,
+    void *cbdata);
+
+/**
+ * FIXME - sam
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param conn Connection.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_request_line_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_parsed_req_line_t *line,
+    void *cbdata);
+
+/**
+ * FIXME - sam
+ * @param ib Engine handle
+ * @param event Which event trigger the callback.
+ * @param conn Connection.
+ * @param cbdata Callback data
+ */
+typedef ib_status_t (*ib_state_response_line_t)(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_parsed_resp_line_t *line,
+    void *cbdata);
 
 /**
  * Connection Event Hook Callback Function.

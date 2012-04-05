@@ -36,159 +36,121 @@
 #include <ironbee/parsed_content.h>
 #include <ironbee/mpool.h>
 
-DLL_PUBLIC ib_status_t ib_parsed_tx_create(ib_mpool_t *tx_mpool,
-                                           ib_parsed_tx_t **transaction,
-                                           ib_engine_t *ib_engine)
-{
-    IB_FTRACE_INIT();
-    assert(ib_engine != NULL);
-    assert(tx_mpool != NULL);
-
-    ib_parsed_tx_t *tx_tmp;
-
-    tx_tmp = ib_mpool_calloc(tx_mpool, 1, sizeof(*tx_tmp));
-
-    if ( tx_tmp == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Set IronBee engine. */
-    tx_tmp->ib_engine = ib_engine;
-
-    /* Set the memory pool. */
-    tx_tmp->mpool = tx_mpool;
-
-    /* Commit back built object. */
-    *transaction = tx_tmp;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_begin(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_req_line_t *req_line)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(req_line != NULL);
 
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_header(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_header_t *headers)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(headers != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_header(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_header_t *headers)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(headers != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_end(
-    ib_parsed_tx_t *transaction)
+    ib_tx_t *transaction)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_begin(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_resp_line_t *line)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(line != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_body(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_data_t *data)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(data != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_body(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_data_t *data)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(data != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_end(
-    ib_parsed_tx_t *transaction)
+    ib_tx_t *transaction)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_trailer(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_trailer_t *trailers)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(trailers != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_trailer(
-    ib_parsed_tx_t *transaction,
+    ib_tx_t *transaction,
     ib_parsed_trailer_t *trailers)
 {
     IB_FTRACE_INIT();
     assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
+    assert(transaction->ib != NULL);
+    assert(transaction->mp != NULL);
     assert(trailers != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
-}
-
-DLL_PUBLIC ib_status_t ib_parsed_tx_destroy(const ib_parsed_tx_t *transaction)
-{
-    IB_FTRACE_INIT();
-    assert(transaction != NULL);
-    assert(transaction->ib_engine != NULL);
-    assert(transaction->mpool != NULL);
-    // nop.
-    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
@@ -295,7 +257,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
+DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_tx_t *tx,
                                              ib_parsed_data_t **data,
                                              const char *buffer,
                                              size_t start,
@@ -304,14 +266,14 @@ DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
     IB_FTRACE_INIT();
 
     assert(tx != NULL);
-    assert(tx->ib_engine != NULL);
-    assert(tx->mpool != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->mp != NULL);
     assert(data != NULL);
     assert(buffer != NULL);
 
     ib_parsed_data_t *data_tmp;
 
-    data_tmp = ib_mpool_alloc(tx->mpool, sizeof(*data_tmp));
+    data_tmp = ib_mpool_alloc(tx->mp, sizeof(*data_tmp));
 
     if ( data_tmp == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -327,7 +289,7 @@ DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_parsed_tx_t *tx,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_parsed_tx_t *tx,
+DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                                   ib_parsed_resp_line_t **line,
                                                   const char *code,
                                                   size_t code_len,
@@ -336,14 +298,14 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_parsed_tx_t *tx,
 {
     IB_FTRACE_INIT();
     assert(tx != NULL);
-    assert(tx->ib_engine != NULL);
-    assert(tx->mpool != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->mp != NULL);
     assert(code != NULL);
     assert(code_len > 0);
     assert(msg != NULL);
     assert(msg_len > 0);
 
-    ib_parsed_resp_line_t *line_tmp = ib_mpool_alloc(tx->mpool,
+    ib_parsed_resp_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                      sizeof(*line_tmp));
 
     if ( line_tmp != NULL ) {
@@ -361,7 +323,7 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_parsed_tx_t *tx,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_parsed_tx_t *tx,
+DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                                  ib_parsed_req_line_t **line,
                                                  const char *method,
                                                  size_t method_len,
@@ -372,8 +334,8 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_parsed_tx_t *tx,
 {
     IB_FTRACE_INIT();
     assert(tx != NULL);
-    assert(tx->ib_engine != NULL);
-    assert(tx->mpool != NULL);
+    assert(tx->ib != NULL);
+    assert(tx->mp != NULL);
     assert(method != NULL);
     assert(method_len > 0);
     assert(path != NULL);
@@ -381,7 +343,7 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_parsed_tx_t *tx,
     assert(version != NULL);
     assert(version_len > 0);
 
-    ib_parsed_req_line_t *line_tmp = ib_mpool_alloc(tx->mpool,
+    ib_parsed_req_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                     sizeof(*line_tmp));
 
     if ( line_tmp != NULL ) {
