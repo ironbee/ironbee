@@ -308,7 +308,7 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
     ib_parsed_resp_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                      sizeof(*line_tmp));
 
-    if ( line_tmp != NULL ) {
+    if ( line_tmp == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -346,7 +346,7 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     ib_parsed_req_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                     sizeof(*line_tmp));
 
-    if ( line_tmp != NULL ) {
+    if ( line_tmp == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
