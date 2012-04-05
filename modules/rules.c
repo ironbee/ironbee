@@ -91,7 +91,7 @@ static stream_lookup_t stream_lookup_table[] = {
     { "STRREQHDR",              STREAM_REQUEST_HEADER },
     { "STRREQBODY",             STREAM_REQUEST_BODY },
     { "STRRSPHDR",              STREAM_RESPONSE_HEADER },
-    { "STRRSPBODY",             STREAM_RESPONSE_BODY }, 
+    { "STRRSPBODY",             STREAM_RESPONSE_BODY },
     /* List terminator */
     { NULL,                     STREAM_INVALID },
 };
