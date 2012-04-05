@@ -24,6 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -45,6 +46,7 @@
 #include <ironbee/config.h>
 #include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/string.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/field.h>
@@ -81,6 +83,12 @@ typedef struct {
     int         buf_len;        /* Total buffer length */
     int         used;           /* Has this field been used */
 } request_header_t;
+
+/* Print operator params */
+typedef struct {
+    ib_num_t    result;
+    size_t      maxlen;
+} printop_params_t;
 
 /* Dump flags */
 #define DUMP_TX                 (1<< 0) /* Dump base transaction */
@@ -734,15 +742,18 @@ static ib_status_t trace_tx_response(
  *
  * @param[in] label Label string
  * @param[in] field Field to print
+ * @param[in] maxlen Maximum string length
  *
  * @returns void
  */
 static void print_field(const char *label,
-                        ib_field_t *field)
+                        ib_field_t *field,
+                        size_t maxlen)
 {
     /* Check the field name
      * Note: field->name is not always a null ('\0') terminated string */
     switch (field->type) {
+
     case IB_FTYPE_GENERIC :      /**< Generic data */
     {
         void *v;
@@ -751,6 +762,7 @@ static void print_field(const char *label,
                 label, v );
         break;
     }
+
     case IB_FTYPE_NUM :          /**< Numeric value */
     {
         ib_num_t n;
@@ -759,6 +771,7 @@ static void print_field(const char *label,
                 label, n );
         break;
     }
+
     case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
     {
         ib_unum_t u;
@@ -767,13 +780,20 @@ static void print_field(const char *label,
                 label, u );
         break;
     }
+
     case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
     {
         const char *s;
         ib_field_value(field, ib_ftype_nulstr_out(&s));
-        printf( "  %s = '%s'\n", label, s );
+        if (maxlen > 0) {
+            printf("  %s = '%.*s'\n", label, (int)maxlen, s);
+        }
+        else {
+            printf("  %s = '%s'\n", label, s);
+        }
         break;
     }
+
     case IB_FTYPE_BYTESTR :      /**< Byte string value */
     {
         const ib_bytestr_t *bs;
@@ -783,24 +803,30 @@ static void print_field(const char *label,
             printf("  %s = ''\n", label);
         }
         else {
-            printf( "  %s = '%.*s'\n",
-                    label, (int)len, ib_bytestr_const_ptr(bs) );
+            if ( (maxlen > 0) && (len > maxlen) ) {
+                len = maxlen;
+            }
+            printf("  %s = '%.*s'\n",
+                   label, (int)len, ib_bytestr_const_ptr(bs) );
         }
         break;
     }
+
     case IB_FTYPE_LIST :         /**< List */
-        {
-            // @todo Remove mutable once list is const correct.
-            ib_list_t *lst;
-            ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
-            size_t len = IB_LIST_ELEMENTS(lst);
-            printf( "  %s = list:len=%d\n", label, (int)len);
-        }
+    {
+        // @todo Remove mutable once list is const correct.
+        ib_list_t *lst;
+        ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
+        size_t len = IB_LIST_ELEMENTS(lst);
+        printf( "  %s = list:len=%d\n", label, (int)len);
         break;
+    }
+
     case IB_FTYPE_SBUFFER :
         // @todo Implement if needed.
         printf("  %s = sbuffer", label);
         break;
+
     default:
         printf("  Unknown field type.");
     }
@@ -885,7 +911,7 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
             case IB_FTYPE_NULSTR:
             case IB_FTYPE_BYTESTR:
                 fullpath = build_path(path, field);
-                print_field(fullpath, field);
+                print_field(fullpath, field, 0);
                 break;
             case IB_FTYPE_LIST:
             {
@@ -898,7 +924,7 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
                 }
 
                 fullpath = build_path(path, field);
-                print_field(fullpath, field);
+                print_field(fullpath, field, 0);
                 print_list(fullpath, v);
                 break;
             }
@@ -950,7 +976,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
-    print_field("tx:ARGS", field);
+    print_field("tx:ARGS", field, 0);
     // @todo Remove mutable once list is const correct.
     rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
     if (rc != IB_OK) {
@@ -1051,8 +1077,8 @@ static ib_status_t print_user_agent(
     /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        const char *path = build_path( "tx/User-Agent", field );
-        print_field( path, field );
+        const char *path = build_path("tx/User-Agent", field);
+        print_field(path, field, 0);
         free((char *)path);
     }
 
@@ -1116,7 +1142,7 @@ static ib_status_t print_geoip(
         if (count++ == 0) {
             printf("GeoIP data:\n");
         }
-        print_field("", field);
+        print_field("", field, 0);
     }
     if (count == 0) {
         printf("No GeoIP data found\n");
@@ -1273,12 +1299,77 @@ static ib_status_t action_printvar_execute(void *data,
     }
 
     snprintf(buf, sizeof(buf), "Var %s", varname);
-    print_field( buf, field);
+    print_field(buf, field, 0);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
- * Execute function for the "print true" operator
+ * Create function for the print operator
+ * @internal
+ *
+ * @param[in] ib The IronBee engine (unused)
+ * @param[in] ctx The current IronBee context (unused)
+ * @param[in,out] mp Memory pool to use for allocation
+ * @param[in] params Constant parameters
+ * @param[in,out] op_inst Instance operator
+ *
+ * @returns Status code
+ */
+static ib_status_t op_print_create(ib_engine_t *ib,
+                                   ib_context_t *ctx,
+                                   ib_mpool_t *mp,
+                                   const char *params,
+                                   ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT();
+    printop_params_t *vptr;
+    const char *space;
+    ib_num_t result;
+    ib_num_t maxlen = 0;
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(mp != NULL);
+    assert(params != NULL);
+    assert(op_inst != NULL);
+
+    /* First parameter: return value */
+    if ( (strncasecmp(params, "t", 1) == 0) ||
+         (strncasecmp(params, "true", 4) == 0) )
+    {
+        result = 1;
+    }
+    else if ( (strncasecmp(params, "f", 1) == 0) ||
+              (strncasecmp(params, "false", 5) == 0) )
+    {
+        result = 0;
+    }
+    else {
+        result = (ib_num_t)strtol(params, NULL, 0);
+    }
+
+    /* Second parameter: max string length */
+    space = strchr(params, ' ');
+    if (space != NULL) {
+        ib_string_to_num(space + 1, 0, &maxlen);
+    }
+
+    /* Allocate storage for the value */
+    vptr = (printop_params_t *)ib_mpool_alloc(mp, sizeof(*vptr));
+    if (vptr == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Fill in the parameters */
+    vptr->result = result;
+    vptr->maxlen = (size_t)maxlen;
+
+    op_inst->data = vptr;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Execute function for the "print" operator
  * @internal
  *
  * @param[in] ib Ironbee engine (unused)
@@ -1290,7 +1381,7 @@ static ib_status_t action_printvar_execute(void *data,
  *
  * @returns Status code
  */
-static ib_status_t op_ptrue_execute(ib_engine_t *ib,
+static ib_status_t op_print_execute(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     void *data,
                                     ib_flags_t flags,
@@ -1298,34 +1389,10 @@ static ib_status_t op_ptrue_execute(ib_engine_t *ib,
                                     ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    print_field("@ptrue", field);
-    *result = 1;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
+    const printop_params_t *pdata = (const printop_params_t *)data;
 
-/**
- * Execute function for the "pfalse" operator
- * @internal
- *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[out] result Pointer to number in which to store the result
- *
- * @returns Status code
- */
-static ib_status_t op_pfalse_execute(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     void *data,
-                                     ib_flags_t flags,
-                                     ib_field_t *field,
-                                     ib_num_t *result)
-{
-    IB_FTRACE_INIT();
-    print_field("@pfalse", field);
-    *result = 0;
+    print_field("@print", field, pdata->maxlen);
+    *result = pdata->result;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1381,29 +1448,16 @@ static ib_status_t register_handlers(ib_engine_t* ib)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-
-    /* Register the true operator */
+    /* Register the print operator */
     rc = ib_operator_register(ib,
-                              "ptrue",
-                              IB_OP_FLAG_ALLOW_NULL,
-                              NULL, /* No create function */
-                              NULL, /* no destroy function */
-                              op_ptrue_execute);
+                              "print",
+                              IB_OP_FLAG_NONE,
+                              op_print_create,
+                              NULL,                  /* no destroy function */
+                              op_print_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-
-    /* Register the false operator */
-    rc = ib_operator_register(ib,
-                              "pfalse",
-                              IB_OP_FLAG_ALLOW_NULL,
-                              NULL, /* No create function */
-                              NULL, /* no destroy function */
-                              op_pfalse_execute);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
 
     IB_FTRACE_RET_STATUS(rc);
 }
