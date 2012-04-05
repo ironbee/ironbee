@@ -46,7 +46,7 @@ extern "C" {
  * Forward declare an ib_tx_t as it exists in engine.h and we are used by engine.h.
  * NOTE: This should be removed when the refactor is done.
  */
-typedef struct ib_tx_t ib_tx_t;
+struct ib_tx_t;
 
 /**
  * An opaque representation of the first line of an HTTP request.
@@ -96,7 +96,7 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
  * @returns IB_OK.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_begin(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_req_line_t *req_line);
 
 /**
@@ -108,7 +108,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_begin(
  * @returns IB_OK or IB_EALLOC if the values cannot be copied.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_header(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_header_t *headers);
 
 /**
@@ -120,7 +120,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_header(
  * @returns IB_OK or IB_EALLOC if the values cannot be copied.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_header(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_header_t *headers);
 
 /**
@@ -131,7 +131,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_header(
  * @returns IB_OK.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_end(
-    ib_tx_t *transaction);
+    struct ib_tx_t *transaction);
 
 /**
  * Signal that the response portion of the transaction has begun.
@@ -142,7 +142,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_end(
  * @returns IB_OK.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_begin(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_resp_line_t *line);
 
 /**
@@ -152,7 +152,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_begin(
  * @return IB_OK.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_body(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_data_t *data);
 
 /**
@@ -162,7 +162,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_body(
  * @return IB_OK.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_body(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_data_t *data);
 
 /**
@@ -173,7 +173,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_body(
  * @returns IB_OK.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_end(
-    ib_tx_t *transaction);
+    struct ib_tx_t *transaction);
 
 /**
  * The trailer version of ib_parsed_tx_res_header.
@@ -181,7 +181,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_end(
  * @see ib_parsed_tx_res_header.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_trailer(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_trailer_t *trailers);
 
 /**
@@ -190,7 +190,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_trailer(
  * @see ib_parsed_tx_resp_header.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_trailer(
-    ib_tx_t *transaction,
+    struct ib_tx_t *transaction,
     ib_parsed_trailer_t *trailers);
 
 /**
@@ -281,7 +281,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
  * @param[in] offset The offset from start.
  * @returns IB_OK. IB_EALLOC if memory allocation fails.
  */
-DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_tx_t *tx,
+DLL_PUBLIC ib_status_t ib_parsed_data_create(struct ib_tx_t *tx,
                                              ib_parsed_data_t **data,
                                              const char *buffer,
                                              size_t start,
@@ -304,7 +304,7 @@ DLL_PUBLIC ib_status_t ib_parsed_data_create(ib_tx_t *tx,
  * @returns IB_OK or IB_EALLOC.
  */
 DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
-    ib_tx_t *tx,
+    struct ib_tx_t *tx,
     ib_parsed_resp_line_t **line,
     const char *code,
     size_t code_len,
@@ -330,7 +330,7 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
  * @returns IB_OK or IB_EALLOC.
  */
 DLL_PUBLIC ib_status_t ib_parsed_req_line_create(
-    ib_tx_t *tx,
+    struct ib_tx_t *tx,
     ib_parsed_req_line_t **line,
     const char *method,
     size_t method_len,
