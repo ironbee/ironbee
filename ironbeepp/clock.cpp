@@ -28,7 +28,12 @@
 using namespace boost::posix_time;
 
 static const ptime c_epoch = from_time_t(0);
-static const uint64_t c_microseconds_per_second = 1000000;
+
+/*
+ * This is used to compare against time_duration::ticks_per_second() so we
+ * we use that type.
+ */
+static const time_duration::tick_type c_microseconds_per_second = 1000000;
 
 namespace IronBee {
 
