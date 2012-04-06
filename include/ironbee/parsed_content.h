@@ -41,17 +41,76 @@ extern "C" {
 
 #include <ironbee/field.h>
 #include <ironbee/types.h>
+#include <ironbee/engine_types.h>
 
 /**
- * Forward declare an ib_tx_t as it exists in engine.h and we are used by engine.h.
- * NOTE: This should be removed when the refactor is done.
+ * A link list element representing HTTP headers.
  */
-struct ib_tx_t;
+typedef struct ib_parsed_name_value_pair_list_t {
+    const char *name;
+    size_t name_len;
+    const char *value;
+    size_t value_len;
+    struct ib_parsed_name_value_pair_list_t *next; /**< Next element. */
+} ib_parsed_name_value_pair_list_t;
+
 
 /**
- * An opaque representation of the first line of an HTTP request.
+ * A list wrapper of ib_Parsed_name_value_pair_list_t.
+ * 
+ * This is used to quickly build a new list. Afterwards the resultant list
+ * can be treated as a simple linked list terminated with next==NULL.
  */
-typedef struct ib_parsed_req_line_t ib_parsed_req_line_t;
+typedef struct ib_parsed_name_value_pair_list_wrapper_t {
+    ib_parsed_name_value_pair_list_t *head; /**< Head of the list. */
+    ib_parsed_name_value_pair_list_t *tail; /**< Tail of the list. */
+    ib_unum_t size;                         /**< Size of the list. */
+    ib_tx_t *tx;                            /**< Tx this list is assoc. with. */
+} ib_parsed_name_value_pair_list_wrapper_t;
+
+
+typedef struct ib_parsed_name_value_pair_list_wrapper_t
+    ib_parsed_header_wrapper_t;
+typedef struct ib_parsed_name_value_pair_list_wrapper_t
+    ib_parsed_trailer_wrapper_t;
+
+/**
+ * The first line in an HTTP request.
+ *
+ * This is typedef'ed to useful types in parsed_content.h.
+ */
+typedef struct ib_parsed_req_line_t {
+    ib_tx_t *tx;
+    const char *method;  /**< HTTP Method. */
+    size_t method_len;   /**< Length of method. */
+    const char *path;    /**< Path request method is against. */
+    size_t path_len;     /**< Length of path. */
+    const char *version; /**< HTTP Version. */
+    size_t version_len;  /**< Length of version. */
+} ib_parsed_req_line_t;
+
+/**
+ * The first line returned to a user from the server.
+ *
+ * This is typedef'ed to useful types in parsed_content.h.
+ */
+typedef struct ib_parsed_resp_line_t {
+    ib_tx_t *tx;
+    const char *code; /**< The status code. */
+    size_t code_len;  /**< Length of code. */
+    const char *msg;  /**< The message to the user. */
+    size_t msg_len;   /**< Length of the msg. */
+} ib_parsed_resp_line_t;
+
+/**
+ * A pointer into an existing buffer of data.
+ */
+typedef struct ib_parsed_data_t {
+    ib_tx_t *tx;
+    const char *buffer;
+    size_t start;
+    size_t offset;
+} ib_parsed_data_t;
 
 /**
  * An opaque list representation of a header list.
@@ -63,17 +122,6 @@ typedef struct ib_parsed_name_value_pair_list_t ib_parsed_header_t;
  */
 typedef struct ib_parsed_name_value_pair_list ib_parsed_trailer_t;
 
-/**
- * Parsed response line.
- *
- * This is the first line in the server response to the user.
- */
-typedef struct ib_parsed_resp_line_t ib_parsed_resp_line_t;
-
-/**
- * A pointer into a read-only buffer with a begin and offset value.
- */
-typedef struct ib_parsed_data_t ib_parsed_data_t;
 
 /**
  * Callback for iterating through a list of headers.
@@ -82,8 +130,7 @@ typedef struct ib_parsed_data_t ib_parsed_data_t;
 typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
                                                          size_t name_len,
                                                          const char *value,
-                                                         size_t value_len,
-                                                         void* user_data);
+                                                         size_t value_len, void* user_data);
 
 /**
  * Signal that the transaction has begun.
@@ -202,11 +249,12 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_trailer(
  * is released.
  *
  * @param[out] headers The headers object that will be constructed.
- * @param[in,out] mp The memory pool that will allocate the headers object.
+ * @param[in] tx The transaction that will allocate the headers object.
  * @returns IB_OK or IB_EALLOC if mp could not allocate memory.
  */
-DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
-                                               ib_mpool_t *mp);
+DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
+    ib_parsed_name_value_pair_list_wrapper_t **headers,
+    ib_tx_t *tx);
 
 /**
  * Link the arguments to a new list element and append it to this list.
@@ -225,17 +273,12 @@ DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
  * @returns IB_OK on success. IB_EALLOC if the list element could not be
  *          allocated.
  */
-DLL_PUBLIC ib_status_t ib_parsed_header_add(ib_parsed_header_t *headers,
-                                            const char *name,
-                                            size_t name_len,
-                                            const char *value,
-                                            size_t value_len);
-
-/**
- * Return the size of the headers (or trailers) list.
- * @param[in] headers The list to extract the current size of.
- */
-DLL_PUBLIC size_t ib_parsed_header_list_size(const ib_parsed_header_t *headers);
+DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
+    ib_parsed_name_value_pair_list_wrapper_t *headers,
+    const char *name,
+    size_t name_len,
+    const char *value,
+    size_t value_len);
 
 /**
  * Apply @a callback to each name-value header pair in @a headers.
@@ -260,7 +303,7 @@ DLL_PUBLIC size_t ib_parsed_header_list_size(const ib_parsed_header_t *headers);
  *          and that return code is returned.
  */
 DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
-    ib_parsed_header_t *headers,
+    ib_parsed_name_value_pair_list_wrapper_t *headers,
     ib_parsed_tx_each_header_callback callback,
     void* user_data);
 

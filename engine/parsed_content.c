@@ -29,7 +29,6 @@
 
 /* Include engine structs, private content structs, etc. */
 #include <ironbee_private.h>
-#include <ironbee_parsed_content_private.h>
 
 /* Public IronBee includes. */
 #include <ironbee/debug.h>
@@ -153,22 +152,23 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_trailer(
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL); /* @todo - implement. */
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
-                                               ib_mpool_t *mp)
+DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
+    ib_parsed_name_value_pair_list_wrapper_t **headers,
+    ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
     assert(headers != NULL);
-    assert(mp != NULL);
+    assert(tx != NULL);
 
-    ib_parsed_header_t *headers_tmp =
-        ib_mpool_calloc(mp, 1, sizeof(*headers_tmp));
+    ib_parsed_name_value_pair_list_wrapper_t *headers_tmp =
+        ib_mpool_calloc(tx->mp, 1, sizeof(*headers_tmp));
 
     if ( headers_tmp == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    headers_tmp->mp = mp;
+    headers_tmp->tx = tx;
     /* headers_tmp->head = initialized by calloc */
     /* headers_tmp->tail = initialized by calloc */
     /* headers_tmp->size = initialized by calloc */
@@ -179,22 +179,24 @@ DLL_PUBLIC ib_status_t ib_parsed_header_create(ib_parsed_header_t **headers,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_header_add(ib_parsed_header_t *headers,
-                                            const char *name,
-                                            size_t name_len,
-                                            const char *value,
-                                            size_t value_len)
+DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
+    ib_parsed_name_value_pair_list_wrapper_t *headers,
+    const char *name,
+    size_t name_len,
+    const char *value,
+    size_t value_len)
 {
     IB_FTRACE_INIT();
 
     assert(headers != NULL);
-    assert(headers->mp != NULL);
+    assert(headers->tx != NULL);
+    assert(headers->tx->mp != NULL);
     assert(name != NULL);
     assert(value != NULL);
 
-    ib_parsed_name_value_pair_list_element_t *ele;
+    ib_parsed_name_value_pair_list_t *ele;
 
-    ele = ib_mpool_alloc(headers->mp, sizeof(*ele));
+    ele = ib_mpool_alloc(headers->tx->mp, sizeof(*ele));
 
     if ( ele == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -223,15 +225,8 @@ DLL_PUBLIC ib_status_t ib_parsed_header_add(ib_parsed_header_t *headers,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC size_t ib_parsed_header_list_size(const ib_parsed_header_t *headers)
-{
-    IB_FTRACE_INIT();
-    assert(headers != NULL);
-    IB_FTRACE_RET_SIZET(headers->size);
-}
-
 DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
-    ib_parsed_header_t *headers,
+    ib_parsed_name_value_pair_list_wrapper_t *headers,
     ib_parsed_tx_each_header_callback callback,
     void* user_data)
 {
@@ -243,7 +238,7 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
 
     /* Loop over headers elements until the end of the list is reached or
      * IB_OK is not returned by the callback. */
-    for( const ib_parsed_name_value_pair_list_element_t *le = headers->head;
+    for( const ib_parsed_name_value_pair_list_t *le = headers->head;
          le != NULL && rc == IB_OK;
          le = le->next)
     {

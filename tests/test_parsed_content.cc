@@ -80,7 +80,7 @@ class ParsedContentHeaderTest : public ParsedContentTest {
     std::list<const char*> values;
     int count;
 
-    ib_parsed_header_t *headers;
+    ib_parsed_header_wrapper_t *headers;
 
     const char *name1;
     const char *value1;
@@ -142,27 +142,31 @@ TEST_F(ParsedContentTest, create_destroy)
 TEST_F(ParsedContentHeaderTest, list_err)
 {
     ib_status_t rc;
+    ib_tx_t *tx;
+    ib_conn_t *c = buildIronBeeConnection();
+    ASSERT_IB_OK(ib_tx_create(ib_engine, &tx, c, NULL));
 
-    ASSERT_IB_OK(ib_parsed_header_create(&headers, tx_mpool));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
+        &headers,
+        tx));
+
     ASSERT_TRUE(headers!=NULL);
 
-    ASSERT_IB_OK(ib_parsed_header_add(headers,
-                                      name1,
-                                      strlen(name1),
-                                      value1,
-                                      strlen(value1)));
-    ASSERT_IB_OK(ib_parsed_header_add(headers,
-                                      name2,
-                                      strlen(name2),
-                                      value2,
-                                      strlen(value2)));
-    ASSERT_IB_OK(ib_parsed_header_add(headers,
-                                      name3,
-                                      strlen(name3),
-                                      value3,
-                                      strlen(value3)));
-
-    ASSERT_EQ(3U, ib_parsed_header_list_size(headers));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
+                                                    name1,
+                                                    strlen(name1),
+                                                    value1,
+                                                    strlen(value1)));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
+                                                    name2,
+                                                    strlen(name2),
+                                                    value2,
+                                                    strlen(value2)));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
+                                                    name3,
+                                                    strlen(name3),
+                                                    value3,
+                                                    strlen(value3)));
 
 
     rc = ib_parsed_tx_each_header(headers,
@@ -170,32 +174,38 @@ TEST_F(ParsedContentHeaderTest, list_err)
                                   this);
     ASSERT_EQ(IB_EOTHER, rc);
     ASSERT_EQ(1, count);
+    ib_tx_destroy(tx);
+    ib_conn_destroy(c);
 }
 
 TEST_F(ParsedContentHeaderTest, list_ok)
 {
     ib_status_t rc;
+    ib_tx_t *tx;
+    ib_conn_t *c = buildIronBeeConnection();
+    ASSERT_IB_OK(ib_tx_create(ib_engine, &tx, c, NULL));
 
-    ASSERT_IB_OK(ib_parsed_header_create(&headers, tx_mpool));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
+        &headers,
+        tx));
+
     ASSERT_TRUE(headers!=NULL);
 
-    ASSERT_IB_OK(ib_parsed_header_add(headers,
-                                      name1,
-                                      strlen(name1),
-                                      value1,
-                                      strlen(value1)));
-    ASSERT_IB_OK(ib_parsed_header_add(headers,
-                                      name2,
-                                      strlen(name2),
-                                      value2,
-                                      strlen(value2)));
-    ASSERT_IB_OK(ib_parsed_header_add(headers,
-                                      name3,
-                                      strlen(name3),
-                                      value3,
-                                      strlen(value3)));
-
-    ASSERT_EQ(3U, ib_parsed_header_list_size(headers));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
+                                                    name1,
+                                                    strlen(name1),
+                                                    value1,
+                                                    strlen(value1)));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
+                                                    name2,
+                                                    strlen(name2),
+                                                    value2,
+                                                    strlen(value2)));
+    ASSERT_IB_OK(ib_parsed_name_value_pair_list_add(headers,
+                                                    name3,
+                                                    strlen(name3),
+                                                    value3,
+                                                    strlen(value3)));
 
 
     rc = ib_parsed_tx_each_header(headers,
@@ -214,4 +224,7 @@ TEST_F(ParsedContentHeaderTest, list_ok)
     ASSERT_STREQ(value1, *it);
     ASSERT_STREQ(value2, *(++it));
     ASSERT_STREQ(value3, *(++it));
+
+    ib_tx_destroy(tx);
+    ib_conn_destroy(c);
 }

@@ -6,7 +6,6 @@
 #include <ironbee/field.h>
 
 #include "ironbee_private.h"
-#include "ironbee_parsed_content_private.h"
 
 #define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, param) \
     do { \
@@ -201,7 +200,7 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
  */
 static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
                                            ib_state_event_type_t event,
-                                           ib_parsed_header_t *headers)
+                                           ib_parsed_header_wrapper_t *headers)
 {
     IB_FTRACE_INIT();
     ib_tx_t *tx = headers->tx;
@@ -213,14 +212,24 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "HEADER EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, headersdata, ib, headers);
+    CALL_HOOKS(&rc,
+               ib->ectx->hook[event],
+               event,
+               headersdata,
+               ib,
+               headers->head);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, headersdata, ib, headers);
+        CALL_HOOKS(&rc,
+                   tx->ctx->hook[event],
+                   event,
+                   headersdata,
+                   ib,
+                   headers->head);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -657,7 +666,7 @@ ib_status_t ib_state_notify_request_started(
 ib_status_t ib_state_notify_request_headers_data(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_header_t *headers)
+    ib_parsed_header_wrapper_t *headers)
 {
     IB_FTRACE_INIT();
 
@@ -684,7 +693,7 @@ ib_status_t ib_state_notify_request_headers_data(
 ib_status_t ib_state_notify_response_headers_data(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_header_t *headers)
+    ib_parsed_header_wrapper_t *headers)
 {
     IB_FTRACE_INIT();
 

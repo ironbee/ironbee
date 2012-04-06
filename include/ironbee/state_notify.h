@@ -32,9 +32,10 @@ extern "C" {
  * @brief IronBee interface for handling parsed content.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
- *
+ */
+
+/**
  * @ingroup IronBeeEngineState State
- * API For passing parsed or partially parsed content to the IronBee Engine.
  * @{
  */
 
@@ -160,7 +161,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(
 ib_status_t ib_state_notify_request_headers_data(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_header_t *headers);
+    ib_parsed_header_wrapper_t *headers);
 
 /**
  * Notify the state machine that the response headers are available.
@@ -174,7 +175,7 @@ ib_status_t ib_state_notify_request_headers_data(
 ib_status_t ib_state_notify_response_headers_data(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_header_t *headers);
+    ib_parsed_header_wrapper_t *headers);
 
 /**
  * Notify the state machine that request headers are available.
