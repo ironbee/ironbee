@@ -38,6 +38,96 @@
 
 #include "ironbee_private.h"
 
+/**
+ * Simple ASCII lowercase function.
+ * @internal
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t tfn_strmod(ib_engine_t *ib,
+                              ib_mpool_t *mp,
+                              ib_strmod_fn_t str_fn,
+                              ib_strmod_ex_fn_t ex_fn,
+                              const ib_field_t *fin,
+                              ib_field_t **fout,
+                              ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_flags_t result;
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
+
+    switch(fin->type) {
+    case IB_FTYPE_NULSTR :
+    {
+        const char *in;
+        char *out;
+        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        assert (in != NULL);
+        rc = str_fn(IB_STROP_COW, mp, (char *)in, &out, &result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create(fout, mp,
+                             fin->name, fin->nlen,
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(out));
+        break;
+    }
+
+    case IB_FTYPE_BYTESTR:
+    {
+        const ib_bytestr_t *bs;
+        const uint8_t *din;
+        uint8_t *dout;
+        size_t dlen;
+        rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        assert (bs != NULL);
+        din = ib_bytestr_const_ptr(bs);
+        dlen = ib_bytestr_length(bs);
+        rc = ex_fn(IB_STROP_COW, mp,
+                   (uint8_t *)din, dlen,
+                   &dout, &dlen,
+                   &result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create_bytestr_alias(fout, mp,
+                                           fin->name, fin->nlen,
+                                           dout, dlen);
+        break;
+    }
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    } /* switch(fin->type) */
+
+    /* Check the flags */
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == IB_TRUE) {
+        *pflags = IB_TFN_FMODIFIED;
+    }
+    else {
+        *pflags = IB_TFN_NONE;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /**
  * Simple ASCII lowercase function.
@@ -57,53 +147,16 @@
 static ib_status_t tfn_lowercase(ib_engine_t *ib,
                                  ib_mpool_t *mp,
                                  void *fndata,
-                                 ib_field_t *fin,
+                                 const ib_field_t *fin,
                                  ib_field_t **fout,
                                  ib_flags_t *pflags)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_bool_t modified = IB_FALSE;
 
-    /* We only handle bytestr and nulstr non-dynamic fields */
-    if (ib_field_is_dynamic(fin)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+    ib_status_t rc = tfn_strmod(ib, mp,
+                                ib_strlower, ib_strlower_ex,
+                                fin, fout, pflags);
 
-    if (fin->type == IB_FTYPE_NULSTR) {
-        char *p;
-        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&p));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        assert (p != NULL);
-        *fout = fin;
-        rc = ib_strlower(p, &modified);
-    }
-    else if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs;
-        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&bs));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        assert (bs != NULL);
-        *fout = fin;
-        rc = ib_strlower_ex(ib_bytestr_ptr(bs),
-                            ib_bytestr_length(bs),
-                            &modified);
-    }
-    else {
-        rc = IB_EINVAL;
-    }
-
-    if (modified) {
-        (*pflags) |= IB_TFN_FMODIFIED;
-    }
-    if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FINPLACE;
-    }
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -123,83 +176,16 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
 static ib_status_t tfn_trim_left(ib_engine_t *ib,
                                  ib_mpool_t *mp,
                                  void *fndata,
-                                 ib_field_t *fin,
+                                 const ib_field_t *fin,
                                  ib_field_t **fout,
                                  ib_flags_t *pflags)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_bool_t modified = IB_FALSE;
 
-    /* We only handle bytestr and nulstr non-dynamic fields */
-    if (ib_field_is_dynamic(fin)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+    ib_status_t rc = tfn_strmod(ib, mp,
+                                ib_strtrim_left, ib_strtrim_left_ex,
+                                fin, fout, pflags);
 
-    if (fin->type == IB_FTYPE_NULSTR) {
-        char *p;
-        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&p));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        char *out;
-        assert (p != NULL);
-
-        rc = ib_strtrim_left(p, &out, &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        if (modified == IB_TRUE) {
-            rc = ib_field_create(
-                fout,
-                mp,
-                fin->name, fin->nlen,
-                IB_FTYPE_NULSTR,
-                ib_ftype_nulstr_in(out)
-            );
-        }
-        else {
-            *fout = fin;
-        }
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs;
-        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&bs));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        uint8_t *out;
-        size_t outlen;
-        assert (bs != NULL);
-
-        rc = ib_strtrim_left_ex(ib_bytestr_ptr(bs),
-                                ib_bytestr_length(bs),
-                                &out,
-                                &outlen,
-                                &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create_bytestr_alias(fout, mp, fin->name, fin->nlen, out, outlen);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else {
-        rc = IB_EINVAL;
-    }
-
-    if (modified) {
-        (*pflags) |= IB_TFN_FMODIFIED;
-    }
-    if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FINPLACE;
-    }
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -219,78 +205,15 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
 static ib_status_t tfn_trim_right(ib_engine_t *ib,
                                   ib_mpool_t *mp,
                                   void *fndata,
-                                  ib_field_t *fin,
+                                  const ib_field_t *fin,
                                   ib_field_t **fout,
                                   ib_flags_t *pflags)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_bool_t modified = IB_FALSE;
 
-    /* We only handle bytestr and nulstr non-dynamic fields */
-    if (ib_field_is_dynamic(fin)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    if (fin->type == IB_FTYPE_NULSTR) {
-        char *p;
-        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&p));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        char *out;
-        assert (p != NULL);
-
-        rc = ib_strtrim_right(p, &out, &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create(
-            fout,
-            mp,
-            fin->name, fin->nlen,
-            IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in(out)
-        );
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs;
-        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&bs));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        uint8_t *out;
-        size_t outlen;
-        assert (bs != NULL);
-
-        rc = ib_strtrim_right_ex(ib_bytestr_ptr(bs),
-                                 ib_bytestr_length(bs),
-                                 &out,
-                                 &outlen,
-                                 &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create_bytestr_alias(fout, mp, fin->name, fin->nlen, out, outlen);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else {
-        rc = IB_EINVAL;
-    }
-
-    if (modified) {
-        (*pflags) |= IB_TFN_FMODIFIED;
-    }
-    if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FINPLACE;
-    }
+    ib_status_t rc = tfn_strmod(ib, mp,
+                                ib_strtrim_right, ib_strtrim_right_ex,
+                                fin, fout, pflags);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -311,75 +234,16 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
 static ib_status_t tfn_trim(ib_engine_t *ib,
                             ib_mpool_t *mp,
                             void *fndata,
-                            ib_field_t *fin,
+                            const ib_field_t *fin,
                             ib_field_t **fout,
                             ib_flags_t *pflags)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_bool_t modified = IB_FALSE;
 
-    /* We only handle bytestr and nulstr non-dynamic fields */
-    if (ib_field_is_dynamic(fin)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+    ib_status_t rc = tfn_strmod(ib, mp,
+                                ib_strtrim_lr, ib_strtrim_lr_ex,
+                                fin, fout, pflags);
 
-    if (fin->type == IB_FTYPE_NULSTR) {
-        char *p;
-        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&p));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        char *out;
-        assert (p != NULL);
-
-        rc = ib_strtrim_lr(p, &out, &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create(
-            fout, mp, fin->name, fin->nlen, IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in(out)
-        );
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs;
-        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&bs));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        uint8_t *out;
-        size_t outlen;
-        assert (bs != NULL);
-
-        rc = ib_strtrim_lr_ex(ib_bytestr_ptr(bs),
-                              ib_bytestr_length(bs),
-                              &out,
-                              &outlen,
-                              &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create_bytestr_alias(fout, mp, fin->name, fin->nlen, out, outlen);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else {
-        rc = IB_EINVAL;
-    }
-
-    if (modified) {
-        (*pflags) |= IB_TFN_FMODIFIED;
-    }
-    if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FINPLACE;
-    }
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -399,76 +263,16 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
 static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
                                    ib_mpool_t *mp,
                                    void *fndata,
-                                   ib_field_t *fin,
+                                   const ib_field_t *fin,
                                    ib_field_t **fout,
                                    ib_flags_t *pflags)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_bool_t modified = IB_FALSE;
 
-    /* We only handle bytestr and nulstr non-dynamic fields */
-    if (ib_field_is_dynamic(fin)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+    ib_status_t rc = tfn_strmod(ib, mp,
+                                ib_str_wspc_remove, ib_str_wspc_remove_ex,
+                                fin, fout, pflags);
 
-    if (fin->type == IB_FTYPE_NULSTR) {
-        char *p;
-        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&p));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        char *out;
-        assert (p != NULL);
-
-        rc = ib_str_wspc_remove(mp, p, &out, &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create(
-            fout, mp, fin->name, fin->nlen, IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in(out)
-        );
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs;
-        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&bs));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        uint8_t *out;
-        size_t outlen;
-        assert (bs != NULL);
-
-        rc = ib_str_wspc_remove_ex(mp,
-                                   ib_bytestr_ptr(bs),
-                                   ib_bytestr_length(bs),
-                                   &out,
-                                   &outlen,
-                                   &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create_bytestr_alias(fout, mp, fin->name, fin->nlen, out, outlen);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else {
-        rc = IB_EINVAL;
-    }
-
-    if (modified) {
-        (*pflags) |= IB_TFN_FMODIFIED;
-    }
-    if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FINPLACE;
-    }
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -488,76 +292,16 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
 static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
                                      ib_mpool_t *mp,
                                      void *fndata,
-                                     ib_field_t *fin,
+                                     const ib_field_t *fin,
                                      ib_field_t **fout,
                                      ib_flags_t *pflags)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_bool_t modified = IB_FALSE;
 
-    /* We only handle bytestr and nulstr non-dynamic fields */
-    if (ib_field_is_dynamic(fin)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
+    ib_status_t rc = tfn_strmod(ib, mp,
+                                ib_str_wspc_compress, ib_str_wspc_compress_ex,
+                                fin, fout, pflags);
 
-    if (fin->type == IB_FTYPE_NULSTR) {
-        char *p;
-        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&p));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        char *out;
-        assert (p != NULL);
-
-        rc = ib_str_wspc_compress(mp, p, &out, &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create(
-            fout, mp, fin->name, fin->nlen, IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in(out)
-        );
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *bs;
-        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&bs));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        uint8_t *out;
-        size_t outlen;
-        assert (bs != NULL);
-
-        rc = ib_str_wspc_compress_ex(mp,
-                                     ib_bytestr_ptr(bs),
-                                     ib_bytestr_length(bs),
-                                     &out,
-                                     &outlen,
-                                     &modified);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_field_create_bytestr_alias(fout, mp, fin->name, fin->nlen, out, outlen);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else {
-        rc = IB_EINVAL;
-    }
-
-    if (modified) {
-        (*pflags) |= IB_TFN_FMODIFIED;
-    }
-    if (rc == IB_OK) {
-        (*pflags) |= IB_TFN_FINPLACE;
-    }
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -577,7 +321,7 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
 static ib_status_t tfn_length(ib_engine_t *ib,
                               ib_mpool_t *mp,
                               void *fndata,
-                              ib_field_t *fin,
+                              const ib_field_t *fin,
                               ib_field_t **fout,
                               ib_flags_t *pflags)
 {
@@ -625,12 +369,12 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         );
     }
     else if (fin->type == IB_FTYPE_LIST) {
-        ib_list_node_t *node = NULL;
-        ib_list_t      *ilist;           /** Incoming list */
+        const ib_list_node_t  *node = NULL;
+        const ib_list_t       *ilist;        /** Incoming list */
 
         /* Get the incoming list */
         // @todo Remove mutable once list is const correct.
-        rc = ib_field_mutable_value(fin, ib_ftype_list_mutable_out(&ilist));
+        rc = ib_field_value(fin, ib_ftype_list_out(&ilist));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -650,8 +394,8 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         }
 
         /* Walk through the incoming fields */
-        IB_LIST_LOOP(ilist, node) {
-            ib_field_t *ifield = (ib_field_t *)node->data;
+        IB_LIST_LOOP_CONST(ilist, node) {
+            const ib_field_t *ifield = (ib_field_t *)node->data;
             ib_field_t *ofield = NULL;
             ib_flags_t flags = 0;
 
@@ -693,7 +437,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 static ib_status_t tfn_count(ib_engine_t *ib,
                              ib_mpool_t *mp,
                              void *fndata,
-                             ib_field_t *fin,
+                             const ib_field_t *fin,
                              ib_field_t **fout,
                              ib_flags_t *pflags)
 {
@@ -709,8 +453,8 @@ static ib_status_t tfn_count(ib_engine_t *ib,
     /* If this is a list, return it's count */
     if (fin->type == IB_FTYPE_LIST) {
         // @todo Remove mutable once list is const correct.
-        ib_list_t *lst;
-        rc = ib_field_mutable_value(fin, ib_ftype_list_mutable_out(&lst));
+        const ib_list_t *lst;
+        rc = ib_field_value(fin, ib_ftype_list_out(&lst));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -732,25 +476,27 @@ static ib_status_t tfn_count(ib_engine_t *ib,
 }
 
 /**
- * Get maximum of a list of values
+ * Get maximum / minimum of a list of values
  * @internal
  *
+ * @param[in] is_max IB_TRUE for max, IB_FALSE for min
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field.
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t max_list(ib_mpool_t *mp,
-                            ib_field_t *fin,
-                            ib_field_t **fout)
+static ib_status_t list_minmax(ib_bool_t is_max,
+                               ib_mpool_t *mp,
+                               const ib_field_t *fin,
+                               ib_field_t **fout)
 {
     IB_FTRACE_INIT();
-    ib_status_t     rc = IB_OK;
-    ib_list_node_t *node = NULL;
-    ib_num_t        maxvalue = 0;
-    ib_num_t        n = 0;
-    ib_list_t      *lst;
+    ib_status_t           rc = IB_OK;
+    const ib_list_t      *lst;
+    const ib_list_node_t *node = NULL;
+    ib_bool_t             first = IB_TRUE;
+    ib_num_t              mmvalue = 0;     /* Current Min / max value */
 
     assert(mp != NULL);
     assert(fin != NULL);
@@ -758,7 +504,7 @@ static ib_status_t max_list(ib_mpool_t *mp,
 
     /* Get the incoming list */
     // @todo Remove mutable once list is const correct.
-    rc = ib_field_mutable_value(fin, ib_ftype_list_mutable_out(&lst));
+    rc = ib_field_value(fin, ib_ftype_list_out(&lst));
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -768,220 +514,96 @@ static ib_status_t max_list(ib_mpool_t *mp,
     }
 
     /* Walk through the incoming fields */
-    IB_LIST_LOOP(lst, node) {
-        ib_field_t *ifield = (ib_field_t *)node->data;
+    IB_LIST_LOOP_CONST(lst, node) {
+        const ib_field_t *ifield = (ib_field_t *)node->data;
         ib_num_t value;
 
         switch (ifield->type) {
-            case IB_FTYPE_NUM:
-                {
-                    ib_num_t fval;
-                    rc = ib_field_value(ifield, ib_ftype_num_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
+        case IB_FTYPE_NUM:
+        {
+            ib_num_t fval;
+            rc = ib_field_value(ifield, ib_ftype_num_out(&fval));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
 
-                    value = fval;
-                }
-                break;
-
-            case IB_FTYPE_UNUM:
-                {
-                    ib_unum_t fval;
-                    rc = ib_field_value(ifield, ib_ftype_unum_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-
-                    if (fval > INT64_MAX) {
-                        IB_FTRACE_RET_STATUS(IB_EOTHER);
-                    }
-                    value = (ib_num_t)fval;
-                }
-                break;
-
-            case IB_FTYPE_NULSTR:
-                {
-                    const char *fval;
-                    rc = ib_field_value(ifield, ib_ftype_nulstr_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-
-                    value = (ib_num_t)strlen(fval);
-                }
-                break;
-
-            case IB_FTYPE_BYTESTR:
-                {
-                    const ib_bytestr_t *fval;
-                    rc = ib_field_value(ifield, ib_ftype_bytestr_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-
-                    value = (ib_num_t)ib_bytestr_length(fval);
-                }
-                break;
-
-            case IB_FTYPE_LIST:
-                {
-                    ib_field_t *tmp = NULL;
-                    ib_num_t v;
-
-                    rc = max_list(mp, fin, &tmp);
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-                    rc = ib_field_value(tmp, ib_ftype_num_out(&v));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-                    value = v;
-                }
-                break;
-
-            default:
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            value = fval;
+            break;
         }
-        if ( (n == 0) || (value > maxvalue) ) {
-            maxvalue = value;
+
+        case IB_FTYPE_UNUM:
+        {
+            ib_unum_t fval;
+            rc = ib_field_value(ifield, ib_ftype_unum_out(&fval));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            if (fval > INT64_MAX) {
+                IB_FTRACE_RET_STATUS(IB_EOTHER);
+            }
+            value = (ib_num_t)fval;
+            break;
+        }
+
+        case IB_FTYPE_NULSTR:
+        {
+            const char *fval;
+            rc = ib_field_value(ifield, ib_ftype_nulstr_out(&fval));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            value = (ib_num_t)strlen(fval);
+            break;
+        }
+
+        case IB_FTYPE_BYTESTR:
+        {
+            const ib_bytestr_t *fval;
+            rc = ib_field_value(ifield, ib_ftype_bytestr_out(&fval));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            value = (ib_num_t)ib_bytestr_length(fval);
+            break;
+        }
+
+        case IB_FTYPE_LIST:
+        {
+            ib_field_t *tmp = NULL;
+            ib_num_t v;
+
+            rc = list_minmax(is_max, mp, fin, &tmp);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            rc = ib_field_value(tmp, ib_ftype_num_out(&v));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            value = v;
+            break;
+        }
+
+        default:
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        if ( (first == IB_TRUE) ||
+             ( ((is_max == IB_TRUE) && (value > mmvalue)) ||
+               ((is_max == IB_FALSE) && (value < mmvalue)) ) )
+        {
+            first = IB_FALSE;
+            mmvalue = value;
         }
     }
 
     /* Create the output field */
-    rc = ib_field_create(
-        fout, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
-        ib_ftype_num_in(&maxvalue)
-    );
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Get the minimum of a list of items
- * @internal
- *
- * @param[in] mp Memory pool to use for allocations.
- * @param[in] fin Input field.
- * @param[out] fout Output field.
- *
- * @returns IB_OK if successful.
- */
-static ib_status_t min_list(ib_mpool_t *mp,
-                            ib_field_t *fin,
-                            ib_field_t **fout)
-{
-    IB_FTRACE_INIT();
-    ib_status_t     rc = IB_OK;
-    ib_list_node_t *node = NULL;
-    ib_num_t        minvalue = 0;
-    ib_num_t        n = 0;
-    ib_list_t      *lst;
-
-    assert(mp != NULL);
-    assert(fin != NULL);
-    assert(fout != NULL);
-
-    /* Get the incoming list */
-    // @todo Remove mutable once list is const correct.
-    rc = ib_field_mutable_value(fin, ib_ftype_list_mutable_out(&lst));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (lst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Walk through the incoming fields */
-    IB_LIST_LOOP(lst, node) {
-        ib_field_t *ifield = (ib_field_t *)node->data;
-        ib_num_t value;
-
-        switch (ifield->type) {
-            case IB_FTYPE_NUM:
-                {
-                    ib_num_t fval;
-                    rc = ib_field_value(ifield, ib_ftype_num_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-
-                    value = fval;
-                }
-                break;
-
-            case IB_FTYPE_UNUM:
-                {
-                    ib_unum_t fval;
-                    rc = ib_field_value(ifield, ib_ftype_unum_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-
-                    if (fval > INT64_MAX) {
-                        IB_FTRACE_RET_STATUS(IB_EOTHER);
-                    }
-                    value = (ib_num_t)fval;
-                }
-                break;
-
-            case IB_FTYPE_NULSTR:
-                {
-                    const char *fval;
-                    rc = ib_field_value(ifield, ib_ftype_nulstr_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-
-                    value = (ib_num_t)strlen(fval);
-                }
-                break;
-
-            case IB_FTYPE_BYTESTR:
-                {
-                    const ib_bytestr_t *fval;
-                    rc = ib_field_value(ifield, ib_ftype_bytestr_out(&fval));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-
-                    value = (ib_num_t)ib_bytestr_length(fval);
-                }
-                break;
-
-            case IB_FTYPE_LIST:
-                {
-                    ib_field_t *tmp = NULL;
-                    ib_num_t v;
-
-                    rc = max_list(mp, fin, &tmp);
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-                    rc = ib_field_value(tmp, ib_ftype_num_out(&v));
-                    if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-                    value = v;
-                }
-                break;
-
-            default:
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-
-        if ( (n == 0) || (value < minvalue) ) {
-            minvalue = value;
-        }
-    }
-
-    /* Create the output field */
-    rc = ib_field_create(
-        fout, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
-        ib_ftype_num_in(&minvalue)
-    );
+    rc = ib_field_create(fout, mp,
+                         fin->name, fin->nlen,
+                         IB_FTYPE_NUM, ib_ftype_num_in(&mmvalue));
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1001,7 +623,7 @@ static ib_status_t min_list(ib_mpool_t *mp,
 static ib_status_t tfn_max(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
-                           ib_field_t *fin,
+                           const ib_field_t *fin,
                            ib_field_t **fout,
                            ib_flags_t *pflags)
 {
@@ -1016,11 +638,11 @@ static ib_status_t tfn_max(ib_engine_t *ib,
     switch (fin->type) {
         case IB_FTYPE_NUM:
         case IB_FTYPE_UNUM:
-            *fout = fin;
+            *fout = (ib_field_t *)fin;
             break;
 
         case IB_FTYPE_LIST:
-            rc = max_list(mp, fin, fout);
+            rc = list_minmax(IB_TRUE, mp, fin, fout);
             (*pflags) |= IB_TFN_FMODIFIED;
             break;
 
@@ -1046,7 +668,7 @@ static ib_status_t tfn_max(ib_engine_t *ib,
 static ib_status_t tfn_min(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
-                           ib_field_t *fin,
+                           const ib_field_t *fin,
                            ib_field_t **fout,
                            ib_flags_t *pflags)
 {
@@ -1061,12 +683,12 @@ static ib_status_t tfn_min(ib_engine_t *ib,
     switch (fin->type) {
         case IB_FTYPE_NUM:
         case IB_FTYPE_UNUM:
-            *fout = fin;
+            *fout = (ib_field_t *)fin;
             rc = IB_OK;
             break;
 
         case IB_FTYPE_LIST:
-            rc = min_list(mp, fin, fout);
+            rc = list_minmax(IB_TRUE, mp, fin, fout);
             (*pflags) |= IB_TFN_FMODIFIED;
             break;
 

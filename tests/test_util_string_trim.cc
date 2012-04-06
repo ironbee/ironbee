@@ -26,10 +26,12 @@
 
 #include <ironbee/types.h>
 #include <ironbee/string.h>
+#include <ironbee/util.h>
 
 #include "ironbee_util_private.h"
 
 #include "ibtest_textbuf.hh"
+#include "ibtest_strbase.hh"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
@@ -63,7 +65,7 @@ public:
           m_lineno(lno), m_cutleft(skip), m_cutright(cut), m_choplen(0) {
     };
 
-    const char *GetBuf(void) const { return m_chopbuf; };
+    char *GetBuf(void) const { return m_chopbuf; };
     size_t GetLen(void) const { return m_choplen; };
     const char *GetFmt(void) const {
         if (IsFmtValid() == false) {
@@ -77,7 +79,8 @@ public:
         return m_fmtbuf;
     };
 
-    bool BuildChopBuf(bool skip, bool cut) const {
+    bool BuildChopBuf(bool skip, bool cut) const
+    {
         m_choplen = m_len;
         const char *start = m_buf;
         if (skip == true) {
@@ -103,24 +106,19 @@ protected:
     mutable size_t  m_choplen;
 };
 
-
 // Single test data point
-class TestDatum
+class TestDatum : public BaseTestDatum
 {
 public:
     TestDatum(void)
-        : m_end(true),
-          m_lineno(0),
-          m_inbuf(BufSize, ""),
+        : BaseTestDatum(),
           m_exvalid(false),
           m_exconst(true),
           m_exout(0, "")
     { };
 
     TestDatum(size_t lno, const char *in, const char *exout)
-        : m_end(false),
-          m_lineno(lno),
-          m_inbuf(BufSize, in),
+        : BaseTestDatum(lno, BufSize, in),
           m_exvalid(false),
           m_exconst(true),
           m_exout(lno, exout),
@@ -128,9 +126,7 @@ public:
     { };
 
     TestDatum(size_t lno, const char *in, size_t skip, size_t cut)
-        : m_end(false),
-          m_lineno(lno),
-          m_inbuf(BufSize, in),
+        : BaseTestDatum(lno, BufSize, in),
           m_exvalid(false),
           m_exconst(false),
           m_exout(lno, in, skip, cut)
@@ -141,9 +137,7 @@ public:
     TestDatum(size_t lno,
               const char *in, size_t inlen,
               size_t skip, size_t cut)
-        : m_end(false),
-          m_lineno(lno),
-          m_inbuf(BufSize, in, inlen),
+        : BaseTestDatum(lno, BufSize, in, inlen),
           m_exvalid(false),
           m_exconst(false),
           m_exout(lno, in, inlen, skip, cut)
@@ -151,13 +145,10 @@ public:
     };
 
     // Accessors
-    size_t LineNo(void) const { return m_lineno; };
-    bool IsEnd(void) const { return m_end; };
     void ClearExpected(void) const { m_exvalid = false; };
     void SetByteStr(bool is_bytestr) const {
         m_exout.SetByteStr(is_bytestr);
     };
-    const TextBuf &Inbuf(void) const { return m_inbuf; };
     const ExTextBuf &ExpectedOut(void) const {
         assert (m_exvalid == true);
         return m_exout;
@@ -179,9 +170,6 @@ public:
     };
 
 private:
-    bool               m_end;         // Special case: End marker.
-    size_t             m_lineno;      // Test's line number
-    TextBuf            m_inbuf;       // Input text buffer
     mutable bool       m_exvalid;     // Expected output valid?
     mutable bool       m_exconst;     // Expected output constant?
     mutable ExTextBuf  m_exout;       // Expected output text
@@ -189,125 +177,122 @@ private:
 };
 
 
-// Formatted call text buffer
-class CallTextBuf : public TextBuf
+class TestIBUtilStrTrimBase : public BaseStrModTest
 {
 public:
-    CallTextBuf(const char *fn) : TextBuf(CallBufSize, fn) { };
-    
-    const char *Stringize(const TestDatum &datum)
+    TestIBUtilStrTrimBase(ib_strmod_fn_t fn, const char *fn_name,
+                          ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
+        : BaseStrModTest(BufSize, CallBufSize, fn, fn_name, ex_fn, ex_fn_name)
     {
-        snprintf(m_fmtbuf, m_size,
-                 "%s(\"%s\", ...)", m_buf, datum.Inbuf().GetFmt() );
-        return m_fmtbuf;
-    };
-};
+    }
 
-class TestIBUtilStrTrimBase : public ::testing::Test
-{
-public:
-    TestIBUtilStrTrimBase(const char *fn)
-        : m_callbuf(fn)
-    { }
+    bool ExpectCowAliasLeft(bool mod) const
+    {
+        bool ls = LeftSpace();
+        bool as = AllSpace();
 
-    ib_bool_t BuildExpBuf(const TestDatum &test) const {
-        return test.BuildChopBuf(ChopLeft(), ChopRight());
+        if ( (mod == false) || (as == true) || (ls == true) ) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    bool ExpectCowAliasRight(bool mod) const
+    {
+        bool rs = RightSpace();
+        bool as = AllSpace();
+
+        if ( (mod == false) || (as == true) ) {
+            return true;
+        }
+        else if ( (IsByteStr() == true) && (rs == true) ) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    bool ExpectCowAliasLr(bool mod) const
+    {
+        bool ls = LeftSpace();
+        bool rs = RightSpace();
+        bool as = AllSpace();
+
+        if ( (mod == false) || (as == true) ) {
+            return true;
+        }
+        else if ( (IsByteStr() == true) && (rs == true) ) {
+            return true;
+        }
+        else if ( (ls == true) && (rs == false) ) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    ib_flags_t BuildExpBuf(ib_strop_t op, const TestDatum &test) const
+    {
+        bool left = ChopLeft();
+        bool right = ChopRight();
+        ib_bool_t mod = test.BuildChopBuf(left, right);
+        return ExpectedResult(op, mod);
     }
 
     // Specify these for specific tests
     virtual bool ChopLeft(void) const = 0;
     virtual bool ChopRight(void) const = 0;
-    virtual const char *FnName(void) const = 0;
-
-    const char *BoolStr(ib_bool_t v) {
-        return (v == IB_TRUE ? "IB_TRUE" : "IB_FALSE");
-    }
-
-    const char *Stringize(const TestDatum &test) {
-        return m_callbuf.Stringize(test);
-    }
-
-    void RunTests( const TestDatum test_data[] ) {
-        const TestDatum *test;
-        ib_status_t rc;
-        for (test = test_data;  test->IsEnd() == false;  ++test) {
-            ib_bool_t modified;
-            test->ClearExpected();
-            test->SetByteStr( IsByteStr() );
-            rc = RunTest(*test, modified);
-            CheckResults(*test, rc, modified);
-        }
-    }
 
     // Specify these for str/ex versions
     virtual bool IsByteStr(void) const = 0;
-    virtual ib_status_t RunTest(const TestDatum &test,
-                                ib_bool_t &modified) = 0;
+
+    // Specify these for str/ex versions
     virtual void CheckResults(const TestDatum &test,
                               ib_status_t rc,
-                              ib_bool_t modified) = 0;
+                              ib_flags_t result) = 0;
 
-protected:
-    CallTextBuf       m_callbuf;       // Call string buffer
+    void RunTests( ib_strop_t op, const TestDatum test_data[] )
+    {
+        const TestDatum *test;
+        ib_status_t rc;
+
+        SetOp( op );
+        for (test = test_data;  test->IsEnd() == false;  ++test) {
+            ib_flags_t result;
+            test->ClearExpected();
+            test->SetByteStr( IsByteStr() );
+            rc = RunTest(*test, result);
+            CheckResults(*test, rc, result);
+        }
+    }
 };
 
 
 // Base string version of trim tests
-class TestIBUtilStrTrimStr : public TestIBUtilStrTrimBase
+class TestIBUtilStrTrim : public TestIBUtilStrTrimBase
 {
 public:
-    TestIBUtilStrTrimStr(const char *fn)
-        : TestIBUtilStrTrimBase(fn),
-          m_inbuf(new char[BufSize+1]),
-          m_outbuf(BufSize)
+    TestIBUtilStrTrim(ib_strmod_fn_t fn, const char *name)
+        : TestIBUtilStrTrimBase(fn, name, NULL, NULL)
     {
     }
-
-    ~TestIBUtilStrTrimStr()
-    {
-        delete [] m_inbuf;
-    }
-
-    // This is test specific
-    virtual ib_status_t RunTestFn(char *in,
-                                  char **out,
-                                  ib_bool_t *modified) = 0;
-
 
     virtual bool IsByteStr(void) const { return false; };
-    virtual ib_status_t RunTest(const TestDatum &test, ib_bool_t &modified)
-    {
-        char *out = NULL;
-        ib_status_t rc;
-        
-        strncpy(m_inbuf, test.Inbuf().GetBuf(), BufSize);
-        rc = RunTestFn(m_inbuf, &out, &modified);
-        if (rc == IB_OK) {
-            m_outbuf.SetStr(out);
-        }
-        return rc;
-    }
 
     virtual void CheckResults(const TestDatum &test,
                               ib_status_t rc,
-                              ib_bool_t modified)
+                              ib_flags_t result)
     {
         size_t lno = test.LineNo();
         const char *out = m_outbuf.GetBuf();
-        ib_bool_t exmod;
+        ib_flags_t exresult;
 
-        EXPECT_EQ(IB_OK, rc)
-            << "Line " << lno << ": " << Stringize(test) << " returned " << rc;
-        if (rc != IB_OK) {
-            return;
-        }
-
-        // Build the expected output
-        exmod = BuildExpBuf(test);
-        EXPECT_EQ(exmod, modified)
-            << "Line " << lno << ": " << Stringize(test)
-            << " expected modified=" << BoolStr(exmod)
-            << " actual=" << BoolStr(modified);
+        exresult = BuildExpBuf(m_op, test);
+        CheckResult(lno, test, rc, exresult, result);
 
         EXPECT_STRNE(NULL, out)
             << "Line " << lno << ": "
@@ -318,58 +303,62 @@ public:
             const char *exbuf = test.ExpectedOut().GetBuf();
             EXPECT_STREQ(exbuf, out)
                 << "Line " << lno << ": " << Stringize(test)
-                << " expected=\"" << test.ExpectedOut().GetFmt()
+                << " expected=\"" << test.ExpectedOut().GetFmt() << "\""
                 << " actual=\""   << m_outbuf.GetFmt() << "\"";
         }
     }
-
-protected:
-    char      *m_inbuf;         // Copy of input
-    TextBuf    m_outbuf;        // Output buffer
 };
 
 // Left trim tests
-class TestIBUtilStrTrimLeft : public TestIBUtilStrTrimStr
+class TestIBUtilStrTrimLeft : public TestIBUtilStrTrim
 {
 public:
-    TestIBUtilStrTrimLeft( ) : TestIBUtilStrTrimStr( FnName() )
+    TestIBUtilStrTrimLeft( ) :
+        TestIBUtilStrTrim( ib_strtrim_left, FnName() )
     { };
 
-    ib_status_t RunTestFn(char *in, char **out, ib_bool_t *modified) {
-        return ::ib_strtrim_left(in, out, modified);
-    }
     bool ChopLeft(void) const { return true; };
     bool ChopRight(void) const { return false; };
+
+    bool ExpectCowAlias(bool mod) const
+    {
+        return ExpectCowAliasLeft(mod);
+    }
     const char *FnName(void) const { return "ib_strtrim_left"; };
 };
 
 // Right trim tests
-class TestIBUtilStrTrimRight : public TestIBUtilStrTrimStr
+class TestIBUtilStrTrimRight : public TestIBUtilStrTrim
 {
 public:
-    TestIBUtilStrTrimRight( ) : TestIBUtilStrTrimStr( FnName() )
+    TestIBUtilStrTrimRight( ) :
+        TestIBUtilStrTrim( ib_strtrim_right, FnName() )
     { };
 
-    ib_status_t RunTestFn(char *in, char **out, ib_bool_t *modified) {
-        return ::ib_strtrim_right(in, out, modified);
-    }
     bool ChopLeft(void) const { return false; };
     bool ChopRight(void) const { return true; };
+
+    bool ExpectCowAlias(bool mod) const
+    {
+        return ExpectCowAliasRight(mod);
+    }
     const char *FnName(void) const { return "ib_strtrim_right"; };
 };
 
 // Left/Right trim tests
-class TestIBUtilStrTrimLr : public TestIBUtilStrTrimStr
+class TestIBUtilStrTrimLr : public TestIBUtilStrTrim
 {
 public:
-    TestIBUtilStrTrimLr( ) : TestIBUtilStrTrimStr( FnName() )
+    TestIBUtilStrTrimLr( ) :
+        TestIBUtilStrTrim( ib_strtrim_lr, FnName() )
     { };
-
-    ib_status_t RunTestFn(char *in, char **out, ib_bool_t *modified) {
-        return ::ib_strtrim_lr(in, out, modified);
-    }
     bool ChopLeft(void) const { return true; };
     bool ChopRight(void) const { return true; };
+
+    bool ExpectCowAlias(bool mod) const
+    {
+        return ExpectCowAliasLr(mod);
+    }
     const char *FnName(void) const { return "ib_strtrim_lr"; };
 };
 
@@ -377,58 +366,23 @@ public:
 class TestIBUtilStrTrimEx : public TestIBUtilStrTrimBase
 {
 public:
-    TestIBUtilStrTrimEx(const char *fn)
-        : TestIBUtilStrTrimBase(fn),
-          m_inbuf(BufSize),
-          m_outbuf(BufSize)
+    TestIBUtilStrTrimEx(ib_strmod_ex_fn_t fn, const char *fn_name )
+        : TestIBUtilStrTrimBase(NULL, NULL, fn, fn_name)
     {
     }
-
-    // This is test specific
-    virtual ib_status_t RunTestFn(uint8_t *in,
-                                  size_t inlen,
-                                  uint8_t **out,
-                                  size_t *outlen,
-                                  ib_bool_t *modified) = 0;
 
     virtual bool IsByteStr(void) const { return true; };
-    ib_status_t RunTest(const TestDatum &test, ib_bool_t &modified)
-    {
-        uint8_t *out;
-        size_t outlen;
-        ib_status_t rc;
-
-        m_inbuf.SetText(test.Inbuf().GetBuf(), test.Inbuf().GetLen());
-        rc = RunTestFn((uint8_t *)m_inbuf.GetBuf(), m_inbuf.GetLen(),
-                       &out, &outlen,
-                       &modified);
-        if (rc == IB_OK) {
-            m_outbuf.SetText((char *)out, outlen);
-        }
-        return rc;
-    }
 
     void CheckResults(const TestDatum &test,
                       ib_status_t rc,
-                      ib_bool_t modified)
+                      ib_flags_t result)
     {
         size_t lno = test.LineNo();
         const char *out = m_outbuf.GetBuf();
         size_t outlen = m_outbuf.GetLen();
-        ib_bool_t exmod;
+        ib_flags_t exresult = BuildExpBuf(m_op, test);
 
-        EXPECT_EQ(IB_OK, rc)
-            << "Line " << lno << ": " << Stringize(test) << " returned " << rc;
-        if (rc != IB_OK) {
-            return;
-        }
-
-        // Build the expected output
-        exmod = BuildExpBuf(test);
-        EXPECT_EQ(exmod, modified)
-            << "Line " << lno << ": " << Stringize(test)
-            << " expected modified=" << BoolStr(exmod)
-            << " actual=" << BoolStr(modified);
+        CheckResult(lno, test, rc, exresult, result);
 
         EXPECT_STRNE(NULL, out)
             << "Line " << lno << ": "
@@ -448,67 +402,57 @@ public:
                 << " actual=\""   << m_outbuf.GetFmt() << "\"";
         }
     }
-
-protected:
-    TextBuf  m_inbuf;         // Copy of input
-    TextBuf  m_outbuf;        // Output buffer
 };
 
 // Left (_ex version) trim tests
 class TestIBUtilStrTrimLeftEx : public TestIBUtilStrTrimEx
 {
 public:
-    TestIBUtilStrTrimLeftEx( ) : TestIBUtilStrTrimEx( FnName() )
+    TestIBUtilStrTrimLeftEx( ) :
+        TestIBUtilStrTrimEx( ib_strtrim_left_ex, FnName() )
     { };
 
     bool ChopLeft(void) const { return true; };
     bool ChopRight(void) const { return false; };
-    const char *FnName(void) const { return "ib_strtrim_left_ex"; };
-
-    ib_status_t RunTestFn(uint8_t *in, size_t inlen,
-                          uint8_t **out, size_t *outlen,
-                          ib_bool_t *modified) {
-        return ::ib_strtrim_left_ex(in, inlen, out, outlen, modified);
+    bool ExpectCowAlias(bool mod) const
+    {
+        return ExpectCowAliasLeft(mod);
     }
-
+    const char *FnName(void) const { return "ib_strtrim_left_ex"; };
 };
 
 // Right (_ex version) trim tests
 class TestIBUtilStrTrimRightEx : public TestIBUtilStrTrimEx
 {
 public:
-    TestIBUtilStrTrimRightEx( ) : TestIBUtilStrTrimEx( FnName() )
+    TestIBUtilStrTrimRightEx( ) :
+        TestIBUtilStrTrimEx( ib_strtrim_right_ex, FnName() )
     { };
 
     bool ChopLeft(void) const { return false; };
     bool ChopRight(void) const { return true; };
-    const char *FnName(void) const { return "ib_strtrim_right_ex"; };
-
-    ib_status_t RunTestFn(uint8_t *in, size_t inlen,
-                          uint8_t **out, size_t *outlen,
-                          ib_bool_t *modified) {
-        return ::ib_strtrim_right_ex(in, inlen, out, outlen, modified);
+    bool ExpectCowAlias(bool mod) const
+    {
+        return ExpectCowAliasRight(mod);
     }
-
+    const char *FnName(void) const { return "ib_strtrim_right_ex"; };
 };
 
 // Left/Right (_ex version) trim tests
 class TestIBUtilStrTrimLrEx : public TestIBUtilStrTrimEx
 {
 public:
-    TestIBUtilStrTrimLrEx( ) : TestIBUtilStrTrimEx( FnName() )
+    TestIBUtilStrTrimLrEx( ) :
+        TestIBUtilStrTrimEx( ib_strtrim_lr_ex, FnName() )
     { };
 
     bool ChopLeft(void) const { return true; };
     bool ChopRight(void) const { return true; };
-    const char *FnName(void) const { return "ib_strtrim_lr_ex"; };
-
-    ib_status_t RunTestFn(uint8_t *in, size_t inlen,
-                          uint8_t **out, size_t *outlen,
-                          ib_bool_t *modified) {
-        return ::ib_strtrim_lr_ex(in, inlen, out, outlen, modified);
+    bool ExpectCowAlias(bool mod) const
+    {
+        return ExpectCowAliasLr(mod);
     }
-
+    const char *FnName(void) const { return "ib_strtrim_lr_ex"; };
 };
 
 static TestDatum str_test_data [ ] =
@@ -582,34 +526,83 @@ static TestDatum str_test_data [ ] =
 };
 
 // The actual str tests
-TEST_F(TestIBUtilStrTrimLeft, test_strtrim_left)
+TEST_F(TestIBUtilStrTrimLeft, test_strtrim_left_inplace)
 {
-    RunTests( str_test_data );
+    RunTests(IB_STROP_INPLACE, str_test_data);
+}
+TEST_F(TestIBUtilStrTrimLeft, test_strtrim_left_copy)
+{
+    RunTests(IB_STROP_COPY, str_test_data);
+}
+TEST_F(TestIBUtilStrTrimLeft, test_strtrim_left_COW)
+{
+    RunTests(IB_STROP_COW, str_test_data);
 }
 
-TEST_F(TestIBUtilStrTrimRight, test_strtrim_right)
+TEST_F(TestIBUtilStrTrimRight, test_strtrim_right_inplace)
 {
-    RunTests( str_test_data );
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimRight, test_strtrim_right_copy)
+{
+    RunTests(IB_STROP_COPY, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimRight, test_strtrim_right_COW)
+{
+    RunTests(IB_STROP_COW, str_test_data );
 }
 
-TEST_F(TestIBUtilStrTrimLr, test_strtrim_lr)
+TEST_F(TestIBUtilStrTrimLr, test_strtrim_lr_inplace)
 {
-    RunTests( str_test_data );
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimLr, test_strtrim_lr_copy)
+{
+    RunTests(IB_STROP_COPY, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimLr, test_strtrim_lr_COW)
+{
+    RunTests(IB_STROP_COW, str_test_data );
 }
 
 // Test the ex versions with normal strings
-TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_strex)
+TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_inplace_ex)
 {
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_copy_ex)
+{
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_COW_ex)
+{
+    RunTests(IB_STROP_INPLACE, str_test_data );
 }
 
-TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_strex)
+TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_inplace_ex)
 {
-    RunTests( str_test_data );
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_copy_ex)
+{
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_COW_ex)
+{
+    RunTests(IB_STROP_INPLACE, str_test_data );
 }
 
-TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_strex)
+TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_inplace_ex)
 {
-    RunTests( str_test_data );
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_copy_ex)
+{
+    RunTests(IB_STROP_INPLACE, str_test_data );
+}
+TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_COW_ex)
+{
+    RunTests(IB_STROP_INPLACE, str_test_data );
 }
 
 static TestDatum ex_test_data [ ] =
@@ -652,17 +645,41 @@ static TestDatum ex_test_data [ ] =
 };
 
 // The actual bytestr tests
-TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_ex)
+TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_inplace_bs_ex)
 {
-    RunTests( ex_test_data );
+    RunTests(IB_STROP_INPLACE, ex_test_data );
+}
+TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_copy_bs_ex)
+{
+    RunTests(IB_STROP_INPLACE, ex_test_data );
+}
+TEST_F(TestIBUtilStrTrimLeftEx, test_strtrim_left_COW_bs_ex)
+{
+    RunTests(IB_STROP_INPLACE, ex_test_data );
 }
 
-TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_ex)
+TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_inplace_bs_ex)
 {
-    RunTests( ex_test_data );
+    RunTests(IB_STROP_INPLACE, ex_test_data );
+}
+TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_copy_bs_ex)
+{
+    RunTests(IB_STROP_INPLACE, ex_test_data );
+}
+TEST_F(TestIBUtilStrTrimRightEx, test_strtrim_right_COW_bs_ex)
+{
+    RunTests(IB_STROP_INPLACE, ex_test_data );
 }
 
-TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_ex)
+TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_inplace_bs_ex)
 {
-    RunTests( ex_test_data );
+    RunTests(IB_STROP_INPLACE, ex_test_data );
+}
+TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_copy_bs_ex)
+{
+    RunTests(IB_STROP_INPLACE, ex_test_data );
+}
+TEST_F(TestIBUtilStrTrimLrEx, test_strtrim_lr_COW_bs_ex)
+{
+    RunTests(IB_STROP_INPLACE, ex_test_data );
 }

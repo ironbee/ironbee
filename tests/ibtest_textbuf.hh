@@ -22,6 +22,8 @@
 /// 
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
+#ifndef __IBTEST_TEXTBUF_HH__
+#define __IBTEST_TEXTBUF_HH__
 
 #include "ironbee_config_auto.h"
 
@@ -41,21 +43,21 @@ public:
           m_fmtsize(2*bufsize), m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr("");
-    };
+    }
 
     TextBuf(size_t bufsize, const char *s)
         : m_size(bufsize), m_buf(new char [bufsize+1]),
           m_fmtsize(2*bufsize), m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr(s);
-    };
+    }
 
     TextBuf(size_t bufsize, const char *text, size_t len)
         : m_size(bufsize), m_buf(new char [bufsize]),
           m_fmtsize(2*bufsize), m_fmtbuf(new char [bufsize*2])
     {
         SetText(text, len);
-    };
+    }
 
     virtual ~TextBuf(){}
 
@@ -67,6 +69,16 @@ public:
         m_bytestr = is_bytestr;
         InvalidateFmt( );
         return m_len;
+    }
+
+    size_t Set(const TextBuf &other)
+    {
+        if (other.IsByteStr() ) {
+            return SetText(other.GetText(), other.GetLen());
+        }
+        else {
+            return SetStr(other.GetStr());
+        }
     }
 
     size_t SetStr(const char *s, bool is_bytestr=false)
@@ -82,7 +94,7 @@ public:
         return m_len;
     };
 
-    size_t SetText(const char *text, size_t len)
+    size_t SetText(const uint8_t *text, size_t len)
     {
         assert (len < m_size);
         if (text == NULL) {
@@ -96,6 +108,11 @@ public:
         return m_len;
     };
 
+    size_t SetText(const char *text, size_t len)
+    {
+        return SetText( (const uint8_t *)text, len);
+    }
+
     void InvalidateFmt(void) const { m_fmtvalid = false; };
     bool IsFmtValid(void) const { return m_fmtvalid; };
 
@@ -103,11 +120,21 @@ public:
     bool IsByteStr(void) const { return m_bytestr; };
     bool IsNull(void) const { return m_null; };
 
-    virtual const char *GetBuf(void) const {
+    virtual char *GetBuf(void) const
+    {
         return m_null == true ? NULL : m_buf;
     };
+    virtual const char *GetStr(void) const
+    {
+        return GetBuf();
+    };
+    virtual const uint8_t *GetText(void) const
+    {
+        return m_null == true ? NULL : (uint8_t *)m_buf;
+    };
     virtual size_t GetLen(void) const { return m_len; };
-    virtual const char *GetFmt(void) const {
+    virtual const char *GetFmt(void) const
+    {
         if (IsFmtValid() == false) {
             if (m_bytestr) {
                 return BuildFmt(m_buf, m_len);
@@ -119,14 +146,15 @@ public:
         return m_fmtbuf;
     };
 
-    bool operator == (const TextBuf &other) const {
-        //assert(other.IsByteStr() == IsByteStr());
+    bool operator == (const TextBuf &other) const
+    {
         if (IsNull() || other.IsNull() ) {
             return false;
         }
-        if (IsByteStr()) {
+        if (IsByteStr() || other.IsByteStr()) {
             if (GetLen() != other.GetLen()) {
                 return false;
+
             }
             return (memcmp(GetBuf(), other.GetBuf(), GetLen()) == 0);
         }
@@ -194,3 +222,4 @@ protected:
 
 };
 
+#endif

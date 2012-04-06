@@ -267,6 +267,54 @@ ib_bool_t ib_tristate_to_bool(ib_tristate_t tristate, ib_bool_t defbool);
     ( (tristate) == IB_TRI_TRUE ? IB_TRUE : \
       (tristate) == IB_TRI_FALSE ? IB_FALSE : (defbool) )
 
+/**
+ * Test if any of a set of flags is set
+ *
+ * @param[in] flags Flags to test
+ * @param[in] check Flag bits to test check in @a flags
+ *
+ * @returns boolean value
+ */
+ib_bool_t ib_flags_any(ib_flags_t flags, ib_flags_t check);
+#define ib_flags_any(flags,check) \
+    ( ( ((flags) & (check)) != 0) ? IB_TRUE : IB_FALSE)
+
+/**
+ * Test if all of a set of flags is set
+ *
+ * @param[in] flags Flags to test
+ * @param[in] check Flag bits to test check in @a flags
+ *
+ * @returns boolean value
+ */
+ib_bool_t ib_flags_all(ib_flags_t flags, ib_flags_t check);
+#define ib_flags_all(flags,check) \
+    ( ( ((flags) & (check)) == (check)) ? IB_TRUE : IB_FALSE)
+
+/**
+ * Set flag bits
+ *
+ * @param[in] flags Flags to modify
+ * @param[in] flags_set Flag bits to set in @a flags
+ *
+ * @returns updated flags
+ */
+ib_bool_t ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
+#define ib_flags_set(flags,flags_set) \
+    ( (flags) | (flags_set) )
+
+/**
+ * Clear flag bits
+ *
+ * @param[in] flags Flags to modify
+ * @param[in] flags_clear Flag bits to clear in @a flags
+ *
+ * @returns updated flags
+ */
+ib_bool_t ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
+#define ib_flags_clear(flags,flags_clear) \
+    ( (flags) & (~(flags_clear)) )
+
 
 /**
  * @} IronBeeUtil

@@ -83,56 +83,78 @@ TEST(TestIronBee, test_engine_config_basic)
 static ib_status_t foo2bar(ib_engine_t *ib,
                            ib_mpool_t *mp,
                            void *fndata,
-                           ib_field_t *fin,
+                           const ib_field_t *fin,
                            ib_field_t **fout,
                            ib_flags_t *pflags)
 {
-    ib_status_t rc;
+    ib_status_t rc = IB_OK;
+
     if (fin->type == IB_FTYPE_BYTESTR) {
-        ib_bytestr_t *ibs;
-        rc = ib_field_mutable_value(fin, ib_ftype_bytestr_mutable_out(&ibs));
+        const ib_bytestr_t *ibs;
+        rc = ib_field_value(fin, ib_ftype_bytestr_out(&ibs));
         if (rc != IB_OK) {
             return rc;
         }
         
-        char *data_in;
+        const uint8_t *data_in;
         size_t dlen_in;
+        uint8_t *data_out;
 
         assert (ibs != NULL);
 
-        data_in = (char *)ib_bytestr_ptr(ibs);
+        data_in = ib_bytestr_const_ptr(ibs);
         dlen_in = ib_bytestr_length(ibs);
 
         if ( (data_in != NULL) &&
              (dlen_in == 3) &&
              (strncmp("foo", (char *)data_in, 3) == 0) )
         {
-            *pflags = (IB_TFN_FMODIFIED | IB_TFN_FINPLACE);
-            *(data_in+0) = 'b';
-            *(data_in+1) = 'a';
-            *(data_in+2) = 'r';
+            data_out = (uint8_t *)ib_mpool_alloc(mp, dlen_in);
+            if (data_out == NULL) {
+                return IB_EINVAL;
+            }
+            *pflags = (IB_TFN_FMODIFIED);
+            *(data_out+0) = 'b';
+            *(data_out+1) = 'a';
+            *(data_out+2) = 'r';
         }
-        *fout = fin;
+        else {
+            data_out = (uint8_t *)data_in;
+        }
+        rc = ib_field_create_bytestr_alias(fout, mp,
+                                           fin->name, fin->nlen,
+                                           data_out, dlen_in);
     }
     else if (fin->type == IB_FTYPE_NULSTR) {
-        char *data;
-        rc = ib_field_mutable_value(fin, ib_ftype_nulstr_mutable_out(&data));
+        const char *in;
+        char *out;
+
+        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
         if (rc != IB_OK) {
             return rc;
         }
-        if ( (data != NULL) && (strncmp(data, "foo", 3) == 0) ) {
-            *pflags = (IB_TFN_FMODIFIED | IB_TFN_FINPLACE);
-            *(data+0) = 'b';
-            *(data+1) = 'a';
-            *(data+2) = 'r';
+        if ( (in != NULL) && (strncmp(in, "foo", 3) == 0) ) {
+            out = (char *)ib_mpool_alloc(mp, strlen(in));
+            if (out == NULL) {
+                return IB_EINVAL;
+            }
+
+            *pflags = (IB_TFN_FMODIFIED);
+            *(out+0) = 'b';
+            *(out+1) = 'a';
+            *(out+2) = 'r';
         }
-        *fout = fin;
+        else {
+            out = (char *)in;
+        }
+        rc = ib_field_create(fout, mp, fin->name, fin->nlen,
+                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in(out));
     }
     else {
         return IB_EINVAL;
     }
 
-    return IB_OK;
+    return rc;
 }
 
 /// @test Test ironbee library - transformation registration
@@ -166,8 +188,7 @@ TEST(TestIronBee, test_tfn)
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
-    ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags));
-    ASSERT_EQ(fin, fout);
+    ASSERT_NE(fin, fout);
 
     strcpy((char *)data_in, "foo");
     fin = NULL;
@@ -182,8 +203,7 @@ TEST(TestIronBee, test_tfn)
     ASSERT_EQ(rc, IB_OK);
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
-    ASSERT_TRUE(IB_TFN_CHECK_FINPLACE(flags));
-    ASSERT_EQ(fin, fout);
+    ASSERT_NE(fin, fout);
 
     ibtest_engine_destroy(ib);
 }

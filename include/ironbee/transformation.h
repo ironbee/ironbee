@@ -47,6 +47,7 @@ extern "C" {
  * Transformation function.
  *
  * @param[in] fndata Transformation function data (config)
+ * @param[in] pool Memory pool to use for allocations
  * @param[in] fin Input field
  * @param[out] fout Output field
  * @param[in,out] flags Address of flags set by transformation
@@ -56,7 +57,7 @@ extern "C" {
 typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    ib_mpool_t *pool,
                                    void *fndata,
-                                   ib_field_t *fin,
+                                   const ib_field_t *fin,
                                    ib_field_t **data_out,
                                    ib_flags_t *pflags);
 
@@ -72,9 +73,8 @@ struct ib_tfn_t {
 };
 
 /** Set if transformation modified the value. */
+#define IB_TFN_NONE                (0x0)
 #define IB_TFN_FMODIFIED          (1<<0)
-/** Set if transformation performed an in-place operation. */
-#define IB_TFN_FINPLACE           (1<<1)
 
 /**
  * Check if FMODIFIED flag is set.
@@ -84,15 +84,6 @@ struct ib_tfn_t {
  * @returns True if FMODIFIED flag is set
  */
 #define IB_TFN_CHECK_FMODIFIED(f) ((f) & IB_TFN_FMODIFIED)
-
-/**
- * Check if FINPLACE flag is set.
- *
- * @param f Transformation flags
- *
- * @returns True if FINPLACE flag is set
- */
-#define IB_TFN_CHECK_FINPLACE(f) ((f) & IB_TFN_FINPLACE)
 
 
 /**

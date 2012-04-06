@@ -17,7 +17,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee &mdash; String Util Test Functions
+/// @brief IronBee - String Util Test Functions
 /// 
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
@@ -30,7 +30,6 @@
 #include "ironbee_util_private.h"
 
 #include "ibtest_textbuf.hh"
-#include "ibtest_strbase.hh"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
@@ -40,106 +39,180 @@
 const size_t BufSize = 64;
 const size_t CallBufSize = BufSize + 32;
 
+
 // Single test data point
-class TestDatum : public BaseTestDatum
+class TestDatum
 {
 public:
     TestDatum(void)
-        : BaseTestDatum(),
-          m_exbuf_remove(BufSize, ""),
-          m_exbuf_compress(BufSize, "")
+        : m_end(true),
+          m_lineno(0),
+          m_inbuf(BufSize, ""),
+          m_exbuf(BufSize, "")
     { };
 
-    TestDatum(size_t lno,
-              const char *in,
-              const char *exstr_remove,
-              const char *exstr_compress)
-        : BaseTestDatum(lno, BufSize, in),
-          m_exbuf_remove(BufSize, exstr_remove),
-          m_exbuf_compress(BufSize, exstr_compress)
+    // Constructor with in and out strings
+    TestDatum(size_t lno, const char *in, const char *ex)
+        : m_end(false),
+          m_lineno(lno),
+          m_inbuf(BufSize, in),
+          m_exbuf(BufSize, ex)
+    { };
+
+    // Constructor with only input string
+    TestDatum(size_t lno, const char *in)
+        : m_end(false),
+          m_lineno(lno),
+          m_inbuf(BufSize, in),
+          m_exbuf(BufSize, in)
     { };
 
     // Ex version
     TestDatum(size_t lno,
               const char *in, size_t inlen,
-              const char *exstr_remove, size_t exlen_remove,
-              const char *exstr_compress, size_t exlen_compress)
-        : BaseTestDatum(lno, BufSize, in, inlen),
-          m_exbuf_remove(BufSize, exstr_remove, exlen_remove),
-          m_exbuf_compress(BufSize, exstr_compress, exlen_compress)
+              const char *ex, size_t exlen)
+        : m_end(false),
+          m_lineno(lno),
+          m_inbuf(BufSize, in, inlen),
+          m_exbuf(BufSize, ex, exlen)
+    {
+    };
+
+    // Ex version with only input
+    TestDatum(size_t lno,
+              const char *in, size_t inlen)
+        : m_end(false),
+          m_lineno(lno),
+          m_inbuf(BufSize, in, inlen),
+          m_exbuf(BufSize, in, inlen)
     {
     };
 
     // Accessors
-    const TextBuf &ExpectedOutRemove() const { return m_exbuf_remove; };
-    const TextBuf &ExpectedOutCompress() const { return m_exbuf_compress; };
+    size_t LineNo(void) const { return m_lineno; };
+    bool IsEnd(void) const { return m_end; };
+    const TextBuf &InBuf(void) const { return m_inbuf; };
+    const TextBuf &ExpectedBuf() const { return m_exbuf_remove; };
 
 private:
-    TextBuf     m_exbuf_remove;   // Expected output text
-    TextBuf     m_exbuf_compress; // Expected output text
+    bool        m_end;            // Special case: End marker.
+    size_t      m_lineno;         // Test's line number
+    TextBuf     m_inbuf;          // Input text buffer
+    TextBuf     m_exbuf;          // Expected output text
 };
 
-class TestIBUtilStrWspcBase : public BaseStrModTest
+
+// Formatted call text buffer
+class CallTextBuf : public TextBuf
 {
 public:
-    TestIBUtilStrWspcBase(ib_strmod_fn_t fn, const char *fn_name,
-                          ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
-        : BaseStrModTest(BufSize, CallBufSize, fn, fn_name, ex_fn, ex_fn_name)
+    CallTextBuf(const char *fn) : TextBuf(CallBufSize, fn) { };
+    
+    const char *Stringize(const TestDatum &datum)
     {
+        snprintf(m_fmtbuf, m_size,
+                 "%s(\"%s\", ...)", m_buf, datum.InBuf().GetFmt());
+        return m_fmtbuf;
+    };
+};
+
+class TestIBUtilStrLowerBase : public ::testing::Test
+{
+public:
+    TestIBUtilStrLowerBase(const char *fn) : m_callbuf(fn) {
+        ib_status_t rc = ib_mpool_create(&m_mpool, "Test", NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not create mpool.");
+        }
+    }
+
+    const char *BoolStr(ib_bool_t v) {
+        return (v == IB_TRUE ? "IB_TRUE" : "IB_FALSE");
+    }
+    const char *Stringize(const TestDatum &test) {
+        return m_callbuf.Stringize(test);
     }
 
     virtual const TextBuf &ExpectedOut(const TestDatum &test) const = 0;
+    virtual const char *FnName(void) const = 0;
 
-    bool ExpectCowAliasRemove(bool mod) const
-    {
-        return false;
-    }
-
-    bool ExpectCowAliasCompress(bool mod) const
-    {
-        return true;
+    void RunTests(const TestDatum *test_data) {
+        const TestDatum *test;
+        ib_status_t rc;
+        for (test = test_data;  test->IsEnd() == false;  ++test) {
+            ib_bool_t modified;
+            rc = RunTest(*test, modified);
+            CheckResults(*test, rc, modified);
+        }
     }
 
     // Specify these for str/ex versions
+    virtual ib_status_t RunTest(const TestDatum &test,
+                                ib_bool_t &modified) = 0;
     virtual void CheckResults(const TestDatum &test,
                               ib_status_t rc,
-                              ib_flags_t result) = 0;
+                              ib_bool_t modified) = 0;
 
-    void RunTests(ib_strop_t op, const TestDatum *test_data)
-    {
-        const TestDatum *test;
-        ib_status_t rc;
-
-        SetOp(op);
-        for (test = test_data;  test->IsEnd() == false;  ++test) {
-            ib_flags_t result;
-            rc = RunTest(*test, result);
-            CheckResults(*test, rc, result);
-        }
-    }
-    virtual ib_tristate_t IsAlias( void ) const = 0;
+protected:
+    CallTextBuf    m_callbuf;       // Call string buffer
+    ib_mpool_t    *m_mpool;         // Memory pool
 };
 
 // Base string version of trim tests
-class TestIBUtilStrWspcStr : public TestIBUtilStrWspcBase
+class TestIBUtilStrLowerStr : public TestIBUtilStrLowerBase
 {
 public:
-    TestIBUtilStrWspcStr(ib_strmod_fn_t fn, const char *fn_name)
-        : TestIBUtilStrWspcBase(fn, fn_name, NULL, NULL)
+    TestIBUtilStrLowerStr(const char *fn)
+        : TestIBUtilStrLowerBase(fn),
+          m_inbuf(new char[BufSize+1]),
+          m_outbuf(BufSize)
     {
+    }
+
+    ~TestIBUtilStrLowerStr()
+    {
+        delete [] m_inbuf;
+    }
+
+    // This is test specific
+    virtual ib_status_t RunTestFn(char *in,
+                                  char **out,
+                                  ib_flags_t *result) = 0;
+
+    virtual ib_status_t RunTest(const TestDatum &test, ib_flags_t &result)
+    {
+        char *out = NULL;
+        ib_status_t rc;
+        
+        strncpy(m_inbuf, test.InBuf().GetBuf(), BufSize);
+        rc = RunTestFn(m_inbuf, &out, &result);
+        if (rc == IB_OK) {
+            m_outbuf.SetStr(out);
+        }
+        return rc;
     }
 
     virtual void CheckResults(const TestDatum &test,
                               ib_status_t rc,
-                              ib_flags_t result)
+                              ib_bool_t modified)
     {
         size_t lno = test.LineNo();
         const char *out = m_outbuf.GetBuf();
         const TextBuf &exout = ExpectedOut(test);
-        bool exmod = (test.InBuf() != exout);
-        ib_flags_t exresult = ExpectedResult(Op(), exmod);
+        ib_bool_t exmod;
 
-        CheckResult(lno, test, rc, exresult, result);
+        EXPECT_EQ(IB_OK, rc)
+            << "Line " << lno << ": " << Stringize(test) << " returned " << rc;
+        if (rc != IB_OK) {
+            return;
+        }
+
+        // Expect change?
+        exmod = (test.InBuf() == exout) ? IB_FALSE : IB_TRUE;
+        EXPECT_EQ(exmod, modified)
+            << "Line " << lno << ": " << Stringize(test)
+            << " expected modified=" << BoolStr(exmod)
+            << " actual=" << BoolStr(modified);
 
         EXPECT_STRNE(NULL, out)
             << "Line " << lno << ": "
@@ -154,129 +227,147 @@ public:
                 << " actual=\""   << m_outbuf.GetFmt() << "\"";
         }
     }
-};
 
-// Remove whitespace tests
-class TestIBUtilStrWspcRemove : public TestIBUtilStrWspcStr
-{
-public:
-    TestIBUtilStrWspcRemove( ) :
-        TestIBUtilStrWspcStr( ib_str_wspc_remove, FnName() )
-    { };
-
-    const char *FnName(void) const { return "ib_str_wspc_remove"; };
-    const TextBuf &ExpectedOut(const TestDatum &test) const {
-        return test.ExpectedOutRemove();
-    };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_FALSE; };
-};
-
-// Right trim tests
-class TestIBUtilStrWspcCompress : public TestIBUtilStrWspcStr
-{
-public:
-    TestIBUtilStrWspcCompress( ) :
-        TestIBUtilStrWspcStr( ib_str_wspc_compress, FnName() )
-    { };
-
-    const char *FnName(void) const { return "ib_str_wspc_compress"; };
-    const TextBuf &ExpectedOut(const TestDatum &test) const {
-        return test.ExpectedOutCompress();
-    };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_FALSE; };
+protected:
+    char      *m_inbuf;         // Copy of input
+    TextBuf    m_outbuf;        // Output buffer
 };
 
 // Base "ex" version of trim tests
-class TestIBUtilStrWspcEx : public TestIBUtilStrWspcBase
+class TestIBUtilStrLowerEx : public TestIBUtilStrLowerBase
 {
 public:
-    TestIBUtilStrWspcEx(ib_strmod_ex_fn_t fn, const char *fn_name) :
-        TestIBUtilStrWspcBase(NULL, NULL, fn, fn_name)
+    TestIBUtilStrLowerEx(const char *fn)
+        : TestIBUtilStrLowerBase(fn),
+          m_inbuf(BufSize),
+          m_outbuf(BufSize)
     {
+    }
+
+    // This is test specific
+    virtual ib_status_t RunTestFn(uint8_t *in,
+                                  size_t inlen,
+                                  uint8_t **out,
+                                  size_t *outlen,
+                                  ib_bool_t *modified) = 0;
+
+    ib_status_t RunTest(const TestDatum &test, ib_bool_t &modified)
+    {
+        uint8_t *out;
+        size_t outlen;
+        ib_status_t rc;
+
+        m_inbuf.SetText(test.InBuf().GetBuf(), test.InBuf().GetLen());
+        rc = RunTestFn((uint8_t *)m_inbuf.GetBuf(), m_inbuf.GetLen(),
+                       &out, &outlen,
+                       &modified);
+        if (rc == IB_OK) {
+            m_outbuf.SetText((char *)out, outlen);
+        }
+        return rc;
     }
 
     void CheckResults(const TestDatum &test,
                       ib_status_t rc,
-                      ib_flags_t result)
+                      ib_bool_t modified)
     {
+        size_t lno = test.LineNo();
         const TextBuf &exout = ExpectedOut(test);
-        const TextBuf &ibuf  = test.InBuf();
-        bool exmod = (exout != test.InBuf());
-
-        printf("Compared exout='%s':%zd:%s to inbuf='%s':%zd:%s => %s\n",
-               exout.GetFmt(), exout.GetLen(), BoolStr(exout.IsByteStr()),
-               ibuf.GetFmt(), ibuf.GetLen(), BoolStr(ibuf.IsByteStr()),
-               BoolStr(exmod));
-        printf("exmod = %s\n", BoolStr(exmod));
-        ib_flags_t exresult = ExpectedResult( Op(), exmod );
-        printf("IsByteStr(ex) = %s\n", BoolStr(m_outbuf.IsByteStr()));
-
-        CheckResult(test.LineNo(), test, rc, exresult, result);
-
         const char *out = m_outbuf.GetBuf();
+        size_t outlen = m_outbuf.GetLen();
+        ib_bool_t exmod = (exout == test.InBuf()) ? IB_FALSE : IB_TRUE;
+
+        EXPECT_EQ(IB_OK, rc)
+            << "Line " << lno << ": " << Stringize(test) << " returned " << rc;
+        if (rc != IB_OK) {
+            return;
+        }
+
+        // Build the expected output
+        EXPECT_EQ(exmod, modified)
+            << "Line " << lno << ": " << Stringize(test)
+            << " expected modified=" << BoolStr(exmod)
+            << " actual=" << BoolStr(modified);
+
+        EXPECT_STRNE(NULL, out)
+            << "Line " << lno << ": "
+            << Stringize(test)
+            << " Data out is NULL";
+
         if (out != NULL) {
-            size_t outlen = m_outbuf.GetLen();
             size_t exlen = exout.GetLen();
             EXPECT_EQ(exlen, outlen)
-                << "Line " << test.LineNo() << ": " << Stringize(test)
+                << "Line " << lno << ": " << Stringize(test)
                 << " expected len=" << exlen
                 << ", actual len=" << outlen;
             EXPECT_TRUE(exout == m_outbuf)
-                << "Line " << test.LineNo() << ": " << Stringize(test)
+                << "Line " << lno << ": " << Stringize(test)
                 << " expected=\"" << exout.GetFmt() << "\""
                 << " actual=\""   << m_outbuf.GetFmt() << "\"";
         }
     }
+
+protected:
+    TextBuf  m_inbuf;         // Copy of input
+    TextBuf  m_outbuf;        // Output buffer
 };
 
 // Remove (_ex version) whitespace tests
-class TestIBUtilStrWspcRemoveEx : public TestIBUtilStrWspcEx
+class TestIBUtilStrLowerRemoveEx : public TestIBUtilStrLowerEx
 {
 public:
-    TestIBUtilStrWspcRemoveEx( ) :
-        TestIBUtilStrWspcEx( ib_str_wspc_remove_ex, FnName() )
+    TestIBUtilStrLowerRemoveEx( ) : TestIBUtilStrLowerEx( FnName() )
     { };
 
     const char *FnName(void) const { return "ib_str_wspc_remove_ex"; };
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutRemove();
     };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_TRUE; };
+    ib_status_t RunTestFn(uint8_t *in, size_t inlen,
+                          uint8_t **out, size_t *outlen,
+                          ib_bool_t *modified) {
+        return ::ib_str_wspc_remove_ex(m_mpool,
+                                       in, inlen,
+                                       out, outlen,
+                                       modified);
+    }
+
 };
 
 // Compress (_ex version) whitespace tests
-class TestIBUtilStrWspcCompressEx : public TestIBUtilStrWspcEx
+class TestIBUtilStrLowerCompressEx : public TestIBUtilStrLowerEx
 {
 public:
-    TestIBUtilStrWspcCompressEx( ) :
-        TestIBUtilStrWspcEx( ib_str_wspc_compress_ex, FnName() )
+    TestIBUtilStrLowerCompressEx( ) : TestIBUtilStrLowerEx( FnName() )
     { };
 
     const char *FnName(void) const { return "ib_str_wspc_compress_ex"; };
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutCompress();
     };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_FALSE; };
+    ib_status_t RunTestFn(uint8_t *in, size_t inlen,
+                          uint8_t **out, size_t *outlen,
+                          ib_bool_t *modified) {
+        return ::ib_str_wspc_compress_ex(m_mpool,
+                                         in, inlen,
+                                         out, outlen,
+                                         modified);
+    }
+
 };
 
 static TestDatum str_test_data [ ] =
 {
-    TestDatum(__LINE__, "",            "",        ""),
-    TestDatum(__LINE__, " ",           "",        " "),
-    TestDatum(__LINE__, "\n",          "",        " "),
-    TestDatum(__LINE__, "\t",          "",        " "),
-    TestDatum(__LINE__, "  ",          "",        " "),
-    TestDatum(__LINE__, "  \n",        "",        " "),
-    TestDatum(__LINE__, "\t  \n",      "",        " "),
+    TestDatum(__LINE__, "",            "")
+    TestDatum(__LINE__, "a",           "a"),
+    TestDatum(__LINE__, "ab",          "ab"),
+    TestDatum(__LINE__, "ab:",         "ab:"),
+    TestDatum(__LINE__, ":ab:",        ":ab:"),
 
-    TestDatum(__LINE__, "a",           "a",       "a"),
-    TestDatum(__LINE__, "ab",          "ab",      "ab"),
-    TestDatum(__LINE__, "ab:",         "ab:",     "ab:"),
-
-    TestDatum(__LINE__, "a ",          "a",       "a "),
-    TestDatum(__LINE__, "a   ",        "a",       "a "),
-    TestDatum(__LINE__, "ab   ",       "ab",      "ab "),
-    TestDatum(__LINE__, "ab  \n",      "ab",      "ab "),
+    TestDatum(__LINE__, "a",           "a"),
+    TestDatum(__LINE__, "ab",          "ab"),
+    TestDatum(__LINE__, "ab:",         "ab:"),
+    TestDatum(__LINE__, "ab:",         ":ab:"),
 
     TestDatum(__LINE__, "a",           "a",       "a"),
     TestDatum(__LINE__, " a",          "a",       " a"),
@@ -339,57 +430,24 @@ static TestDatum str_test_data [ ] =
 };
 
 // The actual str tests
-TEST_F(TestIBUtilStrWspcRemove, test_str_wspc_remove_inplace)
+TEST_F(TestIBUtilStrLowerRemove, test_str_wspc_remove)
 {
-    RunTests(IB_STROP_INPLACE, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcRemove, test_str_wspc_remove_copy)
-{
-    RunTests(IB_STROP_COPY, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcRemove, test_str_wspc_remove_cow)
-{
-    RunTests(IB_STROP_COW, str_test_data);
+    RunTests( str_test_data );
 }
 
-TEST_F(TestIBUtilStrWspcCompress, test_str_wspc_compress_inplace)
+TEST_F(TestIBUtilStrLowerCompress, test_str_wspc_compress)
 {
-    RunTests(IB_STROP_INPLACE, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcCompress, test_str_wspc_compress_copy)
-{
-    RunTests(IB_STROP_COPY, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcCompress, test_str_wspc_compress_cow)
-{
-    RunTests(IB_STROP_COW, str_test_data);
+    RunTests( str_test_data );
 }
 
 // Test the ex versions with normal strings
-TEST_F(TestIBUtilStrWspcRemoveEx, test_str_wspc_remove_strex_inplace)
+TEST_F(TestIBUtilStrLowerRemoveEx, test_str_wspc_remove_strex)
 {
-    RunTests(IB_STROP_INPLACE, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcRemoveEx, test_str_wspc_remove_strex_copy)
-{
-    RunTests(IB_STROP_COPY, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcRemoveEx, test_str_wspc_remove_strex_cow)
-{
-    RunTests(IB_STROP_COW, str_test_data);
 }
 
-TEST_F(TestIBUtilStrWspcCompressEx, test_str_wspc_compress_strex_inplace)
+TEST_F(TestIBUtilStrLowerCompressEx, test_str_wspc_compress_strex)
 {
-    RunTests(IB_STROP_INPLACE, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcCompressEx, test_str_wspc_compress_strex_copy)
-{
-    RunTests(IB_STROP_COPY, str_test_data);
-}
-TEST_F(TestIBUtilStrWspcCompressEx, test_str_wspc_compress_strex_cow)
-{
-    RunTests(IB_STROP_COW, str_test_data);
+    RunTests( str_test_data );
 }
 
 static TestDatum ex_test_data [ ] =
@@ -432,28 +490,12 @@ static TestDatum ex_test_data [ ] =
 };
 
 // The actual bytestr tests
-TEST_F(TestIBUtilStrWspcRemoveEx, test_str_wspc_remove_ex_inplace)
+TEST_F(TestIBUtilStrLowerRemoveEx, test_str_wspc_remove_ex)
 {
-    RunTests(IB_STROP_INPLACE, ex_test_data);
-}
-TEST_F(TestIBUtilStrWspcRemoveEx, test_str_wspc_remove_ex_copy)
-{
-    RunTests(IB_STROP_COPY, ex_test_data);
-}
-TEST_F(TestIBUtilStrWspcRemoveEx, test_str_wspc_remove_ex_cow)
-{
-    RunTests(IB_STROP_COW, ex_test_data);
+    RunTests( ex_test_data );
 }
 
-TEST_F(TestIBUtilStrWspcCompressEx, test_str_wspc_compress_ex_inplace)
+TEST_F(TestIBUtilStrLowerCompressEx, test_str_wspc_compress_ex)
 {
-    RunTests(IB_STROP_INPLACE, ex_test_data);
-}
-TEST_F(TestIBUtilStrWspcCompressEx, test_str_wspc_compress_ex_copy)
-{
-    RunTests(IB_STROP_COPY, ex_test_data);
-}
-TEST_F(TestIBUtilStrWspcCompressEx, test_str_wspc_compress_ex_cow)
-{
-    RunTests(IB_STROP_COW, ex_test_data);
+    RunTests( ex_test_data );
 }

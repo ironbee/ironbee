@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *****************************************************************************/
+#ifndef __IBTEST_UTIL_HH__
+#define __IBTEST_UTIL_HH__
 
 /**
  * @file
@@ -167,3 +169,4 @@ bool ibtest_memeq(const void *v1, const void *v2, size_t n);
  * @} IronBeeTests
  */
 
+#endif

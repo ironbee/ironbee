@@ -42,6 +42,62 @@ extern "C" {
  * @{
  */
 
+
+/**
+ * Operations for functions that modify strings
+ */
+typedef enum {
+    IB_STROP_INPLACE,     /**< Perform the operation in-place */
+    IB_STROP_COPY,        /**< Always copy the input */
+    IB_STROP_COW,         /**< Use copy-on-write semantics */
+} ib_strop_t;
+
+/**
+ * String operator result flags.
+ */
+#define IB_STRFLAG_NONE          (0x0)   /**< No flags */
+#define IB_STRFLAG_MODIFIED   (1 << 0)   /**< Output is different from input */
+#define IB_STRFLAG_NEWBUF     (1 << 1)   /**< Output is a new buffer */
+#define IB_STRFLAG_ALIAS      (1 << 2)   /**< Output is an alias into input */
+
+/**
+ * Generic string modification function, ex version
+ *
+ * @param[in] op String modify operation
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] data_in Pointer to input data
+ * @param[in] dlen_in Length of @a data_in
+ * @param[out] data_out Pointer to output data
+ * @param[out] dlen_out Length of @a data_out
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ *
+ * @result Status code
+ */
+typedef ib_status_t (* ib_strmod_ex_fn_t) (ib_strop_t op,
+                                           ib_mpool_t *mp,
+                                           uint8_t *data_in,
+                                           size_t dlen_in,
+                                           uint8_t **data_out,
+                                           size_t *dlen_out,
+                                           ib_flags_t *result);
+
+/**
+ * Generic string modification function, string version
+ *
+ * @param[in] op String modify operation
+ * @param[in] mp Memory pool for allocations
+ * @param[in] str_in Data to convert to lower case
+ * @param[out] str_out Output data
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
+ *
+ * @returns Status code.
+ */
+typedef ib_status_t (* ib_strmod_fn_t) (ib_strop_t op,
+                                        ib_mpool_t *mp,
+                                        char *str_in,
+                                        char **str_out,
+                                        ib_flags_t *result);
+
 /**
  * Convert string const to string and length parameters.
  *
@@ -121,181 +177,234 @@ const char DLL_PUBLIC *ib_strstr_ex(const char *haystack,
 /**
  * Simple ASCII lowercase function.
  *
- * @param[in] data Data to convert to lower case
- * @param[in] dlen Length of @a data
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[in] op String modify operation
+ * @param[in] mp Memory pool for allocations
+ * @param[in] data_in Data to convert to lower case
+ * @param[in] dlen_in Length of @a data_in
+ * @param[out] data_out Output data
+ * @param[out] dlen_out Length of @a data_out
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
+ *
+ * @returns Status code.
  *
  * @note For non-ASCII (utf8, etc) you should use case folding.
  */
-ib_status_t ib_strlower_ex(uint8_t *data,
-                           size_t dlen,
-                           ib_bool_t *modified);
+ib_status_t ib_strlower_ex(ib_strop_t op,
+                           ib_mpool_t *mp,
+                           uint8_t *data_in,
+                           size_t dlen_in,
+                           uint8_t **data_out,
+                           size_t *dlen_out,
+                           ib_flags_t *result);
 
 /**
  * Simple ASCII lowercase function.
  *
- * @param[in] data Data to convert to lower case
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[in] op String modify operation
+ * @param[in] mp Memory pool for allocations
+ * @param[in] str_in Data to convert to lower case
+ * @param[out] str_out Output data
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
+ *
+ * @returns Status code.
  *
  * @note For non-ASCII (utf8, etc) you should use case folding.
  */
-ib_status_t ib_strlower(char *data,
-                        ib_bool_t *modified);
+ib_status_t ib_strlower(ib_strop_t op,
+                        ib_mpool_t *mp,
+                        char *str_in,
+                        char **str_out,
+                        ib_flags_t *result);
 
 /**
  * Simple ASCII trim left function.
  *
+ * @param[in] op String modify operation
+ * @param[in] mp Memory pool to use for allocations
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
- * @param[in] dlen_out Length of @a data_out
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[out] dlen_out Length of @a data_out
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @result Status code
  */
-ib_status_t ib_strtrim_left_ex(uint8_t *data_in,
+ib_status_t ib_strtrim_left_ex(ib_strop_t op,
+                               ib_mpool_t *mp,
+                               uint8_t *data_in,
                                size_t dlen_in,
                                uint8_t **data_out,
                                size_t *dlen_out,
-                               ib_bool_t *modified);
+                               ib_flags_t *result);
 
 /**
  * Simple ASCII trim left function.
  *
- * @param[in] data_in Pointer to input data
- * @param[out] data_out Pointer to output data
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[in] op String trim operation
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] str_in Pointer to input data
+ * @param[out] str_out Pointer to output data
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @returns Status code.
  */
-ib_status_t ib_strtrim_left(char *data_in,
+ib_status_t ib_strtrim_left(ib_strop_t op,
+                            ib_mpool_t *mp,
+                            char *data_in,
                             char **data_out,
-                            ib_bool_t *modified);
+                            ib_flags_t *result);
 
 /**
  * Simple ASCII trim right function.
  *
+ * @param[in] op String trim operation
+ * @param[in] mp Memory pool to use for allocations
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
- * @param[in] dlen_out Length of @a data_out
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[out] dlen_out Length of @a data_out
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @result Status code
  */
-ib_status_t ib_strtrim_right_ex(uint8_t *data_in,
+ib_status_t ib_strtrim_right_ex(ib_strop_t op,
+                                ib_mpool_t *mp,
+                                uint8_t *data_in,
                                 size_t dlen_in,
                                 uint8_t **data_out,
                                 size_t *dlen_out,
-                                ib_bool_t *modified);
+                                ib_flags_t *result);
 
 /**
  * Simple ASCII trim right function.
  *
- * @param[in] data_in Pointer to input data
- * @param[out] data_out Pointer to output data
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[in] op String trim operation
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] str_in Pointer to input data
+ * @param[out] str_out Pointer to output data
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @result Status code
  */
-ib_status_t ib_strtrim_right(char *data_in,
-                             char **data_out,
-                             ib_bool_t *modified);
-
+ib_status_t ib_strtrim_right(ib_strop_t op,
+                             ib_mpool_t *mp,
+                             char *str_in,
+                             char **str_out,
+                             ib_flags_t *result);
 
 /**
  * Simple ASCII trim left+right function.
  *
+ * @param[in] op String trim operation
+ * @param[in] mp Memory pool to use for allocations
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
- * @param[in] dlen_out Length of @a data_out
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[out] dlen_out Length of @a data_out
+ * @param[out] flags Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @result Status code
  */
-ib_status_t ib_strtrim_lr_ex(uint8_t *data_in,
+ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
+                             ib_mpool_t *mp,
+                             uint8_t *data_in,
                              size_t dlen_in,
                              uint8_t **data_out,
                              size_t *dlen_out,
-                             ib_bool_t *modified);
+                             ib_flags_t *result);
 
 /**
  * Simple ASCII trim left+right function.
  *
- * @param[in] data_in Pointer to input data
- * @param[out] data_out Pointer to output data
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[in] op String trim operation
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] str_in Pointer to input data
+ * @param[out] str_out Pointer to output data
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @result Status code
  */
-ib_status_t ib_strtrim_lr(char *data_in,
+ib_status_t ib_strtrim_lr(ib_strop_t op,
+                          ib_mpool_t *mp,
+                          char *data_in,
                           char **data_out,
-                          ib_bool_t *modified);
+                          ib_flags_t *result);
 
 /**
  * Delete all whitespace from a string (extended version)
  *
+ * @param[in] op String trim operation
  * @param[in] mp Memory pool
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ *
+ * @result Status code
  */
-ib_status_t ib_str_wspc_remove_ex(ib_mpool_t *mp,
-                                  const uint8_t *data_in,
+ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
+                                  ib_mpool_t *mp,
+                                  uint8_t *data_in,
                                   size_t dlen_in,
                                   uint8_t **data_out,
                                   size_t *dlen_out,
-                                  ib_bool_t *modified);
+                                  ib_flags_t *result);
 
 /**
  * Delete all whitespace from a string (NUL terminated string version)
  *
+ * @param[in] op String trim operation
  * @param[in] mp Memory pool
- * @param[in] data_in Pointer to input data
- * @param[out] data_out Pointer to output data
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[in] str_in Pointer to input data
+ * @param[out] str_out Pointer to output data
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @result Status code
  */
-ib_status_t ib_str_wspc_remove(ib_mpool_t *mp,
-                               const char *data_in,
-                               char **data_out,
-                               ib_bool_t *modified);
+ib_status_t ib_str_wspc_remove(ib_strop_t op,
+                               ib_mpool_t *mp,
+                               char *str_in,
+                               char **str_out,
+                               ib_flags_t *result);
 
 /**
  * Compress whitespace in a string (extended version)
  *
+ * @param[in] op String trim operation
  * @param[in] mp Memory pool
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ *
+ * @result Status code
  */
-ib_status_t ib_str_wspc_compress_ex(ib_mpool_t *mp,
-                                    const uint8_t *data_in,
+ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
+                                    ib_mpool_t *mp,
+                                    uint8_t *data_in,
                                     size_t dlen_in,
                                     uint8_t **data_out,
                                     size_t *dlen_out,
-                                    ib_bool_t *modified);
+                                    ib_flags_t *result);
 
 /**
  * Compress whitespace in a string (NUL terminated string version)
  *
+ * @param[in] op String trim operation
  * @param[in] mp Memory pool
- * @param[in] data_in Pointer to input data
- * @param[out] data_out Pointer to output data
- * @param[out] modified IB_TRUE if the string was modified, else IB_FALSE.
+ * @param[in] str_in Pointer to input data
+ * @param[out] str_out Pointer to output data
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
- * @note: This is an in-place operation which may change the data length.
+ * @result Status code
  */
-ib_status_t ib_str_wspc_compress(ib_mpool_t *mp,
-                                 const char *data_in,
-                                 char **data_out,
-                                 ib_bool_t *modified);
+ib_status_t ib_str_wspc_compress(ib_strop_t op,
+                                 ib_mpool_t *mp,
+                                 char *str_in,
+                                 char **str_out,
+                                 ib_flags_t *result);
 
 /**
  * @} IronBeeUtil
