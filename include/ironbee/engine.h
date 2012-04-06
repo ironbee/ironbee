@@ -1118,10 +1118,11 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
 
 
 /**
- * FIXME - sam
+ * Data event for parsed headers.
+ *
  * @param ib Engine handle
  * @param event Which event trigger the callback.
- * @param conn Connection.
+ * @param headers Parsed connection headers.
  * @param cbdata Callback data
  */
 typedef ib_status_t (*ib_state_headers_data_fn_t)(
@@ -1131,26 +1132,32 @@ typedef ib_status_t (*ib_state_headers_data_fn_t)(
     void *cbdata);
 
 /**
- * FIXME - sam
+ * Data event for the start of a request. 
+ *
+ * This provides a request line parsed from the start of the request.
+ *
  * @param ib Engine handle
  * @param event Which event trigger the callback.
- * @param conn Connection.
+ * @param line The parsed request line.
  * @param cbdata Callback data
  */
-typedef ib_status_t (*ib_state_request_line_t)(
+typedef ib_status_t (*ib_state_request_line_fn_t)(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_parsed_req_line_t *line,
     void *cbdata);
 
 /**
- * FIXME - sam
+ * Data event for the start of a response.
+ *
+ * This provides a response line parsed from the start of the response.
+ *
  * @param ib Engine handle
  * @param event Which event trigger the callback.
- * @param conn Connection.
+ * @param line The parsed response line.
  * @param cbdata Callback data
  */
-typedef ib_status_t (*ib_state_response_line_t)(
+typedef ib_status_t (*ib_state_response_line_fn_t)(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_parsed_resp_line_t *line,
@@ -1405,6 +1412,95 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
     ib_state_txdata_hook_fn_t cb
 );
 
+/**
+ * Register a callback for a headers data event.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The specific event.
+ * @param[in] cb The callback to unregister.
+ * @param[in] cbdata Data to provide to the callback.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_headers_data_fn_t cb,
+    void *cbdata);
+
+/**
+ * Unregister a callback for a headers data event.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The specific event.
+ * @param[in] cb The callback to unregister.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_headers_data_fn_t cb);
+
+/**
+ * Register a callback for a request line event.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The specific event.
+ * @param[in] cb The callback to unregister.
+ * @param[in] cbdata Data to provide to the callback.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_request_line_fn_t cb,
+    void *cbdata);
+
+/**
+ * Unregister a callback for a request line event.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The specific event.
+ * @param[in] cb The callback to unregister.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_request_line_fn_t cb);
+
+/**
+ * Register a callback for a response line event.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The specific event.
+ * @param[in] cb The callback to unregister.
+ * @param[in] cbdata Data to provide to the callback.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_response_line_fn_t cb,
+    void *cbdata);
+
+/**
+ * Unregister a callback for a response line event.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The specific event.
+ * @param[in] cb The callback to unregister.
+ *
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_state_response_line_fn_t cb);
 
 /**
  * @} IronBeeEngineHooks

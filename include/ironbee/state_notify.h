@@ -149,8 +149,13 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(
 
 
 /**
- * FIXME - sam
+ * Notify the state machine that the request headers are available.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction object.
  * @param[in] headers If NULL, the callbacks are not fired.
+ *
+ * @returns Status code.
  */
 ib_status_t ib_state_notify_request_headers_data(
     ib_engine_t *ib,
@@ -158,8 +163,13 @@ ib_status_t ib_state_notify_request_headers_data(
     ib_parsed_header_t *headers);
 
 /**
- * FIXME - sam
+ * Notify the state machine that the response headers are available.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction object.
  * @param[in] headers If NULL, the callbacks are not fired.
+ *
+ * @returns Status code.
  */
 ib_status_t ib_state_notify_response_headers_data(
     ib_engine_t *ib,

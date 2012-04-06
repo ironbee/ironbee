@@ -56,8 +56,8 @@ struct ib_hook_t {
         ib_state_tx_hook_fn_t       tx;
         ib_state_txdata_hook_fn_t   txdata;
         ib_state_headers_data_fn_t  headersdata;
-        ib_state_request_line_t     requestline;
-        ib_state_response_line_t    responseline;
+        ib_state_request_line_fn_t  requestline;
+        ib_state_response_line_fn_t responseline;
     } callback;
     void               *cdata;            /**< Data passed to the callback */
     ib_hook_t          *next;             /**< The next callback in the list */
