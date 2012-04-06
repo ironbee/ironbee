@@ -1132,7 +1132,7 @@ typedef ib_status_t (*ib_state_headers_data_fn_t)(
     void *cbdata);
 
 /**
- * Data event for the start of a request. 
+ * Data event for the start of a request.
  *
  * This provides a request line parsed from the start of the request.
  *
