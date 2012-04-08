@@ -121,7 +121,7 @@ typedef struct {
     ib_server_direction_t dir;
     const char *word;
     TSReturnCode (*hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
-    ib_status_t (*ib_notify)(ib_engine_t *, ib_conndata_t *, void *);
+    ib_status_t (*ib_notify)(ib_engine_t *, ib_conndata_t *);
 } ironbee_direction_t;
 
 static ironbee_direction_t ironbee_direction_req = {
@@ -370,7 +370,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         icdata.conn = data->ssn->iconn;
         icdata.dlen = ibd->data->buflen;
         icdata.data = (uint8_t *)ibd->data->buf;
-        (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
+        (*ibd->ibd->ib_notify)(ironbee, &icdata);
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
         ibd->data->buflen = 0;
@@ -439,7 +439,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     icdata.conn = data->ssn->iconn;
                     icdata.dlen = ilength;
                     icdata.data = (uint8_t *)ibuf;
-                    (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
+                    (*ibd->ibd->ib_notify)(ironbee, &icdata);
                 }
                 //"response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
                 //      ib_state_notify_conn_data_out(ironbee, &icdata);
@@ -801,7 +801,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         /* if there's more to come, go round again ... */
         TSIOBufferReaderConsume(readerp, len);
     }
-    (*ibd->ib_notify)(ironbee, &icdata, data);
+    (*ibd->ib_notify)(ironbee, &icdata);
 
     /* Now manipulate headers as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {

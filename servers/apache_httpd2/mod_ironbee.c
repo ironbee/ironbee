@@ -306,10 +306,10 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
 
 
     if (ctx->direction == IRONBEE_REQUEST) {
-        ctx->status = ib_state_notify_conn_data_in(ironbee, &icdata, f);
+        ctx->status = ib_state_notify_conn_data_in(ironbee, &icdata);
     }
     else {
-        ctx->status = ib_state_notify_conn_data_out(ironbee, &icdata, f);
+        ctx->status = ib_state_notify_conn_data_out(ironbee, &icdata);
     }
     if (ctx->status != IB_OK) {
         ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, c,
