@@ -57,7 +57,7 @@ typedef struct ib_parsed_name_value_pair_list_t {
 
 /**
  * A list wrapper of ib_Parsed_name_value_pair_list_t.
- * 
+ *
  * This is used to quickly build a new list. Afterwards the resultant list
  * can be treated as a simple linked list terminated with next==NULL.
  */
