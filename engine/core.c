@@ -2603,6 +2603,7 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     ib_mpool_t *pool = log->mp;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
+    ib_list_t *field_list;
     ib_list_node_t *node;
     ib_field_t *f;
     ib_status_t rc;
@@ -2629,19 +2630,19 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     }
 
     // @todo Remove mutable once list is const correct.
-    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&list));
+    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&field_list));
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
     IB_LIST_LOOP(list, node) {
-        ib_list_push(list, ib_list_node_data(node));
+        ib_list_push(field_list, ib_list_node_data(node));
     }
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
                               "http-request-headers",
                               "application/octet-stream",
-                              list,
+                              field_list,
                               ib_auditlog_gen_headers_flist,
                               NULL);
 
@@ -2686,6 +2687,7 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
     ib_mpool_t *pool = log->mp;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
+    ib_list_t *field_list;
     ib_list_node_t *node;
     ib_field_t *f;
     ib_status_t rc;
@@ -2712,20 +2714,20 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
     }
 
     // @todo Remove mutable once list is const correct.
-    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&list));
+    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&field_list));
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     IB_LIST_LOOP(list, node) {
-        ib_list_push(list, ib_list_node_data(node));
+        ib_list_push(field_list, ib_list_node_data(node));
     }
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
                               "http-response-headers",
                               "application/octet-stream",
-                              list,
+                              field_list,
                               ib_auditlog_gen_headers_flist,
                               NULL);
 
