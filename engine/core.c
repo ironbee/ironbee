@@ -2634,15 +2634,15 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    IB_LIST_LOOP(list, node) {
-        ib_list_push(field_list, ib_list_node_data(node));
+    IB_LIST_LOOP(field_list, node) {
+        ib_list_push(list, ib_list_node_data(node));
     }
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
                               "http-request-headers",
                               "application/octet-stream",
-                              field_list,
+                              list,
                               ib_auditlog_gen_headers_flist,
                               NULL);
 
@@ -2719,15 +2719,15 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_LIST_LOOP(list, node) {
-        ib_list_push(field_list, ib_list_node_data(node));
+    IB_LIST_LOOP(field_list, node) {
+        ib_list_push(list, ib_list_node_data(node));
     }
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
                               "http-response-headers",
                               "application/octet-stream",
-                              field_list,
+                              list,
                               ib_auditlog_gen_headers_flist,
                               NULL);
 
