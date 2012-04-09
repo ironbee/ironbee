@@ -39,19 +39,18 @@ extern "C" {
  * @{
  */
 
+#include <ironbee/bytestr.h>
+#include <ironbee/engine_types.h>
 #include <ironbee/field.h>
 #include <ironbee/types.h>
-#include <ironbee/engine_types.h>
 
 /**
  * A link list element representing HTTP headers.
  */
 typedef struct ib_parsed_name_value_pair_list_t {
     ib_tx_t *tx;       /**< Transaction this element is related to. */
-    const char *name;  /**< Name. */
-    size_t name_len;   /**< Name length. */
-    const char *value; /**< Value the name describes. */
-    size_t value_len;  /**< Value length. */
+    ib_bytestr_t *name;  /**< Name. */
+    ib_bytestr_t *value; /**< Value the name describes. */
     struct ib_parsed_name_value_pair_list_t *next; /**< Next element. */
 } ib_parsed_name_value_pair_list_t;
 
@@ -82,12 +81,9 @@ typedef struct ib_parsed_name_value_pair_list_wrapper_t
  */
 typedef struct ib_parsed_req_line_t {
     ib_tx_t *tx;
-    const char *method;  /**< HTTP Method. */
-    size_t method_len;   /**< Length of method. */
-    const char *path;    /**< Path request method is against. */
-    size_t path_len;     /**< Length of path. */
-    const char *version; /**< HTTP Version. */
-    size_t version_len;  /**< Length of version. */
+    ib_bytestr_t *method;  /**< HTTP Method. */
+    ib_bytestr_t *path;    /**< Path request method is against. */
+    ib_bytestr_t *version; /**< HTTP Version. */
 } ib_parsed_req_line_t;
 
 /**
@@ -97,10 +93,8 @@ typedef struct ib_parsed_req_line_t {
  */
 typedef struct ib_parsed_resp_line_t {
     ib_tx_t *tx;
-    const char *code; /**< The status code. */
-    size_t code_len;  /**< Length of code. */
-    const char *msg;  /**< The message to the user. */
-    size_t msg_len;   /**< Length of the msg. */
+    ib_bytestr_t *code; /**< The status code. */
+    ib_bytestr_t *msg;  /**< The message to the user. */
 } ib_parsed_resp_line_t;
 
 /**

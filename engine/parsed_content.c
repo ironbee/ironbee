@@ -86,10 +86,14 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
     }
 
     ele->tx = headers->tx;
-    ele->name = name;
-    ele->name_len = name_len;
-    ele->value = value;
-    ele->value_len = value_len;
+    ib_bytestr_alias_mem(&ele->name,
+                         headers->tx->mp,
+                         (const uint8_t *)name,
+                         name_len);
+    ib_bytestr_alias_mem(&ele->value,
+                         headers->tx->mp,
+                         (const uint8_t *)value,
+                         value_len);
     ele->next = NULL;
 
     /* List is empty. Add first element. */
@@ -126,10 +130,10 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
          le != NULL && rc == IB_OK;
          le = le->next)
     {
-        rc = callback(le->name,
-                      le->name_len,
-                      le->value,
-                      le->value_len,
+        rc = callback((const char *)ib_bytestr_const_ptr(le->name),
+                      ib_bytestr_size(le->name),
+                      (const char *)ib_bytestr_const_ptr(le->value),
+                      ib_bytestr_size(le->value),
                       user_data);
     }
 
@@ -159,10 +163,14 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    line_tmp->code = code;
-    line_tmp->code_len = code_len;
-    line_tmp->msg = msg;
-    line_tmp->msg_len = msg_len;
+    ib_bytestr_alias_mem(&line_tmp->code,
+                         tx->mp,
+                         (const uint8_t *)code,
+                         code_len);
+    ib_bytestr_alias_mem(&line_tmp->msg,
+                         tx->mp,
+                         (const uint8_t *)msg,
+                         msg_len);
 
     /* Commit back successfully created line. */
     *line = line_tmp;
@@ -197,12 +205,18 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    line_tmp->method = method;
-    line_tmp->method_len = method_len;
-    line_tmp->path = path;
-    line_tmp->path_len = path_len;
-    line_tmp->version = version;
-    line_tmp->version_len = version_len;
+    ib_bytestr_alias_mem(&line_tmp->method,
+                         tx->mp,
+                         (const uint8_t *)method,
+                         method_len);
+    ib_bytestr_alias_mem(&line_tmp->path,
+                         tx->mp,
+                         (const uint8_t *)path,
+                         path_len);
+    ib_bytestr_alias_mem(&line_tmp->version,
+                         tx->mp,
+                         (const uint8_t *)version,
+                         version_len);
 
     /* Commit back successfully created line. */
     *line = line_tmp;
