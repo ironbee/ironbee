@@ -2161,14 +2161,13 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         size_t rlen;
 
         /* Turn tag list into JSON list, limiting the size. */
-        char tags[128];
-        char *tag_ptr = NULL;
+        char tags[128] = "\0";
 
         if (e->tags != NULL) {
             ib_list_node_t *tnode;
             size_t tags_len = sizeof(tags);
+            char *tag_ptr = tags;
 
-            tag_ptr = tags;
             IB_LIST_LOOP(e->tags, tnode) {
                 char *tag = (char *)ib_list_node_data(tnode);
                 int wrote = snprintf(tag_ptr, tags_len,
@@ -2192,9 +2191,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
                 tag_ptr += wrote;
             }
-        }
-        else {
-            tags[0] = '\0';
         }
 
         rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_REC_LEN);
