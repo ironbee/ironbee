@@ -222,6 +222,24 @@ struct ib_tx_t {
     const char         *path;            /**< Path used in the request */
     //struct sockaddr_storage er_addr;   /**< Effective remote address */
     ib_flags_t          flags;           /**< Transaction flags */
+
+    /**
+     * The request line.
+     *
+     * This is made available in the TX because the current context
+     * has not yet been established and the request line and headers may be 
+     * need to be re-run through context-specific rules.
+     */
+    ib_parsed_req_line_t *request_line;
+
+    /**
+     * The request headers.
+     *
+     * This is made available in the TX because the current context
+     * has not yet been established and the request line and headers may be 
+     * need to be re-run through context-specific rules.
+     */
+    ib_parsed_header_wrapper_t *request_headers;
 };
 
 /** Site Structure */

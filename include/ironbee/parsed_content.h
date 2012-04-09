@@ -40,15 +40,16 @@ extern "C" {
  */
 
 #include <ironbee/bytestr.h>
-#include <ironbee/engine_types.h>
 #include <ironbee/field.h>
 #include <ironbee/types.h>
+
+struct ib_tx_t;
 
 /**
  * A link list element representing HTTP headers.
  */
 typedef struct ib_parsed_name_value_pair_list_t {
-    ib_tx_t *tx;       /**< Transaction this element is related to. */
+    struct ib_tx_t *tx;       /**< Transaction this element is related to. */
     ib_bytestr_t *name;  /**< Name. */
     ib_bytestr_t *value; /**< Value the name describes. */
     struct ib_parsed_name_value_pair_list_t *next; /**< Next element. */
@@ -64,8 +65,8 @@ typedef struct ib_parsed_name_value_pair_list_t {
 typedef struct ib_parsed_name_value_pair_list_wrapper_t {
     ib_parsed_name_value_pair_list_t *head; /**< Head of the list. */
     ib_parsed_name_value_pair_list_t *tail; /**< Tail of the list. */
-    ib_unum_t size;                         /**< Size of the list. */
-    ib_tx_t *tx;                            /**< Tx this list is assoc. with. */
+    size_t size;                            /**< Size of the list. */
+    struct ib_tx_t *tx;                            /**< Tx this list is assoc. with. */
 } ib_parsed_name_value_pair_list_wrapper_t;
 
 
@@ -80,7 +81,7 @@ typedef struct ib_parsed_name_value_pair_list_wrapper_t
  * This is typedef'ed to useful types in parsed_content.h.
  */
 typedef struct ib_parsed_req_line_t {
-    ib_tx_t *tx;
+    struct ib_tx_t *tx;
     ib_bytestr_t *method;  /**< HTTP Method. */
     ib_bytestr_t *path;    /**< Path request method is against. */
     ib_bytestr_t *version; /**< HTTP Version. */
@@ -92,7 +93,7 @@ typedef struct ib_parsed_req_line_t {
  * This is typedef'ed to useful types in parsed_content.h.
  */
 typedef struct ib_parsed_resp_line_t {
-    ib_tx_t *tx;
+    struct ib_tx_t *tx;
     ib_bytestr_t *code; /**< The status code. */
     ib_bytestr_t *msg;  /**< The message to the user. */
 } ib_parsed_resp_line_t;
@@ -132,7 +133,7 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
  */
 DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
     ib_parsed_name_value_pair_list_wrapper_t **headers,
-    ib_tx_t *tx);
+    struct ib_tx_t *tx);
 
 /**
  * Link the arguments to a new list element and append it to this list.
