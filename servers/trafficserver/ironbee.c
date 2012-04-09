@@ -681,7 +681,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         icdata.data = (void *)head_buf;
         icdata.dlen = icdata.dalloc = len;
 
-        (*ibd->ib_notify)(ironbee, &icdata);
+        (*ibd->ib_notify)(ironbee, &icdata, NULL);
 
         TSIOBufferDestroy(iobufp);
         TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
@@ -725,7 +725,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
             icdata.data = head_buf;
         }
 
-        (*ibd->ib_notify)(ironbee, &icdata);
+        (*ibd->ib_notify)(ironbee, &icdata, NULL);
     }
 
 #else
