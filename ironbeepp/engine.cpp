@@ -30,6 +30,11 @@
 
 namespace IronBee {
 
+const char* ConstEngine::state_event_name(state_event_e event)
+{
+    return ib_state_event_name(static_cast<ib_state_event_type_t>(event));
+}
+
 ConstEngine::ConstEngine() :
     m_ib(NULL)
 {

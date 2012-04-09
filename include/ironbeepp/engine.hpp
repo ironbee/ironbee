@@ -30,8 +30,7 @@
 #include <ironbeepp/common_semantics.hpp>
 #include <iostream>
 
-// IronBee C
-typedef struct ib_engine_t ib_engine_t;
+#include <ironbee/engine.h>
 
 namespace IronBee {
 
@@ -54,6 +53,56 @@ class ConstEngine :
     public CommonSemantics<ConstEngine>
 {
 public:
+    /**
+     * Events in the engine state machine.
+     *
+     * This enum defines constants representing the states of the engine
+     * state machine.  The main use to module writers is that they are passed
+     * in to hook callbacks.
+     **/
+    enum state_event_e {
+        connection_started         = conn_started_event,
+        connection_finished        = conn_finished_event,
+        connection_opened          = conn_opened_event,
+        connection_data_in         = conn_data_in_event,
+        connection_data_out        = conn_data_out_event,
+        connection_closed          = conn_closed_event,
+        transaction_started        = tx_started_event,
+        transaction_process        = tx_process_event,
+        transaction_finished       = tx_finished_event,
+        transaction_data_in        = tx_data_in_event,
+        transaction_data_out       = tx_data_out_event,
+        handle_context_connection  = handle_context_conn_event,
+        handle_connect             = handle_connect_event,
+        handle_context_transaction = handle_context_tx_event,
+        handle_request_headers     = handle_request_headers_event,
+        handle_request             = handle_request_event,
+        handle_response_headers    = handle_response_headers_event,
+        handle_response            = handle_response_event,
+        handle_disconnect          = handle_disconnect_event,
+        handle_postprocess         = handle_postprocess_event,
+        configuration_started      = cfg_started_event,
+        configuration_finished     = cfg_finished_event,
+        request_started            = request_started_event,
+        request_headers            = request_headers_event,
+        request_headers_data       = request_headers_data_event,
+        request_body_data          = request_body_data_event,
+        request_finished           = request_finished_event,
+        response_started           = response_started_event,
+        response_headers           = response_headers_event,
+        response_headers_data      = response_headers_data_event,
+        response_body_data         = response_body_data_event,
+        response_finished          = response_finished_event
+    };
+
+    /**
+     * Provides human readable versio of @a event.
+     *
+     * @param[in] event Event.
+     * @returns Human readable string name of @a event.
+     **/
+    static const char* state_event_name(state_event_e event);
+
     //! C Type.
     typedef const ib_engine_t* ib_type;
 
