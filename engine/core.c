@@ -2117,7 +2117,12 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
  */
 static const char *ib_data_escape(const void *data, size_t dlen)
 {
-    return (const char *) data;
+    if (data == NULL) {
+        return "";
+    }
+    else {
+        return (const char *) data;
+    }
 }
 
 static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
