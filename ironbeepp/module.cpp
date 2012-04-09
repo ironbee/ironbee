@@ -343,7 +343,8 @@ void Module::chain_initialize(initialize_t f) const
 {
     if (! ib()->fn_init) {
         set_initialize(f);
-    } else {
+    }
+    else {
         set_initialize( Internal::ModuleHookChainModule(
             f,
             Internal::data_to_value<Module::initialize_t>(
@@ -357,7 +358,8 @@ void Module::prechain_initialize(initialize_t f) const
 {
     if (! ib()->fn_init) {
         set_initialize(f);
-    } else {
+    }
+    else {
         set_initialize( Internal::ModuleHookPreChainModule(
             f,
             Internal::data_to_value<Module::initialize_t>(
@@ -372,7 +374,8 @@ void Module::set_initialize(initialize_t f) const
     if (f.empty()) {
         ib()->cbdata_init = NULL;
         ib()->fn_init     = NULL;
-    } else {
+    }
+    else {
         ib()->cbdata_init = Internal::value_to_data(
             f,
             ib_engine_pool_main_get(ib()->ib)
@@ -385,7 +388,8 @@ void Module::chain_finalize(finalize_t f) const
 {
     if (! ib()->fn_fini) {
         set_finalize(f);
-    } else {
+    }
+    else {
         set_finalize( Internal::ModuleHookChainModule(
             f,
             Internal::data_to_value<Module::finalize_t>(
@@ -399,7 +403,8 @@ void Module::prechain_finalize(finalize_t f) const
 {
     if (! ib()->fn_fini) {
         set_finalize(f);
-    } else {
+    }
+    else {
         set_finalize( Internal::ModuleHookPreChainModule(
             f,
             Internal::data_to_value<Module::finalize_t>(
@@ -414,7 +419,8 @@ void Module::set_finalize(finalize_t f) const
     if (f.empty()) {
         ib()->cbdata_fini = NULL;
         ib()->fn_fini     = NULL;
-    } else {
+    }
+    else {
         ib()->cbdata_fini = Internal::value_to_data(
             f,
             ib_engine_pool_main_get(ib()->ib)
@@ -427,7 +433,8 @@ void Module::chain_context_open(context_open_t f) const
 {
     if (! ib()->fn_ctx_open) {
         set_context_open(f);
-    } else {
+    }
+    else {
         set_context_open( Internal::ModuleHookChainContext(
             f,
             Internal::data_to_value<Module::context_open_t>(
@@ -441,7 +448,8 @@ void Module::prechain_context_open(context_open_t f) const
 {
     if (! ib()->fn_ctx_open) {
         set_context_open(f);
-    } else {
+    }
+    else {
         set_context_open( Internal::ModuleHookPreChainContext(
             f,
             Internal::data_to_value<Module::context_open_t>(
@@ -456,7 +464,8 @@ void Module::set_context_open(context_open_t f) const
     if (f.empty()) {
         ib()->cbdata_ctx_open = NULL;
         ib()->fn_ctx_open     = NULL;
-    } else {
+    }
+    else {
         ib()->cbdata_ctx_open = Internal::value_to_data(
             f,
             ib_engine_pool_main_get(ib()->ib)
@@ -469,7 +478,8 @@ void Module::chain_context_close(context_close_t f) const
 {
     if (! ib()->fn_ctx_close) {
         set_context_close(f);
-    } else {
+    }
+    else {
         set_context_close( Internal::ModuleHookChainContext(
             f,
             Internal::data_to_value<Module::context_close_t>(
@@ -483,7 +493,8 @@ void Module::prechain_context_close(context_close_t f) const
 {
     if (! ib()->fn_ctx_close) {
         set_context_close(f);
-    } else {
+    }
+    else {
         set_context_close( Internal::ModuleHookPreChainContext(
             f,
             Internal::data_to_value<Module::context_close_t>(
@@ -498,7 +509,8 @@ void Module::set_context_close(context_close_t f) const
     if (f.empty()) {
         ib()->cbdata_ctx_close = NULL;
         ib()->fn_ctx_close     = NULL;
-    } else {
+    }
+    else {
         ib()->cbdata_ctx_close = Internal::value_to_data(
             f,
             ib_engine_pool_main_get(ib()->ib)
@@ -511,7 +523,8 @@ void Module::chain_context_destroy(context_destroy_t f) const
 {
     if (! ib()->fn_ctx_destroy) {
         set_context_destroy(f);
-    } else {
+    }
+    else {
         set_context_destroy( Internal::ModuleHookChainContext(
             f,
             Internal::data_to_value<Module::context_destroy_t>(
@@ -525,7 +538,8 @@ void Module::prechain_context_destroy(context_destroy_t f) const
 {
     if (! ib()->fn_ctx_destroy) {
         set_context_destroy(f);
-    } else {
+    }
+    else {
         set_context_destroy( Internal::ModuleHookPreChainContext(
             f,
             Internal::data_to_value<Module::context_destroy_t>(
@@ -540,7 +554,8 @@ void Module::set_context_destroy(context_destroy_t f) const
     if (f.empty()) {
         ib()->cbdata_ctx_destroy = NULL;
         ib()->fn_ctx_destroy     = NULL;
-    } else {
+    }
+    else {
         ib()->cbdata_ctx_destroy = Internal::value_to_data(
             f,
             ib_engine_pool_main_get(ib()->ib)
