@@ -223,3 +223,26 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+
+DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_append(
+    ib_parsed_name_value_pair_list_wrapper_t *head,
+    const ib_parsed_name_value_pair_list_wrapper_t *tail)
+{
+    IB_FTRACE_INIT();
+
+    assert(head != NULL);
+    assert(tail != NULL);
+
+    /* If the head list is empty, it assumes the contents of tail. */
+    if ( head->head == NULL ) {
+        /* Shallow copy. */
+        *head = *tail;
+    }
+
+    else {
+        head->tail = tail->head;
+        head->size += tail->size;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}

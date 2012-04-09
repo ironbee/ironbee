@@ -110,9 +110,9 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 }
 
 /**
- * @internal
+ * Signal that the response line was received.
  *
- * FIXME - sam
+ * @internal
  *
  * @param ib Engine
  * @param event Event
@@ -149,9 +149,9 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 }
 
 /**
- * @internal
+ * Signal that the request line was received.
  *
- * FIXME - sam
+ * @internal
  *
  * @param ib Engine
  * @param event Event
@@ -172,6 +172,9 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Request line stored for use when the context has been determined. */
+    tx->request_line = line;
+
     ib_log_debug(ib, 9, "REQ LINE EVENT: %s", ib_state_event_name(event));
 
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, requestline, ib, line);
@@ -188,9 +191,9 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 }
 
 /**
- * @internal
+ * Signal that the header data has been received.
  *
- * FIXME - sam
+ * @internal
  *
  * @param ib Engine
  * @param event Event
@@ -678,14 +681,23 @@ ib_status_t ib_state_notify_request_headers_data(
     /* Mark the time. */
     tx->t.request_started = ib_clock_get_time();
 
+    /* Make sure the headers have the right tx. */
     headers->tx = tx;
 
-    if ( headers != NULL ) {
-        rc = ib_state_notify_headers(ib, request_headers_data_event, headers);
+    if ( tx->request_headers == NULL ) {
+        tx->request_headers = headers;
     }
+
     else {
-        rc = IB_OK;
+        rc = ib_parsed_name_value_pair_list_append(tx->request_headers,
+                                                   headers);
+
+        if ( rc != IB_OK ) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
+
+    rc = ib_state_notify_headers(ib, request_headers_data_event, headers);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -702,15 +714,10 @@ ib_status_t ib_state_notify_response_headers_data(
     /* Mark the time. */
     tx->t.request_started = ib_clock_get_time();
 
+    /* Make sure the headers have the right tx. */
     headers->tx = tx;
 
-
-    if ( headers != NULL ) {
-        rc = ib_state_notify_headers(ib, response_headers_data_event, headers);
-    }
-    else {
-        rc = IB_OK;
-    }
+    rc = ib_state_notify_headers(ib, response_headers_data_event, headers);
 
     IB_FTRACE_RET_STATUS(rc);
 }

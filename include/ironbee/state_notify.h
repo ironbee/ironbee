@@ -130,6 +130,9 @@ ib_status_t DLL_PUBLIC ib_state_notify_tx_data_out(ib_engine_t *ib,
 /**
  * Notify the state machine that the request started.
  *
+ * The @a req parsed request object will be stored in @a tx for use after
+ * the context has been determined.
+ *
  * @note This is an optional event. Unless the plugin can detect that
  *       a request has started prior to receiving the headers, then you
  *       should just call @ref ib_state_notify_request_headers() when the
@@ -151,6 +154,20 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(
 
 /**
  * Notify the state machine that the request headers are available.
+ *
+ * If headers are delivered incrementally @a headers should not be reused.
+ *
+ * To communicate the aggregate headers to the proper call backs this will
+ * aggregate headers. This is done by storing the first @a headers.
+ * This is an optimistic optimization to avoid memory allocations.
+ *
+ * Upon subseqeuent calls to ib_state_notify_request_headers_data the
+ * original @a headers structure is appended to
+ * (using ib_parsed_name_value_pair_list_append).
+ *
+ * After all headers are received @a tx->request_headers is list
+ * of all headers and is available via @a tx when 
+ * ib_state_notify_request_headers is called.
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction object.

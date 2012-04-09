@@ -239,6 +239,17 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(
     size_t version_len);
 
 /**
+ * Append the @a tail list to the @a head list.
+ * 
+ * This modifies the @a head list but leaves the @a tail list untouched.
+ * However, the @a tail list should not be used as it may be indirectly 
+ * appended to by calls to ib_parsed_name_value_pair_list_append or
+ * ib_parsed_name_value_pair_list_add on @a head.
+ */
+DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_append(
+    ib_parsed_name_value_pair_list_wrapper_t *head,
+    const ib_parsed_name_value_pair_list_wrapper_t *tail);
+/**
  * @} IronBeeParsedContent
  * @} IronBeeEngine
  * @} IronBee
