@@ -85,6 +85,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
+    ele->tx = headers->tx;
     ele->name = name;
     ele->name_len = name_len;
     ele->value = value;
