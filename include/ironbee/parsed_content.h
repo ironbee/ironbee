@@ -103,16 +103,6 @@ typedef struct ib_parsed_resp_line_t {
 } ib_parsed_resp_line_t;
 
 /**
- * A pointer into an existing buffer of data.
- */
-typedef struct ib_parsed_data_t {
-    ib_tx_t *tx;
-    const char *buffer;
-    size_t start;
-    size_t offset;
-} ib_parsed_data_t;
-
-/**
  * An opaque list representation of a header list.
  */
 typedef struct ib_parsed_name_value_pair_list_t ib_parsed_header_t;
@@ -130,115 +120,8 @@ typedef struct ib_parsed_name_value_pair_list ib_parsed_trailer_t;
 typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
                                                          size_t name_len,
                                                          const char *value,
-                                                         size_t value_len, void* user_data);
-
-/**
- * Signal that the transaction has begun.
- *
- * Any deferred allocation of resources is completed.
- *
- * @param[in,out] transaction The transaction.
- * @param[in] req_line The HTTP status line.
- *
- * @returns IB_OK.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_begin(
-    struct ib_tx_t *transaction,
-    ib_parsed_req_line_t *req_line);
-
-/**
- * Process @a name and @a value as coming from the client.
- *
- * @param[in] transaction The transaction.
- * @param[in] headers List of HTTP headers.
- *
- * @returns IB_OK or IB_EALLOC if the values cannot be copied.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_header(
-    struct ib_tx_t *transaction,
-    ib_parsed_header_t *headers);
-
-/**
- * Process @a name and @a value as coming from the server.
- *
- * @param[in] transaction The transaction.
- * @param[in] headers List of HTTP headers.
- *
- * @returns IB_OK or IB_EALLOC if the values cannot be copied.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_header(
-    struct ib_tx_t *transaction,
-    ib_parsed_header_t *headers);
-
-/**
- * Signal that the request portion of the transaction has completed.
- *
- * @param[in] transaction The transaction.
- *
- * @returns IB_OK.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_end(
-    struct ib_tx_t *transaction);
-
-/**
- * Signal that the response portion of the transaction has begun.
- *
- * @param[in] transaction The transaction.
- * @param[in] line The HTTP response line.
- *
- * @returns IB_OK.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_begin(
-    struct ib_tx_t *transaction,
-    ib_parsed_resp_line_t *line);
-
-/**
- * Handle a chunk of body data.
- * @param[in] transaction The transaction the data belongs to.
- * @param[in] data The data being sent.
- * @return IB_OK.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_body(
-    struct ib_tx_t *transaction,
-    ib_parsed_data_t *data);
-
-/**
- * Handle a chunk of body data.
- * @param[in] transaction The transaction the data belongs to.
- * @param[in] data The data being sent.
- * @return IB_OK.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_body(
-    struct ib_tx_t *transaction,
-    ib_parsed_data_t *data);
-
-/**
- * Signal that the response portion of the transaction has begun.
- *
- * @param[in] transaction The transaction.
- *
- * @returns IB_OK.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_end(
-    struct ib_tx_t *transaction);
-
-/**
- * The trailer version of ib_parsed_tx_res_header.
- *
- * @see ib_parsed_tx_res_header.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_req_trailer(
-    struct ib_tx_t *transaction,
-    ib_parsed_trailer_t *trailers);
-
-/**
- * The trailer version of ib_parsed_tx_resp_header.
- *
- * @see ib_parsed_tx_resp_header.
- */
-DLL_PUBLIC ib_status_t ib_parsed_tx_notify_resp_trailer(
-    struct ib_tx_t *transaction,
-    ib_parsed_trailer_t *trailers);
+                                                         size_t value_len,
+                                                         void* user_data);
 
 /**
  * Construct a headers (or trailers) object.
@@ -306,29 +189,6 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
     ib_parsed_name_value_pair_list_wrapper_t *headers,
     ib_parsed_tx_each_header_callback callback,
     void* user_data);
-
-/**
- * Create a data chunk representation that lines to the read only @a buffer.
- *
- * Notice that this creates a struct that links the input char*
- * components. Be sure to call the relevant *_notify(...) function to
- * send this data to the IronBee Engine before the buffer in which the
- * arguments reside is invalidated.
- *
- * @param[in] tx The transaction whose memory pool will be used to create
- *            the object.
- * @param[out] data The resultant object will be placed here if IB_OK is
- *             returned.
- * @param[in] buffer The buffer that will be linked into @a data.
- * @param[in] start The buffer that will be linked into @a data.
- * @param[in] offset The offset from start.
- * @returns IB_OK. IB_EALLOC if memory allocation fails.
- */
-DLL_PUBLIC ib_status_t ib_parsed_data_create(struct ib_tx_t *tx,
-                                             ib_parsed_data_t **data,
-                                             const char *buffer,
-                                             size_t start,
-                                             size_t offset);
 
 /**
  * Create a struct to link the response line components.
