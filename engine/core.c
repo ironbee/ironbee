@@ -2206,6 +2206,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             return strlen(*(const char **)chunk);
         }
 
+        ib_log_debug(ib, 4, "TODO: Data escaping not implemented!");
         rlen = snprintf((char *)rec, CORE_JSON_MAX_REC_LEN,
                         "%s"
                         "    {\r\n"
