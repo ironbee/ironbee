@@ -34,7 +34,14 @@
 
 #include <ironbee/engine.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
 #include <boost/date_time/posix_time/ptime.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <ostream>
 
