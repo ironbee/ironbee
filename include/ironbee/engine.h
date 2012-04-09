@@ -825,7 +825,8 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
 /**
  * State Event Types
  *
- * @warning Remember to update ib_state_event_name_list[] as well.
+ * @warning Remember to update ib_state_event_name_list[] when names change.
+ * @warning Remember to update ib_state_event_hook_types[] when types change.
  */
 typedef enum {
     /* Engine States */

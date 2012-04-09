@@ -47,10 +47,11 @@ extern "C" {
  * A link list element representing HTTP headers.
  */
 typedef struct ib_parsed_name_value_pair_list_t {
-    const char *name;
-    size_t name_len;
-    const char *value;
-    size_t value_len;
+    ib_tx_t *tx;       /**< Transaction this element is related to. */
+    const char *name;  /**< Name. */
+    size_t name_len;   /**< Name length. */
+    const char *value; /**< Value the name describes. */
+    size_t value_len;  /**< Value length. */
     struct ib_parsed_name_value_pair_list_t *next; /**< Next element. */
 } ib_parsed_name_value_pair_list_t;
 
