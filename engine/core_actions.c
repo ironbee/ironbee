@@ -396,7 +396,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
             tx->dpi, bsdata, bslen, IB_FALSE, &expanded, &exlen);
         if (rc != IB_OK) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to expand string '%*s': %s",
+                         "setvar: Failed to expand string '%.*s': %s",
                          (int) bslen, bsdata, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -405,7 +405,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
         expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
         if (expanded == NULL) {
             ib_log_error(tx->ib, 4,
-                         "setvar: Failed to copy string '%*s'",
+                         "setvar: Failed to copy string '%.*s'",
                          (int)bslen, bsdata);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }

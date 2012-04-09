@@ -390,17 +390,17 @@ public:
         }
         else if (haystack == NULL) {
             snprintf(buf, buflen,
-                     "strstr_ex(NULL,%zd,\"%*s\",%zd)",
+                     "strstr_ex(NULL,%zd,\"%.*s\",%zd)",
                      haystack_len, (int)needle_len, needle, needle_len);
         }
         else if (needle == NULL) {
             snprintf(buf, buflen,
-                     "strstr_ex(\"%*s\",%zd,NULL,%zd)",
+                     "strstr_ex(\"%.*s\",%zd,NULL,%zd)",
                      (int)haystack_len, haystack, haystack_len, needle_len);
         }
         else {
             snprintf(buf, buflen,
-                     "strstr_ex(\"%*s\",%zd,\"%*s\",%zd)",
+                     "strstr_ex(\"%.*s\",%zd,\"%.*s\",%zd)",
                      (int)haystack_len, haystack, haystack_len,
                      (int)needle_len, needle, needle_len);
         }

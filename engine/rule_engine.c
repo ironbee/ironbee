@@ -136,7 +136,7 @@ static void log_field(ib_engine_t *ib,
         if (rc != IB_OK) {
             return;
         }
-        ib_log_debug(ib, n, "%s = '%*s'",
+        ib_log_debug(ib, n, "%s = '%.*s'",
                      label,
                      (int)ib_bytestr_length(bs),
                      (const char *)ib_bytestr_const_ptr(bs));
