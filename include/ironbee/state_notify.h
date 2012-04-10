@@ -161,7 +161,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(
  * aggregate headers. This is done by storing the first @a headers.
  * This is an optimistic optimization to avoid memory allocations.
  *
- * Upon subseqeuent calls to ib_state_notify_request_headers_data the
+ * Upon subsequent calls to ib_state_notify_request_headers_data the
  * original @a headers structure is appended to
  * (using ib_parsed_name_value_pair_list_append).
  *

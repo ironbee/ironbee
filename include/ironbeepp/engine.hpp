@@ -96,7 +96,7 @@ public:
     };
 
     /**
-     * Provides human readable versio of @a event.
+     * Provides human readable version of @a event.
      *
      * @param[in] event Event.
      * @returns Human readable string name of @a event.
