@@ -32,7 +32,7 @@ ibmod_geoip_la_CFLAGS = $(AM_CFLAGS) $(GEOIP_CFLAGS)
 ibmod_geoip_la_CPPFLAGS = $(AM_CFLAGS) $(GEOIP_CPPFLAGS)
 endif
 
-ibmod_htp_la_SOURCES = htp.c
+ibmod_htp_la_SOURCES = modhtp.c
 ibmod_htp_la_LIBADD = -lhtp
 ibmod_htp_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS)
 ibmod_htp_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)

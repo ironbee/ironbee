@@ -67,8 +67,8 @@ static modtrace_config_t modtrace_global_config = {
 };
 
 /**
- * @internal
  * Trace generic tx event handler.
+ * @internal
  *
  * Handles a generic event, dumping some info on the event.
  *
@@ -118,7 +118,105 @@ static ib_status_t modtrace_txdata_event_callback(
 }
 
 /**
+ * Trace request line parsed event handler.
+ * @internal
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type
+ * @param[in] line Parsed request line
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
+ * event.
+ */
+static ib_status_t modtrace_reqline_event_callback(
+     ib_engine_t *ib,
+     ib_tx_t *tx,
+     ib_state_event_type_t event,
+     ib_parsed_req_line_t *line,
+     void *cbdata
+)
+{
+    IB_FTRACE_INIT();
+    event_info_t *eventp = (event_info_t *)cbdata;
+    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, 1, "Method: '%.*s', path: '%.*s' version: '%.s*'",
+                 (int)ib_bytestr_length(line->method),
+                 (char *)ib_bytestr_const_ptr(line->method),
+                 (int)ib_bytestr_length(line->path),
+                 (char *)ib_bytestr_const_ptr(line->path),
+                 (int)ib_bytestr_length(line->version),
+                 (char *)ib_bytestr_const_ptr(line->version));
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Trace response line parsed event handler.
+ * @internal
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type
+ * @param[in] line Parsed response line
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
+ * event.
+ */
+static ib_status_t modtrace_respline_event_callback(
+     ib_engine_t *ib,
+     ib_tx_t *tx,
+     ib_state_event_type_t event,
+     ib_parsed_resp_line_t *line,
+     void *cbdata
+)
+{
+    IB_FTRACE_INIT();
+    event_info_t *eventp = (event_info_t *)cbdata;
+    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, 1, "Code: '%.*s', message: '%.*s'",
+                 (int)ib_bytestr_length(line->code),
+                 (char *)ib_bytestr_const_ptr(line->code),
+                 (int)ib_bytestr_length(line->msg),
+                 (char *)ib_bytestr_const_ptr(line->msg));
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Trace parsed header event handler.
+ * @internal
+ *
+ * @param[in] ib IronBee object
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type
+ * @param[in] hdr Parsed header
+ * @param[in] cbdata Callback data: actually an event_info_t describing the
+ * event.
+ */
+static ib_status_t modtrace_header_event_callback(
+     ib_engine_t *ib,
+     ib_tx_t *tx,
+     ib_state_event_type_t event,
+     ib_parsed_header_t *hdr,
+     void *cbdata
+)
+{
+    IB_FTRACE_INIT();
+    event_info_t *eventp = (event_info_t *)cbdata;
+    ib_parsed_name_value_pair_list_t *nvp;
+
+    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+
+    for (nvp = hdr;  nvp != NULL;  nvp = nvp->next) {
+        ib_log_debug(ib, 1, "%.*s: '%.*s'",
+                     (int)ib_bytestr_length(nvp->name),
+                     (char *)ib_bytestr_const_ptr(nvp->name),
+                     (int)ib_bytestr_length(nvp->value),
+                     (char *)ib_bytestr_const_ptr(nvp->value));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Trace generic conn event handler.
+ * @internal
  *
  * Handles a generic event, dumping some info on the event.
  *
@@ -188,8 +286,8 @@ static ib_status_t modtrace_null_event_callback(
 }
 
 /**
- * @internal
  * Trace connection data event handler.
+ * @internal
  *
  * Handles conn_data_in_event, dumping some info on the event.
  *
@@ -228,8 +326,8 @@ static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Trace tx events.
+ * @internal
  *
  * Handles a the tx family of events, dumping some info on the event.
  *
@@ -256,8 +354,8 @@ static ib_status_t modtrace_handle_tx(
 }
 
 /**
- * @internal
  * Trace tx_data_in_event event handler.
+ * @internal
  *
  * Handles a tx_data_in_event, dumping some info on the event.
  *
@@ -286,8 +384,8 @@ static ib_status_t modtrace_handle_txdata(
 }
 
 /**
- * @internal
  * Add usage of the current memory pool to the usage data
+ * @internal
  *
  * @param[in] mp The memory pool to look at
  * @param[in,out] usage The usage data to add the pool's summary to
@@ -301,8 +399,8 @@ static void mempool_add_usage(const ib_mpool_t *mp,
 }
 
 /**
- * @internal
  * Walk through the memory pools, calculating total allocations.
+ * @internal
  *
  * @param[in] ib IronBee object
  * @param[in] first First memory pool to examine
@@ -346,8 +444,8 @@ static void mempool_walk(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Trace tx_{started,finished}_event event handler.
+ * @internal
  *
  * Handles tx started and finished events, dumping some memory info on the
  * event.
@@ -407,8 +505,8 @@ static ib_status_t modtrace_handle_tx_mem(
 }
 
 /**
- * @internal
  * Trace request_headers_event event handler.
+ * @internal
  *
  * Handles a request_headers_event, dumping some info on the event.
  *
@@ -480,8 +578,8 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Initialize the trace module.
+ * @internal
  *
  * Called when module is loaded.
  * Registers handlers for all IronBee events.
@@ -581,6 +679,30 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                             (void *)eventp
                         );
                         break;
+                    case IB_STATE_HOOK_REQLINE:
+                        rc = ib_hook_parsed_req_line_register(
+                            ib,
+                            (ib_state_event_type_t)event,
+                            modtrace_reqline_event_callback,
+                            (void *)eventp
+                        );
+                        break;
+                    case IB_STATE_HOOK_RESPLINE:
+                        rc = ib_hook_parsed_resp_line_register(
+                            ib,
+                            (ib_state_event_type_t)event,
+                            modtrace_respline_event_callback,
+                            (void *)eventp
+                        );
+                        break;
+                    case IB_STATE_HOOK_HEADER:
+                        rc = ib_hook_parsed_header_data_register(
+                            ib,
+                            (ib_state_event_type_t)event,
+                            modtrace_header_event_callback,
+                            (void *)eventp
+                        );
+                        break;
                     case IB_STATE_HOOK_NULL:
                         rc = ib_hook_null_register(
                             ib,
@@ -606,8 +728,8 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Uninitialize the trace module.
+ * @internal
  *
  * Called when module is unloaded.
  *
@@ -625,8 +747,8 @@ static ib_status_t modtrace_finish(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Initialize a context for the trace module.
+ * @internal
  *
  * Called when the context is available
  *
@@ -646,8 +768,8 @@ static ib_status_t modtrace_context_close(ib_engine_t  *ib,
 }
 
 /**
- * @internal
  * Finish a context for the trace module.
+ * @internal
  *
  * Called when the context is available
  *

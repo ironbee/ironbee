@@ -83,7 +83,7 @@ struct modhtp_cfg_t {
 
 /* Instantiate a module global configuration. */
 static modhtp_cfg_t modhtp_global_cfg = {
-    "Apache_2_2" /* personality */
+    "generic" /* personality */
 };
 
 /* -- libhtp Routines -- */
@@ -206,7 +206,9 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
             return rc;
         }
 
-        rc = ib_bytestr_setv_const(ibs, (const uint8_t *)bstr_ptr(bs), bstr_len(bs));
+        rc = ib_bytestr_setv_const(ibs,
+                                   (const uint8_t *)bstr_ptr(bs),
+                                   bstr_len(bs));
 
         return rc;
     }
@@ -217,7 +219,8 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
                                 bstr_len(bs), pf);
     if (rc != IB_OK) {
         ib_log_error(dpi->pr->ib, 4,
-                     "Failed to generate \"%s\" field: %s", name, ib_status_to_string(rc));
+                     "Failed to generate \"%s\" field: %s",
+                     name, ib_status_to_string(rc));
     }
 
     return rc;
@@ -405,9 +408,6 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     /* Associate the ironbee transaction with the libhtp transaction. */
     htp_tx_set_user_data(tx, itx);
 
-    /* Tell the engine that the request started. */
-    ib_state_notify_request_started(ib, itx, NULL);
-
     IB_FTRACE_RET_INT(HTP_OK);
 }
 
@@ -418,8 +418,9 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_txdata_t itxdata;
+    ib_parsed_req_line_t *req;
     ib_tx_t *itx;
+
 
     /* Use the current parser transaction to generate fields. */
     ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
@@ -437,39 +438,86 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in request line: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in request line: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
-        itx->path = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->path);
+        itx->path = bstr_util_strdup_to_c(tx->parsed_uri->path);
     }
     if (itx->path == NULL) {
         ib_log_debug(ib, 4, "Unknown URI path - using /");
         /// @todo Probably should set a flag here
-        itx->path = (const char *)ib_mpool_strdup(itx->mp, "/");
+        itx->path = ib_mpool_strdup(itx->mp, "/");
     }
 
     /* Store the hostname if it was parsed with the URI. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
-        itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
+        itx->hostname = bstr_util_strdup_to_c(tx->parsed_uri->hostname);
     }
     if (itx->hostname == NULL) {
-        ib_log_debug(ib, 4, "Unknown hostname - using ip: %s", iconn->local_ipstr);
+        ib_log_debug(ib, 4,
+                     "Unknown hostname - using ip: %s",
+                     iconn->local_ipstr);
         /// @todo Probably should set a flag here
-        itx->hostname = (const char *)ib_mpool_strdup(itx->mp,
-                                                      iconn->local_ipstr);
+        itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
     }
 
-    /* Fill in a temporary ib_txdata_t structure and use it
-     * to notify the engine of transaction data.
-     */
-    itxdata.dtype = IB_DTYPE_HTTP_LINE;
-    itxdata.dlen = bstr_len(tx->request_line_raw);
-    itxdata.data = (uint8_t *)bstr_ptr(tx->request_line_raw);
+    /* Allocate and fill the parsed request line object */
+    req = ib_mpool_calloc(itx->mp, sizeof(*req), 1);
+    if (req == NULL) {
+        ib_log_error(ib, 3, "Error allocating request line buffer");
+    }
+    else {
+        ib_status_t rc;
 
-    ib_state_notify_tx_data_in(ib, itx, &itxdata);
+        req->tx = itx;
+
+        ib_log_debug(ib, 7, "TX request: method=%.*s path=%.*s version=%.*s",
+                     (int)bstr_len(tx->request_method),
+                     (char *)bstr_ptr(tx->request_method),
+                     (int)bstr_len(tx->request_uri),
+                     (char *)bstr_ptr(tx->request_uri),
+                     (int)bstr_len(tx->request_protocol),
+                     (char *)bstr_ptr(tx->request_protocol));
+
+        /* Request method */
+        rc = ib_bytestr_alias_mem(&req->method, itx->mp,
+                                  (uint8_t *)bstr_ptr(tx->request_method),
+                                  bstr_len(tx->request_method));
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3,
+                         "Error aliasing request method: %s",
+                         ib_status_to_string(rc));
+        }
+
+        /* Request URI */
+        rc = ib_bytestr_alias_mem(&req->path, itx->mp,
+                                  (uint8_t *)bstr_ptr(tx->request_uri),
+                                  bstr_len(tx->request_uri));
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3,
+                         "Error aliasing request URI: %s",
+                         ib_status_to_string(rc));
+        }
+
+        /* Request protocol */
+        rc = ib_bytestr_alias_mem(&req->version, itx->mp,
+                                  (uint8_t *)bstr_ptr(tx->request_protocol),
+                                  bstr_len(tx->request_protocol));
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3,
+                         "Error aliasing request version: %s",
+                         ib_status_to_string(rc));
+        }
+    }
+
+    /* Tell the engine that the request started. */
+    ib_log_debug(ib, 7, "Notify request started");
+    ib_state_notify_request_started(ib, itx, req);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -479,11 +527,13 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
-    htp_header_line_t *hline;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_txdata_t itxdata;
     ib_tx_t *itx;
+    ib_status_t rc;
+    htp_header_t *hdr = NULL;
+    ib_parsed_header_wrapper_t *ibhdrs;
+
 
     /* Use the current parser transaction to generate fields. */
     ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
@@ -501,40 +551,59 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in request headers: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in request headers: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
     /* Update the hostname that may have changed with headers. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
-        itx->hostname = (const char *)bstr_util_strdup_to_c(tx->parsed_uri->hostname);
+        itx->hostname = bstr_util_strdup_to_c(tx->parsed_uri->hostname);
     }
     if (itx->hostname == NULL) {
-        ib_log_debug(ib, 4, "Unknown hostname - using ip: %s", iconn->local_ipstr);
+        ib_log_debug(ib, 4,
+                     "Unknown hostname - using ip: %s",
+                     iconn->local_ipstr);
         /// @todo Probably should set a flag here
-        itx->hostname = (const char *)ib_mpool_strdup(itx->mp,
-                                                      iconn->local_ipstr);
+        itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
     }
 
-    /* Fill in a temporary ib_txdata_t structure for each header line
-     * and use it to notify the engine of transaction data.
-     */
-    itxdata.dtype = IB_DTYPE_HTTP_HEADER;
-    list_iterator_reset(tx->request_header_lines);
-    while ((hline = list_iterator_next(tx->request_header_lines)) != NULL) {
-        itxdata.dlen = bstr_len(hline->line);
-        itxdata.data = (uint8_t *)bstr_ptr(hline->line);
-
-        ib_state_notify_tx_data_in(ib, itx, &itxdata);
+    /* Copy the request fields into a parse name value pair list object */
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3, "Erorr creating header wrapper: %s",
+                     ib_status_to_string(rc));
     }
-
-    /* Headers separator */
-    itxdata.dlen = bstr_len(tx->request_headers_sep);
-    itxdata.data = (uint8_t *)bstr_ptr(tx->request_headers_sep);
-    ib_state_notify_tx_data_in(ib, itx, &itxdata);
+    else {
+        table_iterator_reset(tx->request_headers);
+        while (table_iterator_next(tx->request_headers,
+                                   (void **)&hdr) != NULL)
+        {
+            rc = ib_parsed_name_value_pair_list_add(
+                ibhdrs,
+                bstr_ptr(hdr->name),
+                bstr_len(hdr->name),
+                bstr_ptr(hdr->value),
+                bstr_len(hdr->value));
+            if (rc != IB_OK) {
+                ib_log_error(ib, 3, "Error adding header name / value: %s",
+                             ib_status_to_string(rc));
+                continue;
+            }
+            ib_log_debug(ib,9,"Added request header field %.*s='%.*s'",
+                         (int)bstr_len(hdr->name), (char*)bstr_ptr(hdr->name),
+                         (int)bstr_len(hdr->value),(char*)bstr_ptr(hdr->value));
+                         
+        }
+    }
 
     /* The full headers are now available. */
-    ib_state_notify_request_headers(ib, itx);
+    rc = ib_state_notify_request_headers_data(ib, itx, ibhdrs);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3, "Error generating request headers: %s",
+                     ib_status_to_string(rc));
+    }
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -566,7 +635,9 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in request body: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in request body: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -584,11 +655,15 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_BODY;
+    itxdata.dalloc = txdata->len;
     itxdata.dlen = txdata->len;
     itxdata.data = (uint8_t *)txdata->data;
 
-    ib_state_notify_tx_data_in(ib, itx, &itxdata);
+    ib_state_notify_tx_data_in(ib, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -618,7 +693,9 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in request trailer: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in request trailer: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -654,7 +731,9 @@ static int modhtp_htp_request(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in request: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in request: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -670,7 +749,8 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_txdata_t itxdata;
+    ib_parsed_resp_line_t *resp;
+    ib_status_t rc;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
@@ -689,20 +769,54 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in response line: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in response line: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
-    ib_state_notify_response_started(ib, itx, NULL);
 
-    /* Fill in a temporary ib_txdata_t structure and use it
-     * to notify the engine of transaction data.
-     */
-    itxdata.dtype = IB_DTYPE_HTTP_LINE;
-    itxdata.dlen = bstr_len(tx->response_line_raw);
-    itxdata.data = (uint8_t *)bstr_ptr(tx->response_line_raw);
+    /* Allocate and fill the parsed request line object */
+    resp = ib_mpool_calloc(itx->mp, sizeof(*resp), 1);
+    if (resp == NULL) {
+        ib_log_error(ib, 3, "Error allocating response line buffer");
+    }
+    else {
+        resp->tx = itx;
+        ib_log_debug(ib, 7, "TX response: status=%.*s msg=%.*s",
+                     (int)bstr_len(tx->response_status),
+                     (char *)bstr_ptr(tx->response_status),
+                     (int)bstr_len(tx->response_message),
+                     (char *)bstr_ptr(tx->response_message));
 
-    ib_state_notify_tx_data_out(ib, itx, &itxdata);
+        /* Request method */
+        rc = ib_bytestr_alias_mem(&resp->code, itx->mp,
+                                  (uint8_t *)bstr_ptr(tx->response_status),
+                                  bstr_len(tx->response_status));
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3,
+                         "Error aliasing response status: %s",
+                         ib_status_to_string(rc));
+        }
+
+        /* Request URI */
+        rc = ib_bytestr_alias_mem(&resp->msg, itx->mp,
+                                  (uint8_t *)bstr_ptr(tx->response_message),
+                                  bstr_len(tx->response_message));
+        if (rc != IB_OK) {
+            ib_log_error(ib, 3,
+                         "Error aliasing response message: %s",
+                         ib_status_to_string(rc));
+        }
+    }
+
+    /* Tell the engine that the response started. */
+    ib_log_debug(ib, 7, "Notify response started");
+    rc = ib_state_notify_response_started(ib, itx, resp);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3, "Error from notice_response_started(): %s",
+                     ib_status_to_string(rc));
+    }
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -712,10 +826,11 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
-    htp_header_line_t *hline;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_txdata_t itxdata;
+    htp_header_t *hdr = NULL;
+    ib_parsed_header_wrapper_t *ibhdrs;
+    ib_status_t rc;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
@@ -734,29 +849,43 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in response headers: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in response headers: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
-    /* Fill in a temporary ib_txdata_t structure for each header line
-     * and use it to notify the engine of transaction data.
-     */
-    itxdata.dtype = IB_DTYPE_HTTP_HEADER;
-    list_iterator_reset(tx->response_header_lines);
-    while ((hline = list_iterator_next(tx->response_header_lines)) != NULL) {
-        itxdata.dlen = bstr_len(hline->line);
-        itxdata.data = (uint8_t *)bstr_ptr(hline->line);
-
-        ib_state_notify_tx_data_out(ib, itx, &itxdata);
+    /* Copy the response fields into a parse name value pair list object */
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3, "Erorr creating header wrapper: %s",
+                     ib_status_to_string(rc));
+    }
+    else {
+        table_iterator_reset(tx->request_headers);
+        while (table_iterator_next(tx->request_headers,
+                                   (void **)&hdr) != NULL)
+        {
+            rc = ib_parsed_name_value_pair_list_add(
+                ibhdrs,
+                bstr_ptr(hdr->name),
+                bstr_len(hdr->name),
+                bstr_ptr(hdr->value),
+                bstr_len(hdr->value));
+            if (rc != IB_OK) {
+                ib_log_error(ib, 3, "Error adding header name / value: %s",
+                             ib_status_to_string(rc));
+                continue;
+            }
+        }
     }
 
-    /* Headers separator */
-    itxdata.dlen = bstr_len(tx->response_headers_sep);
-    itxdata.data = (uint8_t *)bstr_ptr(tx->response_headers_sep);
-    ib_state_notify_tx_data_out(ib, itx, &itxdata);
-
     /* The full headers are now available. */
-    ib_state_notify_response_headers(ib, itx);
+    rc = ib_state_notify_request_headers_data(ib, itx, ibhdrs);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3, "Error generating request headers: %s",
+                     ib_status_to_string(rc));
+    }
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -788,7 +917,9 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in response body: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in response body: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
@@ -801,11 +932,15 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
+    itxdata.ib = ib;
+    itxdata.mp = itx->mp;
+    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_BODY;
+    itxdata.dalloc = txdata->len;
     itxdata.dlen = txdata->len;
     itxdata.data = (uint8_t *)txdata->data;
 
-    ib_state_notify_tx_data_out(ib, itx, &itxdata);
+    ib_state_notify_tx_data_out(ib, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -836,7 +971,9 @@ static int modhtp_htp_response(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in response: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in response: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
@@ -877,12 +1014,15 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_error(ib, 4, "HTP parser flagged an event in response trailer: 0x%08x", tx->flags);
+        ib_log_error(ib, 4,
+                     "HTP parser flagged an event in response trailer: 0x%08x",
+                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
     /// @todo Notify tx_dataout_event w/response trailer
-    ib_log_debug(ib, 4, "TODO: tx_dataout_event w/response trailer: tx=%p", itx);
+    ib_log_debug(ib, 4,
+                 "TODO: tx_dataout_event w/response trailer: tx=%p", itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -1020,7 +1160,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                                         ib_conndata_t *qcdata)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = pi->pr->ib;
+    ib_engine_t *ib = qcdata->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
@@ -1078,7 +1218,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                                          ib_conndata_t *qcdata)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = pi->pr->ib;
+    ib_engine_t *ib = qcdata->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
