@@ -240,9 +240,9 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(
 
 /**
  * Append the @a tail list to the @a head list.
- * 
+ *
  * This modifies the @a head list but leaves the @a tail list untouched.
- * However, the @a tail list should not be used as it may be indirectly 
+ * However, the @a tail list should not be used as it may be indirectly
  * appended to by calls to ib_parsed_name_value_pair_list_append or
  * ib_parsed_name_value_pair_list_add on @a head.
  */

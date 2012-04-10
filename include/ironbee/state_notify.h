@@ -166,7 +166,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_started(
  * (using ib_parsed_name_value_pair_list_append).
  *
  * After all headers are received @a tx->request_headers is list
- * of all headers and is available via @a tx when 
+ * of all headers and is available via @a tx when
  * ib_state_notify_request_headers is called.
  *
  * @param[in] ib IronBee engine.

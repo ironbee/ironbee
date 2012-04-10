@@ -227,7 +227,7 @@ struct ib_tx_t {
      * The request line.
      *
      * This is made available in the TX because the current context
-     * has not yet been established and the request line and headers may be 
+     * has not yet been established and the request line and headers may be
      * need to be re-run through context-specific rules.
      */
     ib_parsed_req_line_t *request_line;
@@ -236,7 +236,7 @@ struct ib_tx_t {
      * The request headers.
      *
      * This is made available in the TX because the current context
-     * has not yet been established and the request line and headers may be 
+     * has not yet been established and the request line and headers may be
      * need to be re-run through context-specific rules.
      */
     ib_parsed_header_wrapper_t *request_headers;
