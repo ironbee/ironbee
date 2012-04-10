@@ -24,4 +24,5 @@ libibpp_la_SOURCES = \
     transaction.cpp \
     transaction_data.cpp \
     clock.cpp \
-    parsed_request_line.cpp
+    parsed_request_line.cpp \
+    parsed_response_line.cpp

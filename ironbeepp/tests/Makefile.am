@@ -45,30 +45,32 @@ check_PROGRAMS = \
     test_connection_data \
     test_transaction \
     test_transaction_data \
-    test_parsed_request_line
+    test_parsed_request_line \
+    test_parsed_response_line
     
 TESTS=$(check_PROGRAMS)
 
-test_catch_SOURCES               = test_catch.cpp
-test_data_SOURCES                = test_data.cpp
-test_module_SOURCES              = test_module.cpp fixture.cpp
-test_module_bootstrap_a_SOURCES  = test_module_bootstrap_a.cpp fixture.cpp
-test_module_bootstrap_b_SOURCES  = test_module_bootstrap_b.cpp fixture.cpp
-test_module_delegate_SOURCES     = test_module_delegate.cpp fixture.cpp
-test_throw_SOURCES               = test_throw.cpp
-test_memory_pool_SOURCES         = test_memory_pool.cpp fixture.cpp
-test_byte_string_SOURCES         = test_byte_string.cpp
-test_field_SOURCES               = test_field.cpp
-test_configuration_map_SOURCES   = test_configuration_map.cpp fixture.cpp
-test_list_SOURCES                = test_list.cpp fixture.cpp
-test_site_SOURCES                = test_site.cpp fixture.cpp
+test_catch_SOURCES                = test_catch.cpp
+test_data_SOURCES                 = test_data.cpp
+test_module_SOURCES               = test_module.cpp fixture.cpp
+test_module_bootstrap_a_SOURCES   = test_module_bootstrap_a.cpp fixture.cpp
+test_module_bootstrap_b_SOURCES   = test_module_bootstrap_b.cpp fixture.cpp
+test_module_delegate_SOURCES      = test_module_delegate.cpp fixture.cpp
+test_throw_SOURCES                = test_throw.cpp
+test_memory_pool_SOURCES          = test_memory_pool.cpp fixture.cpp
+test_byte_string_SOURCES          = test_byte_string.cpp
+test_field_SOURCES                = test_field.cpp
+test_configuration_map_SOURCES    = test_configuration_map.cpp fixture.cpp
+test_list_SOURCES                 = test_list.cpp fixture.cpp
+test_site_SOURCES                 = test_site.cpp fixture.cpp
 test_configuration_parser_SOURCES = \
     test_configuration_parser.cpp fixture.cpp
 test_configuration_directives_SOURCES = \
     test_configuration_directives.cpp fixture.cpp
-test_clock_SOURCES               = test_clock.cpp
-test_connection_SOURCES          = test_connection.cpp
-test_connection_data_SOURCES     = test_connection_data.cpp
-test_transaction_SOURCES         = test_transaction.cpp
-test_transaction_data_SOURCES    = test_transaction_data.cpp
-test_parsed_request_line_SOURCES = test_parsed_request_line.cpp
+test_clock_SOURCES                = test_clock.cpp
+test_connection_SOURCES           = test_connection.cpp
+test_connection_data_SOURCES      = test_connection_data.cpp
+test_transaction_SOURCES          = test_transaction.cpp
+test_transaction_data_SOURCES     = test_transaction_data.cpp
+test_parsed_request_line_SOURCES  = test_parsed_request_line.cpp
+test_parsed_response_line_SOURCES = test_parsed_response_line.cpp
