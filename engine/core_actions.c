@@ -289,6 +289,11 @@ static ib_status_t act_event_execute(void *data,
             expanded = rule->meta.data;
         }
         rc = ib_logevent_data_set(event, expanded, strlen(expanded));
+        if (rc != IB_OK) {
+            ib_log_error(tx->ib, 4, "event: Failed to set data: %s",
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Link to rule tags. */
