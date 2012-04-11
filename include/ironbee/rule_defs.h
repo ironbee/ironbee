@@ -81,11 +81,26 @@ typedef enum {
  * expected to extract whatever fields, etc. it requires itself.
  */
 #define IB_RULE_FLAG_NONE        (0x0)     /**< No flags */
-#define IB_RULE_FLAG_EXTERNAL    (1 << 0)  /**< External rule */
-#define IB_RULE_FLAG_ALLOW_CHAIN (1 << 1)  /**< Rule allows chaining */
-#define IB_RULE_FLAG_ALLOW_TFNS  (1 << 2)  /**< Rule allows transformations */
-#define IB_RULE_FLAG_CHAIN       (1 << 3)  /**< Rule is part of a chain */
-#define IB_RULE_FLAG_CHAINED_TO  (1 << 4)  /**< Rule is target of a chain */
+#define IB_RULE_FLAG_ENABLED     (1 << 0)  /**< Rule is enabled */
+#define IB_RULE_FLAG_VALID       (1 << 1)  /**< Rule is valid */
+#define IB_RULE_FLAG_EXTERNAL    (1 << 2)  /**< External rule */
+#define IB_RULE_FLAG_ALLOW_CHAIN (1 << 3)  /**< Rule allows chaining */
+#define IB_RULE_FLAG_ALLOW_TFNS  (1 << 4)  /**< Rule allows transformations */
+#define IB_RULE_FLAG_CHAIN       (1 << 5)  /**< Rule is parent in a chain */
+#define IB_RULE_FLAG_IN_CHAIN    (1 << 6)  /**< Rule is part of a chain */
+
+/**
+ * Rule meta-flags:
+ * RUNABLE: Only run the rule if it's enabled and valid
+ * PHASE: Flags set for all phase rules
+ * STREAM: Flags set for all stream rules
+ * CHAIN: Rule is any part of a chain
+ */
+#define IB_RULE_FLAGS_RUNABLE (IB_RULE_FLAG_ENABLED | IB_RULE_FLAG_VALID)
+#define IB_RULE_FLAGS_PHASE   \
+    (IB_RULE_FLAG_ALLOW_TFNS | IB_RULE_FLAG_ALLOW_CHAIN)
+#define IB_RULE_FLAGS_STREAM   (IB_RULE_FLAG_NONE)
+#define IB_RULE_FLAGS_CHAIN    (IB_RULE_FLAG_CHAIN | IB_RULE_FLAG_IN_CHAIN)
 
 /**
  * Rule meta-data flags

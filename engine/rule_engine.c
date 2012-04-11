@@ -684,6 +684,14 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         ib_num_t     rule_result = 0;
         ib_status_t  rule_rc;
 
+        /* Skip invalid / disabled rules */
+        if ( (rule->flags & IB_RULE_FLAGS_RUNABLE) != IB_RULE_FLAGS_RUNABLE) {
+            ib_log_debug(ib, 7,
+                         "Not executing invalid/disabled phase rule %s",
+                         rule->meta.id);
+            continue;
+        }
+
         /* Execute the rule, it's actions and chains */
         rule_rc = execute_phase_rule(ib,
                                      rule,
@@ -845,6 +853,14 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
             }
         }
         if (dtype_found == IB_FALSE) {
+            continue;
+        }
+
+        /* Skip invalid / disabled rules */
+        if ( (rule->flags & IB_RULE_FLAGS_RUNABLE) != IB_RULE_FLAGS_RUNABLE) {
+            ib_log_debug(ib, 7,
+                         "Not executing invalid/disabled stream rule %s",
+                         rule->meta.id);
             continue;
         }
 
@@ -1168,20 +1184,96 @@ ib_mpool_t *ib_rule_mpool(ib_engine_t *ib)
     IB_FTRACE_RET_PTR(ib_mpool_t, ib_engine_pool_config_get(ib));
 }
 
+
+/**
+ * Calculate a rule's position in a chain.
+ * @internal
+ *
+ * @param[in] ib IronBee Engine
+ * @param[in] rule The rule
+ * @param[out] pos The rule's position in the chain
+ *
+ * @returns Status code
+ */
+static ib_status_t chain_position(ib_engine_t *ib,
+                                  const ib_rule_t *rule,
+                                  ib_num_t *pos)
+{
+    IB_FTRACE_INIT();
+    ib_num_t n = 0;
+
+    /* Loop through all parent rules */
+    while (rule != NULL) {
+        if (rule->flags & IB_RULE_FLAG_ENABLED) {
+            ++n;
+        }
+        rule = rule->chained_from;
+    }; /* while (rule != NULL); */
+    *pos = n;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+/**
+ * Generate the id for a chained rule.
+ * @internal
+ *
+ * @param[in] ib IronBee Engine
+ * @param[in,out] rule The rule
+ * @param[in] force Set the ID even if it's already set
+ *
+ * @returns Status code
+ */
+static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
+                                     ib_rule_t *rule,
+                                     ib_bool_t force)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    char idbuf[128];
+    ib_num_t pos;
+
+    /* If it's already set, do nothing */
+    if ( (rule->meta.id != NULL) && (force == IB_FALSE) ) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    rc = chain_position(ib, rule, &pos);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    snprintf(idbuf, sizeof(idbuf), "%s/%d", rule->meta.chain_id, (int)pos);
+    rule->meta.id = ib_mpool_strdup(ib_rule_mpool(ib), idbuf);
+    if (rule->meta.id == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
                                       ib_rule_type_t type,
                                       ib_rule_t **prule)
 {
     IB_FTRACE_INIT();
-    ib_status_t  rc;
-    ib_rule_t   *rule;
-    ib_list_t   *lst;
-    ib_mpool_t  *mp = ib_rule_mpool(ib);
+    ib_status_t       rc;
+    ib_rule_t        *rule;
+    ib_list_t        *lst;
+    ib_mpool_t       *mp = ib_rule_mpool(ib);
+    ib_rule_engine_t *rule_engine;
+    ib_rule_t        *previous;
 
     assert(ib != NULL);
     assert(ctx != NULL);
     assert( (type == RULE_TYPE_PHASE) || (type == RULE_TYPE_STREAM) );
+
+    /* Initialize the context's rule set (if required) */
+    rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, "Failed to initialize rules for context %p",
+                     (void *)ctx);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Allocate the rule */
     rule = (ib_rule_t *)ib_mpool_calloc(mp, sizeof(ib_rule_t), 1);
@@ -1194,7 +1286,10 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     rule->meta.type = type;
     rule->flags = IB_RULE_FLAG_NONE;
     if (rule->meta.type == RULE_TYPE_PHASE) {
-        rule->flags |= (IB_RULE_FLAG_ALLOW_TFNS | IB_RULE_FLAG_ALLOW_CHAIN);
+        rule->flags |= IB_RULE_FLAGS_PHASE;
+    }
+    else {
+        rule->flags |= IB_RULE_FLAGS_STREAM;
     }
 
     /* meta tags list */
@@ -1237,8 +1332,24 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     }
     rule->false_actions = lst;
 
-    /* Chained rule */
-    rule->chained_rule = NULL;
+    /* Get the rule engine and previous rule */
+    rule_engine = ctx->rules;
+    previous = rule_engine->parser_data.previous;
+
+    /*
+     * If the previous rule has it's CHAIN flag set,
+     * chain to that rule & update the current rule.
+     */
+    if (  (previous != NULL) &&
+          ((previous->flags & IB_RULE_FLAG_CHAIN) != 0) )
+    {
+        assert (rule->meta.type == previous->meta.type);
+        previous->chained_rule = rule;
+        rule->chained_from = previous;
+        rule->meta.phase = previous->meta.phase;
+        rule->meta.chain_id = previous->meta.chain_id;
+        rule->flags |= IB_RULE_FLAG_IN_CHAIN;
+    }
 
     /* Good */
     rule->parent_rlist = &(ctx->rules->rule_list);
@@ -1260,6 +1371,18 @@ ib_flags_t ib_rule_required_op_flags(const ib_rule_t *rule)
         IB_FTRACE_RET_UINT(IB_OP_FLAG_STREAM);
     }
     assert(0 && "Rule type not PHASE or STREAM");
+}
+
+ib_status_t ib_rule_set_chain(ib_engine_t *ib,
+                              ib_rule_t *rule)
+{
+    IB_FTRACE_INIT();
+    assert ((rule->flags & IB_RULE_FLAG_ALLOW_CHAIN) != 0);
+
+    /* Set the chain flags */
+    rule->flags |= IB_RULE_FLAGS_CHAIN;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_rule_set_phase(ib_engine_t *ib,
@@ -1310,24 +1433,15 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                              ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
-    ib_status_t           rc;
-    ib_list_t            *rules;
-    ib_rule_engine_t     *rule_engine;
-    ib_rule_t            *chain_rule;
+    ib_status_t       rc;
+    ib_list_t        *rules;
+    ib_rule_engine_t *rule_engine;
 
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(rule != NULL);
     assert( (rule->meta.type == RULE_TYPE_PHASE) ||
             (rule->meta.type == RULE_TYPE_STREAM) );
-
-    /* Initialize the context's rule set (if required) */
-    rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize rules for context %p",
-                     (void *)ctx);
-        IB_FTRACE_RET_STATUS(rc);
-    }
 
     /* Sanity checks */
     if (rule->meta.type == RULE_TYPE_PHASE) {
@@ -1346,6 +1460,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
+
+    /* Verify that we have a valid operator */
     if (rule->opinst == NULL) {
         ib_log_error(ib, 4, "Can't register rule: No operator instance");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1358,39 +1474,39 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, 4, "Can't register rule: No operator function");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (rule->meta.id == NULL) {
+
+    /* Verify that the rule has an ID */
+    if ( (rule->meta.id == NULL) && (rule->meta.chain_id == NULL) ) {
         ib_log_error(ib, 4, "Can't register rule: No ID");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* If the "chain" flag is set, the chain ID is the rule's ID */
+    if (rule->flags & IB_RULE_FLAGS_CHAIN) {
+        if (rule->chained_from != NULL) {
+            rule->meta.chain_id = rule->chained_from->meta.chain_id;
+        }
+        else {
+            rule->meta.chain_id = rule->meta.id;
+        }
+        rule->meta.id = NULL;
+        rc = chain_gen_rule_id(ib, rule, IB_TRUE);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
     /* Get the rule engine and previous rule */
     rule_engine = ctx->rules;
-    chain_rule = rule_engine->parser_data.previous;
 
-    /* Chain (if required) */
-    if ( (chain_rule != NULL)
-         && ((chain_rule->flags & IB_RULE_FLAG_CHAIN) != 0) )
-    {
-        assert(chain_rule->meta.type == RULE_TYPE_PHASE);
-        assert(rule->meta.type == RULE_TYPE_PHASE);
-
-        /* Verify that the rule phase's match */
-        if (chain_rule->meta.phase != rule->meta.phase) {
-            ib_log_error(ib, 4,
-                         "Chained rule '%s' phase %d != rule phase %d",
-                         chain_rule->meta.id,
-                         chain_rule->meta.phase,
-                         rule->meta.phase);
+    /* Handle chained rule */
+    if (rule->chained_from != NULL) {
+        if ( (rule->chained_from->flags & IB_RULE_FLAG_VALID) == 0) {
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-
-        /* Chain to the rule, update the our rule's flags. */
-        chain_rule->chained_rule = rule;
-        rule->flags |= IB_RULE_FLAG_CHAINED_TO;
-
         ib_log_debug(ib, 9,
-                     "Rule '%s' chained from rule '%s'",
-                     rule->meta.id, chain_rule->meta.id);
+                     "Registered rule '%s' chained from rule '%s'",
+                     rule->meta.id, rule->chained_from->meta.id);
     }
 
     /* If the rule isn't chained to, add it to the appropriate list */
@@ -1438,7 +1554,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
     }
 
-
+    /* Enable & validate this rule */
+    rule->flags |= IB_RULE_FLAGS_RUNABLE;
 
     /* Store off this rule for chaining */
     rule_engine->parser_data.previous = rule;
@@ -1475,6 +1592,17 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    if (rule->chained_from != NULL) {
+        ib_log_error(ib, 4, "Can't set rule id of chained rule");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if (rule->meta.id != NULL) {
+        ib_log_error(ib, 4, "Can't set rule id: already set to '%s'",
+                     rule->meta.id);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
     rule->meta.id = id;
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1485,45 +1613,6 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
     IB_FTRACE_INIT();
     assert(rule != NULL);
     IB_FTRACE_RET_CONSTSTR(rule->meta.id);
-}
-
-ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
-                                            ib_rule_t *rule,
-                                            ib_rule_flagop_t op,
-                                            ib_flags_t flags)
-{
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
-    assert(rule != NULL);
-
-    if (rule == NULL) {
-        ib_log_error(ib, 4, "Can't update rule flags: Invalid rule");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    switch(op) {
-        case FLAG_OP_SET:
-            rule->flags = flags;
-            break;
-        case FLAG_OP_OR:
-            rule->flags |= flags;
-            break;
-        case FLAG_OP_CLEAR:
-            rule->flags &= (~flags);
-            break;
-        default:
-            ib_log_error(ib, 4,
-                         "Can't update rule flags: Invalid operation %d",
-                         (int)op);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule)
-{
-    return rule->flags;
 }
 
 ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
@@ -1728,4 +1817,33 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
+                                                ib_rule_t *rule)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc = IB_OK;
+    ib_status_t tmp_rc;
+
+    if (rule == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    rule->flags &= ~IB_RULE_FLAG_VALID;
+
+    /* Invalidate the entire chain */
+    if (rule->chained_from != NULL) {
+        tmp_rc = ib_rule_chain_invalidate(ib, rule->chained_from);
+        if (tmp_rc != IB_OK) {
+            rc = tmp_rc;
+        }
+    }
+    if (rule->chained_rule != NULL) {
+        tmp_rc = ib_rule_chain_invalidate(ib, rule->chained_rule);
+        if (tmp_rc != IB_OK) {
+            rc = tmp_rc;
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
 }

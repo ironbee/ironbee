@@ -809,7 +809,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if ( ((rule->flags & IB_RULE_FLAG_ALLOW_CHAIN) != 0) &&
          (strcasecmp(name, "chain") == 0) )
     {
-        rc = ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_CHAIN);
+        rc = ib_rule_set_chain(cp->ib, rule);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1022,7 +1022,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_rule_update_flags(cp->ib, rule, FLAG_OP_OR, IB_RULE_FLAG_EXTERNAL);
+    rule->flags |= IB_RULE_FLAG_EXTERNAL;
 
     /* Parse all of the modifiers */
     mod = targets;
@@ -1031,8 +1031,8 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         rc = parse_modifier(cp, rule, mod->data);
         if (rc != IB_OK) {
             ib_log_error(cp->ib, 3,
-                         "Error parsing rule modifier - \"%s\".",
-                         mod->data);
+                         "Error parsing external rule modifier \"%s\": %s",
+                         mod->data, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -1112,12 +1112,24 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Disable the entire chain if this rule is invalid */
+    if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
+        rc = ib_rule_chain_invalidate(cp->ib, rule);
+        if (rc != IB_OK) {
+            ib_log_error(cp->ib, 1, "Error invalidating rule chain: %s",
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
     if (rule->meta.type == RULE_TYPE_PHASE) {
-        ib_log_debug(cp->ib, 4, "Registered rule %s for phase %d context %p",
+        ib_log_debug(cp->ib, 4,
+                     "Registered external rule %s for phase %d context %p",
                      ib_rule_id(rule), rule->meta.phase, cp->cur_ctx);
     }
     else if (rule->meta.type == RULE_TYPE_STREAM) {
-        ib_log_debug(cp->ib, 4, "Registered rule %s for stream %d context %p",
+        ib_log_debug(cp->ib, 4,
+                     "Registered external rule %s for stream %d context %p",
                      ib_rule_id(rule), rule->meta.stream, cp->cur_ctx);
     }
 
@@ -1195,9 +1207,9 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     while( (mod = ib_list_node_next_const(mod)) != NULL) {
         rc = parse_modifier(cp, rule, mod->data);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1,
-               "Error parsing rule modifier - \"%s\".",
-                mod->data);
+            ib_log_error(cp->ib, 3,
+                         "Error parsing rule modifier \"%s\": %s",
+                         mod->data, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -1208,6 +1220,20 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
         ib_log_error(cp->ib, 1, "Error registering rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Disable the entire chain if this rule is invalid */
+    if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
+        rc = ib_rule_chain_invalidate(cp->ib, rule);
+        if (rc != IB_OK) {
+            ib_log_error(cp->ib, 1, "Error invalidating rule chain: %s",
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else {
+            ib_log_debug(cp->ib, 5, "Invalidated all rules in chain '%s'",
+                         rule->meta.chain_id);
+        }
     }
 
     /* Done */
@@ -1291,9 +1317,9 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     while( (node = ib_list_node_next_const(node)) != NULL) {
         rc = parse_modifier(cp, rule, node->data);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1,
-               "Error parsing rule modifier - \"%s\".",
-                node->data);
+            ib_log_error(cp->ib, 3,
+                         "Error parsing stream rule modifier \"%s\": %s",
+                         node->data, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }

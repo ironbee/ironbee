@@ -57,6 +57,7 @@ typedef enum {
  */
 typedef struct {
     const char            *id;            /**< Rule ID */
+    const char            *chain_id;      /**< Rule's chain ID */
     const char            *msg;           /**< Rule message */
     const char            *data;          /**< Rule logdata */
     ib_list_t             *tags;          /**< Rule tags */
@@ -96,6 +97,7 @@ struct ib_rule_t {
     ib_list_t             *false_actions; /**< Actions if condition False */
     ib_rulelist_t         *parent_rlist;  /**< Parent rule list */
     ib_rule_t             *chained_rule;  /**< Next rule in the chain */
+    ib_rule_t             *chained_from;  /**< Rule that we're chained from */
     ib_flags_t             flags;         /**< External, etc. */
 };
 
@@ -218,6 +220,17 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
                                       const char *id);
 
 /**
+ * Set a rule's chain flag
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to operate on
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_set_chain(ib_engine_t *ib,
+                                         ib_rule_t *rule);
+
+/**
  * Get a rule's ID string.
  *
  * @param[in] rule Rule to operate on
@@ -225,30 +238,6 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
  * @returns Status code
  */
 const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
-
-/**
- * Update a rule's flags.
- *
- * @param[in] ib IronBee engine
- * @param[in,out] rule Rule to operate on
- * @param[in] op Flag operation
- * @param[in] flags Flags to operate on
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_rule_update_flags(ib_engine_t *ib,
-                                            ib_rule_t *rule,
-                                            ib_rule_flagop_t op,
-                                            ib_flags_t flags);
-
-/**
- * Get a rule's flags.
- *
- * @param[in] rule The rule
- *
- * @returns The rule's flags
- */
-ib_flags_t DLL_PUBLIC ib_rule_flags(const ib_rule_t *rule);
 
 /**
  * Create a rule target.
@@ -348,6 +337,18 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
 ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
                                         ib_context_t *ctx,
                                         ib_rule_t *rule);
+
+/**
+ * Invlidate an entire rule chain
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] rule Rule to invalidate
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
+                                                ib_rule_t *rule);
+
 
 /**
  * Get the memory pool to use for rule allocations.
