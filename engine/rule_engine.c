@@ -637,15 +637,21 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                                    void *cbdata)
 {
     IB_FTRACE_INIT();
-    const phase_rule_cbdata_t *rdata = (const phase_rule_cbdata_t *) cbdata;
-    ib_context_t         *ctx = tx->ctx;
-    ib_rule_phase_data_t *phase = &(ctx->rules->ruleset.phases[rdata->phase]);
-    ib_list_t            *rules = phase->rules.rule_list;
-    ib_list_node_t       *node = NULL;
-
     assert(ib != NULL);
     assert(tx != NULL);
+    assert(tx->ctx != NULL);
     assert(cbdata != NULL);
+
+    const phase_rule_cbdata_t *rdata = (const phase_rule_cbdata_t *) cbdata;
+    ib_context_t              *ctx = tx->ctx;
+    ib_rule_phase_data_t      *phase;
+    ib_list_t                 *rules;
+    ib_list_node_t            *node = NULL;
+
+    phase = &(ctx->rules->ruleset.phases[rdata->phase]);
+    assert(phase != NULL);
+    rules = phase->rules.rule_list;
+    assert(rules != NULL);
 
     /* Sanity check */
     if (phase->phase != rdata->phase) {
@@ -1192,6 +1198,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     }
 
     /* meta tags list */
+    lst = NULL;
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to create rule meta tags list: %s",
@@ -1201,6 +1208,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     rule->meta.tags = lst;
 
     /* Target list */
+    lst = NULL;
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to create rule target field list: %s",
@@ -1210,6 +1218,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     rule->target_fields = lst;
 
     /* True Action list */
+    lst = NULL;
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to create rule true action list: %s",
@@ -1219,6 +1228,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     rule->true_actions = lst;
 
     /* False Action list */
+    lst = NULL;
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to create rule false action list: %s",
@@ -1308,6 +1318,16 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(rule != NULL);
+    assert( (rule->meta.type == RULE_TYPE_PHASE) ||
+            (rule->meta.type == RULE_TYPE_STREAM) );
+
+    /* Initialize the context's rule set (if required) */
+    rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 4, "Failed to initialize rules for context %p",
+                     (void *)ctx);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Sanity checks */
     if (rule->meta.type == RULE_TYPE_PHASE) {
@@ -1315,6 +1335,14 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         if ( (phase <= PHASE_NONE) || (phase > PHASE_MAX) ) {
             ib_log_error(ib, 4,
                          "Can't register rule: Invalid phase %d", phase);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+    else {
+        ib_rule_stream_t stream = rule->meta.stream;
+        if ( (stream <= STREAM_NONE) || (stream > STREAM_MAX) ) {
+            ib_log_error(ib, 4,
+                         "Can't register rule: Invalid stream %d", stream);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
@@ -1333,12 +1361,6 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     if (rule->meta.id == NULL) {
         ib_log_error(ib, 4, "Can't register rule: No ID");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to initialize rules for context %p",
-                     (void *)ctx);
-        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the rule engine and previous rule */
