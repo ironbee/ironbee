@@ -645,6 +645,7 @@ static void set_debug( ib_context_t *ctx )
  */
 static ib_status_t ironbee_conn_init(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conn_t *iconn,
     void *cbdata
@@ -671,6 +672,7 @@ static ib_status_t ironbee_conn_init(
  */
 static ib_status_t trace_tx_request(
      ib_engine_t *ib,
+     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_txdata_t *txdata,
      void *cbdata
@@ -705,6 +707,7 @@ static ib_status_t trace_tx_request(
  */
 static ib_status_t trace_tx_response(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_txdata_t *txdata,
     void *cbdata
@@ -964,15 +967,17 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
  * Extract the address & ports from the transaction & print them.
  *
  * @param[in] ib IronBee object
- * @param[in] event Event type
  * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] tx_param Equal to @a tx.
  * @param[in] data Callback data (not used)
  *
  * @returns Status code
  */
 static ib_status_t print_tx( ib_engine_t *ib,
-                             ib_state_event_type_t event,
                              ib_tx_t *tx,
+                             ib_state_event_type_t event,
+                             ib_tx_t *tx_param,
                              void *data )
 {
     IB_FTRACE_INIT();
@@ -1043,25 +1048,26 @@ static ib_status_t print_tx( ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Print user agent fields
  *
  * Extract the user agent fields from the data provider instance, and print
  * fields.
  *
- * @param[in] ib IronBee object
- * @param[in] event Event type
- * @param[in] tx Transaction object
- * @param[in] data Callback data (not used)
+ * @param[in] ib IronBee object.
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type.
+ * @param[in] tx_param Equal to @a tx_param.
+ * @param[in] data Callback data (not used).
  *
- * @note The data parameter is unused
+ * @note The data parameter is unused.
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t print_user_agent(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
     ib_tx_t *tx,
+    ib_state_event_type_t event,
+    ib_tx_t *tx_param,
     void *data
 )
 {
@@ -1113,8 +1119,9 @@ static ib_status_t print_user_agent(
  * fields.
  *
  * @param[in] ib IronBee object
- * @param[in] event Event type
  * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] tx_param Equal to @a tx.
  * @param[in] data Callback data (not used)
  *
  * @note The data parameter is unused
@@ -1123,8 +1130,9 @@ static ib_status_t print_user_agent(
  */
 static ib_status_t print_geoip(
      ib_engine_t *ib,
-     ib_state_event_type_t event,
      ib_tx_t *tx,
+     ib_state_event_type_t event,
+     ib_tx_t *tx_param,
      void *data
 )
 {

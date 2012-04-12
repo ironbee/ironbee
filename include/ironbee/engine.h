@@ -905,6 +905,7 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event);
  */
 typedef ib_status_t (*ib_state_null_hook_fn_t)(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     void *cbdata
 );
@@ -920,6 +921,7 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
  */
 typedef ib_status_t (*ib_state_headers_data_fn_t)(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_parsed_header_t *headers,
     void *cbdata);
@@ -936,6 +938,7 @@ typedef ib_status_t (*ib_state_headers_data_fn_t)(
  */
 typedef ib_status_t (*ib_state_request_line_fn_t)(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_parsed_req_line_t *line,
     void *cbdata);
@@ -952,6 +955,7 @@ typedef ib_status_t (*ib_state_request_line_fn_t)(
  */
 typedef ib_status_t (*ib_state_response_line_fn_t)(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_parsed_resp_line_t *line,
     void *cbdata);
@@ -966,6 +970,7 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
  */
 typedef ib_status_t (*ib_state_conn_hook_fn_t)(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conn_t *conn,
     void *cbdata
@@ -981,6 +986,7 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
  */
 typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conndata_t *conndata,
     void *cbdata
@@ -990,14 +996,16 @@ typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
  * Transaction Event Hook Callback Function.
  *
  * @param ib Engine handle
- * @param event Which event trigger the callback.
  * @param tx Transaction.
+ * @param event Which event trigger the callback.
+ * @param tx_param Equal to @a tx.
  * @param cbdata Callback data
  */
 typedef ib_status_t (*ib_state_tx_hook_fn_t)(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
     ib_tx_t *tx,
+    ib_state_event_type_t event,
+    ib_tx_t *tx_param,
     void *cbdata
 );
 
@@ -1011,6 +1019,7 @@ typedef ib_status_t (*ib_state_tx_hook_fn_t)(
  */
 typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
     ib_engine_t *ib,
+    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_txdata_t *txdata,
     void *cbdata

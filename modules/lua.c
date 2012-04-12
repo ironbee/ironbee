@@ -1005,16 +1005,17 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Destroy the lua runtime for the configuration.
  *
- * @param ib Engine
- * @param event Event type
- * @param cbdata Unused
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param cbdata Unused.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
+                                                  ib_tx_t *tx,
                                                   ib_state_event_type_t event,
                                                   void *cbdata)
 {
@@ -1039,17 +1040,18 @@ static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Initialize the lua runtime for this connection.
  *
- * @param ib Engine
- * @param event Event type
- * @param conn Connection
- * @param cbdata Unused
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param conn Connection.
+ * @param cbdata Unused.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
+                                           ib_tx_t *tx,
                                            ib_state_event_type_t event,
                                            ib_conn_t *conn,
                                            void *cbdata)
@@ -1124,17 +1126,18 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Destroy the lua runtime for this connection.
  *
- * @param ib Engine
- * @param event Event type
- * @param conn Connection
- * @param cbdata Unused
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param conn Connection.
+ * @param cbdata Unused.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t modlua_destroy_lua_runtime(ib_engine_t *ib,
+                                              ib_tx_t *tx,
                                               ib_state_event_type_t event,
                                               ib_conn_t *conn,
                                               void *cbdata)
@@ -1324,17 +1327,18 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Generic event handler for Lua connection data events.
  *
- * @param ib Engine
- * @param event Event type
- * @param conndata Connection data
- * @param cbdata not used
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param conndata Connection data.
+ * @param cbdata not used.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
+                                                    ib_tx_t *tx,
                                                     ib_state_event_type_t event,
                                                     ib_conndata_t *conndata,
                                                     void *cbdata)
@@ -1403,6 +1407,7 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
  * Generic event handler for Lua transaction data events.
  *
  * @param ib Engine
+ * @param tx Transaction.
  * @param event Event type
  * @param txdata Transaction data
  * @param cbdata Not used
@@ -1410,12 +1415,12 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
  * @return Status code
  */
 static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
+                                                  ib_tx_t *tx,
                                                   ib_state_event_type_t event,
                                                   ib_txdata_t *txdata,
                                                   void *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_tx_t *tx = txdata->tx;
     ib_conn_t *conn = tx->conn;
     modlua_cfg_t *modcfg;
     modlua_runtime_t *lua;
@@ -1477,17 +1482,18 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Generic event handler for Lua connection events.
  *
- * @param ib Engine
- * @param event Event type
- * @param conn Connection
- * @param cbdata Not used
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param conn Connection.
+ * @param cbdata Not used.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
+                                                ib_tx_t *tx,
                                                 ib_state_event_type_t event,
                                                 ib_conn_t *conn,
                                                 void *cbdata)
@@ -1552,19 +1558,20 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Generic event handler for Lua transaction events.
  *
- * @param ib Engine
- * @param event Event type
- * @param tx Transaction
- * @param cbdata Not used
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param tx_param Equal to @a tx.
+ * @param cbdata Not used.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
-                                              ib_state_event_type_t event,
                                               ib_tx_t *tx,
+                                              ib_state_event_type_t event,
+                                              ib_tx_t *tx_param,
                                               void *cbdata)
 {
     IB_FTRACE_INIT();

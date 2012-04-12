@@ -624,22 +624,25 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
  * Run a set of phase rules.
  * @internal
  *
- * @param[in] ib Engine
- * @param[in] event Event type
- * @param[in,out] tx Transaction
- * @param[in] cbdata Callback data (actually phase_rule_cbdata_t *)
+ * @param[in] ib Engine.
+ * @param[in,out] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in,out] tx_param Equal to @a tx.
+ * @param[in] cbdata Callback data (actually phase_rule_cbdata_t).
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t run_phase_rules(ib_engine_t *ib,
-                                   ib_state_event_type_t event,
                                    ib_tx_t *tx,
+                                   ib_state_event_type_t event,
+                                   ib_tx_t *tx_param,
                                    void *cbdata)
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->ctx != NULL);
+    assert(tx == tx_param);
     assert(cbdata != NULL);
 
     const phase_rule_cbdata_t *rdata = (const phase_rule_cbdata_t *) cbdata;
@@ -783,14 +786,16 @@ static ib_status_t execute_stream_rule(ib_engine_t *ib,
  * Run a set of stream rules.
  * @internal
  *
- * @param[in] ib Engine
- * @param[in] event Event type
- * @param[in,out] txdata Transaction
- * @param[in] cbdata Callback data (actually phase_rule_cbdata_t *)
+ * @param[in] ib Engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in,out] txdata Transaction data.
+ * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
  *
  * @returns Status code
  */
 static ib_status_t run_stream_rules(ib_engine_t *ib,
+                                    ib_tx_t *tx,
                                     ib_state_event_type_t event,
                                     ib_txdata_t *txdata,
                                     void *cbdata)

@@ -73,15 +73,17 @@ static modtrace_config_t modtrace_global_config = {
  * Handles a generic event, dumping some info on the event.
  *
  * @param[in] ib IronBee object
- * @param[in] event Event type
  * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] tx_param Equal to @a tx.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_tx_event_callback(
      ib_engine_t *ib,
-     ib_state_event_type_t event,
      ib_tx_t *tx,
+     ib_state_event_type_t event,
+     ib_tx_t *tx_param,
      void *cbdata
 )
 {
@@ -92,19 +94,20 @@ static ib_status_t modtrace_tx_event_callback(
 }
 
 /**
- * @internal
  * Trace generic txdata event handler.
  *
  * Handles a generic event, dumping some info on the event.
  *
- * @param[in] ib IronBee object
- * @param[in] event Event type
- * @param[in] txdata Transaction data object
+ * @param[in] ib IronBee object.
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type.
+ * @param[in] txdata Transaction data object.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
- * event.
+ *            event.
  */
 static ib_status_t modtrace_txdata_event_callback(
      ib_engine_t *ib,
+     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_txdata_t *txdata,
      void *cbdata
@@ -117,19 +120,20 @@ static ib_status_t modtrace_txdata_event_callback(
 }
 
 /**
- * @internal
  * Trace generic conn event handler.
  *
  * Handles a generic event, dumping some info on the event.
  *
- * @param[in] ib IronBee object
- * @param[in] event Event type
- * @param[in] conn Connection object
+ * @param[in] ib IronBee object.
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type.
+ * @param[in] conn Connection object.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
- * event.
+ *            event.
  */
 static ib_status_t modtrace_conn_event_callback(
      ib_engine_t *ib,
+     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_conn_t* conn,
      void *cbdata
@@ -142,19 +146,20 @@ static ib_status_t modtrace_conn_event_callback(
 }
 
 /**
- * @internal
  * Trace generic conndata event handler.
  *
  * Handles a generic event, dumping some info on the event.
  *
- * @param[in] ib IronBee object
- * @param[in] event Event type
- * @param[in] conndata Connection data object
+ * @param[in] ib IronBee object.
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type.
+ * @param[in] conndata Connection data object.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
- * event.
+ *            event.
  */
 static ib_status_t modtrace_conndata_event_callback(
      ib_engine_t *ib,
+     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_conndata_t* conndata,
      void *cbdata
@@ -167,18 +172,19 @@ static ib_status_t modtrace_conndata_event_callback(
 }
 
 /**
- * @internal
  * Trace generic null event handler.
  *
  * Handles a generic event, dumping some info on the event.
  *
- * @param[in] ib IronBee object
- * @param[in] event Event type
+ * @param[in] ib IronBee object.
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
- * event.
+ *            event.
  */
 static ib_status_t modtrace_null_event_callback(
      ib_engine_t *ib,
+     ib_tx_t *tx,
      ib_state_event_type_t event,
      void *cbdata
 )
@@ -200,12 +206,14 @@ static ib_status_t modtrace_null_event_callback(
  * allocate the buffer from the connection's mpool, etc.
  *
  * @param[in] ib IronBee object
- * @param[in] event Event type
  * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] cd Connection data.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
+                                      ib_tx_t *tx,
                                       ib_state_event_type_t event,
                                       ib_conndata_t *cd,
                                       void *cbdata)
@@ -264,13 +272,15 @@ static ib_status_t modtrace_handle_tx(
  * Handles a tx_data_in_event, dumping some info on the event.
  *
  * @param[in] ib IronBee object
+ * @param[in] tx Transaction object.
  * @param[in] event Event type
- * @param[in] tx Transaction object
+ * @param[in] txdata Transaction data object
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_txdata(
      ib_engine_t *ib,
+     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_txdata_t *txdata,
      void *cbdata
@@ -278,7 +288,6 @@ static ib_status_t modtrace_handle_txdata(
 {
     IB_FTRACE_INIT();
     const event_info_t *eventp = (const event_info_t *)cbdata;
-    const ib_tx_t *tx = txdata->tx;
 
     ib_log_debug(ib, 4, "handle_txdata [%s]: data=%p tx=%p dpi=%p",
                  eventp->name, (void *)txdata->data, (void *)tx, (void *)tx->dpi);
@@ -354,15 +363,17 @@ static void mempool_walk(ib_engine_t *ib,
  * event.
  *
  * @param[in] ib IronBee object
- * @param[in] event Event type
  * @param[in] tx Transaction object
+ * @param[in] event Event type
+ * @param[in] tx_param Equal to @tx.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_tx_mem(
      ib_engine_t *ib,
-     ib_state_event_type_t event,
      ib_tx_t *tx,
+     ib_state_event_type_t event,
+     ib_tx_t *tx_param,
      void *cbdata
 )
 {
@@ -414,14 +425,16 @@ static ib_status_t modtrace_handle_tx_mem(
  * Handles a request_headers_event, dumping some info on the event.
  *
  * @param[in] ib IronBee object
+ * @param[in] tx Transaction object.
  * @param[in] event Event type
- * @param[in] tx Transaction object
+ * @param[in] tx_param Equal to @a tx.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
-                                               ib_state_event_type_t event,
                                                ib_tx_t *tx,
+                                               ib_state_event_type_t event,
+                                               ib_tx_t *tx_param,
                                                void *cbdata)
 {
     IB_FTRACE_INIT();

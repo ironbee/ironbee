@@ -49,7 +49,7 @@ struct ib_tx_t;
  * A link list element representing HTTP headers.
  */
 typedef struct ib_parsed_name_value_pair_list_t {
-    struct ib_tx_t *tx;       /**< Transaction this element is related to. */
+    struct ib_tx_t *tx;  /**< Transaction this element is related to. */
     ib_bytestr_t *name;  /**< Name. */
     ib_bytestr_t *value; /**< Value the name describes. */
     struct ib_parsed_name_value_pair_list_t *next; /**< Next element. */
@@ -66,7 +66,7 @@ typedef struct ib_parsed_name_value_pair_list_wrapper_t {
     ib_parsed_name_value_pair_list_t *head; /**< Head of the list. */
     ib_parsed_name_value_pair_list_t *tail; /**< Tail of the list. */
     size_t size;                            /**< Size of the list. */
-    struct ib_tx_t *tx;                            /**< Tx this list is assoc. with. */
+    struct ib_tx_t *tx;                     /**< Tx this list is assoc. with. */
 } ib_parsed_name_value_pair_list_wrapper_t;
 
 

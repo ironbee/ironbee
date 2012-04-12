@@ -2784,19 +2784,20 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
 }
 
 /**
- * @internal
  * Handle writing the logevents.
  *
- * @param ib Engine
- * @param event Event type
- * @param tx Transaction
- * @param cbdata Callback data
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param tx_param Equal to @a tx.
+ * @param cbdata Callback data.
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
-                                             ib_state_event_type_t event,
                                              ib_tx_t *tx,
+                                             ib_state_event_type_t event,
+                                             ib_tx_t *tx_param,
                                              void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -2995,14 +2996,16 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
  *
  * Create the data provider instance and initialize the parser.
  *
- * @param ib Engine
- * @param event Event type
- * @param conn Connection
- * @param cbdata Callback data
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param conn Connection.
+ * @param cbdata Callback data.
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t core_hook_conn_started(ib_engine_t *ib,
+                                          ib_tx_t *tx,
                                           ib_state_event_type_t event,
                                           ib_conn_t *conn,
                                           void *cbdata)
@@ -3051,14 +3054,16 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
  * @internal
  * Handle a new connection.
  *
- * @param ib Engine
- * @param event Event type
- * @param conn Connection
- * @param cbdata Callback data
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param conn Connection.
+ * @param cbdata Callback data.
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t parser_hook_connect(ib_engine_t *ib,
+                                       ib_tx_t *tx,
                                        ib_state_event_type_t event,
                                        ib_conn_t *conn,
                                        void *cbdata)
@@ -3117,17 +3122,18 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Handle a disconnection.
  *
- * @param ib Engine
- * @param event Event type
- * @param conn Connection
- * @param cbdata Callback data
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param conn Connection.
+ * @param cbdata Callback data.
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
+                                          ib_tx_t *tx,
                                           ib_state_event_type_t event,
                                           ib_conn_t *conn,
                                           void *cbdata)
@@ -3158,16 +3164,18 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
  * @internal
  * Handle the request header.
  *
- * @param ib Engine
- * @param event Event type
- * @param tx Transaction
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param tx_param Equals to @a tx.
  * @param cbdata Callback data
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_req_header(ib_engine_t *ib,
-                                          ib_state_event_type_t event,
                                           ib_tx_t *tx,
+                                          ib_state_event_type_t event,
+                                          ib_tx_t *tx_param,
                                           void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -3258,16 +3266,18 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
  * @internal
  * Handle the response header.
  *
- * @param ib Engine
- * @param event Event type
- * @param tx Transaction
- * @param cbdata Callback data
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param tx_param Equal to @a tx.
+ * @param cbdata Callback data.
  *
  * @returns Status code
  */
 static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
-                                           ib_state_event_type_t event,
                                            ib_tx_t *tx,
+                                           ib_state_event_type_t event,
+                                           ib_tx_t *tx_param,
                                            void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -3921,16 +3931,18 @@ static ib_status_t filter_buffer(ib_filter_t *f,
  * @internal
  * Configure the filter controller.
  *
- * @param ib Engine
- * @param event Event type
- * @param tx Transaction
- * @param cbdata Callback data
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param tx_param Transaction.
+ * @param cbdata Callback data.
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t filter_ctl_config(ib_engine_t *ib,
-                                     ib_state_event_type_t event,
                                      ib_tx_t *tx,
+                                     ib_state_event_type_t event,
+                                     ib_tx_t *tx_param,
                                      void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -3956,14 +3968,16 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
  * This is currently used to build the request body
  * stream buffer field.
  *
- * @param ib Engine
+ * @param ib Engine.
+ * @param tx Transaction.
  * @param event Event type.
- * @param txdata Transaction data
- * @param cbdata Unused
+ * @param txdata Transaction data.
+ * @param cbdata Unused.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t process_txdata_in(ib_engine_t *ib,
+                                     ib_tx_t *tx,
                                      ib_state_event_type_t event,
                                      ib_txdata_t *txdata,
                                      void *cbdata)
@@ -3972,7 +3986,6 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
 
     assert(event == tx_data_in_event);
 
-    ib_tx_t *tx;
     ib_core_cfg_t *modcfg;
     ib_field_t *reqbody;
     uint8_t *buf;
@@ -4016,14 +4029,16 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
  * This is currently used to build the response body
  * stream buffer field.
  *
- * @param ib Engine
- * @param event Event type
- * @param txdata Transaction data
- * @param cbdata Unused
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param txdata Transaction data.
+ * @param cbdata Unused.
  *
- * @return Status code
+ * @return Status code.
  */
 static ib_status_t process_txdata_out(ib_engine_t *ib,
+                                      ib_tx_t *tx,
                                       ib_state_event_type_t event,
                                       ib_txdata_t *txdata,
                                       void *cbdata)
@@ -4032,7 +4047,6 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
 
     assert(event == tx_data_out_event);
 
-    ib_tx_t *tx;
     ib_core_cfg_t *modcfg;
     ib_field_t *resbody;
     uint8_t *buf;
@@ -4104,23 +4118,24 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
 /* -- Core Hook Handlers -- */
 
 /**
- * @internal
  * Handle the transaction starting.
  *
  * Create the transaction provider instances.  And setup placeholders
  * for all of the core fields. This allows other modules to refer to
  * the field prior to it it being initialized.
  *
- * @param ib Engine
+ * @param ib Engine.
+ * @param tx Transaction.
  * @param event Event type.
- * @param tx Transaction
- * @param cbdata Callback data
+ * @param tx_param Equals @a tx.
+ * @param cbdata Callback data.
  *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t core_hook_tx_started(ib_engine_t *ib,
-                                        ib_state_event_type_t event,
                                         ib_tx_t *tx,
+                                        ib_state_event_type_t event,
+                                        ib_tx_t *tx_param,
                                         void *cbdata)
 {
     IB_FTRACE_INIT();

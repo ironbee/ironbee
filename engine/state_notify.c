@@ -7,11 +7,11 @@
 
 #include "ironbee_private.h"
 
-#define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, param) \
+#define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, tx, param) \
     do { \
         *(out_rc) = IB_OK; \
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.whicb((ib), (event), (param), hook_->cdata); \
+            ib_status_t rc_ = hook_->callback.whicb((ib), (tx), (event), (param), hook_->cdata); \
             if (rc_ != IB_OK) { \
                 ib_log_error((ib), 4, "Hook returned error: %s=%s", \
                              ib_state_event_name((event)), ib_status_to_string(rc_)); \
@@ -21,11 +21,11 @@
         } \
     } while(0)
 
-#define CALL_NULL_HOOKS(out_rc, first_hook, event, whicb, ib) \
+#define CALL_NULL_HOOKS(out_rc, first_hook, event, whicb, ib, tx) \
     do { \
         *(out_rc) = IB_OK; \
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
-            ib_status_t rc_ = hook_->callback.whicb((ib), (event), hook_->cdata); \
+            ib_status_t rc_ = hook_->callback.whicb((ib), (tx), (event), hook_->cdata); \
             if (rc_ != IB_OK) { \
                 ib_log_error((ib), 4, "Hook returned error: %s=%s", \
                              ib_state_event_name((event)), ib_status_to_string(rc_)); \
@@ -37,12 +37,11 @@
 
 
 /**
- * @internal
  * Notify the engine that a connection event has occurred.
  *
- * @param ib Engine
- * @param event Event
- * @param conn Connection
+ * @param[in] ib Engine
+ * @param[in] event Event
+ * @param[in] conn Connection
  *
  * @returns Status code
  */
@@ -59,26 +58,25 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "CONN EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, conn);
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, NULL, conn);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (conn->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conn, ib, conn);
+        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conn, ib, NULL, conn);
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
- * @internal
  * Notify the engine that a connection data event has occurred.
  *
- * @param ib Engine
- * @param event Event
- * @param conndata Connection data
+ * @param[in] ib Engine
+ * @param[in] event Event
+ * @param[in] conndata Connection data
  *
  * @returns Status code
  */
@@ -96,14 +94,14 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "CONN DATA EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, conndata);
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, NULL, conndata);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (conn->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conndata, ib, conndata);
+        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conndata, ib, NULL, conndata);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -112,11 +110,9 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 /**
  * Signal that the response line was received.
  *
- * @internal
- *
- * @param ib Engine
- * @param event Event
- * @param txdata Connection data
+ * @param[in] ib Engine
+ * @param[in] event Event
+ * @param[in] txdata Connection data
  *
  * @returns Status code
  */
@@ -135,14 +131,14 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "RESP LINE EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, responseline, ib, line);
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, responseline, ib, tx, line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, responseline, ib, line);
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, responseline, ib, tx, line);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -151,11 +147,9 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 /**
  * Signal that the request line was received.
  *
- * @internal
- *
- * @param ib Engine
- * @param event Event
- * @param txdata Connection data
+ * @param[in] ib Engine
+ * @param[in] event Event
+ * @param[in] txdata Connection data
  *
  * @returns Status code
  */
@@ -177,14 +171,14 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "REQ LINE EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, requestline, ib, line);
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, requestline, ib, tx, line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, requestline, ib, line);
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, requestline, ib, tx, line);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -220,6 +214,7 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
                event,
                headersdata,
                ib,
+               tx,
                headers->head);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
@@ -232,12 +227,22 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
                    event,
                    headersdata,
                    ib,
+                   tx,
                    headers->head);
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Signal that transaction data was recieved.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] event The event type.
+ * @param[in] txdata The transaction data chunk.
+ *
+ * @returns Status code.
+ */
 static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                                           ib_state_event_type_t event,
                                           ib_txdata_t *txdata)
@@ -256,21 +261,20 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, txdata, ib, txdata);
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, txdata, ib, tx, txdata);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, txdata, ib, txdata);
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, txdata, ib, tx, txdata);
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
- * @internal
  * Notify the engine that a transaction event has occurred.
  *
  * @param ib Engine
@@ -295,19 +299,29 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx);
+    CALL_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx, tx);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx);
+        CALL_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx, tx);
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Create a main context to operate in.
+ *
+ * @param[in] ib IronBee engine that contains the ectx that we will use
+ *            in creating the main context. The main context
+ *            will be assigned to ib->ctx if it is successfully created.
+ *
+ * @returns IB_OK or the result of
+ *          ib_context_create(ctx, ib, ib->ectx, NULL, NULL, NULL).
+ */
 static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
@@ -339,7 +353,7 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
     }
 
     /// @todo Create a temp mem pool???
-    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_started_event], cfg_started_event, null, ib);
+    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_started_event], cfg_started_event, null, ib, NULL);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -356,7 +370,7 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     }
 
     /* Run the hooks. */
-    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_finished_event], cfg_finished_event, null, ib);
+    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_finished_event], cfg_finished_event, null, ib, NULL);
 
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);
@@ -365,13 +379,12 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
 }
 
 /**
- * @internal
  * Find the config context by executing context functions.
  *
- * @param ib Engine
- * @param type Context type
- * @param data Data (type based on context type)
- * @param pctx Address which context is written
+ * @param ib[in] Engine
+ * @param type[in] Context type
+ * @param data[in] Data (type based on context type)
+ * @param pctx[in] Address which context is written
  *
  * @returns Status code
  */
@@ -419,17 +432,21 @@ static ib_status_t ib_context_get_ex(
 
 /**
  * Notify engine of additional events when notification of a
- * @ref conn_opened_event occurs.
+ * conn_opened_event occurs.
  *
  * When the event is notified, additional events are notified immediately
  * prior to it:
  *
- *  - @ref conn_started_event
+ *  - conn_started_event
  *
  * And immediately following it:
  *
- *  - @ref handle_context_conn_event
- *  - @ref handle_connect_event
+ *  - handle_context_conn_event
+ *  - handle_connect_event
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] conn Connection.
+ * @returns Status code.
  */
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
                                         ib_conn_t *conn)
@@ -531,13 +548,13 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
 }
 
 /**
- * @ref conn_closed_event occurs.
+ * conn_closed_event occurs.
  *
  * When the event is notified, additional events are notified immediately
  * prior to it:
  *
- *  - @ref handle_disconnect_event
- *  - @ref conn_finished_event
+ *  - handle_disconnect_event
+ *  - conn_finished_event
  */
 ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                                         ib_conn_t *conn)
