@@ -112,10 +112,10 @@ public:
     Context context() const;
 
     //! When the connection started.
-    boost::posix_time::ptime started() const;
+    boost::posix_time::ptime started_time() const;
 
     //! When the connection finished.
-    boost::posix_time::ptime finished() const;
+    boost::posix_time::ptime finished_time() const;
 
     //! Remote IP address as a dotted quad string.
     const char* remote_ip_string() const;

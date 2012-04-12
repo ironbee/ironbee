@@ -50,10 +50,10 @@ TEST(TestConnection, basic)
     EXPECT_EQ(ib_conn.ctx, conn.context().ib());
 
     ib_conn.t.started = 17;
-    EXPECT_EQ(ib_conn.t.started, IronBee::ptime_to_ib(conn.started()));
+    EXPECT_EQ(ib_conn.t.started, IronBee::ptime_to_ib(conn.started_time()));
 
     ib_conn.t.finished = 18;
-    EXPECT_EQ(ib_conn.t.finished, IronBee::ptime_to_ib(conn.finished()));
+    EXPECT_EQ(ib_conn.t.finished, IronBee::ptime_to_ib(conn.finished_time()));
 
     ib_conn.remote_ipstr = "foo";
     EXPECT_EQ(ib_conn.remote_ipstr, conn.remote_ip_string());

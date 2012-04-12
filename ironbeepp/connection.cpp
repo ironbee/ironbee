@@ -36,12 +36,12 @@ Context ConstConnection::context() const
     return Context(ib()->ctx);
 }
 
-boost::posix_time::ptime ConstConnection::started() const
+boost::posix_time::ptime ConstConnection::started_time() const
 {
     return ib_to_ptime(ib()->t.started);
 }
 
-boost::posix_time::ptime ConstConnection::finished() const
+boost::posix_time::ptime ConstConnection::finished_time() const
 {
     return ib_to_ptime(ib()->t.finished);
 }

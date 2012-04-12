@@ -55,46 +55,46 @@ TEST(TestTransaction, basic)
     EXPECT_EQ(ib_tx.ctx, tx.context().ib());
 
     ib_tx.t.started = 17;
-    EXPECT_EQ(ib_tx.t.started, ptime_to_ib(tx.started()));
+    EXPECT_EQ(ib_tx.t.started, ptime_to_ib(tx.started_time()));
 
     ib_tx.t.finished = 18;
-    EXPECT_EQ(ib_tx.t.finished, ptime_to_ib(tx.finished()));
+    EXPECT_EQ(ib_tx.t.finished, ptime_to_ib(tx.finished_time()));
 
     ib_tx.t.started = 1;
-    EXPECT_EQ(ib_tx.t.started, ptime_to_ib(tx.started()));
+    EXPECT_EQ(ib_tx.t.started, ptime_to_ib(tx.started_time()));
 
     ib_tx.t.request_started = 2;
-    EXPECT_EQ(ib_tx.t.request_started, ptime_to_ib(tx.request_started()));
+    EXPECT_EQ(ib_tx.t.request_started, ptime_to_ib(tx.request_started_time()));
 
     ib_tx.t.request_headers = 3;
-    EXPECT_EQ(ib_tx.t.request_headers, ptime_to_ib(tx.request_headers()));
+    EXPECT_EQ(ib_tx.t.request_headers, ptime_to_ib(tx.request_headers_time()));
 
     ib_tx.t.request_body = 4;
-    EXPECT_EQ(ib_tx.t.request_body, ptime_to_ib(tx.request_body()));
+    EXPECT_EQ(ib_tx.t.request_body, ptime_to_ib(tx.request_body_time()));
 
     ib_tx.t.request_finished = 5;
-    EXPECT_EQ(ib_tx.t.request_finished, ptime_to_ib(tx.request_finished()));
+    EXPECT_EQ(ib_tx.t.request_finished, ptime_to_ib(tx.request_finished_time()));
 
     ib_tx.t.response_started = 6;
-    EXPECT_EQ(ib_tx.t.response_started, ptime_to_ib(tx.response_started()));
+    EXPECT_EQ(ib_tx.t.response_started, ptime_to_ib(tx.response_started_time()));
 
     ib_tx.t.response_headers = 7;
-    EXPECT_EQ(ib_tx.t.response_headers, ptime_to_ib(tx.response_headers()));
+    EXPECT_EQ(ib_tx.t.response_headers, ptime_to_ib(tx.response_headers_time()));
 
     ib_tx.t.response_body = 8;
-    EXPECT_EQ(ib_tx.t.response_body, ptime_to_ib(tx.response_body()));
+    EXPECT_EQ(ib_tx.t.response_body, ptime_to_ib(tx.response_body_time()));
 
     ib_tx.t.response_finished = 9;
-    EXPECT_EQ(ib_tx.t.response_finished, ptime_to_ib(tx.response_finished()));
+    EXPECT_EQ(ib_tx.t.response_finished, ptime_to_ib(tx.response_finished_time()));
 
     ib_tx.t.postprocess = 10;
-    EXPECT_EQ(ib_tx.t.postprocess, ptime_to_ib(tx.postprocess()));
+    EXPECT_EQ(ib_tx.t.postprocess, ptime_to_ib(tx.postprocess_time()));
 
     ib_tx.t.logtime = 11;
-    EXPECT_EQ(ib_tx.t.logtime, ptime_to_ib(tx.logtime()));
+    EXPECT_EQ(ib_tx.t.logtime, ptime_to_ib(tx.logtime_time()));
 
     ib_tx.t.finished = 12;
-    EXPECT_EQ(ib_tx.t.finished, ptime_to_ib(tx.finished()));
+    EXPECT_EQ(ib_tx.t.finished, ptime_to_ib(tx.finished_time()));
 
     ib_tx.hostname = "foo";
     EXPECT_EQ(ib_tx.hostname, tx.hostname());

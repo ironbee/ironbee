@@ -122,40 +122,40 @@ public:
     ///@{
 
     //! Start of transaction.
-    boost::posix_time::ptime started() const;
+    boost::posix_time::ptime started_time() const;
 
     //! Start of request.
-    boost::posix_time::ptime request_started() const;
+    boost::posix_time::ptime request_started_time() const;
 
     //! Start of request headers.
-    boost::posix_time::ptime request_headers() const;
+    boost::posix_time::ptime request_headers_time() const;
 
     //! Start of request body.
-    boost::posix_time::ptime request_body() const;
+    boost::posix_time::ptime request_body_time() const;
 
     //! Finish of request.
-    boost::posix_time::ptime request_finished() const;
+    boost::posix_time::ptime request_finished_time() const;
 
     //! Start of response.
-    boost::posix_time::ptime response_started() const;
+    boost::posix_time::ptime response_started_time() const;
 
     //! Start of response headers.
-    boost::posix_time::ptime response_headers() const;
+    boost::posix_time::ptime response_headers_time() const;
 
     //! Start of response body.
-    boost::posix_time::ptime response_body() const;
+    boost::posix_time::ptime response_body_time() const;
 
     //! Finish of response.
-    boost::posix_time::ptime response_finished() const;
+    boost::posix_time::ptime response_finished_time() const;
 
     //! Start of post processing.
-    boost::posix_time::ptime postprocess() const;
+    boost::posix_time::ptime postprocess_time() const;
 
     //! Start of event logging.
-    boost::posix_time::ptime logtime() const;
+    boost::posix_time::ptime logtime_time() const;
 
     //! Finish of transaction.
-    boost::posix_time::ptime finished() const;
+    boost::posix_time::ptime finished_time() const;
     ///@}
 
     //! Next transaction in current sequence.
