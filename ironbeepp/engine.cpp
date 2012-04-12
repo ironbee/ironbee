@@ -25,6 +25,7 @@
 
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/configuration_directives.hpp>
+#include <ironbeepp/hooks.hpp>
 
 #include <ironbee/engine.h>
 
@@ -70,6 +71,11 @@ ConfigurationDirectivesRegistrar
      Engine::register_configuration_directives() const
 {
     return ConfigurationDirectivesRegistrar(*this);
+}
+
+HooksRegistrar Engine::register_hooks() const
+{
+    return HooksRegistrar(*this);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)

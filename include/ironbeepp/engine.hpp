@@ -35,6 +35,7 @@
 namespace IronBee {
 
 class ConfigurationDirectivesRegistrar;
+class HooksRegistrar;
 
 /**
  * Const Engine; equivalent to a const pointer to ib_engine_t.
@@ -218,10 +219,23 @@ public:
      * to assist registering configuration directives.  See
      * ConfigurationDirectivesRegistrar for details on how to use it.
      *
+     * @sa ConfigurationDirectivesRegistrar
      * @return ConfigurationDirectivesRegistrar
      **/
     ConfigurationDirectivesRegistrar
          register_configuration_directives() const;
+
+    /**
+     * Register engine hooks.
+     *
+     * This methods returns a HooksRegistrar, a helper class to assist
+     * registering engine hooks.  See HooksRegistrar for details on how to use
+     * it.
+     *
+     * @sa HooksRegistrar
+     * @return HooksRegistrar
+     **/
+    HooksRegistrar register_hooks() const;
 
 private:
     ib_engine_t* m_ib;
