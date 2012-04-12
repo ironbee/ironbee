@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1196 
+personal_ws-1.1 en 1206 
 refactor
 cfg
 api
@@ -76,6 +76,7 @@ NULLed
 bing
 EOH
 ConstModule
+ParsedRequestLine
 dso
 plaintext
 eol
@@ -166,6 +167,7 @@ IronbeeConnection
 abcabc
 hpp
 HSB
+ConstParsedRequestLine
 IronBeeServer
 modula
 hte
@@ -274,6 +276,7 @@ ERRGCMM
 getFieldList
 AuditLogIndex
 erroffset
+HooksRegistrar
 requestmetadata
 reimplement
 newsgator
@@ -290,6 +293,7 @@ GTest
 gtest
 PRIuMAX
 mpr
+ParsedResponseLine
 nIncoming
 modua
 msg
@@ -516,6 +520,7 @@ params
 endl
 Rincon
 vernum
+RequestLine
 getNames
 subclasses
 lauxlib
@@ -722,6 +727,7 @@ RuleBasePath
 PocSigPostTx
 secondlife
 ibcli
+ConstParsedResponseLine
 HandleRequest
 foos
 IronBeeUtilArray
@@ -745,6 +751,7 @@ errinfo
 setvar
 dequeuing
 AuditLogGenerator
+ParsedNameValue
 fout
 ModuleDelegate
 omgilibot
@@ -824,6 +831,7 @@ Finalizer
 precompilation
 logDebug
 DelegateType
+ConstParsedNameValue
 malloced
 listFields
 docallback
@@ -914,6 +922,7 @@ consts
 filehandles
 IronBeeRelease
 ETIMEDOUT
+ResponseLine
 GoBrowser
 sdata
 HandleContextConn
@@ -1003,6 +1012,7 @@ inuse
 onEventHandleRequest
 iconn
 uuid
+RUNABLE
 dereferencing
 ActivateModule
 TSHttpTxnHookAdd
