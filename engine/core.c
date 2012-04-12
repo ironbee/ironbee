@@ -2789,7 +2789,6 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event type.
- * @param tx_param Equal to @a tx.
  * @param cbdata Callback data.
  *
  * @returns Status code.
@@ -2797,7 +2796,6 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
 static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
                                              ib_tx_t *tx,
                                              ib_state_event_type_t event,
-                                             ib_tx_t *tx_param,
                                              void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -3167,7 +3165,6 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event type.
- * @param tx_param Equals to @a tx.
  * @param cbdata Callback data
  *
  * @returns Status code
@@ -3175,7 +3172,6 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
 static ib_status_t parser_hook_req_header(ib_engine_t *ib,
                                           ib_tx_t *tx,
                                           ib_state_event_type_t event,
-                                          ib_tx_t *tx_param,
                                           void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -3269,7 +3265,6 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event type.
- * @param tx_param Equal to @a tx.
  * @param cbdata Callback data.
  *
  * @returns Status code
@@ -3277,7 +3272,6 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
                                            ib_tx_t *tx,
                                            ib_state_event_type_t event,
-                                           ib_tx_t *tx_param,
                                            void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -3934,7 +3928,6 @@ static ib_status_t filter_buffer(ib_filter_t *f,
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event type.
- * @param tx_param Transaction.
  * @param cbdata Callback data.
  *
  * @returns Status code.
@@ -3942,7 +3935,6 @@ static ib_status_t filter_buffer(ib_filter_t *f,
 static ib_status_t filter_ctl_config(ib_engine_t *ib,
                                      ib_tx_t *tx,
                                      ib_state_event_type_t event,
-                                     ib_tx_t *tx_param,
                                      void *cbdata)
 {
     IB_FTRACE_INIT();
@@ -4127,7 +4119,6 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event type.
- * @param tx_param Equals @a tx.
  * @param cbdata Callback data.
  *
  * @returns Status code.
@@ -4135,7 +4126,6 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
 static ib_status_t core_hook_tx_started(ib_engine_t *ib,
                                         ib_tx_t *tx,
                                         ib_state_event_type_t event,
-                                        ib_tx_t *tx_param,
                                         void *cbdata)
 {
     IB_FTRACE_INIT();

@@ -75,7 +75,6 @@ static modtrace_config_t modtrace_global_config = {
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
  * @param[in] event Event type
- * @param[in] tx_param Equal to @a tx.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
@@ -83,7 +82,6 @@ static ib_status_t modtrace_tx_event_callback(
      ib_engine_t *ib,
      ib_tx_t *tx,
      ib_state_event_type_t event,
-     ib_tx_t *tx_param,
      void *cbdata
 )
 {
@@ -365,7 +363,6 @@ static void mempool_walk(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
  * @param[in] event Event type
- * @param[in] tx_param Equal to @tx.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
@@ -373,7 +370,6 @@ static ib_status_t modtrace_handle_tx_mem(
      ib_engine_t *ib,
      ib_tx_t *tx,
      ib_state_event_type_t event,
-     ib_tx_t *tx_param,
      void *cbdata
 )
 {
@@ -427,14 +423,12 @@ static ib_status_t modtrace_handle_tx_mem(
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object.
  * @param[in] event Event type
- * @param[in] tx_param Equal to @a tx.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                ib_state_event_type_t event,
-                                               ib_tx_t *tx_param,
                                                void *cbdata)
 {
     IB_FTRACE_INIT();

@@ -994,18 +994,18 @@ typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
 
 /**
  * Transaction Event Hook Callback Function.
+ * 
+ * This matches the NULL callback type as tx is already passed.
  *
  * @param ib Engine handle
  * @param tx Transaction.
  * @param event Which event trigger the callback.
- * @param tx_param Equal to @a tx.
  * @param cbdata Callback data
  */
 typedef ib_status_t (*ib_state_tx_hook_fn_t)(
     ib_engine_t *ib,
     ib_tx_t *tx,
     ib_state_event_type_t event,
-    ib_tx_t *tx_param,
     void *cbdata
 );
 

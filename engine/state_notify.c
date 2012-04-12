@@ -299,14 +299,14 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx, tx);
+    CALL_NULL_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx, tx);
+        CALL_NULL_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx);
     }
 
     IB_FTRACE_RET_STATUS(rc);

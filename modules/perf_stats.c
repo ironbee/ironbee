@@ -389,7 +389,6 @@ static ib_status_t mod_perf_stats_event_start_conndata_callback(
  * @param[in] ib IronBee object.
  * @param[in] tx Transaction object.
  * @param[in] event Event type.
- * @param[in] tx_param Equals @a tx.
  * @param[in] cbdata Callback data: actually @ref perf_info_t describing the
  *            event.
  */
@@ -397,7 +396,6 @@ static ib_status_t mod_perf_stats_event_start_tx_callback(
      ib_engine_t *ib,
      ib_tx_t *tx,
      ib_state_event_type_t event,
-     ib_tx_t* tx_param,
      void *cbdata
 )
 {
@@ -546,7 +544,6 @@ static ib_status_t mod_perf_stats_event_stop_conndata_callback(
  * @param[in] ib IronBee object.
  * @param[in] tx Transaction object.
  * @param[in] event Event type.
- * @param[in] tx_param Equals @a tx.
  * @param[in] cbdata Callback data: actually an perf_info_t describing the
  *            event.
  */
@@ -554,7 +551,6 @@ static ib_status_t mod_perf_stats_event_stop_tx_callback(
     ib_engine_t *ib,
     ib_tx_t* tx,
     ib_state_event_type_t event,
-    ib_tx_t* tx_param,
     void *cbdata
 )
 {

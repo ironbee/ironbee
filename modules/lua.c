@@ -1563,7 +1563,6 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event type.
- * @param tx_param Equal to @a tx.
  * @param cbdata Not used.
  *
  * @return Status code.
@@ -1571,7 +1570,6 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
 static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               ib_state_event_type_t event,
-                                              ib_tx_t *tx_param,
                                               void *cbdata)
 {
     IB_FTRACE_INIT();

@@ -442,7 +442,6 @@ static IB_DIRMAP_INIT_STRUCTURE(pocacsig_directive_map) = {
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event type.
- * @param tx_para Equals @a tx.
  * @param cbdata Phase passed as pointer value.
  *
  * @return Status code.
@@ -450,7 +449,6 @@ static IB_DIRMAP_INIT_STRUCTURE(pocacsig_directive_map) = {
 static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                                         ib_tx_t *tx,
                                         ib_state_event_type_t event,
-                                        ib_tx_t *tx_param,
                                         void *cbdata)
 {
     IB_FTRACE_INIT();

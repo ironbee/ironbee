@@ -48,7 +48,6 @@ static ib_status_t geoip_lookup(
     ib_engine_t *ib,
     ib_tx_t *tx,
     ib_state_event_type_t event,
-    ib_tx_t *tx_param,
     void *data
 )
 {

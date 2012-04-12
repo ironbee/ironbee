@@ -499,7 +499,6 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction.
  * @param[in] event Event type
- * @param[in,out] tx_param Transaction object
  * @param[in] data Callback data (not used)
  *
  * @returns Status code
@@ -507,7 +506,6 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
 static ib_status_t modua_user_agent(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     ib_state_event_type_t event,
-                                    ib_tx_t *tx_param,
                                     void *data)
 {
     IB_FTRACE_INIT();
@@ -549,7 +547,6 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
  * @param[in] ib IronBee object
  * @param[in,out] tx Transaction object
  * @param[in] event Event type
- * @param[in,out] tx_param Equal to @a tx.
  * @param[in] cbdata Callback data (not used)
  *
  * @returns Status code
@@ -557,7 +554,6 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 static ib_status_t modua_remoteip(ib_engine_t *ib,
                                   ib_tx_t *tx,
                                   ib_state_event_type_t event,
-                                  ib_tx_t *tx_param,
                                   void *cbdata)
 {
     IB_FTRACE_INIT();

@@ -969,7 +969,6 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
  * @param[in] event Event type
- * @param[in] tx_param Equal to @a tx.
  * @param[in] data Callback data (not used)
  *
  * @returns Status code
@@ -977,7 +976,6 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
 static ib_status_t print_tx( ib_engine_t *ib,
                              ib_tx_t *tx,
                              ib_state_event_type_t event,
-                             ib_tx_t *tx_param,
                              void *data )
 {
     IB_FTRACE_INIT();
@@ -1056,7 +1054,6 @@ static ib_status_t print_tx( ib_engine_t *ib,
  * @param[in] ib IronBee object.
  * @param[in] tx Transaction object.
  * @param[in] event Event type.
- * @param[in] tx_param Equal to @a tx_param.
  * @param[in] data Callback data (not used).
  *
  * @note The data parameter is unused.
@@ -1067,7 +1064,6 @@ static ib_status_t print_user_agent(
     ib_engine_t *ib,
     ib_tx_t *tx,
     ib_state_event_type_t event,
-    ib_tx_t *tx_param,
     void *data
 )
 {
@@ -1121,7 +1117,6 @@ static ib_status_t print_user_agent(
  * @param[in] ib IronBee object
  * @param[in] tx Transaction object
  * @param[in] event Event type
- * @param[in] tx_param Equal to @a tx.
  * @param[in] data Callback data (not used)
  *
  * @note The data parameter is unused
@@ -1132,7 +1127,6 @@ static ib_status_t print_geoip(
      ib_engine_t *ib,
      ib_tx_t *tx,
      ib_state_event_type_t event,
-     ib_tx_t *tx_param,
      void *data
 )
 {
