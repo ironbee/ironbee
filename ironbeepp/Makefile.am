@@ -26,4 +26,5 @@ libibpp_la_SOURCES = \
     clock.cpp \
     parsed_request_line.cpp \
     parsed_response_line.cpp \
-    parsed_name_value.cpp
+    parsed_name_value.cpp \
+    hooks.cpp
