@@ -41,4 +41,17 @@ protected:
     ib_server_t  m_ib_server;
 };
 
+/**
+ * Class building on the basic IBPP fixture to add a transaction.
+ */
+class IBPPTXTestFixture : public IBPPTestFixture
+{
+public:
+    IBPPTXTestFixture();
+    virtual ~IBPPTXTestFixture();
+protected:
+    ib_conn_t* m_ib_connection;
+    ib_tx_t* m_ib_transaction;
+};
+
 #endif

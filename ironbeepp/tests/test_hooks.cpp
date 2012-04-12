@@ -48,7 +48,7 @@
 using namespace std;
 using namespace IronBee;
 
-class TestHooks : public ::testing::Test, public IBPPTestFixture
+class TestHooks : public ::testing::Test, public IBPPTXTestFixture
 {
 protected:
     enum callback_e
@@ -69,6 +69,7 @@ protected:
         handler_info_t() : which(CB_NOT_CALLED) {}
         callback_e            which;
         Engine                engine;
+        Transaction           transaction;
         Engine::state_event_e event;
 
         ParsedNameValue       parsed_name_value;
@@ -76,7 +77,6 @@ protected:
         ParsedResponseLine    parsed_response_line;
         Connection            connection;
         ConnectionData        connection_data;
-        Transaction           transaction;
         TransactionData       transaction_data;
     };
 
@@ -87,94 +87,118 @@ protected:
 
         void operator()(
             Engine                engine,
+            Transaction           transaction,
             Engine::state_event_e event
         )
         {
-            m_info.which  = CB_NULL;
+            switch(event) {
+            case ConstEngine::handle_context_transaction:
+            case ConstEngine::handle_postprocess:
+            case ConstEngine::handle_request:
+            case ConstEngine::handle_request_headers:
+            case ConstEngine::handle_response:
+            case ConstEngine::handle_response_headers:
+            case ConstEngine::request_body_data:
+            case ConstEngine::request_finished:
+            case ConstEngine::request_headers:
+            case ConstEngine::response_body_data:
+            case ConstEngine::response_finished:
+            case ConstEngine::response_headers:
+            case ConstEngine::transaction_data_in:
+            case ConstEngine::transaction_data_out:
+            case ConstEngine::transaction_finished:
+            case ConstEngine::transaction_process:
+            case ConstEngine::transaction_started:
+                m_info.which = CB_TRANSACTION;
+                break;
+            default:
+                m_info.which = CB_NULL;
+            }
             m_info.engine = engine;
-            m_info.event  = event;
+            m_info.transaction = transaction;
+            m_info.event = event;
         }
 
         void operator()(
             Engine engine,
+            Transaction transaction,
             Engine::state_event_e event,
             ParsedNameValue parsed_name_value
         )
         {
             m_info.which = CB_HEADERS;
             m_info.engine = engine;
+            m_info.transaction = transaction;
             m_info.event = event;
             m_info.parsed_name_value = parsed_name_value;
         }
 
         void operator()(
             Engine engine,
+            Transaction transaction,
             Engine::state_event_e event,
             ParsedRequestLine parsed_request_line
         )
         {
             m_info.which = CB_REQUEST_LINE;
             m_info.engine = engine;
+            m_info.transaction = transaction;
             m_info.event = event;
             m_info.parsed_request_line = parsed_request_line;
         }
 
         void operator()(
             Engine engine,
+            Transaction transaction,
             Engine::state_event_e event,
             ParsedResponseLine parsed_response_line
         )
         {
             m_info.which = CB_RESPONSE_LINE;
             m_info.engine = engine;
+            m_info.transaction = transaction;
             m_info.event = event;
             m_info.parsed_response_line = parsed_response_line;
         }
 
         void operator()(
             Engine engine,
+            Transaction transaction,
             Engine::state_event_e event,
             Connection connection
         )
         {
             m_info.which = CB_CONNECTION;
             m_info.engine = engine;
+            m_info.transaction = transaction;
             m_info.event = event;
             m_info.connection = connection;
         }
 
         void operator()(
             Engine engine,
+            Transaction transaction,
             Engine::state_event_e event,
             ConnectionData connection_data
         )
         {
             m_info.which = CB_CONNECTION_DATA;
             m_info.engine = engine;
+            m_info.transaction = transaction;
             m_info.event = event;
             m_info.connection_data = connection_data;
         }
 
         void operator()(
             Engine engine,
-            Engine::state_event_e event,
-            Transaction transaction
-        )
-        {
-            m_info.which = CB_TRANSACTION;
-            m_info.engine = engine;
-            m_info.event = event;
-            m_info.transaction = transaction;
-        }
-
-        void operator()(
-            Engine engine,
+            Transaction transaction,
             Engine::state_event_e event,
             TransactionData transaction_data
         )
         {
             m_info.which = CB_TRANSACTION_DATA;
             m_info.engine = engine;
+            m_info.transaction = transaction;
             m_info.event = event;
             m_info.transaction_data = transaction_data;
         }
@@ -182,6 +206,27 @@ protected:
     private:
         handler_info_t& m_info;
     };
+
+    void test_tx(
+        Engine::state_event_e event,
+        handler_info_t&       info
+    )
+    {
+        ib_hook_t* hook;
+        ib_state_event_type_t ib_event =
+            static_cast<ib_state_event_type_t>(event);
+        info = handler_info_t();
+        hook = m_ib_engine->ectx->hook[event];
+        while (hook->next != NULL) {
+            hook = hook->next;
+        }
+        EXPECT_EQ(IB_OK,
+            hook->callback.tx(m_ib_engine, m_ib_transaction, ib_event, hook->cdata)
+        );
+        EXPECT_EQ(CB_TRANSACTION, info.which);
+        EXPECT_EQ(m_ib_engine, info.engine.ib());
+        EXPECT_EQ(event, info.event);
+    }
 
     void test_null(
         Engine::state_event_e event,
@@ -197,7 +242,7 @@ protected:
             hook = hook->next;
         }
         EXPECT_EQ(IB_OK,
-            hook->callback.null(m_ib_engine, ib_event, hook->cdata)
+            hook->callback.null(m_ib_engine, m_ib_transaction, ib_event, hook->cdata)
         );
         EXPECT_EQ(CB_NULL, info.which);
         EXPECT_EQ(m_ib_engine, info.engine.ib());
@@ -214,6 +259,7 @@ protected:
     {
         typedef ib_status_t (*ib_callback_t)(
             ib_engine_t*,
+            ib_tx_t*,
             ib_state_event_type_t,
             DataType*,
             void*
@@ -230,7 +276,7 @@ protected:
         DataType ib_data;
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
-                m_ib_engine, ib_event, &ib_data, hook->cdata
+                m_ib_engine, m_ib_transaction, ib_event, &ib_data, hook->cdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);
@@ -309,11 +355,9 @@ protected:
         handler_info_t&       info
     )
     {
-        test_one_argument<ib_tx_t>(
+        test_tx(
             event,
-            info,
-            CB_TRANSACTION,
-            &handler_info_t::transaction
+            info
         );
     }
 

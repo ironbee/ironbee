@@ -22,12 +22,14 @@ namespace Hooks {
  * Hooks handler for null callbacks.
  *
  * @param[in] ib_engine The IronBee engine.
+ * @param[in] ib_tx     Possibly NULL transaction.
  * @param[in] event     Which event happened.
  * @param[in] cbdata    Callback data: contains C++ functional to forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t null(
     ib_engine_t*          ib_engine,
+    ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
     void*                 cbdata
 )
@@ -35,11 +37,13 @@ ib_status_t null(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
+    /* ib_tx may be NULL */
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::null_t>(cbdata)(
             Engine(ib_engine),
+            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event)
         )
     ));
@@ -49,6 +53,7 @@ ib_status_t null(
  * Hooks handler for headers_data callbacks.
  *
  * @param[in] ib_engine  The IronBee engine.
+ * @param[in] ib_tx      Possibly NULL transaction.
  * @param[in] event      Which event happened.
  * @param[in] ib_headers Data of event.
  * @param[in] cbdata     Callback data: contains C++ functional to forward to.
@@ -56,6 +61,7 @@ ib_status_t null(
  **/
 ib_status_t headers_data(
     ib_engine_t*          ib_engine,
+    ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
     ib_parsed_header_t*   ib_headers,
     void*                 cbdata
@@ -64,12 +70,14 @@ ib_status_t headers_data(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
+    /* ib_tx may be NULL */
     assert(ib_headers != NULL);
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::headers_data_t>(cbdata)(
             Engine(ib_engine),
+            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             ParsedNameValue(ib_headers)
         )
@@ -80,6 +88,7 @@ ib_status_t headers_data(
  * Hooks handler for request_line callbacks.
  *
  * @param[in] ib_engine       The IronBee engine.
+ * @param[in] ib_tx           Possibly NULL transaction.
  * @param[in] event           Which event happened.
  * @param[in] ib_request_line Data of event.
  * @param[in] cbdata          Callback data: contains C++ functional to
@@ -88,6 +97,7 @@ ib_status_t headers_data(
  **/
 ib_status_t request_line(
     ib_engine_t*          ib_engine,
+    ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
     ib_parsed_req_line_t* ib_request_line,
     void*                 cbdata
@@ -96,12 +106,14 @@ ib_status_t request_line(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
+    /* ib_tx may be NULL */
     assert(ib_request_line != NULL);
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::request_line_t>(cbdata)(
             Engine(ib_engine),
+            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             ParsedRequestLine(ib_request_line)
         )
@@ -112,6 +124,7 @@ ib_status_t request_line(
  * Hooks handler for response_line callbacks.
  *
  * @param[in] ib_engine        The IronBee engine.
+ * @param[in] ib_tx            Possibly NULL transaction.
  * @param[in] event            Which event happened.
  * @param[in] ib_response_line Data of event.
  * @param[in] cbdata           Callback data: contains C++ functional to
@@ -120,6 +133,7 @@ ib_status_t request_line(
  **/
 ib_status_t response_line(
     ib_engine_t*           ib_engine,
+    ib_tx_t*               ib_tx,
     ib_state_event_type_t  event,
     ib_parsed_resp_line_t* ib_response_line,
     void*                  cbdata
@@ -128,12 +142,14 @@ ib_status_t response_line(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
+    /* ib_tx may be NULL. */
     assert(ib_response_line != NULL);
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::response_line_t>(cbdata)(
             Engine(ib_engine),
+            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             ParsedResponseLine(ib_response_line)
         )
@@ -144,6 +160,7 @@ ib_status_t response_line(
  * Hooks handler for connection callbacks.
  *
  * @param[in] ib_engine     The IronBee engine.
+ * @param[in] ib_tx         Possibly NULL transaction.
  * @param[in] event         Which event happened.
  * @param[in] ib_connection Data of event.
  * @param[in] cbdata        Callback data: contains C++ functional to forward
@@ -152,6 +169,7 @@ ib_status_t response_line(
  **/
 ib_status_t connection(
     ib_engine_t*          ib_engine,
+    ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
     ib_conn_t*            ib_connection,
     void*                 cbdata
@@ -160,12 +178,14 @@ ib_status_t connection(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
+    /* ib_tx may be NULL. */
     assert(ib_connection != NULL);
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::connection_t>(cbdata)(
             Engine(ib_engine),
+            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             Connection(ib_connection)
         )
@@ -176,6 +196,7 @@ ib_status_t connection(
  * Hooks handler for connection_data callbacks.
  *
  * @param[in] ib_engine          The IronBee engine.
+ * @param[in] ib_tx              Possibly NULL transaction.
  * @param[in] event              Which event happened.
  * @param[in] ib_connection_data Data of event.
  * @param[in] cbdata             Callback data: contains C++ functional to
@@ -184,6 +205,7 @@ ib_status_t connection(
  **/
 ib_status_t connection_data(
     ib_engine_t*          ib_engine,
+    ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
     ib_conndata_t*        ib_connection_data,
     void*                 cbdata
@@ -192,12 +214,14 @@ ib_status_t connection_data(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
+    /* ib_tx may be NULL */
     assert(ib_connection_data != NULL);
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::connection_data_t>(cbdata)(
             Engine(ib_engine),
+            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             ConnectionData(ib_connection_data)
         )
@@ -208,16 +232,16 @@ ib_status_t connection_data(
  * Hooks handler for transaction callbacks.
  *
  * @param[in] ib_engine      The IronBee engine.
- * @param[in] event          Which event happened.
  * @param[in] ib_transaction Data of event.
+ * @param[in] event          Which event happened.
  * @param[in] cbdata         Callback data: contains C++ functional to
  *                           forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t transaction(
     ib_engine_t*          ib_engine,
-    ib_state_event_type_t event,
     ib_tx_t*              ib_transaction,
+    ib_state_event_type_t event,
     void*                 cbdata
 )
 {
@@ -230,8 +254,8 @@ ib_status_t transaction(
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::transaction_t>(cbdata)(
             Engine(ib_engine),
-            static_cast<Engine::state_event_e>(event),
-            Transaction(ib_transaction)
+            Transaction(ib_transaction),
+            static_cast<Engine::state_event_e>(event)
         )
     ));
 }
@@ -240,6 +264,7 @@ ib_status_t transaction(
  * Hooks handler for transaction_data callbacks.
  *
  * @param[in] ib_engine           The IronBee engine.
+ * @param[in] ib_tx               Current transaction.
  * @param[in] event               Which event happened.
  * @param[in] ib_transaction_data Data of event.
  * @param[in] cbdata              Callback data: contains C++ functional to
@@ -248,6 +273,7 @@ ib_status_t transaction(
  **/
 ib_status_t transaction_data(
     ib_engine_t*          ib_engine,
+    ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
     ib_txdata_t*          ib_transaction_data,
     void*                 cbdata
@@ -256,12 +282,14 @@ ib_status_t transaction_data(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
+    assert(ib_tx != NULL);
     assert(ib_transaction_data != NULL);
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::transaction_data_t>(cbdata)(
             Engine(ib_engine),
+            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             TransactionData(ib_transaction_data)
         )

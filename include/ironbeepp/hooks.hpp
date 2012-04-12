@@ -94,6 +94,7 @@ public:
     typedef boost::function<
         void(
             Engine,
+            Transaction,
             Engine::state_event_e
          )
     > null_t;
@@ -108,6 +109,7 @@ public:
     typedef boost::function<
         void(
             Engine,
+            Transaction,
             Engine::state_event_e,
             ParsedNameValue
         )
@@ -123,6 +125,7 @@ public:
     typedef boost::function<
         void(
             Engine,
+            Transaction,
             Engine::state_event_e,
             ParsedRequestLine
         )
@@ -138,6 +141,7 @@ public:
     typedef boost::function<
         void(
             Engine,
+            Transaction,
             Engine::state_event_e,
             ParsedResponseLine
         )
@@ -153,6 +157,7 @@ public:
     typedef boost::function<
         void(
             Engine,
+            Transaction,
             Engine::state_event_e,
             Connection
         )
@@ -168,6 +173,7 @@ public:
     typedef boost::function<
         void(
             Engine,
+            Transaction,
             Engine::state_event_e,
             ConnectionData
         )
@@ -183,8 +189,8 @@ public:
     typedef boost::function<
         void(
             Engine,
-            Engine::state_event_e,
-            Transaction
+            Transaction,
+            Engine::state_event_e
         )
     > transaction_t;
 
@@ -198,6 +204,7 @@ public:
     typedef boost::function<
         void(
             Engine,
+            Transaction,
             Engine::state_event_e,
             TransactionData
         )
