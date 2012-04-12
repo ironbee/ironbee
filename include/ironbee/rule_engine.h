@@ -339,7 +339,7 @@ ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
                                         ib_rule_t *rule);
 
 /**
- * Invlidate an entire rule chain
+ * Invalidate an entire rule chain
  *
  * @param[in] ib IronBee engine
  * @param[in,out] rule Rule to invalidate
