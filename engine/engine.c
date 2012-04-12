@@ -132,10 +132,11 @@ ib_status_t ib_check_hook(
 
     expected_hook_type = ib_state_event_hook_types[event];
     if ( expected_hook_type != hook_type ) {
-        ib_log_error( ib, 1,
-            "Event/hook mismatch: Expected %d but received %d",
-            expected_hook_type, hook_type
-        );
+        ib_log_error(ib, 1,
+                     "Event/hook mismatch: "
+                     "Event type %s expected %d but received %d",
+                     ib_state_event_name(event),
+                     expected_hook_type, hook_type);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
