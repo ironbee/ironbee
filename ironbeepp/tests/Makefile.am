@@ -46,7 +46,8 @@ check_PROGRAMS = \
     test_transaction \
     test_transaction_data \
     test_parsed_request_line \
-    test_parsed_response_line
+    test_parsed_response_line \
+    test_parsed_name_value
     
 TESTS=$(check_PROGRAMS)
 
@@ -74,3 +75,4 @@ test_transaction_SOURCES          = test_transaction.cpp
 test_transaction_data_SOURCES     = test_transaction_data.cpp
 test_parsed_request_line_SOURCES  = test_parsed_request_line.cpp
 test_parsed_response_line_SOURCES = test_parsed_response_line.cpp
+test_parsed_name_value_SOURCES   = test_parsed_name_value.cpp
