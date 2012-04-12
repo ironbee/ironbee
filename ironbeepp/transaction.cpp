@@ -4,6 +4,8 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/clock.hpp>
+#include <ironbeepp/parsed_request_line.hpp>
+#include <ironbeepp/parsed_name_value.hpp>
 
 namespace IronBee {
 
@@ -46,62 +48,62 @@ Context ConstTransaction::context() const
     return Context(ib()->ctx);
 }
 
-boost::posix_time::ptime ConstTransaction::started() const
+boost::posix_time::ptime ConstTransaction::started_time() const
 {
     return ib_to_ptime(ib()->t.started);
 }
 
-boost::posix_time::ptime ConstTransaction::request_started() const
+boost::posix_time::ptime ConstTransaction::request_started_time() const
 {
     return ib_to_ptime(ib()->t.request_started);
 }
 
-boost::posix_time::ptime ConstTransaction::request_headers() const
+boost::posix_time::ptime ConstTransaction::request_headers_time() const
 {
     return ib_to_ptime(ib()->t.request_headers);
 }
 
-boost::posix_time::ptime ConstTransaction::request_body() const
+boost::posix_time::ptime ConstTransaction::request_body_time() const
 {
     return ib_to_ptime(ib()->t.request_body);
 }
 
-boost::posix_time::ptime ConstTransaction::request_finished() const
+boost::posix_time::ptime ConstTransaction::request_finished_time() const
 {
     return ib_to_ptime(ib()->t.request_finished);
 }
 
-boost::posix_time::ptime ConstTransaction::response_started() const
+boost::posix_time::ptime ConstTransaction::response_started_time() const
 {
     return ib_to_ptime(ib()->t.response_started);
 }
 
-boost::posix_time::ptime ConstTransaction::response_headers() const
+boost::posix_time::ptime ConstTransaction::response_headers_time() const
 {
     return ib_to_ptime(ib()->t.response_headers);
 }
 
-boost::posix_time::ptime ConstTransaction::response_body() const
+boost::posix_time::ptime ConstTransaction::response_body_time() const
 {
     return ib_to_ptime(ib()->t.response_body);
 }
 
-boost::posix_time::ptime ConstTransaction::response_finished() const
+boost::posix_time::ptime ConstTransaction::response_finished_time() const
 {
     return ib_to_ptime(ib()->t.response_finished);
 }
 
-boost::posix_time::ptime ConstTransaction::postprocess() const
+boost::posix_time::ptime ConstTransaction::postprocess_time() const
 {
     return ib_to_ptime(ib()->t.postprocess);
 }
 
-boost::posix_time::ptime ConstTransaction::logtime() const
+boost::posix_time::ptime ConstTransaction::logtime_time() const
 {
     return ib_to_ptime(ib()->t.logtime);
 }
 
-boost::posix_time::ptime ConstTransaction::finished() const
+boost::posix_time::ptime ConstTransaction::finished_time() const
 {
     return ib_to_ptime(ib()->t.finished);
 }
@@ -129,6 +131,16 @@ const char* ConstTransaction::path() const
 uint32_t ConstTransaction::flags() const
 {
     return ib()->flags;
+}
+
+ParsedRequestLine ConstTransaction::request_line() const
+{
+    return ParsedRequestLine(ib()->request_line);
+}
+
+ParsedNameValue ConstTransaction::request_headers() const
+{
+    return ParsedNameValue(ib()->request_headers->head);
 }
 
 // Transaction

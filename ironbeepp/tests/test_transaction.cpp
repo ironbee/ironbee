@@ -29,6 +29,8 @@
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/clock.hpp>
+#include <ironbeepp/parsed_request_line.hpp>
+#include <ironbeepp/parsed_name_value.hpp>
 
 #include "gtest/gtest.h"
 
@@ -104,6 +106,14 @@ TEST(TestTransaction, basic)
 
     ib_tx.path = "baz";
     EXPECT_EQ(ib_tx.path, tx.path());
+
+    ib_tx.request_line = (ib_parsed_req_line_t*)1238;
+    EXPECT_EQ(ib_tx.request_line, tx.request_line().ib());
+
+    ib_parsed_name_value_pair_list_wrapper_t plw;
+    plw.head = (ib_parsed_name_value_pair_list_t*)1239;
+    ib_tx.request_headers = &plw;
+    EXPECT_EQ(ib_tx.request_headers->head, tx.request_headers().ib());
 
     ib_tx.flags = 0;
     EXPECT_EQ(ib_tx.flags, tx.flags());

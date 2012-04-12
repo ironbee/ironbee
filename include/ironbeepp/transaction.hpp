@@ -52,6 +52,8 @@ class Context;
 class MemoryPool;
 class Transaction;
 class Connection;
+class ParsedRequestLine;
+class ParsedNameValue;
 
 /**
  * Const Transaction; equivalent to a const pointer to ib_tx_t.
@@ -169,6 +171,17 @@ public:
 
     //! Path used in request.
     const char* path() const;
+
+    //! Parsed request line.
+    ParsedRequestLine request_line() const;
+
+    /**
+     * Parsed headers.
+     *
+     * This method returns the first parsed header.  Later headers can be
+     * accessed via ParsedNameValue::next().
+     **/
+    ParsedNameValue request_headers() const;
 
     /**
      * @defgroup Flags
