@@ -184,7 +184,7 @@ public:
     ParsedNameValue request_headers() const;
 
     /**
-     * @defgroup Flags
+     * @name Flags
      * Transaction Flags
      *
      * The masks for the flags are defined by the flags_e enum.  All flags
