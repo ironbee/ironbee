@@ -1230,7 +1230,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
@@ -1250,7 +1250,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
@@ -1280,7 +1280,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
@@ -1300,7 +1300,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
@@ -1331,7 +1331,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
@@ -1351,7 +1351,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 
