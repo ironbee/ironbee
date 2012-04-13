@@ -93,9 +93,6 @@ public:
     //! Associated Engine.
     Engine engine() const;
 
-    //! Associated MemoryPool.
-    MemoryPool memory_pool() const;
-
     //! Associated Connection.
     Connection connection() const;
 

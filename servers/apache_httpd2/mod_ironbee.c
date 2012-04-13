@@ -301,7 +301,6 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
             return;
     }
     icdata.ib = ironbee;
-    icdata.mp = ctx->iconn->mp;
     icdata.conn = ctx->iconn;
     icdata.dalloc = nbytes;
     icdata.dlen = nbytes;

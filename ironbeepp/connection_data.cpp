@@ -28,11 +28,6 @@ Engine ConstConnectionData::engine() const
     return Engine(ib()->ib);
 }
 
-MemoryPool ConstConnectionData::memory_pool() const
-{
-    return MemoryPool(ib()->mp);
-}
-
 Connection ConstConnectionData::connection() const
 {
     return Connection(ib()->conn);

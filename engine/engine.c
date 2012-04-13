@@ -541,7 +541,6 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     }
 
     (*pconndata)->ib = ib;
-    (*pconndata)->mp = pool;
     (*pconndata)->conn = conn;
 
     (*pconndata)->dlen = 0;
@@ -557,9 +556,6 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    if (*pconndata != NULL) {
-        ib_mpool_destroy((*pconndata)->mp);
-    }
     *pconndata = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
