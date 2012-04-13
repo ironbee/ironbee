@@ -877,15 +877,15 @@ typedef enum {
  * State Event Hook Types
  **/
 typedef enum {
+    IB_STATE_HOOK_NULL,     /**< Hook has no parameter */
+    IB_STATE_HOOK_INVALID,  /**< Something went wrong. */
     IB_STATE_HOOK_CONN,     /**< Hook received ib_conn_t */
     IB_STATE_HOOK_CONNDATA, /**< Hook received ib_conndata_t */
     IB_STATE_HOOK_TX,       /**< Hook received ib_tx_t */
     IB_STATE_HOOK_TXDATA,   /**< Hook received ib_txdata_t */
     IB_STATE_HOOK_REQLINE,  /**< Hook received ib_parsed_req_t. */
     IB_STATE_HOOK_RESPLINE, /**< Hook received ib_parsed_resp_t. */
-    IB_STATE_HOOK_HEADER,   /**< Hook received ib_parsed_header_t. */
-    IB_STATE_HOOK_NULL,     /**< Hook has no parameter */
-    IB_STATE_HOOK_INVALID   /**< Something went wrong. */
+    IB_STATE_HOOK_HEADER    /**< Hook received ib_parsed_header_t. */
 } ib_state_hook_type_t;
 
 /**
