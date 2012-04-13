@@ -111,10 +111,12 @@ ffi.cdef [[
         tx_data_out_event,
         request_started_event,
         request_headers_event,
+        request_headers_data_event,
         request_body_data_event,
         request_finished_event,
         response_started_event,
         response_headers_event,
+        response_headers_data_event,
         response_body_data_event,
         response_finished_event,
         IB_STATE_EVENT_NUM
