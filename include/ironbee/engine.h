@@ -860,12 +860,12 @@ typedef enum {
     tx_data_out_event,             /**< Parser notified of response data */
     request_started_event,         /**< Parser notified request has started */
     request_headers_event,         /**< Parser notified of request headers */
-    request_headers_data_event,    /**< Parser notified of request hdrs data */
+    request_headers_data_event,    /**< Parser notified of request headers data */
     request_body_data_event,       /**< Parser notified of request body */
     request_finished_event,        /**< Parser notified request finished */
     response_started_event,        /**< Parser notified response started */
     response_headers_event,        /**< Parser notified of response headers */
-    response_headers_data_event,   /**< Parser notified of response hdrs data*/
+    response_headers_data_event,   /**< Parser notified of response headers data*/
     response_body_data_event,      /**< Parser notified of response body */
     response_finished_event,       /**< Parser notified response finished */
 

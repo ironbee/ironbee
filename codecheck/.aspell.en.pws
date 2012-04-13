@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1206 
+personal_ws-1.1 en 1209 
 refactor
 cfg
 api
@@ -344,6 +344,7 @@ onEventConnDataOut
 regexs
 IronBeeBufferSize
 poc
+ectx
 prechain
 pmp
 logmsg
@@ -550,6 +551,7 @@ bc
 Rectanus
 IronBeeUtilHash
 cb
+cd
 ap
 dolist
 tparam
@@ -748,6 +750,7 @@ subpools
 ConstEngine
 Alfeld
 errinfo
+NULTERMINATE
 setvar
 dequeuing
 AuditLogGenerator

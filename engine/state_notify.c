@@ -259,7 +259,7 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
 }
 
 /**
- * Signal that transaction data was recieved.
+ * Signal that transaction data was received.
  *
  * @param[in] ib IronBee engine.
  * @param[in] tx Transaction.
