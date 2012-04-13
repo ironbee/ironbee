@@ -88,8 +88,9 @@ public:
     /**
      * Call back type that takes no argument.
      *
-     * First parameter is the IronBee Engine and second is which event trigger
-     * the call back
+     * Parameters are:
+     * - IronBee engine.
+     * - Which event triggered the callback.
      **/
     typedef boost::function<
         void(
@@ -101,9 +102,11 @@ public:
     /**
      * Call back type that takes ParsedNameValue argument.
      *
-     * First parameter is the IronBee Engine, second is which event trigger
-     * the call back, and the third argument is the ParsedNameValue associated
-     * with the event.
+     * Parameters are:
+     * - IronBee engine.
+     * - Current transaction.
+     * - Which event triggered the callback.
+     * - Argument.
      **/
     typedef boost::function<
         void(
@@ -117,9 +120,11 @@ public:
     /**
      * Call back type that takes RequestLine argument.
      *
-     * First parameter is the IronBee Engine, second is which event trigger
-     * the call back, and the third argument is the RequestLine associated
-     * with the event.
+     * Parameters are:
+     * - IronBee engine.
+     * - Current transaction.
+     * - Which event triggered the callback.
+     * - Argument.
      **/
     typedef boost::function<
         void(
@@ -133,9 +138,11 @@ public:
     /**
      * Call back type that takes ResponseLine argument.
      *
-     * First parameter is the IronBee Engine, second is which event trigger
-     * the call back, and the third argument is the ResponseLine associated
-     * with the event.
+     * Parameters are:
+     * - IronBee engine.
+     * - Current transaction.
+     * - Which event triggered the callback.
+     * - Argument.
      **/
     typedef boost::function<
         void(
@@ -149,9 +156,10 @@ public:
     /**
      * Call back type that takes Connection argument.
      *
-     * First parameter is the IronBee Engine, second is which event trigger
-     * the call back, and the third argument is the Connection associated
-     * with the event.
+     * Parameters are:
+     * - IronBee engine.
+     * - Which event triggered the callback.
+     * - Argument.
      **/
     typedef boost::function<
         void(
@@ -164,9 +172,10 @@ public:
     /**
      * Call back type that takes Connection argument.
      *
-     * First parameter is the IronBee Engine, second is which event trigger
-     * the call back, and the third argument is the Connection associated
-     * with the event.
+     * Parameters are:
+     * - IronBee engine.
+     * - Which event triggered the callback.
+     * - Argument.
      **/
     typedef boost::function<
         void(
@@ -177,11 +186,12 @@ public:
     > connection_data_t;
 
     /**
-     * Call back type that takes Transaction argument.
+     * Call back type that takes a Transaction but no argument.
      *
-     * First parameter is the IronBee Engine, second is which event trigger
-     * the call back, and the third argument is the Transaction associated
-     * with the event.
+     * Parameters are:
+     * - IronBee engine.
+     * - Current transaction.
+     * - Which event triggered the callback.
      **/
     typedef boost::function<
         void(
@@ -194,9 +204,11 @@ public:
     /**
      * Call back type that takes TransactionData argument.
      *
-     * First parameter is the IronBee Engine, second is which event trigger
-     * the call back, and the third argument is the TransactionData associated
-     * with the event.
+     * Parameters are:
+     * - IronBee engine.
+     * - Current transaction.
+     * - Which event triggered the callback.
+     * - Argument.
      **/
     typedef boost::function<
         void(
