@@ -704,9 +704,7 @@ ib_status_t ib_state_notify_request_started(
 
     ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
 
-    if ( req != NULL ) {
-        rc = ib_state_notify_req_line(ib, tx, request_started_event, req);
-    }
+    rc = ib_state_notify_req_line(ib, tx, request_started_event, req);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -980,9 +978,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    if ( resp != NULL ) {
-        rc = ib_state_notify_resp_line(ib, tx, response_started_event, resp);
-    }
+    rc = ib_state_notify_resp_line(ib, tx, response_started_event, resp);
 
     IB_FTRACE_RET_STATUS(rc);
 }
