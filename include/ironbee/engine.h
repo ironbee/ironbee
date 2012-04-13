@@ -56,10 +56,10 @@ extern "C" {
  *
  * This function returns IB_OK if the context should be used.
  *
- * @param ctx Configuration context
- * @param type Connection structure
- * @param ctxdata Context data (type dependent: conn or tx)
- * @param cbdata Callback data (fn_ctx_data from context)
+ * @param ctx[in] Configuration context
+ * @param type[in] Connection structure
+ * @param ctxdata[in] Context data (type dependent: conn or tx)
+ * @param cbdata[in] Callback data (fn_ctx_data from context)
  *
  * @returns Status code
  */
@@ -74,9 +74,9 @@ typedef ib_status_t (*ib_context_fn_t)(ib_context_t *ctx,
  * This function returns IB_OK if there is a site associated with
  * the context.
  *
- * @param ctx Configuration context
- * @param psite Address which site is written if non-NULL
- * @param cbdata Callback data (fn_ctx_data from context)
+ * @param ctx[in] Configuration context
+ * @param psite[out] Address which site is written if non-NULL
+ * @param cbdata[in] Callback data (fn_ctx_data from context)
  *
  * @returns Status code
  */
@@ -860,12 +860,12 @@ typedef enum {
     tx_data_out_event,             /**< Parser notified of response data */
     request_started_event,         /**< Parser notified request has started */
     request_headers_event,         /**< Parser notified of request headers */
-    request_headers_data_event,    /**< Parser notified of request headers data */
+    request_headers_data_event,    /**< Parser notified of request hdrs data */
     request_body_data_event,       /**< Parser notified of request body */
     request_finished_event,        /**< Parser notified request finished */
     response_started_event,        /**< Parser notified response started */
     response_headers_event,        /**< Parser notified of response headers */
-    response_headers_data_event,   /**< Parser notified of response headers data*/
+    response_headers_data_event,   /**< Parser notified of response hdrs data*/
     response_body_data_event,      /**< Parser notified of response body */
     response_finished_event,       /**< Parser notified response finished */
 
@@ -914,10 +914,11 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
 /**
  * Data event for parsed headers.
  *
- * @param ib Engine handle
- * @param event Which event trigger the callback.
- * @param headers Parsed connection headers.
- * @param cbdata Callback data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction.
+ * @param[in] event Which event trigger the callback.
+ * @param[in] headers Parsed connection headers.
+ * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_headers_data_fn_t)(
     ib_engine_t *ib,
@@ -931,10 +932,11 @@ typedef ib_status_t (*ib_state_headers_data_fn_t)(
  *
  * This provides a request line parsed from the start of the request.
  *
- * @param ib Engine handle
- * @param event Which event trigger the callback.
- * @param line The parsed request line.
- * @param cbdata Callback data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction.
+ * @param[in] event Which event trigger the callback.
+ * @param[in] line The parsed request line.
+ * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_request_line_fn_t)(
     ib_engine_t *ib,
@@ -948,10 +950,11 @@ typedef ib_status_t (*ib_state_request_line_fn_t)(
  *
  * This provides a response line parsed from the start of the response.
  *
- * @param ib Engine handle
- * @param event Which event trigger the callback.
- * @param line The parsed response line.
- * @param cbdata Callback data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction.
+ * @param[in] event Which event trigger the callback.
+ * @param[in] line The parsed response line.
+ * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_response_line_fn_t)(
     ib_engine_t *ib,
@@ -963,10 +966,11 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
 /**
  * Connection Event Hook Callback Function.
  *
- * @param ib Engine handle
- * @param event Which event trigger the callback.
- * @param conn Connection.
- * @param cbdata Callback data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction.
+ * @param[in] event Which event trigger the callback.
+ * @param[in] conn Connection.
+ * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_conn_hook_fn_t)(
     ib_engine_t *ib,
@@ -979,10 +983,11 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
 /**
  * Connection Data Event Hook Callback Function.
  *
- * @param ib Engine handle
- * @param event Which event trigger the callback.
- * @param conndata Connection data.
- * @param cbdata Callback data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction.
+ * @param[in] event Which event trigger the callback.
+ * @param[in] conndata Connection data.
+ * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
     ib_engine_t *ib,
@@ -997,10 +1002,10 @@ typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
  *
  * This matches the NULL callback type as tx is already passed.
  *
- * @param ib Engine handle
- * @param tx Transaction.
- * @param event Which event trigger the callback.
- * @param cbdata Callback data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction.
+ * @param[in] event Which event trigger the callback.
+ * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_tx_hook_fn_t)(
     ib_engine_t *ib,
@@ -1012,10 +1017,11 @@ typedef ib_status_t (*ib_state_tx_hook_fn_t)(
 /**
  * Transaction Data Event Hook Callback Function.
  *
- * @param ib Engine handle
- * @param event Which event trigger the callback.
- * @param txdata Transaction data.
- * @param cbdata Callback data
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction.
+ * @param[in] event Which event trigger the callback.
+ * @param[in] txdata Transaction data.
+ * @param[in] cbdata Callback data
  */
 typedef ib_status_t (*ib_state_txdata_hook_fn_t)(
     ib_engine_t *ib,

@@ -275,9 +275,9 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
 /**
  * Notify the engine that a transaction event has occurred.
  *
- * @param ib Engine
- * @param event Event
- * @param tx Transaction
+ * @param[in] ib Engine
+ * @param[in] event Event
+ * @param[in] tx Transaction
  *
  * @returns Status code
  */
@@ -379,10 +379,10 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
 /**
  * Find the config context by executing context functions.
  *
- * @param ib[in] Engine
- * @param type[in] Context type
- * @param data[in] Data (type based on context type)
- * @param pctx[in] Address which context is written
+ * @param[in] ib Engine
+ * @param[in] type Context type
+ * @param[in] data Data (type based on context type)
+ * @param[in] pctx Address which context is written
  *
  * @returns Status code
  */
