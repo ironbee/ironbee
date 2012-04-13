@@ -144,19 +144,39 @@ public:
     void sendDataIn(ib_conn_t *ib_conn, const std::string& req)
     {
         ib_conndata_t *ib_conndata;
-        ib_conn_data_create(ib_conn, &ib_conndata, req.size());
+        ib_status_t rc;
+
+        rc = ib_conn_data_create(ib_conn, &ib_conndata, req.size());
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("ib_conn_data_create failed"));
+        }
         ib_conndata->dlen = req.size();
         memcpy(ib_conndata->data, req.data(), req.size());
-        ib_state_notify_conn_data_in(ib_engine, ib_conndata, NULL);
+        rc = ib_state_notify_conn_data_in(ib_engine, ib_conndata, NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("ib_notify_conn_data_in failed"));
+        }
     }
 
     void sendDataOut(ib_conn_t *ib_conn, const std::string& req)
     {
         ib_conndata_t *ib_conndata;
-        ib_conn_data_create(ib_conn, &ib_conndata, req.size());
+        ib_status_t rc;
+        
+        rc = ib_conn_data_create(ib_conn, &ib_conndata, req.size());
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("ib_conn_data_create failed"));
+        }
         ib_conndata->dlen = req.size();
         memcpy(ib_conndata->data, req.data(), req.size());
-        ib_state_notify_conn_data_out(ib_engine, ib_conndata, NULL);
+        rc = ib_state_notify_conn_data_out(ib_engine, ib_conndata, NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("ib_notify_conn_data_in failed"));
+        }
     }
 
 
