@@ -474,8 +474,6 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     else {
         ib_status_t rc;
 
-        req->tx = itx;
-
         ib_log_debug(ib, 7, "TX request: method=%.*s path=%.*s version=%.*s",
                      (int)bstr_len(tx->request_method),
                      (char *)bstr_ptr(tx->request_method),
@@ -616,7 +614,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_txdata_t itxdata;
+    ib_status_t rc;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
@@ -644,26 +642,30 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     /* Check for the "end-of-request" indicator. */
     if (txdata->data == NULL) {
         if (tx->request_entity_len == 0) {
-            /// @todo Need a way to determine if the request was supposed to
-            ///       have body, not if it did have a body.
+            /* @todo Need a way to determine if the request was supposed to
+             *       have body, not if it did have a body. */
             ib_tx_mark_nobody(itx);
         }
-        ib_state_notify_request_body_data(ib, itx, &itxdata);
-        IB_FTRACE_RET_INT(HTP_OK);
+        rc = ib_state_notify_request_body_data(ib, itx, NULL);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "ib_state_notify_request_body_data() failed: %s",
+                         ib_status_to_string(rc));
+        }
     }
-
-    /* Fill in a temporary ib_txdata_t structure and use it
-     * to notify the engine of transaction data.
-     */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
-    itxdata.dtype = IB_DTYPE_HTTP_BODY;
-    itxdata.dalloc = txdata->len;
-    itxdata.dlen = txdata->len;
-    itxdata.data = (uint8_t *)txdata->data;
-
-    ib_state_notify_tx_data_in(ib, &itxdata);
+    else {
+        /* Point the tx-data struture at the data block */
+        ib_txdata_t itxdata;
+        itxdata.dtype = IB_DTYPE_HTTP_BODY;
+        itxdata.dlen = txdata->len;
+        itxdata.data = (uint8_t *)txdata->data;
+        rc = ib_state_notify_request_body_data(ib, itx, &itxdata);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "ib_state_notify_request_body_data() failed: %s",
+                         ib_status_to_string(rc));
+        }
+    }
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -782,7 +784,6 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
         ib_log_error(ib, 3, "Error allocating response line buffer");
     }
     else {
-        resp->tx = itx;
         ib_log_debug(ib, 7, "TX response: status=%.*s msg=%.*s",
                      (int)bstr_len(tx->response_status),
                      (char *)bstr_ptr(tx->response_status),
@@ -877,6 +878,10 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                              ib_status_to_string(rc));
                 continue;
             }
+            ib_log_debug(ib,9,"Added request header field %.*s='%.*s'",
+                         (int)bstr_len(hdr->name), (char*)bstr_ptr(hdr->name),
+                         (int)bstr_len(hdr->value),(char*)bstr_ptr(hdr->value));
+                         
         }
     }
 
@@ -898,7 +903,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_txdata_t itxdata;
+    ib_status_t rc;
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
@@ -923,24 +928,29 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
-    /* Check for the "end-of-response" indicator. */
+
+    /* Check for the "end-of-request" indicator. */
     if (txdata->data == NULL) {
-        ib_state_notify_response_body_data(ib, itx, &itxdata);
-        IB_FTRACE_RET_INT(HTP_OK);
+        rc = ib_state_notify_response_body_data(ib, itx, NULL);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "ib_state_notify_response_body_data() failed: %s",
+                         ib_status_to_string(rc));
+        }
     }
-
-    /* Fill in a temporary ib_txdata_t structure and use it
-     * to notify the engine of transaction data.
-     */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
-    itxdata.dtype = IB_DTYPE_HTTP_BODY;
-    itxdata.dalloc = txdata->len;
-    itxdata.dlen = txdata->len;
-    itxdata.data = (uint8_t *)txdata->data;
-
-    ib_state_notify_tx_data_out(ib, &itxdata);
+    else {
+        /* Point the tx-data struture at the data block */
+        ib_txdata_t itxdata;
+        itxdata.dtype = IB_DTYPE_HTTP_BODY;
+        itxdata.dlen = txdata->len;
+        itxdata.data = (uint8_t *)txdata->data;
+        rc = ib_state_notify_response_body_data(ib, itx, &itxdata);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "ib_state_notify_response_body_data() failed: %s",
+                         ib_status_to_string(rc));
+        }
+    }
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -1160,7 +1170,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                                         ib_conndata_t *qcdata)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = qcdata->ib;
+    ib_engine_t *ib = pi->pr->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
@@ -1218,7 +1228,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                                          ib_conndata_t *qcdata)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = qcdata->ib;
+    ib_engine_t *ib = pi->pr->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
