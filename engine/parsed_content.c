@@ -48,6 +48,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
         ib_mpool_calloc(tx->mp, 1, sizeof(*headers_tmp));
 
     if ( headers_tmp == NULL ) {
+        *headers = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -160,6 +161,7 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                                      sizeof(*line_tmp));
 
     if ( line_tmp == NULL ) {
+        *line = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -202,6 +204,7 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                                     sizeof(*line_tmp));
 
     if ( line_tmp == NULL ) {
+        *line = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
