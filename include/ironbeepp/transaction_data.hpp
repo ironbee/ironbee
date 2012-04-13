@@ -102,20 +102,8 @@ public:
         HTTP_TRAILER = IB_DTYPE_HTTP_TRAILER
     };
 
-    //! Associated Engine.
-    Engine engine() const;
-
-    //! Associated MemoryPool.
-    MemoryPool memory_pool() const;
-
-    //! Associated Transaction.
-    Transaction transaction() const;
-
     //! Type of data.
     type_e type() const;
-
-    //! Amount of memory allocated for data.
-    size_t allocated() const;
 
     //! Length of data.
     size_t length() const;

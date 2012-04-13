@@ -465,15 +465,11 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_LINE;
-    itxdata.dalloc = bstr_size(tx->request_line_raw);
     itxdata.dlen = bstr_len(tx->request_line_raw);
     itxdata.data = (uint8_t *)bstr_ptr(tx->request_line_raw);
 
-    ib_state_notify_tx_data_in(ib, &itxdata);
+    ib_state_notify_tx_data_in(ib, itx, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -523,24 +519,19 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     /* Fill in a temporary ib_txdata_t structure for each header line
      * and use it to notify the engine of transaction data.
      */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_HEADER;
     list_iterator_reset(tx->request_header_lines);
     while ((hline = list_iterator_next(tx->request_header_lines)) != NULL) {
-        itxdata.dalloc = bstr_size(hline->line);
         itxdata.dlen = bstr_len(hline->line);
         itxdata.data = (uint8_t *)bstr_ptr(hline->line);
 
-        ib_state_notify_tx_data_in(ib, &itxdata);
+        ib_state_notify_tx_data_in(ib, itx, &itxdata);
     }
 
     /* Headers separator */
-    itxdata.dalloc = bstr_size(tx->request_headers_sep);
     itxdata.dlen = bstr_len(tx->request_headers_sep);
     itxdata.data = (uint8_t *)bstr_ptr(tx->request_headers_sep);
-    ib_state_notify_tx_data_in(ib, &itxdata);
+    ib_state_notify_tx_data_in(ib, itx, &itxdata);
 
     /* The full headers are now available. */
     ib_state_notify_request_headers(ib, itx);
@@ -593,15 +584,11 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_BODY;
-    itxdata.dalloc = txdata->len;
     itxdata.dlen = txdata->len;
     itxdata.data = (uint8_t *)txdata->data;
 
-    ib_state_notify_tx_data_in(ib, &itxdata);
+    ib_state_notify_tx_data_in(ib, itx, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -711,15 +698,11 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_LINE;
-    itxdata.dalloc = bstr_size(tx->response_line_raw);
     itxdata.dlen = bstr_len(tx->response_line_raw);
     itxdata.data = (uint8_t *)bstr_ptr(tx->response_line_raw);
 
-    ib_state_notify_tx_data_out(ib, &itxdata);
+    ib_state_notify_tx_data_out(ib, itx, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -758,24 +741,19 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     /* Fill in a temporary ib_txdata_t structure for each header line
      * and use it to notify the engine of transaction data.
      */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_HEADER;
     list_iterator_reset(tx->response_header_lines);
     while ((hline = list_iterator_next(tx->response_header_lines)) != NULL) {
-        itxdata.dalloc = bstr_size(hline->line);
         itxdata.dlen = bstr_len(hline->line);
         itxdata.data = (uint8_t *)bstr_ptr(hline->line);
 
-        ib_state_notify_tx_data_out(ib, &itxdata);
+        ib_state_notify_tx_data_out(ib, itx, &itxdata);
     }
 
     /* Headers separator */
-    itxdata.dalloc = bstr_size(tx->response_headers_sep);
     itxdata.dlen = bstr_len(tx->response_headers_sep);
     itxdata.data = (uint8_t *)bstr_ptr(tx->response_headers_sep);
-    ib_state_notify_tx_data_out(ib, &itxdata);
+    ib_state_notify_tx_data_out(ib, itx, &itxdata);
 
     /* The full headers are now available. */
     ib_state_notify_response_headers(ib, itx);
@@ -823,15 +801,11 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     /* Fill in a temporary ib_txdata_t structure and use it
      * to notify the engine of transaction data.
      */
-    itxdata.ib = ib;
-    itxdata.mp = itx->mp;
-    itxdata.tx = itx;
     itxdata.dtype = IB_DTYPE_HTTP_BODY;
-    itxdata.dalloc = txdata->len;
     itxdata.dlen = txdata->len;
     itxdata.data = (uint8_t *)txdata->data;
 
-    ib_state_notify_tx_data_out(ib, &itxdata);
+    ib_state_notify_tx_data_out(ib, itx, &itxdata);
 
     IB_FTRACE_RET_INT(HTP_OK);
 }

@@ -443,7 +443,7 @@ static ib_status_t mod_perf_stats_event_start_txdata_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        txdata->tx->conn->data,
+        tx->conn->data,
         &perf_info,
         "MOD_PERF_STATS"
     );
@@ -601,7 +601,7 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
     perf_info_t *perf_info;
 
     ib_status_t rc = ib_hash_get(
-        txdata->tx->conn->data,
+        tx->conn->data,
         &perf_info,
         "MOD_PERF_STATS"
     );

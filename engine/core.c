@@ -3988,8 +3988,6 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    tx = txdata->tx;
-
     /* Get the module config. */
     rc = ib_context_module_config(tx->ctx,
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
@@ -4050,8 +4048,6 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
         ib_log_debug(ib, 9, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-
-    tx = txdata->tx;
 
     /* Get the module config. */
     rc = ib_context_module_config(tx->ctx,

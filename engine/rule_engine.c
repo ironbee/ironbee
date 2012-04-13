@@ -719,6 +719,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
  *
  * @param[in] ib Engine
  * @param[in] event Event type
+ * @param[in] tx Transaction
  * @param[in,out] txdata Transaction data
  * @param[in,out] rule_result Result of rule execution
  *
@@ -726,6 +727,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
  */
 static ib_status_t execute_stream_rule(ib_engine_t *ib,
                                        ib_rule_t *rule,
+                                       ib_tx_t *tx,
                                        ib_txdata_t *txdata,
                                        ib_num_t *result)
 {
@@ -751,7 +753,7 @@ static ib_status_t execute_stream_rule(ib_engine_t *ib,
 
     /* Create a field to hold the data */
     rc = ib_field_create_bytestr_alias(&value,
-                                       txdata->mp,
+                                       tx->mp,
                                        "tmp", 3,
                                        txdata->data, txdata->dlen);
     if (rc != IB_OK) {
@@ -762,7 +764,7 @@ static ib_status_t execute_stream_rule(ib_engine_t *ib,
     }
 
     /* Execute the rule operator */
-    rc = ib_operator_execute(ib, txdata->tx, opinst, value, result);
+    rc = ib_operator_execute(ib, tx, opinst, value, result);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Operator %s returned an error: %s",
@@ -804,7 +806,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     assert(cbdata != NULL);
 
     const stream_rule_cbdata_t *rdata = (const stream_rule_cbdata_t *) cbdata;
-    ib_context_t               *ctx = txdata->tx->ctx;
+    ib_context_t               *ctx = tx->ctx;
     ib_rule_stream_data_t      *stream =
         &(ctx->rules->ruleset.streams[rdata->stream]);
     ib_list_t                  *rules = stream->rules.rule_list;
@@ -873,7 +875,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * operator returns an error.  This needs further discussion to
          * determine what the correct behavior should be.
          */
-        rc = execute_stream_rule(ib, rule, txdata, &result);
+        rc = execute_stream_rule(ib, rule, tx, txdata, &result);
         if (rc != IB_OK) {
             ib_log_error(ib, 4, "Error executing rule %s: %s",
                          rule->meta.id, ib_status_to_string(rc));
@@ -892,7 +894,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         else {
             actions = rule->false_actions;
         }
-        rc = execute_actions(ib, rule, txdata->tx, result, actions);
+        rc = execute_actions(ib, rule, tx, result, actions);
         if (rc != IB_OK) {
             ib_log_error(ib, 4,
                          "Error executing action for rule %s: %s",

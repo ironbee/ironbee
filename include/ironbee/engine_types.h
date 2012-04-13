@@ -146,11 +146,7 @@ struct ib_conndata_t {
 
 /** Transaction Data Structure */
 struct ib_txdata_t {
-    ib_engine_t        *ib;              /**< Engine handle */
-    ib_mpool_t         *mp;              /**< Data memory pool */
-    ib_tx_t            *tx;              /**< Transaction */
     ib_data_type_t      dtype;           /**< Data type */
-    size_t              dalloc;          /**< Data buffer allocated */
     size_t              dlen;            /**< Data buffer length */
     uint8_t            *data;            /**< Data buffer */
 };

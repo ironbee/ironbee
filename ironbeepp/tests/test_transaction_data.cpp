@@ -38,20 +38,9 @@ TEST(TestTransactionData, basic)
 
     ASSERT_TRUE(txdata);
 
-    ib_txdata.ib = (ib_engine_t*)1234;
-    EXPECT_EQ(ib_txdata.ib, txdata.engine().ib());
-
-    ib_txdata.mp = (ib_mpool_t*)1235;
-    EXPECT_EQ(ib_txdata.mp, txdata.memory_pool().ib());
-
-    ib_txdata.tx = (ib_tx_t*)1236;
-    EXPECT_EQ(ib_txdata.tx, txdata.transaction().ib());
-
     ib_txdata.dtype = IB_DTYPE_HTTP_BODY;
     EXPECT_EQ(IronBee::TransactionData::HTTP_BODY, txdata.type());
 
-    ib_txdata.dalloc = 13;
-    EXPECT_EQ(ib_txdata.dalloc, txdata.allocated());
     ib_txdata.dlen = 14;
     EXPECT_EQ(ib_txdata.dlen, txdata.length());
     ib_txdata.data = (uint8_t*)15;

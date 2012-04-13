@@ -19,29 +19,9 @@ ConstTransactionData::ConstTransactionData(ib_type ib_transaction_data) :
     // nop
 }
 
-Engine ConstTransactionData::engine() const
-{
-    return Engine(ib()->ib);
-}
-
-MemoryPool ConstTransactionData::memory_pool() const
-{
-    return MemoryPool(ib()->mp);
-}
-
-Transaction ConstTransactionData::transaction() const
-{
-    return Transaction(ib()->tx);
-}
-
 ConstTransactionData::type_e ConstTransactionData::type() const
 {
     return static_cast<type_e>(ib()->dtype);
-}
-
-size_t ConstTransactionData::allocated() const
-{
-    return ib()->dalloc;
 }
 
 size_t ConstTransactionData::length() const

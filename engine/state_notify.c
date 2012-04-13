@@ -234,17 +234,18 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
  * Signal that transaction data was recieved.
  *
  * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
  * @param[in] event The event type.
  * @param[in] txdata The transaction data chunk.
  *
  * @returns Status code.
  */
 static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
+                                          ib_tx_t *tx,
                                           ib_state_event_type_t event,
                                           ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
-    ib_tx_t *tx = txdata->tx;
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
@@ -613,21 +614,22 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
  *  - @ref tx_started_event
  */
 ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
+                                       ib_tx_t *tx,
                                        ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    if ((txdata->tx->flags & IB_TX_FSEENDATAIN) == 0) {
-        ib_tx_flags_set(txdata->tx, IB_TX_FSEENDATAIN);
+    if ((tx->flags & IB_TX_FSEENDATAIN) == 0) {
+        ib_tx_flags_set(tx, IB_TX_FSEENDATAIN);
     }
 
-    rc = ib_state_notify_txdata(ib, tx_data_in_event, txdata);
+    rc = ib_state_notify_txdata(ib, tx, tx_data_in_event, txdata);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_fctl_data_add(txdata->tx->fctl,
+    rc = ib_fctl_data_add(tx->fctl,
                           txdata->dtype,
                           txdata->data,
                           txdata->dlen);
@@ -635,16 +637,17 @@ ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
 }
 
 ib_status_t ib_state_notify_tx_data_out(ib_engine_t *ib,
+                                        ib_tx_t *tx,
                                         ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    if ((txdata->tx->flags & IB_TX_FSEENDATAOUT) == 0) {
-        ib_tx_flags_set(txdata->tx, IB_TX_FSEENDATAOUT);
+    if ((tx->flags & IB_TX_FSEENDATAOUT) == 0) {
+        ib_tx_flags_set(tx, IB_TX_FSEENDATAOUT);
     }
 
-    rc = ib_state_notify_txdata(ib, tx_data_out_event, txdata);
+    rc = ib_state_notify_txdata(ib, tx, tx_data_out_event, txdata);
     IB_FTRACE_RET_STATUS(rc);
 }
 
