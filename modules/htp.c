@@ -577,7 +577,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
             ///       have body, not if it did have a body.
             ib_tx_mark_nobody(itx);
         }
-        ib_state_notify_request_body_data(ib, itx);
+        ib_state_notify_request_body_data(ib, itx, &itxdata);
         IB_FTRACE_RET_INT(HTP_OK);
     }
 
@@ -794,7 +794,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
 
     /* Check for the "end-of-response" indicator. */
     if (txdata->data == NULL) {
-        ib_state_notify_response_body_data(ib, itx);
+        ib_state_notify_response_body_data(ib, itx, &itxdata);
         IB_FTRACE_RET_INT(HTP_OK);
     }
 

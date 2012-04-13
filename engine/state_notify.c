@@ -278,8 +278,11 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "TX DATA EVENT: %s (type %d)",
-                 ib_state_event_name(event), txdata->dtype);
+    /* Under certain cirucumstances there is no data. Guard against that. */
+    if ( ib_log_get_level(ib) >= 9 && txdata != NULL ) {
+        ib_log_debug(ib, 9, "TX DATA EVENT: %s (type %d)",
+                     ib_state_event_name(event), txdata->dtype);
+    }
 
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
@@ -831,7 +834,8 @@ ib_status_t ib_state_notify_request_headers(
  *  - @ref handle_request_event
  */
 static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
-                                                   ib_tx_t *tx)
+                                                   ib_tx_t *tx,
+                                                   ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -841,7 +845,7 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_state_notify_tx(ib, request_body_data_event, tx);
+    rc = ib_state_notify_txdata(ib, tx, request_body_data_event, txdata);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -855,7 +859,8 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
 }
 
 ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
-                                              ib_tx_t *tx)
+                                              ib_tx_t *tx,
+                                              ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -877,7 +882,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENBODY);
 
-    rc = ib_state_notify_request_body_ex(ib, tx);
+    rc = ib_state_notify_request_body_ex(ib, tx, txdata);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -914,7 +919,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering %s",
                      ib_state_event_name(request_body_data_event));
-        ib_state_notify_request_body_data(ib, tx);
+        ib_state_notify_request_body_data(ib, tx, NULL);
     }
 
     /* Mark the time. */
@@ -935,7 +940,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         if ((tx->flags & IB_TX_FREQ_NOBODY) == 0) {
             ib_tx_flags_set(tx, IB_TX_FERROR);
         }
-        rc = ib_state_notify_request_body_ex(ib, tx);
+        rc = ib_state_notify_request_body_ex(ib, tx, NULL);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -1041,7 +1046,8 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
  *  - @ref handle_response_event
  */
 ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
-                                               ib_tx_t *tx)
+                                               ib_tx_t *tx,
+                                               ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -1063,7 +1069,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
 
-    rc = ib_state_notify_tx(ib, response_body_data_event, tx);
+    rc = ib_state_notify_txdata(ib, tx, response_body_data_event, txdata);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1093,7 +1099,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENBODY) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering %s",
                      ib_state_event_name(response_body_data_event));
-        ib_state_notify_response_body_data(ib, tx);
+        ib_state_notify_response_body_data(ib, tx, NULL);
     }
 
     /* Mark the time. */

@@ -214,12 +214,14 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_headers(
  * Notify the state machine that the request body is available.
  *
  * @param ib Engine handle
- * @param tx Transaction data
+ * @param tx Transaction
+ * @param txdata Transaction data
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_request_body_data(ib_engine_t *ib,
-                                                         ib_tx_t *tx);
+                                                         ib_tx_t *tx,
+                                                         ib_txdata_t *txdata);
 
 /**
  * Notify the state machine that a request finished.
@@ -268,12 +270,14 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_headers(ib_engine_t *ib,
  * Notify the state machine that the response body is available.
  *
  * @param ib Engine handle
- * @param tx Transaction data
+ * @param tx Transaction
+ * @param txdata Transaction data
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_response_body_data(ib_engine_t *ib,
-                                                          ib_tx_t *tx);
+                                                          ib_tx_t *tx,
+                                                          ib_txdata_t *txdata);
 
 /**
  * Notify the state machine that a response finished.
