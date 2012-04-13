@@ -973,7 +973,6 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
  */
 typedef ib_status_t (*ib_state_conn_hook_fn_t)(
     ib_engine_t *ib,
-    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conn_t *conn,
     void *cbdata
@@ -990,7 +989,6 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
  */
 typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
     ib_engine_t *ib,
-    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conndata_t *conndata,
     void *cbdata

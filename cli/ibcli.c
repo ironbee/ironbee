@@ -645,7 +645,6 @@ static void set_debug( ib_context_t *ctx )
  */
 static ib_status_t ironbee_conn_init(
     ib_engine_t *ib,
-    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conn_t *iconn,
     void *cbdata

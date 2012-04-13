@@ -23,6 +23,20 @@
         } \
     } while(0)
 
+#define CALL_NOTX_HOOKS(out_rc, first_hook, event, whicb, ib, param) \
+    do { \
+        *(out_rc) = IB_OK; \
+        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
+            ib_status_t rc_ = hook_->callback.whicb((ib), (event), (param), hook_->cdata); \
+            if (rc_ != IB_OK) { \
+                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
+                (*out_rc) = rc_; \
+                break; \
+             } \
+        } \
+    } while(0)
+
 #define CALL_TX_HOOKS(out_rc, first_hook, event, whicb, ib, tx) \
     do { \
         *(out_rc) = IB_OK; \
@@ -74,14 +88,14 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "CONN EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, NULL, conn);
+    CALL_NOTX_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, conn);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (conn->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conn, ib, NULL, conn);
+        CALL_NOTX_HOOKS(&rc, conn->ctx->hook[event], event, conn, ib, conn);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -110,14 +124,14 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
     ib_log_debug(ib, 9, "CONN DATA EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, NULL, conndata);
+    CALL_NOTX_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, conndata);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (conn->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, conn->ctx->hook[event], event, conndata, ib, NULL, conndata);
+        CALL_NOTX_HOOKS(&rc, conn->ctx->hook[event], event, conndata, ib, conndata);
     }
 
     IB_FTRACE_RET_STATUS(rc);

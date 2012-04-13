@@ -123,7 +123,6 @@ static ib_status_t modtrace_txdata_event_callback(
  * Handles a generic event, dumping some info on the event.
  *
  * @param[in] ib IronBee object.
- * @param[in] tx Transaction object.
  * @param[in] event Event type.
  * @param[in] conn Connection object.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
@@ -131,7 +130,6 @@ static ib_status_t modtrace_txdata_event_callback(
  */
 static ib_status_t modtrace_conn_event_callback(
      ib_engine_t *ib,
-     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_conn_t* conn,
      void *cbdata
@@ -149,7 +147,6 @@ static ib_status_t modtrace_conn_event_callback(
  * Handles a generic event, dumping some info on the event.
  *
  * @param[in] ib IronBee object.
- * @param[in] tx Transaction object.
  * @param[in] event Event type.
  * @param[in] conndata Connection data object.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
@@ -157,7 +154,6 @@ static ib_status_t modtrace_conn_event_callback(
  */
 static ib_status_t modtrace_conndata_event_callback(
      ib_engine_t *ib,
-     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_conndata_t* conndata,
      void *cbdata
@@ -202,14 +198,12 @@ static ib_status_t modtrace_null_event_callback(
  * allocate the buffer from the connection's mpool, etc.
  *
  * @param[in] ib IronBee object
- * @param[in] tx Transaction object
  * @param[in] event Event type
  * @param[in] cd Connection data.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  * event.
  */
 static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
-                                      ib_tx_t *tx,
                                       ib_state_event_type_t event,
                                       ib_conndata_t *cd,
                                       void *cbdata)

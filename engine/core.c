@@ -2995,7 +2995,6 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
  * Create the data provider instance and initialize the parser.
  *
  * @param ib Engine.
- * @param tx Transaction.
  * @param event Event type.
  * @param conn Connection.
  * @param cbdata Callback data.
@@ -3003,7 +3002,6 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
  * @returns Status code.
  */
 static ib_status_t core_hook_conn_started(ib_engine_t *ib,
-                                          ib_tx_t *tx,
                                           ib_state_event_type_t event,
                                           ib_conn_t *conn,
                                           void *cbdata)
@@ -3053,7 +3051,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
  * Handle a new connection.
  *
  * @param ib Engine.
- * @param tx Transaction.
  * @param event Event type.
  * @param conn Connection.
  * @param cbdata Callback data.
@@ -3061,7 +3058,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
  * @returns Status code.
  */
 static ib_status_t parser_hook_connect(ib_engine_t *ib,
-                                       ib_tx_t *tx,
                                        ib_state_event_type_t event,
                                        ib_conn_t *conn,
                                        void *cbdata)
@@ -3123,7 +3119,6 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
  * Handle a disconnection.
  *
  * @param ib Engine.
- * @param tx Transaction.
  * @param event Event type.
  * @param conn Connection.
  * @param cbdata Callback data.
@@ -3131,7 +3126,6 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
  * @returns Status code.
  */
 static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
-                                          ib_tx_t *tx,
                                           ib_state_event_type_t event,
                                           ib_conn_t *conn,
                                           void *cbdata)

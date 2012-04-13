@@ -151,28 +151,24 @@ protected:
 
         void operator()(
             Engine engine,
-            Transaction transaction,
             Engine::state_event_e event,
             Connection connection
         )
         {
             m_info.which = CB_CONNECTION;
             m_info.engine = engine;
-            m_info.transaction = transaction;
             m_info.event = event;
             m_info.connection = connection;
         }
 
         void operator()(
             Engine engine,
-            Transaction transaction,
             Engine::state_event_e event,
             ConnectionData connection_data
         )
         {
             m_info.which = CB_CONNECTION_DATA;
             m_info.engine = engine;
-            m_info.transaction = transaction;
             m_info.event = event;
             m_info.connection_data = connection_data;
         }
@@ -274,6 +270,41 @@ protected:
         EXPECT_EQ(&ib_data, (info.*which_member).ib());
     }
 
+    template <typename DataType, typename MemberType>
+    void test_notx_one_argument(
+        Engine::state_event_e        event,
+        handler_info_t&              info,
+        callback_e                   which_cb,
+        MemberType handler_info_t::* which_member
+    )
+    {
+        typedef ib_status_t (*ib_callback_t)(
+            ib_engine_t*,
+            ib_state_event_type_t,
+            DataType*,
+            void*
+        );
+
+        ib_hook_t* hook;
+        ib_state_event_type_t ib_event =
+            static_cast<ib_state_event_type_t>(event);
+        info = handler_info_t();
+        hook = m_ib_engine->ectx->hook[event];
+        while (hook->next != NULL) {
+            hook = hook->next;
+        }
+        DataType ib_data;
+        ib_status_t rc =
+            reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
+                m_ib_engine, ib_event, &ib_data, hook->cdata
+            );
+        EXPECT_EQ(IB_OK, rc);
+        EXPECT_EQ(which_cb, info.which);
+        EXPECT_EQ(m_ib_engine, info.engine.ib());
+        EXPECT_EQ(event, info.event);
+        EXPECT_EQ(&ib_data, (info.*which_member).ib());
+    }
+
     void test_headers_data(
         Engine::state_event_e event,
         handler_info_t&       info
@@ -318,7 +349,7 @@ protected:
         handler_info_t&       info
     )
     {
-        test_one_argument<ib_conn_t>(
+        test_notx_one_argument<ib_conn_t>(
             event,
             info,
             CB_CONNECTION,
@@ -331,7 +362,7 @@ protected:
         handler_info_t&       info
     )
     {
-        test_one_argument<ib_conndata_t>(
+        test_notx_one_argument<ib_conndata_t>(
             event,
             info,
             CB_CONNECTION_DATA,

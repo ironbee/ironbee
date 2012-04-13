@@ -142,7 +142,6 @@ int ib_state_event_cbdata_type(ib_state_event_type_t event)
  * counters for the connection.
  *
  * @param[in] ib IronBee object.
- * @param[in] tx Transaction object.
  * @param[in] event Event type.
  * @param[in] connp Connection object.
  * @param[in] cbdata Callback data: actually an perf_info_t describing the
@@ -150,7 +149,6 @@ int ib_state_event_cbdata_type(ib_state_event_type_t event)
  */
 static ib_status_t mod_perf_stats_reg_conn_counter(
      ib_engine_t *ib,
-     ib_tx_t *tx,
      ib_state_event_type_t event_type,
      ib_conn_t *connp,
      void *cbdata
@@ -309,7 +307,6 @@ static ib_status_t mod_perf_stats_event_stop(
  * Handles all conn callback events other than conn_start_event.
  *
  * @param[in] ib IronBee object.
- * @param[in] tx Transaction object.
  * @param[in] event Event type.
  * @param[in] conn Connection.
  * @param[in] cbdata Callback data: actually @ref perf_info_t describing the
@@ -317,7 +314,6 @@ static ib_status_t mod_perf_stats_event_stop(
  */
 static ib_status_t mod_perf_stats_event_start_conn_callback(
      ib_engine_t *ib,
-     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_conn_t* conn,
      void *cbdata
@@ -348,7 +344,6 @@ static ib_status_t mod_perf_stats_event_start_conn_callback(
  * Handles all conndata callback events other than conndata_start_event.
  *
  * @param[in] ib IronBee object.
- * @param[in] tx Transaction object.
  * @param[in] event Event type.
  * @param[in] conndata Connection.
  * @param[in] cbdata Callback data: actually @ref perf_info_t describing the
@@ -356,7 +351,6 @@ static ib_status_t mod_perf_stats_event_start_conn_callback(
  */
 static ib_status_t mod_perf_stats_event_start_conndata_callback(
      ib_engine_t *ib,
-     ib_tx_t *tx,
      ib_state_event_type_t event,
      ib_conndata_t* conndata,
      void *cbdata
@@ -462,7 +456,6 @@ static ib_status_t mod_perf_stats_event_start_txdata_callback(
  * Called at the end of an event.
  *
  * @param[in] ib IronBee object.
- * @param[in] tx Transaction.
  * @param[in] event Event type.
  * @param[in] param Callback data which differs based on hook type.
  * @param[in] cbdata Callback data: actually an perf_info_t describing the
@@ -470,7 +463,6 @@ static ib_status_t mod_perf_stats_event_start_txdata_callback(
  */
 static ib_status_t mod_perf_stats_event_stop_conn_callback(
     ib_engine_t *ib,
-    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conn_t* conn,
     void *cbdata
@@ -510,7 +502,6 @@ static ib_status_t mod_perf_stats_event_stop_conn_callback(
  */
 static ib_status_t mod_perf_stats_event_stop_conndata_callback(
     ib_engine_t *ib,
-    ib_tx_t *tx,
     ib_state_event_type_t event,
     ib_conndata_t* conndata,
     void *cbdata

@@ -1150,7 +1150,6 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
  * @returns status
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
-                                     ib_tx_t *tx,
                                      ib_state_event_type_t event,
                                      ib_conn_t *iconn,
                                      void *cbdata)
