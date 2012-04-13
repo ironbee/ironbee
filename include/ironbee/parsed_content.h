@@ -42,6 +42,7 @@ extern "C" {
 #include <ironbee/bytestr.h>
 #include <ironbee/field.h>
 #include <ironbee/types.h>
+#include <ironbee/mpool.h>
 
 struct ib_tx_t;
 
@@ -49,12 +50,10 @@ struct ib_tx_t;
  * A link list element representing HTTP headers.
  */
 typedef struct ib_parsed_name_value_pair_list_t {
-    struct ib_tx_t *tx;  /**< Transaction this element is related to. */
     ib_bytestr_t *name;  /**< Name. */
     ib_bytestr_t *value; /**< Value the name describes. */
     struct ib_parsed_name_value_pair_list_t *next; /**< Next element. */
 } ib_parsed_name_value_pair_list_t;
-
 
 /**
  * A list wrapper of ib_Parsed_name_value_pair_list_t.
@@ -63,10 +62,10 @@ typedef struct ib_parsed_name_value_pair_list_t {
  * can be treated as a simple linked list terminated with next==NULL.
  */
 typedef struct ib_parsed_name_value_pair_list_wrapper_t {
+    ib_mpool_t *mpool;                      /**< Pool to allocate elements. */
     ib_parsed_name_value_pair_list_t *head; /**< Head of the list. */
     ib_parsed_name_value_pair_list_t *tail; /**< Tail of the list. */
     size_t size;                            /**< Size of the list. */
-    struct ib_tx_t *tx;                     /**< Tx this list is assoc. with. */
 } ib_parsed_name_value_pair_list_wrapper_t;
 
 
@@ -81,7 +80,6 @@ typedef struct ib_parsed_name_value_pair_list_wrapper_t
  * This is typedef'ed to useful types in parsed_content.h.
  */
 typedef struct ib_parsed_req_line_t {
-    struct ib_tx_t *tx;
     ib_bytestr_t *method;  /**< HTTP Method. */
     ib_bytestr_t *path;    /**< Path request method is against. */
     ib_bytestr_t *version; /**< HTTP Version. */
@@ -93,7 +91,6 @@ typedef struct ib_parsed_req_line_t {
  * This is typedef'ed to useful types in parsed_content.h.
  */
 typedef struct ib_parsed_resp_line_t {
-    struct ib_tx_t *tx;
     ib_bytestr_t *code; /**< The status code. */
     ib_bytestr_t *msg;  /**< The message to the user. */
 } ib_parsed_resp_line_t;

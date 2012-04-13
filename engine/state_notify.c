@@ -141,18 +141,18 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
  * Signal that the response line was received.
  *
  * @param[in] ib Engine
+ * @param[in] tx Transaction.
  * @param[in] event Event
  * @param[in] txdata Connection data
  *
  * @returns Status code
  */
 static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
+                                             ib_tx_t *tx,
                                              ib_state_event_type_t event,
                                              ib_parsed_resp_line_t *line)
 {
     IB_FTRACE_INIT();
-
-    ib_tx_t *tx = line->tx;
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
     assert(rc == IB_OK);
@@ -177,17 +177,16 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
  *
  * @param[in] ib Engine
  * @param[in] event Event
- * @param[in] txdata Connection data
+ * @param[in] line Request line.
  *
  * @returns Status code
  */
 static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
+                                            ib_tx_t *tx,
                                             ib_state_event_type_t event,
                                             ib_parsed_req_line_t *line)
 {
     IB_FTRACE_INIT();
-
-    ib_tx_t *tx = line->tx;
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
     assert(rc == IB_OK);
@@ -213,20 +212,19 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 /**
  * Signal that the header data has been received.
  *
- * @internal
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event.
+ * @param headers Connection data.
  *
- * @param ib Engine
- * @param event Event
- * @param txdata Connection data
- *
- * @returns Status code
+ * @returns Status code.
  */
 static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
+                                           ib_tx_t *tx,
                                            ib_state_event_type_t event,
                                            ib_parsed_header_wrapper_t *headers)
 {
     IB_FTRACE_INIT();
-    ib_tx_t *tx = headers->tx;
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
     assert(rc == IB_OK);
@@ -704,7 +702,7 @@ ib_status_t ib_state_notify_request_started(
     ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
 
     if ( req != NULL ) {
-        rc = ib_state_notify_req_line(ib, request_started_event, req);
+        rc = ib_state_notify_req_line(ib, tx, request_started_event, req);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -725,9 +723,6 @@ ib_status_t ib_state_notify_request_headers_data(
     /* Mark the time. */
     tx->t.request_started = ib_clock_get_time();
 
-    /* Make sure the headers have the right tx. */
-    headers->tx = tx;
-
     if ( tx->request_headers == NULL ) {
         tx->request_headers = headers;
     }
@@ -741,7 +736,7 @@ ib_status_t ib_state_notify_request_headers_data(
         }
     }
 
-    rc = ib_state_notify_headers(ib, request_headers_data_event, headers);
+    rc = ib_state_notify_headers(ib, tx, request_headers_data_event, headers);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -758,10 +753,7 @@ ib_status_t ib_state_notify_response_headers_data(
     /* Mark the time. */
     tx->t.request_started = ib_clock_get_time();
 
-    /* Make sure the headers have the right tx. */
-    headers->tx = tx;
-
-    rc = ib_state_notify_headers(ib, response_headers_data_event, headers);
+    rc = ib_state_notify_headers(ib, tx, response_headers_data_event, headers);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -984,7 +976,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     }
 
     if ( resp != NULL ) {
-        rc = ib_state_notify_resp_line(ib, response_started_event, resp);
+        rc = ib_state_notify_resp_line(ib, tx, response_started_event, resp);
     }
 
     IB_FTRACE_RET_STATUS(rc);

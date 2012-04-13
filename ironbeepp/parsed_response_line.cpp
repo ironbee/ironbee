@@ -22,11 +22,6 @@ ConstParsedResponseLine::ConstParsedResponseLine(
     // nop
 }
 
-Transaction ConstParsedResponseLine::transaction() const
-{
-    return Transaction(ib()->tx);
-}
-
 ByteString ConstParsedResponseLine::code() const
 {
     return ByteString(ib()->code);

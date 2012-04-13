@@ -42,10 +42,6 @@ TEST(TestParsedResponseLine, basic)
 
     ASSERT_TRUE(prl);
 
-    ib_tx_t tx;
-    ib_prl.tx = &tx;
-    EXPECT_EQ(&tx, ib_prl.tx);
-
     ib_prl.code = ByteString::create(mp, "foo").ib();
     EXPECT_EQ(ib_prl.code, prl.code().ib());
 

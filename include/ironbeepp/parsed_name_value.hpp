@@ -92,9 +92,6 @@ public:
 
     ///@}
 
-    //! Associated Transaction.
-    Transaction transaction() const;
-
     //! Name.
     ByteString name() const;
 

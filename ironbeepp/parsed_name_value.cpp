@@ -1,6 +1,5 @@
 #include <ironbeepp/parsed_name_value.hpp>
 #include <ironbeepp/byte_string.hpp>
-#include <ironbeepp/transaction.hpp>
 
 #include <ironbee/parsed_content.h>
 
@@ -18,11 +17,6 @@ ConstParsedNameValue::ConstParsedNameValue(ib_type ib_parsed_name_value) :
     m_ib(ib_parsed_name_value)
 {
     // nop
-}
-
-Transaction ConstParsedNameValue::transaction() const
-{
-    return Transaction(ib()->tx);
 }
 
 ByteString ConstParsedNameValue::name() const

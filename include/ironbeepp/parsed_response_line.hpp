@@ -91,9 +91,6 @@ public:
 
     ///@}
 
-    //! Transaction response occurred in.
-    Transaction transaction() const;
-
     //! HTTP Code.
     ByteString code() const;
 

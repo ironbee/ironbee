@@ -42,10 +42,6 @@ TEST(TestParsedRequestLine, basic)
 
     ASSERT_TRUE(pnv);
 
-    ib_tx_t tx;
-    ib_pnv.tx = &tx;
-    EXPECT_EQ(&tx, ib_pnv.tx);
-
     ib_pnv.name = ByteString::create(mp, "foo").ib();
     EXPECT_EQ(ib_pnv.name, pnv.name().ib());
 

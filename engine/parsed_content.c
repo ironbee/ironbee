@@ -52,7 +52,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    headers_tmp->tx = tx;
+    headers_tmp->mpool = tx->mp;
     /* headers_tmp->head = initialized by calloc */
     /* headers_tmp->tail = initialized by calloc */
     /* headers_tmp->size = initialized by calloc */
@@ -73,26 +73,24 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
     IB_FTRACE_INIT();
 
     assert(headers != NULL);
-    assert(headers->tx != NULL);
-    assert(headers->tx->mp != NULL);
+    assert(headers->mpool != NULL);
     assert(name != NULL);
     assert(value != NULL);
 
     ib_parsed_name_value_pair_list_t *ele;
 
-    ele = ib_mpool_alloc(headers->tx->mp, sizeof(*ele));
+    ele = ib_mpool_alloc(headers->mpool, sizeof(*ele));
 
     if ( ele == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ele->tx = headers->tx;
     ib_bytestr_alias_mem(&ele->name,
-                         headers->tx->mp,
+                         headers->mpool,
                          (const uint8_t *)name,
                          name_len);
     ib_bytestr_alias_mem(&ele->value,
-                         headers->tx->mp,
+                         headers->mpool,
                          (const uint8_t *)value,
                          value_len);
     ele->next = NULL;
