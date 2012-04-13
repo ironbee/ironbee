@@ -87,33 +87,21 @@ protected:
 
         void operator()(
             Engine                engine,
+            Engine::state_event_e event
+        )
+        {
+            m_info.which = CB_NULL;
+            m_info.engine = engine;
+            m_info.event = event;
+        }
+
+        void operator()(
+            Engine                engine,
             Transaction           transaction,
             Engine::state_event_e event
         )
         {
-            switch(event) {
-            case ConstEngine::handle_context_transaction:
-            case ConstEngine::handle_postprocess:
-            case ConstEngine::handle_request:
-            case ConstEngine::handle_request_headers:
-            case ConstEngine::handle_response:
-            case ConstEngine::handle_response_headers:
-            case ConstEngine::request_body_data:
-            case ConstEngine::request_finished:
-            case ConstEngine::request_headers:
-            case ConstEngine::response_body_data:
-            case ConstEngine::response_finished:
-            case ConstEngine::response_headers:
-            case ConstEngine::transaction_data_in:
-            case ConstEngine::transaction_data_out:
-            case ConstEngine::transaction_finished:
-            case ConstEngine::transaction_process:
-            case ConstEngine::transaction_started:
-                m_info.which = CB_TRANSACTION;
-                break;
-            default:
-                m_info.which = CB_NULL;
-            }
+            m_info.which = CB_TRANSACTION;
             m_info.engine = engine;
             m_info.transaction = transaction;
             m_info.event = event;
@@ -242,7 +230,7 @@ protected:
             hook = hook->next;
         }
         EXPECT_EQ(IB_OK,
-            hook->callback.null(m_ib_engine, m_ib_transaction, ib_event, hook->cdata)
+            hook->callback.null(m_ib_engine, ib_event, hook->cdata)
         );
         EXPECT_EQ(CB_NULL, info.which);
         EXPECT_EQ(m_ib_engine, info.engine.ib());
@@ -281,6 +269,7 @@ protected:
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);
         EXPECT_EQ(m_ib_engine, info.engine.ib());
+        EXPECT_EQ(m_ib_transaction, info.transaction.ib());
         EXPECT_EQ(event, info.event);
         EXPECT_EQ(&ib_data, (info.*which_member).ib());
     }

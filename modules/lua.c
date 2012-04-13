@@ -1008,14 +1008,12 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
  * Destroy the lua runtime for the configuration.
  *
  * @param ib Engine.
- * @param tx Transaction.
  * @param event Event type.
  * @param cbdata Unused.
  *
  * @return Status code.
  */
 static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
-                                                  ib_tx_t *tx,
                                                   ib_state_event_type_t event,
                                                   void *cbdata)
 {

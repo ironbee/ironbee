@@ -94,7 +94,6 @@ public:
     typedef boost::function<
         void(
             Engine,
-            Transaction,
             Engine::state_event_e
          )
     > null_t;

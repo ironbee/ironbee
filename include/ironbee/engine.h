@@ -905,7 +905,6 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event);
  */
 typedef ib_status_t (*ib_state_null_hook_fn_t)(
     ib_engine_t *ib,
-    ib_tx_t *tx,
     ib_state_event_type_t event,
     void *cbdata
 );

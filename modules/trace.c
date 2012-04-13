@@ -175,14 +175,12 @@ static ib_status_t modtrace_conndata_event_callback(
  * Handles a generic event, dumping some info on the event.
  *
  * @param[in] ib IronBee object.
- * @param[in] tx Transaction object.
  * @param[in] event Event type.
  * @param[in] cbdata Callback data: actually an event_info_t describing the
  *            event.
  */
 static ib_status_t modtrace_null_event_callback(
      ib_engine_t *ib,
-     ib_tx_t *tx,
      ib_state_event_type_t event,
      void *cbdata
 )

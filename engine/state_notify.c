@@ -23,11 +23,25 @@
         } \
     } while(0)
 
-#define CALL_NULL_HOOKS(out_rc, first_hook, event, whicb, ib, tx) \
+#define CALL_TX_HOOKS(out_rc, first_hook, event, whicb, ib, tx) \
     do { \
         *(out_rc) = IB_OK; \
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
             ib_status_t rc_ = hook_->callback.whicb((ib), (tx), (event), hook_->cdata); \
+            if (rc_ != IB_OK) { \
+                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                             ib_state_event_name((event)), ib_status_to_string(rc_)); \
+                (*out_rc) = rc_; \
+                break; \
+             } \
+        } \
+    } while(0)
+
+#define CALL_NULL_HOOKS(out_rc, first_hook, event, ib) \
+    do { \
+        *(out_rc) = IB_OK; \
+        for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
+            ib_status_t rc_ = hook_->callback.null((ib), (event), hook_->cdata); \
             if (rc_ != IB_OK) { \
                 ib_log_error((ib), 4, "Hook returned error: %s=%s", \
                              ib_state_event_name((event)), ib_status_to_string(rc_)); \
@@ -296,14 +310,14 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_NULL_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx);
+    CALL_TX_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (tx->ctx != ib->ctx) {
-        CALL_NULL_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx);
+        CALL_TX_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -350,7 +364,7 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
     }
 
     /// @todo Create a temp mem pool???
-    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_started_event], cfg_started_event, null, ib, NULL);
+    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_started_event], cfg_started_event, ib);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -367,7 +381,7 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     }
 
     /* Run the hooks. */
-    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_finished_event], cfg_finished_event, null, ib, NULL);
+    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_finished_event], cfg_finished_event, ib);
 
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);

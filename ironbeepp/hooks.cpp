@@ -22,14 +22,12 @@ namespace Hooks {
  * Hooks handler for null callbacks.
  *
  * @param[in] ib_engine The IronBee engine.
- * @param[in] ib_tx     Possibly NULL transaction.
  * @param[in] event     Which event happened.
  * @param[in] cbdata    Callback data: contains C++ functional to forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
 ib_status_t null(
     ib_engine_t*          ib_engine,
-    ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
     void*                 cbdata
 )
@@ -37,13 +35,11 @@ ib_status_t null(
     IB_FTRACE_INIT();
 
     assert(ib_engine != NULL);
-    /* ib_tx may be NULL */
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
         Internal::data_to_value<HooksRegistrar::null_t>(cbdata)(
             Engine(ib_engine),
-            Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event)
         )
     ));
