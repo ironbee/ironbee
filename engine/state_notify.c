@@ -2,6 +2,8 @@
 
 #include <ironbee/state_notify.h>
 
+#include <assert.h>
+
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 
@@ -124,10 +126,8 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     ib_tx_t *tx = line->tx;
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
+    assert(rc == IB_OK);
 
     ib_log_debug(ib, 9, "RESP LINE EVENT: %s", ib_state_event_name(event));
 
@@ -161,10 +161,8 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 
     ib_tx_t *tx = line->tx;
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
+    assert(rc == IB_OK);
 
     /* Request line stored for use when the context has been determined. */
     tx->request_line = line;
