@@ -95,7 +95,7 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
                                  &tmp_unesc_len,
                                  str,
                                  str_len,
-                                 IB_UTIL_UNESCAPE_TERMINATE);
+                                 IB_UTIL_UNESCAPE_NULTERMINATE);
 
     if ( rc != IB_OK ) {
         ib_log_debug(ib, 3, "Failed to unescape string: %s", str);

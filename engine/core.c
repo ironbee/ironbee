@@ -200,7 +200,7 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
                                  &dst_len,
                                  src,
                                  src_len,
-                                 IB_UTIL_UNESCAPE_TERMINATE |
+                                 IB_UTIL_UNESCAPE_NULTERMINATE |
                                  IB_UTIL_UNESCAPE_NONULL);
 
     if (rc != IB_OK) {

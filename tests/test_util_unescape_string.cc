@@ -36,7 +36,7 @@ TEST(TestIBUtilUnescapeString, singleCharacter) {
                                            &len,
                                            str,
                                            strlen(str),
-                                           IB_UTIL_UNESCAPE_TERMINATE));
+                                           IB_UTIL_UNESCAPE_NULTERMINATE));
   
   EXPECT_EQ('\r', str2[0]);
   EXPECT_EQ('\n', str2[1]);
@@ -54,7 +54,7 @@ TEST(TestIBUtilUnescapeString, singleBytes) {
                                            &len,
                                            str,
                                            strlen(str),
-                                           IB_UTIL_UNESCAPE_TERMINATE));
+                                           IB_UTIL_UNESCAPE_NULTERMINATE));
   
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
@@ -71,7 +71,7 @@ TEST(TestIBUtilUnescapeString, longBytes) {
                                            &len,
                                            str,
                                            strlen(str),
-                                           IB_UTIL_UNESCAPE_TERMINATE));
+                                           IB_UTIL_UNESCAPE_NULTERMINATE));
   
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
@@ -89,7 +89,7 @@ TEST(TestIBUtilUnescapeString, shortSingleBytesEndOfLine) {
                                                &len,
                                                str,
                                                strlen(str),
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 }
 
 TEST(TestIBUtilUnescapeString, shortSingleBytes) {
@@ -100,7 +100,7 @@ TEST(TestIBUtilUnescapeString, shortSingleBytes) {
                                                &len,
                                                str,
                                                strlen(str),
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 }
 
 TEST(TestIBUtilUnescapeString, shortLongBytes) {
@@ -111,7 +111,7 @@ TEST(TestIBUtilUnescapeString, shortLongBytes) {
                                                &len,
                                                str,
                                                strlen(str),
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 }
 
 TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
@@ -122,7 +122,7 @@ TEST(TestIBUtilUnescapeString, shortLongBytesEndOfLine) {
                                                &len,
                                                str,
                                                strlen(str),
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 }
 
 TEST(TestIBUtilUnescapeString, nochange01) {
@@ -133,7 +133,7 @@ TEST(TestIBUtilUnescapeString, nochange01) {
                                            &len,
                                            str,
                                            strlen(str),
-                                           IB_UTIL_UNESCAPE_TERMINATE));
+                                           IB_UTIL_UNESCAPE_NULTERMINATE));
 
   ASSERT_EQ(0, strcmp(str, str2));
 }
@@ -151,7 +151,7 @@ TEST(TestIBUtilUnescapeString, nullsInString) {
                                            &len,
                                            src1,
                                            strlen(src1),
-                                           IB_UTIL_UNESCAPE_TERMINATE));
+                                           IB_UTIL_UNESCAPE_NULTERMINATE));
   ASSERT_STREQ("hi", dst);
   ASSERT_STREQ("hello", dst+3);
   ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
@@ -159,14 +159,14 @@ TEST(TestIBUtilUnescapeString, nullsInString) {
                                                src1,
                                                strlen(src1),
                                                IB_UTIL_UNESCAPE_NONULL |
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 
   /* \x00 test. */
   ASSERT_EQ(IB_OK, ib_util_unescape_string(dst,
                                            &len,
                                            src2,
                                            strlen(src2),
-                                           IB_UTIL_UNESCAPE_TERMINATE));
+                                           IB_UTIL_UNESCAPE_NULTERMINATE));
   ASSERT_STREQ("hi", dst);
   ASSERT_STREQ("hello", dst+4);
   ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
@@ -174,21 +174,21 @@ TEST(TestIBUtilUnescapeString, nullsInString) {
                                                src2,
                                                strlen(src2),
                                                IB_UTIL_UNESCAPE_NONULL | 
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 
   ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src3,
                                                strlen(src3),
                                                IB_UTIL_UNESCAPE_NONULL | 
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 
   ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src4,
                                                strlen(src4),
                                                IB_UTIL_UNESCAPE_NONULL | 
-                                               IB_UTIL_UNESCAPE_TERMINATE));
+                                               IB_UTIL_UNESCAPE_NULTERMINATE));
 }
 
 TEST(TestIBUtilUnescapeString, removesQuotes) {
@@ -199,7 +199,7 @@ TEST(TestIBUtilUnescapeString, removesQuotes) {
                                              &len,
                                              src,
                                              strlen(src),
-                                             IB_UTIL_UNESCAPE_TERMINATE));
+                                             IB_UTIL_UNESCAPE_NULTERMINATE));
     ASSERT_STREQ("\"hi\'", dst);
 }
 

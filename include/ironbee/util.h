@@ -81,8 +81,8 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  * When passed to @ref ib_util_unescape_string an escaped null character will
  * results in the string not being parsed and IB_EINVAL being returned.
  */
-#define IB_UTIL_UNESCAPE_NONULL    0x0001
-#define IB_UTIL_UNESCAPE_TERMINATE 0x0002
+#define IB_UTIL_UNESCAPE_NONULL    (1U << 0)
+#define IB_UTIL_UNESCAPE_NULTERMINATE (1U << 1)
 
 /**
  * Set the logger level.
@@ -135,7 +135,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  * Unescape a Javascript-escaped string into the @a dst string buffer.
  *
  * Decode the contents of @a str into @a dst. Then terminate @a dst with \0
- * if @a flags includes IB_UTIL_UNESCAPE_TERMINATE. In this case
+ * if @a flags includes IB_UTIL_UNESCAPE_NULTERMINATE. In this case,
  * @a dst must be @a src_len+1 in size.
  *
  * Because @a src may be a segment in a larger character buffer,
@@ -150,7 +150,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  * inconsistent state.
  *
  * @param[out] dst string buffer that should be at least as long as
- *             @a src_len or @a src_len+1 if IB_UTIL_UNESCAPE_TERMINATE
+ *             @a src_len or @a src_len+1 if IB_UTIL_UNESCAPE_NULTERMINATE
  *             is set.
  * @param[out] dst_len the length of the decoded byte array. This will be
  *             equal to or shorter than @a src_len. Note that srclen(dst)

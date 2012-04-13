@@ -2160,7 +2160,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                  &p1_unescaped_len,
                                  p1,
                                  p1_len,
-                                 IB_UTIL_UNESCAPE_TERMINATE |
+                                 IB_UTIL_UNESCAPE_NULTERMINATE |
                                  IB_UTIL_UNESCAPE_NONULL);
 
     if (rc != IB_OK) {
