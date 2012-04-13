@@ -873,12 +873,6 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(request_body_data_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
     if ((tx->flags & IB_TX_FREQ_SEENHEADERS) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering %s",
                      ib_state_event_name(request_headers_event));
@@ -983,10 +977,13 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_STARTED);
 
+#if 0
+    /* @todo (NRL) I think this shouldn't be here, it breaks things */
     rc = ib_state_notify_tx(ib, response_started_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+#endif
 
     rc = ib_state_notify_resp_line(ib, tx, response_started_event, resp);
 
@@ -1057,12 +1054,6 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-
-    if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENBODY)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(response_body_data_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
 
     if ((tx->flags & IB_TX_FRES_SEENHEADERS) == 0) {
         ib_log_debug(ib, 9, "Automatically triggering %s",
