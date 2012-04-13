@@ -574,9 +574,10 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                      ib_status_to_string(rc));
     }
     else {
+        bstr *key = NULL;
         table_iterator_reset(tx->request_headers);
-        while (table_iterator_next(tx->request_headers,
-                                   (void **)&hdr) != NULL)
+        while ( (key = table_iterator_next(tx->request_headers,
+                                           (void **)&hdr)) != NULL)
         {
             rc = ib_parsed_name_value_pair_list_add(
                 ibhdrs,
@@ -863,9 +864,10 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                      ib_status_to_string(rc));
     }
     else {
-        table_iterator_reset(tx->request_headers);
-        while (table_iterator_next(tx->request_headers,
-                                   (void **)&hdr) != NULL)
+        bstr *key = NULL;
+        table_iterator_reset(tx->response_headers);
+        while ( (key = table_iterator_next(tx->response_headers,
+                                           (void **)&hdr)) != NULL)
         {
             rc = ib_parsed_name_value_pair_list_add(
                 ibhdrs,
