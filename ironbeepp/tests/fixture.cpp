@@ -55,10 +55,10 @@ IBPPTestFixture::~IBPPTestFixture()
 IBPPTXTestFixture::IBPPTXTestFixture()
 {
     ib_conn_create(m_ib_engine, &m_ib_connection, NULL);
-    m_ib_connection->local_ipstr = "1.0.0.1";
+    m_ib_connection->local_ipstr  = "1.0.0.1";
     m_ib_connection->remote_ipstr = "1.0.0.2";
-    m_ib_connection->remote_port = 65534;
-    m_ib_connection->local_port = 80;
+    m_ib_connection->remote_port  = 65534;
+    m_ib_connection->local_port   = 80;
 
     ib_tx_create(m_ib_engine, &m_ib_transaction, m_ib_connection, NULL);
 }

@@ -48,10 +48,11 @@ class IBPPTXTestFixture : public IBPPTestFixture
 {
 public:
     IBPPTXTestFixture();
-    virtual ~IBPPTXTestFixture();
+    ~IBPPTXTestFixture();
+
 protected:
     ib_conn_t* m_ib_connection;
-    ib_tx_t* m_ib_transaction;
+    ib_tx_t*   m_ib_transaction;
 };
 
 #endif
