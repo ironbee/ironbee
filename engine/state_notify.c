@@ -2,8 +2,6 @@
 
 #include <ironbee/state_notify.h>
 
-#include <assert.h>
-
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 
@@ -155,7 +153,11 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
-    assert(rc == IB_OK);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "ib_check_hook() failed: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     ib_log_debug(ib, 9, "RESP LINE EVENT: %s", ib_state_event_name(event));
 
@@ -189,7 +191,11 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
-    assert(rc == IB_OK);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "ib_check_hook() failed: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Request line stored for use when the context has been determined. */
     tx->request_line = line;
@@ -227,7 +233,11 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
-    assert(rc == IB_OK);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "ib_check_hook() failed: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     ib_log_debug(ib, 9, "HEADER EVENT: %s", ib_state_event_name(event));
 
