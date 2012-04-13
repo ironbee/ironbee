@@ -200,10 +200,8 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_tx_t *tx = headers->tx;
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
+    assert(rc == IB_OK);
 
     ib_log_debug(ib, 9, "HEADER EVENT: %s", ib_state_event_name(event));
 
