@@ -543,7 +543,6 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     (*pconndata)->conn = conn;
 
     (*pconndata)->dlen = 0;
-    (*pconndata)->dalloc = dalloc;
     (*pconndata)->data = (uint8_t *)ib_mpool_calloc(pool, 1, dalloc);
     if ((*pconndata)->data == NULL) {
         ib_log_error(ib, 0, "Failed to allocate memory for connection data buffer");

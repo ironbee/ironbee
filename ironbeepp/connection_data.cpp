@@ -28,11 +28,6 @@ Connection ConstConnectionData::connection() const
     return Connection(ib()->conn);
 }
 
-size_t ConstConnectionData::allocated() const
-{
-    return ib()->dalloc;
-}
-
 size_t ConstConnectionData::length() const
 {
     return ib()->dlen;

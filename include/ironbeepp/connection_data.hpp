@@ -93,9 +93,6 @@ public:
     //! Associated Connection.
     Connection connection() const;
 
-    //! Amount of memory allocated for data.
-    size_t allocated() const;
-
     //! Length of data.
     size_t length() const;
 

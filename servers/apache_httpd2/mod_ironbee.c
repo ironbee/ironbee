@@ -301,7 +301,6 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
             return;
     }
     icdata.conn = ctx->iconn;
-    icdata.dalloc = nbytes;
     icdata.dlen = nbytes;
     icdata.data = (uint8_t *)bdata;
 

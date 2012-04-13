@@ -368,7 +368,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
          */
         ib_conndata_t icdata;
         icdata.conn = data->ssn->iconn;
-        icdata.dalloc = ibd->data->buflen;
         icdata.dlen = ibd->data->buflen;
         icdata.data = (uint8_t *)ibd->data->buf;
         (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
@@ -438,7 +437,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                 }
                 else {
                     icdata.conn = data->ssn->iconn;
-                    icdata.dalloc = ilength;
                     icdata.dlen = ilength;
                     icdata.data = (uint8_t *)ibuf;
                     (*ibd->ibd->ib_notify)(ironbee, &icdata, data);
@@ -673,7 +671,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
 
         icdata.data = (void *)head_buf;
-        icdata.dlen = icdata.dalloc = len;
+        icdata.dlen = len;
 
         (*ibd->ib_notify)(ironbee, &icdata, NULL);
 
@@ -751,7 +749,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                  "ts/ironbee/process_header: len=%ld", len );
 
     /* if we're going to enable manipulation of headers, we need a copy */
-    icdata.dalloc = icdata.dlen = len;
+    icdata.dlen = len;
     icdata.data = dptr = TSmalloc(len);
 
     for (head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);

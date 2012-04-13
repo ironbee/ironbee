@@ -41,8 +41,6 @@ TEST(TestConnectionData, basic)
     ib_conndata.conn = (ib_conn_t*)1236;
     EXPECT_EQ(ib_conndata.conn, conndata.connection().ib());
 
-    ib_conndata.dalloc = 13;
-    EXPECT_EQ(ib_conndata.dalloc, conndata.allocated());
     ib_conndata.dlen = 14;
     EXPECT_EQ(ib_conndata.dlen, conndata.length());
     ib_conndata.data = (uint8_t*)15;

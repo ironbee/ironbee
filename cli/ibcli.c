@@ -1779,7 +1779,6 @@ static ib_status_t send_header(ib_engine_t* ib,
     }
 
     /* Send it */
-    icdata->dalloc = rbuf.size;
     icdata->dlen   = rbuf.len;
     icdata->data   = (uint8_t *)rbuf.buf;
     rc = ib_state_notify_conn_data_in(ib, icdata, NULL);
@@ -1824,7 +1823,6 @@ static ib_status_t send_file(ib_engine_t* ib,
 
     /* Read a chunk & send it */
     if ( (nbytes = fread(buf, 1, bufsize, fp)) > 0) {
-        icdata->dalloc = bufsize;
         icdata->dlen = nbytes;
         icdata->data = (uint8_t *)buf;
 
