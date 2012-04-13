@@ -38,9 +38,6 @@ TEST(TestConnectionData, basic)
 
     ASSERT_TRUE(conndata);
 
-    ib_conndata.ib = (ib_engine_t*)1234;
-    EXPECT_EQ(ib_conndata.ib, conndata.engine().ib());
-
     ib_conndata.conn = (ib_conn_t*)1236;
     EXPECT_EQ(ib_conndata.conn, conndata.connection().ib());
 

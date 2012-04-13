@@ -1899,7 +1899,6 @@ static ib_status_t run_transaction(ib_engine_t* ib,
     }
 
     // Fill in the connection data object
-    conn_data.ib   = ib;
     conn_data.conn = conn;
 
     /* Read the request header from the file, assembled the header, pass

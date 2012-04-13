@@ -1046,7 +1046,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                                         ib_conndata_t *qcdata)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = qcdata->ib;
+    ib_engine_t *ib = pi->pr->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
@@ -1104,7 +1104,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                                          ib_conndata_t *qcdata)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = qcdata->ib;
+    ib_engine_t *ib = pi->pr->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;

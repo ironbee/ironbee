@@ -23,11 +23,6 @@ ConstConnectionData::ConstConnectionData(ib_type ib_connection_data) :
     // nop
 }
 
-Engine ConstConnectionData::engine() const
-{
-    return Engine(ib()->ib);
-}
-
 Connection ConstConnectionData::connection() const
 {
     return Connection(ib()->conn);

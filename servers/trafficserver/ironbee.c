@@ -367,7 +367,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
          * Feed buffered data to ironbee
          */
         ib_conndata_t icdata;
-        icdata.ib = ironbee;
         icdata.conn = data->ssn->iconn;
         icdata.dalloc = ibd->data->buflen;
         icdata.dlen = ibd->data->buflen;
@@ -438,7 +437,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     bufp += ilength;
                 }
                 else {
-                    icdata.ib = ironbee;
                     icdata.conn = data->ssn->iconn;
                     icdata.dalloc = ilength;
                     icdata.dlen = ilength;
@@ -642,7 +640,6 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     TSDebug("ironbee", "process %s headers\n", ibd->word);
 
-    icdata.ib = ironbee;
     icdata.conn = data->ssn->iconn;
 
     /* Use alternative simpler path to get the un-doctored request

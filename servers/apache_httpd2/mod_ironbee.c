@@ -300,7 +300,6 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
                      ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
             return;
     }
-    icdata.ib = ironbee;
     icdata.conn = ctx->iconn;
     icdata.dalloc = nbytes;
     icdata.dlen = nbytes;

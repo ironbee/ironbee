@@ -540,7 +540,6 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
         goto failed;
     }
 
-    (*pconndata)->ib = ib;
     (*pconndata)->conn = conn;
 
     (*pconndata)->dlen = 0;

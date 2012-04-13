@@ -90,9 +90,6 @@ public:
 
     ///@}
 
-    //! Associated Engine.
-    Engine engine() const;
-
     //! Associated Connection.
     Connection connection() const;
 

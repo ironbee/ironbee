@@ -139,7 +139,6 @@ typedef enum {
 
 /** Connection Data Structure */
 struct ib_conndata_t {
-    ib_engine_t        *ib;              /**< Engine handle */
     ib_conn_t          *conn;            /**< Connection */
     size_t              dalloc;          /**< Data buffer allocated */
     size_t              dlen;            /**< Data buffer length */
