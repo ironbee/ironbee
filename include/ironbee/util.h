@@ -175,6 +175,27 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
                                                size_t src_len,
                                                uint32_t flags);
 
+
+/**
+ * Malloc a char* and escape @a src into it and return that char*.
+ *
+ * Escaping is done by finding ASCII non-printable characters
+ * and replacing them with 0xhh where hh is the hexidecimal value
+ * of the character.
+ *
+ * This utility is intended to assist in logging otherwise unprintable
+ * strings for information purposes. There is no way to distinguish
+ * between the string "hi0x00" and "hi" where the last byte is a zero once
+ * the two strings have passed through this function.
+ *
+ * The returned string must be free'ed.
+ *
+ * @param[in] src The source string.
+ * @param[in] src_len The length of @a src not including the final \0.
+ *
+ * @returns NULL on error or a \0-terminated string that must be free'ed.
+ */
+char DLL_PUBLIC * ib_util_hex_escape(const char *src, size_t src_len);
 /**
  * Initialize the IB lib.
  *

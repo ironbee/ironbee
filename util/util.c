@@ -336,6 +336,35 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
 
     return IB_OK;
 }
+
+char DLL_PUBLIC * ib_util_hex_escape(const char *src, size_t src_len)
+{
+    size_t dst_i = 0;
+    size_t src_i = 0;
+    size_t dst_len = src_len * 4 + 1;
+    char *dst = malloc(dst_len);
+
+    if ( dst == NULL ) {
+        return dst;
+    }
+
+    for ( src_i = 0; src_i < src_len; ++src_i )
+    {
+        if ( isprint(src[src_i]) )
+        {
+            dst[dst_i] = src[src_i];
+            ++dst_i;
+        }
+        else {
+            dst_i += sprintf(dst + dst_i, "0x%x", src[src_i]);
+        }
+    }
+
+    dst[dst_i] = '\0';
+
+    return dst;
+}
+
 /* -- Library Setup -- */
 
 ib_status_t ib_initialize(void)
