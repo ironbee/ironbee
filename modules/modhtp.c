@@ -547,7 +547,6 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     ib_status_t rc;
     ib_parsed_header_wrapper_t *ibhdrs;
 
-
     /* Use the current parser transaction to generate fields. */
     ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
@@ -617,6 +616,12 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     rc = ib_state_notify_request_headers_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
         ib_log_error(ib, 3, "Error generating request headers: %s",
+                     ib_status_to_string(rc));
+    }
+
+    rc = ib_state_notify_request_headers(ib, itx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3, "Error notifying request headers: %s",
                      ib_status_to_string(rc));
     }
 
@@ -846,9 +851,9 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_parsed_header_wrapper_t *ibhdrs;
-    ib_status_t rc;
     ib_tx_t *itx;
+    ib_status_t rc;
+    ib_parsed_header_wrapper_t *ibhdrs;
 
     /* Use the current parser transaction to generate fields. */
     ib_log_debug(ib, 9, "LIBHTP: state=%d", connp->out_status);
@@ -908,6 +913,12 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     rc = ib_state_notify_response_headers_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
         ib_log_error(ib, 3, "Error generating response headers: %s",
+                     ib_status_to_string(rc));
+    }
+
+    rc = ib_state_notify_response_headers(ib, itx);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3, "Error notifying response headers: %s",
                      ib_status_to_string(rc));
     }
 
