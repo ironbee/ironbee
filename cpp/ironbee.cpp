@@ -5,6 +5,7 @@
 #include <ironbee/release.h>
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
+#include <ironbee/state_notify.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -180,7 +181,12 @@ void IronBee::Connection::data_in(const buffer_t& data)
     data
   );
 
-  expect_ok(ib_state_notify_conn_data_in(m_ib.m_ironbee.get(), conndata),
+  expect_ok(
+    ib_state_notify_conn_data_in(
+        m_ib.m_ironbee.get(),
+        conndata,
+        NULL
+    ),
     "Connection data in."
   );
 }
@@ -192,7 +198,12 @@ void IronBee::Connection::data_out(const buffer_t& data)
     data
   );
 
-  expect_ok(ib_state_notify_conn_data_out(m_ib.m_ironbee.get(), conndata),
+  expect_ok(
+    ib_state_notify_conn_data_out(
+      m_ib.m_ironbee.get(),
+      conndata,
+      NULL
+    ),
     "Connection data in."
   );
 }
