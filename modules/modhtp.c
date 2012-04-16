@@ -56,11 +56,6 @@
 
 #include <assert.h>
 
-/* Shut up GCC 4.1 */
-#if ((__GNUC__==4) && (__GNUC_MINOR__==1))
-/* #pragma control "-Wstrict-aliasing" */
-#endif
-
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        htp
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
@@ -785,7 +780,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     }
 
 
-    /* Allocate and fill the parsed request line object */
+    /* Allocate and fill the parsed response line object */
     resp = ib_mpool_calloc(itx->mp, sizeof(*resp), 1);
     if (resp == NULL) {
         ib_log_error(ib, 3, "Error allocating response line buffer");
@@ -797,7 +792,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
                      (int)bstr_len(tx->response_message),
                      (char *)bstr_ptr(tx->response_message));
 
-        /* Request method */
+        /* Response code */
         rc = ib_bytestr_alias_mem(&resp->code, itx->mp,
                                   (uint8_t *)bstr_ptr(tx->response_status),
                                   bstr_len(tx->response_status));
@@ -807,7 +802,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
                          ib_status_to_string(rc));
         }
 
-        /* Request URI */
+        /* Response message */
         rc = ib_bytestr_alias_mem(&resp->msg, itx->mp,
                                   (uint8_t *)bstr_ptr(tx->response_message),
                                   bstr_len(tx->response_message));
@@ -851,7 +846,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     }
 
     /* Fetch the ironbee transaction and notify the engine
-     * that the request headers are now available.
+     * that the response headers are now available.
      */
     itx = htp_tx_get_user_data(tx);
 
