@@ -589,7 +589,8 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                 bstr_ptr(hdr->value),
                 bstr_len(hdr->value));
             if (rc != IB_OK) {
-                ib_log_error(ib, 3, "Error adding header name / value: %s",
+                ib_log_error(ib, 3,
+                             "Error adding request header name / value: %s",
                              ib_status_to_string(rc));
                 continue;
             }
@@ -879,11 +880,12 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                 bstr_ptr(hdr->value),
                 bstr_len(hdr->value));
             if (rc != IB_OK) {
-                ib_log_error(ib, 3, "Error adding header name / value: %s",
+                ib_log_error(ib, 3,
+                             "Error adding response header name / value: %s",
                              ib_status_to_string(rc));
                 continue;
             }
-            ib_log_debug(ib,9,"Added request header field %.*s='%.*s'",
+            ib_log_debug(ib,9,"Added response header field %.*s='%.*s'",
                          (int)bstr_len(hdr->name),
                          (char *)bstr_ptr(hdr->name),
                          (int)bstr_len(hdr->value),
@@ -893,9 +895,9 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     }
 
     /* The full headers are now available. */
-    rc = ib_state_notify_request_headers_data(ib, itx, ibhdrs);
+    rc = ib_state_notify_response_headers_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3, "Error generating request headers: %s",
+        ib_log_error(ib, 3, "Error generating response headers: %s",
                      ib_status_to_string(rc));
     }
 
