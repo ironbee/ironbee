@@ -24,6 +24,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/util.h>
+#include <ironbee/uuid.h>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -379,11 +380,16 @@ ib_status_t ib_initialize(void)
 
     ib_util_log_level(3);
 
+    rc = ib_uuid_initialize();
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     return IB_OK;
 }
 
 void ib_shutdown(void)
 {
-    /// @todo Nothing yet
+    ib_uuid_shutdown();
 }
 

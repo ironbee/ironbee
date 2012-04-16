@@ -27,10 +27,47 @@
 #include <ironbee/uuid.h>
 
 #include <ironbee/debug.h>
+#include <ironbee/lock.h>
 
 #include <string.h>
 #include <uuid.h>
 #include <assert.h>
+
+/*
+ * These are initialized by ib_uuid_init();
+ * OSSP UUID is ... generous .. in what it creates for a UUID.  E.g., it will
+ * do multiple allocations, check its MAC (it may have changed?), etc. for
+ * every creation.  So we only keep one at reuse it.
+ */
+static ib_lock_t  g_uuid_lock;
+uuid_t           *g_ossp_uuid;
+
+ib_status_t ib_uuid_initialize()
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    if (uuid_create(&g_ossp_uuid) != UUID_RC_OK) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    rc = ib_lock_init(&g_uuid_lock);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_uuid_shutdown()
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    rc = ib_lock_destroy(&g_uuid_lock);
+    uuid_destroy(g_ossp_uuid);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
 
 ib_status_t ib_uuid_ascii_to_bin(
      ib_uuid_t *uuid,
@@ -39,10 +76,10 @@ ib_status_t ib_uuid_ascii_to_bin(
 {
     IB_FTRACE_INIT();
 
-    uuid_t *ossp_uuid;
     uuid_rc_t uuid_rc;
     size_t uuid_len = UUID_LEN_BIN;
     size_t str_len;
+    ib_status_t rc = IB_OK;
 
     if (uuid == NULL || str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -52,34 +89,39 @@ ib_status_t ib_uuid_ascii_to_bin(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    uuid_rc = uuid_create(&ossp_uuid);
-    if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    else if (uuid_rc != UUID_RC_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
-    }
-
     assert(str_len == UUID_LEN_STR);
-    uuid_rc = uuid_import(ossp_uuid, UUID_FMT_STR, str, str_len);
-    if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    else if (uuid_rc != UUID_RC_OK) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+
+    rc = ib_lock_init(&g_uuid_lock);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    uuid_rc = uuid_export(ossp_uuid, UUID_FMT_BIN, (void *)&uuid, &uuid_len);
+    uuid_rc = uuid_import(g_ossp_uuid, UUID_FMT_STR, str, str_len);
     if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        rc = IB_EALLOC;
+        goto finish;
+    }
+    else if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EINVAL;
+        goto finish;
+    }
+
+    uuid_rc = uuid_export(g_ossp_uuid, UUID_FMT_BIN, (void *)&uuid, &uuid_len);
+    if (uuid_rc == UUID_RC_MEM) {
+        rc = IB_EALLOC;
+        goto finish;
     }
     else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_BIN) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+finish:
+    if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
-    uuid_destroy(ossp_uuid);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_uuid_bin_to_ascii(
@@ -89,76 +131,84 @@ ib_status_t ib_uuid_bin_to_ascii(
 {
     IB_FTRACE_INIT();
 
-    uuid_t *ossp_uuid;
     uuid_rc_t uuid_rc;
     size_t uuid_len = UUID_LEN_STR+1;
+    ib_status_t rc = IB_OK;
 
     if (uuid == NULL || str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    uuid_rc = uuid_create(&ossp_uuid);
-    if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    else if (uuid_rc != UUID_RC_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    rc = ib_lock_init(&g_uuid_lock);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    uuid_rc = uuid_import(ossp_uuid, UUID_FMT_BIN, uuid, UUID_LEN_BIN);
+    uuid_rc = uuid_import(g_ossp_uuid, UUID_FMT_BIN, uuid, UUID_LEN_BIN);
     if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        rc = IB_EALLOC;
+        goto finish;
     }
     else if (uuid_rc != UUID_RC_OK) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        rc = IB_EINVAL;
+        goto finish;
     }
 
-    uuid_rc = uuid_export(ossp_uuid, UUID_FMT_STR, (void *)&str, &uuid_len);
+    uuid_rc = uuid_export(g_ossp_uuid, UUID_FMT_STR, (void *)&str, &uuid_len);
     if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        rc = IB_EALLOC;
+        goto finish;
     }
     else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_STR+1) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+finish:
+    if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
-    uuid_destroy(ossp_uuid);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid)
 {
     IB_FTRACE_INIT();
 
-    uuid_t *ossp_uuid;
     uuid_rc_t uuid_rc;
     size_t uuid_len = UUID_LEN_BIN;
+    ib_status_t rc = IB_OK;
 
-    uuid_rc = uuid_create(&ossp_uuid);
+    rc = ib_lock_init(&g_uuid_lock);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    uuid_rc = uuid_make(g_ossp_uuid, UUID_MAKE_V4);
     if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        rc = IB_EALLOC;
+        goto finish;
     }
     else if (uuid_rc != UUID_RC_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        rc = IB_EOTHER;
+        goto finish;
     }
 
-    uuid_rc = uuid_make(ossp_uuid, UUID_MAKE_V4);
+    uuid_rc = uuid_export(g_ossp_uuid, UUID_FMT_BIN, (void *)&uuid, &uuid_len);
     if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    else if (uuid_rc != UUID_RC_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
-    }
-
-    uuid_rc = uuid_export(ossp_uuid, UUID_FMT_BIN, (void *)&uuid, &uuid_len);
-    if (uuid_rc == UUID_RC_MEM) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        rc = IB_EALLOC;
+        goto finish;
     }
     else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_BIN) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+finish:
+    if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
-    uuid_destroy(ossp_uuid);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
