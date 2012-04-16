@@ -48,7 +48,7 @@
 using namespace std;
 using namespace IronBee;
 
-class TestHooks : public ::testing::Test, public IBPPTXTestFixture
+class TestHooks : public ::testing::Test, public IBPPTestFixture
 {
 protected:
     enum callback_e
