@@ -1429,7 +1429,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 }
             }
         }
-        else if (rc == IB_ENOENT) {
+        else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
             ib_log_debug(ib, 9, "No request headers");
         }
