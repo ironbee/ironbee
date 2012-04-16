@@ -591,8 +591,10 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                 continue;
             }
             ib_log_debug(ib,9,"Added request header field %.*s='%.*s'",
-                         (int)bstr_len(hdr->name), (char*)bstr_ptr(hdr->name),
-                         (int)bstr_len(hdr->value),(char*)bstr_ptr(hdr->value));
+                         (int)bstr_len(hdr->name),
+                         (char *)bstr_ptr(hdr->name),
+                         (int)bstr_len(hdr->value),
+                         (char *)bstr_ptr(hdr->value));
 
         }
     }
@@ -881,8 +883,10 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                 continue;
             }
             ib_log_debug(ib,9,"Added request header field %.*s='%.*s'",
-                         (int)bstr_len(hdr->name), (char*)bstr_ptr(hdr->name),
-                         (int)bstr_len(hdr->value),(char*)bstr_ptr(hdr->value));
+                         (int)bstr_len(hdr->name),
+                         (char *)bstr_ptr(hdr->name),
+                         (int)bstr_len(hdr->value),
+                         (char *)bstr_ptr(hdr->value));
 
         }
     }
