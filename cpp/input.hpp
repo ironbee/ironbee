@@ -11,6 +11,7 @@
  **/
 
 #include <boost/function.hpp>
+#include <boost/any.hpp>
 
 #include <string>
 #include <vector>
@@ -92,6 +93,9 @@ struct input_t
 
   //! Zero or more transactions.
   std::vector<transaction_t> transactions;
+
+  //! This boost::any can be used to associate memory with the input.
+  boost::any source;
 };
 
 //! Ostream output operator for an input.

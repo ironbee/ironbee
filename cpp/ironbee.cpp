@@ -133,14 +133,9 @@ IronBee::Connection::Connection(
 ) :
   m_ib(ib)
 {
-  {
-    ib_conn_t* conn;
-    expect_ok(ib_conn_create(m_ib.m_ironbee.get(), &conn, NULL),
-      "Creating connection."
-    );
-    // This will destroy any existing current connection.
-    m_connection.reset(conn, &ib_conn_destroy);
-  }
+  expect_ok(ib_conn_create(m_ib.m_ironbee.get(), &m_connection, NULL),
+    "Creating connection."
+  );
 
   m_local_ip                 = local_ip.to_s();
   m_remote_ip                = remote_ip.to_s();
@@ -152,7 +147,7 @@ IronBee::Connection::Connection(
   expect_ok(
     ib_state_notify_conn_opened(
       m_ib.m_ironbee.get(),
-      m_connection.get()
+      m_connection
     ),
     "Opening connection."
   );
@@ -168,16 +163,16 @@ IronBee::Connection::~Connection()
 void IronBee::Connection::close()
 {
   expect_ok(
-    ib_state_notify_conn_closed(m_ib.m_ironbee.get(), m_connection.get()),
+    ib_state_notify_conn_closed(m_ib.m_ironbee.get(), m_connection),
     "Closing connection."
   );
-  m_connection.reset();
+  m_connection = NULL;
 }
 
 void IronBee::Connection::data_in(const buffer_t& data)
 {
   auto conndata = buffer_to_conndata(
-    m_connection.get(),
+    m_connection,
     data
   );
 
@@ -194,7 +189,7 @@ void IronBee::Connection::data_in(const buffer_t& data)
 void IronBee::Connection::data_out(const buffer_t& data)
 {
   auto conndata = buffer_to_conndata(
-    m_connection.get(),
+    m_connection,
     data
   );
 

@@ -33,13 +33,14 @@ ModSecAuditLogGenerator::ModSecAuditLogGenerator(
 
 bool ModSecAuditLogGenerator::operator()(input_t& out_input)
 {
-  ModSecAuditLog::Entry e;
+  auto e = boost::make_shared<ModSecAuditLog::Entry>();
+  out_input.source = e;
 
   bool have_entry = false;
   bool result;
   while (! have_entry) {
     try {
-      result = m_parser(e);
+      result = m_parser(*e);
     }
     catch (const exception& e) {
       if (m_on_error.empty()) {
@@ -60,7 +61,7 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
     R"re(([0-9.]+) (\d+) ([0-9.]+) (\d+)$)re"
   );
   boost::smatch match;
-  const auto& A = e["A"];
+  const auto& A = (*e)["A"];
   if (regex_search(A, match, section_a)) {
     out_input.local_ip.data   = A.c_str() + match.position(1);
     out_input.local_ip.length = match.length(1);
@@ -80,7 +81,7 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
 
   out_input.transactions.clear();
   out_input.transactions.push_back(input_t::transaction_t(
-    buffer_t(e["B"]), buffer_t(e["F"])
+    buffer_t((*e)["B"]), buffer_t((*e)["F"])
   ));
 
   return true;

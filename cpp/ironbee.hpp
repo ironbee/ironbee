@@ -68,7 +68,7 @@ public:
     );
 
     IronBee&                       m_ib;
-    boost::shared_ptr<ib_conn_t>   m_connection;
+    ib_conn_t*                     m_connection;
     // IronBee needs null terminated IPs, so we will need to format and store
     // them as such (they are provided as buffer_t's).
     std::string                    m_local_ip;
