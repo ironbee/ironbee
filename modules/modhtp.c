@@ -56,6 +56,11 @@
 
 #include <assert.h>
 
+/* Shut up GCC 4.1 */
+#if ((__GNUC__==4) && (__GNUC_MINOR__==1))
+/* #pragma control "-Wstrict-aliasing" */
+#endif
+
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        htp
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
@@ -529,7 +534,6 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     ib_engine_t *ib = iconn->ib;
     ib_tx_t *itx;
     ib_status_t rc;
-    htp_header_t *hdr = NULL;
     ib_parsed_header_wrapper_t *ibhdrs;
 
 
@@ -574,10 +578,9 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                      ib_status_to_string(rc));
     }
     else {
-        bstr *key = NULL;
+        htp_header_t *hdr = NULL;
         table_iterator_reset(tx->request_headers);
-        while ( (key = table_iterator_next(tx->request_headers,
-                                           (void **)&hdr)) != NULL)
+        while (table_iterator_next(tx->request_headers, (void *)&hdr) != NULL)
         {
             rc = ib_parsed_name_value_pair_list_add(
                 ibhdrs,
@@ -832,7 +835,6 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    htp_header_t *hdr = NULL;
     ib_parsed_header_wrapper_t *ibhdrs;
     ib_status_t rc;
     ib_tx_t *itx;
@@ -866,10 +868,9 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                      ib_status_to_string(rc));
     }
     else {
-        bstr *key = NULL;
+        htp_header_t *hdr = NULL;
         table_iterator_reset(tx->response_headers);
-        while ( (key = table_iterator_next(tx->response_headers,
-                                           (void **)&hdr)) != NULL)
+        while (table_iterator_next(tx->response_headers, (void *)&hdr) != NULL)
         {
             rc = ib_parsed_name_value_pair_list_add(
                 ibhdrs,
