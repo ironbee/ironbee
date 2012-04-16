@@ -628,13 +628,13 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /* Debug block. Escapes a string and prints it to the log. 
+    /* Debug block. Escapes a string and prints it to the log.
      * Memory is freed. */
     if (ib_log_get_level(ib) >= 9) {
 
         /* Worst case, we can have a string that is 4x larger.
          * Consider if a string of 0xF7 is passed.  That single character
-         * will expand to a string of 4 printed characters +1 for the \0 
+         * will expand to a string of 4 printed characters +1 for the \0
          * character. */
         char *debug_str = ib_util_hex_escape(subject, subject_len);
 
