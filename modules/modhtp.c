@@ -411,6 +411,12 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     IB_FTRACE_RET_INT(HTP_OK);
 }
 
+static ib_status_t modhtp_free(void *p)
+{
+    free(p);
+    return IB_OK;
+}
+
 static int modhtp_htp_request_line(htp_connp_t *connp)
 {
     IB_FTRACE_INIT();
@@ -441,6 +447,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
         itx->path = bstr_util_strdup_to_c(tx->parsed_uri->path);
+        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void*)itx->path);
     }
     if (itx->path == NULL) {
         ib_log_debug(ib, 4, "Unknown URI path - using /");
