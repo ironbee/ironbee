@@ -1207,11 +1207,11 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
             /* Let the parser see the data. */
             ec = htp_connp_req_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
-                ib_log_error(ib, 4, "LibHTP parser blocked: %s", ec);
+                ib_log_error(ib, 4, "LibHTP parser blocked: %d", ec);
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
-                ib_log_error(ib, 4, "LibHTP request parsing error: %s", ec);
+                ib_log_error(ib, 4, "LibHTP request parsing error: %d", ec);
             }
             break;
         case STREAM_STATE_ERROR:
@@ -1265,7 +1265,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
             /* Let the parser see the data. */
             ec = htp_connp_res_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
-                ib_log_error(ib, 4, "LibHTP parser blocked: %s", ec);
+                ib_log_error(ib, 4, "LibHTP parser blocked: %d", ec);
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
