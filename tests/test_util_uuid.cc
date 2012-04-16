@@ -81,6 +81,8 @@ TEST(TestIBUtilUUID, predefined)
     struct testval *rec;
     ib_status_t rc;
 
+    ib_uuid_initialize();
+    
     for (rec = &uuidstr[0];rec->str != NULL; ++rec) {
         ib_uuid_t uuid;
         bzero(&uuid, UUID_LEN_BIN);
@@ -91,6 +93,8 @@ TEST(TestIBUtilUUID, predefined)
             ASSERT_EQ(0, memcmp(&rec->val, &uuid, UUID_LEN_BIN));
         }
     }
+    
+    ib_uuid_shutdown();
 }
 
 TEST(TestIBUtilUUID, random)
@@ -100,7 +104,9 @@ TEST(TestIBUtilUUID, random)
     ib_status_t rc;
     char *str = (char *)malloc(UUID_LEN_STR+1);
     int i;
-    
+ 
+    ib_uuid_initialize();   
+     
     for (i=0; i<100; ++i) {
         bzero(&uuid, UUID_LEN_BIN);
     
@@ -118,4 +124,5 @@ TEST(TestIBUtilUUID, random)
     }
     
     free(str);
+    ib_uuid_shutdown();
 }

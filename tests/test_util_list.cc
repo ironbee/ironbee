@@ -250,7 +250,6 @@ TEST_F(TestIBUtilList, test_list_loop_safe)
     int *val;
     int i;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&m_pool, NULL, NULL);

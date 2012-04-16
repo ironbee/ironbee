@@ -166,7 +166,6 @@ TEST(TestIBUtilRadix, test_radix_prefix_new)
     ib_radix_prefix_t *prefix = NULL;
     ib_status_t rc;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -188,7 +187,6 @@ TEST(TestIBUtilRadix, test_radix_prefix_create_and_destroy)
     ib_radix_prefix_t *prefix = NULL;
     ib_status_t rc;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -219,7 +217,6 @@ TEST(TestIBUtilRadix, test_radix_node_new)
     ib_radix_node_t *node = NULL;
     ib_status_t rc;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&mp, NULL, NULL);
@@ -242,7 +239,6 @@ TEST(TestIBUtilRadix, test_radix_create_and_destroy)
     ib_radix_t *radix = NULL;
     ib_status_t rc;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&mp, NULL, NULL);
@@ -264,7 +260,6 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     ib_radix_t *radix = NULL;
     ib_status_t rc;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -329,7 +324,6 @@ TEST(TestIBUtilRadix, test_radix_insert_null_data)
     ib_radix_t *radix = NULL;
     ib_status_t rc;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -378,7 +372,6 @@ TEST(TestIBUtilRadix, test_radix_is_ipv4_ex)
     const char ascii6[] = "AA\0AA:BBBB::1/111";
 
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -431,7 +424,6 @@ TEST(TestIBUtilRadix, test_radix_is_ipv6_ex)
     const char ascii5[] = "192.168.2.0\0/23";
     const char ascii6[] = "AA\0AA:BBBB::1/111";
 
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -486,7 +478,6 @@ TEST(TestIBUtilRadix, test_radix_ip_to_prefix)
     char *cidr1 = NULL;
     char *cidr2 = NULL;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -570,7 +561,6 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ib_list_node_t *node;
     ib_list_node_t *node_next;
     
-    atexit(ib_shutdown);
     
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
@@ -793,7 +783,6 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
     ib_list_node_t *node;
     ib_list_node_t *node_next;
     
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -972,7 +961,6 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
 
     char *cidr1 = NULL;
 
-    atexit(ib_shutdown);
     
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
@@ -1153,7 +1141,6 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
 
     char *cidr1 = NULL;
 
-    atexit(ib_shutdown);
     
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
@@ -1338,7 +1325,6 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     ib_list_node_t *node;
     ib_list_node_t *node_next;
     
-    atexit(ib_shutdown);
 
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);

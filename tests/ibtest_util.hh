@@ -53,7 +53,6 @@ extern ib_server_t ibt_ibserver;
 #define ibtest_engine_create(pe) \
     do { \
         ib_engine_t **ibt_pib = (pe); \
-        atexit(ib_shutdown); \
         ib_trace_init(NULL); \
         ASSERT_EQ(IB_OK, ib_initialize()); \
         ASSERT_EQ(IB_OK, ib_engine_create(ibt_pib, &ibt_ibserver)); \

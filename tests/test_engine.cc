@@ -39,13 +39,14 @@ TEST(TestIronBee, test_engine_create_null_server)
     ib_engine_t *ib;
     ib_status_t rc;
 
-    atexit(ib_shutdown);
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_engine_create(&ib, NULL);
     ASSERT_EQ(IB_EINVAL, rc);
     ASSERT_FALSE(ib);
+    
+    ib_shutdown();
 }
 
 /// @test Test ironbee library - ib_engine_create() and ib_engine_destroy()

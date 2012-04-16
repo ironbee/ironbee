@@ -46,7 +46,6 @@ public:
         ibt_ibserver.filename = __FILE__;
         ibt_ibserver.name = "unit_tests";
 
-        atexit(ib_shutdown);
         ib_initialize();
         ib_engine_create(&ib_engine, &ibt_ibserver);
         ib_engine_init(ib_engine);
@@ -229,6 +228,7 @@ public:
 
     void TearDown() {
         ib_engine_destroy(ib_engine);
+        ib_shutdown();
     }
 
     ib_engine_t *ib_engine;
