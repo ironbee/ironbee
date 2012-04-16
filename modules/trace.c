@@ -139,13 +139,25 @@ static ib_status_t modtrace_reqline_event_callback(
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
-    ib_log_debug(ib, 1, "Method: '%.*s', path: '%.*s' version: '%.s*'",
-                 (int)ib_bytestr_length(line->method),
-                 (char *)ib_bytestr_const_ptr(line->method),
-                 (int)ib_bytestr_length(line->path),
-                 (char *)ib_bytestr_const_ptr(line->path),
-                 (int)ib_bytestr_length(line->version),
-                 (char *)ib_bytestr_const_ptr(line->version));
+
+    if (line->version == NULL) {
+        ib_log_debug(ib, 1,
+                     "Method: '%.*s', path: '%.*s' version: <unknown>",
+                     (int)ib_bytestr_length(line->method),
+                     (char *)ib_bytestr_const_ptr(line->method),
+                     (int)ib_bytestr_length(line->path),
+                     (char *)ib_bytestr_const_ptr(line->path));
+    }
+    else {
+        ib_log_debug(ib, 1,
+                     "Method: '%.*s', path: '%.*s' version: '%.s*'",
+                     (int)ib_bytestr_length(line->method),
+                     (char *)ib_bytestr_const_ptr(line->method),
+                     (int)ib_bytestr_length(line->path),
+                     (char *)ib_bytestr_const_ptr(line->path),
+                     (int)ib_bytestr_length(line->version),
+                     (char *)ib_bytestr_const_ptr(line->version));
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -171,11 +183,16 @@ static ib_status_t modtrace_respline_event_callback(
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
-    ib_log_debug(ib, 1, "Code: '%.*s', message: '%.*s'",
-                 (int)ib_bytestr_length(line->code),
-                 (char *)ib_bytestr_const_ptr(line->code),
-                 (int)ib_bytestr_length(line->msg),
-                 (char *)ib_bytestr_const_ptr(line->msg));
+    if (line == NULL) {
+        ib_log_debug(ib, 1, "No response line!");
+    }
+    else {
+        ib_log_debug(ib, 1, "Code: '%.*s', message: '%.*s'",
+                     (int)ib_bytestr_length(line->code),
+                     (char *)ib_bytestr_const_ptr(line->code),
+                     (int)ib_bytestr_length(line->msg),
+                     (char *)ib_bytestr_const_ptr(line->msg));
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

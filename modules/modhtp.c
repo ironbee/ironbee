@@ -420,6 +420,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     ib_engine_t *ib = iconn->ib;
     ib_parsed_req_line_t *req;
     ib_tx_t *itx;
+    ib_status_t rc;
 
 
     /* Use the current parser transaction to generate fields. */
@@ -436,13 +437,6 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
-
-    if (tx->flags) {
-        ib_log_error(ib, 4,
-                     "HTP parser flagged an event in request line: 0x%08x",
-                     tx->flags);
-        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
-    }
 
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
@@ -472,15 +466,24 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         ib_log_error(ib, 3, "Error allocating request line buffer");
     }
     else {
-        ib_status_t rc;
-
-        ib_log_debug(ib, 7, "TX request: method=%.*s path=%.*s version=%.*s",
-                     (int)bstr_len(tx->request_method),
-                     (char *)bstr_ptr(tx->request_method),
-                     (int)bstr_len(tx->request_uri),
-                     (char *)bstr_ptr(tx->request_uri),
-                     (int)bstr_len(tx->request_protocol),
-                     (char *)bstr_ptr(tx->request_protocol));
+        if (tx->request_protocol == NULL) {
+            ib_log_debug(ib, 7,
+                         "TX request: method=%.*s path=%.*s version=<unknown>",
+                         (int)bstr_len(tx->request_method),
+                         (char *)bstr_ptr(tx->request_method),
+                         (int)bstr_len(tx->request_uri),
+                         (char *)bstr_ptr(tx->request_uri));
+        }
+        else {
+            ib_log_debug(ib, 7,
+                         "TX request: method=%.*s path=%.*s version=%.*s",
+                         (int)bstr_len(tx->request_method),
+                         (char *)bstr_ptr(tx->request_method),
+                         (int)bstr_len(tx->request_uri),
+                         (char *)bstr_ptr(tx->request_uri),
+                         (int)bstr_len(tx->request_protocol),
+                         (char *)bstr_ptr(tx->request_protocol));
+        }
 
         /* Request method */
         rc = ib_bytestr_alias_mem(&req->method, itx->mp,
@@ -503,19 +506,32 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         }
 
         /* Request protocol */
-        rc = ib_bytestr_alias_mem(&req->version, itx->mp,
-                                  (uint8_t *)bstr_ptr(tx->request_protocol),
-                                  bstr_len(tx->request_protocol));
-        if (rc != IB_OK) {
-            ib_log_error(ib, 3,
-                         "Error aliasing request version: %s",
-                         ib_status_to_string(rc));
+        if (tx->request_protocol != NULL) {
+            rc = ib_bytestr_alias_mem(&req->version, itx->mp,
+                                      (uint8_t *)bstr_ptr(tx->request_protocol),
+                                      bstr_len(tx->request_protocol));
+            if (rc != IB_OK) {
+                ib_log_error(ib, 3,
+                             "Error aliasing request version: %s",
+                             ib_status_to_string(rc));
+            }
         }
     }
 
     /* Tell the engine that the request started. */
     ib_log_debug(ib, 7, "Notify request started");
-    ib_state_notify_request_started(ib, itx, req);
+    rc = ib_state_notify_request_started(ib, itx, req);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 3,
+                     "Error notifying request started: %s",
+                     ib_status_to_string(rc));
+    }
+    else if (tx->flags) {
+        ib_log_alert(ib, 4,
+                     "HTP parser flagged an event in request line: 0x%08x",
+                     tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -594,7 +610,6 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                          (char *)bstr_ptr(hdr->name),
                          (int)bstr_len(hdr->value),
                          (char *)bstr_ptr(hdr->value));
-
         }
     }
 
@@ -1414,13 +1429,17 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(h->value),
                                            bstr_len(h->value));
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to create field: %s", ib_status_to_string(rc));
+                    ib_log_debug(ib, 9,
+                                 "Failed to create field: %s",
+                                 ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to add field: %s", ib_status_to_string(rc));
+                    ib_log_debug(ib, 9,
+                                 "Failed to add field: %s",
+                                 ib_status_to_string(rc));
                 }
             }
         }
@@ -1429,7 +1448,9 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             ib_log_debug(ib, 9, "No request headers");
         }
         else {
-            ib_log_error(ib, 4, "Failed to create request headers list: %s", ib_status_to_string(rc));
+            ib_log_error(ib, 4,
+                         "Failed to create request headers list: %s",
+                         ib_status_to_string(rc));
         }
 
         rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
@@ -1597,22 +1618,28 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                                            (uint8_t *)bstr_ptr(h->value),
                                            bstr_len(h->value));
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to create field: %s", ib_status_to_string(rc));
+                    ib_log_debug(ib, 9,
+                                 "Failed to create field: %s",
+                                 ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug(ib, 9, "Failed to add field: %s", ib_status_to_string(rc));
+                    ib_log_debug(ib, 9,
+                                 "Failed to add field: %s",
+                                 ib_status_to_string(rc));
                 }
             }
         }
-        else if (rc == IB_ENOENT) {
+        else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
             ib_log_debug(ib, 9, "No response headers");
         }
         else {
-            ib_log_error(ib, 4, "Failed to create response headers list: %s", ib_status_to_string(rc));
+            ib_log_error(ib, 4,
+                         "Failed to create response headers list: %s",
+                         ib_status_to_string(rc));
         }
     }
 
