@@ -1200,6 +1200,9 @@ static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
     /* Destroy the parser on disconnect. */
     htp_connp_destroy_all(modctx->htp);
 
+    /* Destroy the configuration. */
+    htp_config_destroy(modctx->htp_cfg);
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
