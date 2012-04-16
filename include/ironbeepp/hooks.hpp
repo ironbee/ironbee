@@ -79,10 +79,11 @@ public:
      * @name Call back types.
      * Types for hook call backs.
      *
-     * Every callback takes an Engine as the first argument and the event
-     * as an Engine::state_event_e that trigger the event as the second
-     * argument.  Most callbacks take a third argument of data associated with
-     * the event.  All callbacks should throw an IronBee++ exception on error.
+     * Every callback receives an Engine and the state event that triggered
+     * the event.  Many events also receive the current transaction.  Some
+     * events receive an additional argument.
+     *
+     * All callbacks should throw an IronBee++ exception on error.
      **/
     ///@{
     /**
