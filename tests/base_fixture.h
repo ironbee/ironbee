@@ -164,7 +164,7 @@ public:
     {
         ib_conndata_t *ib_conndata;
         ib_status_t rc;
-        
+
         rc = ib_conn_data_create(ib_conn, &ib_conndata, req.size());
         if (rc != IB_OK) {
             throw std::runtime_error(
