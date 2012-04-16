@@ -570,7 +570,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     /* Copy the request fields into a parse name value pair list object */
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3, "Erorr creating header wrapper: %s",
+        ib_log_error(ib, 3, "Error creating header wrapper: %s",
                      ib_status_to_string(rc));
     }
     else {
@@ -655,7 +655,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
         }
     }
     else {
-        /* Point the tx-data struture at the data block */
+        /* Point the tx-data structure at the data block */
         ib_txdata_t itxdata;
         itxdata.dtype = IB_DTYPE_HTTP_BODY;
         itxdata.dlen = txdata->len;
@@ -860,7 +860,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     /* Copy the response fields into a parse name value pair list object */
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3, "Erorr creating header wrapper: %s",
+        ib_log_error(ib, 3, "Error creating header wrapper: %s",
                      ib_status_to_string(rc));
     }
     else {
@@ -941,7 +941,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         }
     }
     else {
-        /* Point the tx-data struture at the data block */
+        /* Point the tx-data structure at the data block */
         ib_txdata_t itxdata;
         itxdata.dtype = IB_DTYPE_HTTP_BODY;
         itxdata.dlen = txdata->len;

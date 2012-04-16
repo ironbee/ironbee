@@ -288,7 +288,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Under certain cirucumstances there is no data. Guard against that. */
+    /* Under certain circumstances there is no data. Guard against that. */
     if ( ib_log_get_level(ib) >= 9 && txdata != NULL ) {
         ib_log_debug(ib, 9, "TX DATA EVENT: %s (type %d)",
                      ib_state_event_name(event), txdata->dtype);
