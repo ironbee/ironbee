@@ -77,7 +77,7 @@ ib_status_t DLL_PUBLIC ib_uuid_shutdown(void);
  *
  * @returns Status code
  */
-ib_status_t ib_uuid_ascii_to_bin(
+ib_status_t DLL_PUBLIC ib_uuid_ascii_to_bin(
      ib_uuid_t *ibuuid,
      const char *uuid
 );
@@ -90,7 +90,7 @@ ib_status_t ib_uuid_ascii_to_bin(
  *
  * @returns Status code
  */
-ib_status_t ib_uuid_bin_to_ascii(
+ib_status_t DLL_PUBLIC ib_uuid_bin_to_ascii(
     char *str,
     const ib_uuid_t *uuid
 );
@@ -102,7 +102,7 @@ ib_status_t ib_uuid_bin_to_ascii(
  *
  * @returns Status code
  */
-ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid);
+ib_status_t DLL_PUBLIC ib_uuid_create_v4(ib_uuid_t *uuid);
 
 /** @} IronBeeUtilUUID */
 
