@@ -42,7 +42,7 @@
 static ib_lock_t  g_uuid_lock;
 uuid_t           *g_ossp_uuid;
 
-ib_status_t ib_uuid_initialize()
+ib_status_t DLL_PUBLIC ib_uuid_initialize()
 {
     IB_FTRACE_INIT();
 
@@ -57,7 +57,7 @@ ib_status_t ib_uuid_initialize()
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_uuid_shutdown()
+ib_status_t DLL_PUBLIC ib_uuid_shutdown()
 {
     IB_FTRACE_INIT();
 

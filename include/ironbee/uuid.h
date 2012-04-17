@@ -58,15 +58,15 @@ union ib_uuid_t {
  * Initialize UUID library.
  *
  * ib_initialize() will call this.
- **/
-ib_status_t ib_uuid_initialize();
+ */
+ib_status_t DLL_PUBLIC ib_uuid_initialize(void);
 
 /**
  * Shutdown UUID library.
  *
  * ib_shutdown() will call this.
- **/
-ib_status_t ib_uuid_shutdown();
+ */
+ib_status_t DLL_PUBLIC ib_uuid_shutdown(void);
 
 /**
  * Parses an ASCII UUID (with the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
