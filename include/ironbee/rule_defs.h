@@ -36,42 +36,23 @@ extern "C" {
  */
 
 /**
- * Rule type (phase / stream)
- */
-typedef enum {
-    RULE_TYPE_INVALID = -1,            /**< Not set */
-    RULE_TYPE_PHASE,                   /**< Phase rule */
-    RULE_TYPE_STREAM,                  /**< Stream rule */
-} ib_rule_type_t;
-
-/**
  * Rule phase number.
  */
 typedef enum {
-    PHASE_INVALID = -1,                /**< Invalid; used to terminate list */
-    PHASE_NONE,                        /**< No phase */
-    PHASE_REQUEST_HEADER,              /**< Request header available. */
-    PHASE_REQUEST_BODY,                /**< Request body available. */
-    PHASE_RESPONSE_HEADER,             /**< Response header available. */
-    PHASE_RESPONSE_BODY,               /**< Response body available. */
-    PHASE_POSTPROCESS,                 /**< Post-processing phase. */
-    PHASE_MAX = PHASE_POSTPROCESS,     /**< Max phase number. */
-    IB_RULE_PHASE_COUNT,               /**< Size of rule phase lists */
+    PHASE_INVALID = -1,                 /**< Invalid; used to terminate list */
+    PHASE_NONE,                         /**< No phase */
+    PHASE_REQUEST_HEADER,               /**< Request header available. */
+    PHASE_REQUEST_BODY,                 /**< Request body available. */
+    PHASE_RESPONSE_HEADER,              /**< Response header available. */
+    PHASE_RESPONSE_BODY,                /**< Response body available. */
+    PHASE_POSTPROCESS,                  /**< Post-processing phase. */
+    PHASE_STR_REQUEST_HEADER,           /**< Stream: Req. header available. */
+    PHASE_STR_REQUEST_BODY,             /**< Stream: Req. body available. */
+    PHASE_STR_RESPONSE_HEADER,          /**< Stream: Resp. header available. */
+    PHASE_STR_RESPONSE_BODY,            /**< Stream: Resp. body available. */
+    PHASE_MAX = PHASE_STR_RESPONSE_BODY,/**< Max phase number. */
+    IB_RULE_PHASE_COUNT,                /**< Size of rule phase lists */
 } ib_rule_phase_t;
-
-/**
- * Rule stream number.
- */
-typedef enum {
-    STREAM_INVALID = -1,               /**< Invalid; used to terminate list */
-    STREAM_NONE,                       /**< No stream */
-    STREAM_REQUEST_HEADER,             /**< Request header available. */
-    STREAM_REQUEST_BODY,               /**< Request body available. */
-    STREAM_RESPONSE_HEADER,            /**< Response header available. */
-    STREAM_RESPONSE_BODY,              /**< Response body available. */
-    STREAM_MAX = STREAM_RESPONSE_BODY, /**< Max stream number. */
-    IB_RULE_STREAM_COUNT,              /**< Size of rule phase lists */
-} ib_rule_stream_t;
 
 /**
  * Rule flags
@@ -84,10 +65,8 @@ typedef enum {
 #define IB_RULE_FLAG_ENABLED     (1 << 0)  /**< Rule is enabled */
 #define IB_RULE_FLAG_VALID       (1 << 1)  /**< Rule is valid */
 #define IB_RULE_FLAG_EXTERNAL    (1 << 2)  /**< External rule */
-#define IB_RULE_FLAG_ALLOW_CHAIN (1 << 3)  /**< Rule allows chaining */
-#define IB_RULE_FLAG_ALLOW_TFNS  (1 << 4)  /**< Rule allows transformations */
-#define IB_RULE_FLAG_CHAIN       (1 << 5)  /**< Rule is parent in a chain */
-#define IB_RULE_FLAG_IN_CHAIN    (1 << 6)  /**< Rule is part of a chain */
+#define IB_RULE_FLAG_CHAIN       (1 << 3)  /**< Rule is parent in a chain */
+#define IB_RULE_FLAG_IN_CHAIN    (1 << 4)  /**< Rule is part of a chain */
 
 /**
  * Rule meta-flags:
@@ -99,8 +78,8 @@ typedef enum {
 #define IB_RULE_FLAGS_RUNABLE (IB_RULE_FLAG_ENABLED | IB_RULE_FLAG_VALID)
 #define IB_RULE_FLAGS_PHASE   \
     (IB_RULE_FLAG_ALLOW_TFNS | IB_RULE_FLAG_ALLOW_CHAIN)
-#define IB_RULE_FLAGS_STREAM   (IB_RULE_FLAG_NONE)
-#define IB_RULE_FLAGS_CHAIN    (IB_RULE_FLAG_CHAIN | IB_RULE_FLAG_IN_CHAIN)
+#define IB_RULE_FLAGS_STREAM  (IB_RULE_FLAG_NONE)
+#define IB_RULE_FLAGS_CHAIN   (IB_RULE_FLAG_CHAIN | IB_RULE_FLAG_IN_CHAIN)
 
 /**
  * Rule meta-data flags

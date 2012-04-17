@@ -56,25 +56,16 @@ typedef enum {
  * Rule engine: Rule meta data
  */
 typedef struct {
-    const char            *id;            /**< Rule ID */
-    const char            *chain_id;      /**< Rule's chain ID */
-    const char            *msg;           /**< Rule message */
-    const char            *data;          /**< Rule logdata */
-    ib_list_t             *tags;          /**< Rule tags */
-    ib_rule_type_t         type;          /**< Rule type (phase/stream) */
-    ib_rule_phase_t        phase;         /**< Rule execution phase */
-    ib_rule_stream_t       stream;        /**< Rule execution stream */
-    uint8_t                severity;      /**< Rule severity */
-    uint8_t                confidence;    /**< Rule confidence */
-    ib_flags_t             flags;         /**< Rule meta-data flags */
+    const char            *id;              /**< Rule ID */
+    const char            *chain_id;        /**< Rule's chain ID */
+    const char            *msg;             /**< Rule message */
+    const char            *data;            /**< Rule logdata */
+    ib_list_t             *tags;            /**< Rule tags */
+    ib_rule_phase_t        phase;           /**< Phase number */
+    uint8_t                severity;        /**< Rule severity */
+    uint8_t                confidence;      /**< Rule confidence */
+    ib_flags_t             flags;           /**< Rule meta-data flags */
 } ib_rule_meta_t;
-
-/**
- * Rule engine: Rule list
- */
-typedef struct {
-    ib_list_t             *rule_list;     /**< List of rules */
-} ib_rulelist_t;
 
 /**
  * Rule engine: Target fields
@@ -85,60 +76,58 @@ typedef struct {
 } ib_rule_target_t;
 
 /**
- * Rule engine: Rule
- *
- * The typedef of ib_rule_t is done in ironbee/rule_engine.h
+ * Rule phase meta data
  */
-struct ib_rule_t {
-    ib_rule_meta_t         meta;          /**< Rule meta data */
-    ib_operator_inst_t    *opinst;        /**< Rule operator */
-    ib_list_t             *target_fields; /**< List of target fields */
-    ib_list_t             *true_actions;  /**< Actions if condition True */
-    ib_list_t             *false_actions; /**< Actions if condition False */
-    ib_rulelist_t         *parent_rlist;  /**< Parent rule list */
-    ib_rule_t             *chained_rule;  /**< Next rule in the chain */
-    ib_rule_t             *chained_from;  /**< Rule that we're chained from */
-    ib_flags_t             flags;         /**< External, etc. */
-};
+typedef struct ib_rule_phase_meta_t ib_rule_phase_meta_t;
 
 /**
- * List of rules to execute during a phase
+ * Ruleset for a single phase
  */
 typedef struct {
-    ib_rule_phase_t        phase;         /**< Phase number */
-    ib_rulelist_t          rules;         /**< Rules to execute in phase */
-} ib_rule_phase_data_t;
-
-/**
- * List of rules to execute during on a stream
- */
-typedef struct {
-    ib_rule_stream_t       stream;        /**< Rule stream */
-    ib_rulelist_t          rules;         /**< Rules to execute for stream */
-} ib_rule_stream_data_t;
+    ib_rule_phase_t             phase_num;   /**< Phase number */
+    const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
+    ib_list_t                  *rule_list;   /**< Rules to execute in phase */
+} ib_ruleset_phase_t;
 
 /**
  * Set of rules for all phases
  */
 typedef struct {
-    ib_rule_phase_data_t  phases[IB_RULE_PHASE_COUNT];
-    ib_rule_stream_data_t streams[IB_RULE_STREAM_COUNT];
+    ib_ruleset_phase_t     phases[IB_RULE_PHASE_COUNT];
 } ib_ruleset_t;
+
+/**
+ * Rule engine: Rule
+ *
+ * The typedef of ib_rule_t is done in ironbee/rule_engine.h
+ */
+struct ib_rule_t {
+    ib_rule_meta_t         meta;            /**< Rule meta data */
+    const ib_rule_phase_meta_t *phase_meta; /**< Phase meta data */
+    ib_operator_inst_t    *opinst;          /**< Rule operator */
+    ib_list_t             *target_fields;   /**< List of target fields */
+    ib_list_t             *true_actions;    /**< Actions if condition True */
+    ib_list_t             *false_actions;   /**< Actions if condition False */
+    ib_list_t             *parent_rlist;    /**< Parent rule list */
+    ib_rule_t             *chained_rule;    /**< Next rule in the chain */
+    ib_rule_t             *chained_from;    /**< Ptr to rule chained from */
+    ib_flags_t             flags;           /**< External, etc. */
+};
 
 /**
  * Rule engine parser data
  */
 typedef struct {
-    ib_rule_t         *previous;     /**< Previous rule parsed */
+    ib_rule_t             *previous;     /**< Previous rule parsed */
 } ib_rule_parser_data_t;
 
 /**
  * Rule engine data; typedef in ironbee_private.h
  */
 struct ib_rule_engine_t {
-    ib_ruleset_t          ruleset;     /**< Rules to exec */
-    ib_rulelist_t         rule_list;   /**< All rules owned by this context */
-    ib_rule_parser_data_t parser_data; /**< Rule parser specific data */
+    ib_ruleset_t           ruleset;     /**< Rules to exec */
+    ib_list_t             *rule_list;   /**< All rules owned by this context */
+    ib_rule_parser_data_t  parser_data; /**< Rule parser specific data */
 };
 
 /**
@@ -148,14 +137,14 @@ struct ib_rule_engine_t {
  *
  * @param[in] ib IronBee engine
  * @param[in] ctx Current IronBee context
- * @param[in] type Rule type (RULE_TYPE_PHASE / RULE_TYPE_STREAM)
+ * @param[in] is_stream IB_TRUE if this is an inspection rule else IB_FALSE
  * @param[out] prule Address which new rule is written
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
-                                      ib_rule_type_t type,
+                                      ib_bool_t is_stream,
                                       ib_rule_t **prule);
 
 /**
@@ -172,17 +161,31 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
                               ib_rule_phase_t phase);
 
 /**
- * Set the execution stream of a rule (for stream rules).
+ * Query as to whether a rule allow transformations
  *
- * @param[in] ib IronBee engine
- * @param[in,out] rule Rule to operate on
- * @param[in] stream Rule execution stream
+ * @param[in,out] rule Rule to query
  *
- * @returns Status code
+ * @returns IB_TRUE or IB_FALSE
  */
-ib_status_t ib_rule_set_stream(ib_engine_t *ib,
-                               ib_rule_t *rule,
-                               ib_rule_stream_t stream);
+ib_bool_t ib_rule_allow_tfns(const ib_rule_t *rule);
+
+/**
+ * Query as to whether a rule allow chains
+ *
+ * @param[in,out] rule Rule to query
+ *
+ * @returns IB_TRUE or IB_FALSE
+ */
+ib_bool_t ib_rule_allow_chain(const ib_rule_t *rule);
+
+/**
+ * Query as to whether is a stream inspection rule
+ *
+ * @param[in,out] rule Rule to query
+ *
+ * @returns IB_TRUE or IB_FALSE
+ */
+ib_bool_t ib_rule_is_stream(const ib_rule_t *rule);
 
 /**
  * Get the operator flags required for this rule.

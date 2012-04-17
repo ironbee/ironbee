@@ -59,41 +59,33 @@ IB_MODULE_DECLARE();
  */
 typedef struct {
     const char       *str;
+    ib_bool_t         is_stream;
     ib_rule_phase_t   phase;
 } phase_lookup_t;
-static phase_lookup_t phase_lookup_table[] = {
-    { "REQUEST_HEADER",  PHASE_REQUEST_HEADER },
-    { "REQUEST",         PHASE_REQUEST_BODY },
-    { "RESPONSE_HEADER", PHASE_RESPONSE_HEADER },
-    { "RESPONSE",        PHASE_RESPONSE_BODY },
-    { "POSTPROCESS",     PHASE_POSTPROCESS },
+static phase_lookup_t phase_lookup_table[] =
+{
+    { "REQUEST_HEADER",          IB_FALSE, PHASE_REQUEST_HEADER },
+    { "REQUEST",                 IB_FALSE, PHASE_REQUEST_BODY },
+    { "RESPONSE_HEADER",         IB_FALSE, PHASE_RESPONSE_HEADER },
+    { "RESPONSE",                IB_FALSE, PHASE_RESPONSE_BODY },
+    { "POSTPROCESS",             IB_FALSE, PHASE_POSTPROCESS },
     /* Shortcuts */
-    { "REQHDR",          PHASE_REQUEST_HEADER },
-    { "RSPHDR",          PHASE_RESPONSE_HEADER },
-    /* List terminator */
-    { "NONE",            PHASE_NONE },
-    { NULL,              PHASE_INVALID },
-};
-
-/**
- * Stream lookup table.
- */
-typedef struct {
-    const char       *str;
-    ib_rule_stream_t  stream;
-} stream_lookup_t;
-static stream_lookup_t stream_lookup_table[] = {
-    { "REQUEST_HEADER_STREAM",  STREAM_REQUEST_HEADER },
-    { "REQUEST_BODY_STREAM",    STREAM_REQUEST_BODY },
-    { "RESPONSE_HEADER_STREAM", STREAM_RESPONSE_HEADER },
-    { "RESPONSE_BODY_STREAM",   STREAM_RESPONSE_BODY },
+    { "REQHDR",                  IB_FALSE, PHASE_REQUEST_HEADER },
+    { "REQBDY",                  IB_FALSE, PHASE_REQUEST_BODY },
+    { "RSPHDR",                  IB_FALSE, PHASE_RESPONSE_HEADER },
+    { "RSPBDY",                  IB_FALSE, PHASE_RESPONSE_BODY },
+    /* Stream inspection phases */
+    { "REQUEST_HEADER_STREAM",   IB_TRUE,  PHASE_STR_REQUEST_HEADER },
+    { "REQUEST_BODY_STREAM",     IB_TRUE,  PHASE_STR_REQUEST_BODY },
+    { "RESPONSE_HEADER_STREAM",  IB_TRUE,  PHASE_STR_RESPONSE_HEADER },
+    { "RESPONSE_BODY_STREAM",    IB_TRUE,  PHASE_STR_RESPONSE_BODY },
     /* Shortcuts */
-    { "STRREQHDR",              STREAM_REQUEST_HEADER },
-    { "STRREQBODY",             STREAM_REQUEST_BODY },
-    { "STRRSPHDR",              STREAM_RESPONSE_HEADER },
-    { "STRRSPBODY",             STREAM_RESPONSE_BODY },
+    { "REQHDRS",                 IB_TRUE,  PHASE_STR_REQUEST_HEADER },
+    { "REQBDYS",                 IB_TRUE,  PHASE_STR_REQUEST_BODY },
+    { "RSPHDRS",                 IB_TRUE,  PHASE_STR_RESPONSE_HEADER },
+    { "RSPBDYS",                 IB_TRUE,  PHASE_STR_RESPONSE_BODY },
     /* List terminator */
-    { NULL,                     STREAM_INVALID },
+    { NULL,                      IB_FALSE, PHASE_INVALID },
 };
 
 /**
@@ -112,11 +104,14 @@ static ib_lock_t g_lua_lock;
  * @internal
  *
  * @param[in] str Phase name string to lookup
+ * @param[in] is_stream IB_TRUE if this is a stream phase
  * @param[out] phase Phase number
  *
  * @returns Status code
  */
-static ib_status_t lookup_phase(const char *str, ib_rule_phase_t *phase)
+static ib_status_t lookup_phase(const char *str,
+                                ib_bool_t is_stream,
+                                ib_rule_phase_t *phase)
 {
     IB_FTRACE_INIT();
     const phase_lookup_t *item;
@@ -124,29 +119,6 @@ static ib_status_t lookup_phase(const char *str, ib_rule_phase_t *phase)
     for (item = phase_lookup_table;  item->str != NULL;  ++item) {
          if (strcasecmp(str, item->str) == 0) {
              *phase = item->phase;
-             IB_FTRACE_RET_STATUS(IB_OK);
-         }
-    }
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
-}
-
-/**
- * Lookup a stream name in the stream name table.
- * @internal
- *
- * @param[in] str Stream name string to lookup
- * @param[out] stream Stream number
- *
- * @returns Status code
- */
-static ib_status_t lookup_stream(const char *str, ib_rule_stream_t *stream)
-{
-    IB_FTRACE_INIT();
-    const stream_lookup_t *item;
-
-    for (item = stream_lookup_table;  item->str != NULL;  ++item) {
-         if (strcasecmp(str, item->str) == 0) {
-             *stream = item->stream;
              IB_FTRACE_RET_STATUS(IB_OK);
          }
     }
@@ -769,15 +741,15 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* Phase modifiers */
-    if (rule->meta.type == RULE_TYPE_PHASE) {
+    /* Phase modifiers (Not valid for stream rules) */
+    if (ib_rule_is_stream(rule) == IB_FALSE) {
         ib_rule_phase_t phase = PHASE_NONE;
         if (strcasecmp(name, "phase") == 0) {
             if (value == NULL) {
                 ib_log_error(cp->ib, 4, "Modifier PHASE with no value");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
-            rc = lookup_phase(value, &phase);
+            rc = lookup_phase(value, IB_FALSE, &phase);
             if (rc != IB_OK) {
                 ib_log_error(cp->ib, 4, "Invalid phase: %s", value);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -785,7 +757,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         }
         else {
             ib_rule_phase_t tphase;
-            rc = lookup_phase(name, &tphase);
+            rc = lookup_phase(name, IB_FALSE, &tphase);
             if (rc == IB_OK) {
                 phase = tphase;
             }
@@ -806,7 +778,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Chain modifier */
-    if ( ((rule->flags & IB_RULE_FLAG_ALLOW_CHAIN) != 0) &&
+    if ( (ib_rule_allow_chain(rule) == IB_TRUE) &&
          (strcasecmp(name, "chain") == 0) )
     {
         rc = ib_rule_set_chain(cp->ib, rule);
@@ -814,7 +786,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Transformation modifiers */
-    if ( ((rule->flags & IB_RULE_FLAG_ALLOW_TFNS) != 0) &&
+    if ( (ib_rule_allow_tfns(rule) == IB_TRUE) &&
          (strcasecmp(name, "t") == 0) )
     {
         if (value == NULL) {
@@ -1016,7 +988,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     ib_log_debug(cp->ib, 9, "Processing external rule: %s", file_name);
 
     /* Allocate a rule */
-    rc = ib_rule_create(cp->ib, cp->cur_ctx, RULE_TYPE_PHASE, &rule);
+    rc = ib_rule_create(cp->ib, cp->cur_ctx, IB_FALSE, &rule);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1, "Failed to create rule: %s",
                      ib_status_to_string(rc));
@@ -1122,16 +1094,9 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         }
     }
 
-    if (rule->meta.type == RULE_TYPE_PHASE) {
-        ib_log_debug(cp->ib, 4,
-                     "Registered external rule %s for phase %d context %p",
-                     ib_rule_id(rule), rule->meta.phase, cp->cur_ctx);
-    }
-    else if (rule->meta.type == RULE_TYPE_STREAM) {
-        ib_log_debug(cp->ib, 4,
-                     "Registered external rule %s for stream %d context %p",
-                     ib_rule_id(rule), rule->meta.stream, cp->cur_ctx);
-    }
+    ib_log_debug(cp->ib, 4,
+                 "Registered external rule %s for phase %d context %p",
+                 ib_rule_id(rule), rule->meta.phase, cp->cur_ctx);
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1177,7 +1142,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     }
 
     /* Allocate a rule */
-    rc = ib_rule_create(cp->ib, cp->cur_ctx, RULE_TYPE_PHASE, &rule);
+    rc = ib_rule_create(cp->ib, cp->cur_ctx, IB_FALSE, &rule);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1, "Failed to allocate rule: %s",
                      ib_status_to_string(rc));
@@ -1258,7 +1223,7 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     IB_FTRACE_INIT();
     ib_status_t rc;
     const ib_list_node_t *node;
-    ib_rule_stream_t stream = STREAM_INVALID;
+    ib_rule_phase_t phase = PHASE_INVALID;
     const char *str;
     ib_rule_t *rule;
 
@@ -1274,10 +1239,10 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     }
     str = node->data;
 
-    /* Lookup the stream name */
-    rc = lookup_stream(str, &stream);
+    /* Lookup the phase name */
+    rc = lookup_phase(str, IB_TRUE, &phase);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 4, "Invalid stream: %s", str);
+        ib_log_error(cp->ib, 4, "Invalid phase: %s", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1289,7 +1254,7 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     }
 
     /* Allocate a rule */
-    rc = ib_rule_create(cp->ib, cp->cur_ctx, RULE_TYPE_STREAM, &rule);
+    rc = ib_rule_create(cp->ib, cp->cur_ctx, IB_TRUE, &rule);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, 1, "Failed to create rule: %s",
                      ib_status_to_string(rc));
@@ -1297,9 +1262,9 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     }
 
     /* Set the rule's stream */
-    rc = ib_rule_set_stream(cp->ib, rule, stream);
+    rc = ib_rule_set_phase(cp->ib, rule, phase);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Error setting rule stream: %s",
+        ib_log_error(cp->ib, 1, "Error setting rule phase: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }

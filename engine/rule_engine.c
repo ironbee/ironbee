@@ -28,6 +28,7 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/util.h>
 #include <ironbee/field.h>
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
@@ -41,60 +42,143 @@
 
 #include "ironbee_private.h"
 
-/* Phase rule callback data */
-typedef struct {
-    ib_rule_phase_t         phase;
-    const char             *name;
-    ib_state_event_type_t   event;
-} phase_rule_cbdata_t;
 
-/* Stream rule callback data */
-#define MAX_DATA_TYPES 4
-typedef struct {
-    ib_rule_stream_t        stream;
-    const char             *name;
-    ib_state_event_type_t   event;
-    ib_data_type_t          dtypes[MAX_DATA_TYPES];
-    ib_num_t                num_dtypes;
-} stream_rule_cbdata_t;
+/**
+ * Phase Flags
+ */
+#define PHASE_FLAG_NONE          (0x0)     /**< No phase flags */
+#define PHASE_FLAG_IS_VALID      (1 << 0)  /**< Phase is valid */
+#define PHASE_FLAG_IS_STREAM     (1 << 1)  /**< Phase is steam inspection */
+#define PHASE_FLAG_ALLOW_CHAIN   (1 << 2)  /**< Rule allows chaining */
+#define PHASE_FLAG_ALLOW_TFNS    (1 << 3)  /**< Rule allows transformations */
 
-static phase_rule_cbdata_t phase_rule_cbdata[] = {
-    {PHASE_REQUEST_HEADER,  "Request Header",  handle_request_headers_event},
-    {PHASE_REQUEST_BODY,    "Request Body",    handle_request_event},
-    {PHASE_RESPONSE_HEADER, "Response Header", handle_response_headers_event},
-    {PHASE_RESPONSE_BODY,   "Response Body",   handle_response_event},
-    {PHASE_POSTPROCESS,     "Post Process",    handle_postprocess_event},
-    {PHASE_INVALID,         NULL,              (ib_state_event_type_t) -1}
+/**
+ * Max # of data types (IB_DTYPE_*) per rule phase
+ */
+#define MAX_PHASE_DATA_TYPES 4
+
+/**
+ * Data on each rule phase, one per phase.
+ */
+struct ib_rule_phase_meta_t {
+    ib_tristate_t               is_stream;
+    ib_rule_phase_t             phase_num;
+    ib_flags_t                  flags;
+    const char                 *name;
+    ib_flags_t                  required_op_flags;
+    ib_state_event_type_t       event;
+    ib_data_type_t              dtypes[MAX_PHASE_DATA_TYPES];
+    ib_num_t                    num_dtypes;
 };
 
-static stream_rule_cbdata_t stream_rule_cbdata[] = {
+/* Rule definition data */
+static const ib_rule_phase_meta_t rule_phase_meta[] =
+{
     {
-        STREAM_REQUEST_HEADER,
+        IB_TRI_FALSE,
+        PHASE_NONE,
+        (PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        "Generic 'Phase' Rule",
+        IB_OP_FLAG_PHASE,
+        (ib_state_event_type_t) -1,
+        { }, 0
+    },
+    {
+        IB_TRI_FALSE,
+        PHASE_REQUEST_HEADER,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Request Header",
-        tx_data_in_event,
-        { IB_DTYPE_HTTP_HEADER }, 1
+        IB_OP_FLAG_PHASE,
+        handle_request_headers_event,
+        { }, 0
     },
     {
-        STREAM_REQUEST_BODY,
+        IB_TRI_FALSE,
+        PHASE_REQUEST_BODY,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Request Body",
+        IB_OP_FLAG_PHASE,
+        handle_request_event,
+        { }, 0
+    },
+    {
+        IB_TRI_FALSE,
+        PHASE_RESPONSE_HEADER,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        "Response Header",
+        IB_OP_FLAG_PHASE,
+        handle_response_headers_event,
+        { }, 0
+    },
+    {
+        IB_TRI_FALSE,
+        PHASE_RESPONSE_BODY,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        "Response Body",
+        IB_OP_FLAG_PHASE,
+        handle_response_event,
+        { }, 0
+    },
+    {
+        IB_TRI_FALSE,
+        PHASE_POSTPROCESS,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        "Post Process",
+        IB_OP_FLAG_PHASE,
+        handle_postprocess_event,
+        { }, 0
+    },
+    {
+        IB_TRI_TRUE,
+        PHASE_NONE,
+        (PHASE_FLAG_IS_STREAM),
+        "Generic 'Stream Inspection' Rule",
+        IB_OP_FLAG_STREAM,
+        (ib_state_event_type_t) -1,
+        { }, 0
+    },
+    {
+        IB_TRI_TRUE,
+        PHASE_STR_REQUEST_HEADER,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        "Request Header Stream",
+        IB_OP_FLAG_STREAM,
+        tx_data_in_event,
+        { IB_DTYPE_HTTP_HEADER }, 1
+    },
+    {
+        IB_TRI_TRUE,
+        PHASE_STR_REQUEST_BODY,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        "Request Body Stream",
+        IB_OP_FLAG_STREAM,
         tx_data_in_event,
         { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
     },
     {
-        STREAM_RESPONSE_HEADER,
-        "Response Header",
+        IB_TRI_TRUE,
+        PHASE_STR_RESPONSE_HEADER,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        "Response Header Stream",
+        IB_OP_FLAG_STREAM,
         tx_data_out_event,
         { IB_DTYPE_HTTP_HEADER }, 1
     },
     {
-        STREAM_RESPONSE_BODY,
-        "Response Body",
+        IB_TRI_TRUE,
+        PHASE_STR_RESPONSE_BODY,
+        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        "Response Body Stream",
+        IB_OP_FLAG_STREAM,
         tx_data_out_event,
         { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
     },
     {
-        STREAM_INVALID,
-        NULL,
+        IB_TRI_FALSE,
+        PHASE_INVALID,
+        PHASE_FLAG_NONE,
+        "Invalid",
+        IB_OP_FLAG_NONE,
         (ib_state_event_type_t) -1,
         { }, 0
     }
@@ -105,6 +189,39 @@ static stream_rule_cbdata_t stream_rule_cbdata[] = {
 #define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
 #define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
 
+
+/**
+ * Find a rule's matching phase meta data
+ * @internal
+ *
+ * @param[in] is_stream IB_TRI_TRUE if this is a "stream inspection" rule
+ * @param[in] phase_num Phase number (PHASE_xxx)
+ * @param[out] phase_meta Matching rule phase meta-data
+ *
+ * @returns Status code
+ */
+static ib_status_t find_phase_meta(ib_tristate_t is_stream,
+                                   ib_rule_phase_t phase_num,
+                                   const ib_rule_phase_meta_t **phase_meta)
+{
+    IB_FTRACE_INIT();
+    const ib_rule_phase_meta_t *meta;
+
+    assert (phase_meta != NULL);
+    assert ( (phase_num >= PHASE_NONE) && (phase_num <= PHASE_MAX) );
+
+    /* Loop through all parent rules */
+    for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
+    {
+        if ( ((is_stream == IB_TRI_UNSET) || (meta->is_stream == is_stream)) &&
+             (meta->phase_num == phase_num) )
+        {
+            *phase_meta = meta;
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
 
 /**
  * Log a field's value
@@ -544,7 +661,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(rule != NULL);
-    assert(rule->meta.type == RULE_TYPE_PHASE);
+    assert(rule->phase_meta->is_stream == IB_TRI_FALSE);
     assert(tx != NULL);
     assert(rule_result != NULL);
 
@@ -642,21 +759,21 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(tx->ctx != NULL);
     assert(cbdata != NULL);
 
-    const phase_rule_cbdata_t *rdata = (const phase_rule_cbdata_t *) cbdata;
-    ib_context_t              *ctx = tx->ctx;
-    ib_rule_phase_data_t      *phase;
-    ib_list_t                 *rules;
-    ib_list_node_t            *node = NULL;
+    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
+    ib_context_t               *ctx = tx->ctx;
+    ib_ruleset_phase_t         *ruleset_phase;
+    ib_list_t                  *rules;
+    ib_list_node_t             *node = NULL;
 
-    phase = &(ctx->rules->ruleset.phases[rdata->phase]);
-    assert(phase != NULL);
-    rules = phase->rules.rule_list;
+    ruleset_phase = &(ctx->rules->ruleset.phases[meta->phase_num]);
+    assert(ruleset_phase != NULL);
+    rules = ruleset_phase->rule_list;
     assert(rules != NULL);
 
     /* Sanity check */
-    if (phase->phase != rdata->phase) {
+    if (ruleset_phase->phase_num != meta->phase_num) {
         ib_log_error(ib, 4, "Rule engine: Phase %d (%s) is %d",
-                     rdata->phase, rdata->name, phase->phase );
+                     meta->phase_num, meta->name, ruleset_phase->phase_num );
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -664,13 +781,13 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug(ib, 9,
                      "No rules for phase %d/%s in context p=%p",
-                     rdata->phase, rdata->name, (void *)ctx);
+                     meta->phase_num, meta->name, (void *)ctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug(ib, 9,
                  "Executing %d rules for phase %d/%s in context %p",
                  IB_LIST_ELEMENTS(rules),
-                 rdata->phase, rdata->name, (void *)ctx);
+                 meta->phase_num, meta->name, (void *)ctx);
 
     /**
      * Loop through all of the rules for this phase, execute them.
@@ -738,9 +855,9 @@ static ib_status_t execute_stream_rule(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(rule != NULL);
-    assert(rule->meta.type == RULE_TYPE_STREAM);
     assert(txdata != NULL);
     assert(result != NULL);
+    assert(rule->phase_meta->is_stream == IB_TRI_TRUE);
 
 
     /**
@@ -805,17 +922,17 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     assert(txdata != NULL);
     assert(cbdata != NULL);
 
-    const stream_rule_cbdata_t *rdata = (const stream_rule_cbdata_t *) cbdata;
-    ib_context_t               *ctx = tx->ctx;
-    ib_rule_stream_data_t      *stream =
-        &(ctx->rules->ruleset.streams[rdata->stream]);
-    ib_list_t                  *rules = stream->rules.rule_list;
-    ib_list_node_t             *node = NULL;
+    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
+    ib_context_t            *ctx = tx->ctx;
+    ib_ruleset_phase_t      *ruleset_phase =
+        &(ctx->rules->ruleset.phases[meta->phase_num]);
+    ib_list_t               *rules = ruleset_phase->rule_list;
+    ib_list_node_t          *node = NULL;
 
     /* Sanity check */
-    if (stream->stream != rdata->stream) {
+    if (ruleset_phase->phase_num != meta->phase_num) {
         ib_log_error(ib, 4, "Rule engine: Stream %d (%s) is %d",
-                     rdata->stream, rdata->name, stream->stream );
+                     meta->phase_num, meta->name, ruleset_phase->phase_num);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -823,13 +940,13 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug(ib, 9,
                      "No rules for stream %d/%s in context p=%p",
-                     rdata->stream, rdata->name, (void *)ctx);
+                     meta->phase_num, meta->name, (void *)ctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug(ib, 9,
                  "Executing %d rules for stream %d/%s in context %p",
                  IB_LIST_ELEMENTS(rules),
-                 rdata->stream, rdata->name, (void *)ctx);
+                 meta->phase_num, meta->name, (void *)ctx);
 
     /**
      * Loop through all of the rules for this phase, execute them.
@@ -849,9 +966,9 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         /*
          * Determine if this event applies to this rule
          */
-        assert(rdata->event == event);
-        for (dtype_num = 0;  dtype_num < rdata->num_dtypes;  ++dtype_num) {
-            if (txdata->dtype == rdata->dtypes[dtype_num]) {
+        assert(meta->event == event);
+        for (dtype_num = 0;  dtype_num < meta->num_dtypes;  ++dtype_num) {
+            if (txdata->dtype == meta->dtypes[dtype_num]) {
                 dtype_found = IB_TRUE;
                 break;
             }
@@ -911,7 +1028,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
 }
 
 /**
- * Initialize phase rule set.
+ * Initialize rule set objects.
  * @internal
  *
  * @param[in] ib Engine
@@ -920,9 +1037,9 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t init_phase_ruleset(ib_engine_t *ib,
-                                      ib_mpool_t *mp,
-                                      ib_rule_engine_t *rule_engine)
+static ib_status_t init_ruleset(ib_engine_t *ib,
+                                ib_mpool_t *mp,
+                                ib_rule_engine_t *rule_engine)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -933,15 +1050,26 @@ static ib_status_t init_phase_ruleset(ib_engine_t *ib,
          phase_num <= (ib_num_t)PHASE_MAX;
          ++phase_num)
     {
-        ib_rule_phase_data_t *phase =
+        ib_ruleset_phase_t *ruleset_phase =
             &(rule_engine->ruleset.phases[phase_num]);
-        phase->phase = (ib_rule_phase_t)phase_num;
-        rc = ib_list_create(&(phase->rules.rule_list), mp);
+        ruleset_phase->phase_num = (ib_rule_phase_t)phase_num;
+        rc = find_phase_meta(IB_TRI_UNSET,
+                             phase_num,
+                             &(ruleset_phase->phase_meta));
         if (rc != IB_OK) {
-            ib_log_error(
-                ib, 4,
-                "Rule engine failed to create phase ruleset list: %s",
-                rc);
+            ib_log_error(ib, 4,
+                         "Rule set initialization: "
+                         "failed to find phase meta data: %s",
+                         rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = ib_list_create(&(ruleset_phase->rule_list), mp);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "Rule set initialization: "
+                         "failed to create phase ruleset list: %s",
+                         rc);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -949,7 +1077,7 @@ static ib_status_t init_phase_ruleset(ib_engine_t *ib,
 }
 
 /**
- * Register phase rules callbacks
+ * Register rules callbacks
  * @internal
  *
  * @param[in] ib Engine
@@ -958,102 +1086,39 @@ static ib_status_t init_phase_ruleset(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t register_phase_callbacks(ib_engine_t *ib,
-                                            ib_mpool_t *mp,
-                                            ib_rule_engine_t *rule_engine)
+static ib_status_t register_callbacks(ib_engine_t *ib,
+                                      ib_mpool_t *mp,
+                                      ib_rule_engine_t *rule_engine)
 {
     IB_FTRACE_INIT();
-    phase_rule_cbdata_t *cbdata;
-    ib_status_t          rc;
+    const ib_rule_phase_meta_t *meta;
+    const char                 *hook_type;
+    ib_status_t                 rc;
 
     /* Register specific handlers for specific events, and a
      * generic handler for the rest */
-    for (cbdata = phase_rule_cbdata; cbdata->phase != PHASE_INVALID; ++cbdata)
-    {
-        rc = ib_hook_tx_register(ib,
-                                 cbdata->event,
-                                 run_phase_rules,
-                                 (void *)cbdata);
-        if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Hook register for phase %d/%d/%s returned %d",
-                         cbdata->phase, cbdata->event, cbdata->name,
-                         ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+    for (meta = rule_phase_meta; meta->phase_num != PHASE_INVALID; ++meta) {
+        if (meta->event == (ib_state_event_type_t) -1) {
+            continue;
         }
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * Initialize stream rule set.
- * @internal
- *
- * @param[in] ib Engine
- * @param[in] mp Memory pool to use for allocations
- * @param[in,out] rule_engine Rule engine
- *
- * @returns Status code
- */
-static ib_status_t init_stream_ruleset(ib_engine_t *ib,
-                                       ib_mpool_t *mp,
-                                       ib_rule_engine_t *rule_engine)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_num_t    stream_num;
-
-    /* Initialize the stream rules */
-    for (stream_num = (ib_num_t)STREAM_NONE;
-         stream_num <= (ib_num_t)STREAM_MAX;
-         ++stream_num)
-    {
-        ib_rule_stream_data_t *stream =
-            &(rule_engine->ruleset.streams[stream_num]);
-        stream->stream = (ib_rule_stream_t)stream_num;
-        rc = ib_list_create(&(stream->rules.rule_list), mp);
-        if (rc != IB_OK) {
-            ib_log_error(
-                ib, 4,
-                "Rule engine failed to create stream ruleset list: %s",
-                rc);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        if (meta->is_stream == IB_TRI_FALSE) {
+            rc = ib_hook_tx_register(ib,
+                                     meta->event,
+                                     run_phase_rules,
+                                     (void *)meta);
+            hook_type = "tx";
         }
-    }
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * Register stream rules callbacks
- * @internal
- *
- * @param[in] ib Engine
- * @param[in] mp Memory pool to use for allocations
- * @param[in,out] rule_engine Rule engine
- *
- * @returns Status code
- */
-static ib_status_t register_stream_callbacks(ib_engine_t *ib,
-                                             ib_mpool_t *mp,
-                                             ib_rule_engine_t *rule_engine)
-{
-    IB_FTRACE_INIT();
-    stream_rule_cbdata_t *cbdata;
-    ib_status_t           rc;
-
-    /* Register specific handlers for specific events, and a
-     * generic handler for the rest */
-    for (cbdata = stream_rule_cbdata;
-         cbdata->stream != STREAM_INVALID;
-         ++cbdata)
-    {
-        rc = ib_hook_txdata_register(ib,
-                                     cbdata->event,
-                                     run_stream_rules,
-                                     (void *)cbdata);
+        else {
+            rc = ib_hook_txdata_register(ib,
+                                         meta->event,
+                                         run_stream_rules,
+                                         (void *)meta);
+            hook_type = "txdata";
+        }
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Hook register for stream %d/%d/%s returned %d",
-                         cbdata->stream, cbdata->event, cbdata->name,
+            ib_log_error(ib, 4,
+                         "Hook %s register for phase %d/%d/%s returned %s",
+                         hook_type, meta->phase_num, meta->event, meta->name,
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -1090,7 +1155,7 @@ static ib_status_t create_rule_engine(ib_engine_t *ib,
     }
 
     /* Create the rule list */
-    rc = ib_list_create(&(rule_engine->rule_list.rule_list), mp);
+    rc = ib_list_create(&(rule_engine->rule_list), mp);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Rule engine failed to initialize rule list: %s",
@@ -1117,20 +1182,11 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the phase rule callbacks */
-    rc = register_phase_callbacks(ib, ib->mp, ib->rules);
+    /* Register the rule callbacks */
+    rc = register_callbacks(ib, ib->mp, ib->rules);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Rule engine failed to register phase callbacks: %s",
-                     ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Register the stream rule callbacks */
-    rc = register_stream_callbacks(ib, ib->mp, ib->rules);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4,
-                     "Rule engine failed to register stream callbacks: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1159,20 +1215,11 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Initialize the phase rule sets */
-    rc = init_phase_ruleset(ib, ctx->mp, ctx->rules);
+    /* Initialize the rule sets */
+    rc = init_ruleset(ib, ctx->mp, ctx->rules);
     if (rc != IB_OK) {
         ib_log_error(ib, 4,
                      "Rule engine failed to initialize phase ruleset: %s",
-                     ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Initialize the stream rule sets */
-    rc = init_stream_ruleset(ib, ctx->mp, ctx->rules);
-    if (rc != IB_OK) {
-        ib_log_error(ib, 4,
-                     "Rule engine failed to initialize stream ruleset: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1256,20 +1303,20 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
 
 ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
-                                      ib_rule_type_t type,
+                                      ib_bool_t is_stream,
                                       ib_rule_t **prule)
 {
     IB_FTRACE_INIT();
-    ib_status_t       rc;
-    ib_rule_t        *rule;
-    ib_list_t        *lst;
-    ib_mpool_t       *mp = ib_rule_mpool(ib);
-    ib_rule_engine_t *rule_engine;
-    ib_rule_t        *previous;
+    ib_status_t                 rc;
+    ib_rule_t                  *rule;
+    ib_list_t                  *lst;
+    ib_mpool_t                 *mp = ib_rule_mpool(ib);
+    ib_rule_engine_t           *rule_engine;
+    ib_rule_t                  *previous;
+    const ib_rule_phase_meta_t *phase_meta;
 
     assert(ib != NULL);
     assert(ctx != NULL);
-    assert( (type == RULE_TYPE_PHASE) || (type == RULE_TYPE_STREAM) );
 
     /* Initialize the context's rule set (if required) */
     rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
@@ -1279,24 +1326,27 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Look up the generic rule phase */
+    rc = find_phase_meta(ib_bool_to_tristate(is_stream),
+                         PHASE_NONE,
+                         &phase_meta);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Error looking up rule phase: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Allocate the rule */
     rule = (ib_rule_t *)ib_mpool_calloc(mp, sizeof(ib_rule_t), 1);
     if (rule == NULL) {
-        ib_log_error(ib, 1, "Failed to allocate rule: %s");
+        ib_log_error(ib, 1, "Failed to allocate rule: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+    rule->phase_meta = phase_meta;
+    rule->meta.phase = PHASE_NONE;
 
-    /* Init type & flags */
-    rule->meta.type = type;
-    rule->flags = IB_RULE_FLAG_NONE;
-    if (rule->meta.type == RULE_TYPE_PHASE) {
-        rule->flags |= IB_RULE_FLAGS_PHASE;
-    }
-    else {
-        rule->flags |= IB_RULE_FLAGS_STREAM;
-    }
-
-    /* meta tags list */
+    /* Meta tags list */
     lst = NULL;
     rc = ib_list_create(&lst, mp);
     if (rc != IB_OK) {
@@ -1347,16 +1397,16 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     if (  (previous != NULL) &&
           ((previous->flags & IB_RULE_FLAG_CHAIN) != 0) )
     {
-        assert (rule->meta.type == previous->meta.type);
         previous->chained_rule = rule;
         rule->chained_from = previous;
         rule->meta.phase = previous->meta.phase;
+        rule->phase_meta = previous->phase_meta;
         rule->meta.chain_id = previous->meta.chain_id;
         rule->flags |= IB_RULE_FLAG_IN_CHAIN;
     }
 
     /* Good */
-    rule->parent_rlist = &(ctx->rules->rule_list);
+    rule->parent_rlist = ctx->rules->rule_list;
     *prule = rule;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1364,24 +1414,59 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
 ib_flags_t ib_rule_required_op_flags(const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
-    assert( (rule->meta.type == RULE_TYPE_PHASE) ||
-            (rule->meta.type == RULE_TYPE_STREAM) );
+    assert(rule != NULL);
+    assert(rule->phase_meta != NULL);
 
-    /* Verify that this operator is valid for this rule type */
-    if (rule->meta.type == RULE_TYPE_PHASE) {
-        IB_FTRACE_RET_UINT(IB_OP_FLAG_PHASE);
+    IB_FTRACE_RET_UINT(rule->phase_meta->required_op_flags);
+}
+
+ib_bool_t ib_rule_allow_tfns(const ib_rule_t *rule)
+{
+    IB_FTRACE_INIT();
+    assert(rule != NULL);
+    assert(rule->phase_meta != NULL);
+
+    if ( (rule->phase_meta->flags & PHASE_FLAG_ALLOW_TFNS) != 0) {
+        IB_FTRACE_RET_UINT(IB_TRUE);
     }
-    else if (rule->meta.type == RULE_TYPE_STREAM) {
-        IB_FTRACE_RET_UINT(IB_OP_FLAG_STREAM);
+    else {
+        IB_FTRACE_RET_UINT(IB_FALSE);
     }
-    assert(0 && "Rule type not PHASE or STREAM");
+}
+
+ib_bool_t ib_rule_allow_chain(const ib_rule_t *rule)
+{
+    IB_FTRACE_INIT();
+    assert(rule != NULL);
+    assert(rule->phase_meta != NULL);
+
+    if ( (rule->phase_meta->flags & PHASE_FLAG_ALLOW_CHAIN) != 0) {
+        IB_FTRACE_RET_UINT(IB_TRUE);
+    }
+    else {
+        IB_FTRACE_RET_UINT(IB_FALSE);
+    }
+}
+
+ib_bool_t ib_rule_is_stream(const ib_rule_t *rule)
+{
+    IB_FTRACE_INIT();
+    assert(rule != NULL);
+    assert(rule->phase_meta != NULL);
+
+    if ( (rule->phase_meta->flags & PHASE_FLAG_IS_STREAM) != 0) {
+        IB_FTRACE_RET_UINT(IB_TRUE);
+    }
+    else {
+        IB_FTRACE_RET_UINT(IB_FALSE);
+    }
 }
 
 ib_status_t ib_rule_set_chain(ib_engine_t *ib,
                               ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
-    assert ((rule->flags & IB_RULE_FLAG_ALLOW_CHAIN) != 0);
+    assert ((rule->phase_meta->flags & PHASE_FLAG_ALLOW_CHAIN) != 0);
 
     /* Set the chain flags */
     rule->flags |= IB_RULE_FLAGS_CHAIN;
@@ -1391,44 +1476,39 @@ ib_status_t ib_rule_set_chain(ib_engine_t *ib,
 
 ib_status_t ib_rule_set_phase(ib_engine_t *ib,
                               ib_rule_t *rule,
-                              ib_rule_phase_t phase)
+                              ib_rule_phase_t phase_num)
 {
     IB_FTRACE_INIT();
+    const ib_rule_phase_meta_t *phase_meta;
+    ib_status_t rc;
 
     assert(ib != NULL);
     assert(rule != NULL);
+    assert(rule->phase_meta != NULL);
 
-    if (rule->meta.type != RULE_TYPE_PHASE) {
-        ib_log_error(ib, 4, "Can't set rule phase: rule type not PHASE");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    if ( (phase <= PHASE_NONE) || (phase > PHASE_MAX) ) {
-        ib_log_error(ib, 4, "Can't set rule phase: Invalid phase %d", phase);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    rule->meta.phase = phase;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_rule_set_stream(ib_engine_t *ib,
-                               ib_rule_t *rule,
-                               ib_rule_stream_t stream)
-{
-    IB_FTRACE_INIT();
-
-    assert(ib != NULL);
-    assert(rule != NULL);
-
-    if (rule->meta.type != RULE_TYPE_STREAM) {
-        ib_log_error(ib, 4, "Can't set rule stream: rule type not STREAM");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    if ( (stream <= STREAM_NONE) || (stream > STREAM_MAX) ) {
+    if ( (rule->meta.phase != PHASE_NONE) &&
+         (rule->meta.phase != phase_num) ) {
         ib_log_error(ib, 4,
-                     "Can't set rule stream: Invalid stream %d", stream);
+                     "Can't set rule phase: already set to %d",
+                     rule->meta.phase);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    rule->meta.stream = stream;
+    if ( (phase_num <= PHASE_NONE) || (phase_num > PHASE_MAX) ) {
+        ib_log_error(ib, 4, "Can't set rule phase: Invalid phase %d",
+                     phase_num);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Look up the real rule phase */
+    rc = find_phase_meta(rule->phase_meta->is_stream, phase_num, &phase_meta);
+    if (rc != IB_OK) {
+        ib_log_error(ib, 1, "Error looking up rule phase: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rule->meta.phase = phase_num;
+    rule->phase_meta = phase_meta;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1438,32 +1518,27 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t       rc;
-    ib_list_t        *rules;
     ib_rule_engine_t *rule_engine;
+    ib_rule_phase_t   phase_num;
 
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(rule != NULL);
-    assert( (rule->meta.type == RULE_TYPE_PHASE) ||
-            (rule->meta.type == RULE_TYPE_STREAM) );
+    assert(rule->phase_meta != NULL);
+
+    phase_num = rule->meta.phase;
 
     /* Sanity checks */
-    if (rule->meta.type == RULE_TYPE_PHASE) {
-        ib_rule_phase_t phase = rule->meta.phase;
-        if ( (phase <= PHASE_NONE) || (phase > PHASE_MAX) ) {
-            ib_log_error(ib, 4,
-                         "Can't register rule: Invalid phase %d", phase);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+    if( (rule->phase_meta->flags & PHASE_FLAG_IS_VALID) == 0) {
+        ib_log_error(ib, 4, "Can't register rule: Phase is invalid");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    else {
-        ib_rule_stream_t stream = rule->meta.stream;
-        if ( (stream <= STREAM_NONE) || (stream > STREAM_MAX) ) {
-            ib_log_error(ib, 4,
-                         "Can't register rule: Invalid stream %d", stream);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+    if ( (rule->meta.phase <= PHASE_NONE) || (rule->meta.phase > PHASE_MAX) ) {
+        ib_log_error(ib, 4,
+                     "Can't register rule: Invalid phase %d", phase_num);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+    assert (rule->meta.phase == rule->phase_meta->phase_num);
 
     /* Verify that we have a valid operator */
     if (rule->opinst == NULL) {
@@ -1515,47 +1590,32 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 
     /* If the rule isn't chained to, add it to the appropriate list */
     else {
-        if (rule->meta.type == RULE_TYPE_PHASE) {
-            ib_rule_phase_t phase = rule->meta.phase;
-            ib_rule_phase_data_t *phasep =
-                &(rule_engine->ruleset.phases[phase]);
+        ib_ruleset_phase_t *ruleset_phase;
+        ib_list_t          *rules;
 
-            /* Add it to the list */
-            rules = phasep->rules.rule_list;
-            rc = ib_list_push(rules, (void *)rule);
-            if (rc != IB_OK) {
-                ib_log_error(ib, 4,
-                             "Failed to add rule phase=%d context=%p: %s",
-                             phase, (void *)ctx, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
+        ruleset_phase = &(rule_engine->ruleset.phases[phase_num]);
+        assert(ruleset_phase != NULL);
+        assert(ruleset_phase->phase_meta == rule->phase_meta);
+        rules = ruleset_phase->rule_list;
 
-            ib_log_debug(ib, 7,
-                         "Registered rule %s for phase %d of context %p",
-                         rule->meta.id, phase, (void *)ctx);
+        /* Add it to the list */
+        rc = ib_list_push(rules, (void *)rule);
+        if (rc != IB_OK) {
+            ib_log_error(ib, 4,
+                         "Failed to add rule type=%s phase=%d context=%p: %s",
+                         rule->phase_meta->is_stream ? "Stream" : "Normal",
+                         ruleset_phase,
+                         (void *)ctx,
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
         }
-        else if (rule->meta.type == RULE_TYPE_STREAM) {
-            ib_rule_stream_t stream = rule->meta.stream;
-            ib_rule_stream_data_t *streamp =
-                &(rule_engine->ruleset.streams[stream]);
 
-            /* Add it to the list */
-            rules = streamp->rules.rule_list;
-            rc = ib_list_push(rules, (void *)rule);
-            if (rc != IB_OK) {
-                ib_log_error(ib, 4,
-                             "Failed to add rule stream=%d context=%p: %s",
-                             stream, (void *)ctx, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            ib_log_debug(ib, 7,
-                         "Registered rule %s for stream %d of context %p",
-                         rule->meta.id, stream, (void *)ctx);
-        }
-        else {
-            assert(0 && "Rule type not PHASE or STREAM");
-        }
+        ib_log_debug(ib, 7,
+                     "Registered rule %s for type %s phase %d of context %p",
+                     rule->meta.id,
+                     rule->phase_meta->is_stream ? "Stream" : "Normal",
+                     ruleset_phase,
+                     (void *)ctx);
     }
 
     /* Enable & validate this rule */
