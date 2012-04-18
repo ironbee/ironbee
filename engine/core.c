@@ -1402,10 +1402,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                         path, strerror(errno));
             }
         }
-        else if (uri != NULL) {
-            // Should *never* get here.
-            fprintf(stderr, "Invalid log URI: '%s'\n", uri );
-        }
+        // Else no log URI specified.  Will use stderr below.
     }
 
     // Finally, use stderr as a fallback
