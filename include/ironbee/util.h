@@ -211,6 +211,30 @@ ib_status_t DLL_PUBLIC ib_initialize(void);
  */
 void DLL_PUBLIC ib_shutdown(void);
 
+/**
+ * Convert a ib_bool_t to ib_tristate_t
+ *
+ * @param[in] boolean Boolean value to convert
+ *
+ * @returns tri-state value
+ */
+ib_bool_t ib_bool_to_tristate(ib_bool_t boolean);
+#define ib_bool_to_tristate(boolean) \
+    (((boolean) == IB_TRUE) ? IB_TRI_TRUE : IB_TRI_FALSE)
+
+/**
+ * Convert a ib_tristate_t to a ib_bool_t
+ *
+ * @param[in] tristate Tristate value to convert
+ * @param[in] defbool Boolean value to return if @a tristate is UNSET
+ *
+ * @returns boolean value
+ */
+ib_bool_t ib_tristate_to_bool(ib_tristate_t tristate, ib_bool_t defbool);
+#define ib_tristate_to_bool(tristate,defbool) \
+    ( (tristate) == IB_TRI_TRUE ? IB_TRUE : \
+      (tristate) == IB_TRI_FALSE ? IB_FALSE : (defbool) )
+
 
 /**
  * @} IronBeeUtil
