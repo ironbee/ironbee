@@ -520,7 +520,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     rc = ib_data_get(tx->dpi, "request_headers:User-Agent", &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
         ib_log_debug(ib, 4, "request_headers_event: No user agent");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Found it: copy the data into a newly allocated string buffer */
