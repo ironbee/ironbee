@@ -142,12 +142,9 @@ static int modhtp_callback_log(htp_log_t *log)
     int level;
 
     switch(log->level) {
+        /* Parsing issues are unusual but not IronBee failures. */
         case HTP_LOG_ERROR:
-            level = IB_LOG_ERROR;
-            break;
         case HTP_LOG_WARNING:
-            level = IB_LOG_WARNING;
-            break;
         case HTP_LOG_NOTICE:
             level = IB_LOG_NOTICE;
             break;
@@ -1253,7 +1250,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
-                ib_log_error(ib, "LibHTP request parsing error: %d", ec);
+                ib_log_notice(ib, "LibHTP request parsing error: %d", ec);
             }
             break;
         case STREAM_STATE_ERROR:
