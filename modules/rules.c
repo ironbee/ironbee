@@ -1432,7 +1432,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     for (i = 0; lua_search_paths[i] != NULL; ++i)
     {
-        ib_log_debug(ib, 0,
+        ib_log_debug(ib, 4,
             "Adding %s to lua search path.", lua_search_paths[i]);
 
         /* Strlen + 2. One for \0 and 1 for the path separator. */
@@ -1451,7 +1451,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
         ib_lua_add_require_path(ib, g_ironbee_rules_lua, path);
 
-        ib_log_debug(ib, 1,"Added %s to lua search path.", path);
+        ib_log_debug(ib, 4,"Added %s to lua search path.", path);
     }
 
     /* We are done with path. To be safe, we NULL it as there is more work
