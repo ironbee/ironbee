@@ -180,7 +180,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
  * Malloc a @c char* and escape @a src into it and return that @c char*.
  *
  * Escaping is done by finding ASCII non-printable characters
- * and replacing them with @c 0xhh where @c hh is the hexidecimal value
+ * and replacing them with @c 0xhh where @c hh is the hexadecimal value
  * of the character.
  *
  * This utility is intended to assist in logging otherwise unprintable
