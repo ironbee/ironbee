@@ -447,7 +447,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
         itx->path = bstr_util_strdup_to_c(tx->parsed_uri->path);
-        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void*)itx->path);
+        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->path);
     }
     if (itx->path == NULL) {
         ib_log_debug(ib, 4, "Unknown URI path - using /");
@@ -458,7 +458,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Store the hostname if it was parsed with the URI. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
         itx->hostname = bstr_util_strdup_to_c(tx->parsed_uri->hostname);
-        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void*)itx->hostname);
+        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->hostname);
     }
     if (itx->hostname == NULL) {
         ib_log_debug(ib, 4,
@@ -580,7 +580,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     /* Update the hostname that may have changed with headers. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
         itx->hostname = bstr_util_strdup_to_c(tx->parsed_uri->hostname);
-        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void*)itx->hostname);
+        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->hostname);
     }
     if (itx->hostname == NULL) {
         ib_log_debug(ib, 4,
