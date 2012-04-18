@@ -3669,7 +3669,7 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_util_log_error(0, "Failed to fetch matcher interface");
+        ib_util_log_error("Failed to fetch matcher interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3705,7 +3705,7 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_util_log_error(0, "Failed to fetch matcher interface");
+        ib_util_log_error("Failed to fetch matcher interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 

@@ -40,9 +40,7 @@
 #pragma message "Warning: GCC optimization turned on off GCC 4.4"
 #endif
 
-void ib_field_util_log_debug(
-    int               level,
-    const char       *prefix,
+void ib_field_util_log_debug(  const char       *prefix,
     const ib_field_t *f
 )
 {
@@ -51,7 +49,7 @@ void ib_field_util_log_debug(
     assert(f != NULL);
 
     if (ib_field_is_dynamic(f)) {
-        ib_util_log_debug(level,
+        ib_util_log_debug(
             "%s is dynamic: fn_get=%p cbdata_get=%p fn_set=%p cbdata_set=%p",
 
           prefix,
@@ -60,7 +58,7 @@ void ib_field_util_log_debug(
         );
     }
 
-    ib_util_log_debug(level,
+    ib_util_log_debug(
         "%s name=%.*s type=%d",
         prefix, f->nlen, f->name, f->type
     );
@@ -72,7 +70,7 @@ void ib_field_util_log_debug(
     assert(f->val->pval);
 
     if (*(void **)(f->val->pval) == NULL) {
-        ib_util_log_debug(level,
+        ib_util_log_debug(
             "%s has no value.",
             prefix
         );
@@ -83,7 +81,7 @@ void ib_field_util_log_debug(
         {
             void *v;
             ib_field_value(f, ib_ftype_generic_out(&v));
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s value=%p",
                 prefix, v
             );
@@ -93,7 +91,7 @@ void ib_field_util_log_debug(
         {
             ib_num_t v;
             ib_field_value(f, ib_ftype_num_out(&v));
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s value=%lld",
                 prefix, v
             );
@@ -103,7 +101,7 @@ void ib_field_util_log_debug(
         {
             ib_unum_t v;
             ib_field_value(f, ib_ftype_unum_out(&v));
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s value=%llu",
                 prefix, v
             );
@@ -113,7 +111,7 @@ void ib_field_util_log_debug(
         {
             const char *v;
             ib_field_value(f, ib_ftype_nulstr_out(&v));
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s value=%s",
                 prefix, v
             );
@@ -123,7 +121,7 @@ void ib_field_util_log_debug(
         {
             const ib_bytestr_t *v;
             ib_field_value(f, ib_ftype_bytestr_out(&v));
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s value=%" IB_BYTESTR_FMT,
                 prefix,
                 IB_BYTESTR_FMT_PARAM(v)
@@ -134,7 +132,7 @@ void ib_field_util_log_debug(
         {
             const ib_list_t* v;
             ib_field_value(f, ib_ftype_list_out(&v));
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s &value=%p",
                 prefix, v
             );
@@ -144,14 +142,14 @@ void ib_field_util_log_debug(
         {
             const ib_stream_t* v;
             ib_field_value(f, ib_ftype_sbuffer_out(&v));
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s &value=%p",
                 prefix, v
             );
             break;
         }
         default:
-            ib_util_log_debug(level,
+            ib_util_log_debug(
                 "%s Unknown field type: %d",
                 prefix, f->nlen, f->name, f->type
             );
@@ -184,7 +182,7 @@ ib_status_t ib_field_create(
         goto failed;
     }
 
-    ib_field_util_log_debug(9, "FIELD_CREATE", (*pf));
+    ib_field_util_log_debug("FIELD_CREATE", (*pf));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -220,7 +218,7 @@ ib_status_t ib_field_create_no_copy(
         goto failed;
     }
 
-    ib_field_util_log_debug(9, "FIELD_CREATE_NO_COPY", (*pf));
+    ib_field_util_log_debug("FIELD_CREATE_NO_COPY", (*pf));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -272,7 +270,7 @@ ib_status_t ib_field_create_alias(
 
     (*pf)->val->pval = storage_pval;
 
-    ib_field_util_log_debug(9, "FIELD_CREATE_ALIAS", (*pf));
+    ib_field_util_log_debug("FIELD_CREATE_ALIAS", (*pf));
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
@@ -304,7 +302,7 @@ ib_status_t ib_field_create_dynamic(
     (*pf)->val->cbdata_get = cbdata_get;
     (*pf)->val->cbdata_set = cbdata_set;
 
-    ib_field_util_log_debug(9, "FIELD_CREATE_DYNAMIC", (*pf));
+    ib_field_util_log_debug("FIELD_CREATE_DYNAMIC", (*pf));
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -333,7 +331,7 @@ ib_status_t ib_field_alias(
         goto failed;
     }
 
-    ib_field_util_log_debug(9, "FIELD_ALIAS", (*pf));
+    ib_field_util_log_debug("FIELD_ALIAS", (*pf));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -414,7 +412,7 @@ ib_status_t ib_field_copy(
         goto failed;
     }
 
-    ib_field_util_log_debug(9, "FIELD_COPY", (*pf));
+    ib_field_util_log_debug("FIELD_COPY", (*pf));
 
     IB_FTRACE_RET_STATUS(rc);
 
@@ -450,7 +448,7 @@ ib_status_t ib_field_create_bytestr_alias(
         goto failed;
     }
 
-    ib_field_util_log_debug(9, "FIELD_CREATE_BYTESTR_ALIAS", (*pf));
+    ib_field_util_log_debug("FIELD_CREATE_BYTESTR_ALIAS", (*pf));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -524,7 +522,7 @@ ib_status_t ib_field_make_static(
     f->val->cbdata_get = NULL;
     f->val->cbdata_set = NULL;
 
-    ib_field_util_log_debug(9, "FIELD_MAKE_STATIC", f);
+    ib_field_util_log_debug("FIELD_MAKE_STATIC", f);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -662,7 +660,7 @@ ib_status_t ib_field_setv_ex(
     }
     }
 
-    ib_field_util_log_debug(9, "FIELD_SETV", f);
+    ib_field_util_log_debug("FIELD_SETV", f);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 

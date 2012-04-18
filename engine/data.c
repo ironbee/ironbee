@@ -232,12 +232,12 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
 
     rc = ib_field_create(&f, dpi->mp, IB_S2SL(name), IB_FTYPE_SBUFFER, NULL);
     if (rc != IB_OK) {
-        ib_util_log_debug(9, "SBUFFER field creation failed: %s", ib_status_to_string(rc));
+        ib_util_log_debug("SBUFFER field creation failed: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     rc = api->add(dpi, f, f->name, f->nlen);
-    ib_util_log_debug(9, "SBUFFER field creation returned: %s", ib_status_to_string(rc));
+    ib_util_log_debug("SBUFFER field creation returned: %s", ib_status_to_string(rc));
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }

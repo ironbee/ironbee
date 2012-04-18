@@ -149,7 +149,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
         ec = mkdir(path, mode);
         if (ec == -1) {
             ec = errno;
-            ib_util_log_error(3, "Failed to create path \"%s\": %s (%d)",
+            ib_util_log_error("Failed to create path \"%s\": %s (%d)",
                               path, strerror(ec), ec);
             rc = IB_EINVAL;
             goto cleanup;

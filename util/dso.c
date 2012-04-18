@@ -43,7 +43,7 @@ ib_status_t DLL_PUBLIC ib_dso_open(ib_dso_t **dso,
 
     handle = dlopen(file, RTLD_NOW);
     if (handle == NULL) {
-        ib_util_log_error(1, "%s", dlerror());
+        ib_util_log_error("%s", dlerror());
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -89,7 +89,7 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(ib_dso_t *dso,
     *sym = dlsym(dso->handle, name);
     err = dlerror();
     if (err != NULL) {
-        ib_util_log_error(1, "%s", err);
+        ib_util_log_error("%s", err);
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
 

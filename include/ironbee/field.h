@@ -919,12 +919,10 @@ int ib_field_is_dynamic(
 /**
  * Output debugging information of a field.
  *
- * @param[in] level  Log level.
  * @param[in] prefix Prefix message.
  * @param[in] f      Field to output.
  */
 void ib_field_util_log_debug(
-    int               level,
     const char       *prefix,
     const ib_field_t *f
 );

@@ -155,7 +155,7 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
     cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
 
     if (*errptr != NULL) {
-        ib_util_log_error(4, "PCRE compile error for \"%s\": %s at offset %d",
+        ib_util_log_error("PCRE compile error for \"%s\": %s at offset %d",
                           patt, *errptr, *erroffset);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -165,7 +165,7 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
 #ifdef PCRE_HAVE_JIT
     if(*errptr != NULL)  {
         pcre_free(cpatt);
-        ib_util_log_error(4,"PCRE-JIT study failed: %s", *errptr);
+        ib_util_log_error("PCRE-JIT study failed: %s", *errptr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -173,11 +173,11 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
        now uses pcre_fullinfo see doc/pcrejit.3 */
     rc = pcre_fullinfo(cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
     if (rc != 0) {
-        ib_util_log_error(4,"PCRE-JIT failed to get pcre_fullinfo");
+        ib_util_log_error("PCRE-JIT failed to get pcre_fullinfo");
         is_jit = 0;
     }
     else if (pcre_jit_ret != 1) {
-        ib_util_log_error(4,
+        ib_util_log_error(
                           "PCRE-JIT compiler does not support: %s. "
                           "It will fallback to the normal PCRE",
                           patt);
@@ -189,7 +189,7 @@ static ib_status_t modpcre_compile_internal(ib_mpool_t *pool,
 #else
     if(*errptr != NULL)  {
         pcre_free(cpatt);
-        ib_util_log_error(4,"PCRE study failed: %s", *errptr);
+        ib_util_log_error("PCRE study failed: %s", *errptr);
     }
     is_jit = 0;
 #endif /*PCRE_HAVE_JIT*/

@@ -150,11 +150,11 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
     ib_status_t rc;
 
     /* Add tree entries that just point into the base structure. */
-    ib_util_log_debug(9, "Initializing: t=%p init=%p", cm, init);
+    ib_util_log_debug("Initializing: t=%p init=%p", cm, init);
     cm->base = base;
     while (rec->name != NULL) {
         if (rec->fn_set != NULL && rec->fn_get != NULL) {
-            ib_util_log_debug(9, "INIT: %s type=%d set=%p/%p get=%p/%p",
+            ib_util_log_debug("INIT: %s type=%d set=%p/%p get=%p/%p",
                               rec->name, rec->type,
                               rec->fn_set, rec->cbdata_set,
                               rec->fn_get, rec->cbdata_get);
@@ -189,7 +189,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
 
             void *val = (void *)(((uint8_t *)base) + rec->offset);
 
-            ib_util_log_debug(9, "INIT: %s type=%d base=%p offset=%d dlen=%d %p",
+            ib_util_log_debug("INIT: %s type=%d base=%p offset=%d dlen=%d %p",
                               rec->name, rec->type, base,
                               (int)rec->offset, (int)rec->dlen, val);
 

@@ -64,17 +64,12 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
   ib_util_log_ex((lvl),"IronBee: ",NULL,0,__VA_ARGS__)
 
 /** Error Logger. */
-#define ib_util_log_error(lvl,...) \
-  ib_util_log_ex((lvl),"IronBeeUtil ERROR: ",NULL,0,__VA_ARGS__)
-
-/** Abort Logger. */
-#define ib_util_log_abort(...) \
-  do { ib_util_log_ex(0,"IronBeeUtil ABORT: ",__FILE__,__LINE__,__VA_ARGS__); \
-    abort(); } while(0)
+#define ib_util_log_error(...) \
+  ib_util_log_ex(3,"IronBeeUtil ERROR: ",NULL,0,__VA_ARGS__)
 
 /** Debug Logger. */
-#define ib_util_log_debug(lvl,...) \
-  ib_util_log_ex((lvl),"IronBeeUtil DBG: ",__FILE__,__LINE__,__VA_ARGS__)
+#define ib_util_log_debug(...) \
+  ib_util_log_ex(7,"IronBeeUtil DEBUG: ",__FILE__,__LINE__,__VA_ARGS__)
 
 
 /**
