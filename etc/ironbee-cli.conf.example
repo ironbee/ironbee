@@ -1,6 +1,6 @@
 ### Logging
-#DebugLog /var/log/ironbee/debug.log
-DebugLogLevel 9
+#Log /var/log/ironbee/debug.log
+LogLevel 9
 
 ### Sensor Info
 # Sensor ID, must follow UUID format

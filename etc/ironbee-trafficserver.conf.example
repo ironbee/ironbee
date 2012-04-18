@@ -1,7 +1,7 @@
 ### Logging
-#DebugLog /var/log/ironbee/debug.log
-DebugLogLevel 4
-DebugLogHandler ironbee-ts
+#Log /var/log/ironbee/debug.log
+LogLevel 4
+LogHandler ironbee-ts
 
 ### Sensor Info
 # Sensor ID, must follow UUID format

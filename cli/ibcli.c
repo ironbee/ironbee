@@ -54,7 +54,7 @@
 #include "ironbee_private.h"
 
 /* Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line
- * handling.  It's currently disabled because DebugLog and DebugLogLevel
+ * handling.  It's currently disabled because Log and LogLevel
  * directives in the configuration will overwrite the command-line version,
  * which can cause the CLI to log back and forth between the two files. */
 #define DEBUG_ARGS_ENABLE 0
@@ -2108,7 +2108,7 @@ int main(int argc, char* argv[])
     }
 
     /* Set all contexts' debug flags from the command line args
-     * We do this because they may have been overwritten by DebugLog
+     * We do this because they may have been overwritten by Log
      * directives. */
 #if DEBUG_ARGS_ENABLE
     if ( (settings.debug_level >= 0) || (settings.debug_uri != NULL) ) {

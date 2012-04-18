@@ -1,7 +1,7 @@
 ### Logging
-#DebugLog /var/log/ironbee/debug.log
-DebugLogLevel 4
-DebugLogHandler mod_ironbee
+#Log /var/log/ironbee/debug.log
+LogLevel 4
+LogHandler mod_ironbee
 
 ### Sensor Info
 # Sensor ID, must follow UUID format
@@ -87,7 +87,7 @@ RequestBuffering On
     Rule ARGS.foo "@rx bar" id:1 phase:REQUEST msg:foo=bar tag:foo tag:bar severity:12 confidence:30 event
 
     <Location /foo>
-        DebugLogLevel 9
+        LogLevel 9
         AuditLogParts +debug
     </Location>
 </Site>

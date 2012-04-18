@@ -33,7 +33,7 @@ class TestConfig : public BaseFixture {
 };
 
 TEST_F(TestConfig, simpleparse) {
-    ASSERT_IB_OK(config("DebugLogLevel 9"));
+    ASSERT_IB_OK(config("LogLevel 9"));
 }
 
 TEST_F(TestConfig, valid_module) {

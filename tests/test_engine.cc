@@ -63,8 +63,8 @@ TEST(TestIronBee, test_engine_config_basic)
 {
     ib_engine_t *ib;
     const char *cfgbuf =
-        "#DebugLog /tmp/ironbee-debug.log\n"
-        "DebugLogLevel 9\n"
+        "#Log /tmp/ironbee-debug.log\n"
+        "LogLevel 9\n"
         "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
         "SensorName UnitTesting\n"
         "SensorHostname unit-testing.sensor.tld\n"

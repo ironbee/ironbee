@@ -4761,13 +4761,19 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (strcasecmp("DebugLogLevel", name) == 0) {
+    else if (
+        strcasecmp("DebugLogLevel", name) == 0 ||
+        strcasecmp("LogLevel", name) == 0
+    ) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: %d", name, atol(p1_unescaped));
         rc = ib_context_set_num(ctx, "logger.log_level", atol(p1_unescaped));
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (strcasecmp("DebugLog", name) == 0) {
+    else if (
+        strcasecmp("DebugLog", name) == 0 ||
+        strcasecmp("Log", name) == 0
+    ) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
         const char   *uri = NULL;
@@ -4795,7 +4801,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "logger.log_uri", uri);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (strcasecmp("DebugLogHandler", name) == 0) {
+    else if (
+        strcasecmp("DebugLogHandler", name) == 0 ||
+        strcasecmp("LogHandler", name) == 0
+    ) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
@@ -5240,6 +5249,21 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "DebugLogHandler",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "LogLevel",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "Log",
+        core_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "LogHandler",
         core_dir_param1,
         NULL
     ),
