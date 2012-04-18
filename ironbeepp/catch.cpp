@@ -59,10 +59,8 @@ ib_status_t ibpp_caught_ib_exception(
     }
 
     if (engine) {
-        ib_log_error(engine, level, "%s", message.c_str());
-        ib_log_debug(engine, level, "%s",
-            diagnostic_information(e).c_str()
-        );
+        ib_log(engine, level, "%s", message.c_str());
+        ib_log_debug(engine, "%s", diagnostic_information(e).c_str() );
     } else {
         ib_util_log_error(level, "%s", message.c_str());
         ib_util_log_debug(level, "%s",
@@ -93,8 +91,8 @@ ib_status_t ibpp_caught_boost_exception(
     }
 
     if (engine) {
-        ib_log_error(engine, level, "%s", message.c_str());
-        ib_log_debug(engine, level, "%s",
+        ib_log(engine, level, "%s", message.c_str());
+        ib_log_debug(engine, "%s",
             diagnostic_information(e).c_str()
         );
     } else {
@@ -127,7 +125,7 @@ ib_status_t ibpp_caught_std_exception(
     message += e.what();
 
     if (engine) {
-        ib_log_error(engine, 1, "%s", message.c_str());
+        ib_log_error(engine,  "%s", message.c_str());
     } else {
         ib_util_log_error(1, "%s", message.c_str());
     }
@@ -140,7 +138,7 @@ ib_status_t ibpp_caught_unknown_exception(
 )
 {
     if (engine) {
-        ib_log_error(engine, 1, "%s",
+        ib_log_error(engine,  "%s",
             "Completely unknown exception thrown.  "
             "Please report as bug."
         );

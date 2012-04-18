@@ -85,7 +85,7 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
     /* Get the API, if any */
     rc = ib_hash_get(ib->apis, &prd, type);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1,
+        ib_log_error(ib,
                      "Error registering provider \"%s\": "
                      "Unknown provider type \"%s\"",
                      key, type);

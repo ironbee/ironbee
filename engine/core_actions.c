@@ -132,7 +132,7 @@ static ib_status_t act_debuglog_execute(void *data,
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
         rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "log_execute: Failed to expand string '%s': %s",
                          cstr, ib_status_to_string(rc));
         }
@@ -141,7 +141,7 @@ static ib_status_t act_debuglog_execute(void *data,
         expanded = (char *)cstr;
     }
 
-    ib_log_debug(tx->ib, 9, "LOG: %s", expanded);
+    ib_log_debug3(tx->ib, "LOG: %s", expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -205,7 +205,7 @@ static ib_status_t act_setflag_execute(void *data,
         ib_tx_flags_set(tx, IB_TX_FSUSPICIOUS);
     }
     else {
-        ib_log_error(tx->ib, 4, "Set flag action: invalid flag '%s'", cstr);
+        ib_log_error(tx->ib,  "Set flag action: invalid flag '%s'", cstr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -235,14 +235,14 @@ static ib_status_t act_event_execute(void *data,
     ib_logevent_t *event;
     const char *expanded;
 
-    ib_log_debug(tx->ib, 4, "Creating event via action");
+    ib_log_debug(tx->ib, "Creating event via action");
 
     /* Expand the message string */
     if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_MSG) != 0) {
         char *tmp;
         rc = ib_data_expand_str(tx->dpi, rule->meta.msg, &tmp);
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "event: Failed to expand string '%s': %s",
                          rule->meta.msg, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -278,7 +278,7 @@ static ib_status_t act_event_execute(void *data,
             char *tmp;
             rc = ib_data_expand_str(tx->dpi, rule->meta.data, &tmp);
             if (rc != IB_OK) {
-                ib_log_error(tx->ib, 4,
+                ib_log_error(tx->ib,
                              "event: Failed to expand data '%s': %s",
                              rule->meta.data, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
@@ -290,7 +290,7 @@ static ib_status_t act_event_execute(void *data,
         }
         rc = ib_logevent_data_set(event, expanded, strlen(expanded));
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4, "event: Failed to set data: %s",
+            ib_log_error(tx->ib,  "event: Failed to set data: %s",
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -443,7 +443,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
         rc = ib_data_expand_str_ex(
             tx->dpi, bsdata, bslen, IB_FALSE, &expanded, &exlen);
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: Failed to expand string '%.*s': %s",
                          (int) bslen, bsdata, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -452,7 +452,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
     else if (svdata->type == IB_FTYPE_BYTESTR) {
         expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
         if (expanded == NULL) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: Failed to copy string '%.*s'",
                          (int)bslen, bsdata);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -472,7 +472,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
         /* Create a bytestr to hold it. */
         rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)expanded, exlen);
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: Failed to bytestring for field %s: %s",
                          svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -487,7 +487,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
             ib_ftype_bytestr_in(bs)
         );
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: Failed to create field %s: %s",
                          svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -496,7 +496,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
         /* Add the field to the DPI */
         rc = ib_data_add(tx->dpi, new);
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: Failed to add field %s: %s",
                          svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -520,7 +520,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
             ib_ftype_num_in(&svdata->value.num)
         );
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: Failed to create field %s: %s",
                          svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -529,7 +529,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
         /* Add the field to the DPI */
         rc = ib_data_add(tx->dpi, new);
         if (rc != IB_OK) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: Failed to add field %s: %s",
                          svdata->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -540,7 +540,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
     else if (svdata->op == SETVAR_NUMADD) {
         assert(svdata->type == IB_FTYPE_NUM);
         if (cur == NULL) {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: field %s does not exist for NUMADD action",
                          svdata->name);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -568,7 +568,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
             ib_field_setv(cur, ib_ftype_unum_in(&num));
         }
         else {
-            ib_log_error(tx->ib, 4,
+            ib_log_error(tx->ib,
                          "setvar: field %s type %d invalid for NUMADD action",
                          svdata->name, cur->type);
             IB_FTRACE_RET_STATUS(IB_EINVAL);

@@ -325,7 +325,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
         /* Get the non-tfn field. */
         rc = api->get(dpi, name, nlen, pf);
         if (rc != IB_OK) {
-            ib_log_debug(ib, 4, "Failed to fetch field: %p (%s)", *pf, ib_status_to_string(rc));
+            ib_log_debug(ib, "Failed to fetch field: %p (%s)", *pf, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -333,7 +333,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
         if (   ((*pf)->type != IB_FTYPE_NULSTR)
             && ((*pf)->type != IB_FTYPE_BYTESTR))
         {
-            ib_log_error(ib, 4,
+            ib_log_error(ib,
                          "Cannot transform a non-string based field type=%d",
                          (int)(*pf)->type);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -359,7 +359,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
 
                 rc = ib_tfn_lookup_ex(ib, tname, len, &t);
                 if (rc == IB_OK) {
-                    ib_log_debug(ib, 7,
+                    ib_log_debug2(ib,
                                  "TFN: %" IB_BYTESTR_FMT ".%" IB_BYTESTR_FMT,
                                  IB_BYTESTRSL_FMT_PARAM(name, nlen),
                                  IB_BYTESTRSL_FMT_PARAM(tname, len));
@@ -367,14 +367,14 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                     rc = ib_tfn_transform(ib, dpi->mp, t, *pf, pf, &flags);
                     if (rc != IB_OK) {
                         /// @todo What to do here?  Fail or ignore?
-                        ib_log_error(ib, 3,
+                        ib_log_error(ib,
                                      "Transformation failed: %" IB_BYTESTR_FMT,
                                      IB_BYTESTRSL_FMT_PARAM(tname, len));
                     }
                 }
                 else {
                     /// @todo What to do here?  Fail or ignore?
-                    ib_log_error(ib, 4,
+                    ib_log_error(ib,
                                  "Unknown transformation: %" IB_BYTESTR_FMT,
                                  IB_BYTESTRSL_FMT_PARAM(tname, len));
                 }
@@ -386,7 +386,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
         /* Store the transformed field. */
         rc = ib_data_add_named(dpi, *pf, fullname, fnlen);
         if (rc != IB_OK) {
-            ib_log_error(ib, 4,
+            ib_log_error(ib,
                          "Cannot store field \"%.*s\" type=%d: %s",
                          (int)fnlen, fullname,
                          (int)(*pf)->type,

@@ -575,7 +575,7 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
     ib_txn_ctx *data = TSContDataGet(contp);
     if (data->out.buflen == (unsigned int)-1) {
     TSDebug("ironbee", "\tout_data_event: buflen = -1");
-    ib_log_debug(ironbee, 9,
+    ib_log_debug3(ironbee,
                      "ironbee/out_data_event(): buflen = -1");
     return 0;
     }
@@ -603,7 +603,7 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
     ib_txn_ctx *data = TSContDataGet(contp);
     if (data->out.buflen == (unsigned int)-1) {
     TSDebug("ironbee", "\tin_data_event: buflen = -1");
-    ib_log_debug(ironbee, 9,
+    ib_log_debug3(ironbee,
                  "ironbee/in_data_event(): buflen = -1");
     return 0;
     }
@@ -745,7 +745,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     blockp = TSIOBufferReaderStart(readerp);
 
     len = TSIOBufferBlockReadAvail(blockp, readerp);
-    ib_log_debug(ironbee, 9,
+    ib_log_debug3(ironbee,
                  "ts/ironbee/process_header: len=%ld", len );
 
     /* if we're going to enable manipulation of headers, we need a copy */

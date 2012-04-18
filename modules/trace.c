@@ -87,7 +87,7 @@ static ib_status_t modtrace_tx_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -113,7 +113,7 @@ static ib_status_t modtrace_txdata_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -138,10 +138,10 @@ static ib_status_t modtrace_reqline_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
 
     if (line->version == NULL) {
-        ib_log_debug(ib, 1,
+        ib_log_debug(ib,
                      "Method: '%.*s', path: '%.*s' version: <unknown>",
                      (int)ib_bytestr_length(line->method),
                      (char *)ib_bytestr_const_ptr(line->method),
@@ -149,7 +149,7 @@ static ib_status_t modtrace_reqline_event_callback(
                      (char *)ib_bytestr_const_ptr(line->path));
     }
     else {
-        ib_log_debug(ib, 1,
+        ib_log_debug(ib,
                      "Method: '%.*s', path: '%.*s' version: '%.s*'",
                      (int)ib_bytestr_length(line->method),
                      (char *)ib_bytestr_const_ptr(line->method),
@@ -182,12 +182,12 @@ static ib_status_t modtrace_respline_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
     if (line == NULL) {
-        ib_log_debug(ib, 1, "No response line!");
+        ib_log_debug(ib, "No response line!");
     }
     else {
-        ib_log_debug(ib, 1, "Code: '%.*s', message: '%.*s'",
+        ib_log_debug(ib, "Code: '%.*s', message: '%.*s'",
                      (int)ib_bytestr_length(line->code),
                      (char *)ib_bytestr_const_ptr(line->code),
                      (int)ib_bytestr_length(line->msg),
@@ -219,10 +219,10 @@ static ib_status_t modtrace_header_event_callback(
     event_info_t *eventp = (event_info_t *)cbdata;
     ib_parsed_name_value_pair_list_t *nvp;
 
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
 
     for (nvp = hdr;  nvp != NULL;  nvp = nvp->next) {
-        ib_log_debug(ib, 1, "%.*s: '%.*s'",
+        ib_log_debug(ib, "%.*s: '%.*s'",
                      (int)ib_bytestr_length(nvp->name),
                      (char *)ib_bytestr_const_ptr(nvp->name),
                      (int)ib_bytestr_length(nvp->value),
@@ -252,7 +252,7 @@ static ib_status_t modtrace_conn_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -276,7 +276,7 @@ static ib_status_t modtrace_conndata_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -298,7 +298,7 @@ static ib_status_t modtrace_null_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
-    ib_log_debug(ib, 1, "Callback: %s (%d)", eventp->name, eventp->number);
+    ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -326,7 +326,7 @@ static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
 
-    ib_log_debug(ib, 4, "handle_conn_data [%s]: data=%p dlen=%u",
+    ib_log_debug(ib, "handle_conn_data [%s]: data=%p dlen=%u",
                  eventp->name, cd->data, cd->dlen);
     if (eventp->number == conn_data_in_event) {
         char buf[1024];
@@ -336,7 +336,7 @@ static ib_status_t modtrace_handle_conn_data(ib_engine_t *ib,
         }
         memcpy(buf, cd->data, len);
         buf[len] = '\0';
-        ib_log_debug(ib, 4, "%s: data=%s", eventp->name, buf);
+        ib_log_debug(ib, "%s: data=%s", eventp->name, buf);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -364,7 +364,7 @@ static ib_status_t modtrace_handle_tx(
     IB_FTRACE_INIT();
     const event_info_t *eventp = (const event_info_t *)cbdata;
 
-    ib_log_debug(ib, 4, "handle_tx [%s]: data=%p tx->dpi=%p",
+    ib_log_debug(ib, "handle_tx [%s]: data=%p tx->dpi=%p",
                  eventp->name, (void *)tx->data, (void *)tx->dpi);
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -394,7 +394,7 @@ static ib_status_t modtrace_handle_txdata(
     IB_FTRACE_INIT();
     const event_info_t *eventp = (const event_info_t *)cbdata;
 
-    ib_log_debug(ib, 4, "handle_txdata [%s]: data=%p tx=%p dpi=%p",
+    ib_log_debug(ib, "handle_txdata [%s]: data=%p tx=%p dpi=%p",
                  eventp->name, (void *)txdata->data, (void *)tx, (void *)tx->dpi);
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -444,7 +444,7 @@ static void mempool_walk(ib_engine_t *ib,
             else {
                 parent = mp->parent->name;
             }
-            ib_log_debug(ib, 9,
+            ib_log_debug3(ib,
                          "Memory pool '%s': parent='%s' size=%zd inuse=%zd",
                          mp->name, parent, mp->size, mp->inuse);
         }
@@ -494,7 +494,7 @@ static ib_status_t modtrace_handle_tx_mem(
                                   IB_MODULE_STRUCT_PTR,
                                   (void *)&config);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -504,19 +504,19 @@ static ib_status_t modtrace_handle_tx_mem(
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib, 9, "=== Start Memory Pool Dump (%s) ===", eventp->name);
+    ib_log_debug3(ib, "=== Start Memory Pool Dump (%s) ===", eventp->name);
 
     /* Walk through all of the memory pools */
     mempool_walk(ib, ib->mp, &anon, &total);
 
     /* Dump totals */
-    ib_log_debug(ib, 9,
+    ib_log_debug3(ib,
                  "Anonymous memory pools: num=%zd size=%zd inuse=%zd",
                  anon.count, anon.size, anon.inuse);
-    ib_log_debug(ib, 9,
+    ib_log_debug3(ib,
                  "Memory pool totals: num=%zd size=%zd inuse=%zd",
                  total.count, total.size, total.inuse);
-    ib_log_debug(ib, 9, "=== End Memory Pool Dump (%s) ===", eventp->name);
+    ib_log_debug3(ib, "=== End Memory Pool Dump (%s) ===", eventp->name);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -548,7 +548,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, 4, "%s: no request headers", eventp->name);
+        ib_log_debug(ib, "%s: no request headers", eventp->name);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -560,7 +560,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
     }
 
     if (lst == NULL) {
-        ib_log_debug(ib, 4, "%s: Field list missing / incorrect type",
+        ib_log_debug(ib, "%s: Field list missing / incorrect type",
                      eventp->name );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -589,7 +589,7 @@ static ib_status_t modtrace_handle_req_headers(ib_engine_t *ib,
         /* And, log it
          * Note: field->name is not always a null ('\0') terminated string,
          *       so you must use field->nlen as it's length. */
-        ib_log_debug(ib, 4, "%.*s = '%s'", field->nlen, field->name, buf);
+        ib_log_debug(ib, "%.*s = '%s'", field->nlen, field->name, buf);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -730,13 +730,13 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                         break;
                     default:
                         rc = IB_EINVAL;
-                        ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
+                        ib_log_error(ib, "Event with unknown hook type: %d/%s",
                                      eventp->number, eventp->name);
 
                 }
         }
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Hook register for %d/%s returned %s",
+            ib_log_error(ib, "Hook register for %d/%s returned %s",
                          eventp->number, eventp->name, ib_status_to_string(rc));
         }
     }
@@ -759,7 +759,7 @@ static ib_status_t modtrace_finish(ib_engine_t *ib,
                                    void        *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_log_debug(ib, 4, "Trace module unloaded.");
+    ib_log_debug(ib, "Trace module unloaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -780,7 +780,7 @@ static ib_status_t modtrace_context_close(ib_engine_t  *ib,
                                           void         *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_log_debug(ib, 4, "Trace module initializing context=%p.", ctx);
+    ib_log_debug(ib, "Trace module initializing context=%p.", ctx);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -801,7 +801,7 @@ static ib_status_t modtrace_context_destroy(ib_engine_t  *ib,
                                             void         *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_log_debug(ib, 4, "Trace module finishing context=%p.", ctx);
+    ib_log_debug(ib, "Trace module finishing context=%p.", ctx);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

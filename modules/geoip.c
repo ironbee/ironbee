@@ -56,7 +56,7 @@ static ib_status_t geoip_lookup(
     const char *ip = tx->er_ipstr;
 
     if (ip == NULL) {
-        ib_log_error(ib, 0, "Trying to lookup NULL IP in GEOIP");
+        ib_log_alert(ib, "Trying to lookup NULL IP in GEOIP");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -85,7 +85,7 @@ static ib_status_t geoip_lookup(
 
     GeoIPRecord *geoip_rec;
 
-    ib_log_debug(ib, 4, "GeoIP Lookup '%s'", ip);
+    ib_log_debug(ib, "GeoIP Lookup '%s'", ip);
 
     /* Build a new list. */
     rc = ib_data_add_list(tx->dpi, "GEOIP", &geoip_lst);
@@ -94,12 +94,12 @@ static ib_status_t geoip_lookup(
      * GeoIPRecord. */
     if (rc != IB_OK)
     {
-        ib_log_error(ib, 0, "Unable to add GEOIP list to DPI.");
+        ib_log_alert(ib, "Unable to add GEOIP list to DPI.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if (geoip_db == NULL) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "GeoIP database was never opened. Perhaps the "
                      "configuration file needs a GeoIPDatabaseFile "
                      "\"/usr/share/geoip/GeoLiteCity.dat\" line?");
@@ -110,7 +110,7 @@ static ib_status_t geoip_lookup(
 
     if (geoip_rec != NULL)
     {
-        ib_log_debug(ib, 4, "GeoIP record found.");
+        ib_log_debug(ib, "GeoIP record found.");
 
         /* Append the floats latitude and longitude.
          * NOTE: Future work may add a float type to the Ironbee DPI. */
@@ -275,7 +275,7 @@ static ib_status_t geoip_lookup(
     }
     else
     {
-        ib_log_debug(ib, 4, "No GeoIP record found.");
+        ib_log_debug(ib, "No GeoIP record found.");
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -313,7 +313,7 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
                         "GeoIP Database File \"%s\" contains nulls." :
                         "GeoIP Database File \"%s\" is an invalid string.";
 
-        ib_log_debug(cp->ib, 3, msg, p1);
+        ib_log_debug(cp->ib, msg, p1);
         free(p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -362,34 +362,34 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     if (geoip_db == NULL)
     {
-        ib_log_debug(ib, 4, "Initializing default GeoIP database...");
+        ib_log_debug(ib, "Initializing default GeoIP database...");
         geoip_db = GeoIP_new(GEOIP_MMAP_CACHE);
     }
 
     if (geoip_db == NULL)
     {
-        ib_log_debug(ib, 4, "Failed to initialize GeoIP database.");
+        ib_log_debug(ib, "Failed to initialize GeoIP database.");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
-    ib_log_debug(ib, 4, "Initializing GeoIP database complete.");
+    ib_log_debug(ib, "Initializing GeoIP database complete.");
 
-    ib_log_debug(ib, 4, "Registering handler...");
+    ib_log_debug(ib, "Registering handler...");
 
     rc = ib_hook_tx_register(ib,
                              handle_context_tx_event,
                              geoip_lookup,
                              NULL);
 
-    ib_log_debug(ib, 4, "Done registering handler.");
+    ib_log_debug(ib, "Done registering handler.");
 
     if (rc != IB_OK)
     {
-        ib_log_debug(ib, 4, "Failed to load GeoIP module.");
+        ib_log_debug(ib, "Failed to load GeoIP module.");
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 4, "GeoIP module loaded.");
+    ib_log_debug(ib, "GeoIP module loaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -401,7 +401,7 @@ static ib_status_t geoip_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     {
         GeoIP_delete(geoip_db);
     }
-    ib_log_debug(ib, 4, "GeoIP module unloaded.");
+    ib_log_debug(ib, "GeoIP module unloaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

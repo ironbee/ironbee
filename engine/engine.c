@@ -124,7 +124,7 @@ ib_status_t ib_check_hook(
     ib_state_hook_type_t expected_hook_type;
 
     if (event > num_events) {
-        ib_log_error( ib, 1,
+        ib_log_error( ib,
             "Event/hook mismatch: Unknown event type: %d", event
         );
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -132,7 +132,7 @@ ib_status_t ib_check_hook(
 
     expected_hook_type = ib_state_event_hook_types[event];
     if ( expected_hook_type != hook_type ) {
-        ib_log_error(ib, 1,
+        ib_log_error(ib,
                      "Event/hook mismatch: "
                      "Event type %s expected %d but received %d",
                      ib_state_event_name(event),
@@ -154,7 +154,7 @@ static ib_status_t ib_register_hook(
 
     /* Insert the hook at the end of the list */
     if (last == NULL) {
-        ib_log(ib, 9, "Registering %s hook: %p",
+        ib_log_debug3(ib, "Registering %s hook: %p",
                ib_state_event_name(event),
                hook->callback.as_void);
 
@@ -168,7 +168,7 @@ static ib_status_t ib_register_hook(
 
     last->next = hook;
 
-    ib_log(ib, 9, "Registering %s hook after %p: %p",
+    ib_log_debug3(ib, "Registering %s hook after %p: %p",
            ib_state_event_name(event), last->callback,
            hook->callback.as_void);
 
@@ -264,12 +264,12 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
 
     /* Check plugin for ABI compatibility with this engine */
     if (p == NULL) {
-        ib_log_error(*pib, 1, "Error in ib_create: plugin info required");
+        ib_log_error(*pib,  "Error in ib_create: plugin info required");
         rc = IB_EINVAL;
         goto failed;
     }
     if (p->vernum > IB_VERNUM) {
-        ib_log_error(*pib, 0,
+        ib_log_alert(*pib,
                      "Plugin %s (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
@@ -338,7 +338,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     /// @todo Probably want to do this in a less hard-coded manner.
     rc = ib_module_init(ib_core_module(), *pib);
     if (rc != IB_OK) {
-        ib_log_error(*pib, 0, "Error in ib_module_init");
+        ib_log_alert(*pib,  "Error in ib_module_init");
         goto failed;
     }
 
@@ -429,7 +429,7 @@ void ib_engine_destroy(ib_engine_t *ib)
 
         /// @todo Destroy filters
 
-        ib_log(ib, 9, "Destroying configuration contexts...");
+        ib_log_debug3(ib, "Destroying configuration contexts...");
         IB_ARRAY_LOOP_REVERSE(ib->contexts, ne, idx, ctx) {
             if (   (ctx != ib->ctx)
                 && (ctx != ib->ectx) )
@@ -438,22 +438,22 @@ void ib_engine_destroy(ib_engine_t *ib)
             }
         }
         if (ib->ctx != ib->ectx) {
-            ib_log(ib, 9, "Destroying main configuration context...");
+            ib_log_debug3(ib, "Destroying main configuration context...");
             ib_context_destroy(ib->ctx);
             ib->ctx = NULL;
         }
-        ib_log(ib, 9, "Destroying engine configuration context...");
+        ib_log_debug3(ib, "Destroying engine configuration context...");
         ib_context_destroy(ib->ectx);
         ib->ectx = ib->ctx = NULL;
 
-        ib_log(ib, 9, "Unloading modules...");
+        ib_log_debug3(ib, "Unloading modules...");
         IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
             if (m != cm) {
                 ib_module_unload(m);
             }
         }
 
-        ib_log(ib, 9, "Destroy IB handle (%d,%d,%s,%s): %p",
+        ib_log_debug3(ib, "Destroy IB handle (%d,%d,%s,%s): %p",
                ib->plugin->vernum, ib->plugin->abinum,
                ib->plugin->filename, ib->plugin->name, ib);
 
@@ -474,13 +474,13 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     /// @todo Need to tune the pool size
     rc = ib_mpool_create_ex(&pool, "Connection", ib->mp, 2048);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create connection memory pool: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to create connection memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;
         goto failed;
     }
     *pconn = (ib_conn_t *)ib_mpool_calloc(pool, 1, sizeof(**pconn));
     if (*pconn == NULL) {
-        ib_log_error(ib, 0, "Failed to allocate memory for connection");
+        ib_log_alert(ib, "Failed to allocate memory for connection");
         rc = IB_EALLOC;
         goto failed;
     }
@@ -528,14 +528,14 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     /// @todo Need to tune the pool size
     rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Failed to create connection data memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;
         goto failed;
     }
     *pconndata = (ib_conndata_t *)ib_mpool_calloc(pool, 1, sizeof(**pconndata));
     if (*pconndata == NULL) {
-        ib_log_error(ib, 0, "Failed to allocate memory for connection data");
+        ib_log_alert(ib, "Failed to allocate memory for connection data");
         rc = IB_EALLOC;
         goto failed;
     }
@@ -545,7 +545,7 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     (*pconndata)->dlen = 0;
     (*pconndata)->data = (uint8_t *)ib_mpool_calloc(pool, 1, dalloc);
     if ((*pconndata)->data == NULL) {
-        ib_log_error(ib, 0, "Failed to allocate memory for connection data buffer");
+        ib_log_alert(ib, "Failed to allocate memory for connection data buffer");
         rc = IB_EALLOC;
         goto failed;
     }
@@ -617,13 +617,13 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     /// @todo Need to tune the pool size
     rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create transaction memory pool: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to create transaction memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;
         goto failed;
     }
     tx = (ib_tx_t *)ib_mpool_calloc(pool, 1, sizeof(*tx));
     if (tx == NULL) {
-        ib_log_error(ib, 0, "Failed to allocate memory for transaction");
+        ib_log_alert(ib, "Failed to allocate memory for transaction");
         rc = IB_EALLOC;
         goto failed;
     }
@@ -668,7 +668,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         conn->tx_first = tx;
         conn->tx = tx;
         conn->tx_last = tx;
-        ib_log_debug(ib, 9, "First transaction: %p", tx);
+        ib_log_debug3(ib, "First transaction: %p", tx);
     }
     else {
         conn->tx = tx;
@@ -683,7 +683,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         }
         ib_tx_flags_set(tx, IB_TX_FPIPELINED);
 
-        ib_log_debug(ib, 9, "Found a pipelined transaction: %p", tx);
+        ib_log_debug3(ib, "Found a pipelined transaction: %p", tx);
     }
 
     /* Only when we are successful, commit changes to output variable. */
@@ -965,7 +965,8 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.null = cb;
@@ -1015,7 +1016,8 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.conn = cb;
@@ -1065,7 +1067,8 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.conndata = cb;
@@ -1115,7 +1118,8 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.tx = cb;
@@ -1165,7 +1169,8 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.txdata = cb;
@@ -1216,7 +1221,8 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.headersdata = cb;
@@ -1266,7 +1272,8 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.requestline = cb;
@@ -1317,7 +1324,8 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
 
     if (hook == NULL) {
-        ib_log_abort(ib, "Error in ib_mpool_calloc");
+        ib_log_emergency(ib, "Error in ib_mpool_calloc");
+        abort();
     }
 
     hook->callback.responseline = cb;
@@ -1425,7 +1433,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         size_t n;
         size_t i;
         IB_ARRAY_LOOP(ib->modules, n, i, m) {
-            ib_log_debug(ib, 9, "Registering module=\"%s\" idx=%d",
+            ib_log_debug3(ib, "Registering module=\"%s\" idx=%d",
                          m->name, m->idx);
             rc = ib_module_register_context(m, ctx);
             if (rc != IB_OK) {
@@ -1464,7 +1472,7 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     size_t ncfgdata;
     size_t i;
 
-    ib_log_debug(ib, 9, "Opening context ctx=%p", ctx);
+    ib_log_debug3(ib, "Opening context ctx=%p", ctx);
 
     IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
         if (cfgdata == NULL) {
@@ -1476,7 +1484,7 @@ ib_status_t ib_context_open(ib_context_t *ctx)
             rc = m->fn_ctx_open(ib, m, ctx, m->cbdata_ctx_open);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, 4, "Failed to call context open: %s", ib_status_to_string(rc));
+                ib_log_error(ib, "Failed to call context open: %s", ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -1519,7 +1527,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
         rc = ib_lock_init(&ctx->auditlog->index_fp_lock);
 
         if (rc!=IB_OK) {
-            ib_log_debug(ctx->ib, 5,
+            ib_log_debug2(ctx->ib,
                 "Failed to initialize lock for audit index %s", idx);
 
             IB_FTRACE_RET_STATUS(rc);
@@ -1537,7 +1545,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
         rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
 
         if (rc!=IB_OK) {
-            ib_log_debug(ctx->ib, 5, "Failed lock to audit index %s", idx);
+            ib_log_debug2(ctx->ib, "Failed lock to audit index %s", idx);
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -1546,7 +1554,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
 
             ib_lock_unlock(&ctx->auditlog->index_fp_lock);
 
-            ib_log_debug(ctx->ib, 7,
+            ib_log_debug2(ctx->ib,
                          "Re-setting log same value. No action: %s",
                          idx);
 
@@ -1587,7 +1595,7 @@ ib_status_t ib_context_close(ib_context_t *ctx)
     size_t ncfgdata;
     size_t i;
 
-    ib_log_debug(ib, 9, "Closing context ctx=%p", ctx);
+    ib_log_debug3(ib, "Closing context ctx=%p", ctx);
 
     IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
         if (cfgdata == NULL) {
@@ -1599,7 +1607,7 @@ ib_status_t ib_context_close(ib_context_t *ctx)
             rc = m->fn_ctx_close(ib, m, ctx, m->cbdata_ctx_close);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, 4, "Failed to call context init: %s", ib_status_to_string(rc));
+                ib_log_error(ib, "Failed to call context init: %s", ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -1628,7 +1636,7 @@ ib_site_t *ib_context_site_get(ib_context_t *ctx)
     ib_status_t rc;
     ib_site_t *site;
 
-    ib_log_debug(ctx->ib, 7, "ctx=%p; fn_ctx_site=%p", ctx, ctx->fn_ctx_site);
+    ib_log_debug2(ctx->ib, "ctx=%p; fn_ctx_site=%p", ctx, ctx->fn_ctx_site);
 
     if (ctx->fn_ctx_site == NULL) {
         IB_FTRACE_RET_PTR(ib_site_t, NULL);
@@ -1657,7 +1665,7 @@ void ib_context_destroy(ib_context_t *ctx)
 
     ib = ctx->ib;
 
-    ib_log_debug(ib, 9, "Destroying context ctx=%p", ctx);
+    ib_log_debug3(ib, "Destroying context ctx=%p", ctx);
 
     /* Run through the context modules to call any ctx_fini functions. */
     /// @todo Not sure this is needed anymore
@@ -1668,12 +1676,12 @@ void ib_context_destroy(ib_context_t *ctx)
         ib_module_t *m = cfgdata->module;
 
         if (m->fn_ctx_destroy != NULL) {
-            ib_log_debug(ib, 9, "Finishing context ctx=%p for module=%s (%p)",
+            ib_log_debug3(ib, "Finishing context ctx=%p for module=%s (%p)",
                          ctx, m->name, m);
             rc = m->fn_ctx_destroy(ib, m, ctx, m->cbdata_ctx_destroy);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, 4, "Failed to call context fini: %s", ib_status_to_string(rc));
+                ib_log_error(ib, "Failed to call context fini: %s", ib_status_to_string(rc));
             }
         }
     }
@@ -1705,7 +1713,7 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    ib_log_debug(ctx->ib, 9, "Initializing context config %p base=%p", ctx, base);
+    ib_log_debug3(ctx->ib, "Initializing context config %p base=%p", ctx, base);
 
     if (init == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -1814,7 +1822,7 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
     txhostlen = strlen(txhost);
     txpath = tx->path;
 
-    ib_log_debug(ib, 9, "CHOOSER: ctx=%p tx=%p loc=%p", ctx, tx, loc);
+    ib_log_debug3(ib, "CHOOSER: ctx=%p tx=%p loc=%p", ctx, tx, loc);
 
     /*
      * Check for a matching IP address, then a matching hostname and
@@ -1827,7 +1835,7 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
     ip = ipnode ? (const char *)ib_list_node_data(ipnode) : NULL;
     while (numips--) {
         /// @todo IP should be IP:Port combo
-        ib_log_debug(ib, 6, "Checking IP %s against context %s",
+        ib_log_debug2(ib, "Checking IP %s against context %s",
                      tx->conn->local_ipstr, ip?ip:"ANY");
         if ((ip == NULL) || (strcmp(ip, tx->conn->local_ipstr) == 0)) {
             numhosts = loc->site->hosts ? ib_list_elements(loc->site->hosts) : 1;
@@ -1839,22 +1847,22 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
                 off_t cmpoffset = txhostlen - hostlen;
                 const char *cmphost = (cmpoffset > 0)?txhost + cmpoffset:NULL;
                 if (cmphost != NULL) {
-                    ib_log_debug(ib, 6, "Checking Host \"%s\" (effective=\"%s\") against context %s",
+                    ib_log_debug2(ib, "Checking Host \"%s\" (effective=\"%s\") against context %s",
                                  txhost, cmphost, (host&&*host)?host:"ANY");
                     if ((host == NULL) || (strcmp(host, cmphost) == 0)) {
                         path = loc->path;
 
-                        ib_log_debug(ib, 6, "Checking Location %s against context %s",
+                        ib_log_debug2(ib, "Checking Location %s against context %s",
                                      txpath, path?path:"ANY");
                         if ((path == NULL) || (strncmp(path, txpath, strlen(path)) == 0)) {
-                            ib_log_debug(ib, 5, "Site \"%s:%s\" matched ctx=%p",
+                            ib_log_debug2(ib, "Site \"%s:%s\" matched ctx=%p",
                                          loc->site->name, loc->path, ctx);
                             IB_FTRACE_RET_STATUS(IB_OK);
                         }
                     }
                 }
                 else {
-                    ib_log_debug(ib, 6, "Skipping Host \"%s\" check against context %s",
+                    ib_log_debug2(ib, "Skipping Host \"%s\" check against context %s",
                                  txhost, host?host:"ANY");
                 }
                 if (numhosts > 0) {

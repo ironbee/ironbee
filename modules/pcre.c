@@ -503,7 +503,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
 
     rc = ensure_field_exists(ib, tx, field_name);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Could not ensure that field %s was a list.",
+        ib_log_alert(ib, "Could not ensure that field %s was a list.",
             field_name);
         free(full_field_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -530,7 +530,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
                 memcpy(debug_msg, match_start, match_len);
                 debug_msg[match_len] = '\0';
 
-                ib_log_debug(ib, 7, "REGEX Setting %s=%s.",
+                ib_log_debug2(ib, "REGEX Setting %s=%s.",
                             full_field_name,
                             debug_msg);
 
@@ -639,7 +639,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         char *debug_str = ib_util_hex_escape(subject, subject_len);
 
         if ( debug_str != NULL ) {
-            ib_log_debug(ib, 9, "Matching against: %s", debug_str);
+            ib_log_debug3(ib, "Matching against: %s", debug_str);
             free( debug_str );
         }
     }
@@ -737,7 +737,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
             memcpy(tmp_c, subject, subject_len);
             tmp_c[subject_len] = '\0';
             /* No match. Return false to the caller (*result = 0). */
-            ib_log_debug(ib, 7, "No match for [%s] using pattern [%s].",
+            ib_log_debug2(ib, "No match for [%s] using pattern [%s].",
                         tmp_c,
                         rule_data->patt);
             free(tmp_c);
@@ -783,14 +783,14 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                               &modpcre_matcher_iface,
                               NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3,
+        ib_log_error(ib,
                      MODULE_NAME_STR
                      ": Error registering pcre matcher provider: "
                      "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib, 4,"PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"",
+    ib_log_debug(ib,"PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"",
         PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
 
     /* Register operators. */

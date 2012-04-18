@@ -87,7 +87,7 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
     size_t tmp_unesc_len;
 
     if ( tmp_unesc == NULL ) {
-        ib_log_debug(ib, 3, "Failed to allocate unescape string buffer.");
+        ib_log_debug(ib, "Failed to allocate unescape string buffer.");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -98,7 +98,7 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
                                  IB_UTIL_UNESCAPE_NULTERMINATE);
 
     if ( rc != IB_OK ) {
-        ib_log_debug(ib, 3, "Failed to unescape string: %s", str);
+        ib_log_debug(ib, "Failed to unescape string: %s", str);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -364,7 +364,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
         *result = ib_tx_flags_isset(tx, IB_TX_FSUSPICIOUS);
     }
     else {
-        ib_log_error(tx->ib, 4, "checkflag operator: invalid flag '%s'", cstr);
+        ib_log_error(tx->ib,  "checkflag operator: invalid flag '%s'", cstr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -452,7 +452,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     /* Make a copy of the parameters to operate on */
     rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Error unescaping rule parameters '%s'", parameters);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -460,7 +460,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     /* Create the radix matcher */
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to allocate a radix matcher: %s",
+        ib_log_error(ib, "Failed to allocate a radix matcher: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -472,7 +472,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         /* Convert the IP address string to a prefix object */
         rc = ib_radix_ip_to_prefix(p, &prefix, mp);
         if (rc != IB_OK) {
-            ib_log_error(ib, 4,
+            ib_log_error(ib,
                          "Error created radix prefix for %s: %s",
                          p, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -481,13 +481,13 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         /* Insert the prefix into the radix tree */
         rc = ib_radix_insert_data(radix, prefix, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib, 4,
+            ib_log_error(ib,
                          "Error loading prefix %s to the radix tree: %s",
                          p, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(ib, 9, "prefix '%s' added to the radix tree", p);
+        ib_log_debug3(ib, "prefix '%s' added to the radix tree", p);
     }
 
     /* Done */
@@ -536,7 +536,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
 
         /* Verify that we got out a string */
         if (ipstr == NULL) {
-            ib_log_error(ib, 4, "Failed to get NULSTR from field");
+            ib_log_error(ib, "Failed to get NULSTR from field");
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
         iplen = strlen(ipstr);
@@ -562,7 +562,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     /* Convert the IP address string to a prefix object */
     rc = ib_radix_ip_to_prefix_ex(ipstr, iplen, &prefix, tx->mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Error created radix prefix for %.*s: %s",
                      iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -577,7 +577,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
         *result = 1;
     }
     else {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Radix matcher failed matching for %.*s: %s",
                      iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -614,7 +614,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 
     rc = unescape_op_args(ib, mp, &params_unesc, &params_unesc_len, params);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 3, "Unable to unescape parameter: %s", params);
+        ib_log_debug(ib, "Unable to unescape parameter: %s", params);
         IB_FTRACE_RET_STATUS(rc);
     }
 

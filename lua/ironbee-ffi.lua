@@ -680,22 +680,26 @@ end
 -- ===============================================
 -- Debug Functions.
 -- ===============================================
-function ib_util_log_debug(lvl, fmt, ...)
+function ib_util_log_debug(fmt, ...)
     local dinfo = debug.getinfo(2)
 
-    c.ib_util_log_ex(lvl, "LuaFFI - ",
+    c.ib_util_log_ex(7, "LuaFFI - ",
                      dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
-function ib_log_debug(ib, lvl, fmt, ...)
+function ib_log_debug(ib, fmt, ...)
     local dinfo = debug.getinfo(2)
 
-    c.ib_log_ex(ib, lvl, "LuaFFI - ",
+    c.ib_log_ex(ib, 7, "LuaFFI - ",
                  dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
-function ib_log_error(ib, lvl, fmt, ...)
-    c.ib_log_ex(ib, lvl, "LuaFFI - ", nil, 0, fmt, ...)
+function ib_log(ib, lvl, fmt, ...)
+    c.ib_log_ex(ib, lvl, "LuaFFI -", nil, 0, fmt, ...)
+end
+
+function ib_log_error(ib, fmt, ...)
+    c.ib_log_ex(ib, 3, "LuaFFI - ", nil, 0, fmt, ...)
 end
 
 -- ===============================================
@@ -1243,12 +1247,12 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
     elseif c_event == c.response_finished_event then
         l_arg = newTx(arg)
     else
-        ib_log_error(l_ib, 4, "Unhandled event for module \"%s\": %d",
+        ib_log_error(l_ib,  "Unhandled event for module \"%s\": %d",
                      modname, ffi.cast("int", event))
         return nil
     end
 
---    ib_log_debug(l_ib, 9, "Executing event handler for module \"%s\" event=%d",
+--    ib_log_debug3(l_ib, "Executing event handler for module \"%s\" event=%d",
 --                 modname, ffi.cast("int", event))
     m = modules[modname]
     if m == nil then

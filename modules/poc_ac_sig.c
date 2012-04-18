@@ -120,7 +120,7 @@ static ib_status_t pocacsig_dir_trace(ib_cfgparser_t *cp,
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_status_t rc;
 
-    ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
+    ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1, ctx);
     if (strcasecmp("On", p1) == 0) {
         rc = ib_context_set_num(ctx, MODULE_NAME_STR ".trace", 1);
         IB_FTRACE_RET_STATUS(rc);
@@ -130,7 +130,7 @@ static ib_status_t pocacsig_dir_trace(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_error(ib, 3, "Failed to parse directive: %s \"%s\"", name, p1);
+    ib_log_error(ib, "Failed to parse directive: %s \"%s\"", name, p1);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
@@ -173,7 +173,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
     /* Get the pocacsig configuration for this context. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to fetch %s config: %s",
+        ib_log_error(ib, "Failed to fetch %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
     }
 
@@ -182,7 +182,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         rc = ib_matcher_create(ib, ib_engine_pool_config_get(ib),
                                "pcre", &cfg->pcre);
         if (rc != IB_OK) {
-            ib_log_error(ib, 2, "Could not create a PCRE matcher: %s", ib_status_to_string(rc));
+            ib_log_error(ib, "Could not create a PCRE matcher: %s", ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -201,13 +201,13 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
     else if (strcasecmp("PocACSigReqHead", name) == 0) {
         phase = POCACSIG_REQHEAD;
         if (cfg->phase[phase] == NULL) {
-            ib_log_debug(ib, 9, "Creating list for phase=%d", phase);
+            ib_log_debug3(ib, "Creating list for phase=%d", phase);
             rc = ib_list_create(&list,
                                 ib_engine_pool_config_get(ib));
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
-            ib_log_debug(ib, 9, "List for phase=%d list=%p", phase, list);
+            ib_log_debug3(ib, "List for phase=%d list=%p", phase, list);
             cfg->phase[phase] = list;
         }
     }
@@ -252,7 +252,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         }
     }
     else {
-        ib_log_error(ib, 3, "Invalid signature: %s", name);
+        ib_log_error(ib, "Invalid signature: %s", name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -260,7 +260,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
 
     /* Target */
     if (current_arg == NULL) {
-        ib_log_error(ib, 1, "No PocACSig target");
+        ib_log_error(ib, "No PocACSig target");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     target = (const char *)ib_list_node_data_const(current_arg);
@@ -268,7 +268,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
 
     /* Prequal (The AC pattern) */
     if (current_arg == NULL) {
-        ib_log_error(ib, 1, "No PocACSig operator");
+        ib_log_error(ib, "No PocACSig operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     prequal = (const char *)ib_list_node_data_const(current_arg);
@@ -276,7 +276,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
 
     /* An extra Pcre */
     if (current_arg == NULL) {
-        ib_log_error(ib, 1, "No PocACSig operator");
+        ib_log_error(ib, "No PocACSig operator");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     op = (const char *)ib_list_node_data_const(current_arg);
@@ -284,7 +284,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
 
     /* Action */
     if (current_arg == NULL) {
-        ib_log_debug(ib, 4, "No PocACSig action");
+        ib_log_debug(ib, "No PocACSig action");
         action = "";
     }
     else {
@@ -305,18 +305,18 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
 
     /* Compile the PCRE patt. */
     if (cfg->pcre == NULL) {
-        ib_log_error(ib, 2, "No PCRE matcher available (load the pcre module?)");
+        ib_log_error(ib, "No PCRE matcher available (load the pcre module?)");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     sig->cpatt = ib_matcher_compile(cfg->pcre, sig->patt, &errptr, &erroff);
     if (sig->cpatt == NULL) {
-        ib_log_error(ib, 3, "Error at offset=%d of PCRE patt=\"%s\": %s",
+        ib_log_error(ib, "Error at offset=%d of PCRE patt=\"%s\": %s",
                      erroff, sig->patt, errptr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(ib, 4, "POCACSIG: \"%s\" \"%s\" \"%s\" phase=%d ctx=%p",
+    ib_log_debug(ib, "POCACSIG: \"%s\" \"%s\" \"%s\" phase=%d ctx=%p",
                  target, op, action, phase, ctx);
 
     ib_list_t *sigs = cfg->phase[phase];
@@ -348,7 +348,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         rc = ib_matcher_instance_create(ib, mp,
                                "ac", &pfe->ac_matcher);
         if (rc != IB_OK) {
-            ib_log_error(ib, 2, "Could not create an AC matcher: %s", ib_status_to_string(rc));
+            ib_log_error(ib, "Could not create an AC matcher: %s", ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -358,7 +358,7 @@ static ib_status_t pocacsig_dir_signature(ib_cfgparser_t *cp,
         /** Append it to the phase list */
         rc = ib_list_push(sigs, pfe);
         if (rc != IB_OK) {
-            ib_log_error(ib, 2, "Could not add an entry to the phase %d"
+            ib_log_error(ib, "Could not add an entry to the phase %d"
                                 " (ret: %d)", phase, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -458,28 +458,24 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
     ib_list_t *sigs;
     ib_list_node_t *node;
     ib_list_node_t *sig_node;
-    int dbglvl;
     ib_status_t rc;
 
     /* Get the pocacsig configuration for this context. */
     rc = ib_context_module_config(tx->ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to fetch %s config: %s",
+        ib_log_error(ib, "Failed to fetch %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
     }
-
-    /* If tracing is enabled, lower the log level. */
-    dbglvl = cfg->trace ? 4 : 9;
 
     /* Get the list of sigs for this phase. */
     sigs = cfg->phase[phase];
     if (sigs == NULL) {
-        ib_log_debug(ib, dbglvl, "No signatures for phase=%d ctx=%p",
+        ib_log_debug(ib, "No signatures for phase=%d ctx=%p",
                      phase, tx->ctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib, dbglvl, "Executing %d signatures for phase=%d ctx=%p",
+    ib_log_debug(ib, "Executing %d signatures for phase=%d ctx=%p",
                  ib_list_elements(sigs), phase, tx->ctx);
 
     ib_ac_context_t ctx;
@@ -498,12 +494,12 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
         /* Fetch the field. */
         rc = ib_data_get(tx->dpi, pfe->target, &f);
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "PocACSig: No field named \"%s\"", pfe->target);
+            ib_log_error(ib, "PocACSig: No field named \"%s\"", pfe->target);
             continue;
         }
 
         /* Perform the match. */
-        ib_log_debug(ib, dbglvl, "PocACSig: Matching tree \"%x\" against"
+        ib_log_debug(ib, "PocACSig: Matching tree \"%x\" against"
                                  " field \"%s\"", pfe->ac_matcher, pfe->target);
 
         rc = ib_matcher_exec_field(pfe->ac_matcher, 0, f, (void *)ac_mctx);
@@ -516,7 +512,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                 s = (pocacsig_sig_t *)acm->data;
 
                 /* Perform the match. */
-                ib_log_debug(ib, dbglvl, "PocSig: Matched prequal:\"%s\". Now"
+                ib_log_debug(ib, "PocSig: Matched prequal:\"%s\". Now"
                                          " Matching \"%s\" against field"
                                          " \"%s\"", s->prequal,
                                          s->patt, s->target);
@@ -527,7 +523,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                         and process the pcre expression */
                     ib_logevent_t *e;
 
-                    ib_log_debug(ib, dbglvl, "PocACSig MATCH: prequal:\"%s\""
+                    ib_log_debug(ib, "PocACSig MATCH: prequal:\"%s\""
                                              " pcre:\"%s\" at %s", s->prequal,
                                              s->patt, pfe->target);
 
@@ -545,7 +541,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                     );
 
                     if (rc != IB_OK) {
-                        ib_log_error(ib, 3, "PocACSig: Error generating "
+                        ib_log_error(ib, "PocACSig: Error generating "
                                      "event: %s", ib_status_to_string(rc));
                         continue;
                     }
@@ -556,7 +552,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
             }
         }
         else {
-            ib_log_debug(ib, dbglvl, "PocACSig NOMATCH");
+            ib_log_debug(ib, "PocACSig NOMATCH");
         }
     }
 

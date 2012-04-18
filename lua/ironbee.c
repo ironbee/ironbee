@@ -72,7 +72,6 @@ static int register_module(lua_State *L)
  *
  * Lua parameter stack:
  *  1) engine handle
- *  2) level
  *  3) format
  *  4) ...
  *
@@ -81,7 +80,6 @@ static int register_module(lua_State *L)
 static int log_debug(lua_State *L)
 {
     ib_engine_t *ib = (ib_engine_t *)lua_topointer(L, 1);
-    int level = luaL_checkint(L, 2);
     int nargs = lua_gettop(L);
     const char *msg;
     int ec;
@@ -98,18 +96,17 @@ static int log_debug(lua_State *L)
     /// @todo Store the format function for faster access???
     lua_getglobal(L, "string");
     lua_getfield(L, -1, "format"); /* string.format() */
-    lua_replace(L, 2); /* replace the "level" arg with format function */
     lua_pop(L, 1); /* cleanup the stack used to find string table */
     ec = lua_pcall(L, (nargs - 2), 1, 0); /* format(fmt, ...) */
     if (ec != 0) {
-        ib_log_error(ib, 1, "Failed to exec string.format - %s (%d)",
+        ib_log_error(ib, "Failed to exec string.format - %s (%d)",
                      lua_tostring(L, -1), ec);
         return 0;
     }
     msg = lua_tostring(L, -1); /* formatted string */
 
     /* Call the ironbee API with the formatted message. */
-    ib_log_debug(ib, level, "%s", msg);
+    ib_log_debug(ib, "%s", msg);
 
     return 1;
 }

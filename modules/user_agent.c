@@ -339,7 +339,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
 
     /* No value?  Do nothing */
     if (value == NULL) {
-        ib_log_debug(ib, 9, "No %s field in user agent", name);
+        ib_log_debug3(ib, "No %s field in user agent", name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -352,7 +352,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
         ib_ftype_nulstr_in(value)
     );
     if (rc != IB_OK) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Error creating user agent %s field: %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -360,12 +360,12 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     /* Add the field to the list */
     rc = ib_field_list_add(agent_list, tmp_field);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Error adding user agent %s field: %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "Stored user agent %s '%s'", name, value);
+    ib_log_debug3(ib, "Stored user agent %s '%s'", name, value);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -404,7 +404,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     /* Allocate memory for a copy of the string to split up below. */
     buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                       "Failed to allocate %d bytes for agent string",
                       len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -413,29 +413,29 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     /* Copy the string out */
     memcpy(buf, ib_bytestr_const_ptr(bs), len);
     buf[len] = '\0';
-    ib_log_debug(ib, 4, "Found user agent: '%s'", buf);
+    ib_log_debug(ib, "Found user agent: '%s'", buf);
 
     /* Copy the agent string */
     agent = (char *)ib_mpool_strdup(tx->mp, buf);
     if (agent == NULL) {
-        ib_log_error(ib, 4, "Failed to allocate copy of agent string");
+        ib_log_error(ib, "Failed to allocate copy of agent string");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Parse the user agent string */
     rc = modua_parse_uastring(buf, &product, &platform, &extra);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 4, "Failed to parse User Agent string '%s'", agent);
+        ib_log_debug(ib, "Failed to parse User Agent string '%s'", agent);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Categorize the parsed string */
     rule = modua_match_cat_rules(product, platform, extra);
     if (rule == NULL) {
-        ib_log_debug(ib, 4, "No rule matched" );
+        ib_log_debug(ib, "No rule matched" );
     }
     else {
-        ib_log_debug(ib, 4, "Matched to rule #%d / category '%s'",
+        ib_log_debug(ib, "Matched to rule #%d / category '%s'",
                      rule->rule_num, rule->category );
     }
 
@@ -443,7 +443,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     rc = ib_data_add_list(tx->dpi, "UA", &agent_list);
     if (rc != IB_OK)
     {
-        ib_log_error(ib, 0, "Unable to add UserAgent list to DPI.");
+        ib_log_alert(ib, "Unable to add UserAgent list to DPI.");
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -519,7 +519,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers:User-Agent", &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, 4, "request_headers_event: No user agent");
+        ib_log_debug(ib, "request_headers_event: No user agent");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -571,7 +571,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* Extract the X-Forwarded-For from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &field);
     if ( (field == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, 4, "No forward header");
+        ib_log_debug(ib, "No forward header");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -583,7 +583,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     }
 
     if (bs == NULL) {
-        ib_log_debug(ib, 4, "Forward header not a bytestr");
+        ib_log_debug(ib, "Forward header not a bytestr");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     len = ib_bytestr_length(bs);
@@ -598,7 +598,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* Allocate the memory */
     buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Failed to allocate %d bytes for local address",
                      len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -608,7 +608,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     memcpy(buf, data, len);
     buf[len] = '\0';
 
-    ib_log_debug(ib, 4, "Remote address => '%s'", buf);
+    ib_log_debug(ib, "Remote address => '%s'", buf);
 
     /* This will lose the pointer to the original address
      * buffer, but it should be cleaned up with the rest
@@ -618,7 +618,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     /* Update the remote address field in the tx collection */
     rc = ib_data_add_bytestr(tx->dpi, "remote_addr", (uint8_t*)buf, len, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Failed to create remote address TX field: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -650,7 +650,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                              modua_user_agent,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Hook register returned %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Hook register returned %s", ib_status_to_string(rc));
     }
 
     /* Register the remote address callback */
@@ -658,13 +658,13 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                              modua_remoteip,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Hook register returned %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Hook register returned %s", ib_status_to_string(rc));
     }
 
     /* Initializations */
     rc = modua_ruleset_init(&failed_rule, &failed_frule_num);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "User agent rule initialization failed"
                      " on rule %s field rule #%d: %s",
                      failed_rule->label, failed_frule_num, ib_status_to_string(rc));
@@ -673,10 +673,10 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Get the rules */
     modua_match_ruleset = modua_ruleset_get( );
     if (modua_match_ruleset == NULL) {
-        ib_log_error(ib, 4, "Failed to get user agent rule list: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to get user agent rule list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_log_debug(ib, 4,
+    ib_log_debug(ib,
                  "Found %d match rules",
                  modua_match_ruleset->num_rules);
 

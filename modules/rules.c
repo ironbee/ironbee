@@ -177,21 +177,21 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
             break;
         }
         else if (isblank(*cptr) == 0) {
-            ib_log_error(cp->ib, 4, "Invalid rule syntax '%s'", str);
+            ib_log_error(cp->ib,  "Invalid rule syntax '%s'", str);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
 
     /* Make sure that we have an operator */
     if (! at || strlen(at+1) == 0) {
-        ib_log_error(cp->ib, 4, "Invalid rule syntax '%s'", str);
+        ib_log_error(cp->ib,  "Invalid rule syntax '%s'", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Make a copy of the string to operate on */
     copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), at+1);
     if (copy == NULL) {
-        ib_log_error(cp->ib, 3,
+        ib_log_error(cp->ib,
                      "Failed to copy rule operator string '%s'", at+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -251,7 +251,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                                  flags,
                                  &operator);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 4,
+        ib_log_error(cp->ib,
                      "Failed to create operator instance '%s': %s",
                      op, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -260,12 +260,12 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     /* Set the operator */
     rc = ib_rule_set_operator(cp->ib, rule, operator);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 4,
+        ib_log_error(cp->ib,
                      "Failed to set operator for rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_log_debug(cp->ib, 9,
+    ib_log_debug3(cp->ib,
                  "Rule: op='%s'; flags=0x%04x args='%s'",
                  op, flags, ( (args == NULL) ? "" : args) );
 
@@ -329,7 +329,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
      */
     new = ib_mpool_alloc(cp->mp, target_len);
     if (new == NULL) {
-        ib_log_error(cp->ib, 4,
+        ib_log_error(cp->ib,
                      "Failed to duplicate target field string '%s'",
                      target_str);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -342,7 +342,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
     }
 
     /* Log our rewrite */
-    ib_log_debug(cp->ib, 9, "Rewrote '%s' -> '%s'", target_str, new);
+    ib_log_debug3(cp->ib, "Rewrote '%s' -> '%s'", target_str, new);
 
     /* Done */
     *rewritten = new;
@@ -387,7 +387,7 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
     /* Make a duplicate of the target string to work on */
     dup_str = ib_mpool_strdup(ib_rule_mpool(ib), str);
     if (dup_str == NULL) {
-        ib_log_error(ib, 4, "Error duplicating target string '%s'", str);
+        ib_log_error(ib, "Error duplicating target string '%s'", str);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -443,7 +443,7 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
         if (*tfns == NULL) {
             rc = ib_list_create(tfns, ib_rule_mpool(ib));
             if (rc != IB_OK) {
-                ib_log_error(ib, 4,
+                ib_log_error(ib,
                              "Error creating transformation list: %s",
                              ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
@@ -453,7 +453,7 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
         /* Add the name to the list */
         rc = ib_list_push(*tfns, tfn);
         if (rc != IB_OK) {
-            ib_log_error(ib, 4,
+            ib_log_error(ib,
                          "Error adding transformation %s to list: %s",
                          tfn, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -465,7 +465,7 @@ static ib_status_t parse_target_string(ib_engine_t *ib,
      * it's been chopped up into pieces.
      */
     *target = dup_str;
-    ib_log_debug(ib, 9, "Final target field name is '%s'", *target);
+    ib_log_debug3(ib, "Final target field name is '%s'", *target);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -498,12 +498,12 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
         ++target_str;
     }
     if (*target_str == '\0') {
-        ib_log_error(cp->ib, 4, "Rule targets is empty");
+        ib_log_error(cp->ib,  "Rule targets is empty");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), target_str);
     if (copy == NULL) {
-        ib_log_error(cp->ib, 4, "Failed to copy rule targets");
+        ib_log_error(cp->ib,  "Failed to copy rule targets");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -517,28 +517,28 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
 
         rc = rewrite_target_tokens(cp, cur, &rewritten);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Error rewriting target '%s'", cur);
+            ib_log_error(cp->ib,  "Error rewriting target '%s'", cur);
             continue;
         }
 
         /* Parse the target string */
         rc = parse_target_string(cp->ib, rewritten, &tstr, &tfns);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Error parsing target string '%s'", cur);
+            ib_log_error(cp->ib,  "Error parsing target string '%s'", cur);
             continue;
         }
 
         /* Create the target object */
         rc = ib_rule_create_target(cp->ib, tstr, tfns, &target, &not_found);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4,
+            ib_log_error(cp->ib,
                          "Error creating rule target '%s': %s",
                          tstr, ib_status_to_string(rc));
             continue;
 
         }
         else if (not_found != 0) {
-            ib_log_alert(cp->ib, 4,
+            ib_log_error(cp->ib,
                          "Rule target '%s': %d transformations not found",
                          tstr, not_found);
         }
@@ -546,17 +546,17 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
         /* Add the target to the rule */
         rc = ib_rule_add_target(cp->ib, rule, target);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Failed to add rule target '%s'", cur);
+            ib_log_error(cp->ib,  "Failed to add rule target '%s'", cur);
             IB_FTRACE_RET_STATUS(rc);
         }
-        ib_log_debug(cp->ib, 9,
+        ib_log_debug3(cp->ib,
                      "Added rule target '%s' to rule %p", cur, (void *)rule);
         ++num_targets;
     }
 
     /* Make sure we have at least one successful target */
     if (num_targets == 0) {
-        ib_log_error(cp->ib, 4, "No targets for rule %s", rule->meta.id);
+        ib_log_error(cp->ib,  "No targets for rule %s", rule->meta.id);
         rc = IB_EINVAL;
     }
 
@@ -599,11 +599,11 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
                                IB_ACTINST_FLAG_NONE,
                                &action);
     if (rc == IB_ENOENT) {
-        ib_log_alert(cp->ib, 4, "Ignoring unknown modifier '%s'", name);
+        ib_log_error(cp->ib, "Ignoring unknown modifier '%s'", name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (rc != IB_OK) {
-        ib_log_error(cp->ib, 4,
+        ib_log_error(cp->ib,
                      "Failed to create action instance '%s': %s",
                      name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -612,7 +612,7 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     /* Add the action to the rule */
     rc = ib_rule_add_action(cp->ib, rule, action, atype);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 4,
+        ib_log_error(cp->ib,
                      "Failed to add action '%s' to rule '%s': %s",
                      name, ib_rule_id(rule), ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -652,7 +652,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     /* Copy the string */
     copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), modifier_str);
     if (copy == NULL) {
-        ib_log_error(cp->ib, 4,
+        ib_log_error(cp->ib,
                      "Failed to copy rule modifier '%s'", modifier_str);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -674,7 +674,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     /* ID modifier */
     if (strcasecmp(name, "id") == 0) {
         if (value == NULL) {
-            ib_log_error(cp->ib, 4, "Modifier ID with no value");
+            ib_log_error(cp->ib,  "Modifier ID with no value");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         rc = ib_rule_set_id(cp->ib, rule, value);
@@ -687,7 +687,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rule->meta.msg = value;
         rc = ib_data_expand_test_str(value, &expand);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Expansion test failed: %d", rc);
+            ib_log_error(cp->ib,  "Expansion test failed: %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
         if (expand == IB_TRUE) {
@@ -702,7 +702,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rule->meta.data = value;
         rc = ib_data_expand_test_str(value, &expand);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Expansion test failed: %d", rc);
+            ib_log_error(cp->ib,  "Expansion test failed: %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
         if (expand == IB_TRUE) {
@@ -722,7 +722,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         int severity = value ? atoi(value) : 0;
 
         if (severity > UINT8_MAX) {
-            ib_log_error(cp->ib, 4, "Invalid severity: %s", value);
+            ib_log_error(cp->ib,  "Invalid severity: %s", value);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         rule->meta.severity = (uint8_t)severity;
@@ -734,7 +734,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         int confidence = value ? atoi(value) : 0;
 
         if (confidence > UINT8_MAX) {
-            ib_log_error(cp->ib, 4, "Invalid confidence: %s", value);
+            ib_log_error(cp->ib,  "Invalid confidence: %s", value);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         rule->meta.confidence = (uint8_t)confidence;
@@ -746,12 +746,12 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         ib_rule_phase_t phase = PHASE_NONE;
         if (strcasecmp(name, "phase") == 0) {
             if (value == NULL) {
-                ib_log_error(cp->ib, 4, "Modifier PHASE with no value");
+                ib_log_error(cp->ib,  "Modifier PHASE with no value");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
             rc = lookup_phase(value, IB_FALSE, &phase);
             if (rc != IB_OK) {
-                ib_log_error(cp->ib, 4, "Invalid phase: %s", value);
+                ib_log_error(cp->ib,  "Invalid phase: %s", value);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
@@ -767,7 +767,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         if (phase != PHASE_NONE) {
             rc = ib_rule_set_phase(cp->ib, rule, phase);
             if (rc != IB_OK) {
-                ib_log_error(cp->ib, 4, "Error setting rule phase: %s",
+                ib_log_error(cp->ib,  "Error setting rule phase: %s",
                              ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -790,16 +790,16 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
          (strcasecmp(name, "t") == 0) )
     {
         if (value == NULL) {
-            ib_log_error(cp->ib, 4, "Modifier transformation with no value");
+            ib_log_error(cp->ib,  "Modifier transformation with no value");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         rc = ib_rule_add_tfn(cp->ib, rule, value);
         if (rc == IB_ENOENT) {
-            ib_log_error(cp->ib, 4, "Unknown transformation: %s", value);
+            ib_log_error(cp->ib,  "Unknown transformation: %s", value);
             IB_FTRACE_RET_STATUS(rc);
         }
         else if (rc != IB_OK) {
-            ib_log_error(cp->ib, 4, "Error adding transformation '%s': %s",
+            ib_log_error(cp->ib,  "Error adding transformation '%s': %s",
                          value, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
@@ -809,7 +809,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     /* Finally, try to match it to an action */
     rc = register_action_modifier(cp, rule, name, value);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 4, "Error registering action '%s': %s",
+        ib_log_error(cp->ib,  "Error registering action '%s': %s",
                      value, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -845,7 +845,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
 
     /* Report semop error and return. */
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to lock Lua context.");
+        ib_log_error(ib, "Failed to lock Lua context.");
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
@@ -855,13 +855,13 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
     ib_rc = ib_lock_unlock(&g_lua_lock);
 
     if (critical_rc != IB_OK) {
-        ib_log_error(ib, 1, "Critical call failed: %s",
+        ib_log_error(ib, "Critical call failed: %s",
                      ib_status_to_string(critical_rc));
     }
 
     /* Report semop error and return. */
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to unlock Lua context.");
+        ib_log_error(ib, "Failed to unlock Lua context.");
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
@@ -936,11 +936,11 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
     ib_status_t ib_rc;
     const char *func_name = (char *) data;
 
-    ib_log_debug(ib, 9, "Calling lua function %s.", func_name);
+    ib_log_debug3(ib, "Calling lua function %s.", func_name);
 
     ib_rc = ib_lua_func_eval_r(ib, tx, func_name, result);
 
-    ib_log_debug(ib, 9, "Lua function %s=%d.", func_name, *result);
+    ib_log_debug3(ib, "Lua function %s=%d.", func_name, *result);
 
     IB_FTRACE_RET_STATUS(ib_rc);
 }
@@ -981,16 +981,16 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     file_name = (const char *)ib_list_node_data_const(targets);
 
     if ( file_name == NULL ) {
-        ib_log_error(cp->ib, 1, "No targets for rule");
+        ib_log_error(cp->ib,  "No targets for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(cp->ib, 9, "Processing external rule: %s", file_name);
+    ib_log_debug3(cp->ib, "Processing external rule: %s", file_name);
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx, IB_FALSE, &rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Failed to create rule: %s",
+        ib_log_error(cp->ib,  "Failed to create rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -999,10 +999,10 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     /* Parse all of the modifiers */
     mod = targets;
     while( (mod = ib_list_node_next_const(mod)) != NULL) {
-        ib_log_debug(cp->ib, 9, "Parsing modifier %s", mod->data);
+        ib_log_debug3(cp->ib, "Parsing modifier %s", mod->data);
         rc = parse_modifier(cp, rule, mod->data);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 3,
+            ib_log_error(cp->ib,
                          "Error parsing external rule modifier \"%s\": %s",
                          mod->data, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -1017,13 +1017,13 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                              ib_rule_id(rule));
 
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 3,
+            ib_log_error(cp->ib,
                          "Failed to load lua file %s",
                          file_name+4);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(cp->ib, 9, "Loaded lua file %s", file_name+4);
+        ib_log_debug3(cp->ib, "Loaded lua file %s", file_name+4);
 
         rc = ib_operator_register(cp->ib,
                                   file_name,
@@ -1032,7 +1032,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                                   &lua_operator_destroy,
                                   &lua_operator_execute);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1,
+            ib_log_error(cp->ib,
                          "Failed to register lua operator: %s",
                          file_name);
             IB_FTRACE_RET_STATUS(rc);
@@ -1047,7 +1047,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
                                      &op_inst);
 
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1,
+            ib_log_error(cp->ib,
                          "Failed to instantiate lua operator for rule %s",
                          file_name+4);
             IB_FTRACE_RET_STATUS(rc);
@@ -1059,19 +1059,19 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
         rc = ib_rule_set_operator(cp->ib, rule, op_inst);
 
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1,
+            ib_log_error(cp->ib,
                          "Failed to associate lua operator with rule %s: %s",
                          ib_rule_id(rule), file_name+4);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(cp->ib, 9, "Set operator %s for rule %s",
+        ib_log_debug3(cp->ib, "Set operator %s for rule %s",
                      file_name,
                      ib_rule_id(rule));
 
     }
     else {
-        ib_log_error(cp->ib, 3, "RuleExt does not support rule type %s.",
+        ib_log_error(cp->ib,  "RuleExt does not support rule type %s.",
                      file_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1079,7 +1079,7 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     /* Finally, register the rule */
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Error registering rule: %s",
+        ib_log_error(cp->ib,  "Error registering rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1088,13 +1088,13 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
         rc = ib_rule_chain_invalidate(cp->ib, rule);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1, "Error invalidating rule chain: %s",
+            ib_log_error(cp->ib,  "Error invalidating rule chain: %s",
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
-    ib_log_debug(cp->ib, 4,
+    ib_log_debug(cp->ib,
                  "Registered external rule %s for phase %d context %p",
                  ib_rule_id(rule), rule->meta.phase, cp->cur_ctx);
 
@@ -1130,21 +1130,21 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Get the targets string */
     targets = ib_list_first_const(vars);
     if ( (targets == NULL) || (targets->data == NULL) ) {
-        ib_log_error(cp->ib, 1, "No targets for rule");
+        ib_log_error(cp->ib,  "No targets for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Get the operator string */
     op = ib_list_node_next_const(targets);
     if ( (op == NULL) || (op->data == NULL) ) {
-        ib_log_error(cp->ib, 1, "No operator for rule");
+        ib_log_error(cp->ib,  "No operator for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx, IB_FALSE, &rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Failed to allocate rule: %s",
+        ib_log_error(cp->ib,  "Failed to allocate rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1152,7 +1152,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Parse the targets */
     rc = parse_targets(cp, rule, targets->data);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1,
+        ib_log_error(cp->ib,
                      "Error parsing rule targets: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -1161,7 +1161,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Parse the operator */
     rc = parse_operator(cp, rule, op->data);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1,
+        ib_log_error(cp->ib,
                      "Error parsing rule targets: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -1172,7 +1172,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     while( (mod = ib_list_node_next_const(mod)) != NULL) {
         rc = parse_modifier(cp, rule, mod->data);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 3,
+            ib_log_error(cp->ib,
                          "Error parsing rule modifier \"%s\": %s",
                          mod->data, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -1182,7 +1182,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Finally, register the rule */
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Error registering rule: %s",
+        ib_log_error(cp->ib,  "Error registering rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1191,12 +1191,12 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
         rc = ib_rule_chain_invalidate(cp->ib, rule);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 1, "Error invalidating rule chain: %s",
+            ib_log_error(cp->ib,  "Error invalidating rule chain: %s",
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         else {
-            ib_log_debug(cp->ib, 5, "Invalidated all rules in chain '%s'",
+            ib_log_debug2(cp->ib, "Invalidated all rules in chain '%s'",
                          rule->meta.chain_id);
         }
     }
@@ -1234,7 +1234,7 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     /* Get the targets string */
     node = ib_list_first_const(vars);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_log_error(cp->ib, 1, "No stream for StreamInspect");
+        ib_log_error(cp->ib,  "No stream for StreamInspect");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     str = node->data;
@@ -1242,21 +1242,21 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     /* Lookup the phase name */
     rc = lookup_phase(str, IB_TRUE, &phase);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 4, "Invalid phase: %s", str);
+        ib_log_error(cp->ib, "Invalid phase: %s", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Get the operator string */
     node = ib_list_node_next_const(node);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_log_error(cp->ib, 1, "No operator for rule");
+        ib_log_error(cp->ib,  "No operator for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx, IB_TRUE, &rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Failed to create rule: %s",
+        ib_log_error(cp->ib,  "Failed to create rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1264,7 +1264,7 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     /* Set the rule's stream */
     rc = ib_rule_set_phase(cp->ib, rule, phase);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Error setting rule phase: %s",
+        ib_log_error(cp->ib, "Error setting rule phase: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1272,7 +1272,7 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     /* Parse the operator */
     rc = parse_operator(cp, rule, node->data);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1,
+        ib_log_error(cp->ib,
                      "Error parsing rule targets: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -1282,7 +1282,7 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     while( (node = ib_list_node_next_const(node)) != NULL) {
         rc = parse_modifier(cp, rule, node->data);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, 3,
+            ib_log_error(cp->ib,
                          "Error parsing stream rule modifier \"%s\": %s",
                          node->data, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -1292,7 +1292,7 @@ static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
     /* Finally, register the rule */
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, 1, "Error registering rule: %s",
+        ib_log_error(cp->ib,  "Error registering rule: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1361,7 +1361,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     ib_rc = ib_lock_init(&g_lua_lock);
 
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to initialize lua global lock.");
+        ib_log_error(ib, "Failed to initialize lua global lock.");
     }
 
     atexit(&clean_up_ipc_mem);
@@ -1375,7 +1375,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     g_ironbee_rules_lua = luaL_newstate();
 
     if (g_ironbee_rules_lua == NULL) {
-        ib_log_error(ib, 0, "Failed to create LuaJIT state.");
+        ib_log_alert(ib, "Failed to create LuaJIT state.");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -1386,7 +1386,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                                      (void *)&corecfg);
 
     if (ib_rc != IB_OK) {
-        ib_log_error(ib, 1, "Could not retrieve core module configuration.");
+        ib_log_error(ib, "Could not retrieve core module configuration.");
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
@@ -1397,7 +1397,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     for (i = 0; lua_search_paths[i] != NULL; ++i)
     {
-        ib_log_debug(ib, 4,
+        ib_log_debug(ib,
             "Adding %s to lua search path.", lua_search_paths[i]);
 
         /* Strlen + 2. One for \0 and 1 for the path separator. */
@@ -1406,7 +1406,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                        strlen(lua_file_pattern) + 2);
 
         if (path == NULL) {
-            ib_log_error(ib, 1, "Could allocate buffer for string append.");
+            ib_log_error(ib, "Could allocate buffer for string append.");
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
@@ -1416,7 +1416,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
         ib_lua_add_require_path(ib, g_ironbee_rules_lua, path);
 
-        ib_log_debug(ib, 4,"Added %s to lua search path.", path);
+        ib_log_debug(ib,"Added %s to lua search path.", path);
     }
 
     /* We are done with path. To be safe, we NULL it as there is more work
@@ -1432,7 +1432,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                                lua_preloads[i][1]);
         if (ib_rc != IB_OK)
         {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                 "Failed to load mode %s into %s.",
                 lua_preloads[i][1],
                 lua_preloads[i][0]);

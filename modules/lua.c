@@ -192,7 +192,7 @@ static const char *modlua_data_reader(lua_State *L, void *udata, size_t *size)
     /* Get the Lua byte code from the list. */
     rc = ib_array_get(chunk->cparts, tracker->part, &cpart);
     if (rc != IB_OK) {
-        ib_log_error(ib_engine, 4, "No more chunk parts to read: %s", ib_status_to_string(rc));
+        ib_log_error(ib_engine,  "No more chunk parts to read: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_CONSTSTR(NULL);
     }
 
@@ -227,7 +227,7 @@ static int modlua_data_writer(lua_State *L,
     modlua_cpart_t *cpart;
     ib_status_t rc;
 
-    //ib_log_debug(ib, 9, "Lua writing part size=%" PRIuMAX, size);
+    //ib_log_debug3(ib, "Lua writing part size=%" PRIuMAX, size);
 
     /* Add a chunk part to the list. */
     cpart = (modlua_cpart_t *)ib_mpool_alloc(chunk->mp, sizeof(*cpart));
@@ -292,7 +292,7 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib_engine, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib_engine,  "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -388,11 +388,11 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
         event = conn_data_out_event;
     }
     else {
-        ib_log_error(ib_engine, 4, "Unhandled event %s", event_name);
+        ib_log_error(ib_engine,  "Unhandled event %s", event_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(ib_engine, 9,
+    ib_log_debug3(ib_engine,
                  "Registering lua event handler m=%p event=%d: onEvent%s",
                  module,
                  event,
@@ -407,7 +407,7 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
     }
 
     /* Add the lua module to the lua event list. */
-    ib_log_debug(ib_engine, 9, "Adding module=%p to event=%d list=%p",
+    ib_log_debug3(ib_engine, "Adding module=%p to event=%d list=%p",
                  module, event, modcfg->event_reg[event]);
     rc = ib_list_push(modcfg->event_reg[event], (void *)module);
 
@@ -461,11 +461,11 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
     memcpy(name, name_start, name_len);
     name[name_len] = '\0';
 
-    ib_log_debug(ib_engine, 6, "Loading lua module \"%s\": %s",
+    ib_log_debug2(ib_engine, "Loading lua module \"%s\": %s",
                  name, file);
 
     /* Save the Lua chunk. */
-    ib_log_debug(ib_engine, 9, "Allocating chunk");
+    ib_log_debug3(ib_engine, "Allocating chunk");
     chunk = (modlua_chunk_t *)ib_mpool_alloc(pool, sizeof(*chunk));
     if (chunk == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -475,19 +475,19 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
     chunk->name = name;
     *pchunk = chunk;
 
-    ib_log_debug(ib_engine, 9, "Creating array for chunk parts");
+    ib_log_debug3(ib_engine, "Creating array for chunk parts");
     /// @todo Make this initial size configurable
     ib_rc = ib_array_create(&chunk->cparts, pool, 32, 32);
     if (ib_rc != IB_OK) {
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
-    ib_log_debug(ib_engine, 7, "Using precompilation via lua_dump.");
+    ib_log_debug2(ib_engine, "Using precompilation via lua_dump.");
 
     /* Load (compile) the lua module. */
     sys_rc = luaL_loadfile(L, file);
     if (sys_rc != 0) {
-        ib_log_error(ib_engine, 1, "Failed to load lua module \"%s\" - %s (%d)",
+        ib_log_error(ib_engine,  "Failed to load lua module \"%s\" - %s (%d)",
                      file, lua_tostring(L, -1), sys_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -495,7 +495,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
     /* Dump the byte code into lua chunk. */
     sys_rc = lua_dump(L, modlua_data_writer, chunk);
     if (sys_rc != 0) {
-        ib_log_error(ib_engine, 1, "Failed to save lua module \"%s\" - %s (%d)",
+        ib_log_error(ib_engine,  "Failed to save lua module \"%s\" - %s (%d)",
                      file, lua_tostring(L, -1), sys_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -503,7 +503,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
     lua_pushstring(L, name);
     sys_rc = lua_pcall(L, 1,0,0);
     if (sys_rc != 0) {
-        ib_log_error(ib_engine, 1, "Failed to run lua module \"%s\" - %s (%d)",
+        ib_log_error(ib_engine,  "Failed to run lua module \"%s\" - %s (%d)",
                      file, lua_tostring(L, -1), sys_rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -525,7 +525,7 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s main config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s main config: %s",
                      module->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -537,7 +537,7 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
     if (lua_isfunction(L, -1)) {
         int ec;
 
-        ib_log_debug(ib, 9,
+        ib_log_debug3(ib,
                      "Executing lua module handler \"%s.%s\" via wrapper",
                      module->name, funcname);
         lua_pushlightuserdata(L, ib);
@@ -546,7 +546,7 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
         /// @todo Use errfunc w/debug.traceback()
         ec = lua_pcall(L, 3, 1, 0);
         if (ec != 0) {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Failed to exec lua wrapper for \"%s.%s\": "
                          "%s (%d)",
                          module->name, funcname,
@@ -558,7 +558,7 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
             rc = (ib_status_t)(int)li;
         }
         else {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Expected %s returned from lua "
                          "\"%s.%s\", but received %s",
                          lua_typename(L, LUA_TNUMBER),
@@ -568,7 +568,7 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
         }
     }
     else {
-        ib_log_error(ib, 3,
+        ib_log_error(ib,
                      "Lua module wrapper function not available - "
                      "could not execute \"%s.%s\" handler",
                      module->name, funcname);
@@ -601,7 +601,7 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s main config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s main config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -609,7 +609,7 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     /* Uses the configuration lua state. */
     L = maincfg->Lconfig;
     if (L == NULL) {
-        ib_log_error(ib, 3,
+        ib_log_error(ib,
                      "Cannot load lua module \"%s\": "
                      "Lua support not available.",
                      file);
@@ -619,12 +619,12 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     /* Load the lua file. */
     rc = modlua_load_lua_file(ib, L, file, &chunk);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3, "Ignoring failed lua module \"%s\": %s", file, ib_status_to_string(rc));
+        ib_log_error(ib, "Ignoring failed lua module \"%s\": %s", file, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Check if there is an onModuleLoad module. */
-    ib_log_debug(ib, 9, "Analyzing lua module \"%s\"", chunk->name);
+    ib_log_debug3(ib, "Analyzing lua module \"%s\"", chunk->name);
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "loaded");
     lua_getfield(L, -1, chunk->name);
@@ -635,14 +635,14 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     lua_pop(L, 4); /* Cleanup the stack */
 
     /* Create the Lua module as if it was a normal module. */
-    ib_log_debug(ib, 9, "Creating lua module structure");
+    ib_log_debug3(ib, "Creating lua module structure");
     rc = ib_module_create(&module, ib);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Initialize the loaded module. */
-    ib_log_debug(ib, 9, "Init lua module structure");
+    ib_log_debug3(ib, "Init lua module structure");
     IB_MODULE_INIT_DYNAMIC(
         module,                         /* Module */
         file,                           /* Module code filename */
@@ -674,7 +674,7 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
     }
 
     /* Initialize and register the new lua module with the engine. */
-    ib_log_debug(ib, 9, "Init lua module");
+    ib_log_debug3(ib, "Init lua module");
     rc = ib_module_init(module, ib);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -705,7 +705,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s main config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s main config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -713,12 +713,12 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 7, "Init lua module ctx=%p maincfg=%p Lconfig=%p: %s", ctx, maincfg, maincfg->Lconfig, name);
+    ib_log_debug2(ib, "Init lua module ctx=%p maincfg=%p Lconfig=%p: %s", ctx, maincfg, maincfg->Lconfig, name);
 
     /* Use the config lua state. */
     L = maincfg->Lconfig;
@@ -744,7 +744,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     /* Load the module lua code. */
     ec = modlua_load_lua_data(ib, L, chunk);
     if (ec != 0) {
-        ib_log_error(ib, 1, "Failed to init lua module \"%s\" - %s (%d)",
+        ib_log_error(ib, "Failed to init lua module \"%s\" - %s (%d)",
                      name, lua_tostring(L, -1), ec);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -761,17 +761,17 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     lua_pushstring(L, module->name);
     ec = lua_pcall(L, 1, 0, 0);
     if (ec != 0) {
-        ib_log_error(ib, 1, "Failed to execute lua module \"%s\" - %s (%d)",
+        ib_log_error(ib, "Failed to execute lua module \"%s\" - %s (%d)",
                      name, lua_tostring(L, -1), ec);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Initialize the loaded module. */
-    ib_log_debug(ib, 6, "Initializing lua module \"%s\"", module->name);
+    ib_log_debug2(ib, "Initializing lua module \"%s\"", module->name);
     lua_getglobal(L, "package");
     lua_getfield(L, -1, "loaded");
     lua_getfield(L, -1, module->name);
-    ib_log_debug(ib, 9, "Module load returned type=%s",
+    ib_log_debug3(ib, "Module load returned type=%s",
                  lua_typename(L, lua_type(L, -1)));
     if (lua_istable(L, -1)) {
         lua_pushnil(L);
@@ -782,7 +782,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                 key = lua_tostring(L, -2);
                 if (lua_isstring(L, -1)) {
                     val = lua_tostring(L, -1);
-                    ib_log_debug(ib, 9, "Lua module \"%s\" %s=\"%s\"",
+                    ib_log_debug3(ib, "Lua module \"%s\" %s=\"%s\"",
                                  module->name, key, val);
                 }
                 else if (lua_isfunction(L, -1)) {
@@ -792,7 +792,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                      * function as a lua event handler.
                      */
                     if (strncmp("onEvent", key, 7) == 0) {
-                        ib_log_debug(ib, 9,
+                        ib_log_debug3(ib,
                                      "Lua module \"%s\" registering event "
                                      "handler: %s",
                                      module->name, key);
@@ -803,7 +803,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                                                            key + 7,
                                                            module);
                         if (rc != IB_OK) {
-                            ib_log_error(ib, 3,
+                            ib_log_error(ib,
                                          "Failed to register "
                                          "lua event handler \"%s\": %s",
                                          key, ib_status_to_string(rc));
@@ -811,7 +811,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                         }
                     }
                     else {
-                        ib_log_debug(ib, 9, "KEY:%s; VAL:%p", key, val);
+                        ib_log_debug3(ib, "KEY:%s; VAL:%p", key, val);
                     }
                 }
             }
@@ -840,18 +840,18 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
         int ec;
 
         chunk = (modlua_chunk_t *)m->data;
-        ib_log_debug(ib, 9, "Lua %p module \"%s\" module=%p chunk=%p",
+        ib_log_debug3(ib, "Lua %p module \"%s\" module=%p chunk=%p",
                      L, IB_FFI_MODULE_STR, m, chunk);
         ec = modlua_load_lua_data(ib, L, chunk);
         if (ec != 0) {
-            ib_log_error(ib, 1, "Failed to init lua module \"%s\" - %s (%d)",
+            ib_log_error(ib, "Failed to init lua module \"%s\" - %s (%d)",
                          IB_FFI_MODULE_STR, lua_tostring(L, -1), ec);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         lua_pushstring(L, m->name);
         ec = lua_pcall(L, 1, 0, 0);
         if (ec != 0) {
-            ib_log_error(ib, 1, "Failed to execute lua module \"%s\" - %s (%d)",
+            ib_log_error(ib, "Failed to execute lua module \"%s\" - %s (%d)",
                          IB_FFI_MODULE_STR, lua_tostring(L, -1), ec);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
@@ -862,14 +862,14 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
                                       (void *)&corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to retrieve core configuration.");
+            ib_log_error(ib, "Failed to retrieve core configuration.");
             IB_FTRACE_RET_STATUS(rc);
         }
 
         path = malloc(pathmax);
 
         if (path==NULL) {
-            ib_log_error(ib, 1, "Cannot allocate memory for module path.");
+            ib_log_error(ib, "Cannot allocate memory for module path.");
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
@@ -878,7 +878,7 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
                               "ironbee-ffi.lua");
 
         if (len >= pathmax) {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Filename too long: %s/%s",
                          corecfg->module_base_path,
                          "ironbee-ffi.lua");
@@ -917,14 +917,14 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
 
     /* Set package paths if configured. */
     if (modcfg->pkg_path != NULL) {
-        ib_log_debug(ib, 4, "Using lua package.path=\"%s\"",
+        ib_log_debug(ib, "Using lua package.path=\"%s\"",
                      modcfg->pkg_path);
         lua_getfield(L, -1, "path");
         lua_pushstring(L, modcfg->pkg_path);
         lua_setglobal(L, "path");
     }
     if (modcfg->pkg_cpath != NULL) {
-        ib_log_debug(ib, 4, "Using lua package.cpath=\"%s\"",
+        ib_log_debug(ib, "Using lua package.cpath=\"%s\"",
                      modcfg->pkg_cpath);
         lua_getfield(L, -1, "cpath");
         lua_pushstring(L, modcfg->pkg_cpath);
@@ -981,17 +981,17 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Setup a fresh Lua state for this configuration. */
     if (modcfg->Lconfig == NULL) {
-        ib_log_debug(ib, 8, "Initializing lua runtime for configuration.");
+        ib_log_debug2(ib, "Initializing lua runtime for configuration.");
         modcfg->Lconfig = luaL_newstate();
         if (modcfg->Lconfig == NULL) {
-            ib_log_error(ib, 1, "Failed to initialize lua module.");
+            ib_log_error(ib, "Failed to initialize lua module.");
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
 
@@ -1025,12 +1025,12 @@ static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 8, "Destroying lua runtime for configuration.");
+    ib_log_debug2(ib, "Destroying lua runtime for configuration.");
     lua_close(modcfg->Lconfig);
     modcfg->Lconfig = NULL;
 
@@ -1065,27 +1065,27 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
     /* Get the module config. */
     rc = ib_context_module_config(conn->ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Setup a fresh Lua state for this connection. */
-    ib_log_debug(ib, 9, "Initializing lua runtime for conn=%p", conn);
+    ib_log_debug3(ib, "Initializing lua runtime for conn=%p", conn);
     L = luaL_newstate();
     luaL_openlibs(L);
 
     /* Create the lua runtime and store it with the connection. */
-    ib_log_debug(ib, 9, "Creating lua runtime for conn=%p", conn);
+    ib_log_debug3(ib, "Creating lua runtime for conn=%p", conn);
     lua = ib_mpool_alloc(conn->mp, sizeof(*lua));
     if (lua == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     lua->L = L;
     rc = ib_hash_set(conn->data, MODLUA_CONN_KEY, lua);
-    ib_log_debug(ib, 7, "Setting lua runtime for conn=%p lua=%p L=%p", conn, lua, L);
+    ib_log_debug2(ib, "Setting lua runtime for conn=%p lua=%p L=%p", conn, lua, L);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 3, "Failed to set lua runtime: %s", ib_status_to_string(rc));
+        ib_log_debug(ib, "Failed to set lua runtime: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1101,17 +1101,17 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
             modlua_chunk_t *chunk = (modlua_chunk_t *)m->data;
             int ec;
 
-            ib_log_debug(ib, 7, "Loading lua module \"%s\" into runtime for conn=%p", m->name, conn);
+            ib_log_debug2(ib, "Loading lua module \"%s\" into runtime for conn=%p", m->name, conn);
             rc = modlua_load_lua_data(ib, L, chunk);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
 
-            ib_log_debug(ib, 9, "Executing lua chunk=%p", chunk);
+            ib_log_debug3(ib, "Executing lua chunk=%p", chunk);
             lua_pushstring(L, m->name);
             ec = lua_pcall(L, 1, 0, 0);
             if (ec != 0) {
-                ib_log_error(ib, 1, "Failed to execute lua module \"%s\" - %s (%d)",
+                ib_log_error(ib, "Failed to execute lua module \"%s\" - %s (%d)",
                              m->name, lua_tostring(L, -1), ec);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
@@ -1143,7 +1143,7 @@ static ib_status_t modlua_destroy_lua_runtime(ib_engine_t *ib,
     modlua_runtime_t *lua;
     ib_status_t rc;
 
-    ib_log_debug(ib, 9, "Destroying lua runtime for conn=%p", conn);
+    ib_log_debug3(ib, "Destroying lua runtime for conn=%p", conn);
 
     lua = modlua_runtime_get(conn);
     if (lua != NULL) {
@@ -1278,7 +1278,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
     if (lua_isfunction(L, -1)) {
         int ec;
 
-        ib_log_debug(ib, 9,
+        ib_log_debug3(ib,
                      "Executing lua handler \"%s.%s\" via wrapper",
                      modname, funcname);
         lua_pushlightuserdata(L, ib);
@@ -1290,7 +1290,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
         /// @todo Use errfunc w/debug.traceback()
         ec = lua_pcall(L, 6, 1, 0);
         if (ec != 0) {
-            ib_log_error(ib, 1, "Failed to exec lua wrapper for \"%s.%s\" - %s (%d)",
+            ib_log_error(ib, "Failed to exec lua wrapper for \"%s.%s\" - %s (%d)",
                          modname, funcname, lua_tostring(L, -1), ec);
             rc = IB_EINVAL;
         }
@@ -1299,7 +1299,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
             rc = (ib_status_t)(int)li;
         }
         else {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Expected %s returned from lua \"%s.%s\", "
                          "but received %s",
                          lua_typename(L, LUA_TNUMBER),
@@ -1309,7 +1309,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
         }
     }
     else {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Lua event wrapper function not available - "
                      "could not execute \"%s.%s\" handler",
                      modname, funcname);
@@ -1349,14 +1349,14 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Verify event is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, 3, "Lua event was out of range: %" PRIxMAX,
+        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
                      event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1372,7 +1372,7 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
     /* Get the lua runtime. */
     lua = modlua_runtime_get(conn);
     if (lua == NULL) {
-        ib_log_error(ib, 3, "Failed to fetch lua runtime for conn=%p", conn);
+        ib_log_error(ib, "Failed to fetch lua runtime for conn=%p", conn);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1383,11 +1383,11 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug(ib, 9, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+        ib_log_debug3(ib, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
                      m->name, m, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, conndata, lua, m->name, event);
         if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Error executing lua handler");
+            ib_log_error(ib, "Error executing lua handler");
         }
     }
 
@@ -1426,14 +1426,14 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, 3, "Lua event was out of range: %" PRIxMAX,
+        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
                      event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1443,14 +1443,14 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
      */
     luaevents = modcfg->event_reg[event];
     if (luaevents == NULL) {
-        ib_log_error(ib, 9, "No lua events found");
+        ib_log_error(ib, "No lua events found");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Get the lua runtime. */
     lua = modlua_runtime_get(conn);
     if (lua == NULL) {
-        ib_log_error(ib, 3, "Failed to fetch lua runtime for tx=%p", tx);
+        ib_log_error(ib, "Failed to fetch lua runtime for tx=%p", tx);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1461,12 +1461,12 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *module = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug(ib, 9,
+        ib_log_debug3(ib,
                      "Lua module \"%s\" (%p) has handler for event[%d]=%s",
                      module->name, module, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, txdata, lua, module->name, event);
         if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Error executing lua handler");
+            ib_log_error(ib, "Error executing lua handler");
         }
     }
 
@@ -1501,14 +1501,14 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, 3, "Lua event was out of range: %" PRIxMAX,
+        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
                      event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1524,7 +1524,7 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
     /* Get the lua runtime. */
     lua = modlua_runtime_get(conn);
     if (lua == NULL) {
-        ib_log_error(ib, 3, "Failed to fetch lua runtime for conn=%p", conn);
+        ib_log_error(ib, "Failed to fetch lua runtime for conn=%p", conn);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1535,12 +1535,12 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *module = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug(ib, 9,
+        ib_log_debug3(ib,
                      "Lua module \"%s\" (%p) has handler for event[%d]=%s",
                      module->name, module, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, conn, lua, module->name, event);
         if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Error executing lua handler");
+            ib_log_error(ib, "Error executing lua handler");
         }
     }
 
@@ -1575,14 +1575,14 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, 3, "Lua event was out of range: %" PRIxMAX,
+        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
                      event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1598,7 +1598,7 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
     /* Get the lua runtime. */
     lua = modlua_runtime_get(tx->conn);
     if (lua == NULL) {
-        ib_log_error(ib, 3, "Failed to fetch lua runtime for tx=%p conn=%p", tx, tx->conn);
+        ib_log_error(ib, "Failed to fetch lua runtime for tx=%p conn=%p", tx, tx->conn);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1609,11 +1609,11 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug(ib, 9, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+        ib_log_debug3(ib, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
                      m->name, m, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, tx, lua, m->name, event);
         if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Error executing lua handler");
+            ib_log_error(ib, "Error executing lua handler");
         }
     }
 
@@ -1643,7 +1643,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     /* Setup a list to track loaded lua modules. */
     rc = ib_list_create(&mlist, ib_engine_pool_config_get(ib));
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create lua module list: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to create lua module list: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     m->data = mlist;
@@ -1659,7 +1659,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                                modlua_destroy_lua_runtime_cfg,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
 
@@ -1668,7 +1668,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                           modlua_init_lua_runtime,
                           NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
 
@@ -1677,7 +1677,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                           modlua_destroy_lua_runtime,
                           NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
 
@@ -1686,28 +1686,28 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                                    modlua_handle_lua_conndata_event,
                                    NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conndata_register(ib, conn_data_out_event,
                                    modlua_handle_lua_conndata_event,
                                    NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_txdata_register(ib, tx_data_in_event,
                                  modlua_handle_lua_txdata_event,
                                  NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_txdata_register(ib, tx_data_out_event,
                                  modlua_handle_lua_txdata_event,
                                  NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
 
@@ -1716,49 +1716,49 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                                modlua_handle_lua_conn_event,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, conn_opened_event,
                                modlua_handle_lua_conn_event,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, handle_context_conn_event,
                                modlua_handle_lua_conn_event,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, handle_connect_event,
                                modlua_handle_lua_conn_event,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, conn_closed_event,
                                modlua_handle_lua_conn_event,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, handle_disconnect_event,
                                modlua_handle_lua_conn_event,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, conn_finished_event,
                                modlua_handle_lua_conn_event,
                                NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
 
@@ -1767,119 +1767,119 @@ static ib_status_t modlua_init(ib_engine_t *ib,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, request_started_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, request_headers_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_context_tx_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_request_headers_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, request_body_data_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_request_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, request_finished_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, tx_process_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, response_started_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, response_headers_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_response_headers_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, response_body_data_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_response_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, response_finished_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_postprocess_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, tx_finished_event,
                              modlua_handle_lua_tx_event,
                              NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 5, "Failed to register hook: %s",
+        ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
 
@@ -1900,14 +1900,14 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Check for a valid lua state. */
     if (modcfg->Lconfig == NULL) {
-        ib_log_error(ib, 4, "Lua support not available");
+        ib_log_error(ib, "Lua support not available");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -1960,12 +1960,12 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
     lua_State *L;
     ib_status_t rc;
 
-    ib_log_debug(ib, 6, "Handling Lua Directive: %s", name);
+    ib_log_debug2(ib, "Handling Lua Directive: %s", name);
     /* Get the main module config. */
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module main config: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to fetch module main config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1976,7 +1976,7 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
     if (lua_isfunction(L, -1)) {
         int ec;
 
-        ib_log_debug(ib, 9,
+        ib_log_debug3(ib,
                      "Executing lua config handler \"%s.%s\" via wrapper",
                      wcbdata->fn_config_modname,
                      wcbdata->fn_config_name);
@@ -1998,7 +1998,7 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
         /// @todo Use errfunc w/debug.traceback()
         ec = lua_pcall(L, 4 + ib_list_elements(args), 1, 0);
         if (ec != 0) {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Failed to exec lua directive wrapper for \"%s.%s\": "
                          "%s (%d)",
                          wcbdata->fn_config_modname,
@@ -2011,7 +2011,7 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
             rc = (ib_status_t)(int)li;
         }
         else {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Expected %s returned from lua "
                          "\"%s.%s\", but received %s",
                          lua_typename(L, LUA_TNUMBER),
@@ -2022,7 +2022,7 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
         }
     }
     else {
-        ib_log_error(ib, 3,
+        ib_log_error(ib,
                      "Lua config wrapper function not available - "
                      "could not execute \"%s.%s\" handler",
                      wcbdata->fn_config_modname,
@@ -2046,12 +2046,12 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
     lua_State *L;
     ib_status_t rc;
 
-    ib_log_debug(ib, 6, "Handling Lua Directive: %s", name);
+    ib_log_debug2(ib, "Handling Lua Directive: %s", name);
     /* Get the main module config. */
     rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&maincfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module main config: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to fetch module main config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -2062,7 +2062,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
     if (lua_isfunction(L, -1)) {
         int ec;
 
-        ib_log_debug(ib, 9,
+        ib_log_debug3(ib,
                      "Executing lua config handler \"%s.%s\" via wrapper",
                      wcbdata->fn_config_modname,
                      wcbdata->fn_config_name);
@@ -2081,7 +2081,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
         /// @todo Use errfunc w/debug.traceback()
         ec = lua_pcall(L, 4, 1, 0);
         if (ec != 0) {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Failed to exec lua directive wrapper for \"%s.%s\": "
                          "%s (%d)",
                          wcbdata->fn_config_modname,
@@ -2094,7 +2094,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
             rc = (ib_status_t)(int)li;
         }
         else {
-            ib_log_error(ib, 1,
+            ib_log_error(ib,
                          "Expected %s returned from lua "
                          "\"%s.%s\", but received %s",
                          lua_typename(L, LUA_TNUMBER),
@@ -2105,7 +2105,7 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
         }
     }
     else {
-        ib_log_error(ib, 3,
+        ib_log_error(ib,
                      "Lua config wrapper function not available - "
                      "could not execute \"%s.%s\" handler",
                      wcbdata->fn_config_modname,
@@ -2157,7 +2157,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
         const char *msg = (rc == IB_EBADVAL)?
             "Value for parameter \"%s\" may not contain NULL bytes: %s":
             "Value for parameter \"%s\" could not be unescaped: %s";
-        ib_log_debug(ib, 3, msg, name, p1);
+        ib_log_debug(ib, msg, name, p1);
         free(p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2168,7 +2168,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                   (void *)&corecfg);
 
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to retrieve core configuration.");
+        ib_log_error(ib, "Failed to retrieve core configuration.");
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -2180,7 +2180,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
             path = malloc(pathmax);
 
             if (path==NULL) {
-                ib_log_error(ib, 1, "Cannot allocate memory for module path.");
+                ib_log_error(ib, "Cannot allocate memory for module path.");
                 free(p1_unescaped);
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
@@ -2190,7 +2190,7 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
                                   p1_unescaped);
 
             if (len >= pathmax) {
-                ib_log_error(ib, 1, "Filename too long: %s %s", name, p1_unescaped);
+                ib_log_error(ib, "Filename too long: %s %s", name, p1_unescaped);
                 free(path);
                 path = NULL;
                 free(p1_unescaped);
@@ -2204,20 +2204,20 @@ static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("LuaPackagePath", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_path", p1_unescaped);
         free(p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LuaPackageCPath", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, MODULE_NAME_STR ".pkg_cpath", p1_unescaped);
         free(p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else {
-        ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1_unescaped);
+        ib_log_error(ib, "Unhandled directive: %s %s", name, p1_unescaped);
         free(p1_unescaped);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }

@@ -114,7 +114,7 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
     mrc = (modbinradix_content_t *)ib_mpool_calloc(mpi->pr->mp, 1,
                                                sizeof(modbinradix_content_t));
     if (mrc == NULL) {
-        ib_log_error(mpi->pr->ib, 4, "Failed to allocate modbinradix_content_t"
+        ib_log_error(mpi->pr->ib,  "Failed to allocate modbinradix_content_t"
                                  " for %s to the BinRadix tree %x", prefix,
                                  binradix_tree);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -127,7 +127,7 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
 
     rc = ib_radix_ip_to_prefix(prefix, &pre, mpi->mp);
     if (rc != IB_OK) {
-        ib_log_error(mpi->pr->ib, 4, "Failed to create a binradix prefix for %s"
+        ib_log_error(mpi->pr->ib,  "Failed to create a binradix prefix for %s"
                                  " to the BinRadix tree %x", prefix,
                                  binradix_tree);
         IB_FTRACE_RET_STATUS(rc);
@@ -136,11 +136,11 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
     rc = ib_radix_insert_data(binradix_tree, pre, (void *) mrc);
 
     if (rc == IB_OK) {
-        ib_log_debug(mpi->pr->ib, 4, "prefix %s added to the BinRadix tree %x",
+        ib_log_debug(mpi->pr->ib, "prefix %s added to the BinRadix tree %x",
                      prefix, binradix_tree);
     }
     else {
-        ib_log_error(mpi->pr->ib, 4, "Failed to load prefix %s to the BinRadix "
+        ib_log_error(mpi->pr->ib,  "Failed to load prefix %s to the BinRadix "
                                  "tree %x", prefix, binradix_tree);
     }
 
@@ -170,7 +170,7 @@ static ib_status_t modbinradix_provider_instance_init(ib_provider_inst_t *mpi,
 
     rc = ib_radix_new(&dt->binradix_tree, NULL, NULL, NULL, mpi->mp);
     if (rc != IB_OK) {
-        ib_log_error(mpi->pr->ib, 4, "Unable to create the BinRadix tree at"
+        ib_log_error(mpi->pr->ib,  "Unable to create the BinRadix tree at"
                                  " modbinradix");
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -206,7 +206,7 @@ static ib_status_t modbinradix_match(ib_provider_inst_t *mpi,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(mpi->pr->ib, 4, "Matching AGAINST BinRadix tree %x",
+    ib_log_debug(mpi->pr->ib, "Matching AGAINST BinRadix tree %x",
                      dt->binradix_tree);
 
     ib_radix_t *binradix_tree = dt->binradix_tree;
@@ -301,13 +301,13 @@ static ib_status_t modbinradix_init(ib_engine_t *ib,
                               &modbinradix_matcher_iface,
                               modbinradix_provider_instance_init);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3,
+        ib_log_error(ib,
                      MODULE_NAME_STR ": Error registering ac matcher provider: "
                      "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib, 4, "AC Status: compiled=\"%d.%d %s\" BinRadix Matcher"
+    ib_log_debug(ib, "AC Status: compiled=\"%d.%d %s\" BinRadix Matcher"
                         " registered", AC_MAJOR, AC_MINOR,
                         IB_XSTRINGIFY(AC_DATE));
 

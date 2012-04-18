@@ -41,7 +41,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     m->idx = ib_array_elements(ib->modules);
     m->ib = ib;
 
-    ib_log_debug(ib, 7, "Initializing module %s (%d): %s",
+    ib_log_debug2(ib, "Initializing module %s (%d): %s",
                  m->name, m->idx, m->filename);
 
     /* Register directives */
@@ -51,17 +51,17 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     rc = ib_array_setn(ib->modules, m->idx, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to register module %s: %s", m->name, ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to register module %s: %s", m->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (ib->ctx != NULL) {
-        ib_log_debug(ib, 7, "Registering module \"%s\" with main context %p",
+        ib_log_debug2(ib, "Registering module \"%s\" with main context %p",
                      m->name, ib->ctx);
         ib_module_register_context(m, ib->ctx);
     }
     else {
-        ib_log_error(ib, 4, "No main context to registering module \"%s\"",
+        ib_log_error(ib, "No main context to registering module \"%s\"",
                      m->name);
     }
 
@@ -69,7 +69,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     if (m->fn_init != NULL) {
         rc = m->fn_init(ib, m, m->cbdata_init);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to initialize module %s: %s",
+            ib_log_error(ib, "Failed to initialize module %s: %s",
                          m->name, ib_status_to_string(rc));
             /// @todo Need to be able to delete the entry???
             ib_array_setn(ib->modules, m->idx, NULL);
@@ -111,16 +111,16 @@ ib_status_t ib_module_load(ib_module_t **pm,
     }
 
     /* Load module and fetch the module symbol. */
-    ib_log_debug(ib, 7, "Loading module: %s", file);
+    ib_log_debug2(ib, "Loading module: %s", file);
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load module %s: %s", file, ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to load module %s: %s", file, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &sym.dso);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Failed to load module %s: no symbol named %s",
+        ib_log_error(ib, "Failed to load module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -128,14 +128,14 @@ ib_status_t ib_module_load(ib_module_t **pm,
     /* Fetch the module structure. */
     *pm = sym.fn_sym(ib);
     if (*pm == NULL) {
-        ib_log_error(ib, 1, "Failed to load module %s: no module structure",
+        ib_log_error(ib, "Failed to load module %s: no module structure",
                      file);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     /* Check module for ABI compatibility with this engine */
     if ((*pm)->vernum > IB_VERNUM) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Module %s (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
@@ -143,7 +143,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
         IB_FTRACE_RET_STATUS(IB_EINCOMPAT);
     }
 
-    ib_log_debug(ib, 9,
+    ib_log_debug3(ib,
                  "Loaded module %s: "
                  "vernum=%d abinum=%d version=%s index=%d filename=%s",
                  (*pm)->name,
@@ -166,7 +166,7 @@ ib_status_t ib_module_unload(ib_module_t *m)
 
     ib = m->ib;
 
-    ib_log_debug(ib, 9,
+    ib_log_debug3(ib,
                  "Unloading module %s: "
                  "vernum=%d abinum=%d version=%s index=%d filename=%s",
                  m->name,
@@ -177,7 +177,7 @@ ib_status_t ib_module_unload(ib_module_t *m)
     if (m->fn_fini != NULL) {
         rc = m->fn_fini(ib, m, m->cbdata_fini);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Failed to finish module %s: %s",
+            ib_log_error(ib, "Failed to finish module %s: %s",
                          m->name, ib_status_to_string(rc));
         }
     }

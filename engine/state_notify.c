@@ -13,7 +13,7 @@
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
             ib_status_t rc_ = hook_->callback.whicb((ib), (tx), (event), (param), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                ib_log_error((ib),  "Hook returned error: %s=%s", \
                              ib_state_event_name((event)), ib_status_to_string(rc_)); \
                 (*out_rc) = rc_; \
                 break; \
@@ -27,7 +27,7 @@
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
             ib_status_t rc_ = hook_->callback.whicb((ib), (event), (param), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                ib_log_error((ib),  "Hook returned error: %s=%s", \
                              ib_state_event_name((event)), ib_status_to_string(rc_)); \
                 (*out_rc) = rc_; \
                 break; \
@@ -41,7 +41,7 @@
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
             ib_status_t rc_ = hook_->callback.whicb((ib), (tx), (event), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                ib_log_error((ib),  "Hook returned error: %s=%s", \
                              ib_state_event_name((event)), ib_status_to_string(rc_)); \
                 (*out_rc) = rc_; \
                 break; \
@@ -55,7 +55,7 @@
         for (ib_hook_t* hook_ = (first_hook); hook_ != NULL; hook_ = hook_->next ) { \
             ib_status_t rc_ = hook_->callback.null((ib), (event), hook_->cdata); \
             if (rc_ != IB_OK) { \
-                ib_log_error((ib), 4, "Hook returned error: %s=%s", \
+                ib_log_error((ib),  "Hook returned error: %s=%s", \
                              ib_state_event_name((event)), ib_status_to_string(rc_)); \
                 (*out_rc) = rc_; \
                 break; \
@@ -84,7 +84,7 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "CONN EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "CONN EVENT: %s", ib_state_event_name(event));
 
     CALL_NOTX_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, conn);
 
@@ -120,7 +120,7 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "CONN DATA EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "CONN DATA EVENT: %s", ib_state_event_name(event));
 
     CALL_NOTX_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, conndata);
 
@@ -154,12 +154,12 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "ib_check_hook() failed: %s",
+        ib_log_error(ib, "ib_check_hook() failed: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "RESP LINE EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "RESP LINE EVENT: %s", ib_state_event_name(event));
 
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, responseline, ib, tx, line);
 
@@ -192,7 +192,7 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "ib_check_hook() failed: %s",
+        ib_log_error(ib, "ib_check_hook() failed: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -200,7 +200,7 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     /* Request line stored for use when the context has been determined. */
     tx->request_line = line;
 
-    ib_log_debug(ib, 9, "REQ LINE EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "REQ LINE EVENT: %s", ib_state_event_name(event));
 
     CALL_HOOKS(&rc, ib->ectx->hook[event], event, requestline, ib, tx, line);
 
@@ -234,12 +234,12 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "ib_check_hook() failed: %s",
+        ib_log_error(ib, "ib_check_hook() failed: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "HEADER EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "HEADER EVENT: %s", ib_state_event_name(event));
 
     CALL_HOOKS(&rc,
                ib->ectx->hook[event],
@@ -290,7 +290,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
 
     /* Under certain circumstances there is no data. Guard against that. */
     if ( ib_log_get_level(ib) >= 9 && txdata != NULL ) {
-        ib_log_debug(ib, 9, "TX DATA EVENT: %s (type %d)",
+        ib_log_debug3(ib, "TX DATA EVENT: %s (type %d)",
                      ib_state_event_name(event), txdata->dtype);
     }
 
@@ -330,7 +330,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 9, "TX EVENT: %s", ib_state_event_name(event));
+    ib_log_debug3(ib, "TX EVENT: %s", ib_state_event_name(event));
 
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
@@ -439,7 +439,7 @@ static ib_status_t ib_context_get_ex(
 
     /* Run through the config context functions to select the context. */
     IB_ARRAY_LOOP(ib->contexts, nctx, i, ctx) {
-        ib_log_debug(ib, 9, "Processing context %d=%p", (int)i, ctx);
+        ib_log_debug3(ib, "Processing context %d=%p", (int)i, ctx);
         /* A NULL function is a null context, so skip it */
         if ((ctx == NULL) || (ctx->fn_ctx == NULL)) {
             continue;
@@ -448,7 +448,7 @@ static ib_status_t ib_context_get_ex(
         rc = ctx->fn_ctx(ctx, type, data, ctx->fn_ctx_data);
         if (rc == IB_OK) {
             ib_site_t *site = ib_context_site_get(ctx);
-            ib_log_debug(ib, 7, "Selected context %d=%p site=%s(%s)",
+            ib_log_debug2(ib, "Selected context %d=%p site=%s(%s)",
                     (int)i, ctx,
                     (site?site->id_str:"none"), (site?site->name:"none"));
             *pctx = ctx;
@@ -459,7 +459,7 @@ static ib_status_t ib_context_get_ex(
         }
     }
     if (*pctx == NULL) {
-        ib_log_debug(ib, 9, "Using engine context");
+        ib_log_debug3(ib, "Using engine context");
         *pctx = ib_context_main(ib);
     }
 
@@ -489,7 +489,7 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     if (ib_conn_flags_isset(conn, IB_CONN_FOPENED)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(conn_opened_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -544,7 +544,7 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
     /* Run the data through the parser. */
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface on data in");
+        ib_log_alert(ib, "Failed to fetch parser interface on data in");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     rc = iface->data_in(pi, conndata);
@@ -575,7 +575,7 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
     /* Run the data through the parser. */
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface on data out");
+        ib_log_alert(ib, "Failed to fetch parser interface on data out");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     rc = iface->data_out(pi, conndata);
@@ -599,7 +599,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     ib_status_t rc;
 
     if (ib_conn_flags_isset(conn, IB_CONN_FCLOSED)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(conn_closed_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -609,13 +609,13 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
         ib_tx_t *tx = conn->tx;
 
         if ((tx->flags & IB_TX_FREQ_FINISHED) == 0) {
-            ib_log_debug(ib, 9, "Automatically triggering %s",
+            ib_log_debug3(ib, "Automatically triggering %s",
                          ib_state_event_name(request_finished_event));
             ib_state_notify_request_finished(ib, tx);
         }
 
         if ((tx->flags & IB_TX_FRES_FINISHED) == 0) {
-            ib_log_debug(ib, 9, "Automatically triggering %s",
+            ib_log_debug3(ib, "Automatically triggering %s",
                          ib_state_event_name(response_finished_event));
             ib_state_notify_response_finished(ib, tx);
         }
@@ -638,7 +638,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     rc = ib_state_notify_conn(ib, conn_finished_event, conn);
 
-    ib_log_debug(ib, 9, "Destroying connection structure");
+    ib_log_debug3(ib, "Destroying connection structure");
     ib_conn_destroy(conn);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -699,7 +699,7 @@ ib_status_t ib_state_notify_request_started(
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(request_started_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -791,13 +791,13 @@ ib_status_t ib_state_notify_request_headers(
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADERS)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(request_headers_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if ((tx->flags & IB_TX_FREQ_STARTED) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering optional %s",
+        ib_log_debug3(ib, "Automatically triggering optional %s",
                      ib_state_event_name(request_started_event));
         ib_state_notify_request_started(ib, tx, NULL);
     }
@@ -874,7 +874,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     ib_status_t rc;
 
     if ((tx->flags & IB_TX_FREQ_SEENHEADERS) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering %s",
+        ib_log_debug3(ib, "Automatically triggering %s",
                      ib_state_event_name(request_headers_event));
         ib_state_notify_request_headers(ib, tx);
     }
@@ -907,19 +907,19 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(request_finished_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if ((tx->flags & IB_TX_FREQ_SEENHEADERS) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering %s",
+        ib_log_debug3(ib, "Automatically triggering %s",
                      ib_state_event_name(request_headers_event));
         ib_state_notify_request_headers(ib, tx);
     }
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering %s",
+        ib_log_debug3(ib, "Automatically triggering %s",
                      ib_state_event_name(request_body_data_event));
         ib_state_notify_request_body_data(ib, tx, NULL);
     }
@@ -967,7 +967,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     tx->t.response_started = ib_clock_get_time();
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(response_started_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1009,13 +1009,13 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADERS)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(response_headers_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if ((tx->flags & IB_TX_FRES_STARTED) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering optional %s",
+        ib_log_debug3(ib, "Automatically triggering optional %s",
                      ib_state_event_name(response_started_event));
         ib_state_notify_response_started(ib, tx, NULL);
     }
@@ -1056,7 +1056,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     ib_status_t rc;
 
     if ((tx->flags & IB_TX_FRES_SEENHEADERS) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering %s",
+        ib_log_debug3(ib, "Automatically triggering %s",
                      ib_state_event_name(response_headers_event));
         ib_state_notify_response_headers(ib, tx);
     }
@@ -1082,19 +1082,19 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
-        ib_log_error(ib, 4, "Attempted to notify previously notified event: %s",
+        ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(response_finished_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if ((tx->flags & IB_TX_FRES_SEENHEADERS) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering %s",
+        ib_log_debug3(ib, "Automatically triggering %s",
                      ib_state_event_name(response_headers_event));
         ib_state_notify_response_headers(ib, tx);
     }
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENBODY) == 0) {
-        ib_log_debug(ib, 9, "Automatically triggering %s",
+        ib_log_debug3(ib, "Automatically triggering %s",
                      ib_state_event_name(response_body_data_event));
         ib_state_notify_response_body_data(ib, tx, NULL);
     }

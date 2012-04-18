@@ -192,7 +192,7 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     ib_status_t rc;
 
     if ( dst_tmp == NULL ) {
-        ib_log_debug(ib, 0, "Failed to allocate memory for unescaping.");
+        ib_log_debug(ib, "Failed to allocate memory for unescaping.");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -208,7 +208,7 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
             "Failed to unescape string \"%s\" because resultant unescaped "
                 "string contains a NULL character." :
             "Failed to unescape string \"%s\"";
-        ib_log_debug(ib, 3, msg, src);
+        ib_log_debug(ib, msg, src);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -237,7 +237,7 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
                                             0,
                                             NULL);
     if (rc != IB_OK) {
-        ib_log_error(dpi->pr->ib, 3,
+        ib_log_error(dpi->pr->ib,
                      "Failed to generate \"%s\" placeholder field: %s",
                      name, ib_status_to_string(rc));
     }
@@ -320,7 +320,7 @@ static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
 
 static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
 {
-    ib_log_alert(epi->pr->ib, 1, "Event [id %016" PRIxMAX "][type %d]: %s",
+    ib_log_notice(epi->pr->ib, "Event [id %016" PRIxMAX "][type %d]: %s",
                  e->event_id, e->type, e->msg);
     return IB_OK;
 }
@@ -405,7 +405,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     struct tm gmtime_result;
 
     if (dtmp == NULL || dn == NULL) {
-        ib_log_error(log->ib, 1, "Failed to allocate internal buffers.");
+        ib_log_error(log->ib,  "Failed to allocate internal buffers.");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -417,7 +417,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                               corecfg->auditlog_sdir_fmt, &gmtime_result);
         if (ret == 0) {
             /// @todo Better error - probably should validate at cfg time
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not create audit log filename template, "
                          "using default:"
                          " too long");
@@ -433,7 +433,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                   corecfg->auditlog_dir, (*dtmp)?"/":"", dtmp);
     if (sys_rc >= dn_sz) {
         /// @todo Better error.
-        ib_log_error(log->ib, 1,
+        ib_log_error(log->ib,
                      "Could not create audit log directory: too long",
                      corecfg->auditlog_dir,
                      log->ctx->auditlog->index);
@@ -450,7 +450,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                       "%s/%s.log", dn, cfg->tx->id);
     if (sys_rc >= (int)audit_filename_sz) {
         /// @todo Better error.
-        ib_log_error(log->ib, 1,
+        ib_log_error(log->ib,
                      "Could not create audit log filename: too long");
         free(dtmp);
         free(dn);
@@ -459,7 +459,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
 
     ib_rc = ib_util_mkpath(dn, corecfg->auditlog_dmode);
     if (ib_rc != IB_OK) {
-        ib_log_error(log->ib, 1,
+        ib_log_error(log->ib,
                      "Could not create audit log dir: %s", dn);
         free(dtmp);
         free(dn);
@@ -471,7 +471,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     if (cfg->fp == NULL) {
         sys_rc = errno;
         /// @todo Better error.
-        ib_log_error(log->ib, 1,
+        ib_log_error(log->ib,
                      "Could not open audit log \"%s\": %s (%d)",
                      audit_filename, strerror(sys_rc), sys_rc);
         free(dtmp);
@@ -482,7 +482,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     /* Track the relative audit log filename. */
     cfg->fn = audit_filename + (strlen(corecfg->auditlog_dir) + 1);
 
-    ib_log_debug(log->ib, 4, "AUDITLOG: %s", audit_filename);
+    ib_log_debug(log->ib, "AUDITLOG: %s", audit_filename);
 
     free(dtmp);
     free(dn);
@@ -534,7 +534,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
     else {
         ib_rc = ib_util_mkpath(corecfg->auditlog_dir, corecfg->auditlog_dmode);
         if (ib_rc != IB_OK) {
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not create audit log dir: %s",
                          corecfg->auditlog_dir);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
@@ -554,7 +554,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                           corecfg->auditlog_dir,
                           log->ctx->auditlog->index);
         if (sys_rc >= index_file_sz) {
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not create audit log index \"%s/%s\":"
                          " too long",
                          corecfg->auditlog_dir,
@@ -572,7 +572,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
 
         sys_rc = pipe(p);
         if (sys_rc != 0) {
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not create piped audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
@@ -597,12 +597,12 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
             parg[1] = (char *)"-c";
             parg[2] = index_file;
             parg[3] = NULL;
-            ib_log_debug(log->ib, 4,
+            ib_log_debug(log->ib,
                          "Executing piped audit log index: %s %s \"%s\"",
                          parg[0], parg[1], parg[2]);
             execvp(ib_pipe_shell, (char * const *)parg); /// @todo define shell
             sys_rc = errno;
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not execute piped audit log index "
                          "\"%s\": %s (%d)",
                          index_file, strerror(sys_rc), sys_rc);
@@ -611,7 +611,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
         else if (pipe_pid == -1) {
             /* Error - no process created */
             sys_rc = errno;
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not create piped audit log index process: "
                          "%s (%d)",
                          strerror(sys_rc), sys_rc);
@@ -626,7 +626,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
         cfg->index_fp = fdopen(p[1], "w");
         if (cfg->index_fp == NULL) {
             sys_rc = errno;
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not open piped audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
@@ -638,7 +638,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
         cfg->index_fp = fopen(index_file, "ab");
         if (cfg->index_fp == NULL) {
             sys_rc = errno;
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not open audit log index \"%s\": %s (%d)",
                          index_file, strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
@@ -649,7 +649,7 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
     log->ctx->auditlog->index_fp = cfg->index_fp;
     ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
 
-    ib_log_debug(log->ib, 4, "AUDITLOG INDEX%s: %s",
+    ib_log_debug(log->ib, "AUDITLOG INDEX%s: %s",
                  (log->ctx->auditlog->index[0] == '|'?" (piped)":""),
                  index_file);
 
@@ -690,7 +690,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_error(log->ib, 1, "Could not fetch core configuration: %s", ib_status_to_string(rc) );
+        ib_log_error(log->ib,  "Could not fetch core configuration: %s", ib_status_to_string(rc) );
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -711,7 +711,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         rc = core_audit_open_auditindexfile(lpi, log, cfg, corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(log->ib, 1, "Could not open auditlog index.");
+            ib_log_error(log->ib,  "Could not open auditlog index.");
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -722,7 +722,7 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
         rc = core_audit_open_auditfile(lpi, log, cfg, corecfg);
 
         if (rc!=IB_OK) {
-            ib_log_error(log->ib, 1, "Failed to open audit log file.");
+            ib_log_error(log->ib,  "Failed to open audit log file.");
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -782,7 +782,7 @@ static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
 
     hlen = strlen(header);
     if (fwrite(header, hlen, 1, cfg->fp) != 1) {
-        ib_log_error(lpi->pr->ib, 1, "Failed to write audit log header");
+        ib_log_error(lpi->pr->ib,  "Failed to write audit log header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     fflush(cfg->fp);
@@ -820,7 +820,7 @@ static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
     /* Write the part data. */
     while((chunk_size = part->fn_gen(part, &chunk)) != 0) {
         if (fwrite(chunk, chunk_size, 1, cfg->fp) != 1) {
-            ib_log_error(lpi->pr->ib, 1, "Failed to write audit log part");
+            ib_log_error(lpi->pr->ib,  "Failed to write audit log part");
             fflush(cfg->fp);
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
@@ -993,7 +993,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     ib_rc = ib_context_module_config(log->ctx, ib_core_module(),
                                      &corecfg);
     if (ib_rc != IB_OK) {
-        ib_log_error(log->ib, 0, "Failure accessing core module: %s", ib_status_to_string(ib_rc));
+        ib_log_alert(log->ib,  "Failure accessing core module: %s", ib_status_to_string(ib_rc));
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
@@ -1019,7 +1019,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
 
         if (sys_rc < 0) {
             sys_rc = errno;
-            ib_log_error(log->ib, 1,
+            ib_log_error(log->ib,
                          "Could not write to audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
 
@@ -1224,7 +1224,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                 IB_FTRACE_RET_STATUS(IB_ENOENT);
             }
 
-            ib_log_error(dpi->pr->ib, 1, "Trying to lookup subkey in non-list.");
+            ib_log_error(dpi->pr->ib,  "Trying to lookup subkey in non-list.");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
@@ -1547,7 +1547,7 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     ib_status_t rc;
 
     if (ib_list_elements(log->parts) == 0) {
-        ib_log_error(lpi->pr->ib, 4, "No parts to write to audit log");
+        ib_log_error(lpi->pr->ib,  "No parts to write to audit log");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1564,7 +1564,7 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
 
     if (rc!=IB_OK) {
-        ib_log_error(lpi->pr->ib, 4,
+        ib_log_error(lpi->pr->ib,
                      "Cannot lock %s for write.",
                      log->ctx->auditlog->index);
         IB_FTRACE_RET_STATUS(rc);
@@ -1585,7 +1585,7 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
             (ib_auditlog_part_t *)ib_list_node_data(node);
         rc = iface->write_part(lpi, part);
         if (rc != IB_OK) {
-            ib_log_error(log->ib, 4, "Failed to write audit log part: %s",
+            ib_log_error(log->ib,  "Failed to write audit log part: %s",
                          part->name);
         }
     }
@@ -1637,7 +1637,7 @@ static ib_status_t audit_register(ib_engine_t *ib,
 
     /* Verify that required interface functions are implemented. */
     if (iface->write_part == NULL) {
-        ib_log_error(ib, 0, "The write_part function "
+        ib_log_alert(ib, "The write_part function "
                      "MUST be implemented by a audit provider");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1821,7 +1821,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, 4, "No data in audit log part: %s", part->name);
+            ib_log_error(ib, "No data in audit log part: %s", part->name);
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -1933,7 +1933,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_FIELD_LEN) {
-            ib_log_error(ib, 3, "Item too large to log in part %s: %" PRIuMAX,
+            ib_log_error(ib, "Item too large to log in part %s: %" PRIuMAX,
                          part->name, rlen);
             *chunk = (const uint8_t *)"\r\n";
             part->gen_data = (void *)-1;
@@ -1943,7 +1943,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
         *chunk = rec;
     }
     else {
-        ib_log_error(ib, 4, "NULL field in part: %s", part->name);
+        ib_log_error(ib, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
@@ -1981,7 +1981,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, 4, "No data in audit log part: %s", part->name);
+            ib_log_error(ib, "No data in audit log part: %s", part->name);
             part->gen_data = NULL;
             return 0;
         }
@@ -2004,7 +2004,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
 
             /* Verify size. */
             if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-                ib_log_error(ib, 3, "Item too large to log in part %s: %" PRIuMAX,
+                ib_log_error(ib, "Item too large to log in part %s: %" PRIuMAX,
                              part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
                 part->gen_data = (void *)-1;
@@ -2030,7 +2030,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
     /* Header Lines */
     f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
     if (f == NULL) {
-        ib_log_error(ib, 4, "NULL field in part: %s", part->name);
+        ib_log_error(ib, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
@@ -2082,7 +2082,7 @@ static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
 
     /* Verify size. */
     if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-        ib_log_error(ib, 3, "Item too large to log in part %s: %" PRIuMAX,
+        ib_log_error(ib, "Item too large to log in part %s: %" PRIuMAX,
                      part->name, rlen);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
@@ -2140,7 +2140,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     if (part->gen_data == NULL) {
         /* No events. */
         if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, 4, "No events in audit log");
+            ib_log_error(ib, "No events in audit log");
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -2203,7 +2203,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             return strlen(*(const char **)chunk);
         }
 
-        ib_log_debug(ib, 4, "TODO: Data escaping not implemented!");
+        ib_log_debug(ib, "TODO: Data escaping not implemented!");
         rlen = snprintf((char *)rec, CORE_JSON_MAX_REC_LEN,
                         "%s"
                         "    {\r\n"
@@ -2235,7 +2235,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_REC_LEN) {
-            ib_log_error(ib, 3, "Event too large to log: %" PRIuMAX, rlen);
+            ib_log_error(ib, "Event too large to log: %" PRIuMAX, rlen);
             *chunk = (const uint8_t *)"    {}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -2244,7 +2244,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         *chunk = rec;
     }
     else {
-        ib_log_error(ib, 4, "NULL event");
+        ib_log_error(ib, "NULL event");
         *chunk = (const uint8_t *)"    {}";
         part->gen_data = (void *)-1;
         return strlen(*(const char **)chunk);
@@ -2259,7 +2259,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         if (clen+8 > CORE_JSON_MAX_REC_LEN) {
             if (clen+2 > CORE_JSON_MAX_REC_LEN) {
-                ib_log_error(ib, 4, "Event too large to fit in buffer");
+                ib_log_error(ib, "Event too large to fit in buffer");
                 *chunk = (const uint8_t *)"    {}\r\n  ]\r\n}";
             }
             memcpy(*(uint8_t **)chunk + clen, "]}", 2);
@@ -2522,7 +2522,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
         else {
-            ib_log_error(ib, 4, "Failed to get request_protocol: %s", ib_status_to_string(rc));
+            ib_log_error(ib, "Failed to get request_protocol: %s", ib_status_to_string(rc));
         }
 
         rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_method"), &f);
@@ -2530,7 +2530,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
         else {
-            ib_log_error(ib, 4, "Failed to get request_method: %s", ib_status_to_string(rc));
+            ib_log_error(ib, "Failed to get request_method: %s", ib_status_to_string(rc));
         }
 
         /// @todo If this is NULL, parser failed - what to do???
@@ -2589,7 +2589,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
     }
     else {
-        ib_log_error(ib, 4, "Failed to get response_status: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to get response_status: %s", ib_status_to_string(rc));
     }
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_protocol"), &f);
@@ -2597,7 +2597,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
     }
     else {
-        ib_log_error(ib, 4, "Failed to get response_protocol: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to get response_protocol: %s", ib_status_to_string(rc));
     }
 
     /* Add the part to the auditlog. */
@@ -2633,14 +2633,14 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_line"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to get request_line: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to get request_line: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_list_push(list, f);
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_headers"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to get request_headers: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to get request_headers: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -2717,14 +2717,14 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_line"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to get response_line: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to get response_line: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_list_push(list, f);
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_headers"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to get response_headers: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to get response_headers: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -2898,7 +2898,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.audit, &audit,
                                         tx->mp, log);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create audit log provider instance: %s",
+        ib_log_alert(ib, "Failed to create audit log provider instance: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2935,7 +2935,7 @@ static ib_status_t logevent_register(ib_engine_t *ib,
 
     /* Verify that required interface functions are implemented. */
     if (iface->write == NULL) {
-        ib_log_error(ib, 0, "The write function "
+        ib_log_alert(ib, "The write function "
                      "MUST be implemented by a logevent provider");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -3016,7 +3016,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
                                   (void *)&corecfg);
 
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize core module: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to initialize core module: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -3024,14 +3024,14 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &conn->dpi,
                                         conn->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create conn data provider instance: %s",
+        ib_log_alert(ib, "Failed to create conn data provider instance: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
 
     if (iface == NULL) {
-        ib_log_error(ib, 0, "Failed to fetch parser interface on init");
+        ib_log_alert(ib, "Failed to fetch parser interface on init");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3100,7 +3100,7 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
     }
 
     if (iface == NULL) {
-        ib_log_error(ib, 0, "Failed to fetch parser interface on connect");
+        ib_log_alert(ib, "Failed to fetch parser interface on connect");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3137,7 +3137,7 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface on disconnect");
+        ib_log_alert(ib, "Failed to fetch parser interface on disconnect");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3176,7 +3176,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface on request header");
+        ib_log_alert(ib, "Failed to fetch parser interface on request header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3193,11 +3193,11 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     if (rc == IB_OK) {
         rc = ib_data_add_named(tx->dpi, f, "args", 4);
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Failed to alias ARGS: %s", ib_status_to_string(rc));
+            ib_log_error(ib, "Failed to alias ARGS: %s", ib_status_to_string(rc));
         }
         rc = ib_data_add_named(tx->dpi, f, "args_get", 8);
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
+            ib_log_error(ib, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
         }
     }
 
@@ -3275,7 +3275,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(ib, 0, "Failed to fetch parser interface response header");
+        ib_log_alert(ib, "Failed to fetch parser interface response header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3315,7 +3315,7 @@ static ib_status_t parser_register(ib_engine_t *ib,
         || (iface->gen_request_header_fields == NULL)
         || (iface->gen_response_header_fields == NULL))
     {
-        ib_log_error(ib, 0, "The data in/out and generate interface functions "
+        ib_log_alert(ib, "The data in/out and generate interface functions "
                             "MUST be implemented by a parser provider");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -3350,7 +3350,7 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
+        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3384,7 +3384,7 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
+        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3422,7 +3422,7 @@ static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
+        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3458,7 +3458,7 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
+        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3490,7 +3490,7 @@ static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
+        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3526,7 +3526,7 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_error(dpi->pr->ib, 0, "Failed to fetch data interface");
+        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3605,7 +3605,7 @@ static ib_status_t data_register(ib_engine_t *ib,
         || (iface->remove == NULL)
         || (iface->clear == NULL))
     {
-        ib_log_error(ib, 0, "All required interface functions "
+        ib_log_alert(ib, "All required interface functions "
                             "MUST be implemented by a data provider");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -3635,7 +3635,7 @@ static ib_status_t data_init(ib_provider_inst_t *dpi,
     }
     dpi->data = (void *)ht;
 
-    ib_log_debug(dpi->pr->ib, 9, "Initialized core data provider instance: %p", dpi);
+    ib_log_debug3(dpi->pr->ib, "Initialized core data provider instance: %p", dpi);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -3750,7 +3750,7 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
     rc = iface->add_ex(mpi, patterns, patt, callback, arg,
                                errptr, erroffset);
     if (rc != IB_OK) {
-        ib_log_error(mpi->pr->ib, 4,
+        ib_log_error(mpi->pr->ib,
                      "Failed to add pattern %s patt: (%s) %s at"
                      " offset %d", patt, ib_status_to_string(rc), errptr, erroffset);
         IB_FTRACE_RET_STATUS(rc);
@@ -3983,7 +3983,7 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
     rc = ib_context_module_config(tx->ctx,
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4036,7 +4036,7 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
     /* Only interested in the body. */
     if (   (txdata->dtype != IB_DTYPE_HTTP_BODY)
         && (txdata->dlen > 0)) {
-        ib_log_debug(ib, 9, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
+        ib_log_debug3(ib, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -4044,7 +4044,7 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
     rc = ib_context_module_config(tx->ctx,
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch module %s config: %s",
+        ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4086,7 +4086,7 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
     rc = ib_data_add_list_ex(tx->dpi, "TX", 2, NULL);
 
     if (rc!=IB_OK) {
-        ib_log_debug(ib, 7, "Unable to add list \"TX\".");
+        ib_log_debug2(ib, "Unable to add list \"TX\".");
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4125,7 +4125,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_context_module_config(tx->ctx, ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failure accessing core module: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failure accessing core module: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4133,7 +4133,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &tx->dpi,
                                         tx->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create tx data provider instance: %s",
+        ib_log_alert(ib, "Failed to create tx data provider instance: %s",
                      rc);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4141,7 +4141,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     /* Data Provider Default Initialization */
     rc = dpi_default_init(ib, tx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize data provider instance.");
+        ib_log_alert(ib, "Failed to initialize data provider instance.");
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4149,7 +4149,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.logevent, &tx->epi,
                                         tx->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create logevent provider instance: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to create logevent provider instance: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4354,34 +4354,34 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     rc = core_unescape(ib, &p1_unescaped, p1);
 
     if ( rc != IB_OK ) {
-        ib_log_debug(ib, 7, "Could not unescape configuration %s=%s", name, p1);
+        ib_log_debug2(ib, "Could not unescape configuration %s=%s", name, p1);
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 6, "Creating site \"%s\"", p1_unescaped);
+    ib_log_debug2(ib, "Creating site \"%s\"", p1_unescaped);
     rc = ib_site_create(&site, ib, p1_unescaped);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to create site \"%s\": %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to create site \"%s\": %s", ib_status_to_string(rc));
     }
 
-    ib_log_debug(ib, 6,
+    ib_log_debug2(ib,
                  "Creating default location for site \"%s\"", p1_unescaped);
     rc = ib_site_loc_create_default(site, &loc);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Failed to create default location for site \"%s\": %s",
                      p1_unescaped,
                      rc);
     }
 
-    ib_log_debug(ib, 6,
+    ib_log_debug2(ib,
                  "Creating context for \"%s:%s\"", p1_unescaped, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            ib_context_siteloc_chooser,
                            ib_context_site_lookup,
                            loc);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Failed to create context for \"%s:%s\": %s",
                      p1_unescaped,
                      loc->path,
@@ -4390,10 +4390,10 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     }
     ib_cfgparser_context_push(cp, ctx);
 
-    ib_log_debug(ib, 8, "Opening context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "Opening context %p for \"%s\"", ctx, name);
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Error opening context for \"%s\": %s",
+        ib_log_error(ib, "Error opening context for \"%s\": %s",
                      name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -4428,19 +4428,19 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
     ib_context_t *ctx;
     ib_status_t rc;
 
-    ib_log_debug(ib, 8, "Processing site block \"%s\"", name);
+    ib_log_debug2(ib, "Processing site block \"%s\"", name);
 
     /* Pop the current items off the stack */
     rc = ib_cfgparser_context_pop(cp, &ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to pop context for \"%s\": %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to pop context for \"%s\": %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 8, "Closing context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "Closing context %p for \"%s\"", ctx, name);
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Error closing context for \"%s\": %s",
+        ib_log_error(ib, "Error closing context for \"%s\": %s",
                      name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -4484,25 +4484,25 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
 
     rc = core_unescape(ib, &p1_unescaped, p1);
     if ( rc != IB_OK ) {
-        ib_log_debug(ib, 7,
+        ib_log_debug2(ib,
                      "Failed to unescape parameter %s=%s.", name, p1);
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 6,
+    ib_log_debug2(ib,
                  "Creating location \"%s\" for site \"%s\"",
                  p1_unescaped,
                  site->name);
     rc = ib_site_loc_create(site, &loc, p1_unescaped);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4,
+        ib_log_error(ib,
                      "Failed to create location \"%s:%s\": %s",
                      site->name,
                      p1_unescaped,
                      rc);
     }
 
-    ib_log_debug(ib, 6,
+    ib_log_debug2(ib,
                  "Creating context for \"%s:%s\"",
                  site->name,
                  loc->path);
@@ -4511,7 +4511,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                            ib_context_site_lookup,
                            loc);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 6,
+        ib_log_debug2(ib,
                      "Failed to create context for \"%s:%s\": %s",
                      site->name,
                      loc->path,
@@ -4520,10 +4520,10 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     }
     ib_cfgparser_context_push(cp, ctx);
 
-    ib_log_debug(ib, 8, "Opening context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "Opening context %p for \"%s\"", ctx, name);
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Error opening context for \"%s\": %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "Error opening context for \"%s\": %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -4552,19 +4552,19 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
     ib_context_t *ctx;
     ib_status_t rc;
 
-    ib_log_debug(ib, 8, "Processing location block \"%s\"", name);
+    ib_log_debug2(ib, "Processing location block \"%s\"", name);
 
     /* Pop the current items off the stack */
     rc = ib_cfgparser_context_pop(cp, &ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to pop context for \"%s\": %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to pop context for \"%s\": %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug(ib, 8, "Closing context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "Closing context %p for \"%s\"", ctx, name);
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 1, "Error closing context for \"%s\": %s",
+        ib_log_error(ib, "Error closing context for \"%s\": %s",
                      name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -4607,23 +4607,23 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
         rc = core_unescape(ib, &p_unescaped, p);
 
         if ( rc != IB_OK ) {
-            ib_log_debug(ib, 3, "Failed to unescape %s=%s", name, p);
+            ib_log_debug(ib, "Failed to unescape %s=%s", name, p);
             IB_FTRACE_RET_STATUS(rc);
         }
 
         if (strncasecmp("ip=", p_unescaped, 3) == 0) {
             p_unescaped += 3; /* Skip over ip= */
-            ib_log_debug(ib, 7, "Adding IP \"%s\" to site \"%s\"",
+            ib_log_debug2(ib, "Adding IP \"%s\" to site \"%s\"",
                          p_unescaped, cp->cur_site->name);
             rc = ib_site_address_add(cp->cur_site, p_unescaped);
         }
         else if (strncasecmp("path=", p_unescaped, 5) == 0) {
             //p_unescaped += 5; /* Skip over path= */
-            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p_unescaped);
+            ib_log_debug(ib, "TODO: Handle: %s %s", name, p_unescaped);
         }
         else if (strncasecmp("port=", p_unescaped, 5) == 0) {
             //p_unescaped += 5; /* Skip over port= */
-            ib_log_debug(ib, 4, "TODO: Handle: %s %s", name, p_unescaped);
+            ib_log_debug(ib, "TODO: Handle: %s %s", name, p_unescaped);
         }
         else {
             /// @todo Handle full wildcards
@@ -4634,7 +4634,7 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                  */
                 p_unescaped++;
             }
-            ib_log_debug(ib, 7, "Adding host \"%s\" to site \"%s\"",
+            ib_log_debug2(ib, "Adding host \"%s\" to site \"%s\"",
                          p_unescaped, cp->cur_site->name);
             rc = ib_site_hostname_add(cp->cur_site, p_unescaped);
         }
@@ -4675,17 +4675,17 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     /* We remove constness to populate this buffer. */
     rc = core_unescape(ib, (char**)&p1_unescaped, p1);
     if ( rc != IB_OK ) {
-        ib_log_debug(ib, 5, "Failed to unescape %s=%s", name, p1);
+        ib_log_debug2(ib, "Failed to unescape %s=%s", name, p1);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (strcasecmp("InspectionEngine", name) == 0) {
-        ib_log_debug(ib, 4,
+        ib_log_debug(ib,
                     "TODO: Handle Directive: %s \"%s\"", name, p1_unescaped);
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "audit_engine", 2);
             IB_FTRACE_RET_STATUS(rc);
@@ -4699,7 +4699,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_error(ib, 1,
+        ib_log_error(ib,
                      "Failed to parse directive: %s \"%s\"",
                      name,
                      p1_unescaped);
@@ -4707,7 +4707,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditLogIndex", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
 
         /* "None" means do not use the index file at all. */
         if (strcasecmp("None", p1_unescaped) == 0) {
@@ -4721,7 +4721,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("AuditLogIndexFormat", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_index_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4730,10 +4730,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         long lmode = strtol(p1_unescaped, NULL, 0);
 
         if ((lmode > 0777) || (lmode <= 0)) {
-            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1_unescaped);
+            ib_log_error(ib, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_num(ctx, "auditlog_dmode", lmode);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4742,28 +4742,28 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         long lmode = strtol(p1_unescaped, NULL, 0);
 
         if ((lmode > 0777) || (lmode <= 0)) {
-            ib_log_error(ib, 1, "Invalid mode: %s \"%s\"", name, p1_unescaped);
+            ib_log_error(ib, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_num(ctx, "auditlog_fmode", lmode);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_dir", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogSubDirFormat", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("DebugLogLevel", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: %d", name, atol(p1_unescaped));
+        ib_log_debug2(ib, "%s: %d", name, atol(p1_unescaped));
         rc = ib_context_set_num(ctx, "logger.log_level", atol(p1_unescaped));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4772,7 +4772,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
         const char   *uri = NULL;
 
-        ib_log_debug(ib, 7, "%s: \"%s\"", name, p1_unescaped);
+        ib_log_debug2(ib, "%s: \"%s\"", name, p1_unescaped);
 
         // Create a file URI from the file path, using memory
         // from the context's mem pool.
@@ -4783,7 +4783,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             uri = buf;
         }
         else if ( strncmp(p1_unescaped, "file://", 7) != 0 ) {
-            ib_log_error(ib, 3,
+            ib_log_error(ib,
                          "Unsupported URI in %s: \"%s\"",
                          name, p1_unescaped);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -4791,13 +4791,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         else {
             uri = p1_unescaped;
         }
-        ib_log_debug(ib, 7, "%s: URI=\"%s\"", name, uri);
+        ib_log_debug2(ib, "%s: URI=\"%s\"", name, uri);
         rc = ib_context_set_string(ctx, "logger.log_uri", uri);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("DebugLogHandler", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
+        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4829,7 +4829,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         rc = ib_module_load(&m, ib, absfile);
         if (rc != IB_OK) {
-            ib_log_error(ib, 2,
+            ib_log_error(ib,
                          "Failed to load module \"%s\": %s", p1_unescaped, ib_status_to_string(rc));
         }
         IB_FTRACE_RET_STATUS(rc);
@@ -4837,7 +4837,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("RequestBuffering", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
 
-        ib_log_debug(ib, 7, "%s: %s", name, p1_unescaped);
+        ib_log_debug2(ib, "%s: %s", name, p1_unescaped);
         if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_req", 1);
             IB_FTRACE_RET_STATUS(rc);
@@ -4849,7 +4849,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("ResponseBuffering", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
 
-        ib_log_debug(ib, 7, "%s: %s", name, p1_unescaped);
+        ib_log_debug2(ib, "%s: %s", name, p1_unescaped);
         if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_res", 1);
             IB_FTRACE_RET_STATUS(rc);
@@ -4871,7 +4871,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         /* Calculate the binary version. */
         rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1_unescaped);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
+            ib_log_error(ib, "Invalid UUID at %s: %s should have "
                             "UUID format "
                             "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
                             " hex values)",
@@ -4884,7 +4884,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_id_str);
+        ib_log_debug2(ib, "%s: %s", name, ib->sensor_id_str);
 
         /* Generate a 4byte hash id to use it for transaction id generations */
         reduce.uint64 = ib->sensor_id.uint64[0] ^
@@ -4898,13 +4898,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("SensorName", name) == 0) {
         ib->sensor_name = ib_mpool_strdup(ib_engine_pool_config_get(ib),
                                           p1_unescaped);
-        ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_name);
+        ib_log_debug2(ib, "%s: %s", name, ib->sensor_name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SensorHostname", name) == 0) {
         ib->sensor_hostname =
             ib_mpool_strdup(ib_engine_pool_config_get(ib), p1_unescaped);
-        ib_log_debug(ib, 7, "%s: %s", name, ib->sensor_hostname);
+        ib_log_debug2(ib, "%s: %s", name, ib->sensor_hostname);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("SiteId", name) == 0) {
@@ -4917,7 +4917,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         /* Calculate the binary version. */
         rc = ib_uuid_ascii_to_bin(&site->id, (const char *)p1_unescaped);
         if (rc != IB_OK) {
-            ib_log_error(ib, 1, "Invalid UUID at %s: %s should have "
+            ib_log_error(ib, "Invalid UUID at %s: %s should have "
                             "UUID format "
                             "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
                             " hex values)",
@@ -4930,7 +4930,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(ib, 7, "%s: %s", name, site->id_str);
+        ib_log_debug2(ib, "%s: %s", name, site->id_str);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("ModuleBasePath", name) == 0) {
@@ -4939,13 +4939,13 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 3,
+            ib_log_error(ib,
                          "Could not set ModuleBasePath %s", p1_unescaped);
             IB_FTRACE_RET_STATUS(rc);
         }
 
         corecfg->module_base_path = p1_unescaped;
-        ib_log_debug(ib, 7, "ModuleBasePath: %s", p1_unescaped);
+        ib_log_debug2(ib, "ModuleBasePath: %s", p1_unescaped);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("RuleBasePath", name) == 0) {
@@ -4954,17 +4954,17 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 3, "Could not set RuleBasePath %s", p1_unescaped);
+            ib_log_error(ib, "Could not set RuleBasePath %s", p1_unescaped);
             IB_FTRACE_RET_STATUS(rc);
         }
 
         corecfg->rule_base_path = p1_unescaped;
-        ib_log_debug(ib, 7, "RuleBasePath: %s", p1_unescaped);
+        ib_log_debug2(ib, "RuleBasePath: %s", p1_unescaped);
         IB_FTRACE_RET_STATUS(IB_OK);
 
     }
 
-    ib_log_error(ib, 1, "Unhandled directive: %s %s", name, p1_unescaped);
+    ib_log_error(ib, "Unhandled directive: %s %s", name, p1_unescaped);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
@@ -5000,7 +5000,7 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     parts = (flags & fmask) | (parts & ~fmask);
 
-    ib_log_debug(ib, 7, "AUDITLOG PARTS: 0x%08x", (unsigned long)parts);
+    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08x", (unsigned long)parts);
 
     rc = ib_context_set_num(ctx, "auditlog_parts", parts);
     IB_FTRACE_RET_STATUS(rc);
@@ -5044,7 +5044,7 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                          val, &pi,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %s",
+            ib_log_alert(ib, "Failed to create %s provider instance: %s",
                          IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -5058,7 +5058,7 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                 val,
                                 &corecfg->pr.audit);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to lookup %s audit log provider: %s",
+            ib_log_alert(ib, "Failed to lookup %s audit log provider: %s",
                          val, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -5070,7 +5070,7 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                 val,
                                 &corecfg->pr.data);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to lookup %s data provider: %s",
+            ib_log_alert(ib, "Failed to lookup %s data provider: %s",
                          val, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -5082,7 +5082,7 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                 val,
                                 &corecfg->pr.logevent);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to lookup %s logevent provider: %s",
+            ib_log_alert(ib, "Failed to lookup %s logevent provider: %s",
                          val, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -5131,7 +5131,7 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
                 ib_context_set_num(ctx, p1, atol(p2));
                 break;
             default:
-                ib_log_error(ib, 3,
+                ib_log_error(ib,
                              "Can only set string(%d) or numeric(%d) "
                              "types, but %s was type=%d",
                              IB_FTYPE_NULSTR, IB_FTYPE_NUM,
@@ -5143,7 +5143,7 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_error(ib, 1, "Unhandled directive: %s %s %s", name, p1, p2);
+    ib_log_error(ib, "Unhandled directive: %s %s %s", name, p1, p2);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
@@ -5370,7 +5370,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_context_module_config(ib->ctx, m,
                                   (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to fetch core module config: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to fetch core module config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -5452,7 +5452,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_PARSER,
                             parser_register, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to define parser provider: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to define parser provider: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -5465,7 +5465,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                             filter_buffer,
                             NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to register buffer filter: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to register buffer filter: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_hook_tx_register(ib, handle_context_tx_event,
@@ -5510,7 +5510,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_DATA,
                             data_register, &data_api);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to define data provider: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to define data provider: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -5527,7 +5527,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_MATCHER,
                             matcher_register, &matcher_api);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to define matcher provider: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to define matcher provider: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -5536,7 +5536,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                                      corecfg->log_handler, &logger,
                                      ib->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance '%s': %s",
+        ib_log_alert(ib, "Failed to create %s provider instance '%s': %s",
                      IB_PROVIDER_TYPE_LOGGER, corecfg->log_handler, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5548,7 +5548,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                             IB_DSTR_CORE,
                             &corecfg->pr.data);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to lookup %s data provider: %s",
+        ib_log_alert(ib, "Failed to lookup %s data provider: %s",
                      IB_DSTR_CORE, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5559,7 +5559,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                             IB_DSTR_CORE,
                             &corecfg->pr.audit);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to lookup %s audit log provider: %s",
+        ib_log_alert(ib, "Failed to lookup %s audit log provider: %s",
                      IB_DSTR_CORE, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5570,7 +5570,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                             IB_DSTR_CORE,
                             &corecfg->pr.logevent);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to lookup %s logevent provider: %s",
+        ib_log_alert(ib, "Failed to lookup %s logevent provider: %s",
                      IB_DSTR_CORE, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5581,7 +5581,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                                          corecfg->parser, &parser,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib, 0, "Failed to create %s provider instance: %s",
+            ib_log_alert(ib, "Failed to create %s provider instance: %s",
                          IB_DSTR_CORE, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -5591,28 +5591,28 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Initialize the core rule engine */
     rc = ib_rule_engine_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize rule engine: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to initialize rule engine: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Initialize the core transformations */
     rc = ib_core_transformations_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize core operators: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to initialize core operators: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Initialize the core operators */
     rc = ib_core_operators_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize core operators: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to initialize core operators: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Initialize the core actions */
     rc = ib_core_actions_init(ib, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize core actions: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to initialize core actions: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -5777,7 +5777,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     /* Initialize the rule engine for the context */
     rc = ib_rule_engine_ctx_init(ib, mod, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to initialize rule engine context: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to initialize rule engine context: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -5786,7 +5786,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     rc = ib_context_module_config(main_ctx, ib_core_module(),
                                   (void *)&main_core_config);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Failed to fetch main core module context config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5796,7 +5796,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     // Get the current context config.
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Failed to fetch core module context config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5810,7 +5810,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
                                      ib->mp,
                                      NULL);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0, "Failed to create %s provider instance '%s': %s",
+        ib_log_alert(ib, "Failed to create %s provider instance '%s': %s",
                      IB_PROVIDER_TYPE_LOGGER, handler, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5880,7 +5880,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     rc = ib_context_module_config(main_ctx, ib_core_module(),
                                   (void *)&main_core_config);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Failed to fetch main core module context config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -5890,7 +5890,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     // Get the current context config.
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, 0,
+        ib_log_alert(ib,
                      "Failed to fetch core module context config: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }

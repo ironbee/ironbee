@@ -110,7 +110,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
     if (ac_tree == NULL) {
         rc = ib_ac_create(&ac_tree, 0, mpi->mp);
         if (rc != IB_OK || ac_tree == NULL) {
-            ib_log_error(mpi->pr->ib, 4,
+            ib_log_error(mpi->pr->ib,
                          "Unable to create the AC tree at modac");
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -120,11 +120,11 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
     rc = ib_ac_add_pattern(ac_tree, patt, (ib_ac_callback_t)callback, arg, 0);
 
     if (rc == IB_OK) {
-        ib_log_debug(mpi->pr->ib, 4, "pattern %s added to the AC tree %x", patt,
+        ib_log_debug(mpi->pr->ib, "pattern %s added to the AC tree %x", patt,
                      ac_tree);
     }
     else {
-        ib_log_error(mpi->pr->ib, 4, "Failed to load pattern %s to the AC tree %x",
+        ib_log_error(mpi->pr->ib,  "Failed to load pattern %s to the AC tree %x",
                      patt, ac_tree);
     }
 
@@ -156,7 +156,7 @@ static ib_status_t modac_provider_instance_init(ib_provider_inst_t *mpi,
     rc = ib_ac_create(&dt->ac_tree, 0, mpi->mp);
 
     if (rc != IB_OK) {
-        ib_log_error(mpi->pr->ib, 4, "Unable to create the AC tree at modac");
+        ib_log_error(mpi->pr->ib,  "Unable to create the AC tree at modac");
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -184,7 +184,7 @@ static ib_status_t modac_match(ib_provider_inst_t *mpi,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(mpi->pr->ib, 4, "Matching AGAINST AC tree %x",
+    ib_log_debug(mpi->pr->ib, "Matching AGAINST AC tree %x",
                      dt->ac_tree);
 
 
@@ -370,7 +370,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
             "Cannot unescape file \"%s\" because it contains NULLs." :
             "Cannot unescape file \"%s\".";
         free(pattern_file_unescaped);
-        ib_log_debug(ib, 3, msg, pattern_file);
+        ib_log_debug(ib, msg, pattern_file);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -584,7 +584,7 @@ static ib_status_t modac_init(ib_engine_t *ib,
                               &modac_matcher_iface,
                               modac_provider_instance_init);
     if (rc != IB_OK) {
-        ib_log_error(ib, 3,
+        ib_log_error(ib,
                      MODULE_NAME_STR ": Error registering ac matcher provider: "
                      "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -603,7 +603,7 @@ static ib_status_t modac_init(ib_engine_t *ib,
                          &pm_operator_destroy,
                          &pm_operator_execute);
 
-    ib_log_debug(ib, 4,
+    ib_log_debug(ib,
                  "AC Status: compiled=\"%d.%d %s\" AC Matcher registered",
                  AC_MAJOR, AC_MINOR, IB_XSTRINGIFY(AC_DATE));
 

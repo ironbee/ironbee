@@ -36,7 +36,7 @@ function onModuleLoad(ib)
     -- Print out a value at each log level
     local i = 0
     while i <= 9 do
-        ironbee.ib_log_debug(ib, i, "Logging at level " .. i)
+        ironbee.ib_log(ib, i, "Logging at level " .. i)
         i = i + 1
     end
 

@@ -1758,6 +1758,23 @@ ib_status_t DLL_PUBLIC ib_matcher_exec_field(ib_matcher_t *m,
  */
 
 /**
+ * Logger log level.
+ **/
+typedef enum {
+    IB_LOG_EMERGENCY = 0, /**< System unusable. */
+    IB_LOG_ALERT     = 1, /**< Crisis happened; immediate attention */
+    IB_LOG_CRITICAL  = 2, /**< Crisis coming; immediate attention */
+    IB_LOG_ERROR     = 3, /**< Error occurred; needs attention */
+    IB_LOG_WARNING   = 4, /**< Error likely to occur; needs attention */
+    IB_LOG_NOTICE    = 5, /**< Something unusual happened */
+    IB_LOG_INFO      = 6, /**< Something usual happened */
+    IB_LOG_DEBUG     = 7, /**< Developer oriented information */
+    IB_LOG_DEBUG2    = 8, /**< As above, lower priority */
+    IB_LOG_DEBUG3    = 9, /**< As above, lowest priority */
+    IB_LOG_TRACE     = 10 /**< Reserved for future use */
+} ib_log_level_t;
+
+/**
  * Logger callback.
  *
  * @param cbdata Callback data
@@ -1768,22 +1785,36 @@ ib_status_t DLL_PUBLIC ib_matcher_exec_field(ib_matcher_t *m,
  * @param fmt Formatting string
  */
 typedef void (*ib_log_logger_fn_t)(void *cbdata,
-                                   int level,
+                                   ib_log_level_t level,
                                    const char *prefix,
                                    const char *file, int line,
                                    const char *fmt, va_list ap)
                                    VPRINTF_ATTRIBUTE(6);
 
-/** Normal Logger. */
-#define ib_log(ib,lvl,...) ib_log_ex((ib),(lvl),NULL,NULL,0,__VA_ARGS__)
-/** Error Logger. */
-#define ib_log_error(ib,lvl,...) ib_log_ex((ib),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
-/** Alert Logger. */
-#define ib_log_alert(ib,lvl,...) ib_log_ex((ib),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
-/** Abort Logger. */
-#define ib_log_abort(ib,...) do { ib_log_ex((ib),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
-/** Debug Logger. */
-#define ib_log_debug(ib,lvl,...) ib_log_ex((ib),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
+/** Log Generic */
+#define ib_log(ib,lvl,...) ib_log_ex((ib), (lvl), NULL, NULL, 0, __VA_ARGS__)
+/** Log Emergency */
+#define ib_log_emergency(ib,...) ib_log_ex((ib), IB_LOG_EMERGENCY, "EMERGENCY - ", NULL, 0, __VA_ARGS__)
+/** Log Alert */
+#define ib_log_alert(ib,...)     ib_log_ex((ib), IB_LOG_ALERT,     "ALERT     - ", NULL, 0, __VA_ARGS__)
+/** Log Critical */
+#define ib_log_critical(ib,...)  ib_log_ex((ib), IB_LOG_CRITICAL,  "CRITICAL  - ", NULL, 0, __VA_ARGS__)
+/** Log Error */
+#define ib_log_error(ib,...)     ib_log_ex((ib), IB_LOG_ERROR,     "ERROR     - ", NULL, 0, __VA_ARGS__)
+/** Log Warning */
+#define ib_log_warning(ib,...)   ib_log_ex((ib), IB_LOG_WARNING,   "WARNING   - ", NULL, 0, __VA_ARGS__)
+/** Log Notice */
+#define ib_log_notice(ib,...)    ib_log_ex((ib), IB_LOG_NOTICE,    "NOTICE    - ", NULL, 0, __VA_ARGS__)
+/** Log Info */
+#define ib_log_info(ib,...)      ib_log_ex((ib), IB_LOG_INFO,      "INFO      - ", NULL, 0, __VA_ARGS__)
+/** Log Debug */
+#define ib_log_debug(ib,...)     ib_log_ex((ib), IB_LOG_DEBUG,     "DEBUG     - ", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug2 */
+#define ib_log_debug2(ib,...)    ib_log_ex((ib), IB_LOG_DEBUG2,    "DEBUG2    - ", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug3 */
+#define ib_log_debug3(ib,...)    ib_log_ex((ib), IB_LOG_DEBUG3,    "DEBUG3    - ", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Trace */
+#define ib_log_trace(ib,...)     ib_log_ex((ib), IB_LOG_TRACE,     "TRACE     - ", __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * Generic Logger for engine.

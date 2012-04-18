@@ -422,7 +422,7 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
 
     /* Create the connection structure. */
     /// @todo Perhaps the engine should do this instead via an event???
-    ib_log_debug(ironbee, 9, "Creating connection structure");
+    ib_log_debug3(ironbee, "Creating connection structure");
     rc = ib_conn_create(ironbee, &iconn, c);
     if (rc != IB_OK) {
         return DECLINED;
@@ -476,7 +476,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     conn_rec *c = (conn_rec *)iconn->pctx;
     ib_status_t rc;
 
-    ib_log_debug(ib, 9, "Initializing connection remote=%s:%d local=%s:%d",
+    ib_log_debug3(ib, "Initializing connection remote=%s:%d local=%s:%d",
                  c->remote_ip, c->remote_addr->port,
                  c->local_ip, c->local_addr->port);
 

@@ -167,7 +167,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
     for (event = 0; event < IB_STATE_EVENT_NUM; ++event) {
         if ((eventp->cbdata_type == IB_CBDATA_NONE) ||
             (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T)) {
-            ib_log_error(ib, 4, "Cannot collect stats for:%d name:%s cbdata_type: %d",
+            ib_log_error(ib, "Cannot collect stats for:%d name:%s cbdata_type: %d",
                          eventp->number, eventp->name, eventp->cbdata_type);
         }
         else {
@@ -193,14 +193,14 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
             perfp->total_usec = 0;
             perfp->stop_usec = 0;
 
-            ib_log_debug(ib, 4, "Perf callback registered %s (%d) (%d)",
+            ib_log_debug(ib, "Perf callback registered %s (%d) (%d)",
                          perfp->name, perfp->number, perfp->cbdata_type);
         }
     }
 
     rc = ib_hash_set(connp->data, "MOD_PERF_STATS" ,perf_info);
     if (rc != IB_OK) {
-        ib_log_debug(ib, 3, "Failed to store perf stats in connection data: %s", ib_status_to_string(rc));
+        ib_log_debug(ib, "Failed to store perf stats in connection data: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -237,11 +237,11 @@ static void mod_perf_stats_event_start(
         /* Increment the call counter */
         perfp->call_cnt++;
 
-        ib_log_debug(ib, 4, "Start Callback: %s (%llu) (%llu) ",
+        ib_log_debug(ib, "Start Callback: %s (%llu) (%llu) ",
                      perfp->name, perfp->call_cnt, perfp->start_usec);
     }
     else {
-        ib_log_debug(ib, 4, "Connection based perf_info is NULL");
+        ib_log_debug(ib, "Connection based perf_info is NULL");
     }
 
     IB_FTRACE_RET_VOID();
@@ -288,14 +288,14 @@ static ib_status_t mod_perf_stats_event_stop(
             perfp->max_usec = time_taken;
         }
 
-        ib_log_debug(ib, 4, "Stop Callback: %s call_cnt:(%llu) start:(%llu) "
+        ib_log_debug(ib, "Stop Callback: %s call_cnt:(%llu) start:(%llu) "
                      "stop:(%llu) took:(%llu) conn total:(%llu) max:(%llu)",
                      perfp->name, perfp->call_cnt, perfp->start_usec,
                      perfp->stop_usec, time_taken, perfp->total_usec,
                      perfp->max_usec);
     }
     else {
-        ib_log_debug(ib, 4, "Connection based perf_info is NULL");
+        ib_log_debug(ib, "Connection based perf_info is NULL");
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -621,7 +621,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
     /*Detect main context otherwise return IB_ENGINE_CONTEXT_MAIN. */
 
     IB_FTRACE_INIT();
-    ib_log_debug(ib, 4, "Perf stats module loaded.");
+    ib_log_debug(ib, "Perf stats module loaded.");
     ib_status_t rc;
     int event;
 
@@ -649,7 +649,7 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
                  (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T))
         {
             rc = IB_EINVAL;
-            ib_log_error(ib, 4, "Cannot register handler "
+            ib_log_error(ib, "Cannot register handler "
                          "for:%d name:%s cbdata_type: %d",
                          eventp->number, eventp->name, eventp->cbdata_type);
         }
@@ -690,14 +690,14 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
                     break;
                 default:
                     rc = IB_EINVAL;
-                    ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
+                    ib_log_error(ib, "Event with unknown hook type: %d/%s",
                                  eventp->number, eventp->name);
 
             }
         }
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Hook register for"
+            ib_log_error(ib, "Hook register for"
                          "event:%d name:%s cbdata_type: %d returned %s",
                          eventp->number, eventp->name,
                          eventp->cbdata_type, ib_status_to_string(rc));
@@ -742,7 +742,7 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
             (eventp->cbdata_type == IB_CBDATA_CONN_DATA_T))
         {
             rc = IB_EINVAL;
-            ib_log_error(ib, 4, "Cannot register handler "
+            ib_log_error(ib, "Cannot register handler "
                          "for:%d name:%s cbdata_type: %d",
                          eventp->number, eventp->name, eventp->cbdata_type);
         }
@@ -782,14 +782,14 @@ static ib_status_t perf_stats_context_close(ib_engine_t  *ib,
                     break;
                 default:
                     rc = IB_EINVAL;
-                    ib_log_error(ib, 4, "Event with unknown hook type: %d/%s",
+                    ib_log_error(ib, "Event with unknown hook type: %d/%s",
                                  eventp->number, eventp->name);
 
             }
         }
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 4, "Hook register for "
+            ib_log_error(ib, "Hook register for "
                          "event:%d name:%s cbdata_type: %d returned %s",
                          eventp->number, eventp->name,
                          eventp->cbdata_type, ib_status_to_string(rc));
@@ -805,7 +805,7 @@ static ib_status_t perf_stats_fini(ib_engine_t *ib,
                                    void        *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_log_debug(ib, 4, "Perf stats module unloaded.");
+    ib_log_debug(ib, "Perf stats module unloaded.");
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

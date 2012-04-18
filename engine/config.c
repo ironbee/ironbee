@@ -113,7 +113,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
 
     /* Other fields are NULLed via calloc */
 
-    ib_log_debug(ib, 9, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
+    ib_log_debug3(ib, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
                  (*pcp)->cur_ctx,
                  (*pcp)->cur_site, (*pcp)->cur_site?(*pcp)->cur_site->name:"NONE",
                  (*pcp)->cur_loc, (*pcp)->cur_loc?(*pcp)->cur_loc->path:"/");
@@ -148,7 +148,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
 
     if (fd == -1) {
         ec = errno;
-        ib_log_error(cp->ib, 1, "Could not open config file \"%s\": (%d) %s",
+        ib_log_error(cp->ib,  "Could not open config file \"%s\": (%d) %s",
                      file, ec, strerror(ec));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -156,7 +156,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
     buf = (char *)malloc(sizeof(*buf)*bufsz);
 
     if (buf==NULL){
-        ib_log_error(cp->ib, 1,
+        ib_log_error(cp->ib,
             "Unable to allocate buffer for configuration file.");
         close(fd);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -166,7 +166,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
     do {
         nbytes = read(fd, buf+buflen, bufsz-buflen);
         buflen += nbytes;
-        ib_log_debug(cp->ib, 9, "Read a %d byte chunk. Total len=%d",
+        ib_log_debug3(cp->ib, "Read a %d byte chunk. Total len=%d",
             nbytes,
             buflen);
 
@@ -196,7 +196,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                 else {
                     /* There is no end of line and there is no more
                      * space in the buffer. This is an error. */
-                    ib_log_error(cp->ib, 1,
+                    ib_log_error(cp->ib,
                         "Unable to read a configuration line "
                             "larger than %d bytes from file %s. "
                             "Parsing has failed.",
@@ -223,13 +223,13 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
 
                 /* There are no more end-of-line opportunities.
                  * Now move the last end-of-line to the beginning. */
-                ib_log_debug(cp->ib, 7,
+                ib_log_debug2(cp->ib,
                              "Buffer of length %d must be shrunk.", buflen);
-                ib_log_debug(cp->ib, 7,
+                ib_log_debug2(cp->ib,
                              "Beginning of last line is at index %d.", bol-buf);
                 buflen = buf + buflen - bol;
                 if (buflen > 0) {
-                    ib_log_debug(cp->ib, 7,
+                    ib_log_debug2(cp->ib,
                                  "Discarding parsed lines."
                                  " Moving %p to %p with length %d.",
                                  bol, buf, buflen);
@@ -239,7 +239,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
         }
         else {
             /* nbytes < 0. This is an error. */
-            ib_log_error(cp->ib, 1,
+            ib_log_error(cp->ib,
                 "Error reading log file %s - %s.", file, strerror(errno));
             free(buf);
             close(fd);
@@ -249,12 +249,12 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
 
     free(buf);
     close(fd);
-    ib_log_debug(cp->ib, 9, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
+    ib_log_debug3(cp->ib, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failure:
-    ib_log_error(cp->ib, 1,
+    ib_log_error(cp->ib,
         "Error parsing config file: %s", ib_status_to_string(rc));
     free(buf);
     close(fd);
@@ -296,12 +296,12 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->stack, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to push context %p: %s", ctx, ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to push context %p: %s", ctx, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug(ib, 9, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
+    ib_log_debug3(ib, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
                  cp->cur_ctx,
                  cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
                  cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
@@ -324,7 +324,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     /* Remove the last item. */
     rc = ib_list_pop(cp->stack, &ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to pop context: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to pop context: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -336,7 +336,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug(ib, 9, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
+    ib_log_debug3(ib, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
                  cp->cur_ctx,
                  cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
                  cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
@@ -353,7 +353,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->block, (void *)name);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to push block %p: %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to push block %p: %s", name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     cp->cur_blkname = name;
@@ -375,7 +375,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
 
     rc = ib_list_pop(cp->block, &name);
     if (rc != IB_OK) {
-        ib_log_error(ib, 4, "Failed to pop block: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to pop block: %s", ib_status_to_string(rc));
         cp->cur_blkname = NULL;
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -475,7 +475,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     switch (rec->type) {
         case IB_DIRTYPE_ONOFF:
             if (nargs != 1) {
-                ib_log_error(ib, 1, "OnOff directive \"%s\" takes one parameter, not %d",
+                ib_log_error(ib, "OnOff directive \"%s\" takes one parameter, not %d",
                              name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -493,7 +493,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_PARAM1:
             if (nargs != 1) {
-                ib_log_error(ib, 1, "Param1 directive \"%s\" takes one parameter, not %d",
+                ib_log_error(ib, "Param1 directive \"%s\" takes one parameter, not %d",
                              name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -503,7 +503,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_PARAM2:
             if (nargs != 2) {
-                ib_log_error(ib, 1, "Param2 directive \"%s\" takes two parameters, not %d",
+                ib_log_error(ib, "Param2 directive \"%s\" takes two parameters, not %d",
                              name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -532,7 +532,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                     fmask = ~0;
                 }
 
-                ib_log_debug(ib, 9, "Processing %s option: %s", name, opname);
+                ib_log_debug3(ib, "Processing %s option: %s", name, opname);
 
                 /* Remove the operator from the name if required.
                  * and determine the numeric value of the option
@@ -544,7 +544,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
 
                 rc = cfgp_opval(opname, rec->valmap, &val);
                 if (rc != IB_OK) {
-                    ib_log_error(ib, 3, "Invalid %s option: %s", name, opname);
+                    ib_log_error(ib, "Invalid %s option: %s", name, opname);
                     IB_FTRACE_RET_STATUS(rc);
                 }
 
@@ -566,7 +566,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_SBLK1:
             if (nargs != 1) {
-                ib_log_error(ib, 1, "SBlk1 directive \"%s\" takes one parameter, not %d",
+                ib_log_error(ib, "SBlk1 directive \"%s\" takes one parameter, not %d",
                              name, nargs);
                 rc = IB_EINVAL;
                 break;
