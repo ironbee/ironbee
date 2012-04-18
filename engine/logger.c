@@ -283,56 +283,32 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
                            const char *prefix, const char *file, int line,
                            const char *fmt, ...)
 {
+    IB_FTRACE_INIT();
+
     va_list ap;
-
     va_start(ap, fmt);
-    ib_vclog_ex(ib_context_main(ib), level, prefix, file, line, fmt, ap);
+
+    ib_vlog_ex(ib, level, prefix, file, line, fmt, ap);
+
     va_end(ap);
-}
 
-int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib)
-{
-    IB_FTRACE_INIT();
-    ib_core_cfg_t *corecfg = NULL;
-    ib_context_module_config(ib_context_main(ib),
-                             ib_core_module(),
-                             (void *)&corecfg);
-    IB_FTRACE_RET_INT(corecfg->log_level);
-}
-
-void DLL_PUBLIC ib_log_set_level(ib_engine_t *ib, int level)
-{
-    IB_FTRACE_INIT();
-    ib_core_cfg_t *corecfg = NULL;
-    ib_context_module_config(ib_context_main(ib),
-                             ib_core_module(),
-                             (void *)&corecfg);
-    corecfg->log_level = level;
     IB_FTRACE_RET_VOID();
 }
 
-
-void ib_clog_ex(ib_context_t *ctx, int level,
-                const char *prefix, const char *file, int line,
-                const char *fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    ib_vclog_ex(ctx, level, prefix, file, line, fmt, ap);
-    va_end(ap);
-}
-
-void ib_vclog_ex(ib_context_t *ctx, int level,
-                 const char *prefix, const char *file, int line,
-                 const char *fmt, va_list ap)
+void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
+                           const char *prefix, const char *file, int line,
+                           const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
+
     IB_PROVIDER_API_TYPE(logger) *api;
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
     char prefix_with_pid[1024];
+    ib_context_t *ctx;
+
+    ctx = ib_context_main(ib);
 
     if (prefix != NULL) {
       snprintf(prefix_with_pid, 1024, "[%d] %s", getpid(), prefix);
@@ -358,6 +334,29 @@ void ib_vclog_ex(ib_context_t *ctx, int level,
     }
 
     default_logger(stderr, level, prefix_with_pid, file, line, fmt, ap);
+
+    IB_FTRACE_RET_VOID();
+}
+
+int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT();
+    ib_core_cfg_t *corecfg = NULL;
+    ib_context_module_config(ib_context_main(ib),
+                             ib_core_module(),
+                             (void *)&corecfg);
+    IB_FTRACE_RET_INT(corecfg->log_level);
+}
+
+void DLL_PUBLIC ib_log_set_level(ib_engine_t *ib, int level)
+{
+    IB_FTRACE_INIT();
+    ib_core_cfg_t *corecfg = NULL;
+    ib_context_module_config(ib_context_main(ib),
+                             ib_core_module(),
+                             (void *)&corecfg);
+    corecfg->log_level = level;
+    IB_FTRACE_RET_VOID();
 }
 
 ib_status_t ib_event_add(ib_provider_inst_t *pi,

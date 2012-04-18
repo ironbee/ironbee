@@ -476,9 +476,9 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     conn_rec *c = (conn_rec *)iconn->pctx;
     ib_status_t rc;
 
-    ib_clog_debug(iconn->ctx, 9, "Initializing connection remote=%s:%d local=%s:%d",
-                  c->remote_ip, c->remote_addr->port,
-                  c->local_ip, c->local_addr->port);
+    ib_log_debug(ib, 9, "Initializing connection remote=%s:%d local=%s:%d",
+                 c->remote_ip, c->remote_addr->port,
+                 c->local_ip, c->local_addr->port);
 
     /*
      * Create connection fields

@@ -1628,7 +1628,7 @@ ib_site_t *ib_context_site_get(ib_context_t *ctx)
     ib_status_t rc;
     ib_site_t *site;
 
-    ib_clog_debug(ctx, 7, "ctx=%p; fn_ctx_site=%p", ctx, ctx->fn_ctx_site);
+    ib_log_debug(ctx->ib, 7, "ctx=%p; fn_ctx_site=%p", ctx, ctx->fn_ctx_site);
 
     if (ctx->fn_ctx_site == NULL) {
         IB_FTRACE_RET_PTR(ib_site_t, NULL);
@@ -1705,7 +1705,7 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    ib_clog_debug(ctx, 9, "Initializing context config %p base=%p", ctx, base);
+    ib_log_debug(ctx->ib, 9, "Initializing context config %p base=%p", ctx, base);
 
     if (init == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);

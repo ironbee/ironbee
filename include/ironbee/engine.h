@@ -1785,21 +1785,8 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 /** Debug Logger. */
 #define ib_log_debug(ib,lvl,...) ib_log_ex((ib),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
 
-/** Normal Context Logger. */
-#define ib_clog(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,NULL,0,__VA_ARGS__)
-/** Error Logger. */
-#define ib_clog_error(ctx,lvl,...) ib_clog_ex((ctx),(lvl),"ERROR - ",NULL,0,__VA_ARGS__)
-/** Alert Logger. */
-#define ib_clog_alert(ib,lvl,...) ib_clog_ex((ctx),(lvl),"ALERT - ",NULL,0,__VA_ARGS__)
-/** Abort Logger. */
-#define ib_clog_abort(ctx,...) do { ib_clog_ex((ctx),0,"ABORT - ",__FILE__,__LINE__,__VA_ARGS__); abort(); } while(0)
-/** Debug Logger. */
-#define ib_clog_debug(ctx,lvl,...) ib_clog_ex((ctx),(lvl),NULL,__FILE__,__LINE__,__VA_ARGS__)
-
 /**
  * Generic Logger for engine.
- *
- * @todo Get a real logging framework.
  *
  * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
@@ -1817,45 +1804,23 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
                           PRINTF_ATTRIBUTE(6, 0);
 
 /**
- * Generic Logger for context.
- *
- * @todo Get a real logging framework.
+ * Generic Logger for engine.  valist version.
  *
  * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
  *
- * @param ctx Config context
+ * @param ib IronBee engine
  * @param level Log level (0-9)
  * @param prefix String to prefix log header data (or NULL)
  * @param file Filename (or NULL)
  * @param line Line number (or 0)
  * @param fmt Printf-like format string
+ * @param ap Argument list.
  */
-void DLL_PUBLIC ib_clog_ex(ib_context_t *ctx, int level,
-                           const char *prefix, const char *file, int line,
-                           const char *fmt, ...)
-                           PRINTF_ATTRIBUTE(6, 0);
+void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
+                          const char *prefix, const char *file, int line,
+                          const char *fmt,  va_list ap);
 
-/**
- * Generic Logger (va_list version).
- *
- * @todo Get a real logging framework.
- *
- * @warning There is currently a 1024 byte formatter limit when prefixing the
- *          log header data.
- *
- * @param ctx Config context
- * @param level Log level (0-9)
- * @param prefix String to prefix log header data (or NULL)
- * @param file Filename (or NULL)
- * @param line Line number (or 0)
- * @param fmt Printf-like format string
- * @param ap Variable argument pointer
- */
-void DLL_PUBLIC ib_vclog_ex(ib_context_t *ctx, int level,
-                            const char *prefix, const char *file, int line,
-                            const char *fmt, va_list ap)
-                            VPRINTF_ATTRIBUTE(6);
 
 /**
  * Return the configured logging level.

@@ -543,13 +543,13 @@ ffi.cdef [[
                                        ib_engine_t *ib);
 
     /* Logging */
-    void ib_clog_ex(ib_context_t *ctx,
-                    int level,
-                    const char *prefix,
-                    const char *file,
-                    int line,
-                    const char *fmt,
-                    ...);
+    void ib_log_ex(ib_engine_t *ib,
+                   int level,
+                   const char *prefix,
+                   const char *file,
+                   int line,
+                   const char *fmt,
+                   ...);
     void ib_util_log_ex(int level, const char *prefix,
                         const char *file, int line,
                         const char *fmt, ...);
@@ -688,17 +688,14 @@ function ib_util_log_debug(lvl, fmt, ...)
 end
 
 function ib_log_debug(ib, lvl, fmt, ...)
-    local c_ctx = c.ib_context_main(ib.cvalue())
     local dinfo = debug.getinfo(2)
 
-    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ",
+    c.ib_log_ex(ib, lvl, "LuaFFI - ",
                  dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
 function ib_log_error(ib, lvl, fmt, ...)
-    local c_ctx = c.ib_context_main(ib.cvalue())
-
-    c.ib_clog_ex(c_ctx, lvl, "LuaFFI - ", nil, 0, fmt, ...)
+    c.ib_log_ex(ib, lvl, "LuaFFI - ", nil, 0, fmt, ...)
 end
 
 -- ===============================================
@@ -888,7 +885,7 @@ function ib_data_get(dpi, name)
         local c_ctx = c.ib_context_main(c_dpi.pr.ib)
         local dinfo = debug.getinfo(2)
 
-        c.ib_clog_ex(c_ctx, 4, "LuaFFI - ",
+        c.ib_log_ex(c_dpi.pr.ib, 4, "LuaFFI - ",
                      dinfo.source, dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
         return nil
     end

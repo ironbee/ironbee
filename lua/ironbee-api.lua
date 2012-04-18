@@ -183,7 +183,6 @@ ibapi.new = function(self, ib_engine, ib_tx)
     -- number will not be accurage because the call stack will be at an
     -- unexpected depth.
     ib_obj.private.log = function(self, level, prefix, msg, ...) 
-        local ctx = ffi.C.ib_context_main(self.ib_engine)
         local debug_table = debug.getinfo(3, "Sl")
         local file = debug_table.short_src
         local line = debug_table.currentline
@@ -197,7 +196,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         if ... ~= nil then msg = string.format(msg, ...) end
 
         -- Log the string.
-        ffi.C.ib_clog_ex(ctx, level, prefix, file, line, msg)
+        ffi.C.ib_log_ex(self.ib_engine, level, prefix, file, line, msg)
     end
 
     -- Log an error.

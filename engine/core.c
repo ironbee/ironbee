@@ -5411,7 +5411,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Force any IBUtil calls to use the default logger */
-    rc = ib_util_log_logger((ib_util_fn_logger_t)ib_vclog_ex, ib->ctx);
+    rc = ib_util_log_logger((ib_util_fn_logger_t)ib_vlog_ex, ib);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
