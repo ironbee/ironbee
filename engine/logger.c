@@ -342,17 +342,9 @@ void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi = NULL;
     ib_status_t rc;
-    char prefix_with_pid[1024];
     ib_context_t *ctx;
 
     ctx = ib_context_main(ib);
-
-    if (prefix != NULL) {
-      snprintf(prefix_with_pid, 1024, "[%d] %s", getpid(), prefix);
-    }
-    else {
-      snprintf(prefix_with_pid, 1024, "[%d] ", getpid());
-    }
 
     if (ctx != NULL) {
         rc = ib_context_module_config(ctx, ib_core_module(),
@@ -364,13 +356,13 @@ void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
         if (pi != NULL) {
             api = (IB_PROVIDER_API_TYPE(logger) *)pi->pr->api;
 
-            api->vlogmsg(pi, ctx, level, prefix_with_pid, file, line, fmt, ap);
+            api->vlogmsg(pi, ctx, level, prefix, file, line, fmt, ap);
 
             IB_FTRACE_RET_VOID();
         }
     }
 
-    default_logger(stderr, level, prefix_with_pid, file, line, fmt, ap);
+    default_logger(stderr, level, prefix, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }

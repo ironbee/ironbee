@@ -1346,6 +1346,8 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     ib_status_t rc;
     const char *uri = NULL;
     FILE *fp = NULL;            // The file pointer to write to
+    char *prefix_with_pid = NULL;
+    size_t prefix_length = 0;
 
     // Get the module context core configuration
     rc = ib_context_module_config(ctx, ib_core_module(),
@@ -1361,6 +1363,24 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
         return;
     }
 
+    // Add pid and level to prefix.
+    if (prefix != NULL) {
+        prefix_length = strlen(prefix);
+    }
+    else {
+        prefix_length = 0;
+    }
+    prefix_with_pid = (char *)malloc(50+prefix_length);
+    if (prefix_with_pid == NULL) {
+        return;
+    }
+    if (prefix != NULL) {
+      snprintf(prefix_with_pid, 1024, "[%d] %s", getpid(), prefix);
+    }
+    else {
+      snprintf(prefix_with_pid, 1024, "[%d] ", getpid());
+    }
+
     // Get the current 'logger' provider interface
     iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
 
@@ -1372,15 +1392,15 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     main_lp = main_core_config->pi.logger->pr;
     if ( (main_lp != lpi->pr)
          || (iface->logger != (ib_log_logger_fn_t)core_logger) ) {
-        iface->logger(lpi->data, level, prefix, file, line, fmt, ap);
-        return;
+        iface->logger(lpi->data, level, prefix_with_pid, file, line, fmt, ap);
+        goto done;
     }
 
     // If no interface, do *something*
     //  Note that this should be the same as the default case
     if (iface == NULL) {
-        core_logger(stderr, level, prefix, file, line, fmt, ap);
-        return;
+        core_logger(stderr, level, prefix_with_pid, file, line, fmt, ap);
+        goto done;
     }
 
     // Get the current file pointer
@@ -1418,7 +1438,10 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
      * the first parameter (if the interface is implemented and not
      * just abstract).
      */
-    iface->logger(fp, level, prefix, file, line, fmt, ap);
+    iface->logger(fp, level, prefix_with_pid, file, line, fmt, ap);
+
+done:
+    free(prefix_with_pid);
 }
 
 /**
