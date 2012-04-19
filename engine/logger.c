@@ -263,7 +263,7 @@ static size_t c_num_levels = sizeof(c_log_levels)/sizeof(*c_log_levels);
 
 ib_log_level_t ib_log_string_to_level(const char* s)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < c_num_levels; ++i) {
         if (strncasecmp(s, c_log_levels[i], strlen(c_log_levels[i])) == 0) {
