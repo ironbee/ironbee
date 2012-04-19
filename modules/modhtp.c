@@ -469,6 +469,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     }
 
     /* Allocate and fill the parsed request line object */
+    // FIXME: libhtp bstr_{ptr,len} should work for NULL bstr
     rc = ib_parsed_req_line_create(itx,
                                    &req_line,
                                    (char *)bstr_ptr(tx->request_line),
@@ -477,8 +478,12 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
                                    bstr_len(tx->request_method),
                                    (char *)bstr_ptr(tx->request_uri),
                                    bstr_len(tx->request_uri),
-                                   (char *)bstr_ptr(tx->request_protocol),
-                                   bstr_len(tx->request_protocol));
+                                   (tx->request_protocol == NULL
+                                    ? NULL
+                                    : (char *)bstr_ptr(tx->request_protocol)),
+                                   (tx->request_protocol == NULL
+                                    ? 0
+                                    : bstr_len(tx->request_protocol)));
     if (rc != IB_OK) {
         ib_log_error_tx(itx,
                         "Error creating parsed request line: %s",
@@ -771,6 +776,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
 
 
     /* Allocate and fill the parsed response line object */
+    // FIXME: libhtp bstr_{ptr,len} should work for NULL bstr
     rc = ib_parsed_resp_line_create(itx,
                                     &resp_line,
                                     (char *)bstr_ptr(tx->response_line),
@@ -779,8 +785,12 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
                                     bstr_len(tx->response_protocol),
                                     (char *)bstr_ptr(tx->response_status),
                                     bstr_len(tx->response_status),
-                                    (char *)bstr_ptr(tx->response_message),
-                                    bstr_len(tx->response_message));
+                                    (tx->response_message == NULL
+                                     ? NULL
+                                     : (char *)bstr_ptr(tx->response_message)),
+                                    (tx->response_message == NULL
+                                     ? 0
+                                     : bstr_len(tx->response_message)));
 
     /* Tell the engine that the response started. */
     ib_log_debug2_tx(itx, "Notify response started");
@@ -1299,28 +1309,8 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
         htp_tx_set_user_data(tx, itx);
 
         modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_line",
-                                 tx->request_line,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_method",
-                                 tx->request_method,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_protocol",
-                                 tx->request_protocol,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri",
                                  tx->request_uri_normalized,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_raw",
-                                 tx->request_uri,
                                  NULL);
 
         modhtp_field_gen_bytestr(itx->dpi,
@@ -1535,25 +1525,6 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     /// @todo Check htp state, etc.
     tx = modctx->htp->out_tx;
     if (tx != NULL) {
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "response_line",
-                                 tx->response_line,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "response_protocol",
-                                 tx->response_protocol,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "response_status",
-                                 tx->response_status,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "response_message",
-                                 tx->response_message,
-                                 NULL);
 
         /// @todo Need a table type that can have more than one
         ///       of the same header.

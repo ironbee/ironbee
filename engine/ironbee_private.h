@@ -190,6 +190,17 @@ struct ib_matcher_t {
 #define IB_VARIABLE_EXPANSION_POSTFIX "}"   /**< Variable postfix */
 
 /**
+ * Initialize the core fields.
+ *
+ * Called when the core is loaded, registers the core field generators.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ */
+ib_status_t ib_core_fields_init(ib_engine_t *ib,
+                                ib_module_t *mod);
+
+/**
  * @internal
  * Initialize the rule engine.
  *

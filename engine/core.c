@@ -5611,6 +5611,13 @@ static ib_status_t core_init(ib_engine_t *ib,
         ib_parser_provider_set_instance(ib->ctx, parser);
     }
 
+    /* Initialize the core fields */
+    rc = ib_core_fields_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to initialize core fields: %s", ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Initialize the core rule engine */
     rc = ib_rule_engine_init(ib, m);
     if (rc != IB_OK) {
