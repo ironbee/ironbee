@@ -4766,8 +4766,17 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         strcasecmp("LogLevel", name) == 0
     ) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_log_debug2(ib, "%s: %d", name, atol(p1_unescaped));
-        rc = ib_context_set_num(ctx, "logger.log_level", atol(p1_unescaped));
+        int num_read = 0;
+        long level = 0;
+        num_read = sscanf(p1_unescaped, "%ld", &level);
+        if (num_read == 0) {
+            level = ib_log_string_to_level(p1_unescaped);
+            if (level > IB_LOG_TRACE) {
+                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            }
+        }
+        ib_log_debug2(ib, "%s: %d", name, level);
+        rc = ib_context_set_num(ctx, "logger.log_level", level);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (

@@ -246,6 +246,43 @@ ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
 
 /* -- Exported Logging Routines -- */
 
+static const char* c_log_levels[] = {
+    "EMERGENCY",
+    "ALERT",
+    "CRITICAL",
+    "ERROR",
+    "WARNING",
+    "NOTICE",
+    "INFO",
+    "DEBUG",
+    "DEBUG2",
+    "DEBUG3",
+    "TRACE"
+};
+static size_t c_num_levels = sizeof(c_log_levels)/sizeof(*c_log_levels);
+
+ib_log_level_t ib_log_string_to_level(const char* s)
+{
+    int i;
+
+    for (i = 0; i < c_num_levels; ++i) {
+        if (strncasecmp(s, c_log_levels[i], strlen(c_log_levels[i])) == 0) {
+            break;
+        }
+    }
+    return i;
+}
+
+const char *ib_log_level_to_string(ib_log_level_t level)
+{
+    if (level < c_num_levels) {
+        return c_log_levels[level];
+    }
+    else {
+        return "UNKNOWN";
+    }
+}
+
 ib_provider_inst_t *ib_log_provider_get_instance(ib_context_t *ctx)
 {
     IB_FTRACE_INIT();

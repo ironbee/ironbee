@@ -1775,6 +1775,16 @@ typedef enum {
 } ib_log_level_t;
 
 /**
+ * String to level conversion.
+ */
+ib_log_level_t DLL_PUBLIC ib_log_string_to_level(const char* s);
+
+/**
+ * Level to string conversion
+ */
+const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
+
+/**
  * Logger callback.
  *
  * @param cbdata Callback data
