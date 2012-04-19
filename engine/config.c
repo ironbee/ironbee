@@ -137,6 +137,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
     IB_FTRACE_INIT();
     int ec;                                    /**< Error code for sys calls. */
     int fd = open(file, O_RDONLY);             /**< File to read. */
+    //ib_num_t lineno = 1;                       /**< Current line number */
     ssize_t nbytes = 0;                        /**< Bytes read by one read(). */
     const size_t bufsz = 8192;                 /**< Buffer size. */
     size_t buflen = 0;                         /**< Last char in buffer. */
@@ -155,7 +156,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
 
     buf = (char *)malloc(sizeof(*buf)*bufsz);
 
-    if (buf==NULL){
+    if (buf==NULL) {
         ib_log_error(cp->ib,
             "Unable to allocate buffer for configuration file.");
         close(fd);

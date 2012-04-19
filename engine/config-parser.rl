@@ -29,6 +29,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/util.h>
@@ -42,8 +46,8 @@
  * Finite state machine type.
  * @internal
  * Contains state information for Ragel's parser.
- * Many of these values and names come from the Ragel documentation, section 
- * 5.1 Variable Used by Ragel. p53 of The Ragel Guide 6.7 found at
+ * Many of these values and names come from the Ragel documentation, section
+ * 5.1 Variable Used by Ragel. p35 of The Ragel Guide 6.7 found at
  * http://www.complang.org/ragel/ragel-guide-6.7.pdf
  */
 typedef struct {
@@ -73,23 +77,23 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
                                      const char *fpc,
                                      ib_mpool_t* mp)
 {
-  const char *afpc = fpc;
-  size_t pvallen;
-  char* pval;
-  /* Adjust for quoted value. */
-  if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc-2)) {
-      fpc_mark++;
-      afpc--;
-  }
-  pvallen = (size_t)(afpc - fpc_mark);
-  pval = (char *)ib_mpool_memdup(mp, fpc_mark, (pvallen + 1) * sizeof(*pval));
+    const char *afpc = fpc;
+    size_t pvallen;
+    char* pval;
+    /* Adjust for quoted value. */
+    if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc-2)) {
+        fpc_mark++;
+        afpc--;
+    }
+    pvallen = (size_t)(afpc - fpc_mark);
+    pval = (char *)ib_mpool_memdup(mp, fpc_mark, (pvallen + 1) * sizeof(*pval));
 
-  pval[pvallen] = '\0';
+    pval[pvallen] = '\0';
 
-  /* At this point the buffer i pvallen+1 in size, but we cannot shrink it. */
-  /* This is not considered a problem for configuration parsing and it is
-     deallocated after parsing and configuration is complete. */
-  return pval;
+    /* At this point the buffer i pvallen+1 in size, but we cannot shrink it. */
+    /* This is not considered a problem for configuration parsing and it is
+       deallocated after parsing and configuration is complete. */
+    return pval;
 }
 
 %%{
@@ -99,7 +103,9 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
     action mark { mark = fpc; }
     action error_action {
         rc = IB_EOTHER;
-        ib_log_debug(ib_engine, "ERROR: parser error before \"%.*s\"", (int)(fpc - mark), mark);
+        ib_log_debug(ib_engine,
+                     "ERROR: parser error before \"%.*s\"",
+                     (int)(fpc - mark), mark);
     }
 
     # Parameter
@@ -122,7 +128,9 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
     action push_dir {
         rc = ib_config_directive_process(cp, dirname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine,  "Failed to process directive \"%s\": %s", dirname, ib_status_to_string(rc));
+            ib_log_error(ib_engine,
+                         "Failed to process directive \"%s\": %s",
+                         dirname, ib_status_to_string(rc));
         }
         if (dirname != NULL) {
             free(dirname);
@@ -139,19 +147,67 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
     action push_block {
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine,  "Failed to start block \"%s\": %s", blkname, ib_status_to_string(rc));
+            ib_log_error(ib_engine,
+                         "Failed to start block \"%s\": %s",
+                         blkname, ib_status_to_string(rc));
         }
     }
     action pop_block {
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine,  "Failed to process block \"%s\": %s", blkname, ib_status_to_string(rc));
+            ib_log_error(ib_engine,
+                         "Failed to process block \"%s\": %s",
+                         blkname, ib_status_to_string(rc));
         }
         if (blkname != NULL) {
             free(blkname);
         }
         blkname = (char *)cp->cur_blkname;
+    }
+
+    # Include logic
+    action include_config {
+        struct stat statbuf;
+    	int statval;
+        int error = 0;
+
+        pval = alloc_cpy_marked_string(mark, fpc, mpcfg);
+
+	if (access(pval, R_OK) != 0) {
+            ib_log_error(ib_engine, "Can't access included file \"%s\": %s",
+                         pval, strerror(errno));
+            error = 1;
+            goto include_error;
+	}
+
+        statval = stat(pval, &statbuf);
+        if (statval != 0) {
+             ib_log_error(ib_engine,
+                          "Failed to stat include file \"%s\": %s",
+                          pval, strerror(errno));
+            error = 1;
+            goto include_error;
+        }
+
+        if (S_ISREG(statbuf.st_mode) == 0) {
+            ib_log_error(ib_engine, "Included file \"%s\" isn't a file", pval);
+            error = 1;
+            goto include_error;
+        }
+
+        ib_log_debug(ib_engine, "Include configuration '%s'\n", pval);
+        rc = ib_cfgparser_parse(cp, pval);
+        if (rc != IB_OK) {
+            ib_log_error(ib_engine, "Error parsing included file \"%s\": %s",
+                         pval, ib_status_to_string(rc));
+            error = 1;
+            goto include_error;
+        }
+        include_error:
+            if (error == 0) {
+                ib_log_debug(ib_engine, "Done processing include file \"%s\"", pval);
+            }
     }
 
     WS = [ \t];
@@ -188,8 +244,14 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
         WS* ">" EOL $!error_action { fret; };
     *|;
 
+    includeconfig := |*
+	WS* EOL $!error_action;
+        WS* param >mark $!error_action %include_config;
+    *|;
+
     main := |*
         WS* comment;
+	"include" { fcall includeconfig; };
         WS* token >mark %start_dir { fcall parameters; };
         "<" { fcall newblock; };
         "</" { fcall endblock; };
@@ -264,4 +326,3 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     return rc;
 }
-

@@ -32,9 +32,12 @@ endif
 
 
 # Ragel generated files
-config-parser.c: config-parser.rl
-	if test -n "$(RAGEL)"; then \
-	  $(RAGEL) -s -o $@ $<; \
-	else \
-	  echo "WARNING: $< was modified, but there is no ragel compiler installed to regenerate the $@ file."; \
-	fi;
+RUNRAGEL=$(srcdir)/run-ragel.py
+$(srcdir)/config-parser.c: $(srcdir)/config-parser.rl Makefile $(RUNRAGEL)
+	$(RUNRAGEL) "$(RAGEL)" $*
+
+config-parser.dot: $(srcdir)/config-parser.rl
+	$(RAGEL) -V $< > $@
+
+config-parser.svg: config-parser.dot
+	dot -Tsvg $<  > $@
