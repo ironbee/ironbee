@@ -419,7 +419,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_parsed_req_line_t *req;
+    ib_parsed_req_line_t *req_line;
     ib_tx_t *itx;
     ib_status_t rc;
 
@@ -450,8 +450,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->path);
     }
     if (itx->path == NULL) {
-        ib_log_debug_tx(itx,
-            "Unknown URI path - using /");
+        ib_log_debug_tx(itx, "Unknown URI path - using /");
         /// @todo Probably should set a flag here
         itx->path = ib_mpool_strdup(itx->mp, "/");
     }
@@ -463,74 +462,32 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     }
     if (itx->hostname == NULL) {
         ib_log_debug_tx(itx,
-
-                     "Unknown hostname - using ip: %s",
-                     iconn->local_ipstr);
+                        "Unknown hostname - using ip: %s",
+                        iconn->local_ipstr);
         /// @todo Probably should set a flag here
         itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
     }
 
     /* Allocate and fill the parsed request line object */
-    req = ib_mpool_calloc(itx->mp, sizeof(*req), 1);
-    if (req == NULL) {
-        ib_log_error_tx(itx, "Error allocating request line buffer");
-    }
-    else {
-        if (tx->request_protocol == NULL) {
-            ib_log_debug2_tx(itx,
-                         "TX request: method=%.*s path=%.*s version=<unknown>",
-                         (int)bstr_len(tx->request_method),
-                         (char *)bstr_ptr(tx->request_method),
-                         (int)bstr_len(tx->request_uri),
-                         (char *)bstr_ptr(tx->request_uri));
-        }
-        else {
-            ib_log_debug2_tx(itx,
-                         "TX request: method=%.*s path=%.*s version=%.*s",
-                         (int)bstr_len(tx->request_method),
-                         (char *)bstr_ptr(tx->request_method),
-                         (int)bstr_len(tx->request_uri),
-                         (char *)bstr_ptr(tx->request_uri),
-                         (int)bstr_len(tx->request_protocol),
-                         (char *)bstr_ptr(tx->request_protocol));
-        }
-
-        /* Request method */
-        rc = ib_bytestr_alias_mem(&req->method, itx->mp,
-                                  (uint8_t *)bstr_ptr(tx->request_method),
-                                  bstr_len(tx->request_method));
-        if (rc != IB_OK) {
-            ib_log_error_tx(itx,
-                         "Error aliasing request method: %s",
-                         ib_status_to_string(rc));
-        }
-
-        /* Request URI */
-        rc = ib_bytestr_alias_mem(&req->path, itx->mp,
-                                  (uint8_t *)bstr_ptr(tx->request_uri),
-                                  bstr_len(tx->request_uri));
-        if (rc != IB_OK) {
-            ib_log_error_tx(itx,
-                         "Error aliasing request URI: %s",
-                         ib_status_to_string(rc));
-        }
-
-        /* Request protocol */
-        if (tx->request_protocol != NULL) {
-            rc = ib_bytestr_alias_mem(&req->version, itx->mp,
-                                      (uint8_t *)bstr_ptr(tx->request_protocol),
-                                      bstr_len(tx->request_protocol));
-            if (rc != IB_OK) {
-                ib_log_error_tx(itx,
-                             "Error aliasing request version: %s",
-                             ib_status_to_string(rc));
-            }
-        }
+    rc = ib_parsed_req_line_create(itx,
+                                   &req_line,
+                                   (char *)bstr_ptr(tx->request_line),
+                                   bstr_len(tx->request_line),
+                                   (char *)bstr_ptr(tx->request_method),
+                                   bstr_len(tx->request_method),
+                                   (char *)bstr_ptr(tx->request_uri),
+                                   bstr_len(tx->request_uri),
+                                   (char *)bstr_ptr(tx->request_protocol),
+                                   bstr_len(tx->request_protocol));
+    if (rc != IB_OK) {
+        ib_log_error_tx(itx,
+                        "Error creating parsed request line: %s",
+                        ib_status_to_string(rc));
     }
 
     /* Tell the engine that the request started. */
     ib_log_debug2_tx(itx, "Notify request started");
-    rc = ib_state_notify_request_started(ib, itx, req);
+    rc = ib_state_notify_request_started(ib, itx, req_line);
     if (rc != IB_OK) {
         ib_log_error_tx(itx,
                      "Error notifying request started: %s",
@@ -786,7 +743,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
-    ib_parsed_resp_line_t *resp;
+    ib_parsed_resp_line_t *resp_line;
     ib_status_t rc;
     ib_tx_t *itx;
 
@@ -814,41 +771,20 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
 
 
     /* Allocate and fill the parsed response line object */
-    resp = ib_mpool_calloc(itx->mp, sizeof(*resp), 1);
-    if (resp == NULL) {
-        ib_log_error_tx(itx, "Error allocating response line buffer");
-    }
-    else {
-        ib_log_debug2_tx(itx, "TX response: status=%.*s msg=%.*s",
-                     (int)bstr_len(tx->response_status),
-                     (char *)bstr_ptr(tx->response_status),
-                     (int)bstr_len(tx->response_message),
-                     (char *)bstr_ptr(tx->response_message));
-
-        /* Response code */
-        rc = ib_bytestr_alias_mem(&resp->code, itx->mp,
-                                  (uint8_t *)bstr_ptr(tx->response_status),
-                                  bstr_len(tx->response_status));
-        if (rc != IB_OK) {
-            ib_log_error_tx(itx,
-                         "Error aliasing response status: %s",
-                         ib_status_to_string(rc));
-        }
-
-        /* Response message */
-        rc = ib_bytestr_alias_mem(&resp->msg, itx->mp,
-                                  (uint8_t *)bstr_ptr(tx->response_message),
-                                  bstr_len(tx->response_message));
-        if (rc != IB_OK) {
-            ib_log_error_tx(itx,
-                         "Error aliasing response message: %s",
-                         ib_status_to_string(rc));
-        }
-    }
+    rc = ib_parsed_resp_line_create(itx,
+                                    &resp_line,
+                                    (char *)bstr_ptr(tx->response_line),
+                                    bstr_len(tx->response_line),
+                                    (char *)bstr_ptr(tx->response_protocol),
+                                    bstr_len(tx->response_protocol),
+                                    (char *)bstr_ptr(tx->response_status),
+                                    bstr_len(tx->response_status),
+                                    (char *)bstr_ptr(tx->response_message),
+                                    bstr_len(tx->response_message));
 
     /* Tell the engine that the response started. */
     ib_log_debug2_tx(itx, "Notify response started");
-    rc = ib_state_notify_response_started(ib, itx, resp);
+    rc = ib_state_notify_response_started(ib, itx, resp_line);
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error from notice_response_started(): %s",
                      ib_status_to_string(rc));

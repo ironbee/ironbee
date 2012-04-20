@@ -74,24 +74,23 @@ typedef struct ib_parsed_name_value_pair_list_wrapper_t
     ib_parsed_trailer_wrapper_t;
 
 /**
- * The first line in an HTTP request.
- *
- * This is typedef'ed to useful types in parsed_content.h.
+ * A structure representing the parsed HTTP request line.
  */
 typedef struct ib_parsed_req_line_t {
-    ib_bytestr_t *method;  /**< HTTP Method. */
-    ib_bytestr_t *path;    /**< Path request method is against. */
-    ib_bytestr_t *version; /**< HTTP Version. */
+    ib_bytestr_t *raw;      /**< Raw HTTP request line */
+    ib_bytestr_t *method;   /**< HTTP method */
+    ib_bytestr_t *uri;      /**< HTTP URI */
+    ib_bytestr_t *protocol; /**< HTTP protocol/version */
 } ib_parsed_req_line_t;
 
 /**
- * The first line returned to a user from the server.
- *
- * This is typedef'ed to useful types in parsed_content.h.
+ * A structure representing the parsed HTTP response line.
  */
 typedef struct ib_parsed_resp_line_t {
-    ib_bytestr_t *code; /**< The status code. */
-    ib_bytestr_t *msg;  /**< The message to the user. */
+    ib_bytestr_t *raw;      /**< Raw HTTP response line */
+    ib_bytestr_t *protocol; /**< HTTP protocol/version */
+    ib_bytestr_t *status;   /**< HTTP status code */
+    ib_bytestr_t *msg;      /**< HTTP status message */
 } ib_parsed_resp_line_t;
 
 /**
@@ -127,7 +126,7 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
  * @param[in] tx The transaction that will allocate the headers object.
  * @returns IB_OK or IB_EALLOC if mp could not allocate memory.
  */
-DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
+ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
     ib_parsed_name_value_pair_list_wrapper_t **headers,
     struct ib_tx_t *tx);
 
@@ -148,7 +147,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
  * @returns IB_OK on success. IB_EALLOC if the list element could not be
  *          allocated.
  */
-DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
+ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_add(
     ib_parsed_name_value_pair_list_wrapper_t *headers,
     const char *name,
     size_t name_len,
@@ -177,7 +176,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
  *          a value that is not IB_OK iteration is prematurely terminated
  *          and that return code is returned.
  */
-DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
+ib_status_t DLL_PUBLIC ib_parsed_tx_each_header(
     ib_parsed_name_value_pair_list_wrapper_t *headers,
     ib_parsed_tx_each_header_callback callback,
     void* user_data);
@@ -190,19 +189,33 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
  *
+ * @note The @a raw response line can be NULL if it is not available. If
+ * available, the @a status and @a msg parameters should be offsets
+ * into the @a raw data if possible.
+ *
+ * @note The @a msg parameter may be NULL if no message is specified.
+ *
  * @param[in] tx The transaction whose memory pool will be used.
  * @param[out] line The resultant object will be stored here.
- * @param[in] code The HTTP status code.
- * @param[in] code_len The length of @a code.
- * @param[in] msg The message describing @a code.
+ * @param[in] raw The raw HTTP ponse line (NULL if not available)
+ * @param[in] raw_len The length of @a raw.
+ * @param[in] protocol The HTTP protocol.
+ * @param[in] protocol_len The length of @a protocol.
+ * @param[in] status The HTTP status code.
+ * @param[in] status_len The length of @a status.
+ * @param[in] msg The message describing @a status code.
  * @param[in] msg_len The length of @a msg.
  * @returns IB_OK or IB_EALLOC.
  */
-DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
+ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
     struct ib_tx_t *tx,
     ib_parsed_resp_line_t **line,
-    const char *code,
-    size_t code_len,
+    const char *raw,
+    size_t raw_len,
+    const char *protocol,
+    size_t protocol_len,
+    const char *status,
+    size_t status_len,
     const char *msg,
     size_t msg_len);
 
@@ -214,25 +227,35 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(
  * send this data to the IronBee Engine before the buffer in which the
  * arguments reside is invalidated.
  *
+ * @note The @a raw request line can be NULL if it is not available. If
+ * available, the @a method, @a uri and @a protocol parameters should be
+ * offsets into the @a raw data if possible.
+ *
+ * @note The @a protocol parameter should be NULL for HTTP/0.9 requests.
+ *
  * @param[in] tx The transaction whose memory pool is used.
  * @param[out] line The resultant object is placed here.
+ * @param[in] raw The raw HTTP ponse line (NULL if not available)
+ * @param[in] raw_len The length of @a raw.
  * @param[in] method The method.
  * @param[in] method_len The length of @a method.
- * @param[in] path The path component of the request.
- * @param[in] path_len The length of @a path.
- * @param[in] version The HTTP version.
- * @param[in] version_len The length of @a version.
+ * @param[in] uri The uri component of the request.
+ * @param[in] uri_len The length of @a uri.
+ * @param[in] protocol The HTTP protocol/version.
+ * @param[in] protocol_len The length of @a protocol.
  * @returns IB_OK or IB_EALLOC.
  */
-DLL_PUBLIC ib_status_t ib_parsed_req_line_create(
+ib_status_t DLL_PUBLIC ib_parsed_req_line_create(
     struct ib_tx_t *tx,
     ib_parsed_req_line_t **line,
+    const char *raw,
+    size_t raw_len,
     const char *method,
     size_t method_len,
-    const char *path,
-    size_t path_len,
-    const char *version,
-    size_t version_len);
+    const char *uri,
+    size_t uri_len,
+    const char *protocol,
+    size_t protocol_len);
 
 /**
  * Append the @a tail list to the @a head list.
@@ -242,7 +265,7 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(
  * appended to by calls to ib_parsed_name_value_pair_list_append or
  * ib_parsed_name_value_pair_list_add on @a head.
  */
-DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_append(
+ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_append(
     ib_parsed_name_value_pair_list_wrapper_t *head,
     const ib_parsed_name_value_pair_list_wrapper_t *tail);
 /**

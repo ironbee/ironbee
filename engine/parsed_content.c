@@ -35,7 +35,7 @@
 #include <ironbee/parsed_content.h>
 #include <ironbee/mpool.h>
 
-DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
+ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
     ib_parsed_name_value_pair_list_wrapper_t **headers,
     ib_tx_t *tx)
 {
@@ -63,7 +63,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
+ib_status_t ib_parsed_name_value_pair_list_add(
     ib_parsed_name_value_pair_list_wrapper_t *headers,
     const char *name,
     size_t name_len,
@@ -71,6 +71,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
     size_t value_len)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
 
     assert(headers != NULL);
     assert(headers->mpool != NULL);
@@ -81,22 +82,30 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
 
     ele = ib_mpool_alloc(headers->mpool, sizeof(*ele));
 
-    if ( ele == NULL ) {
+    if (ele == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_bytestr_alias_mem(&ele->name,
-                         headers->mpool,
-                         (const uint8_t *)name,
-                         name_len);
-    ib_bytestr_alias_mem(&ele->value,
-                         headers->mpool,
-                         (const uint8_t *)value,
-                         value_len);
+    rc = ib_bytestr_alias_mem(&ele->name,
+                              headers->mpool,
+                              (const uint8_t *)name,
+                              name_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_bytestr_alias_mem(&ele->value,
+                              headers->mpool,
+                              (const uint8_t *)value,
+                              value_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     ele->next = NULL;
 
     /* List is empty. Add first element. */
-    if ( headers->head == NULL ) {
+    if (headers->head == NULL) {
         headers->head = ele;
         headers->tail = ele;
         headers->size = 1;
@@ -112,7 +121,7 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_add(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
+ib_status_t ib_parsed_tx_each_header(
     ib_parsed_name_value_pair_list_wrapper_t *headers,
     ib_parsed_tx_each_header_callback callback,
     void* user_data)
@@ -125,9 +134,9 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
 
     /* Loop over headers elements until the end of the list is reached or
      * IB_OK is not returned by the callback. */
-    for( const ib_parsed_name_value_pair_list_t *le = headers->head;
-         le != NULL && rc == IB_OK;
-         le = le->next)
+    for(const ib_parsed_name_value_pair_list_t *le = headers->head;
+        le != NULL && rc == IB_OK;
+        le = le->next)
     {
         rc = callback((const char *)ib_bytestr_const_ptr(le->name),
                       ib_bytestr_size(le->name),
@@ -139,38 +148,49 @@ DLL_PUBLIC ib_status_t ib_parsed_tx_each_header(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
-                                                  ib_parsed_resp_line_t **line,
-                                                  const char *code,
-                                                  size_t code_len,
-                                                  const char *msg,
-                                                  size_t msg_len)
+ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
+                                       ib_parsed_resp_line_t **line,
+                                       const char *raw,
+                                       size_t raw_len,
+                                       const char *protocol,
+                                       size_t protocol_len,
+                                       const char *status,
+                                       size_t status_len,
+                                       const char *msg,
+                                       size_t msg_len)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
+
     assert(tx != NULL);
     assert(tx->ib != NULL);
     assert(tx->mp != NULL);
-    assert(code != NULL);
-    assert(code_len > 0);
+    assert(protocol != NULL);
+    assert(protocol_len > 0);
+    assert(status != NULL);
+    assert(status_len > 0);
     assert(msg != NULL);
-    assert(msg_len > 0);
 
     ib_parsed_resp_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                      sizeof(*line_tmp));
 
-    if ( line_tmp == NULL ) {
+    if (line_tmp == NULL) {
         *line = NULL;
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_bytestr_alias_mem(&line_tmp->code,
-                         tx->mp,
-                         (const uint8_t *)code,
-                         code_len);
-    ib_bytestr_alias_mem(&line_tmp->msg,
-                         tx->mp,
-                         (const uint8_t *)msg,
-                         msg_len);
+    rc = ib_bytestr_alias_mem(&line_tmp->status,
+                              tx->mp,
+                              (const uint8_t *)status,
+                              status_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_bytestr_alias_mem(&line_tmp->msg,
+                              tx->mp,
+                              (const uint8_t *)msg,
+                              msg_len);
 
     /* Commit back successfully created line. */
     *line = line_tmp;
@@ -178,25 +198,27 @@ DLL_PUBLIC ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
-                                                 ib_parsed_req_line_t **line,
-                                                 const char *method,
-                                                 size_t method_len,
-                                                 const char *path,
-                                                 size_t path_len,
-                                                 const char *version,
-                                                 size_t version_len)
+ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
+                                      ib_parsed_req_line_t **line,
+                                      const char *raw,
+                                      size_t raw_len,
+                                      const char *method,
+                                      size_t method_len,
+                                      const char *uri,
+                                      size_t uri_len,
+                                      const char *protocol,
+                                      size_t protocol_len)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
+
     assert(tx != NULL);
     assert(tx->ib != NULL);
     assert(tx->mp != NULL);
     assert(method != NULL);
     assert(method_len > 0);
-    assert(path != NULL);
-    assert(path_len > 0);
-    assert(version != NULL);
-    assert(version_len > 0);
+    assert(uri != NULL);
+    assert(uri_len > 0);
 
     ib_parsed_req_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                     sizeof(*line_tmp));
@@ -206,18 +228,79 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_bytestr_alias_mem(&line_tmp->method,
-                         tx->mp,
-                         (const uint8_t *)method,
-                         method_len);
-    ib_bytestr_alias_mem(&line_tmp->path,
-                         tx->mp,
-                         (const uint8_t *)path,
-                         path_len);
-    ib_bytestr_alias_mem(&line_tmp->version,
-                         tx->mp,
-                         (const uint8_t *)version,
-                         version_len);
+    rc = ib_bytestr_alias_mem(&line_tmp->method,
+                              tx->mp,
+                              (const uint8_t *)method,
+                              method_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_bytestr_alias_mem(&line_tmp->uri,
+                              tx->mp,
+                              (const uint8_t *)uri,
+                              uri_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    
+    /* HTTP/0.9 will have a NULL protocol. */
+    if (protocol == NULL) {
+        rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                tx->mp,
+                                (const uint8_t *)"HTTP/0.9",
+                                protocol_len);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else {
+        rc = ib_bytestr_alias_mem(&line_tmp->protocol,
+                                  tx->mp,
+                                  (const uint8_t *)protocol,
+                                  protocol_len);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* If no raw line is available, then create one. */
+    if (raw == NULL) {
+        uint8_t *ptr;
+
+        /* Create a correctly sized bytestr and manually copy
+         * the data into it.
+         */
+        rc = ib_bytestr_create(&line_tmp->raw,
+                               tx->mp,
+                               method_len + 1 + uri_len +
+                               (protocol == NULL ? 0 : 1 + protocol_len));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        ptr = ib_bytestr_ptr(line_tmp->raw);
+        memcpy(ptr, method, method_len);
+        ptr += method_len;
+        *ptr = ' ';
+        ptr += 1;
+        memcpy(ptr, uri, uri_len);
+        ptr += uri_len;
+        if (protocol != NULL) {
+            *ptr = ' ';
+            ptr += 1;
+            memcpy(ptr, protocol, protocol_len);
+        }
+    }
+    else {
+        ib_bytestr_alias_mem(&line_tmp->raw,
+                             tx->mp,
+                             (const uint8_t *)raw,
+                             raw_len);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
 
     /* Commit back successfully created line. */
     *line = line_tmp;
@@ -225,7 +308,7 @@ DLL_PUBLIC ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_append(
+ib_status_t ib_parsed_name_value_pair_list_append(
     ib_parsed_name_value_pair_list_wrapper_t *head,
     const ib_parsed_name_value_pair_list_wrapper_t *tail)
 {

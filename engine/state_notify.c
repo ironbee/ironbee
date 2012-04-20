@@ -584,6 +584,213 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 }
 
 /**
+ * Signal that the response line was received.
+ *
+ * @note A NULL @a line is used for HTTP/0.9 requests which do not have
+ * a response line.  In this case a fake response line is created.
+ *
+ * @param[in] ib Engine
+ * @param[in] tx Transaction.
+ * @param[in] event Event
+ * @param[in] line Connection data
+ *
+ * @returns Status code
+ */
+static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
+                                             ib_tx_t *tx,
+                                             ib_state_event_type_t event,
+                                             ib_parsed_resp_line_t *line)
+{
+    IB_FTRACE_INIT();
+    ib_parsed_resp_line_t *resp_line = line;
+    ib_status_t rc;
+    ib_log_debug3_tx(tx, "RESP LINE EVENT: line=%p %s", line, ib_state_event_name(event));
+
+    rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "ib_check_hook() failed: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (resp_line == NULL) {
+        rc = ib_parsed_resp_line_create(tx,
+                                        &resp_line,
+                                        "",
+                                        0,
+                                        "HTTP/0.9",
+                                        8,
+                                        "200",
+                                        3,
+                                        NULL,
+                                        0);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Response line stored. */
+    tx->response_line = resp_line;
+
+    ib_log_debug3_tx(tx, "RESP LINE EVENT: %s", ib_state_event_name(event));
+
+    CALL_HOOKS(&rc, ib->hook[event], event, responseline, ib, tx, line);
+
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Signal that the request line was received.
+ *
+ * @param[in] ib Engine
+ * @param[in] event Event
+ * @param[in] line Request line.
+ *
+ * @returns Status code
+ */
+static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
+                                            ib_tx_t *tx,
+                                            ib_state_event_type_t event,
+                                            ib_parsed_req_line_t *line)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "ib_check_hook() failed: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Request line stored. */
+    tx->request_line = line;
+
+    ib_log_debug3_tx(tx, "REQ LINE EVENT: %s", ib_state_event_name(event));
+
+    CALL_HOOKS(&rc, ib->hook[event], event, requestline, ib, tx, line);
+
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_state_notify_request_started(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_req_line_t *req)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
+        ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
+                     ib_state_event_name(request_started_event));
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Mark the time. */
+    tx->t.request_started = ib_clock_get_time();
+
+    rc = ib_state_notify_tx(ib, tx_started_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
+
+    rc = ib_state_notify_req_line(ib, tx, request_started_event, req);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Signal that the header data has been received.
+ *
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event.
+ * @param headers Connection data.
+ *
+ * @returns Status code.
+ */
+static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
+                                           ib_tx_t *tx,
+                                           ib_state_event_type_t event,
+                                           ib_parsed_header_wrapper_t *headers)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "ib_check_hook() failed: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug3_tx(tx, "HEADER EVENT: %s", ib_state_event_name(event));
+
+    CALL_HOOKS(&rc,
+               ib->hook[event],
+               event,
+               headersdata,
+               ib,
+               tx,
+               headers->head);
+
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Signal that transaction data was received.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction.
+ * @param[in] event The event type.
+ * @param[in] txdata The transaction data chunk.
+ *
+ * @returns Status code.
+ */
+static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
+                                          ib_tx_t *tx,
+                                          ib_state_event_type_t event,
+                                          ib_txdata_t *txdata)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Under certain circumstances there is no data. Guard against that. */
+    if ( ib_log_get_level(ib) >= 9 && txdata != NULL ) {
+        ib_log_debug3_tx(tx, "TX DATA EVENT: %s (type %d)",
+                     ib_state_event_name(event), txdata->dtype);
+    }
+
+    /* This transaction is now the current (for pipelined). */
+    tx->conn->tx = tx;
+
+    CALL_HOOKS(&rc, ib->hook[event], event, txdata, ib, tx, txdata);
+
+    if ((rc != IB_OK) || (tx->ctx == NULL)) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * @ref tx_data_in_event occurs.
  *
  * When the event is notified, additional events are notified immediately
@@ -626,35 +833,6 @@ ib_status_t ib_state_notify_tx_data_out(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_txdata(ib, tx, tx_data_out_event, txdata);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-ib_status_t ib_state_notify_request_started(
-    ib_engine_t *ib,
-    ib_tx_t *tx,
-    ib_parsed_req_line_t *req)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
-        ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(request_started_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Mark the time. */
-    tx->t.request_started = ib_clock_get_time();
-
-    rc = ib_state_notify_tx(ib, tx_started_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    ib_tx_flags_set(tx, IB_TX_FREQ_STARTED);
-
-    rc = ib_state_notify_req_line(ib, tx, request_started_event, req);
-
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -915,14 +1093,6 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     tx->t.response_started = ib_clock_get_time();
 
     ib_tx_flags_set(tx, IB_TX_FRES_STARTED);
-
-#if 0
-    /* @todo (NRL) I think this shouldn't be here, it breaks things */
-    rc = ib_state_notify_tx(ib, response_started_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-#endif
 
     rc = ib_state_notify_resp_line(ib, tx, response_started_event, resp);
 

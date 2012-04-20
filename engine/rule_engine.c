@@ -1235,26 +1235,26 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    if (tx->request_line->path != NULL) {
+    if (tx->request_line->uri != NULL) {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
-            "path", 4,
-            (const char *)ib_bytestr_const_ptr(tx->request_line->path),
-            ib_bytestr_length(tx->request_line->path));
+            "uri", 4,
+            (const char *)ib_bytestr_const_ptr(tx->request_line->uri),
+            ib_bytestr_length(tx->request_line->uri));
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error adding path to name/value pair list: %s",
+            ib_log_error_tx(tx, "Error adding uri to name/value pair list: %s",
                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    if (tx->request_line->version != NULL) {
+    if (tx->request_line->protocol != NULL) {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
-            "version", 7,
-            (const char *)ib_bytestr_const_ptr(tx->request_line->version),
-            ib_bytestr_length(tx->request_line->version));
+            "protocol", 7,
+            (const char *)ib_bytestr_const_ptr(tx->request_line->protocol),
+            ib_bytestr_length(tx->request_line->protocol));
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error adding version to name/value pair list: %s",
+            ib_log_error_tx(tx, "Error adding protocol to name/value pair list: %s",
                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }

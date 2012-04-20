@@ -51,7 +51,7 @@ typedef struct {
 /* Event info structure */
 typedef struct {
     int          number;
-    const char  *name;	
+    const char  *name;
 } event_info_t;
 
 /* Memory pool usage data */
@@ -138,26 +138,13 @@ static ib_status_t modtrace_reqline_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
+
     ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
 
-    if (line->version == NULL) {
-        ib_log_debug(ib,
-                     "Method: '%.*s', path: '%.*s' version: <unknown>",
-                     (int)ib_bytestr_length(line->method),
-                     (char *)ib_bytestr_const_ptr(line->method),
-                     (int)ib_bytestr_length(line->path),
-                     (char *)ib_bytestr_const_ptr(line->path));
-    }
-    else {
-        ib_log_debug(ib,
-                     "Method: '%.*s', path: '%.*s' version: '%.s*'",
-                     (int)ib_bytestr_length(line->method),
-                     (char *)ib_bytestr_const_ptr(line->method),
-                     (int)ib_bytestr_length(line->path),
-                     (char *)ib_bytestr_const_ptr(line->path),
-                     (int)ib_bytestr_length(line->version),
-                     (char *)ib_bytestr_const_ptr(line->version));
-    }
+    ib_log_debug(ib,"Request line: %.*s",
+                 (int)ib_bytestr_length(line->raw),
+                 (char *)ib_bytestr_const_ptr(line->raw));
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -182,17 +169,13 @@ static ib_status_t modtrace_respline_event_callback(
 {
     IB_FTRACE_INIT();
     event_info_t *eventp = (event_info_t *)cbdata;
+
     ib_log_debug(ib, "Callback: %s (%d)", eventp->name, eventp->number);
-    if (line == NULL) {
-        ib_log_debug(ib, "No response line!");
-    }
-    else {
-        ib_log_debug(ib, "Code: '%.*s', message: '%.*s'",
-                     (int)ib_bytestr_length(line->code),
-                     (char *)ib_bytestr_const_ptr(line->code),
-                     (int)ib_bytestr_length(line->msg),
-                     (char *)ib_bytestr_const_ptr(line->msg));
-    }
+
+    ib_log_debug(ib,"Response line: %.*s",
+                 (int)ib_bytestr_length(line->raw),
+                 (char *)ib_bytestr_const_ptr(line->raw));
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
