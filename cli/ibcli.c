@@ -1557,7 +1557,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
         rc = ib_hook_tx_register(
             ib,
-            handle_request_headers_event,
+            tx_finished_event,
             print_tx,
             NULL
         );
