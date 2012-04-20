@@ -1030,11 +1030,6 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_state_notify_tx(ib, response_headers_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     rc = ib_state_notify_tx(ib, handle_response_headers_event, tx);
 
     IB_FTRACE_RET_STATUS(rc);
