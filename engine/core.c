@@ -130,7 +130,6 @@ static ib_core_cfg_t core_global_cfg;
 /* -- Utilities -- */
 
 /**
- * @internal
  * Duplicate a file handle
  *
  * This is a simple function which basically does fdopen(dup(fileno(fp)))
@@ -249,7 +248,6 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
 /* -- Core Logger Provider -- */
 
 /**
- * @internal
  * Core debug logger.
  *
  * This is just a simple default logger that prints to stderr. Typically
@@ -307,7 +305,6 @@ static void core_logger(FILE *fh, int level,
 
 
 /**
- * @internal
  * Logger provider interface mapping for the core module.
  */
 static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
@@ -335,7 +332,6 @@ static IB_PROVIDER_IFACE_TYPE(logevent) core_logevent_iface = {
 
 typedef struct core_audit_cfg_t core_audit_cfg_t;
 /**
- * @internal
  * Core audit configuration structure
  */
 struct core_audit_cfg_t {
@@ -855,7 +851,6 @@ static ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
 
 
 /**
- * @internal
  * Render the log index line. Line must have a size of
  * IB_LOGFORMAT_MAX_INDEX_LENGTH + 1
  *
@@ -1052,7 +1047,6 @@ static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
 /* -- Core Data Provider -- */
 
 /**
- * @internal
  * Core data provider implementation to add a data field.
  *
  * @param dpi Data provider instance
@@ -1074,7 +1068,6 @@ static ib_status_t core_data_add(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Core data provider implementation to set a data field.
  *
  * @param dpi Data provider instance
@@ -1095,7 +1088,6 @@ static ib_status_t core_data_set(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Core data provider implementation to set a relative data field value.
  *
  * @param dpi Data provider instance
@@ -1154,7 +1146,6 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Core data provider implementation to get a data field.
  *
  * @param dpi Data provider instance
@@ -1238,7 +1229,6 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Core data provider implementation to get all data fields.
  *
  * @param dpi Data provider instance
@@ -1257,7 +1247,6 @@ static ib_status_t core_data_get_all(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Core data provider implementation to remove a data field.
  *
  * The data field which is removed is written to @ref pf if it
@@ -1285,7 +1274,6 @@ static ib_status_t core_data_remove(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Core data provider implementation to clear the data store.
  *
  * @param dpi Data provider instance
@@ -1300,7 +1288,6 @@ static ib_status_t core_data_clear(ib_provider_inst_t *dpi)
 }
 
 /**
- * @internal
  * Data provider interface mapping for the core module.
  */
 static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
@@ -1318,7 +1305,6 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
 /* -- Logger API Implementations -- */
 
 /**
- * @internal
  * Core data provider API implementation to log data via va_list args.
  *
  * @param lpi Logger provider instance
@@ -1445,7 +1431,6 @@ done:
 }
 
 /**
- * @internal
  * Core data provider API implementation to log data via variable args.
  *
  * @param lpi Logger provider instance
@@ -1498,7 +1483,6 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
 }
 
 /**
- * @internal
  * Logger provider registration function.
  *
  * This just does a version and sanity check on a registered provider.
@@ -1523,7 +1507,6 @@ static ib_status_t logger_register(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Logger provider initialization function.
  *
  * @warning Not yet doing anything.
@@ -1541,7 +1524,6 @@ static ib_status_t logger_init(ib_provider_inst_t *lpi,
 }
 
 /**
- * @internal
  * Logger provider API mapping for core module.
  */
 static IB_PROVIDER_API_TYPE(logger) logger_api = {
@@ -1553,7 +1535,6 @@ static IB_PROVIDER_API_TYPE(logger) logger_api = {
 /* -- Audit API Implementations -- */
 
 /**
- * @internal
  * Write an audit log.
  *
  * @param ib Engine
@@ -1637,7 +1618,6 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
 }
 
 /**
- * @internal
  * Audit provider registration function.
  *
  * This just does a version and sanity check on a registered provider.
@@ -1669,7 +1649,6 @@ static ib_status_t audit_register(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Audit provider API mapping for core module.
  */
 static IB_PROVIDER_API_TYPE(audit) audit_api = {
@@ -1680,7 +1659,6 @@ static IB_PROVIDER_API_TYPE(audit) audit_api = {
 /* -- Logevent API Implementations -- */
 
 /**
- * @internal
  * Core logevent provider API implementation to add an event.
  *
  * @param epi Logevent provider instance
@@ -1700,7 +1678,6 @@ static ib_status_t logevent_api_add_event(ib_provider_inst_t *epi,
 }
 
 /**
- * @internal
  * Core logevent provider API implementation to remove an event.
  *
  * @param epi Logevent provider instance
@@ -1729,7 +1706,6 @@ static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
 }
 
 /**
- * @internal
  * Core logevent provider API implementation to fetch events.
  *
  * @param epi Logevent provider instance
@@ -1746,7 +1722,6 @@ static ib_status_t logevent_api_fetch_events(ib_provider_inst_t *epi,
 }
 
 /**
- * @internal
  * Core logevent provider API implementation to write out (and remove)
  * all the pending events.
  *
@@ -2296,7 +2271,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 }
 
 /**
- * @internal
  * Generate a timestamp formatted for the audit log.
  *
  * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
@@ -2935,7 +2909,6 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Logevent provider registration function.
  *
  * This just does a version and sanity check on a registered provider.
@@ -2967,7 +2940,6 @@ static ib_status_t logevent_register(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Logevent provider initialization function.
  *
  * @warning Not yet doing anything.
@@ -2994,7 +2966,6 @@ static ib_status_t logevent_init(ib_provider_inst_t *epi,
 }
 
 /**
- * @internal
  * Logevent provider API mapping for core module.
  */
 static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
@@ -3009,7 +2980,6 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
 /* -- Parser Implementation -- */
 
 /**
- * @internal
  * Handle the connection starting.
  *
  * Create the data provider instance and initialize the parser.
@@ -3067,7 +3037,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Handle a new connection.
  *
  * @param ib Engine.
@@ -3173,7 +3142,6 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Handle the request header.
  *
  * @param ib Engine.
@@ -3273,7 +3241,6 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Handle the response header.
  *
  * @param ib Engine.
@@ -3309,7 +3276,6 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Parser provider registration function.
  *
  * This just does a version and sanity check on a registered provider.
@@ -3350,7 +3316,6 @@ static ib_status_t parser_register(ib_engine_t *ib,
 /* -- Data Implementation -- */
 
 /**
- * @internal
  * Calls a registered provider interface to add a data field to a
  * provider instance.
  *
@@ -3384,7 +3349,6 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Calls a registered provider interface to set a data field in a
  * provider instance.
  *
@@ -3418,7 +3382,6 @@ static ib_status_t data_api_set(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Calls a registered provider interface to set a relative value for a data
  * field in a provider instance.
  *
@@ -3456,7 +3419,6 @@ static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Calls a registered provider interface to get a data field in a
  * provider instance.
  *
@@ -3492,7 +3454,6 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Calls a registered provider interface to get all data fields within a
  * provider instance.
  *
@@ -3524,7 +3485,6 @@ static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Calls a registered provider interface to remove a data field in a
  * provider instance.
  *
@@ -3560,7 +3520,6 @@ static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
 }
 
 /**
- * @internal
  * Calls a registered provider interface to clear all fields from a
  * provider instance.
  *
@@ -3585,7 +3544,6 @@ static ib_status_t data_api_clear(ib_provider_inst_t *dpi)
 }
 
 /**
- * @internal
  * Data access provider API mapping for core module.
  */
 static IB_PROVIDER_API_TYPE(data) data_api = {
@@ -3599,7 +3557,6 @@ static IB_PROVIDER_API_TYPE(data) data_api = {
 };
 
 /**
- * @internal
  * Data access provider registration function.
  *
  * This just does a version and sanity check on a registered provider.
@@ -3637,7 +3594,6 @@ static ib_status_t data_register(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Initialize the data access provider instance.
  *
  * @param dpi Data provider instance
@@ -3666,7 +3622,6 @@ static ib_status_t data_init(ib_provider_inst_t *dpi,
 /* -- Matcher Implementation -- */
 
 /**
- * @internal
  * Compile a pattern.
  *
  * @param mpr Matcher provider
@@ -3705,7 +3660,6 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
 }
 
 /**
- * @internal
  * Match a compiled pattern against a buffer.
  *
  * @param mpr Matcher provider
@@ -3741,7 +3695,6 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
 }
 
 /**
- * @internal
  * Add a pattern to a matcher provider instance.
  *
  * Multiple patterns can be added to a provider instance and all used
@@ -3784,7 +3737,6 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
 
 
 /**
- * @internal
  * Add a pattern to a matcher provider instance.
  *
  * Multiple patterns can be added to a provider instance and all used
@@ -3803,7 +3755,6 @@ static ib_status_t matcher_api_add_pattern(ib_provider_inst_t *mpi,
 }
 
 /**
- * @internal
  * Match all the provider instance patterns on a data field.
  *
  * @warning Not yet implemented
@@ -3826,7 +3777,6 @@ static ib_status_t matcher_api_match(ib_provider_inst_t *mpi,
 }
 
 /**
- * @internal
  * Matcher provider API mapping for core module.
  */
 static IB_PROVIDER_API_TYPE(matcher) matcher_api = {
@@ -3838,7 +3788,6 @@ static IB_PROVIDER_API_TYPE(matcher) matcher_api = {
 };
 
 /**
- * @internal
  * Matcher provider registration function.
  *
  * This just does a version and sanity check on a registered provider.
@@ -3869,7 +3818,6 @@ static ib_status_t matcher_register(ib_engine_t *ib,
 /* -- Filters -- */
 
 /**
- * @internal
  * Core buffer filter.
  *
  * This is a simplistic buffer filter that holds request data while
@@ -3936,7 +3884,6 @@ static ib_status_t filter_buffer(ib_filter_t *f,
 }
 
 /**
- * @internal
  * Configure the filter controller.
  *
  * @param ib Engine.
@@ -3968,7 +3915,6 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
 /* -- Core Data Processors -- */
 
 /**
- * @internal
  * Process the transaction data.
  *
  * This is currently used to build the request body
@@ -4027,7 +3973,6 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Process the transaction data.
  *
  * This is currently used to build the response body
@@ -4308,7 +4253,6 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
 /* -- Directive Handlers -- */
 
 /**
- * @internal
  * Make an absolute filename out of a base directory and relative filename.
  *
  * @todo Needs to not assume the trailing slash will be there.
@@ -4341,7 +4285,6 @@ static ib_status_t core_abs_module_path(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Handle the start of a Site block.
  *
  * This function sets up the new site and pushes it onto the parser stack.
@@ -4425,7 +4368,6 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Handle the end of a Site block.
  *
  * This function closes out the site and pops it from the parser stack.
@@ -4472,7 +4414,6 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Handle the start of a Location block.
  *
  * This function sets up the new location and pushes it onto the parser stack.
@@ -4554,7 +4495,6 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Handle the end of a Location block.
  *
  * This function closes out the location and pops it from the parser stack.
@@ -4596,7 +4536,6 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Handle a Hostname directive.
  *
  * @param cp Config parser
@@ -4667,7 +4606,6 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Handle single parameter directives.
  *
  * @param cp Config parser
@@ -5010,7 +4948,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Handle single parameter directives.
  *
  * @param cp Config parser
@@ -5048,7 +4985,6 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Perform any extra duties when certain config parameters are "Set".
  *
  * @param ctx Context
@@ -5137,7 +5073,6 @@ static ib_status_t core_set_value(ib_context_t *ctx,
 
 
 /**
- * @internal
  * Handle two parameter directives.
  *
  * @param cp Config parser
@@ -5190,7 +5125,6 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
 
 
 /**
- * @internal
  * Mapping of valid audit log part names to flag values.
  */
 static IB_STRVAL_MAP(core_parts_map) = {
@@ -5221,7 +5155,6 @@ static IB_STRVAL_MAP(core_parts_map) = {
 };
 
 /**
- * @internal
  * Directive initialization structure.
  */
 static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
@@ -5399,7 +5332,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
 /* -- Module Routines -- */
 
 /**
- * @internal
  * Initialize the core module on load.
  *
  * @param[in] ib Engine
@@ -5676,7 +5608,6 @@ static ib_status_t core_init(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Core module configuration parameter initialization structure.
  */
 static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
@@ -5804,7 +5735,6 @@ ib_module_t *ib_core_module(void)
 }
 
 /**
- * @internal
  * Initialize the core module context
  *
  * @param ib Engine
@@ -5900,7 +5830,6 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
 }
 
 /**
- * @internal
  * Close the core module context
  *
  * @param ib Engine
@@ -5982,7 +5911,6 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Static core module structure.
  */
 IB_MODULE_INIT(
