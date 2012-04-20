@@ -673,23 +673,22 @@ static ib_status_t trace_tx_request(
      ib_engine_t *ib,
      ib_tx_t *tx,
      ib_state_event_type_t event,
-     ib_txdata_t *txdata,
      void *cbdata
 )
 {
     IB_FTRACE_INIT();
     trace_context_t *trace_ctx = (trace_context_t *)cbdata;
 
-    if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
-        settings.trace_request_cnt++;
-        trace_ctx->request = settings.trace_request_cnt;
+    ib_log_debug(ib, "trace_tx_request");
 
-        fprintf(stderr, "REQUEST[%d]: %.*s\n",
-                (int)settings.trace_request_cnt,
-                (int)(txdata->data[txdata->dlen] == '\n' ?
-                      txdata->dlen : txdata->dlen - 1),
-                txdata->data);
-    }
+    settings.trace_request_cnt++;
+    trace_ctx->request = settings.trace_request_cnt;
+
+    fprintf(stderr, "REQUEST [%d]: %.*s\n",
+            (int)settings.trace_request_cnt,
+            (int)ib_bytestr_length(tx->request_line->raw),
+            (char *)ib_bytestr_const_ptr(tx->request_line->raw));
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -708,30 +707,29 @@ static ib_status_t trace_tx_response(
     ib_engine_t *ib,
     ib_tx_t *tx,
     ib_state_event_type_t event,
-    ib_txdata_t *txdata,
     void *cbdata
 )
 {
     IB_FTRACE_INIT();
     trace_context_t *trace_ctx = (trace_context_t *)cbdata;
 
-    /* HTTP/0.9 will not have a response line, so rely on context. */
-    if (txdata->dtype == IB_DTYPE_HTTP_LINE) {
-        settings.trace_response_cnt++;
-        trace_ctx->response = settings.trace_response_cnt;
+    ib_log_debug(ib, "trace_tx_response");
 
+    settings.trace_response_cnt++;
+    trace_ctx->response = settings.trace_response_cnt;
+
+    /* HTTP/0.9 will not have a response line, so just output the protocol. */
+    if (ib_bytestr_length(tx->response_line->raw) == 0) {
         fprintf(stderr, "RESPONSE[%d]: %.*s\n",
                 (int)settings.trace_response_cnt,
-                (int)(txdata->data[txdata->dlen] == '\n' ?
-                      txdata->dlen : txdata->dlen - 1),
-                txdata->data);
+                (int)ib_bytestr_length(tx->response_line->protocol),
+                (char *)ib_bytestr_const_ptr(tx->response_line->protocol));
     }
-    else if (trace_ctx->request > trace_ctx->response) {
-        settings.trace_response_cnt++;
-        trace_ctx->response = settings.trace_response_cnt;
-
-        fprintf(stderr, "RESPONSE[%d]: HTTP/0.9\n",
-                (int)settings.trace_response_cnt);
+    else {
+        fprintf(stderr, "RESPONSE[%d]: %.*s\n",
+                (int)settings.trace_response_cnt,
+                (int)ib_bytestr_length(tx->response_line->raw),
+                (char *)ib_bytestr_const_ptr(tx->response_line->raw));
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1533,9 +1531,9 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
 
         /* Register the request trace handler. */
-        rc = ib_hook_txdata_register(
+        rc = ib_hook_tx_register(
             ib,
-            tx_data_in_event,
+            request_headers_event,
             trace_tx_request,
             trace_ctx
         );
@@ -1545,9 +1543,9 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
 
         /* Register the response trace handler. */
-        rc = ib_hook_txdata_register(
+        rc = ib_hook_tx_register(
             ib,
-            tx_data_out_event,
+            response_headers_event,
             trace_tx_response,
             trace_ctx
         );
