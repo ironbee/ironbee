@@ -817,11 +817,11 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         /* if there's more to come, go round again ... */
         TSIOBufferReaderConsume(readerp, len);
     }
-#if 1
+
     /* parse into lines and feed to ironbee as parsed data */
     if (ibd->dir == IBD_REQ) {
-        char *method, *path, *version;
-        size_t m_len, p_len, v_len, n_len;
+        char *method, *uri, *protocol;
+        size_t m_len, u_len, p_len, n_len, v_len;
         ib_parsed_header_wrapper_t *ibhdrs;
         ib_parsed_req_line_t *rline;
 
@@ -834,17 +834,20 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         m_len = lptr - line;
         while (isspace(*lptr))
             ++lptr;
-        /* path for our purposes is anything-but-whitespace */
-        path = lptr;
-        p_len = strcspn(path, " \t\r\n");
-        lptr += p_len;
+        /* uri for our purposes is anything-but-whitespace */
+        uri = lptr;
+        u_len = strcspn(uri, " \t\r\n");
+        lptr += u_len;
         while (isspace(*lptr))
             ++lptr;
-        /* Version is the rest of the line, but tolerate trailing whitespace */
-        version = lptr;
-        v_len = strcspn(version, " \t\r\n");
-        rv = ib_parsed_req_line_create(data->tx, &rline, method, m_len,
-                                       path, p_len, version, v_len);
+        /* protocol is the rest of the line, but tolerate trailing whitespace */
+        protocol = lptr;
+        p_len = strcspn(protocol, " \t\r\n");
+        rv = ib_parsed_req_line_create(data->tx, &rline,
+                                       line, line_len,
+                                       method, m_len,
+                                       uri, u_len,
+                                       protocol, p_len);
         ib_state_notify_request_started(ironbee, data->tx, rline);
 
         /* now loop over req header lines */
@@ -868,27 +871,31 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         //ib_parsed_header_t *ibhdr = NULL, *newhdr;
         ib_parsed_header_wrapper_t *ibhdrs;
         ib_parsed_resp_line_t *rline;
-        char *code, *msg;
-        size_t c_len, m_len, n_len, v_len;
+        char *protocol, *code, *msg;
+        size_t p_len, c_len, m_len, n_len, v_len;
 
         line = (char*)icdatabuf;
         rv = get_line(line, &line_len);
+        ib_log_debug_tx(data->tx, "RESP_LINE: %.*s", (int)line_len, line);
 
-        /* "HTTP/1.x code reason".  We only need code and reason */
-        for (lptr = line; !isspace(*lptr); ++lptr) ;
-        while (isspace(*lptr))
-            ++lptr;
+        /* "protocol code msg". */
+        protocol = lptr = line;
+        while (!isspace(*lptr)) ++lptr;
+        p_len = lptr - line;
+        while (isspace(*lptr)) ++lptr;
         code = lptr;
-        while (!isspace(*lptr))
-            ++lptr;
+        while (!isspace(*lptr)) ++lptr;
         c_len = lptr - code;
-        while (isspace(*lptr))
-            ++lptr;
+        while (isspace(*lptr)) ++lptr;
         msg = lptr;
         m_len = line_len - (lptr - line);
 
-        rv = ib_parsed_resp_line_create(data->tx, &rline, code, c_len,
+        rv = ib_parsed_resp_line_create(data->tx, &rline,
+                                        line, line_len,
+                                        protocol, p_len,
+                                        code, c_len,
                                         msg, m_len);
+        ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
         rv = ib_state_notify_response_started(ironbee, data->tx, rline);
 
         /* now loop over resp header lines */
@@ -908,9 +915,6 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         rv = ib_state_notify_response_headers_data(ironbee, data->tx, ibhdrs);
         rv = ib_state_notify_response_headers(ironbee, data->tx);
     }
-#else
-    (*ibd->ib_notify)(ironbee, &icdata);
-#endif
 
     /* Now manipulate headers as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {

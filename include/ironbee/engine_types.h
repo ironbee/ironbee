@@ -215,23 +215,13 @@ struct ib_tx_t {
     //struct sockaddr_storage er_addr;   /**< Effective remote address */
     ib_flags_t          flags;           /**< Transaction flags */
 
-    /**
-     * The request line.
-     *
-     * This is made available in the TX because the current context
-     * has not yet been established and the request line and headers may be
-     * need to be re-run through context-specific rules.
-     */
-    ib_parsed_req_line_t *request_line;
+    /* Request */
+    ib_parsed_req_line_t *request_line;  /**< Request line */
+    ib_parsed_header_wrapper_t *request_headers;/**< Request headers */
 
-    /**
-     * The request headers.
-     *
-     * This is made available in the TX because the current context
-     * has not yet been established and the request line and headers may be
-     * need to be re-run through context-specific rules.
-     */
-    ib_parsed_header_wrapper_t *request_headers;
+    /* Response */
+    ib_parsed_resp_line_t *response_line;/**< Response line */
+    ib_parsed_header_wrapper_t *response_headers;/**< Response headers */
 };
 
 /** Site Structure */
