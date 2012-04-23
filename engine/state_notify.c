@@ -86,14 +86,10 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 
     ib_log_debug3(ib, "CONN EVENT: %s", ib_state_event_name(event));
 
-    CALL_NOTX_HOOKS(&rc, ib->ectx->hook[event], event, conn, ib, conn);
+    CALL_NOTX_HOOKS(&rc, ib->hook[event], event, conn, ib, conn);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (conn->ctx != ib->ctx) {
-        CALL_NOTX_HOOKS(&rc, conn->ctx->hook[event], event, conn, ib, conn);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -122,14 +118,10 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
     ib_log_debug3(ib, "CONN DATA EVENT: %s", ib_state_event_name(event));
 
-    CALL_NOTX_HOOKS(&rc, ib->ectx->hook[event], event, conndata, ib, conndata);
+    CALL_NOTX_HOOKS(&rc, ib->hook[event], event, conndata, ib, conndata);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (conn->ctx != ib->ctx) {
-        CALL_NOTX_HOOKS(&rc, conn->ctx->hook[event], event, conndata, ib, conndata);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -161,14 +153,10 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     ib_log_debug3(ib, "RESP LINE EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, responseline, ib, tx, line);
+    CALL_HOOKS(&rc, ib->hook[event], event, responseline, ib, tx, line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, responseline, ib, tx, line);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -202,14 +190,10 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 
     ib_log_debug3(ib, "REQ LINE EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, requestline, ib, tx, line);
+    CALL_HOOKS(&rc, ib->hook[event], event, requestline, ib, tx, line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, requestline, ib, tx, line);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -242,7 +226,7 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
     ib_log_debug3(ib, "HEADER EVENT: %s", ib_state_event_name(event));
 
     CALL_HOOKS(&rc,
-               ib->ectx->hook[event],
+               ib->hook[event],
                event,
                headersdata,
                ib,
@@ -251,16 +235,6 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc,
-                   tx->ctx->hook[event],
-                   event,
-                   headersdata,
-                   ib,
-                   tx,
-                   headers->head);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -297,14 +271,10 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_HOOKS(&rc, ib->ectx->hook[event], event, txdata, ib, tx, txdata);
+    CALL_HOOKS(&rc, ib->hook[event], event, txdata, ib, tx, txdata);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (tx->ctx != ib->ctx) {
-        CALL_HOOKS(&rc, tx->ctx->hook[event], event, txdata, ib, tx, txdata);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -335,14 +305,10 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     /* This transaction is now the current (for pipelined). */
     tx->conn->tx = tx;
 
-    CALL_TX_HOOKS(&rc, ib->ectx->hook[event], event, tx, ib, tx);
+    CALL_TX_HOOKS(&rc, ib->hook[event], event, tx, ib, tx);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (tx->ctx != ib->ctx) {
-        CALL_TX_HOOKS(&rc, tx->ctx->hook[event], event, tx, ib, tx);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -389,7 +355,7 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
     }
 
     /// @todo Create a temp mem pool???
-    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_started_event], cfg_started_event, ib);
+    CALL_NULL_HOOKS(&rc, ib->hook[cfg_started_event], cfg_started_event, ib);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -406,7 +372,7 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     }
 
     /* Run the hooks. */
-    CALL_NULL_HOOKS(&rc, ib->ectx->hook[cfg_finished_event], cfg_finished_event, ib);
+    CALL_NULL_HOOKS(&rc, ib->hook[cfg_finished_event], cfg_finished_event, ib);
 
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);

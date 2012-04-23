@@ -200,7 +200,7 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->ectx->hook[event];
+        hook = m_ib_engine->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }
@@ -221,7 +221,7 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->ectx->hook[event];
+        hook = m_ib_engine->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }
@@ -253,7 +253,7 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->ectx->hook[event];
+        hook = m_ib_engine->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }
@@ -289,7 +289,7 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->ectx->hook[event];
+        hook = m_ib_engine->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }

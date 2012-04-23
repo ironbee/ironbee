@@ -150,7 +150,7 @@ static ib_status_t ib_register_hook(
 ) {
     IB_FTRACE_INIT();
 
-    ib_hook_t *last = ib->ectx->hook[event];
+    ib_hook_t *last = ib->hook[event];
 
     /* Insert the hook at the end of the list */
     if (last == NULL) {
@@ -158,7 +158,7 @@ static ib_status_t ib_register_hook(
                ib_state_event_name(event),
                hook->callback.as_void);
 
-        ib->ectx->hook[event] = hook;
+        ib->hook[event] = hook;
 
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -182,13 +182,13 @@ static ib_status_t ib_unregister_hook(
 ) {
     IB_FTRACE_INIT();
     ib_hook_t *prev = NULL;
-    ib_hook_t *hook = ib->ectx->hook[event];
+    ib_hook_t *hook = ib->hook[event];
 
     /* Remove the first matching hook */
     while (hook != NULL) {
         if (hook->callback.as_void == cb) {
             if (prev == NULL) {
-                ib->ectx->hook[event] = hook->next;
+                ib->hook[event] = hook->next;
             }
             else {
                 prev->next = hook->next;

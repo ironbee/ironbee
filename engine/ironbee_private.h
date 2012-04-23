@@ -101,6 +101,9 @@ struct ib_engine_t {
     ib_hash_t          *operators;        /**< Hash tracking operators */
     ib_hash_t          *actions;          /**< Hash tracking rules */
     ib_rule_engine_t   *rules;            /**< Rule engine data */
+
+    /* Hooks */
+    ib_hook_t *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
 };
 
 /**
@@ -159,9 +162,6 @@ struct ib_context_t {
 
     /* Filters */
     ib_list_t               *filters;     /**< Context enabled filters */
-
-    /* Hooks */
-    ib_hook_t   *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
 
     /* Rules associated with this context */
     ib_rule_engine_t        *rules;       /**< Rule engine data */
