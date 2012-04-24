@@ -1940,10 +1940,10 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
                         path = loc->path;
 
                         ib_log_debug2(ib,
-                                      "Checking Location %s "
-                                      "against context %s '%s'",
-                                      txpath, path?path:"ANY",
-                                      ctx->ctx_full);
+                                      "Checking Location path '%s' "
+                                      "against context (%s) path '%s'",
+                                      txpath, ctx->ctx_full, path?path:"ANY");
+                                      
                         if ((path == NULL) || (strncmp(path, txpath, strlen(path)) == 0)) {
                             ib_log_debug2(ib,
                                           "Site \"%s:%s\" matched ctx=%p '%s'",
