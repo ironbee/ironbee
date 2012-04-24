@@ -1611,7 +1611,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                      "Registered rule %s for type %s phase %d of context %p",
                      rule->meta.id,
                      rule->phase_meta->is_stream ? "Stream" : "Normal",
-                     ruleset_phase,
+                     ruleset_phase->phase_num,
                      (void *)ctx);
     }
 
