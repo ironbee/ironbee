@@ -216,6 +216,11 @@ AC_ARG_ENABLE(cpp,
               AS_HELP_STRING([--enable-cpp],
                              [Enable C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
 AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
+AM_CONDITIONAL([CPP], [test "$enable_cpp" = "yes"])
+ironbeepp_includedir='${prefix}/include/ironbeepp'
+ironbeepp_internal_includedir='${prefix}/include/ironbeepp/internal'
+AC_SUBST(ironbeepp_includedir)
+AC_SUBST(ironbeepp_internal_includedir)
 
 ### Ragel
 AC_ARG_WITH([ragel],
