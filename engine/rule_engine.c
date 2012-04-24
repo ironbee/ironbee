@@ -778,14 +778,14 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     /* Walk through the rules & execute them */
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug3(ib,
-                     "No rules for phase %d/%s in context p=%p",
-                     meta->phase_num, meta->name, (void *)ctx);
+                     "No rules for phase %d/%s in context %s",
+                      meta->phase_num, meta->name, ib_context_full_get(ctx));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug3(ib,
-                 "Executing %d rules for phase %d/%s in context %p",
-                 IB_LIST_ELEMENTS(rules),
-                 meta->phase_num, meta->name, (void *)ctx);
+                  "Executing %d rules for phase %d/%s in context %s",
+                  IB_LIST_ELEMENTS(rules),
+                  meta->phase_num, meta->name, ib_context_full_get(ctx));
 
     /**
      * Loop through all of the rules for this phase, execute them.
@@ -937,14 +937,14 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     /* Walk through the rules & execute them */
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug3(ib,
-                     "No rules for stream %d/%s in context p=%p",
-                     meta->phase_num, meta->name, (void *)ctx);
+                      "No rules for stream %d/%s in context %s",
+                      meta->phase_num, meta->name, ib_context_full_get(ctx));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug3(ib,
-                 "Executing %d rules for stream %d/%s in context %p",
-                 IB_LIST_ELEMENTS(rules),
-                 meta->phase_num, meta->name, (void *)ctx);
+                  "Executing %d rules for stream %d/%s in context %s",
+                  IB_LIST_ELEMENTS(rules),
+                  meta->phase_num, meta->name, ib_context_full_get(ctx));
 
     /**
      * Loop through all of the rules for this phase, execute them.
@@ -1319,8 +1319,8 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* Initialize the context's rule set (if required) */
     rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize rules for context %p",
-                     (void *)ctx);
+        ib_log_error(ib, "Failed to initialize rules for context %s",
+                     ib_context_full_get(ctx));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1599,20 +1599,20 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         rc = ib_list_push(rules, (void *)rule);
         if (rc != IB_OK) {
             ib_log_error(ib,
-                         "Failed to add rule type=%s phase=%d context=%p: %s",
+                         "Failed to add rule type=%s phase=%d context=%s: %s",
                          rule->phase_meta->is_stream ? "Stream" : "Normal",
                          ruleset_phase,
-                         (void *)ctx,
+                         ib_context_full_get(ctx),
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
         ib_log_debug(ib,
-                     "Registered rule %s for type %s phase %d of context %p",
+                     "Registered rule %s for type %s phase %d of context %s",
                      rule->meta.id,
                      rule->phase_meta->is_stream ? "Stream" : "Normal",
                      ruleset_phase->phase_num,
-                     (void *)ctx);
+                     ib_context_full_get(ctx));
     }
 
     /* Enable & validate this rule */

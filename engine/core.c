@@ -4343,6 +4343,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     ib_log_debug2(ib,
                  "Creating context for \"%s:%s\"", p1_unescaped, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
+                           "site", p1_unescaped,
                            ib_context_siteloc_chooser,
                            ib_context_site_lookup,
                            loc);
@@ -4471,6 +4472,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                  site->name,
                  loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
+                           "location", p1_unescaped,
                            ib_context_siteloc_chooser,
                            ib_context_site_lookup,
                            loc);

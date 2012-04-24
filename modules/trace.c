@@ -780,7 +780,8 @@ static ib_status_t modtrace_context_close(ib_engine_t  *ib,
                                           void         *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_log_debug(ib, "Trace module initializing context=%p.", ctx);
+    ib_log_debug(ib, "Trace module initializing context=%p '%s'",
+                 ctx, ib_context_full_get(ctx));
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -801,7 +802,8 @@ static ib_status_t modtrace_context_destroy(ib_engine_t  *ib,
                                             void         *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_log_debug(ib, "Trace module finishing context=%p.", ctx);
+    ib_log_debug(ib, "Trace module finishing context=%p '%s'",
+                 ctx, ib_context_full_get(ctx));
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

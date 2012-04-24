@@ -153,6 +153,9 @@ struct ib_context_t {
     ib_cfgmap_t             *cfg;         /**< Config map */
     ib_array_t              *cfgdata;     /**< Config data */
     ib_context_t            *parent;      /**< Parent context */
+    const char              *ctx_type;    /**< Type identifier string. */ 
+    const char              *ctx_name;    /**< Name identifier string. */ 
+    const char              *ctx_full;    /**< Full name of context */
     ib_auditlog_cfg_t       *auditlog;    /**< Per-context audit log cfgs. */
 
     /* Context Selection */

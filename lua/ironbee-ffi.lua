@@ -539,8 +539,7 @@ ffi.cdef [[
 
     /* Misc */
     ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin);
-    ib_status_t ib_context_create_main(ib_context_t **pctx,
-                                       ib_engine_t *ib);
+    ib_status_t ib_context_create_main(ib_engine_t *ib);
 
     /* Logging */
     void ib_log_ex(ib_engine_t *ib,

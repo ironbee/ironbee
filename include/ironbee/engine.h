@@ -146,6 +146,18 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib, void *plugin);
 ib_status_t DLL_PUBLIC ib_engine_init(ib_engine_t *ib);
 
 /**
+ * Create a main context to operate in.
+ *
+ * @param[in] ib IronBee engine that contains the ectx that we will use
+ *            in creating the main context. The main context
+ *            will be assigned to ib->ctx if it is successfully created.
+ *
+ * @returns IB_OK or the result of
+ *          ib_context_create(ctx, ib, ib->ectx, NULL, NULL, NULL).
+ */
+ib_status_t ib_engine_context_create_main(ib_engine_t *ib);
+
+/**
  * Get a module by name.
  *
  * @param ib Engine handle
@@ -219,6 +231,8 @@ void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
  * @param pctx Address which new context is written
  * @param ib Engine handle
  * @param parent Parent context (or NULL)
+ * @param ctx_type String to identify context type (i.e. "Site", "Main")
+ * @param ctx_name String to identify context ("foo.com", "main")
  * @param fn_ctx Context function
  * @param fn_ctx_site Context site lookup function
  * @param fn_ctx_data Context function data
@@ -228,6 +242,8 @@ void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
 ib_status_t DLL_PUBLIC ib_context_create(ib_context_t **pctx,
                                          ib_engine_t *ib,
                                          ib_context_t *parent,
+                                         const char *ctx_type,
+                                         const char *ctx_name,
                                          ib_context_fn_t fn_ctx,
                                          ib_context_site_fn_t fn_ctx_site,
                                          void *fn_ctx_data);
@@ -283,6 +299,33 @@ void DLL_PUBLIC ib_context_parent_set(ib_context_t *ctx,
  * @returns Site or NULL if none is associated
  */
 ib_site_t DLL_PUBLIC *ib_context_site_get(ib_context_t *ctx);
+
+/**
+ * Get the type identifier of the context.
+ *
+ * @param ctx Configuration context
+ *
+ * @returns Type string (or NULL)
+ */
+const char DLL_PUBLIC *ib_context_type_get(const ib_context_t *ctx);
+
+/**
+ * Get the name identifier of the context.
+ *
+ * @param ctx Configuration context
+ *
+ * @returns Name string (or NULL)
+ */
+const char DLL_PUBLIC *ib_context_name_get(const ib_context_t *ctx);
+
+/**
+ * Get the full name identifier of the context.
+ *
+ * @param ctx Configuration context
+ *
+ * @returns Full name string (or NULL)
+ */
+const char DLL_PUBLIC *ib_context_full_get(const ib_context_t *ctx);
 
 /**
  * Destroy a configuration context.

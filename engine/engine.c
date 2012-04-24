@@ -256,7 +256,8 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     /* Create an engine config context and use it as the
      * main context until the engine can be configured.
      */
-    rc = ib_context_create(&((*pib)->ectx), *pib, NULL, NULL, NULL, NULL);
+    rc = ib_context_create(&((*pib)->ectx), *pib, NULL, "engine", "main",
+                           NULL, NULL, NULL);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -368,6 +369,24 @@ ib_status_t ib_engine_init(ib_engine_t *ib)
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/* Create a main context to operate in. */
+ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT();
+    ib_context_t *ctx;
+    ib_status_t rc;
+
+    rc = ib_context_create(&ctx, ib, ib->ectx,
+                           "main", "main",
+                           NULL, NULL, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib->ctx = ctx;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 ib_status_t ib_engine_module_get(ib_engine_t *ib,
                                  const char * name,
@@ -1367,6 +1386,8 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
 ib_status_t ib_context_create(ib_context_t **pctx,
                               ib_engine_t *ib,
                               ib_context_t *parent,
+                              const char *ctx_type,
+                              const char *ctx_name,
                               ib_context_fn_t fn_ctx,
                               ib_context_site_fn_t fn_ctx_site,
                               void *fn_ctx_data)
@@ -1375,6 +1396,8 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     ib_mpool_t *pool;
     ib_status_t rc;
     ib_context_t *ctx = NULL;
+    char *full;
+    size_t full_len;
 
     /* Create memory subpool */
     /// @todo Should we be doing this???
@@ -1394,9 +1417,36 @@ ib_status_t ib_context_create(ib_context_t **pctx,
     ctx->ib = ib;
     ctx->mp = pool;
     ctx->parent = parent;
+    ctx->ctx_type = ctx_type;
+    ctx->ctx_name = ctx_name;
     ctx->fn_ctx = fn_ctx;
     ctx->fn_ctx_site = fn_ctx_site;
     ctx->fn_ctx_data = fn_ctx_data;
+
+    /* Generate the full name of the context */
+    full_len = 2;
+    if (ctx_type != NULL) {
+        full_len += strlen(ctx_type);
+    }
+    if (ctx_name != NULL) {
+        full_len += strlen(ctx_name);
+    }
+    full = (char *)ib_mpool_alloc(pool, full_len);
+    if (full == NULL) {
+        rc = IB_EALLOC;
+        goto failed;
+    }
+    if (ctx_type != NULL) {
+        strcpy(full, ctx_type);
+    }
+    else {
+        *full = '\0';
+    }
+    strcat(full, "/");
+    if (ctx_name != NULL) {
+        strcat(full, ctx_name);
+    }
+    ctx->ctx_full = full;
 
     /* Create a cfgmap to hold the configuration */
     rc = ib_cfgmap_create(&(ctx->cfg), ctx->mp);
@@ -1472,7 +1522,7 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     size_t ncfgdata;
     size_t i;
 
-    ib_log_debug3(ib, "Opening context ctx=%p", ctx);
+    ib_log_debug3(ib, "Opening context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
         if (cfgdata == NULL) {
@@ -1595,7 +1645,7 @@ ib_status_t ib_context_close(ib_context_t *ctx)
     size_t ncfgdata;
     size_t i;
 
-    ib_log_debug3(ib, "Closing context ctx=%p", ctx);
+    ib_log_debug3(ib, "Closing context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
         if (cfgdata == NULL) {
@@ -1636,7 +1686,8 @@ ib_site_t *ib_context_site_get(ib_context_t *ctx)
     ib_status_t rc;
     ib_site_t *site;
 
-    ib_log_debug2(ctx->ib, "ctx=%p; fn_ctx_site=%p", ctx, ctx->fn_ctx_site);
+    ib_log_debug2(ctx->ib, "ctx=%p '%s'; fn_ctx_site=%p",
+                  ctx, ctx->ctx_full, ctx->fn_ctx_site);
 
     if (ctx->fn_ctx_site == NULL) {
         IB_FTRACE_RET_PTR(ib_site_t, NULL);
@@ -1649,6 +1700,40 @@ ib_site_t *ib_context_site_get(ib_context_t *ctx)
     }
 
     IB_FTRACE_RET_PTR(ib_site_t, site);
+}
+
+const char *ib_context_type_get(const ib_context_t *ctx)
+{
+    IB_FTRACE_INIT();
+    assert(ctx != NULL);
+
+    if (ctx->ctx_type == NULL) {
+        IB_FTRACE_RET_CONSTSTR("");
+    }
+    else {
+        IB_FTRACE_RET_CONSTSTR(ctx->ctx_type);
+    }
+}
+
+const char *ib_context_name_get(const ib_context_t *ctx)
+{
+    IB_FTRACE_INIT();
+    assert(ctx != NULL);
+
+    if (ctx->ctx_name == NULL) {
+        IB_FTRACE_RET_CONSTSTR("");
+    }
+    else {
+        IB_FTRACE_RET_CONSTSTR(ctx->ctx_name);
+    }
+}
+
+const char *ib_context_full_get(const ib_context_t *ctx)
+{
+    IB_FTRACE_INIT();
+    assert(ctx != NULL);
+
+    IB_FTRACE_RET_CONSTSTR(ctx->ctx_full);
 }
 
 void ib_context_destroy(ib_context_t *ctx)
@@ -1665,7 +1750,7 @@ void ib_context_destroy(ib_context_t *ctx)
 
     ib = ctx->ib;
 
-    ib_log_debug3(ib, "Destroying context ctx=%p", ctx);
+    ib_log_debug3(ib, "Destroying context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     /* Run through the context modules to call any ctx_fini functions. */
     /// @todo Not sure this is needed anymore
@@ -1676,8 +1761,9 @@ void ib_context_destroy(ib_context_t *ctx)
         ib_module_t *m = cfgdata->module;
 
         if (m->fn_ctx_destroy != NULL) {
-            ib_log_debug3(ib, "Finishing context ctx=%p for module=%s (%p)",
-                         ctx, m->name, m);
+            ib_log_debug3(ib,
+                          "Finishing context ctx=%p '%s' for module=%s (%p)",
+                          ctx, ctx->ctx_full, m->name, m);
             rc = m->fn_ctx_destroy(ib, m, ctx, m->cbdata_ctx_destroy);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
@@ -1822,7 +1908,8 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
     txhostlen = strlen(txhost);
     txpath = tx->path;
 
-    ib_log_debug3(ib, "CHOOSER: ctx=%p tx=%p loc=%p", ctx, tx, loc);
+    ib_log_debug3(ib, "CHOOSER: ctx=%p '%s' tx=%p loc=%p",
+                  ctx, ctx->ctx_full, tx, loc);
 
     /*
      * Check for a matching IP address, then a matching hostname and
@@ -1855,8 +1942,10 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
                         ib_log_debug2(ib, "Checking Location %s against context %s",
                                      txpath, path?path:"ANY");
                         if ((path == NULL) || (strncmp(path, txpath, strlen(path)) == 0)) {
-                            ib_log_debug2(ib, "Site \"%s:%s\" matched ctx=%p",
-                                         loc->site->name, loc->path, ctx);
+                            ib_log_debug2(ib,
+                                          "Site \"%s:%s\" matched ctx=%p '%s'",
+                                          loc->site->name, loc->path,
+                                          ctx, ctx->ctx_full);
                             IB_FTRACE_RET_STATUS(IB_OK);
                         }
                     }

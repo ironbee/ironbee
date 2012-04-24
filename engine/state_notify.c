@@ -314,33 +314,6 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Create a main context to operate in.
- *
- * @param[in] ib IronBee engine that contains the ectx that we will use
- *            in creating the main context. The main context
- *            will be assigned to ib->ctx if it is successfully created.
- *
- * @returns IB_OK or the result of
- *          ib_context_create(ctx, ib, ib->ectx, NULL, NULL, NULL).
- */
-static ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
-{
-    IB_FTRACE_INIT();
-    ib_context_t *ctx;
-    ib_status_t rc;
-
-    rc = ib_context_create(&ctx, ib, ib->ectx, NULL, NULL, NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    ib->ctx = ctx;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-
 ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
