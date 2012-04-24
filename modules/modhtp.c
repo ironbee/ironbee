@@ -23,6 +23,7 @@
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
+#include "ironbee_config_auto.h"
 
 #include <stdio.h>
 #include <stdlib.h>
