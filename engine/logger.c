@@ -266,7 +266,10 @@ ib_log_level_t ib_log_string_to_level(const char* s)
     unsigned int i;
 
     for (i = 0; i < c_num_levels; ++i) {
-        if (strncasecmp(s, c_log_levels[i], strlen(c_log_levels[i])) == 0) {
+        if (
+            strncasecmp(s, c_log_levels[i], strlen(c_log_levels[i])) == 0 &&
+            strlen(s) == strlen(c_log_levels[i])
+        ) {
             break;
         }
     }
