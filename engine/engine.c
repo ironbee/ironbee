@@ -1939,8 +1939,11 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
                     if ((host == NULL) || (strcmp(host, cmphost) == 0)) {
                         path = loc->path;
 
-                        ib_log_debug2(ib, "Checking Location %s against context %s",
-                                     txpath, path?path:"ANY");
+                        ib_log_debug2(ib,
+                                      "Checking Location %s "
+                                      "against context %s '%s'",
+                                      txpath, path?path:"ANY",
+                                      ctx->ctx_full);
                         if ((path == NULL) || (strncmp(path, txpath, strlen(path)) == 0)) {
                             ib_log_debug2(ib,
                                           "Site \"%s:%s\" matched ctx=%p '%s'",
@@ -1951,8 +1954,10 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
                     }
                 }
                 else {
-                    ib_log_debug2(ib, "Skipping Host \"%s\" check against context %s",
-                                 txhost, host?host:"ANY");
+                    ib_log_debug2(ib,
+                                  "Skipping Host \"%s\" "
+                                  "check against context %s '%s'",
+                                  txhost, host?host:"ANY", ctx->ctx_full);
                 }
                 if (numhosts > 0) {
                     hostnode = ib_list_node_next(hostnode);

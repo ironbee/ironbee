@@ -113,10 +113,10 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
 
     /* Other fields are NULLed via calloc */
 
-    ib_log_debug3(ib, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
-                 (*pcp)->cur_ctx,
-                 (*pcp)->cur_site, (*pcp)->cur_site?(*pcp)->cur_site->name:"NONE",
-                 (*pcp)->cur_loc, (*pcp)->cur_loc?(*pcp)->cur_loc->path:"/");
+    ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+                  (*pcp)->cur_ctx, ib_context_full_get((*pcp)->cur_ctx),
+                  (*pcp)->cur_site, (*pcp)->cur_site?(*pcp)->cur_site->name:"NONE",
+                  (*pcp)->cur_loc, (*pcp)->cur_loc?(*pcp)->cur_loc->path:"/");
 
     IB_FTRACE_RET_STATUS(rc);
 
@@ -296,15 +296,16 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->stack, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to push context %p: %s", ctx, ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to push context %p(%s): %s",
+                     ctx, ib_context_full_get(ctx), ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug3(ib, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
-                 cp->cur_ctx,
-                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                 cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
+    ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+                  cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
+                  cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
+                  cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -336,10 +337,10 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug3(ib, "Stack: ctx=%p site=%p(%s) loc=%p(%s)",
-                 cp->cur_ctx,
-                 cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                 cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
+    ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+                  cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
+                  cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
+                  cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

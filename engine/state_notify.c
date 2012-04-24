@@ -378,7 +378,8 @@ static ib_status_t ib_context_get_ex(
 
     /* Run through the config context functions to select the context. */
     IB_ARRAY_LOOP(ib->contexts, nctx, i, ctx) {
-        ib_log_debug3(ib, "Processing context %d=%p", (int)i, ctx);
+        ib_log_debug3(ib, "Processing context %d=%p '%s'",
+                      (int)i, ctx, ib_context_full_get(ctx));
         /* A NULL function is a null context, so skip it */
         if ((ctx == NULL) || (ctx->fn_ctx == NULL)) {
             continue;
@@ -387,9 +388,10 @@ static ib_status_t ib_context_get_ex(
         rc = ctx->fn_ctx(ctx, type, data, ctx->fn_ctx_data);
         if (rc == IB_OK) {
             ib_site_t *site = ib_context_site_get(ctx);
-            ib_log_debug2(ib, "Selected context %d=%p site=%s(%s)",
-                    (int)i, ctx,
-                    (site?site->id_str:"none"), (site?site->name:"none"));
+            ib_log_debug2(ib, "Selected context %d=%p '%s' site=%s(%s)",
+                          (int)i, ctx, ib_context_full_get(ctx),
+                          (site?site->id_str:"none"),
+                          (site?site->name:"none"));
             *pctx = ctx;
             break;
         }
