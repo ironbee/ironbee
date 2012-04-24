@@ -443,6 +443,10 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
         itx->path = bstr_util_strdup_to_c(tx->parsed_uri->path);
+        /* Work around libhtp bug. */
+        if (itx->path != NULL && itx->path[0] == '\0') {
+            itx->path = strdup(IB_DSTR_URI_ROOT_PATH);
+        }
         ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->path);
     }
     if (itx->path == NULL) {
