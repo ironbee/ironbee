@@ -137,7 +137,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
     IB_FTRACE_INIT();
     int ec;                                    /**< Error code for sys calls. */
     int fd = open(file, O_RDONLY);             /**< File to read. */
-    //ib_num_t lineno = 1;                       /**< Current line number */
+    ib_num_t lineno = 1;                       /**< Current line number */
     ssize_t nbytes = 0;                        /**< Bytes read by one read(). */
     const size_t bufsz = 8192;                 /**< Buffer size. */
     size_t buflen = 0;                         /**< Last char in buffer. */
@@ -168,17 +168,16 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
         nbytes = read(fd, buf+buflen, bufsz-buflen);
         buflen += nbytes;
         ib_log_debug3(cp->ib, "Read a %d byte chunk. Total len=%d",
-            nbytes,
-            buflen);
+                      nbytes, buflen);
 
         if ( nbytes == 0 ) { /* EOF */
-                rc = ib_cfgparser_parse_buffer(cp, buf, nbytes, 1);
+            rc = ib_cfgparser_parse_buffer(
+                cp, buf, nbytes, file, lineno, IB_TRUE);
+            if (rc != IB_OK) {
+                goto failure;
+            }
 
-                if (rc != IB_OK) {
-                    goto failure;
-                }
-
-                break;
+            break;
         }
         else if ( nbytes > 0 ) { /* Normal. */
 
@@ -198,10 +197,10 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                     /* There is no end of line and there is no more
                      * space in the buffer. This is an error. */
                     ib_log_error(cp->ib,
-                        "Unable to read a configuration line "
-                            "larger than %d bytes from file %s. "
-                            "Parsing has failed.",
-                        buflen, file);
+                                 "Unable to read a configuration line "
+                                 "larger than %d bytes from file %s. "
+                                 "Parsing has failed.",
+                                 buflen, file);
                     free(buf);
                     close(fd);
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -213,8 +212,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                  * ib_cfgparser_parse_buffer */
                 do {
                     rc = ib_cfgparser_parse_buffer(
-                        cp, bol, eol-bol+1, 0
-                    );
+                        cp, bol, eol-bol+1, file, lineno, IB_FALSE);
                     if (rc != IB_OK) {
                         goto failure;
                     }
@@ -265,6 +263,8 @@ failure:
 ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                       const char     *buffer,
                                       size_t          length,
+                                      const char     *file,
+                                      ib_num_t        lineno,
                                       ib_bool_t       more)
 {
     IB_FTRACE_INIT();
@@ -274,6 +274,8 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
             cp,
             buffer,
             length,
+            file,
+            lineno,
             (more == IB_TRUE ? 1 : 0)
         )
     );
@@ -454,6 +456,8 @@ ib_status_t ib_config_register_directive(
 }
 
 ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
+                                        const char *file,
+                                        ib_num_t lineno,
                                         const char *name,
                                         ib_list_t *args)
 {
@@ -477,8 +481,11 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     switch (rec->type) {
         case IB_DIRTYPE_ONOFF:
             if (nargs != 1) {
-                ib_log_error(ib, "OnOff directive \"%s\" takes one parameter, not %d",
-                             name, nargs);
+                ib_log_error(ib,
+                             "File %s line #%d: "
+                             "OnOff directive \"%s\" "
+                             "takes one parameter, not %d",
+                             file, lineno, name, nargs);
                 rc = IB_EINVAL;
                 break;
             }
@@ -495,8 +502,11 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_PARAM1:
             if (nargs != 1) {
-                ib_log_error(ib, "Param1 directive \"%s\" takes one parameter, not %d",
-                             name, nargs);
+                ib_log_error(ib,
+                             "File %s line #%d: "
+                             "Param1 directive \"%s\" "
+                             "takes one parameter, not %d",
+                             file, lineno, name, nargs);
                 rc = IB_EINVAL;
                 break;
             }
@@ -505,8 +515,11 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_PARAM2:
             if (nargs != 2) {
-                ib_log_error(ib, "Param2 directive \"%s\" takes two parameters, not %d",
-                             name, nargs);
+                ib_log_error(ib,
+                             "File %s line #%d: "
+                             "Param2 directive \"%s\" "
+                             "takes two parameters, not %d",
+                             file, lineno, name, nargs);
                 rc = IB_EINVAL;
                 break;
             }
@@ -584,6 +597,8 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
 }
 
 ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
+                                  const char *file,
+                                  ib_num_t lineno,
                                   const char *name,
                                   ib_list_t *args)
 {
@@ -591,10 +606,12 @@ ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         return rc;
     }
-    return ib_config_directive_process(cp, name, args);
+    return ib_config_directive_process(cp, file, lineno, name, args);
 }
 
 ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
+                                    const char *file,
+                                    ib_num_t lineno,
                                     const char *name)
 {
     IB_FTRACE_INIT();

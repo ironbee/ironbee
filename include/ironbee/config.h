@@ -282,12 +282,16 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse(ib_cfgparser_t *cp,
  * @param[in,out] cp     The configuration parser to be used and populated.
  * @param[in]     buffer The buffer to parser
  * @param[in]     length Length of @a buffer.
+ * @param[in]     file   Name of configuration file being parsed
+ * @param[in]     lineno Line number of text in @a buffer
  * @param[in]     more   Use true if more data available and false otherwise.
  * @returns IB_OK on success and error code on failure.
  **/
 ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                                  const char     *buffer,
                                                  size_t          length,
+                                                 const char     *file,
+                                                 ib_num_t        lineno,
                                                  ib_bool_t       more);
 /**
  * Push a new context onto the stack and make it the current.
@@ -384,6 +388,8 @@ ib_status_t DLL_PUBLIC ib_config_register_directive(
  * Process a directive.
  *
  * @param cp Config parser
+ * @param file Name of configuration file being parsed
+ * @param lineno Current line number being processed
  * @param name Directive name
  * @param args Directive arguments
  * @todo Need to pass back an error msg???
@@ -391,6 +397,8 @@ ib_status_t DLL_PUBLIC ib_config_register_directive(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
+                                                   const char *file,
+                                                   ib_num_t lineno,
                                                    const char *name,
                                                    ib_list_t *args);
 
@@ -398,6 +406,8 @@ ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
  * Start a block.
  *
  * @param cp Config parser
+ * @param file Name of configuration file being parsed
+ * @param lineno Current line number being processed
  * @param name Block name
  * @param args Block arguments
  * @todo Need to pass back an error msg???
@@ -405,6 +415,8 @@ ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
+                                             const char *file,
+                                             ib_num_t lineno,
                                              const char *name,
                                              ib_list_t *args);
 
@@ -416,12 +428,16 @@ ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
  * block started.
  *
  * @param cp Config parser
+ * @param file Name of configuration file being parsed
+ * @param lineno Current line number being processed
  * @param name Block name
  * @todo Need to pass back an error msg???
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_config_block_process(ib_cfgparser_t *cp,
+                                               const char *file,
+                                               ib_num_t lineno,
                                                const char *name);
 
 /**

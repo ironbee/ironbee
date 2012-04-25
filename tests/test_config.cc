@@ -24,10 +24,18 @@ class TestConfig : public BaseFixture {
     }
 
     virtual ib_status_t config(const string& configString, int isEnd=0) {
+        return config(configString, "test.conf", 1, isEnd);
+    }
+
+    virtual ib_status_t config(const string& configString,
+                               const char *file, ib_num_t lineno,
+                               int isEnd=0) {
         string s = configString + "\n";
         return ib_cfgparser_ragel_parse_chunk(cfgparser,
                                               s.c_str(),
                                               s.length(),
+                                              file,
+                                              lineno,
                                               isEnd);
     }
 };
@@ -51,7 +59,7 @@ TEST_F(TestConfig, incomplete_site_block) {
                             "Hostname *\n"
                             "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
                             "</Site", 1));
-    ASSERT_NE(IB_OK, config("<Site defau", 1));
+    ASSERT_NE(IB_OK, config("<Site defau",  1));
     ASSERT_NE(IB_OK, config("<Site default>\n", 1));
     ASSERT_NE(IB_OK, config("<Site default>\n"
                             "Hostname *\n"

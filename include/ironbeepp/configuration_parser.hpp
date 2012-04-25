@@ -193,17 +193,24 @@ public:
      *
      * @param[in] buffer Buffer to parse.
      * @param[in] length Length of @a buffer.
+     * @param[in] file   Name of configuration file being parsed
+     * @param[in] lineno Line number of text in @a buffer
      * @param[in] more   True iff more input in future.
      * @throw IronBee++ exception on error.
      **/
     void parse_buffer(
         const char* buffer,
         size_t      length,
+        const char* file,
+        ib_num_t    lineno,
         bool        more
     ) const;
 
     //! As above, but for string.
-    void parse_buffer(const std::string& s, bool more) const;
+    void parse_buffer(const std::string& s,
+                      const std::string& file,
+                      ib_num_t lineno,
+                      bool more) const;
 
 private:
     ib_type m_ib;

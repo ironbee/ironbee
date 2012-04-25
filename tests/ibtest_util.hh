@@ -97,14 +97,14 @@ extern ib_server_t ibt_ibserver;
  * @param buf String buffer containing config data
  * @param len Buffer length
  */
-#define ibtest_engine_config_buf(e,buf,len) \
+#define ibtest_engine_config_buf(e,buf,len,file,lineno)       \
     do { \
         ib_engine_t *ibt_ib = (e); \
         ib_cfgparser_t *ibt_cp; \
         ASSERT_EQ(IB_OK, ib_state_notify_cfg_started(ibt_ib)); \
         ASSERT_EQ(IB_OK, ib_cfgparser_create(&ibt_cp, ibt_ib)); \
         ASSERT_TRUE(ibt_cp); \
-        ASSERT_EQ(IB_OK, ib_cfgparser_ragel_parse_chunk(ibt_cp,(buf),(len),1)); \
+        ASSERT_EQ(IB_OK, ib_cfgparser_ragel_parse_chunk(ibt_cp,(buf),(len),file,lineno,1)); \
         ib_cfgparser_destroy(ibt_cp); \
         ASSERT_EQ(IB_OK, ib_state_notify_cfg_finished(ibt_ib)); \
     } while(0)

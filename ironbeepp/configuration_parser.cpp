@@ -87,6 +87,8 @@ void ConfigurationParser::parse_file(const string& path) const
 void ConfigurationParser::parse_buffer(
     const char* buffer,
     size_t      length,
+    const char* file,
+    ib_num_t    lineno,
     bool        more
 ) const
 {
@@ -94,14 +96,18 @@ void ConfigurationParser::parse_buffer(
         ib_cfgparser_parse_buffer(
             ib(),
             buffer, length,
+            file, lineno,
             (more ? IB_TRUE : IB_FALSE)
         )
     );
 }
 
-void ConfigurationParser::parse_buffer(const std::string& s, bool more) const
+void ConfigurationParser::parse_buffer(const std::string& s,
+                                       const std::string& file,
+                                       ib_num_t lineno,
+                                       bool more) const
 {
-    parse_buffer(s.data(), s.length(), more);
+    parse_buffer(s.data(), s.length(), file.c_str(), lineno, more);
 }
 
 ostream& operator<<(

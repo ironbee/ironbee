@@ -126,11 +126,11 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
         ib_list_clear(plist);
     }
     action push_dir {
-        rc = ib_config_directive_process(cp, dirname, plist);
+        rc = ib_config_directive_process(cp, file, lineno, dirname, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process directive \"%s\": %s",
-                         dirname, ib_status_to_string(rc));
+                         "Failed to process directive \"%s\" on line %d of %s: %s",
+                         dirname, lineno, file, ib_status_to_string(rc));
         }
         if (dirname != NULL) {
             free(dirname);
@@ -145,20 +145,20 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
         ib_list_clear(plist);
     }
     action push_block {
-        rc = ib_config_block_start(cp, blkname, plist);
+        rc = ib_config_block_start(cp, file, lineno, blkname, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to start block \"%s\": %s",
-                         blkname, ib_status_to_string(rc));
+                         "Failed to start block \"%s\" on line %d of %s: %s",
+                         blkname, file, lineno, ib_status_to_string(rc));
         }
     }
     action pop_block {
         blkname = (char *)cp->cur_blkname;
-        rc = ib_config_block_process(cp, blkname);
+        rc = ib_config_block_process(cp, file, lineno, blkname);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process block \"%s\": %s",
-                         blkname, ib_status_to_string(rc));
+                         "Failed to process block \"%s\" on line %d of %s: %s",
+                         blkname, lineno, file, ib_status_to_string(rc));
         }
         if (blkname != NULL) {
             free(blkname);
@@ -265,6 +265,8 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
                                            const size_t blen,
+                                           const char *file,
+                                           const ib_num_t lineno,
                                            const int is_last_chunk)
 {
     ib_engine_t *ib_engine = cp->ib;

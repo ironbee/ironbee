@@ -312,6 +312,8 @@ static const int ironbee_config_en_main = 20;
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
                                            const size_t blen,
+                                           const char *file,
+                                           const ib_num_t lineno,
                                            const int is_last_chunk)
 {
     ib_engine_t *ib_engine = cp->ib;
@@ -359,16 +361,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
 
-#line 315 "config-parser.rl"
-
-#line 316 "config-parser.rl"
-
 #line 317 "config-parser.rl"
 
 #line 318 "config-parser.rl"
 
+#line 319 "config-parser.rl"
 
-#line 372 "config-parser.c"
+#line 320 "config-parser.rl"
+
+
+#line 374 "config-parser.c"
 	{
 	 fsm.cs = ironbee_config_start;
 	 fsm.top = 0;
@@ -377,9 +379,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 fsm.act = 0;
 	}
 
-#line 320 "config-parser.rl"
+#line 322 "config-parser.rl"
 
-#line 383 "config-parser.c"
+#line 385 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -400,7 +402,7 @@ _resume:
 #line 1 "NONE"
 	{ fsm.ts = ( fsm.p);}
 	break;
-#line 404 "config-parser.c"
+#line 406 "config-parser.c"
 		}
 	}
 
@@ -505,11 +507,11 @@ _eof_trans:
 	case 5:
 #line 128 "config-parser.rl"
 	{
-        rc = ib_config_directive_process(cp, dirname, plist);
+        rc = ib_config_directive_process(cp, file, lineno, dirname, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process directive \"%s\": %s",
-                         dirname, ib_status_to_string(rc));
+                         "Failed to process directive \"%s\" on line %d of %s: %s",
+                         dirname, lineno, file, ib_status_to_string(rc));
         }
         if (dirname != NULL) {
             free(dirname);
@@ -528,11 +530,11 @@ _eof_trans:
 	case 7:
 #line 147 "config-parser.rl"
 	{
-        rc = ib_config_block_start(cp, blkname, plist);
+        rc = ib_config_block_start(cp, file, lineno, blkname, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to start block \"%s\": %s",
-                         blkname, ib_status_to_string(rc));
+                         "Failed to start block \"%s\" on line %d of %s: %s",
+                         blkname, file, lineno, ib_status_to_string(rc));
         }
     }
 	break;
@@ -540,11 +542,11 @@ _eof_trans:
 #line 155 "config-parser.rl"
 	{
         blkname = (char *)cp->cur_blkname;
-        rc = ib_config_block_process(cp, blkname);
+        rc = ib_config_block_process(cp, file, lineno, blkname);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process block \"%s\": %s",
-                         blkname, ib_status_to_string(rc));
+                         "Failed to process block \"%s\" on line %d of %s: %s",
+                         blkname, lineno, file, ib_status_to_string(rc));
         }
         if (blkname != NULL) {
             free(blkname);
@@ -775,7 +777,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 779 "config-parser.c"
+#line 781 "config-parser.c"
 		}
 	}
 
@@ -792,7 +794,7 @@ _again:
 #line 1 "NONE"
 	{ fsm.act = 0;}
 	break;
-#line 796 "config-parser.c"
+#line 798 "config-parser.c"
 		}
 	}
 
@@ -830,18 +832,18 @@ _again:
 	case 5:
 #line 128 "config-parser.rl"
 	{
-        rc = ib_config_directive_process(cp, dirname, plist);
+        rc = ib_config_directive_process(cp, file, lineno, dirname, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process directive \"%s\": %s",
-                         dirname, ib_status_to_string(rc));
+                         "Failed to process directive \"%s\" on line %d of %s: %s",
+                         dirname, lineno, file, ib_status_to_string(rc));
         }
         if (dirname != NULL) {
             free(dirname);
         }
     }
 	break;
-#line 845 "config-parser.c"
+#line 847 "config-parser.c"
 		}
 	}
 	}
@@ -849,7 +851,7 @@ _again:
 	_out: {}
 	}
 
-#line 321 "config-parser.rl"
+#line 323 "config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {
