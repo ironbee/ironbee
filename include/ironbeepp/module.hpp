@@ -365,7 +365,7 @@ public:
     **/
     template <typename DataType>
     ConfigurationMapInit<DataType> set_configuration_data(
-        const DataType& global_data
+        const DataType& global_data = DataType()
     ) const;
 
     ///@}
