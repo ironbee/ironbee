@@ -26,6 +26,7 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/hooks.hpp>
+#include <ironbeepp/context.hpp>
 
 #include <ironbee/engine.h>
 
@@ -47,6 +48,12 @@ ConstEngine::ConstEngine(const ib_engine_t* ib_engine) :
 {
     // nop
 }
+
+Context ConstEngine::main_context() const
+{
+  return Context(ib_context_main(ib()));
+}
+
 
 Engine::Engine() :
     m_ib(NULL)

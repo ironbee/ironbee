@@ -36,6 +36,7 @@ namespace IronBee {
 
 class ConfigurationDirectivesRegistrar;
 class HooksRegistrar;
+class Context;
 
 /**
  * Const Engine; equivalent to a const pointer to ib_engine_t.
@@ -133,6 +134,9 @@ public:
     ConstEngine(const ib_engine_t* ib_engine);
 
     ///@}
+
+    //! Main context.
+    Context main_context() const;
 
 private:
     const ib_engine_t* m_ib;
