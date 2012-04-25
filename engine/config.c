@@ -132,7 +132,8 @@ failed:
 
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
-ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
+ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
+                               const char *file)
 {
     IB_FTRACE_INIT();
     int ec;                                    /**< Error code for sys calls. */
@@ -173,6 +174,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
         if ( nbytes == 0 ) { /* EOF */
             rc = ib_cfgparser_parse_buffer(
                 cp, buf, nbytes, file, lineno, IB_TRUE);
+            ++lineno;
             if (rc != IB_OK) {
                 goto failure;
             }
@@ -213,6 +215,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp, const char *file)
                 do {
                     rc = ib_cfgparser_parse_buffer(
                         cp, bol, eol-bol+1, file, lineno, IB_FALSE);
+                    ++lineno;
                     if (rc != IB_OK) {
                         goto failure;
                     }

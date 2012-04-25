@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <errno.h>
 
 #include <ironbee/engine.h>
@@ -96,6 +97,92 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
     return pval;
 }
 
+static ib_status_t include_config_fn(ib_cfgparser_t *cp,
+                                     ib_mpool_t* mp,
+                                     const char *mark,
+                                     const char *fpc,
+                                     const char *file,
+                                     ib_num_t lineno)
+{
+    struct stat statbuf;
+    ib_status_t rc;
+    int statval;
+    char *incfile;
+    char *pval;
+
+    pval = alloc_cpy_marked_string(mark, fpc, mp);
+
+    if (*pval == '/') {
+        incfile = (char *)ib_mpool_strdup(mp, pval);
+        if (incfile == NULL) {
+            ib_log_error(cp->ib,
+                         "Error allocating include file name buffer");
+            return IB_EALLOC;
+        }
+    }
+    else { 
+        char *ofile;         /* Copy of original file name */
+        const char *pdir;    /* Parent directory */
+        size_t len;
+
+        ofile = (char *)ib_mpool_strdup(mp, file);
+        if (ofile == NULL) {
+            ib_log_error(cp->ib,
+                         "Cannot allocate original file name buffer");
+            return IB_EALLOC;
+        }
+        pdir = dirname(ofile);
+
+        /* Allocate & generate the include file name */
+        len = strlen(pdir);      /* Parent directory */
+        len += 1;                /* slash */
+        len += strlen(pval);     /* file name */
+        len += 1;                /* NUL */
+        incfile = (char *)ib_mpool_alloc(mp, len);
+        if (incfile == NULL) {
+            ib_log_error(cp->ib,
+                         "Cannot allocate include file name buffer (%d)",
+                         len);
+            return IB_EALLOC;
+        }
+        strcpy(incfile, pdir);
+        strcat(incfile, "/");
+        strcat(incfile, pval);
+    }
+
+    if (access(incfile, R_OK) != 0) {
+        ib_log_error(cp->ib, "Can't access included file \"%s\": %s",
+                     incfile, strerror(errno));
+        return IB_EALLOC;
+    }
+
+    statval = stat(incfile, &statbuf);
+    if (statval != 0) {
+        ib_log_error(cp->ib,
+                     "Failed to stat include file \"%s\": %s",
+                     incfile, strerror(errno));
+        return IB_EINVAL;
+    }
+
+    if (S_ISREG(statbuf.st_mode) == 0) {
+        ib_log_error(cp->ib,
+                     "Included file \"%s\" isn't a file", incfile);
+        return IB_EINVAL;
+    }
+
+    ib_log_debug(cp->ib, "Including '%s' from line %d of %s\n",
+                 incfile, lineno, file);
+    rc = ib_cfgparser_parse(cp, incfile);
+    if (rc != IB_OK) {
+        ib_log_error(cp->ib, "Error parsing included file \"%s\": %s",
+                     incfile, ib_status_to_string(rc));
+        return rc;
+    }
+    
+    ib_log_debug(cp->ib, "Done processing include file \"%s\"", incfile);
+    return IB_OK;
+}
+
 %%{
     machine ironbee_config;
 
@@ -121,19 +208,19 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
     # Directives
     action start_dir {
         size_t namelen = (size_t)(fpc - mark);
-        dirname = (char *)calloc(namelen + 1, sizeof(*dirname));
-        memcpy(dirname, mark, namelen);
+        directive = (char *)calloc(namelen + 1, sizeof(*directive));
+        memcpy(directive, mark, namelen);
         ib_list_clear(plist);
     }
     action push_dir {
-        rc = ib_config_directive_process(cp, file, lineno, dirname, plist);
+        rc = ib_config_directive_process(cp, file, lineno, directive, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
                          "Failed to process directive \"%s\" on line %d of %s: %s",
-                         dirname, lineno, file, ib_status_to_string(rc));
+                         directive, lineno, file, ib_status_to_string(rc));
         }
-        if (dirname != NULL) {
-            free(dirname);
+        if (directive != NULL) {
+            free(directive);
         }
     }
 
@@ -168,46 +255,18 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
 
     # include file logic
     action include_config {
-        struct stat statbuf;
-    	int statval;
-        int error = 0;
-
-        pval = alloc_cpy_marked_string(mark, fpc, mpcfg);
-
-	if (access(pval, R_OK) != 0) {
-            ib_log_error(ib_engine, "Can't access included file \"%s\": %s",
-                         pval, strerror(errno));
-            error = 1;
-            goto include_error;
-	}
-
-        statval = stat(pval, &statbuf);
-        if (statval != 0) {
-             ib_log_error(ib_engine,
-                          "Failed to stat include file \"%s\": %s",
-                          pval, strerror(errno));
-            error = 1;
-            goto include_error;
+        rc = include_config_fn(cp, mpcfg, mark, fpc, file, lineno);
+        if (rc == IB_OK) {
+            ib_log_debug(ib_engine,
+                         "Done processing include direction on line %d of %s",
+                         lineno, file);
         }
-
-        if (S_ISREG(statbuf.st_mode) == 0) {
-            ib_log_error(ib_engine, "Included file \"%s\" isn't a file", pval);
-            error = 1;
-            goto include_error;
+        else {
+            ib_log_error(ib_engine,
+                         "Failed to process include directive "
+                         "on line %d of %s: %s",
+                         lineno, file, ib_status_to_string(rc));
         }
-
-        ib_log_debug(ib_engine, "Include configuration '%s'\n", pval);
-        rc = ib_cfgparser_parse(cp, pval);
-        if (rc != IB_OK) {
-            ib_log_error(ib_engine, "Error parsing included file \"%s\": %s",
-                         pval, ib_status_to_string(rc));
-            error = 1;
-            goto include_error;
-        }
-        include_error:
-            if (error == 0) {
-                ib_log_debug(ib_engine, "Done processing include file \"%s\"", pval);
-            }
     }
 
     WS = [ \t];
@@ -281,7 +340,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
     ib_status_t rc = IB_OK;
 
     /* Directive name being parsed. */
-    char *dirname = NULL;
+    char *directive = NULL;
 
     /* Block name being parsed. */
     char *blkname = NULL;
