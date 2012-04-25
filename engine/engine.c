@@ -1777,12 +1777,12 @@ void ib_context_destroy(ib_context_t *ctx)
     IB_FTRACE_RET_VOID();
 }
 
-ib_context_t *ib_context_engine(ib_engine_t *ib)
+ib_context_t *ib_context_engine(const ib_engine_t *ib)
 {
     return ib->ectx;
 }
 
-ib_context_t *ib_context_main(ib_engine_t *ib)
+ib_context_t *ib_context_main(const ib_engine_t *ib)
 {
     return ib->ctx;
 }
