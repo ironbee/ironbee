@@ -166,7 +166,7 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
         blkname = (char *)cp->cur_blkname;
     }
 
-    # Include logic
+    # include file logic
     action include_config {
         struct stat statbuf;
     	int statval;
@@ -251,7 +251,7 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
 
     main := |*
         WS* comment;
-	"include" { fcall includeconfig; };
+	[Ii] "nclude" { fcall includeconfig; };
         WS* token >mark %start_dir { fcall parameters; };
         "<" { fcall newblock; };
         "</" { fcall endblock; };

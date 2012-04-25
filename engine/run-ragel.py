@@ -16,8 +16,9 @@ srcdir = os.path.dirname(base)
 
 if ragel == "" :
     print >>sys.stderr, \
-        "WARNING: %s was modified, but there is no ragel compiler "+ \
-        "installed to regenerate the %s file." % ( infile, outfile )
+        ("WARNING: %s was modified, but there is no ragel compiler "+
+         "installed to regenerate the %s file.") % \
+         ( infile, outfile )
     sys.exit(1)
 
 print "Generating %s from %s using %s" % ( infile, outfile, ragel )
