@@ -1666,7 +1666,7 @@ ib_status_t ib_context_close(ib_context_t *ctx)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_context_t *ib_context_parent_get(ib_context_t *ctx)
+ib_context_t *ib_context_parent_get(const ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
     IB_FTRACE_RET_PTR(ib_context_t, ctx->parent);
@@ -1680,7 +1680,7 @@ void ib_context_parent_set(ib_context_t *ctx,
     IB_FTRACE_RET_VOID();
 }
 
-ib_site_t *ib_context_site_get(ib_context_t *ctx)
+ib_site_t *ib_context_site_get(const ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -1787,7 +1787,7 @@ ib_context_t *ib_context_main(ib_engine_t *ib)
     return ib->ctx;
 }
 
-ib_engine_t *ib_context_get_engine(ib_context_t *ctx)
+ib_engine_t *ib_context_get_engine(const ib_context_t *ctx)
 {
     return ctx->ib;
 }
@@ -1871,7 +1871,7 @@ ib_status_t ib_context_get(ib_context_t *ctx,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
+ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                                        ib_ctype_t type,
                                        void *ctxdata,
                                        void *cbdata)
@@ -1974,7 +1974,7 @@ ib_status_t ib_context_siteloc_chooser(ib_context_t *ctx,
     IB_FTRACE_RET_STATUS(IB_ENOENT);
 }
 
-ib_status_t ib_context_site_lookup(ib_context_t *ctx,
+ib_status_t ib_context_site_lookup(const ib_context_t *ctx,
                                    ib_site_t **psite,
                                    void *cbdata)
 {

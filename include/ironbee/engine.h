@@ -63,7 +63,7 @@ extern "C" {
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_context_fn_t)(ib_context_t *ctx,
+typedef ib_status_t (*ib_context_fn_t)(const ib_context_t *ctx,
                                        ib_ctype_t type,
                                        void *ctxdata,
                                        void *cbdata);
@@ -80,7 +80,7 @@ typedef ib_status_t (*ib_context_fn_t)(ib_context_t *ctx,
  *
  * @returns Status code
  */
-typedef ib_status_t (*ib_context_site_fn_t)(ib_context_t *ctx,
+typedef ib_status_t (*ib_context_site_fn_t)(const ib_context_t *ctx,
                                             ib_site_t **psite,
                                             void *cbdata);
 
@@ -280,7 +280,7 @@ ib_status_t DLL_PUBLIC ib_context_close(ib_context_t *ctx);
  *
  * @returns Parent context
  */
-ib_context_t DLL_PUBLIC *ib_context_parent_get(ib_context_t *ctx);
+ib_context_t DLL_PUBLIC *ib_context_parent_get(const ib_context_t *ctx);
 
 /**
  * Set the parent context.
@@ -298,7 +298,7 @@ void DLL_PUBLIC ib_context_parent_set(ib_context_t *ctx,
  *
  * @returns Site or NULL if none is associated
  */
-ib_site_t DLL_PUBLIC *ib_context_site_get(ib_context_t *ctx);
+ib_site_t DLL_PUBLIC *ib_context_site_get(const ib_context_t *ctx);
 
 /**
  * Get the type identifier of the context.
@@ -344,7 +344,7 @@ void DLL_PUBLIC ib_context_destroy(ib_context_t *ctx);
  *
  * @returns Pointer to the engine.
  */
-ib_engine_t DLL_PUBLIC *ib_context_get_engine(ib_context_t *ctx);
+ib_engine_t DLL_PUBLIC *ib_context_get_engine(const ib_context_t *ctx);
 
 /**
  * Get the engine (startup) configuration context.
@@ -474,7 +474,7 @@ ib_status_t DLL_PUBLIC ib_context_get(ib_context_t *ctx,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_context_siteloc_chooser(ib_context_t *ctx,
+ib_status_t DLL_PUBLIC ib_context_siteloc_chooser(const ib_context_t *ctx,
                                                   ib_ctype_t type,
                                                   void *ctxdata,
                                                   void *cbdata);
@@ -489,7 +489,7 @@ ib_status_t DLL_PUBLIC ib_context_siteloc_chooser(ib_context_t *ctx,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_context_site_lookup(ib_context_t *ctx,
+ib_status_t DLL_PUBLIC ib_context_site_lookup(const ib_context_t *ctx,
                                               ib_site_t **psite,
                                               void *cbdata);
 
