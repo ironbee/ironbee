@@ -24,27 +24,27 @@ const char* ConstContext::type() const
 {
     return ib_context_type_get(ib());
 }
-    
+
 const char* ConstContext::name() const
 {
     return ib_context_name_get(ib());
 }
-    
+
 const char* ConstContext::full_name() const
 {
     return ib_context_full_get(ib());
 }
-    
+
 Context ConstContext::parent() const
 {
     return Context(ib_context_parent_get(ib()));
 }
-    
+
 Engine ConstContext::engine() const
 {
     return Engine(ib_context_get_engine(ib()));
 }
-    
+
 Site ConstContext::site() const
 {
     return Site(ib_context_site_get(ib()));
@@ -69,7 +69,7 @@ Context::Context(ib_type ib_context) :
 {
     // nop
 }
- 
+
 std::ostream& operator<<(std::ostream& o, const ConstContext& context)
 {
     if (! context) {
