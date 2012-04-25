@@ -1,49 +1,85 @@
-/*****************************************************************************
- * Licensed to Qualys, Inc. (QUALYS) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * QUALYS licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ****************************************************************************/
-
-/**
- * @file
- * @brief IronBee++ Internals -- Context implementation.
- * @internal
- *
- * @author Christopher Alfeld <calfeld@qualys.com>
- **/
-
 #include <ironbeepp/context.hpp>
+#include <ironbeepp/site.hpp>
+#include <ironbeepp/engine.hpp>
 
 #include <ironbee/engine.h>
 
 namespace IronBee {
 
-Context::Context(ib_context_t* ib_context) :
+// ConstContext
+
+ConstContext::ConstContext() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ConstContext::ConstContext(ib_type ib_context) :
     m_ib(ib_context)
 {
-    // Nop
+    // nop
 }
 
-ib_context_t* Context::ib()
+const char* ConstContext::type() const
 {
-    return m_ib;
+    return ib_context_type_get(ib());
 }
-
-const ib_context_t* Context::ib() const
+    
+const char* ConstContext::name() const
 {
-    return m_ib;
+    return ib_context_name_get(ib());
+}
+    
+const char* ConstContext::full_name() const
+{
+    return ib_context_full_get(ib());
+}
+    
+Context ConstContext::parent() const
+{
+    return Context(ib_context_parent_get(ib()));
+}
+    
+Engine ConstContext::engine() const
+{
+    return Engine(ib_context_get_engine(ib()));
+}
+    
+Site ConstContext::site() const
+{
+    return Site(ib_context_site_get(ib()));
 }
 
+// Context
+
+Context Context::remove_const(ConstContext context)
+{
+    return Context(const_cast<ib_type>(context.ib()));
+}
+
+Context::Context() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+Context::Context(ib_type ib_context) :
+    ConstContext(ib_context),
+    m_ib(ib_context)
+{
+    // nop
+}
+ 
+std::ostream& operator<<(std::ostream& o, const ConstContext& context)
+{
+    if (! context) {
+        o << "IronBee::Context[!singular!]";
+    } else {
+        o << "IronBee::Context["
+          << context.full_name()
+          << "]";
+    }
+    return o;
+}
 
 } // IronBee
