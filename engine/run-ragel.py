@@ -32,7 +32,7 @@ try :
     cfile = open(outfile)
     lines = cfile.readlines()
     cfile.close( )
-except IOError as e :
+except IOError, e :
     print >>sys.stderr, "Error reading ragel generated C file "+outfile+" :", e
     sys.exit(1)
 
@@ -43,6 +43,6 @@ try :
         line = re.sub( r'(#line \d+) "'+srcdir+r'/(.*)\"', r'\g<1> "\g<2>"', line )
         print >>cfile, line
     cfile.close( )
-except IOError as e :
+except IOError, e :
     print >>sys.stderr, "Error rewriting generated C file "+outfile+" :", e
     sys.exit(1)
