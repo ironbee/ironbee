@@ -235,3 +235,10 @@ TEST_F(TestList, List)
     L.clear();
     EXPECT_TRUE(L.empty());
 }
+
+TEST_F(TestList, is_list)
+{
+    EXPECT_TRUE(is_list<List<int> >::value);
+    EXPECT_FALSE(is_list<int>::value);
+    EXPECT_TRUE(is_list<ConstList<int> >::value);
+}

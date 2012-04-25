@@ -322,6 +322,28 @@ void* value_as_void(Base* v)
 } // Internal
 /// @endcond
 
+template <typename T>
+class ConstList;
+
+template <typename T>
+class List;
+
+/**
+ * Metafunction to determineif @a T is a ConstList or List.
+ *
+ * Inherits from true_type if @a T is a ConstList or List and false_type
+ * otherwise.
+ *
+ * @tparam T Type to test.
+ **/
+template <typename T>
+struct is_list : public boost::false_type {};
+//! Implementation detail of is_list.
+template <typename U>
+struct is_list<ConstList<U> > : public boost::true_type {};
+//! Implementation detail of is_list.
+template <typename U>
+struct is_list<List<U> > : public boost::true_type {};
 
 /**
  * Const List; equivalent to a const pointer to ib_list_t.
