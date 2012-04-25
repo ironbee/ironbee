@@ -28,7 +28,6 @@
 #include <ironbeepp/field.hpp>
 #include <ironbeepp/internal/catch.hpp>
 #include <ironbeepp/internal/throw.hpp>
-#include <ironbeepp/internal/data.hpp>
 
 #include <ironbee/field.h>
 #include <ironbee/debug.h>
@@ -41,7 +40,6 @@
 namespace IronBee {
 
 namespace Internal {
-namespace {
 
 std::string type_as_s(Field::type_e type)
 {
@@ -164,6 +162,17 @@ ib_status_t field_dynamic_get(
                 ).ib();
                 IB_FTRACE_RET_STATUS(IB_OK);
             }
+            case IB_FTYPE_LIST:
+            {
+                const ib_list_t** l
+                    = reinterpret_cast<const ib_list_t**>(out_val);
+                *l = Internal::data_to_value<
+                    Internal::dynamic_list_getter_translator_t
+                >(cbdata)(
+                    fieldpp, carg, arg_length
+                );
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
             default:
                 BOOST_THROW_EXCEPTION(
                     einval() << errinfo_what(
@@ -220,6 +229,18 @@ ib_status_t field_dynamic_set(
                     reinterpret_cast<const ib_bytestr_t*>(in_value)
                 );
                 Internal::data_to_value<Field::byte_string_set_t>(cbdata)(
+                    Field(field),
+                    carg, arg_length,
+                    value
+                );
+                break;
+            }
+            case IB_FTYPE_LIST: {
+                const ib_list_t* value =
+                    reinterpret_cast<const ib_list_t*>(in_value);
+                Internal::data_to_value<
+                    Internal::dynamic_list_setter_translator_t
+                >(cbdata)(
                     Field(field),
                     carg, arg_length,
                     value
@@ -331,7 +352,6 @@ Field create_dynamic_field(
     return Field(f);
 }
 
-} // Anonymous
 } // Internal
 
 /* ConstField */
@@ -710,6 +730,22 @@ Field Field::create_alias_byte_string(
         name, name_length,
         Field::BYTE_STRING,
         ib_ftype_bytestr_storage(&value)
+    );
+}
+
+Field Field::create_alias_list(
+    MemoryPool     pool,
+    const char*    name,
+    size_t         name_length,
+    ib_list_t*&    value
+)
+{
+    // ByteString is a friend.
+    return Internal::create_alias(
+        pool,
+        name, name_length,
+        Field::LIST,
+        ib_ftype_list_storage(&value)
     );
 }
 

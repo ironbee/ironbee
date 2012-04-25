@@ -31,6 +31,8 @@
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/byte_string.hpp>
+#include <ironbeepp/list.hpp>
+#include <ironbeepp/internal/data.hpp>
 
 #include <ironbee/field.h>
 
@@ -77,7 +79,7 @@ public:
         NULL_STRING     = IB_FTYPE_NULSTR,
         //! ByteString
         BYTE_STRING     = IB_FTYPE_BYTESTR,
-        //! List &mdash; Currently unsupported in IronBee++
+        //! List &mdash.
         LIST            = IB_FTYPE_LIST,
         //! Stream Buffer &mdash; Currently unsupported in IronBee++
         STREAM_BUFFER   = IB_FTYPE_SBUFFER
@@ -93,6 +95,7 @@ public:
      * - Unsigned integral types result in UNSIGNED_NUMBER.
      * - Types convertible to @c const @c char* result in NULL_STRING.
      * - Types convertible to ConstByteString result in BYTE_STRING.
+     * - IronBee::List<T> results in LIST.
      * - All other types result in a compiler error.
      *
      * @tparam T Type to derive field type for.
@@ -107,7 +110,8 @@ public:
                 boost::is_signed<T>,
                 boost::is_unsigned<T>,
                 boost::is_convertible<T,const char*>,
-                boost::is_convertible<T,ConstByteString>
+                boost::is_convertible<T,ConstByteString>,
+                is_list<T>
             >::value
         ));
         if (boost::is_signed<T>::value) {
@@ -121,6 +125,9 @@ public:
         }
         else if (boost::is_convertible<T,ConstByteString>::value) {
             return BYTE_STRING;
+        }
+        else if (is_list<T>::value) {
+            return LIST;
         }
     }
 
@@ -264,6 +271,18 @@ public:
         size_t      arg_length
     ) const;
 
+    //! List value accessor.
+    template <typename T>
+    ConstList<T> value_as_list() const;
+    //! List value accessor -- dynamic.
+    template <typename T>
+    ConstList<T> value_as_list(const std::string& arg) const;
+    //! List value accessor -- dynamic.
+    template <typename T>
+    ConstList<T> value_as_list(
+        const char* arg,
+        size_t      arg_length
+    ) const;
     ///@}
 
     /**
@@ -456,6 +475,25 @@ public:
     );
 
     /**
+     * Create List field without copy.
+     *
+     * Note: At present, IronBee does not support copy-in list fields.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Value of field.
+     * @throws IronBee++ exception on any error.
+     **/
+    template <typename T>
+    static Field create_no_copy_list(
+        MemoryPool  pool,
+        const char* name,
+        size_t      name_length,
+        List<T>     value
+    );
+
+    /**
      * Create Number alias.
      *
      * @param[in] pool        Pool to use for memory allocation.
@@ -518,6 +556,26 @@ public:
          const char*    name,
          size_t         name_length,
          ib_bytestr_t*& value
+    );
+
+    /**
+     * Create List alias.
+     *
+     * Note that this uses the C type, ib_list_t, instead of List.
+     * This is because @a value represents a location to store the field
+     * value which is a C type.  You can turn that into a List when you
+     * use it via @c List(value).
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Where to store value.
+     **/
+    static Field create_alias_list(
+         MemoryPool     pool,
+         const char*    name,
+         size_t         name_length,
+         ib_list_t*&    value
     );
 
     /**
@@ -595,6 +653,15 @@ public:
         byte_string_get_t get,
         byte_string_set_t set
     );
+    //! As create_no_copy_list() but with dynamic setter/getter.
+    template <typename T>
+    static Field create_dynamic_list(
+        MemoryPool        pool,
+        const char*       name,
+        size_t            name_length,
+        boost::function<ConstList<T>(ConstField, const char*, size_t)>  get,
+        boost::function<void(Field, const char*, size_t, ConstList<T>)> set
+    );
     ///@}
     ///@}
 
@@ -663,6 +730,19 @@ public:
     //! Set byte string without copy..
     void set_no_copy_byte_string(ByteString value) const;
 
+    //! Set List value.
+    template <typename T>
+    void set_no_copy_list(List<T> value) const;
+    //! Set List value -- dynamic.
+    template <typename T>
+    void set_no_copy_list(List<T> value, const std::string& arg) const;
+    //! Set List value -- dynamic.
+    template <typename T>
+    void set_no_copy_list(
+        List<T> value,
+        const char* arg, size_t arg_length
+    ) const;
+
     ///@}
 
     /**
@@ -685,6 +765,9 @@ public:
     char* mutable_value_as_null_string() const;
     //! ByteString mutable value accessor.
     ByteString mutable_value_as_byte_string() const;
+    //! List mutable value accessor.
+    template <typename T>
+    List<T> mutable_value_as_list() const;
 
     ///@}
 
@@ -722,6 +805,208 @@ private:
  * @return @a o
  **/
 std::ostream& operator<<(std::ostream& o, const ConstField& field);
+
+namespace Internal {
+/// @cond Internal
+
+void check_type(Field::type_e expected, Field::type_e actual);
+
+Field create_no_copy(
+    MemoryPool    pool,
+    const char*   name,
+    size_t        name_length,
+    Field::type_e type,
+    void*         mutable_in_value
+);
+
+void set_value_no_copy(ib_field_t* f, void* mutable_in_value);
+
+void set_value(
+    ib_field_t* f,
+    void* in_value,
+    const char* arg,
+    size_t arg_length
+);
+
+typedef boost::function<
+    const ib_list_t*(ConstField, const char*, size_t)
+> dynamic_list_getter_translator_t;
+
+template <typename T>
+class dynamic_list_getter_translator
+{
+public:
+    typedef boost::function<
+        ConstList<T>(ConstField, const char*, size_t)
+    > get_t;
+    dynamic_list_getter_translator(get_t get) :
+        m_get(get)
+    {
+        // nop
+    }
+
+    const ib_list_t* operator()(
+        ConstField field,
+        const char* arg,
+        size_t arg_length
+    ) const
+    {
+        return m_get(field, arg, arg_length).ib();
+    }
+
+private:
+    get_t m_get;
+};
+
+typedef boost::function<
+    void(Field, const char*, size_t, const ib_list_t* value)
+> dynamic_list_setter_translator_t;
+
+template <typename T>
+class dynamic_list_setter_translator
+{
+public:
+    typedef boost::function<
+        void(Field, const char*, size_t, ConstList<T>)
+    > set_t;
+    dynamic_list_setter_translator(set_t set) :
+        m_set(set)
+    {
+        // nop
+    }
+
+    void operator()(
+        Field field,
+        const char* arg,
+        size_t arg_length,
+        const ib_list_t* value
+    ) const
+    {
+        m_set(field, arg, arg_length, ConstList<T>(value));
+    }
+
+private:
+    set_t m_set;
+};
+
+Field create_dynamic_field(
+    MemoryPool    pool,
+    const char*   name,
+    size_t        name_length,
+    Field::type_e type,
+    void*         cbdata_get,
+    void*         cbdata_set
+);
+
+/// @endcond
+} // Internal
+
+// Definitions
+
+template <typename T>
+ConstList<T> ConstField::value_as_list() const
+{
+    Internal::check_type(LIST, type());
+    const ib_list_t* v;
+    Internal::throw_if_error(ib_field_value(ib(), ib_ftype_list_out(&v)));
+    return ConstList<T>(v);
+}
+
+template <typename T>
+ConstList<T> ConstField::value_as_list(const std::string& arg) const
+{
+    return value_as_list<T>(arg.data(),arg.length());
+}
+
+template <typename T>
+ConstList<T> ConstField::value_as_list(
+    const char* arg,
+    size_t      arg_length
+) const
+{
+    Internal::check_type(LIST, type());
+    const ib_list_t* v;
+    Internal::throw_if_error(ib_field_value_ex(
+        ib(), ib_ftype_list_out(&v),
+        arg, arg_length
+    ));
+    return ConstList<T>(v);
+}
+
+template <typename T>
+Field Field::create_no_copy_list(
+    MemoryPool  pool,
+    const char* name,
+    size_t      name_length,
+    List<T>     value
+)
+{
+    return Internal::create_no_copy(
+        pool,
+        name, name_length,
+        Field::LIST,
+        ib_ftype_list_mutable_in(value.ib())
+    );
+}
+
+template <typename T>
+void Field::set_no_copy_list(List<T> value) const
+{
+    Internal::check_type(LIST, type());
+    Internal::set_value_no_copy(
+        ib(), ib_ftype_list_mutable_in(value.ib())
+    );
+}
+
+template <typename T>
+void Field::set_no_copy_list(List<T> value, const std::string& arg) const
+{
+    return set_no_copy_list(value, arg.data(), arg.length());
+}
+
+template <typename T>
+void Field::set_no_copy_list(
+    List<T> value,
+    const char* arg, size_t arg_length
+) const
+{
+    Internal::check_type(LIST, type());
+    Internal::set_value(ib(), ib_ftype_list_in(value.ib()), arg, arg_length);
+}
+
+template <typename T>
+Field Field::create_dynamic_list(
+    MemoryPool   pool,
+    const char*  name,
+    size_t       name_length,
+    boost::function<ConstList<T>(ConstField, const char*, size_t)>  get,
+    boost::function<void(Field, const char*, size_t, ConstList<T>)> set
+)
+{
+    Internal::dynamic_list_getter_translator_t getter =
+      Internal::dynamic_list_getter_translator<T>(get);
+    Internal::dynamic_list_setter_translator_t setter =
+      Internal::dynamic_list_setter_translator<T>(set);
+
+    return Internal::create_dynamic_field(
+        pool,
+        name, name_length,
+        Field::LIST,
+        Internal::value_to_data(getter, pool.ib()),
+        Internal::value_to_data(setter, pool.ib())
+    );
+}
+
+template <typename T>
+List<T> Field::mutable_value_as_list() const
+{
+    Internal::check_type(LIST, type());
+    ib_list_t* l;
+    Internal::throw_if_error(ib_field_mutable_value(ib(),
+        ib_ftype_list_mutable_out(&l)
+    ));
+    return List<T>(l);;
+}
 
 } // IronBee
 

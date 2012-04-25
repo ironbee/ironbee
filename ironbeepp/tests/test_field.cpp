@@ -40,6 +40,8 @@ using IronBee::ConstField;
 using IronBee::MemoryPool;
 using IronBee::ByteString;
 using IronBee::ConstByteString;
+using IronBee::List;
+using IronBee::ConstList;
 
 class TestField : public ::testing::Test
 {
@@ -89,6 +91,15 @@ TEST_F(TestField, Construction)
     EXPECT_EQ("test", f.name_as_s());
     EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
+
+    // No Copy specific behavior tested in create no copy test below.
+    List<int*> l = List<int*>::create(m_pool);
+    f = Field::create_no_copy_list(m_pool, "test", 4, l);
+    EXPECT_TRUE(f);
+    EXPECT_EQ(Field::LIST, f.type());
+    EXPECT_EQ("test", f.name_as_s());
+    EXPECT_EQ(m_pool, f.memory_pool());
+    EXPECT_FALSE(f.is_dynamic());
 }
 
 TEST_F(TestField, SetAndGet)
@@ -103,6 +114,7 @@ TEST_F(TestField, SetAndGet)
     EXPECT_THROW(f.value_as_unsigned_number(), IronBee::einval);
     EXPECT_THROW(f.value_as_null_string(),     IronBee::einval);
     EXPECT_THROW(f.value_as_byte_string(),     IronBee::einval);
+    EXPECT_THROW(f.value_as_list<int*>(),      IronBee::einval);
     EXPECT_NO_THROW(f.set_number(-5));
     EXPECT_EQ(-5, f.value_as_number());
 
@@ -113,6 +125,7 @@ TEST_F(TestField, SetAndGet)
     EXPECT_THROW(f.value_as_number(),          IronBee::einval);
     EXPECT_THROW(f.value_as_null_string(),     IronBee::einval);
     EXPECT_THROW(f.value_as_byte_string(),     IronBee::einval);
+    EXPECT_THROW(f.value_as_list<int*>(),      IronBee::einval);
     EXPECT_NO_THROW(f.set_unsigned_number(5));
     EXPECT_EQ(5UL, f.value_as_unsigned_number());
 
@@ -123,6 +136,7 @@ TEST_F(TestField, SetAndGet)
     EXPECT_THROW(f.value_as_number(),          IronBee::einval);
     EXPECT_THROW(f.value_as_unsigned_number(), IronBee::einval);
     EXPECT_THROW(f.value_as_byte_string(),     IronBee::einval);
+    EXPECT_THROW(f.value_as_list<int*>(),      IronBee::einval);
     EXPECT_NO_THROW(f.set_null_string("value2"));
     EXPECT_EQ("value2", string(f.value_as_null_string()));
 
@@ -134,8 +148,21 @@ TEST_F(TestField, SetAndGet)
     EXPECT_THROW(f.value_as_number(),          IronBee::einval);
     EXPECT_THROW(f.value_as_unsigned_number(), IronBee::einval);
     EXPECT_THROW(f.value_as_null_string(),     IronBee::einval);
+    EXPECT_THROW(f.value_as_list<int*>(),      IronBee::einval);
     EXPECT_NO_THROW(f.set_byte_string(bs2));
     EXPECT_EQ("value2", f.value_as_byte_string().to_s());
+
+    List<int*> l = List<int*>::create(m_pool);
+    f = Field::create_no_copy_list(m_pool, "test", 4, l);
+    EXPECT_THROW(f.set_number(1),              IronBee::einval);
+    EXPECT_THROW(f.set_unsigned_number(7),     IronBee::einval);
+    EXPECT_THROW(f.set_byte_string(bs),        IronBee::einval);
+    EXPECT_THROW(f.set_null_string("foo"),     IronBee::einval);
+    EXPECT_THROW(f.value_as_number(),          IronBee::einval);
+    EXPECT_THROW(f.value_as_unsigned_number(), IronBee::einval);
+    EXPECT_THROW(f.value_as_null_string(),     IronBee::einval);
+    EXPECT_NO_THROW(f.set_no_copy_list<int*>(l));
+    EXPECT_EQ(l.ib(), f.value_as_list<int*>().ib());
 }
 
 struct test_args
@@ -379,6 +406,51 @@ TEST_F(TestField, Dynamic)
         EXPECT_FALSE(f.is_dynamic());
         EXPECT_EQ("123", f.value_as_byte_string().to_s());
     }
+
+    {
+        ConstList<int*> v;
+        List<int*> v2;
+
+        f = Field::create_dynamic_list<int*>(
+            m_pool,
+            "test", 4,
+            test_getter<ConstList<int*> >(v, args),
+            test_setter<ConstList<int*> >(v, args)
+        );
+        v = List<int*>::create(m_pool);
+        EXPECT_EQ(v.ib(), f.value_as_list<int*>().ib());
+        EXPECT_EQ(f, args.field);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
+        v2 = List<int*>::create(m_pool);
+        args.reset();
+        EXPECT_EQ(v.ib(), f.value_as_list<int*>("Hello", 5).ib());
+        EXPECT_EQ(f, args.field);
+        EXPECT_EQ("Hello", string(args.arg, args.arg_length));
+        EXPECT_TRUE(f.is_dynamic());
+
+        args.reset();
+        v = List<int*>();
+        v2 = List<int*>::create(m_pool);
+        f.set_no_copy_list(v2);
+        EXPECT_EQ(v2.ib(), v.ib());
+        EXPECT_EQ(f, args.field);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
+        args.reset();
+        v = List<int*>();
+        v2 = List<int*>::create(m_pool);
+        f.set_no_copy_list(v2, "Hello", 5);
+        EXPECT_EQ(v2.ib(), v.ib());
+        EXPECT_EQ(f, args.field);
+        EXPECT_EQ("Hello", string(args.arg, args.arg_length));
+
+        f.make_static();
+        v2 = List<int*>::create(m_pool);
+        f.set_no_copy_list(v2);
+        EXPECT_FALSE(f.is_dynamic());
+        EXPECT_EQ(v2.ib(), f.value_as_list<int*>().ib());
+    }
 }
 
 TEST_F(TestField, ExposeC)
@@ -424,6 +496,14 @@ TEST_F(TestField, TypeForType)
         Field::BYTE_STRING,
         Field::field_type_for_type<ConstByteString>()
     );
+    EXPECT_EQ(
+        Field::LIST,
+        Field::field_type_for_type<List<int*> >()
+    );
+    EXPECT_EQ(
+        Field::LIST,
+        Field::field_type_for_type<ConstList<int*> >()
+    );
 }
 
 TEST_F(TestField, CreateNoCopy)
@@ -438,6 +518,10 @@ TEST_F(TestField, CreateNoCopy)
     Field f2 = Field::create_no_copy_byte_string(m_pool, "foo", 3, b);
     b.set("Test4");
     EXPECT_EQ(b.to_s(), f2.value_as_byte_string().to_s());
+
+    List<int*> l = List<int*>::create(m_pool);
+    Field f3 = Field::create_no_copy_list(m_pool, "foo", 3, l);
+    EXPECT_EQ(l.ib(), f3.value_as_list<int*>().ib());
 }
 
 TEST_F(TestField, CreateAlias)
@@ -474,6 +558,15 @@ TEST_F(TestField, CreateAlias)
 
         EXPECT_EQ("Hello", ByteString(b).to_s());
     }
+    {
+        ib_list_t* l = NULL;
+        Field f = Field::create_alias_list(m_pool, "foo", 3, l);
+
+        List<int*> l2 = List<int*>::create(m_pool);
+        f.set_no_copy_list(l2);
+
+        EXPECT_EQ(l2.ib(), l);
+    }
 }
 
 TEST_F(TestField, Mutable)
@@ -498,6 +591,12 @@ TEST_F(TestField, Mutable)
             ByteString::create(m_pool, "Hello"));
         f.mutable_value_as_byte_string().set("ABC");
         EXPECT_EQ("ABC", f.value_as_byte_string().to_s());
+    }
+    {
+        List<int*> l = List<int*>::create(m_pool);
+        Field f = Field::create_no_copy_list(m_pool, "foo", 3, l);
+        List<int*> l2 = f.mutable_value_as_list<int*>();
+        EXPECT_EQ(l.ib(), l2.ib());
     }
 }
 
