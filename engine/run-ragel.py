@@ -19,7 +19,7 @@ if ragel == "" :
         ("WARNING: %s was modified, but there is no ragel compiler "+
          "installed to regenerate the %s file.") % \
          ( infile, outfile )
-    sys.exit(1)
+    sys.exit(0)
 
 print "Generating %s from %s using %s" % ( infile, outfile, ragel )
 cmd = [ ragel, '-s', infile ]
