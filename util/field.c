@@ -534,7 +534,10 @@ ib_status_t ib_field_setv_no_copy(
 {
     IB_FTRACE_INIT();
 
-    if (f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_UNUM) {
+    if (
+      f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_UNUM ||
+      ib_field_is_dynamic(f)
+    ) {
         IB_FTRACE_RET_STATUS(ib_field_setv(f, mutable_in_pval));
     }
 
