@@ -33,7 +33,7 @@ endif
 
 # Ragel generated files
 RUNRAGEL=$(srcdir)/run-ragel.py
-$(srcdir)/config-parser.c: $(srcdir)/config-parser.rl Makefile $(RUNRAGEL)
+$(srcdir)/config-parser.c: $(srcdir)/config-parser.rl
 	$(RUNRAGEL) "$(RAGEL)" $*
 
 config-parser.dot: $(srcdir)/config-parser.rl

@@ -92,7 +92,7 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
 
     pval[pvallen] = '\0';
 
-    /* At this point the buffer i pvallen+1 in size, but we cannot shrink it.  */
+    /* At this point the buffer i pvallen+1 in size, but we cannot shrink it. */
     /* This is not considered a problem for configuration parsing and it is
        deallocated after parsing and configuration is complete. */
     return pval;
