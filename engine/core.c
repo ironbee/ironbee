@@ -4809,10 +4809,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
 
         rc = ib_module_load(&m, ib, absfile);
-        if (rc != IB_OK) {
-            ib_log_error(ib,
-                         "Failed to load module \"%s\": %s", p1_unescaped, ib_status_to_string(rc));
-        }
+        /* ib_module_load will report errors. */
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("RequestBuffering", name) == 0) {
