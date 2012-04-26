@@ -153,7 +153,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     if (access(incfile, R_OK) != 0) {
         ib_log_error(cp->ib, "Can't access included file \"%s\": %s",
                      incfile, strerror(errno));
-        return IB_EALLOC;
+        return IB_ENOENT;
     }
 
     statval = stat(incfile, &statbuf);
@@ -161,16 +161,16 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         ib_log_error(cp->ib,
                      "Failed to stat include file \"%s\": %s",
                      incfile, strerror(errno));
-        return IB_EINVAL;
+        return IB_ENOENT;
     }
 
     if (S_ISREG(statbuf.st_mode) == 0) {
         ib_log_error(cp->ib,
                      "Included file \"%s\" isn't a file", incfile);
-        return IB_EINVAL;
+        return IB_ENOENT;
     }
 
-    ib_log_debug(cp->ib, "Including '%s' from line %d of %s\n",
+    ib_log_debug(cp->ib, "Including '%s' from line %d of %s",
                  incfile, lineno, file);
     rc = ib_cfgparser_parse(cp, incfile);
     if (rc != IB_OK) {
@@ -191,8 +191,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     action error_action {
         rc = IB_EOTHER;
         ib_log_debug(ib_engine,
-                     "ERROR: parser error before \"%.*s\"",
-                     (int)(fpc - mark), mark);
+                     "ERROR: parser error before \"%.*s\" on line %d of %s",
+                     (int)(fpc - mark), mark, lineno, file);
     }
 
     # Parameter
@@ -280,6 +280,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     token = (qchar | (any - (WS | EOL | [<>#"\\]))) (qchar | (any - ( WS | EOL | [<>"\\])))*;
     param = qtoken | token;
     keyval = token '=' param;
+    iparam = ( '"' (any - (EOL | '"'))+ '"' ) | (any - (WS | EOL) )+;
 
     comment = '#' (any -- EOLSEQ)*;
 
@@ -299,18 +300,18 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     *|;
 
     endblock := |*
+	WS* EOL %error_action { fret; };
         WS* token >mark $!error_action %pop_block;
         WS* ">" EOL $!error_action { fret; };
     *|;
 
-    includeconfig := |*
-	WS* EOL $!error_action;
-        WS* param >mark $!error_action %include_config;
+    finclude := |*
+        WS* iparam >mark $!error_action %include_config EOL >mark $!error_action { fret; };
     *|;
 
     main := |*
         WS* comment;
-	WS* [Ii] "nclude" { fcall includeconfig; };
+	WS* [Ii] "nclude" { fcall finclude; };
         WS* token >mark %start_dir { fcall parameters; };
         "<" { fcall newblock; };
         "</" { fcall endblock; };
