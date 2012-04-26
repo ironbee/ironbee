@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 
 
-EXTRA_DIST =  config-parser.rl
+EXTRA_DIST =  config-parser.rl run-ragel.py
 lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
                         config.c config-parser.c config-parser.h core.c \
