@@ -302,6 +302,7 @@ void bootstrap_module(
  *                    @c void(@c IronBee::Module)
  **/
 #define IBPP_BOOTSTRAP_MODULE(name, on_load) \
+extern "C" { \
 ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
 { \
     static ib_module_t ib_module; \
@@ -316,6 +317,7 @@ ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
     }); \
     assert(rc == IB_OK); \
     return &ib_module; \
+} \
 }
 
 /**
