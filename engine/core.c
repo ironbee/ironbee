@@ -5353,7 +5353,7 @@ static void core_util_logger(
 {
     IB_FTRACE_INIT();
 
-    ib_vlog_ex((ib_engine_t*)ib, level, NULL, prefix, file, line, fmt, ap);
+    ib_vlog_ex((ib_engine_t *)ib, level, NULL, prefix, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }
