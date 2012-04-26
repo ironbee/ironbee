@@ -1832,6 +1832,7 @@ const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
  *
  * @param cbdata Callback data
  * @param level Log level
+ * @param tx Optional transaction information.
  * @param prefix Optional prefix to the log
  * @param file Optional source filename (or NULL)
  * @param line Optional source line number (or 0)
@@ -1839,35 +1840,61 @@ const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
  */
 typedef void (*ib_log_logger_fn_t)(void *cbdata,
                                    ib_log_level_t level,
+                                   const ib_tx_t *tx,
                                    const char *prefix,
                                    const char *file, int line,
                                    const char *fmt, va_list ap)
-                                   VPRINTF_ATTRIBUTE(6);
+                                   VPRINTF_ATTRIBUTE(7);
 
 /** Log Generic */
-#define ib_log(ib,lvl,...) ib_log_ex((ib), (lvl), NULL, NULL, 0, __VA_ARGS__)
+#define ib_log(ib,lvl,...) ib_log_ex((ib), (lvl), NULL, NULL, NULL, 0, __VA_ARGS__)
 /** Log Emergency */
-#define ib_log_emergency(ib,...) ib_log_ex((ib), IB_LOG_EMERGENCY, "EMERGENCY - ", NULL, 0, __VA_ARGS__)
+#define ib_log_emergency(ib,...) ib_log_ex((ib), IB_LOG_EMERGENCY, NULL, "EMERGENCY - ", NULL, 0, __VA_ARGS__)
 /** Log Alert */
-#define ib_log_alert(ib,...)     ib_log_ex((ib), IB_LOG_ALERT,     "ALERT     - ", NULL, 0, __VA_ARGS__)
+#define ib_log_alert(ib,...)     ib_log_ex((ib), IB_LOG_ALERT,     NULL, "ALERT     - ", NULL, 0, __VA_ARGS__)
 /** Log Critical */
-#define ib_log_critical(ib,...)  ib_log_ex((ib), IB_LOG_CRITICAL,  "CRITICAL  - ", NULL, 0, __VA_ARGS__)
+#define ib_log_critical(ib,...)  ib_log_ex((ib), IB_LOG_CRITICAL,  NULL, "CRITICAL  - ", NULL, 0, __VA_ARGS__)
 /** Log Error */
-#define ib_log_error(ib,...)     ib_log_ex((ib), IB_LOG_ERROR,     "ERROR     - ", NULL, 0, __VA_ARGS__)
+#define ib_log_error(ib,...)     ib_log_ex((ib), IB_LOG_ERROR,     NULL, "ERROR     - ", NULL, 0, __VA_ARGS__)
 /** Log Warning */
-#define ib_log_warning(ib,...)   ib_log_ex((ib), IB_LOG_WARNING,   "WARNING   - ", NULL, 0, __VA_ARGS__)
+#define ib_log_warning(ib,...)   ib_log_ex((ib), IB_LOG_WARNING,   NULL, "WARNING   - ", NULL, 0, __VA_ARGS__)
 /** Log Notice */
-#define ib_log_notice(ib,...)    ib_log_ex((ib), IB_LOG_NOTICE,    "NOTICE    - ", NULL, 0, __VA_ARGS__)
+#define ib_log_notice(ib,...)    ib_log_ex((ib), IB_LOG_NOTICE,    NULL, "NOTICE    - ", NULL, 0, __VA_ARGS__)
 /** Log Info */
-#define ib_log_info(ib,...)      ib_log_ex((ib), IB_LOG_INFO,      "INFO      - ", NULL, 0, __VA_ARGS__)
+#define ib_log_info(ib,...)      ib_log_ex((ib), IB_LOG_INFO,      NULL, "INFO      - ", NULL, 0, __VA_ARGS__)
 /** Log Debug */
-#define ib_log_debug(ib,...)     ib_log_ex((ib), IB_LOG_DEBUG,     "DEBUG     - ", __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log_debug(ib,...)     ib_log_ex((ib), IB_LOG_DEBUG,     NULL, "DEBUG     - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Debug2 */
-#define ib_log_debug2(ib,...)    ib_log_ex((ib), IB_LOG_DEBUG2,    "DEBUG2    - ", __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log_debug2(ib,...)    ib_log_ex((ib), IB_LOG_DEBUG2,    NULL, "DEBUG2    - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Debug3 */
-#define ib_log_debug3(ib,...)    ib_log_ex((ib), IB_LOG_DEBUG3,    "DEBUG3    - ", __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log_debug3(ib,...)    ib_log_ex((ib), IB_LOG_DEBUG3,    NULL, "DEBUG3    - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Trace */
-#define ib_log_trace(ib,...)     ib_log_ex((ib), IB_LOG_TRACE,     "TRACE     - ", __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log_trace(ib,...)     ib_log_ex((ib), IB_LOG_TRACE,     NULL, "TRACE     - ", __FILE__, __LINE__, __VA_ARGS__)
+
+/** Log Generic (Transaction form) */
+#define ib_log_tx(tx,lvl,...) ib_log_ex(tx->ib, (lvl), tx, NULL, NULL, 0, __VA_ARGS__)
+/** Log Emergency (Transaction form) */
+#define ib_log_emergency_tx(tx,...) ib_log_ex(tx->ib, IB_LOG_EMERGENCY, tx, "EMERGENCY - ", NULL, 0, __VA_ARGS__)
+/** Log Alert (Transaction form) */
+#define ib_log_alert_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_ALERT,     tx, "ALERT     - ", NULL, 0, __VA_ARGS__)
+/** Log Critical (Transaction form) */
+#define ib_log_critical_tx(tx,...)  ib_log_ex(tx->ib, IB_LOG_CRITICAL,  tx, "CRITICAL  - ", NULL, 0, __VA_ARGS__)
+/** Log Error (Transaction form) */
+#define ib_log_error_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_ERROR,     tx, "ERROR     - ", NULL, 0, __VA_ARGS__)
+/** Log Warning (Transaction form) */
+#define ib_log_warning_tx(tx,...)   ib_log_ex(tx->ib, IB_LOG_WARNING,   tx, "WARNING   - ", NULL, 0, __VA_ARGS__)
+/** Log Notice (Transaction form) */
+#define ib_log_notice_tx(tx,...)    ib_log_ex(tx->ib, IB_LOG_NOTICE,    tx, "NOTICE    - ", NULL, 0, __VA_ARGS__)
+/** Log Info (Transaction form) */
+#define ib_log_info_tx(tx,...)      ib_log_ex(tx->ib, IB_LOG_INFO,      tx, "INFO      - ", NULL, 0, __VA_ARGS__)
+/** Log Debug (Transaction form) */
+#define ib_log_debug_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_DEBUG,     tx, "DEBUG     - ", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug2 (Transaction form) */
+#define ib_log_debug2_tx(tx,...)    ib_log_ex(tx->ib, IB_LOG_DEBUG2,    tx, "DEBUG2    - ", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug3 (Transaction form) */
+#define ib_log_debug3_tx(tx,...)    ib_log_ex(tx->ib, IB_LOG_DEBUG3,    tx, "DEBUG3    - ", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Trace (Transaction form) */
+#define ib_log_trace_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_TRACE,     tx, "TRACE     - ", __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * Generic Logger for engine.
@@ -1877,15 +1904,17 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
  *
  * @param ib IronBee engine
  * @param level Log level (0-9)
+ * @param tx Transaction information (or NULL)
  * @param prefix String to prefix log header data (or NULL)
  * @param file Filename (or NULL)
  * @param line Line number (or 0)
  * @param fmt Printf-like format string
  */
 void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
+                          const ib_tx_t *tx,
                           const char *prefix, const char *file, int line,
                           const char *fmt, ...)
-                          PRINTF_ATTRIBUTE(6, 0);
+                          PRINTF_ATTRIBUTE(7, 0);
 
 /**
  * Generic Logger for engine.  valist version.
@@ -1895,6 +1924,7 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
  *
  * @param ib IronBee engine
  * @param level Log level (0-9)
+ * @param tx Transaction information (or NULL)
  * @param prefix String to prefix log header data (or NULL)
  * @param file Filename (or NULL)
  * @param line Line number (or 0)
@@ -1902,6 +1932,7 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
  * @param ap Argument list.
  */
 void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
+                          const ib_tx_t *tx,
                           const char *prefix, const char *file, int line,
                           const char *fmt,  va_list ap);
 

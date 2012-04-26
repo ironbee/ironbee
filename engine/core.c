@@ -256,6 +256,7 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
  *
  * @param fh File handle
  * @param level Log level
+ * @param tx Transaction info or NULL.
  * @param prefix String prefix to prefix to the message or NULL
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
@@ -263,43 +264,53 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
  * @param ap Variable length parameter list
  */
 static void core_logger(FILE *fh, int level,
+                        const ib_tx_t *tx,
                         const char *prefix, const char *file, int line,
                         const char *fmt, va_list ap)
 {
     int fmt2_sz = 1024;
     char *fmt2 = (char *)malloc(fmt2_sz+1);
+    char *tx_info = (char *)malloc(fmt2_sz+1);
+    int ec = 0;
 
-    if ( fmt2 == NULL ) {
+    if (fmt2 == NULL || tx_info == NULL) {
         fprintf(fh, "Cannot allocate memory to log.");
         fflush(fh);
         abort();
     }
 
-    if ((file != NULL) && (line > 0)) {
-        int ec = snprintf(fmt2, fmt2_sz,
-                          "%s[%d] (%s:%d) %s\n",
-                          (prefix?prefix:""), level, file, line, fmt);
-        if (ec > 1024) {
-            /// @todo Do something better
-            fprintf(fh, "Formatter too long (>%d): %d\n", fmt2_sz, (int)ec);
-            fflush(fh);
-            abort();
-        }
+    if (tx != NULL) {
+        ec = snprintf(tx_info, 1024,
+                      "[tx:%s] ",
+                      tx->id+31);
     }
     else {
-        int ec = snprintf(fmt2, fmt2_sz,
-                          "%s[%d] %s\n",
-                          (prefix?prefix:""), level, fmt);
-        if (ec > fmt2_sz) {
-            /// @todo Do something better
-            fprintf(fh, "Formatter too long (>%d): %d\n", fmt2_sz, (int)ec);
-            fflush(fh);
-            abort();
-        }
+        tx_info[0] = '\0';
+    }
+    if (ec > 1024) {
+        abort();
+    }
+
+    if ((file != NULL) && (line > 0)) {
+        ec = snprintf(fmt2, fmt2_sz,
+                      "%s[%d] (%s:%d) %s%s\n",
+                      (prefix?prefix:""), level, file, line, tx_info, fmt);
+    }
+    else {
+        ec = snprintf(fmt2, fmt2_sz,
+                      "%s[%d] %s%s\n",
+                      (prefix?prefix:""), level, tx_info, fmt);
+    }
+    if (ec > 1024) {
+        /// @todo Do something better
+        fprintf(fh, "Formatter too long (>%d): %d\n", fmt2_sz, (int)ec);
+        fflush(fh);
+        abort();
     }
 
     vfprintf(fh, fmt2, ap);
     free(fmt2);
+    free(tx_info);
     fflush(fh);
 }
 
@@ -1310,6 +1321,7 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
  * @param lpi Logger provider instance
  * @param ctx Config context
  * @param level Log level
+ * @param tx Transaction info (or NULL)
  * @param prefix String to prefix to the message or NULL
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
@@ -1320,6 +1332,7 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
  */
 static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                                int level,
+                               const ib_tx_t *tx,
                                const char *prefix,
                                const char *file, int line,
                                const char *fmt, va_list ap)
@@ -1378,14 +1391,14 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     main_lp = main_core_config->pi.logger->pr;
     if ( (main_lp != lpi->pr)
          || (iface->logger != (ib_log_logger_fn_t)core_logger) ) {
-        iface->logger(lpi->data, level, prefix_with_pid, file, line, fmt, ap);
+        iface->logger(lpi->data, level, tx, prefix_with_pid, file, line, fmt, ap);
         goto done;
     }
 
     // If no interface, do *something*
     //  Note that this should be the same as the default case
     if (iface == NULL) {
-        core_logger(stderr, level, prefix_with_pid, file, line, fmt, ap);
+        core_logger(stderr, level, tx, prefix_with_pid, file, line, fmt, ap);
         goto done;
     }
 
@@ -1424,7 +1437,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
      * the first parameter (if the interface is implemented and not
      * just abstract).
      */
-    iface->logger(fp, level, prefix_with_pid, file, line, fmt, ap);
+    iface->logger(fp, level, tx, prefix_with_pid, file, line, fmt, ap);
 
 done:
     free(prefix_with_pid);
@@ -1436,6 +1449,7 @@ done:
  * @param lpi Logger provider instance
  * @param ctx Config context
  * @param level Log level
+ * @param tx Transaction info (or NULL)
  * @param prefix String to prefix to the message or NULL
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
@@ -1445,6 +1459,7 @@ done:
  */
 static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                               int level,
+                              const ib_tx_t *tx,
                               const char *prefix,
                               const char *file, int line,
                               const char *fmt, ...)
@@ -1476,7 +1491,7 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     /// @todo Probably should not need this check
     if (iface != NULL) {
         iface->logger((lpi->pr->data?lpi->pr->data:lpi->data),
-                      level, prefix, file, line, fmt, ap);
+                      level, tx, prefix, file, line, fmt, ap);
     }
 
     va_end(ap);
@@ -5331,6 +5346,22 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
 /* -- Module Routines -- */
 
 /**
+ * Logger for util logger.
+ **/
+static void core_util_logger(
+    void *ib, int level,
+    const char *prefix, const char *file, int line,
+    const char *fmt, va_list ap
+)
+{
+    IB_FTRACE_INIT();
+
+    ib_vlog_ex((ib_engine_t*)ib, level, NULL, prefix, file, line, fmt, ap);
+
+    IB_FTRACE_RET_VOID();
+}
+
+/**
  * Initialize the core module on load.
  *
  * @param[in] ib Engine
@@ -5398,7 +5429,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Force any IBUtil calls to use the default logger */
-    rc = ib_util_log_logger((ib_util_fn_logger_t)ib_vlog_ex, ib);
+    rc = ib_util_log_logger(core_util_logger, ib);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

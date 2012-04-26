@@ -51,6 +51,7 @@
  *
  * @param fp File pointer
  * @param level Log level
+ * @param tx Transaction information (or NULL)
  * @param prefix Optional prefix to the log
  * @param file Optional source filename (or NULL)
  * @param line Optional source line number (or 0)
@@ -58,34 +59,47 @@
  * @param ap Variable argument list
  */
 static void default_logger(FILE *fp, int level,
+                           const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
     char fmt2[1024 + 1];
+    char tx_info[1024 + 1];
+    int ec = 0;
 
     if (level > 4) {
         IB_FTRACE_RET_VOID();
     }
 
-    if ((file != NULL) && (line > 0)) {
-        int ec = snprintf(fmt2, 1024,
-                          "%s[%d] (%s:%d) %s\n",
-                          (prefix?prefix:""), level, file, line, fmt);
-        if (ec > 1024) {
-            /// @todo Do something better
-            abort();
-        }
+    if (tx != NULL) {
+        ec = snprintf(tx_info, 1024,
+                      "[tx:%s] ",
+                      tx->id+31);
     }
     else {
-        int ec = snprintf(fmt2, 1024,
-                          "%s[%d] %s\n",
-                          (prefix?prefix:""), level, fmt);
-        if (ec > 1024) {
-            /// @todo Do something better
-            abort();
-        }
+        tx_info[0] = '\0';
     }
+    if (ec > 1024) {
+        abort();
+    }
+
+
+    if ((file != NULL) && (line > 0)) {
+        ec = snprintf(fmt2, 1024,
+                      "%s[%d] (%s:%d) %s%s\n",
+                      (prefix?prefix:""), level, file, line, tx_info, fmt);
+    }
+    else {
+        ec = snprintf(fmt2, 1024,
+                      "%s[%d] %s%s\n",
+                      (prefix?prefix:""), level, tx_info, fmt);
+    }
+    if (ec > 1024) {
+        /// @todo Do something better
+        abort();
+    }
+
 
     vfprintf(fp, fmt2, ap);
     fflush(fp);
@@ -320,6 +334,7 @@ void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
 }
 
 void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
+                           const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, ...)
 {
@@ -328,7 +343,7 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
     va_list ap;
     va_start(ap, fmt);
 
-    ib_vlog_ex(ib, level, prefix, file, line, fmt, ap);
+    ib_vlog_ex(ib, level, tx, prefix, file, line, fmt, ap);
 
     va_end(ap);
 
@@ -336,6 +351,7 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
 }
 
 void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
+                           const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)
 {
@@ -359,13 +375,13 @@ void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
         if (pi != NULL) {
             api = (IB_PROVIDER_API_TYPE(logger) *)pi->pr->api;
 
-            api->vlogmsg(pi, ctx, level, prefix, file, line, fmt, ap);
+            api->vlogmsg(pi, ctx, level, tx, prefix, file, line, fmt, ap);
 
             IB_FTRACE_RET_VOID();
         }
     }
 
-    default_logger(stderr, level, prefix, file, line, fmt, ap);
+    default_logger(stderr, level, tx, prefix, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }

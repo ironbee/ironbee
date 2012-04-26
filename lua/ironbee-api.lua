@@ -196,7 +196,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         if ... ~= nil then msg = string.format(msg, ...) end
 
         -- Log the string.
-        ffi.C.ib_log_ex(self.ib_engine, level, prefix, file, line, msg)
+        ffi.C.ib_log_ex(self.ib_engine, level, nil, prefix, file, line, msg)
     end
 
     -- Log an error.

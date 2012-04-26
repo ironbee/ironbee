@@ -544,6 +544,7 @@ ffi.cdef [[
     /* Logging */
     void ib_log_ex(ib_engine_t *ib,
                    int level,
+                   const ib_tx_t *tx,
                    const char *prefix,
                    const char *file,
                    int line,
@@ -689,16 +690,16 @@ end
 function ib_log_debug(ib, fmt, ...)
     local dinfo = debug.getinfo(2)
 
-    c.ib_log_ex(ib, 7, "LuaFFI - ",
+    c.ib_log_ex(ib, 7, nil, "LuaFFI - ",
                  dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
 function ib_log(ib, lvl, fmt, ...)
-    c.ib_log_ex(ib, lvl, "LuaFFI -", nil, 0, fmt, ...)
+    c.ib_log_ex(ib, lvl, nil, "LuaFFI -", nil, 0, fmt, ...)
 end
 
 function ib_log_error(ib, fmt, ...)
-    c.ib_log_ex(ib, 3, "LuaFFI - ", nil, 0, fmt, ...)
+    c.ib_log_ex(ib, 3, nil, "LuaFFI - ", nil, 0, fmt, ...)
 end
 
 -- ===============================================
@@ -888,7 +889,7 @@ function ib_data_get(dpi, name)
         local c_ctx = c.ib_context_main(c_dpi.pr.ib)
         local dinfo = debug.getinfo(2)
 
-        c.ib_log_ex(c_dpi.pr.ib, 4, "LuaFFI - ",
+        c.ib_log_ex(c_dpi.pr.ib, 4, nil, "LuaFFI - ",
                      dinfo.source, dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
         return nil
     end

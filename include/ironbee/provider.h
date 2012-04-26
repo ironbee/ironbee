@@ -238,23 +238,23 @@ IB_PROVIDER_DECLARE_IFACE(logger) {
 
 /** Logger API Definition. */
 IB_PROVIDER_DECLARE_API(logger) {
-    /* void vlogmsg(pi, ctx, level, prefix, file, line, fmt, ap) */
+    /* void vlogmsg(pi, ctx, level, tx, prefix, file, line, fmt, ap) */
     IB_PROVIDER_FUNC(
         void,
         vlogmsg,
         (ib_provider_inst_t *pi, ib_context_t *ctx,
-         int level, const char *prefix,
+         int level, const ib_tx_t* tx, const char *prefix,
          const char *file, int line, const char *fmt, va_list ap)
-         VPRINTF_ATTRIBUTE(7)
+         VPRINTF_ATTRIBUTE(8)
     );
-    /* void logmsg(pi, ctx, level, prefix, file, line, fmt, ...) */
+    /* void logmsg(pi, ctx, level, tx, prefix, file, line, fmt, ...) */
     IB_PROVIDER_FUNC(
         void,
         logmsg,
         (ib_provider_inst_t *pi, ib_context_t *ctx,
-         int level, const char *prefix,
+         int level, const ib_tx_t *tx,const char *prefix,
          const char *file, int line, const char *fmt, ...)
-         VPRINTF_ATTRIBUTE(7)
+         VPRINTF_ATTRIBUTE(8)
     );
 };
 
