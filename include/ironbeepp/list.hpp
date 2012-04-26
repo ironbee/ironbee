@@ -329,7 +329,7 @@ template <typename T>
 class List;
 
 /**
- * Metafunction to determineif @a T is a ConstList or List.
+ * Metafunction to determine if @a T is a ConstList or List.
  *
  * Inherits from true_type if @a T is a ConstList or List and false_type
  * otherwise.
