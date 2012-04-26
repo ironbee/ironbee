@@ -32,6 +32,7 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_pool.hpp>
 #include <ironbeepp/configuration_map.hpp>
+#include <ironbeepp/context.hpp>
 #include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/internal/data.hpp>
 
@@ -44,8 +45,6 @@
 #include <cassert>
 
 namespace IronBee {
-
-class Context;
 
 class Module;
 
@@ -368,6 +367,43 @@ public:
         const DataType& global_data = DataType()
     ) const;
 
+    /**
+     * Fetch POD configuration data for @a context.
+     *
+     * This method fetches configuration data for @a context assuming
+     * set_configuration_data_pod() was used during module setup.
+     *
+     * @warning Do not use this method if set_configuration_data() was used;
+     *          instead, use configuration_data().
+     *
+     * @a DataType must match the data type used in
+     * set_configuration_data_pod().
+     *
+     * @tparam DataType Type of configuration data.
+     * @param[in] context Context to fetch configuration for.
+     * @returns Configuration data.
+     **/
+    template <typename DataType>
+    DataType& configuration_data_pod(Context context) const;
+
+    /**
+     * Fetch configuration data for @a context.
+     *
+     * This method fetches configuration data for @a context assuming
+     * set_configuration_data() was used during module setup.
+     *
+     * @warning Do not use this method if set_configuration_data_pod() was
+     *          used; instead, use configuration_data_pod().
+     *
+     * @a DataType must match the data type used in
+     * set_configuration_data().
+     *
+     * @tparam DataType Type of configuration data.
+     * @param[in] context Context to fetch configuration for.
+     * @returns Configuration data.
+     **/
+    template <typename DataType>
+    DataType& configuration_data(Context context) const;
     ///@}
 
     /**
@@ -604,6 +640,23 @@ ConfigurationMapInit<DataType> Module::set_configuration_data(
     );
 
     return ConfigurationMapInit<DataType>(ib()->cm_init, mpool, true);
+}
+
+template <typename DataType>
+DataType& Module::configuration_data_pod(Context context) const
+{
+    DataType* config;
+    Internal::throw_if_error(
+        ib_context_module_config(context.ib(), ib(), &config)
+    );
+    return *config;
+}
+
+template <typename DataType>
+DataType& Module::configuration_data(Context context) const
+{
+    DataType* config_ptr = configuration_data_pod<DataType*>(context);
+    return *config_ptr;
 }
 
 /**
