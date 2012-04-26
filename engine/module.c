@@ -93,6 +93,15 @@ ib_status_t ib_module_create(ib_module_t **pm,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+
+/*
+ * ib_dso_sym_find will search beyond the specified file if IB_MODULE_SYM is
+ * not found in it.  In order to detect this situation, the resulting symbol
+ * is compared against the statically linked IB_MODULE_SYM, i.e., the one
+ * that core defines.  This extern allows the code to access its address.
+ */
+extern ib_module_t *IB_MODULE_SYM(ib_engine_t *);
+
 ib_status_t ib_module_load(ib_module_t **pm,
                            ib_engine_t *ib,
                            const char *file)
@@ -119,7 +128,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     }
 
     rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &sym.dso);
-    if (rc != IB_OK) {
+    if (rc != IB_OK || &IB_MODULE_SYM == sym.fn_sym) {
         ib_log_error(ib, "Failed to load module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);
         IB_FTRACE_RET_STATUS(rc);
