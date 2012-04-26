@@ -936,11 +936,11 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
     ib_status_t ib_rc;
     const char *func_name = (char *) data;
 
-    ib_log_debug3(ib, "Calling lua function %s.", func_name);
+    ib_log_debug3_tx(tx, "Calling lua function %s.", func_name);
 
     ib_rc = ib_lua_func_eval_r(ib, tx, func_name, result);
 
-    ib_log_debug3(ib, "Lua function %s=%d.", func_name, *result);
+    ib_log_debug3_tx(tx, "Lua function %s=%d.", func_name, *result);
 
     IB_FTRACE_RET_STATUS(ib_rc);
 }
