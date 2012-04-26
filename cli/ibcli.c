@@ -753,8 +753,15 @@ static void print_field(const char *label,
                         ib_field_t *field,
                         size_t maxlen)
 {
+    IB_FTRACE_INIT();
+
     /* Check the field name
      * Note: field->name is not always a null ('\0') terminated string */
+    if (field == NULL) {
+        printf( "  %s = <NULL>\n", label );
+        IB_FTRACE_RET_VOID();
+    }
+
     switch (field->type) {
 
     case IB_FTYPE_GENERIC :      /**< Generic data */
