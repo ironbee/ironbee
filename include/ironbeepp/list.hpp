@@ -447,7 +447,12 @@ public:
     //! Iterator just past end of list.
     iterator end() const
     {
-        return boost::next(iterator(IB_LIST_LAST(ib())));
+        if (IB_LIST_ELEMENTS(ib()) == 0) {
+            return begin();
+        }
+        else {
+            return boost::next(iterator(IB_LIST_LAST(ib())));
+        }
     }
 
     //! Reverse iterator at last element of list.

@@ -199,6 +199,17 @@ TEST_F(TestList, ConstListIBIteration)
     EXPECT_EQ(c, v[2]);
 }
 
+TEST_F(TestList, EmptyList)
+{
+    ib_list_t* l;
+
+    ASSERT_EQ(IB_OK, ib_list_create(&l, m_pool.ib()));
+
+    ConstList<int*> L(l);
+
+    ASSERT_TRUE(L.begin() == L.end());
+}
+
 TEST_F(TestList, List)
 {
     static const char* a = "a";
