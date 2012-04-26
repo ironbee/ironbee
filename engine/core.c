@@ -2451,7 +2451,6 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
 static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
     ib_unum_t tx_num = tx ? tx->conn->tx_count : 0;
     ib_mpool_t *pool = log->mp;
@@ -2534,7 +2533,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
         else {
-            ib_log_error(ib, "Failed to get request_protocol: %s", ib_status_to_string(rc));
+            ib_log_error_tx(tx, "Failed to get request_protocol: %s", ib_status_to_string(rc));
         }
 
         rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_method"), &f);
@@ -2542,7 +2541,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
         else {
-            ib_log_error(ib, "Failed to get request_method: %s", ib_status_to_string(rc));
+            ib_log_error_tx(tx, "Failed to get request_method: %s", ib_status_to_string(rc));
         }
 
         /// @todo If this is NULL, parser failed - what to do???
@@ -2569,7 +2568,6 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
@@ -2601,7 +2599,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
     }
     else {
-        ib_log_error(ib, "Failed to get response_status: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get response_status: %s", ib_status_to_string(rc));
     }
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_protocol"), &f);
@@ -2609,7 +2607,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
     }
     else {
-        ib_log_error(ib, "Failed to get response_protocol: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get response_protocol: %s", ib_status_to_string(rc));
     }
 
     /* Add the part to the auditlog. */
@@ -2626,7 +2624,6 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
 static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = log->ib;
     ib_mpool_t *pool = log->mp;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
@@ -2645,14 +2642,14 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_line"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get request_line: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get request_line: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_list_push(list, f);
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_headers"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get request_headers: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get request_headers: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -2710,7 +2707,6 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
 static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = log->ib;
     ib_mpool_t *pool = log->mp;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
@@ -2729,14 +2725,14 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_line"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get response_line: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get response_line: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_list_push(list, f);
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_headers"), &f);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get response_headers: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get response_headers: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -2910,8 +2906,9 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.audit, &audit,
                                         tx->mp, log);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create audit log provider instance: %s",
-                     ib_status_to_string(rc));
+        ib_log_alert_tx(tx,
+                        "Failed to create audit log provider instance: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -3182,7 +3179,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_alert(ib, "Failed to fetch parser interface on request header");
+        ib_log_alert_tx(tx, "Failed to fetch parser interface on request header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3199,11 +3196,11 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     if (rc == IB_OK) {
         rc = ib_data_add_named(tx->dpi, f, "args", 4);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to alias ARGS: %s", ib_status_to_string(rc));
+            ib_log_error_tx(tx, "Failed to alias ARGS: %s", ib_status_to_string(rc));
         }
         rc = ib_data_add_named(tx->dpi, f, "args_get", 8);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
+            ib_log_error_tx(tx, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
         }
     }
 
@@ -3280,7 +3277,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 
     if (iface == NULL) {
         /// @todo Probably should not need this check
-        ib_log_alert(ib, "Failed to fetch parser interface response header");
+        ib_log_alert_tx(tx, "Failed to fetch parser interface response header");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -3967,7 +3964,7 @@ static ib_status_t process_txdata_in(ib_engine_t *ib,
     rc = ib_context_module_config(tx->ctx,
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4019,7 +4016,7 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
     /* Only interested in the body. */
     if (   (txdata->dtype != IB_DTYPE_HTTP_BODY)
         && (txdata->dlen > 0)) {
-        ib_log_debug3(ib, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
+        ib_log_debug3_tx(tx, "Ignoring dtype=%d dlen=%zd", txdata->dtype, txdata->dlen);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -4027,7 +4024,7 @@ static ib_status_t process_txdata_out(ib_engine_t *ib,
     rc = ib_context_module_config(tx->ctx,
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4069,7 +4066,7 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
     rc = ib_data_add_list_ex(tx->dpi, "TX", 2, NULL);
 
     if (rc!=IB_OK) {
-        ib_log_debug2(ib, "Unable to add list \"TX\".");
+        ib_log_debug2_tx(tx, "Unable to add list \"TX\".");
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4108,7 +4105,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_context_module_config(tx->ctx, ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failure accessing core module: %s", ib_status_to_string(rc));
+        ib_log_alert_tx(tx, "Failure accessing core module: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4116,7 +4113,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &tx->dpi,
                                         tx->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create tx data provider instance: %s",
+        ib_log_alert_tx(tx, "Failed to create tx data provider instance: %s",
                      rc);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4124,7 +4121,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     /* Data Provider Default Initialization */
     rc = dpi_default_init(ib, tx);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize data provider instance.");
+        ib_log_alert_tx(tx, "Failed to initialize data provider instance.");
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4132,7 +4129,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.logevent, &tx->epi,
                                         tx->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create logevent provider instance: %s", ib_status_to_string(rc));
+        ib_log_alert_tx(tx, "Failed to create logevent provider instance: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 

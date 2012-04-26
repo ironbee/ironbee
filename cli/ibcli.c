@@ -982,7 +982,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     ib_field_t *field = NULL;
     ib_status_t rc;
 
-    ib_log_debug3(ib, "print_tx");
+    ib_log_debug3_tx(tx, "print_tx");
     printf("TX:\n");
     printf("  tx/remote: %s:%d\n",
             tx->er_ipstr, tx->conn->remote_port);
@@ -993,7 +993,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     rc = ib_data_get(tx->dpi, "ARGS", &field);
     if (rc != IB_OK) {
         printf("print_tx: Failed to get ARGS: %d\n", rc);
-        ib_log_debug(ib, "print_tx: Failed to get ARGS: %s",
+        ib_log_debug_tx(tx, "print_tx: Failed to get ARGS: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -1006,7 +1006,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
 
     if (lst == NULL) {
         printf("print_tx: Failed ARGS is not a list\n");
-        ib_log_debug(ib, "print_tx: ARGS is not a list");
+        ib_log_debug_tx(tx, "print_tx: ARGS is not a list");
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
     print_list("tx:ARGS", lst);
@@ -1019,7 +1019,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     /* Build the list */
     rc = ib_list_create(&lst, ib->mp);
     if (rc != IB_OK) {
-        ib_log_debug(ib, "print_tx: Failed to create tx list: %s",
+        ib_log_debug_tx(tx, "print_tx: Failed to create tx list: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -1027,7 +1027,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get_all(tx->dpi, lst);
     if (rc != IB_OK) {
-        ib_log_debug(ib, "print_tx: Failed to get all headers: %s",
+        ib_log_debug_tx(tx, "print_tx: Failed to get all headers: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -1035,7 +1035,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     /* Print it all */
     rc = print_list("tx", lst);
     if (rc != IB_OK) {
-        ib_log_debug(ib, "print_tx: Failed printing headers: %s",
+        ib_log_debug_tx(tx, "print_tx: Failed printing headers: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -1075,7 +1075,7 @@ static ib_status_t print_user_agent(
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "UA", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib,
+        ib_log_debug_tx(tx,
                      "print_user_agent: No user agent info available" );
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -1088,7 +1088,7 @@ static ib_status_t print_user_agent(
     }
 
     if (lst == NULL) {
-        ib_log_debug(ib,
+        ib_log_debug_tx(tx,
                      "print_user_agent: "
                      "Field list missing / incorrect type" );
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -1139,7 +1139,7 @@ static ib_status_t print_geoip(
     /* Extract the request headers field from the provider instance */
     rc = ib_data_get(tx->dpi, "GEOIP", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
-        ib_log_debug(ib, "print_geoip: No GeoIP info available" );
+        ib_log_debug_tx(tx, "print_geoip: No GeoIP info available" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1151,7 +1151,7 @@ static ib_status_t print_geoip(
     }
 
     if (lst == NULL) {
-        ib_log_debug(ib,
+        ib_log_debug_tx(tx,
                      "print_geoip: Field list missing / incorrect type" );
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
@@ -1242,7 +1242,7 @@ static ib_status_t action_print_execute(void *data,
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
         rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
         if (rc != IB_OK) {
-            ib_log_error(tx->ib,
+            ib_log_error_tx(tx,
                          "print: Failed to expand string '%s': %d",
                          cstr, rc);
         }
@@ -1314,7 +1314,7 @@ static ib_status_t action_printvar_execute(void *data,
     /* Lookup the variable in the DPI */
     rc = ib_data_get(tx->dpi, varname, &field);
     if (rc != IB_OK) {
-        ib_log_error(tx->ib,
+        ib_log_error_tx(tx,
                      "setvar: Failed to lookup '%s': %d", varname, rc);
     }
 

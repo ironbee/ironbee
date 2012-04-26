@@ -1426,14 +1426,14 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
+        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
                      event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1443,14 +1443,14 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
      */
     luaevents = modcfg->event_reg[event];
     if (luaevents == NULL) {
-        ib_log_error(ib, "No lua events found");
+        ib_log_error_tx(tx, "No lua events found");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Get the lua runtime. */
     lua = modlua_runtime_get(conn);
     if (lua == NULL) {
-        ib_log_error(ib, "Failed to fetch lua runtime for tx=%p", tx);
+        ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p", tx);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1461,12 +1461,12 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *module = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug3(ib,
+        ib_log_debug3_tx(tx,
                      "Lua module \"%s\" (%p) has handler for event[%d]=%s",
                      module->name, module, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, txdata, lua, module->name, event);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Error executing lua handler");
+            ib_log_error_tx(tx, "Error executing lua handler");
         }
     }
 
@@ -1575,14 +1575,14 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
     //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
+        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
                      event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1598,7 +1598,7 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
     /* Get the lua runtime. */
     lua = modlua_runtime_get(tx->conn);
     if (lua == NULL) {
-        ib_log_error(ib, "Failed to fetch lua runtime for tx=%p conn=%p", tx, tx->conn);
+        ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p conn=%p", tx, tx->conn);
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1609,11 +1609,11 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug3(ib, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+        ib_log_debug3_tx(tx, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
                      m->name, m, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, tx, lua, m->name, event);
         if (rc != IB_OK) {
-            ib_log_error(ib, "Error executing lua handler");
+            ib_log_error_tx(tx, "Error executing lua handler");
         }
     }
 

@@ -232,7 +232,6 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
                                       const char *flag)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = itx->ib;
     ib_status_t rc;
     ib_field_t *f;
 
@@ -250,12 +249,12 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
                         ib_ftype_num_in(&value));
         rc = ib_field_list_add(f, lf);
         if (rc != IB_OK) {
-            ib_log_debug3(ib, "Failed to add %s field: %s",
+            ib_log_debug3_tx(itx, "Failed to add %s field: %s",
                          collection_name, flag);
         }
     }
     else {
-        ib_log_debug3(ib, "Failed to add flag collection: %s",
+        ib_log_debug3_tx(itx, "Failed to add flag collection: %s",
                      collection_name);
     }
 
@@ -267,7 +266,6 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
                                           unsigned int flags)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = itx->ib;
     ib_status_t rc = IB_OK;
 
     if (flags & HTP_AMBIGUOUS_HOST) {
@@ -363,7 +361,7 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
 
     /* If flags is not 0 we did not handle one of the bits. */
     if (flags != 0) {
-        ib_log_error(ib, "HTP parser unknown flag: 0x%08x", flags);
+        ib_log_error_tx(itx, "HTP parser unknown flag: 0x%08x", flags);
         rc = IB_EUNKNOWN;
     }
 
@@ -392,9 +390,9 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 
     /* Store this as the current transaction. */
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->in_status);
+    ib_log_debug3_tx(itx, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
-        ib_log_error(ib, "HTP Parser Error");
+        ib_log_error_tx(itx, "HTP Parser Error");
     }
     tx = connp->in_tx;
     if (tx == NULL) {
@@ -452,7 +450,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->path);
     }
     if (itx->path == NULL) {
-        ib_log_debug(ib,
+        ib_log_debug_tx(itx,
             "Unknown URI path - using /");
         /// @todo Probably should set a flag here
         itx->path = ib_mpool_strdup(itx->mp, "/");
@@ -464,7 +462,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->hostname);
     }
     if (itx->hostname == NULL) {
-        ib_log_debug(ib,
+        ib_log_debug_tx(itx,
 
                      "Unknown hostname - using ip: %s",
                      iconn->local_ipstr);
@@ -475,11 +473,11 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     /* Allocate and fill the parsed request line object */
     req = ib_mpool_calloc(itx->mp, sizeof(*req), 1);
     if (req == NULL) {
-        ib_log_error(ib, "Error allocating request line buffer");
+        ib_log_error_tx(itx, "Error allocating request line buffer");
     }
     else {
         if (tx->request_protocol == NULL) {
-            ib_log_debug2(ib,
+            ib_log_debug2_tx(itx,
                          "TX request: method=%.*s path=%.*s version=<unknown>",
                          (int)bstr_len(tx->request_method),
                          (char *)bstr_ptr(tx->request_method),
@@ -487,7 +485,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
                          (char *)bstr_ptr(tx->request_uri));
         }
         else {
-            ib_log_debug2(ib,
+            ib_log_debug2_tx(itx,
                          "TX request: method=%.*s path=%.*s version=%.*s",
                          (int)bstr_len(tx->request_method),
                          (char *)bstr_ptr(tx->request_method),
@@ -502,7 +500,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
                                   (uint8_t *)bstr_ptr(tx->request_method),
                                   bstr_len(tx->request_method));
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "Error aliasing request method: %s",
                          ib_status_to_string(rc));
         }
@@ -512,7 +510,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
                                   (uint8_t *)bstr_ptr(tx->request_uri),
                                   bstr_len(tx->request_uri));
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "Error aliasing request URI: %s",
                          ib_status_to_string(rc));
         }
@@ -523,7 +521,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
                                       (uint8_t *)bstr_ptr(tx->request_protocol),
                                       bstr_len(tx->request_protocol));
             if (rc != IB_OK) {
-                ib_log_error(ib,
+                ib_log_error_tx(itx,
                              "Error aliasing request version: %s",
                              ib_status_to_string(rc));
             }
@@ -531,15 +529,15 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     }
 
     /* Tell the engine that the request started. */
-    ib_log_debug2(ib, "Notify request started");
+    ib_log_debug2_tx(itx, "Notify request started");
     rc = ib_state_notify_request_started(ib, itx, req);
     if (rc != IB_OK) {
-        ib_log_error(ib,
+        ib_log_error_tx(itx,
                      "Error notifying request started: %s",
                      ib_status_to_string(rc));
     }
     else if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in request line: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -575,7 +573,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in request headers: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -587,7 +585,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
         ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->hostname);
     }
     if (itx->hostname == NULL) {
-        ib_log_debug(ib,
+        ib_log_debug_tx(itx,
 
                      "Unknown hostname - using ip: %s",
                      iconn->local_ipstr);
@@ -598,7 +596,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     /* Copy the request fields into a parse name value pair list object */
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error creating header wrapper: %s",
+        ib_log_error_tx(itx, "Error creating header wrapper: %s",
                      ib_status_to_string(rc));
     }
     else {
@@ -613,12 +611,12 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                 bstr_ptr(hdr->value),
                 bstr_len(hdr->value));
             if (rc != IB_OK) {
-                ib_log_error(ib,
+                ib_log_error_tx(itx,
                              "Error adding request header name / value: %s",
                              ib_status_to_string(rc));
                 continue;
             }
-            ib_log_debug3(ib, "Added request header field %.*s='%.*s'",
+            ib_log_debug3_tx(itx, "Added request header field %.*s='%.*s'",
                          (int)bstr_len(hdr->name),
                          (char *)bstr_ptr(hdr->name),
                          (int)bstr_len(hdr->value),
@@ -629,13 +627,13 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     /* The full headers are now available. */
     rc = ib_state_notify_request_headers_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error generating request headers: %s",
+        ib_log_error_tx(itx, "Error generating request headers: %s",
                      ib_status_to_string(rc));
     }
 
     rc = ib_state_notify_request_headers(ib, itx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error notifying request headers: %s",
+        ib_log_error_tx(itx, "Error notifying request headers: %s",
                      ib_status_to_string(rc));
     }
 
@@ -669,7 +667,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in request body: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -684,7 +682,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
         }
         rc = ib_state_notify_request_body_data(ib, itx, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "ib_state_notify_request_body_data() failed: %s",
                          ib_status_to_string(rc));
         }
@@ -697,7 +695,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
         itxdata.data = (uint8_t *)txdata->data;
         rc = ib_state_notify_request_body_data(ib, itx, &itxdata);
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "ib_state_notify_request_body_data() failed: %s",
                          ib_status_to_string(rc));
         }
@@ -731,14 +729,14 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in request trailer: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
     /// @todo Notify tx_datain_event w/request trailer
-    ib_log_debug(ib,
+    ib_log_debug_tx(itx,
         "TODO: tx_datain_event w/request trailer: tx=%p", itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -770,7 +768,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in request: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -808,7 +806,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in response line: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -818,10 +816,10 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     /* Allocate and fill the parsed response line object */
     resp = ib_mpool_calloc(itx->mp, sizeof(*resp), 1);
     if (resp == NULL) {
-        ib_log_error(ib, "Error allocating response line buffer");
+        ib_log_error_tx(itx, "Error allocating response line buffer");
     }
     else {
-        ib_log_debug2(ib, "TX response: status=%.*s msg=%.*s",
+        ib_log_debug2_tx(itx, "TX response: status=%.*s msg=%.*s",
                      (int)bstr_len(tx->response_status),
                      (char *)bstr_ptr(tx->response_status),
                      (int)bstr_len(tx->response_message),
@@ -832,7 +830,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
                                   (uint8_t *)bstr_ptr(tx->response_status),
                                   bstr_len(tx->response_status));
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "Error aliasing response status: %s",
                          ib_status_to_string(rc));
         }
@@ -842,17 +840,17 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
                                   (uint8_t *)bstr_ptr(tx->response_message),
                                   bstr_len(tx->response_message));
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "Error aliasing response message: %s",
                          ib_status_to_string(rc));
         }
     }
 
     /* Tell the engine that the response started. */
-    ib_log_debug2(ib, "Notify response started");
+    ib_log_debug2_tx(itx, "Notify response started");
     rc = ib_state_notify_response_started(ib, itx, resp);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error from notice_response_started(): %s",
+        ib_log_error_tx(itx, "Error from notice_response_started(): %s",
                      ib_status_to_string(rc));
     }
 
@@ -886,7 +884,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in response headers: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -895,7 +893,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     /* Copy the response fields into a parse name value pair list object */
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error creating header wrapper: %s",
+        ib_log_error_tx(itx, "Error creating header wrapper: %s",
                      ib_status_to_string(rc));
     }
     else {
@@ -910,12 +908,12 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                 bstr_ptr(hdr->value),
                 bstr_len(hdr->value));
             if (rc != IB_OK) {
-                ib_log_error(ib,
+                ib_log_error_tx(itx,
                              "Error adding response header name / value: %s",
                              ib_status_to_string(rc));
                 continue;
             }
-            ib_log_debug(ib, "Added response header field %.*s='%.*s'",
+            ib_log_debug_tx(itx, "Added response header field %.*s='%.*s'",
                          (int)bstr_len(hdr->name),
                          (char *)bstr_ptr(hdr->name),
                          (int)bstr_len(hdr->value),
@@ -927,13 +925,13 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     /* The full headers are now available. */
     rc = ib_state_notify_response_headers_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error generating response headers: %s",
+        ib_log_error_tx(itx, "Error generating response headers: %s",
                      ib_status_to_string(rc));
     }
 
     rc = ib_state_notify_response_headers(ib, itx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error notifying response headers: %s",
+        ib_log_error_tx(itx, "Error notifying response headers: %s",
                      ib_status_to_string(rc));
     }
 
@@ -967,7 +965,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in response body: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -978,7 +976,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     if (txdata->data == NULL) {
         rc = ib_state_notify_response_body_data(ib, itx, NULL);
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "ib_state_notify_response_body_data() failed: %s",
                          ib_status_to_string(rc));
         }
@@ -991,7 +989,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         itxdata.data = (uint8_t *)txdata->data;
         rc = ib_state_notify_response_body_data(ib, itx, &itxdata);
         if (rc != IB_OK) {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "ib_state_notify_response_body_data() failed: %s",
                          ib_status_to_string(rc));
         }
@@ -1026,7 +1024,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in response: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -1036,7 +1034,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
 
     /* Destroy the transaction. */
     /// @todo Perhaps the engine should do this instead via an event???
-    ib_log_debug3(ib, "Destroying transaction structure");
+    ib_log_debug3_tx(itx, "Destroying transaction structure");
     ib_tx_destroy(itx);
     htp_tx_destroy(tx);
 
@@ -1069,14 +1067,14 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice(ib,
+        ib_log_notice_tx(itx,
                      "HTP parser flagged an event in response trailer: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
     /// @todo Notify tx_dataout_event w/response trailer
-    ib_log_debug(ib,
+    ib_log_debug_tx(itx,
 
                  "TODO: tx_dataout_event w/response trailer: tx=%p", itx);
 
@@ -1335,7 +1333,6 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                                           ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = itx->ib;
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
@@ -1347,7 +1344,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1445,7 +1442,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_headers);
-            ib_log_debug3(ib, "Adding request_headers fields");
+            ib_log_debug3_tx(itx, "Adding request_headers fields");
             while ((key = table_iterator_next(tx->request_headers,
                                               (void *)&h)) != NULL)
             {
@@ -1459,7 +1456,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(h->value),
                                            bstr_len(h->value));
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib,
+                    ib_log_debug3_tx(itx,
                                  "Failed to create field: %s",
                                  ib_status_to_string(rc));
                 }
@@ -1467,7 +1464,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib,
+                    ib_log_debug3_tx(itx,
                                  "Failed to add field: %s",
                                  ib_status_to_string(rc));
                 }
@@ -1475,10 +1472,10 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
         }
         else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3(ib, "No request headers");
+            ib_log_debug3_tx(itx, "No request headers");
         }
         else {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "Failed to create request headers list: %s",
                          ib_status_to_string(rc));
         }
@@ -1493,7 +1490,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_cookies);
-            ib_log_debug3(ib, "Adding request_cookies fields");
+            ib_log_debug3_tx(itx, "Adding request_cookies fields");
             while ((key = table_iterator_next(tx->request_cookies,
                                               (void *)&value)) != NULL)
             {
@@ -1507,21 +1504,21 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(value),
                                            bstr_len(value));
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib, "Failed to create field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx, "Failed to create field: %s", ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib, "Failed to add field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx, "Failed to add field: %s", ib_status_to_string(rc));
                 }
             }
         }
         else if (rc == IB_OK) {
-            ib_log_debug3(ib, "No request cookies");
+            ib_log_debug3_tx(itx, "No request cookies");
         }
         else {
-            ib_log_error(ib, "Failed to create request cookies list: %s", ib_status_to_string(rc));
+            ib_log_error_tx(itx, "Failed to create request cookies list: %s", ib_status_to_string(rc));
         }
 
         rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
@@ -1534,7 +1531,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_params_query);
-            ib_log_debug3(ib, "Adding request_params_query fields");
+            ib_log_debug3_tx(itx, "Adding request_params_query fields");
             while ((key = table_iterator_next(tx->request_params_query,
                                               (void *)&value)) != NULL)
             {
@@ -1548,21 +1545,21 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(value),
                                            bstr_len(value));
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib, "Failed to create field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx, "Failed to create field: %s", ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib, "Failed to add field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx, "Failed to add field: %s", ib_status_to_string(rc));
                 }
             }
         }
         else if (rc == IB_OK) {
-            ib_log_debug3(ib, "No request URI parameters");
+            ib_log_debug3_tx(itx, "No request URI parameters");
         }
         else {
-            ib_log_error(ib, "Failed to create request URI parameters: %s", ib_status_to_string(rc));
+            ib_log_error_tx(itx, "Failed to create request URI parameters: %s", ib_status_to_string(rc));
         }
     }
 
@@ -1573,7 +1570,6 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                                                            ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = itx->ib;
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
@@ -1585,7 +1581,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     /* Get the module config. */
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
+        ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1594,7 +1590,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     /// @todo Move this into a ib_conn_t field
     rc = ib_hash_get(iconn->data, &modctx, "MODHTP_CTX");
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s context: %s",
+        ib_log_alert_tx(itx, "Failed to fetch module %s context: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1648,7 +1644,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                                            (uint8_t *)bstr_ptr(h->value),
                                            bstr_len(h->value));
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib,
+                    ib_log_debug3_tx(itx,
                                  "Failed to create field: %s",
                                  ib_status_to_string(rc));
                 }
@@ -1656,7 +1652,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug3(ib,
+                    ib_log_debug3_tx(itx,
                                  "Failed to add field: %s",
                                  ib_status_to_string(rc));
                 }
@@ -1664,10 +1660,10 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
         }
         else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3(ib, "No response headers");
+            ib_log_debug3_tx(itx, "No response headers");
         }
         else {
-            ib_log_error(ib,
+            ib_log_error_tx(itx,
                          "Failed to create response headers list: %s",
                          ib_status_to_string(rc));
         }

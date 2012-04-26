@@ -89,6 +89,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
 {
     int res = 0;
     ib_tx_t tx;
+    tx.ib = ib_engine;
     tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
 
     lua_State *L = luaL_newstate();
@@ -107,6 +108,7 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
 {
     int res = 0;
     ib_tx_t tx;
+    tx.ib = ib_engine;
     tx.id = "tx_id.TestIronBeeModuleRulesLua.new_state";
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
@@ -129,6 +131,7 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
 TEST_F(TestIronBeeModuleRulesLua, operator_test)
 {
     ib_tx_t tx;
+    tx.ib = ib_engine;
 
     ib_operator_t op;
     ib_operator_inst_t *op_inst=NULL;

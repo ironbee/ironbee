@@ -687,7 +687,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         conn->tx_first = tx;
         conn->tx = tx;
         conn->tx_last = tx;
-        ib_log_debug3(ib, "First transaction: %p", tx);
+        ib_log_debug3_tx(tx, "First transaction: %p", tx);
     }
     else {
         conn->tx = tx;
@@ -702,7 +702,7 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
         }
         ib_tx_flags_set(tx, IB_TX_FPIPELINED);
 
-        ib_log_debug3(ib, "Found a pipelined transaction: %p", tx);
+        ib_log_debug3_tx(tx, "Found a pipelined transaction: %p", tx);
     }
 
     /* Only when we are successful, commit changes to output variable. */
@@ -1908,7 +1908,7 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
     txhostlen = strlen(txhost);
     txpath = tx->path;
 
-    ib_log_debug3(ib, "CHOOSER: ctx=%p '%s' tx=%p loc=%p",
+    ib_log_debug3_tx(tx, "CHOOSER: ctx=%p '%s' tx=%p loc=%p",
                   ctx, ctx->ctx_full, tx, loc);
 
     /*
@@ -1922,7 +1922,7 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
     ip = ipnode ? (const char *)ib_list_node_data(ipnode) : NULL;
     while (numips--) {
         /// @todo IP should be IP:Port combo
-        ib_log_debug2(ib, "Checking IP %s against context %s",
+        ib_log_debug2_tx(tx, "Checking IP %s against context %s",
                      tx->conn->local_ipstr, ip?ip:"ANY");
         if ((ip == NULL) || (strcmp(ip, tx->conn->local_ipstr) == 0)) {
             numhosts = loc->site->hosts ? ib_list_elements(loc->site->hosts) : 1;
@@ -1934,18 +1934,18 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                 off_t cmpoffset = txhostlen - hostlen;
                 const char *cmphost = (cmpoffset > 0)?txhost + cmpoffset:NULL;
                 if (cmphost != NULL) {
-                    ib_log_debug2(ib, "Checking Host \"%s\" (effective=\"%s\") against context %s",
+                    ib_log_debug2_tx(tx, "Checking Host \"%s\" (effective=\"%s\") against context %s",
                                  txhost, cmphost, (host&&*host)?host:"ANY");
                     if ((host == NULL) || (strcmp(host, cmphost) == 0)) {
                         path = loc->path;
 
-                        ib_log_debug2(ib,
+                        ib_log_debug2_tx(tx,
                                       "Checking Location path '%s' "
                                       "against context (%s) path '%s'",
                                       txpath, ctx->ctx_full, path?path:"ANY");
 
                         if ((path == NULL) || (strncmp(path, txpath, strlen(path)) == 0)) {
-                            ib_log_debug2(ib,
+                            ib_log_debug2_tx(tx,
                                           "Site \"%s:%s\" matched ctx=%p '%s'",
                                           loc->site->name, loc->path,
                                           ctx, ctx->ctx_full);
@@ -1954,7 +1954,7 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                     }
                 }
                 else {
-                    ib_log_debug2(ib,
+                    ib_log_debug2_tx(tx,
                                   "Skipping Host \"%s\" "
                                   "check against context %s '%s'",
                                   txhost, host?host:"ANY", ctx->ctx_full);

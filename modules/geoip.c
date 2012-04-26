@@ -56,7 +56,7 @@ static ib_status_t geoip_lookup(
     const char *ip = tx->er_ipstr;
 
     if (ip == NULL) {
-        ib_log_alert(ib, "Trying to lookup NULL IP in GEOIP");
+        ib_log_alert_tx(tx, "Trying to lookup NULL IP in GEOIP");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -85,7 +85,7 @@ static ib_status_t geoip_lookup(
 
     GeoIPRecord *geoip_rec;
 
-    ib_log_debug(ib, "GeoIP Lookup '%s'", ip);
+    ib_log_debug_tx(tx, "GeoIP Lookup '%s'", ip);
 
     /* Build a new list. */
     rc = ib_data_add_list(tx->dpi, "GEOIP", &geoip_lst);
@@ -94,12 +94,12 @@ static ib_status_t geoip_lookup(
      * GeoIPRecord. */
     if (rc != IB_OK)
     {
-        ib_log_alert(ib, "Unable to add GEOIP list to DPI.");
+        ib_log_alert_tx(tx, "Unable to add GEOIP list to DPI.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if (geoip_db == NULL) {
-        ib_log_alert(ib,
+        ib_log_alert_tx(tx,
                      "GeoIP database was never opened. Perhaps the "
                      "configuration file needs a GeoIPDatabaseFile "
                      "\"/usr/share/geoip/GeoLiteCity.dat\" line?");
@@ -110,7 +110,7 @@ static ib_status_t geoip_lookup(
 
     if (geoip_rec != NULL)
     {
-        ib_log_debug(ib, "GeoIP record found.");
+        ib_log_debug_tx(tx, "GeoIP record found.");
 
         /* Append the floats latitude and longitude.
          * NOTE: Future work may add a float type to the Ironbee DPI. */
@@ -275,7 +275,7 @@ static ib_status_t geoip_lookup(
     }
     else
     {
-        ib_log_debug(ib, "No GeoIP record found.");
+        ib_log_debug_tx(tx, "No GeoIP record found.");
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

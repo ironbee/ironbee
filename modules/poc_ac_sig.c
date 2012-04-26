@@ -463,19 +463,19 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
     /* Get the pocacsig configuration for this context. */
     rc = ib_context_module_config(tx->ctx, IB_MODULE_STRUCT_PTR, (void *)&cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to fetch %s config: %s",
+        ib_log_error_tx(tx, "Failed to fetch %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
     }
 
     /* Get the list of sigs for this phase. */
     sigs = cfg->phase[phase];
     if (sigs == NULL) {
-        ib_log_debug(ib, "No signatures for phase=%d ctx=%p",
+        ib_log_debug_tx(tx, "No signatures for phase=%d ctx=%p",
                      phase, tx->ctx);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib, "Executing %d signatures for phase=%d ctx=%p",
+    ib_log_debug_tx(tx, "Executing %d signatures for phase=%d ctx=%p",
                  ib_list_elements(sigs), phase, tx->ctx);
 
     ib_ac_context_t ctx;
@@ -494,12 +494,12 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
         /* Fetch the field. */
         rc = ib_data_get(tx->dpi, pfe->target, &f);
         if (rc != IB_OK) {
-            ib_log_error(ib, "PocACSig: No field named \"%s\"", pfe->target);
+            ib_log_error_tx(tx, "PocACSig: No field named \"%s\"", pfe->target);
             continue;
         }
 
         /* Perform the match. */
-        ib_log_debug(ib, "PocACSig: Matching tree \"%x\" against"
+        ib_log_debug_tx(tx, "PocACSig: Matching tree \"%x\" against"
                                  " field \"%s\"", pfe->ac_matcher, pfe->target);
 
         rc = ib_matcher_exec_field(pfe->ac_matcher, 0, f, (void *)ac_mctx);
@@ -512,7 +512,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                 s = (pocacsig_sig_t *)acm->data;
 
                 /* Perform the match. */
-                ib_log_debug(ib, "PocSig: Matched prequal:\"%s\". Now"
+                ib_log_debug_tx(tx, "PocSig: Matched prequal:\"%s\". Now"
                                          " Matching \"%s\" against field"
                                          " \"%s\"", s->prequal,
                                          s->patt, s->target);
@@ -523,7 +523,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                         and process the pcre expression */
                     ib_logevent_t *e;
 
-                    ib_log_debug(ib, "PocACSig MATCH: prequal:\"%s\""
+                    ib_log_debug_tx(tx, "PocACSig MATCH: prequal:\"%s\""
                                              " pcre:\"%s\" at %s", s->prequal,
                                              s->patt, pfe->target);
 
@@ -541,7 +541,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
                     );
 
                     if (rc != IB_OK) {
-                        ib_log_error(ib, "PocACSig: Error generating "
+                        ib_log_error_tx(tx, "PocACSig: Error generating "
                                      "event: %s", ib_status_to_string(rc));
                         continue;
                     }
@@ -552,7 +552,7 @@ static ib_status_t pocacsig_handle_sigs(ib_engine_t *ib,
             }
         }
         else {
-            ib_log_debug(ib, "PocACSig NOMATCH");
+            ib_log_debug_tx(tx, "PocACSig NOMATCH");
         }
     }
 

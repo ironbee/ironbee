@@ -112,7 +112,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     int lua_rc;
 
     if (!lua_checkstack(L, 5)) {
-        ib_log_error(ib,
+        ib_log_error_tx(tx,
             "Not enough stack space to call Lua rule %s.", func_name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -121,7 +121,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     lua_getglobal(L, func_name);
 
     if (!lua_isfunction(L, -1)) {
-        ib_log_error(ib, "Variable \"%s\" is not a LUA function - %s",
+        ib_log_error_tx(tx, "Variable \"%s\" is not a LUA function - %s",
                      func_name);
 
         /* Remove wrong parameter from stack. */
@@ -151,7 +151,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     lua_rc = lua_pcall(L, 3, 1, 0); /* Make new ib api object. */
 
     if (lua_rc != 0) {
-        ib_log_error(ib,
+        ib_log_error_tx(tx,
             "Error running Lua Rule %s - %s", func_name, lua_tostring(L, -1));
         /* Pop (1) error string, (2) string "ib", and (3) new table, (4) func */
         lua_pop(L, 4);
@@ -172,7 +172,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
      * user rule function and the anonymous table we are building. */
     lua_pop(L, 1);
 
-    ib_log_debug(ib, "Executing user rule %s", func_name);
+    ib_log_debug_tx(tx, "Executing user rule %s", func_name);
 
     /* Call the function on the stack with 1 input, 0 outputs, and errmsg=0. */
     lua_rc = lua_pcall(L, 1, 1, 0);
@@ -181,7 +181,7 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     if (lua_rc != 0) {
         switch(lua_rc) {
             case LUA_ERRRUN:
-                ib_log_error(ib,
+                ib_log_error_tx(tx,
                     "Error running Lua Rule %s - %s",
                     func_name,
                     lua_tostring(L, -1));
@@ -190,23 +190,23 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
                 lua_pop(L, 1);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             case LUA_ERRMEM:
-                ib_log_error(ib,
+                ib_log_error_tx(tx,
                     "Failed to allocate memory during Lua rule.");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             case LUA_ERRERR:
-                ib_log_error(ib,
+                ib_log_error_tx(tx,
                     "Error fetching error message during Lua rule.");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
 #if LUA_VERSION_NUM > 501
             /* If LUA_ERRGCMM is defined, include a custom error for it as
                well. This was introduced in Lua 5.2. */
             case LUA_ERRGCMM:
-                ib_log_error(ib,
+                ib_log_error_tx(tx,
                     "Garbage collection error during Lua rule.");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
 #endif
             default:
-                ib_log_error(ib,
+                ib_log_error_tx(tx,
                     "Unexpected error (%d) during Lua rule.", lua_rc);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
         }

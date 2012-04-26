@@ -364,7 +364,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
         *result = ib_tx_flags_isset(tx, IB_TX_FSUSPICIOUS);
     }
     else {
-        ib_log_error(tx->ib,  "checkflag operator: invalid flag '%s'", cstr);
+        ib_log_error_tx(tx,  "checkflag operator: invalid flag '%s'", cstr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -536,7 +536,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
 
         /* Verify that we got out a string */
         if (ipstr == NULL) {
-            ib_log_error(ib, "Failed to get NULSTR from field");
+            ib_log_error_tx(tx, "Failed to get NULSTR from field");
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
         iplen = strlen(ipstr);
@@ -562,7 +562,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     /* Convert the IP address string to a prefix object */
     rc = ib_radix_ip_to_prefix_ex(ipstr, iplen, &prefix, tx->mp);
     if (rc != IB_OK) {
-        ib_log_error(ib,
+        ib_log_error_tx(tx,
                      "Error created radix prefix for %.*s: %s",
                      iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -577,7 +577,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
         *result = 1;
     }
     else {
-        ib_log_error(ib,
+        ib_log_error_tx(tx,
                      "Radix matcher failed matching for %.*s: %s",
                      iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
