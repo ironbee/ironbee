@@ -310,7 +310,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     main := |*
         WS* comment;
-	[Ii] "nclude" { fcall includeconfig; };
+	WS* [Ii] "nclude" { fcall includeconfig; };
         WS* token >mark %start_dir { fcall parameters; };
         "<" { fcall newblock; };
         "</" { fcall endblock; };
