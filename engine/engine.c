@@ -1877,7 +1877,6 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                                        void *cbdata)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib;
     ib_loc_t *loc;
     ib_tx_t *tx;
     size_t numips;
@@ -1902,7 +1901,6 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
     }
 
     tx = (ib_tx_t *)ctxdata;
-    ib = tx->ib;
     loc = (ib_loc_t *)cbdata;
     txhost = tx->hostname;
     txhostlen = strlen(txhost);
