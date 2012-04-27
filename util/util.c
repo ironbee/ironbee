@@ -203,7 +203,7 @@ char *ib_util_path_join(ib_mpool_t *mp,
     if (out == NULL) {
         return NULL;
     }
-     
+
     strncpy(out, parent, plen);
     if (plen > 1) {
         strcat(out, "/");
