@@ -463,7 +463,8 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 }
 
 ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
-                                         ib_conndata_t *conndata)
+                                         ib_conndata_t *conndata,
+                                         void *appdata)
 {
     IB_FTRACE_INIT();
     ib_conn_t *conn = conndata->conn;
@@ -493,7 +494,8 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
 }
 
 ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
-                                          ib_conndata_t *conndata)
+                                          ib_conndata_t *conndata,
+                                          void *appdata)
 {
     IB_FTRACE_INIT();
     ib_conn_t *conn = conndata->conn;
