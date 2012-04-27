@@ -1223,35 +1223,41 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
                         ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    rc = ib_parsed_name_value_pair_list_add(
-        hdrs,
-        "method", 6,
-        (const char *)ib_bytestr_const_ptr(tx->request_line->method),
-        ib_bytestr_length(tx->request_line->method));
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Error adding method to name/value pair list: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    if (tx->request_line->method != NULL) {
+        rc = ib_parsed_name_value_pair_list_add(
+            hdrs,
+            "method", 6,
+            (const char *)ib_bytestr_const_ptr(tx->request_line->method),
+            ib_bytestr_length(tx->request_line->method));
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error adding method to name/value pair list: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
-    rc = ib_parsed_name_value_pair_list_add(
-        hdrs,
-        "path", 4,
-        (const char *)ib_bytestr_const_ptr(tx->request_line->path),
-        ib_bytestr_length(tx->request_line->path));
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Error adding path to name/value pair list: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    if (tx->request_line->path != NULL) {
+        rc = ib_parsed_name_value_pair_list_add(
+            hdrs,
+            "path", 4,
+            (const char *)ib_bytestr_const_ptr(tx->request_line->path),
+            ib_bytestr_length(tx->request_line->path));
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error adding path to name/value pair list: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
-    rc = ib_parsed_name_value_pair_list_add(
-        hdrs,
-        "version", 7,
-        (const char *)ib_bytestr_const_ptr(tx->request_line->version),
-        ib_bytestr_length(tx->request_line->version));
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Error adding version to name/value pair list: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    if (tx->request_line->version != NULL) {
+        rc = ib_parsed_name_value_pair_list_add(
+            hdrs,
+            "version", 7,
+            (const char *)ib_bytestr_const_ptr(tx->request_line->version),
+            ib_bytestr_length(tx->request_line->version));
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error adding version to name/value pair list: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Now, process the request line */
@@ -1265,14 +1271,16 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     }
 
     /* Process the request headers */
-    ib_log_debug_tx(tx, "Running headers through stream headers");
-    rc = run_stream_header_rules(ib, tx, event,
-                                 tx->request_headers->head,
-                                 cbdata);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Error processing tx request line: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    if (tx->request_headers != NULL && tx->request_headers->head != NULL) {
+        ib_log_debug_tx(tx, "Running headers through stream headers");
+        rc = run_stream_header_rules(ib, tx, event,
+                                     tx->request_headers->head,
+                                     cbdata);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error processing tx request line: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
