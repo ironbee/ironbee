@@ -63,6 +63,7 @@
 struct ib_rule_phase_meta_t {
     ib_tristate_t               is_stream;
     ib_rule_phase_t             phase_num;
+    ib_state_hook_type_t        hook_type;
     ib_flags_t                  flags;
     const char                 *name;
     ib_flags_t                  required_op_flags;
@@ -77,6 +78,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     {
         IB_TRI_FALSE,
         PHASE_NONE,
+        (ib_state_hook_type_t) -1,
         (PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Generic 'Phase' Rule",
         IB_OP_FLAG_PHASE,
@@ -86,6 +88,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     {
         IB_TRI_FALSE,
         PHASE_REQUEST_HEADER,
+        IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Request Header",
         IB_OP_FLAG_PHASE,
@@ -95,6 +98,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     {
         IB_TRI_FALSE,
         PHASE_REQUEST_BODY,
+        IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Request Body",
         IB_OP_FLAG_PHASE,
@@ -104,6 +108,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     {
         IB_TRI_FALSE,
         PHASE_RESPONSE_HEADER,
+        IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Response Header",
         IB_OP_FLAG_PHASE,
@@ -113,6 +118,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     {
         IB_TRI_FALSE,
         PHASE_RESPONSE_BODY,
+        IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Response Body",
         IB_OP_FLAG_PHASE,
@@ -122,15 +128,19 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     {
         IB_TRI_FALSE,
         PHASE_POSTPROCESS,
+        IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Post Process",
         IB_OP_FLAG_PHASE,
         handle_postprocess_event,
         { }, 0
     },
+
+    /* Stream rule phases */
     {
         IB_TRI_TRUE,
         PHASE_NONE,
+        (ib_state_hook_type_t) -1,
         (PHASE_FLAG_IS_STREAM),
         "Generic 'Stream Inspection' Rule",
         IB_OP_FLAG_STREAM,
@@ -140,42 +150,47 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     {
         IB_TRI_TRUE,
         PHASE_STR_REQUEST_HEADER,
+        IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Request Header Stream",
         IB_OP_FLAG_STREAM,
-        tx_data_in_event,
+        handle_context_tx_event,
         { IB_DTYPE_HTTP_HEADER }, 1
     },
     {
         IB_TRI_TRUE,
         PHASE_STR_REQUEST_BODY,
+        IB_STATE_HOOK_TXDATA,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Request Body Stream",
         IB_OP_FLAG_STREAM,
-        tx_data_in_event,
+        request_body_data_event,
         { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
     },
     {
         IB_TRI_TRUE,
         PHASE_STR_RESPONSE_HEADER,
+        IB_STATE_HOOK_HEADER,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Response Header Stream",
         IB_OP_FLAG_STREAM,
-        tx_data_out_event,
+        response_headers_data_event,
         { IB_DTYPE_HTTP_HEADER }, 1
     },
     {
         IB_TRI_TRUE,
         PHASE_STR_RESPONSE_BODY,
+        IB_STATE_HOOK_TXDATA,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Response Body Stream",
         IB_OP_FLAG_STREAM,
-        tx_data_out_event,
+        response_body_data_event,
         { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
     },
     {
         IB_TRI_FALSE,
         PHASE_INVALID,
+        (ib_state_hook_type_t) -1,
         PHASE_FLAG_NONE,
         "Invalid",
         IB_OP_FLAG_NONE,
@@ -565,15 +580,15 @@ static ib_status_t execute_action(ib_engine_t *ib,
     const char   *name = (result != 0) ? "True" : "False";
 
     ib_log_debug3_tx(tx,
-                 "Executing %s rule %s action %s",
-                 rule->meta.id, name, action->action->name);
+                     "Executing %s rule %s action %s",
+                     rule->meta.id, name, action->action->name);
 
     /* Run it, check the results */
     rc = ib_action_execute(action, rule, tx);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                     "Action %s returned an error: %s",
-                     action->action->name, ib_status_to_string(rc));
+                        "Action %s returned an error: %s",
+                        action->action->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -620,13 +635,13 @@ static ib_status_t execute_actions(ib_engine_t *ib,
         arc = execute_action(ib, rule, tx, result, action);
         if (arc == IB_DECLINED) {
             ib_log_error_tx(tx,
-                         "Action %s/%s did not run",
-                         name, action->action->name);
+                            "Action %s/%s did not run",
+                            name, action->action->name);
         }
         else if (arc != IB_OK) {
             ib_log_error_tx(tx,
-                         "Action %s/%s returned an error: %d",
-                         name, action->action->name, arc);
+                            "Action %s/%s returned an error: %d",
+                            name, action->action->name, arc);
             rc = arc;
         }
     }
@@ -829,7 +844,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 }
 
 /**
- * Execute a single stream rule, and it's actions
+ * Execute a single stream txdata rule, and it's actions
  * @internal
  *
  * @param[in] ib Engine
@@ -840,11 +855,11 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t execute_stream_rule(ib_engine_t *ib,
-                                       ib_rule_t *rule,
-                                       ib_tx_t *tx,
-                                       ib_txdata_t *txdata,
-                                       ib_num_t *result)
+static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
+                                              ib_rule_t *rule,
+                                              ib_tx_t *tx,
+                                              ib_txdata_t *txdata,
+                                              ib_num_t *result)
 {
     IB_FTRACE_INIT();
     ib_status_t          rc = IB_OK;
@@ -873,8 +888,8 @@ static ib_status_t execute_stream_rule(ib_engine_t *ib,
                                        txdata->data, txdata->dlen);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                     "Error creating field for stream rule data: %s",
-                     ib_status_to_string(rc));
+                        "Error creating field for stream txdata rule data: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -888,10 +903,85 @@ static ib_status_t execute_stream_rule(ib_engine_t *ib,
     }
     ib_log_debug3_tx(tx, "Operator %s => %d", opinst->op->name, *result);
 
-    /* Invert? */
-    if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
-        *result = ( (*result) == 0);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Execute a single stream header rule, and it's actions
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in] event Event type
+ * @param[in] tx Transaction
+ * @param[in] headers Parsed headers
+ * @param[in,out] rule_result Result of rule execution
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
+                                              ib_rule_t *rule,
+                                              ib_tx_t *tx,
+                                              ib_parsed_header_t *headers,
+                                              ib_num_t *rule_result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t          rc = IB_OK;
+    ib_operator_inst_t  *opinst = rule->opinst;
+    ib_field_t          *value;
+    ib_parsed_name_value_pair_list_t *nvpair;
+
+    assert(ib != NULL);
+    assert(rule != NULL);
+    assert(headers != NULL);
+    assert(rule_result != NULL);
+    assert(rule->phase_meta->is_stream == IB_TRI_TRUE);
+
+
+    /**
+     * Execute the rule operator.
+     *
+     * @todo The current behavior is to keep running even after action(s)
+     * returns an error.  This needs further discussion to determine what the
+     * correct behavior should be.
+     */
+    *rule_result = 0;
+    for (nvpair = headers;  nvpair != NULL;  nvpair = nvpair->next) {
+        ib_num_t result;
+
+        /* Create a field to hold the data */
+        ib_log_debug_tx(tx, "nvpair: '%.*s'='%.*s'\n",
+                        (int)ib_bytestr_length(nvpair->name),
+                        (const char *)ib_bytestr_const_ptr(nvpair->name),
+                        (int)ib_bytestr_length(nvpair->value),
+                        (const char *)ib_bytestr_const_ptr(nvpair->value));
+        rc = ib_field_create(&value,
+                             tx->mp,
+                             (const char *)ib_bytestr_const_ptr(nvpair->name),
+                             ib_bytestr_length(nvpair->name),
+                             IB_FTYPE_BYTESTR,
+                             ib_ftype_bytestr_in(nvpair->value));
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                            "Error creating field for header stream rule data: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Execute the rule operator */
+        rc = ib_operator_execute(ib, tx, opinst, value, &result);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                            "Operator %s returned an error: %s",
+                            opinst->op->name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Store the result */
+        if (result != 0) {
+            *rule_result = result;
+        }
     }
+    ib_log_debug3_tx(tx, "Operator %s => %d", opinst->op->name, *rule_result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -903,8 +993,9 @@ static ib_status_t execute_stream_rule(ib_engine_t *ib,
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
  * @param[in] event Event type.
- * @param[in,out] txdata Transaction data.
- * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
+ * @param[in] txdata Transaction data (or NULL)
+ * @param[in] headers Parsed headers (or NULL)
+ * @param[in] meta Phase meta data
  *
  * @returns Status code
  */
@@ -912,15 +1003,17 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     ib_state_event_type_t event,
                                     ib_txdata_t *txdata,
-                                    void *cbdata)
+                                    ib_parsed_header_t *headers,
+                                    const ib_rule_phase_meta_t *meta)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
-    assert(txdata != NULL);
-    assert(cbdata != NULL);
+    assert( (txdata != NULL) || (headers != NULL) );
+    assert(meta != NULL);
+    assert( (meta->hook_type != IB_STATE_HOOK_TXDATA) || (txdata != NULL) );
+    assert( (meta->hook_type != IB_STATE_HOOK_HEADER) || (headers != NULL) );
 
-    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
     ib_context_t            *ctx = tx->ctx;
     ib_ruleset_phase_t      *ruleset_phase =
         &(ctx->rules->ruleset.phases[meta->phase_num]);
@@ -934,7 +1027,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Walk through the rules & execute them */
+    /* Are there any rules?  If not, do a quick exit */
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug3_tx(tx,
                       "No rules for stream %d/%s in context %s",
@@ -962,17 +1055,19 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         ib_status_t  rc;
 
         /*
-         * Determine if this event applies to this rule
+         * Determine if this event applies to this rule (txdata only)
          */
         assert(meta->event == event);
-        for (dtype_num = 0;  dtype_num < meta->num_dtypes;  ++dtype_num) {
-            if (txdata->dtype == meta->dtypes[dtype_num]) {
-                dtype_found = IB_TRUE;
-                break;
+        if (txdata != NULL) {
+            for (dtype_num = 0;  dtype_num < meta->num_dtypes;  ++dtype_num) {
+                if (txdata->dtype == meta->dtypes[dtype_num]) {
+                    dtype_found = IB_TRUE;
+                    break;
+                }
             }
-        }
-        if (dtype_found == IB_FALSE) {
-            continue;
+            if (dtype_found == IB_FALSE) {
+                continue;
+            }
         }
 
         /* Skip invalid / disabled rules */
@@ -990,10 +1085,20 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * operator returns an error.  This needs further discussion to
          * determine what the correct behavior should be.
          */
-        rc = execute_stream_rule(ib, rule, tx, txdata, &result);
+        if (txdata != NULL) {
+            rc = execute_stream_txdata_rule(ib, rule, tx, txdata, &result);
+        }
+        else if (headers != NULL) {
+            rc = execute_stream_header_rule(ib, rule, tx, headers, &result);
+        }
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error executing rule %s: %s",
                          rule->meta.id, ib_status_to_string(rc));
+        }
+
+        /* Invert? */
+        if ( (rule->opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
+            result = ( (result) == 0);
         }
 
         /*
@@ -1022,6 +1127,154 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
      * occurred, return IB_OK to the engine.  A bigger discussion of if / how
      * such errors should be propagated needs to occur.
      */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Run stream header rules
+ * @internal
+ *
+ * @param[in] ib Engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in] headers Parsed headers
+ * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
+ *
+ * @returns Status code
+ */
+static ib_status_t run_stream_header_rules(ib_engine_t *ib,
+                                           ib_tx_t *tx,
+                                           ib_state_event_type_t event,
+                                           ib_parsed_header_t *headers,
+                                           void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(headers != NULL);
+    assert(cbdata != NULL);
+
+    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
+    ib_status_t rc;
+    rc = run_stream_rules(ib, tx, event, NULL, headers, meta);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Run stream TXDATA rules
+ * @internal
+ *
+ * @param[in] ib Engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in] txdata Transaction data.
+ * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
+ *
+ * @returns Status code
+ */
+static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
+                                           ib_tx_t *tx,
+                                           ib_state_event_type_t event,
+                                           ib_txdata_t *txdata,
+                                           void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(cbdata != NULL);
+
+    if (txdata == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
+    ib_status_t rc;
+    rc = run_stream_rules(ib, tx, event, txdata, NULL, meta);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Run stream TX rules (aka request header)
+ * @internal
+ *
+ * @param[in] ib Engine.
+ * @param[in] tx Transaction.
+ * @param[in] event Event type.
+ * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
+ *
+ * @returns Status code
+ */
+static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
+                                       ib_tx_t *tx,
+                                       ib_state_event_type_t event,
+                                       void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_parsed_header_wrapper_t *hdrs;
+    ib_status_t rc;
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(cbdata != NULL);
+
+    /* Wrap up the request line */
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&hdrs, tx);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error creating name/value pair list: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_parsed_name_value_pair_list_add(
+        hdrs,
+        "method", 6,
+        (const char *)ib_bytestr_const_ptr(tx->request_line->method),
+        ib_bytestr_length(tx->request_line->method));
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error adding method to name/value pair list: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_parsed_name_value_pair_list_add(
+        hdrs,
+        "path", 4,
+        (const char *)ib_bytestr_const_ptr(tx->request_line->path),
+        ib_bytestr_length(tx->request_line->path));
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error adding path to name/value pair list: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_parsed_name_value_pair_list_add(
+        hdrs,
+        "version", 7,
+        (const char *)ib_bytestr_const_ptr(tx->request_line->version),
+        ib_bytestr_length(tx->request_line->version));
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error adding version to name/value pair list: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Now, process the request line */
+    ib_log_debug_tx(tx, "Running header line through stream headers");
+    rc = run_stream_header_rules(ib, tx, event,
+                                 hdrs->head, cbdata);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error processing tx request line: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Process the request headers */
+    ib_log_debug_tx(tx, "Running headers through stream headers");
+    rc = run_stream_header_rules(ib, tx, event,
+                                 tx->request_headers->head,
+                                 cbdata);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Error processing tx request line: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1099,23 +1352,67 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
         if (meta->event == (ib_state_event_type_t) -1) {
             continue;
         }
-        if (meta->is_stream == IB_TRI_FALSE) {
-            rc = ib_hook_tx_register(ib,
-                                     meta->event,
-                                     run_phase_rules,
-                                     (void *)meta);
+
+        /* Non-phase rules all use the same callback */
+        switch (meta->is_stream) {
+
+        case IB_TRI_FALSE :
+            rc = ib_hook_tx_register(
+                ib,
+                meta->event,
+                run_phase_rules,
+                (void *)meta);
             hook_type = "tx";
+            break;
+
+        case IB_TRI_TRUE :
+            switch (meta->hook_type) {
+
+            case IB_STATE_HOOK_TX:
+                rc = ib_hook_tx_register(
+                    ib,
+                    meta->event,
+                    run_stream_tx_rules,
+                    (void *)meta);
+                hook_type = "stream-tx";
+                break;
+
+            case IB_STATE_HOOK_TXDATA:
+                rc = ib_hook_txdata_register(
+                    ib,
+                    meta->event,
+                    run_stream_txdata_rules,
+                    (void *)meta);
+                hook_type = "txdata";
+                break;
+
+            case IB_STATE_HOOK_HEADER:
+                rc = ib_hook_parsed_header_data_register(
+                    ib,
+                    meta->event,
+                    run_stream_header_rules,
+                    (void *)meta);
+                hook_type = "header";
+                break;
+
+            default:
+                ib_log_error(ib,
+                             "Unknown hook registration type %d for "
+                             "phase %d/%d/%s",
+                             meta->phase_num, meta->event, meta->name);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            break;
+
+        default:
+            ib_log_error(ib, "Rule class unknown: %d", meta->is_stream);
+            break;
         }
-        else {
-            rc = ib_hook_txdata_register(ib,
-                                         meta->event,
-                                         run_stream_rules,
-                                         (void *)meta);
-            hook_type = "txdata";
-        }
+        
+        /* OK */
         if (rc != IB_OK) {
             ib_log_error(ib,
-                         "Hook %s register for phase %d/%d/%s returned %s",
+                         "Hook %s registration for phase %d/%d/%s returned %s",
                          hook_type, meta->phase_num, meta->event, meta->name,
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
