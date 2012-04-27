@@ -1408,7 +1408,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             ib_log_error(ib, "Rule class unknown: %d", meta->is_stream);
             break;
         }
-        
+
         /* OK */
         if (rc != IB_OK) {
             ib_log_error(ib,
