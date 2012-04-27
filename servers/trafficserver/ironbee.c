@@ -1371,7 +1371,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return rc;
     }
 
-    ib_util_log_level(9);
+    ib_util_log_level(4);
 
     ib_trace_init(TRACEFILE);
 
