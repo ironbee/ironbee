@@ -996,25 +996,27 @@ static ib_status_t print_tx( ib_engine_t *ib,
 
     /* ARGS */
     rc = ib_data_get(tx->dpi, "ARGS", &field);
-    if (rc != IB_OK) {
+    if (rc == IB_OK) {
+        print_field("tx:ARGS", field, 0);
+
+        // @todo Remove mutable once list is const correct.
+        rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        if (lst == NULL) {
+            printf("print_tx: Failed ARGS is not a list\n");
+            ib_log_debug(ib, "print_tx: ARGS is not a list");
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+        print_list("tx:ARGS", lst);
+    }
+    else {
         printf("print_tx: Failed to get ARGS: %d\n", rc);
         ib_log_debug_tx(tx, "print_tx: Failed to get ARGS: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
-    print_field("tx:ARGS", field, 0);
-    // @todo Remove mutable once list is const correct.
-    rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (lst == NULL) {
-        printf("print_tx: Failed ARGS is not a list\n");
-        ib_log_debug_tx(tx, "print_tx: ARGS is not a list");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-    print_list("tx:ARGS", lst);
 
     /* Not doing a full dump?  Done */
     if (test_dump_flags(DUMP_TX_FULL) == 0) {
