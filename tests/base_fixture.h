@@ -152,7 +152,7 @@ public:
         }
         ib_conndata->dlen = req.size();
         memcpy(ib_conndata->data, req.data(), req.size());
-        rc = ib_state_notify_conn_data_in(ib_engine, ib_conndata, NULL);
+        rc = ib_state_notify_conn_data_in(ib_engine, ib_conndata);
         if (rc != IB_OK) {
             throw std::runtime_error(
                 std::string("ib_notify_conn_data_in failed"));
@@ -171,7 +171,7 @@ public:
         }
         ib_conndata->dlen = req.size();
         memcpy(ib_conndata->data, req.data(), req.size());
-        rc = ib_state_notify_conn_data_out(ib_engine, ib_conndata, NULL);
+        rc = ib_state_notify_conn_data_out(ib_engine, ib_conndata);
         if (rc != IB_OK) {
             throw std::runtime_error(
                 std::string("ib_notify_conn_data_in failed"));
