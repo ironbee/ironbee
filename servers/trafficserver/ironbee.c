@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h>
 #include <ts/ts.h>
 
 #include <sys/socket.h>
@@ -47,6 +48,8 @@
 #include <ironbee/util.h>
 #include <ironbee/debug.h>
 
+#define PARSED_TXDATA 1
+
 
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
@@ -58,7 +61,6 @@ TSTextLogObject ironbee_log;
 
 typedef struct {
     ib_conn_t *iconn;
-
     /* store the IPs here so we can clean them up and not leak memory */
     char remote_ip[ADDRSIZE];
     char local_ip[ADDRSIZE];
@@ -104,6 +106,7 @@ typedef struct {
 
 typedef struct {
     ib_ssn_ctx *ssn;
+    ib_tx_t *tx;
     TSHttpTxn txnp;
     ib_filter_ctx in;
     ib_filter_ctx out;
@@ -121,20 +124,29 @@ typedef struct {
     ib_server_direction_t dir;
     const char *word;
     TSReturnCode (*hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
-    ib_status_t (*ib_notify)(ib_engine_t *, ib_conndata_t *);
+    ib_status_t (*ib_notify_header)(ib_engine_t*, ib_tx_t*,
+                 ib_parsed_header_wrapper_t*);
+    ib_status_t (*ib_notify_body)(ib_engine_t*, ib_tx_t*, ib_txdata_t*);
+    ib_status_t (*ib_notify_end)(ib_engine_t*, ib_tx_t*);
 } ironbee_direction_t;
 
 static ironbee_direction_t ironbee_direction_req = {
     IBD_REQ,
     "request",
     TSHttpTxnClientReqGet,
-    ib_state_notify_conn_data_in
+    //ib_state_notify_conn_data_in
+    ib_state_notify_request_headers_data,
+    ib_state_notify_request_body_data,
+    ib_state_notify_request_finished
 };
 static ironbee_direction_t ironbee_direction_resp = {
     IBD_RESP,
     "response",
     TSHttpTxnClientRespGet,
-    ib_state_notify_conn_data_out
+    //ib_state_notify_conn_data_out
+    ib_state_notify_response_headers_data,
+    ib_state_notify_response_body_data,
+    ib_state_notify_response_finished
 };
 
 typedef struct {
@@ -184,29 +196,50 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     TSReturnCode rv;
 
     if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
-        TSError("couldn't retrieve client response header\n");
+        TSError("Errordoc: couldn't retrieve client response header");
         TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
         return;
     }
-    TSHttpHdrStatusSet(bufp, hdr_loc, txndata->status);
-    TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
+    rv = TSHttpHdrStatusSet(bufp, hdr_loc, txndata->status);
+    if (rv != TS_SUCCESS) {
+        TSError("ErrorDoc - TSHttpHdrStatusSet");
+    }
+    rv = TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
+    if (rv != TS_SUCCESS) {
+        TSError("ErrorDoc - TSHttpHdrReasonSet");
+    }
 
-    /* FIXME - generalize this lot */
     while (hdrs = txndata->err_hdrs, hdrs != 0) {
         txndata->err_hdrs = hdrs->next;
         rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
         if (rv != TS_SUCCESS) {
-            // TODO
+            TSError("ErrorDoc - TSMimeHdrFieldCreate");
+            goto errordoc_free;
         }
         rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
                                    hdrs->hdr, strlen(hdrs->hdr));
         if (rv != TS_SUCCESS) {
-            // TODO
+            TSError("ErrorDoc - TSMimeHdrFieldNameSet");
+            goto errordoc_free1;
         }
-        TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
+        rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
                                         hdrs->value, strlen(hdrs->value));
-        TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
-        TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+        if (rv != TS_SUCCESS) {
+            TSError("ErrorDoc - TSMimeHdrFieldValueStringInsert");
+            goto errordoc_free1;
+        }
+        rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
+        if (rv != TS_SUCCESS) {
+            TSError("ErrorDoc - TSMimeHdrFieldAppend");
+            goto errordoc_free1;
+        }
+errordoc_free1:
+        rv = TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+        if (rv != TS_SUCCESS) {
+            TSError("ErrorDoc - TSHandleMLocRelease 1");
+            goto errordoc_free;
+        }
+errordoc_free:
         TSfree(hdrs->hdr);
         TSfree(hdrs->value);
         TSfree(hdrs);
@@ -214,9 +247,13 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     }
     if (txndata->err_body) {
         /* this will free the body, so copy it first! */
-        TSHttpTxnErrorBodySet(txnp, txndata->err_body, strlen(txndata->err_body), NULL);
+        TSHttpTxnErrorBodySet(txnp, txndata->err_body,
+                              strlen(txndata->err_body), NULL);
     }
-    TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+    rv = TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
+    if (rv != TS_SUCCESS) {
+        TSError("ErrorDoc - TSHandleMLocRelease 2");
+    }
 }
 
 static ib_status_t ib_error_callback(void *x, int status)
@@ -284,6 +321,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
     if (data) {
         hdr_do *x;
+        ib_tx_destroy(data->tx);
         if (data->out.output_buffer) {
             TSIOBufferDestroy(data->out.output_buffer);
             data->out.output_buffer = NULL;
@@ -314,7 +352,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
 {
     if (data) {
-        if (data->iconn)
+        if (data->iconn) /* notify_conn_closed calls conn_destroy */
             ib_state_notify_conn_closed(ironbee, data->iconn);
         TSfree(data);
     }
@@ -366,11 +404,11 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         /* this is the second call to us, and we have data buffered.
          * Feed buffered data to ironbee
          */
-        ib_conndata_t icdata;
-        icdata.conn = data->ssn->iconn;
-        icdata.dlen = ibd->data->buflen;
-        icdata.data = (uint8_t *)ibd->data->buf;
-        (*ibd->ibd->ib_notify)(ironbee, &icdata);
+        ib_txdata_t itxdata;
+        itxdata.dtype = IB_DTYPE_HTTP_BODY;
+        itxdata.data = (uint8_t *)ibd->data->buf;
+        itxdata.dlen = ibd->data->buflen;
+        (*ibd->ibd->ib_notify_body)(ironbee, data->tx, &itxdata);
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
         ibd->data->buflen = 0;
@@ -424,7 +462,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
 
             /* feed the data to ironbee, and consume them */
             while (btowrite > 0) {
-                ib_conndata_t icdata;
+                //ib_conndata_t icdata;
                 int64_t ilength;
                 TSIOBufferReader input_reader = TSVIOReaderGet(input_vio);
                 TSIOBufferBlock blkp = TSIOBufferReaderStart(input_reader);
@@ -436,13 +474,13 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     bufp += ilength;
                 }
                 else {
-                    icdata.conn = data->ssn->iconn;
-                    icdata.dlen = ilength;
-                    icdata.data = (uint8_t *)ibuf;
-                    (*ibd->ibd->ib_notify)(ironbee, &icdata);
+                    ib_txdata_t itxdata;
+                    itxdata.dtype = IB_DTYPE_HTTP_BODY;
+                    itxdata.data = (uint8_t *)ibd->data->buf;
+                    itxdata.dlen = ibd->data->buflen;
+                    (*ibd->ibd->ib_notify_body)(ironbee, data->tx,
+                                                (ilength!=0) ? &itxdata : NULL);
                 }
-                //"response", TSHttpTxnClientRespGet, ib_state_notify_conn_data_out
-                //      ib_state_notify_conn_data_out(ironbee, &icdata);
 
                 /* and mark it as all consumed */
                 btowrite -= ilength;
@@ -505,6 +543,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
     /* Check to see if the transformation has been closed by a call to
      * TSVConnClose.
      */
+    ib_txn_ctx *data;
     TSDebug("ironbee", "Entering out_data for %s\n", ibd->ibd->word);
 
     if (TSVConnClosedGet(contp)) {
@@ -540,6 +579,9 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
              * indicate that we don't want to hear about it anymore.
              */
             TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
+
+            data = TSContDataGet(contp);
+            (*ibd->ibd->ib_notify_end)(ironbee, data->tx);
             break;
         case TS_EVENT_VCONN_WRITE_READY:
             TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_READY");
@@ -575,8 +617,8 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
     ib_txn_ctx *data = TSContDataGet(contp);
     if (data->out.buflen == (unsigned int)-1) {
     TSDebug("ironbee", "\tout_data_event: buflen = -1");
-    ib_log_debug3(ironbee,
-                     "ironbee/out_data_event(): buflen = -1");
+    //ib_log_debug(ironbee, 9,
+                     //"ironbee/out_data_event(): buflen = -1");
     return 0;
     }
     ibd_ctx direction;
@@ -603,14 +645,55 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
     ib_txn_ctx *data = TSContDataGet(contp);
     if (data->out.buflen == (unsigned int)-1) {
     TSDebug("ironbee", "\tin_data_event: buflen = -1");
-    ib_log_debug3(ironbee,
-                 "ironbee/in_data_event(): buflen = -1");
+    //ib_log_debug(ironbee, 9,
+                 //"ironbee/in_data_event(): buflen = -1");
     return 0;
     }
     ibd_ctx direction;
     direction.ibd = &ironbee_direction_req;
     direction.data = &data->in;
     return data_event(contp, event, &direction);
+}
+/**
+ * @internal
+ * Parse lines in an HTTP header buffer
+ *
+ * Given a line terminated by "\r\n", this finds the end-of-line.
+ * Where a line is wrapped, continuation lines are included in
+ * in the (multi-)line parsed.
+ *
+ * @param[in] line Buffer to parse
+ * @param[out] lenp Line length (excluding line end)
+ * @return 1 if a line was parsed, 0 for a blank line (no more headers),
+ *         -1 for a parse error
+ */
+static int get_line(char * const line, size_t *lenp)
+{
+    size_t len = 0;
+    char *end;
+    if (line[0] == '\r' && line[1] == '\n') {
+        return 0; /* blank line = no more hdr lines */
+    }
+    else {
+        /* Use a loop here to catch theoretically-unlimited numbers
+         * of continuation lines in a folded header.  The isspace
+         * tests for a continuation line
+         */
+        do {
+            if (len > 0) {
+                /* we have a continuation line.  Add the lineend. */
+                len += 2;
+            }
+            end = strstr(line + len, "\r\n");
+            if (!end) {
+                return -1;
+            }
+            len = end - line;
+        } while (isspace(end[2]) && end[2] != '\r');
+
+        *lenp = len;
+        return 1;
+    }
 }
 
 /**
@@ -626,7 +709,6 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
 static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                        ironbee_direction_t *ibd)
 {
-    ib_conndata_t icdata;
     int rv;
     TSMBuffer bufp;
     TSMLoc hdr_loc;
@@ -635,10 +717,18 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     TSIOBufferBlock blockp;
     int64_t len;
     hdr_do *hdr;
+    char *line, *lptr;
+    size_t line_len = 0;
+    int offset = 0;
+
+    char *head_buf;
+    char *head_ptr;
+    void *head_start;
+    int first_time = 1;
+    unsigned char *dptr, *icdatabuf;
+    size_t icdatalen;
 
     TSDebug("ironbee", "process %s headers\n", ibd->word);
-
-    icdata.conn = data->ssn->iconn;
 
     /* Use alternative simpler path to get the un-doctored request
      * if we have the fix for TS-998
@@ -646,90 +736,8 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
      * This check will want expanding/fine-tuning according to what released
      * versions incorporate the fix
      */
-#if (TS_VERSION_MAJOR >= 3) &&  ( \
-    ((TS_VERSION_MINOR >= 1) && (TS_VERSION_MICRO >= 3)) ||  \
-    (TS_VERSION_MINOR >= 2))
-    if (ibd->dir == IBD_RESP) {
-        char *head_buf;
-
-        /* before the HTTP headers comes the request line / response code */
-        rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
-        if (rv) {
-            TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
-            return 0;
-        }
-
-        /* Get the data into an IOBuffer so we can access them! */
-        //iobufp = TSIOBufferSizedCreate(...);
-        iobufp = TSIOBufferCreate();
-        TSHttpHdrPrint(bufp, hdr_loc, iobufp);
-
-        readerp = TSIOBufferReaderAlloc(iobufp);
-        blockp = TSIOBufferReaderStart(readerp);
-
-        len = TSIOBufferBlockReadAvail(blockp, readerp);
-        head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
-
-        icdata.data = (void *)head_buf;
-        icdata.dlen = len;
-
-        (*ibd->ib_notify)(ironbee, &icdata, NULL);
-
-        TSIOBufferDestroy(iobufp);
-        TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
-    }
-    else {
-        void *head_buf;
-        char *head_ptr;
-
-        rv = TSHttpTxnClientDataGet(txnp, &head_buf, &icdata.dlen);
-        if (rv) {
-            TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
-            return 0;
-        }
-
-        /* Workaround:
-         * Search for and remove the extra "http://" in the path by
-         * advancing the bytes preceding the extra string forward.
-         *
-         * EX: Here 1 would become 2 (x are removed bytes)
-         *  1) "GET http:///foo HTTP/1.0"
-         *  2) "xxxxxxxGET /foo HTTP/1.0"
-         */
-        head_ptr = (char *)memchr(head_buf, ' ', icdata.dlen);
-        if ((head_ptr != NULL) &&
-            (icdata.dlen - (head_ptr - (char *)head_buf) >= 9) &&
-            (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
-            (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
-            (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
-            (head_ptr[7] = '/') && (head_ptr[8] = '/'))
-        {
-            TSError("ATS Workaround - Removing extra http:// from request line: %.*s\n", 50, (char *)head_buf);
-            while (head_ptr >= (char *)head_buf) {
-                *(head_ptr + 7) = *head_ptr;
-                --head_ptr;
-            }
-            icdata.data = (void *)(((char *)head_buf) + 7);
-            icdata.dlen -= 7;
-            TSError("ATS Workaround - DATA[%d]: %.*s ...\n", (int)icdata.dlen, 25, (char *)icdata.data);
-        }
-        else {
-            icdata.data = head_buf;
-        }
-
-        (*ibd->ib_notify)(ironbee, &icdata, NULL);
-    }
-
-#else
     /* We'll get a bogus URL from TS-998 */
 
-    char *head_buf;
-    char *head_ptr;
-    void *head_start;
-    int first_time = 1;
-    unsigned char *dptr;
-
-    /* before the HTTP headers comes the request line / response code */
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv) {
         TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
@@ -745,12 +753,12 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     blockp = TSIOBufferReaderStart(readerp);
 
     len = TSIOBufferBlockReadAvail(blockp, readerp);
-    ib_log_debug3(ironbee,
-                 "ts/ironbee/process_header: len=%ld", len );
+    //ib_log_debug(ironbee, 9,
+                 //"ts/ironbee/process_header: len=%ld", len );
 
     /* if we're going to enable manipulation of headers, we need a copy */
-    icdata.dlen = len;
-    icdata.data = dptr = TSmalloc(len);
+    icdatalen = len;
+    icdatabuf = dptr = TSmalloc(len);
 
     for (head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
          len > 0;
@@ -769,27 +777,35 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
             head_ptr = (char *)memchr(head_buf, ' ', len);
             if ((head_ptr != NULL) &&
                 (len - (head_ptr - head_buf) >= 9) &&
-                (head_ptr[1] = 'h') && (head_ptr[2] = 't') &&
-                (head_ptr[3] = 't') && (head_ptr[4] = 'p') &&
-                (head_ptr[5] = ':') && (head_ptr[6] = '/') &&
-                (head_ptr[7] = '/') && (head_ptr[8] = '/'))
-            {
+                (head_ptr[1] == 'h') && (head_ptr[2] == 't') &&
+                (head_ptr[3] == 't') && (head_ptr[4] == 'p')) {
+                if ((head_ptr[5] == ':') && (head_ptr[6] == '/') &&
+                    (head_ptr[7] == '/') && (head_ptr[8] == '/')) {
+                    offset = 7;
+                }
+                else if ((head_ptr[5] == 's') &&
+                         (head_ptr[6] == ':') && (head_ptr[7] == '/') &&
+                         (head_ptr[8] == '/') && (head_ptr[9] == '/')) {
+                    offset = 8;
+                }
+            }
+            if (offset > 0) {
                 TSError("ATS Workaround - Removing extra http:// from request line: %.*s\n", 50, (char *)head_buf);
                 while (head_ptr >= head_buf) {
-                    *(head_ptr + 7) = *head_ptr;
+                    *(head_ptr + offset) = *head_ptr;
                     --head_ptr;
                 }
-                head_start = head_buf + 7;
-                len -= 7;
-                icdata.dlen -= 7;
+                head_start = head_buf + offset;
+                icdatalen -= offset;
+                memcpy(dptr, head_start, len - offset);
+                dptr += len - offset;
                 TSError("ATS Workaround - DATA[%d]: %.*s ...\n", (int)len, 25, (char *)head_start);
             }
             else {
                 head_start = head_buf;
+                memcpy(dptr, head_start, len);
+                dptr += len;
             }
-
-            memcpy(dptr, head_start, len);
-            dptr += len;
         }
         else {
             memcpy(dptr, head_buf, len);
@@ -801,7 +817,100 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         /* if there's more to come, go round again ... */
         TSIOBufferReaderConsume(readerp, len);
     }
+#if 1
+    /* parse into lines and feed to ironbee as parsed data */
+    if (ibd->dir == IBD_REQ) {
+        char *method, *path, *version;
+        size_t m_len, p_len, v_len, n_len;
+        ib_parsed_header_wrapper_t *ibhdrs;
+        ib_parsed_req_line_t *rline;
+
+        line = (char*)icdatabuf;
+        rv = get_line(line, &line_len);
+
+        /* method is alphanumeric */
+        method = line;
+        for (lptr = line; isalpha(*lptr); ++lptr);
+        m_len = lptr - line;
+        while (isspace(*lptr))
+            ++lptr;
+        /* path for our purposes is anything-but-whitespace */
+        path = lptr;
+        p_len = strcspn(path, " \t\r\n");
+        lptr += p_len;
+        while (isspace(*lptr))
+            ++lptr;
+        /* Version is the rest of the line, but tolerate trailing whitespace */
+        version = lptr;
+        v_len = strcspn(version, " \t\r\n");
+        rv = ib_parsed_req_line_create(data->tx, &rline, method, m_len,
+                                       path, p_len, version, v_len);
+        ib_state_notify_request_started(ironbee, data->tx, rline);
+
+        /* now loop over req header lines */
+        rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
+        for (line += line_len + 2;
+             get_line(line, &line_len) == 1;
+             line += line_len + 2) {
+            n_len = strcspn(line, ":");
+            lptr = line + n_len + 1;
+            while (isspace(*lptr))
+                ++lptr;
+            v_len = line_len - (lptr - line);
+            rv = ib_parsed_name_value_pair_list_add(ibhdrs,
+                                                    line, n_len,
+                                                    lptr, v_len);
+        }
+        rv = ib_state_notify_request_headers_data(ironbee, data->tx, ibhdrs);
+        rv = ib_state_notify_request_headers(ironbee, data->tx);
+    }
+    else {
+        //ib_parsed_header_t *ibhdr = NULL, *newhdr;
+        ib_parsed_header_wrapper_t *ibhdrs;
+        ib_parsed_resp_line_t *rline;
+        char *code, *msg;
+        size_t c_len, m_len, n_len, v_len;
+
+        line = (char*)icdatabuf;
+        rv = get_line(line, &line_len);
+
+        /* "HTTP/1.x code reason".  We only need code and reason */
+        for (lptr = line; !isspace(*lptr); ++lptr) ;
+        while (isspace(*lptr))
+            ++lptr;
+        code = lptr;
+        while (!isspace(*lptr))
+            ++lptr;
+        c_len = lptr - code;
+        while (isspace(*lptr))
+            ++lptr;
+        msg = lptr;
+        m_len = line_len - (lptr - line);
+
+        rv = ib_parsed_resp_line_create(data->tx, &rline, code, c_len,
+                                        msg, m_len);
+        rv = ib_state_notify_response_started(ironbee, data->tx, rline);
+
+        /* now loop over resp header lines */
+        rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
+        for (line += line_len + 2;
+             get_line(line, &line_len) == 1;
+             line += line_len + 2) {
+            n_len = strcspn(line, ":");
+            lptr = line + n_len + 1;
+            while (isspace(*lptr))
+                ++lptr;
+            v_len = line_len - (lptr - line);
+            rv = ib_parsed_name_value_pair_list_add(ibhdrs,
+                                                    line, n_len,
+                                                    lptr, v_len);
+        }
+        rv = ib_state_notify_response_headers_data(ironbee, data->tx, ibhdrs);
+        rv = ib_state_notify_response_headers(ironbee, data->tx);
+    }
+#else
     (*ibd->ib_notify)(ironbee, &icdata);
+#endif
 
     /* Now manipulate headers as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
@@ -859,10 +968,9 @@ add_hdr:
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);
     TSIOBufferDestroy(iobufp);
-    TSfree(icdata.data);
+    TSfree(icdatabuf);
 
     return data->status;
-#endif
 }
 
 /**
@@ -948,6 +1056,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Hook to process requests */
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
+            ib_tx_create(ironbee, &txndata->tx, ssndata->iconn, txndata);
+
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
@@ -1012,6 +1122,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* hook for processing incoming request/headers */
         case TS_EVENT_HTTP_PRE_REMAP:
+        case TS_EVENT_HTTP_OS_DNS:
             txndata = TSContDataGet(contp);
             status = process_hdr(txndata, txnp, &ironbee_direction_req);
             txndata->state |= HDRS_IN;
