@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee Module Code
+ * @brief IronBee &mdash; Module Code
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>

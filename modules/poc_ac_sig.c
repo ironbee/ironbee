@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Proof of Concept using AhoCorasick AC Matcher Module
+ * @brief IronBee &mdash; Proof of Concept using AhoCorasick AC Matcher Module
  *
  * This module serves as an example and proof of concept for
  * signatures using AC based Matcher.

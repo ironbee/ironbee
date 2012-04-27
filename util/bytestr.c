@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Utility Byte String Functions
+ * @brief IronBee &mdash; Utility Byte String Functions
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

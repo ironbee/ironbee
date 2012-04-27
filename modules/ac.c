@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - AhoCorasick Matcher Module
+ * @brief IronBee &mdash; AhoCorasick Matcher Module
  *
  * This module adds an AhoCorasick based matcher named "ac".
  *

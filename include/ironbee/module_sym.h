@@ -21,7 +21,7 @@
 
 /**
  * @file
- * @brief IronBee - Module
+ * @brief IronBee &mdash; Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

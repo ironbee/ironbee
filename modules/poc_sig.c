@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Proof of Concept Signature Module
+ * @brief IronBee &mdash; Proof of Concept Signature Module
  *
  * This module serves as an example and proof of concept for
  * a signature language. The module is purposefully simplistic

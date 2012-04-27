@@ -27,15 +27,15 @@
 extern "C" {
 #endif
 
-/* File tag is intentionally omitted. */
 /**
- * @brief IronBee interface for handling parsed content.
+ * @file
+ * @brief IronBee &mdash; Interface for handling parsed content.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 /**
- * @ingroup IronBeeEngineState State
+ * @ingroup IronBeeEngineState
  * @{
  */
 

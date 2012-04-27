@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Provider
+ * @brief IronBee &mdash; Provider
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -36,6 +36,10 @@ extern "C" {
 /**
  * @defgroup IronBeeProvider Provider
  * @ingroup IronBee
+ *
+ * Providers allow for alternative implementation of specific functionality,
+ * e.g., logging.
+ *
  * @{
  */
 

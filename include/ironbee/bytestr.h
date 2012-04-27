@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Byte String Utility Functions
+ * @brief IronBee &mdash; Byte String Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -38,6 +38,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilByteStr Byte String
  * @ingroup IronBeeUtil
+ *
+ * Mpool managed strings with support for embedded NULs.
+ *
  * @{
  */
 

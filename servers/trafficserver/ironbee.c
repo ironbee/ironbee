@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Apache Traffic Server Plugin
+ * @brief IronBee &mdash; Apache Traffic Server Plugin
  *
  * @author Nick Kew <nkew@qualys.com>
  */

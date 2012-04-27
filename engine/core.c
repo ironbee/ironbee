@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Core Module
+ * @brief IronBee &mdash; Core Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

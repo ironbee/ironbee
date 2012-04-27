@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - String Expansion Utility Functions
+ * @brief IronBee &mdash; String Expansion Utility Functions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

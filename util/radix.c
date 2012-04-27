@@ -18,7 +18,7 @@
 /**
  * @file
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
- * @brief IronBee - Utility Radix functions
+ * @brief IronBee &mdash; Utility Radix functions
  *
  * This is a radix tree bitwise implementation initially designed for
  * IP / CIDR addresses.

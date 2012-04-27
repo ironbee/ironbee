@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Configuration Map Utility Functions
+ * @brief IronBee &mdash; Configuration Map Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

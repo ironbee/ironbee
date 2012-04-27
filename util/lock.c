@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Lock Utilities
+ * @brief IronBee &mdash; Lock Utilities
  * @author Sam Baskinger <sbaskinger@qualys.com>
  *
  * @internal

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Configuration Parser
+ * @brief IronBee &mdash; Configuration Parser
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -47,6 +47,9 @@ extern "C" {
 /**
  * @defgroup IronBeeConfigParser Configuration Parser
  * @ingroup IronBeeConfig
+ *
+ * Code specific to the RAGEL configuration parser.
+ *
  * @{
  */
 

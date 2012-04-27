@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Configuration Functions
+ * @brief IronBee &mdash; Configuration Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -36,6 +36,9 @@ extern "C" {
 /**
  * @defgroup IronBeeConfig Configuration
  * @ingroup IronBee
+ *
+ * Code related to parsing and interpreting the configuration file.
+ *
  * @{
  */
 

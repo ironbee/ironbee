@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Type Definitions
+ * @brief IronBee &mdash; Type Definitions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -34,6 +34,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilTypes Type Definitions
  * @ingroup IronBeeUtil
+ *
+ * Common type definitions.
+ *
  * @{
  */
 

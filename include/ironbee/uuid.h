@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - UUID Utility Functions
+ * @brief IronBee &mdash; UUID Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -37,6 +37,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilUUID UUID
  * @ingroup IronBeeUtil
+ *
+ * Code to generate, convert, and manipulate UUIDs.
+ *
  * @{
  */
 

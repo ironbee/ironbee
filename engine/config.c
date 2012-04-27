@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Configuration
+ * @brief IronBee &mdash; Configuration
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Utility Functions
+ * @brief IronBee &mdash; Utility Functions
  *
  * @author William Metcalf <wmetcalf@qualys.com>
  * @author Brian Rectanus <brectanus@qualys.com>
@@ -36,6 +36,9 @@ extern "C" {
 /**
  * @defgroup IronBeeClock Clock and Timing
  * @ingroup IronBeeUtil
+ *
+ * Functions to access clocks.
+ *
  * @{
  */
 

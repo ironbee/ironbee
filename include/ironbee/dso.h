@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - DSO Utility Functions
+ * @brief IronBee &mdash; DSO Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -35,6 +35,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilDso Dynamic Shared Object (DSO)
  * @ingroup IronBeeUtil
+ *
+ * Code to load and interact with DSOs.  Used for module loading.
+ *
  * @{
  */
 

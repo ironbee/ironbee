@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee
+ * @brief IronBee &mdash; Engine
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -42,9 +42,8 @@ extern "C" {
 #endif
 
 /**
- * @addtogroup IronBee IronBee
- * @{
- * @addtogroup IronBeeEngine Engine
+ * @defgroup IronBeeEngine IronBee Engine
+ * @ingroup IronBee
  *
  * This is the API for the IronBee engine.
  *

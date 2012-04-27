@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Data Access
+ * @brief IronBee &mdash; Data Access
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

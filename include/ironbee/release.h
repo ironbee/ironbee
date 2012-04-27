@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Release Data
+ * @brief IronBee &mdash; Release Data
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -32,6 +32,9 @@ extern "C" {
 /**
  * @defgroup IronBeeRelease Release
  * @ingroup IronBee
+ *
+ * Release information, e.g., version.
+ *
  * @{
  */
 

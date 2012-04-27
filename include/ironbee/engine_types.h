@@ -18,21 +18,20 @@
 #ifndef _IB_ENGINE_TYPES_H_
 #define _IB_ENGINE_TYPES_H_
 
+/**
+ * @file
+ * @brief IronBee &mdash; Engine Types.
+ *
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @brief IronBeeEngine types.
- *
- * @author Sam Baskinger <sbaskinger@qualys.com>
- *
- * @addtogroup IronBee IronBee
+ * @addtogroup IronBeeEngine
  * @{
- *
- * @addtogroup IronBeeEngine Engine
- * @{
- *
  */
 
 /** Engine Handle */
@@ -257,10 +256,7 @@ struct ib_loc_t {
 };
 
 
-/**
- * @} IronBeeEngine
- * @} IronBee
- */
+/** @} */
 
 #ifdef __cplusplus
 }

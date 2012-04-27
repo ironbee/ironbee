@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Field Routines
+ * @brief IronBee &mdash; Field Routines
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

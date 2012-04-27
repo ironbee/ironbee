@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Build Definitions
+ * @brief IronBee &mdash; Build Definitions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -28,6 +28,9 @@
 /**
  * @defgroup IronBeeBuild Build
  * @ingroup IronBee
+ *
+ * Cross-platform build support.
+ *
  * @{
  */
 

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - AhoCorasick Utility Functions
+ * @brief IronBee &mdash; AhoCorasick Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -39,6 +39,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilAhoCorasick AhoCorasick String Matching
  * @ingroup IronBeeUtil
+ *
+ * Implementation of the AhoCorasick string matching algorithm.
+ *
  * @{
  */
 

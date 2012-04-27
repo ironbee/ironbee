@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Rule engine definitions
+ * @brief IronBee &mdash; Rule engine definitions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
@@ -34,6 +34,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+* @defgroup IronBeeRule Rule Engine
+* @ingroup IronBeeEngine
+*
+* The rule engine supports writing rules that trigger on certain inputs
+* and execute actions as a result.
+*
+* @{
+*/
 
 /**
  * Rule flag update operations.
@@ -361,6 +371,8 @@ ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
  * @returns Pointer to the memory pool to use.
  */
 ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
+
+/** @} */
 
 #ifdef __cplusplus
 }

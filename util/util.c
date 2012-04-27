@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Utility Functions
+ * @brief IronBee &mdash; Utility Functions
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 

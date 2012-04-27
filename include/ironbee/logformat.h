@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Log Format Utility Functions
+ * @brief IronBee &mdash; Log Format Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -33,8 +33,11 @@ extern "C" {
 
 
 /**
- * @defgroup IronBeeUtilLogformat Log Format
+ * @defgroup IronBeeUtilLogformat AuditLog Format
  * @ingroup IronBeeUtil
+ *
+ * Code related to the format of the audit log.
+ *
  * @{
  */
 #define IB_LOGFORMAT_MAXFIELDS 128

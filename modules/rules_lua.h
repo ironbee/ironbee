@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee Lua Rule Integration.
+ * @brief IronBee &mdash; Lua Rule Integration.
  *
  * @author Sam Baskinger <basking2@yahoo.com>
  */

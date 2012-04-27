@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Private Utility Declarations
+ * @brief IronBee &mdash; Private Utility Declarations
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>

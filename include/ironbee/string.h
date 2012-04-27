@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - String Utility Functions
+ * @brief IronBee &mdash; String Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -36,6 +36,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilString String
  * @ingroup IronBeeUtil
+ *
+ * Functions to manipulate strings.
+ *
  * @{
  */
 

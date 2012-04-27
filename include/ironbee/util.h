@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Utility Functions
+ * @brief IronBee &mdash; Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -39,6 +39,10 @@ extern "C" {
 /**
  * @defgroup IronBeeUtil Utility Functions
  * @ingroup IronBee
+ *
+ * This module contains a wide variety of useful code not necessarily
+ * specific to IronBee.
+ *
  * @{
  */
 

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee action interface
+ * @brief IronBee &mdash; Action interface
  *
  * @author Craig Forbes <cforbes@qualys.com>
  */
@@ -28,6 +28,8 @@
 /**
  * @defgroup IronBeeActions Actions
  * @ingroup IronBee
+ *
+ * Actions are code that is executed in response to some trigger.
  * @{
  */
 

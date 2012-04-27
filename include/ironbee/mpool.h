@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Memory Pool Utility Functions
+ * @brief IronBee &mdash; Memory Pool Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

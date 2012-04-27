@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Rule engine definitions
+ * @brief IronBee &mdash; Rule engine definitions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
@@ -30,8 +30,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeRuleDefs Rule Engine Definitions
- * @ingroup IronBeeEngine
+ * @ingroup IronBeeRule
  * @{
  */
 

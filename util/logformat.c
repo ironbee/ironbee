@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Utility Log Format helper functions
+ * @brief IronBee &mdash; Utility Log Format helper functions
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Filter Interface
+ * @brief IronBee &mdash; Filter Interface
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

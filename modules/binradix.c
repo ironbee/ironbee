@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - BinRadix Matcher Module
+ * @brief IronBee &mdash; BinRadix Matcher Module
  *
  * This module adds a IP BinRadix based matcher named "binradix".
  *

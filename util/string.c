@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - String related functions
+ * @brief IronBee &mdash; String related functions
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 

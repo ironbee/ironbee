@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee transformation interface
+ * @brief IronBee &mdash; Transformation interface
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
@@ -28,6 +28,9 @@
 /**
  * @defgroup IronBeeTransformations Transformations
  * @ingroup IronBee
+ *
+ * Transformations modify input.
+ *
  * @{
  */
 

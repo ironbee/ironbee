@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Autoconf Header
+ * @brief IronBee &mdash; Autoconf Header
  *
  * This file wraps the generated autoconf header to provide define
  * blocks to prevent issue when included more than once.

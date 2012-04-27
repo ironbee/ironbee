@@ -24,15 +24,14 @@ extern "C" {
 
 /**
  * @file
- * @brief IronBee interface for handling parsed content.
+ * @brief IronBee &mdash; Interface for handling parsed content.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
- *
- * @defgroup IronBee IronBee
- * @{
- * @defgroup IronBeeEngine Engine
- * @{
+ */
+
+/**
  * @defgroup IronBeeParsedContent Parsed Content
+ * @ingroup IronBeeEngine
  *
  * API For passing parsed or partially parsed content to the IronBee Engine.
  *
@@ -248,8 +247,6 @@ DLL_PUBLIC ib_status_t ib_parsed_name_value_pair_list_append(
     const ib_parsed_name_value_pair_list_wrapper_t *tail);
 /**
  * @} IronBeeParsedContent
- * @} IronBeeEngine
- * @} IronBee
  */
 
 #ifdef __cplusplus

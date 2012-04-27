@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee interface for handling parsed content.
+ * @brief IronBee &mdash; Interface for handling parsed content.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */

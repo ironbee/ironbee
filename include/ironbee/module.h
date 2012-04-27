@@ -23,7 +23,7 @@
 
 /**
  * @file
- * @brief IronBee - Module
+ * @brief IronBee &mdash; Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -40,6 +40,9 @@ extern "C" {
 /**
  * @defgroup IronBeeModule Module
  * @ingroup IronBee
+ *
+ * Modules add functionality to IronBee.
+ *
  * @{
  */
 

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Radix Utility Functions
+ * @brief IronBee &mdash; Radix Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -38,6 +38,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilRadix Radix
  * @ingroup IronBeeUtil
+ *
+ * Datastructure to that maps bit string prefixes to arbitrary data.
+ *
  * @{
  */
 

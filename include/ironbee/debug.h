@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Debugging Utility Functions
+ * @brief IronBee &mdash; Debugging Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -38,6 +38,9 @@ extern "C" {
 /**
  * @defgroup IronBeeUtilDebug Debugging
  * @ingroup IronBeeUtil
+ *
+ * Debugging support; e.g., tracing all function calls.
+ *
  * @{
  */
 

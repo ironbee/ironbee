@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - User Agent Extraction Module
+ * @brief IronBee &mdash; User Agent Extraction Module
  *
  * This module extracts the user agent information
  *

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Radix Matcher Module
+ * @brief IronBee &mdash; Radix Matcher Module
  *
  * This module adds a IP Radix based matcher named "radix".
  *

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Top level API documentation.
+ * @brief IronBee++ &mdash; Top level API documentation.
  *
  * This file contains no code, only API documentations.  It functions as the
  * main page of the API documentation.
@@ -30,12 +30,12 @@
  *
  * Welcome to the API documentation for IronBee.
  *
- * If you are a module, rule, or plugin writer, you are probably interested in
+ * If you are a module, rule, or server writer, you are probably interested in
  * the public API.  See the Modules list and the files in include/ironbee.
  *
  * Of particular interest:
  * - Module writers: module.h, module_sym.h
- * - Plugin writers: plugin.h
+ * - Server writers: server.h, state_notify.h
  * - Everyone: types.h, mpool.h, debug.h
  *
  * If you are interested in developing the above in C++, see @ref
@@ -48,4 +48,8 @@
  * @c doxygen_internal/html/index.html
  *
  * This page is defined in include/ironbee/apidoc.h.
+ **/
+
+/**
+ * @defgroup IronBee IronBee WAF
  **/

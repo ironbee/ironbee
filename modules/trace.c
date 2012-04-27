@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Trace Module
+ * @brief IronBee &mdash; Trace Module
  *
  * This is a trace module
  *

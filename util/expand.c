@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Variable expansion related functions
+ * @brief IronBee &mdash; Variable expansion related functions
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 

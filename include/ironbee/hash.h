@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Hash Utility Functions
+ * @brief IronBee &mdash; Hash Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -37,6 +37,8 @@ extern "C" {
 /**
  * @defgroup IronBeeHash Hash
  * @ingroup IronBeeUtil
+ *
+ * Hash based map of null-string to void*.
  *
  * @{
  */

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee - Ironbee as a server plugin
+ * @brief IronBee &mdash; Ironbee as a server plugin
  *
  * @author Brian Rectanus <brectanus@qualys.com>, Nick Kew <nkew@qualys.com>
  */
@@ -34,6 +34,9 @@ extern "C" {
 /**
  * @defgroup IronBeeServer Server Plugins
  * @ingroup IronBee
+ *
+ * A server plugin defines how data is given to IronBee.
+ *
  * @{
  */
 

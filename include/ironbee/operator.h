@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee operator interface
+ * @brief IronBee &mdash; Operator interface
  *
  * @author Craig Forbes <cforbes@qualys.com>
  */
@@ -28,6 +28,9 @@
 /**
  * @defgroup IronBeeOperators Operators
  * @ingroup IronBee
+ *
+ * Operators interpret, modify, or compare data.
+ *
  * @{
  */
 

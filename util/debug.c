@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee - Debug Functions
+ * @brief IronBee &mdash; Debug Functions
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 

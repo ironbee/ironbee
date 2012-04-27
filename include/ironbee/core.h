@@ -22,7 +22,7 @@
 
 /**
  * @file
- * @brief IronBee - Module
+ * @brief IronBee &mdash; Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -41,6 +41,9 @@ extern "C" {
 /**
  * @defgroup IronBeeCore Core
  * @ingroup IronBee
+ *
+ * Core implements much of IronBee as a module.
+ *
  * @{
  */
 
