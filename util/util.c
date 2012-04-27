@@ -166,6 +166,77 @@ cleanup:
     return rc;
 }
 
+char *ib_util_path_join(ib_mpool_t *mp,
+                        const char *parent,
+                        const char *file_path)
+{
+    size_t len;
+    size_t plen;  /* Length of parent */
+    size_t flen;  /* Length of file_path */
+    char *out;
+
+    /* Strip off extraneous trailing slash chars */
+    plen = strlen(parent);
+    while( (plen >= 2) && (*(parent+(plen-1)) == '/') ) {
+        --plen;
+    }
+
+    /* Ignore leading and trailing slash chars in file_path */
+    flen = strlen(file_path);
+    while ( (flen > 1) && (*file_path == '/') ) {
+        ++file_path;
+        --flen;
+    }
+    while ( (flen > 1) && (*(file_path+(flen-1)) == '/') ) {
+        --flen;
+    }
+
+    /* Allocate & generate the include file name */
+    len = plen;                /* Parent directory */
+    if (plen > 1) {
+        len += 1;              /* slash */
+    }
+    len += flen;               /* file name */
+    len += 1;                  /* NUL */
+
+    out = (char *)ib_mpool_calloc(mp, len, 1);
+    if (out == NULL) {
+        return NULL;
+    }
+     
+    strncpy(out, parent, plen);
+    if (plen > 1) {
+        strcat(out, "/");
+    }
+    strncat(out, file_path, flen);
+
+    return out;
+}
+
+char *ib_util_relative_file(ib_mpool_t *mp,
+                            const char *ref_file,
+                            const char *file_path)
+{
+    char *refcopy;       /* Copy of reference file */
+    const char *ref_dir; /* Reference directory */
+
+    /* If file_path is absolute, just use it */
+    if (*file_path == '/') {
+        return ib_mpool_strdup(mp, file_path);
+    }
+
+    /* Make a copy of cur_file because dirname() modifies it's input */
+    refcopy = (char *)ib_mpool_strdup(mp, ref_file);
+    if (refcopy == NULL) {
+        return NULL;
+    }
+
+    /* Finally, extract the directory portion of the copy, use it to
+     * build the final path. */
+    ref_dir = dirname(refcopy);
+    return ib_util_path_join(mp, ref_dir, file_path);
+}
+
 /**
  * @brief Convert the input character to the byte value represented by
  *        it's hexadecimal value. The input of 'F' results in the

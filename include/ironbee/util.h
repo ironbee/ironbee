@@ -130,6 +130,34 @@ void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
  */
 ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 
+
+/**
+ * Create a file path relative to a reference file
+ *
+ * @param[in] mp Memory path to use for allocations
+ * @param[in] ref_file Reference file path
+ * @param[in] file_path New file's path
+ *
+ * @return Pointer to new path, or NULL
+ */
+char *ib_util_relative_file(ib_mpool_t *mp,
+                            const char *ref_file,
+                            const char *file_path);
+
+
+/**
+ * Join two directory components
+ *
+ * @param[in] mp Memory path to use for allocations
+ * @param[in] parent Parent portion of path
+ * @param[in] file_path Child portion of path
+ *
+ * @return Pointer to new path, or NULL
+ */
+char *ib_util_path_join(ib_mpool_t *mp,
+                        const char *parent,
+                        const char *file_path);
+
 /**
  * Unescape a Javascript-escaped string into the @a dst string buffer.
  *
