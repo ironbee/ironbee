@@ -102,7 +102,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
                                      const char *mark,
                                      const char *fpc,
                                      const char *file,
-                                     unsigned lineno)
+                                     unsigned int lineno)
 {
     struct stat statbuf;
     ib_status_t rc;
