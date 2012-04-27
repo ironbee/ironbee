@@ -305,6 +305,8 @@ static void core_logger(FILE *fh, int level,
         /// @todo Do something better
         fprintf(fh, "Formatter too long (>%d): %d\n", fmt2_sz, (int)ec);
         fflush(fh);
+        free(fmt2);
+        free(tx_info);
         abort();
     }
 
@@ -413,6 +415,12 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
 
     if (dtmp == NULL || dn == NULL) {
         ib_log_error(log->ib,  "Failed to allocate internal buffers.");
+        if (dtmp != NULL) {
+            free(dtmp);
+        }
+        if (dn != NULL) {
+            free(dn);
+        }
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
