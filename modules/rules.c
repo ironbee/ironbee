@@ -975,6 +975,12 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
     ib_operator_inst_t *op_inst;
     const char *file_name;
 
+    /* Check if lua is available. */
+    if (g_ironbee_rules_lua == NULL) {
+        ib_log_error(cp->ib, "Lua is not available");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
     /* Get the targets string */
     targets = ib_list_first_const(vars);
 
@@ -1376,7 +1382,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     if (g_ironbee_rules_lua == NULL) {
         ib_log_alert(ib, "Failed to create LuaJIT state.");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     luaL_openlibs(g_ironbee_rules_lua);
