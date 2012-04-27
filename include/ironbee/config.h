@@ -294,7 +294,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                                  const char     *buffer,
                                                  size_t          length,
                                                  const char     *file,
-                                                 ib_num_t        lineno,
+                                                 unsigned        lineno,
                                                  ib_bool_t       more);
 /**
  * Push a new context onto the stack and make it the current.
@@ -401,7 +401,7 @@ ib_status_t DLL_PUBLIC ib_config_register_directive(
  */
 ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
                                                    const char *file,
-                                                   ib_num_t lineno,
+                                                   unsigned lineno,
                                                    const char *name,
                                                    ib_list_t *args);
 
@@ -419,7 +419,7 @@ ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
  */
 ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
                                              const char *file,
-                                             ib_num_t lineno,
+                                             unsigned lineno,
                                              const char *name,
                                              ib_list_t *args);
 
@@ -440,7 +440,7 @@ ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
  */
 ib_status_t DLL_PUBLIC ib_config_block_process(ib_cfgparser_t *cp,
                                                const char *file,
-                                               ib_num_t lineno,
+                                               unsigned lineno,
                                                const char *name);
 
 /**

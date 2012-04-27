@@ -138,7 +138,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     IB_FTRACE_INIT();
     int ec;                                    /**< Error code for sys calls. */
     int fd = open(file, O_RDONLY);             /**< File to read. */
-    ib_num_t lineno = 1;                       /**< Current line number */
+    unsigned lineno = 1;                       /**< Current line number */
     ssize_t nbytes = 0;                        /**< Bytes read by one read(). */
     const size_t bufsz = 8192;                 /**< Buffer size. */
     size_t buflen = 0;                         /**< Last char in buffer. */
@@ -267,7 +267,7 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                       const char     *buffer,
                                       size_t          length,
                                       const char     *file,
-                                      ib_num_t        lineno,
+                                      unsigned        lineno,
                                       ib_bool_t       more)
 {
     IB_FTRACE_INIT();
@@ -460,7 +460,7 @@ ib_status_t ib_config_register_directive(
 
 ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                                         const char *file,
-                                        ib_num_t lineno,
+                                        unsigned lineno,
                                         const char *name,
                                         ib_list_t *args)
 {
@@ -485,8 +485,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         case IB_DIRTYPE_ONOFF:
             if (nargs != 1) {
                 ib_log_error(ib,
-                             "File %s line #%d: "
-                             "OnOff directive \"%s\" "
+                             "%s:%d: OnOff directive \"%s\" "
                              "takes one parameter, not %d",
                              file, lineno, name, nargs);
                 rc = IB_EINVAL;
@@ -506,8 +505,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         case IB_DIRTYPE_PARAM1:
             if (nargs != 1) {
                 ib_log_error(ib,
-                             "File %s line #%d: "
-                             "Param1 directive \"%s\" "
+                             "%s:%d: Param1 directive \"%s\" "
                              "takes one parameter, not %d",
                              file, lineno, name, nargs);
                 rc = IB_EINVAL;
@@ -519,8 +517,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
         case IB_DIRTYPE_PARAM2:
             if (nargs != 2) {
                 ib_log_error(ib,
-                             "File %s line #%d: "
-                             "Param2 directive \"%s\" "
+                             "%s:%d: Param2 directive \"%s\" "
                              "takes two parameters, not %d",
                              file, lineno, name, nargs);
                 rc = IB_EINVAL;
@@ -601,7 +598,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
 
 ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
                                   const char *file,
-                                  ib_num_t lineno,
+                                  unsigned lineno,
                                   const char *name,
                                   ib_list_t *args)
 {
@@ -614,7 +611,7 @@ ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
 
 ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
                                     const char *file,
-                                    ib_num_t lineno,
+                                    unsigned lineno,
                                     const char *name)
 {
     IB_FTRACE_INIT();

@@ -102,7 +102,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
                                      const char *mark,
                                      const char *fpc,
                                      const char *file,
-                                     ib_num_t lineno)
+                                     unsigned lineno)
 {
     struct stat statbuf;
     ib_status_t rc;
@@ -111,47 +111,10 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     char *pval;
 
     pval = alloc_cpy_marked_string(mark, fpc, mp);
-
-    if (*pval == '/') {
-        incfile = (char *)ib_mpool_strdup(mp, pval);
-        if (incfile == NULL) {
-            ib_log_error(cp->ib,
-                         "Error allocating include file name buffer");
-            return IB_EALLOC;
-        }
-    }
-    else { 
-        char *ofile;         /* Copy of original file name */
-        const char *pdir;    /* Parent directory */
-        size_t len;
-
-        ofile = (char *)ib_mpool_strdup(mp, file);
-        if (ofile == NULL) {
-            ib_log_error(cp->ib,
-                         "Cannot allocate original file name buffer");
-            return IB_EALLOC;
-        }
-        pdir = dirname(ofile);
-
-        /* Allocate & generate the include file name */
-        len = strlen(pdir);      /* Parent directory */
-        len += 1;                /* slash */
-        len += strlen(pval);     /* file name */
-        len += 1;                /* NUL */
-        incfile = (char *)ib_mpool_alloc(mp, len);
-        if (incfile == NULL) {
-            ib_log_error(cp->ib,
-                         "Cannot allocate include file name buffer (%d)",
-                         len);
-            return IB_EALLOC;
-        }
-        strcpy(incfile, pdir);
-        strcat(incfile, "/");
-        strcat(incfile, pval);
-    }
+    incfile = ib_util_relative_file(mp, file, pval);
 
     if (access(incfile, R_OK) != 0) {
-        ib_log_error(cp->ib, "Can't access included file \"%s\": %s",
+        ib_log_error(cp->ib, "Cannot access included file \"%s\": %s",
                      incfile, strerror(errno));
         return IB_ENOENT;
     }
@@ -170,8 +133,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         return IB_ENOENT;
     }
 
-    ib_log_debug(cp->ib, "Including '%s' from line %d of %s",
-                 incfile, lineno, file);
+    ib_log_debug(cp->ib, "Including '%s' from %s:%d",
+                 incfile, file, lineno);
     rc = ib_cfgparser_parse(cp, incfile);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, "Error parsing included file \"%s\": %s",
@@ -190,9 +153,9 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     action mark { mark = fpc; }
     action error_action {
         rc = IB_EOTHER;
-        ib_log_debug(ib_engine,
-                     "ERROR: parser error before \"%.*s\" on line %d of %s",
-                     (int)(fpc - mark), mark, lineno, file);
+        ib_log_error(ib_engine,
+                     "ERROR: parser error before \"%.*s\" on %s:%d",
+                     (int)(fpc - mark), mark, file, lineno);
     }
 
     # Parameter
@@ -216,8 +179,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         rc = ib_config_directive_process(cp, file, lineno, directive, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process directive \"%s\" on line %d of %s: %s",
-                         directive, lineno, file, ib_status_to_string(rc));
+                         "Failed to process directive \"%s\" on %s:%d: %s",
+                         directive, file, lineno, ib_status_to_string(rc));
         }
         if (directive != NULL) {
             free(directive);
@@ -235,8 +198,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         rc = ib_config_block_start(cp, file, lineno, blkname, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to start block \"%s\" on line %d of %s: %s",
-                         blkname, file, lineno, ib_status_to_string(rc));
+                         "Failed to start block \"%s\" on %s:%d: %s",
+                         blkname, lineno, file, ib_status_to_string(rc));
         }
     }
     action pop_block {
@@ -244,8 +207,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         rc = ib_config_block_process(cp, file, lineno, blkname);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process block \"%s\" on line %d of %s: %s",
-                         blkname, lineno, file, ib_status_to_string(rc));
+                         "Failed to process block \"%s\" on %s:%d: %s",
+                         blkname, file, lineno, ib_status_to_string(rc));
         }
         if (blkname != NULL) {
             free(blkname);
@@ -258,14 +221,13 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         rc = include_config_fn(cp, mpcfg, mark, fpc, file, lineno);
         if (rc == IB_OK) {
             ib_log_debug(ib_engine,
-                         "Done processing include direction on line %d of %s",
-                         lineno, file);
+                         "Done processing include direction on %s:%d",
+                         file, lineno);
         }
         else {
             ib_log_error(ib_engine,
-                         "Failed to process include directive "
-                         "on line %d of %s: %s",
-                         lineno, file, ib_status_to_string(rc));
+                         "Failed to process include directive on %s:%d: %s",
+                         file, lineno, ib_status_to_string(rc));
         }
     }
 
@@ -311,7 +273,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     main := |*
         WS* comment;
-	WS* [Ii] "nclude" { fcall finclude; };
+	WS* [Ii] [Nn] [Cc] [Ll] [Uu] [Dd] [Ee] { fcall finclude; };
         WS* token >mark %start_dir { fcall parameters; };
         "<" { fcall newblock; };
         "</" { fcall endblock; };
@@ -326,7 +288,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
                                            const size_t blen,
                                            const char *file,
-                                           const ib_num_t lineno,
+                                           const unsigned lineno,
                                            const int is_last_chunk)
 {
     ib_engine_t *ib_engine = cp->ib;

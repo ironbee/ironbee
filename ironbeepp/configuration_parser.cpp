@@ -88,7 +88,7 @@ void ConfigurationParser::parse_buffer(
     const char* buffer,
     size_t      length,
     const char* file,
-    ib_num_t    lineno,
+    unsigned    lineno,
     bool        more
 ) const
 {
@@ -104,7 +104,7 @@ void ConfigurationParser::parse_buffer(
 
 void ConfigurationParser::parse_buffer(const std::string& s,
                                        const std::string& file,
-                                       ib_num_t lineno,
+                                       unsigned lineno,
                                        bool more) const
 {
     parse_buffer(s.data(), s.length(), file.c_str(), lineno, more);

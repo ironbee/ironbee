@@ -202,14 +202,14 @@ public:
         const char* buffer,
         size_t      length,
         const char* file,
-        ib_num_t    lineno,
+        unsigned    lineno,
         bool        more
     ) const;
 
     //! As above, but for string.
     void parse_buffer(const std::string& s,
                       const std::string& file,
-                      ib_num_t lineno,
+                      unsigned lineno,
                       bool more) const;
 
 private:

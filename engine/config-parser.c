@@ -104,7 +104,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
                                      const char *mark,
                                      const char *fpc,
                                      const char *file,
-                                     ib_num_t lineno)
+                                     unsigned lineno)
 {
     struct stat statbuf;
     ib_status_t rc;
@@ -113,47 +113,10 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     char *pval;
 
     pval = alloc_cpy_marked_string(mark, fpc, mp);
-
-    if (*pval == '/') {
-        incfile = (char *)ib_mpool_strdup(mp, pval);
-        if (incfile == NULL) {
-            ib_log_error(cp->ib,
-                         "Error allocating include file name buffer");
-            return IB_EALLOC;
-        }
-    }
-    else {
-        char *ofile;         /* Copy of original file name */
-        const char *pdir;    /* Parent directory */
-        size_t len;
-
-        ofile = (char *)ib_mpool_strdup(mp, file);
-        if (ofile == NULL) {
-            ib_log_error(cp->ib,
-                         "Cannot allocate original file name buffer");
-            return IB_EALLOC;
-        }
-        pdir = dirname(ofile);
-
-        /* Allocate & generate the include file name */
-        len = strlen(pdir);      /* Parent directory */
-        len += 1;                /* slash */
-        len += strlen(pval);     /* file name */
-        len += 1;                /* NUL */
-        incfile = (char *)ib_mpool_alloc(mp, len);
-        if (incfile == NULL) {
-            ib_log_error(cp->ib,
-                         "Cannot allocate include file name buffer (%d)",
-                         len);
-            return IB_EALLOC;
-        }
-        strcpy(incfile, pdir);
-        strcat(incfile, "/");
-        strcat(incfile, pval);
-    }
+    incfile = ib_util_relative_file(mp, file, pval);
 
     if (access(incfile, R_OK) != 0) {
-        ib_log_error(cp->ib, "Can't access included file \"%s\": %s",
+        ib_log_error(cp->ib, "Cannot access included file \"%s\": %s",
                      incfile, strerror(errno));
         return IB_ENOENT;
     }
@@ -172,8 +135,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         return IB_ENOENT;
     }
 
-    ib_log_debug(cp->ib, "Including '%s' from line %d of %s",
-                 incfile, lineno, file);
+    ib_log_debug(cp->ib, "Including '%s' from %s:%d",
+                 incfile, file, lineno);
     rc = ib_cfgparser_parse(cp, incfile);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, "Error parsing included file \"%s\": %s",
@@ -186,11 +149,11 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 }
 
 
-#line 321 "config-parser.rl"
+#line 283 "config-parser.rl"
 
 
 
-#line 194 "config-parser.c"
+#line 157 "config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 1, 1, 8, 1,
 	10, 1, 12, 1, 21, 1, 23, 1,
@@ -216,10 +179,10 @@ static const unsigned char _ironbee_config_key_offsets[] = {
 	0, 0, 0, 0, 9, 11, 11, 11,
 	19, 21, 21, 21, 30, 30, 39, 43,
 	44, 48, 52, 53, 57, 62, 67, 69,
-	73, 75, 86, 93, 104, 111, 112, 120,
-	128, 136, 144, 152, 160, 161, 170, 177,
-	184, 184, 192, 199, 199, 208, 215, 222,
-	231, 238, 238, 245
+	73, 75, 86, 93, 104, 111, 112, 121,
+	130, 139, 148, 157, 166, 167, 176, 183,
+	190, 190, 198, 205, 205, 214, 221, 228,
+	237, 244, 244, 251
 };
 
 static const char _ironbee_config_trans_keys[] = {
@@ -237,32 +200,32 @@ static const char _ironbee_config_trans_keys[] = {
 	60, 62, 92, 9, 10, 9, 10, 13,
 	32, 34, 35, 60, 62, 73, 92, 105,
 	9, 10, 32, 34, 60, 62, 92, 10,
-	32, 34, 60, 62, 92, 110, 9, 10,
-	32, 34, 60, 62, 92, 99, 9, 10,
-	32, 34, 60, 62, 92, 108, 9, 10,
-	32, 34, 60, 62, 92, 117, 9, 10,
-	32, 34, 60, 62, 92, 100, 9, 10,
-	32, 34, 60, 62, 92, 101, 9, 10,
-	47, 9, 10, 13, 32, 34, 35, 60,
-	62, 92, 32, 34, 60, 62, 92, 9,
-	10, 9, 10, 32, 34, 60, 62, 92,
-	9, 10, 32, 34, 35, 60, 62, 92,
-	32, 34, 60, 62, 92, 9, 10, 9,
-	10, 13, 32, 60, 62, 92, 34, 35,
+	32, 34, 60, 62, 78, 92, 110, 9,
+	10, 32, 34, 60, 62, 67, 92, 99,
+	9, 10, 32, 34, 60, 62, 76, 92,
+	108, 9, 10, 32, 34, 60, 62, 85,
+	92, 117, 9, 10, 32, 34, 60, 62,
+	68, 92, 100, 9, 10, 32, 34, 60,
+	62, 69, 92, 101, 9, 10, 47, 9,
+	10, 13, 32, 34, 35, 60, 62, 92,
 	32, 34, 60, 62, 92, 9, 10, 9,
 	10, 32, 34, 60, 62, 92, 9, 10,
-	13, 32, 60, 62, 92, 34, 35, 32,
-	34, 60, 62, 92, 9, 10, 9, 10,
-	32, 34, 60, 62, 92, 9, 10, 32,
-	34, 0
+	32, 34, 35, 60, 62, 92, 32, 34,
+	60, 62, 92, 9, 10, 9, 10, 13,
+	32, 60, 62, 92, 34, 35, 32, 34,
+	60, 62, 92, 9, 10, 9, 10, 32,
+	34, 60, 62, 92, 9, 10, 13, 32,
+	60, 62, 92, 34, 35, 32, 34, 60,
+	62, 92, 9, 10, 9, 10, 32, 34,
+	60, 62, 92, 9, 10, 32, 34, 0
 };
 
 static const char _ironbee_config_single_lengths[] = {
 	0, 0, 0, 9, 2, 0, 0, 8,
 	2, 0, 0, 7, 0, 7, 4, 1,
 	4, 4, 1, 4, 5, 5, 2, 4,
-	2, 11, 5, 11, 7, 1, 6, 6,
-	6, 6, 6, 6, 1, 9, 5, 7,
+	2, 11, 5, 11, 7, 1, 7, 7,
+	7, 7, 7, 7, 1, 9, 5, 7,
 	0, 8, 5, 0, 7, 5, 7, 7,
 	5, 0, 7, 4
 };
@@ -281,10 +244,10 @@ static const short _ironbee_config_index_offsets[] = {
 	0, 0, 1, 2, 12, 15, 16, 17,
 	26, 29, 30, 31, 40, 41, 50, 55,
 	57, 62, 67, 69, 74, 80, 86, 89,
-	94, 97, 109, 116, 128, 136, 138, 146,
-	154, 162, 170, 178, 186, 188, 198, 205,
-	213, 214, 223, 230, 231, 240, 247, 255,
-	264, 271, 272, 280
+	94, 97, 109, 116, 128, 136, 138, 147,
+	156, 165, 174, 183, 192, 194, 204, 211,
+	219, 220, 229, 236, 237, 246, 253, 261,
+	270, 277, 278, 286
 };
 
 static const char _ironbee_config_indicies[] = {
@@ -305,25 +268,26 @@ static const char _ironbee_config_indicies[] = {
 	68, 69, 68, 1, 61, 62, 63, 61,
 	70, 64, 70, 70, 66, 67, 66, 60,
 	71, 72, 71, 71, 71, 71, 69, 1,
-	73, 64, 71, 71, 71, 71, 69, 74,
-	71, 1, 71, 71, 71, 71, 69, 75,
-	71, 1, 71, 71, 71, 71, 69, 76,
-	71, 1, 71, 71, 71, 71, 69, 77,
-	71, 1, 71, 71, 71, 71, 69, 78,
-	71, 1, 71, 71, 71, 71, 69, 79,
-	71, 1, 81, 80, 5, 6, 7, 5,
-	8, 9, 9, 9, 10, 4, 83, 83,
-	83, 83, 84, 83, 3, 83, 85, 83,
-	83, 83, 83, 84, 3, 83, 17, 9,
-	17, 18, 9, 9, 19, 20, 16, 86,
-	86, 86, 86, 87, 86, 15, 86, 27,
-	28, 29, 27, 30, 30, 31, 30, 26,
-	88, 88, 88, 88, 89, 88, 25, 88,
-	90, 88, 88, 88, 88, 89, 25, 35,
-	36, 37, 35, 30, 38, 39, 30, 34,
-	91, 91, 91, 91, 92, 91, 33, 93,
-	91, 94, 91, 91, 91, 91, 92, 33,
-	50, 30, 50, 51, 49, 0
+	73, 64, 71, 71, 71, 71, 74, 69,
+	74, 71, 1, 71, 71, 71, 71, 75,
+	69, 75, 71, 1, 71, 71, 71, 71,
+	76, 69, 76, 71, 1, 71, 71, 71,
+	71, 77, 69, 77, 71, 1, 71, 71,
+	71, 71, 78, 69, 78, 71, 1, 71,
+	71, 71, 71, 79, 69, 79, 71, 1,
+	81, 80, 5, 6, 7, 5, 8, 9,
+	9, 9, 10, 4, 83, 83, 83, 83,
+	84, 83, 3, 83, 85, 83, 83, 83,
+	83, 84, 3, 83, 17, 9, 17, 18,
+	9, 9, 19, 20, 16, 86, 86, 86,
+	86, 87, 86, 15, 86, 27, 28, 29,
+	27, 30, 30, 31, 30, 26, 88, 88,
+	88, 88, 89, 88, 25, 88, 90, 88,
+	88, 88, 88, 89, 25, 35, 36, 37,
+	35, 30, 38, 39, 30, 34, 91, 91,
+	91, 91, 92, 91, 33, 93, 91, 94,
+	91, 91, 91, 91, 92, 33, 50, 30,
+	50, 51, 49, 0
 };
 
 static const char _ironbee_config_trans_targs[] = {
@@ -408,13 +372,13 @@ static const int ironbee_config_en_finclude = 51;
 static const int ironbee_config_en_main = 25;
 
 
-#line 324 "config-parser.rl"
+#line 286 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
                                            const size_t blen,
                                            const char *file,
-                                           const ib_num_t lineno,
+                                           const unsigned lineno,
                                            const int is_last_chunk)
 {
     ib_engine_t *ib_engine = cp->ib;
@@ -462,16 +426,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
 
-#line 377 "config-parser.rl"
+#line 339 "config-parser.rl"
 
-#line 378 "config-parser.rl"
+#line 340 "config-parser.rl"
 
-#line 379 "config-parser.rl"
+#line 341 "config-parser.rl"
 
-#line 380 "config-parser.rl"
+#line 342 "config-parser.rl"
 
 
-#line 475 "config-parser.c"
+#line 439 "config-parser.c"
 	{
 	 fsm.cs = ironbee_config_start;
 	 fsm.top = 0;
@@ -480,9 +444,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 fsm.act = 0;
 	}
 
-#line 382 "config-parser.rl"
+#line 344 "config-parser.rl"
 
-#line 486 "config-parser.c"
+#line 450 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -503,7 +467,7 @@ _resume:
 #line 1 "NONE"
 	{ fsm.ts = ( fsm.p);}
 	break;
-#line 507 "config-parser.c"
+#line 471 "config-parser.c"
 		}
 	}
 
@@ -570,34 +534,34 @@ _eof_trans:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 190 "config-parser.rl"
+#line 153 "config-parser.rl"
 	{ mark = ( fsm.p); }
 	break;
 	case 1:
-#line 191 "config-parser.rl"
+#line 154 "config-parser.rl"
 	{
         rc = IB_EOTHER;
-        ib_log_debug(ib_engine,
-                     "ERROR: parser error before \"%.*s\" on line %d of %s",
-                     (int)(( fsm.p) - mark), mark, lineno, file);
+        ib_log_error(ib_engine,
+                     "ERROR: parser error before \"%.*s\" on %s:%d",
+                     (int)(( fsm.p) - mark), mark, file, lineno);
     }
 	break;
 	case 2:
-#line 199 "config-parser.rl"
+#line 162 "config-parser.rl"
 	{
         pval = alloc_cpy_marked_string(mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
 	case 3:
-#line 203 "config-parser.rl"
+#line 166 "config-parser.rl"
 	{
         pval = alloc_cpy_marked_string(mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
 	case 4:
-#line 209 "config-parser.rl"
+#line 172 "config-parser.rl"
 	{
         size_t namelen = (size_t)(( fsm.p) - mark);
         directive = (char *)calloc(namelen + 1, sizeof(*directive));
@@ -606,13 +570,13 @@ _eof_trans:
     }
 	break;
 	case 5:
-#line 215 "config-parser.rl"
+#line 178 "config-parser.rl"
 	{
         rc = ib_config_directive_process(cp, file, lineno, directive, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process directive \"%s\" on line %d of %s: %s",
-                         directive, lineno, file, ib_status_to_string(rc));
+                         "Failed to process directive \"%s\" on %s:%d: %s",
+                         directive, file, lineno, ib_status_to_string(rc));
         }
         if (directive != NULL) {
             free(directive);
@@ -620,7 +584,7 @@ _eof_trans:
     }
 	break;
 	case 6:
-#line 228 "config-parser.rl"
+#line 191 "config-parser.rl"
 	{
         size_t namelen = (size_t)(( fsm.p) - mark);
         blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
@@ -629,25 +593,25 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 234 "config-parser.rl"
+#line 197 "config-parser.rl"
 	{
         rc = ib_config_block_start(cp, file, lineno, blkname, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to start block \"%s\" on line %d of %s: %s",
-                         blkname, file, lineno, ib_status_to_string(rc));
+                         "Failed to start block \"%s\" on %s:%d: %s",
+                         blkname, lineno, file, ib_status_to_string(rc));
         }
     }
 	break;
 	case 8:
-#line 242 "config-parser.rl"
+#line 205 "config-parser.rl"
 	{
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, file, lineno, blkname);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process block \"%s\" on line %d of %s: %s",
-                         blkname, lineno, file, ib_status_to_string(rc));
+                         "Failed to process block \"%s\" on %s:%d: %s",
+                         blkname, file, lineno, ib_status_to_string(rc));
         }
         if (blkname != NULL) {
             free(blkname);
@@ -656,19 +620,18 @@ _eof_trans:
     }
 	break;
 	case 9:
-#line 257 "config-parser.rl"
+#line 220 "config-parser.rl"
 	{
         rc = include_config_fn(cp, mpcfg, mark, ( fsm.p), file, lineno);
         if (rc == IB_OK) {
             ib_log_debug(ib_engine,
-                         "Done processing include direction on line %d of %s",
-                         lineno, file);
+                         "Done processing include direction on %s:%d",
+                         file, lineno);
         }
         else {
             ib_log_error(ib_engine,
-                         "Failed to process include directive "
-                         "on line %d of %s: %s",
-                         lineno, file, ib_status_to_string(rc));
+                         "Failed to process include directive on %s:%d: %s",
+                         file, lineno, ib_status_to_string(rc));
         }
     }
 	break;
@@ -677,15 +640,15 @@ _eof_trans:
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 14:
-#line 288 "config-parser.rl"
+#line 250 "config-parser.rl"
 	{ fsm.act = 1;}
 	break;
 	case 15:
-#line 289 "config-parser.rl"
+#line 251 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 16:
-#line 288 "config-parser.rl"
+#line 250 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 17:
@@ -701,15 +664,15 @@ _eof_trans:
 	}
 	break;
 	case 18:
-#line 293 "config-parser.rl"
+#line 255 "config-parser.rl"
 	{ fsm.act = 3;}
 	break;
 	case 19:
-#line 294 "config-parser.rl"
+#line 256 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 20:
-#line 293 "config-parser.rl"
+#line 255 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 21:
@@ -725,15 +688,15 @@ _eof_trans:
 	}
 	break;
 	case 22:
-#line 298 "config-parser.rl"
+#line 260 "config-parser.rl"
 	{ fsm.act = 5;}
 	break;
 	case 23:
-#line 299 "config-parser.rl"
+#line 261 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 24:
-#line 298 "config-parser.rl"
+#line 260 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 41; goto _again;} }}
 	break;
 	case 25:
@@ -749,19 +712,19 @@ _eof_trans:
 	}
 	break;
 	case 26:
-#line 304 "config-parser.rl"
+#line 266 "config-parser.rl"
 	{ fsm.act = 8;}
 	break;
 	case 27:
-#line 305 "config-parser.rl"
+#line 267 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 28:
-#line 303 "config-parser.rl"
+#line 265 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 29:
-#line 304 "config-parser.rl"
+#line 266 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 30:
@@ -777,43 +740,43 @@ _eof_trans:
 	}
 	break;
 	case 31:
-#line 309 "config-parser.rl"
+#line 271 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 32:
-#line 314 "config-parser.rl"
+#line 276 "config-parser.rl"
 	{ fsm.act = 12;}
 	break;
 	case 33:
-#line 315 "config-parser.rl"
+#line 277 "config-parser.rl"
 	{ fsm.act = 13;}
 	break;
 	case 34:
-#line 318 "config-parser.rl"
+#line 280 "config-parser.rl"
 	{ fsm.act = 16;}
 	break;
 	case 35:
-#line 317 "config-parser.rl"
+#line 279 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 47; goto _again;} }}
 	break;
 	case 36:
-#line 319 "config-parser.rl"
+#line 281 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 37:
-#line 313 "config-parser.rl"
+#line 275 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 38:
-#line 315 "config-parser.rl"
+#line 277 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 37; goto _again;} }}
 	break;
 	case 39:
-#line 316 "config-parser.rl"
+#line 278 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 44; goto _again;} }}
 	break;
 	case 40:
-#line 318 "config-parser.rl"
+#line 280 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 41:
@@ -834,7 +797,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 838 "config-parser.c"
+#line 801 "config-parser.c"
 		}
 	}
 
@@ -851,7 +814,7 @@ _again:
 #line 1 "NONE"
 	{ fsm.act = 0;}
 	break;
-#line 855 "config-parser.c"
+#line 818 "config-parser.c"
 		}
 	}
 
@@ -871,36 +834,36 @@ _again:
 	while ( __nacts-- > 0 ) {
 		switch ( *__acts++ ) {
 	case 1:
-#line 191 "config-parser.rl"
+#line 154 "config-parser.rl"
 	{
         rc = IB_EOTHER;
-        ib_log_debug(ib_engine,
-                     "ERROR: parser error before \"%.*s\" on line %d of %s",
-                     (int)(( fsm.p) - mark), mark, lineno, file);
+        ib_log_error(ib_engine,
+                     "ERROR: parser error before \"%.*s\" on %s:%d",
+                     (int)(( fsm.p) - mark), mark, file, lineno);
     }
 	break;
 	case 2:
-#line 199 "config-parser.rl"
+#line 162 "config-parser.rl"
 	{
         pval = alloc_cpy_marked_string(mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
 	case 5:
-#line 215 "config-parser.rl"
+#line 178 "config-parser.rl"
 	{
         rc = ib_config_directive_process(cp, file, lineno, directive, plist);
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
-                         "Failed to process directive \"%s\" on line %d of %s: %s",
-                         directive, lineno, file, ib_status_to_string(rc));
+                         "Failed to process directive \"%s\" on %s:%d: %s",
+                         directive, file, lineno, ib_status_to_string(rc));
         }
         if (directive != NULL) {
             free(directive);
         }
     }
 	break;
-#line 904 "config-parser.c"
+#line 867 "config-parser.c"
 		}
 	}
 	}
@@ -908,7 +871,7 @@ _again:
 	_out: {}
 	}
 
-#line 383 "config-parser.rl"
+#line 345 "config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {
