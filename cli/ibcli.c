@@ -1390,6 +1390,19 @@ static ib_status_t op_print_create(ib_engine_t *ib,
         }
     }
 
+    /* Do we need expansion? */
+    if (text != NULL) {
+        ib_bool_t expand;
+        ib_status_t rc;
+        rc = ib_data_expand_test_str(text, &expand);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else if (expand == IB_TRUE) {
+            op_inst->flags |= IB_OPINST_FLAG_EXPAND;
+        }
+    }
+
     /* Allocate storage for the value */
     vptr = (printop_params_t *)ib_mpool_alloc(mp, sizeof(*vptr));
     if (vptr == NULL) {
@@ -1427,9 +1440,37 @@ static ib_status_t op_print_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const printop_params_t *pdata = (const printop_params_t *)data;
+    const char *label =  "_field_name_";
     const char *text;
 
-    text = (pdata->text != NULL) ? pdata->text : "print";
+    if ( (pdata->text != NULL) && ((flags & IB_OPINST_FLAG_EXPAND) != 0)) {
+        ib_status_t rc;
+
+        char *fncopy = (char *)ib_mpool_alloc(tx->mp, field->nlen + 1);
+        if (fncopy == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        strncpy(fncopy, field->name, field->nlen);
+        rc = ib_data_add_bytestr(tx->dpi,
+                                 label, (uint8_t *)fncopy, field->nlen,
+                                 NULL);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = ib_data_expand_str(tx->dpi, pdata->text, (char **)&text);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        ib_data_remove(tx->dpi, label, NULL);
+    }
+    else if (pdata->text != NULL) {
+        text = pdata->text;
+    }
+    else {
+        text = "print";
+    }
+    
     print_field(text, field, pdata->maxlen);
     *result = pdata->result;
     IB_FTRACE_RET_STATUS(IB_OK);
