@@ -1351,7 +1351,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     const ib_rule_phase_meta_t *meta;
-    const char                 *hook_type;
+    const char                 *hook_type = NULL;
     ib_status_t                 rc = IB_OK;
 
     /* Register specific handlers for specific events, and a
