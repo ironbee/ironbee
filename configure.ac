@@ -205,6 +205,22 @@ else
     IB_DEBUG=
 fi
 
+### Development-only features
+AC_ARG_ENABLE(devel,
+              AS_HELP_STRING([--enable-devel],
+                             [Enable development features (development use only).]),
+[
+  devel=$enableval
+],
+[
+  devel="no"
+])
+if test "$devel" != "no"; then
+    IB_DEVEL="-DIB_DEVEL"
+else
+    IB_DEVEL=
+fi
+
 ### CLI
 AC_ARG_ENABLE(cli,
               AS_HELP_STRING([--disable-cli],
@@ -389,6 +405,7 @@ AC_SUBST(JAVA)
 AC_SUBST(VALGRIND)
 AC_SUBST(LDFLAGS)
 AC_SUBST(IB_DEBUG)
+AC_SUBST(IB_DEVEL)
 dnl Generate files
 AC_CONFIG_FILES([Makefile])
 

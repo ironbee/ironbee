@@ -70,20 +70,24 @@ static phase_lookup_t phase_lookup_table[] =
     { "RESPONSE",                IB_FALSE, PHASE_RESPONSE_BODY },
     { "POSTPROCESS",             IB_FALSE, PHASE_POSTPROCESS },
     /* Shortcuts */
+#ifdef IB_DEVEL
     { "REQHDR",                  IB_FALSE, PHASE_REQUEST_HEADER },
     { "REQBDY",                  IB_FALSE, PHASE_REQUEST_BODY },
     { "RSPHDR",                  IB_FALSE, PHASE_RESPONSE_HEADER },
     { "RSPBDY",                  IB_FALSE, PHASE_RESPONSE_BODY },
+#endif
     /* Stream inspection phases */
     { "REQUEST_HEADER_STREAM",   IB_TRUE,  PHASE_STR_REQUEST_HEADER },
     { "REQUEST_BODY_STREAM",     IB_TRUE,  PHASE_STR_REQUEST_BODY },
     { "RESPONSE_HEADER_STREAM",  IB_TRUE,  PHASE_STR_RESPONSE_HEADER },
     { "RESPONSE_BODY_STREAM",    IB_TRUE,  PHASE_STR_RESPONSE_BODY },
     /* Shortcuts */
+#ifdef IB_DEVEL
     { "REQHDRS",                 IB_TRUE,  PHASE_STR_REQUEST_HEADER },
     { "REQBDYS",                 IB_TRUE,  PHASE_STR_REQUEST_BODY },
     { "RSPHDRS",                 IB_TRUE,  PHASE_STR_RESPONSE_HEADER },
     { "RSPBDYS",                 IB_TRUE,  PHASE_STR_RESPONSE_BODY },
+#endif
     /* List terminator */
     { NULL,                      IB_FALSE, PHASE_INVALID },
 };
