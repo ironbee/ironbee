@@ -275,10 +275,6 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     assert(tx != NULL);
     assert(tx->ib != NULL);
     assert(tx->mp != NULL);
-    assert(method != NULL);
-    assert(method_len > 0);
-    assert(uri != NULL);
-    assert(uri_len > 0);
 
     ib_parsed_req_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                     sizeof(*line_tmp));
@@ -288,20 +284,33 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_bytestr_alias_mem(&line_tmp->method,
-                              tx->mp,
-                              (const uint8_t *)method,
-                              method_len);
+    if (method != NULL) {
+        rc = ib_bytestr_alias_mem(&line_tmp->method,
+                                  tx->mp,
+                                  (const uint8_t *)method,
+                                  method_len);
+    }
+    else {
+        rc = ib_bytestr_dup_mem(&line_tmp->method,
+                                tx->mp,
+                                (const uint8_t *)"",
+                                0);
+    }
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_bytestr_alias_mem(&line_tmp->uri,
-                              tx->mp,
-                              (const uint8_t *)uri,
-                              uri_len);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+    if (uri != NULL) {
+        rc = ib_bytestr_alias_mem(&line_tmp->uri,
+                                  tx->mp,
+                                  (const uint8_t *)uri,
+                                  uri_len);
+    }
+    else {
+        rc = ib_bytestr_dup_mem(&line_tmp->uri,
+                                tx->mp,
+                                (const uint8_t *)"",
+                                0);
     }
 
     /* HTTP/0.9 will have a NULL protocol. */
