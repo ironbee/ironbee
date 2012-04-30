@@ -197,7 +197,7 @@ ib_status_t DLL_PUBLIC ib_parsed_tx_each_header(
  *
  * @param[in] tx The transaction whose memory pool will be used.
  * @param[out] line The resultant object will be stored here.
- * @param[in] raw The raw HTTP ponse line (NULL if not available)
+ * @param[in] raw The raw HTTP response line (NULL if not available)
  * @param[in] raw_len The length of @a raw.
  * @param[in] protocol The HTTP protocol.
  * @param[in] protocol_len The length of @a protocol.
@@ -235,7 +235,7 @@ ib_status_t DLL_PUBLIC ib_parsed_resp_line_create(
  *
  * @param[in] tx The transaction whose memory pool is used.
  * @param[out] line The resultant object is placed here.
- * @param[in] raw The raw HTTP ponse line (NULL if not available)
+ * @param[in] raw The raw HTTP response line (NULL if not available)
  * @param[in] raw_len The length of @a raw.
  * @param[in] method The method.
  * @param[in] method_len The length of @a method.
