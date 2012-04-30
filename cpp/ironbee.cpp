@@ -179,8 +179,7 @@ void IronBee::Connection::data_in(const buffer_t& data)
   expect_ok(
     ib_state_notify_conn_data_in(
         m_ib.m_ironbee.get(),
-        conndata,
-        NULL
+        conndata
     ),
     "Connection data in."
   );
@@ -196,8 +195,7 @@ void IronBee::Connection::data_out(const buffer_t& data)
   expect_ok(
     ib_state_notify_conn_data_out(
       m_ib.m_ironbee.get(),
-      conndata,
-      NULL
+      conndata
     ),
     "Connection data in."
   );
