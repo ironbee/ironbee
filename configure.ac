@@ -290,6 +290,9 @@ AC_ARG_WITH([valgrind],
 
 if test "$valgrind" = "yes"; then
     AC_PATH_PROGS([valgrind],[valgrind],[])
+elif test "$withval" = "no"; then
+    AC_MSG_NOTICE([Not using valgrind])
+    valgrind=no
 elif test "$valgrind" != "no"; then
     AC_MSG_NOTICE([Using valgrind: $valgrind])
 else
@@ -297,7 +300,9 @@ else
 fi
 
 VALGRIND=$valgrind
-PKG_CHECK_MODULES([VALGRIND], [valgrind], [AC_DEFINE([HAVE_VALGRIND],[1],[valgrind exists])],[AC_DEFINE([NO_VALGRIND], [1], [valgrind does not exist])])
+if test "$valgrind" != "no"; then
+    PKG_CHECK_MODULES([VALGRIND], [valgrind], [AC_DEFINE([HAVE_VALGRIND],[1],[valgrind exists])],[AC_DEFINE([NO_VALGRIND], [1], [valgrind does not exist])])
+fi
 
 dnl Checks for various external dependencies
 sinclude(acinclude/htp.m4)
