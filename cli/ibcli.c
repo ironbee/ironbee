@@ -1470,7 +1470,7 @@ static ib_status_t op_print_execute(ib_engine_t *ib,
     else {
         text = "print";
     }
-    
+
     print_field(text, field, pdata->maxlen);
     *result = pdata->result;
     IB_FTRACE_RET_STATUS(IB_OK);
