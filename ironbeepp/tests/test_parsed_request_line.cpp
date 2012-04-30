@@ -55,3 +55,29 @@ TEST(TestParsedRequestLine, basic)
     ib_prl.protocol = ByteString::create(mp, "baz").ib();
     EXPECT_EQ(ib_prl.protocol, prl.protocol().ib());
 }
+
+TEST(TestParsedRequestLine, create)
+{
+    const char* raw      = "raw";
+    const char* method   = "foo";
+    const char* uri      = "bar";
+    const char* protocol = "baz";
+
+    ib_tx_t tx;
+    tx.mp = MemoryPool::create().ib();
+
+    ConstParsedRequestLine prl = ConstParsedRequestLine::create_alias(
+        Transaction(&tx),
+        raw,      3,
+        method,   3,
+        uri,      3,
+        protocol, 3
+    );
+
+    ASSERT_TRUE(prl);
+
+    EXPECT_EQ(raw,      prl.raw().to_s());
+    EXPECT_EQ(method,   prl.method().to_s());
+    EXPECT_EQ(uri,      prl.uri().to_s());
+    EXPECT_EQ(protocol, prl.protocol().to_s());
+}

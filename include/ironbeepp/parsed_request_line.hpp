@@ -103,6 +103,40 @@ public:
     //! HTTP Protocol.
     ByteString protocol() const;
 
+    /**
+     * Create a ConstParsedRequestLine, aliasing memory.
+     *
+     * The C API will eventually match this, i.e., return a const rather than
+     * not const parsed request line.
+     *
+     * All memory is aliased and its lifetime must exceed the lifetime of the
+     * parsed request line, and thus the lifetime of @a transaction.
+     *
+     * @param[in] transaction     Associated transaction.  Determine memory
+     *                            pool and lifetime.
+     * @param[in] raw             Raw request line.
+     * @param[in] raw_length      Length of @a raw.
+     * @param[in] method          HTTP method.
+     * @param[in] method_length   Length of @a method.
+     * @param[in] uri             HTTP URI.
+     * @param[in] uri_length      Length of @a uri.
+     * @param[in] protocol        HTTP protocol.
+     * @param[in] protocol_length Length of @a protocol.
+     * @return Parsed request line.
+     **/
+    static
+    ConstParsedRequestLine create_alias(
+        Transaction transaction,
+        const char* raw,
+        size_t raw_length,
+        const char* method,
+        size_t method_length,
+        const char* uri,
+        size_t uri_length,
+        const char* protocol,
+        size_t protocol_length
+    );
+
 private:
     ib_type m_ib;
 };

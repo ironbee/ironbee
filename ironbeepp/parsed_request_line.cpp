@@ -1,6 +1,7 @@
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/byte_string.hpp>
+#include <ironbeepp/internal/throw.hpp>
 
 #include <ironbee/parsed_content.h>
 
@@ -40,6 +41,36 @@ ByteString ConstParsedRequestLine::uri() const
 ByteString ConstParsedRequestLine::protocol() const
 {
     return ByteString(ib()->protocol);
+}
+
+ConstParsedRequestLine ConstParsedRequestLine::create_alias(
+    Transaction transaction,
+    const char* raw,
+    size_t raw_length,
+    const char* method,
+    size_t method_length,
+    const char* uri,
+    size_t uri_length,
+    const char* protocol,
+    size_t protocol_length
+)
+{
+    ib_parsed_req_line_t *ib_prl;
+    Internal::throw_if_error(
+        ib_parsed_req_line_create(
+            transaction.ib(),
+            &ib_prl,
+            raw,
+            raw_length,
+            method,
+            method_length,
+            uri,
+            uri_length,
+            protocol,
+            protocol_length
+        )
+    );
+    return ConstParsedRequestLine(ib_prl);
 }
 
 // ParsedRequestLine

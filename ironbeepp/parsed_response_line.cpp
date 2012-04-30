@@ -1,6 +1,7 @@
 #include <ironbeepp/parsed_response_line.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/byte_string.hpp>
+#include <ironbeepp/internal/throw.hpp>
 
 #include <ironbee/parsed_content.h>
 
@@ -40,6 +41,36 @@ ByteString ConstParsedResponseLine::status() const
 ByteString ConstParsedResponseLine::message() const
 {
     return ByteString(ib()->msg);
+}
+
+ConstParsedResponseLine ConstParsedResponseLine::create_alias(
+    Transaction transaction,
+    const char* raw,
+    size_t raw_length,
+    const char* protocol,
+    size_t protocol_length,
+    const char* status,
+    size_t status_length,
+    const char* message,
+    size_t message_length
+)
+{
+    ib_parsed_resp_line_t *ib_prl;
+    Internal::throw_if_error(
+        ib_parsed_resp_line_create(
+            transaction.ib(),
+            &ib_prl,
+            raw,
+            raw_length,
+            protocol,
+            protocol_length,
+            status,
+            status_length,
+            message,
+            message_length
+        )
+    );
+    return ConstParsedResponseLine(ib_prl);
 }
 
 // ParsedResponseLine

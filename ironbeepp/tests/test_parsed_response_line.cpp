@@ -54,3 +54,29 @@ TEST(TestParsedResponseLine, basic)
     ib_prl.msg = ByteString::create(mp, "bar").ib();
     EXPECT_EQ(ib_prl.msg, prl.message().ib());
 }
+
+TEST(TestParsedResponseLine, create)
+{
+    const char* raw      = "raw";
+    const char* protocol = "foo";
+    const char* status   = "bar";
+    const char* message  = "baz";
+
+    ib_tx_t tx;
+    tx.mp = MemoryPool::create().ib();
+
+    ConstParsedResponseLine prl = ConstParsedResponseLine::create_alias(
+        Transaction(&tx),
+        raw,      3,
+        protocol, 3,
+        status,   3,
+        message,  3
+    );
+
+    ASSERT_TRUE(prl);
+
+    EXPECT_EQ(raw,      prl.raw().to_s());
+    EXPECT_EQ(protocol, prl.protocol().to_s());
+    EXPECT_EQ(status,   prl.status().to_s());
+    EXPECT_EQ(message,  prl.message().to_s());
+}
