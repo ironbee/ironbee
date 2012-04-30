@@ -271,6 +271,9 @@ static void core_logger(FILE *fh, int level,
     int fmt2_sz = 1024;
     char *fmt2 = (char *)malloc(fmt2_sz+1);
     char *tx_info = (char *)malloc(fmt2_sz+1);
+    char time_info[32 + 1];
+    struct tm *tminfo;
+    time_t timet;
     int ec = 0;
 
     if (fmt2 == NULL || tx_info == NULL) {
@@ -291,14 +294,20 @@ static void core_logger(FILE *fh, int level,
         abort();
     }
 
+    timet = time(NULL);
+    tminfo = localtime(&timet);
+    strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
+
     if ((file != NULL) && (line > 0)) {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s[%d] (%s:%d) %s%s\n",
+                      "%s %s[%d] (%s:%d) %s%s\n",
+                      time_info,
                       (prefix?prefix:""), level, file, line, tx_info, fmt);
     }
     else {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s[%d] %s%s\n",
+                      "%s %s[%d] %s%s\n",
+                      time_info,
                       (prefix?prefix:""), level, tx_info, fmt);
     }
     if (ec > 1024) {

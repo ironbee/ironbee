@@ -66,6 +66,9 @@ static void default_logger(FILE *fp, int level,
     IB_FTRACE_INIT();
     char fmt2[1024 + 1];
     char tx_info[1024 + 1];
+    char time_info[32 + 1];
+    struct tm *tminfo;
+    time_t timet;
     int ec = 0;
 
     if (level > 4) {
@@ -84,15 +87,20 @@ static void default_logger(FILE *fp, int level,
         abort();
     }
 
+    timet = time(NULL);
+    tminfo = localtime(&timet);
+    strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
 
     if ((file != NULL) && (line > 0)) {
         ec = snprintf(fmt2, 1024,
-                      "%s[%d] (%s:%d) %s%s\n",
+                      "%s %s[%d] (%s:%d) %s%s\n",
+                      time_info,
                       (prefix?prefix:""), level, file, line, tx_info, fmt);
     }
     else {
         ec = snprintf(fmt2, 1024,
-                      "%s[%d] %s%s\n",
+                      "%s %s[%d] %s%s\n",
+                      time_info,
                       (prefix?prefix:""), level, tx_info, fmt);
     }
     if (ec > 1024) {
