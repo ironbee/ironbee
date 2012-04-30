@@ -22,19 +22,24 @@ ConstParsedRequestLine::ConstParsedRequestLine(
     // nop
 }
 
+ByteString ConstParsedRequestLine::raw() const
+{
+    return ByteString(ib()->raw);
+}
+
 ByteString ConstParsedRequestLine::method() const
 {
     return ByteString(ib()->method);
 }
 
-ByteString ConstParsedRequestLine::path() const
+ByteString ConstParsedRequestLine::uri() const
 {
-    return ByteString(ib()->path);
+    return ByteString(ib()->uri);
 }
 
-ByteString ConstParsedRequestLine::version() const
+ByteString ConstParsedRequestLine::protocol() const
 {
-    return ByteString(ib()->version);
+    return ByteString(ib()->protocol);
 }
 
 // ParsedRequestLine
@@ -66,8 +71,8 @@ std::ostream& operator<<(std::ostream& o, const ConstParsedRequestLine& parsed_r
     } else {
         o << "IronBee::ParsedRequestLine["
           << parsed_request_line.method().to_s() << " "
-          << parsed_request_line.path().to_s() << " "
-          << parsed_request_line.version().to_s() << "]";
+          << parsed_request_line.uri().to_s() << " "
+          << parsed_request_line.protocol().to_s() << "]";
     }
     return o;
 }

@@ -22,9 +22,19 @@ ConstParsedResponseLine::ConstParsedResponseLine(
     // nop
 }
 
-ByteString ConstParsedResponseLine::code() const
+ByteString ConstParsedResponseLine::raw() const
 {
-    return ByteString(ib()->code);
+    return ByteString(ib()->raw);
+}
+
+ByteString ConstParsedResponseLine::protocol() const
+{
+    return ByteString(ib()->protocol);
+}
+
+ByteString ConstParsedResponseLine::status() const
+{
+    return ByteString(ib()->status);
 }
 
 ByteString ConstParsedResponseLine::message() const
@@ -60,7 +70,7 @@ std::ostream& operator<<(std::ostream& o, const ConstParsedResponseLine& parsed_
         o << "IronBee::ParsedResponseLine[!singular!]";
     } else {
         o << "IronBee::ParsedResponseLine["
-          << parsed_response_line.code().to_s() << " "
+          << parsed_response_line.status().to_s() << " "
           << parsed_response_line.message().to_s() << "]";
     }
     return o;

@@ -91,8 +91,14 @@ public:
 
     ///@}
 
-    //! HTTP Code.
-    ByteString code() const;
+    //! Raw response line.
+    ByteString raw() const;
+
+    //! HTTP Protocol (protocol/version).
+    ByteString protocol() const;
+
+    //! HTTP Status.
+    ByteString status() const;
 
     //! HTTP Message.
     ByteString message() const;
@@ -173,7 +179,7 @@ private:
  * Output operator for ParsedResponseLine.
  *
  * Output IronBee::ParsedResponseLine[@e value] where @e value is the
- * code and message separated by space.
+ * status and message separated by space.
  *
  * @param[in] o Ostream to output to.
  * @param[in] parsed_response_line ParsedResponseLine to output.

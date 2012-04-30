@@ -1,9 +1,9 @@
 include $(top_srcdir)/build/common.mk
 bin_PROGRAMS=ibcli_cpp
 
-if DARWIN
-AM_LDFLAGS = -pagezero_size 10000 -image_base 100000000
-endif
+#if DARWIN
+#AM_LDFLAGS = -pagezero_size 10000 -image_base 100000000
+#endif
 
 ibcli_cpp_SOURCES = \
   ibcli_cpp.cpp \

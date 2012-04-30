@@ -42,12 +42,16 @@ TEST(TestParsedRequestLine, basic)
 
     ASSERT_TRUE(prl);
 
+
+    ib_prl.raw = ByteString::create(mp, "raw").ib();
+    EXPECT_EQ(ib_prl.raw, prl.raw().ib());
+
     ib_prl.method = ByteString::create(mp, "foo").ib();
     EXPECT_EQ(ib_prl.method, prl.method().ib());
 
-    ib_prl.path = ByteString::create(mp, "bar").ib();
-    EXPECT_EQ(ib_prl.path, prl.path().ib());
+    ib_prl.uri = ByteString::create(mp, "bar").ib();
+    EXPECT_EQ(ib_prl.uri, prl.uri().ib());
 
-    ib_prl.version = ByteString::create(mp, "baz").ib();
-    EXPECT_EQ(ib_prl.version, prl.version().ib());
+    ib_prl.protocol = ByteString::create(mp, "baz").ib();
+    EXPECT_EQ(ib_prl.protocol, prl.protocol().ib());
 }

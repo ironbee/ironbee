@@ -91,14 +91,17 @@ public:
 
     ///@}
 
+    //! Raw request line.
+    ByteString raw() const;
+
     //! HTTP Method.
     ByteString method() const;
 
-    //! HTTP Path.
-    ByteString path() const;
+    //! HTTP URI.
+    ByteString uri() const;
 
-    //! HTTP Version.
-    ByteString version() const;
+    //! HTTP Protocol.
+    ByteString protocol() const;
 
 private:
     ib_type m_ib;
@@ -177,7 +180,7 @@ private:
  * Output operator for ParsedRequestLine.
  *
  * Output IronBee::ParsedRequestLine[@e value] where @e value is the
- * method, path, and version separated by space.
+ * method, uri, and protocol separated by space.
  *
  * @param[in] o Ostream to output to.
  * @param[in] parsed_request_line ParsedRequestLine to output.
