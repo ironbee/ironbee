@@ -791,6 +791,11 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
                                     (tx->response_message == NULL
                                      ? 0
                                      : bstr_len(tx->response_message)));
+    if (rc != IB_OK) {
+        ib_log_error_tx(itx, "Error creating parsed response line: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     /* Tell the engine that the response started. */
     ib_log_debug2_tx(itx, "Notify response started");
