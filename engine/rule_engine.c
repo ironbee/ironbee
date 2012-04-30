@@ -1223,7 +1223,10 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
                         ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    if (tx->request_line->method != NULL) {
+    if (
+        tx->request_line->method != NULL &&
+        ib_bytestr_const_ptr(tx->request_line->method) != NULL
+    ) {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
             "method", 6,
@@ -1235,7 +1238,10 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    if (tx->request_line->uri != NULL) {
+    if (
+        tx->request_line->uri != NULL &&
+        ib_bytestr_const_ptr(tx->request_line->uri) != NULL
+    ) {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
             "uri", 4,
@@ -1247,7 +1253,10 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    if (tx->request_line->protocol != NULL) {
+    if (
+        tx->request_line->protocol != NULL &&
+        ib_bytestr_const_ptr(tx->request_line->protocol) != NULL
+    ) {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
             "protocol", 7,
