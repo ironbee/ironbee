@@ -530,7 +530,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
                 memcpy(debug_msg, match_start, match_len);
                 debug_msg[match_len] = '\0';
 
-                ib_log_debug2_tx(tx, "REGEX Setting %s=%s.",
+                ib_log_debug2_tx(tx, "REGEX Setting %s=%s",
                             full_field_name,
                             debug_msg);
 
