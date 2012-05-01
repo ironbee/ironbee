@@ -204,11 +204,10 @@ static ib_status_t ib_unregister_hook(
 
 /* -- Main Engine Routines -- */
 
-ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
+ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *plugin)
 {
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
-    ib_server_t *p = (ib_server_t *)plugin;
     ib_status_t rc;
 
     /* Create primary memory pool */
@@ -264,21 +263,21 @@ ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin)
     (*pib)->ctx = (*pib)->ectx;
 
     /* Check plugin for ABI compatibility with this engine */
-    if (p == NULL) {
+    if (plugin == NULL) {
         ib_log_error(*pib,  "Error in ib_create: plugin info required");
         rc = IB_EINVAL;
         goto failed;
     }
-    if (p->vernum > IB_VERNUM) {
+    if (plugin->vernum > IB_VERNUM) {
         ib_log_alert(*pib,
                      "Plugin %s (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
-                     p->filename, p->version, IB_VERSION, p->abinum, IB_ABINUM);
+                     plugin->filename, plugin->version, IB_VERSION, plugin->abinum, IB_ABINUM);
         rc = IB_EINCOMPAT;
         goto failed;
     }
-    (*pib)->plugin = p;
+    (*pib)->plugin = plugin;
 
     /* Sensor info. */
     (*pib)->sensor_name = IB_DSTR_UNKNOWN;

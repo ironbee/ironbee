@@ -34,6 +34,7 @@
 #include <ironbee/clock.h>
 #include <ironbee/parsed_content.h>
 #include <ironbee/engine_types.h>
+#include <ironbee/server.h>
 
 #include <stdarg.h>
 
@@ -133,7 +134,8 @@ struct ib_auditlog_part_t {
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib, void *plugin);
+ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
+                                        ib_server_t *plugin);
 
 /**
  * Initialize the engine configuration context.
