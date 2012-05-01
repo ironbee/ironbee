@@ -32,7 +32,7 @@
 
 using namespace IronBee;
 
-TEST(TestParsedRequestLine, basic)
+TEST(TestParsedNameValue, basic)
 {
     MemoryPool mp = MemoryPool::create();
 
@@ -51,4 +51,19 @@ TEST(TestParsedRequestLine, basic)
     ib_parsed_name_value_pair_list_t ib_pnv2;
     ib_pnv.next = &ib_pnv2;
     EXPECT_EQ(ib_pnv.next, pnv.next().ib());
+}
+
+TEST(TestParsedNameValue, create)
+{
+    MemoryPool mp = MemoryPool::create();
+
+    ParsedNameValue pnv = ParsedNameValue::create(
+        mp,
+        ByteString::create(mp, "foo"),
+        ByteString::create(mp, "bar")
+    );
+
+    ASSERT_TRUE(pnv);
+    EXPECT_EQ("foo", pnv.name().to_s());
+    EXPECT_EQ("bar", pnv.value().to_s());
 }

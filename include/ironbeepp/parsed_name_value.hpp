@@ -44,6 +44,7 @@ namespace IronBee {
 class ByteString;
 class Transaction;
 class ParsedNameValue;
+class MemoryPool;
 
 /**
  * Const ParsedNameValue; equivalent to a const pointer to ib_parsed_name_value_pair_list_t.
@@ -170,6 +171,21 @@ public:
 
     ///@}
 
+    /**
+     * Create a ParsedNameValue.
+     *
+     * @param[in] pool  Memory pool to use for allocations.
+     * @param[in] name  Name.
+     * @param[in] value Value.
+     * @returns ParsedNameValue
+     **/
+    static
+    ParsedNameValue create(
+        MemoryPool pool,
+        ByteString name,
+        ByteString value
+    );
+
 private:
     ib_type m_ib;
 };
@@ -192,4 +208,3 @@ std::ostream& operator<<(
 } // IronBee
 
 #endif
-

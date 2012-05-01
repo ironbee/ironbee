@@ -56,6 +56,21 @@ ParsedNameValue::ParsedNameValue(ib_type ib_parsed_name_value) :
     // nop
 }
 
+ParsedNameValue ParsedNameValue::create(
+    MemoryPool pool,
+    ByteString name,
+    ByteString value
+)
+{
+    ib_parsed_name_value_pair_list_t* ib_pnv
+        = pool.allocate<ib_parsed_name_value_pair_list_t>();
+    ib_pnv->name = name.ib();
+    ib_pnv->value = value.ib();
+    ib_pnv->next = NULL;
+
+    return ParsedNameValue(ib_pnv);
+}
+
 std::ostream& operator<<(
     std::ostream& o,
     const ConstParsedNameValue& parsed_name_value
