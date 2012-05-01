@@ -73,7 +73,6 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_opened(ib_engine_t *ib,
  *
  * @param ib Engine handle
  * @param conndata Connection data
- * @param ctx Data to pass back to callback functions
  *
  * @returns Status code
  */
@@ -85,7 +84,6 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_data_in(ib_engine_t *ib,
  *
  * @param ib Engine handle
  * @param conndata Connection data
- * @param ctx Data to pass back to callback functions
  *
  * @returns Status code
  */

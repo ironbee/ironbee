@@ -164,8 +164,8 @@ public:
     /**
      * Create new ConnectionData.
      *
-     * @param[in] Connection to associate with.
-     * @param[in] How large a buffer to allocate.
+     * @param[in] connection Connection to associate with.
+     * @param[in] size How large a buffer to allocate.
      * @returns ConnectionData
      **/
     static
