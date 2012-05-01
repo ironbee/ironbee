@@ -6,6 +6,7 @@
 #include <ironbeepp/clock.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
+#include <ironbeepp/internal/throw.hpp>
 
 namespace IronBee {
 
@@ -161,6 +162,16 @@ Transaction::Transaction(ib_type ib_transaction) :
     m_ib(ib_transaction)
 {
     // nop
+}
+
+Transaction Transaction::create(Connection connection)
+{
+    ib_tx_t* ib_tx;
+    Internal::throw_if_error(
+        ib_tx_create(&ib_tx, connection.ib(), NULL)
+    );
+
+    return Transaction(ib_tx);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstTransaction& transaction)

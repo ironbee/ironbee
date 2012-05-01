@@ -372,6 +372,19 @@ public:
 
     ///@}
 
+    /**
+     * Create a new transaction.
+     *
+     * The C API provides a plugin context @c void* parameter for transaction
+     * creation.  This is currently unsupported.  It is intended that C++
+     * server plugins not need that context.
+     *
+     * @param[in] connection Connection to associate transaction with.
+     * @returns Transaction
+     **/
+    static
+    Transaction create(Connection connection);
+
 private:
     ib_type m_ib;
 };

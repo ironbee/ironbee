@@ -32,11 +32,16 @@
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
 
+#include "fixture.hpp"
 #include "gtest/gtest.h"
 
 using namespace IronBee;
 
-TEST(TestTransaction, basic)
+class TestTransaction : public ::testing::Test, public IBPPTestFixture
+{
+};
+
+TEST_F(TestTransaction, basic)
 {
     ib_tx_t ib_tx;
 
@@ -135,4 +140,13 @@ TEST(TestTransaction, basic)
     EXPECT_FALSE(tx.is_response_seen_body());
     EXPECT_FALSE(tx.is_response_finished());
     EXPECT_TRUE(tx.is_suspicious());
+}
+
+TEST_F(TestTransaction, create)
+{
+    Connection c = Connection::create(Engine(m_ib_engine));
+    Transaction tx = Transaction::create(c);
+
+    ASSERT_TRUE(tx);
+    EXPECT_EQ(c, tx.connection());
 }
