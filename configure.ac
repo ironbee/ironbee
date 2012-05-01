@@ -220,6 +220,8 @@ if test "$devel" != "no"; then
 else
     IB_DEVEL=
 fi
+AM_CONDITIONAL([BUILD_MODFIELDS], [test "$IB_DEVEL" != "no"])
+AM_CONDITIONAL([BUILD_MODTRACE], [test "$IB_DEVEL" != "no"])
 
 ### CLI
 AC_ARG_ENABLE(cli,
