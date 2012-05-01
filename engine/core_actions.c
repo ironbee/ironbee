@@ -72,6 +72,7 @@ typedef struct {
  *
  * @returns Status code
  */
+#ifdef IB_DEVEL
 static ib_status_t act_log_create(ib_engine_t *ib,
                                   ib_context_t *ctx,
                                   ib_mpool_t *mp,
@@ -104,6 +105,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
     inst->data = str;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+#endif
 
 /**
  * Execute function for the "debuglog" action
@@ -116,6 +118,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
+#ifdef IB_DEVEL
 static ib_status_t act_debuglog_execute(void *data,
                                         ib_rule_t *rule,
                                         ib_tx_t *tx,
@@ -144,6 +147,7 @@ static ib_status_t act_debuglog_execute(void *data,
     ib_log_debug3_tx(tx, "LOG: %s", expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+#endif
 
 /**
  * Create function for the setflags action.
@@ -589,6 +593,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     ib_status_t  rc;
 
     /* Register the debuglog action */
+#ifdef IB_DEVEL
     rc = ib_action_register(ib,
                             "debuglog",
                             IB_ACT_FLAG_NONE,
@@ -598,6 +603,10 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+#endif
+
+    /* dlog is an alias for debuglog */
+#ifdef IB_DEVEL
     rc = ib_action_register(ib,
                             "dlog",
                             IB_ACT_FLAG_NONE,
@@ -607,6 +616,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+#endif
 
     /* Register the set flag action */
     rc = ib_action_register(ib,

@@ -383,6 +383,7 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
+#ifdef IB_DEVEL
 static ib_status_t op_true_execute(ib_engine_t *ib,
                                    ib_tx_t *tx,
                                    void *data,
@@ -394,6 +395,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
     *result = 1;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+#endif
 
 /**
  * Execute function for the "false" operator
@@ -408,6 +410,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
+#ifdef IB_DEVEL
 static ib_status_t op_false_execute(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     void *data,
@@ -419,6 +422,7 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
     *result = 0;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+#endif
 
 /**
  * Create function for the "ipmatch" operator
@@ -1182,6 +1186,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
      */
 
     /* Register the true operator */
+#ifdef IB_DEVEL
     rc = ib_operator_register(ib,
                               "true",
                               IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
@@ -1191,8 +1196,10 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+#endif
 
     /* Register the false operator */
+#ifdef IB_DEVEL
     rc = ib_operator_register(ib,
                               "false",
                               IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
@@ -1202,6 +1209,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+#endif
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
