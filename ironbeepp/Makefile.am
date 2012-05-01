@@ -28,4 +28,6 @@ libibpp_la_SOURCES = \
     parsed_response_line.cpp \
     parsed_name_value.cpp \
     hooks.cpp \
-    notifier.cpp
+    notifier.cpp \
+    ironbee.cpp
+    
