@@ -161,6 +161,16 @@ public:
 
     ///@}
 
+    /**
+     * Create new ConnectionData.
+     *
+     * @param[in] Connection to associate with.
+     * @param[in] How large a buffer to allocate.
+     * @returns ConnectionData
+     **/
+    static
+    ConnectionData create(Connection connection, size_t size);
+
 private:
     ib_type m_ib;
 };

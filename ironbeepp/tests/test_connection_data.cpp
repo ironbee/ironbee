@@ -28,13 +28,21 @@
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_pool.hpp>
 
+#include "fixture.hpp"
+
 #include "gtest/gtest.h"
 
-TEST(TestConnectionData, basic)
+using namespace IronBee;
+
+class TestConnectionData : public ::testing::Test, public IBPPTestFixture
+{
+};
+
+TEST_F(TestConnectionData, basic)
 {
     ib_conndata_t ib_conndata;
 
-    IronBee::ConnectionData conndata(&ib_conndata);
+    ConnectionData conndata(&ib_conndata);
 
     ASSERT_TRUE(conndata);
 
@@ -45,4 +53,14 @@ TEST(TestConnectionData, basic)
     EXPECT_EQ(ib_conndata.dlen, conndata.length());
     ib_conndata.data = (uint8_t*)15;
     EXPECT_EQ((char*)ib_conndata.data, conndata.data());
+}
+
+TEST_F(TestConnectionData, create)
+{
+    Connection c = Connection::create(Engine(m_ib_engine));
+    ConnectionData cd = ConnectionData::create(c, 100);
+
+    ASSERT_TRUE(cd);
+    EXPECT_EQ(c, cd.connection());
+    EXPECT_TRUE(cd.data());
 }
