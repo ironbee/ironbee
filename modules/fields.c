@@ -72,7 +72,7 @@ static ib_status_t parse_type(ib_cfgparser_t *cp,
                               ib_ftype_t *element_type)
 {
     IB_FTRACE_INIT();
-    
+
     /* Parse the type name */
     if (strcasecmp(str, "NUM") == 0) {
         *type = (ib_ftype_t)IB_FTYPE_NUM;
