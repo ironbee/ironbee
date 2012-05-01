@@ -22,7 +22,6 @@ LoadModule "ibmod_rules.so"
 
 # Lua
 LoadModule "ibmod_lua.so"
-LuaLoadModule "example.lua"
 
 ### Main Context (need separate directives for these)
 Set parser "htp"
