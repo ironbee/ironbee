@@ -76,19 +76,34 @@ typedef enum {
     IB_HDR_NOTIMPL
 } ib_server_header_action_t;
 
-typedef ib_status_t (*ib_server_error_fn)(void *ctx, int status);
-typedef ib_status_t (*ib_server_error_hdr)(void *ctx, const char *name,
-                                           const char *value);
-typedef ib_status_t (*ib_server_error_data)(void *ctx, const char *data);
-typedef ib_server_header_action_t (*ib_server_header_fn)
-                  (void *ctx, ib_server_direction_t dir,
-                   ib_server_header_action_t action,
-                   const char *hdr, const char *value);
-typedef ib_status_t (*ib_server_filter_init_fn)(void *ctx,
-                                                ib_server_direction_t dir);
-typedef ib_status_t (*ib_server_filter_data_fn)(void *ctx,
-                                                ib_server_direction_t dir,
-                                                const char *block, size_t len);
+typedef ib_status_t (*ib_server_error_fn_t)(
+    void *ctx,
+    int status
+);
+typedef ib_status_t (*ib_server_error_hdr_fn_t)(
+    void *ctx,
+    const char *name,
+    const char *value
+);
+typedef ib_status_t (*ib_server_error_data_fn_t)(
+    void *ctx,
+    const char *data
+);
+typedef ib_server_header_action_t (*ib_server_header_fn_t)(
+    void *ctx, ib_server_direction_t dir,
+    ib_server_header_action_t action,
+    const char *hdr,
+    const char *value
+);
+typedef ib_status_t (*ib_server_filter_init_fn_t)(
+    void *ctx,
+    ib_server_direction_t dir
+);
+typedef ib_status_t (*ib_server_filter_data_fn_t)(
+    void *ctx,
+    ib_server_direction_t dir,
+    const char *block, size_t len
+);
 
 struct ib_server_t {
     /* Header */
@@ -96,28 +111,37 @@ struct ib_server_t {
     uint32_t                 abinum;   /**< Engine ABI Number */
     const char              *version;  /**< Engine version string */
     const char              *filename; /**< Plugin code filename */
-
     const char              *name;     /**< Unique plugin name */
 
-    ib_server_header_fn     hdr_fn;    /**
-                                        * Function to tell host server
-                                        * to do something to an HTTP header.
-                                        */
-    ib_server_error_fn      err_fn;    /**
-                                        * Function to communicate an error
-                                        * response/action to host server.
-                                        */
-    ib_server_error_hdr     err_hdr;   /**
-                                        * Function to communicate an error
-                                        * response header to host server.
-                                        */
-    ib_server_error_data    err_data;  /**
-                                        * Function to communicate an error
-                                        * response body to host server.
-                                        */
+    /**
+     * Function to tell host server
+     * to do something to an HTTP header.
+     */
+    ib_server_header_fn_t hdr_fn;
+
+    /**
+     * Function to communicate an error
+     * response/action to host server.
+     */
+    ib_server_error_fn_t err_fn;
+
+    /**
+     * Function to communicate an error
+     * response header to host server.
+     */
+    ib_server_error_hdr_fn_t err_hdr_fn;
+
+    /**
+     * Function to communicate an error
+     * response body to host server.
+     */
+    ib_server_error_data_fn_t err_data_fn;
+
 #ifdef HAVE_FILTER_DATA_API
-    ib_server_filter_init_fn init_fn;  /** Initialize data filtering */
-    ib_server_filter_data_fn data_fn;  /** Pass filtered data chunk to caller */
+    /** Initialize data filtering */
+    ib_server_filter_init_fn_t init_fn;
+    /** Pass filtered data chunk to caller */
+    ib_server_filter_data_fn_t data_fn;
 #endif
 };
 
@@ -227,16 +251,18 @@ ib_status_t ib_server_filter_data(ib_server_t *svr, void *ctx,
 #define ib_server_error_response(svr,ctx,status) \
              (svr)->err_fn ? (svr)->err_fn(ctx, status) : IB_ENOTIMPL;
 #define ib_server_error_header(svr,ctx,name,val) \
-             (svr)->err_hdr ? (svr)->err_hdr(ctx, name, val) : IB_ENOTIMPL;
+             (svr)->err_hdr_fn ? (svr)->err_hdr_fn(ctx, name, val) \
+                               : IB_ENOTIMPL;
 #define ib_server_error_body(svr,ctx,data) \
-             (svr)->err_data ? (svr)->err_data(ctx, data) : IB_ENOTIMPL;
+             (svr)->err_data_fn ? (svr)->err_data_fn(ctx, data) : IB_ENOTIMPL;
 #define ib_server_header(svr,ctx,dir,action,hdr,value) \
              (svr)->hdr_fn ? (svr)->hdr_fn(ctx, dir, action, hdr, value) \
                            : IB_HDR_NOTIMPL;
 #define ib_server_filter_init(svr,ctx,dir) \
              (svr)->init_fn ? (svr)->init_fn(ctx, dir) : IB_ENOTIMPL;
 #define ib_server_filter_data(svr,ctx,dir,data,len) \
-             (svr)->data_fn ? (svr)->data_fn(ctx, dir, data, len) : IB_ENOTIMPL;
+             (svr)->data_fn ? (svr)->data_fn(ctx, dir, data, len) \
+                            : IB_ENOTIMPL;
 #endif
 
 /**
