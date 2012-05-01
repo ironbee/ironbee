@@ -276,6 +276,19 @@ public:
 
     ///@}
 
+    /**
+     * Create a new connection.
+     *
+     * The C API provides a plugin context @c void* parameter for connection
+     * creation.  This is currently unsupported.  It is intended that C++
+     * server plugins not need that context.
+     *
+     * @param[in] engine Engine to associate connection with.
+     * @returns Connection
+     **/
+    static
+    Connection create(Engine engine);
+
 private:
     ib_type m_ib;
 };

@@ -4,6 +4,7 @@
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/clock.hpp>
+#include <ironbeepp/internal/throw.hpp>
 
 namespace IronBee {
 
@@ -109,6 +110,17 @@ Connection::Connection(ib_type ib_connection) :
     m_ib(ib_connection)
 {
     // nop
+}
+
+Connection Connection::create(Engine engine)
+{
+    ib_conn_t* ib_conn;
+
+    Internal::throw_if_error(
+        ib_conn_create(engine.ib(), &ib_conn, NULL)
+    );
+
+    return Connection(ib_conn);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstConnection& connection)

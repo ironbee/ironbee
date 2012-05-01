@@ -70,7 +70,7 @@ test_configuration_parser_SOURCES = \
 test_configuration_directives_SOURCES = \
     test_configuration_directives.cpp fixture.cpp
 test_clock_SOURCES                = test_clock.cpp
-test_connection_SOURCES           = test_connection.cpp
+test_connection_SOURCES           = test_connection.cpp fixture.cpp
 test_connection_data_SOURCES      = test_connection_data.cpp
 test_transaction_SOURCES          = test_transaction.cpp
 test_transaction_data_SOURCES     = test_transaction_data.cpp

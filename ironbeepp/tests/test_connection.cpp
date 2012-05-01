@@ -30,9 +30,15 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/clock.hpp>
 
+#include "fixture.hpp"
+
 #include "gtest/gtest.h"
 
-TEST(TestConnection, basic)
+class TestConnection : public ::testing::Test, public IBPPTestFixture
+{
+};
+
+TEST_F(TestConnection, basic)
 {
     ib_conn_t ib_conn;
 
@@ -93,4 +99,14 @@ TEST(TestConnection, basic)
     EXPECT_FALSE(conn.is_seen_data_out());
     EXPECT_FALSE(conn.is_opened());
     EXPECT_TRUE(conn.is_closed());
+}
+
+TEST_F(TestConnection, create)
+{
+    IronBee::Connection conn = IronBee::Connection::create(
+        IronBee::Engine(m_ib_engine)
+    );
+
+    ASSERT_TRUE(conn);
+    ASSERT_EQ(m_ib_engine, conn.engine().ib());
 }
