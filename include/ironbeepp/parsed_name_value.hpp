@@ -243,7 +243,7 @@ ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
         std::make_pair(begin, end)
     ) {
         // This will reconstruct the bytestrings but not copy the data.
-        // The C API is currently assymetric: named values are consumed as
+        // The C API is currently asymmetric: named values are consumed as
         // structures but added to list as members.  IronBee++ hides that
         // asymmetry.
         Internal::throw_if_error(
