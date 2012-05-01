@@ -52,7 +52,7 @@ IBPPTestFixture::IBPPTestFixture()
     m_ib_connection->remote_port  = 65534;
     m_ib_connection->local_port   = 80;
 
-    ib_tx_create(m_ib_engine, &m_ib_transaction, m_ib_connection, NULL);
+    ib_tx_create(&m_ib_transaction, m_ib_connection, NULL);
 }
 
 IBPPTestFixture::~IBPPTestFixture()

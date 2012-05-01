@@ -619,8 +619,7 @@ static ib_status_t ib_tx_generate_id(ib_tx_t *tx)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_tx_create(ib_engine_t *ib,
-                         ib_tx_t **ptx,
+ib_status_t ib_tx_create(ib_tx_t **ptx,
                          ib_conn_t *conn,
                          void *pctx)
 {
@@ -629,6 +628,8 @@ ib_status_t ib_tx_create(ib_engine_t *ib,
     ib_status_t rc;
     char namebuf[64];
     ib_tx_t *tx = NULL;
+
+    ib_engine_t *ib = conn->ib;
 
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it

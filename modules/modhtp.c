@@ -382,7 +382,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 
     /* Create the transaction structure. */
     ib_log_debug3(ib, "Creating transaction structure");
-    rc = ib_tx_create(ib, &itx, iconn, NULL);
+    rc = ib_tx_create(&itx, iconn, NULL);
     if (rc != IB_OK) {
         /// @todo Set error.
         IB_FTRACE_RET_INT(HTP_ERROR);

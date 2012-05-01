@@ -1060,7 +1060,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Hook to process requests */
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
-            ib_tx_create(ironbee, &txndata->tx, ssndata->iconn, txndata);
+            ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;

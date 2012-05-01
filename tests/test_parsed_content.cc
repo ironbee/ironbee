@@ -131,7 +131,7 @@ TEST_F(ParsedContentTest, create_destroy)
     ib_tx_t *tx;
 
 
-    ASSERT_IB_OK(ib_tx_create(ib_engine, &tx, c, NULL));
+    ASSERT_IB_OK(ib_tx_create(&tx, c, NULL));
     ASSERT_TRUE(tx!=NULL);
 
     ib_tx_destroy(tx);
@@ -144,7 +144,7 @@ TEST_F(ParsedContentHeaderTest, list_err)
     ib_status_t rc;
     ib_tx_t *tx;
     ib_conn_t *c = buildIronBeeConnection();
-    ASSERT_IB_OK(ib_tx_create(ib_engine, &tx, c, NULL));
+    ASSERT_IB_OK(ib_tx_create(&tx, c, NULL));
 
     ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
         &headers,
@@ -183,7 +183,7 @@ TEST_F(ParsedContentHeaderTest, list_ok)
     ib_status_t rc;
     ib_tx_t *tx;
     ib_conn_t *c = buildIronBeeConnection();
-    ASSERT_IB_OK(ib_tx_create(ib_engine, &tx, c, NULL));
+    ASSERT_IB_OK(ib_tx_create(&tx, c, NULL));
 
     ASSERT_IB_OK(ib_parsed_name_value_pair_list_wrapper_create(
         &headers,

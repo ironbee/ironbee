@@ -546,15 +546,13 @@ void DLL_PUBLIC ib_conn_destroy(ib_conn_t *conn);
 /**
  * Create a transaction structure.
  *
- * @param ib Engine handle
  * @param ptx Address which new transaction is written
  * @param conn Connection structure
  * @param pctx Plugin transaction context
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_tx_create(ib_engine_t *ib,
-                                    ib_tx_t **ptx,
+ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
                                     ib_conn_t *conn,
                                     void *pctx);
 
