@@ -318,7 +318,7 @@ ib_status_t ib_field_alias(
 
     ib_status_t rc;
 
-    if (ib_field_is_dynamic(*pf)) {
+    if (ib_field_is_dynamic(src)) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -352,7 +352,7 @@ ib_status_t ib_field_copy(
 
     ib_status_t rc;
 
-    if (ib_field_is_dynamic(*pf)) {
+    if (ib_field_is_dynamic(src)) {
         rc = ib_field_create_dynamic(
             pf, mp, name, nlen,
             src->type,
