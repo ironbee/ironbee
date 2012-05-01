@@ -55,6 +55,21 @@ TransactionData::TransactionData(ib_type ib_transaction_data) :
     // nop
 }
 
+TransactionData TransactionData::create_alias(
+    MemoryPool mp,
+    type_e     type,
+    char*      data,
+    size_t     data_length
+)
+{
+    ib_txdata_t* ib_txdata = mp.allocate<ib_txdata_t>();
+    ib_txdata->dtype = static_cast<ib_data_type_t>(type);
+    ib_txdata->data  = reinterpret_cast<uint8_t*>(data);
+    ib_txdata->dlen  = data_length;
+
+    return TransactionData(ib_txdata);
+}
+
 std::ostream& operator<<(std::ostream& o, const ConstTransactionData& transaction_data)
 {
     if (! transaction_data) {

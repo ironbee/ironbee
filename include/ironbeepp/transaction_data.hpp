@@ -173,6 +173,27 @@ public:
 
     ///@}
 
+    /**
+     * Create TransactionData aliasing memory.
+     *
+     * The memory pointed to by @a data must exceed the usetime of
+     * transaction data (usually a transaction).  It is recommended that
+     * @a mp be the memory pool of the current transaction.
+     *
+     * @param[in] mp          Memory pool to use for allocations.
+     * @param[in] type        Type of data.
+     * @param[in] data        Data to alias.
+     * @param[in] data_length Length of @a data.
+     * @returns TransactionData.
+     **/
+    static
+    TransactionData create_alias(
+        MemoryPool mp,
+        type_e     type,
+        char*      data,
+        size_t     data_length
+    );
+
 private:
     ib_type m_ib;
 };

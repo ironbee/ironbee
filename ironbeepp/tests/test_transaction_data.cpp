@@ -30,19 +30,43 @@
 
 #include "gtest/gtest.h"
 
+using namespace IronBee;
+
 TEST(TestTransactionData, basic)
 {
     ib_txdata_t ib_txdata;
 
-    IronBee::TransactionData txdata(&ib_txdata);
+    TransactionData txdata(&ib_txdata);
 
     ASSERT_TRUE(txdata);
 
     ib_txdata.dtype = IB_DTYPE_HTTP_BODY;
-    EXPECT_EQ(IronBee::TransactionData::HTTP_BODY, txdata.type());
+    EXPECT_EQ(TransactionData::HTTP_BODY, txdata.type());
 
     ib_txdata.dlen = 14;
     EXPECT_EQ(ib_txdata.dlen, txdata.length());
     ib_txdata.data = (uint8_t*)15;
     EXPECT_EQ((char*)ib_txdata.data, txdata.data());
+}
+
+TEST(TestTransactionData, create)
+{
+    char* data = strdup("foobar");
+
+    ScopedMemoryPool smp;
+    MemoryPool mp = smp;
+
+    TransactionData td = TransactionData::create_alias(
+        mp,
+        TransactionData::HTTP_BODY,
+        data,
+        6
+    );
+
+    ASSERT_TRUE(td);
+    EXPECT_EQ(TransactionData::HTTP_BODY, td.type());
+    EXPECT_EQ(data, td.data());
+    EXPECT_EQ(6, td.length());
+
+    free(data);
 }
