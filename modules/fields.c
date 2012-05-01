@@ -225,7 +225,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
         ib_log_error(cp->ib, "No type specified for field");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    type_str = (const char*)(type_node->data);
+    type_str = (const char *)(type_node->data);
 
     /* Parse the type name */
     rc = parse_type(cp, mp, type_str, &type_num, &element_type);
@@ -330,7 +330,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     }
     ib_log_debug(cp->ib,
                  "Created field %p '%s' of type %d '%s'",
-                 (void*)field, name_str, (int)type_num, type_str);
+                 (void *)field, name_str, (int)type_num, type_str);
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -374,9 +374,9 @@ static ib_status_t fields_tx_headers(ib_engine_t *ib,
                 continue;
             }
             ib_log_debug_tx(tx, "Adding bytestr %p (f=%p) = '%.*s'",
-                            (void*)bs, (void*)field,
+                            (void *)bs, (void *)field,
                             (int)ib_bytestr_size(bs),
-                            (const char*)ib_bytestr_const_ptr(bs));
+                            (const char *)ib_bytestr_const_ptr(bs));
         }
 
         rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
