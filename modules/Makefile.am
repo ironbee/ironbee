@@ -15,9 +15,7 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_ac.la \
                      ibmod_radix.la \
                      ibmod_binradix.la \
-                     ibmod_poc_ac_sig.la \
                      ibmod_lua.la \
-                     ibmod_poc_sig.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la \
                      ibmod_perf_stats.la 
@@ -62,14 +60,6 @@ ibmod_lua_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
                       -lm
-
-ibmod_poc_sig_la_SOURCES = poc_sig.c 
-ibmod_poc_sig_la_LDFLAGS = $(AM_LDFLAGS)
-ibmod_poc_sig_la_CFLAGS = $(AM_CFLAGS)
-
-ibmod_poc_ac_sig_la_SOURCES = poc_ac_sig.c 
-ibmod_poc_ac_sig_la_LDFLAGS = $(AM_LDFLAGS)
-ibmod_poc_ac_sig_la_CFLAGS = $(AM_CFLAGS)
 
 ibmod_rules_la_SOURCES = rules.c \
                          rules_lua.c \

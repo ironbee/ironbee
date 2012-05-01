@@ -60,14 +60,13 @@ check_PROGRAMS = test_gtest \
                  test_util_expand \
                  test_engine \
                  test_module_ahocorasick \
-                 test_module_trace \
                  test_module_pcre \
-                 test_module_poc_sig \
                  test_module_rules_lua \
                  test_operator \
                  test_action \
                  test_luajit \
                  test_config
+
 
 TESTS=$(check_PROGRAMS)
 
@@ -141,8 +140,13 @@ test_engine_LDADD = $(MODULE_TEST_LDADD)
 test_config_SOURCES = test_config.cc test_main.cc 
 test_config_LDADD = $(MODULE_TEST_LDADD)
 
-test_module_trace_SOURCES = test_module_trace.cc test_main.cc ibtest_util.hh ibtest_util.cc
+
+if BUILD_MODTRACE
+check_PROGRAMS += test_module_trace
+test_module_trace_SOURCES = \
+    test_module_trace.cc test_main.cc ibtest_util.hh ibtest_util.cc
 test_module_trace_LDADD = $(MODULE_TEST_LDADD) 
+endif
 
 test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
                                 test_main.cc ibtest_util.cc
@@ -165,10 +169,6 @@ test_module_ahocorasick_SOURCES = test_module_ahocorasick.cc test_main.cc
 test_module_ahocorasick_LDADD = $(MODULE_TEST_LDADD)
 test_module_ahocorasick_CPPFLAGS = $(CPPFLAGS) \
                                    -I$(top_srcdir)/modules
-
-test_module_poc_sig_SOURCES = test_module_poc_sig.cc test_main.cc \
-                              ibtest_util.cc
-test_module_poc_sig_LDADD = $(MODULE_TEST_LDADD)
 
 test_operator_SOURCES = test_operator.cc test_main.cc
 test_operator_LDADD = $(MODULE_TEST_LDADD)

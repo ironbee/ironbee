@@ -20,11 +20,10 @@ LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_radix.so"
 LoadModule "ibmod_ac.so"
 LoadModule "ibmod_rules.so"
-#LoadModule "ibmod_poc_sig.so"
 
 # Lua
-LoadModule "ibmod_lua.so"
-LuaLoadModule "example.lua"
+#LoadModule "ibmod_lua.so"
+#LuaLoadModule "example.lua"
 
 ### Main Context (need separate directives for these)
 Set parser "htp"
@@ -58,20 +57,7 @@ RequestBuffering On
 # Response (TODO Implement)
 #ResponseBuffering Off
 
-#PocSigTrace On
-
 # -- Sites --
-# TODO: Hostname - currently wildcard can only be on left
-# Default
-<Site default>
-    SiteId AAAABBBB-1111-2222-3333-000000000000
-    Hostname *
-
-    # Example rule syntax
-    Rule ARGS.foo "@rx bar" id:1 phase:REQUEST msg:foo=bar tag:foo tag:bar severity:12 confidence:30 event
-
-    # This signature is handled by modules/poc_sig.c
-    # syntax: sigphase field pcre_pattern title
-#    PocSigReqHead request_line bar "TESTING: Matched bar in request line."
-</Site>
-
+Include "site-1.conf"
+Include "site-2.conf"
+Include "site-default.conf"

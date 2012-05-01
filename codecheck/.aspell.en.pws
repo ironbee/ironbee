@@ -107,8 +107,6 @@ fbuffer
 fpc
 cfgs
 fmt
-PocSig
-pocsig
 Lconfig
 IronBeeEngineTfn
 hdr
@@ -127,7 +125,6 @@ parr
 internalhash
 MemoryPool
 ETRUNC
-PocACSigPreTx
 abcdefghijklfoobar
 gettimeofday
 IronBee's
@@ -237,7 +234,6 @@ nbe
 nsec
 bool
 ibconfig
-PocACSigReqHead
 RSPHDRS
 enoent
 errmsg
@@ -335,7 +331,6 @@ myStringValue
 errptr
 nto
 ple
-PocSigResHead
 NULs
 nul
 bintree
@@ -350,7 +345,6 @@ onEventConnDataOut
 regexs
 lineno
 IronBeeBufferSize
-poc
 ectx
 prechain
 pmp
@@ -572,7 +566,6 @@ tparam
 fini
 de
 Unlink
-PocSigTrace
 ec
 br
 typedef'ed
@@ -640,7 +633,6 @@ struct
 MyString
 nc
 TxProcess
-PocSigReqHead
 nd
 errno
 ne
@@ -681,7 +673,6 @@ Shsf
 tc
 abcdefABCDEF
 td
-PocACSigPostTx
 strstr
 IronBeeBuild
 BaiDuSpider
@@ -742,7 +733,6 @@ SubPool
 subpool
 testval
 RuleBasePath
-PocSigPostTx
 secondlife
 ibcli
 ConstParsedResponseLine
@@ -754,8 +744,6 @@ rset
 Dataless
 udata
 modradix
-PocACSigReq
-PocACSigRes
 RequestStarted
 TxDataOut
 responsetrailers
@@ -794,8 +782,6 @@ teashark
 Deinitialize
 tolower
 ironbeepp
-PocSigReq
-PocSigRes
 hostname
 memcpy
 portably
@@ -833,7 +819,6 @@ FINPLACE
 Mediapartners
 Ragel's
 IronBeeError
-PocACSigTrace
 func
 FMODIFIED
 Tracefile
@@ -1119,8 +1104,6 @@ InkAPI
 LuaPackagePath
 json
 truthy
-pocacsig
-PocACSig
 Hashtable
 ptime
 IEMobile
@@ -1137,7 +1120,6 @@ IronBeeFilter
 IronBeeUtilExpand
 appendList
 nselected
-PocSigPreTx
 substring
 DirectiveName
 opflags
@@ -1208,7 +1190,6 @@ cabc
 tVConn
 IronBeeRule
 IronBeeEngineLog
-PocACSigResHead
 rtorrent
 atexit
 aho
