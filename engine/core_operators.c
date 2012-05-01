@@ -374,12 +374,17 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
  * Execute function for the "true" operator
  * @internal
  *
+ * @note This operator is enabled only for builds configured with
+ * "--enable-devel".
+ *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
  * @param[out] result Pointer to number in which to store the result
+ *
+ *
  *
  * @returns Status code
  */
@@ -400,6 +405,9 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
 /**
  * Execute function for the "false" operator
  * @internal
+ *
+ * @note This operator is enabled only for builds configured with
+ * "--enable-devel".
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)

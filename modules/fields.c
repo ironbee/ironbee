@@ -15,6 +15,37 @@
  * limitations under the License.
  *****************************************************************************/
 
+/**
+ * @file
+ * @brief IronBee &mdash; Fields Module
+ *
+ * This module can be used to create fields in the TX DPI.  These fields are
+ * defined through the use of the FieldTx configuration directive.
+ *
+ * Below is an example configuration snippet that uses the FieldTx directive
+ * to create number, unsigned number, NUL-terminated string, Byte-string and
+ * List.  The named fields "Num1", "Num2", ... will be created for every
+ * transaction processed by the engine.
+ *
+ *   FieldTx Num1      NUM      1
+ *   FieldTx Num2      NUM      5
+ *   FieldTx UNum1     UNUM     1
+ *   FieldTx Str1      NULSTR   "abc"
+ *   FieldTx Str2      NULSTR   "ABC"
+ *   FieldTx BStr1     BYTESTR  "ABC"
+ *   FieldTx BStr2     BYTESTR  "DEF"
+ *   FieldTx List0     LIST
+ *   FieldTx List1     LIST:NUM 1 2 3 4 5
+ *   FieldTx List2     LIST:NULSTR a bc def foo
+ *   FieldTx List3     LIST
+ *   FieldTx List3:Lst LIST:NULSTR a bc def foo
+ *
+ * @note This module is enabled only for builds configured with
+ * "--enable-devel".
+ *
+ * @author Nick LeRoy <nleroy@qualys.com>
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>

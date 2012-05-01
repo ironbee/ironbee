@@ -19,7 +19,10 @@
  * @file
  * @brief IronBee &mdash; Trace Module
  *
- * This is a trace module
+ * This is a trace module.
+ *
+ * @note This module is enabled only for builds configured with
+ * "--enable-devel".
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

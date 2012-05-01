@@ -64,6 +64,9 @@ typedef struct {
  * Create function for the log action.
  * @internal
  *
+ * @note This action is enabled only for builds configured with
+ * "--enable-devel".
+ *
  * @param[in] ib IronBee engine (unused)
  * @param[in] ctx Current context.
  * @param[in] mp Memory pool to use for allocation
@@ -110,6 +113,9 @@ static ib_status_t act_log_create(ib_engine_t *ib,
 /**
  * Execute function for the "debuglog" action
  * @internal
+ *
+ * @note This action is enabled only for builds configured with
+ * "--enable-devel".
  *
  * @param[in] data C-style string to log
  * @param[in] rule The matched rule
