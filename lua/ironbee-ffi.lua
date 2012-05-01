@@ -155,6 +155,14 @@ ffi.cdef [[
     typedef struct ib_sdata_t ib_sdata_t;
     typedef uint64_t ib_time_t;
 
+    /* Parsed Object Types */
+    typedef struct ib_parsed_req_line_t ib_parsed_req_line_t;
+    typedef struct ib_parsed_resp_line_t ib_parsed_resp_line_t;
+    typedef struct ib_parsed_name_value_pair_list_t ib_parsed_name_value_pair_list_t;
+    typedef struct ib_parsed_name_value_pair_list_wrapper_t ib_parsed_name_value_pair_list_wrapper_t;
+    typedef struct ib_parsed_name_value_pair_list_wrapper_t ib_parsed_header_wrapper_t;
+    typedef struct ib_parsed_name_value_pair_list_wrapper_t ib_parsed_trailer_wrapper_t;
+
     /** Function called when a provider is registered. */
     typedef ib_status_t (*ib_provider_register_fn_t)(ib_engine_t *ib,
                                                      ib_provider_t *pr);
@@ -274,6 +282,43 @@ ffi.cdef [[
         const char         *er_ipstr;
         const char         *path;
         ib_flags_t          flags;
+
+        ib_parsed_req_line_t *request_line;
+        ib_parsed_header_wrapper_t *request_headers;
+
+        ib_parsed_resp_line_t *response_line;
+        ib_parsed_header_wrapper_t *response_headers;
+    };
+
+    /* Parsed Name Value Pair List Node */
+    struct ib_parsed_name_value_pair_list_t {
+        ib_bytestr_t *name;
+        ib_bytestr_t *value;
+        ib_parsed_name_value_pair_list_t *next;
+    }
+
+    /* Parsed Name Value Pair List */
+    struct ib_parsed_name_value_pair_list_wrapper_t {
+        ib_mpool_t *mpool;
+        ib_parsed_name_value_pair_list_t *head;
+        ib_parsed_name_value_pair_list_t *tail;
+        size_t size;
+    };
+
+    /* Parsed Request Line */
+    struct ib_parsed_req_line_t {
+        ib_bytestr_t *raw;
+        ib_bytestr_t *method;
+        ib_bytestr_t *uri;
+        ib_bytestr_t *protocol;
+    };
+
+    /* Parsed Response Line */
+    struct ib_parsed_resp_line_t {
+        ib_bytestr_t *raw;
+        ib_bytestr_t *protocol;
+        ib_bytestr_t *status;
+        ib_bytestr_t *msg;
     };
 
     /* Data Field Structure */
