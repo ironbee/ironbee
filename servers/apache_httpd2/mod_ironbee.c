@@ -130,7 +130,7 @@ struct ironbee_tx_context {
 #define ap_is_HTTP_VALID_RESPONSE(x) (((x) >= 100)&&((x) < 600))
 #endif
 
-static ib_status_t ib_error_callback(void *vf, int status)
+static ib_status_t ib_error_callback(void *vf, int status, void *cbdata)
 {
     /* We're being called from a connection filter here.
      * So on input we have to anticipate the Request
@@ -160,29 +160,31 @@ static ib_status_t ib_error_callback(void *vf, int status)
 
     return IB_ENOTIMPL;
 }
-static ib_status_t ib_errdata_callback(void *vf, const char *data)
+static ib_status_t ib_errdata_callback(void *vf, const char *data, void *cbdata)
 {
     return IB_ENOTIMPL;
 }
-static ib_status_t ib_errhdr_callback(void *vf, const char *hdr, const char *val)
+static ib_status_t ib_errhdr_callback(void *vf, const char *hdr, const char *val, void *cbdata)
 {
     return IB_ENOTIMPL;
 }
 static ib_server_header_action_t ib_header_callback
                                           (void *ctx, ib_server_direction_t dir,
                                            ib_server_header_action_t action,
-                                           const char *hdr, const char *value)
+                                           const char *hdr, const char *value,
+                                           void *cbdata)
 {
     //ap_filter_t *f = ctx;
     return IB_HDR_NOTIMPL;
 }
 #ifdef HAVE_FILTER_DATA_API
-static ib_status_t ib_filter_init_callback(void *ctx, ib_server_direction_t dir)
+static ib_status_t ib_filter_init_callback(void *ctx, ib_server_direction_t dir, void *cbdata)
 {
     return IB_OK;
 }
 static ib_status_t ib_filter_data_callback(void *ctx, ib_server_direction_t dir,
-                                           const char *block, size_t len)
+                                           const char *block, size_t len,
+                                           void *cbdata)
 {
     return IB_OK;
 }
@@ -193,12 +195,18 @@ ib_server_t DLL_LOCAL ibplugin = {
     IB_SERVER_HEADER_DEFAULTS,
     "apache_2",
     &ib_header_callback,
+    NULL,
     &ib_error_callback,
+    NULL,
     &ib_errhdr_callback,
+    NULL,
     &ib_errdata_callback,
+    NULL,
 #ifdef HAVE_FILTER_DATA_API
     &ib_filter_init_callback,
+    NULL,
     &ib_filter_data_callback,
+    NULL,
 #endif
 };
 

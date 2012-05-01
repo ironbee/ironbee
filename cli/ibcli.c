@@ -182,6 +182,10 @@ ib_server_t ibplugin = {
     NULL,
     NULL,
     NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
 

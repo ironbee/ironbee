@@ -160,7 +160,8 @@ typedef struct {
 static ib_server_header_action_t ib_header_callback
                                           (void *x, ib_server_direction_t dir,
                                            ib_server_header_action_t action,
-                                           const char *hdr, const char *value)
+                                           const char *hdr, const char *value,
+                                           void *cbdata)
 {
     ib_txn_ctx *ctx = x;
     hdr_do *header;
@@ -256,7 +257,7 @@ errordoc_free:
     }
 }
 
-static ib_status_t ib_error_callback(void *x, int status)
+static ib_status_t ib_error_callback(void *x, int status, void *cbdata)
 {
     ib_txn_ctx *ctx = x;
     if (status >= 200 && status < 600) {
@@ -270,7 +271,7 @@ static ib_status_t ib_error_callback(void *x, int status)
     }
     return IB_ENOTIMPL;
 }
-static ib_status_t ib_errhdr_callback(void *x, const char *hdr, const char *val)
+static ib_status_t ib_errhdr_callback(void *x, const char *hdr, const char *val, void *cbdata)
 {
     ib_txn_ctx *ctx = x;
     hdr_list *hdrs;
@@ -286,7 +287,7 @@ static ib_status_t ib_errhdr_callback(void *x, const char *hdr, const char *val)
     ctx->err_hdrs = hdrs;
     return IB_OK;
 }
-static ib_status_t ib_errdata_callback(void *x, const char *data)
+static ib_status_t ib_errdata_callback(void *x, const char *data, void *cbdata)
 {
     ib_txn_ctx *ctx = x;
     /* We can't return an error after the response has started */
@@ -303,9 +304,13 @@ ib_server_t DLL_LOCAL ibplugin = {
     IB_SERVER_HEADER_DEFAULTS,
     "ts-ironbee",
     ib_header_callback,
+    NULL,
     ib_error_callback,
+    NULL,
     ib_errhdr_callback,
+    NULL,
     ib_errdata_callback,
+    NULL,
 };
 
 /**
