@@ -220,7 +220,7 @@ if test "$devel" != "no"; then
 else
     IB_DEVEL=
 fi
-echo "IB_DEVEL=\"$IB_DEVEL\""
+
 AM_CONDITIONAL([BUILD_MODFIELDS], [test "$IB_DEVEL" != ""])
 AM_CONDITIONAL([BUILD_MODTRACE], [test "$IB_DEVEL" != ""])
 
