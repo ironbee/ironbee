@@ -265,7 +265,7 @@ public:
      * @throw ealloc on failure to allocate.
      **/
     template <typename T>
-    T* allocate(size_t number) const;
+    T* allocate(size_t number = 1) const;
 
     /**
      * Allocate @a size bytes of memory.
