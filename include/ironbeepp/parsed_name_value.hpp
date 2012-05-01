@@ -28,12 +28,19 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP__PARSEDNAMEVALUE__
-#define __IBPP__PARSEDNAMEVALUE__
+#ifndef __IBPP__PARSED_NAME_VALUE__
+#define __IBPP__PARSED_NAME_VALUE__
 
 #include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/byte_string.hpp>
+#include <ironbeepp/transaction.hpp>
+#include <ironbeepp/internal/throw.hpp>
+
+#include <ironbee/parsed_content.h>
 
 #include <ostream>
+
+#include <boost/foreach.hpp>
 
 // IronBee C Type
 typedef struct ib_parsed_name_value_pair_list_t
@@ -41,7 +48,6 @@ typedef struct ib_parsed_name_value_pair_list_t
 
 namespace IronBee {
 
-class ByteString;
 class Transaction;
 class ParsedNameValue;
 class MemoryPool;
@@ -204,6 +210,58 @@ std::ostream& operator<<(
     std::ostream&               o,
     const ConstParsedNameValue& parsed_name_value
 );
+
+
+namespace Internal {
+/// @cond Internal
+
+/**
+ * Turn a sequence of ParsedNameValues into a C API appropriate type.
+ *
+ * @param[in] transaction Transaction to associate with.
+ * @param[in] begin       Beginning of sequence.
+ * @param[in] end         End of sequence.
+ * @returns ib_parsed_name_value_pair_list_wrapper_t for use in C API.
+ **/
+template <typename Iterator>
+ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
+    Transaction transaction,
+    Iterator    begin,
+    Iterator    end
+)
+{
+    ib_parsed_name_value_pair_list_wrapper_t* ib_pnv_list;
+    Internal::throw_if_error(
+        ib_parsed_name_value_pair_list_wrapper_create(
+            &ib_pnv_list,
+            transaction.ib()
+        )
+    );
+
+    BOOST_FOREACH(
+        ParsedNameValue pnv,
+        std::make_pair(begin, end)
+    ) {
+        // This will reconstruct the bytestrings but not copy the data.
+        // The C API is currently assymetric: named values are consumed as
+        // structures but added to list as members.  IronBee++ hides that
+        // asymmetry.
+        Internal::throw_if_error(
+            ib_parsed_name_value_pair_list_add(
+                ib_pnv_list,
+                pnv.name().const_data(),
+                pnv.name().length(),
+                pnv.value().const_data(),
+                pnv.name().length()
+            )
+        );
+    }
+
+    return ib_pnv_list;
+}
+
+/// @endcond
+} // Internal
 
 } // IronBee
 

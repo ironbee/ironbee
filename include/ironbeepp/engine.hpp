@@ -37,6 +37,7 @@ namespace IronBee {
 class ConfigurationDirectivesRegistrar;
 class HooksRegistrar;
 class Context;
+class Notifier;
 
 /**
  * Const Engine; equivalent to a const pointer to ib_engine_t.
@@ -240,6 +241,17 @@ public:
      * @return HooksRegistrar
      **/
     HooksRegistrar register_hooks() const;
+
+     /**
+      * Notify engine of events.
+      *
+      * This methods returns a Notifier which can be used to notify the engine
+      * of events (state changes).  See Notifier for details on how to use it.
+      *
+      * @sa Notifier
+      * @return Notifier
+      **/
+    Notifier notify() const;
 
 private:
     ib_engine_t* m_ib;
