@@ -30,6 +30,7 @@
 
 #include "gtest/gtest.h"
 
+#include "ironbee_private.h"
 #include <ironbee/engine.h>
 #include <ironbee/config.h>
 
@@ -50,8 +51,8 @@ TEST_F(TestConfigurationParser, ConfigurationParser)
     ASSERT_TRUE(P);
     ASSERT_EQ(&parser, P.ib());
 
-    parser.ib = m_ib_engine;
-    parser.mp = ib_engine_pool_main_get(m_ib_engine);
+    parser.ib = m_engine.ib();
+    parser.mp = ib_engine_pool_main_get(m_engine.ib());
 
     ib_context_t ctx;
     parser.cur_ctx = &ctx;

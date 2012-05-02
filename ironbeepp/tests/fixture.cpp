@@ -25,38 +25,35 @@
 
 #include "fixture.hpp"
 
+#include <ironbeepp/ironbee.hpp>
+
 #include <stdexcept>
 
-IBPPTestFixture::IBPPTestFixture()
+using namespace IronBee;
+
+IBPPTestFixture::IBPPTestFixture() :
+    m_server_value("filename", "name")
 {
-    m_ib_server.vernum   = IB_VERNUM;
-    m_ib_server.abinum   = IB_ABINUM;
-    m_ib_server.version  = IB_VERSION;
-    m_ib_server.filename = __FILE__;
-    m_ib_server.name     = "IBPPTest";
+    IronBee::initialize();
 
-    ib_initialize();
+    m_server = m_server_value.get();
 
-    ib_status_t rc = ib_engine_create(&m_ib_engine, &m_ib_server);
-    if (rc != IB_OK) {
-        throw std::runtime_error("ib_engine_create failed.");
-    }
-    rc = ib_engine_init(m_ib_engine);
-    if (rc != IB_OK) {
-        throw std::runtime_error("ib_engine_init failed.");
-    }
+    m_engine = Engine::create(m_server);
+    m_engine.initialize();
 
-    ib_conn_create(m_ib_engine, &m_ib_connection, NULL);
-    m_ib_connection->local_ipstr  = "1.0.0.1";
-    m_ib_connection->remote_ipstr = "1.0.0.2";
-    m_ib_connection->remote_port  = 65534;
-    m_ib_connection->local_port   = 80;
+    m_connection = Connection::create(m_engine);
 
-    ib_tx_create(&m_ib_transaction, m_ib_connection, NULL);
+    m_connection.set_local_ip_string("1.0.0.1");
+    m_connection.set_remote_ip_string("1.0.0.2");
+    m_connection.set_remote_port(65534);
+    m_connection.set_local_port(80);
+
+    m_transaction = Transaction::create(m_connection);
 }
 
 IBPPTestFixture::~IBPPTestFixture()
 {
-    ib_shutdown();
+    m_engine.destroy();
+    IronBee::shutdown();
 }
 

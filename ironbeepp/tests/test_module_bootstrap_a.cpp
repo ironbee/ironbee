@@ -48,10 +48,10 @@ TEST_F(TestModuleBootstrapA, basic)
 {
     g_test_module = NULL;
 
-    ib_module_t* m = IB_MODULE_SYM(m_ib_engine);
+    ib_module_t* m = IB_MODULE_SYM(m_engine.ib());
 
     ASSERT_EQ(m,                     g_test_module);
     ASSERT_EQ(s_module_name,         m->name);
     ASSERT_EQ(std::string(__FILE__), m->filename);
-    ASSERT_EQ(m_ib_engine,           m->ib);
+    ASSERT_EQ(m_engine.ib(),         m->ib);
 }

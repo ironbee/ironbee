@@ -29,6 +29,7 @@
 
 #include "gtest/gtest.h"
 
+#include "ironbee_private.h"
 #include <ironbee/debug.h>
 
 class TestModule : public ::testing::Test, public IBPPTestFixture
@@ -88,11 +89,11 @@ private:
 TEST_F(TestModule, basic)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 
     ASSERT_EQ(&ib_module, module.ib());
-    ASSERT_EQ(m_ib_engine, module.engine().ib());
+    ASSERT_EQ(m_engine, module.engine());
 
     ib_module.vernum   = 1;
     ib_module.abinum   = 2;
@@ -121,7 +122,7 @@ TEST_F(TestModule, equality)
 TEST_F(TestModule, callbacks)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 
     ib_module_t*  out_ib_module;
@@ -303,8 +304,8 @@ TEST_F(TestModule, operators)
 
     ib_module_t ib_module1;
     ib_module_t ib_module2;
-    ib_module1.ib = m_ib_engine;
-    ib_module2.ib = m_ib_engine;
+    ib_module1.ib = m_engine.ib();
+    ib_module2.ib = m_engine.ib();
     IronBee::Module nonsingular1(&ib_module1);
     IronBee::Module nonsingular2(&ib_module2);
 
@@ -373,7 +374,7 @@ TEST_F(TestModule, chain)
 
     ib_module_t ib_module;
     bzero(&ib_module, sizeof(ib_module));
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 
     ib_status_t rc;
@@ -463,7 +464,7 @@ TEST_F(TestModule, DataPOD)
     data.x = 17;
 
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 
     module.set_configuration_data_pod(data, test_data_copier);
@@ -503,7 +504,7 @@ TEST_F(TestModule, DataCPP)
     test_data_cpp_t data;
 
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 
     module.set_configuration_data(data);
@@ -529,7 +530,7 @@ TEST_F(TestModule, DataCPP)
 TEST_F(TestModule, Const)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 
     IronBee::ConstModule cmodule = module;
@@ -546,7 +547,7 @@ TEST_F(TestModule, Const)
 TEST_F(TestModule, ConfigurationMap)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module module(&ib_module);
 
     test_data_t data;

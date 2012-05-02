@@ -25,6 +25,8 @@
 
 #include <ironbeepp/module_bootstrap.hpp>
 
+#include "ironbee_private.h"
+
 #include "fixture.hpp"
 
 #include "gtest/gtest.h"
@@ -94,20 +96,20 @@ TEST_F(TestModuleBootstrapB, basic)
     s_ib_module                = NULL;
     s_ib_context               = NULL;
 
-    ib_module_t* m = IB_MODULE_SYM(m_ib_engine);
+    ib_module_t* m = IB_MODULE_SYM(m_engine.ib());
 
     EXPECT_TRUE(s_delegate_constructed);
     EXPECT_EQ(m, s_ib_module);
     EXPECT_EQ(s_module_name,         m->name);
     EXPECT_EQ(std::string(__FILE__), m->filename);
-    EXPECT_EQ(m_ib_engine,           m->ib);
+    EXPECT_EQ(m_engine.ib(),           m->ib);
 
     ib_context_t c;
     ib_status_t rc;
 
     s_delegate_initialized = false;
     rc = m->fn_init(
-        m_ib_engine,
+        m_engine.ib(),
         m,
         m->cbdata_init
     );
@@ -117,7 +119,7 @@ TEST_F(TestModuleBootstrapB, basic)
     s_delegate_context_open = false;
     s_ib_context = NULL;
     rc = m->fn_ctx_open(
-        m_ib_engine,
+        m_engine.ib(),
         m,
         &c,
         m->cbdata_ctx_open
@@ -129,7 +131,7 @@ TEST_F(TestModuleBootstrapB, basic)
     s_delegate_context_close = false;
     s_ib_context = NULL;
     rc = m->fn_ctx_close(
-        m_ib_engine,
+        m_engine.ib(),
         m,
         &c,
         m->cbdata_ctx_close
@@ -141,7 +143,7 @@ TEST_F(TestModuleBootstrapB, basic)
     s_delegate_context_destroy = false;
     s_ib_context = NULL;
     rc = m->fn_ctx_destroy(
-        m_ib_engine,
+        m_engine.ib(),
         m,
         &c,
         m->cbdata_ctx_destroy
@@ -152,7 +154,7 @@ TEST_F(TestModuleBootstrapB, basic)
 
     s_delegate_destructed = false;
     rc = m->fn_fini(
-        m_ib_engine,
+        m_engine.ib(),
         m,
         m->cbdata_fini
     );

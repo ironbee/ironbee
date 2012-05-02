@@ -144,7 +144,7 @@ TEST_F(TestTransaction, basic)
 
 TEST_F(TestTransaction, create)
 {
-    Connection c = Connection::create(Engine(m_ib_engine));
+    Connection c = Connection::create(m_engine);
     Transaction tx = Transaction::create(c);
 
     ASSERT_TRUE(tx);

@@ -43,5 +43,5 @@ IBPP_BOOTSTRAP_MODULE_DELEGATE(
 
 TEST_F(TestModuleDelegate, basic)
 {
-    IB_MODULE_SYM(m_ib_engine);
+    IB_MODULE_SYM(m_engine.ib());
 }

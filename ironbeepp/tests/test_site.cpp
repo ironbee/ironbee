@@ -39,7 +39,7 @@ class TestSite : public ::testing::Test, public IBPPTestFixture
 
 TEST_F(TestSite, Location)
 {
-    Site s = Site::create(Engine(m_ib_engine), "test");
+    Site s = Site::create(m_engine, "test");
     ASSERT_TRUE(s);
 
     Location l = s.create_location("foo");
@@ -56,11 +56,11 @@ TEST_F(TestSite, Location)
 
 TEST_F(TestSite, Site)
 {
-    Site s = Site::create(Engine(m_ib_engine), "test");
+    Site s = Site::create(m_engine, "test");
     ASSERT_TRUE(s);
 
     EXPECT_EQ(string("test"), s.name());
-    EXPECT_EQ(Engine(m_ib_engine), s.engine());
+    EXPECT_EQ(m_engine, s.engine());
     EXPECT_TRUE(s.memory_pool());
 
     Location l = s.create_default_location();

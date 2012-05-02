@@ -57,7 +57,7 @@ TEST_F(TestConnectionData, basic)
 
 TEST_F(TestConnectionData, create)
 {
-    Connection c = Connection::create(Engine(m_ib_engine));
+    Connection c = Connection::create(m_engine);
     ConnectionData cd = ConnectionData::create(c, 100);
 
     ASSERT_TRUE(cd);

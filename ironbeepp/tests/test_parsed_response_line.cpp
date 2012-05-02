@@ -69,7 +69,7 @@ TEST_F(TestParsedResponseLine, create)
     const char* message  = "baz";
 
     ConstParsedResponseLine prl = ConstParsedResponseLine::create_alias(
-        Transaction(m_ib_transaction),
+        m_transaction,
         raw,      3,
         protocol, 3,
         status,   3,

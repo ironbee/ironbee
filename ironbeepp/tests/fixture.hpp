@@ -26,9 +26,10 @@
 #ifndef __IBPP__TESTS__FIXTURE__
 #define __IBPP__TESTS__FIXTURE__
 
-#include <ironbee/types.h>
-
-#include "ironbee_private.h"
+#include <ironbeepp/engine.hpp>
+#include <ironbeepp/server.hpp>
+#include <ironbeepp/connection.hpp>
+#include <ironbeepp/transaction.hpp>
 
 class IBPPTestFixture
 {
@@ -37,10 +38,13 @@ public:
     ~IBPPTestFixture();
 
 protected:
-    ib_engine_t* m_ib_engine;
-    ib_server_t  m_ib_server;
-    ib_conn_t*   m_ib_connection;
-    ib_tx_t*     m_ib_transaction;
+    IronBee::Server      m_server;
+    IronBee::Engine      m_engine;
+    IronBee::Connection  m_connection;
+    IronBee::Transaction m_transaction;
+
+private:
+    IronBee::ServerValue m_server_value;
 };
 
 #endif

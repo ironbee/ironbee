@@ -70,7 +70,7 @@ TEST_F(TestParsedRequestLine, create)
     const char* protocol = "baz";
 
     ConstParsedRequestLine prl = ConstParsedRequestLine::create_alias(
-        Transaction(m_ib_transaction),
+        m_transaction,
         raw,      3,
         method,   3,
         uri,      3,

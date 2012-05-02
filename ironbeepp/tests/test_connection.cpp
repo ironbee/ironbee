@@ -34,6 +34,8 @@
 
 #include "gtest/gtest.h"
 
+using namespace std;
+
 class TestConnection : public ::testing::Test, public IBPPTestFixture
 {
 };
@@ -104,11 +106,11 @@ TEST_F(TestConnection, basic)
 TEST_F(TestConnection, create)
 {
     IronBee::Connection conn = IronBee::Connection::create(
-        m_ib_engine)
+        m_engine
     );
 
     ASSERT_TRUE(conn);
-    ASSERT_EQ(m_ib_engine, conn.engine().ib());
+    ASSERT_EQ(m_engine.ib(), conn.engine().ib());
 }
 
 TEST_F(TestConnection, set)

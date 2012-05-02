@@ -155,18 +155,17 @@ TEST_F(TestConfigurationDirectives, Registrar)
     ib_cfgparser_t* parser = NULL;
     ib_status_t rc;
 
-    rc = ib_cfgparser_create(&parser, m_ib_engine);
+    rc = ib_cfgparser_create(&parser, m_engine.ib());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(parser);
     ConfigurationParser P(parser);
 
-    Engine engine(m_ib_engine);
     Info info;
     Handler handler(info);
     Info info2;
     Handler handler2(info2);
 
-    ConfigurationDirectivesRegistrar R(engine);
+    ConfigurationDirectivesRegistrar R(m_engine);
     R.param1("Param1", handler);
     R.param2("Param2", handler);
     R.block("Block", handler, handler2);

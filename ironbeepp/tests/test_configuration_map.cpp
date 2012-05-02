@@ -42,7 +42,7 @@ protected:
     {
         ib_cfgmap_t* cm = NULL;
         ib_status_t rc;
-        rc = ib_cfgmap_create(&cm, ib_engine_pool_main_get(m_ib_engine));
+        rc = ib_cfgmap_create(&cm, ib_engine_pool_main_get(m_engine.ib()));
         EXPECT_EQ(IB_OK, rc);
         rc = ib_cfgmap_init(cm, data, init);
         EXPECT_EQ(IB_OK, rc);
@@ -90,9 +90,9 @@ struct test_data_t
 TEST_F(TestConfigurationMap, DataMember)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_ib_engine));
+    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_engine.ib()));
 
     IronBee::ConfigurationMapInit<test_data_t> cmi(m.ib()->cm_init, mpool);
 
@@ -241,9 +241,9 @@ test_data_t test_data2_t::s_data;
 TEST_F(TestConfigurationMap, FunctionMember)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_ib_engine));
+    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_engine.ib()));
 
     IronBee::ConfigurationMapInit<test_data2_t> cmi(m.ib()->cm_init, mpool);
 
@@ -360,9 +360,9 @@ TEST_F(TestConfigurationMap, FunctionMember)
 TEST_F(TestConfigurationMap, Functional)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_ib_engine));
+    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_engine.ib()));
 
     IronBee::ConfigurationMapInit<test_data2_t> cmi(m.ib()->cm_init, mpool);
     test_data2_t data;
@@ -479,9 +479,9 @@ TEST_F(TestConfigurationMap, Functional)
 TEST_F(TestConfigurationMap, TestHandle)
 {
     ib_module_t ib_module;
-    ib_module.ib = m_ib_engine;
+    ib_module.ib = m_engine.ib();
     IronBee::Module m(&ib_module);
-    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_ib_engine));
+    IronBee::MemoryPool mpool(ib_engine_pool_main_get(m_engine.ib()));
 
     IronBee::ConfigurationMapInit<test_data_t>
         cmi(m.ib()->cm_init, mpool, true);

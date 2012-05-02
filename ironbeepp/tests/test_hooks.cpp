@@ -200,15 +200,17 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->hook[event];
+        hook = m_engine.ib()->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }
         EXPECT_EQ(IB_OK,
-            hook->callback.tx(m_ib_engine, m_ib_transaction, ib_event, hook->cdata)
+            hook->callback.tx(
+                m_engine.ib(), m_transaction.ib(),
+                ib_event, hook->cdata)
         );
         EXPECT_EQ(CB_TRANSACTION, info.which);
-        EXPECT_EQ(m_ib_engine, info.engine.ib());
+        EXPECT_EQ(m_engine, info.engine);
         EXPECT_EQ(event, info.event);
     }
 
@@ -221,15 +223,15 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->hook[event];
+        hook = m_engine.ib()->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }
         EXPECT_EQ(IB_OK,
-            hook->callback.null(m_ib_engine, ib_event, hook->cdata)
+            hook->callback.null(m_engine.ib(), ib_event, hook->cdata)
         );
         EXPECT_EQ(CB_NULL, info.which);
-        EXPECT_EQ(m_ib_engine, info.engine.ib());
+        EXPECT_EQ(m_engine, info.engine);
         EXPECT_EQ(event, info.event);
     }
 
@@ -253,19 +255,20 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->hook[event];
+        hook = m_engine.ib()->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }
         DataType ib_data;
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
-                m_ib_engine, m_ib_transaction, ib_event, &ib_data, hook->cdata
+                m_engine.ib(), m_transaction.ib(),
+                ib_event, &ib_data, hook->cdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);
-        EXPECT_EQ(m_ib_engine, info.engine.ib());
-        EXPECT_EQ(m_ib_transaction, info.transaction.ib());
+        EXPECT_EQ(m_engine, info.engine);
+        EXPECT_EQ(m_transaction, info.transaction);
         EXPECT_EQ(event, info.event);
         EXPECT_EQ(&ib_data, (info.*which_member).ib());
     }
@@ -289,18 +292,18 @@ protected:
         ib_state_event_type_t ib_event =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
-        hook = m_ib_engine->hook[event];
+        hook = m_engine.ib()->hook[event];
         while (hook->next != NULL) {
             hook = hook->next;
         }
         DataType ib_data;
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
-                m_ib_engine, ib_event, &ib_data, hook->cdata
+                m_engine.ib(), ib_event, &ib_data, hook->cdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);
-        EXPECT_EQ(m_ib_engine, info.engine.ib());
+        EXPECT_EQ(m_engine, info.engine);
         EXPECT_EQ(event, info.event);
         EXPECT_EQ(&ib_data, (info.*which_member).ib());
     }
@@ -397,9 +400,7 @@ protected:
 
 TEST_F(TestHooks, Basic)
 {
-    Engine engine(m_ib_engine);
-
-    HooksRegistrar H(engine);
+    HooksRegistrar H(m_engine);
     handler_info_t info;
     Handler handler(info);
 
