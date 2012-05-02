@@ -49,7 +49,8 @@ check_PROGRAMS = \
     test_parsed_response_line \
     test_parsed_name_value \
     test_hooks \
-    test_ironbee
+    test_ironbee \
+    test_server
     
 TESTS=$(check_PROGRAMS)
 
@@ -80,3 +81,4 @@ test_parsed_response_line_SOURCES = test_parsed_response_line.cpp fixture.cpp
 test_parsed_name_value_SOURCES    = test_parsed_name_value.cpp
 test_hooks_SOURCES                = test_hooks.cpp fixture.cpp
 test_ironbee_SOURCES              = test_ironbee.cpp
+test_server_SOURCES               = test_server.cpp

@@ -29,5 +29,7 @@ libibpp_la_SOURCES = \
     parsed_name_value.cpp \
     hooks.cpp \
     notifier.cpp \
-    ironbee.cpp
+    ironbee.cpp \
+    server.cpp
+
     
