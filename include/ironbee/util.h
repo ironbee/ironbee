@@ -132,13 +132,18 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 
 
 /**
- * Create a file path relative to a reference file
+ * Create a file path relative to a reference file.
  *
- * @param[in] mp Memory path to use for allocations
+ * If @a file_path looks like an absolute path (it starts with a '/'),
+ * a copy of @a file_path is returned.  If not, the directory portion
+ * of @a ref_file is joined with @a file_path using ib_util_path_join,
+ * and the resulting path is returned.
+ *
+ * @param[in] mp Memory pool to use for allocations
  * @param[in] ref_file Reference file path
  * @param[in] file_path New file's path
  *
- * @return Pointer to new path, or NULL
+ * @return Pointer to new path, or NULL if unable to allocate memory
  */
 char *ib_util_relative_file(ib_mpool_t *mp,
                             const char *ref_file,
@@ -146,13 +151,13 @@ char *ib_util_relative_file(ib_mpool_t *mp,
 
 
 /**
- * Join two directory components
+ * Join two path components (similar to os.path.join() in Python)
  *
- * @param[in] mp Memory path to use for allocations
+ * @param[in] mp Memory pool to use for allocations
  * @param[in] parent Parent portion of path
  * @param[in] file_path Child portion of path
  *
- * @return Pointer to new path, or NULL
+ * @return Pointer to new path, or NULL if unable to allocate memory
  */
 char *ib_util_path_join(ib_mpool_t *mp,
                         const char *parent,
