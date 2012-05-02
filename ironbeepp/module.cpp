@@ -378,7 +378,7 @@ void Module::set_initialize(initialize_t f) const
     else {
         ib()->cbdata_init = Internal::value_to_data(
             f,
-            ib_engine_pool_main_get(ib()->ib)
+            engine().main_memory_pool().ib()
         );
         ib()->fn_init = Internal::Hooks::initialize;
     }
@@ -423,7 +423,7 @@ void Module::set_finalize(finalize_t f) const
     else {
         ib()->cbdata_fini = Internal::value_to_data(
             f,
-            ib_engine_pool_main_get(ib()->ib)
+            engine().main_memory_pool().ib()
         );
         ib()->fn_fini = Internal::Hooks::finalize;
     }
@@ -468,7 +468,7 @@ void Module::set_context_open(context_open_t f) const
     else {
         ib()->cbdata_ctx_open = Internal::value_to_data(
             f,
-            ib_engine_pool_main_get(ib()->ib)
+            engine().main_memory_pool().ib()
         );
         ib()->fn_ctx_open = Internal::Hooks::context_open;
     }
@@ -513,7 +513,7 @@ void Module::set_context_close(context_close_t f) const
     else {
         ib()->cbdata_ctx_close = Internal::value_to_data(
             f,
-            ib_engine_pool_main_get(ib()->ib)
+            engine().main_memory_pool().ib()
         );
         ib()->fn_ctx_close = Internal::Hooks::context_close;
     }
@@ -558,7 +558,7 @@ void Module::set_context_destroy(context_destroy_t f) const
     else {
         ib()->cbdata_ctx_destroy = Internal::value_to_data(
             f,
-            ib_engine_pool_main_get(ib()->ib)
+            engine().main_memory_pool().ib()
         );
         ib()->fn_ctx_destroy = Internal::Hooks::context_destroy;
     }
@@ -570,7 +570,7 @@ void Module::set_configuration_copier_translator(
 {
     ib()->cbdata_cfg_copy = Internal::value_to_data(
         f,
-        ib_engine_pool_main_get(ib()->ib)
+        engine().main_memory_pool().ib()
     );
     ib()->fn_cfg_copy = Internal::Hooks::configuration_copy;
 }

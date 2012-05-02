@@ -189,11 +189,11 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::block(
         &Internal::Hooks::config_end_block,
         Internal::value_to_data(
             start_function,
-            ib_engine_pool_main_get(m_engine.ib())
+            m_engine.main_memory_pool().ib()
         ),
         Internal::value_to_data(
             end_function,
-            ib_engine_pool_main_get(m_engine.ib())
+            m_engine.main_memory_pool().ib()
         ),
         NULL
     ));
@@ -214,7 +214,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::on_off(
         NULL,
         Internal::value_to_data(
             function,
-            ib_engine_pool_main_get(m_engine.ib())
+            m_engine.main_memory_pool().ib()
         ),
         NULL,
         NULL
@@ -236,7 +236,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param1(
         NULL,
         Internal::value_to_data(
             function,
-            ib_engine_pool_main_get(m_engine.ib())
+            m_engine.main_memory_pool().ib()
         ),
         NULL,
         NULL
@@ -258,7 +258,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param2(
         NULL,
         Internal::value_to_data(
             function,
-            ib_engine_pool_main_get(m_engine.ib())
+            m_engine.main_memory_pool().ib()
         ),
         NULL,
         NULL
@@ -280,7 +280,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::list(
         NULL,
         Internal::value_to_data(
             function,
-            ib_engine_pool_main_get(m_engine.ib())
+            m_engine.main_memory_pool().ib()
         ),
         NULL,
         NULL
@@ -298,7 +298,7 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
     typedef List<ib_strval_t*> list_t;
     typedef map<string, int64_t>::value_type value_type;
 
-    MemoryPool mp(ib_engine_pool_main_get(m_engine.ib()));
+    MemoryPool mp = m_engine.main_memory_pool();
     ib_strval_t* valmap = mp.allocate<ib_strval_t>(value_map.size()+1);
 
     int i = 0;
