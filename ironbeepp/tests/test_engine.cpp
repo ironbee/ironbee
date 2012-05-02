@@ -25,17 +25,29 @@
 
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/server.hpp>
+#include <ironbeepp/memory_pool.hpp>
 
+#include "fixture.hpp"
 #include "gtest/gtest.h"
 
 using namespace IronBee;
 
-TEST(TestEngine, create)
+class TestEngine : public ::testing::Test, public IBPPTestFixture
 {
-    ServerValue server("foo", "bar");
-    Engine engine = Engine::create(server.get());
+};
+
+TEST_F(TestEngine, create)
+{
+    Engine engine = Engine::create(m_server);
 
     ASSERT_TRUE(engine);
     engine.initialize();
     engine.destroy();
+}
+
+TEST_F(TestEngine, memory_pools)
+{
+    ASSERT_TRUE(m_engine.main_memory_pool());
+    ASSERT_TRUE(m_engine.configuration_memory_pool());
+    ASSERT_TRUE(m_engine.temporary_memory_pool());
 }

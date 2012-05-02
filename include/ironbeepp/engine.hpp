@@ -39,6 +39,7 @@ class HooksRegistrar;
 class Context;
 class Notifier;
 class Server;
+class MemoryPool;
 
 /**
  * Const Engine; equivalent to a const pointer to ib_engine_t.
@@ -278,6 +279,43 @@ public:
       * @return Notifier
       **/
     Notifier notify() const;
+
+    /**
+     * @name Memory Pools
+     * Functions to fetch Engine memory pools.
+     **/
+    ///@{
+
+    /**
+     * Main memory pool.
+     *
+     * This memory pool should be used for memory that needs to live as long
+     * as the engine.
+     *
+     * @returns Memory pool.
+     **/
+    MemoryPool main_memory_pool() const;
+
+    /**
+     * Configuration memory pool.
+     *
+     * This memory pool should be used for memory involved in configuration.
+     * At present, this memory lives as long as the engine.
+     *
+     * @returns Memory pool.
+     **/
+    MemoryPool configuration_memory_pool() const;
+
+    /**
+     * Temporary memory pool.
+     *
+     * This memory pool should be used for temporary storage during
+     * configuration.  It is destroyed at the end of configuration and should
+     * not be used afterwards.
+     *
+     * @returns Memory pool.
+     **/
+    MemoryPool temporary_memory_pool() const;
 
 private:
     ib_engine_t* m_ib;

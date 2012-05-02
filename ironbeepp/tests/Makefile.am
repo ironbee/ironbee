@@ -83,4 +83,4 @@ test_parsed_name_value_SOURCES    = test_parsed_name_value.cpp
 test_hooks_SOURCES                = test_hooks.cpp fixture.cpp
 test_ironbee_SOURCES              = test_ironbee.cpp
 test_server_SOURCES               = test_server.cpp
-test_engine_SOURCES               = test_engine.cpp
+test_engine_SOURCES               = test_engine.cpp fixture.cpp

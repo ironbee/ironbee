@@ -108,6 +108,21 @@ HooksRegistrar Engine::register_hooks() const
     return HooksRegistrar(*this);
 }
 
+MemoryPool Engine::main_memory_pool() const
+{
+    return MemoryPool(ib_engine_pool_main_get(ib()));
+}
+
+MemoryPool Engine::configuration_memory_pool() const
+{
+    return MemoryPool(ib_engine_pool_config_get(ib()));
+}
+
+MemoryPool Engine::temporary_memory_pool() const
+{
+    return MemoryPool(ib_engine_pool_temp_get(ib()));
+}
+
 std::ostream& operator<<(std::ostream& o, const ConstEngine& engine)
 {
     if (! engine) {
