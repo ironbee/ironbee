@@ -20,14 +20,8 @@ LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_htp.so"
 LoadModule "ibmod_rules.so"
 
-# Lua
-LoadModule "ibmod_lua.so"
-
 ### Main Context (need separate directives for these)
 Set parser "htp"
-
-# Trace / example module
-#LoadModule "ibmod_trace.so"
 
 # Parse the user agent
 #LoadModule "ibmod_user_agent.so"
