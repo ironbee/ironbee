@@ -28,6 +28,7 @@
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/server.hpp>
+#include <ironbeepp/notifier.hpp>
 
 #include <ironbee/engine.h>
 
@@ -106,6 +107,11 @@ ConfigurationDirectivesRegistrar
 HooksRegistrar Engine::register_hooks() const
 {
     return HooksRegistrar(*this);
+}
+
+Notifier Engine::notify() const
+{
+    return Notifier(*this);
 }
 
 MemoryPool Engine::main_memory_pool() const
