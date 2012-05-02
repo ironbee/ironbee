@@ -120,8 +120,7 @@ struct ib_server_t {
     const char              *name;     /**< Unique plugin name */
 
     /**
-     * Function to tell host server
-     * to do something to an HTTP header.
+     * Function to tell host server to do something to an HTTP header.
      */
     ib_server_header_fn_t hdr_fn;
 
@@ -129,8 +128,7 @@ struct ib_server_t {
     void *hdr_data;
 
     /**
-     * Function to communicate an error
-     * response/action to host server.
+     * Function to communicate an error response/action to host server.
      */
     ib_server_error_fn_t err_fn;
 
@@ -138,8 +136,7 @@ struct ib_server_t {
     void *err_data;
 
     /**
-     * Function to communicate an error
-     * response header to host server.
+     * Function to communicate an error response header to host server.
      */
     ib_server_error_hdr_fn_t err_hdr_fn;
 
@@ -147,8 +144,7 @@ struct ib_server_t {
     void *err_hdr_data;
 
     /**
-     * Function to communicate an error
-     * response body to host server.
+     * Function to communicate an error response body to host server.
      */
     ib_server_error_data_fn_t err_data_fn;
 
