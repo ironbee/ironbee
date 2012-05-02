@@ -213,7 +213,7 @@ static ib_status_t init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /**
      * Simple True / False operators.
      */
-    
+
     /* Register the true operator */
     rc = ib_operator_register(ib,
                               "true",
