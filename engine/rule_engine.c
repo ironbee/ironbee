@@ -61,7 +61,7 @@
  * Data on each rule phase, one per phase.
  */
 struct ib_rule_phase_meta_t {
-    ib_tristate_t               is_stream;
+    ib_bool_t                   is_stream;
     ib_rule_phase_t             phase_num;
     ib_state_hook_type_t        hook_type;
     ib_flags_t                  flags;
@@ -76,7 +76,7 @@ struct ib_rule_phase_meta_t {
 static const ib_rule_phase_meta_t rule_phase_meta[] =
 {
     {
-        IB_TRI_FALSE,
+        IB_FALSE,
         PHASE_NONE,
         (ib_state_hook_type_t) -1,
         (PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
@@ -86,7 +86,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { }, 0
     },
     {
-        IB_TRI_FALSE,
+        IB_FALSE,
         PHASE_REQUEST_HEADER,
         IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
@@ -96,7 +96,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { }, 0
     },
     {
-        IB_TRI_FALSE,
+        IB_FALSE,
         PHASE_REQUEST_BODY,
         IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
@@ -106,7 +106,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { }, 0
     },
     {
-        IB_TRI_FALSE,
+        IB_FALSE,
         PHASE_RESPONSE_HEADER,
         IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
@@ -116,7 +116,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { }, 0
     },
     {
-        IB_TRI_FALSE,
+        IB_FALSE,
         PHASE_RESPONSE_BODY,
         IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
@@ -126,7 +126,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { }, 0
     },
     {
-        IB_TRI_FALSE,
+        IB_FALSE,
         PHASE_POSTPROCESS,
         IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
@@ -138,7 +138,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 
     /* Stream rule phases */
     {
-        IB_TRI_TRUE,
+        IB_TRUE,
         PHASE_NONE,
         (ib_state_hook_type_t) -1,
         (PHASE_FLAG_IS_STREAM),
@@ -148,7 +148,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { }, 0
     },
     {
-        IB_TRI_TRUE,
+        IB_TRUE,
         PHASE_STR_REQUEST_HEADER,
         IB_STATE_HOOK_TX,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
@@ -158,7 +158,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { IB_DTYPE_HTTP_HEADER }, 1
     },
     {
-        IB_TRI_TRUE,
+        IB_TRUE,
         PHASE_STR_REQUEST_BODY,
         IB_STATE_HOOK_TXDATA,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
@@ -168,7 +168,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
     },
     {
-        IB_TRI_TRUE,
+        IB_TRUE,
         PHASE_STR_RESPONSE_HEADER,
         IB_STATE_HOOK_HEADER,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
@@ -178,7 +178,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { IB_DTYPE_HTTP_HEADER }, 1
     },
     {
-        IB_TRI_TRUE,
+        IB_TRUE,
         PHASE_STR_RESPONSE_BODY,
         IB_STATE_HOOK_TXDATA,
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
@@ -188,7 +188,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
     },
     {
-        IB_TRI_FALSE,
+        IB_FALSE,
         PHASE_INVALID,
         (ib_state_hook_type_t) -1,
         PHASE_FLAG_NONE,
@@ -206,17 +206,15 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 
 
 /**
- * Find a rule's matching phase meta data
+ * Find a rule's matching phase meta data, matching the only the phase number.
  * @internal
  *
- * @param[in] is_stream IB_TRI_TRUE if this is a "stream inspection" rule
  * @param[in] phase_num Phase number (PHASE_xxx)
  * @param[out] phase_meta Matching rule phase meta-data
  *
  * @returns Status code
  */
-static ib_status_t find_phase_meta(ib_tristate_t is_stream,
-                                   ib_rule_phase_t phase_num,
+static ib_status_t find_phase_meta(ib_rule_phase_t phase_num,
                                    const ib_rule_phase_meta_t **phase_meta)
 {
     IB_FTRACE_INIT();
@@ -228,8 +226,44 @@ static ib_status_t find_phase_meta(ib_tristate_t is_stream,
     /* Loop through all parent rules */
     for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
     {
-        if ( ((is_stream == IB_TRI_UNSET) || (meta->is_stream == is_stream)) &&
-             (meta->phase_num == phase_num) )
+        if (meta->phase_num == phase_num) {
+            *phase_meta = meta;
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+/**
+ * Find a rule's matching phase meta data, matching the phase number and
+ * the phase's stream type.
+ * @internal
+ *
+ * @param[in] is_stream IB_TRUE if this is a "stream inspection" rule
+ * @param[in] phase_num Phase number (PHASE_xxx)
+ * @param[out] phase_meta Matching rule phase meta-data
+ *
+ * @note If @a is_stream is IB_TRI_UNSET, this function will return the
+ * first phase meta-data object that matches the phase number.
+ *
+ * @returns Status code
+ */
+static ib_status_t find_phase_stream_meta(
+    ib_bool_t is_stream,
+    ib_rule_phase_t phase_num,
+    const ib_rule_phase_meta_t **phase_meta)
+{
+    IB_FTRACE_INIT();
+    const ib_rule_phase_meta_t *meta;
+
+    assert (phase_meta != NULL);
+    assert ( (phase_num >= PHASE_NONE) && (phase_num <= PHASE_MAX) );
+
+    /* Loop through all parent rules */
+    for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
+    {
+        if ( (meta->phase_num == phase_num) &&
+             (is_stream == meta->is_stream) )
         {
             *phase_meta = meta;
             IB_FTRACE_RET_STATUS(IB_OK);
@@ -674,7 +708,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(rule != NULL);
-    assert(rule->phase_meta->is_stream == IB_TRI_FALSE);
+    assert(rule->phase_meta->is_stream == IB_FALSE);
     assert(tx != NULL);
     assert(rule_result != NULL);
 
@@ -870,7 +904,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     assert(rule != NULL);
     assert(txdata != NULL);
     assert(result != NULL);
-    assert(rule->phase_meta->is_stream == IB_TRI_TRUE);
+    assert(rule->phase_meta->is_stream == IB_TRUE);
 
 
     /**
@@ -934,7 +968,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
     assert(rule != NULL);
     assert(headers != NULL);
     assert(rule_result != NULL);
-    assert(rule->phase_meta->is_stream == IB_TRI_TRUE);
+    assert(rule->phase_meta->is_stream == IB_TRUE);
 
 
     /**
@@ -1321,9 +1355,7 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
         ib_ruleset_phase_t *ruleset_phase =
             &(rule_engine->ruleset.phases[phase_num]);
         ruleset_phase->phase_num = (ib_rule_phase_t)phase_num;
-        rc = find_phase_meta(IB_TRI_UNSET,
-                             phase_num,
-                             &(ruleset_phase->phase_meta));
+        rc = find_phase_meta(phase_num, &(ruleset_phase->phase_meta));
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Rule set initialization: "
@@ -1373,7 +1405,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
         /* Non-phase rules all use the same callback */
         switch (meta->is_stream) {
 
-        case IB_TRI_FALSE :
+        case IB_FALSE :
             rc = ib_hook_tx_register(
                 ib,
                 meta->event,
@@ -1382,7 +1414,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             hook_type = "tx";
             break;
 
-        case IB_TRI_TRUE :
+        case IB_TRUE :
             switch (meta->hook_type) {
 
             case IB_STATE_HOOK_TX:
@@ -1422,8 +1454,9 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             break;
 
         default:
-            ib_log_error(ib, "Rule class unknown: %d", meta->is_stream);
+            assert(0 && "Invalid bool for is_stream");
             break;
+
         }
 
         /* OK */
@@ -1639,9 +1672,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     }
 
     /* Look up the generic rule phase */
-    rc = find_phase_meta(ib_bool_to_tristate(is_stream),
-                         PHASE_NONE,
-                         &phase_meta);
+    rc = find_phase_stream_meta(is_stream, PHASE_NONE, &phase_meta);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error looking up rule phase: %s",
                      ib_status_to_string(rc));
@@ -1812,7 +1843,9 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
     }
 
     /* Look up the real rule phase */
-    rc = find_phase_meta(rule->phase_meta->is_stream, phase_num, &phase_meta);
+    rc = find_phase_stream_meta(rule->phase_meta->is_stream,
+                                phase_num,
+                                &phase_meta);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error looking up rule phase: %s",
                      ib_status_to_string(rc));
