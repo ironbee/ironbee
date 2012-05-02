@@ -723,11 +723,12 @@ static ib_status_t trace_tx_response(
     trace_ctx->response = settings.trace_response_cnt;
 
     /* HTTP/0.9 will not have a response line, so just output the protocol. */
-    if (ib_bytestr_length(tx->response_line->raw) == 0) {
-        fprintf(stderr, "RESPONSE[%d]: %.*s\n",
-                (int)settings.trace_response_cnt,
-                (int)ib_bytestr_length(tx->response_line->protocol),
-                (char *)ib_bytestr_const_ptr(tx->response_line->protocol));
+    if (ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
+        fprintf(stderr, "RESPONSE[%d]: HTTP/0.9\n",
+                (int)settings.trace_response_cnt);
+    }
+    else if (ib_bytestr_length(tx->response_line->raw) == 0) {
+        fprintf(stderr, "RESPONSE[%d]: -\n", (int)settings.trace_response_cnt);
     }
     else {
         fprintf(stderr, "RESPONSE[%d]: %.*s\n",

@@ -112,19 +112,20 @@ typedef enum {
 /// @todo Do we need anymore???
 #define IB_TX_FNONE             (0)
 #define IB_TX_FERROR            (1 << 0) /**< Transaction had an error */
-#define IB_TX_FPIPELINED        (1 << 1) /**< Transaction is pipelined */
-#define IB_TX_FSEENDATAIN       (1 << 2) /**< Transaction had data in */
-#define IB_TX_FSEENDATAOUT      (1 << 3) /**< Transaction had data out */
-#define IB_TX_FREQ_STARTED      (1 << 4) /**< Request started */
-#define IB_TX_FREQ_SEENHEADERS  (1 << 5) /**< Request headers seen */
-#define IB_TX_FREQ_NOBODY       (1 << 6) /**< Request should not have body */
-#define IB_TX_FREQ_SEENBODY     (1 << 7) /**< Request body seen */
-#define IB_TX_FREQ_FINISHED     (1 << 8) /**< Request finished */
-#define IB_TX_FRES_STARTED      (1 << 9) /**< Response started */
-#define IB_TX_FRES_SEENHEADERS  (1 << 0) /**< Response headers seen */
-#define IB_TX_FRES_SEENBODY     (1 <<11) /**< Response body seen */
-#define IB_TX_FRES_FINISHED     (1 <<12) /**< Response finished  */
-#define IB_TX_FSUSPICIOUS       (1 <<13) /**< Transaction is suspicious */
+#define IB_TX_FHTTP09           (1 << 1) /**< Transaction is HTTP/0.9 */
+#define IB_TX_FPIPELINED        (1 << 2) /**< Transaction is pipelined */
+#define IB_TX_FSEENDATAIN       (1 << 3) /**< Transaction had data in */
+#define IB_TX_FSEENDATAOUT      (1 << 4) /**< Transaction had data out */
+#define IB_TX_FREQ_STARTED      (1 << 5) /**< Request started */
+#define IB_TX_FREQ_SEENHEADERS  (1 << 6) /**< Request headers seen */
+#define IB_TX_FREQ_NOBODY       (1 << 7) /**< Request should not have body */
+#define IB_TX_FREQ_SEENBODY     (1 << 8) /**< Request body seen */
+#define IB_TX_FREQ_FINISHED     (1 << 9) /**< Request finished */
+#define IB_TX_FRES_STARTED      (1 <<10) /**< Response started */
+#define IB_TX_FRES_SEENHEADERS  (1 <<11) /**< Response headers seen */
+#define IB_TX_FRES_SEENBODY     (1 <<12) /**< Response body seen */
+#define IB_TX_FRES_FINISHED     (1 <<13) /**< Response finished  */
+#define IB_TX_FSUSPICIOUS       (1 <<14) /**< Transaction is suspicious */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???

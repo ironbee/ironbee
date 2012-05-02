@@ -22,6 +22,8 @@
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 
+#include <assert.h>
+
 #include "ironbee_private.h"
 
 #define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, tx, param) \
@@ -96,6 +98,9 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
+    assert(ib != NULL);
+    assert(conn != NULL);
+
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -126,6 +131,10 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
                                              ib_conndata_t *conndata)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(conndata != NULL);
+
     ib_conn_t *conn = conndata->conn;
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
@@ -163,6 +172,10 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
                                              ib_parsed_resp_line_t *line)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
     ib_parsed_resp_line_t *resp_line = line;
     ib_status_t rc;
     ib_log_debug3_tx(tx, "RESP LINE EVENT: line=%p %s", line, ib_state_event_name(event));
@@ -177,14 +190,10 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     if (resp_line == NULL) {
         rc = ib_parsed_resp_line_create(tx,
                                         &resp_line,
-                                        "",
-                                        0,
-                                        "HTTP/0.9",
-                                        8,
-                                        "200",
-                                        3,
-                                        NULL,
-                                        0);
+                                        NULL, 0,
+                                        NULL, 0,
+                                        NULL, 0,
+                                        NULL, 0);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -195,7 +204,7 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     ib_log_debug3_tx(tx, "RESP LINE EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->hook[event], event, responseline, ib, tx, line);
+    CALL_HOOKS(&rc, ib->hook[event], event, responseline, ib, tx, resp_line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
@@ -220,19 +229,43 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_parsed_req_line_t *req_line = line;
+    ib_status_t rc;
+    ib_log_debug3_tx(tx, "REQ LINE EVENT: line=%p %s", line, ib_state_event_name(event));
+
+    rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_check_hook() failed: %s",
-                     ib_status_to_string(rc));
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    if (req_line == NULL) {
+        rc = ib_parsed_req_line_create(tx,
+                                       &req_line,
+                                       NULL, 0,
+                                       NULL, 0,
+                                       NULL, 0,
+                                       NULL, 0);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
     /* Request line stored. */
-    tx->request_line = line;
+    tx->request_line = req_line;
+
+    /* Is this a HTTP/0.9 request (has no protocol specification)? */
+    if (ib_bytestr_length(req_line->protocol) == 0) {
+        ib_tx_flags_set(tx, IB_TX_FHTTP09);
+    }
 
     ib_log_debug3_tx(tx, "REQ LINE EVENT: %s", ib_state_event_name(event));
 
-    CALL_HOOKS(&rc, ib->hook[event], event, requestline, ib, tx, line);
+    CALL_HOOKS(&rc, ib->hook[event], event, requestline, ib, tx, req_line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
@@ -255,6 +288,9 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
                                       ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
@@ -281,6 +317,10 @@ ib_status_t ib_state_notify_request_started(
     ib_parsed_req_line_t *req)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
@@ -307,6 +347,9 @@ ib_status_t ib_state_notify_request_started(
 ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+
     ib_status_t rc;
 
     /* Create and configure the main configuration context. */
@@ -326,6 +369,9 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+
     ib_status_t rc;
 
     /* Initialize (and close) the main configuration context. */

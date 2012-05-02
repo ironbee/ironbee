@@ -165,10 +165,6 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
     assert(tx != NULL);
     assert(tx->ib != NULL);
     assert(tx->mp != NULL);
-    assert(protocol != NULL);
-    assert(protocol_len > 0);
-    assert(status != NULL);
-    assert(status_len > 0);
 
     ib_parsed_resp_line_t *line_tmp = ib_mpool_alloc(tx->mp,
                                                      sizeof(*line_tmp));
@@ -178,33 +174,46 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_bytestr_alias_mem(&line_tmp->protocol,
-                              tx->mp,
-                              (const uint8_t *)protocol,
-                              protocol_len);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_bytestr_alias_mem(&line_tmp->status,
-                              tx->mp,
-                              (const uint8_t *)status,
-                              status_len);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Message may not exist. */
-    if (msg == NULL) {
-        rc = ib_bytestr_dup_mem(&line_tmp->msg,
-                                tx->mp,
-                                (const uint8_t *)"-",
-                                1);
+    if (status != NULL) {
+        rc = ib_bytestr_alias_mem(&line_tmp->protocol,
+                                  tx->mp,
+                                  (const uint8_t *)protocol,
+                                  protocol_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
     }
     else {
+        rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                tx->mp,
+                                (const uint8_t *)"",
+                                0);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+
+    if (status != NULL) {
+        rc = ib_bytestr_alias_mem(&line_tmp->status,
+                                  tx->mp,
+                                  (const uint8_t *)status,
+                                  status_len);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else {
+        rc = ib_bytestr_dup_mem(&line_tmp->status,
+                                tx->mp,
+                                (const uint8_t *)"",
+                                0);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    if (msg != NULL) {
         rc = ib_bytestr_alias_mem(&line_tmp->msg,
                                   tx->mp,
                                   (const uint8_t *)msg,
@@ -213,33 +222,53 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-
-    /* If no raw line is available, then create one. */
-    if (raw == NULL) {
-        uint8_t *ptr;
-
-        /* Create a correctly sized bytestr and manually copy
-         * the data into it.
-         */
-        rc = ib_bytestr_create(&line_tmp->raw,
-                               tx->mp,
-                               protocol_len + 1 + status_len +
-                               (msg == NULL ? 0 : 1 + msg_len));
+    else {
+        rc = ib_bytestr_dup_mem(&line_tmp->msg,
+                                tx->mp,
+                                (const uint8_t *)"",
+                                0);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
+    }
 
-        ptr = ib_bytestr_ptr(line_tmp->raw);
-        memcpy(ptr, protocol, protocol_len);
-        ptr += protocol_len;
-        *ptr = ' ';
-        ptr += 1;
-        memcpy(ptr, status, status_len);
-        ptr += status_len;
-        if (msg != NULL) {
+    /* If no raw line is available, then create one. */
+    if (raw == NULL) {
+        if (protocol_len + status_len + msg_len == 0) {
+            rc = ib_bytestr_dup_mem(&line_tmp->raw,
+                                    tx->mp,
+                                    (const uint8_t *)"",
+                                    0);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+        else {
+            uint8_t *ptr;
+
+            /* Create a correctly sized bytestr and manually copy
+             * the data into it.
+             */
+            rc = ib_bytestr_create(&line_tmp->raw,
+                                   tx->mp,
+                                   protocol_len + 1 + status_len +
+                                   (msg == NULL ? 0 : 1 + msg_len));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            ptr = ib_bytestr_ptr(line_tmp->raw);
+            memcpy(ptr, protocol, protocol_len);
+            ptr += protocol_len;
             *ptr = ' ';
             ptr += 1;
-            memcpy(ptr, msg, msg_len);
+            memcpy(ptr, status, status_len);
+            ptr += status_len;
+            if (msg != NULL) {
+                *ptr = ' ';
+                ptr += 1;
+                memcpy(ptr, msg, msg_len);
+            }
         }
     }
     else {
@@ -313,17 +342,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 0);
     }
 
-    /* HTTP/0.9 will have a NULL protocol. */
-    if (protocol == NULL) {
-        rc = ib_bytestr_dup_mem(&line_tmp->protocol,
-                                tx->mp,
-                                (const uint8_t *)"HTTP/0.9",
-                                protocol_len);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else {
+    if (protocol != NULL) {
         rc = ib_bytestr_alias_mem(&line_tmp->protocol,
                                   tx->mp,
                                   (const uint8_t *)protocol,
@@ -332,33 +351,53 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-
-    /* If no raw line is available, then create one. */
-    if (raw == NULL) {
-        uint8_t *ptr;
-
-        /* Create a correctly sized bytestr and manually copy
-         * the data into it.
-         */
-        rc = ib_bytestr_create(&line_tmp->raw,
-                               tx->mp,
-                               method_len + 1 + uri_len +
-                               (protocol == NULL ? 0 : 1 + protocol_len));
+    else {
+        rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                tx->mp,
+                                (const uint8_t *)"",
+                                0);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
+    }
 
-        ptr = ib_bytestr_ptr(line_tmp->raw);
-        memcpy(ptr, method, method_len);
-        ptr += method_len;
-        *ptr = ' ';
-        ptr += 1;
-        memcpy(ptr, uri, uri_len);
-        ptr += uri_len;
-        if (protocol != NULL) {
+    /* If no raw line is available, then create one. */
+    if (raw == NULL) {
+        if (method_len + uri_len + protocol_len == 0) {
+            rc = ib_bytestr_dup_mem(&line_tmp->raw,
+                                    tx->mp,
+                                    (const uint8_t *)"",
+                                    0);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+        else {
+            uint8_t *ptr;
+
+            /* Create a correctly sized bytestr and manually copy
+             * the data into it.
+             */
+            rc = ib_bytestr_create(&line_tmp->raw,
+                                   tx->mp,
+                                   method_len + 1 + uri_len +
+                                   (protocol == NULL ? 0 : 1 + protocol_len));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            ptr = ib_bytestr_ptr(line_tmp->raw);
+            memcpy(ptr, method, method_len);
+            ptr += method_len;
             *ptr = ' ';
             ptr += 1;
-            memcpy(ptr, protocol, protocol_len);
+            memcpy(ptr, uri, uri_len);
+            ptr += uri_len;
+            if (protocol != NULL) {
+                *ptr = ' ';
+                ptr += 1;
+                memcpy(ptr, protocol, protocol_len);
+            }
         }
     }
     else {
