@@ -25,6 +25,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>, Nick Kew <nkew@qualys.com>
  */
 
+#include <ironbee/types.h>
+#include <ironbee/release.h>
+
 #include <stdint.h>
 
 #ifdef __cplusplus
