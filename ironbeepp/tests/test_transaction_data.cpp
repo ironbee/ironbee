@@ -66,7 +66,7 @@ TEST(TestTransactionData, create)
     ASSERT_TRUE(td);
     EXPECT_EQ(TransactionData::HTTP_BODY, td.type());
     EXPECT_EQ(data, td.data());
-    EXPECT_EQ(6, td.length());
+    EXPECT_EQ(6UL, td.length());
 
     free(data);
 }
