@@ -38,6 +38,7 @@ class ConfigurationDirectivesRegistrar;
 class HooksRegistrar;
 class Context;
 class Notifier;
+class Server;
 
 /**
  * Const Engine; equivalent to a const pointer to ib_engine_t.
@@ -169,6 +170,17 @@ class Engine :
 public:
     //! C Type.
     typedef ib_engine_t* ib_type;
+
+    /**
+     * Create a new Engine.
+     *
+     * Result must be destroyed when finished via destroy().  Must also be
+     * initialized with initialize() before yse.
+     *
+     * @param[in] Server The associated server.
+     * @returns Engine
+     **/
+    static Engine create(Server server);
 
     /**
      * Remove the constness of a ConstEngine.

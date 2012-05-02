@@ -27,6 +27,7 @@
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/hooks.hpp>
 #include <ironbeepp/context.hpp>
+#include <ironbeepp/server.hpp>
 
 #include <ironbee/engine.h>
 
@@ -66,6 +67,18 @@ Engine::Engine(ib_engine_t* ib_engine) :
     m_ib(ib_engine)
 {
     // nop
+}
+
+Engine Engine::create(Server server)
+{
+    ib_engine_t* ib_engine;
+    Internal::throw_if_error(
+        ib_engine_create(
+            &ib_engine,
+            server.ib()
+        )
+    );
+    return Engine(ib_engine);
 }
 
 Engine Engine::remove_const(ConstEngine engine)
