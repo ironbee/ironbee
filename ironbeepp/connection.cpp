@@ -123,6 +123,26 @@ Connection Connection::create(Engine engine)
     return Connection(ib_conn);
 }
 
+void Connection::set_remote_ip_string(const char* ip) const
+{
+    ib()->remote_ipstr = ip;
+}
+
+void Connection::set_remote_port(uint16_t port) const
+{
+    ib()->remote_port = port;
+}
+
+void Connection::set_local_ip_string(const char* ip) const
+{
+    ib()->local_ipstr = ip;
+}
+
+void Connection::set_local_port(uint16_t port) const
+{
+    ib()->local_port = port;
+}
+
 std::ostream& operator<<(std::ostream& o, const ConstConnection& connection)
 {
     if (! connection) {

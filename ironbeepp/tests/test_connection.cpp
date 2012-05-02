@@ -104,9 +104,25 @@ TEST_F(TestConnection, basic)
 TEST_F(TestConnection, create)
 {
     IronBee::Connection conn = IronBee::Connection::create(
-        IronBee::Engine(m_ib_engine)
+        m_ib_engine)
     );
 
     ASSERT_TRUE(conn);
     ASSERT_EQ(m_ib_engine, conn.engine().ib());
+}
+
+TEST_F(TestConnection, set)
+{
+    ib_conn_t ib_conn;
+
+    IronBee::Connection conn(&ib_conn);
+
+    conn.set_remote_ip_string("foo");
+    EXPECT_EQ(string("foo"), ib_conn.remote_ipstr);
+    conn.set_remote_port(12);
+    EXPECT_EQ(12, ib_conn.remote_port);
+    conn.set_local_ip_string("bar");
+    EXPECT_EQ(string("bar"), ib_conn.local_ipstr);
+    conn.set_local_port(13);
+    EXPECT_EQ(13, ib_conn.local_port);
 }

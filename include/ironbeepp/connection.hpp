@@ -289,6 +289,40 @@ public:
     static
     Connection create(Engine engine);
 
+    /**
+     * Set remote IP string.
+     *
+     * The memory pointed to by @a ip must have a lifetime that exceeds the
+     * connection.
+     *
+     * @param[in] ip New remote IP string.
+     **/
+    void set_remote_ip_string(const char* ip) const;
+
+    /**
+     * Set remote port number.
+     *
+     * @param[in] port New port number.
+     **/
+    void set_remote_port(uint16_t port) const;
+
+    /**
+     * Set local IP string.
+     *
+     * The memory pointed to by @a ip must have a lifetime that exceeds the
+     * connection.
+     *
+     * @param[in] ip New local IP string.
+     **/
+    void set_local_ip_string(const char* ip) const;
+
+    /**
+     * Set local port number.
+     *
+     * @param[in] port New port number.
+     **/
+    void set_local_port(uint16_t port) const;
+
 private:
     ib_type m_ib;
 };
