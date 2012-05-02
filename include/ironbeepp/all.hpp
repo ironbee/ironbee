@@ -38,7 +38,6 @@
 #include <include/ironbeepp/exception.hpp>
 #include <include/ironbeepp/field.hpp>
 #include <include/ironbeepp/hooks.hpp>
-#include <include/ironbeepp/internal>
 #include <include/ironbeepp/internal/catch.hpp>
 #include <include/ironbeepp/internal/data.hpp>
 #include <include/ironbeepp/internal/throw.hpp>
