@@ -61,14 +61,14 @@ ConnectionData::ConnectionData(ib_type ib_connection_data) :
     // nop
 }
 
-void ConnectionData::set_data(char* data) const
+void ConnectionData::set_data(char* new_data) const
 {
-    ib()->data = reinterpret_cast<uint8_t*>(data);
+    ib()->data = reinterpret_cast<uint8_t*>(new_data);
 }
 
-void ConnectionData::set_length(size_t length) const
+void ConnectionData::set_length(size_t new_length) const
 {
-    ib()->dlen = length;
+    ib()->dlen = new_length;
 }
 
 ConnectionData ConnectionData::create(Connection connection, size_t size)

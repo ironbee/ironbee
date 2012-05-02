@@ -71,11 +71,11 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
         try {
             result = m_parser(*e);
         }
-        catch (const exception& e) {
+        catch (const exception& err) {
             if (m_on_error.empty()) {
                 throw;
             }
-            if (m_on_error(e.what())) {
+            if (m_on_error(err.what())) {
                 m_parser.recover();
             }
         }

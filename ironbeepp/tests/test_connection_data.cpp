@@ -80,7 +80,7 @@ TEST_F(TestConnectionData, create)
     cd = ConnectionData::create_alias(c, buf, 6);
     ASSERT_TRUE(cd);
     EXPECT_EQ(buf, cd.data());
-    EXPECT_EQ(6, cd.length());
+    EXPECT_EQ(6U, cd.length());
 
     free(buf);
 }
