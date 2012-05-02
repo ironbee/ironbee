@@ -178,7 +178,7 @@ public:
      * Result must be destroyed when finished via destroy().  Must also be
      * initialized with initialize() before yse.
      *
-     * @param[in] Server The associated server.
+     * @param[in] server The associated server.
      * @returns Engine
      **/
     static Engine create(Server server);
