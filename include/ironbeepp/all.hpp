@@ -25,33 +25,36 @@
 #ifndef __IBPP__ALL__
 #define __IBPP__ALL__
 
-#include<ironbeepp/apidoc.hpp>
-#include<ironbeepp/byte_string.hpp>
-#include<ironbeepp/clock.hpp>
-#include<ironbeepp/common_semantics.hpp>
-#include<ironbeepp/configuration_directives.hpp>
-#include<ironbeepp/configuration_map.hpp>
-#include<ironbeepp/configuration_parser.hpp>
-#include<ironbeepp/connection.hpp>
-#include<ironbeepp/connection_data.hpp>
-#include<ironbeepp/context.hpp>
-#include<ironbeepp/engine.hpp>
-#include<ironbeepp/exception.hpp>
-#include<ironbeepp/field.hpp>
-#include<ironbeepp/hooks.hpp>
-#include<ironbeepp/internal/catch.hpp>
-#include<ironbeepp/internal/data.hpp>
-#include<ironbeepp/internal/throw.hpp>
-#include<ironbeepp/list.hpp>
-#include<ironbeepp/memory_pool.hpp>
-#include<ironbeepp/module.hpp>
-#include<ironbeepp/module_bootstrap.hpp>
-#include<ironbeepp/module_delegate.hpp>
-#include<ironbeepp/parsed_name_value.hpp>
-#include<ironbeepp/parsed_request_line.hpp>
-#include<ironbeepp/parsed_response_line.hpp>
-#include<ironbeepp/site.hpp>
-#include<ironbeepp/transaction.hpp>
-#include<ironbeepp/transaction_data.hpp>
+#include <include/ironbeepp/byte_string.hpp>
+#include <include/ironbeepp/clock.hpp>
+#include <include/ironbeepp/common_semantics.hpp>
+#include <include/ironbeepp/configuration_directives.hpp>
+#include <include/ironbeepp/configuration_map.hpp>
+#include <include/ironbeepp/configuration_parser.hpp>
+#include <include/ironbeepp/connection.hpp>
+#include <include/ironbeepp/connection_data.hpp>
+#include <include/ironbeepp/context.hpp>
+#include <include/ironbeepp/engine.hpp>
+#include <include/ironbeepp/exception.hpp>
+#include <include/ironbeepp/field.hpp>
+#include <include/ironbeepp/hooks.hpp>
+#include <include/ironbeepp/internal>
+#include <include/ironbeepp/internal/catch.hpp>
+#include <include/ironbeepp/internal/data.hpp>
+#include <include/ironbeepp/internal/throw.hpp>
+#include <include/ironbeepp/ironbee.hpp>
+#include <include/ironbeepp/list.hpp>
+#include <include/ironbeepp/memory_pool.hpp>
+#include <include/ironbeepp/module.hpp>
+#include <include/ironbeepp/module_bootstrap.hpp>
+#include <include/ironbeepp/module_delegate.hpp>
+#include <include/ironbeepp/notifier.hpp>
+#include <include/ironbeepp/parsed_name_value.hpp>
+#include <include/ironbeepp/parsed_request_line.hpp>
+#include <include/ironbeepp/parsed_response_line.hpp>
+#include <include/ironbeepp/server.hpp>
+#include <include/ironbeepp/site.hpp>
+#include <include/ironbeepp/transaction.hpp>
+#include <include/ironbeepp/transaction_data.hpp>
 
 #endif
