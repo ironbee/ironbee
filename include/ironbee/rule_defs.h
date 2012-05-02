@@ -49,7 +49,6 @@ typedef enum {
     PHASE_STR_REQUEST_BODY,             /**< Stream: Req. body available. */
     PHASE_STR_RESPONSE_HEADER,          /**< Stream: Resp. header available. */
     PHASE_STR_RESPONSE_BODY,            /**< Stream: Resp. body available. */
-    PHASE_MAX = PHASE_STR_RESPONSE_BODY,/**< Max phase number. */
     IB_RULE_PHASE_COUNT,                /**< Size of rule phase lists */
 } ib_rule_phase_t;
 

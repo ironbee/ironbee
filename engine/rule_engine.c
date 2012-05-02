@@ -206,6 +206,22 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 
 
 /**
+ * Test the validity of a phase number
+ * @internal
+ *
+ * @param phase_num Phase number to check
+ *
+ * @returns IB_TRUE if @phase_num is valid, IB_FALSE if not.
+ */
+static inline ib_bool_t is_phase_num_valid(ib_rule_phase_t phase_num)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_UINT(
+        ( (phase_num >= PHASE_NONE) && (phase_num < IB_RULE_PHASE_COUNT) )
+        ? IB_TRUE : IB_FALSE);
+}
+
+/**
  * Find a rule's matching phase meta data, matching the only the phase number.
  * @internal
  *
@@ -221,7 +237,7 @@ static ib_status_t find_phase_meta(ib_rule_phase_t phase_num,
     const ib_rule_phase_meta_t *meta;
 
     assert (phase_meta != NULL);
-    assert ( (phase_num >= PHASE_NONE) && (phase_num <= PHASE_MAX) );
+    assert (is_phase_num_valid(phase_num) == IB_TRUE);
 
     /* Loop through all parent rules */
     for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
@@ -257,7 +273,7 @@ static ib_status_t find_phase_stream_meta(
     const ib_rule_phase_meta_t *meta;
 
     assert (phase_meta != NULL);
-    assert ( (phase_num >= PHASE_NONE) && (phase_num <= PHASE_MAX) );
+    assert (is_phase_num_valid(phase_num) == IB_TRUE);
 
     /* Loop through all parent rules */
     for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
@@ -722,7 +738,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     /* Initialize the rule result */
     *rule_result = 0;
 
-    /**
+    /*
      * Execute the rule operator on the target fields.
      *
      * @todo The current behavior is to keep running even after an operator
@@ -736,7 +752,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
         rc = trc;
     }
 
-    /**
+    /*
      * Execute the actions.
      *
      * @todo The current behavior is to keep running even after action(s)
@@ -756,7 +772,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
         rc = trc;
     }
 
-    /**
+    /*
      * Execute chained rule
      *
      * @todo The current behavior is to keep running even after a chained rule
@@ -836,7 +852,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                   IB_LIST_ELEMENTS(rules),
                   meta->phase_num, meta->name, ib_context_full_get(ctx));
 
-    /**
+    /*
      * Loop through all of the rules for this phase, execute them.
      *
      * @todo The current behavior is to keep running even after rule execution
@@ -907,7 +923,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     assert(rule->phase_meta->is_stream == IB_TRUE);
 
 
-    /**
+    /*
      * Execute the rule operator.
      *
      * @todo The current behavior is to keep running even after action(s)
@@ -971,7 +987,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
     assert(rule->phase_meta->is_stream == IB_TRUE);
 
 
-    /**
+    /*
      * Execute the rule operator.
      *
      * @todo The current behavior is to keep running even after action(s)
@@ -1073,7 +1089,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                   IB_LIST_ELEMENTS(rules),
                   meta->phase_num, meta->name, ib_context_full_get(ctx));
 
-    /**
+    /*
      * Loop through all of the rules for this phase, execute them.
      *
      * @todo The current behavior is to keep running even after rule execution
@@ -1349,7 +1365,7 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
 
     /* Initialize the phase rules */
     for (phase_num = (ib_num_t)PHASE_NONE;
-         phase_num <= (ib_num_t)PHASE_MAX;
+         phase_num < (ib_num_t)IB_RULE_PHASE_COUNT;
          ++phase_num)
     {
         ib_ruleset_phase_t *ruleset_phase =
@@ -1836,7 +1852,7 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
                      rule->meta.phase);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if ( (phase_num <= PHASE_NONE) || (phase_num > PHASE_MAX) ) {
+    if (is_phase_num_valid(phase_num) != IB_TRUE) {
         ib_log_error(ib, "Can't set rule phase: Invalid phase %d",
                      phase_num);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1878,7 +1894,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, "Can't register rule: Phase is invalid");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if ( (rule->meta.phase <= PHASE_NONE) || (rule->meta.phase > PHASE_MAX) ) {
+    if (is_phase_num_valid(phase_num) != IB_TRUE) {
         ib_log_error(ib, "Can't register rule: Invalid phase %d", phase_num);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
