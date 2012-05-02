@@ -141,6 +141,14 @@ public:
     typedef ib_cfgparser_t* ib_type;
 
     /**
+     * Create configuration parser.
+     *
+     * @param[in] engine Engine to parse for.
+     * @returns Configuration parser.
+     **/
+    static ConfigurationParser create(Engine engine);
+
+    /**
      * Remove the constness of a ConstConfigurationParser.
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
@@ -211,6 +219,9 @@ public:
                       const std::string& file,
                       unsigned lineno,
                       bool more) const;
+
+    //! Destroy configuration parser, reclaiming memory.
+    void destroy() const;
 
 private:
     ib_type m_ib;

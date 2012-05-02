@@ -56,6 +56,15 @@ const char* ConstConfigurationParser::current_block_name() const
 
 // ConfigurationParser
 
+ConfigurationParser ConfigurationParser::create(Engine engine)
+{
+    ib_cfgparser_t* ib_cp = NULL;
+    Internal::throw_if_error(
+        ib_cfgparser_create(&ib_cp, engine.ib())
+    );
+    return ConfigurationParser(ib_cp);
+}
+
 ConfigurationParser ConfigurationParser::remove_const(
      ConstConfigurationParser configuration_parser
 )
@@ -108,6 +117,11 @@ void ConfigurationParser::parse_buffer(const std::string& s,
                                        bool more) const
 {
     parse_buffer(s.data(), s.length(), file.c_str(), lineno, more);
+}
+
+void ConfigurationParser::destroy() const
+{
+    ib_cfgparser_destroy(ib());
 }
 
 ostream& operator<<(

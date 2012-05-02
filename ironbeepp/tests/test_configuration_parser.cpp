@@ -71,3 +71,10 @@ TEST_F(TestConfigurationParser, ConfigurationParser)
 
     // Parse routines tested in test_configuration_directives.
 }
+
+TEST_F(TestConfigurationParser, create_destroy)
+{
+    ConfigurationParser P = ConfigurationParser::create(m_engine);
+    ASSERT_TRUE(P);
+    P.destroy();
+}
