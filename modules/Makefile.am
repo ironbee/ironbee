@@ -17,8 +17,7 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_binradix.la \
                      ibmod_lua.la \
                      ibmod_rules.la \
-                     ibmod_user_agent.la \
-                     ibmod_perf_stats.la 
+                     ibmod_user_agent.la
 
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la 
@@ -73,23 +72,33 @@ ibmod_rules_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
                       -lluajit-ironbee \
                       -lm
 
-if BUILD_MODTRACE
+if BUILD_DEV_MODULES
 pkglib_LTLIBRARIES += ibmod_trace.la 
 ibmod_trace_la_SOURCES = trace.c
 ibmod_trace_la_CFLAGS = ${AM_CFLAGS}
 ibmod_trace_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
-if BUILD_MODFIELDS
+if BUILD_DEV_MODULES
 pkglib_LTLIBRARIES += ibmod_fields.la 
 ibmod_fields_la_SOURCES = fields.c
 ibmod_fields_la_CFLAGS = ${AM_CFLAGS}
 ibmod_fields_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
+if BUILD_DEV_MODULES
+pkglib_LTLIBRARIES += ibmod_rule_dev.la 
+ibmod_rule_dev_la_SOURCES = rule_dev.c
+ibmod_rule_dev_la_CFLAGS = ${AM_CFLAGS}
+ibmod_rule_dev_la_LDFLAGS = $(AM_LDFLAGS)
+endif
+
+if BUILD_DEV_MODULES
+pkglib_LTLIBRARIES += ibmod_perf_stats.la 
 ibmod_perf_stats_la_SOURCES = perf_stats.c
 ibmod_perf_stats_la_CFLAGS = ${AM_CFLAGS}
 ibmod_perf_stats_la_LDFLAGS = $(AM_LDFLAGS)
+endif
 
 ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_rules.c \

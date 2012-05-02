@@ -371,68 +371,6 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
 }
 
 /**
- * Execute function for the "true" operator
- * @internal
- *
- * @note This operator is enabled only for builds configured with
- * "--enable-devel".
- *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[out] result Pointer to number in which to store the result
- *
- *
- *
- * @returns Status code
- */
-#ifdef IB_DEVEL
-static ib_status_t op_true_execute(ib_engine_t *ib,
-                                   ib_tx_t *tx,
-                                   void *data,
-                                   ib_flags_t flags,
-                                   ib_field_t *field,
-                                   ib_num_t *result)
-{
-    IB_FTRACE_INIT();
-    *result = 1;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-#endif
-
-/**
- * Execute function for the "false" operator
- * @internal
- *
- * @note This operator is enabled only for builds configured with
- * "--enable-devel".
- *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value (unused)
- * @param[out] result Pointer to number in which to store the result
- *
- * @returns Status code
- */
-#ifdef IB_DEVEL
-static ib_status_t op_false_execute(ib_engine_t *ib,
-                                    ib_tx_t *tx,
-                                    void *data,
-                                    ib_flags_t flags,
-                                    ib_field_t *field,
-                                    ib_num_t *result)
-{
-    IB_FTRACE_INIT();
-    *result = 0;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-#endif
-
-/**
  * Create function for the "ipmatch" operator
  * @internal
  *
@@ -1188,36 +1126,6 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-
-    /**
-     * Simple True / False operators.
-     */
-
-    /* Register the true operator */
-#ifdef IB_DEVEL
-    rc = ib_operator_register(ib,
-                              "true",
-                              IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
-                              NULL, /* No create function */
-                              NULL, /* no destroy function */
-                              op_true_execute);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-#endif
-
-    /* Register the false operator */
-#ifdef IB_DEVEL
-    rc = ib_operator_register(ib,
-                              "false",
-                              IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
-                              NULL, /* No create function */
-                              NULL, /* no destroy function */
-                              op_false_execute);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-#endif
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

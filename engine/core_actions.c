@@ -61,101 +61,6 @@ typedef struct {
 } setvar_data_t;
 
 /**
- * Create function for the log action.
- * @internal
- *
- * @note This action is enabled only for builds configured with
- * "--enable-devel".
- *
- * @param[in] ib IronBee engine (unused)
- * @param[in] ctx Current context.
- * @param[in] mp Memory pool to use for allocation
- * @param[in] parameters Constant parameters from the rule definition
- * @param[in,out] inst Action instance
- *
- * @returns Status code
- */
-#ifdef IB_DEVEL
-static ib_status_t act_log_create(ib_engine_t *ib,
-                                  ib_context_t *ctx,
-                                  ib_mpool_t *mp,
-                                  const char *parameters,
-                                  ib_action_inst_t *inst)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_bool_t expand;
-    char *str;
-
-    if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Do we need expansion? */
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    else if (expand == IB_TRUE) {
-        inst->flags |= IB_ACTINST_FLAG_EXPAND;
-    }
-
-    inst->data = str;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-#endif
-
-/**
- * Execute function for the "debuglog" action
- * @internal
- *
- * @note This action is enabled only for builds configured with
- * "--enable-devel".
- *
- * @param[in] data C-style string to log
- * @param[in] rule The matched rule
- * @param[in] tx IronBee transaction
- * @param[in] flags Action instance flags
- *
- * @returns Status code
- */
-#ifdef IB_DEVEL
-static ib_status_t act_debuglog_execute(void *data,
-                                        ib_rule_t *rule,
-                                        ib_tx_t *tx,
-                                        ib_flags_t flags)
-{
-    IB_FTRACE_INIT();
-
-    /* This works on C-style (NUL terminated) strings */
-    const char *cstr = (const char *)data;
-    char *expanded = NULL;
-    ib_status_t rc;
-
-    /* Expand the string */
-    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "log_execute: Failed to expand string '%s': %s",
-                         cstr, ib_status_to_string(rc));
-        }
-    }
-    else {
-        expanded = (char *)cstr;
-    }
-
-    ib_log_debug3_tx(tx, "LOG: %s", expanded);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-#endif
-
-/**
  * Create function for the setflags action.
  * @internal
  *
@@ -597,32 +502,6 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
-
-    /* Register the debuglog action */
-#ifdef IB_DEVEL
-    rc = ib_action_register(ib,
-                            "debuglog",
-                            IB_ACT_FLAG_NONE,
-                            act_log_create,
-                            NULL, /* no destroy function */
-                            act_debuglog_execute);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-#endif
-
-    /* dlog is an alias for debuglog */
-#ifdef IB_DEVEL
-    rc = ib_action_register(ib,
-                            "dlog",
-                            IB_ACT_FLAG_NONE,
-                            act_log_create,
-                            NULL, /* no destroy function */
-                            act_debuglog_execute);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-#endif
 
     /* Register the set flag action */
     rc = ib_action_register(ib,

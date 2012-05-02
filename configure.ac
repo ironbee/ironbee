@@ -215,14 +215,8 @@ AC_ARG_ENABLE(devel,
 [
   devel="no"
 ])
-if test "$devel" != "no"; then
-    IB_DEVEL="-DIB_DEVEL"
-else
-    IB_DEVEL=
-fi
 
-AM_CONDITIONAL([BUILD_MODFIELDS], [test "$IB_DEVEL" != ""])
-AM_CONDITIONAL([BUILD_MODTRACE], [test "$IB_DEVEL" != ""])
+AM_CONDITIONAL([BUILD_DEV_MODULES], [test "$devel" != "no"])
 
 ### CLI
 AC_ARG_ENABLE(cli,
@@ -408,7 +402,6 @@ AC_SUBST(JAVA)
 AC_SUBST(VALGRIND)
 AC_SUBST(LDFLAGS)
 AC_SUBST(IB_DEBUG)
-AC_SUBST(IB_DEVEL)
 dnl Generate files
 AC_CONFIG_FILES([Makefile])
 

@@ -3,7 +3,6 @@
 # In C++, we could ommit the name, but not in C.
 CPPFLAGS += @GCC_CHARACTERISTICS_CPPFLAGS@ \
             @IB_DEBUG@ \
-            @IB_DEVEL@ \
             -I$(top_srcdir) \
             -I$(top_srcdir)/include \
             -I$(top_srcdir)/util \
