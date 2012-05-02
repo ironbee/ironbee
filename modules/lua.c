@@ -1330,7 +1330,7 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
  *
  * @return Status code.
  */
-static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
+static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,
                                                     ib_state_event_type_t event,
                                                     ib_conndata_t *conndata,
                                                     void *cbdata)
@@ -1406,7 +1406,7 @@ static ib_status_t modlua_handle_lua_conndata_event(ib_engine_t *ib,
  *
  * @return Status code
  */
-static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
+static ib_status_t modlua_handle_txdata_event(ib_engine_t *ib,
                                                   ib_tx_t *tx,
                                                   ib_state_event_type_t event,
                                                   ib_txdata_t *txdata,
@@ -1483,7 +1483,7 @@ static ib_status_t modlua_handle_lua_txdata_event(ib_engine_t *ib,
  *
  * @return Status code.
  */
-static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
+static ib_status_t modlua_handle_conn_event(ib_engine_t *ib,
                                                 ib_state_event_type_t event,
                                                 ib_conn_t *conn,
                                                 void *cbdata)
@@ -1557,7 +1557,7 @@ static ib_status_t modlua_handle_lua_conn_event(ib_engine_t *ib,
  *
  * @return Status code.
  */
-static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
+static ib_status_t modlua_handle_tx_event(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               ib_state_event_type_t event,
                                               void *cbdata)
@@ -1620,6 +1620,160 @@ static ib_status_t modlua_handle_lua_tx_event(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Generic event handler for Lua transaction events.
+ *
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param line The parsed request line
+ * @param cbdata Not used.
+ *
+ * @return Status code.
+ */
+static ib_status_t modlua_handle_reqline_event(ib_engine_t *ib,
+                                               ib_tx_t *tx,
+                                               ib_state_event_type_t event,
+                                               ib_parsed_req_line_t *line,
+                                               void *cbdata)
+{
+    IB_FTRACE_INIT();
+    modlua_cfg_t *modcfg;
+    modlua_runtime_t *lua;
+    ib_list_t *luaevents;
+    ib_list_node_t *node;
+    ib_status_t rc;
+
+    /* Get the module config. */
+    /// @todo For now, context is in main, not tx
+    rc = ib_context_module_config(tx->ctx,
+    //rc = ib_context_module_config(ib_context_main(ib),
+                                  IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Verify cbdata is in range for an event. */
+    if (event >= IB_STATE_EVENT_NUM) {
+        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
+                     event);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Get the list of lua events. If it is NULL, then there are no
+     * registered lua events of this type, so just exit cleanly.
+     */
+    luaevents = modcfg->event_reg[event];
+    if (luaevents == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Get the lua runtime. */
+    lua = modlua_runtime_get(tx->conn);
+    if (lua == NULL) {
+        ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p conn=%p",
+                        tx, tx->conn);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* Run through the luaevents list, which is a list of loaded
+     * lua modules that have an event handler for this event. The
+     * corresponding lua event handler (onEventFoo) need to be
+     * executed for each module in the list.
+     */
+    IB_LIST_LOOP(luaevents, node) {
+        ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
+        ib_log_debug3_tx(tx,
+                         "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+                         m->name, m, event, ib_state_event_name(event));
+        rc = modlua_exec_lua_handler(ib, line, lua, m->name, event);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error executing lua handler");
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Generic event handler for Lua transaction events.
+ *
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param line The parsed response line
+ * @param cbdata Not used.
+ *
+ * @return Status code.
+ */
+static ib_status_t modlua_handle_respline_event(ib_engine_t *ib,
+                                                ib_tx_t *tx,
+                                                ib_state_event_type_t event,
+                                                ib_parsed_resp_line_t *line,
+                                                void *cbdata)
+{
+    IB_FTRACE_INIT();
+    modlua_cfg_t *modcfg;
+    modlua_runtime_t *lua;
+    ib_list_t *luaevents;
+    ib_list_node_t *node;
+    ib_status_t rc;
+
+    /* Get the module config. */
+    /// @todo For now, context is in main, not tx
+    rc = ib_context_module_config(tx->ctx,
+    //rc = ib_context_module_config(ib_context_main(ib),
+                                  IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Verify cbdata is in range for an event. */
+    if (event >= IB_STATE_EVENT_NUM) {
+        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
+                     event);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Get the list of lua events. If it is NULL, then there are no
+     * registered lua events of this type, so just exit cleanly.
+     */
+    luaevents = modcfg->event_reg[event];
+    if (luaevents == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Get the lua runtime. */
+    lua = modlua_runtime_get(tx->conn);
+    if (lua == NULL) {
+        ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p conn=%p",
+                        tx, tx->conn);
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* Run through the luaevents list, which is a list of loaded
+     * lua modules that have an event handler for this event. The
+     * corresponding lua event handler (onEventFoo) need to be
+     * executed for each module in the list.
+     */
+    IB_LIST_LOOP(luaevents, node) {
+        ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
+        ib_log_debug3_tx(tx,
+                         "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+                         m->name, m, event, ib_state_event_name(event));
+        rc = modlua_exec_lua_handler(ib, line, lua, m->name, event);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error executing lua handler");
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 
 /* -- Module Routines -- */
 
@@ -1643,7 +1797,8 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     /* Setup a list to track loaded lua modules. */
     rc = ib_list_create(&mlist, ib_engine_pool_config_get(ib));
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create lua module list: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to create lua module list: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     m->data = mlist;
@@ -1683,28 +1838,28 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     /* Register data event handlers. */
     rc = ib_hook_conndata_register(ib, conn_data_in_event,
-                                   modlua_handle_lua_conndata_event,
+                                   modlua_handle_conndata_event,
                                    NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conndata_register(ib, conn_data_out_event,
-                                   modlua_handle_lua_conndata_event,
+                                   modlua_handle_conndata_event,
                                    NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_txdata_register(ib, tx_data_in_event,
-                                 modlua_handle_lua_txdata_event,
+                                 modlua_handle_txdata_event,
                                  NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_txdata_register(ib, tx_data_out_event,
-                                 modlua_handle_lua_txdata_event,
+                                 modlua_handle_txdata_event,
                                  NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
@@ -1713,49 +1868,49 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     /* Register connection event handlers. */
     rc = ib_hook_conn_register(ib, conn_started_event,
-                               modlua_handle_lua_conn_event,
+                               modlua_handle_conn_event,
                                NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, conn_opened_event,
-                               modlua_handle_lua_conn_event,
+                               modlua_handle_conn_event,
                                NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, handle_context_conn_event,
-                               modlua_handle_lua_conn_event,
+                               modlua_handle_conn_event,
                                NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, handle_connect_event,
-                               modlua_handle_lua_conn_event,
+                               modlua_handle_conn_event,
                                NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, conn_closed_event,
-                               modlua_handle_lua_conn_event,
+                               modlua_handle_conn_event,
                                NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, handle_disconnect_event,
-                               modlua_handle_lua_conn_event,
+                               modlua_handle_conn_event,
                                NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_conn_register(ib, conn_finished_event,
-                               modlua_handle_lua_conn_event,
+                               modlua_handle_conn_event,
                                NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
@@ -1764,119 +1919,119 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     /* Register transaction event handlers. */
     rc = ib_hook_tx_register(ib, tx_started_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, request_started_event,
-                             modlua_handle_lua_tx_event,
-                             NULL);
+    rc = ib_hook_parsed_req_line_register(ib, request_started_event,
+                                          modlua_handle_reqline_event,
+                                          NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, request_headers_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_context_tx_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_request_headers_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, request_body_data_event,
-                             modlua_handle_lua_tx_event,
-                             NULL);
+    rc = ib_hook_txdata_register(ib, request_body_data_event,
+                                 modlua_handle_txdata_event,
+                                 NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_request_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, request_finished_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, tx_process_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, response_started_event,
-                             modlua_handle_lua_tx_event,
-                             NULL);
+    rc = ib_hook_parsed_resp_line_register(ib, response_started_event,
+                                           modlua_handle_respline_event,
+                                           NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, response_headers_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_response_headers_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, response_body_data_event,
-                             modlua_handle_lua_tx_event,
-                             NULL);
+    rc = ib_hook_txdata_register(ib, response_body_data_event,
+                                 modlua_handle_txdata_event,
+                                 NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_response_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, response_finished_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, handle_postprocess_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
     rc = ib_hook_tx_register(ib, tx_finished_event,
-                             modlua_handle_lua_tx_event,
+                             modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
