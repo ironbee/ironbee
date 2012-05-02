@@ -87,6 +87,16 @@ Engine Engine::remove_const(ConstEngine engine)
     return Engine(const_cast<ib_engine_t*>(engine.ib()));
 }
 
+void Engine::initialize()
+{
+    Internal::throw_if_error(ib_engine_init(ib()));
+}
+
+void Engine::destroy()
+{
+    ib_engine_destroy(ib());
+}
+
 ConfigurationDirectivesRegistrar
      Engine::register_configuration_directives() const
 {

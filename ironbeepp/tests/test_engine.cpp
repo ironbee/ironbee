@@ -36,4 +36,6 @@ TEST(TestEngine, create)
     Engine engine = Engine::create(server.get());
 
     ASSERT_TRUE(engine);
+    engine.initialize();
+    engine.destroy();
 }

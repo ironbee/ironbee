@@ -230,6 +230,20 @@ public:
     ///@}
 
     /**
+     * Initialize Engine.
+     *
+     * This should be called on a new Engine (via create()) before use.
+     **/
+    void initialize();
+
+    /**
+     * Destroy Engine.
+     *
+     * Destory Engine, reclaiming all memory.  Do not use afterwards.
+     **/
+    void destroy();
+
+    /**
      * Register configuration directives.
      *
      * This method returns a ConfigurationDirectivesRegistrar, a helper class
