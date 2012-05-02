@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <assert.h>
 
 #include <sys/types.h> /* getpid */
 #include <arpa/inet.h> /* htonl */
@@ -88,7 +89,7 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
     IB_STATE_HOOK_CONN,     /**< handle_disconnect_event */
     IB_STATE_HOOK_TX,       /**< handle_postprocess_event */
 
-    /* Plugin States */
+    /* Server States */
     IB_STATE_HOOK_NULL,     /**< cfg_started_event */
     IB_STATE_HOOK_NULL,     /**< cfg_finished_event */
     IB_STATE_HOOK_CONN,     /**< conn_opened_event */
@@ -479,7 +480,7 @@ void ib_engine_destroy(ib_engine_t *ib)
 }
 
 ib_status_t ib_conn_create(ib_engine_t *ib,
-                           ib_conn_t **pconn, void *pctx)
+                           ib_conn_t **pconn, void *server_ctx)
 {
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
@@ -511,7 +512,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->ib = ib;
     (*pconn)->mp = pool;
     (*pconn)->ctx = ib->ctx;
-    (*pconn)->pctx = pctx;
+    (*pconn)->server_ctx = server_ctx;
 
     rc = ib_hash_create_nocase(&((*pconn)->data), (*pconn)->mp);
     if (rc != IB_OK) {
@@ -530,6 +531,26 @@ failed:
 
     IB_FTRACE_RET_STATUS(rc);
 }
+
+void ib_conn_parser_context_set(ib_conn_t *conn,
+                                void *parser_ctx)
+{
+    IB_FTRACE_INIT();
+    assert(conn != NULL);
+
+    conn->parser_ctx = parser_ctx;
+
+    IB_FTRACE_RET_VOID();
+}
+
+void *ib_conn_parser_context_get(ib_conn_t *conn)
+{
+    IB_FTRACE_INIT();
+    assert(conn != NULL);
+
+    IB_FTRACE_RET_PTR(void, conn->parser_ctx);
+}
+
 
 ib_status_t ib_conn_data_create(ib_conn_t *conn,
                                 ib_conndata_t **pconndata,

@@ -30,6 +30,7 @@
 
 #include <assert.h>
 
+
 /* -- Field Generation Routines -- */
 
 static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
@@ -40,6 +41,7 @@ static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
 
     assert(tx != NULL);
     assert(name != NULL);
+    assert(val != NULL);
 
     ib_status_t rc = ib_field_create_no_copy(&f, tx->mp,
                                              name, strlen(name),
@@ -63,6 +65,9 @@ static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
     }
 }
 
+
+/* -- Hooks -- */
+
 /*
  * Callback used to generate request fields.
  */
@@ -75,7 +80,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == request_headers_event);
+    assert(event == handle_context_tx_event);
 
     ib_log_debug(ib, "core_gen_request_header_fields");
 
@@ -110,17 +115,47 @@ static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
 
     ib_log_debug(ib, "core_gen_response_header_fields");
 
-    core_gen_bytestr_alias_field(tx, "response_line",
-                                 tx->response_line->raw);
+    if (tx->response_line != NULL) {
+        core_gen_bytestr_alias_field(tx, "response_line",
+                                     tx->response_line->raw);
 
-    core_gen_bytestr_alias_field(tx, "response_protocol",
-                                 tx->response_line->protocol);
+        core_gen_bytestr_alias_field(tx, "response_protocol",
+                                     tx->response_line->protocol);
 
-    core_gen_bytestr_alias_field(tx, "response_status",
-                                 tx->response_line->status);
+        core_gen_bytestr_alias_field(tx, "response_status",
+                                     tx->response_line->status);
 
-    core_gen_bytestr_alias_field(tx, "response_message",
-                                 tx->response_line->msg);
+        core_gen_bytestr_alias_field(tx, "response_message",
+                                     tx->response_line->msg);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+/* -- Initialization Routines -- */
+
+/* Initialize libhtp config object for the context. */
+ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
+                                    ib_module_t *mod,
+                                    ib_context_t *ctx,
+                                    void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_core_cfg_t *corecfg;
+    ib_status_t rc;
+
+    assert(ib != NULL);
+    assert(mod != NULL);
+    assert(ctx != NULL);
+
+    /* Get the core context config. */
+    rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert(ib,
+                     "Failed to fetch core module context config: %s", ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -135,7 +170,7 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     assert(mod != NULL);
 
 
-    ib_hook_tx_register(ib, request_headers_event,
+    ib_hook_tx_register(ib, handle_context_tx_event,
                         core_gen_request_header_fields, NULL);
 
     ib_hook_tx_register(ib, response_headers_event,

@@ -204,7 +204,8 @@ ffi.cdef [[
         ib_engine_t        *ib;
         ib_mpool_t         *mp;
         ib_context_t       *ctx;
-        void               *pctx;
+        void               *server_ctx;
+        void               *parser_ctx;
         ib_provider_inst_t *dpi;
         ib_hash_t          *data;
         struct {

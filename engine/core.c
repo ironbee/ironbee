@@ -217,6 +217,7 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+#if 0
 /* Placeholder for as-of-yet-initialized bytestring fields. */
 static const uint8_t core_placeholder_value[] = {
     '_', '_', 'c', 'o', 'r', 'e', '_', '_',
@@ -243,6 +244,7 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
 
     IB_FTRACE_RET_STATUS(rc);
 }
+#endif
 
 
 /* -- Core Logger Provider -- */
@@ -2717,20 +2719,24 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     }
 
     /* Add the raw request line */
-    rc = ib_field_create(&f, mpool,
-                         IB_FIELD_NAME("request_line"),
-                         IB_FTYPE_BYTESTR,
-                         tx->request_line->raw);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to create field for request line: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_list_push(list, f);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to add request headers: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    // FIXME: Why would this be NULL?  Should this ever happen?
+    if (tx->request_line != NULL) {
+        rc = ib_field_create(&f, mpool,
+                             IB_FIELD_NAME("request_line"),
+                             IB_FTYPE_BYTESTR,
+                             tx->request_line->raw);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to create request line field: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = ib_list_push(list, f);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to add request line field: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Add the request header fields */
@@ -2807,21 +2813,26 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Add the raw response line */
-    rc = ib_field_create(&f, mpool,
-                         IB_FIELD_NAME("response_line"),
-                         IB_FTYPE_BYTESTR,
-                         tx->response_line->raw);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to create field for response line: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_list_push(list, f);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to add response headers: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    /* Add the raw response line
+     *
+     * The response_line may be NULL for HTTP/0.9 requests.
+     */
+    if (tx->response_line != NULL) {
+        rc = ib_field_create(&f, mpool,
+                             IB_FIELD_NAME("response_line"),
+                             IB_FTYPE_BYTESTR,
+                             tx->response_line->raw);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to create response line field: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_list_push(list, f);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to add response line field: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Add the response header fields */
@@ -3279,6 +3290,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     }
 
 
+#if 0
     /* Alias ARGS fields */
     rc = ib_data_get(tx->dpi, "request_uri_params", &f);
     if (rc == IB_OK) {
@@ -3291,6 +3303,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
             ib_log_error_tx(tx, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
         }
     }
+#endif
 
     /**
      * Alias connection remote and server addresses
@@ -4104,6 +4117,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     }
 
     /* Core Request Fields */
+#if 0
     rc = ib_data_add_stream(tx->dpi, "request_body", NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -4226,6 +4240,7 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+#endif
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -5739,6 +5754,34 @@ ib_module_t *ib_core_module(void)
  *
  * @returns Status code
  */
+static ib_status_t core_ctx_open(ib_engine_t  *ib,
+                                 ib_module_t  *mod,
+                                 ib_context_t *ctx,
+                                 void         *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    /* Initialize the core fields context. */
+    rc = ib_core_fields_ctx_init(ib, mod, ctx, cbdata);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to initialize core fields: %s", ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Initialize the core module context
+ *
+ * @param ib Engine
+ * @param mod Module
+ * @param ctx Context
+ * @param cbdata Callback data (unused)
+ *
+ * @returns Status code
+ */
 static ib_status_t core_ctx_close(ib_engine_t  *ib,
                                   ib_module_t  *mod,
                                   ib_context_t *ctx,
@@ -5918,7 +5961,7 @@ IB_MODULE_INIT(
     NULL,                                /**< Callback data */
     NULL,                                /**< Finish function */
     NULL,                                /**< Callback data */
-    NULL,                                /**< Context open function */
+    core_ctx_open,                       /**< Context open function */
     NULL,                                /**< Callback data */
     core_ctx_close,                      /**< Context close function */
     NULL,                                /**< Callback data */

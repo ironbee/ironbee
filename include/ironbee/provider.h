@@ -366,6 +366,8 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
         disconnect,
         (ib_provider_inst_t *pi, ib_conn_t *conn)
     );
+
+    /* Raw Connection Data Functions */
     IB_PROVIDER_FUNC(
         ib_status_t,
         data_in,
@@ -376,6 +378,52 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
         data_out,
         (ib_provider_inst_t *pi, ib_conndata_t *cdata)
     );
+
+    /* Preparsed Request Data Functions */
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        request_line,
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_req_line_t *line)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        request_header_data,
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_header_wrapper_t *headers)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        request_headers_finished,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        request_body_data,
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_txdata_t *txdata)
+    );
+
+    /* Preparsed Response Data Functions */
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        response_line,
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_resp_line_t *line)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        response_header_data,
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_header_wrapper_t *headers)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        response_headers_finished,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        response_body_data,
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_txdata_t *txdata)
+    );
+
+    /* Field Generation Functions */
     IB_PROVIDER_FUNC(
         ib_status_t,
         gen_request_header_fields,

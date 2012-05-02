@@ -201,6 +201,19 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
                                 ib_module_t *mod);
 
 /**
+ * Initialize the core config context for fields.
+ *
+ * Called when the core is loaded, registers the core field generators.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ */
+ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
+                                    ib_module_t *mod,
+                                    ib_context_t *ctx,
+                                    void *cbdata);
+
+/**
  * @internal
  * Initialize the rule engine.
  *

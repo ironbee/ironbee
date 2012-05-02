@@ -146,7 +146,8 @@ struct ib_conn_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Connection memory pool */
     ib_context_t       *ctx;             /**< Config context */
-    void               *pctx;            /**< Plugin context */
+    void               *server_ctx;      /**< Server context */
+    void               *parser_ctx;      /**< Parser context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_hash_t          *data;            /**< Generic data store */
 //    ib_filter_ctl_t    *fctl;            /**< Connection filter controller */

@@ -1030,7 +1030,34 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     IB_FTRACE_RET_INT(HTP_OK);
 }
 
-/* -- Provider Interface Implementation -- */
+/* -- Parser Provider Interface Implementation -- */
+
+/*****************************************************************************
+ * Dragons be here.
+ *
+ * The parser interface is called indirectly by the server in one of two modes:
+ *
+ * 1) The server will call the data_in/data_out functions to feed
+ *    in raw HTTP data. This data is then parsed and the appropriate
+ *    parsed versions of the ib_state_notify_*() functions are called
+ *    by the parser.
+ *
+ * 2) The server will call the parsed versions of the ib_state_notify_*()
+ *    functions directly with the parsed HTTP data. Because of limitations
+ *    in libhtp, the parsed functions implemented here will reconstruct
+ *    a normalized raw HTTP stream and call the data_in/data_out functions
+ *    as if it was receiving a raw stream.
+ * 
+ * The interfaces for the two modes are cyclic (raw data functions call
+ * the parsed versions and vice versa) and some care is taken to detect
+ * which mode is in use so that calls do not endlessly recurse. However, 
+ * no effort was taken to prevent an incorrectly written server from
+ * causing problems and infinite recursion.
+ *
+ * TODO: Fix libhtp to have an interface that accepts pre-parsed HTTP
+ *       data so that reconstructing the raw HTTP is not required. This
+ *       will greatly simplify the interface.
+ *****************************************************************************/
 
 static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
                                      ib_conn_t *iconn)
@@ -1103,10 +1130,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     iconn->t.started = ib_clock_get_time();
 
     /* Store the context. */
-    rc = ib_hash_set(iconn->data, "MODHTP_CTX", modctx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    ib_conn_parser_context_set(iconn, modctx);
     htp_connp_set_user_data(modctx->htp, modctx);
 
     /* Register callbacks. */
@@ -1142,14 +1166,9 @@ static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
     IB_FTRACE_INIT();
     ib_engine_t *ib = iconn->ib;
     modhtp_context_t *modctx;
-    ib_status_t rc;
 
     /* Fetch context from the connection. */
-    /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, &modctx, "MODHTP_CTX");
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
 
     ib_log_debug3(ib, "Destroying LibHTP parser");
 
@@ -1170,18 +1189,13 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
-    ib_status_t rc;
     struct timeval tv;
     int ec;
 
     gettimeofday(&tv, NULL);
 
     /* Fetch context from the connection. */
-    /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, &modctx, "MODHTP_CTX");
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
     htp = modctx->htp;
 
     ib_log_debug3(ib, "LibHTP incoming data status=%d", htp->in_status);
@@ -1228,18 +1242,13 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
-    ib_status_t rc;
     struct timeval tv;
     int ec;
 
     gettimeofday(&tv, NULL);
 
     /* Fetch context from the connection. */
-    /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, &modctx, "MODHTP_CTX");
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
     htp = modctx->htp;
 
     ib_log_debug3(ib, "LibHTP outgoing data status=%d", htp->out_status);
@@ -1278,6 +1287,325 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t modhtp_iface_request_line(ib_provider_inst_t *pi,
+                                             ib_tx_t *tx,
+                                             ib_parsed_req_line_t *line)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+    assert(line != NULL);
+
+    ib_conndata_t conndata = {0};
+    modhtp_context_t *modctx;
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND REQUEST LINE TO LIBHTP: modhtp_iface_request_line");
+
+    /* Fetch context from the connection and mark this
+     * as being a parsed data request. */
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(tx->conn);
+    modctx->parsed_data = 1;
+
+    conndata.conn = tx->conn;
+
+    /* Write request line to libhtp. */
+    conndata.dlen = ib_bytestr_length(line->raw);
+    conndata.data = ib_bytestr_ptr(line->raw);
+    rc = modhtp_iface_data_in(pi, &conndata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Write request line end-of-line to libhtp. */
+    conndata.dlen = 2;
+    conndata.data = (uint8_t *)"\r\n";
+    rc = modhtp_iface_data_in(pi, &conndata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/* User data structure for header iteration. */
+typedef struct modhtp_header_data {
+    ib_provider_inst_t *pi;
+    ib_conndata_t *conndata;
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        write_fn,
+        (ib_provider_inst_t *pi, ib_conndata_t *cdata)
+    );
+} modhtp_header_data;
+
+/* Send header data to libhtp via this header iteration callback. */
+static ib_status_t modhtp_send_header_data(const char *name,
+                                           size_t name_len,
+                                           const char *value,
+                                           size_t value_len,
+                                           void *user_data)
+{
+    assert(user_data != NULL);
+
+    const modhtp_header_data *data = (const modhtp_header_data *)user_data;
+    ib_status_t rc;
+
+    /* Write header name to libhtp. */
+    data->conndata->dlen = name_len;
+    data->conndata->data = (uint8_t *)name;
+    rc = data->write_fn(data->pi, data->conndata);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Write header name/value delimiter to libhtp. */
+    data->conndata->dlen = 2;
+    data->conndata->data = (uint8_t *)": ";
+    rc = data->write_fn(data->pi, data->conndata);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Write header value to libhtp. */
+    data->conndata->dlen = value_len;
+    data->conndata->data = (uint8_t *)value;
+    rc = data->write_fn(data->pi, data->conndata);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Write header end-of-line to libhtp. */
+    data->conndata->dlen = 2;
+    data->conndata->data = (uint8_t *)"\r\n";
+    rc = data->write_fn(data->pi, data->conndata);
+
+    return rc;
+}
+
+static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
+                                                    ib_tx_t *tx,
+                                                    ib_parsed_header_wrapper_t *headers)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+    assert(header != NULL);
+
+    ib_conndata_t conndata = {0};
+    modhtp_header_data cbdata;
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND REQUEST HEADER DATA TO LIBHTP: modhtp_iface_request_header_data");
+
+    conndata.conn = tx->conn;
+    cbdata.pi = pi;
+    cbdata.conndata = &conndata;
+    cbdata.write_fn = modhtp_iface_data_in;
+
+    rc = ib_parsed_tx_each_header(header,
+                                  modhtp_send_header_data,
+                                  &cbdata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_iface_request_headers_finished(ib_provider_inst_t *pi,
+                                                         ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+
+    ib_conndata_t conndata = {0};
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND REQUEST HEADER FINISHED TO LIBHTP: modhtp_iface_request_header_finished");
+
+    conndata.conn = tx->conn;
+
+    /* Write request header separator to libhtp. */
+    conndata.dlen = 2;
+    conndata.data = (uint8_t *)"\r\n";
+    rc = modhtp_iface_data_in(pi, &conndata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_iface_request_body_data(ib_provider_inst_t *pi,
+                                                  ib_tx_t *tx,
+                                                  ib_txdata_t *txdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+    assert(txdata != NULL);
+
+    ib_conndata_t conndata = {0};
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND REQUEST BODY DATA TO LIBHTP: modhtp_iface_request_body_data");
+
+    conndata.conn = tx->conn;
+
+    /* Write request body data to libhtp. */
+    conndata.dlen = txdata->dlen;
+    conndata.data = txdata->data;
+    rc = modhtp_iface_data_in(pi, &conndata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
+                                              ib_tx_t *tx,
+                                              ib_parsed_resp_line_t *line)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+    assert(line != NULL);
+
+    ib_conndata_t conndata = {0};
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND RESPONSE LINE TO LIBHTP: modhtp_iface_response_line");
+
+    conndata.conn = tx->conn;
+
+    /* Write response line to libhtp. */
+    conndata.dlen = ib_bytestr_length(line->raw);
+    conndata.data = ib_bytestr_ptr(line->raw);
+    rc = modhtp_iface_data_out(pi, &conndata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Write response line end-of-line to libhtp. */
+    conndata.dlen = 2;
+    conndata.data = (uint8_t *)"\r\n";
+    rc = modhtp_iface_data_in(pi, &conndata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
+                                                     ib_tx_t *tx,
+                                                     ib_parsed_header_wrapper_t *headers)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+    assert(header != NULL);
+
+    ib_conndata_t conndata = {0};
+    modhtp_header_data cbdata;
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND RESPONSE HEADER DATA TO LIBHTP: modhtp_iface_response_header_data");
+
+    conndata.conn = tx->conn;
+    cbdata.pi = pi;
+    cbdata.conndata = &conndata;
+    cbdata.write_fn = modhtp_iface_data_out;
+
+    rc = ib_parsed_tx_each_header(header,
+                                  modhtp_send_header_data,
+                                  &cbdata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_iface_response_headers_finished(ib_provider_inst_t *pi,
+                                                          ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+
+    ib_conndata_t conndata = {0};
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND RESPONSE HEADER FINISHED TO LIBHTP: modhtp_iface_response_header_finished");
+
+    conndata.conn = tx->conn;
+
+    /* Write response header separator to libhtp. */
+    conndata.dlen = 2;
+    conndata.data = (uint8_t *)"\r\n";
+    rc = modhtp_iface_data_out(pi, &conndata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
+                                                   ib_tx_t *tx,
+                                                   ib_txdata_t *txdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(tx != NULL);
+    assert(txdata != NULL);
+
+    ib_conndata_t conndata = {0};
+    ib_status_t rc;
+
+    /* This is required for parsed data only. */
+    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug_tx(tx, "SEND RESPONSE BODY DATA TO LIBHTP: modhtp_iface_response_body_data");
+
+    conndata.conn = tx->conn;
+
+    /* Write request body data to libhtp. */
+    conndata.dlen = txdata->dlen;
+    conndata.data = txdata->data;
+    rc = modhtp_iface_data_out(pi, &conndata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi,
                                                           ib_tx_t *itx)
 {
@@ -1299,22 +1627,13 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
     }
 
     /* Fetch context from the connection. */
-    /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, &modctx, "MODHTP_CTX");
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
     tx = modctx->htp->in_tx;
     if (tx != NULL) {
         htp_tx_set_user_data(tx, itx);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri",
-                                 tx->request_uri_normalized,
-                                 NULL);
 
         modhtp_field_gen_bytestr(itx->dpi,
                                  "request_uri_scheme",
@@ -1361,6 +1680,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  tx->parsed_uri->fragment,
                                  NULL);
 
+#if 0
         rc = ib_data_add_list(itx->dpi, "request_headers", &f);
         if (   (tx->request_headers != NULL)
             && table_size(tx->request_headers)
@@ -1408,6 +1728,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                          "Failed to create request headers list: %s",
                          ib_status_to_string(rc));
         }
+#endif
 
         rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
         if (   (tx->request_cookies != NULL)
@@ -1499,6 +1820,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                                                            ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
+#if 0
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
@@ -1516,13 +1838,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
     }
 
     /* Fetch context from the connection. */
-    /// @todo Move this into a ib_conn_t field
-    rc = ib_hash_get(iconn->data, &modctx, "MODHTP_CTX");
-    if (rc != IB_OK) {
-        ib_log_alert_tx(itx, "Failed to fetch module %s context: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
@@ -1578,6 +1894,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                          ib_status_to_string(rc));
         }
     }
+#endif
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1593,6 +1910,17 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     /* Required Parser Functions */
     modhtp_iface_data_in,
     modhtp_iface_data_out,
+
+    modhtp_iface_request_line,
+    modhtp_iface_request_header_data,
+    modhtp_iface_request_headers_finished,
+    modhtp_iface_request_body_data,
+
+    modhtp_iface_response_line,
+    modhtp_iface_response_header_data,
+    modhtp_iface_response_headers_finished,
+    modhtp_iface_response_body_data,
+
     modhtp_iface_gen_request_header_fields,
     modhtp_iface_gen_response_header_fields
 };

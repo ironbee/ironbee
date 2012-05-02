@@ -482,7 +482,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     assert(event == conn_opened_event);
 
     //server_rec *s = cbdata;
-    conn_rec *c = (conn_rec *)iconn->pctx;
+    conn_rec *c = (conn_rec *)iconn->server_ctx;
     ib_status_t rc;
 
     ib_log_debug3(ib, "Initializing connection remote=%s:%d local=%s:%d",

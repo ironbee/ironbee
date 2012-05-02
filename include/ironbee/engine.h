@@ -499,13 +499,31 @@ ib_status_t DLL_PUBLIC ib_context_site_lookup(const ib_context_t *ctx,
  *
  * @param ib Engine handle
  * @param pconn Address which new connection is written
- * @param pctx Plugin connection context
+ * @param server_ctx Server connection context
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_conn_create(ib_engine_t *ib,
                                       ib_conn_t **pconn,
-                                      void *pctx);
+                                      void *server_ctx);
+
+/**
+ * Set the connection parser context.
+ *
+ * @param conn Connection structure
+ * @param parser_ctx Parser context
+ */
+void ib_conn_parser_context_set(ib_conn_t *conn,
+                                void *parser_ctx);
+
+/**
+ * Get the connection parser context.
+ *
+ * @param conn Connection structure
+ *
+ * @returns The connection parser context
+ */
+void DLL_PUBLIC *ib_conn_parser_context_get(ib_conn_t *conn);
 
 /**
  * Set connection flags.

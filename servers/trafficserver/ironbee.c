@@ -1316,7 +1316,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     const struct sockaddr *addr;
     int port;
 
-    TSCont contp = iconn->pctx;
+    TSCont contp = iconn->server_ctx;
     ib_ssn_ctx* data = TSContDataGet(contp);
 //  ib_clog_debug(....);
 
