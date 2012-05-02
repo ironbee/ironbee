@@ -104,6 +104,27 @@
  * can be expanded to other module hooks simply by defining the appropriate
  * methods (e.g., @c context_close).  See module_bootstrap.hpp for details.
  *
+ * \section includes Include Files
+ *
+ * There are two options regarding include files in IronBee++
+ *   -# Include ironbeepp/all.hpp and don't worry about it.
+ *   -# Include the files for the features you use.
+ *
+ * Each include file will include any other include files needed to avoid
+ * compilation errors when @e included.  However, include files do not
+ * necessarilly include files needed for usage and, where possible, avoid
+ * doing so.
+ *
+ * For example, you can include ironbeepp/engine.hpp without including any
+ * other files before hand.  However, to use Engine::hooks() you will also
+ * need to include ironbeepp/hooks.hpp.
+ *
+ * The IronBee++ include files minimize additional includes where possible.
+ * The advantage of this approach is that you do not pay (in compiler
+ * processing) for includes you do not need.  The disadvantage is that you
+ * need to remember to include features you use.  If you prefer conveneince,
+ * simply include all.hpp.
+ *
  * \section errors Reporting Errors
  *
  * In the C API, most functions and callbacks report errors via an
