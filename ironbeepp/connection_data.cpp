@@ -61,6 +61,16 @@ ConnectionData::ConnectionData(ib_type ib_connection_data) :
     // nop
 }
 
+void ConnectionData::set_data(char* data) const
+{
+    ib()->data = reinterpret_cast<uint8_t*>(data);
+}
+
+void ConnectionData::set_length(size_t length) const
+{
+    ib()->dlen = length;
+}
+
 ConnectionData ConnectionData::create(Connection connection, size_t size)
 {
     ib_conndata_t* ib_conndata;
@@ -70,6 +80,38 @@ ConnectionData ConnectionData::create(Connection connection, size_t size)
     );
 
     return ConnectionData(ib_conndata);
+}
+
+ConnectionData ConnectionData::create(
+    Connection  connection,
+    const char* data,
+    size_t      length
+)
+{
+    ConnectionData cd = create(connection, length);
+    copy(data, data+length, cd.data());
+    cd.set_length(length);
+    return cd;
+}
+
+ConnectionData ConnectionData::create(
+    Connection         connection,
+    const std::string& data
+)
+{
+    return create(connection, data.data(), data.length());
+}
+
+ConnectionData ConnectionData::create_alias(
+    Connection  connection,
+    char*       data,
+    size_t      length
+)
+{
+    ConnectionData cd = create(connection);
+    cd.set_data(data);
+    cd.set_length(length);
+    return cd;
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstConnectionData& connection_data)

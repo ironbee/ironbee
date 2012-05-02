@@ -161,15 +161,64 @@ public:
 
     ///@}
 
+    //! Set data.
+    void set_data(char* data) const;
+
+    //! Set length of data.
+    void set_length(size_t length) const;
+
     /**
      * Create new ConnectionData.
      *
      * @param[in] connection Connection to associate with.
-     * @param[in] size How large a buffer to allocate.
+     * @param[in] size       How large a buffer to allocate.
      * @returns ConnectionData
      **/
     static
-    ConnectionData create(Connection connection, size_t size);
+    ConnectionData create(Connection connection, size_t size = 0);
+
+    /**
+     * Create new ConnectionData.
+     *
+     * @param[in] connection Connection to associate with.
+     * @param[in] data       Data to @e copy in.
+     * @param[in] length     Length of @a data.
+     * @returns ConnectionData
+     **/
+    static
+    ConnectionData create(
+        Connection  connection,
+        const char* data,
+        size_t      length
+    );
+
+    /**
+     * Create new ConnectionData.
+     *
+     * @param[in] connection Connection to associate with.
+     * @param[in] data       Data to @e copy in.
+     * @returns ConnectionData
+     **/
+    static
+    ConnectionData create(
+        Connection         connection,
+        const std::string& data
+    );
+
+    /**
+     * Create new ConnectionData; aliasing memory.
+     *
+     * @param[in] connection Connection to associate with.
+     * @param[in] data       Data to @e alias.
+     * @param[in] length     Length of @a data.
+     * @returns ConnectionData
+     **/
+    static
+    ConnectionData create_alias(
+        Connection  connection,
+        char*       data,
+        size_t      length
+    );
 
 private:
     ib_type m_ib;

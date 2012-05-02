@@ -227,7 +227,7 @@ AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
 ### CPP
 AC_ARG_ENABLE(cpp,
               AS_HELP_STRING([--enable-cpp],
-                             [Enable C++11 code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
+                             [Enable C++ code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
 AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
 AM_CONDITIONAL([CPP], [test "$enable_cpp" = "yes"])
 ironbeepp_includedir='${prefix}/include/ironbeepp'
@@ -363,9 +363,9 @@ if test "$util_cli" != 0; then
     TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} cli"
 fi
 
-dnl Enable ironbeepp subdir if enabled
+dnl Enable C++ subdirs if enabled
 if test "$cpp_code" != 0; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp"
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp clipp"
 fi
 
 dnl Make sure abs_top_builddir is available
@@ -418,7 +418,7 @@ AC_CONFIG_FILES([cli/Makefile])
 fi
 
 if test "$cpp_code" != 0; then
-AC_CONFIG_FILES([cpp/Makefile])
+AC_CONFIG_FILES([clipp/Makefile])
 AC_CONFIG_FILES([ironbeepp/Makefile])
 AC_CONFIG_FILES([ironbeepp/tests/Makefile])
 fi

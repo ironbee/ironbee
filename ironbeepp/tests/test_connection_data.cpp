@@ -33,6 +33,7 @@
 #include "gtest/gtest.h"
 
 using namespace IronBee;
+using namespace std;
 
 class TestConnectionData : public ::testing::Test, public IBPPTestFixture
 {
@@ -63,4 +64,39 @@ TEST_F(TestConnectionData, create)
     ASSERT_TRUE(cd);
     EXPECT_EQ(c, cd.connection());
     EXPECT_TRUE(cd.data());
+
+    cd = ConnectionData::create(c, "hello", 5);
+    ASSERT_TRUE(cd);
+    EXPECT_EQ(c, cd.connection());
+    EXPECT_EQ("hello", string(cd.data(), cd.length()));
+
+    cd = ConnectionData::create(c, string("hello"));
+    ASSERT_TRUE(cd);
+    EXPECT_EQ(c, cd.connection());
+    EXPECT_EQ("hello", string(cd.data(), cd.length()));
+
+    char* buf = strdup("foobar");
+
+    cd = ConnectionData::create_alias(c, buf, 6);
+    ASSERT_TRUE(cd);
+    EXPECT_EQ(buf, cd.data());
+    EXPECT_EQ(6, cd.length());
+
+    free(buf);
+}
+
+TEST_F(TestConnectionData, setters)
+{
+    Connection c = Connection::create(m_engine);
+    ConnectionData cd = ConnectionData::create(c);
+
+    char* buf = strdup("abc");
+
+    cd.set_data(buf);
+    cd.set_length(3);
+
+    EXPECT_EQ(buf, cd.data());
+    EXPECT_EQ(3U, cd.length());
+
+    free(buf);
 }
