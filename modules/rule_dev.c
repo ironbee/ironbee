@@ -75,6 +75,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
                                    ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    ib_log_debug_tx(tx, "True operator returning 1");
     *result = 1;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -205,14 +206,15 @@ static ib_status_t act_debuglog_execute(void *data,
  *
  * @returns Status code
  */
-static ib_status_t init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /**
      * Simple True / False operators.
      */
+    ib_log_debug(ib, "Initializing rule development module");
 
     /* Register the true operator */
     rc = ib_operator_register(ib,
@@ -237,7 +239,7 @@ static ib_status_t init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     }
 
     /**
-     * Development actions
+     * Debug logging actions
      */
 
     /* Register the debuglog action */
@@ -261,6 +263,8 @@ static ib_status_t init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 IB_MODULE_INIT(
@@ -269,7 +273,7 @@ IB_MODULE_INIT(
     IB_MODULE_CONFIG_NULL,          /* Global config data */
     NULL,                           /* Module config map */
     NULL,                           /* Module directive map */
-    init,                           /* Initialize function */
+    ruledev_init,                   /* Initialize function */
     NULL,                           /* Callback data */
     NULL,                           /* Finish function */
     NULL,                           /* Callback data */
