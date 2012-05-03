@@ -22,6 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 #include "pb_consumer.hpp"
 #include "clipp.pb.h"
 
@@ -31,7 +33,11 @@
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
+#if defined(HAVE_ARPA_INET_H)
 #include <arpa/inet.h>
+#elif defined(HAVE_NETINET_IN_H)
+#include <netinet/in.h>
+#endif
 #include <fstream>
 #include <stdexcept>
 
