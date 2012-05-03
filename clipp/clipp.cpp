@@ -54,6 +54,8 @@
 #include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
 #include "ironbee_consumer.hpp"
+#include "pb_consumer.hpp"
+#include "pb_generator.hpp"
 
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>
@@ -102,9 +104,11 @@ typedef map<string,consumer_factory_t> consumer_factory_map_t;
 // Generators
 input_generator_t init_modsec_generator(const string& arg);
 input_generator_t init_raw_generator(const string& arg);
+input_generator_t init_pb_generator(const string& arg);
 
 // Consumers
 input_consumer_t init_ironbee_consumer(const string& arg);
+input_consumer_t init_pb_consumer(const string& arg);
 
 bool on_error(const string& message);
 
@@ -120,13 +124,15 @@ void help()
     "Generators are processed in order and fed to consumer.\n"
     "\n"
     "Generators:\n"
-    "  modsec:<path> -- Read <path> as modsec audit log.\n"
-    "                   One transaction per connection.\n"
+    "  pb:<path>      -- Read <path> as protobuf.\n"
+    "  modsec:<path>  -- Read <path> as modsec audit log.\n"
+    "                    One transaction per connection.\n"
     "  raw:<in>,<out> -- Read <in>,<out> as raw data in and out.\n"
     "                    Single transaction and connection.\n"
     "\n"
     "Consumers:\n"
     "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
+    "  writepb:<path> -- Output to protobuf file at <path>.\n"
     ;
 }
 
@@ -141,10 +147,12 @@ int main(int argc, char** argv)
     generator_factory_map_t generator_factory_map;
     generator_factory_map["modsec"] = &init_modsec_generator;
     generator_factory_map["raw"]    = &init_raw_generator;
+    generator_factory_map["pb"]     = &init_pb_generator;
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
     consumer_factory_map["ironbee"] = &init_ironbee_consumer;
+    consumer_factory_map["writepb"] = &init_pb_consumer;
 
     // Convert argv into list of pairs of name, parameters.
     typedef pair<string,string> component_t;
@@ -258,6 +266,16 @@ input_generator_t init_raw_generator(const string& arg)
 input_consumer_t init_ironbee_consumer(const string& arg)
 {
     return IronBeeConsumer(arg);
+}
+
+input_generator_t init_pb_generator(const string& arg)
+{
+    return PBGenerator(arg);
+}
+
+input_consumer_t init_pb_consumer(const string& arg)
+{
+    return PBConsumer(arg);
 }
 
 bool on_error(const string& message)

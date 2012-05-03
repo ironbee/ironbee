@@ -7,13 +7,17 @@ clipp_SOURCES = \
     modsec_audit_log.cpp \
     modsec_audit_log_generator.cpp \
     raw_generator.cpp \
-    ironbee_consumer.cpp
+    ironbee_consumer.cpp \
+    pb_consumer.cpp \
+    pb_generator.cpp \
+    clipp.pb.cc
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     -lboost_system \
     -lboost_filesystem \
     -lboost_program_options \
-    -lboost_regex
+    -lboost_regex \
+    -lprotobuf
 clipp_LDADD = \
     $(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/engine/libironbee.la

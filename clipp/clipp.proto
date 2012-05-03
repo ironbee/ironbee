@@ -1,0 +1,14 @@
+package IronBee.CLIPP.PB;
+
+message Transaction {
+    optional bytes raw_request  = 1;
+    optional bytes raw_response = 2;
+};
+
+message Input {
+    required string      local_ip    = 1;
+    required uint32      local_port  = 2;
+    required string      remote_ip   = 3;
+    required uint32      remote_port = 4;
+    repeated Transaction transaction = 5;
+};
