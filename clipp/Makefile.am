@@ -1,6 +1,11 @@
 include $(top_srcdir)/build/common.mk
 bin_PROGRAMS=clipp
 
+check-local:
+	$(srcdir)/run_tests.rb \
+		$(abs_builddir)/clipp \
+		$(abs_builddir)/tests/ironbee.conf
+
 clipp_SOURCES = \
     clipp.cpp \
     input.cpp \
