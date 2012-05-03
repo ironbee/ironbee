@@ -14,5 +14,5 @@ clipp_LDFLAGS = \
     -lboost_program_options \
     -lboost_regex
 clipp_LDADD = \
-    $(top_builddir)/engine/libironbee.la \
-    $(top_builddir)/ironbeepp/libibpp.la
+    $(top_builddir)/ironbeepp/libibpp.la \
+    $(top_builddir)/engine/libironbee.la
