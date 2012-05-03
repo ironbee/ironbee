@@ -87,33 +87,36 @@ std::ostream& operator<<(std::ostream& out, const buffer_t& buffer);
  **/
 struct input_t
 {
-  //! Local IP address.  Must outlive input_t.
-  buffer_t local_ip;
-  //! Local port.
-  uint16_t local_port;
+    //! ID.  Optional.  For human consumption.
+    std::string id;
 
-  //! Remote IP address.  Must outlive input_t.
-  buffer_t remote_ip;
-  //! Remote port.
-  uint16_t remote_port;
+    //! Local IP address.  Must outlive input_t.
+    buffer_t local_ip;
+    //! Local port.
+    uint16_t local_port;
 
-  //! A transaction for IronBee to process.
-  struct transaction_t {
-      //! Constructor.
-      transaction_t(buffer_t request_, buffer_t response_);
+    //! Remote IP address.  Must outlive input_t.
+    buffer_t remote_ip;
+    //! Remote port.
+    uint16_t remote_port;
 
-      //! Request data.  Must outlive input_t.
-      buffer_t request;
-      //! Response data.  Must outlive input_t.
-      buffer_t response;
+    //! A transaction for IronBee to process.
+    struct transaction_t {
+        //! Constructor.
+        transaction_t(buffer_t request_, buffer_t response_);
+
+        //! Request data.  Must outlive input_t.
+        buffer_t request;
+        //! Response data.  Must outlive input_t.
+        buffer_t response;
+    };
+
+    //! Zero or more transactions.
+    std::vector<transaction_t> transactions;
+
+    //! This boost::any can be used to associate memory with the input.
+    boost::any source;
   };
-
-  //! Zero or more transactions.
-  std::vector<transaction_t> transactions;
-
-  //! This boost::any can be used to associate memory with the input.
-  boost::any source;
-};
 
 //! Ostream output operator for an input.
 std::ostream& operator<<(std::ostream& out, const input_t& input);

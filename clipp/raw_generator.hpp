@@ -74,6 +74,7 @@ public:
 
 private:
     bool               m_produced_input;
+    std::string        m_id;
     std::vector<char>  m_request_buffer;
     std::vector<char>  m_response_buffer;
 };

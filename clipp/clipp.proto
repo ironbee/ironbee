@@ -11,4 +11,5 @@ message Input {
     required string      remote_ip   = 3;
     required uint32      remote_port = 4;
     repeated Transaction transaction = 5;
+    optional string      id          = 6;
 };

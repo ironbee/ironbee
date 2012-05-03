@@ -241,6 +241,17 @@ class Input : public ::google::protobuf::Message {
   inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >*
       mutable_transaction();
 
+  // optional string id = 6;
+  inline bool has_id() const;
+  inline void clear_id();
+  static const int kIdFieldNumber = 6;
+  inline const ::std::string& id() const;
+  inline void set_id(const ::std::string& value);
+  inline void set_id(const char* value);
+  inline void set_id(const char* value, size_t size);
+  inline ::std::string* mutable_id();
+  inline ::std::string* release_id();
+
   // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.Input)
  private:
   inline void set_has_local_ip();
@@ -251,6 +262,8 @@ class Input : public ::google::protobuf::Message {
   inline void clear_has_remote_ip();
   inline void set_has_remote_port();
   inline void clear_has_remote_port();
+  inline void set_has_id();
+  inline void clear_has_id();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -259,9 +272,10 @@ class Input : public ::google::protobuf::Message {
   ::google::protobuf::uint32 local_port_;
   ::google::protobuf::uint32 remote_port_;
   ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction > transaction_;
+  ::std::string* id_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
 
   friend void  protobuf_AddDesc_clipp_2eproto();
   friend void protobuf_AssignDesc_clipp_2eproto();
@@ -580,6 +594,64 @@ Input::transaction() const {
 inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >*
 Input::mutable_transaction() {
   return &transaction_;
+}
+
+// optional string id = 6;
+inline bool Input::has_id() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void Input::set_has_id() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void Input::clear_has_id() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void Input::clear_id() {
+  if (id_ != &::google::protobuf::internal::kEmptyString) {
+    id_->clear();
+  }
+  clear_has_id();
+}
+inline const ::std::string& Input::id() const {
+  return *id_;
+}
+inline void Input::set_id(const ::std::string& value) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
+  }
+  id_->assign(value);
+}
+inline void Input::set_id(const char* value) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
+  }
+  id_->assign(value);
+}
+inline void Input::set_id(const char* value, size_t size) {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
+  }
+  id_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Input::mutable_id() {
+  set_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    id_ = new ::std::string;
+  }
+  return id_;
+}
+inline ::std::string* Input::release_id() {
+  clear_has_id();
+  if (id_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = id_;
+    id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
 }
 
 

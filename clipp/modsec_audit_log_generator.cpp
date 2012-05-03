@@ -50,6 +50,7 @@ ModSecAuditLogGenerator::ModSecAuditLogGenerator(
     const std::string& path,
     on_error_t on_error
 ) :
+    m_id(path),
     m_on_error(on_error),
     m_input(boost::make_shared<ifstream>(path.c_str())),
     m_parser(*m_input)
@@ -87,21 +88,22 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
 
     // Extract connection information.
     static const boost::regex section_a(
-      "([0-9.]+) (\\d+) ([0-9.]+) (\\d+)$"
+      "([-@\\w]+) ([0-9.]+) (\\d+) ([0-9.]+) (\\d+)$"
     );
     boost::smatch match;
     try {
         const string& A = (*e)["A"];
         if (regex_search(A, match, section_a)) {
-            out_input.local_ip.data   = A.c_str() + match.position(1);
-            out_input.local_ip.length = match.length(1);
+            out_input.id              = m_id + ":" + match.str(1);
+            out_input.local_ip.data   = A.c_str() + match.position(2);
+            out_input.local_ip.length = match.length(2);
 
-            out_input.local_port = boost::lexical_cast<uint16_t>(match.str(2));
+            out_input.local_port = boost::lexical_cast<uint16_t>(match.str(3));
 
-            out_input.remote_ip.data   = A.c_str() + match.position(3);
-            out_input.remote_ip.length = match.length(3);
+            out_input.remote_ip.data   = A.c_str() + match.position(4);
+            out_input.remote_ip.length = match.length(4);
 
-            out_input.remote_port = boost::lexical_cast<uint16_t>(match.str(4));
+            out_input.remote_port = boost::lexical_cast<uint16_t>(match.str(5));
         }
         else {
             throw runtime_error(

@@ -122,13 +122,16 @@ bool on_error(const string& message);
 void help()
 {
     cerr <<
-    "Usage: clipp <component>...\n"
+    "Usage: clipp [<flags>] <component>...\n"
     "<component> := <name>:<parameters>\n"
     "\n"
     "Generator components produce inputs.\n"
     "Consumer components consume inputs.\n"
     "Consumer must be unique (and come last).\n"
     "Generators are processed in order and fed to consumer.\n"
+    "\n"
+    "Flags:\n"
+    " --verbose,-v -- Output ID for each input.\n"
     "\n"
     "Generators:\n"
     "  pb:<path>      -- Read <path> as protobuf.\n"
@@ -150,6 +153,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    list<string> args;
+    bool verbose = false;
+
     // Declare generators.
     generator_factory_map_t generator_factory_map;
     generator_factory_map["modsec"] = &init_modsec_generator;
@@ -161,23 +167,33 @@ int main(int argc, char** argv)
     consumer_factory_map["ironbee"] = &init_ironbee_consumer;
     consumer_factory_map["writepb"] = &init_pb_consumer;
 
+    // Convert argv to args.
+    for (int i = 1; i < argc; ++i) {
+        args.push_back(argv[i]);
+    }
+
+    // Parse flags.
+    if (args.front() == "--verbose" || args.front() == "-v") {
+        verbose = true;
+        args.pop_front();
+    }
+
     // Convert argv into list of pairs of name, parameters.
     typedef pair<string,string> component_t;
     typedef list<component_t> components_t;
     components_t components;
 
-    for (int i = 1; i < argc; ++i) {
-        string s(argv[i]);
-        size_t colon_i = s.find_first_of(':');
+    BOOST_FOREACH(const string& arg, args) {
+        size_t colon_i = arg.find_first_of(':');
         if (colon_i == string::npos) {
-            cerr << "Component " << s << " lacks :" << endl;
+            cerr << "Component " << arg << " lacks :" << endl;
             help();
             return 1;
         }
         components.push_back(
             make_pair(
-                s.substr(0, colon_i),
-                s.substr(colon_i + 1, string::npos)
+                arg.substr(0, colon_i),
+                arg.substr(colon_i + 1, string::npos)
             )
         );
     }
@@ -248,6 +264,10 @@ int main(int argc, char** argv)
             }
             catch (const exception& e) {
                 cerr << "Error generating input: " << e.what() << endl;
+            }
+
+            if (verbose ) {
+                cout << input.id << endl;
             }
 
             try {

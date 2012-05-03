@@ -84,6 +84,7 @@ public:
     bool operator()(input_t& out_input);
 
 private:
+    std::string                     m_id;
     on_error_t                      m_on_error;
     boost::shared_ptr<std::istream> m_input;
     ModSecAuditLog::Parser          m_parser;

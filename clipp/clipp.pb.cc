@@ -52,12 +52,13 @@ void protobuf_AssignDesc_clipp_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(Transaction));
   Input_descriptor_ = file->message_type(1);
-  static const int Input_offsets_[5] = {
+  static const int Input_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Input, local_ip_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Input, local_port_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Input, remote_ip_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Input, remote_port_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Input, transaction_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Input, id_),
   };
   Input_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -106,10 +107,11 @@ void protobuf_AddDesc_clipp_2eproto() {
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
     "\n\013clipp.proto\022\020IronBee.CLIPP.PB\"8\n\013Trans"
     "action\022\023\n\013raw_request\030\001 \001(\014\022\024\n\014raw_respo"
-    "nse\030\002 \001(\014\"\211\001\n\005Input\022\020\n\010local_ip\030\001 \002(\t\022\022\n"
+    "nse\030\002 \001(\014\"\225\001\n\005Input\022\020\n\010local_ip\030\001 \002(\t\022\022\n"
     "\nlocal_port\030\002 \002(\r\022\021\n\tremote_ip\030\003 \002(\t\022\023\n\013"
     "remote_port\030\004 \002(\r\0222\n\013transaction\030\005 \003(\0132\035"
-    ".IronBee.CLIPP.PB.Transaction", 229);
+    ".IronBee.CLIPP.PB.Transaction\022\n\n\002id\030\006 \001("
+    "\t", 241);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "clipp.proto", &protobuf_RegisterTypes);
   Transaction::default_instance_ = new Transaction();
@@ -398,6 +400,7 @@ const int Input::kLocalPortFieldNumber;
 const int Input::kRemoteIpFieldNumber;
 const int Input::kRemotePortFieldNumber;
 const int Input::kTransactionFieldNumber;
+const int Input::kIdFieldNumber;
 #endif  // !_MSC_VER
 
 Input::Input()
@@ -420,6 +423,7 @@ void Input::SharedCtor() {
   local_port_ = 0u;
   remote_ip_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   remote_port_ = 0u;
+  id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -433,6 +437,9 @@ void Input::SharedDtor() {
   }
   if (remote_ip_ != &::google::protobuf::internal::kEmptyString) {
     delete remote_ip_;
+  }
+  if (id_ != &::google::protobuf::internal::kEmptyString) {
+    delete id_;
   }
   if (this != default_instance_) {
   }
@@ -472,6 +479,11 @@ void Input::Clear() {
       }
     }
     remote_port_ = 0u;
+    if (has_id()) {
+      if (id_ != &::google::protobuf::internal::kEmptyString) {
+        id_->clear();
+      }
+    }
   }
   transaction_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -560,6 +572,23 @@ bool Input::MergePartialFromCodedStream(
           goto handle_uninterpreted;
         }
         if (input->ExpectTag(42)) goto parse_transaction;
+        if (input->ExpectTag(50)) goto parse_id;
+        break;
+      }
+      
+      // optional string id = 6;
+      case 6: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_id:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_id()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->id().data(), this->id().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -616,6 +645,15 @@ void Input::SerializeWithCachedSizes(
       5, this->transaction(i), output);
   }
   
+  // optional string id = 6;
+  if (has_id()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->id().data(), this->id().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      6, this->id(), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -661,6 +699,16 @@ void Input::SerializeWithCachedSizes(
         5, this->transaction(i), target);
   }
   
+  // optional string id = 6;
+  if (has_id()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->id().data(), this->id().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        6, this->id(), target);
+  }
+  
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -698,6 +746,13 @@ int Input::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->remote_port());
+    }
+    
+    // optional string id = 6;
+    if (has_id()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->id());
     }
     
   }
@@ -748,6 +803,9 @@ void Input::MergeFrom(const Input& from) {
     if (from.has_remote_port()) {
       set_remote_port(from.remote_port());
     }
+    if (from.has_id()) {
+      set_id(from.id());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -777,6 +835,7 @@ void Input::Swap(Input* other) {
     std::swap(remote_ip_, other->remote_ip_);
     std::swap(remote_port_, other->remote_port_);
     transaction_.Swap(&other->transaction_);
+    std::swap(id_, other->id_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

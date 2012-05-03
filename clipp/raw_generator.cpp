@@ -72,6 +72,7 @@ RawGenerator::RawGenerator(
 ) :
     m_produced_input(false)
 {
+    m_id = request_path + "," + response_path;
     load(m_request_buffer,  request_path);
     load(m_response_buffer, response_path);
 }
@@ -82,6 +83,7 @@ bool RawGenerator::operator()(input_t& out_input)
         return false;
     }
 
+    out_input.id                = m_id;
     out_input.local_ip          = buffer_t(local_ip);
     out_input.remote_ip         = buffer_t(remote_ip);
     out_input.local_port        = local_port;
