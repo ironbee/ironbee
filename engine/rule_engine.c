@@ -1320,13 +1320,15 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     }
 
     /* Now, process the request line */
-    ib_log_debug_tx(tx, "Running header line through stream headers");
-    rc = run_stream_header_rules(ib, tx, event,
-                                 hdrs->head, cbdata);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Error processing tx request line: %s",
-                        ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    if (hdrs != NULL && hdrs->head != NULL) {
+        ib_log_debug_tx(tx, "Running header line through stream headers");
+        rc = run_stream_header_rules(ib, tx, event,
+                                     hdrs->head, cbdata);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error processing tx request line: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Process the request headers */
