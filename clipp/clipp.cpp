@@ -19,7 +19,33 @@
  * @file
  * @brief IronBee &mdash; CLIPP
  *
- * A CLI for IronBee
+ * A CLI for IronBee.
+ *
+ * clipp is a framework for handling "inputs", which represent a connection
+ * and sequence of transactions within that connection.  clipp attaches
+ * input generators to an input consumer.  For example, modsec audit logs,
+ * to an internal IronBee engine.  The primary purpose of clipp is to be
+ * extendible, allowing additional generators and consumers to be written.
+ *
+ * In the near future, clipp will also support transformations which take
+ * inputs and produce inputs.  Transformations can be used to filter, modify,
+ * or aggregate inputs.
+ *
+ * To add a new generator:
+ *   -# Write your generator.  This should be a functional that takes a
+ *      @c input_t& as a single argument, fills that argument with a new
+ *      input, and a returns a bool indicating whether additional inputs are
+ *      available.
+ *   -# Write a factory for your generator.  This should be a functin(al) that
+ *      takes a single string argument (the second half of the component) and
+ *      returns a generator.
+ *   -# Add documentation to help() below.
+ *   -# Add your factory to the @c generator_factory_map at the top of main.
+ *
+ * To add a new consumer: Follow the directions above for generators, except
+ * that consumers take a @c const @c input_t& and return true if they are able
+ * to consume additional inputs.  They should also be added to the
+ * @c consumer_factory_map instead of the @c generator_factory_map.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -27,10 +53,11 @@
 #include "input.hpp"
 #include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
+#include "ironbee_consumer.hpp"
 
-#include <ironbeepp/all.hpp>
-
+#include <boost/function.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
 
 #include <string>
 
@@ -38,28 +65,48 @@ using namespace std;
 using namespace IronBee::CLIPP;
 
 using IronBee::CLIPP::input_t;
-using IronBee::CLIPP::input_generator_t;
 using IronBee::CLIPP::buffer_t;
+
+/**
+ * A generator of inputs.
+ *
+ * Should be a function that takes an input_t as an output argument.  If
+ * input is available it should fill its argument and return true.  If no
+ * more input is available, it should return false.
+ *
+ * It should not make any assumptions about the existing value of its
+ * argument, i.e., it should set every field.
+ **/
+typedef boost::function<bool(input_t&)> input_generator_t;
+
+/**
+ * A consumer of inputs.
+ *
+ * Should take a const input_t as an input argument.  Should return true if
+ * can accept more input and false otherwise.
+ **/
+typedef boost::function<bool(const input_t&)> input_consumer_t;
 
 //! A producer of input generators.
 typedef boost::function<input_generator_t(const string&)> generator_factory_t;
 
+//! A producer of input consumers.
+typedef boost::function<input_consumer_t(const string&)> consumer_factory_t;
+
 //! A map of command line argument to factory.
 typedef map<string,generator_factory_t> generator_factory_map_t;
 
+//! A map of command line argument to factory.
+typedef map<string,consumer_factory_t> consumer_factory_map_t;
+
+// Generators
 input_generator_t init_modsec_generator(const string& arg);
 input_generator_t init_raw_generator(const string& arg);
 
-bool on_error(const string& message);
+// Consumers
+input_consumer_t init_ironbee_consumer(const string& arg);
 
-void load_configuration(IronBee::Engine engine, const std::string& path);
-IronBee::Connection open_connection(
-    IronBee::Engine engine,
-    const input_t& input
-);
-void data_in(IronBee::Connection connection, buffer_t request);
-void data_out(IronBee::Connection connection, buffer_t response);
-void close_connection(IronBee::Connection connection);
+bool on_error(const string& message);
 
 void help()
 {
@@ -90,13 +137,14 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // Declare input types.
+    // Declare generators.
     generator_factory_map_t generator_factory_map;
     generator_factory_map["modsec"] = &init_modsec_generator;
     generator_factory_map["raw"]    = &init_raw_generator;
 
-    // In the near future, consumers will be abstracted.  Currently, it's
-    // special cased.
+    // Declare consumers.
+    consumer_factory_map_t consumer_factory_map;
+    consumer_factory_map["ironbee"] = &init_ironbee_consumer;
 
     // Convert argv into list of pairs of name, parameters.
     typedef pair<string,string> component_t;
@@ -119,15 +167,21 @@ int main(int argc, char** argv)
         );
     }
 
-    // Special case last component.
-    if (components.back().first != "ironbee") {
-        cerr << "Final component must be consumer. "
-             << components.back().first << " is not a consumer." << endl;
-        help();
-        return 1;
+    // Last component must be consumer.
+    input_consumer_t consumer;
+    {
+        component_t consumer_component = components.back();
+        components.pop_back();
+        consumer_factory_map_t::const_iterator i =
+            consumer_factory_map.find(consumer_component.first);
+        if (i == consumer_factory_map.end()) {
+            cerr << "Final component must be consumer. "
+                 << components.back().first << " is not a consumer." << endl;
+            help();
+            return 1;
+        }
+        consumer = i->second(consumer_component.second);
     }
-    string config_path = components.back().second;
-    components.pop_back();
 
     // Generators can use significant memory, so delay instantiation.
     // But do validate that they exist.
@@ -140,22 +194,6 @@ int main(int argc, char** argv)
             help();
             return 1;
         }
-    }
-
-    // Initialize IronBee.
-    IronBee::initialize();
-    IronBee::ServerValue server_value(__FILE__, "clipp");
-    IronBee::Engine engine = IronBee::Engine::create(server_value.get());
-
-    try {
-        load_configuration(engine, config_path);
-    }
-    catch (IronBee::error) {
-        cerr << "Error loading configuration.  See log." << endl;
-        return 1;
-    }
-    catch (const exception& e) {
-        cerr << "Error loading configuration: " << e.what() << endl;
     }
 
     // Loop through components, generating and processing input generators
@@ -172,7 +210,6 @@ int main(int argc, char** argv)
             }
             else {
                 cerr << "Insanity error: Validated component is invalid."
-
                      << " Please report as bug."
                      << endl;
                 return 1;
@@ -189,20 +226,14 @@ int main(int argc, char** argv)
         // Process inputs.
         input_t input;
         while (generator(input)) {
-            IronBee::Connection connection = open_connection(engine, input);
-            BOOST_FOREACH(
-                const input_t::transaction_t& transaction,
-                input.transactions
-            ) {
-                data_in(connection, transaction.request);
-                data_out(connection, transaction.response);
+            bool result = consumer(input);
+            if (! result) {
+                cerr << "Consumer is refusing additional input." << endl;
+                break;
             }
-            close_connection(connection);
         }
     }
 
-    engine.destroy();
-    IronBee::shutdown();
     return 0;
 }
 
@@ -224,82 +255,13 @@ input_generator_t init_raw_generator(const string& arg)
     );
 }
 
+input_consumer_t init_ironbee_consumer(const string& arg)
+{
+    return IronBeeConsumer(arg);
+}
+
 bool on_error(const string& message)
 {
     cerr << "ERROR: " << message << endl;
     return true;
-}
-
-void load_configuration(IronBee::Engine engine, const std::string& path)
-{
-    engine.notify().configuration_started();
-
-    IronBee::ConfigurationParser parser
-        = IronBee::ConfigurationParser::create(engine);
-
-    parser.parse_file(path);
-
-    parser.destroy();
-    engine.notify().configuration_finished();
-}
-
-IronBee::Connection open_connection(
-    IronBee::Engine engine,
-    const input_t& input
-)
-{
-    using namespace boost;
-
-    IronBee::Connection conn
-        = IronBee::Connection::create(engine);
-
-    char* local_ip = strndup(
-        input.local_ip.data,
-        input.local_ip.length
-    );
-    conn.memory_pool().register_cleanup(bind(free,local_ip));
-    char* remote_ip = strndup(
-        input.remote_ip.data,
-        input.remote_ip.length
-    );
-    conn.memory_pool().register_cleanup(bind(free,remote_ip));
-
-
-    conn.set_local_ip_string(local_ip);
-    conn.set_local_port(input.local_port);
-    conn.set_remote_ip_string(remote_ip);
-    conn.set_remote_port(input.remote_port);
-
-    conn.engine().notify().connection_opened(conn);
-
-    return conn;
-}
-
-void data_in(IronBee::Connection connection, buffer_t request)
-{
-    // Copy because IronBee needs mutable input.
-    IronBee::ConnectionData data = IronBee::ConnectionData::create(
-        connection,
-        request.data,
-        request.length
-    );
-
-    connection.engine().notify().connection_data_in(data);
-}
-
-void data_out(IronBee::Connection connection, buffer_t response)
-{
-    // Copy because IronBee needs mutable input.
-    IronBee::ConnectionData data = IronBee::ConnectionData::create(
-        connection,
-        response.data,
-        response.length
-    );
-
-    connection.engine().notify().connection_data_in(data);
-}
-
-void close_connection(IronBee::Connection connection)
-{
-    connection.engine().notify().connection_closed(connection);
 }

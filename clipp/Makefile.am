@@ -6,7 +6,8 @@ clipp_SOURCES = \
     input.cpp \
     modsec_audit_log.cpp \
     modsec_audit_log_generator.cpp \
-    raw_generator.cpp
+    raw_generator.cpp \
+    ironbee_consumer.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     -lboost_system \

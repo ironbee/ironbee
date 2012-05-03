@@ -29,12 +29,13 @@
 #ifndef __IRONBEE__CLIPP__INPUT__
 #define __IRONBEE__CLIPP__INPUT__
 
-#include <boost/function.hpp>
 #include <boost/any.hpp>
 
 #include <string>
 #include <vector>
 #include <iostream>
+
+#include <stdint.h>
 
 namespace IronBee {
 namespace CLIPP {
@@ -116,17 +117,6 @@ struct input_t
 
 //! Ostream output operator for an input.
 std::ostream& operator<<(std::ostream& out, const input_t& input);
-
-//! A generator of inputs.
-/**
- * Should be a function that takes an input_t as an output argument.  If
- * input is available it should fill its argument and return true.  If no
- * more input is available, it should return false.
- *
- * It should not make any assumptions about the existing value of its
- * argument, i.e., it should set every field.
- **/
-typedef boost::function<bool(input_t&)> input_generator_t;
 
 } // CLIPP
 } // IronBee
