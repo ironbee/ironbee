@@ -10,7 +10,8 @@ clipp_SOURCES = \
     ironbee_consumer.cpp \
     pb_consumer.cpp \
     pb_generator.cpp \
-    clipp.pb.cc
+    clipp.pb.cc \
+    view_consumer.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     -lboost_system \

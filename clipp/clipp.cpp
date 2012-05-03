@@ -56,6 +56,7 @@
 #include "ironbee_consumer.hpp"
 #include "pb_consumer.hpp"
 #include "pb_generator.hpp"
+#include "view_consumer.hpp"
 
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>
@@ -116,6 +117,7 @@ input_generator_t init_pb_generator(const string& arg);
 // Consumers
 input_consumer_t init_ironbee_consumer(const string& arg);
 input_consumer_t init_pb_consumer(const string& arg);
+input_consumer_t init_view_consumer(const string& arg);
 
 bool on_error(const string& message);
 
@@ -143,6 +145,7 @@ void help()
     "Consumers:\n"
     "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
     "  writepb:<path> -- Output to protobuf file at <path>.\n"
+    "  view:          -- Output to stdout for human consumption.\n"
     ;
 }
 
@@ -166,6 +169,7 @@ int main(int argc, char** argv)
     consumer_factory_map_t consumer_factory_map;
     consumer_factory_map["ironbee"] = &init_ironbee_consumer;
     consumer_factory_map["writepb"] = &init_pb_consumer;
+    consumer_factory_map["view"]    = &init_view_consumer;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -316,6 +320,11 @@ input_generator_t init_pb_generator(const string& arg)
 input_consumer_t init_pb_consumer(const string& arg)
 {
     return PBConsumer(arg);
+}
+
+input_consumer_t init_view_consumer(const string&)
+{
+    return ViewConsumer();
 }
 
 bool on_error(const string& message)
