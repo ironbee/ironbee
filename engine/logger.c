@@ -83,9 +83,9 @@ static void default_logger(FILE *fp, int level,
     else {
         tx_info[0] = '\0';
     }
-    if (ec > 1024) {
-        abort();
-    }
+
+    /* It is a coding error if this format string is too big. */
+    assert(ec <= 1024);
 
     timet = time(NULL);
     tminfo = localtime(&timet);
@@ -103,11 +103,9 @@ static void default_logger(FILE *fp, int level,
                       time_info,
                       (prefix?prefix:""), level, tx_info, fmt);
     }
-    if (ec > 1024) {
-        /// @todo Do something better
-        abort();
-    }
 
+    /* It is a coding error if this format string is too big. */
+    assert(ec <= 1024);
 
     vfprintf(fp, fmt2, ap);
     fflush(fp);

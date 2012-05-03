@@ -726,9 +726,7 @@ void ib_tx_destroy(ib_tx_t *tx)
     /// @todo It should always be the first one in the list,
     ///       so this should not be needed and should cause an error
     ///       or maybe for us to throw a flag???
-    if (tx->conn->tx_first != tx) {
-        abort(); /// @todo Testing - should never happen
-    }
+    assert(tx->conn->tx_first == tx);
 
     /* Keep track of the first/current tx. */
     tx->conn->tx_first = tx->next;
@@ -976,16 +974,14 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.null = cb;
@@ -1003,11 +999,9 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister(
     ib_state_null_hook_fn_t cb
 ) {
     IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1027,16 +1021,14 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.conn = cb;
@@ -1054,11 +1046,9 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
     ib_state_conn_hook_fn_t cb
 ) {
     IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1078,16 +1068,14 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.conndata = cb;
@@ -1105,11 +1093,9 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
     ib_state_conndata_hook_fn_t cb
 ) {
     IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1129,16 +1115,14 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.tx = cb;
@@ -1160,7 +1144,6 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1180,16 +1163,14 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.txdata = cb;
@@ -1207,11 +1188,9 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
     ib_state_txdata_hook_fn_t cb
 ) {
     IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1228,20 +1207,17 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     void *cdata)
 {
     IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.headersdata = cb;
@@ -1259,11 +1235,9 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
     ib_state_headers_data_fn_t cb)
 {
     IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1283,16 +1257,14 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.requestline = cb;
@@ -1310,11 +1282,9 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
     ib_state_request_line_fn_t cb)
 {
     IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1335,16 +1305,14 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        abort();
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     hook->callback.responseline = cb;
@@ -1366,7 +1334,6 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
-
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

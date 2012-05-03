@@ -32,6 +32,7 @@
 #include <libgen.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 #include "ironbee_util_private.h"
 
@@ -58,19 +59,15 @@ static void _builtin_logger(FILE *fh, int level,
         int ec = snprintf(fmt2, 1024,
                           "%s[%d] (%s:%d) %s\n",
                           (prefix?prefix:""), level, file, line, fmt);
-        if (ec > 1024) {
-            /// @todo Do something better
-            abort();
-        }
+        /* It is a coding error if this format string is too big. */
+        assert(ec <= 1024);
     }
     else {
         int ec = snprintf(fmt2, 1024,
                           "%s[%d] %s\n",
                           (prefix?prefix:""), level, fmt);
-        if (ec > 1024) {
-            /// @todo Do something better
-            abort();
-        }
+        /* It is a coding error if this format string is too big. */
+        assert(ec <= 1024);
     }
 
     vfprintf(fh, fmt2, ap);
