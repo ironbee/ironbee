@@ -30,7 +30,6 @@
 
 #include <ironbeepp/all.hpp>
 
-#include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
 #include <string>
@@ -43,13 +42,13 @@ using IronBee::CLIPP::input_generator_t;
 using IronBee::CLIPP::buffer_t;
 
 //! A producer of input generators.
-typedef boost::function<input_generator_t(const string&)> input_factory_t;
+typedef boost::function<input_generator_t(const string&)> generator_factory_t;
 
 //! A map of command line argument to factory.
-typedef map<string,input_factory_t> input_factory_map_t;
+typedef map<string,generator_factory_t> generator_factory_map_t;
 
-input_generator_t init_audit_input(const string& arg);
-input_generator_t init_raw_input(const string& arg);
+input_generator_t init_modsec_generator(const string& arg);
+input_generator_t init_raw_generator(const string& arg);
 
 bool on_error(const string& message);
 
@@ -62,60 +61,86 @@ void data_in(IronBee::Connection connection, buffer_t request);
 void data_out(IronBee::Connection connection, buffer_t response);
 void close_connection(IronBee::Connection connection);
 
+void help()
+{
+    cerr <<
+    "Usage: clipp <component>...\n"
+    "<component> := <name>:<parameters>\n"
+    "\n"
+    "Generator components produce inputs.\n"
+    "Consumer components consume inputs.\n"
+    "Consumer must be unique (and come last).\n"
+    "Generators are processed in order and fed to consumer.\n"
+    "\n"
+    "Generators:\n"
+    "  modsec:<path> -- Read <path> as modsec audit log.\n"
+    "                   One transaction per connection.\n"
+    "  raw:<in>,<out> -- Read <in>,<out> as raw data in and out.\n"
+    "                    Single transaction and connection.\n"
+    "\n"
+    "Consumers:\n"
+    "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
+    ;
+}
+
 int main(int argc, char** argv)
 {
-    namespace po = boost::program_options;
-
-    bool   show_help = false;
-    string config_path;
-
-    po::options_description desc(
-        "All input options can be repeated.  Inputs will be processed in the "
-        "order listed."
-    );
-
-    po::options_description general_desc("General:");
-    general_desc.add_options()
-        ("help", po::bool_switch(&show_help), "Output help message.")
-        ("config,C", po::value<string>(&config_path),
-            "IronBee config file.  REQUIRED"
-        )
-    ;
-
-    po::options_description input_desc("Input Options:");
-    input_desc.add_options()
-        ("audit,A", po::value<vector<string> >(),
-            "Mod Security Audit Log"
-        )
-        ("raw,R", po::value<vector<string> >(),
-            "Raw inputs.  Use comma separated pair: request path,response "
-            "path. Raw input will use bogus connection information."
-        )
-    ;
-    desc.add(general_desc).add(input_desc);
-
-    po::basic_parsed_options<char> options
-        = po::parse_command_line(argc, argv, desc);
-
-    po::variables_map vm;
-    po::store(options, vm);
-    po::notify(vm);
-
-    if (show_help) {
-        cerr << desc << endl;
-        return 1;
-    }
-
-    if (config_path.empty()) {
-        cerr << "Config required." << endl;
-        cout << desc << endl;
+    if (argc == 1) {
+        help();
         return 1;
     }
 
     // Declare input types.
-    input_factory_map_t input_factory_map;
-    input_factory_map["audit"] = &init_audit_input;
-    input_factory_map["raw"]   = &init_raw_input;
+    generator_factory_map_t generator_factory_map;
+    generator_factory_map["modsec"] = &init_modsec_generator;
+    generator_factory_map["raw"]    = &init_raw_generator;
+
+    // In the near future, consumers will be abstracted.  Currently, it's
+    // special cased.
+
+    // Convert argv into list of pairs of name, parameters.
+    typedef pair<string,string> component_t;
+    typedef list<component_t> components_t;
+    components_t components;
+
+    for (int i = 1; i < argc; ++i) {
+        string s(argv[i]);
+        size_t colon_i = s.find_first_of(':');
+        if (colon_i == string::npos) {
+            cerr << "Component " << s << " lacks :" << endl;
+            help();
+            return 1;
+        }
+        components.push_back(
+            make_pair(
+                s.substr(0, colon_i),
+                s.substr(colon_i + 1, string::npos)
+            )
+        );
+    }
+
+    // Special case last component.
+    if (components.back().first != "ironbee") {
+        cerr << "Final component must be consumer. "
+             << components.back().first << " is not a consumer." << endl;
+        help();
+        return 1;
+    }
+    string config_path = components.back().second;
+    components.pop_back();
+
+    // Generators can use significant memory, so delay instantiation.
+    // But do validate that they exist.
+    BOOST_FOREACH(const component_t& component, components) {
+        generator_factory_map_t::const_iterator i =
+            generator_factory_map.find(component.first);
+        if (i == generator_factory_map.end()) {
+            cerr << "Component " << component.first << " is not a generator."
+                 << endl;
+            help();
+            return 1;
+        }
+    }
 
     // Initialize IronBee.
     IronBee::initialize();
@@ -133,25 +158,29 @@ int main(int argc, char** argv)
         cerr << "Error loading configuration: " << e.what() << endl;
     }
 
-    // Loop through the options, generating and processing input generators
+    // Loop through components, generating and processing input generators
     // as needed to limit the scope of each input generator.  As input
     // generators can make use of significant memory, it is good to only have
     // one around at a time.
-    BOOST_FOREACH(const po::basic_option<char>& option, options.options) {
+    BOOST_FOREACH(const component_t& component, components) {
         input_generator_t generator;
         try {
-            input_factory_map_t::iterator i =
-                input_factory_map.find(option.string_key);
-            if (i != input_factory_map.end()) {
-                generator = i->second(option.value[0]);
+            generator_factory_map_t::iterator i =
+                generator_factory_map.find(component.first);
+            if (i != generator_factory_map.end()) {
+                generator = i->second(component.second);
             }
             else {
-                continue;
+                cerr << "Insanity error: Validated component is invalid."
+
+                     << " Please report as bug."
+                     << endl;
+                return 1;
             }
         }
         catch (const exception& e) {
             cerr << "Error initializing "
-                 << option.string_key << " " << option.value[0] << ".  "
+                 << component.first << ":" << component.second << ".  "
                  << "Message = " << e.what()
                  << endl;
            return 1;
@@ -177,12 +206,12 @@ int main(int argc, char** argv)
     return 0;
 }
 
-input_generator_t init_audit_input(const string& str)
+input_generator_t init_modsec_generator(const string& str)
 {
     return ModSecAuditLogGenerator(str, on_error);
 }
 
-input_generator_t init_raw_input(const string& arg)
+input_generator_t init_raw_generator(const string& arg)
 {
     size_t comma_i = arg.find_first_of(',');
     if (comma_i == string::npos) {
