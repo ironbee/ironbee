@@ -78,6 +78,10 @@ using IronBee::CLIPP::buffer_t;
  *
  * It should not make any assumptions about the existing value of its
  * argument, i.e., it should set every field.
+ *
+ * Errors should be reported via exceptions.  Exceptions will not halt
+ * processing, so generators should arrange to do nothing and return false if
+ * they are also unable to continue.
  **/
 typedef boost::function<bool(input_t&)> input_generator_t;
 
@@ -86,6 +90,9 @@ typedef boost::function<bool(input_t&)> input_generator_t;
  *
  * Should take a const input_t as an input argument.  Should return true if
  * can accept more input and false otherwise.
+ *
+ * Exceptions are as per generators, i.e., use to report errors; does not
+ * halt processing.
  **/
 typedef boost::function<bool(const input_t&)> input_consumer_t;
 
@@ -233,12 +240,25 @@ int main(int argc, char** argv)
 
         // Process inputs.
         input_t input;
-        while (generator(input)) {
-            bool result = consumer(input);
-            if (! result) {
-                cerr << "Consumer is refusing additional input." << endl;
-                break;
+        bool generator_continue = true;
+        bool consumer_continue  = true;
+        while (generator_continue && consumer_continue) {
+            try {
+                generator_continue = generator(input);
             }
+            catch (const exception& e) {
+                cerr << "Error generating input: " << e.what() << endl;
+            }
+
+            try {
+                consumer_continue = consumer(input);
+            }
+            catch (const exception& e) {
+                cerr << "Error consuming input: " << e.what() << endl;
+            }
+        }
+        if (generator_continue && ! consumer_continue) {
+            cerr << "Consumer refusing more input." << endl;
         }
     }
 

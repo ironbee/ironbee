@@ -90,28 +90,34 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
       "([0-9.]+) (\\d+) ([0-9.]+) (\\d+)$"
     );
     boost::smatch match;
-    const string& A = (*e)["A"];
-    if (regex_search(A, match, section_a)) {
-        out_input.local_ip.data   = A.c_str() + match.position(1);
-        out_input.local_ip.length = match.length(1);
+    try {
+        const string& A = (*e)["A"];
+        if (regex_search(A, match, section_a)) {
+            out_input.local_ip.data   = A.c_str() + match.position(1);
+            out_input.local_ip.length = match.length(1);
 
-        out_input.local_port = boost::lexical_cast<uint16_t>(match.str(2));
+            out_input.local_port = boost::lexical_cast<uint16_t>(match.str(2));
 
-        out_input.remote_ip.data   = A.c_str() + match.position(3);
-        out_input.remote_ip.length = match.length(3);
+            out_input.remote_ip.data   = A.c_str() + match.position(3);
+            out_input.remote_ip.length = match.length(3);
 
-        out_input.remote_port = boost::lexical_cast<uint16_t>(match.str(4));
+            out_input.remote_port = boost::lexical_cast<uint16_t>(match.str(4));
+        }
+        else {
+            throw runtime_error(
+                "Could not parse connection information: " + A
+            );
+        }
+
+        out_input.transactions.clear();
+        out_input.transactions.push_back(input_t::transaction_t(
+            buffer_t((*e)["B"]), buffer_t((*e)["F"])
+        ));
     }
-    else {
-        throw runtime_error(
-            "Could not parse connection information: " + A
-        );
+    catch (...) {
+        m_parser.recover();
+        throw;
     }
-
-    out_input.transactions.clear();
-    out_input.transactions.push_back(input_t::transaction_t(
-        buffer_t((*e)["B"]), buffer_t((*e)["F"])
-    ));
 
     return true;
 }
