@@ -112,7 +112,7 @@
  *
  * Each include file will include any other include files needed to avoid
  * compilation errors when @e included.  However, include files do not
- * necessarilly include files needed for usage and, where possible, avoid
+ * necessarily include files needed for usage and, where possible, avoid
  * doing so.
  *
  * For example, you can include ironbeepp/engine.hpp without including any
@@ -122,7 +122,7 @@
  * The IronBee++ include files minimize additional includes where possible.
  * The advantage of this approach is that you do not pay (in compiler
  * processing) for includes you do not need.  The disadvantage is that you
- * need to remember to include features you use.  If you prefer conveneince,
+ * need to remember to include features you use.  If you prefer convenience,
  * simply include all.hpp.
  *
  * \section errors Reporting Errors

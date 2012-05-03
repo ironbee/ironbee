@@ -176,7 +176,7 @@ public:
      * Create a new Engine.
      *
      * Result must be destroyed when finished via destroy().  Must also be
-     * initialized with initialize() before yse.
+     * initialized with initialize() before use.
      *
      * @param[in] server The associated server.
      * @returns Engine
@@ -240,7 +240,7 @@ public:
     /**
      * Destroy Engine.
      *
-     * Destory Engine, reclaiming all memory.  Do not use afterwards.
+     * Destroy Engine, reclaiming all memory.  Do not use afterwards.
      **/
     void destroy();
 

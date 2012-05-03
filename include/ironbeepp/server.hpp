@@ -91,7 +91,7 @@ public:
     uint32_t version_number() const;
     //! IronBee ABI number server was compiled with.
     uint32_t abi_number() const;
-    //! IronBee versions tring server was compiled with.
+    //! IronBee version string server was compiled with.
     const char* version() const;
     //! Name of file defining server.
     const char* filename() const;
