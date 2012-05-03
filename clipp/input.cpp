@@ -40,6 +40,11 @@ std::string buffer_t::to_s() const
     return std::string(data, length);
 }
 
+input_t::transaction_t::transaction_t()
+{
+    // nop
+}
+
 input_t::transaction_t::transaction_t(
     buffer_t request_,
     buffer_t response_

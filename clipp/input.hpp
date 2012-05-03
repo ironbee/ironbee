@@ -102,6 +102,9 @@ struct input_t
 
     //! A transaction for IronBee to process.
     struct transaction_t {
+        //! Default constructor.
+        transaction_t();
+
         //! Constructor.
         transaction_t(buffer_t request_, buffer_t response_);
 
