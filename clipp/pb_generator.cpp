@@ -92,7 +92,7 @@ struct data_t
 bool PBGenerator::operator()(input_t& input)
 {
     if (! m_state->input) {
-        throw runtime_error("No input available.");
+        return false;
     }
 
     uint32_t raw_size;
@@ -136,7 +136,7 @@ bool PBGenerator::operator()(input_t& input)
         tx.response.length = pb_tx.raw_response().length();
     }
 
-    return m_state->input;
+    return true;
 }
 
 } // CLIPP

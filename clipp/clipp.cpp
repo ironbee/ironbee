@@ -34,8 +34,8 @@
  * To add a new generator:
  *   -# Write your generator.  This should be a functional that takes a
  *      @c input_t& as a single argument, fills that argument with a new
- *      input, and a returns a bool indicating whether additional inputs are
- *      available.
+ *      input, and returns true.  If the input can not be produced, it should
+ *      return false.
  *   -# Write a factory for your generator.  This should be a functin(al) that
  *      takes a single string argument (the second half of the component) and
  *      returns a generator.
@@ -43,8 +43,8 @@
  *   -# Add your factory to the @c generator_factory_map at the top of main.
  *
  * To add a new consumer: Follow the directions above for generators, except
- * that consumers take a @c const @c input_t& and return true if they are able
- * to consume additional inputs.  They should also be added to the
+ * that consumers take a @c const @c input_t& and return true if it is able
+ * to consume the input.  It should also be added to the
  * @c consumer_factory_map instead of the @c generator_factory_map.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -73,12 +73,9 @@ using IronBee::CLIPP::buffer_t;
 /**
  * A generator of inputs.
  *
- * Should be a function that takes an input_t as an output argument.  If
+ * Should be a function that takes an input_p as an output argument.  If
  * input is available it should fill its argument and return true.  If no
  * more input is available, it should return false.
- *
- * It should not make any assumptions about the existing value of its
- * argument, i.e., it should set every field.
  *
  * Errors should be reported via exceptions.  Exceptions will not halt
  * processing, so generators should arrange to do nothing and return false if
@@ -90,7 +87,7 @@ typedef boost::function<bool(input_t&)> input_generator_t;
  * A consumer of inputs.
  *
  * Should take a const input_t as an input argument.  Should return true if
- * can accept more input and false otherwise.
+ * the input was accepted and false if it can not accept additional inputs.
  *
  * Exceptions are as per generators, i.e., use to report errors; does not
  * halt processing.
@@ -268,6 +265,11 @@ int main(int argc, char** argv)
             }
             catch (const exception& e) {
                 cerr << "Error generating input: " << e.what() << endl;
+                continue;
+            }
+
+            if (! generator_continue) {
+                break;
             }
 
             if (verbose ) {
@@ -279,10 +281,11 @@ int main(int argc, char** argv)
             }
             catch (const exception& e) {
                 cerr << "Error consuming input: " << e.what() << endl;
+                continue;
             }
-        }
-        if (generator_continue && ! consumer_continue) {
-            cerr << "Consumer refusing more input." << endl;
+            if (! consumer_continue) {
+                cerr << "Consumer refusing input." << endl;
+            }
         }
     }
 
