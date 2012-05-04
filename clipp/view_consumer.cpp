@@ -35,7 +35,7 @@ namespace {
 
 bool is_not_printable(char c)
 {
-    return (c < 32 || c > 126) && (c != 10);
+    return (c < 32 || c > 126) && (c != 10) && (c != 13);
 }
 
 void output_with_escapes(const char* b, const char* e)
