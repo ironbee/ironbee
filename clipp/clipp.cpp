@@ -212,7 +212,13 @@ int main(int argc, char** argv)
             help();
             return 1;
         }
-        consumer = i->second(consumer_component.second);
+        try {
+            consumer = i->second(consumer_component.second);
+        }
+        catch (const exception& e) {
+            cerr << "Error initializing consumer: " << e.what() << endl;
+            return 1;
+        }
     }
 
     // Generators can use significant memory, so delay instantiation.
