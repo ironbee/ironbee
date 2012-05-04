@@ -97,13 +97,18 @@ bool PBGenerator::operator()(input_t& input)
 
     uint32_t raw_size;
     uint32_t size;
+
     m_state->input.read(reinterpret_cast<char*>(&raw_size), sizeof(uint32_t));
+    if (! m_state->input) {
+        return false;
+    }
     size = ntohl(raw_size);
 
     boost::shared_ptr<data_t> data = make_shared<data_t>(size);
     input.source = data;
 
     m_state->input.read(data->buffer.get(), size);
+
     google::protobuf::io::ArrayInputStream in(data->buffer.get(), size);
     google::protobuf::io::GzipInputStream unzipped_in(&in);
 
