@@ -2192,6 +2192,7 @@ int main(int argc, char* argv[])
 
     /* Done */
     ib_engine_destroy(ironbee);
+    ib_shutdown();
 
     /* Free up memory, etc. */
     clean_up( );
