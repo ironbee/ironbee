@@ -65,6 +65,9 @@ typedef struct {
     char remote_ip[ADDRSIZE];
     char local_ip[ADDRSIZE];
     TSHttpTxn txnp; /* hack: conn data requires txnp to access */
+    /* Keep track of whether this is open and has active transactions */
+    int txn_count;
+    int closing;
 } ib_ssn_ctx;
 
 typedef struct {
@@ -341,6 +344,15 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
             TSfree(x->value);
             TSfree(x);
         }
+        /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
+        if (data->ssn) {
+            --data->ssn->txn_count;
+            if (data->ssn->txn_count == 0 && data->ssn->closing) {
+                if (data->ssn->iconn) /* notify_conn_closed calls conn_destroy */
+                    ib_state_notify_conn_closed(ironbee, data->ssn->iconn);
+                TSfree(data->ssn);
+            }
+        }
         TSfree(data);
     }
 }
@@ -356,10 +368,19 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
  */
 static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
 {
+    /* To avoid the risk of sequencing issues with this coming before TXN_CLOSE,
+     * we just mark the session as closing, but leave actually closing it
+     * for the TXN_CLOSE if there's a TXN
+     */
     if (data) {
-        if (data->iconn) /* notify_conn_closed calls conn_destroy */
-            ib_state_notify_conn_closed(ironbee, data->iconn);
-        TSfree(data);
+        if (data->txn_count == 0) { /* TXN_CLOSE happened already */
+            if (data->iconn) /* notify_conn_closed calls conn_destroy */
+                ib_state_notify_conn_closed(ironbee, data->iconn);
+            TSfree(data);
+        }
+        else {
+            data->closing = 1;
+        }
     }
 }
 
@@ -1028,6 +1049,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_TXN_START:
             /* start of Request */
             /* First req on a connection, we set up conn stuff */
+
             ssndata = TSContDataGet(contp);
             if (ssndata == NULL) {
                 ib_conn_t *iconn = NULL;
@@ -1041,9 +1063,11 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 memset(ssndata, 0, sizeof(ib_ssn_ctx));
                 ssndata->iconn = iconn;
                 ssndata->txnp = txnp;
+                ssndata->txn_count = ssndata->closing = 0;
                 TSContDataSet(contp, ssndata);
                 ib_state_notify_conn_opened(ironbee, iconn);
             }
+            ++ssndata->txn_count;
 
             /* create a txn cont (request ctx) */
             mycont = TSContCreate(ironbee_plugin, NULL);
