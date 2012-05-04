@@ -17,7 +17,8 @@ clipp_SOURCES = \
     pb_generator.cpp \
     clipp.pb.cc \
     view_consumer.cpp \
-    apache_generator.cpp
+    apache_generator.cpp \
+    suricata_generator.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     -lboost_system \
