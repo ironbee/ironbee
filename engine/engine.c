@@ -707,6 +707,8 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
 
     /* Only when we are successful, commit changes to output variable. */
     *ptx = tx;
+    ib_log_debug3_tx(tx, "TX %p (mp=%p %s) CREATE", tx, tx->mp, ib_mpool_name(tx->mp));
+
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
@@ -726,7 +728,11 @@ void ib_tx_destroy(ib_tx_t *tx)
     /// @todo It should always be the first one in the list,
     ///       so this should not be needed and should cause an error
     ///       or maybe for us to throw a flag???
+    assert(tx != NULL);
+    assert(tx->conn != NULL);
     assert(tx->conn->tx_first == tx);
+
+    ib_log_debug3_tx(tx, "TX %p (mp=%p %s) DESTROY", tx, tx->mp, ib_mpool_name(tx->mp));
 
     /* Keep track of the first/current tx. */
     tx->conn->tx_first = tx->next;
