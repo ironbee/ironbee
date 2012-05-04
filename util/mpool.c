@@ -444,6 +444,7 @@ void ib_mpool_destroy(ib_mpool_t *mp)
     /* Unlink parent/child. */
     if (mp->parent != NULL) {
         ib_mpool_t *parent = mp->parent;
+        ib_mpool_t *mp_prev = NULL;
 
         /* Remove this mp from the child list. */
         if (parent->child == mp) {
@@ -451,25 +452,23 @@ void ib_mpool_destroy(ib_mpool_t *mp)
             parent->child = parent->child->next;
         }
         else {
-            ib_mpool_t *mp_prev = parent->child;
-            ib_mpool_t *mp_child = mp_prev->next;
-            ib_mpool_t *mp_next;
+            mp_prev = parent->child;
+            ib_mpool_t *mp_child = mp_prev ? mp_prev->next : NULL;
 
             /* Search the list. */
             while (mp_child != NULL) {
-                mp_next = mp_child->next;
                 if (mp_child == mp) {
                     mp_prev->next = mp_child->next;
                     break;
                 }
                 mp_prev = mp_child;
-                mp_child = mp_next;
+                mp_child = mp_child->next;
             }
         }
 
         /* Update last child reference if required. */
         if (parent->child_last == mp) {
-            parent->child_last = parent->child;
+            parent->child_last = mp_prev;
         }
     }
 
