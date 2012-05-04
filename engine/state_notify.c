@@ -101,6 +101,8 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     assert(ib != NULL);
     assert(conn != NULL);
 
+    ib_log_debug3(ib, "ib_state_notify_conn(%p,%d,%p)", ib, event, conn);
+
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -134,6 +136,8 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(conndata != NULL);
+
+    ib_log_debug3(ib, "ib_state_notify_conn_data(%p,%d,%p)", ib, event, conndata);
 
     ib_conn_t *conn = conndata->conn;
 
@@ -297,6 +301,8 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
 
+    ib_log_debug3_tx(tx, "ib_state_notify_tx(%p,%d,%p)", ib, event, tx);
+
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -367,6 +373,8 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 
     assert(ib != NULL);
 
+    ib_log_debug3(ib, "ib_state_notify_cfg_started(%p)", ib);
+
     ib_status_t rc;
 
     /* Create and configure the main configuration context. */
@@ -388,6 +396,8 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+
+    ib_log_debug3(ib, "ib_state_notify_cfg_finished(%p)", ib);
 
     ib_status_t rc;
 
@@ -488,7 +498,6 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 
     ib_log_debug3(ib, "ib_state_notify_conn_opened(%p,%p)", ib, conn);
 
-    /* Validate. */
     if (ib_conn_flags_isset(conn, IB_CONN_FOPENED)) {
         ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(conn_opened_event));
@@ -526,6 +535,12 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
                                          ib_conndata_t *conndata)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(conndata != NULL);
+
+    ib_log_debug3(ib, "ib_state_notify_conn_data_in(%p,%p)", ib, conndata);
+
     ib_conn_t *conn = conndata->conn;
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -556,6 +571,12 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
                                           ib_conndata_t *conndata)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(conndata != NULL);
+
+    ib_log_debug3(ib, "ib_state_notify_conn_data_out(%p,%p)", ib, conndata);
+
     ib_conn_t *conn = conndata->conn;
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -595,6 +616,12 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(conn != NULL);
+
+    ib_log_debug3(ib, "ib_state_notify_conn_closed(%p,%p)", ib, conn);
+
     ib_status_t rc;
 
     /* Validate. */
@@ -661,6 +688,12 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(headers != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_headers(%p,%p,%d,%p)", ib, tx, event, headers);
+
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_check_hook() failed: %s",
@@ -702,6 +735,12 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(txdata != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_txdata(%p,%p,%d,%p)", ib, tx, event, txdata);
+
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -731,6 +770,13 @@ ib_status_t ib_state_notify_request_headers_data(
     ib_parsed_header_wrapper_t *headers)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(headers != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_request_headers_data(%p,%p,%p)", ib, tx, headers);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -784,6 +830,12 @@ ib_status_t ib_state_notify_request_headers(
     ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_request_headers(%p,%p)", ib, tx);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -853,6 +905,13 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
                                                    ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(txdata != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_request_body_ex(%p,%p,%p)", ib, tx, txdata);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -898,6 +957,12 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(txdata != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_request_body_data(%p,%p,%p)", ib, tx, txdata);
+
     if ((tx->flags & IB_TX_FREQ_SEENHEADERS) == 0) {
         ib_log_debug3_tx(tx, "Automatically triggering %s",
                          ib_state_event_name(request_headers_event));
@@ -930,6 +995,12 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_request_finished(%p,%p)", ib, tx);
+
     ib_status_t rc;
 
     /* Validate. */
@@ -1002,6 +1073,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
+    assert(line != NULL);
 
     ib_log_debug3_tx(tx, "ib_state_notify_response_started(%p,%p,%p)", ib, tx, line);
 
@@ -1032,6 +1104,13 @@ ib_status_t ib_state_notify_response_headers_data(
     ib_parsed_header_wrapper_t *headers)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(headers != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_response_headers_data(%p,%p,%p)", ib, tx, headers);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -1066,6 +1145,12 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_response_headers(%p,%p)", ib, tx);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -1117,6 +1202,13 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
                                                ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(txdata != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_response_body_data(%p,%p,%p)", ib, tx, txdata);
+
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -1165,6 +1257,12 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
                                               ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_log_debug3_tx(tx, "ib_state_notify_response_finished(%p,%p)", ib, tx);
+
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
