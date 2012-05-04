@@ -28,6 +28,8 @@
 #include <fstream>
 #include <stdexcept>
 
+#include <boost/make_shared.hpp>
+
 using namespace std;
 
 namespace IronBee {
@@ -61,6 +63,20 @@ void load(vector<char>& buffer, const string& file)
 
 }
 
+struct RawGenerator::State
+{
+    State() :
+        produced_input(false)
+    {
+        // nop
+    }
+
+    bool               produced_input;
+    std::string        id;
+    std::vector<char>  request_buffer;
+    std::vector<char>  response_buffer;
+};
+
 RawGenerator::RawGenerator()
 {
     // nop
@@ -70,20 +86,20 @@ RawGenerator::RawGenerator(
     const std::string& request_path,
     const std::string& response_path
 ) :
-    m_produced_input(false)
+    m_state(boost::make_shared<State>())
 {
-    m_id = request_path + "," + response_path;
-    load(m_request_buffer,  request_path);
-    load(m_response_buffer, response_path);
+    m_state->id = request_path + "," + response_path;
+    load(m_state->request_buffer,  request_path);
+    load(m_state->response_buffer, response_path);
 }
 
 bool RawGenerator::operator()(input_p& out_input)
 {
-    if (m_produced_input) {
+    if (m_state->produced_input) {
         return false;
     }
 
-    out_input->id                = m_id;
+    out_input->id                = m_state->id;
     out_input->local_ip          = buffer_t(local_ip);
     out_input->remote_ip         = buffer_t(remote_ip);
     out_input->local_port        = local_port;
@@ -92,17 +108,17 @@ bool RawGenerator::operator()(input_p& out_input)
     out_input->transactions.push_back(
         input_t::transaction_t(
             buffer_t(
-                &*m_request_buffer.begin(),
-                m_request_buffer.size()
+                &*m_state->request_buffer.begin(),
+                m_state->request_buffer.size()
             ),
            buffer_t(
-               &*m_response_buffer.begin(),
-               m_response_buffer.size()
+               &*m_state->response_buffer.begin(),
+               m_state->response_buffer.size()
            )
         )
     );
 
-    m_produced_input = true;
+    m_state->produced_input = true;
 
     return true;
 }

@@ -73,10 +73,8 @@ public:
     bool operator()(input_p& out_input);
 
 private:
-    bool               m_produced_input;
-    std::string        m_id;
-    std::vector<char>  m_request_buffer;
-    std::vector<char>  m_response_buffer;
+    struct State;
+    boost::shared_ptr<State> m_state;
 };
 
 } // CLI
