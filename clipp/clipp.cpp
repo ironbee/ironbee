@@ -128,6 +128,8 @@ input_consumer_t init_view_consumer(const string& arg);
 
 bool on_error(const string& message);
 
+vector<string> split_on_char(const string& src, char c);
+
 void help()
 {
     cerr <<
@@ -199,17 +201,17 @@ int main(int argc, char** argv)
     components_t components;
 
     BOOST_FOREACH(const string& arg, args) {
-        size_t colon_i = arg.find_first_of(':');
-        if (colon_i == string::npos) {
-            cerr << "Component " << arg << " lacks :" << endl;
+        vector<string> subargs = split_on_char(arg, ':');
+        if (subargs.size() > 2) {
+            cerr << "Component " << arg << " has too many colons." << endl;
             help();
             return 1;
         }
+        if (subargs.size() == 1) {
+            subargs.push_back("");
+        }
         components.push_back(
-            make_pair(
-                arg.substr(0, colon_i),
-                arg.substr(colon_i + 1, string::npos)
-            )
+            make_pair(subargs[0], subargs[1])
         );
     }
 
@@ -321,6 +323,25 @@ int main(int argc, char** argv)
     return 0;
 }
 
+vector<string> split_on_char(const string& src, char c)
+{
+    size_t i = 0;
+    vector<string> r;
+
+    for (;;) {
+        size_t j = src.find_first_of(c, i);
+        if (j == string::npos) {
+            r.push_back(src.substr(i));
+            break;
+        }
+
+        r.push_back(src.substr(i, j-i));
+        i = j+1;
+    }
+
+    return r;
+}
+
 input_generator_t init_modsec_generator(const string& str)
 {
     return ModSecAuditLogGenerator(str, on_error);
@@ -328,15 +349,12 @@ input_generator_t init_modsec_generator(const string& str)
 
 input_generator_t init_raw_generator(const string& arg)
 {
-    size_t comma_i = arg.find_first_of(',');
-    if (comma_i == string::npos) {
+    vector<string> subargs = split_on_char(arg, ',');
+    if (subargs.size() != 2) {
         throw runtime_error("Raw inputs must be _request_,_response_.");
     }
 
-    return RawGenerator(
-        arg.substr(0, comma_i),
-        arg.substr(comma_i+1)
-    );
+    return RawGenerator(subargs[0], subargs[1]);
 }
 
 input_generator_t init_pb_generator(const string& arg)
