@@ -51,11 +51,14 @@
  */
 
 #include "input.hpp"
+
 #include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
+#include "pb_generator.hpp"
+#include "apache_generator.hpp"
+
 #include "ironbee_consumer.hpp"
 #include "pb_consumer.hpp"
-#include "pb_generator.hpp"
 #include "view_consumer.hpp"
 
 #include <boost/function.hpp>
@@ -110,6 +113,7 @@ typedef map<string,consumer_factory_t> consumer_factory_map_t;
 input_generator_t init_modsec_generator(const string& arg);
 input_generator_t init_raw_generator(const string& arg);
 input_generator_t init_pb_generator(const string& arg);
+input_generator_t init_apache_generator(const string& arg);
 
 // Consumers
 input_consumer_t init_ironbee_consumer(const string& arg);
@@ -138,6 +142,7 @@ void help()
     "                    One transaction per connection.\n"
     "  raw:<in>,<out> -- Read <in>,<out> as raw data in and out.\n"
     "                    Single transaction and connection.\n"
+    "  apache:<path>  -- Read <path> as apache NCSA format.\n"
     "\n"
     "Consumers:\n"
     "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
@@ -161,6 +166,7 @@ int main(int argc, char** argv)
     generator_factory_map["modsec"] = &init_modsec_generator;
     generator_factory_map["raw"]    = &init_raw_generator;
     generator_factory_map["pb"]     = &init_pb_generator;
+    generator_factory_map["apache"] = &init_apache_generator;
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
@@ -316,14 +322,19 @@ input_generator_t init_raw_generator(const string& arg)
     );
 }
 
-input_consumer_t init_ironbee_consumer(const string& arg)
-{
-    return IronBeeConsumer(arg);
-}
-
 input_generator_t init_pb_generator(const string& arg)
 {
     return PBGenerator(arg);
+}
+
+input_generator_t init_apache_generator(const string& arg)
+{
+    return ApacheGenerator(arg);
+}
+
+input_consumer_t init_ironbee_consumer(const string& arg)
+{
+    return IronBeeConsumer(arg);
 }
 
 input_consumer_t init_pb_consumer(const string& arg)
