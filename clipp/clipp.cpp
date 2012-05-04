@@ -62,15 +62,19 @@
 #include "pb_consumer.hpp"
 #include "view_consumer.hpp"
 
+#include "connection_modifiers.hpp"
+
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/bind.hpp>
 
 #include <string>
 
 using namespace std;
 using namespace IronBee::CLIPP;
+using boost::bind;
 
 using IronBee::CLIPP::input_p;
 using IronBee::CLIPP::buffer_t;
@@ -102,17 +106,37 @@ typedef boost::function<bool(input_p&)> input_generator_t;
  **/
 typedef boost::function<bool(const input_p&)> input_consumer_t;
 
+/**
+ * A modiifier of inputs.
+ *
+ * Should take a input_p as an in/out parameter.  The parameter is guaranteed
+ * to point to an already allocated input_t.  That input_t can be modified or
+ * the pointer can be changed to point to a new input_t.
+ *
+ * The return value should be true if the result is to be used and false if
+ * the result is to be discard.
+ *
+ * Exception semantics is the same as generators and consumers.
+ **/
+typedef boost::function<bool(input_p&)> input_modifier_t;
+
 //! A producer of input generators.
 typedef boost::function<input_generator_t(const string&)> generator_factory_t;
 
 //! A producer of input consumers.
 typedef boost::function<input_consumer_t(const string&)> consumer_factory_t;
 
+//! A producer of input modifiers.
+typedef boost::function<input_modifier_t(const string&)> modifier_factory_t;
+
 //! A map of command line argument to factory.
 typedef map<string,generator_factory_t> generator_factory_map_t;
 
 //! A map of command line argument to factory.
 typedef map<string,consumer_factory_t> consumer_factory_map_t;
+
+//! A map of command line argument to factory.
+typedef map<string,modifier_factory_t> modifier_factory_map_t;
 
 // Generators
 input_generator_t init_modsec_generator(const string& arg);
@@ -126,6 +150,9 @@ input_consumer_t init_ironbee_consumer(const string& arg);
 input_consumer_t init_pb_consumer(const string& arg);
 input_consumer_t init_view_consumer(const string& arg);
 
+// Modifier
+input_modifier_t init_set_local_ip_modifier(const string& arg);
+
 bool on_error(const string& message);
 
 vector<string> split_on_char(const string& src, char c);
@@ -133,13 +160,25 @@ vector<string> split_on_char(const string& src, char c);
 void help()
 {
     cerr <<
-    "Usage: clipp [<flags>] <component>...\n"
+    "Usage: clipp [<flags>] <generator>... <consumer>\n"
+    "<generator> := <component>\n"
+    "<consumer>  := <component>\n"
+    "<modifier>  := <component>\n"
     "<component> := <name>:<parameters>\n"
+    "             | <name>\n"
+    "             | <component>@<modifier>\n"
     "\n"
     "Generator components produce inputs.\n"
     "Consumer components consume inputs.\n"
+    "Modifier consumer and produce inputs:\n"
+    "  Filters only let some inputs through.\n"
+    "  Transforms modify aspects of inputs.\n"
+    "  Aggregators convert multiple inputs into a single input.\n"
+    "\n"
     "Consumer must be unique (and come last).\n"
     "Generators are processed in order and fed to consumer.\n"
+    "Each input passes through the modifiers of its generator and the\n"
+    "modifiers of the consumer.\n"
     "\n"
     "Flags:\n"
     " --verbose,-v -- Output ID for each input.\n"
@@ -147,9 +186,9 @@ void help()
     "Generators:\n"
     "  pb:<path>       -- Read <path> as protobuf.\n"
     "  modsec:<path>   -- Read <path> as modsec audit log.\n"
-    "                    One transaction per connection.\n"
+    "                     One transaction per connection.\n"
     "  raw:<in>,<out>  -- Read <in>,<out> as raw data in and out.\n"
-    "                    Single transaction and connection.\n"
+    "                     Single transaction and connection.\n"
     "  apache:<path>   -- Read <path> as apache NCSA format.\n"
     "  suricata:<path> -- Read <path> as suricata format.\n"
     "\n"
@@ -157,8 +196,34 @@ void help()
     "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
     "  writepb:<path> -- Output to protobuf file at <path>.\n"
     "  view:          -- Output to stdout for human consumption.\n"
+    "\n"
+    "Modifiers:\n"
+    "  set_local_ip:<ip> -- Change local IP to <ip>.\n"
     ;
 }
+
+struct component_t
+{
+    string name;
+    string arg;
+};
+
+struct chain_t
+{
+    component_t       base;
+    list<component_t> modifiers;
+};
+
+chain_t parse_chain(const string& s);
+
+input_generator_t modify_generator(
+    input_generator_t generator,
+    input_modifier_t  modifier
+);
+
+template <typename ResultType, typename MapType>
+ResultType
+construct_component(const component_t& component, const MapType& map);
 
 int main(int argc, char** argv)
 {
@@ -184,6 +249,10 @@ int main(int argc, char** argv)
     consumer_factory_map["writepb"] = &init_pb_consumer;
     consumer_factory_map["view"]    = &init_view_consumer;
 
+    // Declare modifiers.
+    modifier_factory_map_t modifier_factory_map;
+    modifier_factory_map["set_local_ip"] = &init_set_local_ip_modifier;
+
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
         args.push_back(argv[i]);
@@ -195,87 +264,80 @@ int main(int argc, char** argv)
         args.pop_front();
     }
 
-    // Convert argv into list of pairs of name, parameters.
-    typedef pair<string,string> component_t;
-    typedef list<component_t> components_t;
-    components_t components;
-
+    // Parse argv
+    typedef list<chain_t> chains_t;
+    chains_t chains;
+    bool had_error = false;
     BOOST_FOREACH(const string& arg, args) {
-        vector<string> subargs = split_on_char(arg, ':');
-        if (subargs.size() > 2) {
-            cerr << "Component " << arg << " has too many colons." << endl;
-            help();
-            return 1;
+        try {
+            chains.push_back(parse_chain(arg));
         }
-        if (subargs.size() == 1) {
-            subargs.push_back("");
+        catch (const exception& e) {
+            cerr << "Error Parsing Component " << arg << ": "
+                 << e.what() << endl;
+            had_error = true;
         }
-        components.push_back(
-            make_pair(subargs[0], subargs[1])
-        );
+    }
+    if (had_error) {
+        return 1;
     }
 
     // Last component must be consumer.
     input_consumer_t consumer;
-    {
-        component_t consumer_component = components.back();
-        components.pop_back();
-        consumer_factory_map_t::const_iterator i =
-            consumer_factory_map.find(consumer_component.first);
-        if (i == consumer_factory_map.end()) {
-            cerr << "Final component must be consumer. "
-                 << components.back().first << " is not a consumer." << endl;
-            help();
-            return 1;
-        }
-        try {
-            consumer = i->second(consumer_component.second);
-        }
-        catch (const exception& e) {
-            cerr << "Error initializing consumer: " << e.what() << endl;
-            return 1;
-        }
+    chain_t consumer_chain = chains.back();
+    chains.pop_back();
+    try {
+        consumer = construct_component<input_consumer_t>(
+            consumer_chain.base,
+            consumer_factory_map
+        );
     }
-
-    // Generators can use significant memory, so delay instantiation.
-    // But do validate that they exist.
-    BOOST_FOREACH(const component_t& component, components) {
-        generator_factory_map_t::const_iterator i =
-            generator_factory_map.find(component.first);
-        if (i == generator_factory_map.end()) {
-            cerr << "Component " << component.first << " is not a generator."
-                 << endl;
-            help();
-            return 1;
-        }
+    catch (const exception& e) {
+        cerr << "Error constructing consumer: " << e.what() << endl;
+        return 1;
     }
 
     // Loop through components, generating and processing input generators
     // as needed to limit the scope of each input generator.  As input
     // generators can make use of significant memory, it is good to only have
     // one around at a time.
-    BOOST_FOREACH(const component_t& component, components) {
+    BOOST_FOREACH(chain_t& chain, chains) {
         input_generator_t generator;
         try {
-            generator_factory_map_t::iterator i =
-                generator_factory_map.find(component.first);
-            if (i != generator_factory_map.end()) {
-                generator = i->second(component.second);
-            }
-            else {
-                cerr << "Insanity error: Validated component is invalid."
-                     << " Please report as bug."
-                     << endl;
-                return 1;
-            }
+            generator = construct_component<input_generator_t>(
+                chain.base,
+                generator_factory_map
+            );
         }
         catch (const exception& e) {
-            cerr << "Error initializing "
-                 << component.first << ":" << component.second << ".  "
-                 << "Message = " << e.what()
-                 << endl;
+            cerr << "Error constructing generator " << chain.base.name
+                 << ": " << e.what() << endl;
            return 1;
-         }
+        }
+
+        // Append consumer modifiers.
+        copy(
+            consumer_chain.modifiers.begin(), consumer_chain.modifiers.end(),
+            back_inserter(chain.modifiers)
+        );
+        BOOST_FOREACH(
+            const component_t& modifier_component,
+            chain.modifiers
+        ) {
+            input_modifier_t modifier;
+            try {
+                modifier = construct_component<input_modifier_t>(
+                    modifier_component,
+                    modifier_factory_map
+                );
+            }
+            catch (const exception& e) {
+                cerr << "Error constructing modifier "
+                     << modifier_component.name << ": " << e.what() << endl;
+                return 1;
+            }
+            generator = modify_generator(generator, modifier);
+        }
 
         // Process inputs.
         input_p input;
@@ -387,8 +449,75 @@ input_consumer_t init_view_consumer(const string&)
     return ViewConsumer();
 }
 
+input_modifier_t init_set_local_ip_modifier(const string& arg)
+{
+    return SetLocalIpModifier(arg);
+}
+
 bool on_error(const string& message)
 {
     cerr << "ERROR: " << message << endl;
     return true;
+}
+
+bool modify_generator_function(
+    input_generator_t generator,
+    input_modifier_t  modifier,
+    input_p&          input
+)
+{
+    if (generator(input)) {
+        return modifier(input);
+    }
+    else {
+        return false;
+    }
+}
+
+input_generator_t modify_generator(
+    input_generator_t generator,
+    input_modifier_t  modifier
+)
+{
+    return bind(modify_generator_function, generator, modifier, _1);
+}
+
+template <typename ResultType, typename MapType>
+ResultType
+construct_component(const component_t& component, const MapType& map)
+{
+    typename MapType::const_iterator i = map.find(component.name);
+    if (i == map.end()) {
+        throw runtime_error("Unknown component: " + component.name);
+    }
+
+    return i->second(component.arg);
+}
+
+component_t parse_component(const string& s)
+{
+    vector<string> split = split_on_char(s, ':');
+    if (split.size() > 2) {
+        throw runtime_error("Too many colons in: " + s);
+    }
+
+    component_t component;
+    component.name = split[0];
+    if (split.size() == 2) {
+        component.arg = split[1];
+    }
+
+    return component;
+}
+
+chain_t parse_chain(const string& s)
+{
+    chain_t chain;
+    vector<string> components = split_on_char(s, '@');
+    chain.base = parse_component(components[0]);
+    for (int i = 1; i < components.size(); ++i) {
+        chain.modifiers.push_back(parse_component(components[i]));
+    }
+
+    return chain;
 }
