@@ -635,22 +635,8 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
-    /* Check for the "end-of-request" indicator. */
-    if (txdata->data == NULL) {
-        if (tx->request_entity_len == 0) {
-            /* @todo Need a way to determine if the request was supposed to
-             *       have body, not if it did have a body. */
-            ib_tx_mark_nobody(itx);
-        }
-        rc = ib_state_notify_request_body_data(ib, itx, NULL);
-        if (rc != IB_OK) {
-            ib_log_error_tx(itx,
-                         "ib_state_notify_request_body_data() failed: %s",
-                         ib_status_to_string(rc));
-        }
-    }
-    else {
-        /* Point the tx-data structure at the data block */
+    /* Notify the engine of any request body data. */
+    if (txdata->data != NULL) {
         ib_txdata_t itxdata;
         itxdata.dlen = txdata->len;
         itxdata.data = (uint8_t *)txdata->data;
@@ -922,17 +908,8 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     }
 
 
-    /* Check for the "end-of-request" indicator. */
-    if (txdata->data == NULL) {
-        rc = ib_state_notify_response_body_data(ib, itx, NULL);
-        if (rc != IB_OK) {
-            ib_log_error_tx(itx,
-                         "ib_state_notify_response_body_data() failed: %s",
-                         ib_status_to_string(rc));
-        }
-    }
-    else {
-        /* Point the tx-data structure at the data block */
+    /* Notify the engine of any response body data. */
+    if (txdata->data != NULL) {
         ib_txdata_t itxdata;
         itxdata.dlen = txdata->len;
         itxdata.data = (uint8_t *)txdata->data;

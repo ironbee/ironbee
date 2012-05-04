@@ -353,7 +353,7 @@ ib_status_t ib_state_notify_request_started(
      * the request was started without seeing data from the
      * connection (conndata_in) event.
      */
-    if (!ib_tx_flags_isset(tx, IB_CONN_FSEENDATAIN)) {
+    if (!ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
         ib_tx_flags_set(tx, IB_TX_FPARSED_DATA);
     }
 
@@ -463,7 +463,7 @@ static ib_status_t ib_context_get_ex(
         }
     }
     if (*pctx == NULL) {
-        ib_log_debug3(ib, "Using engine context");
+        ib_log_debug3(ib, "Using \"main\" context");
         *pctx = ib_context_main(ib);
     }
 
@@ -546,7 +546,7 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
-    if ((conndata->conn->flags & IB_CONN_FSEENDATAIN) == 0) {
+    if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAIN)) {
         ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAIN);
     }
 
@@ -582,7 +582,7 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
-    if ((conndata->conn->flags & IB_CONN_FSEENDATAOUT) == 0) {
+    if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAOUT)) {
         ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAOUT);
     }
 
@@ -850,7 +850,7 @@ ib_status_t ib_state_notify_request_headers(
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
         ib_log_debug3_tx(tx, "Automatically triggering optional %s",
                      ib_state_event_name(request_started_event));
-        ib_state_notify_request_started(ib, tx, NULL);
+        ib_state_notify_request_started(ib, tx, tx->request_line);
     }
 
     /* Mark the time. */
@@ -891,18 +891,9 @@ ib_status_t ib_state_notify_request_headers(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * @ref request_body_data_event occurs.
- *
- * When the event is notified, additional events are notified immediately
- * following it:
- *
- *  - @ref handle_request_event
- */
-// FIXME: Do we still need this extra _ex version???
-static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
-                                                   ib_tx_t *tx,
-                                                   ib_txdata_t *txdata)
+ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
+                                              ib_tx_t *tx,
+                                              ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
 
@@ -910,7 +901,7 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_request_body_ex(%p,%p,%p)", ib, tx, txdata);
+    ib_log_debug3_tx(tx, "ib_state_notify_request_body_data(%p,%p,%p)", ib, tx, txdata);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -941,41 +932,11 @@ static ib_status_t ib_state_notify_request_body_ex(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    // FIXME: This should be: handle_request_data_event
     rc = ib_state_notify_tx(ib, handle_request_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
-                                              ib_tx_t *tx,
-                                              ib_txdata_t *txdata)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-
-    assert(ib != NULL);
-    assert(tx != NULL);
-    assert(txdata != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_request_body_data(%p,%p,%p)", ib, tx, txdata);
-
-    if ((tx->flags & IB_TX_FREQ_SEENHEADERS) == 0) {
-        ib_log_debug3_tx(tx, "Automatically triggering %s",
-                         ib_state_event_name(request_headers_event));
-        ib_state_notify_request_headers(ib, tx);
-    }
-
-    /* Mark the time. */
-    // FIXME: Only on the first time called
-    tx->t.request_body = ib_clock_get_time();
-
-    ib_tx_flags_set(tx, IB_TX_FREQ_SEENBODY);
-
-    rc = ib_state_notify_request_body_ex(ib, tx, txdata);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1016,13 +977,6 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         ib_state_notify_request_headers(ib, tx);
     }
 
-    // FIXME: Should this occur???
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY) == 0) {
-        ib_log_debug3_tx(tx, "Automatically triggering %s",
-                     ib_state_event_name(request_body_data_event));
-        ib_state_notify_request_body_data(ib, tx, NULL);
-    }
-
     /* Mark the time. */
     tx->t.request_finished = ib_clock_get_time();
 
@@ -1041,20 +995,6 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
-
-    /* Still need to notify request_body_data_event, if it has not yet
-     * been triggered, however, it is an error if it was not
-     * triggered for a request that should have had a body.
-     */
-    if ((tx->flags & IB_TX_FREQ_SEENBODY) == 0) {
-        if ((tx->flags & IB_TX_FREQ_NOBODY) == 0) {
-            ib_tx_flags_set(tx, IB_TX_FERROR);
-        }
-        rc = ib_state_notify_request_body_ex(ib, tx, NULL);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
 
     rc = ib_state_notify_tx(ib, request_finished_event, tx);
     if (rc != IB_OK) {
@@ -1165,7 +1105,7 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
     if (!ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
         ib_log_debug3_tx(tx, "Automatically triggering optional %s",
                      ib_state_event_name(response_started_event));
-        ib_state_notify_response_started(ib, tx, NULL);
+        ib_state_notify_response_started(ib, tx, tx->response_line);
     }
 
     /* Mark the time. */
@@ -1230,11 +1170,11 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         }
     }
 
-    /* Mark the time. */
-    // FIXME: ONly the first time
-    tx->t.response_body = ib_clock_get_time();
-
-    ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
+    /* On the first call, record the time and mark that there is a body. */
+    if (tx->t.response_body == 0) {
+        tx->t.response_body = ib_clock_get_time();
+        ib_tx_flags_set(tx, IB_TX_FRES_SEENBODY);
+    }
 
     /* Call the parser with the data. */
     rc = iface->response_body_data(pi, tx, txdata);
@@ -1248,7 +1188,6 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    // FIXME: This should be: handle_response_data_event
     rc = ib_state_notify_tx(ib, handle_response_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
