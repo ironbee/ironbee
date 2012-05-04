@@ -89,7 +89,7 @@ struct data_t
 
 }
 
-bool PBGenerator::operator()(input_t& input)
+bool PBGenerator::operator()(input_p& input)
 {
     if (! m_state->input) {
         return false;
@@ -105,7 +105,7 @@ bool PBGenerator::operator()(input_t& input)
     size = ntohl(raw_size);
 
     boost::shared_ptr<data_t> data = make_shared<data_t>(size);
-    input.source = data;
+    input->source = data;
 
     m_state->input.read(data->buffer.get(), size);
 
@@ -116,24 +116,24 @@ bool PBGenerator::operator()(input_t& input)
         throw runtime_error("Failed to parse input.");
     }
 
-    input.id.clear();
+    input->id.clear();
     if (data->pb_input.has_id()) {
-        input.id = data->pb_input.id();
+        input->id = data->pb_input.id();
     }
-    input.local_ip.data    = data->pb_input.local_ip().data();
-    input.local_ip.length  = data->pb_input.local_ip().length();
-    input.local_port       = data->pb_input.local_port();
-    input.remote_ip.data   = data->pb_input.remote_ip().data();
-    input.remote_ip.length = data->pb_input.remote_ip().length();
-    input.remote_port      = data->pb_input.remote_port();
+    input->local_ip.data    = data->pb_input.local_ip().data();
+    input->local_ip.length  = data->pb_input.local_ip().length();
+    input->local_port       = data->pb_input.local_port();
+    input->remote_ip.data   = data->pb_input.remote_ip().data();
+    input->remote_ip.length = data->pb_input.remote_ip().length();
+    input->remote_port      = data->pb_input.remote_port();
 
-    input.transactions.clear();
+    input->transactions.clear();
     BOOST_FOREACH(
         const PB::Transaction& pb_tx,
         data->pb_input.transaction()
     ) {
-        input.transactions.push_back(input_t::transaction_t());
-        input_t::transaction_t& tx = input.transactions.back();
+        input->transactions.push_back(input_t::transaction_t());
+        input_t::transaction_t& tx = input->transactions.back();
 
         tx.request.data    = pb_tx.raw_request().data();
         tx.request.length  = pb_tx.raw_request().length();

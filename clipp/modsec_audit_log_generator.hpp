@@ -28,15 +28,6 @@
 #include "input.hpp"
 #include "modsec_audit_log.hpp"
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-#include <boost/shared_ptr.hpp>
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
 #include <boost/function.hpp>
 
 #include <iostream>
@@ -81,7 +72,7 @@ public:
     );
 
     //! Produce an input.  See input_t and input_generator_t.
-    bool operator()(input_t& out_input);
+    bool operator()(input_p& out_input);
 
 private:
     std::string                     m_id;

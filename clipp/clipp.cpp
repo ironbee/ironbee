@@ -65,13 +65,14 @@
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
 #include <string>
 
 using namespace std;
 using namespace IronBee::CLIPP;
 
-using IronBee::CLIPP::input_t;
+using IronBee::CLIPP::input_p;
 using IronBee::CLIPP::buffer_t;
 
 /**
@@ -81,22 +82,25 @@ using IronBee::CLIPP::buffer_t;
  * input is available it should fill its argument and return true.  If no
  * more input is available, it should return false.
  *
+ * The input_p can be changed but it is guaranteed to be an already allocated
+ * input_t which can be reused.
+ *
  * Errors should be reported via exceptions.  Exceptions will not halt
  * processing, so generators should arrange to do nothing and return false if
  * they are also unable to continue.
  **/
-typedef boost::function<bool(input_t&)> input_generator_t;
+typedef boost::function<bool(input_p&)> input_generator_t;
 
 /**
  * A consumer of inputs.
  *
- * Should take a const input_t as an input argument.  Should return true if
+ * Should take a const input_p as an input argument.  Should return true if
  * the input was accepted and false if it can not accept additional inputs.
  *
  * Exceptions are as per generators, i.e., use to report errors; does not
  * halt processing.
  **/
-typedef boost::function<bool(const input_t&)> input_consumer_t;
+typedef boost::function<bool(const input_p&)> input_consumer_t;
 
 //! A producer of input generators.
 typedef boost::function<input_generator_t(const string&)> generator_factory_t;
@@ -272,10 +276,14 @@ int main(int argc, char** argv)
          }
 
         // Process inputs.
-        input_t input;
+        input_p input;
         bool generator_continue = true;
         bool consumer_continue  = true;
         while (generator_continue && consumer_continue) {
+            if (! input) {
+                input = boost::make_shared<input_t>();
+            }
+
             try {
                 generator_continue = generator(input);
             }
@@ -288,8 +296,13 @@ int main(int argc, char** argv)
                 break;
             }
 
-            if (verbose ) {
-                cout << input.id << endl;
+            if (! input) {
+                cerr << "Generator said it provided input, but didn't."
+                     << endl;
+                continue;
+            }
+            if (verbose) {
+                cout << input->id << endl;
             }
 
             try {

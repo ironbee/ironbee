@@ -50,7 +50,7 @@ void load_configuration(IronBee::Engine engine, const std::string& path)
 
 IronBee::Connection open_connection(
     IronBee::Engine engine,
-    const input_t& input
+    const input_p& input
 )
 {
     using namespace boost;
@@ -59,21 +59,21 @@ IronBee::Connection open_connection(
         = IronBee::Connection::create(engine);
 
     char* local_ip = strndup(
-        input.local_ip.data,
-        input.local_ip.length
+        input->local_ip.data,
+        input->local_ip.length
     );
     conn.memory_pool().register_cleanup(bind(free,local_ip));
     char* remote_ip = strndup(
-        input.remote_ip.data,
-        input.remote_ip.length
+        input->remote_ip.data,
+        input->remote_ip.length
     );
     conn.memory_pool().register_cleanup(bind(free,remote_ip));
 
 
     conn.set_local_ip_string(local_ip);
-    conn.set_local_port(input.local_port);
+    conn.set_local_port(input->local_port);
     conn.set_remote_ip_string(remote_ip);
-    conn.set_remote_port(input.remote_port);
+    conn.set_remote_port(input->remote_port);
 
     conn.engine().notify().connection_opened(conn);
 
@@ -141,13 +141,13 @@ IronBeeConsumer::IronBeeConsumer(const string& config_path) :
     load_configuration(m_engine_state->engine, config_path);
 }
 
-bool IronBeeConsumer::operator()(const input_t& input)
+bool IronBeeConsumer::operator()(const input_p& input)
 {
     IronBee::Connection connection =
         open_connection(m_engine_state->engine, input);
     BOOST_FOREACH(
         const input_t::transaction_t& transaction,
-        input.transactions
+        input->transactions
     ) {
         data_in(connection, transaction.request);
         data_out(connection, transaction.response);

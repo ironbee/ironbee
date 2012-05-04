@@ -123,7 +123,7 @@ buffer_t s_to_buf(const string& s)
 
 }
 
-bool SuricataGenerator::operator()(input_t& input)
+bool SuricataGenerator::operator()(input_p& input)
 {
     if (! m_state->input) {
         return false;
@@ -131,11 +131,11 @@ bool SuricataGenerator::operator()(input_t& input)
 
     ++m_state->line_number;
 
-    input.id = m_state->prefix + ":" +
+    input->id = m_state->prefix + ":" +
         boost::lexical_cast<string>(m_state->line_number);
 
     data_p data = boost::make_shared<data_t>();
-    input.source = data;
+    input->source = data;
 
     boost::smatch match;
     string line;
@@ -149,12 +149,12 @@ bool SuricataGenerator::operator()(input_t& input)
         data->local_ip = match.str(9);
         data->remote_ip = match.str(7);
 
-        input.local_ip = s_to_buf(data->local_ip);
-        input.local_port = boost::lexical_cast<uint32_t>(
+        input->local_ip = s_to_buf(data->local_ip);
+        input->local_port = boost::lexical_cast<uint32_t>(
             match.str(10)
         );
-        input.remote_ip = s_to_buf(data->remote_ip);
-        input.remote_port = boost::lexical_cast<uint32_t>(
+        input->remote_ip = s_to_buf(data->remote_ip);
+        input->remote_port = boost::lexical_cast<uint32_t>(
             match.str(8)
         );
 
@@ -174,8 +174,8 @@ bool SuricataGenerator::operator()(input_t& input)
             data->response = match.str(5) + " " + match.str(6) + s_eol;
         }
 
-        input.transactions.clear();
-        input.transactions.push_back(
+        input->transactions.clear();
+        input->transactions.push_back(
             input_t::transaction_t(
                 s_to_buf(data->request),
                 s_to_buf(data->response)

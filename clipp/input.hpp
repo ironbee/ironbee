@@ -31,6 +31,15 @@
 
 #include <boost/any.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
+#include <boost/shared_ptr.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -119,7 +128,10 @@ struct input_t
 
     //! This boost::any can be used to associate memory with the input.
     boost::any source;
-  };
+};
+
+//! Shared pointer to input_t.
+typedef boost::shared_ptr<input_t> input_p;
 
 //! Ostream output operator for an input.
 std::ostream& operator<<(std::ostream& out, const input_t& input);

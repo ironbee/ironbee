@@ -27,15 +27,6 @@
 
 #include "input.hpp"
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-#include <boost/shared_ptr.hpp>
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-
 namespace IronBee {
 namespace CLIPP {
 
@@ -54,7 +45,7 @@ public:
     explicit
     PBConsumer(const std::string& output_path);
 
-    bool operator()(const input_t& input);
+    bool operator()(const input_p& input);
 
 private:
     struct State;

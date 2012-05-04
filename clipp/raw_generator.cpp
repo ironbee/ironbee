@@ -77,19 +77,19 @@ RawGenerator::RawGenerator(
     load(m_response_buffer, response_path);
 }
 
-bool RawGenerator::operator()(input_t& out_input)
+bool RawGenerator::operator()(input_p& out_input)
 {
     if (m_produced_input) {
         return false;
     }
 
-    out_input.id                = m_id;
-    out_input.local_ip          = buffer_t(local_ip);
-    out_input.remote_ip         = buffer_t(remote_ip);
-    out_input.local_port        = local_port;
-    out_input.remote_port       = remote_port;
-    out_input.transactions.clear();
-    out_input.transactions.push_back(
+    out_input->id                = m_id;
+    out_input->local_ip          = buffer_t(local_ip);
+    out_input->remote_ip         = buffer_t(remote_ip);
+    out_input->local_port        = local_port;
+    out_input->remote_port       = remote_port;
+    out_input->transactions.clear();
+    out_input->transactions.push_back(
         input_t::transaction_t(
             buffer_t(
                 &*m_request_buffer.begin(),

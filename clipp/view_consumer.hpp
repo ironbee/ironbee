@@ -36,7 +36,7 @@ namespace CLIPP {
 class ViewConsumer
 {
 public:
-    bool operator()(const input_t& input);
+    bool operator()(const input_p& input);
 };
 
 } // CLIPP

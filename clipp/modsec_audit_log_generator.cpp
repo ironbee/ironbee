@@ -60,11 +60,11 @@ ModSecAuditLogGenerator::ModSecAuditLogGenerator(
     }
 }
 
-bool ModSecAuditLogGenerator::operator()(input_t& out_input)
+bool ModSecAuditLogGenerator::operator()(input_p& out_input)
 {
     boost::shared_ptr<ModSecAuditLog::Entry> e
         = boost::make_shared<ModSecAuditLog::Entry>();
-    out_input.source = e;
+    out_input->source = e;
 
     bool have_entry = false;
     bool result;
@@ -94,16 +94,18 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
     try {
         const string& A = (*e)["A"];
         if (regex_search(A, match, section_a)) {
-            out_input.id              = m_id + ":" + match.str(1);
-            out_input.local_ip.data   = A.c_str() + match.position(2);
-            out_input.local_ip.length = match.length(2);
+            out_input->id              = m_id + ":" + match.str(1);
+            out_input->local_ip.data   = A.c_str() + match.position(2);
+            out_input->local_ip.length = match.length(2);
 
-            out_input.local_port = boost::lexical_cast<uint16_t>(match.str(3));
+            out_input->local_port =
+                boost::lexical_cast<uint16_t>(match.str(3));
 
-            out_input.remote_ip.data   = A.c_str() + match.position(4);
-            out_input.remote_ip.length = match.length(4);
+            out_input->remote_ip.data   = A.c_str() + match.position(4);
+            out_input->remote_ip.length = match.length(4);
 
-            out_input.remote_port = boost::lexical_cast<uint16_t>(match.str(5));
+            out_input->remote_port =
+                boost::lexical_cast<uint16_t>(match.str(5));
         }
         else {
             throw runtime_error(
@@ -111,8 +113,8 @@ bool ModSecAuditLogGenerator::operator()(input_t& out_input)
             );
         }
 
-        out_input.transactions.clear();
-        out_input.transactions.push_back(input_t::transaction_t(
+        out_input->transactions.clear();
+        out_input->transactions.push_back(input_t::transaction_t(
             buffer_t((*e)["B"]), buffer_t((*e)["F"])
         ));
     }

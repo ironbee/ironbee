@@ -115,7 +115,7 @@ buffer_t s_to_buf(const string& s)
 
 }
 
-bool ApacheGenerator::operator()(input_t& input)
+bool ApacheGenerator::operator()(input_p& input)
 {
     if (! m_state->input) {
         return false;
@@ -123,15 +123,15 @@ bool ApacheGenerator::operator()(input_t& input)
 
     ++m_state->line_number;
 
-    input.id = m_state->prefix + ":" +
+    input->id = m_state->prefix + ":" +
         boost::lexical_cast<string>(m_state->line_number);
 
-    input.local_ip    = s_to_buf(s_local_ip);
-    input.local_port  = s_local_port;
-    input.remote_port = s_remote_port;
+    input->local_ip    = s_to_buf(s_local_ip);
+    input->local_port  = s_local_port;
+    input->remote_port = s_remote_port;
 
     data_p data = boost::make_shared<data_t>();
-    input.source = data;
+    input->source = data;
 
     boost::smatch match;
     string line;
@@ -149,16 +149,16 @@ bool ApacheGenerator::operator()(input_t& input)
 
         if (regex_match(match.str(1), s_re_ip)) {
             data->remote_ip = match.str(1);
-            input.remote_ip = s_to_buf(data->remote_ip);
+            input->remote_ip = s_to_buf(data->remote_ip);
         }
         else {
-            input.remote_ip = s_to_buf(s_default_ip);
+            input->remote_ip = s_to_buf(s_default_ip);
         }
 
         data->response = s_version + " " + match.str(3) + s_eol;
 
-        input.transactions.clear();
-        input.transactions.push_back(
+        input->transactions.clear();
+        input->transactions.push_back(
             input_t::transaction_t(
                 s_to_buf(data->request),
                 s_to_buf(data->response)

@@ -60,20 +60,20 @@ void output_with_escapes(const char* b, const char* e)
 
 }
 
-bool ViewConsumer::operator()(const input_t& input)
+bool ViewConsumer::operator()(const input_p& input)
 {
-    if (input.id.empty()) {
+    if (input->id.empty()) {
         cout << "---- No ID Provided ----" << endl;
     }
     else {
-        cout << "---- " << input.id << " ----" << endl;
+        cout << "---- " << input->id << " ----" << endl;
     }
-    cout << input.local_ip.to_s() << ":" << input.local_port
+    cout << input->local_ip.to_s() << ":" << input->local_port
          << " <---> "
-         << input.remote_ip.to_s() << ":" << input.remote_port
+         << input->remote_ip.to_s() << ":" << input->remote_port
          << endl;
 
-    BOOST_FOREACH(const input_t::transaction_t& tx, input.transactions) {
+    BOOST_FOREACH(const input_t::transaction_t& tx, input->transactions) {
         cout << "==== REQUEST ====" << endl;
         output_with_escapes(
             tx.request.data,

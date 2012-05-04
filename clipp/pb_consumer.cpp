@@ -71,20 +71,20 @@ PBConsumer::PBConsumer(const std::string& output_path) :
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 }
 
-bool PBConsumer::operator()(const input_t& input)
+bool PBConsumer::operator()(const input_p& input)
 {
     if (! m_state || ! m_state->output) {
         return false;
     }
 
     PB::Input pb_input;
-    pb_input.set_local_ip(input.local_ip.data, input.local_ip.length);
-    pb_input.set_local_port(input.local_port);
-    pb_input.set_remote_ip(input.remote_ip.data, input.remote_ip.length);
-    pb_input.set_remote_port(input.remote_port);
-    pb_input.set_id(input.id);
+    pb_input.set_local_ip(input->local_ip.data, input->local_ip.length);
+    pb_input.set_local_port(input->local_port);
+    pb_input.set_remote_ip(input->remote_ip.data, input->remote_ip.length);
+    pb_input.set_remote_port(input->remote_port);
+    pb_input.set_id(input->id);
 
-    BOOST_FOREACH(const input_t::transaction_t& tx, input.transactions) {
+    BOOST_FOREACH(const input_t::transaction_t& tx, input->transactions) {
         PB::Transaction* pb_tx = pb_input.add_transaction();
         pb_tx->set_raw_request(tx.request.data, tx.request.length);
         pb_tx->set_raw_response(tx.response.data, tx.response.length);

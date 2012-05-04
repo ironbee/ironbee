@@ -27,8 +27,6 @@
 
 #include "input.hpp"
 
-#include <boost/shared_ptr.hpp>
-
 namespace IronBee {
 namespace CLIPP {
 
@@ -52,7 +50,7 @@ public:
     SuricataGenerator(const std::string& path);
 
     //! Produce an input.  See input_t and input_generator_t.
-    bool operator()(input_t& out_input);
+    bool operator()(input_p& out_input);
 
 private:
     struct State;
