@@ -142,20 +142,33 @@ typedef map<string,consumer_factory_t> consumer_factory_map_t;
 //! A map of command line argument to factory.
 typedef map<string,modifier_factory_t> modifier_factory_map_t;
 
+//! Generic generator constructor.
+template <typename T>
+input_generator_t construct_generator(const string& arg)
+{
+    return T(arg);
+}
+
+//! Generic consumer constructor.
+template <typename T>
+input_consumer_t construct_consumer(const string& arg)
+{
+    return T(arg);
+}
+
+//! Generic modifier constructor.
+template <typename T>
+input_modifier_t construct_modifier(const string& arg)
+{
+    return T(arg);
+}
+
 // Generators
-input_generator_t init_modsec_generator(const string& arg);
 input_generator_t init_raw_generator(const string& arg);
-input_generator_t init_pb_generator(const string& arg);
-input_generator_t init_apache_generator(const string& arg);
-input_generator_t init_suricata_generator(const string& arg);
 
 // Consumers
-input_consumer_t init_ironbee_consumer(const string& arg);
-input_consumer_t init_pb_consumer(const string& arg);
 input_consumer_t init_view_consumer(const string& arg);
 
-// Modifier
-input_modifier_t init_set_local_ip_modifier(const string& arg);
 
 bool on_error(const string& message);
 
@@ -227,21 +240,24 @@ int main(int argc, char** argv)
 
     // Declare generators.
     generator_factory_map_t generator_factory_map;
-    generator_factory_map["modsec"]   = &init_modsec_generator;
-    generator_factory_map["raw"]      = &init_raw_generator;
-    generator_factory_map["pb"]       = &init_pb_generator;
-    generator_factory_map["apache"]   = &init_apache_generator;
-    generator_factory_map["suricata"] = &init_suricata_generator;
+    generator_factory_map["modsec"]   =
+        construct_generator<ModSecAuditLogGenerator>;
+    generator_factory_map["raw"]      = init_raw_generator;
+    generator_factory_map["pb"]       = construct_generator<PBGenerator>;
+    generator_factory_map["apache"]   = construct_generator<ApacheGenerator>;
+    generator_factory_map["suricata"] =
+        construct_generator<SuricataGenerator>;
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
-    consumer_factory_map["ironbee"] = &init_ironbee_consumer;
-    consumer_factory_map["writepb"] = &init_pb_consumer;
-    consumer_factory_map["view"]    = &init_view_consumer;
+    consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
+    consumer_factory_map["writepb"] = construct_consumer<PBConsumer>;
+    consumer_factory_map["view"]    = init_view_consumer;
 
     // Declare modifiers.
     modifier_factory_map_t modifier_factory_map;
-    modifier_factory_map["set_local_ip"] = &init_set_local_ip_modifier;
+    modifier_factory_map["set_local_ip"] =
+        construct_modifier<SetLocalIPModifier>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -389,11 +405,6 @@ vector<string> split_on_char(const string& src, char c)
     return r;
 }
 
-input_generator_t init_modsec_generator(const string& str)
-{
-    return ModSecAuditLogGenerator(str, on_error);
-}
-
 input_generator_t init_raw_generator(const string& arg)
 {
     vector<string> subargs = split_on_char(arg, ',');
@@ -404,39 +415,9 @@ input_generator_t init_raw_generator(const string& arg)
     return RawGenerator(subargs[0], subargs[1]);
 }
 
-input_generator_t init_pb_generator(const string& arg)
-{
-    return PBGenerator(arg);
-}
-
-input_generator_t init_apache_generator(const string& arg)
-{
-    return ApacheGenerator(arg);
-}
-
-input_generator_t init_suricata_generator(const string& arg)
-{
-    return SuricataGenerator(arg);
-}
-
-input_consumer_t init_ironbee_consumer(const string& arg)
-{
-    return IronBeeConsumer(arg);
-}
-
-input_consumer_t init_pb_consumer(const string& arg)
-{
-    return PBConsumer(arg);
-}
-
-input_consumer_t init_view_consumer(const string&)
+input_consumer_t init_view_consumer(const string& arg)
 {
     return ViewConsumer();
-}
-
-input_modifier_t init_set_local_ip_modifier(const string& arg)
-{
-    return SetLocalIpModifier(arg);
 }
 
 bool on_error(const string& message)

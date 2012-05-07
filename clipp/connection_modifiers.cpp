@@ -24,16 +24,16 @@
 
 #include "connection_modifiers.hpp"
 
- namespace IronBee {
+namespace IronBee {
 namespace CLIPP {
 
-SetLocalIpModifier::SetLocalIpModifier(const std::string& ip) :
+SetLocalIPModifier::SetLocalIPModifier(const std::string& ip) :
     m_ip(ip)
 {
     // nop
 }
 
-bool SetLocalIpModifier::operator()(input_p& in_out)
+bool SetLocalIPModifier::operator()(input_p& in_out)
 {
     in_out->local_ip.data   = m_ip.data();
     in_out->local_ip.length = m_ip.length();

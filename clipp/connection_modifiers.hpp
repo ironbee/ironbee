@@ -34,11 +34,11 @@ namespace IronBee {
 namespace CLIPP {
 
 //! Change local_ip of connection information.
-class SetLocalIpModifier
+class SetLocalIPModifier
 {
 public:
     explicit
-    SetLocalIpModifier(const std::string& ip);
+    SetLocalIPModifier(const std::string& ip);
 
     bool operator()(input_p& in_out);
 
