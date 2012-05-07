@@ -69,6 +69,7 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <string>
 
@@ -166,7 +167,7 @@ void help()
     "<modifier>  := <component>\n"
     "<component> := <name>:<parameters>\n"
     "             | <name>\n"
-    "             | <component>@<modifier>\n"
+    "             | <component> @<modifier>\n"
     "\n"
     "Generator components produce inputs.\n"
     "Consumer components consume inputs.\n"
@@ -214,7 +215,7 @@ struct chain_t
     list<component_t> modifiers;
 };
 
-chain_t parse_chain(const string& s);
+chain_t parse_chain(const vector<string>& tokens);
 
 input_generator_t modify_generator(
     input_generator_t generator,
@@ -264,16 +265,41 @@ int main(int argc, char** argv)
         args.pop_front();
     }
 
-    // Parse argv
+    // Convert argv to configuration.
+    // In the future, configuration can also be loaded from files.
+    string configuration = boost::algorithm::join(args, " ");
+
+    // Parse configuration.
+    // Better tokenizer coming.
+    vector<string> tokens = split_on_char(configuration, ' ');
+    vector<vector<string> > chain_tokens;
+    BOOST_FOREACH(const string& token, tokens) {
+        if (token.empty()) {
+            continue;
+        }
+        if (token[0] == '@') {
+            if (chain_tokens.empty()) {
+                cerr << "First component was a modifier." << endl;
+                help();
+                return 1;
+            }
+        }
+        else {
+            chain_tokens.push_back(vector<string>());
+        }
+        chain_tokens.back().push_back(token);
+    }
+
     typedef list<chain_t> chains_t;
     chains_t chains;
     bool had_error = false;
-    BOOST_FOREACH(const string& arg, args) {
+    BOOST_FOREACH(const vector<string>& chain_as_tokens, chain_tokens) {
         try {
-            chains.push_back(parse_chain(arg));
+            chains.push_back(parse_chain(chain_as_tokens));
         }
         catch (const exception& e) {
-            cerr << "Error Parsing Component " << arg << ": "
+            cerr << "Error Parsing Chain for "
+                 << chain_as_tokens.front() << ": "
                  << e.what() << endl;
             had_error = true;
         }
@@ -510,13 +536,18 @@ component_t parse_component(const string& s)
     return component;
 }
 
-chain_t parse_chain(const string& s)
+chain_t parse_chain(const vector<string>& tokens)
 {
     chain_t chain;
-    vector<string> components = split_on_char(s, '@');
-    chain.base = parse_component(components[0]);
-    for (int i = 1; i < components.size(); ++i) {
-        chain.modifiers.push_back(parse_component(components[i]));
+    chain.base = parse_component(tokens[0]);
+    for (int i = 1; i < tokens.size(); ++i) {
+        const string& token = tokens[i];
+        if (token[0] != '@') {
+            throw logic_error("Modifier does not begin with @.");
+        }
+        chain.modifiers.push_back(
+            parse_component(token.substr(1))
+        );
     }
 
     return chain;
