@@ -316,10 +316,18 @@ sinclude(acinclude/trafficserver.m4)
 sinclude(acinclude/geoip.m4)
 sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
+sinclude(acinclude/ax_boost_base.m4)
+
 # Required libs
 CHECK_HTP()
 CHECK_PCRE()
 CHECK_XML2()
+AX_BOOST_BASE(1.46,
+              [], 
+              [if test "$enable_cpp" = "yes" ; then
+	         AC_MSG_ERROR([Boost is required for C++ tools])
+               fi
+              ])
 
 # Clang does not support -pthread or variants.
 if test "$cc_is_clang" = "yes"; then
