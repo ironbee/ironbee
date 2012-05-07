@@ -55,15 +55,15 @@
 
 #include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
-#include "pb_generator.hpp"
-#include "apache_generator.hpp"
-#include "suricata_generator.hpp"
+//#include "pb_generator.hpp"
+//#include "apache_generator.hpp"
+//#include "suricata_generator.hpp"
 
-#include "ironbee_consumer.hpp"
-#include "pb_consumer.hpp"
+//#include "ironbee_consumer.hpp"
+//#include "pb_consumer.hpp"
 #include "view_consumer.hpp"
 
-#include "connection_modifiers.hpp"
+//#include "connection_modifiers.hpp"
 
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>
@@ -78,6 +78,7 @@ using namespace std;
 using namespace IronBee::CLIPP;
 using boost::bind;
 
+using Input::input_p;
 using ConfigurationParser::component_t;
 using ConfigurationParser::component_vec_t;
 using ConfigurationParser::chain_t;
@@ -169,7 +170,6 @@ input_generator_t init_raw_generator(const string& arg);
 // Consumers
 input_consumer_t init_view_consumer(const string& arg);
 
-
 bool on_error(const string& message);
 
 vector<string> split_on_char(const string& src, char c);
@@ -243,21 +243,21 @@ int main(int argc, char** argv)
     generator_factory_map["modsec"]   =
         construct_generator<ModSecAuditLogGenerator>;
     generator_factory_map["raw"]      = init_raw_generator;
-    generator_factory_map["pb"]       = construct_generator<PBGenerator>;
-    generator_factory_map["apache"]   = construct_generator<ApacheGenerator>;
-    generator_factory_map["suricata"] =
-        construct_generator<SuricataGenerator>;
+//    generator_factory_map["pb"]       = construct_generator<PBGenerator>;
+//    generator_factory_map["apache"]   = construct_generator<ApacheGenerator>;
+//    generator_factory_map["suricata"] =
+//        construct_generator<SuricataGenerator>;
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
-    consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
-    consumer_factory_map["writepb"] = construct_consumer<PBConsumer>;
+//    consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
+//    consumer_factory_map["writepb"] = construct_consumer<PBConsumer>;
     consumer_factory_map["view"]    = init_view_consumer;
 
     // Declare modifiers.
     modifier_factory_map_t modifier_factory_map;
-    modifier_factory_map["set_local_ip"] =
-        construct_modifier<SetLocalIPModifier>;
+//    modifier_factory_map["set_local_ip"] =
+//        construct_modifier<SetLocalIPModifier>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -346,7 +346,7 @@ int main(int argc, char** argv)
         bool consumer_continue  = true;
         while (generator_continue && consumer_continue) {
             if (! input) {
-                input = boost::make_shared<input_t>();
+                input = boost::make_shared<Input::Input>();
             }
 
             try {

@@ -46,21 +46,38 @@ using namespace std;
 namespace IronBee {
 namespace CLIPP {
 
+struct ModSecAuditLogGenerator::State
+{
+    State(
+        const string& path,
+        on_error_t    on_error
+    ) :
+        id(path),
+        on_error(on_error),
+        input(boost::make_shared<ifstream>(path.c_str())),
+        parser(*input)
+    {
+        // nop
+    }
+
+    string                     id;
+    on_error_t                 on_error;
+    boost::shared_ptr<istream> input;
+    ModSecAuditLog::Parser     parser;
+};
+
 ModSecAuditLogGenerator::ModSecAuditLogGenerator(
-    const std::string& path,
+    const string& path,
     on_error_t on_error
 ) :
-    m_id(path),
-    m_on_error(on_error),
-    m_input(boost::make_shared<ifstream>(path.c_str())),
-    m_parser(*m_input)
+    m_state(new ModSecAuditLogGenerator::State(path, on_error))
 {
-    if (! *m_input) {
+    if (! *m_state->input) {
         throw runtime_error("Error reading " + path);
     }
 }
 
-bool ModSecAuditLogGenerator::operator()(input_p& out_input)
+bool ModSecAuditLogGenerator::operator()(Input::input_p& out_input)
 {
     boost::shared_ptr<ModSecAuditLog::Entry> e
         = boost::make_shared<ModSecAuditLog::Entry>();
@@ -70,14 +87,14 @@ bool ModSecAuditLogGenerator::operator()(input_p& out_input)
     bool result;
     while (! have_entry) {
         try {
-            result = m_parser(*e);
+            result = m_state->parser(*e);
         }
         catch (const exception& err) {
-            if (m_on_error.empty()) {
+            if (m_state->on_error.empty()) {
                 throw;
             }
-            if (m_on_error(err.what())) {
-                m_parser.recover();
+            if (m_state->on_error(err.what())) {
+                m_state->parser.recover();
             }
         }
         if (! result) {
@@ -94,18 +111,15 @@ bool ModSecAuditLogGenerator::operator()(input_p& out_input)
     try {
         const string& A = (*e)["A"];
         if (regex_search(A, match, section_a)) {
-            out_input->id              = m_id + ":" + match.str(1);
-            out_input->local_ip.data   = A.c_str() + match.position(2);
-            out_input->local_ip.length = match.length(2);
-
-            out_input->local_port =
-                boost::lexical_cast<uint16_t>(match.str(3));
-
-            out_input->remote_ip.data   = A.c_str() + match.position(4);
-            out_input->remote_ip.length = match.length(4);
-
-            out_input->remote_port =
-                boost::lexical_cast<uint16_t>(match.str(5));
+            out_input->id              = m_state->id + ":" + match.str(1);
+            out_input->connection = Input::Connection();
+            out_input->connection.connection_opened(
+                Input::Buffer(A.c_str() + match.position(2),match.length(2)),
+                boost::lexical_cast<uint16_t>(match.str(3)),
+                Input::Buffer(A.c_str() + match.position(4), match.length(4)),
+                boost::lexical_cast<uint16_t>(match.str(5))
+            );
+            out_input->connection.connection_closed();
         }
         else {
             throw runtime_error(
@@ -113,13 +127,13 @@ bool ModSecAuditLogGenerator::operator()(input_p& out_input)
             );
         }
 
-        out_input->transactions.clear();
-        out_input->transactions.push_back(input_t::transaction_t(
-            buffer_t((*e)["B"]), buffer_t((*e)["F"])
-        ));
+        out_input->connection.add_transaction(
+            Input::Buffer((*e)["B"]),
+            Input::Buffer((*e)["F"])
+        );
     }
     catch (...) {
-        m_parser.recover();
+        m_state->parser.recover();
         throw;
     }
 

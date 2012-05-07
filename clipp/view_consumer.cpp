@@ -58,6 +58,171 @@ void output_with_escapes(const char* b, const char* e)
     }
 }
 
+using namespace Input;
+
+struct ViewDelegate :
+    public Delegate
+{
+    //! Output ConnectionEvent.
+    static
+    void connection_event(const ConnectionEvent& event)
+    {
+        cout << event.local_ip << ":" << event.local_port
+             << " <--> "
+             << event.remote_ip << ":" << event.remote_port
+             ;
+    }
+
+    //! Connection data type.
+    static const char* tx_data_type(transaction_data_type_e type)
+    {
+        switch (type) {
+            case META_TYPE:    return "META";
+            case RAW_TYPE:     return "RAW";
+            case LINE_TYPE:    return "LINE";
+            case HEADER_TYPE:  return "HEADER";
+            case BODY_TYPE:    return "BODY";
+            case TRAILER_TYPE: return "TRAILER";
+            default:           return "UNKNOWN";
+        }
+
+    }
+
+    //! Output ConnectionDataEvent.
+    static
+    void connection_data_event(const ConnectionDataEvent& event)
+    {
+        output_with_escapes(
+            event.data.data,
+            event.data.data + event.data.length
+        );
+    }
+
+    //! Output TransactionDataEvent.
+    static
+    void transaction_data_event(const TransactionDataEvent& event)
+    {
+        output_with_escapes(
+            event.data.data,
+            event.data.data + event.data.length
+        );
+    }
+
+    //! Output HeaderEven& eventt
+    static
+    void headers_event(const HeaderEvent& event)
+    {
+        BOOST_FOREACH(const header_t& header, event.headers) {
+            cout << header.first << ": " << header.second << endl;
+        }
+    }
+
+    //! CONNECTION_OPENED
+    void connection_opened(const ConnectionEvent& event) const
+    {
+        cout << "=== CONNECTION_OPENED: ";
+        connection_event(event);
+        cout << " ===" << endl;
+    }
+
+    //! CONNECTION_CLOSED
+    void connection_closed(const NullEvent& event) const
+    {
+        cout << "=== CONNECTION_CLOSED ===" << endl;
+    }
+
+    //! CONNECTION_DATA_IN
+    void connection_data_in(const ConnectionDataEvent& event) const
+    {
+        cout << "=== CONNECTION_DATA_IN ===" << endl;
+        connection_data_event(event);
+    }
+
+    //! CONNECTION_DATA_OUT
+    void connection_data_out(const ConnectionDataEvent& event) const
+    {
+        cout << "=== CONNECTION_DATA_OUT ===" << endl;
+        connection_data_event(event);
+    }
+
+    //! TRANSACTION_DATA_IN
+    void transaction_data_in(const TransactionDataEvent& event) const
+    {
+        cout << "=== TRANSACTION_DATA_IN: " << tx_data_type(event.type)
+             << " ===" << endl;
+        transaction_data_event(event);
+    }
+
+    //! TRANSACTION_DATA_OUT
+    void transaction_data_out(const TransactionDataEvent& event) const
+    {
+        cout << "=== TRANSACTION_DATA_OUT: " << tx_data_type(event.type)
+             << " ===" << endl;
+        transaction_data_event(event);
+    }
+
+    //! REQUEST_STARTED
+    void request_started(const RequestEvent& event) const
+    {
+        cout << "=== REQUEST_STARTED: "
+             << event.method << " " << event.uri << " " << event.uri
+             << " ===" << endl;
+        if (event.raw.data) {
+            cout << event.raw.data << endl;
+        }
+    }
+
+    //! REQUEST_HEADERS
+    void request_headers(const HeaderEvent& event) const {
+        cout << "=== REQUEST_HEADERS ===" << endl;
+        headers_event(event);
+    }
+
+    //! REQUEST_BODY
+    void request_body(const TransactionDataEvent& event) const
+    {
+        cout << "=== REQUEST_BODY ===" << endl;
+        transaction_data_event(event);
+    }
+
+    //! REQUEST_FINISHED
+    void request_finished(const NullEvent& event) const
+    {
+        cout << "=== REQUEST_FINISHED ===" << endl;
+    }
+
+    //! RESPONSE_STARTED
+    void response_started(const ResponseEvent& event) const
+    {
+        cout << "=== RESPONSE_STARTED "
+             << event.protocol << " " << event.status << " " << event.message
+             << " ===" << endl;
+        if (event.raw.data) {
+            cout << event.raw.data << endl;
+        }
+    }
+
+    //! RESPONSE_HEADERS
+    void response_headers(const HeaderEvent& event) const
+    {
+        cout << "=== RESPONSE HEADERS ===" << endl;
+        headers_event(event);
+    }
+
+    //! RESPONSE_BODY
+    void response_body(const TransactionDataEvent& event) const
+    {
+        cout << "=== RESPONSE BODY ===" << endl;
+        transaction_data_event(event);
+    }
+
+    //! RESPONSE_FINISHED
+    void response_finished(const NullEvent& event) const
+    {
+        cout << "=== RESPONSE FINISHED ===" << endl;
+    }
+};
+
 }
 
 bool ViewConsumer::operator()(const input_p& input)
@@ -68,23 +233,8 @@ bool ViewConsumer::operator()(const input_p& input)
     else {
         cout << "---- " << input->id << " ----" << endl;
     }
-    cout << input->local_ip.to_s() << ":" << input->local_port
-         << " <---> "
-         << input->remote_ip.to_s() << ":" << input->remote_port
-         << endl;
-
-    BOOST_FOREACH(const input_t::transaction_t& tx, input->transactions) {
-        cout << "==== REQUEST ====" << endl;
-        output_with_escapes(
-            tx.request.data,
-            tx.request.data + tx.request.length
-        );
-        cout << "==== RESPONSE ====" << endl;
-        output_with_escapes(
-            tx.response.data,
-            tx.response.data + tx.response.length
-        );
-    }
+    ViewDelegate viewer;
+    input->connection.dispatch(viewer);
 
     return true;
 }

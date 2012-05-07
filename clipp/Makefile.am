@@ -12,15 +12,15 @@ clipp_SOURCES = \
     input.cpp \
     modsec_audit_log.cpp \
     modsec_audit_log_generator.cpp \
-    raw_generator.cpp \
-    ironbee_consumer.cpp \
-    pb_consumer.cpp \
-    pb_generator.cpp \
-    clipp.pb.cc \
     view_consumer.cpp \
-    apache_generator.cpp \
-    suricata_generator.cpp \
-    connection_modifiers.cpp
+    raw_generator.cpp
+#    ironbee_consumer.cpp \
+#    pb_consumer.cpp \
+#    pb_generator.cpp \
+#    clipp.pb.cc \
+#    apache_generator.cpp \
+#    suricata_generator.cpp \
+#    connection_modifiers.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     -lboost_system \

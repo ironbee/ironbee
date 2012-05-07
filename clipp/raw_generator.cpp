@@ -93,29 +93,28 @@ RawGenerator::RawGenerator(
     load(m_state->response_buffer, response_path);
 }
 
-bool RawGenerator::operator()(input_p& out_input)
+bool RawGenerator::operator()(Input::input_p& out_input)
 {
     if (m_state->produced_input) {
         return false;
     }
 
     out_input->id                = m_state->id;
-    out_input->local_ip          = buffer_t(local_ip);
-    out_input->remote_ip         = buffer_t(remote_ip);
-    out_input->local_port        = local_port;
-    out_input->remote_port       = remote_port;
-    out_input->transactions.clear();
-    out_input->transactions.push_back(
-        input_t::transaction_t(
-            buffer_t(
-                &*m_state->request_buffer.begin(),
-                m_state->request_buffer.size()
-            ),
-           buffer_t(
-               &*m_state->response_buffer.begin(),
-               m_state->response_buffer.size()
-           )
-        )
+    out_input->connection = Input::Connection();
+    out_input->connection.connection_opened(
+        Input::Buffer(local_ip),  local_port,
+        Input::Buffer(remote_ip), remote_port
+    );
+    out_input->connection.connection_closed();
+    out_input->connection.add_transaction(
+        Input::Buffer(
+            &*m_state->request_buffer.begin(),
+            m_state->request_buffer.size()
+        ),
+       Input::Buffer(
+           &*m_state->response_buffer.begin(),
+           m_state->response_buffer.size()
+       )
     );
 
     m_state->produced_input = true;

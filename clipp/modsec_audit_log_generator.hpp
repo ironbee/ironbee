@@ -29,6 +29,7 @@
 #include "modsec_audit_log.hpp"
 
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <iostream>
 #include <string>
@@ -72,13 +73,11 @@ public:
     );
 
     //! Produce an input.  See input_t and input_generator_t.
-    bool operator()(input_p& out_input);
+    bool operator()(Input::input_p& out_input);
 
 private:
-    std::string                     m_id;
-    on_error_t                      m_on_error;
-    boost::shared_ptr<std::istream> m_input;
-    ModSecAuditLog::Parser          m_parser;
+    struct State;
+    boost::shared_ptr<State> m_state;
 };
 
 } // CLIPP
