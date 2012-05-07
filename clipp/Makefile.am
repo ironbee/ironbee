@@ -8,6 +8,7 @@ check-local:
 
 clipp_SOURCES = \
     clipp.cpp \
+    configuration_parser.cpp \
     input.cpp \
     modsec_audit_log.cpp \
     modsec_audit_log_generator.cpp \

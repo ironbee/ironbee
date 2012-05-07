@@ -51,6 +51,7 @@
  */
 
 #include "input.hpp"
+ #include "configuration_parser.hpp"
 
 #include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
@@ -77,8 +78,10 @@ using namespace std;
 using namespace IronBee::CLIPP;
 using boost::bind;
 
-using IronBee::CLIPP::input_p;
-using IronBee::CLIPP::buffer_t;
+using ConfigurationParser::component_t;
+using ConfigurationParser::component_vec_t;
+using ConfigurationParser::chain_t;
+using ConfigurationParser::chain_vec_t;
 
 /**
  * A generator of inputs.
@@ -203,20 +206,6 @@ void help()
     ;
 }
 
-struct component_t
-{
-    string name;
-    string arg;
-};
-
-struct chain_t
-{
-    component_t       base;
-    list<component_t> modifiers;
-};
-
-chain_t parse_chain(const vector<string>& tokens);
-
 input_generator_t modify_generator(
     input_generator_t generator,
     input_modifier_t  modifier
@@ -269,42 +258,12 @@ int main(int argc, char** argv)
     // In the future, configuration can also be loaded from files.
     string configuration = boost::algorithm::join(args, " ");
 
-    // Parse configuration.
-    // Better tokenizer coming.
-    vector<string> tokens = split_on_char(configuration, ' ');
-    vector<vector<string> > chain_tokens;
-    BOOST_FOREACH(const string& token, tokens) {
-        if (token.empty()) {
-            continue;
-        }
-        if (token[0] == '@') {
-            if (chain_tokens.empty()) {
-                cerr << "First component was a modifier." << endl;
-                help();
-                return 1;
-            }
-        }
-        else {
-            chain_tokens.push_back(vector<string>());
-        }
-        chain_tokens.back().push_back(token);
+    chain_vec_t chains;
+    try {
+        chains = ConfigurationParser::parse_string(configuration);
     }
-
-    typedef list<chain_t> chains_t;
-    chains_t chains;
-    bool had_error = false;
-    BOOST_FOREACH(const vector<string>& chain_as_tokens, chain_tokens) {
-        try {
-            chains.push_back(parse_chain(chain_as_tokens));
-        }
-        catch (const exception& e) {
-            cerr << "Error Parsing Chain for "
-                 << chain_as_tokens.front() << ": "
-                 << e.what() << endl;
-            had_error = true;
-        }
-    }
-    if (had_error) {
+    catch (const exception& e) {
+        cerr << "Error parsing configuration: " << e.what() << endl;
         return 1;
     }
 
