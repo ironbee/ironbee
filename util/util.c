@@ -202,7 +202,7 @@ char *ib_util_path_join(ib_mpool_t *mp,
     }
 
     strncpy(out, parent, plen);
-    if (plen > 1) {
+    if ( (plen > 1) || ((plen == 1) && (*parent == '.')) ) {
         strcat(out, "/");
     }
     strncat(out, file_path, flen);

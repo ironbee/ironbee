@@ -52,6 +52,10 @@ static struct test_path_data_t test_path_join[] = {
 };
 
 static struct test_path_data_t test_rel_file[] = {
+    { __LINE__, "x.conf",        "y.conf",      "./y.conf" },
+    { __LINE__, "x.conf",        "y.conf",      "./y.conf" },
+    { __LINE__, "./x.conf",      "y.conf",      "./y.conf" },
+    { __LINE__, "./x.conf",      "a/y.conf",    "./a/y.conf" },
     { __LINE__, "/x.conf",       "a/y.conf",    "/a/y.conf" },
     { __LINE__, "/a/b/c/x.conf", "d/y.conf",    "/a/b/c/d/y.conf" },
     { __LINE__, "/a/x.conf",     "/b/c/y.conf", "/b/c/y.conf" },
