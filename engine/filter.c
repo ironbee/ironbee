@@ -174,7 +174,6 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
 }
 
 ib_status_t ib_fctl_data_add(ib_fctl_t *fc,
-                             ib_data_type_t dtype,
                              void *data,
                              size_t dlen)
 {
@@ -182,7 +181,7 @@ ib_status_t ib_fctl_data_add(ib_fctl_t *fc,
 //    ib_engine_t *ib = fc->ib;
     ib_status_t rc;
 
-    rc = ib_stream_push(fc->source, IB_STREAM_DATA, dtype, data, dlen);
+    rc = ib_stream_push(fc->source, IB_STREAM_DATA, data, dlen);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -198,7 +197,7 @@ ib_status_t ib_fctl_meta_add(ib_fctl_t *fc,
 //    ib_engine_t *ib = fc->ib;
     ib_status_t rc;
 
-    rc = ib_stream_push(fc->source, stype, IB_DTYPE_META, NULL, 0);
+    rc = ib_stream_push(fc->source, stype, NULL, 0);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

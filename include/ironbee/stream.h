@@ -79,7 +79,6 @@ struct ib_stream_t {
  */
 struct ib_sdata_t {
     ib_sdata_type_t         type;       /**< Stream data type */
-    int                     dtype;      /**< Data type */
     size_t                  dlen;       /**< Data length */
     void                   *data;       /**< Data */
     IB_LIST_NODE_REQ_FIELDS(ib_sdata_t);/* Required list node fields */
@@ -111,7 +110,6 @@ ib_status_t DLL_PUBLIC ib_stream_push_sdata(ib_stream_t *s,
  *
  * @param s Stream
  * @param type Stream data type
- * @param dtype Data type
  * @param data Data
  * @param dlen Data length
  *
@@ -119,7 +117,6 @@ ib_status_t DLL_PUBLIC ib_stream_push_sdata(ib_stream_t *s,
  */
 ib_status_t DLL_PUBLIC ib_stream_push(ib_stream_t *s,
                                       ib_sdata_type_t type,
-                                      int dtype,
                                       void *data,
                                       size_t dlen);
 

@@ -19,11 +19,6 @@ ConstTransactionData::ConstTransactionData(ib_type ib_transaction_data) :
     // nop
 }
 
-ConstTransactionData::type_e ConstTransactionData::type() const
-{
-    return static_cast<type_e>(ib()->dtype);
-}
-
 size_t ConstTransactionData::length() const
 {
     return ib()->dlen;
@@ -57,13 +52,11 @@ TransactionData::TransactionData(ib_type ib_transaction_data) :
 
 TransactionData TransactionData::create_alias(
     MemoryPool mp,
-    type_e     type,
     char*      data,
     size_t     data_length
 )
 {
     ib_txdata_t* ib_txdata = mp.allocate<ib_txdata_t>();
-    ib_txdata->dtype = static_cast<ib_data_type_t>(type);
     ib_txdata->data  = reinterpret_cast<uint8_t*>(data);
     ib_txdata->dlen  = data_length;
 

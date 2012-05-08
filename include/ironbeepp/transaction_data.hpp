@@ -92,19 +92,6 @@ public:
 
     ///@}
 
-    //! Possible types of data.
-    enum type_e {
-        META         = IB_DTYPE_META,
-        RAW          = IB_DTYPE_RAW,
-        HTTP_LINE    = IB_DTYPE_HTTP_LINE,
-        HTTP_HEADER  = IB_DTYPE_HTTP_HEADER,
-        HTTP_BODY    = IB_DTYPE_HTTP_BODY,
-        HTTP_TRAILER = IB_DTYPE_HTTP_TRAILER
-    };
-
-    //! Type of data.
-    type_e type() const;
-
     //! Length of data.
     size_t length() const;
 
@@ -181,7 +168,6 @@ public:
      * @a mp be the memory pool of the current transaction.
      *
      * @param[in] mp          Memory pool to use for allocations.
-     * @param[in] type        Type of data.
      * @param[in] data        Data to alias.
      * @param[in] data_length Length of @a data.
      * @returns TransactionData.
@@ -189,7 +175,6 @@ public:
     static
     TransactionData create_alias(
         MemoryPool mp,
-        type_e     type,
         char*      data,
         size_t     data_length
     );

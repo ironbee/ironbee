@@ -78,15 +78,6 @@ typedef struct ib_logevent_t ib_logevent_t;
 typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
 
-typedef enum {
-    IB_DTYPE_META,
-    IB_DTYPE_RAW,
-    IB_DTYPE_HTTP_LINE,
-    IB_DTYPE_HTTP_HEADER,
-    IB_DTYPE_HTTP_BODY,
-    IB_DTYPE_HTTP_TRAILER
-} ib_data_type_t;
-
 typedef struct ib_filter_t ib_filter_t;
 typedef struct ib_fdata_t ib_fdata_t;
 typedef struct ib_fctl_t ib_fctl_t;
@@ -146,7 +137,6 @@ struct ib_conndata_t {
 
 /** Transaction Data Structure */
 struct ib_txdata_t {
-    ib_data_type_t      dtype;           /**< Data type */
     size_t              dlen;            /**< Data buffer length */
     uint8_t            *data;            /**< Data buffer */
 };

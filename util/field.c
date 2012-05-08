@@ -501,7 +501,7 @@ ib_status_t ib_field_buf_add(
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_stream_push(s, IB_STREAM_DATA, dtype, buf, blen);
+    rc = ib_stream_push(s, IB_STREAM_DATA, buf, blen);
     IB_FTRACE_RET_STATUS(rc);
 }
 

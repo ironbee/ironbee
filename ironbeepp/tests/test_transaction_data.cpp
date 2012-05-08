@@ -40,9 +40,6 @@ TEST(TestTransactionData, basic)
 
     ASSERT_TRUE(txdata);
 
-    ib_txdata.dtype = IB_DTYPE_HTTP_BODY;
-    EXPECT_EQ(TransactionData::HTTP_BODY, txdata.type());
-
     ib_txdata.dlen = 14;
     EXPECT_EQ(ib_txdata.dlen, txdata.length());
     ib_txdata.data = (uint8_t*)15;
@@ -58,13 +55,11 @@ TEST(TestTransactionData, create)
 
     TransactionData td = TransactionData::create_alias(
         mp,
-        TransactionData::HTTP_BODY,
         data,
         6
     );
 
     ASSERT_TRUE(td);
-    EXPECT_EQ(TransactionData::HTTP_BODY, td.type());
     EXPECT_EQ(data, td.data());
     EXPECT_EQ(6UL, td.length());
 

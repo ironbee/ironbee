@@ -68,8 +68,6 @@ struct ib_rule_phase_meta_t {
     const char                 *name;
     ib_flags_t                  required_op_flags;
     ib_state_event_type_t       event;
-    ib_data_type_t              dtypes[MAX_PHASE_DATA_TYPES];
-    ib_num_t                    num_dtypes;
 };
 
 /* Rule definition data */
@@ -82,8 +80,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Generic 'Phase' Rule",
         IB_OP_FLAG_PHASE,
-        (ib_state_event_type_t) -1,
-        { }, 0
+        (ib_state_event_type_t) -1
     },
     {
         IB_FALSE,
@@ -92,8 +89,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Request Header",
         IB_OP_FLAG_PHASE,
-        handle_request_headers_event,
-        { }, 0
+        handle_request_headers_event
     },
     {
         IB_FALSE,
@@ -102,8 +98,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Request Body",
         IB_OP_FLAG_PHASE,
-        handle_request_event,
-        { }, 0
+        handle_request_event
     },
     {
         IB_FALSE,
@@ -112,8 +107,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Response Header",
         IB_OP_FLAG_PHASE,
-        handle_response_headers_event,
-        { }, 0
+        handle_response_headers_event
     },
     {
         IB_FALSE,
@@ -122,8 +116,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Response Body",
         IB_OP_FLAG_PHASE,
-        handle_response_event,
-        { }, 0
+        handle_response_event
     },
     {
         IB_FALSE,
@@ -132,8 +125,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Post Process",
         IB_OP_FLAG_PHASE,
-        handle_postprocess_event,
-        { }, 0
+        handle_postprocess_event
     },
 
     /* Stream rule phases */
@@ -144,8 +136,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_STREAM),
         "Generic 'Stream Inspection' Rule",
         IB_OP_FLAG_STREAM,
-        (ib_state_event_type_t) -1,
-        { }, 0
+        (ib_state_event_type_t) -1
     },
     {
         IB_TRUE,
@@ -154,8 +145,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Request Header Stream",
         IB_OP_FLAG_STREAM,
-        handle_context_tx_event,
-        { IB_DTYPE_HTTP_HEADER }, 1
+        handle_context_tx_event
     },
     {
         IB_TRUE,
@@ -164,8 +154,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Request Body Stream",
         IB_OP_FLAG_STREAM,
-        request_body_data_event,
-        { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
+        request_body_data_event
     },
     {
         IB_TRUE,
@@ -174,8 +163,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Response Header Stream",
         IB_OP_FLAG_STREAM,
-        response_headers_data_event,
-        { IB_DTYPE_HTTP_HEADER }, 1
+        response_headers_data_event
     },
     {
         IB_TRUE,
@@ -184,8 +172,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Response Body Stream",
         IB_OP_FLAG_STREAM,
-        response_body_data_event,
-        { IB_DTYPE_HTTP_LINE, IB_DTYPE_HTTP_BODY, IB_DTYPE_HTTP_TRAILER }, 3
+        response_body_data_event
     },
     {
         IB_FALSE,
@@ -194,8 +181,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         PHASE_FLAG_NONE,
         "Invalid",
         IB_OP_FLAG_NONE,
-        (ib_state_event_type_t) -1,
-        { }, 0
+        (ib_state_event_type_t) -1
     }
 };
 
@@ -1100,25 +1086,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         ib_rule_t   *rule = (ib_rule_t *)node->data;
         ib_list_t   *actions;
         ib_num_t     result = 0;
-        ib_num_t     dtype_num;
-        ib_bool_t    dtype_found = IB_FALSE;
         ib_status_t  rc = IB_OK;
-
-        /*
-         * Determine if this event applies to this rule (txdata only)
-         */
-        assert(meta->event == event);
-        if (txdata != NULL) {
-            for (dtype_num = 0;  dtype_num < meta->num_dtypes;  ++dtype_num) {
-                if (txdata->dtype == meta->dtypes[dtype_num]) {
-                    dtype_found = IB_TRUE;
-                    break;
-                }
-            }
-            if (dtype_found == IB_FALSE) {
-                continue;
-            }
-        }
 
         /* Skip invalid / disabled rules */
         if ( (rule->flags & IB_RULE_FLAGS_RUNABLE) != IB_RULE_FLAGS_RUNABLE) {

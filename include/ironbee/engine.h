@@ -2302,14 +2302,12 @@ ib_status_t DLL_PUBLIC ib_fctl_process(ib_fctl_t *fc);
  * with calls to @ref ib_fctl_drain.
  *
  * @param fc Filter controller
- * @param dtype Data type
  * @param data Data
  * @param dlen Data length
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_fctl_data_add(ib_fctl_t *fc,
-                                        ib_data_type_t dtype,
                                         void *data,
                                         size_t dlen);
 

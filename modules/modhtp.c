@@ -652,7 +652,6 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     else {
         /* Point the tx-data structure at the data block */
         ib_txdata_t itxdata;
-        itxdata.dtype = IB_DTYPE_HTTP_BODY;
         itxdata.dlen = txdata->len;
         itxdata.data = (uint8_t *)txdata->data;
         rc = ib_state_notify_request_body_data(ib, itx, &itxdata);
@@ -935,7 +934,6 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     else {
         /* Point the tx-data structure at the data block */
         ib_txdata_t itxdata;
-        itxdata.dtype = IB_DTYPE_HTTP_BODY;
         itxdata.dlen = txdata->len;
         itxdata.data = (uint8_t *)txdata->data;
         rc = ib_state_notify_response_body_data(ib, itx, &itxdata);

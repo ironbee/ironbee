@@ -169,12 +169,6 @@ ffi.cdef [[
     typedef ib_status_t (*ib_provider_inst_init_fn_t)(ib_provider_inst_t *pi,
                                                       void *data);
     typedef enum {
-        IB_DTYPE_HTTP_LINE,
-        IB_DTYPE_HTTP_HEADER,
-        IB_DTYPE_HTTP_BODY,
-        IB_DTYPE_HTTP_TRAILER
-    } ib_data_type_t;
-    typedef enum {
         IB_STREAM_DATA,
         IB_STREAM_FLUSH,
         IB_STREAM_EOH,
@@ -243,7 +237,6 @@ ffi.cdef [[
         ib_engine_t        *ib;
         ib_mpool_t         *mp;
         ib_tx_t            *tx;
-        ib_data_type_t      dtype;
         size_t              dalloc;
         size_t              dlen;
         const char         *data;

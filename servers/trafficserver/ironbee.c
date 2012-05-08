@@ -431,7 +431,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
          * Feed buffered data to ironbee
          */
         ib_txdata_t itxdata;
-        itxdata.dtype = IB_DTYPE_HTTP_BODY;
         itxdata.data = (uint8_t *)ibd->data->buf;
         itxdata.dlen = ibd->data->buflen;
         (*ibd->ibd->ib_notify_body)(ironbee, data->tx, &itxdata);
@@ -501,7 +500,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                 }
                 else {
                     ib_txdata_t itxdata;
-                    itxdata.dtype = IB_DTYPE_HTTP_BODY;
                     itxdata.data = (uint8_t *)ibd->data->buf;
                     itxdata.dlen = ibd->data->buflen;
                     (*ibd->ibd->ib_notify_body)(ironbee, data->tx,

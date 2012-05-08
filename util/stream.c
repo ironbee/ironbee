@@ -61,7 +61,6 @@ ib_status_t ib_stream_push_sdata(ib_stream_t *s,
 
 ib_status_t ib_stream_push(ib_stream_t *s,
                            ib_sdata_type_t type,
-                           int dtype,
                            void *data,
                            size_t dlen)
 {
@@ -74,7 +73,6 @@ ib_status_t ib_stream_push(ib_stream_t *s,
     }
 
     node->type = type;
-    node->dtype = dtype;
     node->dlen = dlen;
     node->data = data;
 
