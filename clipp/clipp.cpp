@@ -480,7 +480,7 @@ chain_t parse_chain(const vector<string>& tokens)
 {
     chain_t chain;
     chain.base = parse_component(tokens[0]);
-    for (int i = 1; i < tokens.size(); ++i) {
+    for (unsigned int i = 1; i < tokens.size(); ++i) {
         const string& token = tokens[i];
         if (token[0] != '@') {
             throw logic_error("Modifier does not begin with @.");

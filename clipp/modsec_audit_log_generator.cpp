@@ -50,10 +50,10 @@ struct ModSecAuditLogGenerator::State
 {
     State(
         const string& path,
-        on_error_t    on_error
+        on_error_t    on_error_
     ) :
         id(path),
-        on_error(on_error),
+        on_error(on_error_),
         input(boost::make_shared<ifstream>(path.c_str())),
         parser(*input)
     {
