@@ -118,7 +118,7 @@ struct ViewDelegate :
     }
 
     //! CONNECTION_OPENED
-    void connection_opened(const ConnectionEvent& event) const
+    void connection_opened(const ConnectionEvent& event)
     {
         cout << "=== CONNECTION_OPENED: ";
         connection_event(event);
@@ -126,27 +126,27 @@ struct ViewDelegate :
     }
 
     //! CONNECTION_CLOSED
-    void connection_closed(const NullEvent& event) const
+    void connection_closed(const NullEvent& event)
     {
         cout << "=== CONNECTION_CLOSED ===" << endl;
     }
 
     //! CONNECTION_DATA_IN
-    void connection_data_in(const ConnectionDataEvent& event) const
+    void connection_data_in(const ConnectionDataEvent& event)
     {
         cout << "=== CONNECTION_DATA_IN ===" << endl;
         connection_data_event(event);
     }
 
     //! CONNECTION_DATA_OUT
-    void connection_data_out(const ConnectionDataEvent& event) const
+    void connection_data_out(const ConnectionDataEvent& event)
     {
         cout << "=== CONNECTION_DATA_OUT ===" << endl;
         connection_data_event(event);
     }
 
     //! TRANSACTION_DATA_IN
-    void transaction_data_in(const TransactionDataEvent& event) const
+    void transaction_data_in(const TransactionDataEvent& event)
     {
         cout << "=== TRANSACTION_DATA_IN: " << tx_data_type(event.type)
              << " ===" << endl;
@@ -154,7 +154,7 @@ struct ViewDelegate :
     }
 
     //! TRANSACTION_DATA_OUT
-    void transaction_data_out(const TransactionDataEvent& event) const
+    void transaction_data_out(const TransactionDataEvent& event)
     {
         cout << "=== TRANSACTION_DATA_OUT: " << tx_data_type(event.type)
              << " ===" << endl;
@@ -162,7 +162,7 @@ struct ViewDelegate :
     }
 
     //! REQUEST_STARTED
-    void request_started(const RequestEvent& event) const
+    void request_started(const RequestEvent& event)
     {
         cout << "=== REQUEST_STARTED: "
              << event.method << " " << event.uri << " " << event.uri
@@ -173,26 +173,26 @@ struct ViewDelegate :
     }
 
     //! REQUEST_HEADERS
-    void request_headers(const HeaderEvent& event) const {
+    void request_headers(const HeaderEvent& event) {
         cout << "=== REQUEST_HEADERS ===" << endl;
         headers_event(event);
     }
 
     //! REQUEST_BODY
-    void request_body(const TransactionDataEvent& event) const
+    void request_body(const TransactionDataEvent& event)
     {
         cout << "=== REQUEST_BODY ===" << endl;
         transaction_data_event(event);
     }
 
     //! REQUEST_FINISHED
-    void request_finished(const NullEvent& event) const
+    void request_finished(const NullEvent& event)
     {
         cout << "=== REQUEST_FINISHED ===" << endl;
     }
 
     //! RESPONSE_STARTED
-    void response_started(const ResponseEvent& event) const
+    void response_started(const ResponseEvent& event)
     {
         cout << "=== RESPONSE_STARTED "
              << event.protocol << " " << event.status << " " << event.message
@@ -203,21 +203,21 @@ struct ViewDelegate :
     }
 
     //! RESPONSE_HEADERS
-    void response_headers(const HeaderEvent& event) const
+    void response_headers(const HeaderEvent& event)
     {
         cout << "=== RESPONSE HEADERS ===" << endl;
         headers_event(event);
     }
 
     //! RESPONSE_BODY
-    void response_body(const TransactionDataEvent& event) const
+    void response_body(const TransactionDataEvent& event)
     {
         cout << "=== RESPONSE BODY ===" << endl;
         transaction_data_event(event);
     }
 
     //! RESPONSE_FINISHED
-    void response_finished(const NullEvent& event) const
+    void response_finished(const NullEvent& event)
     {
         cout << "=== RESPONSE FINISHED ===" << endl;
     }

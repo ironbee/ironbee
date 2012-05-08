@@ -73,59 +73,59 @@ class Delegate
 public:
     //! CONNECTION_OPENED
     virtual
-    void connection_opened(const ConnectionEvent& event) const {};
+    void connection_opened(const ConnectionEvent& event) {}
 
     //! CONNECTION_CLOSED
     virtual
-    void connection_closed(const NullEvent& event) const {};
+    void connection_closed(const NullEvent& event) {}
 
     //! CONNECTION_DATA_IN
     virtual
-    void connection_data_in(const ConnectionDataEvent& event) const {};
+    void connection_data_in(const ConnectionDataEvent& event) {}
 
     //! CONNECTION_DATA_OUT
     virtual
-    void connection_data_out(const ConnectionDataEvent& event) const {};
+    void connection_data_out(const ConnectionDataEvent& event) {}
 
     //! TRANSACTION_DATA_IN
     virtual
-    void transaction_data_in(const TransactionDataEvent& event) const {};
+    void transaction_data_in(const TransactionDataEvent& event) {}
 
     //! TRANSACTION_DATA_OUT
     virtual
-    void transaction_data_out(const TransactionDataEvent& event) const {};
+    void transaction_data_out(const TransactionDataEvent& event) {}
 
     //! REQUEST_STARTED
     virtual
-    void request_started(const RequestEvent& event) const {}
+    void request_started(const RequestEvent& event) {}
 
     //! REQUEST_HEADERS
     virtual
-    void request_headers(const HeaderEvent& event) const {}
+    void request_headers(const HeaderEvent& event) {}
 
     //! REQUEST_BODY
     virtual
-    void request_body(const TransactionDataEvent& event) const {}
+    void request_body(const TransactionDataEvent& event) {}
 
     //! REQUEST_FINISHED
     virtual
-    void request_finished(const NullEvent& event) const {}
+    void request_finished(const NullEvent& event) {}
 
     //! RESPONSE_STARTED
     virtual
-    void response_started(const ResponseEvent& event) const {}
+    void response_started(const ResponseEvent& event) {}
 
     //! RESPONSE_HEADERS
     virtual
-    void response_headers(const HeaderEvent& event) const {}
+    void response_headers(const HeaderEvent& event) {}
 
     //! RESPONSE_BODY
     virtual
-    void response_body(const TransactionDataEvent& event) const {}
+    void response_body(const TransactionDataEvent& event) {}
 
     //! RESPONSE_FINISHED
     virtual
-    void response_finished(const NullEvent& event) const {}
+    void response_finished(const NullEvent& event) {}
 };
 
 /**
