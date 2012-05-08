@@ -52,7 +52,7 @@ public:
     explicit
     IronBeeConsumer(const std::string& config_path);
 
-    bool operator()(const input_p& input);
+    bool operator()(const Input::input_p& input);
 
 private:
     struct EngineState;

@@ -28,12 +28,106 @@
 #include <boost/make_shared.hpp>
 
 using namespace std;
+
 using boost::make_shared;
 
 namespace IronBee {
 namespace CLIPP {
 
 namespace {
+
+class IronBeeDelegate :
+    public Input::Delegate
+{
+public:
+    explicit
+    IronBeeDelegate(IronBee::Engine engine) :
+        m_engine( engine )
+    {
+        // nop
+    }
+
+    void connection_opened(const Input::ConnectionEvent& event)
+    {
+        using namespace boost;
+
+        m_connection = IronBee::Connection::create(m_engine);
+
+        char* local_ip = strndup(
+            event.local_ip.data,
+            event.local_ip.length
+        );
+        m_connection.memory_pool().register_cleanup(bind(free,local_ip));
+        char* remote_ip = strndup(
+            event.remote_ip.data,
+            event.remote_ip.length
+        );
+        m_connection.memory_pool().register_cleanup(bind(free,remote_ip));
+
+
+        m_connection.set_local_ip_string(local_ip);
+        m_connection.set_local_port(event.local_port);
+        m_connection.set_remote_ip_string(remote_ip);
+        m_connection.set_remote_port(event.remote_port);
+
+        m_engine.notify().connection_opened(m_connection);
+    }
+
+    void connection_closed(const Input::NullEvent& event)
+    {
+        if (! m_connection) {
+            throw runtime_error(
+                "CONNECTION_CLOSED event fired outside "
+                "of connection lifetime."
+            );
+        }
+        m_engine.notify().connection_closed(m_connection);
+        m_connection = IronBee::Connection();
+    };
+
+    void connection_data_in(const Input::ConnectionDataEvent& event)
+    {
+        if (! m_connection) {
+            throw runtime_error(
+                "CONNECTION_DATA_IN event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        // Copy because IronBee needs mutable input.
+        IronBee::ConnectionData data = IronBee::ConnectionData::create(
+            m_connection,
+            event.data.data,
+            event.data.length
+        );
+
+        m_engine.notify().connection_data_in(data);
+    }
+
+    void connection_data_out(const Input::ConnectionDataEvent& event)
+    {
+        if (! m_connection) {
+            throw runtime_error(
+                "CONNECTION_DATA_IN event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        // Copy because IronBee needs mutable input.
+        IronBee::ConnectionData data = IronBee::ConnectionData::create(
+            m_connection,
+            event.data.data,
+            event.data.length
+        );
+
+        m_engine.notify().connection_data_out(data);
+    }
+
+private:
+    IronBee::Engine      m_engine;
+    IronBee::Connection  m_connection;
+    IronBee::Transaction m_transaction;
+};
 
 void load_configuration(IronBee::Engine engine, const std::string& path)
 {
@@ -46,67 +140,6 @@ void load_configuration(IronBee::Engine engine, const std::string& path)
 
     parser.destroy();
     engine.notify().configuration_finished();
-}
-
-IronBee::Connection open_connection(
-    IronBee::Engine engine,
-    const input_p& input
-)
-{
-    using namespace boost;
-
-    IronBee::Connection conn
-        = IronBee::Connection::create(engine);
-
-    char* local_ip = strndup(
-        input->local_ip.data,
-        input->local_ip.length
-    );
-    conn.memory_pool().register_cleanup(bind(free,local_ip));
-    char* remote_ip = strndup(
-        input->remote_ip.data,
-        input->remote_ip.length
-    );
-    conn.memory_pool().register_cleanup(bind(free,remote_ip));
-
-
-    conn.set_local_ip_string(local_ip);
-    conn.set_local_port(input->local_port);
-    conn.set_remote_ip_string(remote_ip);
-    conn.set_remote_port(input->remote_port);
-
-    conn.engine().notify().connection_opened(conn);
-
-    return conn;
-}
-
-void data_in(IronBee::Connection connection, buffer_t request)
-{
-    // Copy because IronBee needs mutable input.
-    IronBee::ConnectionData data = IronBee::ConnectionData::create(
-        connection,
-        request.data,
-        request.length
-    );
-
-    connection.engine().notify().connection_data_in(data);
-}
-
-void data_out(IronBee::Connection connection, buffer_t response)
-{
-    // Copy because IronBee needs mutable input.
-    IronBee::ConnectionData data = IronBee::ConnectionData::create(
-        connection,
-        response.data,
-        response.length
-    );
-
-    connection.engine().notify().connection_data_in(data);
-}
-
-void close_connection(IronBee::Connection connection)
-{
-    connection.engine().notify().connection_closed(connection);
 }
 
 }
@@ -141,18 +174,10 @@ IronBeeConsumer::IronBeeConsumer(const string& config_path) :
     load_configuration(m_engine_state->engine, config_path);
 }
 
-bool IronBeeConsumer::operator()(const input_p& input)
+bool IronBeeConsumer::operator()(const Input::input_p& input)
 {
-    IronBee::Connection connection =
-        open_connection(m_engine_state->engine, input);
-    BOOST_FOREACH(
-        const input_t::transaction_t& transaction,
-        input->transactions
-    ) {
-        data_in(connection, transaction.request);
-        data_out(connection, transaction.response);
-    }
-    close_connection(connection);
+    IronBeeDelegate delegate(m_engine_state->engine);
+    input->connection.dispatch(delegate, true);
 
     return true;
 }

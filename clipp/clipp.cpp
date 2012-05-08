@@ -59,7 +59,7 @@
 //#include "apache_generator.hpp"
 //#include "suricata_generator.hpp"
 
-//#include "ironbee_consumer.hpp"
+#include "ironbee_consumer.hpp"
 //#include "pb_consumer.hpp"
 #include "view_consumer.hpp"
 
@@ -250,7 +250,7 @@ int main(int argc, char** argv)
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
-//    consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
+    consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
 //    consumer_factory_map["writepb"] = construct_consumer<PBConsumer>;
     consumer_factory_map["view"]    = init_view_consumer;
 

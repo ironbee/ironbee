@@ -13,8 +13,8 @@ clipp_SOURCES = \
     modsec_audit_log.cpp \
     modsec_audit_log_generator.cpp \
     view_consumer.cpp \
-    raw_generator.cpp
-#    ironbee_consumer.cpp \
+    raw_generator.cpp \
+    ironbee_consumer.cpp
 #    pb_consumer.cpp \
 #    pb_generator.cpp \
 #    clipp.pb.cc \
