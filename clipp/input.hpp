@@ -54,8 +54,7 @@ namespace Input {
 
 struct ConnectionEvent;
 struct NullEvent;
-struct ConnectionDataEvent;
-struct TransactionDataEvent;
+struct DataEvent;
 struct RequestEvent;
 struct ResponseEvent;
 struct HeaderEvent;
@@ -81,11 +80,11 @@ public:
 
     //! CONNECTION_DATA_IN
     virtual
-    void connection_data_in(const ConnectionDataEvent& event) {}
+    void connection_data_in(const DataEvent& event) {}
 
     //! CONNECTION_DATA_OUT
     virtual
-    void connection_data_out(const ConnectionDataEvent& event) {}
+    void connection_data_out(const DataEvent& event) {}
 
     //! REQUEST_STARTED
     virtual
@@ -97,7 +96,7 @@ public:
 
     //! REQUEST_BODY
     virtual
-    void request_body(const TransactionDataEvent& event) {}
+    void request_body(const DataEvent& event) {}
 
     //! REQUEST_FINISHED
     virtual
@@ -113,7 +112,7 @@ public:
 
     //! RESPONSE_BODY
     virtual
-    void response_body(const TransactionDataEvent& event) {}
+    void response_body(const DataEvent& event) {}
 
     //! RESPONSE_FINISHED
     virtual
@@ -166,8 +165,6 @@ enum event_e {
     CONNECTION_DATA_IN,
     CONNECTION_DATA_OUT,
     CONNECTION_CLOSED,
-    TRANSACTION_DATA_IN,
-    TRANSACTION_DATA_OUT,
     REQUEST_STARTED,
     REQUEST_HEADERS,
     REQUEST_BODY,
@@ -265,16 +262,17 @@ struct ConnectionEvent : public Event
 };
 
 /**
- * ConnectionData data: CONNECTION_DATA_IN, CONNECTION_DATA_OUT
+ * ConnectionData data: CONNECTION_DATA_IN, CONNECTION_DATA_OUT,
+ *                      REQUEST_BODY, RESPONSE_BODY.
  **/
-struct ConnectionDataEvent : public Event
+struct DataEvent : public Event
 {
     //! Constructor.
     explicit
-    ConnectionDataEvent(event_e which_);
+    DataEvent(event_e which_);
 
     //! Constructor.
-    ConnectionDataEvent(event_e which_, const Buffer& data_);
+    DataEvent(event_e which_, const Buffer& data_);
 
     //! Dispatch.
     inline
@@ -283,43 +281,14 @@ struct ConnectionDataEvent : public Event
         switch (which) {
             case CONNECTION_DATA_IN:  to.connection_data_in(*this); break;
             case CONNECTION_DATA_OUT: to.connection_data_out(*this); break;
+            case REQUEST_BODY:         to.request_body(*this); break;
+            case RESPONSE_BODY:        to.response_body(*this); break;
             default:
-                throw std::logic_error("Invalid ConnectionDataEvent.");
+                throw std::logic_error("Invalid DataEvent.");
         }
     }
 
     Buffer data;
-};
-
-/**
- * TransactionData data: REQUEST_BODY, RESPONSE_BODY.
- **/
-struct TransactionDataEvent : public Event
-{
-    //! Constructor.
-    explicit
-    TransactionDataEvent(event_e which_);
-
-    //! Constructor.
-    TransactionDataEvent(
-        event_e                 which_,
-        const Buffer&           data_
-    );
-
-    //! Dispatch.
-    inline
-    void dispatch(Delegate& to) const
-    {
-        switch (which) {
-            case REQUEST_BODY:         to.request_body(*this); break;
-            case RESPONSE_BODY:        to.response_body(*this); break;
-            default:
-                throw std::logic_error("Invalid TransactionDataEvent.");
-        }
-    }
-
-    //! Data.
-    Buffer           data;
 };
 
 /**
@@ -446,9 +415,9 @@ struct Transaction
     event_list_t events;
 
     //! Add CONNECTION_DATA_IN to back of events.
-    ConnectionDataEvent& connection_data_in(const Buffer& data);
+    DataEvent& connection_data_in(const Buffer& data);
     //! Add CONNECTION_DATA_OUT to back of events.
-    ConnectionDataEvent& connection_data_out(const Buffer& data);
+    DataEvent& connection_data_out(const Buffer& data);
     //! Add REQUEST_STARTED to back of events.
     RequestEvent& request_started(
         const Buffer& raw,
@@ -459,7 +428,7 @@ struct Transaction
     //! Add REQUEST_HEADERS to back of events.
     HeaderEvent& request_headers();
     //! Add REQUEST_BODY to back of events.
-    TransactionDataEvent& request_body(const Buffer& data);
+    DataEvent& request_body(const Buffer& data);
     //! Add REQUEST_FINISHED to back of events.
     NullEvent& request_finished();
     //! Add RESPONSE_STARTED to back of events.
@@ -472,7 +441,7 @@ struct Transaction
     //! Add RESPONSE_HEADERS to back of events.
     HeaderEvent& response_headers();
     //! Add RESPONSE_BODY to back of events.
-    TransactionDataEvent& response_body(const Buffer& data);
+    DataEvent& response_body(const Buffer& data);
     //! Add RESPONSE_FINISHED to back of events.
     NullEvent& response_finished();
 

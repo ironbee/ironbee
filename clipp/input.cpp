@@ -85,31 +85,15 @@ ConnectionEvent::ConnectionEvent(
     // nop
 }
 
-ConnectionDataEvent::ConnectionDataEvent(event_e which_) :
+DataEvent::DataEvent(event_e which_) :
     Event(which_)
 {
     // nop
 }
 
-ConnectionDataEvent::ConnectionDataEvent(
+DataEvent::DataEvent(
     event_e       which_,
     const Buffer& data_
-) :
-    Event(which_),
-    data(data_)
-{
-    // nop
-}
-
-TransactionDataEvent::TransactionDataEvent(event_e which_) :
-    Event(which_)
-{
-    // nop
-}
-
-TransactionDataEvent::TransactionDataEvent(
-    event_e            which_,
-    const Buffer&      data_
 ) :
     Event(which_),
     data(data_)
@@ -173,12 +157,12 @@ header_t& HeaderEvent::add(const Buffer& name, const Buffer& value)
     return headers.back();
 }
 
-ConnectionDataEvent& Transaction::connection_data_in(
+DataEvent& Transaction::connection_data_in(
     const Buffer& data
 )
 {
-    boost::shared_ptr<ConnectionDataEvent> event =
-        make_shared<ConnectionDataEvent>(
+    boost::shared_ptr<DataEvent> event =
+        make_shared<DataEvent>(
             CONNECTION_DATA_IN,
             data
         );
@@ -187,12 +171,12 @@ ConnectionDataEvent& Transaction::connection_data_in(
     return *event;
 }
 
-ConnectionDataEvent& Transaction::connection_data_out(
+DataEvent& Transaction::connection_data_out(
     const Buffer& data
 )
 {
-    boost::shared_ptr<ConnectionDataEvent> event =
-        make_shared<ConnectionDataEvent>(
+    boost::shared_ptr<DataEvent> event =
+        make_shared<DataEvent>(
             CONNECTION_DATA_OUT,
             data
         );
@@ -230,12 +214,12 @@ HeaderEvent& Transaction::request_headers()
     return *event;
 }
 
-TransactionDataEvent& Transaction::request_body(
+DataEvent& Transaction::request_body(
     const Buffer& data
 )
 {
-    boost::shared_ptr<TransactionDataEvent> event =
-        make_shared<TransactionDataEvent>(
+    boost::shared_ptr<DataEvent> event =
+        make_shared<DataEvent>(
             REQUEST_BODY,
             data
         );
@@ -281,12 +265,12 @@ HeaderEvent& Transaction::response_headers()
     return *event;
 }
 
-TransactionDataEvent& Transaction::response_body(
+DataEvent& Transaction::response_body(
     const Buffer& data
 )
 {
-    boost::shared_ptr<TransactionDataEvent> event =
-        make_shared<TransactionDataEvent>(
+    boost::shared_ptr<DataEvent> event =
+        make_shared<DataEvent>(
             RESPONSE_BODY,
             data
         );

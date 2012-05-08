@@ -112,7 +112,7 @@ public:
         m_connection = IronBee::Connection();
     };
 
-    void connection_data_in(const Input::ConnectionDataEvent& event)
+    void connection_data_in(const Input::DataEvent& event)
     {
         if (! m_connection) {
             throw runtime_error(
@@ -131,7 +131,7 @@ public:
         m_engine.notify().connection_data_in(data);
     }
 
-    void connection_data_out(const Input::ConnectionDataEvent& event)
+    void connection_data_out(const Input::DataEvent& event)
     {
         if (! m_connection) {
             throw runtime_error(
@@ -190,7 +190,7 @@ public:
         );
     }
 
-    void request_body(const Input::TransactionDataEvent& event)
+    void request_body(const Input::DataEvent& event)
     {
         if (! m_transaction) {
             throw runtime_error(
@@ -266,7 +266,7 @@ public:
         );
     }
 
-    void response_body(const Input::TransactionDataEvent& event)
+    void response_body(const Input::DataEvent& event)
     {
         if (! m_transaction) {
             throw runtime_error(

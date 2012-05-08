@@ -73,19 +73,9 @@ struct ViewDelegate :
              ;
     }
 
-    //! Output ConnectionDataEvent.
+    //! Output DataEvent.
     static
-    void connection_data_event(const ConnectionDataEvent& event)
-    {
-        output_with_escapes(
-            event.data.data,
-            event.data.data + event.data.length
-        );
-    }
-
-    //! Output TransactionDataEvent.
-    static
-    void transaction_data_event(const TransactionDataEvent& event)
+    void data_event(const DataEvent& event)
     {
         output_with_escapes(
             event.data.data,
@@ -117,17 +107,17 @@ struct ViewDelegate :
     }
 
     //! CONNECTION_DATA_IN
-    void connection_data_in(const ConnectionDataEvent& event)
+    void connection_data_in(const DataEvent& event)
     {
         cout << "=== CONNECTION_DATA_IN ===" << endl;
-        connection_data_event(event);
+        data_event(event);
     }
 
     //! CONNECTION_DATA_OUT
-    void connection_data_out(const ConnectionDataEvent& event)
+    void connection_data_out(const DataEvent& event)
     {
         cout << "=== CONNECTION_DATA_OUT ===" << endl;
-        connection_data_event(event);
+        data_event(event);
     }
 
     //! REQUEST_STARTED
@@ -148,10 +138,10 @@ struct ViewDelegate :
     }
 
     //! REQUEST_BODY
-    void request_body(const TransactionDataEvent& event)
+    void request_body(const DataEvent& event)
     {
         cout << "=== REQUEST_BODY ===" << endl;
-        transaction_data_event(event);
+        data_event(event);
     }
 
     //! REQUEST_FINISHED
@@ -179,10 +169,10 @@ struct ViewDelegate :
     }
 
     //! RESPONSE_BODY
-    void response_body(const TransactionDataEvent& event)
+    void response_body(const DataEvent& event)
     {
         cout << "=== RESPONSE BODY ===" << endl;
-        transaction_data_event(event);
+        data_event(event);
     }
 
     //! RESPONSE_FINISHED
