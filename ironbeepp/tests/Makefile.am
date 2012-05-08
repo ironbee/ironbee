@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I../acinclude
 EXTRA_DIST = gtest_executor.sh
 
 LDADD = \
-    $(top_builddir)/tests/gtest/libgtest.la \
+    $(top_builddir)/tests/libgtest.a \
     $(top_builddir)/tests/test_main.o \
     $(builddir)/../libibpp.la \
     $(top_builddir)/util/libibutil.la \

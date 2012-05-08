@@ -1,5 +1,4 @@
 ACLOCAL_AMFLAGS = -I../acinclude
-SUBDIRS = gtest
 EXTRA_DIST = gtest \
        TestIronBeeModuleRulesLua.operator_test.config \
        AhoCorasickModuleTest.config \
@@ -13,11 +12,15 @@ EXTRA_DIST = gtest \
  
 include $(top_srcdir)/build/tests.mk
 
-LIBUTIL_LDADD = gtest/libgtest.la $(top_builddir)/util/libibutil.la
+LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
+noinst_LIBRARIES = libgtest.a libgtest_main.a
+
+libgtest_a_SOURCES = gtest/gtest-all.cc
+libgtest_main_a_SOURCES = gtest/gtest_main.cc
 
 TESTS_ENVIRONMENT = ./gtest_executor.sh
 
-LDADD = $(LIBUTIL_LDADD)
+LDADD = $(LIBUTIL_LDADD) libgtest.a
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
@@ -189,8 +192,7 @@ test_luajit_LDFLAGS = $(LDFLAGS)
 test_luajit_LDADD = $(LDADD) \
                     $(MODULE_TEST_LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
-                    -lm \
-                    gtest/libgtest.la 
+                    -lm
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 

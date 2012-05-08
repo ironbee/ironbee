@@ -449,7 +449,6 @@ AC_CONFIG_FILES([docs/docbook/manual/Makefile])
 
 # TODO: Conditional on unit testing
 AC_CONFIG_FILES([tests/Makefile])
-AC_CONFIG_FILES([tests/gtest/Makefile])
 
 # pkg-config
 AC_CONFIG_FILES([ironbee.pc])
