@@ -8,7 +8,6 @@ LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_radix.so"
 LoadModule "ibmod_ac.so"
 LoadModule "ibmod_rules.so"
-LoadModule "ibmod_poc_sig.so"
 LoadModule "ibmod_user_agent.so"
 
 Set parser "htp"
