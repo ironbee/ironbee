@@ -700,52 +700,6 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * @ref tx_data_in_event occurs.
- *
- * When the event is notified, additional events are notified immediately
- * prior to it:
- *
- *  - @ref tx_started_event
- */
-ib_status_t ib_state_notify_tx_data_in(ib_engine_t *ib,
-                                       ib_tx_t *tx,
-                                       ib_txdata_t *txdata)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-
-    if ((tx->flags & IB_TX_FSEENDATAIN) == 0) {
-        ib_tx_flags_set(tx, IB_TX_FSEENDATAIN);
-    }
-
-    rc = ib_state_notify_txdata(ib, tx, tx_data_in_event, txdata);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_fctl_data_add(tx->fctl,
-                          txdata->dtype,
-                          txdata->data,
-                          txdata->dlen);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-ib_status_t ib_state_notify_tx_data_out(ib_engine_t *ib,
-                                        ib_tx_t *tx,
-                                        ib_txdata_t *txdata)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-
-    if ((tx->flags & IB_TX_FSEENDATAOUT) == 0) {
-        ib_tx_flags_set(tx, IB_TX_FSEENDATAOUT);
-    }
-
-    rc = ib_state_notify_txdata(ib, tx, tx_data_out_event, txdata);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
 ib_status_t ib_state_notify_request_headers_data(
     ib_engine_t *ib,
     ib_tx_t *tx,

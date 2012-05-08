@@ -104,37 +104,6 @@ Notifier Notifier::connection_closed(Connection connection)
 }
 
 
-Notifier Notifier::transaction_data_in(
-    Transaction     transaction,
-    TransactionData transaction_data
-)
-{
-    Internal::throw_if_error(
-        ib_state_notify_tx_data_in(
-            m_engine.ib(),
-            transaction.ib(),
-            transaction_data.ib()
-        )
-    );
-    return *this;
-}
-
-Notifier Notifier::transaction_data_out(
-    Transaction     transaction,
-    TransactionData transaction_data
-)
-{
-    Internal::throw_if_error(
-        ib_state_notify_tx_data_out(
-            m_engine.ib(),
-            transaction.ib(),
-            transaction_data.ib()
-        )
-    );
-    return *this;
-}
-
-
 Notifier Notifier::request_started(
     Transaction       transaction,
     ParsedRequestLine parsed_request_line

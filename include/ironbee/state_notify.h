@@ -102,32 +102,6 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_closed(ib_engine_t *ib,
                                                    ib_conn_t *conn);
 
 /**
- * Notify the state machine that transaction data came in.
- *
- * @param ib Engine handle
- * @param tx Transaction
- * @param txdata Transaction data
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_state_notify_tx_data_in(ib_engine_t *ib,
-                                                  ib_tx_t *tx,
-                                                  ib_txdata_t *txdata);
-
-/**
- * Notify the state machine that transaction data is headed out.
- *
- * @param ib Engine handle
- * @param tx Transaction
- * @param txdata Transaction data
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_state_notify_tx_data_out(ib_engine_t *ib,
-                                                   ib_tx_t *tx,
-                                                   ib_txdata_t *txdata);
-
-/**
  * Notify the state machine that the request started.
  *
  * The @a req parsed request object will be stored in @a tx for use after

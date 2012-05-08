@@ -93,17 +93,6 @@ public:
     //! Notify connection_closed event.
     Notifier connection_closed(Connection connection);
 
-    //! Notify transaction_data_in event.
-    Notifier transaction_data_in(
-        Transaction     transaction,
-        TransactionData transaction_data
-    );
-    //! Notify transaction_data_out event.
-    Notifier transaction_data_out(
-        Transaction     transaction,
-        TransactionData transaction_data
-    );
-
     //! Notify request_started event.
     Notifier request_started(
         Transaction       transaction,
