@@ -43,7 +43,29 @@ ByteString ConstParsedRequestLine::protocol() const
     return ByteString(ib()->protocol);
 }
 
-ConstParsedRequestLine ConstParsedRequestLine::create_alias(
+// ParsedRequestLine
+
+ParsedRequestLine ParsedRequestLine::remove_const(
+    ConstParsedRequestLine parsed_request_line
+)
+{
+    return ParsedRequestLine(const_cast<ib_type>(parsed_request_line.ib()));
+}
+
+ParsedRequestLine::ParsedRequestLine() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ParsedRequestLine::ParsedRequestLine(ib_type ib_parsed_request_line) :
+    ConstParsedRequestLine(ib_parsed_request_line),
+    m_ib(ib_parsed_request_line)
+{
+    // nop
+}
+
+ParsedRequestLine ParsedRequestLine::create_alias(
     Transaction transaction,
     const char* raw,
     size_t raw_length,
@@ -70,29 +92,7 @@ ConstParsedRequestLine ConstParsedRequestLine::create_alias(
             protocol_length
         )
     );
-    return ConstParsedRequestLine(ib_prl);
-}
-
-// ParsedRequestLine
-
-ParsedRequestLine ParsedRequestLine::remove_const(
-    ConstParsedRequestLine parsed_request_line
-)
-{
-    return ParsedRequestLine(const_cast<ib_type>(parsed_request_line.ib()));
-}
-
-ParsedRequestLine::ParsedRequestLine() :
-    m_ib(NULL)
-{
-    // nop
-}
-
-ParsedRequestLine::ParsedRequestLine(ib_type ib_parsed_request_line) :
-    ConstParsedRequestLine(ib_parsed_request_line),
-    m_ib(ib_parsed_request_line)
-{
-    // nop
+    return ParsedRequestLine(ib_prl);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstParsedRequestLine& parsed_request_line)

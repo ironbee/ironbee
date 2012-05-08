@@ -43,7 +43,29 @@ ByteString ConstParsedResponseLine::message() const
     return ByteString(ib()->msg);
 }
 
-ConstParsedResponseLine ConstParsedResponseLine::create_alias(
+// ParsedResponseLine
+
+ParsedResponseLine ParsedResponseLine::remove_const(
+    ConstParsedResponseLine parsed_response_line
+)
+{
+    return ParsedResponseLine(const_cast<ib_type>(parsed_response_line.ib()));
+}
+
+ParsedResponseLine::ParsedResponseLine() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ParsedResponseLine::ParsedResponseLine(ib_type ib_parsed_response_line) :
+    ConstParsedResponseLine(ib_parsed_response_line),
+    m_ib(ib_parsed_response_line)
+{
+    // nop
+}
+
+ParsedResponseLine ParsedResponseLine::create_alias(
     Transaction transaction,
     const char* raw,
     size_t raw_length,
@@ -70,29 +92,7 @@ ConstParsedResponseLine ConstParsedResponseLine::create_alias(
             message_length
         )
     );
-    return ConstParsedResponseLine(ib_prl);
-}
-
-// ParsedResponseLine
-
-ParsedResponseLine ParsedResponseLine::remove_const(
-    ConstParsedResponseLine parsed_response_line
-)
-{
-    return ParsedResponseLine(const_cast<ib_type>(parsed_response_line.ib()));
-}
-
-ParsedResponseLine::ParsedResponseLine() :
-    m_ib(NULL)
-{
-    // nop
-}
-
-ParsedResponseLine::ParsedResponseLine(ib_type ib_parsed_response_line) :
-    ConstParsedResponseLine(ib_parsed_response_line),
-    m_ib(ib_parsed_response_line)
-{
-    // nop
+    return ParsedResponseLine(ib_prl);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstParsedResponseLine& parsed_response_line)

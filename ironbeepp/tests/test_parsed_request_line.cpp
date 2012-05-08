@@ -69,7 +69,7 @@ TEST_F(TestParsedRequestLine, create)
     const char* uri      = "bar";
     const char* protocol = "baz";
 
-    ConstParsedRequestLine prl = ConstParsedRequestLine::create_alias(
+    ConstParsedRequestLine prl = ParsedRequestLine::create_alias(
         m_transaction,
         raw,      3,
         method,   3,
