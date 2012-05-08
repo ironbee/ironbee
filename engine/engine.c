@@ -1928,6 +1928,14 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                         }
                     }
                 }
+                else if ((cmphost == NULL) && (host == NULL)) {
+                    /* Match default (wildcard) site for missing host. */
+                    ib_log_debug2_tx(tx,
+                                  "Site \"%s:%s\" matched ctx=%p '%s'",
+                                  loc->site->name, loc->path,
+                                  ctx, ctx->ctx_full);
+                    IB_FTRACE_RET_STATUS(IB_OK);
+                }
                 else {
                     ib_log_debug2_tx(tx,
                                   "Skipping Host \"%s\" "
