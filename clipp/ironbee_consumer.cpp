@@ -36,6 +36,33 @@ namespace CLIPP {
 
 namespace {
 
+class adapt_header :
+    public unary_function<const Input::header_t, IronBee::ParsedNameValue>
+{
+public:
+    explicit adapt_header(IronBee::MemoryPool mp) :
+        m_mp( mp )
+    {
+        // nop
+    }
+
+    IronBee::ParsedNameValue operator()(const Input::header_t& header) const
+    {
+        return IronBee::ParsedNameValue::create(
+            m_mp,
+            IronBee::ByteString::create_alias(
+                m_mp, header.first.data, header.first.length
+            ),
+            IronBee::ByteString::create_alias(
+                m_mp, header.second.data, header.second.length
+            )
+        );
+    }
+
+private:
+    IronBee::MemoryPool m_mp;
+};
+
 class IronBeeDelegate :
     public Input::Delegate
 {
@@ -121,6 +148,159 @@ public:
         );
 
         m_engine.notify().connection_data_out(data);
+    }
+
+    void request_started(const Input::RequestEvent& event)
+    {
+        if (! m_connection) {
+            throw runtime_error(
+                "REQUEST_STARTED event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        m_transaction = IronBee::Transaction::create(m_connection);
+
+        IronBee::ParsedRequestLine prl =
+            IronBee::ParsedRequestLine::create_alias(
+                m_transaction,
+                event.raw.data,      event.raw.length,
+                event.method.data,   event.method.length,
+                event.uri.data,      event.uri.length,
+                event.protocol.data, event.protocol.length
+            );
+
+        m_engine.notify().request_started(m_transaction, prl);
+    }
+
+    void request_headers(const Input::HeaderEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "REQUEST_HEADERS event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        adapt_header adaptor(m_transaction.memory_pool());
+        m_engine.notify().request_headers_data(
+            m_transaction,
+            boost::make_transform_iterator(event.headers.begin(), adaptor),
+            boost::make_transform_iterator(event.headers.end(),   adaptor)
+        );
+    }
+
+    void request_body(const Input::TransactionDataEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "REQUEST_BODY event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        // Copy because IronBee needs mutable input.
+        char* mutable_data = strndup(event.data.data, event.data.length);
+        m_connection.memory_pool().register_cleanup(
+            boost::bind(free, mutable_data)
+        );
+        IronBee::TransactionData data =
+            IronBee::TransactionData::create_alias(
+                m_connection.memory_pool(),
+                mutable_data,
+                event.data.length
+            );
+
+        m_engine.notify().request_body_data(m_transaction, data);
+    }
+
+    void request_finished(const Input::NullEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "REQUEST_FINISHED event fired outside "
+                "of connection lifetime."
+            );
+        }
+        m_engine.notify().request_finished(m_transaction);
+        m_transaction = IronBee::Transaction();
+    }
+
+
+
+    void response_started(const Input::ResponseEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "RESPONSE_STARTED event fired outside "
+                "of transaction lifetime."
+            );
+        }
+
+        IronBee::ParsedResponseLine prl =
+            IronBee::ParsedResponseLine::create_alias(
+                m_transaction,
+                event.raw.data,      event.raw.length,
+                event.protocol.data, event.protocol.length,
+                event.status.data,   event.status.length,
+                event.message.data,  event.message.length
+            );
+
+        m_engine.notify().response_started(m_transaction, prl);
+    }
+
+    void response_headers(const Input::HeaderEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "RESPONSE_HEADERS event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        adapt_header adaptor(m_transaction.memory_pool());
+        m_engine.notify().response_headers_data(
+            m_transaction,
+            boost::make_transform_iterator(event.headers.begin(), adaptor),
+            boost::make_transform_iterator(event.headers.end(),   adaptor)
+        );
+    }
+
+    void response_body(const Input::TransactionDataEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "RESPONSE_BODY event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        // Copy because IronBee needs mutable input.
+        char* mutable_data = strndup(event.data.data, event.data.length);
+        m_connection.memory_pool().register_cleanup(
+            boost::bind(free, mutable_data)
+        );
+        IronBee::TransactionData data =
+            IronBee::TransactionData::create_alias(
+                m_connection.memory_pool(),
+                mutable_data,
+                event.data.length
+            );
+
+        m_engine.notify().response_body_data(m_transaction, data);
+    }
+
+    void response_finished(const Input::NullEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "RESPONSE_FINISHED event fired outside "
+                "of connection lifetime."
+            );
+        }
+
+        m_engine.notify().response_finished(m_transaction);
+        m_transaction = IronBee::Transaction();
     }
 
 private:
