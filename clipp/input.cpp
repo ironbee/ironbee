@@ -109,11 +109,9 @@ TransactionDataEvent::TransactionDataEvent(event_e which_) :
 
 TransactionDataEvent::TransactionDataEvent(
     event_e            which_,
-    transaction_data_type_e type_,
     const Buffer&      data_
 ) :
     Event(which_),
-    type(type_),
     data(data_)
 {
     // nop
@@ -239,7 +237,6 @@ TransactionDataEvent& Transaction::request_body(
     boost::shared_ptr<TransactionDataEvent> event =
         make_shared<TransactionDataEvent>(
             REQUEST_BODY,
-            BODY_TYPE,
             data
         );
     events.push_back(event);
@@ -291,7 +288,6 @@ TransactionDataEvent& Transaction::response_body(
     boost::shared_ptr<TransactionDataEvent> event =
         make_shared<TransactionDataEvent>(
             RESPONSE_BODY,
-            BODY_TYPE,
             data
         );
     events.push_back(event);

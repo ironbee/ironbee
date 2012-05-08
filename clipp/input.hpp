@@ -291,16 +291,6 @@ struct ConnectionDataEvent : public Event
     Buffer data;
 };
 
-//! Type of transaction data.
-enum transaction_data_type_e {
-    META_TYPE,
-    RAW_TYPE,
-    LINE_TYPE,
-    HEADER_TYPE,
-    BODY_TYPE,
-    TRAILER_TYPE
-};
-
 /**
  * TransactionData data: REQUEST_BODY, RESPONSE_BODY.
  **/
@@ -313,7 +303,6 @@ struct TransactionDataEvent : public Event
     //! Constructor.
     TransactionDataEvent(
         event_e                 which_,
-        transaction_data_type_e type_,
         const Buffer&           data_
     );
 
@@ -329,8 +318,6 @@ struct TransactionDataEvent : public Event
         }
     }
 
-    //! Data type.
-    transaction_data_type_e type;
     //! Data.
     Buffer           data;
 };

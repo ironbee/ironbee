@@ -73,21 +73,6 @@ struct ViewDelegate :
              ;
     }
 
-    //! Connection data type.
-    static const char* tx_data_type(transaction_data_type_e type)
-    {
-        switch (type) {
-            case META_TYPE:    return "META";
-            case RAW_TYPE:     return "RAW";
-            case LINE_TYPE:    return "LINE";
-            case HEADER_TYPE:  return "HEADER";
-            case BODY_TYPE:    return "BODY";
-            case TRAILER_TYPE: return "TRAILER";
-            default:           return "UNKNOWN";
-        }
-
-    }
-
     //! Output ConnectionDataEvent.
     static
     void connection_data_event(const ConnectionDataEvent& event)
