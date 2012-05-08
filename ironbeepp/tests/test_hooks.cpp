@@ -462,10 +462,6 @@ TEST_F(TestHooks, Basic)
     test_transaction(Engine::response_headers, info);
     H.response_finished(handler);
     test_transaction(Engine::response_finished, info);
-    H.transaction_data_in(handler);
-    test_transaction_data(Engine::transaction_data_in, info);
-    H.transaction_data_out(handler);
-    test_transaction_data(Engine::transaction_data_out, info);
     H.request_body_data(handler);
     test_transaction_data(Engine::request_body_data, info);
     H.response_body_data(handler);

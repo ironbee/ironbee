@@ -116,8 +116,6 @@ static int ib_state_event_name_cbdata_type_list[] = {
     IB_CBDATA_CONN_T,      /**< conn_closed_event */
 
     /* Parser States */
-    IB_CBDATA_TX_DATA_T,   /**< tx_data_in_event */
-    IB_CBDATA_TX_DATA_T,   /**< tx_data_out_event */
     IB_CBDATA_TX_T,        /**< request_started_event */
     IB_CBDATA_TX_T,        /**< request_headers_event */
     IB_CBDATA_TX_T,        /**< request_body_data_event */

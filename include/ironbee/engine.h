@@ -898,8 +898,6 @@ typedef enum {
     conn_closed_event,             /**< Plugin notified connection closed */
 
     /* Parser States */
-    tx_data_in_event,              /**< Parser notified of request data */
-    tx_data_out_event,             /**< Parser notified of response data */
     request_started_event,         /**< Parser notified request has started */
     request_headers_event,         /**< Parser notified of request headers */
     request_headers_data_event,    /**< Parser notified of request headers data */

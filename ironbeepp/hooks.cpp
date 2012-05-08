@@ -726,22 +726,6 @@ HooksRegistrar& HooksRegistrar::response_finished(transaction_t f)
     );
 }
 
-HooksRegistrar& HooksRegistrar::transaction_data_in(transaction_data_t f)
-{
-    return transaction_data(
-        Engine::transaction_data_in,
-        f
-    );
-}
-
-HooksRegistrar& HooksRegistrar::transaction_data_out(transaction_data_t f)
-{
-    return transaction_data(
-        Engine::transaction_data_out,
-        f
-    );
-}
-
 HooksRegistrar& HooksRegistrar::request_body_data(transaction_data_t f)
 {
     return transaction_data(

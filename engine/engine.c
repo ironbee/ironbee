@@ -97,8 +97,6 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
     IB_STATE_HOOK_CONN,     /**< conn_closed_event */
 
     /* Parser States */
-    IB_STATE_HOOK_TXDATA,   /**< tx_data_in_event */
-    IB_STATE_HOOK_TXDATA,   /**< tx_data_out_event */
     IB_STATE_HOOK_REQLINE,  /**< request_started_event */
     IB_STATE_HOOK_TX,       /**< request_headers_event */
     IB_STATE_HOOK_HEADER,   /**< request_headers_data_event */
@@ -939,8 +937,6 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(conn_closed_event),
 
     /* Parser States */
-    IB_STRINGIFY(tx_data_in_event),
-    IB_STRINGIFY(tx_data_out_event),
     IB_STRINGIFY(request_started_event),
     IB_STRINGIFY(request_headers_event),
     IB_STRINGIFY(request_headers_data_event),

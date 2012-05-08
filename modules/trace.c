@@ -357,36 +357,6 @@ static ib_status_t modtrace_handle_tx(
 }
 
 /**
- * Trace tx_data_in_event event handler.
- * @internal
- *
- * Handles a tx_data_in_event, dumping some info on the event.
- *
- * @param[in] ib IronBee object
- * @param[in] tx Transaction object.
- * @param[in] event Event type
- * @param[in] txdata Transaction data object
- * @param[in] cbdata Callback data: actually an event_info_t describing the
- * event.
- */
-static ib_status_t modtrace_handle_txdata(
-     ib_engine_t *ib,
-     ib_tx_t *tx,
-     ib_state_event_type_t event,
-     ib_txdata_t *txdata,
-     void *cbdata
-)
-{
-    IB_FTRACE_INIT();
-    const event_info_t *eventp = (const event_info_t *)cbdata;
-
-    ib_log_debug(ib, "handle_txdata [%s]: data=%p tx=%p dpi=%p",
-                 eventp->name, (void *)txdata->data, (void *)tx, (void *)tx->dpi);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
  * Add usage of the current memory pool to the usage data
  * @internal
  *
@@ -616,15 +586,6 @@ static ib_status_t modtrace_init(ib_engine_t *ib,
                     ib,
                     (ib_state_event_type_t)event,
                     modtrace_handle_conn_data,
-                    (void *)eventp
-                );
-                break;
-
-            case tx_data_in_event:
-                rc = ib_hook_txdata_register(
-                    ib,
-                    (ib_state_event_type_t)event,
-                    modtrace_handle_txdata,
                     (void *)eventp
                 );
                 break;

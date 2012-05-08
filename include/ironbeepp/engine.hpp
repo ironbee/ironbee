@@ -75,8 +75,6 @@ public:
         transaction_started        = tx_started_event,
         transaction_process        = tx_process_event,
         transaction_finished       = tx_finished_event,
-        transaction_data_in        = tx_data_in_event,
-        transaction_data_out       = tx_data_out_event,
         handle_context_connection  = handle_context_conn_event,
         handle_connect             = handle_connect_event,
         handle_context_transaction = handle_context_tx_event,

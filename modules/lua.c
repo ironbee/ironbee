@@ -375,12 +375,6 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
     else if (strcmp("ConnFinished", event_name) == 0) {
         event = conn_finished_event;
     }
-    else if (strcmp("TxDataIn", event_name) == 0) {
-        event = tx_data_in_event;
-    }
-    else if (strcmp("TxDataOut", event_name) == 0) {
-        event = tx_data_out_event;
-    }
     else if (strcmp("ConnDataIn", event_name) == 0) {
         event = conn_data_in_event;
     }
@@ -1233,12 +1227,6 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
             break;
 
         /* Transaction Handlers */
-        case tx_data_in_event:
-            funcname = "onEventTxDataIn";
-            break;
-        case tx_data_out_event:
-            funcname = "onEventTxDataOut";
-            break;
         case tx_started_event:
             funcname = "onEventTxStarted";
             break;
@@ -1847,20 +1835,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     rc = ib_hook_conndata_register(ib, conn_data_out_event,
                                    modlua_handle_conndata_event,
                                    NULL);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register hook: %s",
-                     ib_status_to_string(rc));
-    }
-    rc = ib_hook_txdata_register(ib, tx_data_in_event,
-                                 modlua_handle_txdata_event,
-                                 NULL);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register hook: %s",
-                     ib_status_to_string(rc));
-    }
-    rc = ib_hook_txdata_register(ib, tx_data_out_event,
-                                 modlua_handle_txdata_event,
-                                 NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
