@@ -203,38 +203,6 @@ ConnectionDataEvent& Transaction::connection_data_out(
     return *event;
 }
 
-TransactionDataEvent& Transaction::transaction_data_in(
-    transaction_data_type_e type,
-    const Buffer&           data
-)
-{
-    boost::shared_ptr<TransactionDataEvent> event =
-        make_shared<TransactionDataEvent>(
-            TRANSACTION_DATA_IN,
-            type,
-            data
-        );
-    events.push_back(event);
-
-    return *event;
-}
-
-TransactionDataEvent& Transaction::transaction_data_out(
-    transaction_data_type_e type,
-    const Buffer&           data
-)
-{
-    boost::shared_ptr<TransactionDataEvent> event =
-        make_shared<TransactionDataEvent>(
-            TRANSACTION_DATA_OUT,
-            type,
-            data
-        );
-    events.push_back(event);
-
-    return *event;
-}
-
 RequestEvent& Transaction::request_started(
     const Buffer& raw,
     const Buffer& method,

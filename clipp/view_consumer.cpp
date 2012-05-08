@@ -145,22 +145,6 @@ struct ViewDelegate :
         connection_data_event(event);
     }
 
-    //! TRANSACTION_DATA_IN
-    void transaction_data_in(const TransactionDataEvent& event)
-    {
-        cout << "=== TRANSACTION_DATA_IN: " << tx_data_type(event.type)
-             << " ===" << endl;
-        transaction_data_event(event);
-    }
-
-    //! TRANSACTION_DATA_OUT
-    void transaction_data_out(const TransactionDataEvent& event)
-    {
-        cout << "=== TRANSACTION_DATA_OUT: " << tx_data_type(event.type)
-             << " ===" << endl;
-        transaction_data_event(event);
-    }
-
     //! REQUEST_STARTED
     void request_started(const RequestEvent& event)
     {

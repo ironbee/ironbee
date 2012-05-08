@@ -87,14 +87,6 @@ public:
     virtual
     void connection_data_out(const ConnectionDataEvent& event) {}
 
-    //! TRANSACTION_DATA_IN
-    virtual
-    void transaction_data_in(const TransactionDataEvent& event) {}
-
-    //! TRANSACTION_DATA_OUT
-    virtual
-    void transaction_data_out(const TransactionDataEvent& event) {}
-
     //! REQUEST_STARTED
     virtual
     void request_started(const RequestEvent& event) {}
@@ -310,8 +302,7 @@ enum transaction_data_type_e {
 };
 
 /**
- * TransactionData data: TRANSACTION_DATA_IN, TRANSACTION_DATA_OUT,
- * REQUEST_BODY, RESPONSE_BODY.
+ * TransactionData data: REQUEST_BODY, RESPONSE_BODY.
  **/
 struct TransactionDataEvent : public Event
 {
@@ -331,8 +322,6 @@ struct TransactionDataEvent : public Event
     void dispatch(Delegate& to) const
     {
         switch (which) {
-            case TRANSACTION_DATA_IN:  to.transaction_data_in(*this); break;
-            case TRANSACTION_DATA_OUT: to.transaction_data_out(*this); break;
             case REQUEST_BODY:         to.request_body(*this); break;
             case RESPONSE_BODY:        to.response_body(*this); break;
             default:
@@ -473,16 +462,6 @@ struct Transaction
     ConnectionDataEvent& connection_data_in(const Buffer& data);
     //! Add CONNECTION_DATA_OUT to back of events.
     ConnectionDataEvent& connection_data_out(const Buffer& data);
-    //! Add TRANSACTION_DATA_IN to back of events.
-    TransactionDataEvent& transaction_data_in(
-        transaction_data_type_e type,
-        const Buffer&           data
-    );
-    //! Add TRANSACTION_DATA_OUT to back of events.
-    TransactionDataEvent& transaction_data_out(
-        transaction_data_type_e type,
-        const Buffer&           data
-    );
     //! Add REQUEST_STARTED to back of events.
     RequestEvent& request_started(
         const Buffer& raw,
