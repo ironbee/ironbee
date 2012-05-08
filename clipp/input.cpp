@@ -39,9 +39,22 @@ string Buffer::to_s() const
 }
 
 Event::Event(event_e which_) :
-    which(which_)
+    which(which_),
+    pre_delay(0),
+    post_delay(0)
 {
     // nop
+}
+
+void Event::dispatch(Delegate& to, bool with_delay) const
+{
+    if (with_delay && pre_delay > 0) {
+        usleep(useconds_t(pre_delay * 1e6));
+    }
+    this->dispatch(to);
+    if (with_delay && post_delay > 0) {
+        usleep(useconds_t(post_delay * 1e6));
+    }
 }
 
 NullEvent::NullEvent(event_e which_) :
@@ -327,10 +340,10 @@ NullEvent& Transaction::response_finished()
     return *event;
 }
 
-void Transaction::dispatch(Delegate& to) const
+void Transaction::dispatch(Delegate& to, bool with_delay) const
 {
     BOOST_FOREACH(const event_p& event, events) {
-        event->dispatch(to);
+        event->dispatch(to, with_delay);
     }
 }
 
@@ -397,16 +410,16 @@ Transaction& Connection::add_transaction(
     return tx;
 }
 
-void Connection::dispatch(Delegate& to) const
+void Connection::dispatch(Delegate& to, bool with_delay) const
 {
     BOOST_FOREACH(const event_p& event, pre_transaction_events) {
-        event->dispatch(to);
+        event->dispatch(to, with_delay);
     }
     BOOST_FOREACH(const Transaction& tx, transactions) {
-        tx.dispatch(to);
+        tx.dispatch(to, with_delay);
     }
     BOOST_FOREACH(const event_p& event, post_transaction_events) {
-        event->dispatch(to);
+        event->dispatch(to, with_delay);
     }
 }
 

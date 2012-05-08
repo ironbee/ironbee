@@ -195,11 +195,20 @@ struct Event
     explicit
     Event(event_e which_);
 
-    //! Dispatch Event.  See Delegate.
+    //! Dispatch event without delay.  Must be overriden by subclass.
     virtual void dispatch(Delegate& to) const = 0;
+
+    //! Dispatch event with optional delay.
+    void dispatch(Delegate& to, bool with_delay) const;
 
     //! Which event we are.
     event_e which;
+
+    //! Seconds to delay before firing event.
+    double pre_delay;
+
+    //! Seconds to delay after firing event.
+    double post_delay;
 };
 
 /**
@@ -502,7 +511,7 @@ struct Transaction
     NullEvent& response_finished();
 
     //! Dispatch events.
-    void dispatch(Delegate& to) const;
+    void dispatch(Delegate& to, bool with_delay = false) const;
 };
 
 //! List of transactions.
@@ -552,7 +561,7 @@ struct Connection
     NullEvent& connection_closed();
 
     //! Dispatch.
-    void dispatch(Delegate& to) const;
+    void dispatch(Delegate& to, bool with_delay = false) const;
 };
 
 /**
