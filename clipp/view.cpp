@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "view_consumer.hpp"
+#include "view.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -196,6 +196,11 @@ bool ViewConsumer::operator()(const input_p& input)
     input->connection.dispatch(viewer);
 
     return true;
+}
+
+bool ViewModifier::operator()(input_p& input)
+{
+    return ViewConsumer()(input);
 }
 
 } // CLIPP

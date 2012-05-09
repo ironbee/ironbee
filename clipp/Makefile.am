@@ -12,7 +12,7 @@ clipp_SOURCES = \
     input.cpp \
     modsec_audit_log.cpp \
     modsec_audit_log_generator.cpp \
-    view_consumer.cpp \
+    view.cpp \
     raw_generator.cpp \
     ironbee_consumer.cpp \
     clipp.pb.cc \

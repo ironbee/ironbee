@@ -51,7 +51,7 @@
  */
 
 #include "input.hpp"
- #include "configuration_parser.hpp"
+#include "configuration_parser.hpp"
 
 #include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
@@ -61,9 +61,11 @@
 
 #include "ironbee_consumer.hpp"
 #include "pb_consumer.hpp"
-#include "view_consumer.hpp"
 
 #include "connection_modifiers.hpp"
+
+// Consumer and Modifier
+#include "view.hpp"
 
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>
@@ -170,6 +172,9 @@ input_generator_t init_raw_generator(const string& arg);
 // Consumers
 input_consumer_t init_view_consumer(const string& arg);
 
+// Modifiers
+input_modifier_t init_view_modifier(const string& arg);
+
 bool on_error(const string& message);
 
 vector<string> split_on_char(const string& src, char c);
@@ -256,6 +261,7 @@ int main(int argc, char** argv)
 
     // Declare modifiers.
     modifier_factory_map_t modifier_factory_map;
+    modifier_factory_map["view"] = init_view_modifier;
     modifier_factory_map["set_local_ip"] =
         construct_modifier<SetLocalIPModifier>;
 
@@ -418,6 +424,11 @@ input_generator_t init_raw_generator(const string& arg)
 input_consumer_t init_view_consumer(const string& arg)
 {
     return ViewConsumer();
+}
+
+input_modifier_t init_view_modifier(const string& arg)
+{
+    return ViewModifier();
 }
 
 bool on_error(const string& message)

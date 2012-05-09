@@ -39,6 +39,15 @@ public:
     bool operator()(const Input::input_p& input);
 };
 
+/**
+ * CLIPP modifier that writes inputs to cout in human readable form.
+ **/
+class ViewModifier
+{
+public:
+    bool operator()(Input::input_p& input);
+};
+
 } // CLIPP
 } // IronBee
 
