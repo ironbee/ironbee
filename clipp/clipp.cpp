@@ -55,7 +55,7 @@
 
 #include "modsec_audit_log_generator.hpp"
 #include "raw_generator.hpp"
-//#include "pb_generator.hpp"
+#include "pb_generator.hpp"
 //#include "apache_generator.hpp"
 //#include "suricata_generator.hpp"
 
@@ -243,7 +243,7 @@ int main(int argc, char** argv)
     generator_factory_map["modsec"]   =
         construct_generator<ModSecAuditLogGenerator>;
     generator_factory_map["raw"]      = init_raw_generator;
-//    generator_factory_map["pb"]       = construct_generator<PBGenerator>;
+    generator_factory_map["pb"]       = construct_generator<PBGenerator>;
 //    generator_factory_map["apache"]   = construct_generator<ApacheGenerator>;
 //    generator_factory_map["suricata"] =
 //        construct_generator<SuricataGenerator>;

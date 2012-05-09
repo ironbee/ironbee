@@ -30,6 +30,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
@@ -87,9 +88,162 @@ struct data_t
     PB::Input                 pb_input;
 };
 
+struct pb_to_event :
+    public unary_function<const PB::Event, Input::event_p>
+{
+    Input::event_p operator()(const PB::Event& pb_event) const
+    {
+        Input::event_p generic;
+
+        Input::event_e which = static_cast<Input::event_e>(pb_event.which());
+        switch (which) {
+            case Input::UNKNOWN:
+                throw runtime_error("Event of UNKNOWN type.");
+            case Input::CONNECTION_DATA_IN:
+            case Input::CONNECTION_DATA_OUT:
+            case Input::REQUEST_BODY:
+            case Input::RESPONSE_BODY:
+            {
+                // DataEvent
+                boost::shared_ptr<Input::DataEvent> specific =
+                    boost::make_shared<Input::DataEvent>(which);
+                generic = specific;
+                if (! pb_event.has_data_event()) {
+                    throw runtime_error("DataEvent lacking specific data.");
+                }
+                const PB::DataEvent& pb = pb_event.data_event();
+                specific->data.data   = pb.data().data();
+                specific->data.length = pb.data().length();
+                break;
+            }
+            case Input::CONNECTION_CLOSED:
+            case Input::REQUEST_FINISHED:
+            case Input::RESPONSE_FINISHED:
+            {
+                // NUllEvent
+                boost::shared_ptr<Input::NullEvent> specific =
+                    boost::make_shared<Input::NullEvent>(which);
+                generic = specific;
+                break;
+            }
+            case Input::CONNECTION_OPENED:
+            {
+                // ConnectionEvent
+                boost::shared_ptr<Input::ConnectionEvent> specific =
+                    boost::make_shared<Input::ConnectionEvent>(which);
+                generic = specific;
+                if (! pb_event.has_connection_event()) {
+                    throw runtime_error(
+                        "ConnectionEvent lacking specific data."
+                    );
+                }
+                const PB::ConnectionEvent& pb = pb_event.connection_event();
+                if (pb.has_local_ip()) {
+                    specific->local_ip = Input::Buffer(pb.local_ip());
+                }
+                if (pb.has_local_port()) {
+                    specific->local_port = pb.local_port();
+                }
+                if (pb.has_remote_ip()) {
+                    specific->remote_ip = Input::Buffer(pb.remote_ip());
+                }
+                if (pb.has_remote_port()) {
+                    specific->remote_port = pb.remote_port();
+                }
+                break;
+            }
+            case Input::REQUEST_STARTED:
+            {
+                // RequestEvent
+                boost::shared_ptr<Input::RequestEvent> specific =
+                    boost::make_shared<Input::RequestEvent>(which);
+                generic = specific;
+                if (! pb_event.has_request_event()) {
+                    throw runtime_error(
+                        "RequestEvent lacking specific data."
+                    );
+                }
+                const PB::RequestEvent& pb = pb_event.request_event();
+                if (pb.has_raw()) {
+                    specific->raw = Input::Buffer(pb.raw());
+                }
+                if (pb.has_method()) {
+                    specific->method = Input::Buffer(pb.method());
+                }
+                if (pb.has_uri()) {
+                    specific->uri = Input::Buffer(pb.uri());
+                }
+                if (pb.has_protocol()) {
+                    specific->protocol = Input::Buffer(pb.protocol());
+                }
+                break;
+            }
+            case Input::RESPONSE_STARTED:
+            {
+                // ResponseEvent
+                boost::shared_ptr<Input::ResponseEvent> specific =
+                    boost::make_shared<Input::ResponseEvent>(which);
+                generic = specific;
+                if (! pb_event.has_response_event()) {
+                    throw runtime_error(
+                        "ResponseEvent lacking specific data."
+                    );
+                }
+                const PB::ResponseEvent& pb = pb_event.response_event();
+                if (pb.has_raw()) {
+                    specific->raw = Input::Buffer(pb.raw());
+                }
+                if (pb.has_status()) {
+                    specific->status = Input::Buffer(pb.status());
+                }
+                if (pb.has_message()) {
+                    specific->message = Input::Buffer(pb.message());
+                }
+                if (pb.has_protocol()) {
+                    specific->protocol = Input::Buffer(pb.protocol());
+                }
+                break;
+            }
+            case Input::REQUEST_HEADERS:
+            case Input::RESPONSE_HEADERS:
+            {
+                // HeaderEvent
+                boost::shared_ptr<Input::HeaderEvent> specific =
+                    boost::make_shared<Input::HeaderEvent>(which);
+                generic = specific;
+                if (! pb_event.has_header_event()) {
+                    throw runtime_error("HeaderEvent lacking specific data.");
+                }
+                const PB::HeaderEvent& pb = pb_event.header_event();
+                BOOST_FOREACH(const PB::Header& pb_header, pb.header()) {
+                    specific->headers.push_back(Input::header_t());
+                    Input::header_t& header = specific->headers.back();
+                    header.first = Input::Buffer(pb_header.name());
+                    header.second = Input::Buffer(pb_header.value());
+                }
+                break;
+            }
+            default:
+                throw runtime_error(
+                    "Invalid event type: "
+                    + boost::lexical_cast<string>(pb_event.which())
+                );
+        }
+
+        if (pb_event.has_pre_delay()) {
+            generic->pre_delay = pb_event.pre_delay();
+        }
+        if (pb_event.has_post_delay()) {
+            generic->post_delay = pb_event.post_delay();
+        }
+
+        return generic;
+    }
+};
+
 }
 
-bool PBGenerator::operator()(input_p& input)
+bool PBGenerator::operator()(Input::input_p& input)
 {
     if (! m_state->input) {
         return false;
@@ -113,33 +267,45 @@ bool PBGenerator::operator()(input_p& input)
     google::protobuf::io::GzipInputStream unzipped_in(&in);
 
     if (! data->pb_input.ParseFromZeroCopyStream(&unzipped_in)) {
-        throw runtime_error("Failed to parse input.");
+        throw runtime_error("Failed to parse input->");
     }
 
-    input->id.clear();
+    // Reset Input
+    *input = Input::Input();
+
+    // Input
     if (data->pb_input.has_id()) {
         input->id = data->pb_input.id();
     }
-    input->local_ip.data    = data->pb_input.local_ip().data();
-    input->local_ip.length  = data->pb_input.local_ip().length();
-    input->local_port       = data->pb_input.local_port();
-    input->remote_ip.data   = data->pb_input.remote_ip().data();
-    input->remote_ip.length = data->pb_input.remote_ip().length();
-    input->remote_port      = data->pb_input.remote_port();
 
-    input->transactions.clear();
-    BOOST_FOREACH(
-        const PB::Transaction& pb_tx,
-        data->pb_input.transaction()
-    ) {
-        input->transactions.push_back(input_t::transaction_t());
-        input_t::transaction_t& tx = input->transactions.back();
+    // Connection
+    const PB::Connection& pb_conn = data->pb_input.connection();
 
-        tx.request.data    = pb_tx.raw_request().data();
-        tx.request.length  = pb_tx.raw_request().length();
-        tx.response.data   = pb_tx.raw_response().data();
-        tx.response.length = pb_tx.raw_response().length();
+    transform(
+        pb_conn.pre_transaction_event().begin(),
+        pb_conn.pre_transaction_event().end(),
+        back_inserter(input->connection.pre_transaction_events),
+        pb_to_event()
+    );
+
+
+    BOOST_FOREACH(const PB::Transaction& pb_tx, pb_conn.transaction())
+    {
+
+        Input::Transaction& tx = input->connection.add_transaction();
+        transform(
+            pb_tx.event().begin(), pb_tx.event().end(),
+            back_inserter(tx.events),
+            pb_to_event()
+        );
     }
+
+    transform(
+        pb_conn.post_transaction_event().begin(),
+        pb_conn.post_transaction_event().end(),
+        back_inserter(input->connection.post_transaction_events),
+        pb_to_event()
+    );
 
     return true;
 }
