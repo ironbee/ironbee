@@ -6,6 +6,7 @@ check-local:
 		$(abs_builddir)/clipp \
 		$(abs_builddir)/tests/ironbee.conf
 
+CPPFLAGS += -Wno-shadow
 clipp_SOURCES = \
     clipp.cpp \
     configuration_parser.cpp \
