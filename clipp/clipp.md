@@ -246,6 +246,18 @@ of a single transaction with the fabricated request and response.
 This generator behaves almost identically to `apache` but reads Suricata log
 format instead. 
 
+**htp**:*path: --- Generate events from a libHTP test file.
+
+A libHTP test file is a sequence of request and response blocks.  Request 
+blocks begin with `>>>` on a line by itself and response blocks begin with
+`<<<` on a line by itself. 
+
+This generator produces a single Input from the file.  The Input consists of
+a transaction for every pair of request and response blocks.  The connction
+opened event has bogus information.
+
+You may omit response blocks in which case they default to the empty string.  
+You may not omit request blocks.
 
 Modifiers
 ---------

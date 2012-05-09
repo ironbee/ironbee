@@ -20,6 +20,7 @@ clipp_SOURCES = \
     pb_generator.cpp \
     apache_generator.cpp \
     suricata_generator.cpp \
+    htp_generator.cpp \
     connection_modifiers.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
