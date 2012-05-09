@@ -197,7 +197,7 @@ void help()
     "modifiers of the consumer.\n"
     "\n"
     "Flags:\n"
-    " --verbose,-v -- Output ID for each input.\n"
+    "  Coming soon\n"
     "\n"
     "Generators:\n"
     "  pb:<path>       -- Read <path> as protobuf.\n"
@@ -235,7 +235,6 @@ int main(int argc, char** argv)
     }
 
     list<string> args;
-    bool verbose = false;
 
     // Declare generators.
     generator_factory_map_t generator_factory_map;
@@ -265,10 +264,7 @@ int main(int argc, char** argv)
     }
 
     // Parse flags.
-    if (args.front() == "--verbose" || args.front() == "-v") {
-        verbose = true;
-        args.pop_front();
-    }
+    // Coming Soon
 
     // Convert argv to configuration.
     // In the future, configuration can also be loaded from files.
@@ -365,9 +361,6 @@ int main(int argc, char** argv)
                 cerr << "Generator said it provided input, but didn't."
                      << endl;
                 continue;
-            }
-            if (verbose) {
-                cout << input->id << endl;
             }
 
             try {
