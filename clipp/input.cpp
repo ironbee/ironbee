@@ -59,6 +59,11 @@ void Event::dispatch(Delegate& to, bool with_delay) const
     }
 }
 
+void Event::dispatch(ModifierDelegate& to)
+{
+    this->dispatch(to);
+}
+
 NullEvent::NullEvent(event_e which_) :
     Event(which_)
 {
@@ -299,6 +304,13 @@ void Transaction::dispatch(Delegate& to, bool with_delay) const
     }
 }
 
+void Transaction::dispatch(ModifierDelegate& to)
+{
+    BOOST_FOREACH(event_p& event, events) {
+        event->dispatch(to);
+    }
+}
+
 Connection::Connection()
 {
     // nop
@@ -372,6 +384,19 @@ void Connection::dispatch(Delegate& to, bool with_delay) const
     }
     BOOST_FOREACH(const event_p& event, post_transaction_events) {
         event->dispatch(to, with_delay);
+    }
+}
+
+void Connection::dispatch(ModifierDelegate& to)
+{
+    BOOST_FOREACH(event_p& event, pre_transaction_events) {
+        event->dispatch(to);
+    }
+    BOOST_FOREACH(Transaction& tx, transactions) {
+        tx.dispatch(to);
+    }
+    BOOST_FOREACH(event_p& event, post_transaction_events) {
+        event->dispatch(to);
     }
 }
 

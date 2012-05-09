@@ -120,6 +120,68 @@ public:
 };
 
 /**
+ * This is the parent class of all modifier delegates for dispatch().
+ *
+ * Unlike the previous delegate, this allows mutation of the events.
+ *
+ * To use, subclass, override the methods for events you wish to handle, and
+ * pass to a dispatch() call (e.g., Event::dispatch) or (Input::dispatch).
+ *
+ * Note that default behavior is to do nothing.
+ **/
+class ModifierDelegate
+{
+public:
+    //! CONNECTION_OPENED
+    virtual
+    void connection_opened(ConnectionEvent& event) {}
+
+    //! CONNECTION_CLOSED
+    virtual
+    void connection_closed(NullEvent& event) {}
+
+    //! CONNECTION_DATA_IN
+    virtual
+    void connection_data_in(DataEvent& event) {}
+
+    //! CONNECTION_DATA_OUT
+    virtual
+    void connection_data_out(DataEvent& event) {}
+
+    //! REQUEST_STARTED
+    virtual
+    void request_started(RequestEvent& event) {}
+
+    //! REQUEST_HEADERS
+    virtual
+    void request_headers(HeaderEvent& event) {}
+
+    //! REQUEST_BODY
+    virtual
+    void request_body(DataEvent& event) {}
+
+    //! REQUEST_FINISHED
+    virtual
+    void request_finished(NullEvent& event) {}
+
+    //! RESPONSE_STARTED
+    virtual
+    void response_started(ResponseEvent& event) {}
+
+    //! RESPONSE_HEADERS
+    virtual
+    void response_headers(HeaderEvent& event) {}
+
+    //! RESPONSE_BODY
+    virtual
+    void response_body(DataEvent& event) {}
+
+    //! RESPONSE_FINISHED
+    virtual
+    void response_finished(NullEvent& event) {}
+};
+
+/**
  * Simple representation of memory buffer.
  *
  * This structure is a data pointer and length.  It's primary use is to refer
@@ -190,6 +252,9 @@ struct Event
     //! Dispatch event with optional delay.
     void dispatch(Delegate& to, bool with_delay) const;
 
+    //! Dispatch event for modification.
+    virtual void dispatch(ModifierDelegate& to) = 0;
+
     //! Which event we are.
     event_e which;
 
@@ -212,6 +277,19 @@ struct NullEvent : public Event
     //! Dispatch.
     inline
     void dispatch(Delegate& to) const
+    {
+        switch (which) {
+            case REQUEST_FINISHED:  to.request_finished(*this); break;
+            case RESPONSE_FINISHED: to.response_finished(*this); break;
+            case CONNECTION_CLOSED: to.connection_closed(*this); break;
+            default:
+                throw std::logic_error("Invalid NullEvent.");
+        }
+    }
+
+    //! Modifier Dispatch.
+    inline
+    void dispatch(ModifierDelegate& to)
     {
         switch (which) {
             case REQUEST_FINISHED:  to.request_finished(*this); break;
@@ -251,6 +329,17 @@ struct ConnectionEvent : public Event
         }
     }
 
+    //! ModifierDispatch.
+    inline
+    void dispatch(ModifierDelegate& to)
+    {
+        switch (which) {
+            case CONNECTION_OPENED: to.connection_opened(*this); break;
+            default:
+                throw std::logic_error("Invalid ConnectionEvent.");
+        }
+    }
+
     //! Local IP address.
     Buffer local_ip;
     //! Local port.
@@ -281,8 +370,22 @@ struct DataEvent : public Event
         switch (which) {
             case CONNECTION_DATA_IN:  to.connection_data_in(*this); break;
             case CONNECTION_DATA_OUT: to.connection_data_out(*this); break;
-            case REQUEST_BODY:         to.request_body(*this); break;
-            case RESPONSE_BODY:        to.response_body(*this); break;
+            case REQUEST_BODY:        to.request_body(*this); break;
+            case RESPONSE_BODY:       to.response_body(*this); break;
+            default:
+                throw std::logic_error("Invalid DataEvent.");
+        }
+    }
+
+    //! Dispatch.
+    inline
+    void dispatch(ModifierDelegate& to)
+    {
+        switch (which) {
+            case CONNECTION_DATA_IN:  to.connection_data_in(*this); break;
+            case CONNECTION_DATA_OUT: to.connection_data_out(*this); break;
+            case REQUEST_BODY:        to.request_body(*this); break;
+            case RESPONSE_BODY:       to.response_body(*this); break;
             default:
                 throw std::logic_error("Invalid DataEvent.");
         }
@@ -311,6 +414,17 @@ struct RequestEvent : public Event
     //! Dispatch.
     inline
     void dispatch(Delegate& to) const
+    {
+        switch (which) {
+            case REQUEST_STARTED: to.request_started(*this); break;
+            default:
+                throw std::logic_error("Invalid RequestEvent.");
+        }
+    }
+
+    //! ModifierDispatch.
+    inline
+    void dispatch(ModifierDelegate& to)
     {
         switch (which) {
             case REQUEST_STARTED: to.request_started(*this); break;
@@ -358,6 +472,17 @@ struct ResponseEvent : public Event
         }
     }
 
+    //! ModifierDispatch.
+    inline
+    void dispatch(ModifierDelegate& to)
+    {
+        switch (which) {
+            case RESPONSE_STARTED: to.response_started(*this); break;
+            default:
+                throw std::logic_error("Invalid ResponseEvent.");
+        }
+    }
+
     //! Raw response line.
     Buffer raw;
     //! Protocol, e.g, HTTP/1.0.
@@ -388,6 +513,18 @@ struct HeaderEvent : public Event
     //! Dispatch.
     inline
     void dispatch(Delegate& to) const
+    {
+        switch (which) {
+            case REQUEST_HEADERS: to.request_headers(*this); break;
+            case RESPONSE_HEADERS: to.response_headers(*this); break;
+            default:
+                throw std::logic_error("Invalid HeaderEvent.");
+        }
+    }
+
+    //! Dispatch.
+    inline
+    void dispatch(ModifierDelegate& to)
     {
         switch (which) {
             case REQUEST_HEADERS: to.request_headers(*this); break;
@@ -447,6 +584,9 @@ struct Transaction
 
     //! Dispatch events.
     void dispatch(Delegate& to, bool with_delay = false) const;
+
+    //! Dispatch events for modification
+    void dispatch(ModifierDelegate& to);
 };
 
 //! List of transactions.
@@ -497,6 +637,9 @@ struct Connection
 
     //! Dispatch.
     void dispatch(Delegate& to, bool with_delay = false) const;
+
+    //! Dispatch for modification.
+    void dispatch(ModifierDelegate& to);
 };
 
 /**
