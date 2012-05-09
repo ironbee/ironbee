@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Apache Generator.
+ * @brief IronBee &mdash; CLIPP Suricata Generator.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
