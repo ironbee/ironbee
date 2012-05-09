@@ -206,7 +206,7 @@ void help()
     "modifiers of the consumer.\n"
     "\n"
     "Flags:\n"
-    "  Coming soon\n"
+    "  -c <path> -- Load <path> as CLIPP configuration.\n"
     "\n"
     "Generators:\n"
     "  pb:<path>       -- Read <path> as protobuf.\n"
@@ -281,14 +281,38 @@ int main(int argc, char** argv)
         args.push_back(argv[i]);
     }
 
+    list<chain_t> all_chains;
+    chain_vec_t   chains;
     // Parse flags.
-    // Coming Soon
+    while (args.front() == "-c") {
+        args.pop_front();
+        if (args.empty()) {
+            cerr << "-c requires an argument." << endl;
+            help();
+            return 1;
+        }
+        string path = args.front();
+        args.pop_front();
+
+        try {
+            chains = ConfigurationParser::parse_file(path);
+        }
+        catch (const exception& e) {
+            cerr << "Error parsing configuration file " << path
+                 << ": " << e.what() << endl;
+            return 1;
+        }
+
+        copy(
+            chains.begin(), chains.end(),
+            back_inserter(all_chains)
+        );
+    }
 
     // Convert argv to configuration.
     // In the future, configuration can also be loaded from files.
     string configuration = boost::algorithm::join(args, " ");
 
-    chain_vec_t chains;
     try {
         chains = ConfigurationParser::parse_string(configuration);
     }
@@ -296,11 +320,21 @@ int main(int argc, char** argv)
         cerr << "Error parsing configuration: " << e.what() << endl;
         return 1;
     }
+    copy(
+        chains.begin(), chains.end(),
+        back_inserter(all_chains)
+    );
 
+    // Basic validation.
+    if (all_chains.size() < 2) {
+        cerr << "Need at least a generator and a consumer." << endl;
+        help();
+        return 1;
+    }
     // Last component must be consumer.
     input_consumer_t consumer;
-    chain_t consumer_chain = chains.back();
-    chains.pop_back();
+    chain_t consumer_chain = all_chains.back();
+    all_chains.pop_back();
     try {
         consumer = construct_component<input_consumer_t>(
             consumer_chain.base,
@@ -316,7 +350,7 @@ int main(int argc, char** argv)
     // as needed to limit the scope of each input generator.  As input
     // generators can make use of significant memory, it is good to only have
     // one around at a time.
-    BOOST_FOREACH(chain_t& chain, chains) {
+    BOOST_FOREACH(chain_t& chain, all_chains) {
         input_generator_t generator;
         try {
             generator = construct_component<input_generator_t>(
