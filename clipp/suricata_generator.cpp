@@ -116,20 +116,17 @@ struct data_t
 
 typedef boost::shared_ptr<data_t> data_p;
 
-buffer_t s_to_buf(const string& s)
-{
-    return buffer_t(s.data(), s.length());
 }
 
-}
-
-bool SuricataGenerator::operator()(input_p& input)
+bool SuricataGenerator::operator()(Input::input_p& input)
 {
     if (! m_state->input) {
         return false;
     }
 
     ++m_state->line_number;
+
+    *input = Input::Input();
 
     input->id = m_state->prefix + ":" +
         boost::lexical_cast<string>(m_state->line_number);
@@ -149,13 +146,15 @@ bool SuricataGenerator::operator()(input_p& input)
         data->local_ip = match.str(9);
         data->remote_ip = match.str(7);
 
-        input->local_ip = s_to_buf(data->local_ip);
-        input->local_port = boost::lexical_cast<uint32_t>(
-            match.str(10)
-        );
-        input->remote_ip = s_to_buf(data->remote_ip);
-        input->remote_port = boost::lexical_cast<uint32_t>(
-            match.str(8)
+        input->connection.connection_opened(
+            Input::Buffer(data->local_ip),
+            boost::lexical_cast<uint32_t>(
+                match.str(10)
+            ),
+            Input::Buffer(data->remote_ip),
+            boost::lexical_cast<uint32_t>(
+                match.str(8)
+            )
         );
 
         data->request = match.str(4) + " " + match.str(1) + " " \
@@ -174,13 +173,12 @@ bool SuricataGenerator::operator()(input_p& input)
             data->response = match.str(5) + " " + match.str(6) + s_eol;
         }
 
-        input->transactions.clear();
-        input->transactions.push_back(
-            input_t::transaction_t(
-                s_to_buf(data->request),
-                s_to_buf(data->response)
-            )
+        input->connection.add_transaction(
+            Input::Buffer(data->request),
+            Input::Buffer(data->response)
         );
+
+        input->connection.connection_closed();
     }
     else {
         throw runtime_error("Unparsed line: " + line);
