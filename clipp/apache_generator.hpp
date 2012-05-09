@@ -58,7 +58,7 @@ public:
     ApacheGenerator(const std::string& path);
 
     //! Produce an input.  See input_t and input_generator_t.
-    bool operator()(input_p& out_input);
+    bool operator()(Input::input_p& out_input);
 
 private:
     struct State;

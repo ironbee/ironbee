@@ -108,14 +108,9 @@ struct data_t
 
 typedef boost::shared_ptr<data_t> data_p;
 
-buffer_t s_to_buf(const string& s)
-{
-    return buffer_t(s.data(), s.length());
 }
 
-}
-
-bool ApacheGenerator::operator()(input_p& input)
+bool ApacheGenerator::operator()(Input::input_p& input)
 {
     if (! m_state->input) {
         return false;
@@ -123,12 +118,10 @@ bool ApacheGenerator::operator()(input_p& input)
 
     ++m_state->line_number;
 
+    *input = Input::Input();
+
     input->id = m_state->prefix + ":" +
         boost::lexical_cast<string>(m_state->line_number);
-
-    input->local_ip    = s_to_buf(s_local_ip);
-    input->local_port  = s_local_port;
-    input->remote_port = s_remote_port;
 
     data_p data = boost::make_shared<data_t>();
     input->source = data;
@@ -142,28 +135,33 @@ bool ApacheGenerator::operator()(input_p& input)
     }
 
     if (regex_match(line, match, s_re_line)) {
+        Input::Buffer remote_ip;
+        if (regex_match(match.str(1), s_re_ip)) {
+            data->remote_ip = match.str(1);
+            remote_ip = Input::Buffer(data->remote_ip);
+        }
+        else {
+            remote_ip = Input::Buffer(s_default_ip);
+        }
+        input->connection.connection_opened(
+            Input::Buffer(s_local_ip),
+            s_local_port,
+            remote_ip,
+            s_remote_port
+        );
+
         data->request =  match.str(2)                  + s_eol;
         data->request += "Referer: " + match.str(4)    + s_eol;
         data->request += "User-Agent: " + match.str(5) + s_eol;
         data->request += s_eol;
-
-        if (regex_match(match.str(1), s_re_ip)) {
-            data->remote_ip = match.str(1);
-            input->remote_ip = s_to_buf(data->remote_ip);
-        }
-        else {
-            input->remote_ip = s_to_buf(s_default_ip);
-        }
-
         data->response = s_version + " " + match.str(3) + s_eol;
 
-        input->transactions.clear();
-        input->transactions.push_back(
-            input_t::transaction_t(
-                s_to_buf(data->request),
-                s_to_buf(data->response)
-            )
+        input->connection.add_transaction(
+            Input::Buffer(data->request),
+            Input::Buffer(data->response)
         );
+
+        input->connection.connection_closed();
     }
     else {
         throw runtime_error("Unparsed line: " + line);
