@@ -72,8 +72,10 @@ chain_vec_t parse(const std::string& input)
     typedef qi::rule<iterator, chain_vec_t()>   chains_rule;
 
     string_rule quoted_string = lit('"') >> +(char_ - '"') >> '"';
-    string_rule cfg_string    = lexeme[quoted_string
-                              | +(char_ - '@' - space)];
+    string_rule cfg_string    = lexeme[
+                                    quoted_string
+                                  | *(char_ - '@' - space)
+                                ];
 
     component_rule component = +(char_ - ':' - space) >> -(':' >> cfg_string);
     component_rule modifier  = lit('@') >> component;
