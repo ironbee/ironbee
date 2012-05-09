@@ -32,20 +32,36 @@ namespace CLIPP {
 
 /**
  * CLIPP consumer that writes inputs to cout in human readable form.
+ *
+ * view:id displays only the id.
  **/
 class ViewConsumer
 {
 public:
+    explicit
+    ViewConsumer(const std::string& arg);
+
     bool operator()(const Input::input_p& input);
+
+private:
+    bool m_id_only;
 };
 
 /**
  * CLIPP modifier that writes inputs to cout in human readable form.
+ *
+ * view:id displays only the id.
  **/
 class ViewModifier
 {
 public:
+    explicit
+    ViewModifier(const std::string& arg);
+
     bool operator()(Input::input_p& input);
+
+private:
+    ViewConsumer m_consumer;
 };
 
 } // CLIPP

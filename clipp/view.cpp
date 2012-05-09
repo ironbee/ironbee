@@ -184,6 +184,17 @@ struct ViewDelegate :
 
 }
 
+ViewConsumer::ViewConsumer(const std::string& arg) :
+    m_id_only(false)
+{
+    if (arg == "id") {
+        m_id_only = true;
+    }
+    else if (! arg.empty()) {
+        throw runtime_error("Unknown View argument: " + arg);
+    }
+}
+
 bool ViewConsumer::operator()(const input_p& input)
 {
     if (input->id.empty()) {
@@ -192,15 +203,23 @@ bool ViewConsumer::operator()(const input_p& input)
     else {
         cout << "---- " << input->id << " ----" << endl;
     }
-    ViewDelegate viewer;
-    input->connection.dispatch(viewer);
+    if (! m_id_only) {
+        ViewDelegate viewer;
+        input->connection.dispatch(viewer);
+    }
 
     return true;
 }
 
+ViewModifier::ViewModifier(const std::string& arg) :
+    m_consumer(arg)
+{
+    // nop
+}
+
 bool ViewModifier::operator()(input_p& input)
 {
-    return ViewConsumer()(input);
+    return m_consumer(input);
 }
 
 } // CLIPP

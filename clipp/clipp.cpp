@@ -169,12 +169,6 @@ input_modifier_t construct_modifier(const string& arg)
 // Generators
 input_generator_t init_raw_generator(const string& arg);
 
-// Consumers
-input_consumer_t init_view_consumer(const string& arg);
-
-// Modifiers
-input_modifier_t init_view_modifier(const string& arg);
-
 bool on_error(const string& message);
 
 vector<string> split_on_char(const string& src, char c);
@@ -257,11 +251,11 @@ int main(int argc, char** argv)
     consumer_factory_map_t consumer_factory_map;
     consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
     consumer_factory_map["writepb"] = construct_consumer<PBConsumer>;
-    consumer_factory_map["view"]    = init_view_consumer;
+    consumer_factory_map["view"]    = construct_consumer<ViewConsumer>;
 
     // Declare modifiers.
     modifier_factory_map_t modifier_factory_map;
-    modifier_factory_map["view"] = init_view_modifier;
+    modifier_factory_map["view"] = construct_modifier<ViewModifier>;
     modifier_factory_map["set_local_ip"] =
         construct_modifier<SetLocalIPModifier>;
 
@@ -419,16 +413,6 @@ input_generator_t init_raw_generator(const string& arg)
     }
 
     return RawGenerator(subargs[0], subargs[1]);
-}
-
-input_consumer_t init_view_consumer(const string& arg)
-{
-    return ViewConsumer();
-}
-
-input_modifier_t init_view_modifier(const string& arg)
-{
-    return ViewModifier();
 }
 
 bool on_error(const string& message)
