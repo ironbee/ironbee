@@ -47,6 +47,148 @@ using boost::make_shared;
 namespace IronBee {
 namespace CLIPP {
 
+namespace  {
+
+void fill_event(PB::Event& pb_event, const Input::Event& event)
+{
+    if (event.pre_delay > 0) {
+        pb_event.set_pre_delay(event.pre_delay);
+    }
+    if (event.post_delay > 0) {
+        pb_event.set_post_delay(event.post_delay);
+    }
+    pb_event.set_which(event.which);
+}
+
+
+class PBConsumerDelegate :
+    public Input::Delegate
+{
+public:
+    explicit
+    PBConsumerDelegate(PB::Event& pb_event) :
+        m_pb_event(pb_event)
+    {
+        // nop
+    }
+
+    void connection_opened(const Input::ConnectionEvent& event)
+    {
+        PB::ConnectionEvent& pb_ce = *m_pb_event.mutable_connection_event();
+        if (event.local_ip.length > 0) {
+            pb_ce.set_local_ip(event.local_ip.data, event.local_ip.length);
+        }
+        if (event.remote_ip.length > 0) {
+            pb_ce.set_remote_ip(event.remote_ip.data, event.remote_ip.length);
+        }
+        if (event.local_port > 0) {
+            pb_ce.set_local_port(event.local_port);
+        }
+        if (event.remote_port > 0) {
+            pb_ce.set_remote_port(event.remote_port);
+        }
+    }
+
+    void connection_closed(const Input::NullEvent& event)
+    {
+        // nop
+    }
+
+    void connection_data_in(const Input::DataEvent& event)
+    {
+        PB::DataEvent& pb = *m_pb_event.mutable_data_event();
+        if (event.data.length > 0) {
+            pb.set_data(event.data.data, event.data.length);
+        }
+    }
+
+    void connection_data_out(const Input::DataEvent& event)
+    {
+        // Forward to connection_data_in
+        connection_data_in(event);
+    }
+
+    void request_started(const Input::RequestEvent& event)
+    {
+        PB::RequestEvent& pb =
+            *m_pb_event.mutable_request_event();
+        if (event.raw.length > 0) {
+            pb.set_raw(event.raw.data, event.raw.length);
+        }
+        if (event.method.length > 0) {
+            pb.set_method(event.method.data, event.method.length);
+        }
+        if (event.uri.length > 0) {
+            pb.set_uri(event.uri.data, event.uri.length);
+        }
+        if (event.protocol.length > 0) {
+            pb.set_protocol(event.protocol.data, event.protocol.length);
+        }
+    }
+
+    void request_headers(const Input::HeaderEvent& event)
+    {
+        PB::HeaderEvent& pb = *m_pb_event.mutable_header_event();
+        BOOST_FOREACH(const Input::header_t& header, event.headers)
+        {
+            PB::Header& h = *pb.add_header();
+            h.set_name(header.first.data, header.first.length);
+            h.set_value(header.second.data, header.second.length);
+        }
+    }
+
+    void request_body(const Input::DataEvent& event)
+    {
+        // Forward to connection_data_in
+        connection_data_in(event);
+    }
+
+    void request_finished(const Input::NullEvent& event)
+    {
+        // nop
+    }
+
+    void response_started(const Input::ResponseEvent& event)
+    {
+        PB::ResponseEvent& pb =
+            *m_pb_event.mutable_response_event();
+        if (event.raw.length > 0) {
+            pb.set_raw(event.raw.data, event.raw.length);
+        }
+        if (event.protocol.length > 0) {
+            pb.set_protocol(event.protocol.data, event.protocol.length);
+        }
+        if (event.status.length > 0) {
+            pb.set_status(event.status.data, event.status.length);
+        }
+        if (event.message.length > 0) {
+            pb.set_message(event.message.data, event.message.length);
+        }
+    }
+
+    void response_headers(const Input::HeaderEvent& event)
+    {
+        // Forward to request_headers
+        request_headers(event);
+    }
+
+    void response_body(const Input::DataEvent& event)
+    {
+        // Forward to connection_data_in
+        connection_data_in(event);
+    }
+
+    void response_finished(const Input::NullEvent& event)
+    {
+        // nop
+    }
+
+private:
+    PB::Event& m_pb_event;
+};
+
+}
+
 struct PBConsumer::State
 {
     State(const std::string& path) :
@@ -71,13 +213,58 @@ PBConsumer::PBConsumer(const std::string& output_path) :
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 }
 
-bool PBConsumer::operator()(const input_p& input)
+bool PBConsumer::operator()(const Input::input_p& input)
 {
     if (! m_state || ! m_state->output) {
         return false;
     }
 
     PB::Input pb_input;
+
+    if (! input->id.empty()) {
+        pb_input.set_id(input->id);
+    }
+
+    PB::Connection& pb_connection = *pb_input.mutable_connection();
+
+    BOOST_FOREACH(
+        const Input::event_p event,
+        input->connection.pre_transaction_events
+    )
+    {
+        PB::Event& pb_event = *pb_connection.add_pre_transaction_event();
+        fill_event(pb_event, *event);
+        PBConsumerDelegate delegate(pb_event);
+        event->dispatch(delegate);
+    }
+
+    BOOST_FOREACH(
+        const Input::Transaction& tx,
+        input->connection.transactions
+    )
+    {
+        PB::Transaction& pb_tx = *pb_connection.add_transaction();
+        BOOST_FOREACH(const Input::event_p event, tx.events) {
+            PB::Event& pb_event = *pb_tx.add_event();
+            fill_event(pb_event, *event);
+            PBConsumerDelegate delegate(pb_event);
+            event->dispatch(delegate);
+        }
+    }
+
+    BOOST_FOREACH(
+        const Input::event_p event,
+        input->connection.post_transaction_events
+    )
+    {
+        PB::Event& pb_event = *pb_connection.add_post_transaction_event();
+        fill_event(pb_event, *event);
+        PBConsumerDelegate delegate(pb_event);
+        event->dispatch(delegate);
+    }
+
+
+    /*
     pb_input.set_local_ip(input->local_ip.data, input->local_ip.length);
     pb_input.set_local_port(input->local_port);
     pb_input.set_remote_ip(input->remote_ip.data, input->remote_ip.length);
@@ -89,6 +276,7 @@ bool PBConsumer::operator()(const input_p& input)
         pb_tx->set_raw_request(tx.request.data, tx.request.length);
         pb_tx->set_raw_response(tx.response.data, tx.response.length);
     }
+    */
 
     string buffer;
     google::protobuf::io::StringOutputStream output(&buffer);

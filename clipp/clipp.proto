@@ -1,15 +1,61 @@
 package IronBee.CLIPP.PB;
 
+message ConnectionEvent {
+    optional string local_ip    = 1;
+    optional uint32 local_port  = 2;
+    optional string remote_ip   = 3;
+    optional uint32 remote_port = 4;
+};
+
+message DataEvent {
+    required string data = 1;
+};
+
+message RequestEvent {
+    optional string raw      = 1;
+    optional string method   = 2;
+    optional string uri      = 3;
+    optional string protocol = 4;
+};
+
+message ResponseEvent {
+    optional string raw      = 1;
+    optional string protocol = 2;
+    optional string status   = 3;
+    optional string message  = 4;
+};
+
+message Header {
+    required string name  = 1;
+    required string value = 2;
+};
+
+message HeaderEvent {
+    repeated Header header = 1;
+};
+
+message Event {
+    required uint32          which            = 1;
+    optional double          pre_delay        = 2;
+    optional double          post_delay       = 3;
+    optional ConnectionEvent connection_event = 4;
+    optional DataEvent       data_event       = 5;
+    optional RequestEvent    request_event    = 6;
+    optional ResponseEvent   response_event   = 7;
+    optional HeaderEvent     header_event     = 8;
+};
+
 message Transaction {
-    optional bytes raw_request  = 1;
-    optional bytes raw_response = 2;
+    repeated Event event = 1;
+};
+
+message Connection {
+    repeated Event       pre_transaction_event  = 1;
+    repeated Transaction transaction            = 2;
+    repeated Event       post_transaction_event = 3;
 };
 
 message Input {
-    required string      local_ip    = 1;
-    required uint32      local_port  = 2;
-    required string      remote_ip   = 3;
-    required uint32      remote_port = 4;
-    repeated Transaction transaction = 5;
-    optional string      id          = 6;
+    optional string     id         = 1;
+    required Connection connection = 2;
 };

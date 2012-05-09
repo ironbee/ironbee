@@ -34,10 +34,822 @@ void  protobuf_AddDesc_clipp_2eproto();
 void protobuf_AssignDesc_clipp_2eproto();
 void protobuf_ShutdownFile_clipp_2eproto();
 
+class ConnectionEvent;
+class DataEvent;
+class RequestEvent;
+class ResponseEvent;
+class Header;
+class HeaderEvent;
+class Event;
 class Transaction;
+class Connection;
 class Input;
 
 // ===================================================================
+
+class ConnectionEvent : public ::google::protobuf::Message {
+ public:
+  ConnectionEvent();
+  virtual ~ConnectionEvent();
+
+  ConnectionEvent(const ConnectionEvent& from);
+
+  inline ConnectionEvent& operator=(const ConnectionEvent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ConnectionEvent& default_instance();
+
+  void Swap(ConnectionEvent* other);
+
+  // implements Message ----------------------------------------------
+
+  ConnectionEvent* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ConnectionEvent& from);
+  void MergeFrom(const ConnectionEvent& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional string local_ip = 1;
+  inline bool has_local_ip() const;
+  inline void clear_local_ip();
+  static const int kLocalIpFieldNumber = 1;
+  inline const ::std::string& local_ip() const;
+  inline void set_local_ip(const ::std::string& value);
+  inline void set_local_ip(const char* value);
+  inline void set_local_ip(const char* value, size_t size);
+  inline ::std::string* mutable_local_ip();
+  inline ::std::string* release_local_ip();
+
+  // optional uint32 local_port = 2;
+  inline bool has_local_port() const;
+  inline void clear_local_port();
+  static const int kLocalPortFieldNumber = 2;
+  inline ::google::protobuf::uint32 local_port() const;
+  inline void set_local_port(::google::protobuf::uint32 value);
+
+  // optional string remote_ip = 3;
+  inline bool has_remote_ip() const;
+  inline void clear_remote_ip();
+  static const int kRemoteIpFieldNumber = 3;
+  inline const ::std::string& remote_ip() const;
+  inline void set_remote_ip(const ::std::string& value);
+  inline void set_remote_ip(const char* value);
+  inline void set_remote_ip(const char* value, size_t size);
+  inline ::std::string* mutable_remote_ip();
+  inline ::std::string* release_remote_ip();
+
+  // optional uint32 remote_port = 4;
+  inline bool has_remote_port() const;
+  inline void clear_remote_port();
+  static const int kRemotePortFieldNumber = 4;
+  inline ::google::protobuf::uint32 remote_port() const;
+  inline void set_remote_port(::google::protobuf::uint32 value);
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.ConnectionEvent)
+ private:
+  inline void set_has_local_ip();
+  inline void clear_has_local_ip();
+  inline void set_has_local_port();
+  inline void clear_has_local_port();
+  inline void set_has_remote_ip();
+  inline void clear_has_remote_ip();
+  inline void set_has_remote_port();
+  inline void clear_has_remote_port();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* local_ip_;
+  ::std::string* remote_ip_;
+  ::google::protobuf::uint32 local_port_;
+  ::google::protobuf::uint32 remote_port_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static ConnectionEvent* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class DataEvent : public ::google::protobuf::Message {
+ public:
+  DataEvent();
+  virtual ~DataEvent();
+
+  DataEvent(const DataEvent& from);
+
+  inline DataEvent& operator=(const DataEvent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const DataEvent& default_instance();
+
+  void Swap(DataEvent* other);
+
+  // implements Message ----------------------------------------------
+
+  DataEvent* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const DataEvent& from);
+  void MergeFrom(const DataEvent& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required string data = 1;
+  inline bool has_data() const;
+  inline void clear_data();
+  static const int kDataFieldNumber = 1;
+  inline const ::std::string& data() const;
+  inline void set_data(const ::std::string& value);
+  inline void set_data(const char* value);
+  inline void set_data(const char* value, size_t size);
+  inline ::std::string* mutable_data();
+  inline ::std::string* release_data();
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.DataEvent)
+ private:
+  inline void set_has_data();
+  inline void clear_has_data();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* data_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static DataEvent* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class RequestEvent : public ::google::protobuf::Message {
+ public:
+  RequestEvent();
+  virtual ~RequestEvent();
+
+  RequestEvent(const RequestEvent& from);
+
+  inline RequestEvent& operator=(const RequestEvent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const RequestEvent& default_instance();
+
+  void Swap(RequestEvent* other);
+
+  // implements Message ----------------------------------------------
+
+  RequestEvent* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const RequestEvent& from);
+  void MergeFrom(const RequestEvent& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional string raw = 1;
+  inline bool has_raw() const;
+  inline void clear_raw();
+  static const int kRawFieldNumber = 1;
+  inline const ::std::string& raw() const;
+  inline void set_raw(const ::std::string& value);
+  inline void set_raw(const char* value);
+  inline void set_raw(const char* value, size_t size);
+  inline ::std::string* mutable_raw();
+  inline ::std::string* release_raw();
+
+  // optional string method = 2;
+  inline bool has_method() const;
+  inline void clear_method();
+  static const int kMethodFieldNumber = 2;
+  inline const ::std::string& method() const;
+  inline void set_method(const ::std::string& value);
+  inline void set_method(const char* value);
+  inline void set_method(const char* value, size_t size);
+  inline ::std::string* mutable_method();
+  inline ::std::string* release_method();
+
+  // optional string uri = 3;
+  inline bool has_uri() const;
+  inline void clear_uri();
+  static const int kUriFieldNumber = 3;
+  inline const ::std::string& uri() const;
+  inline void set_uri(const ::std::string& value);
+  inline void set_uri(const char* value);
+  inline void set_uri(const char* value, size_t size);
+  inline ::std::string* mutable_uri();
+  inline ::std::string* release_uri();
+
+  // optional string protocol = 4;
+  inline bool has_protocol() const;
+  inline void clear_protocol();
+  static const int kProtocolFieldNumber = 4;
+  inline const ::std::string& protocol() const;
+  inline void set_protocol(const ::std::string& value);
+  inline void set_protocol(const char* value);
+  inline void set_protocol(const char* value, size_t size);
+  inline ::std::string* mutable_protocol();
+  inline ::std::string* release_protocol();
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.RequestEvent)
+ private:
+  inline void set_has_raw();
+  inline void clear_has_raw();
+  inline void set_has_method();
+  inline void clear_has_method();
+  inline void set_has_uri();
+  inline void clear_has_uri();
+  inline void set_has_protocol();
+  inline void clear_has_protocol();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* raw_;
+  ::std::string* method_;
+  ::std::string* uri_;
+  ::std::string* protocol_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static RequestEvent* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class ResponseEvent : public ::google::protobuf::Message {
+ public:
+  ResponseEvent();
+  virtual ~ResponseEvent();
+
+  ResponseEvent(const ResponseEvent& from);
+
+  inline ResponseEvent& operator=(const ResponseEvent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ResponseEvent& default_instance();
+
+  void Swap(ResponseEvent* other);
+
+  // implements Message ----------------------------------------------
+
+  ResponseEvent* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ResponseEvent& from);
+  void MergeFrom(const ResponseEvent& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // optional string raw = 1;
+  inline bool has_raw() const;
+  inline void clear_raw();
+  static const int kRawFieldNumber = 1;
+  inline const ::std::string& raw() const;
+  inline void set_raw(const ::std::string& value);
+  inline void set_raw(const char* value);
+  inline void set_raw(const char* value, size_t size);
+  inline ::std::string* mutable_raw();
+  inline ::std::string* release_raw();
+
+  // optional string protocol = 2;
+  inline bool has_protocol() const;
+  inline void clear_protocol();
+  static const int kProtocolFieldNumber = 2;
+  inline const ::std::string& protocol() const;
+  inline void set_protocol(const ::std::string& value);
+  inline void set_protocol(const char* value);
+  inline void set_protocol(const char* value, size_t size);
+  inline ::std::string* mutable_protocol();
+  inline ::std::string* release_protocol();
+
+  // optional string status = 3;
+  inline bool has_status() const;
+  inline void clear_status();
+  static const int kStatusFieldNumber = 3;
+  inline const ::std::string& status() const;
+  inline void set_status(const ::std::string& value);
+  inline void set_status(const char* value);
+  inline void set_status(const char* value, size_t size);
+  inline ::std::string* mutable_status();
+  inline ::std::string* release_status();
+
+  // optional string message = 4;
+  inline bool has_message() const;
+  inline void clear_message();
+  static const int kMessageFieldNumber = 4;
+  inline const ::std::string& message() const;
+  inline void set_message(const ::std::string& value);
+  inline void set_message(const char* value);
+  inline void set_message(const char* value, size_t size);
+  inline ::std::string* mutable_message();
+  inline ::std::string* release_message();
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.ResponseEvent)
+ private:
+  inline void set_has_raw();
+  inline void clear_has_raw();
+  inline void set_has_protocol();
+  inline void clear_has_protocol();
+  inline void set_has_status();
+  inline void clear_has_status();
+  inline void set_has_message();
+  inline void clear_has_message();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* raw_;
+  ::std::string* protocol_;
+  ::std::string* status_;
+  ::std::string* message_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static ResponseEvent* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Header : public ::google::protobuf::Message {
+ public:
+  Header();
+  virtual ~Header();
+
+  Header(const Header& from);
+
+  inline Header& operator=(const Header& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Header& default_instance();
+
+  void Swap(Header* other);
+
+  // implements Message ----------------------------------------------
+
+  Header* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Header& from);
+  void MergeFrom(const Header& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required string name = 1;
+  inline bool has_name() const;
+  inline void clear_name();
+  static const int kNameFieldNumber = 1;
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+
+  // required string value = 2;
+  inline bool has_value() const;
+  inline void clear_value();
+  static const int kValueFieldNumber = 2;
+  inline const ::std::string& value() const;
+  inline void set_value(const ::std::string& value);
+  inline void set_value(const char* value);
+  inline void set_value(const char* value, size_t size);
+  inline ::std::string* mutable_value();
+  inline ::std::string* release_value();
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.Header)
+ private:
+  inline void set_has_name();
+  inline void clear_has_name();
+  inline void set_has_value();
+  inline void clear_has_value();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* name_;
+  ::std::string* value_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static Header* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class HeaderEvent : public ::google::protobuf::Message {
+ public:
+  HeaderEvent();
+  virtual ~HeaderEvent();
+
+  HeaderEvent(const HeaderEvent& from);
+
+  inline HeaderEvent& operator=(const HeaderEvent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const HeaderEvent& default_instance();
+
+  void Swap(HeaderEvent* other);
+
+  // implements Message ----------------------------------------------
+
+  HeaderEvent* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const HeaderEvent& from);
+  void MergeFrom(const HeaderEvent& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .IronBee.CLIPP.PB.Header header = 1;
+  inline int header_size() const;
+  inline void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  inline const ::IronBee::CLIPP::PB::Header& header(int index) const;
+  inline ::IronBee::CLIPP::PB::Header* mutable_header(int index);
+  inline ::IronBee::CLIPP::PB::Header* add_header();
+  inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Header >&
+      header() const;
+  inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Header >*
+      mutable_header();
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.HeaderEvent)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Header > header_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static HeaderEvent* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Event : public ::google::protobuf::Message {
+ public:
+  Event();
+  virtual ~Event();
+
+  Event(const Event& from);
+
+  inline Event& operator=(const Event& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Event& default_instance();
+
+  void Swap(Event* other);
+
+  // implements Message ----------------------------------------------
+
+  Event* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Event& from);
+  void MergeFrom(const Event& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required uint32 which = 1;
+  inline bool has_which() const;
+  inline void clear_which();
+  static const int kWhichFieldNumber = 1;
+  inline ::google::protobuf::uint32 which() const;
+  inline void set_which(::google::protobuf::uint32 value);
+
+  // optional double pre_delay = 2;
+  inline bool has_pre_delay() const;
+  inline void clear_pre_delay();
+  static const int kPreDelayFieldNumber = 2;
+  inline double pre_delay() const;
+  inline void set_pre_delay(double value);
+
+  // optional double post_delay = 3;
+  inline bool has_post_delay() const;
+  inline void clear_post_delay();
+  static const int kPostDelayFieldNumber = 3;
+  inline double post_delay() const;
+  inline void set_post_delay(double value);
+
+  // optional .IronBee.CLIPP.PB.ConnectionEvent connection_event = 4;
+  inline bool has_connection_event() const;
+  inline void clear_connection_event();
+  static const int kConnectionEventFieldNumber = 4;
+  inline const ::IronBee::CLIPP::PB::ConnectionEvent& connection_event() const;
+  inline ::IronBee::CLIPP::PB::ConnectionEvent* mutable_connection_event();
+  inline ::IronBee::CLIPP::PB::ConnectionEvent* release_connection_event();
+
+  // optional .IronBee.CLIPP.PB.DataEvent data_event = 5;
+  inline bool has_data_event() const;
+  inline void clear_data_event();
+  static const int kDataEventFieldNumber = 5;
+  inline const ::IronBee::CLIPP::PB::DataEvent& data_event() const;
+  inline ::IronBee::CLIPP::PB::DataEvent* mutable_data_event();
+  inline ::IronBee::CLIPP::PB::DataEvent* release_data_event();
+
+  // optional .IronBee.CLIPP.PB.RequestEvent request_event = 6;
+  inline bool has_request_event() const;
+  inline void clear_request_event();
+  static const int kRequestEventFieldNumber = 6;
+  inline const ::IronBee::CLIPP::PB::RequestEvent& request_event() const;
+  inline ::IronBee::CLIPP::PB::RequestEvent* mutable_request_event();
+  inline ::IronBee::CLIPP::PB::RequestEvent* release_request_event();
+
+  // optional .IronBee.CLIPP.PB.ResponseEvent response_event = 7;
+  inline bool has_response_event() const;
+  inline void clear_response_event();
+  static const int kResponseEventFieldNumber = 7;
+  inline const ::IronBee::CLIPP::PB::ResponseEvent& response_event() const;
+  inline ::IronBee::CLIPP::PB::ResponseEvent* mutable_response_event();
+  inline ::IronBee::CLIPP::PB::ResponseEvent* release_response_event();
+
+  // optional .IronBee.CLIPP.PB.HeaderEvent header_event = 8;
+  inline bool has_header_event() const;
+  inline void clear_header_event();
+  static const int kHeaderEventFieldNumber = 8;
+  inline const ::IronBee::CLIPP::PB::HeaderEvent& header_event() const;
+  inline ::IronBee::CLIPP::PB::HeaderEvent* mutable_header_event();
+  inline ::IronBee::CLIPP::PB::HeaderEvent* release_header_event();
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.Event)
+ private:
+  inline void set_has_which();
+  inline void clear_has_which();
+  inline void set_has_pre_delay();
+  inline void clear_has_pre_delay();
+  inline void set_has_post_delay();
+  inline void clear_has_post_delay();
+  inline void set_has_connection_event();
+  inline void clear_has_connection_event();
+  inline void set_has_data_event();
+  inline void clear_has_data_event();
+  inline void set_has_request_event();
+  inline void clear_has_request_event();
+  inline void set_has_response_event();
+  inline void clear_has_response_event();
+  inline void set_has_header_event();
+  inline void clear_has_header_event();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  double pre_delay_;
+  double post_delay_;
+  ::IronBee::CLIPP::PB::ConnectionEvent* connection_event_;
+  ::IronBee::CLIPP::PB::DataEvent* data_event_;
+  ::IronBee::CLIPP::PB::RequestEvent* request_event_;
+  ::IronBee::CLIPP::PB::ResponseEvent* response_event_;
+  ::IronBee::CLIPP::PB::HeaderEvent* header_event_;
+  ::google::protobuf::uint32 which_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static Event* default_instance_;
+};
+// -------------------------------------------------------------------
 
 class Transaction : public ::google::protobuf::Message {
  public:
@@ -93,42 +905,27 @@ class Transaction : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional bytes raw_request = 1;
-  inline bool has_raw_request() const;
-  inline void clear_raw_request();
-  static const int kRawRequestFieldNumber = 1;
-  inline const ::std::string& raw_request() const;
-  inline void set_raw_request(const ::std::string& value);
-  inline void set_raw_request(const char* value);
-  inline void set_raw_request(const void* value, size_t size);
-  inline ::std::string* mutable_raw_request();
-  inline ::std::string* release_raw_request();
-
-  // optional bytes raw_response = 2;
-  inline bool has_raw_response() const;
-  inline void clear_raw_response();
-  static const int kRawResponseFieldNumber = 2;
-  inline const ::std::string& raw_response() const;
-  inline void set_raw_response(const ::std::string& value);
-  inline void set_raw_response(const char* value);
-  inline void set_raw_response(const void* value, size_t size);
-  inline ::std::string* mutable_raw_response();
-  inline ::std::string* release_raw_response();
+  // repeated .IronBee.CLIPP.PB.Event event = 1;
+  inline int event_size() const;
+  inline void clear_event();
+  static const int kEventFieldNumber = 1;
+  inline const ::IronBee::CLIPP::PB::Event& event(int index) const;
+  inline ::IronBee::CLIPP::PB::Event* mutable_event(int index);
+  inline ::IronBee::CLIPP::PB::Event* add_event();
+  inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >&
+      event() const;
+  inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >*
+      mutable_event();
 
   // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.Transaction)
  private:
-  inline void set_has_raw_request();
-  inline void clear_has_raw_request();
-  inline void set_has_raw_response();
-  inline void clear_has_raw_response();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string* raw_request_;
-  ::std::string* raw_response_;
+  ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event > event_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
 
   friend void  protobuf_AddDesc_clipp_2eproto();
   friend void protobuf_AssignDesc_clipp_2eproto();
@@ -136,6 +933,117 @@ class Transaction : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static Transaction* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Connection : public ::google::protobuf::Message {
+ public:
+  Connection();
+  virtual ~Connection();
+
+  Connection(const Connection& from);
+
+  inline Connection& operator=(const Connection& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Connection& default_instance();
+
+  void Swap(Connection* other);
+
+  // implements Message ----------------------------------------------
+
+  Connection* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Connection& from);
+  void MergeFrom(const Connection& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .IronBee.CLIPP.PB.Event pre_transaction_event = 1;
+  inline int pre_transaction_event_size() const;
+  inline void clear_pre_transaction_event();
+  static const int kPreTransactionEventFieldNumber = 1;
+  inline const ::IronBee::CLIPP::PB::Event& pre_transaction_event(int index) const;
+  inline ::IronBee::CLIPP::PB::Event* mutable_pre_transaction_event(int index);
+  inline ::IronBee::CLIPP::PB::Event* add_pre_transaction_event();
+  inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >&
+      pre_transaction_event() const;
+  inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >*
+      mutable_pre_transaction_event();
+
+  // repeated .IronBee.CLIPP.PB.Transaction transaction = 2;
+  inline int transaction_size() const;
+  inline void clear_transaction();
+  static const int kTransactionFieldNumber = 2;
+  inline const ::IronBee::CLIPP::PB::Transaction& transaction(int index) const;
+  inline ::IronBee::CLIPP::PB::Transaction* mutable_transaction(int index);
+  inline ::IronBee::CLIPP::PB::Transaction* add_transaction();
+  inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >&
+      transaction() const;
+  inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >*
+      mutable_transaction();
+
+  // repeated .IronBee.CLIPP.PB.Event post_transaction_event = 3;
+  inline int post_transaction_event_size() const;
+  inline void clear_post_transaction_event();
+  static const int kPostTransactionEventFieldNumber = 3;
+  inline const ::IronBee::CLIPP::PB::Event& post_transaction_event(int index) const;
+  inline ::IronBee::CLIPP::PB::Event* mutable_post_transaction_event(int index);
+  inline ::IronBee::CLIPP::PB::Event* add_post_transaction_event();
+  inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >&
+      post_transaction_event() const;
+  inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >*
+      mutable_post_transaction_event();
+
+  // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.Connection)
+ private:
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event > pre_transaction_event_;
+  ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction > transaction_;
+  ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event > post_transaction_event_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+
+  friend void  protobuf_AddDesc_clipp_2eproto();
+  friend void protobuf_AssignDesc_clipp_2eproto();
+  friend void protobuf_ShutdownFile_clipp_2eproto();
+
+  void InitAsDefaultInstance();
+  static Connection* default_instance_;
 };
 // -------------------------------------------------------------------
 
@@ -193,58 +1101,10 @@ class Input : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required string local_ip = 1;
-  inline bool has_local_ip() const;
-  inline void clear_local_ip();
-  static const int kLocalIpFieldNumber = 1;
-  inline const ::std::string& local_ip() const;
-  inline void set_local_ip(const ::std::string& value);
-  inline void set_local_ip(const char* value);
-  inline void set_local_ip(const char* value, size_t size);
-  inline ::std::string* mutable_local_ip();
-  inline ::std::string* release_local_ip();
-
-  // required uint32 local_port = 2;
-  inline bool has_local_port() const;
-  inline void clear_local_port();
-  static const int kLocalPortFieldNumber = 2;
-  inline ::google::protobuf::uint32 local_port() const;
-  inline void set_local_port(::google::protobuf::uint32 value);
-
-  // required string remote_ip = 3;
-  inline bool has_remote_ip() const;
-  inline void clear_remote_ip();
-  static const int kRemoteIpFieldNumber = 3;
-  inline const ::std::string& remote_ip() const;
-  inline void set_remote_ip(const ::std::string& value);
-  inline void set_remote_ip(const char* value);
-  inline void set_remote_ip(const char* value, size_t size);
-  inline ::std::string* mutable_remote_ip();
-  inline ::std::string* release_remote_ip();
-
-  // required uint32 remote_port = 4;
-  inline bool has_remote_port() const;
-  inline void clear_remote_port();
-  static const int kRemotePortFieldNumber = 4;
-  inline ::google::protobuf::uint32 remote_port() const;
-  inline void set_remote_port(::google::protobuf::uint32 value);
-
-  // repeated .IronBee.CLIPP.PB.Transaction transaction = 5;
-  inline int transaction_size() const;
-  inline void clear_transaction();
-  static const int kTransactionFieldNumber = 5;
-  inline const ::IronBee::CLIPP::PB::Transaction& transaction(int index) const;
-  inline ::IronBee::CLIPP::PB::Transaction* mutable_transaction(int index);
-  inline ::IronBee::CLIPP::PB::Transaction* add_transaction();
-  inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >&
-      transaction() const;
-  inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >*
-      mutable_transaction();
-
-  // optional string id = 6;
+  // optional string id = 1;
   inline bool has_id() const;
   inline void clear_id();
-  static const int kIdFieldNumber = 6;
+  static const int kIdFieldNumber = 1;
   inline const ::std::string& id() const;
   inline void set_id(const ::std::string& value);
   inline void set_id(const char* value);
@@ -252,30 +1112,28 @@ class Input : public ::google::protobuf::Message {
   inline ::std::string* mutable_id();
   inline ::std::string* release_id();
 
+  // required .IronBee.CLIPP.PB.Connection connection = 2;
+  inline bool has_connection() const;
+  inline void clear_connection();
+  static const int kConnectionFieldNumber = 2;
+  inline const ::IronBee::CLIPP::PB::Connection& connection() const;
+  inline ::IronBee::CLIPP::PB::Connection* mutable_connection();
+  inline ::IronBee::CLIPP::PB::Connection* release_connection();
+
   // @@protoc_insertion_point(class_scope:IronBee.CLIPP.PB.Input)
  private:
-  inline void set_has_local_ip();
-  inline void clear_has_local_ip();
-  inline void set_has_local_port();
-  inline void clear_has_local_port();
-  inline void set_has_remote_ip();
-  inline void clear_has_remote_ip();
-  inline void set_has_remote_port();
-  inline void clear_has_remote_port();
   inline void set_has_id();
   inline void clear_has_id();
+  inline void set_has_connection();
+  inline void clear_has_connection();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::std::string* local_ip_;
-  ::std::string* remote_ip_;
-  ::google::protobuf::uint32 local_port_;
-  ::google::protobuf::uint32 remote_port_;
-  ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction > transaction_;
   ::std::string* id_;
+  ::IronBee::CLIPP::PB::Connection* connection_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
 
   friend void  protobuf_AddDesc_clipp_2eproto();
   friend void protobuf_AssignDesc_clipp_2eproto();
@@ -289,176 +1147,56 @@ class Input : public ::google::protobuf::Message {
 
 // ===================================================================
 
-// Transaction
+// ConnectionEvent
 
-// optional bytes raw_request = 1;
-inline bool Transaction::has_raw_request() const {
+// optional string local_ip = 1;
+inline bool ConnectionEvent::has_local_ip() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void Transaction::set_has_raw_request() {
+inline void ConnectionEvent::set_has_local_ip() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void Transaction::clear_has_raw_request() {
+inline void ConnectionEvent::clear_has_local_ip() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void Transaction::clear_raw_request() {
-  if (raw_request_ != &::google::protobuf::internal::kEmptyString) {
-    raw_request_->clear();
-  }
-  clear_has_raw_request();
-}
-inline const ::std::string& Transaction::raw_request() const {
-  return *raw_request_;
-}
-inline void Transaction::set_raw_request(const ::std::string& value) {
-  set_has_raw_request();
-  if (raw_request_ == &::google::protobuf::internal::kEmptyString) {
-    raw_request_ = new ::std::string;
-  }
-  raw_request_->assign(value);
-}
-inline void Transaction::set_raw_request(const char* value) {
-  set_has_raw_request();
-  if (raw_request_ == &::google::protobuf::internal::kEmptyString) {
-    raw_request_ = new ::std::string;
-  }
-  raw_request_->assign(value);
-}
-inline void Transaction::set_raw_request(const void* value, size_t size) {
-  set_has_raw_request();
-  if (raw_request_ == &::google::protobuf::internal::kEmptyString) {
-    raw_request_ = new ::std::string;
-  }
-  raw_request_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* Transaction::mutable_raw_request() {
-  set_has_raw_request();
-  if (raw_request_ == &::google::protobuf::internal::kEmptyString) {
-    raw_request_ = new ::std::string;
-  }
-  return raw_request_;
-}
-inline ::std::string* Transaction::release_raw_request() {
-  clear_has_raw_request();
-  if (raw_request_ == &::google::protobuf::internal::kEmptyString) {
-    return NULL;
-  } else {
-    ::std::string* temp = raw_request_;
-    raw_request_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-    return temp;
-  }
-}
-
-// optional bytes raw_response = 2;
-inline bool Transaction::has_raw_response() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void Transaction::set_has_raw_response() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void Transaction::clear_has_raw_response() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void Transaction::clear_raw_response() {
-  if (raw_response_ != &::google::protobuf::internal::kEmptyString) {
-    raw_response_->clear();
-  }
-  clear_has_raw_response();
-}
-inline const ::std::string& Transaction::raw_response() const {
-  return *raw_response_;
-}
-inline void Transaction::set_raw_response(const ::std::string& value) {
-  set_has_raw_response();
-  if (raw_response_ == &::google::protobuf::internal::kEmptyString) {
-    raw_response_ = new ::std::string;
-  }
-  raw_response_->assign(value);
-}
-inline void Transaction::set_raw_response(const char* value) {
-  set_has_raw_response();
-  if (raw_response_ == &::google::protobuf::internal::kEmptyString) {
-    raw_response_ = new ::std::string;
-  }
-  raw_response_->assign(value);
-}
-inline void Transaction::set_raw_response(const void* value, size_t size) {
-  set_has_raw_response();
-  if (raw_response_ == &::google::protobuf::internal::kEmptyString) {
-    raw_response_ = new ::std::string;
-  }
-  raw_response_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* Transaction::mutable_raw_response() {
-  set_has_raw_response();
-  if (raw_response_ == &::google::protobuf::internal::kEmptyString) {
-    raw_response_ = new ::std::string;
-  }
-  return raw_response_;
-}
-inline ::std::string* Transaction::release_raw_response() {
-  clear_has_raw_response();
-  if (raw_response_ == &::google::protobuf::internal::kEmptyString) {
-    return NULL;
-  } else {
-    ::std::string* temp = raw_response_;
-    raw_response_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-    return temp;
-  }
-}
-
-// -------------------------------------------------------------------
-
-// Input
-
-// required string local_ip = 1;
-inline bool Input::has_local_ip() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void Input::set_has_local_ip() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void Input::clear_has_local_ip() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void Input::clear_local_ip() {
+inline void ConnectionEvent::clear_local_ip() {
   if (local_ip_ != &::google::protobuf::internal::kEmptyString) {
     local_ip_->clear();
   }
   clear_has_local_ip();
 }
-inline const ::std::string& Input::local_ip() const {
+inline const ::std::string& ConnectionEvent::local_ip() const {
   return *local_ip_;
 }
-inline void Input::set_local_ip(const ::std::string& value) {
+inline void ConnectionEvent::set_local_ip(const ::std::string& value) {
   set_has_local_ip();
   if (local_ip_ == &::google::protobuf::internal::kEmptyString) {
     local_ip_ = new ::std::string;
   }
   local_ip_->assign(value);
 }
-inline void Input::set_local_ip(const char* value) {
+inline void ConnectionEvent::set_local_ip(const char* value) {
   set_has_local_ip();
   if (local_ip_ == &::google::protobuf::internal::kEmptyString) {
     local_ip_ = new ::std::string;
   }
   local_ip_->assign(value);
 }
-inline void Input::set_local_ip(const char* value, size_t size) {
+inline void ConnectionEvent::set_local_ip(const char* value, size_t size) {
   set_has_local_ip();
   if (local_ip_ == &::google::protobuf::internal::kEmptyString) {
     local_ip_ = new ::std::string;
   }
   local_ip_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* Input::mutable_local_ip() {
+inline ::std::string* ConnectionEvent::mutable_local_ip() {
   set_has_local_ip();
   if (local_ip_ == &::google::protobuf::internal::kEmptyString) {
     local_ip_ = new ::std::string;
   }
   return local_ip_;
 }
-inline ::std::string* Input::release_local_ip() {
+inline ::std::string* ConnectionEvent::release_local_ip() {
   clear_has_local_ip();
   if (local_ip_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
@@ -469,76 +1207,76 @@ inline ::std::string* Input::release_local_ip() {
   }
 }
 
-// required uint32 local_port = 2;
-inline bool Input::has_local_port() const {
+// optional uint32 local_port = 2;
+inline bool ConnectionEvent::has_local_port() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void Input::set_has_local_port() {
+inline void ConnectionEvent::set_has_local_port() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void Input::clear_has_local_port() {
+inline void ConnectionEvent::clear_has_local_port() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void Input::clear_local_port() {
+inline void ConnectionEvent::clear_local_port() {
   local_port_ = 0u;
   clear_has_local_port();
 }
-inline ::google::protobuf::uint32 Input::local_port() const {
+inline ::google::protobuf::uint32 ConnectionEvent::local_port() const {
   return local_port_;
 }
-inline void Input::set_local_port(::google::protobuf::uint32 value) {
+inline void ConnectionEvent::set_local_port(::google::protobuf::uint32 value) {
   set_has_local_port();
   local_port_ = value;
 }
 
-// required string remote_ip = 3;
-inline bool Input::has_remote_ip() const {
+// optional string remote_ip = 3;
+inline bool ConnectionEvent::has_remote_ip() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void Input::set_has_remote_ip() {
+inline void ConnectionEvent::set_has_remote_ip() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void Input::clear_has_remote_ip() {
+inline void ConnectionEvent::clear_has_remote_ip() {
   _has_bits_[0] &= ~0x00000004u;
 }
-inline void Input::clear_remote_ip() {
+inline void ConnectionEvent::clear_remote_ip() {
   if (remote_ip_ != &::google::protobuf::internal::kEmptyString) {
     remote_ip_->clear();
   }
   clear_has_remote_ip();
 }
-inline const ::std::string& Input::remote_ip() const {
+inline const ::std::string& ConnectionEvent::remote_ip() const {
   return *remote_ip_;
 }
-inline void Input::set_remote_ip(const ::std::string& value) {
+inline void ConnectionEvent::set_remote_ip(const ::std::string& value) {
   set_has_remote_ip();
   if (remote_ip_ == &::google::protobuf::internal::kEmptyString) {
     remote_ip_ = new ::std::string;
   }
   remote_ip_->assign(value);
 }
-inline void Input::set_remote_ip(const char* value) {
+inline void ConnectionEvent::set_remote_ip(const char* value) {
   set_has_remote_ip();
   if (remote_ip_ == &::google::protobuf::internal::kEmptyString) {
     remote_ip_ = new ::std::string;
   }
   remote_ip_->assign(value);
 }
-inline void Input::set_remote_ip(const char* value, size_t size) {
+inline void ConnectionEvent::set_remote_ip(const char* value, size_t size) {
   set_has_remote_ip();
   if (remote_ip_ == &::google::protobuf::internal::kEmptyString) {
     remote_ip_ = new ::std::string;
   }
   remote_ip_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* Input::mutable_remote_ip() {
+inline ::std::string* ConnectionEvent::mutable_remote_ip() {
   set_has_remote_ip();
   if (remote_ip_ == &::google::protobuf::internal::kEmptyString) {
     remote_ip_ = new ::std::string;
   }
   return remote_ip_;
 }
-inline ::std::string* Input::release_remote_ip() {
+inline ::std::string* ConnectionEvent::release_remote_ip() {
   clear_has_remote_ip();
   if (remote_ip_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
@@ -549,62 +1287,1047 @@ inline ::std::string* Input::release_remote_ip() {
   }
 }
 
-// required uint32 remote_port = 4;
-inline bool Input::has_remote_port() const {
+// optional uint32 remote_port = 4;
+inline bool ConnectionEvent::has_remote_port() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
-inline void Input::set_has_remote_port() {
+inline void ConnectionEvent::set_has_remote_port() {
   _has_bits_[0] |= 0x00000008u;
 }
-inline void Input::clear_has_remote_port() {
+inline void ConnectionEvent::clear_has_remote_port() {
   _has_bits_[0] &= ~0x00000008u;
 }
-inline void Input::clear_remote_port() {
+inline void ConnectionEvent::clear_remote_port() {
   remote_port_ = 0u;
   clear_has_remote_port();
 }
-inline ::google::protobuf::uint32 Input::remote_port() const {
+inline ::google::protobuf::uint32 ConnectionEvent::remote_port() const {
   return remote_port_;
 }
-inline void Input::set_remote_port(::google::protobuf::uint32 value) {
+inline void ConnectionEvent::set_remote_port(::google::protobuf::uint32 value) {
   set_has_remote_port();
   remote_port_ = value;
 }
 
-// repeated .IronBee.CLIPP.PB.Transaction transaction = 5;
-inline int Input::transaction_size() const {
+// -------------------------------------------------------------------
+
+// DataEvent
+
+// required string data = 1;
+inline bool DataEvent::has_data() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void DataEvent::set_has_data() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void DataEvent::clear_has_data() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void DataEvent::clear_data() {
+  if (data_ != &::google::protobuf::internal::kEmptyString) {
+    data_->clear();
+  }
+  clear_has_data();
+}
+inline const ::std::string& DataEvent::data() const {
+  return *data_;
+}
+inline void DataEvent::set_data(const ::std::string& value) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(value);
+}
+inline void DataEvent::set_data(const char* value) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(value);
+}
+inline void DataEvent::set_data(const char* value, size_t size) {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  data_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* DataEvent::mutable_data() {
+  set_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    data_ = new ::std::string;
+  }
+  return data_;
+}
+inline ::std::string* DataEvent::release_data() {
+  clear_has_data();
+  if (data_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = data_;
+    data_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// -------------------------------------------------------------------
+
+// RequestEvent
+
+// optional string raw = 1;
+inline bool RequestEvent::has_raw() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void RequestEvent::set_has_raw() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void RequestEvent::clear_has_raw() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void RequestEvent::clear_raw() {
+  if (raw_ != &::google::protobuf::internal::kEmptyString) {
+    raw_->clear();
+  }
+  clear_has_raw();
+}
+inline const ::std::string& RequestEvent::raw() const {
+  return *raw_;
+}
+inline void RequestEvent::set_raw(const ::std::string& value) {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  raw_->assign(value);
+}
+inline void RequestEvent::set_raw(const char* value) {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  raw_->assign(value);
+}
+inline void RequestEvent::set_raw(const char* value, size_t size) {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  raw_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* RequestEvent::mutable_raw() {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  return raw_;
+}
+inline ::std::string* RequestEvent::release_raw() {
+  clear_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = raw_;
+    raw_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional string method = 2;
+inline bool RequestEvent::has_method() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void RequestEvent::set_has_method() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void RequestEvent::clear_has_method() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void RequestEvent::clear_method() {
+  if (method_ != &::google::protobuf::internal::kEmptyString) {
+    method_->clear();
+  }
+  clear_has_method();
+}
+inline const ::std::string& RequestEvent::method() const {
+  return *method_;
+}
+inline void RequestEvent::set_method(const ::std::string& value) {
+  set_has_method();
+  if (method_ == &::google::protobuf::internal::kEmptyString) {
+    method_ = new ::std::string;
+  }
+  method_->assign(value);
+}
+inline void RequestEvent::set_method(const char* value) {
+  set_has_method();
+  if (method_ == &::google::protobuf::internal::kEmptyString) {
+    method_ = new ::std::string;
+  }
+  method_->assign(value);
+}
+inline void RequestEvent::set_method(const char* value, size_t size) {
+  set_has_method();
+  if (method_ == &::google::protobuf::internal::kEmptyString) {
+    method_ = new ::std::string;
+  }
+  method_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* RequestEvent::mutable_method() {
+  set_has_method();
+  if (method_ == &::google::protobuf::internal::kEmptyString) {
+    method_ = new ::std::string;
+  }
+  return method_;
+}
+inline ::std::string* RequestEvent::release_method() {
+  clear_has_method();
+  if (method_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = method_;
+    method_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional string uri = 3;
+inline bool RequestEvent::has_uri() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void RequestEvent::set_has_uri() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void RequestEvent::clear_has_uri() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void RequestEvent::clear_uri() {
+  if (uri_ != &::google::protobuf::internal::kEmptyString) {
+    uri_->clear();
+  }
+  clear_has_uri();
+}
+inline const ::std::string& RequestEvent::uri() const {
+  return *uri_;
+}
+inline void RequestEvent::set_uri(const ::std::string& value) {
+  set_has_uri();
+  if (uri_ == &::google::protobuf::internal::kEmptyString) {
+    uri_ = new ::std::string;
+  }
+  uri_->assign(value);
+}
+inline void RequestEvent::set_uri(const char* value) {
+  set_has_uri();
+  if (uri_ == &::google::protobuf::internal::kEmptyString) {
+    uri_ = new ::std::string;
+  }
+  uri_->assign(value);
+}
+inline void RequestEvent::set_uri(const char* value, size_t size) {
+  set_has_uri();
+  if (uri_ == &::google::protobuf::internal::kEmptyString) {
+    uri_ = new ::std::string;
+  }
+  uri_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* RequestEvent::mutable_uri() {
+  set_has_uri();
+  if (uri_ == &::google::protobuf::internal::kEmptyString) {
+    uri_ = new ::std::string;
+  }
+  return uri_;
+}
+inline ::std::string* RequestEvent::release_uri() {
+  clear_has_uri();
+  if (uri_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = uri_;
+    uri_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional string protocol = 4;
+inline bool RequestEvent::has_protocol() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void RequestEvent::set_has_protocol() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void RequestEvent::clear_has_protocol() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void RequestEvent::clear_protocol() {
+  if (protocol_ != &::google::protobuf::internal::kEmptyString) {
+    protocol_->clear();
+  }
+  clear_has_protocol();
+}
+inline const ::std::string& RequestEvent::protocol() const {
+  return *protocol_;
+}
+inline void RequestEvent::set_protocol(const ::std::string& value) {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  protocol_->assign(value);
+}
+inline void RequestEvent::set_protocol(const char* value) {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  protocol_->assign(value);
+}
+inline void RequestEvent::set_protocol(const char* value, size_t size) {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  protocol_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* RequestEvent::mutable_protocol() {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  return protocol_;
+}
+inline ::std::string* RequestEvent::release_protocol() {
+  clear_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = protocol_;
+    protocol_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// -------------------------------------------------------------------
+
+// ResponseEvent
+
+// optional string raw = 1;
+inline bool ResponseEvent::has_raw() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void ResponseEvent::set_has_raw() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void ResponseEvent::clear_has_raw() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void ResponseEvent::clear_raw() {
+  if (raw_ != &::google::protobuf::internal::kEmptyString) {
+    raw_->clear();
+  }
+  clear_has_raw();
+}
+inline const ::std::string& ResponseEvent::raw() const {
+  return *raw_;
+}
+inline void ResponseEvent::set_raw(const ::std::string& value) {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  raw_->assign(value);
+}
+inline void ResponseEvent::set_raw(const char* value) {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  raw_->assign(value);
+}
+inline void ResponseEvent::set_raw(const char* value, size_t size) {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  raw_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ResponseEvent::mutable_raw() {
+  set_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    raw_ = new ::std::string;
+  }
+  return raw_;
+}
+inline ::std::string* ResponseEvent::release_raw() {
+  clear_has_raw();
+  if (raw_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = raw_;
+    raw_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional string protocol = 2;
+inline bool ResponseEvent::has_protocol() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void ResponseEvent::set_has_protocol() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void ResponseEvent::clear_has_protocol() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void ResponseEvent::clear_protocol() {
+  if (protocol_ != &::google::protobuf::internal::kEmptyString) {
+    protocol_->clear();
+  }
+  clear_has_protocol();
+}
+inline const ::std::string& ResponseEvent::protocol() const {
+  return *protocol_;
+}
+inline void ResponseEvent::set_protocol(const ::std::string& value) {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  protocol_->assign(value);
+}
+inline void ResponseEvent::set_protocol(const char* value) {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  protocol_->assign(value);
+}
+inline void ResponseEvent::set_protocol(const char* value, size_t size) {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  protocol_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ResponseEvent::mutable_protocol() {
+  set_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    protocol_ = new ::std::string;
+  }
+  return protocol_;
+}
+inline ::std::string* ResponseEvent::release_protocol() {
+  clear_has_protocol();
+  if (protocol_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = protocol_;
+    protocol_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional string status = 3;
+inline bool ResponseEvent::has_status() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void ResponseEvent::set_has_status() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void ResponseEvent::clear_has_status() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void ResponseEvent::clear_status() {
+  if (status_ != &::google::protobuf::internal::kEmptyString) {
+    status_->clear();
+  }
+  clear_has_status();
+}
+inline const ::std::string& ResponseEvent::status() const {
+  return *status_;
+}
+inline void ResponseEvent::set_status(const ::std::string& value) {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  status_->assign(value);
+}
+inline void ResponseEvent::set_status(const char* value) {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  status_->assign(value);
+}
+inline void ResponseEvent::set_status(const char* value, size_t size) {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  status_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ResponseEvent::mutable_status() {
+  set_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    status_ = new ::std::string;
+  }
+  return status_;
+}
+inline ::std::string* ResponseEvent::release_status() {
+  clear_has_status();
+  if (status_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = status_;
+    status_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional string message = 4;
+inline bool ResponseEvent::has_message() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void ResponseEvent::set_has_message() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void ResponseEvent::clear_has_message() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void ResponseEvent::clear_message() {
+  if (message_ != &::google::protobuf::internal::kEmptyString) {
+    message_->clear();
+  }
+  clear_has_message();
+}
+inline const ::std::string& ResponseEvent::message() const {
+  return *message_;
+}
+inline void ResponseEvent::set_message(const ::std::string& value) {
+  set_has_message();
+  if (message_ == &::google::protobuf::internal::kEmptyString) {
+    message_ = new ::std::string;
+  }
+  message_->assign(value);
+}
+inline void ResponseEvent::set_message(const char* value) {
+  set_has_message();
+  if (message_ == &::google::protobuf::internal::kEmptyString) {
+    message_ = new ::std::string;
+  }
+  message_->assign(value);
+}
+inline void ResponseEvent::set_message(const char* value, size_t size) {
+  set_has_message();
+  if (message_ == &::google::protobuf::internal::kEmptyString) {
+    message_ = new ::std::string;
+  }
+  message_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ResponseEvent::mutable_message() {
+  set_has_message();
+  if (message_ == &::google::protobuf::internal::kEmptyString) {
+    message_ = new ::std::string;
+  }
+  return message_;
+}
+inline ::std::string* ResponseEvent::release_message() {
+  clear_has_message();
+  if (message_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = message_;
+    message_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// -------------------------------------------------------------------
+
+// Header
+
+// required string name = 1;
+inline bool Header::has_name() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Header::set_has_name() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Header::clear_has_name() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Header::clear_name() {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    name_->clear();
+  }
+  clear_has_name();
+}
+inline const ::std::string& Header::name() const {
+  return *name_;
+}
+inline void Header::set_name(const ::std::string& value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(value);
+}
+inline void Header::set_name(const char* value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(value);
+}
+inline void Header::set_name(const char* value, size_t size) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Header::mutable_name() {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  return name_;
+}
+inline ::std::string* Header::release_name() {
+  clear_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// required string value = 2;
+inline bool Header::has_value() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Header::set_has_value() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Header::clear_has_value() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Header::clear_value() {
+  if (value_ != &::google::protobuf::internal::kEmptyString) {
+    value_->clear();
+  }
+  clear_has_value();
+}
+inline const ::std::string& Header::value() const {
+  return *value_;
+}
+inline void Header::set_value(const ::std::string& value) {
+  set_has_value();
+  if (value_ == &::google::protobuf::internal::kEmptyString) {
+    value_ = new ::std::string;
+  }
+  value_->assign(value);
+}
+inline void Header::set_value(const char* value) {
+  set_has_value();
+  if (value_ == &::google::protobuf::internal::kEmptyString) {
+    value_ = new ::std::string;
+  }
+  value_->assign(value);
+}
+inline void Header::set_value(const char* value, size_t size) {
+  set_has_value();
+  if (value_ == &::google::protobuf::internal::kEmptyString) {
+    value_ = new ::std::string;
+  }
+  value_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Header::mutable_value() {
+  set_has_value();
+  if (value_ == &::google::protobuf::internal::kEmptyString) {
+    value_ = new ::std::string;
+  }
+  return value_;
+}
+inline ::std::string* Header::release_value() {
+  clear_has_value();
+  if (value_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = value_;
+    value_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// -------------------------------------------------------------------
+
+// HeaderEvent
+
+// repeated .IronBee.CLIPP.PB.Header header = 1;
+inline int HeaderEvent::header_size() const {
+  return header_.size();
+}
+inline void HeaderEvent::clear_header() {
+  header_.Clear();
+}
+inline const ::IronBee::CLIPP::PB::Header& HeaderEvent::header(int index) const {
+  return header_.Get(index);
+}
+inline ::IronBee::CLIPP::PB::Header* HeaderEvent::mutable_header(int index) {
+  return header_.Mutable(index);
+}
+inline ::IronBee::CLIPP::PB::Header* HeaderEvent::add_header() {
+  return header_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Header >&
+HeaderEvent::header() const {
+  return header_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Header >*
+HeaderEvent::mutable_header() {
+  return &header_;
+}
+
+// -------------------------------------------------------------------
+
+// Event
+
+// required uint32 which = 1;
+inline bool Event::has_which() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Event::set_has_which() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Event::clear_has_which() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Event::clear_which() {
+  which_ = 0u;
+  clear_has_which();
+}
+inline ::google::protobuf::uint32 Event::which() const {
+  return which_;
+}
+inline void Event::set_which(::google::protobuf::uint32 value) {
+  set_has_which();
+  which_ = value;
+}
+
+// optional double pre_delay = 2;
+inline bool Event::has_pre_delay() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Event::set_has_pre_delay() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Event::clear_has_pre_delay() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Event::clear_pre_delay() {
+  pre_delay_ = 0;
+  clear_has_pre_delay();
+}
+inline double Event::pre_delay() const {
+  return pre_delay_;
+}
+inline void Event::set_pre_delay(double value) {
+  set_has_pre_delay();
+  pre_delay_ = value;
+}
+
+// optional double post_delay = 3;
+inline bool Event::has_post_delay() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void Event::set_has_post_delay() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void Event::clear_has_post_delay() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void Event::clear_post_delay() {
+  post_delay_ = 0;
+  clear_has_post_delay();
+}
+inline double Event::post_delay() const {
+  return post_delay_;
+}
+inline void Event::set_post_delay(double value) {
+  set_has_post_delay();
+  post_delay_ = value;
+}
+
+// optional .IronBee.CLIPP.PB.ConnectionEvent connection_event = 4;
+inline bool Event::has_connection_event() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void Event::set_has_connection_event() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void Event::clear_has_connection_event() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void Event::clear_connection_event() {
+  if (connection_event_ != NULL) connection_event_->::IronBee::CLIPP::PB::ConnectionEvent::Clear();
+  clear_has_connection_event();
+}
+inline const ::IronBee::CLIPP::PB::ConnectionEvent& Event::connection_event() const {
+  return connection_event_ != NULL ? *connection_event_ : *default_instance_->connection_event_;
+}
+inline ::IronBee::CLIPP::PB::ConnectionEvent* Event::mutable_connection_event() {
+  set_has_connection_event();
+  if (connection_event_ == NULL) connection_event_ = new ::IronBee::CLIPP::PB::ConnectionEvent;
+  return connection_event_;
+}
+inline ::IronBee::CLIPP::PB::ConnectionEvent* Event::release_connection_event() {
+  clear_has_connection_event();
+  ::IronBee::CLIPP::PB::ConnectionEvent* temp = connection_event_;
+  connection_event_ = NULL;
+  return temp;
+}
+
+// optional .IronBee.CLIPP.PB.DataEvent data_event = 5;
+inline bool Event::has_data_event() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void Event::set_has_data_event() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void Event::clear_has_data_event() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void Event::clear_data_event() {
+  if (data_event_ != NULL) data_event_->::IronBee::CLIPP::PB::DataEvent::Clear();
+  clear_has_data_event();
+}
+inline const ::IronBee::CLIPP::PB::DataEvent& Event::data_event() const {
+  return data_event_ != NULL ? *data_event_ : *default_instance_->data_event_;
+}
+inline ::IronBee::CLIPP::PB::DataEvent* Event::mutable_data_event() {
+  set_has_data_event();
+  if (data_event_ == NULL) data_event_ = new ::IronBee::CLIPP::PB::DataEvent;
+  return data_event_;
+}
+inline ::IronBee::CLIPP::PB::DataEvent* Event::release_data_event() {
+  clear_has_data_event();
+  ::IronBee::CLIPP::PB::DataEvent* temp = data_event_;
+  data_event_ = NULL;
+  return temp;
+}
+
+// optional .IronBee.CLIPP.PB.RequestEvent request_event = 6;
+inline bool Event::has_request_event() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void Event::set_has_request_event() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void Event::clear_has_request_event() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void Event::clear_request_event() {
+  if (request_event_ != NULL) request_event_->::IronBee::CLIPP::PB::RequestEvent::Clear();
+  clear_has_request_event();
+}
+inline const ::IronBee::CLIPP::PB::RequestEvent& Event::request_event() const {
+  return request_event_ != NULL ? *request_event_ : *default_instance_->request_event_;
+}
+inline ::IronBee::CLIPP::PB::RequestEvent* Event::mutable_request_event() {
+  set_has_request_event();
+  if (request_event_ == NULL) request_event_ = new ::IronBee::CLIPP::PB::RequestEvent;
+  return request_event_;
+}
+inline ::IronBee::CLIPP::PB::RequestEvent* Event::release_request_event() {
+  clear_has_request_event();
+  ::IronBee::CLIPP::PB::RequestEvent* temp = request_event_;
+  request_event_ = NULL;
+  return temp;
+}
+
+// optional .IronBee.CLIPP.PB.ResponseEvent response_event = 7;
+inline bool Event::has_response_event() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void Event::set_has_response_event() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void Event::clear_has_response_event() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void Event::clear_response_event() {
+  if (response_event_ != NULL) response_event_->::IronBee::CLIPP::PB::ResponseEvent::Clear();
+  clear_has_response_event();
+}
+inline const ::IronBee::CLIPP::PB::ResponseEvent& Event::response_event() const {
+  return response_event_ != NULL ? *response_event_ : *default_instance_->response_event_;
+}
+inline ::IronBee::CLIPP::PB::ResponseEvent* Event::mutable_response_event() {
+  set_has_response_event();
+  if (response_event_ == NULL) response_event_ = new ::IronBee::CLIPP::PB::ResponseEvent;
+  return response_event_;
+}
+inline ::IronBee::CLIPP::PB::ResponseEvent* Event::release_response_event() {
+  clear_has_response_event();
+  ::IronBee::CLIPP::PB::ResponseEvent* temp = response_event_;
+  response_event_ = NULL;
+  return temp;
+}
+
+// optional .IronBee.CLIPP.PB.HeaderEvent header_event = 8;
+inline bool Event::has_header_event() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void Event::set_has_header_event() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void Event::clear_has_header_event() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void Event::clear_header_event() {
+  if (header_event_ != NULL) header_event_->::IronBee::CLIPP::PB::HeaderEvent::Clear();
+  clear_has_header_event();
+}
+inline const ::IronBee::CLIPP::PB::HeaderEvent& Event::header_event() const {
+  return header_event_ != NULL ? *header_event_ : *default_instance_->header_event_;
+}
+inline ::IronBee::CLIPP::PB::HeaderEvent* Event::mutable_header_event() {
+  set_has_header_event();
+  if (header_event_ == NULL) header_event_ = new ::IronBee::CLIPP::PB::HeaderEvent;
+  return header_event_;
+}
+inline ::IronBee::CLIPP::PB::HeaderEvent* Event::release_header_event() {
+  clear_has_header_event();
+  ::IronBee::CLIPP::PB::HeaderEvent* temp = header_event_;
+  header_event_ = NULL;
+  return temp;
+}
+
+// -------------------------------------------------------------------
+
+// Transaction
+
+// repeated .IronBee.CLIPP.PB.Event event = 1;
+inline int Transaction::event_size() const {
+  return event_.size();
+}
+inline void Transaction::clear_event() {
+  event_.Clear();
+}
+inline const ::IronBee::CLIPP::PB::Event& Transaction::event(int index) const {
+  return event_.Get(index);
+}
+inline ::IronBee::CLIPP::PB::Event* Transaction::mutable_event(int index) {
+  return event_.Mutable(index);
+}
+inline ::IronBee::CLIPP::PB::Event* Transaction::add_event() {
+  return event_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >&
+Transaction::event() const {
+  return event_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >*
+Transaction::mutable_event() {
+  return &event_;
+}
+
+// -------------------------------------------------------------------
+
+// Connection
+
+// repeated .IronBee.CLIPP.PB.Event pre_transaction_event = 1;
+inline int Connection::pre_transaction_event_size() const {
+  return pre_transaction_event_.size();
+}
+inline void Connection::clear_pre_transaction_event() {
+  pre_transaction_event_.Clear();
+}
+inline const ::IronBee::CLIPP::PB::Event& Connection::pre_transaction_event(int index) const {
+  return pre_transaction_event_.Get(index);
+}
+inline ::IronBee::CLIPP::PB::Event* Connection::mutable_pre_transaction_event(int index) {
+  return pre_transaction_event_.Mutable(index);
+}
+inline ::IronBee::CLIPP::PB::Event* Connection::add_pre_transaction_event() {
+  return pre_transaction_event_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >&
+Connection::pre_transaction_event() const {
+  return pre_transaction_event_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >*
+Connection::mutable_pre_transaction_event() {
+  return &pre_transaction_event_;
+}
+
+// repeated .IronBee.CLIPP.PB.Transaction transaction = 2;
+inline int Connection::transaction_size() const {
   return transaction_.size();
 }
-inline void Input::clear_transaction() {
+inline void Connection::clear_transaction() {
   transaction_.Clear();
 }
-inline const ::IronBee::CLIPP::PB::Transaction& Input::transaction(int index) const {
+inline const ::IronBee::CLIPP::PB::Transaction& Connection::transaction(int index) const {
   return transaction_.Get(index);
 }
-inline ::IronBee::CLIPP::PB::Transaction* Input::mutable_transaction(int index) {
+inline ::IronBee::CLIPP::PB::Transaction* Connection::mutable_transaction(int index) {
   return transaction_.Mutable(index);
 }
-inline ::IronBee::CLIPP::PB::Transaction* Input::add_transaction() {
+inline ::IronBee::CLIPP::PB::Transaction* Connection::add_transaction() {
   return transaction_.Add();
 }
 inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >&
-Input::transaction() const {
+Connection::transaction() const {
   return transaction_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Transaction >*
-Input::mutable_transaction() {
+Connection::mutable_transaction() {
   return &transaction_;
 }
 
-// optional string id = 6;
+// repeated .IronBee.CLIPP.PB.Event post_transaction_event = 3;
+inline int Connection::post_transaction_event_size() const {
+  return post_transaction_event_.size();
+}
+inline void Connection::clear_post_transaction_event() {
+  post_transaction_event_.Clear();
+}
+inline const ::IronBee::CLIPP::PB::Event& Connection::post_transaction_event(int index) const {
+  return post_transaction_event_.Get(index);
+}
+inline ::IronBee::CLIPP::PB::Event* Connection::mutable_post_transaction_event(int index) {
+  return post_transaction_event_.Mutable(index);
+}
+inline ::IronBee::CLIPP::PB::Event* Connection::add_post_transaction_event() {
+  return post_transaction_event_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >&
+Connection::post_transaction_event() const {
+  return post_transaction_event_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::IronBee::CLIPP::PB::Event >*
+Connection::mutable_post_transaction_event() {
+  return &post_transaction_event_;
+}
+
+// -------------------------------------------------------------------
+
+// Input
+
+// optional string id = 1;
 inline bool Input::has_id() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
+  return (_has_bits_[0] & 0x00000001u) != 0;
 }
 inline void Input::set_has_id() {
-  _has_bits_[0] |= 0x00000020u;
+  _has_bits_[0] |= 0x00000001u;
 }
 inline void Input::clear_has_id() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000001u;
 }
 inline void Input::clear_id() {
   if (id_ != &::google::protobuf::internal::kEmptyString) {
@@ -652,6 +2375,35 @@ inline ::std::string* Input::release_id() {
     id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
+}
+
+// required .IronBee.CLIPP.PB.Connection connection = 2;
+inline bool Input::has_connection() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Input::set_has_connection() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Input::clear_has_connection() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Input::clear_connection() {
+  if (connection_ != NULL) connection_->::IronBee::CLIPP::PB::Connection::Clear();
+  clear_has_connection();
+}
+inline const ::IronBee::CLIPP::PB::Connection& Input::connection() const {
+  return connection_ != NULL ? *connection_ : *default_instance_->connection_;
+}
+inline ::IronBee::CLIPP::PB::Connection* Input::mutable_connection() {
+  set_has_connection();
+  if (connection_ == NULL) connection_ = new ::IronBee::CLIPP::PB::Connection;
+  return connection_;
+}
+inline ::IronBee::CLIPP::PB::Connection* Input::release_connection() {
+  clear_has_connection();
+  ::IronBee::CLIPP::PB::Connection* temp = connection_;
+  connection_ = NULL;
+  return temp;
 }
 
 

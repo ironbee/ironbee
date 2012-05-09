@@ -14,10 +14,10 @@ clipp_SOURCES = \
     modsec_audit_log_generator.cpp \
     view_consumer.cpp \
     raw_generator.cpp \
-    ironbee_consumer.cpp
-#    pb_consumer.cpp \
+    ironbee_consumer.cpp \
+    pb_consumer.cpp \
+    clipp.pb.cc
 #    pb_generator.cpp \
-#    clipp.pb.cc \
 #    apache_generator.cpp \
 #    suricata_generator.cpp \
 #    connection_modifiers.cpp
