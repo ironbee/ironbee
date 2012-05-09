@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>CLIPP User Manual</title>
+	<meta name="author" content="Christopher Alfeld &lt;calfeld@qualys.com&gt;"/>
+	<meta name="data" content="May, 2012"/>
+</head>
+<body>
+<h1 id="clippusermanual">CLIPP User Manual</h1>
+
+<p>Christopher Alfeld <a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#58;&#99;&#x61;&#x6c;&#102;&#x65;&#108;&#100;&#x40;&#x71;&#x75;&#x61;&#108;&#121;&#x73;&#x2e;&#x63;&#x6f;&#109;">&#x63;&#x61;&#108;&#102;&#x65;&#x6c;&#100;&#64;&#x71;&#117;&#x61;&#x6c;&#x79;&#x73;&#x2e;&#x63;&#111;&#x6d;</a><br>
+May, 2012</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>CLIPP (pronounced clip-pea) is a framework for generating, manipulating, and
+consuming IronBee event streams.</p>
+
+<h2 id="examples">Examples</h2>
+
+<p>Send a ModSecurity Audit Log, <code>february.log</code>, to a local IronBee configured
+with `ironbee.conf``.</p>
+
+<pre><code>clipp modsec:february.log ironbee:ironbee.conf
+</code></pre>
+
+<p><code>modsec</code> is a generator. It produces event streams. <code>ironbee</code> is a consumer.
+It consumes the event streams, sending them to a local IronBee engine.</p>
+
+<p>As previous, but also display the event stream to standard out:</p>
+
+<pre><code>clipp modsec:february.log @view ironbee:ironbee.conf
+</code></pre>
+
+<p><code>@view@</code> is a modifier. It takes event streams as inputs, displays them to
+standard out, and passes them on to the next element in the stage.</p>
+
+<p>Multiple generators are possible:</p>
+
+<pre><code>clipp modsec:february.log modsec:march.log ironbee:ironbee.conf
+</code></pre>
+
+<p>The consumer must be unique though. Generators are processed in order, so all
+events from <code>february.log</code> will be sent before events in <code>march.log</code>.</p>
+
+<p>Modifiers can be attached to either generators or consumers. Below, the
+<code>@view</code> modifier is attached only to the first generator and events from
+<code>march.log</code> will not be displayed:</p>
+
+<pre><code>clipp modsec:february.log @view modsec:march.log ironbee:ironbee.conf
+</code></pre>
+
+<p>To see all events we could attach an <code>@view</code> modifier to the <code>march.log</code>
+generator or we could move the modifier to be attached to the consumer
+instead:</p>
+
+<pre><code>clipp modsec:february.log modsec:march.log ironbee:ironbee.conf @view
+</code></pre>
+
+<p>Spaces between components and modifiers are optional. Removing them, may make
+which components they are attached to clearer.</p>
+
+<pre><code>clipp modsec:february.log modsec:march.log ironbee:ironbee.conf@view
+</code></pre>
+
+<p>There are many generators, modifiers, and consumers. See below for specifics.</p>
+
+<h2 id="configuration">Configuration</h2>
+
+<p>Configuration consists of chains. Each chain is a generator or a consumer
+and zero or more modifiers. The last chain listed in the configuration is
+interpreted as the consumer and all others as generators. There must be at
+least two chains: a generator and a consumer.</p>
+
+<p>Generators, consumers, and modifiers are all components. Components are
+written as <code>name</code>:<code>argument</code> or, if <code>argument</code> is the empty string, just
+<code>name</code>. Modifiers are distinguished by beginning with <code>@</code>. The component
+they modify is referred to as the <em>base</em> component. Modifiers may be separated
+from earlier components (base or previous modifier) by white space, but this
+is optional.</p>
+
+<p>Component names only consist of lower case letters and underscores. Arguments
+may contain spaces but, if so, must be in double quotes. Note that these
+quotes must make it to <code>clipp</code>, which usually means they are escaped on the
+command line, e.g.,:</p>
+
+<pre><code>clipp modsec:\&quot;my log.log\&quot; ironbee:ironbee.conf
+</code></pre>
+
+<p>Formally, the configuration grammar is, in pseudo-BNF:</p>
+
+<pre><code>configuration := generators WS+ consumer
+generators    := generator ( WS+ generator )*
+generator     := chain
+consumer      := chain
+chain         := base modifiers
+modifiers     := ( WS* modifier )*
+modifier      := AT component
+base          := component
+component     := name [ COLON configuration ]
+configuration := quoted | unquoted
+quoted        := /&quot;[^&quot;]+&quot;/
+unquoted      := /[^\s]+/
+name          := /[a-z_]+/
+AT            := &quot;@&quot;
+COLON         := &quot;:&quot;
+WS            := &quot; &quot;
+</code></pre>
+
+<p>The grammar is likely to change in in the near future. </p>
+
+<p>All arguments after the flags are joined with whitespace and treated as
+configuration text. You may also ask <code>clipp</code> to load configuration from a
+file via <code>-c</code> <em>path</em>. Configuration files may have comments by beginning a
+line with <code>#</code>. All lines in the configuration file are otherwise joined with
+whitespace. E.g.,</p>
+
+<pre><code># input.log
+modsec:input.log
+# and then a single input at the end to 127.0.0.1:80
+raw:a,b
+   @set_local_ip:127.0.0.1
+   @set_local_port:80
+# all fed to ironbee with IDs displayed
+ironbee:ironbee.conf
+   @view:id
+</code></pre>
+
+<h2 id="input">Input</h2>
+
+<p>An <em>Input</em> is the fundamental unit of data in <code>clipp</code>. Generators produce
+them, modifiers modify them, and consumers consumer them. An Input represents
+a single connection with zero or more transactions. The Input format is
+oriented around IronBee server plugin events and is designed to adapt to
+future changes such as additional events.</p>
+
+<p>An Input is an ID for human consumption and a Connection. The ID is optional,
+and is mainly used by <code>@view</code> and <code>@view:id</code>, i.e., displayed to standard out
+for human consumption.</p>
+
+<p>A Connection is a list of pre-transaction Events, a list of Transactions, and
+a list of post-transaction Events.</p>
+
+<p>A Transaction is a list of Events.</p>
+
+<p>An Event is an event identifier (which IronBee Event it corresponds to), a
+pre-delay and a post-delay, both of which are floating point values measured
+in seconds. Some consumers, e.g., <code>ironbee</code> will interpreted the pre- and
+post- delay values by delaying for that many seconds before and after the
+event is fired.</p>
+
+<p>The following Events are currently defined:</p>
+
+<p><strong>connection opened</strong> &#8212; Pre transaction only; contains local and remote IP
+and ports.</p>
+
+<p><strong>connection closed</strong> &#8212; Post transaction only; contains no data.</p>
+
+<p>The remaining Events may only occur in a Transaction.</p>
+
+<p><strong>connection data in</strong> &#8212; Contains data.</p>
+
+<p><strong>connection data out</strong> &#8212; Contains data.</p>
+
+<p><strong>request started</strong> &#8212; Contains some of raw data, method, uri, and protocol.</p>
+
+<p><strong>request header</strong> &#8212; Contains zero or more headers, each of which is a name
+and value.</p>
+
+<p><strong>request body</strong> &#8211; Contains data.</p>
+
+<p><strong>request finished</strong> &#8212; Contains no data.</p>
+
+<p><strong>response started</strong> &#8212; Contains some of raw data, status, message, and
+protocol.</p>
+
+<p><strong>response header</strong> &#8212; Contains zero or more headers, each of which is a name
+and value.</p>
+
+<p><strong>response body</strong> &#8211; Contains data.</p>
+
+<p><strong>response finished</strong> &#8212; Contains no data.</p>
+
+<p>Typically, there are two classes of Inputs:</p>
+
+<ol>
+<li><p>Consists of a connection open event, then a sequence of transactions each
+consisting of a connection data in and a connection data out event, and then a
+connection closed event. These inputs are typical of generators that read
+other formats including <code>modsec</code>, <code>apache</code>, <code>raw</code>, and <code>suricata</code>.<br/>
+Unmodified, they are usually consumed by an IronBee that uses modhtp to
+parse them.</p></li>
+<li><p>Consists of a connection open event, then a sequence of transactions each
+consisting of request started, request header, request body, request finished,
+response started, response header, response body, response finished, and then
+a connection closed event. These are meant to represent input to IronBee from
+a source that already does basic parsing.</p></li>
+</ol>
+
+<p>Other Inputs beyond the above two are certainly possible. E.g., connection
+data in might occur several times in a row to test data that comes in batches.</p>
+
+<h2 id="protobuffileformat">Protobuf File Format</h2>
+
+<p>The CLIPP protobuf file format and it associated components: <code>pb</code> and
+<code>writepb</code> are especially important. The protobuf format completely captures
+the Input is the most powerful and flexible format.</p>
+
+<p>The Protobuf format is compact to begin with and uses gzip compression to
+further reduce its size. If you have a lot of data that you are going to run
+through <code>clipp</code> multiple times, consider converting it to protobuf format
+first via <code>writepb</code>.</p>
+
+<h2 id="generators">Generators</h2>
+
+<p><strong>pb</strong>:<em>path</em> </p>
+
+<p>Generate Input from CLIPP Protobuf file.</p>
+
+<p><strong>raw</strong>:<em>request</em>,<em>response</em> </p>
+
+<p>Generate events from a pair of raw files. Bogus IP and ports are used for the
+connection opened event. You can override those with the <code>@set_</code><em>X</em>
+modifiers.</p>
+
+<p>This generator produces a single input with a single transaction. A
+connection opened and connection closed event are included along with a
+single pair of connection data in and connection data out events in the
+transaction.</p>
+
+<p><strong>modsec</strong>:<em>path</em> &#8212; Generate events from ModSecurity audit log.</p>
+
+<p>ModSecurity audit logs are often somewhat corrupted. CLIPP will emit a
+message, ignore, and continue processing whenever it fails to parse an entry.</p>
+
+<p>This generator produces an Input for each audit log entry. The Input consists
+of a single transaction with the request and response.</p>
+
+<p><strong>apache</strong>:<em>path</em> &#8212; Generate events from an Apache log.</p>
+
+<p>The log must be in NCSA format:</p>
+
+<pre><code>&quot;%h %l %u %t \&quot;%r\&quot; %&gt;s %b \&quot;%{Referer}i\&quot; \&quot;%{User-agent}i\&quot;&quot;
+</code></pre>
+
+<p>Only <code>Referer</code> and <code>User-Agent</code> headers are included. No bodies are included.</p>
+
+<p>This generator produces an Input for each line of the log. The Input consists
+of a single transaction with the fabricated request and response.</p>
+
+<p><strong>suricata</strong>:<em>path</em> &#8212; Generate events from a Suricata log.</p>
+
+<p>This generator behaves almost identically to <code>apache</code> but reads Suricata log
+format instead. </p>
+
+<h2 id="modifiers">Modifiers</h2>
+
+<p><strong>@view</strong></p>
+
+<p>All Events are output to standard out in human readable format. Unprintable
+characters are represented by <code>[</code><em>X</em><code>]</code> where <em>X</em> is the decimal value.</p>
+
+<p><strong>@view:id</strong></p>
+
+<p>This modifier is identical to <code>@view</code> except only the IDs of each event are
+displayed.</p>
+
+<p><strong>@set_local_ip</strong>:<em>ip</em><br>
+<strong>@set_local_port</strong>:<em>port</em><br>
+<strong>@set_remote_ip</strong>:<em>ip</em><br>
+<strong>@set_remote_port</strong>:<em>port</em><br></p>
+
+<p>These modifiers change <em>every</em> connection opened event to use the given
+parameters.</p>
+
+<h2 id="consumers">Consumers</h2>
+
+<p><strong>ironbee</strong>:<em>path</em></p>
+
+<p>This consumer initialized an IronBee engine, loads <em>path</em> as configuration,
+and feeds all events to it. The pre- and post- delay attributes of Events
+are interpreted.</p>
+
+<p><strong>view</strong>
+<strong>view:id</strong></p>
+
+<p>These consumer are identical to the modifiers of the same name except that they behave as a consumer, i.e., can appear as the final chain.</p>
+
+<p><strong>writepb</strong>:<em>path</em> </p>
+
+<p>This consumer the Inputs to <em>path</em> in the CLIPP protobuf format. This format
+perfectly captures the Inputs.</p>
+
+<h2 id="extendingclipp">Extending CLIPP</h2>
+
+<p>CLIPP is designed to be extendable via adding additional components:
+generators, modifiers, and consumers. As a component writer, you will need to
+be familiar with <code>input.hpp</code>.</p>
+
+<p>All components are C++ functionals. You will need to write the functional
+(probably as a class) and then modify <code>clipp.cpp</code> to add the functional to
+the appropriate factory map (<code>clipp.cpp</code> has specific documentation for
+doing this). If your functional can be instantiated with a single
+<code>std::string</code> argument, then this addition is easy. Otherwise, you will also
+need to write a factory functional which takes a single <code>std::string</code> argument
+and returns the component functional.</p>
+
+<p>All components use shared pointers to the Input class for their parameter.
+This type is called an <code>input_p</code>. All components return a bool. </p>
+
+<p>Generators take an <code>input_p&amp;</code> parameter. The parameter is guaranteed to be
+non-singular, i.e., non-NULL. The generator can either reuse the Input
+pointed to or reset the parameter to a new Input. The Generator should make
+no assumptions about the value of the passed in Input. It can be reset, via</p>
+
+<p>input = Input::Input();</p>
+
+<p>A generator should return true if and only if it was able to generate an
+Input. When it returns false, <code>clipp</code> will discard the Input and move on to
+the next Generator.</p>
+
+<p>Modifiers also take an <code>input_p&amp;</code> parameter. The parameter is guaranteed to
+point to an incoming Input. The modifier can modify that Input or generate a
+new Input based on it and change the parameter to point to the new one. The
+modifier should return true if processing of this Input should continue and
+false otherwise. Returning false is useful, e.g., for filters. If false is
+returned, <code>clipp</code> will stop processing the Input and ask the Generator for the
+next input.</p>
+
+<p>Consumer take a <code>const input_p&amp;</code> parameter. They are, however, allowed to
+modify the pointed to Input if that helps them. The Input will be not be
+read after the Consumer runs. Consumers should return true if they were able
+to process the input and false otherwise. If a consumer returns false,
+<code>clipp</code> will emit an error message and exit.</p>
+
+<p>All components should indicate error conditions by throwing standard
+exceptions. Errors during construction will cause <code>clipp</code> to exit. Errors
+during Input processing will cause <code>clipp</code> to emit an error and move on to the
+next input. Thus, e.g., if a Consumer suffers a fatal error it should both
+through an exception and arrange to return false in the future.</p>
+
+<p>The Input classes provide a variety of routines to ease component writing.
+For Generators, there are methods to easily add new Transactions and Events.
+For Modifiers, there is a <code>ModifierDelegate</code> class and <code>dispatch</code> methods to
+visit every Event in a non-const fashion. For Consumers, there is a
+<code>Delegate</code> class and <code>dispatch</code> methods to visit every Event in a
+const-fashion, with, if desired, delays.</p>
+
+<p>As functionals, components must be easily copied. A standard technique to
+handle this (and to encapsulate implementation) is to have the functional
+classes hold only a shared pointer to a declared but not defined internal
+state class.</p>
+
+<p>For simple examples see:</p>
+
+<ul>
+<li><code>raw_generator.[ch]pp</code></li>
+<li><code>view.[ch]pp</code></li>
+<li><code>connection_modifiers.[ch]pp</code></li>
+</ul>
+</body>
+</html>
