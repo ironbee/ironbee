@@ -127,8 +127,11 @@ ibapi.new = function(self, ib_engine, ib_tx)
     -- nil if the value is not supported.
     ib_obj.private.fieldToLua = function(self, field)
 
+        -- Nil, guard against undefined fields.
+        if field == nil then
+            return nil
         -- Number
-        if field.type == ffi.C.IB_FTYPE_NUM then
+        elseif field.type == ffi.C.IB_FTYPE_NUM then
             local value = ffi.new("ib_num_t[1]")
             ffi.C.ib_field_value(field, value)
             return tonumber(value[0])
