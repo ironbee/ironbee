@@ -1928,7 +1928,9 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                         }
                     }
                 }
-                else if ((cmphost == NULL) && (host == NULL)) {
+                else if ((cmphost == NULL) && 
+                         ((host == NULL) || (*host == '\0')))
+                {
                     /* Match default (wildcard) site for missing host. */
                     ib_log_debug2_tx(tx,
                                   "Site \"%s:%s\" matched ctx=%p '%s'",
