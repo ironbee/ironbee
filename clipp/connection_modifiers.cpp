@@ -29,13 +29,13 @@
 namespace IronBee {
 namespace CLIPP {
 
-namespace  {
+namespace {
 
-class SetLocalIp :
+class SetLocalIP :
     public Input::ModifierDelegate
 {
 public:
-    SetLocalIp(const std::string& ip) :
+    SetLocalIP(const std::string& ip) :
         m_ip(ip)
     {
         // nop
@@ -50,6 +50,63 @@ private:
     const std::string& m_ip;
 };
 
+class SetLocalPort :
+    public Input::ModifierDelegate
+{
+public:
+    SetLocalPort(uint32_t port) :
+        m_port( port )
+    {
+        // nop
+    }
+
+    void connection_opened(Input::ConnectionEvent& event)
+    {
+        event.local_port = m_port;
+    }
+
+private:
+    uint32_t m_port;
+};
+
+class SetRemoteIP :
+    public Input::ModifierDelegate
+{
+public:
+    SetRemoteIP(const std::string& ip) :
+        m_ip(ip)
+    {
+        // nop
+    }
+
+    void connection_opened(Input::ConnectionEvent& event)
+    {
+        event.remote_ip = Input::Buffer(m_ip);
+    }
+
+private:
+    const std::string& m_ip;
+};
+
+class SetRemotePort :
+    public Input::ModifierDelegate
+{
+public:
+    SetRemotePort(uint32_t port) :
+        m_port( port )
+    {
+        // nop
+    }
+
+    void connection_opened(Input::ConnectionEvent& event)
+    {
+        event.remote_port = m_port;
+    }
+
+private:
+    uint32_t m_port;
+};
+
 }
 
 SetLocalIPModifier::SetLocalIPModifier(const std::string& ip) :
@@ -60,7 +117,70 @@ SetLocalIPModifier::SetLocalIPModifier(const std::string& ip) :
 
 bool SetLocalIPModifier::operator()(Input::input_p& in_out)
 {
-    SetLocalIp delegate(m_ip);
+    SetLocalIP delegate(m_ip);
+    // ConnectionOpened events only occur in pre-transaction
+    BOOST_FOREACH(
+        const Input::event_p& event,
+        in_out->connection.pre_transaction_events
+    )
+    {
+        event->dispatch(delegate);
+    }
+
+    return true;
+}
+
+SetLocalPortModifier::SetLocalPortModifier(uint32_t port) :
+    m_port(port)
+{
+    // nop
+}
+
+bool SetLocalPortModifier::operator()(Input::input_p& in_out)
+{
+    SetLocalPort delegate(m_port);
+    // ConnectionOpened events only occur in pre-transaction
+    BOOST_FOREACH(
+        const Input::event_p& event,
+        in_out->connection.pre_transaction_events
+    )
+    {
+        event->dispatch(delegate);
+    }
+
+    return true;
+}
+
+SetRemoteIPModifier::SetRemoteIPModifier(const std::string& ip) :
+    m_ip(ip)
+{
+    // nop
+}
+
+bool SetRemoteIPModifier::operator()(Input::input_p& in_out)
+{
+    SetRemoteIP delegate(m_ip);
+    // ConnectionOpened events only occur in pre-transaction
+    BOOST_FOREACH(
+        const Input::event_p& event,
+        in_out->connection.pre_transaction_events
+    )
+    {
+        event->dispatch(delegate);
+    }
+
+    return true;
+}
+
+SetRemotePortModifier::SetRemotePortModifier(uint32_t port) :
+    m_port(port)
+{
+    // nop
+}
+
+bool SetRemotePortModifier::operator()(Input::input_p& in_out)
+{
+    SetRemotePort delegate(m_port);
     // ConnectionOpened events only occur in pre-transaction
     BOOST_FOREACH(
         const Input::event_p& event,

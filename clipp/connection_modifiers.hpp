@@ -37,14 +37,98 @@ namespace CLIPP {
 class SetLocalIPModifier
 {
 public:
+    /**
+     * Constructor.
+     *
+     * @param[in] ip IP to use for all connection opened events.
+     **/
     explicit
     SetLocalIPModifier(const std::string& ip);
 
+    //! Call operator.
+    /**
+     * Changes local IP address of all connection opened events of @a in_out.
+     *
+     * @param[in,out] in_out Input to modify.
+     **/
     bool operator()(Input::input_p& in_out);
 
 private:
     std::string m_ip;
 };
+
+//! Change local_port of connection opened events.
+class SetLocalPortModifier
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param[in] port Port to use for all connection opened events.
+     **/
+    explicit
+    SetLocalPortModifier(uint32_t port);
+
+    //! Call operator.
+    /**
+     * Changes local port of all connection opened events of @a in_out.
+     *
+     * @param[in,out] in_out Input to modify.
+     **/
+    bool operator()(Input::input_p& in_out);
+
+private:
+    uint32_t m_port;
+};
+
+//! Change remote_ip of connection opened events.
+class SetRemoteIPModifier
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param[in] ip IP to use for all connection opened events.
+     **/
+    explicit
+    SetRemoteIPModifier(const std::string& ip);
+
+    //! Call operator.
+    /**
+     * Changes remote IP address of all connection opened events of @a in_out.
+     *
+     * @param[in,out] in_out Input to modify.
+     **/
+    bool operator()(Input::input_p& in_out);
+
+private:
+    std::string m_ip;
+};
+
+//! Change remote_port of connection opened events.
+class SetRemotePortModifier
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param[in] port Port to use for all connection opened events.
+     **/
+    explicit
+    SetRemotePortModifier(uint32_t port);
+
+    //! Call operator.
+    /**
+     * Changes remote port of all connection opened events of @a in_out.
+     *
+     * @param[in,out] in_out Input to modify.
+     **/
+    bool operator()(Input::input_p& in_out);
+
+private:
+    uint32_t m_port;
+};
+
 
 } // CLI
 } // IronBee

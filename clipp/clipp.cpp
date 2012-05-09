@@ -73,6 +73,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/call_traits.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <string>
 
@@ -160,6 +162,13 @@ input_consumer_t construct_consumer(const string& arg)
 }
 
 //! Generic modifier constructor.
+template <typename T, typename ArgType>
+input_modifier_t construct_modifier(const string& arg)
+{
+    return T(boost::lexical_cast<ArgType>(arg));
+}
+
+//! Generic modifier constructor.
 template <typename T>
 input_modifier_t construct_modifier(const string& arg)
 {
@@ -214,7 +223,10 @@ void help()
     "  view:          -- Output to stdout for human consumption.\n"
     "\n"
     "Modifiers:\n"
-    "  set_local_ip:<ip> -- Change local IP to <ip>.\n"
+    "  @set_local_ip:<ip>      -- Change local IP to <ip>.\n"
+    "  @set_local_port:<port>  -- Change local port to <port>.\n"
+    "  @set_remote_ip:<ip>     -- Change remote IP to <ip>.\n"
+    "  @set_remote_port:<port> -- Change remote port to <port>.\n"
     ;
 }
 
@@ -257,6 +269,12 @@ int main(int argc, char** argv)
     modifier_factory_map["view"] = construct_modifier<ViewModifier>;
     modifier_factory_map["set_local_ip"] =
         construct_modifier<SetLocalIPModifier>;
+    modifier_factory_map["set_local_port"] =
+        construct_modifier<SetLocalPortModifier, uint32_t>;
+    modifier_factory_map["set_remote_ip"] =
+        construct_modifier<SetRemoteIPModifier>;
+    modifier_factory_map["set_remote_port"] =
+        construct_modifier<SetRemotePortModifier, uint32_t>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
