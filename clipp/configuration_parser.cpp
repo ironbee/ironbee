@@ -95,7 +95,6 @@ chain_vec_t parse(const std::string& input)
         result
     );
 
-    cout << result.size() << endl;
     if (! success) {
         size_t pos = begin - input.begin();
         throw runtime_error(
