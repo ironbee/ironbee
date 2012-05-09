@@ -196,10 +196,3 @@ test_luajit_LDADD = $(LDADD) \
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
 
-#check-local: $(check_PROGRAMS)
-#	for cp in $(check_PROGRAMS); do \
-#		./$${cp} --gtest_output=xml:$${cp}_details.xml 2> $${cp}_stderr.log; \
-#		if test -n "$(VALGRIND)"; then \
-#		 $(VALGRIND) --xml=yes --xml-file=$${cp}_valgrind_memcheck.xml ./$${cp}; \
-#		fi; \
-#	done
