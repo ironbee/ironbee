@@ -24,8 +24,33 @@
 
 #include "connection_modifiers.hpp"
 
+#include <boost/foreach.hpp>
+
 namespace IronBee {
 namespace CLIPP {
+
+namespace  {
+
+class SetLocalIp :
+    public Input::ModifierDelegate
+{
+public:
+    SetLocalIp(const std::string& ip) :
+        m_ip(ip)
+    {
+        // nop
+    }
+
+    void connection_opened(Input::ConnectionEvent& event)
+    {
+        event.local_ip = Input::Buffer(m_ip);
+    }
+
+private:
+    const std::string& m_ip;
+};
+
+}
 
 SetLocalIPModifier::SetLocalIPModifier(const std::string& ip) :
     m_ip(ip)
@@ -33,10 +58,17 @@ SetLocalIPModifier::SetLocalIPModifier(const std::string& ip) :
     // nop
 }
 
-bool SetLocalIPModifier::operator()(input_p& in_out)
+bool SetLocalIPModifier::operator()(Input::input_p& in_out)
 {
-    in_out->local_ip.data   = m_ip.data();
-    in_out->local_ip.length = m_ip.length();
+    SetLocalIp delegate(m_ip);
+    // ConnectionOpened events only occur in pre-transaction
+    BOOST_FOREACH(
+        const Input::event_p& event,
+        in_out->connection.pre_transaction_events
+    )
+    {
+        event->dispatch(delegate);
+    }
 
     return true;
 }

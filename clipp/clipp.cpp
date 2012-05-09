@@ -63,7 +63,7 @@
 #include "pb_consumer.hpp"
 #include "view_consumer.hpp"
 
-//#include "connection_modifiers.hpp"
+#include "connection_modifiers.hpp"
 
 #include <boost/function.hpp>
 #include <boost/filesystem.hpp>
@@ -256,8 +256,8 @@ int main(int argc, char** argv)
 
     // Declare modifiers.
     modifier_factory_map_t modifier_factory_map;
-//    modifier_factory_map["set_local_ip"] =
-//        construct_modifier<SetLocalIPModifier>;
+    modifier_factory_map["set_local_ip"] =
+        construct_modifier<SetLocalIPModifier>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
