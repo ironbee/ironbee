@@ -127,7 +127,7 @@ public:
  **/
 struct Buffer
 {
-    //! Default constructor.
+    //! Default constructor.  Buffer is empty string.
     Buffer();
 
     //! Constructor.

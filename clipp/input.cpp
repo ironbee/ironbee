@@ -16,9 +16,11 @@ ostream& operator<<(ostream& out, const Buffer& buffer)
     return out;
 }
 
-Buffer::Buffer()
+Buffer::Buffer() :
+    data(NULL), length(0)
 {
-    // nop
+    static const char* c_default = "";
+    data = c_default;
 }
 
 Buffer::Buffer(const char* data_, size_t length_) :
@@ -64,7 +66,9 @@ NullEvent::NullEvent(event_e which_) :
 }
 
 ConnectionEvent::ConnectionEvent(event_e which_) :
-    Event(which_)
+    Event(which_),
+    local_port(0),
+    remote_port(0)
 {
     // nop
 }
