@@ -13,11 +13,9 @@ Get the code:
 
   git clone git://github.com/ironbee/ironbee.git
 
-Update code from submodules:
+Change to the repo directory:
 
   cd ironbee
-  git submodule init
-  git submodule update
 
 Set your name/email:
 
@@ -27,7 +25,7 @@ Set your name/email:
 Keep the code up-to-date:
 
   git checkout master
-  git rebase origin master
+  git pull --rebase
 
 Make a local branch for your work:
 
@@ -38,7 +36,7 @@ Make a local branch for your work:
 Keep your local branch up-to-date with changes upstream:
 
   git checkout master
-  git pull origin master
+  git pull --rebase
   git checkout mywork
   git rebase master
 
