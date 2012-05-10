@@ -205,7 +205,7 @@ ib_status_t ib_strlower(ib_strop_t op,
     IB_FTRACE_INIT();
     size_t len;
     ib_status_t rc = IB_OK;
-    char *out;
+    char *out = NULL;
 
     assert(mp != NULL);
     assert(str_in != NULL);
@@ -228,10 +228,20 @@ ib_status_t ib_strlower(ib_strop_t op,
         break;
 
     case IB_STROP_COW:
+    {
+#if ((__GNUC__==4) && (__GNUC_MINOR__<3))
+        uint8_t *uint8ptr;
         rc = copy_on_write(mp,
                            (uint8_t *)str_in, len+1,
-                           (uint8_t **)&out, &len, result);
+                           &uint8ptr, &len, result);
+        out = (char *)uint8ptr;
+#else
+        rc = copy_on_write(mp,
+                           (uint8_t *)str_in, len+1,
+                           (uint8_t **)out, &len, result);
+#endif
         break;
+    }
     }
 
     if (rc == IB_OK) {
