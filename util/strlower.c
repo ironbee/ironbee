@@ -162,7 +162,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
                            ib_flags_t *result)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
+    ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
     assert(data_in != NULL);
@@ -204,7 +204,7 @@ ib_status_t ib_strlower(ib_strop_t op,
 {
     IB_FTRACE_INIT();
     size_t len;
-    ib_status_t rc;
+    ib_status_t rc = IB_OK;
     char *out;
 
     assert(mp != NULL);

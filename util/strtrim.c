@@ -354,7 +354,7 @@ static ib_status_t trim_right(ib_strop_t op,
                               ib_flags_t *result)
 {
     IB_FTRACE_INIT();
-    char *out;
+    char *out = NULL;
 
     /* Set the base result flags */
     if (len != offset + 1) {
