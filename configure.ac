@@ -235,6 +235,17 @@ ironbeepp_internal_includedir='${prefix}/include/ironbeepp/internal'
 AC_SUBST(ironbeepp_includedir)
 AC_SUBST(ironbeepp_internal_includedir)
 
+### Development-only features
+AC_ARG_ENABLE(clipp,
+              AS_HELP_STRING([--enable-clipp],
+                             [Enable the CPP CLI (clipp).]),
+[
+  enable_clipp=$enableval
+],
+[
+  enable_clipp="${enable_cpp}"
+])
+
 ### Ragel
 AC_ARG_WITH([ragel],
             [  --with-ragel=PROG ragel executable],
@@ -317,6 +328,7 @@ sinclude(acinclude/geoip.m4)
 sinclude(acinclude/ax_pthread.m4)
 sinclude(acinclude/ossp-uuid.m4)
 sinclude(acinclude/ax_boost_base.m4)
+sinclude(acinclude/protobuf.m4)
 
 # Required libs
 CHECK_HTP()
@@ -349,6 +361,16 @@ CHECK_HTTPD()
 CHECK_TS()
 CHECK_GEOIP()
 CHECK_OSSP_UUID()
+CHECK_PROTOBUF()
+
+if test "${enable_clipp}" = "yes" ; then
+  if test "${enable_cpp}" != "yes" ; then
+    AC_MSG_ERROR([C++ is required for clipp])
+  fi
+  if test "${HAVE_PROTOBUF}" != "yes" ; then
+    AC_MSG_ERROR([protobuf is required for clipp])
+  fi
+fi
 
 # Workaround for issue with gcc 4.6 and APR on Darwin
 if test "$OS_DARWIN" = true; then
@@ -378,7 +400,12 @@ fi
 
 dnl Enable C++ subdirs if enabled
 if test "$cpp_code" != 0; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp clipp"
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp"
+fi
+
+dnl Enable clipp subdir if enabled
+if test "${enable_clipp}" = "yes"; then
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} clipp"
 fi
 
 dnl Make sure abs_top_builddir is available

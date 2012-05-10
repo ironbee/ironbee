@@ -6,7 +6,7 @@ check-local:
 		$(abs_builddir)/clipp \
 		$(abs_builddir)/tests/ironbee.conf
 
-CPPFLAGS += -Wno-shadow
+CPPFLAGS += -Wno-shadow ${PROTOBUF_CPPFLAGS}
 clipp_SOURCES = \
     clipp.cpp \
     configuration_parser.cpp \
@@ -25,6 +25,7 @@ clipp_SOURCES = \
     connection_modifiers.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
+    $(PROTOBUF_LDFLAGS) \
     -lboost_system \
     -lboost_filesystem \
     -lboost_program_options \
