@@ -250,8 +250,8 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
  */
 ib_status_t ib_strtrim_left(ib_strop_t op,
                             ib_mpool_t *mp,
-                            char *data_in,
-                            char **data_out,
+                            char *str_in,
+                            char **str_out,
                             ib_flags_t *result);
 
 /**
@@ -301,7 +301,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] flags Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -326,8 +326,8 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
  */
 ib_status_t ib_strtrim_lr(ib_strop_t op,
                           ib_mpool_t *mp,
-                          char *data_in,
-                          char **data_out,
+                          char *str_in,
+                          char **str_out,
                           ib_flags_t *result);
 
 /**
