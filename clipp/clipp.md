@@ -298,6 +298,13 @@ a single block of text) was deemed more unexpected than useful.  So, if
 repeated events are present, an error will be displayed and the input 
 discarded.
 
+**@unparse**
+
+This modifier is the opposite of parse, converting the parsed events into
+connection data in and connection data out events.  It generates a single
+connection data in (out) event for each set of request (response) events, even
+if some of those events are repeated.
+
 Consumers
 ---------
 

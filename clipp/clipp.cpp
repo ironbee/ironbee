@@ -65,6 +65,7 @@
 
 #include "connection_modifiers.hpp"
 #include "parse_modifier.hpp"
+#include "unparse_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -238,6 +239,7 @@ void help()
     "  @set_remote_ip:<ip>     -- Change remote IP to <ip>.\n"
     "  @set_remote_port:<port> -- Change remote port to <port>.\n"
     "  @parse                  -- Parse connection data events.\n"
+    "  @unparse                -- Unparse parsed events.\n"
     ;
 }
 
@@ -288,6 +290,8 @@ int main(int argc, char** argv)
     modifier_factory_map["set_remote_port"] =
         construct_modifier<SetRemotePortModifier, uint32_t>;
     modifier_factory_map["parse"] = construct_argless_modifier<ParseModifier>;
+    modifier_factory_map["unparse"] =
+        construct_argless_modifier<UnparseModifier>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
