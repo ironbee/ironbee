@@ -19,9 +19,8 @@
  * @file
  * @brief IronBee &mdash; CLIPP Input
  *
- * Defines input_t, the fundamental unit of input that CLIPP will give to
- * IronBee and related structures: buffer_t (a copyless substring) and
- * input_generator_t (a generic producer of input).
+ * Defines Input, the fundamental unit of input that CLIPP will give to
+ * IronBee and related structures.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -60,12 +59,14 @@ struct ResponseEvent;
 struct HeaderEvent;
 
 /**
- * This is the parent class of all delegates for dispatch().
+ * This is the parent class of all read-only delegates for dispatch().
  *
  * To use, subclass, override the methods for events you wish to handle, and
  * pass to a dispatch() call (e.g., Event::dispatch) or (Input::dispatch).
  *
  * Note that default behavior is to do nothing.
+ *
+ * @sa ModifierDelegate
  **/
 class Delegate
 {
@@ -120,14 +121,16 @@ public:
 };
 
 /**
- * This is the parent class of all modifier delegates for dispatch().
+ * This is the parent class of all mutating delegates for dispatch().
  *
- * Unlike the previous delegate, this allows mutation of the events.
+ * Unlike Delegate, this allows mutation of the events.
  *
  * To use, subclass, override the methods for events you wish to handle, and
  * pass to a dispatch() call (e.g., Event::dispatch) or (Input::dispatch).
  *
  * Note that default behavior is to do nothing.
+ *
+ * @sa Delegate.
  **/
 class ModifierDelegate
 {
@@ -239,6 +242,10 @@ enum event_e {
 
 /**
  * Base class of all events.
+ *
+ * This class can be used for dispatching, identication of which event it
+ * represents, and delays.  All event specific information requires it to be
+ * cast to the appropriate subclass, preferably via dispatch().
  **/
 struct Event
 {
@@ -266,9 +273,12 @@ struct Event
 };
 
 /**
- * No associated data: REQUEST_FINISHED, RESPONSE_FINISHED, CONNECTION_CLOSED
+ * No associated data: REQUEST_FINISHED, RESPONSE_FINISHED, CONNECTION_CLOSED.
+ *
+ * @sa Event
  **/
-struct NullEvent : public Event
+struct NullEvent :
+    public Event
 {
     //! Constructor.
     explicit
@@ -303,8 +313,11 @@ struct NullEvent : public Event
 
 /**
  * Connection data: CONNECTION_OPENED.
+ *
+ * @sa Event
  **/
-struct ConnectionEvent : public Event
+struct ConnectionEvent :
+    public Event
 {
     //! Constructor.
     explicit
@@ -353,8 +366,11 @@ struct ConnectionEvent : public Event
 /**
  * ConnectionData data: CONNECTION_DATA_IN, CONNECTION_DATA_OUT,
  *                      REQUEST_BODY, RESPONSE_BODY.
+ *
+ * @sa Event
  **/
-struct DataEvent : public Event
+struct DataEvent :
+    public Event
 {
     //! Constructor.
     explicit
@@ -396,8 +412,11 @@ struct DataEvent : public Event
 
 /**
  * Request line data: REQUEST_STARTED.
+ *
+ * @sa Event
  **/
-struct RequestEvent : public Event
+struct RequestEvent :
+    public Event
 {
     //! Constructor.
     explicit
@@ -445,8 +464,11 @@ struct RequestEvent : public Event
 
 /**
  * Response line data: RESPONSE_STARTED.
+ *
+ * @sa Event
  **/
-struct ResponseEvent : public Event
+struct ResponseEvent :
+    public Event
 {
     //! Constructor.
     explicit
@@ -495,13 +517,15 @@ struct ResponseEvent : public Event
 
 //! A header is a pair of buffers: name and value.
 typedef std::pair<Buffer, Buffer> header_t;
+
 //! A list of headers.
 typedef std::list<header_t> header_list_t;
 
 /**
  * Headers data: REQUEST_HEADERS, RESPONSE_HEADERS.
  **/
-struct HeaderEvent : public Event
+struct HeaderEvent :
+    public Event
 {
     //! Constructor.
     explicit
@@ -540,6 +564,7 @@ struct HeaderEvent : public Event
 
 //! Shared pointer to an event.
 typedef boost::shared_ptr<Event> event_p;
+
 //! List of event pointers.
 typedef std::list<event_p> event_list_t;
 
@@ -553,8 +578,10 @@ struct Transaction
 
     //! Add CONNECTION_DATA_IN to back of events.
     DataEvent& connection_data_in(const Buffer& data);
+
     //! Add CONNECTION_DATA_OUT to back of events.
     DataEvent& connection_data_out(const Buffer& data);
+
     //! Add REQUEST_STARTED to back of events.
     RequestEvent& request_started(
         const Buffer& raw,
@@ -562,12 +589,16 @@ struct Transaction
         const Buffer& uri,
         const Buffer& protocol
     );
+
     //! Add REQUEST_HEADERS to back of events.
     HeaderEvent& request_headers();
+
     //! Add REQUEST_BODY to back of events.
     DataEvent& request_body(const Buffer& data);
+
     //! Add REQUEST_FINISHED to back of events.
     NullEvent& request_finished();
+
     //! Add RESPONSE_STARTED to back of events.
     ResponseEvent& response_started(
         const Buffer& raw,
@@ -575,10 +606,13 @@ struct Transaction
         const Buffer& status,
         const Buffer& message
     );
+
     //! Add RESPONSE_HEADERS to back of events.
     HeaderEvent& response_headers();
+
     //! Add RESPONSE_BODY to back of events.
     DataEvent& response_body(const Buffer& data);
+
     //! Add RESPONSE_FINISHED to back of events.
     NullEvent& response_finished();
 
@@ -599,8 +633,10 @@ struct Connection
 {
     //! Events to fire before any transaction.
     event_list_t pre_transaction_events;
+
     //! Transactions.
     transaction_list_t transactions;
+
     //! Events to fire after all transactions.
     event_list_t post_transaction_events;
 
