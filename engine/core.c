@@ -2638,45 +2638,109 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Add request/response header fields to the audit log
+ *
+ * @param[in,out] log Audit log to log to
+ * @param[in] tx Transaction
+ * @param[in] mpool Memory pool to user for allocations
+ * @param[in,out] list List to add the fields to
+ * @param[in] label Label string ("request"/"response")
+ * @param[in] headers Parsed header fields data
+ *
+ * @return Status code
+ */
+static ib_status_t ib_auditlog_add_part_http_head_fields(
+    ib_tx_t *tx,
+    ib_mpool_t *mpool,
+    ib_list_t *list,
+    const char *label,
+    ib_parsed_header_wrapper_t *headers)
+{
+    IB_FTRACE_INIT();
+    ib_parsed_name_value_pair_list_t *nvpair;
+    ib_status_t rc;
+    ib_field_t *f;
+
+    /* Loop through all of the header name/value pairs */
+    for (nvpair = headers->head;
+         nvpair != NULL;
+         nvpair = nvpair->next)
+    {
+        /* Create a field to hold the name/value pair. */
+        rc = ib_field_create(&f, mpool,
+                             (char *)ib_bytestr_const_ptr(nvpair->name),
+                             ib_bytestr_length(nvpair->name),
+                             IB_FTYPE_BYTESTR,
+                             ib_ftype_bytestr_mutable_in(nvpair->value));
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to create %s headers field: %s",
+                            label, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the new field to the list */
+        rc = ib_list_push(list, f);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                            "Failed to add %s field '%.*s': %s",
+                            label,
+                            (int) ib_bytestr_length(nvpair->name),
+                            ib_bytestr_ptr(nvpair->name),
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Add request headers to the audit log
+ *
+ * @param[in,out] log Audit log to log to
+ *
+ * @return Status code
+ */
 static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
-    ib_mpool_t *pool = log->mp;
+    ib_mpool_t *mpool = log->mp;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
-    ib_list_t *field_list;
-    ib_list_node_t *node;
     ib_field_t *f;
     ib_status_t rc;
 
-    /// @todo Use raw buffered data when available.
-
     /* Generate a list of fields in this part. */
-    rc = ib_list_create(&list, pool);
+    rc = ib_list_create(&list, mpool);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_line"), &f);
+    /* Add the raw request line */
+    rc = ib_field_create(&f, mpool,
+                         IB_FIELD_NAME("request_line"),
+                         IB_FTYPE_BYTESTR,
+                         tx->request_line->raw);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to get request_line: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to create field for request line: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_list_push(list, f);
+    rc = ib_list_push(list, f);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to add request headers: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_headers"), &f);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to get request_headers: %s", ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    // @todo Remove mutable once list is const correct.
-    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&field_list));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    IB_LIST_LOOP(field_list, node) {
-        ib_list_push(list, ib_list_node_data(node));
+    /* Add the request header fields */
+    if (tx->request_headers != NULL) {
+        rc = ib_auditlog_add_part_http_head_fields(tx, mpool,
+                                                   list, "request",
+                                                   tx->request_headers);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Add the part to the auditlog. */
@@ -2721,46 +2785,53 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Add response headers to the audit log
+ *
+ * @param[in,out] log Audit log to log to
+ *
+ * @return Status code
+ */
 static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
-    ib_mpool_t *pool = log->mp;
+    ib_mpool_t *mpool = log->mp;
     ib_tx_t *tx = log->tx;
     ib_list_t *list;
-    ib_list_t *field_list;
-    ib_list_node_t *node;
     ib_field_t *f;
     ib_status_t rc;
 
-    /// @todo Use raw buffered data when available.
-
     /* Generate a list of fields in this part. */
-    rc = ib_list_create(&list, pool);
+    rc = ib_list_create(&list, mpool);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_line"), &f);
+    /* Add the raw response line */
+    rc = ib_field_create(&f, mpool,
+                         IB_FIELD_NAME("response_line"),
+                         IB_FTYPE_BYTESTR,
+                         tx->response_line->raw);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to get response_line: %s", ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to create field for response line: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_list_push(list, f);
-
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_headers"), &f);
+    rc = ib_list_push(list, f);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to get response_headers: %s", ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    // @todo Remove mutable once list is const correct.
-    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&field_list));
-    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Failed to add response headers: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_LIST_LOOP(field_list, node) {
-        ib_list_push(list, ib_list_node_data(node));
+    /* Add the response header fields */
+    if (tx->response_headers != NULL) {
+        rc = ib_auditlog_add_part_http_head_fields(tx, mpool,
+                                                   list, "response",
+                                                   tx->response_headers);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Add the part to the auditlog. */
