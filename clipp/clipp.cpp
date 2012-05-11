@@ -150,6 +150,13 @@ typedef map<string,consumer_factory_t> consumer_factory_map_t;
 //! A map of command line argument to factory.
 typedef map<string,modifier_factory_t> modifier_factory_map_t;
 
+/**
+ * @name Constructor Helpers
+ *
+ * This functions can be used with bind to easily construct components.
+ **/
+///@{
+
 //! Generic generator constructor.
 template <typename T>
 input_generator_t construct_generator(const string& arg)
@@ -164,7 +171,7 @@ input_consumer_t construct_consumer(const string& arg)
     return T(arg);
 }
 
-//! Generic modifier constructor.
+//! Generic modifier constructor.  Converts @a arg to @a ArgType.
 template <typename T, typename ArgType>
 input_modifier_t construct_modifier(const string& arg)
 {
@@ -178,20 +185,43 @@ input_modifier_t construct_modifier(const string& arg)
     return T(arg);
 }
 
-//! Generic modifier constructor for no-args
+//! Generic modifier constructor for no-args.  Ignores @a arg.
 template <typename T>
 input_modifier_t construct_argless_modifier(const string& arg)
 {
     return T();
 }
 
-// Generators
+///@}
+
+/**
+ * @name Specific component constructors.
+ *
+ * These routines construct components.  They are used when more complex
+ * behavior (interpretation of @a arg) is needed than the generic constructors
+ * above.
+ **/
+
+//! Construct raw generator, interpreting @a arg as @e request,response.
 input_generator_t init_raw_generator(const string& arg);
 
-bool on_error(const string& message);
 
+///@}
+
+/**
+ * Split @a src into substrings separated by @a c.
+ *
+ * @param[in] src String to split.
+ * @param[in] c   Character to split on.
+ * @returns Vector of substrings.
+ **/
 vector<string> split_on_char(const string& src, char c);
 
+/**
+ * Display help.
+ *
+ * Component writers: Add your component below.
+ **/
 void help()
 {
     cerr <<
@@ -243,15 +273,51 @@ void help()
     ;
 }
 
+/**
+ * @name Helper methods for main().
+ **/
+///@{
+
+/**
+ * Combine @a generator and @a modifier into a single generator.
+ *
+ * Returns a generator that calls @a generator, passes the result to
+ * @a modifier, and then provides the result as its own.  It will only call
+ * @a modifier if @a generator returns true.
+ *
+ * @param[in] generator
+ * @param[in] modifier
+ * @returns Composition of @a modifier and @a generator.
+ **/
 input_generator_t modify_generator(
     input_generator_t generator,
     input_modifier_t  modifier
 );
 
+/**
+ * Constructs a component from a parsed representation.
+ *
+ * @tparam ResultType Type of component to construct.
+ * @tparam MapType Type of @a map.
+ * @param[in] component Parsed representation of component.
+ * @param[in] map       Generator map for this type of component.
+ * @returns Component.
+ * @throw runtime_error if invalid component.
+ **/
 template <typename ResultType, typename MapType>
 ResultType
 construct_component(const component_t& component, const MapType& map);
 
+///@}
+
+/**
+ * Main
+ *
+ * Interprets arguments, constructs the actual chains, and executes them.
+ *
+ * Component writers: Add your component to the generator maps at the top of
+ * this function.
+ **/
 int main(int argc, char** argv)
 {
     if (argc == 1) {
@@ -477,12 +543,7 @@ input_generator_t init_raw_generator(const string& arg)
     return RawGenerator(subargs[0], subargs[1]);
 }
 
-bool on_error(const string& message)
-{
-    cerr << "ERROR: " << message << endl;
-    return true;
-}
-
+//! Helper function for modify_generator()
 bool modify_generator_function(
     input_generator_t generator,
     input_modifier_t  modifier,
@@ -515,37 +576,4 @@ construct_component(const component_t& component, const MapType& map)
     }
 
     return i->second(component.arg);
-}
-
-component_t parse_component(const string& s)
-{
-    vector<string> split = split_on_char(s, ':');
-    if (split.size() > 2) {
-        throw runtime_error("Too many colons in: " + s);
-    }
-
-    component_t component;
-    component.name = split[0];
-    if (split.size() == 2) {
-        component.arg = split[1];
-    }
-
-    return component;
-}
-
-chain_t parse_chain(const vector<string>& tokens)
-{
-    chain_t chain;
-    chain.base = parse_component(tokens[0]);
-    for (unsigned int i = 1; i < tokens.size(); ++i) {
-        const string& token = tokens[i];
-        if (token[0] != '@') {
-            throw logic_error("Modifier does not begin with @.");
-        }
-        chain.modifiers.push_back(
-            parse_component(token.substr(1))
-        );
-    }
-
-    return chain;
 }
