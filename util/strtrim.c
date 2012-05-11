@@ -41,21 +41,6 @@
  */
 #define ALL_WHITESPACE ((size_t) -1) /**< String is entirely whitespace */
 
-#if 0
-static const char *opname(ib_strop_t op)
-{
-    switch (op) {
-    case IB_STROP_INPLACE:
-        return "INPLACE";
-    case IB_STROP_COW:
-        return "COW";
-    case IB_STROP_COPY:
-        return "COPY";
-    }
-    return "";
-}
-#endif
-
 /**
  * Search start from the left for the first non-whitespace.
  * @internal
@@ -89,8 +74,8 @@ static size_t find_nonws_left(const uint8_t *str,
     IB_FTRACE_RET_SIZET(ALL_WHITESPACE);
 }
 
-/*
- * Return a zero-length string that maybe an alias into the original
+/**
+ * Return a zero-length string that may be an alias into the original
  * or a new allocation.
  * @internal
  *
@@ -99,7 +84,7 @@ static size_t find_nonws_left(const uint8_t *str,
  * @param[in] data_in Input data
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -132,14 +117,17 @@ static ib_status_t zero_len_ex(ib_strop_t op,
         }
         flags |= IB_STRFLAG_NEWBUF;
         break;
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     *dlen_out = 0;
     *result = flags;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
- * Return a zero-length string that maybe an alias into the original
+/**
+ * Return a zero-length string that may be an alias into the original
  * or a new allocation.
  * @internal
  *
@@ -148,7 +136,7 @@ static ib_status_t zero_len_ex(ib_strop_t op,
  * @param[in] copy_on_cow Always treat COW as copy
  * @param[in] str_in Input data
  * @param[out] str_out Output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -181,12 +169,15 @@ static ib_status_t zero_len(ib_strop_t op,
         }
         flags |= IB_STRFLAG_NEWBUF;
         break;
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     *result = flags;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
+/**
  * Left trim the input string
  * @internal
  *
@@ -195,7 +186,7 @@ static ib_status_t zero_len(ib_strop_t op,
  * @param[in] str_in Input data
  * @param[in] offset Offset into @a str_in
  * @param[out] str_out Output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -232,6 +223,9 @@ static ib_status_t trim_left(ib_strop_t op,
         }
         flags |= IB_STRFLAG_NEWBUF;
         break;
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Done */
@@ -271,8 +265,8 @@ static size_t find_nonws_right(const uint8_t *str,
     IB_FTRACE_RET_SIZET(ALL_WHITESPACE);
 }
 
-/*
- * Return a zero-length string that maybe an alias into the original
+/**
+ * Return a zero-length string that may be an alias into the original
  * or a new allocation.
  * @internal
  *
@@ -284,7 +278,7 @@ static size_t find_nonws_right(const uint8_t *str,
  * @param[in] offset Offset of last non-whitespace in @a data_in
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out to use
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -322,6 +316,9 @@ static ib_status_t trim_right_ex(ib_strop_t op,
         memcpy(data_out, data_in, *dlen_out);
         flags |= IB_STRFLAG_NEWBUF;
         break;
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Done */
@@ -329,8 +326,8 @@ static ib_status_t trim_right_ex(ib_strop_t op,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
- * Return a zero-length string that maybe an alias into the original
+/**
+ * Return a zero-length string that may be an alias into the original
  * or a new allocation.
  * @internal
  *
@@ -340,7 +337,7 @@ static ib_status_t trim_right_ex(ib_strop_t op,
  * @param[in] str_in Input string
  * @param[in] len Length of @a str_in to use
  * @param[out] str_out Output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -380,6 +377,9 @@ static ib_status_t trim_right(ib_strop_t op,
         memcpy(out, str_in, len);
         flags |= IB_STRFLAG_NEWBUF;
         break;
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     *(out + offset + 1) = '\0';
@@ -388,9 +388,7 @@ static ib_status_t trim_right(ib_strop_t op,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Simple ASCII trimLeft function.
- */
+/* Simple ASCII trimLeft function (see string.h). */
 ib_status_t ib_strtrim_left_ex(ib_strop_t op,
                                ib_mpool_t *mp,
                                uint8_t *data_in,
@@ -455,6 +453,9 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
         memcpy(data_out, data_in + offset, *dlen_out);
         flags |= IB_STRFLAG_NEWBUF;
         break;
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Done */
@@ -462,9 +463,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
- * Simple ASCII trimLeft function.
- */
+/* Simple ASCII trimLeft function (see string.h). */
 ib_status_t ib_strtrim_left(ib_strop_t op,
                             ib_mpool_t *mp,
                             char *str_in,
@@ -507,9 +506,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Simple ASCII trimRight function.
- */
+/* Simple ASCII trimRight function (see string.h). */
 ib_status_t ib_strtrim_right_ex(ib_strop_t op,
                                 ib_mpool_t *mp,
                                 uint8_t *data_in,
@@ -552,9 +549,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Simple ASCII trimRight function.
- */
+/* Simple ASCII trimRight function (see string.h). */
 ib_status_t ib_strtrim_right(ib_strop_t op,
                              ib_mpool_t *mp,
                              char *str_in,
@@ -599,9 +594,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Simple ASCII trim function.
- */
+/* Simple ASCII trim function (see string.h). */
 ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
                              ib_mpool_t *mp,
                              uint8_t *data_in,
@@ -658,9 +651,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Simple ASCII trim function.
- */
+/* Simple ASCII trim function (see string.h) */
 ib_status_t ib_strtrim_lr(ib_strop_t op,
                           ib_mpool_t *mp,
                           char *str_in,

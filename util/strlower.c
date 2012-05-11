@@ -37,8 +37,16 @@
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 
-/*
- * Simple ASCII lowercase function.
+/**
+ * Simple in-place ASCII lowercase function.
+ * @internal
+ *
+ * @param[in] inflags Incoming flags
+ * @param[in,out] data Data to translate to lowercase
+ * @param[in] dlen Length of @a data
+ * @param[out] result Result flags (@c IB_STRFLAG_xxx)
+ *
+ * @returns Status code.
  */
 static ib_status_t inplace(ib_flags_t inflags,
                            uint8_t *data,
@@ -56,10 +64,9 @@ static ib_status_t inplace(ib_flags_t inflags,
         int c = *(data+i);
         *(data+i) = tolower(c);
         if (c != *(data+i)) {
-
             ++modcount;
         }
-        i++;
+        ++i;
     }
 
     /* Note if any modifications were made. */
@@ -73,7 +80,7 @@ static ib_status_t inplace(ib_flags_t inflags,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
+/**
  * ASCII lowercase function with copy-on-write semantics.
  *
  * @param[in] mp Memory pool for allocations
@@ -81,7 +88,7 @@ static ib_status_t inplace(ib_flags_t inflags,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] oflags Output flags (IB_STRFLAG_xxx)
+ * @param[out] oflags Output flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */
@@ -150,9 +157,7 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
- * Simple ASCII lowercase function.
- */
+/* Simple ASCII lowercase function (ex version); see string.h */
 ib_status_t ib_strlower_ex(ib_strop_t op,
                            ib_mpool_t *mp,
                            uint8_t *data_in,
@@ -188,14 +193,15 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
 
     case IB_STROP_COW:
         rc = copy_on_write(mp, data_in, dlen_in, data_out, dlen_out, result);
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * ASCII lowercase function.
- */
+/* ASCII lowercase function (string version); See string.h */
 ib_status_t ib_strlower(ib_strop_t op,
                         ib_mpool_t *mp,
                         char *str_in,
@@ -242,6 +248,9 @@ ib_status_t ib_strlower(ib_strop_t op,
 #endif
         break;
     }
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if (rc == IB_OK) {

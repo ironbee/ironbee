@@ -200,16 +200,9 @@ public:
                       ib_flags_t result)
     {
         const TextBuf &exout = ExpectedOut(test);
-        const TextBuf &ibuf  = test.InBuf();
         bool exmod = (exout != test.InBuf());
 
-        printf("Compared exout='%s':%zd:%s to inbuf='%s':%zd:%s => %s\n",
-               exout.GetFmt(), exout.GetLen(), BoolStr(exout.IsByteStr()),
-               ibuf.GetFmt(), ibuf.GetLen(), BoolStr(ibuf.IsByteStr()),
-               BoolStr(exmod));
-        printf("exmod = %s\n", BoolStr(exmod));
         ib_flags_t exresult = ExpectedResult( Op(), exmod );
-        printf("IsByteStr(ex) = %s\n", BoolStr(m_outbuf.IsByteStr()));
 
         CheckResult(test.LineNo(), test, rc, exresult, result);
 

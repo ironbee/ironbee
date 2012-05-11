@@ -36,7 +36,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 
-/*
+/**
  * Count the amount of whitespace in a string function
  * @internal
  *
@@ -52,14 +52,14 @@ typedef void (* count_fn_t)(size_t minlen,
                             size_t *count,
                             size_t *other);
 
-/*
+/**
  * In-place whitespace removal/compression function
  * @internal
  *
  * @param[in,out] buf Buffer to operate on
  * @param[in] dlen_in Input length
  * @param[out] dlen_out Length after whitespace removal
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */
@@ -67,7 +67,7 @@ typedef ib_status_t (* inplace_fn_t)(uint8_t *buf,
                                      size_t dlen_in,
                                      size_t *dlen_out,
                                      ib_flags_t *result);
-/*
+/**
  * Non-in-place whitespace removal/compression function
  * @internal
  *
@@ -76,7 +76,7 @@ typedef ib_status_t (* inplace_fn_t)(uint8_t *buf,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output buffer
  * @param[in] dlen_out Length of @a data_out
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */
@@ -155,14 +155,14 @@ static void ws_remove_count(size_t minlen,
     IB_FTRACE_RET_VOID();
 }
 
-/*
+/**
  * In-place whitespace removal
  * @internal
  *
  * @param[in,out] buf Buffer to operate on
  * @param[in] dlen_in Input length
  * @param[out] dlen_out Length after whitespace removal
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */
@@ -209,7 +209,7 @@ static ib_status_t ws_remove_inplace(uint8_t *buf,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
+/**
  * Non-inline whitespace removal
  * @internal
  *
@@ -277,14 +277,14 @@ static void ws_compress_count(size_t minlen,
     IB_FTRACE_RET_VOID();
 }
 
-/*
+/**
  * Inline whitespace compression
  * @internal
  *
  * @param[in,out] buf Buffer to operate on
  * @param[in] dlen_in Input length
  * @param[out] dlen_out Length after whitespace compression
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */
@@ -345,7 +345,7 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
+/**
  * Non-inline whitespace compression
  * @internal
  *
@@ -401,7 +401,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/*
+/**
  * Perform whitespace removal / compression
  * @internal
  *
@@ -414,7 +414,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
- * @param[out] flags Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] flags Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -486,14 +486,15 @@ static ib_status_t ws_op(ib_strop_t op,
             *dlen_out = olen;
         }
         break;
+
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Delete all whitespace from a string (extended version)
- */
+/* Delete all whitespace from a string (extended version) */
 ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
                                   ib_mpool_t *mp,
                                   uint8_t *data_in,
@@ -518,9 +519,7 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Delete all whitespace from a string (NUL terminated string version)
- */
+/* Delete all whitespace from a string (NUL terminated string version) */
 ib_status_t ib_str_wspc_remove(ib_strop_t op,
                                ib_mpool_t *mp,
                                char *data_in,
@@ -547,9 +546,7 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Compress whitespace in a string (extended version)
- */
+/*Compress whitespace in a string (extended version) */
 ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
                                     ib_mpool_t *mp,
                                     uint8_t *data_in,
@@ -574,9 +571,7 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*
- * Compress whitespace in a string (NUL terminated string version)
- */
+/* Compress whitespace in a string (NUL terminated string version) */
 ib_status_t ib_str_wspc_compress(ib_strop_t op,
                                  ib_mpool_t *mp,
                                  char *data_in,

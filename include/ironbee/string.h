@@ -53,12 +53,15 @@ typedef enum {
 } ib_strop_t;
 
 /**
- * String operator result flags.
+ * @name String operator result flags
+ *
+ * @{
  */
 #define IB_STRFLAG_NONE          (0x0)   /**< No flags */
 #define IB_STRFLAG_MODIFIED   (1 << 0)   /**< Output is different from input */
 #define IB_STRFLAG_NEWBUF     (1 << 1)   /**< Output is a new buffer */
 #define IB_STRFLAG_ALIAS      (1 << 2)   /**< Output is an alias into input */
+/** @} */
 
 /**
  * Generic string modification function, ex version
@@ -69,7 +72,7 @@ typedef enum {
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -88,7 +91,7 @@ typedef ib_status_t (* ib_strmod_ex_fn_t) (ib_strop_t op,
  * @param[in] mp Memory pool for allocations
  * @param[in] str_in Data to convert to lower case
  * @param[out] str_out Output data
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */
@@ -183,7 +186,7 @@ const char DLL_PUBLIC *ib_strstr_ex(const char *haystack,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] result Result flags (@c @c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  *
@@ -204,7 +207,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
  * @param[in] mp Memory pool for allocations
  * @param[in] str_in Data to convert to lower case
  * @param[out] str_out Output data
- * @param[out] result Result flags (IB_STRFLAG_xxx)
+ * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  *
@@ -225,7 +228,7 @@ ib_status_t ib_strlower(ib_strop_t op,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -244,7 +247,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
  * @param[in] mp Memory pool to use for allocations
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @returns Status code.
  */
@@ -263,7 +266,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -282,7 +285,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
  * @param[in] mp Memory pool to use for allocations
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -301,7 +304,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -320,7 +323,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
  * @param[in] mp Memory pool to use for allocations
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -339,7 +342,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -358,7 +361,7 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
  * @param[in] mp Memory pool
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -377,7 +380,7 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
@@ -396,7 +399,7 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
  * @param[in] mp Memory pool
  * @param[in] str_in Pointer to input data
  * @param[out] str_out Pointer to output data
- * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */
