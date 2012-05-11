@@ -127,7 +127,7 @@ struct ViewDelegate :
              << event.method << " " << event.uri << " " << event.uri
              << " ===" << endl;
         if (event.raw.data) {
-            cout << event.raw.data << endl;
+            cout << event.raw << endl;
         }
     }
 
@@ -157,7 +157,7 @@ struct ViewDelegate :
              << event.protocol << " " << event.status << " " << event.message
              << " ===" << endl;
         if (event.raw.data) {
-            cout << event.raw.data << endl;
+            cout << event.raw << endl;
         }
     }
 
