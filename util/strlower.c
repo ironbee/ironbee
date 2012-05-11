@@ -113,7 +113,7 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
     optr = NULL;    /* Output pointer; NULL until obuf is allocated */
 
     /*
-     * Loop through all of the input, using the input pointer as loop ctrl.
+     * Loop through all of the input, using the input pointer as loop variable.
      */
     for (iptr = data_in;  iptr < iend;  ++iptr) {
         int c = *iptr;

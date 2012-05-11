@@ -283,7 +283,7 @@ static size_t find_nonws_right(const uint8_t *str,
  * @param[in] data_len Length of @a data_in
  * @param[in] offset Offset of last non-whitespace in @a data_in
  * @param[out] data_out Output data
- * @param[out] dlen_out Lenth of @a data_out to use
+ * @param[out] dlen_out Length of @a data_out to use
  * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
  * @result Status code
@@ -338,7 +338,7 @@ static ib_status_t trim_right_ex(ib_strop_t op,
  * @param[in] mp Memory pool
  * @param[in] flags Incoming flags
  * @param[in] str_in Input string
- * @param[in] len Lenth of @a str_in to use
+ * @param[in] len Length of @a str_in to use
  * @param[out] str_out Output data
  * @param[out] result Flags detailing the result (IB_STRFLAG_xx)
  *
