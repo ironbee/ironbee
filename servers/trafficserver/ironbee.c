@@ -1252,13 +1252,27 @@ static void ironbee_logger(void *dummy, int level,
 
     /* Write it to the ironbee log. */
     /* FIXME: why is the format arg's prototype not const char* ? */
-    rc = prefix ? TSTextLogObjectWrite(ironbee_log, (char *)"%s: %s", prefix, buf)
-        : TSTextLogObjectWrite(ironbee_log, (char *)"%s", buf);
+    if ((file != NULL) && (line > 0)) {
+        rc = TSTextLogObjectWrite(ironbee_log,
+                                  (char *)"%s(%s:%d) %s",
+                                  (prefix ? prefix : ""),
+                                  file, line,
+                                  buf);
+    }
+    else {
+        rc = TSTextLogObjectWrite(ironbee_log,
+                                  (char *)"%s%s",
+                                  (prefix ? prefix : ""),
+                                  buf);
+    }
+
     if (rc != TS_SUCCESS) {
         errmsg = "Data logging failed!";
     }
-    if (errmsg != NULL)
+
+    if (errmsg != NULL) {
         TSError("[ts-ironbee] %s\n", errmsg);
+    }
 }
 
 /**

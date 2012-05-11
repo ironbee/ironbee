@@ -300,15 +300,15 @@ static void core_logger(FILE *fh, int level,
 
     if ((file != NULL) && (line > 0)) {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %s[%d] (%s:%d) %s%s\n",
+                      "%s %s(%s:%d) %s%s\n",
                       time_info,
-                      (prefix?prefix:""), level, file, line, tx_info, fmt);
+                      (prefix?prefix:""), file, line, tx_info, fmt);
     }
     else {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %s[%d] %s%s\n",
+                      "%s %s%s%s\n",
                       time_info,
-                      (prefix?prefix:""), level, tx_info, fmt);
+                      (prefix?prefix:""), tx_info, fmt);
     }
     if (ec > 1024) {
         /// @todo Do something better
