@@ -64,6 +64,7 @@
 #include "pb_consumer.hpp"
 
 #include "connection_modifiers.hpp"
+#include "parse_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -176,6 +177,13 @@ input_modifier_t construct_modifier(const string& arg)
     return T(arg);
 }
 
+//! Generic modifier constructor for no-args
+template <typename T>
+input_modifier_t construct_argless_modifier(const string& arg)
+{
+    return T();
+}
+
 // Generators
 input_generator_t init_raw_generator(const string& arg);
 
@@ -229,6 +237,7 @@ void help()
     "  @set_local_port:<port>  -- Change local port to <port>.\n"
     "  @set_remote_ip:<ip>     -- Change remote IP to <ip>.\n"
     "  @set_remote_port:<port> -- Change remote port to <port>.\n"
+    "  @parse                  -- Parse connection data events.\n"
     ;
 }
 
@@ -278,6 +287,7 @@ int main(int argc, char** argv)
         construct_modifier<SetRemoteIPModifier>;
     modifier_factory_map["set_remote_port"] =
         construct_modifier<SetRemotePortModifier, uint32_t>;
+    modifier_factory_map["parse"] = construct_argless_modifier<ParseModifier>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {

@@ -22,7 +22,8 @@ clipp_SOURCES = \
     apache_generator.cpp \
     suricata_generator.cpp \
     htp_generator.cpp \
-    connection_modifiers.cpp
+    connection_modifiers.cpp \
+    parse_modifier.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \

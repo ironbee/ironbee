@@ -280,6 +280,24 @@ displayed.
 These modifiers change *every* connection opened event to use the given 
 parameters.
 
+**@parse**
+
+This modifier converts all connection data in events into request started, 
+request headers, request finished events and call connection data out events
+into response started, response headers, and response finished events.
+
+The parser used to do this is extremely simple.  It, essentially, splits the
+first line on spaces into three values (the request/response line values), 
+splits the next lines on : into two values (header key and value), and, when
+it sees a blank line, treats the remainder of the data as the body.
+
+At present, @parse does not support repeated connection data in or connection
+data out events.  Handling those properly (also repeat parsed events) would 
+require a smarter parser and handling those dumbly (join them and process as
+a single block of text) was deemed more unexpected than useful.  So, if 
+repeated events are present, an error will be displayed and the input 
+discarded.
+
 Consumers
 ---------
 
