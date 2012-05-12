@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<appendix version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="todo">
+    <title>Ideas For Future Improvements</title>
+    <para>This document contains the list of things we want to look into.</para>
+    <para><emphasis role="bold">Reminder (to ourselves): We will not add features unless we can
+            demonstrate clear need.</emphasis></para>
+    <section>
+        <title>Directive: AuditLogPart</title>
+        <para>Syntax if/when we want to support configurable parts, and multiple instances of the
+            same part (with different names):</para>
+        <para><literal>AuditLogPart [+|-]partType [partName][; param=value]</literal></para>
+    </section>
+    <section>
+        <title>Directive: Include</title>
+        <itemizedlist>
+            <listitem>
+                <para>Brian wants to support only Unix path separators (but why not just use
+                    whatever works on current platform?).</para>
+            </listitem>
+            <listitem>
+                <para>Ivan wants to consider syntax that would allow configuration to retrieved from
+                    sources other than the filesystem (e.g., from a database).</para>
+            </listitem>
+            <listitem>
+                <para>Consider using optional parameters to restrict what can be in the included
+                    files</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>Directive: Hostname</title>
+        <para>Add support for URI-based mapping.</para>
+        <para>Need to validate domain names that we accept.</para>
+        <para>Our configuration files are in UTF-8 -- do we want to support international domain
+            names (and convert them into punycode)?</para>
+    </section>
+    <section>
+        <title>Directive: LoadModule</title>
+        <para>Support many instances of the same module:</para>
+        <programlisting>LoadModule /path/to/module.so moduleName</programlisting>
+        <para>Module name is optional. When not provided, the filename with extension removed is
+            used as the name.</para>
+        <para>Some ideas to support module parameters, should we need to do it later on:</para>
+        <programlisting>&lt;LoadModule /path/to/module.so>
+    Param paramName1 paramValue1
+    Param paramName2 paramValue2
+
+    &lt;Param paramName3>
+        # value3 here, free-form
+    &lt;/Param>
+
+    Param paramName4 @file:/path/to/file/with/paramValue4
+&lt;/LoadModule></programlisting>
+        <para>Modules should be able to hook into the engine in the correct order relative to other
+            modules, but should manual tweaking be needed, we could use the following:</para>
+        <programlisting>&lt;LoadModule /path/to/module.so>
+    HookPriority hookName PRIORITY_FIRST "beforeModule1, beforeModule2" "afterModule1, afterModule2"
+&lt;/LoadModule></programlisting>
+    </section>
+    <section>
+        <title>Directive: Site</title>
+        <para>Enable variable expansion in site names. The idea is to avoid overlap when managing
+            multiple sensors. For example:</para>
+        <programlisting>&lt;Site %{sensorName}.default>
+    # Site definition
+&lt;/Site></programlisting>
+        <para>On the other hand, this type of site name manipulation can be performed in the
+            management component. Why should a sensor care about what other sensors' sites are
+            called?</para>
+        <para>Sites should be viewed primarily as a way of identifying (and mapping to) real-life
+            entities. They should be used to reduce clutter and map multiple hostnames into a single
+            name, and to use different policies with potentially different group in charge of every
+            entity.</para>
+    </section>
+    <section>
+        <title>Directive: DebugLogLevel</title>
+        <para>Extend DebugLogLevel to use different levels for different parts of the engine (e.g.,
+            on per-module basis)</para>
+    </section>
+    <section>
+        <title>Directive: SensorName</title>
+        <para>Explicitly configure sensor name. If omitted, use hostname.</para>
+    </section>
+    <section>
+        <title>Directive: RequestParamsExtra</title>
+        <para>Extract parameters transported in the request URI. The parameter supplied to this
+            directive should be a regular expression with named captures. On a match, the named
+            captures will be placed in the <literal>ARGS_EXTRA</literal> collection. A new effective
+            path will be constructed (using backreferences?).</para>
+    </section>
+    <section>
+        <title>Variable: ARGS_URI</title>
+        <para>Request parameters extracted from request URI.</para>
+    </section>
+    <section>
+        <title>Modules</title>
+        <para><emphasis role="bold">Description:</emphasis> Establishes a configuration section for
+            module loading (NOTE: Is this really needed???)</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>&lt;Modules>...&lt;/Modules></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para>Modules can be specified only from within the <literal>Modules</literal>
+            container:</para>
+        <programlisting>&lt;Modules>
+    LoadModule /path/to/module1.so
+    LoadModule /path/to/module2.so
+&lt;/Modules></programlisting>
+    </section>
+    <section>
+        <title>Variable length</title>
+        <para>To find out how many bytes there are in a variable:</para>
+        <programlisting>#REQUEST_URI</programlisting>
+        <para>Applied to a collection, the length operator will return the lengths of all variables
+            in it.</para>
+    </section>
+</appendix>

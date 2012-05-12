@@ -1,0 +1,68 @@
+### Sensor Info
+# 32-bit numeric value
+SensorId 0x98765432
+# Arbitrary name
+SensorName ExampleSensorName
+# Arbitrary hostname
+SensorHostname example.sensor.tld
+
+### Logging
+#DebugLog /var/log/ironbee/debug.log
+DebugLogLevel 4
+# TODO: Default is still stderr logging - this will go to Apache error_log
+Set logger "mod_ironbee"
+
+### Load Modules
+LoadModule "ibmod_pcre.so"
+LoadModule "ibmod_htp.so"
+LoadModule "ibmod_poc_sig.so"
+
+# Lua
+LoadModule "ibmod_lua.so"
+LuaLoadModule "example.lua"
+
+### Main Context (need separate directives for these)
+Set parser "htp"
+
+# Enable inspection engine (TODO: Implement)
+#InspectionEngine On
+
+# Enable audit engine
+AuditEngine RelevantOnly
+AuditLogIndex auditlog.log
+AuditLogBaseDir /tmp/ironbee
+AuditLogDirMode 0755
+#AuditLogFileMode 0644
+
+### Buffering
+# Request
+RequestBuffering On
+# Response (TODO Implement)
+#ResponseBuffering Off
+
+PocSigTrace On
+
+# -- Sites --
+# TODO: Hostname - currently wildcard can only be on left
+
+# Site 1
+<Site site1>
+    Hostname * ip=127.0.0.1
+
+    PocSigReqHead request_line bar "TESTING: Matched bar in request line."
+
+    <Location /foo>
+        DebugLogLevel 9
+    </Location>
+</Site>
+
+# Site 2
+<Site site2>
+    Hostname * ip=127.0.1.1
+</Site>
+
+# Default
+<Site default>
+    Hostname *
+</Site>
+

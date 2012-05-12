@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<appendix version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="modsecurity-migration">
+    <title>ModSecurity Migration Guide</title>
+    <para>...</para>
+    <section>
+        <title>Variables</title>
+        <para/>
+        <section>
+            <title>Syntax</title>
+            <itemizedlist>
+                <listitem>
+                    <para>Change to Unicode, with UTF-8 as the storage format</para>
+                </listitem>
+                <listitem>
+                    <para>Use the same escaping syntax as in JavaScript</para>
+                </listitem>
+                <listitem>
+                    <para>Generally tighten the syntax, specifying which characters can be used and
+                        where</para>
+                </listitem>
+                <listitem>
+                    <para>Add syntax to specify n-th element in a collection, starting from the
+                        beginning or starting from the end</para>
+                </listitem>
+                <listitem>
+                    <para>Allow the comma operator to be used anywhere to retrieve only one element
+                        from a collection</para>
+                </listitem>
+                <listitem>
+                    <para>Make the comma operator smart so that it changes behavior based on the
+                        current context personality</para>
+                </listitem>
+            </itemizedlist>
+        </section>
+        <section>
+            <title>Other changes</title>
+            <para>With IronBee, we are starting to build the list of variables from scratch, adding
+                what is needed, as it is needed. We may support some of the missing variables in
+                future releases, but there will remain a number of variables that only make sense in
+                ModSecurity. In general, we are reusing the names of ModSecurity variables wherever
+                possible.</para>
+            <para>In some cases, variables with the same name will behave differently. This happens
+                for two reasons. First, whereas in ModSecurity <command>httpd</command> provided
+                certain values, in IronBee we have to do it ourselves, possibly differently and from
+                a different starting point. Second, in some cases we determined that there is room
+                for improvement in how variables are constructed, and we wanted to do the right
+                thing.</para>
+            <para>In this section we will highlight some of the major differences:</para>
+            <itemizedlist>
+                <listitem>
+                    <para>todo</para>
+                </listitem>
+            </itemizedlist>
+        </section>
+    </section>
+    <section>
+        <title>Rules</title>
+        <itemizedlist>
+            <listitem>
+                <para>The main rule directive is shortened, to just <literal>Rule</literal>. All
+                    other supported directives from ModSecurity also have the <literal>Sec</literal>
+                    prefix removed.</para>
+            </listitem>
+            <listitem>
+                <para>In chained rules, instructions (known as disruptive actions in ModSecurity)
+                    are specified on the last rule in the chain, not on the first; the rule metadata
+                    remains with the first rule in the chain.</para>
+            </listitem>
+            <listitem>
+                <para>There are no default transformations, which means that it is no longer
+                    necessary to begin rules with <literal>t:none</literal>.</para>
+            </listitem>
+            <listitem>
+                <para>The <literal>SecRuleScript</literal> functionality is now handled by
+                        <literal>RuleRunExt</literal>, which works as an interface between the rule
+                    language and externally-implemented security logic (for example, Lua rules,
+                    rules implemented natively, etc). </para>
+            </listitem>
+            <listitem>
+                <para>Run-time rule manipulation (using <literal>ctl:ruleRemoveById</literal> or
+                        <literal>ctl:ruleUpdateTagetById</literal>) is not currently supported.
+                    These features are slow in ModSecurity and we wish to rethink them before and if
+                    we implement them. At the very least we will wish to provide a faster
+                    implementation.</para>
+            </listitem>
+            <listitem>
+                <para>Changing rule flow at run-time is not supported at this time. This means that
+                    the functionality of <literal>skip</literal>, <literal>skipAfter</literal>, and
+                        <literal>SecMarker</literal> is not supported. Neither is that of
+                        <literal>SecAction</literal>, which is commonly used with skipping.</para>
+            </listitem>
+            <listitem>
+                <para>IronBee uses a simplified configuration model in which site configuration
+                    always starts from scratch. Inheritance is used when location contexts are
+                    created, but, unlike in ModSecurity, locations always inherit configuration from
+                    their sites.</para>
+            </listitem>
+            <listitem>
+                <para>There is no ability to update rule targets and actions at configure-time, but
+                    we will probably implement a similar feature in the future.</para>
+            </listitem>
+            <listitem>
+                <para>All rules that generate events must use the <literal>msg</literal> modifer to
+                    provide a message. This is because IronBee does not use machine-generated rule
+                    messages. In ModSecurity, machine-generated messages have shown to have little
+                    value, especially as rules increase in complexity. They are often a source of
+                    confusion.</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>Miscellaneous</title>
+        <para>
+            <itemizedlist>
+                <listitem>
+                    <para>The audit log format has been redesigned to support new features.</para>
+                </listitem>
+                <listitem>
+                    <para><literal>SecArgumentSeparator</literal> is implemented as a personality
+                        parameter (see <literal>PersonalityParam</literal> for more
+                        information).</para>
+                </listitem>
+                <listitem>
+                    <para>In IronBee, request and response body inspection is not tied to buffering.
+                        Disabling buffering will generally not affect inspection; it will only
+                        affect the ability to block attacks reliably.</para>
+                </listitem>
+                <listitem>
+                    <para>In IronBee, like in ModSecurity, you can have a transaction blocked if the
+                        buffer limit is encountered, but, you can also choose to continue to use the
+                        buffer in circular fashion. In that case, IronBee will simply buffer as much
+                        data as it can, allowing any overflowing data to pass through.</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+    </section>
+    <section>
+        <title>Features Not Supported (Yet)</title>
+        <itemizedlist>
+            <listitem>
+                <para>Content injection - will be added in the future</para>
+            </listitem>
+            <listitem>
+                <para>Guardian log - will not implement this obsolete feature</para>
+            </listitem>
+            <listitem>
+                <para>XML support - will be added in the future</para>
+            </listitem>
+            <listitem>
+                <para>Persistent storage - will be added in the future (with high priority)</para>
+            </listitem>
+            <listitem>
+                <para>Chroot support - will not implement this <filename>httpd</filename>&#8211;specific
+                    feature</para>
+            </listitem>
+            <listitem>
+                <para>File upload inspection and extraction - will be added in the future</para>
+            </listitem>
+            <listitem>
+                <para>Anti-DoS features are not supported, and we don't expect they will be in the
+                    future</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+
+</appendix>

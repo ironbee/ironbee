@@ -1,0 +1,12 @@
+/* Module Configuration Structure */
+struct pocsig_cfg_t {
+    /* Exposed as configuration parameters. */
+    ib_num_t            trace;                   /* Log signature tracing */
+
+    /* Private. */
+    ib_list_t          *phase[POCSIG_PHASE_NUM]; /* Phase signature lists */
+    ib_matcher_t       *pcre;                    /* PCRE matcher */
+};
+
+/* Instantiate a module global configuration. */
+static pocsig_cfg_t pocsig_global_cfg;
