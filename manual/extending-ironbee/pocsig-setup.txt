@@ -1,0 +1,39 @@
+#include <strings.h>
+
+#include <ironbee/engine.h>
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/module.h>
+#include <ironbee/provider.h>
+
+/* Define the module name as well as a string version of it. */
+#define MODULE_NAME               pocsig
+#define MODULE_NAME_STR           IB_XSTRINGIFY(MODULE_NAME)
+
+/* Declare the public module symbol. */
+IB_MODULE_DECLARE();
+
+typedef struct pocsig_cfg_t pocsig_cfg_t;
+typedef struct pocsig_sig_t pocsig_sig_t;
+
+/* Signature Phases */
+typedef enum {
+    POCSIG_PRE,                   /* Pre transaction phase */
+    POCSIG_REQHEAD,               /* Request headers phase */
+    POCSIG_REQ,                   /* Request phase */
+    POCSIG_RESHEAD,               /* Response headers phase */
+    POCSIG_RES,                   /* Response phase */
+    POCSIG_POST,                  /* Post transaction phase */
+
+    /* Keep track of the number of defined phases. */
+    POCSIG_PHASE_NUM
+} pocsig_phase_t;
+
+/* Signature Structure */
+struct pocsig_sig_t {
+    const char         *target;   /* Target name */
+    const char         *patt;     /* Pattern to match in target */
+    void               *cpatt;    /* Compiled PCRE regex */
+    const char         *emsg;     /* Event message */
+};

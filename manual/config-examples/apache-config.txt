@@ -1,0 +1,5 @@
+<IfModule ironbee_module>
+    LogLevel debug
+    IronBeeEnable on
+    IronBeeConfig /usr/local/ironbee/etc/ironbee.conf
+</IfModule>

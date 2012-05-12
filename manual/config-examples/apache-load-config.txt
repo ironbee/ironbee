@@ -1,0 +1,2 @@
+LoadFile /usr/local/lib/libhtp.so
+LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so

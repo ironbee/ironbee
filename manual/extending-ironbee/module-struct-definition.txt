@@ -1,0 +1,23 @@
+struct ib_module_t {
+    /* Header */
+    uint32_t                vernum;           /* Engine version number */
+    uint32_t                abinum;           /* Engine ABI Number */
+    const char             *version;          /* Engine version string */
+    const char             *filename;         /* Module code filename */
+    void                   *data;             /* Module data */
+    ib_engine_t            *ib;               /* Engine */
+    size_t                  idx;              /* Module index */
+
+    /* Module Config */
+    const char             *name;             /* Module name */
+    const void             *gcdata;           /* Global config data */
+    size_t                  gclen;            /* Global config data length */
+    const ib_cfgmap_init_t *cm_init;          /* Module config mapping */
+    const ib_dirmap_init_t *dm_init;          /* Module directive mapping */
+
+    /* Functions */
+    ib_module_fn_init_t     fn_init;          /* Module init */
+    ib_module_fn_fini_t     fn_fini;          /* Module finish */
+    ib_module_fn_ctx_init_t fn_ctx_init;      /* Module context init */
+    ib_module_fn_ctx_fini_t fn_ctx_fini;      /* Module context fini */
+};

@@ -1,0 +1,677 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="directives">
+    <title>Directives</title>
+    <para>...</para>
+    <section>
+        <title>AuditEngine</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the audit log engine.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditEngine On|Off|RelevantOnly</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>Note: Setting <literal>AuditEngine</literal> to <literal>On</literal> activates audit
+            logging, but does not log any transactions in itself. Further activity (e.g., a rule
+            match) is required for a transaction to be recorded.</para>
+    </section>
+    <section>
+        <title>AuditLogBaseDir</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the directory where
+            individual audit log entries will be stored. This also serves as the base directory for
+            <literal>AuditLogIndex</literal> if it uses a relative path.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditLogBaseDir <replaceable>directory</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>"/var/log/ironbee"</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+    </section>
+    <section>
+        <title>AuditLogDirMode</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the directory mode that will
+            be used for new directories created during audit logging.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditLogDirMode <replaceable>octal-mode</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>0700</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+    </section>
+    <section>
+        <title>AuditLogFileMode</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the file mode that will be
+            used when creating individual audit log files.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditLogFileMode <replaceable>octal-mode</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>0600</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>AuditLogIndex</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the location of the audit log
+            index file.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditLogIndex None|<replaceable>filename</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>ironbee-index.log</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>Relative filenames are based off the <literal>AuditLogBaseDir</literal> directory and
+            specifying <literal>None</literal> disables the index file entirely.</para>
+    </section>
+    <section>
+        <title>AuditLogIndexFormat</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the format of the entries
+            logged in the audit log index file.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditLogIndexFormat <replaceable>format-string</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>"%T %h %a %S %s %t %f"</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>
+            <itemizedlist>
+                <listitem>
+                    <para><emphasis role="bold">%%</emphasis> The percent sign</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%a</emphasis> Remote IP-address</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%A</emphasis> Local IP-address</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%h</emphasis> HTTP Hostname</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%s</emphasis> Site ID</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%S</emphasis> Sensor ID</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%t</emphasis> Transaction ID</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%T</emphasis> Transaction timestamp (YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ)</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">%f</emphasis> Auditlog filename (relative to <literal>AuditLogBaseDir</literal>)</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+    </section>
+    <section>
+        <title>AuditLogParts</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures which parts will be logged to
+            the audit log.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditLogPart <replaceable>[+|-]partType</replaceable> ...</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>default</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>An audit log consist of many parts; <literal>AuditLogParts</literal> determines which
+            parts are recorded by default. The parts are inherited into child contexts (Site,
+            Location, etc). Specifying a part with +/- operator will add or remove the given part
+            from the current set of parts. Specifying the first option without +/- operators will
+            cause all options to be overridden and the list of options will be the only options set.
+            Here is what your configuration might look like:</para>
+        <programlisting>AuditLogParts minimal +request -requestBody +response -responseBody</programlisting>
+        <para>The above first resets the list of parts to <emphasis role="bold">minimal</emphasis>,
+            adds all the <emphasis role="bold">request</emphasis> parts except the <emphasis
+                role="bold">requestBody</emphasis>, then adds all the <emphasis role="bold"
+                >response</emphasis> parts except the <emphasis role="bold"
+            >responseBody</emphasis>.</para>
+        <para>Later, in a sub-context, you may wish to enable response body logging and thus can
+            just specify this part with the + operator:</para>
+        <programlisting>&lt;Location /some/path>
+    AuditLogParts <emphasis role="bold">+responseBody</emphasis>
+&lt;/Location></programlisting>
+        <para>If you already had response body logging enabled, but didn't want it any more, you
+            would write:</para>
+        <programlisting>&lt;Location /some/path>
+    AuditLogParts <emphasis role="bold">-responseBody</emphasis>
+&lt;/Location></programlisting>
+        <para>Audit Log Part Names:</para>
+        <para>
+            <itemizedlist>
+                <listitem>
+                    <para><emphasis role="bold">header:</emphasis> Audit Log header
+                        (required)</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">events:</emphasis> List of events that
+                        triggered</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">requestMetadata:</emphasis> Information about the
+                        request</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">requestHeaders:</emphasis> Raw request
+                        headers</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">requestBody:</emphasis> Raw request body</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">requestTrailers:</emphasis> Raw request
+                        trailers</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">responseMetadata:</emphasis> Information about the
+                        response</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">responseHeaders:</emphasis> Raw response
+                        headers</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">responseBody:</emphasis> Raw response body</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">responseTrailers:</emphasis> Raw response
+                        trailers</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">debugFields:</emphasis> Currently not
+                        implemented</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+        <para>Audit Log Part Group Names:</para>
+        <para>These are just aliases for multiple parts.</para>
+        <para>
+            <itemizedlist>
+                <listitem>
+                    <para><emphasis role="bold">none:</emphasis> Removes all parts</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">minimal:</emphasis> Minimal parts (currently
+                            <emphasis role="bold">header</emphasis> and <emphasis role="bold"
+                            >events</emphasis> parts) </para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">default:</emphasis> Default parts (currently
+                            <emphasis role="bold">minimal</emphasis> and request/response parts
+                        without bodies)</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">request:</emphasis> All request related parts</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">response:</emphasis> All response related
+                        parts</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">debug:</emphasis> All debug related parts</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">all:</emphasis> All parts</para>
+                </listitem>
+            </itemizedlist>
+        </para>
+    </section>
+    <section>
+        <title>AuditLogSubDirFormat</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the directory structure created under the <emphasis>AuditLogBaseDir</emphasis> directory. This is a <emphasis>strftime(3)</emphasis> format string allowing the directory structure to be created based on date/time.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>AuditLogSubDirFormat <replaceable>format-string</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>None</literal> (audit logs will be created in the base directory)</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+    </section>
+    <section>
+        <title>DebugLog</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the location of the debug log
+            file.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>DebugLog default|<replaceable>filename</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>default</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet (always uses the
+            plugin's default error log)</para>
+    </section>
+    <section>
+        <title>DebugLogLevel</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the detail level of the
+            entries recorded to the debug log.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>DebugLogLevel <replaceable>level</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>4</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>The following log levels are supported:</para>
+        <itemizedlist>
+            <listitem>
+                <para><literal>0</literal> - fatal errors</para>
+            </listitem>
+            <listitem>
+                <para><literal>1</literal> - errors</para>
+            </listitem>
+            <listitem>
+                <para><literal>2</literal> - warnings</para>
+            </listitem>
+            <listitem>
+                <para><literal>3</literal> - notices</para>
+            </listitem>
+            <listitem>
+                <para><literal>4</literal> - informational messages</para>
+            </listitem>
+            <listitem>
+                <para><literal>5</literal> - debugging: transaction state changes</para>
+            </listitem>
+            <listitem>
+                <para><literal>6</literal> - debugging: log of activities carried out</para>
+            </listitem>
+            <listitem>
+                <para><literal>7</literal> - debugging: activities, with more detail</para>
+            </listitem>
+            <listitem>
+                <para><literal>9</literal> - debugging: developer log messages</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>Include</title>
+        <para><emphasis role="bold">Description:</emphasis> Includes external file into
+            configuration.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Include <replaceable>filename</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para>Allows inclusion of another file into the current configuration file. The following
+            line will include the contents of the file <filename>sites.conf</filename> into
+            configuration:</para>
+        <programlisting>Include conf/sites.conf</programlisting>
+        <para>If you specify a relative path, the location of the current configuration file will be
+            used to resolve it.</para>
+    </section>
+    <section>
+        <title>InspectionEngine</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the inspection engine.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>InspectionEngine On|DetectionOnly|Off</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>Hostname</title>
+        <para><emphasis role="bold">Description:</emphasis> Maps hostname, URL, IP address, and port
+            combinations to a Site.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Hostname <replaceable>hostname</replaceable>
+                    [<replaceable>hostname</replaceable>] ...
+                    [ip=<replaceable>ipaddress</replaceable>] [port=<replaceable>port</replaceable>]
+                    [path=<replaceable>path</replaceable>]</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>The <literal>Hostname</literal> directive establishes a mapping between a Site and one
+            or more URL spaces. </para>
+        <para>In the simplest case, a site will occupy an entire domain name:</para>
+        <programlisting>Hostname www.ironbee.com</programlisting>
+        <para>More often than not, however, several domain names will be used:</para>
+        <programlisting>Hostname www.ironbee.com ironbee.com</programlisting>
+        <para>Wildcards are permitted when there is a large number of subdomains to map or when the
+            subdomains are not known in advance. Only one wildcard character per hostname is
+            allowed:</para>
+        <programlisting>Hostname *.ironbee.com ironbee.com</programlisting>
+        <para>When there is a unique IP address assigned to the site, you can configure a site to
+            match any hostname that uses the IP address (both IPv4 and IPv6 are supported):</para>
+        <programlisting>Hostname * ip=192.168.1.1</programlisting>
+        <para>Specific ports may be specified:</para>
+        <programlisting>Hostname * port=8000</programlisting>
+        <para>Path prefixes may be specified as well (NOTE: Not yet specified - do nested Location
+            tags resolve with path= prefix???  Probably should so that path= can easily be changed
+            without affecting nested Location tags):</para>
+        <programlisting>Hostname * path=/app1</programlisting>
+        <para>Finally, to match any hostname on any IP address (which you will need to do in default
+            sites), use a single asterisk:</para>
+        <programlisting>Hostname *</programlisting>
+    </section>
+    <section>
+        <title>LoadModule</title>
+        <para><emphasis role="bold">Description:</emphasis> Loads an external module into
+            configuration.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>LoadModule <replaceable>module</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>This directive will add an external module to the engine, potentially making new
+            directives available to the configuration.</para>
+    </section>
+    <section>
+        <title>Location</title>
+        <para><emphasis role="bold">Description:</emphasis> Creates a subcontext that can have a
+            different configuration.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>&lt;Location /site/path>...&lt;/Location></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>A subcontext created by this directive initially has identical configuration to that
+            of the site it belongs to. Further directives are required to introduce changes.
+            Locations are evaluated in the order in which they appear in the configuration file. The
+            first location that matches request path will be used. This means that you should put
+            the most-specific location first, followed by the less specific ones.</para>
+    </section>
+    <section>
+        <title>PcreMatchLimit</title>
+        <para/>
+    </section>
+    <section>
+        <title>PcreMatchLimitRecursion</title>
+        <para/>
+    </section>
+    <section>
+        <title>PersonalityAdd</title>
+        <para><emphasis role="bold">Description:</emphasis> Adds a personality to the current
+            configuration, configuring all the parameters the alias contains</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAdd <replaceable>alias</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para>The parameters extracted from the personality being added will overwrite the existing
+            settings, but non-overlapping settings will be preserved. This allows multiple
+            personalities to be stacked as needed.</para>
+    </section>
+    <section>
+        <title>PersonalityAliasClear</title>
+        <para><emphasis role="bold">Description:</emphasis> Clears a previously configured
+            personality alias</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAliasClear <replaceable>alias</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>PersonalityAliasParam</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures a parameter for the given
+            alias</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAliasParam <replaceable>alias</replaceable>
+                <replaceable>paramName</replaceable>
+                <replaceable>paramValue</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>See <literal>PersonalityParam</literal> for the list of all parameters.</para>
+    </section>
+    <section>
+        <title>PersonalityClearAll</title>
+        <para><emphasis role="bold">Description:</emphasis> Clears all personality configuration in
+            the current context</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityClearAll</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>PersonalityParam</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures a specific personality
+            parameter</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityParam <replaceable>paramName</replaceable>
+                <replaceable>paramValue</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Configuration of the <literal>multipart/form-data</literal> parser:</para>
+        <variablelist>
+            <varlistentry>
+                <term><literal>multipart.file_limit</literal></term>
+                <listitem>
+                    <para>Configures a hard limit for the number of files that will be accepted in
+                        one request. Default: 100</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+        <para>Request parameters personality parameters:</para>
+        <variablelist>
+            <varlistentry>
+                <term><literal>params.urlencoded_separator</literal></term>
+                <listitem>
+                    <para>Default separator: <literal>&amp;</literal></para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.multi_retrieval</literal></term>
+                <listitem>
+                    <para>Possible values: <literal>first</literal>, <literal>last</literal>,
+                            <literal>combined_comma</literal>, <literal>combined_dbman</literal>,
+                            <literal>array_perl</literal>, <literal>array_python</literal>. No
+                        default setting; a configuration error is raised if an attempt to use a
+                        single variable is detected and the personality has not been
+                        configured.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.name_transformation</literal></term>
+                <listitem>
+                    <para>Possible values: <literal>none</literal> (default),
+                        <literal>php</literal>.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.source_order</literal></term>
+                <listitem>
+                    <para>Possible values: place source identifiers in the order in which you wish
+                        new parameters to be added to <literal>ARGS</literal> (<literal>G</literal>
+                        for query string parameters, <literal>P</literal> for request body
+                        parameters, <literal>C</literal> for cookies, and <literal>U</literal> for
+                        parameters extracted from request URLs). Default:
+                        <literal>GP</literal>.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.parse_limit</literal></term>
+                <listitem>
+                    <para>Configures a hard limit for the number of parameters created during
+                        parsing. Default: 1000</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+    </section>
+    <section>
+        <title>RequestBodyBuffering</title>
+        <para><emphasis role="bold">Description:</emphasis> Enable/disable request body
+            buffering.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RequestBodyBuffering On|Off</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>RequestBodyBufferLimit</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the size of the request body
+            buffer.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RequestBodyBufferLimit LIMIT_IN_BYTES</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>RequestBodyBufferLimitAction</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures what happens when the buffer
+            is smaller than the request body.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RequestBodyBufferLimitAction Reject|RollOver</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>When <literal>Reject</literal> is configured, the transaction with a body larger than
+            the buffer will be blocked. With <literal>RollOver</literal> selected, the buffer will
+            be used to keep as much data as possible, but any overflowing data will be allowed to
+            the backend. Request headers will be sent before the first overflow batch. In
+            detection-only mode, <literal>Reject</literal> is converted to
+                <literal>RollOver</literal>.</para>
+    </section>
+    <section>
+        <title>ResponseBodyBuffering</title>
+        <para><emphasis role="bold">Description:</emphasis> Enable/disable response body
+            buffering.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>ResponseBodyBuffering On|Off</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>ResponseBodyBufferLimit</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the size of the responset
+            body buffer.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>ResponseBodyBufferLimit LIMIT_IN_BYTES</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>ResponseBodyBufferLimitAction</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures what happens when the buffer
+            is smaller than the response body.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>ResponseBodyBufferLimitAction Reject|RollOver</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>When <literal>Reject</literal> is configured, the transaction with a body larger than
+            the buffer will be blocked. With <literal>RollOver</literal> selected, the buffer will
+            be used to keep as much data as possible, but any overflowing data will be allowed to
+            the backend. Reesponse headers will be sent before the first overflow batch. In
+            detection-only mode, <literal>Reject</literal> is converted to
+                <literal>RollOver</literal>.</para>
+    </section>
+    <section>
+        <title>Rule</title>
+        <para><emphasis role="bold">Description:</emphasis> Creates a rule.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Rule INPUTS OPERATOR [MODIFIERS]</literal>
+        </para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>RuleExt</title>
+        <para><emphasis role="bold">Description:</emphasis> Creates a rule implemented externally,
+            either by loading the rule directly from a file, or referencing a rule that was
+            previously declared by a module.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RuleExt ruleLocation ACTIONS</literal>
+        </para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para>To load a Lua rule:</para>
+        <programlisting>RuleExt file:/path/to/rule.lua phase:REQUEST</programlisting>
+        <para>To reference a rule created by a previously-loaded module:</para>
+        <programlisting>RuleExt mod:moduleName.ruleName phase:REQUEST</programlisting>
+        <para>Note: Complex external rules cannot have their phase and priority information
+            changed.</para>
+    </section>
+    <section>
+        <title>SensorId</title>
+        <para><emphasis role="bold">Description:</emphasis> Unique sensor identifier.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>SensorId SENSOR_ID</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para>TODO: Can we make this directive so that, if not defined, we attempt to detect server
+            hostname and use that as ID?</para>
+    </section>    
+    <section>
+        <title>Site</title>
+        <para>A site is one of the main concepts in the configuration in IronBee. The idea is to
+            have an element to correspond to real-life web sites. With most web sites there is an
+            one-to-one mapping to domain names, but our mapping mechanism is quite flexible: you can
+            have one site per domain name, many domain names for a single site, or even have one
+            domain name shared among several sites [Note: URL-based mapping is not planned for
+            v0.1].</para>
+        <para>At the highest level, a configuration will contain one or more sites. For
+            example:</para>
+        <programlisting>&lt;Site site1>
+    Hostname site1.example.com
+&lt;/Site>
+
+&lt;Site site2>
+    Hostname site2.example.com
+&lt;/Site>
+
+&lt;Site default>
+    Hostname *
+&lt;/Site>s</programlisting>
+        <para>Before it can process a transaction, IronBee will examine the current configuration
+            looking for a site to assign the transaction to. The default site is used as the choice
+            of last resort, when a better selection cannot be made. The <literal>Site</literal>
+            directive only establishes site boundaries and assigns a unique handle to each site; the
+                <literal>Hostname</literal> directive is responsible for the mapping.</para>
+        <note>
+            <para>Every configuration should have a default site. IronBee will generate a run-time
+                error if it is unable to find a site to assign to a transaction. When in blocking
+                mode, the error will cause the transaction to be blocked. Otherwise, a warning will
+                be raised.</para>
+        </note>
+    </section>
+    <section>
+        <title>StreamInspect</title>
+        <para><emphasis role="bold">Description:</emphasis> Creates a streaming inspection rule,
+            which inspects data as it becomes available, outside rule phases.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>StreamInspect INPUT OPERATOR [MODIFIERS]</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para>Normally, rules run in one of the available phases, which happen at strategic points in
+            transaction lifecycle. Phase rules are convenient to write, because all the relevant
+            data is available for inspection. However, there are situations when it is not possible
+            to have access to all of the data in a phase. This is the case, for example, when a
+            request body is very large, or when buffering is not allowed.</para>
+        <para>Streaming rules are designed to operate in these circumstances. They are able to
+            inspect data as it becomes available, be it a dozen of bytes, or a single byte.</para>
+        <para>The syntax of the <literal>Inspect</literal> directive is similar to that of
+            <literal>Rule</literal>, but there are several restrictions:</para>
+        <itemizedlist>
+            <listitem>
+                <para>Only one input can be used. This is because streaming rules attach to a single
+                    data source.</para>
+            </listitem>
+            <listitem>
+                <para>The <literal>phase</literal> modifier cannot be used, as streaming rules
+                    operate outside phases.</para>
+            </listitem>
+            <listitem>
+                <para>Only <literal>REQUEST_BODY</literal> and <literal>RESPONSE_BODY</literal> can
+                    be used as inputs.</para>
+            </listitem>
+            <listitem>
+                <para>Only the <literal>pm</literal> operator can be used.</para>
+            </listitem>
+            <listitem>
+                <para>Transformation functions are not supported.</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+</chapter>

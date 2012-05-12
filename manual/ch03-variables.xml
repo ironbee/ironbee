@@ -1,0 +1,280 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="variables">
+    <title>Variables</title>
+    <para>...<note>
+            <para>Currently the variable names are case sensitive and implemented as all lowercase.
+                In a later release they will be made case insensitive.</para>
+        </note></para>
+    <section>
+        <title>ARGS</title>
+        <para><emphasis role="bold">Description:</emphasis> All request parameters combined.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>, <literal>REQUEST_BODY</literal>)</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>
+            <note>
+                <para>Only request header parameters are implemented as of version 0.2.</para>
+            </note>
+        </para>
+    </section>
+    <section>
+        <title>ARGS_GET</title>
+        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in query string.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>ARGS_POST</title>
+        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in request body.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>AUTH_PASSWORD</title>
+        <para><emphasis role="bold">Description:</emphasis> Basic authentication password.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>AUTH_USERNAME</title>
+        <para><emphasis role="bold">Description:</emphasis> Basic or Digest authentication
+            username.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>AUTH_TYPE</title>
+        <para><emphasis role="bold">Description:</emphasis> Indicator of the authentication method
+            used.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>This field contains the first token extracted from the <literal>Authorization</literal>
+            request header. Typical values are: <literal>Basic</literal>, <literal>Digest</literal>,
+            and <literal>NTLM</literal>. </para>
+    </section>
+    <section>
+        <title>GEO</title>
+        <para><emphasis role="bold">Description:</emphasis> Results of the most recent geolocation
+            lookup.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>MATCHED_VAR</title>
+        <para><emphasis role="bold">Description:</emphasis> The value of the most recent matched
+            variable.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>This variable is useful in a rule that is inspecting several variables, and you need
+            to access the value of the variable that matched. For example:</para>
+        <programlisting>Rule ARGS "@rx test" \
+    "msg:'Test matched',logdata:%{MATCHED_VAR}"</programlisting>
+        <para>Note: This variable can be used only within the same rule.</para>
+    </section>
+    <section>
+        <title>REMOTE_ADDR</title>
+        <para><emphasis role="bold">Description:</emphasis> Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Connection</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REMOTE_PORT</title>
+        <para><emphasis role="bold">Description:</emphasis> Remote (client) port, extracted from the TCP connection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Context:</emphasis> Connection</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REQUEST_BODY</title>
+        <para><emphasis role="bold">Description:</emphasis> Request body data.</para>
+        <para><emphasis role="bold">Type:</emphasis> Scalar</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction (phase n/a)</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Request content type is constructed from the request <literal>Content-Type</literal>
+            header. The value is first converted to keep only the content type part (and exclude
+            character encoding information, if any), then converted to lowercase.</para>
+    </section>
+    <section>
+        <title>REQUEST_CONTENT_TYPE</title>
+        <para><emphasis role="bold">Description:</emphasis> Contains request content type.</para>
+        <para><emphasis role="bold">Type:</emphasis> Scalar</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Request content type is constructed from the request <literal>Content-Type</literal>
+            header. The value is first converted to contain only the content type (and exclude any
+            character encoding information), then converted to lowercase.</para>
+    </section>
+    <section>
+        <title>REQUEST_HEADERS</title>
+        <para><emphasis role="bold">Description:</emphasis> Request headers.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REQUEST_HOST</title>
+        <para><emphasis role="bold">Description:</emphasis> Request hostname information, extracted from the request and normalized.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>The following rules apply:</para>
+        <orderedlist>
+            <listitem>
+                <para>Use the hostname information if provided on the request line</para>
+            </listitem>
+            <listitem>
+                <para>Alternatively, look up the <literal>Host</literal> request header</para>
+            </listitem>
+            <listitem>
+                <para>If the hostname information is provided in both locations, the information in
+                    the <literal>Host</literal> header is ignored</para>
+            </listitem>
+        </orderedlist>
+        <para>Normalization [TODO What RFC should we refer to?]:</para>
+        <orderedlist>
+            <listitem>
+                <para>Lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Remove trailing dot</para>
+            </listitem>
+        </orderedlist>
+    </section>
+    <section>
+        <title>REQUEST_FILENAME</title>
+        <para><emphasis role="bold">Description:</emphasis> Request filename, extracted from request URI and normalized according to the current personality.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Normalization algorithm, with all "features" enabled, is as follows:</para>
+        <orderedlist>
+            <listitem>
+                <para>Decode URL-encoded characters (both <literal>%HH</literal> and
+                        <literal>%uHHHH</literal> formats), convert to lowercase, compress
+                    separators, convert backslashes, and terminate NUL.</para>
+            </listitem>
+            <listitem>
+                <para>Convert UTF-8 to single-byte stream using best-fit mapping</para>
+            </listitem>
+            <listitem>
+                <para>Perform RFC 3986 normalization</para>
+            </listitem>
+        </orderedlist>
+    </section>
+    <section>
+        <title>REQUEST_PROTOCOL</title>
+        <para><emphasis role="bold">Description:</emphasis> Request protocol name and
+            version.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>This variable contains the protocol name and version, as specified on the request
+            line. Transactions using version 0.9 of the protocol (which does not specify protocol
+            name and version) will have this variable set to <literal>HTTP/0.9</literal>.</para>
+    </section>
+    <section>
+        <title>REQUEST_URI</title>
+        <para><emphasis role="bold">Description:</emphasis> Request URI, extracted from request and normalized according to the current personality (see <literal>REQUEST_FILENAME</literal> for more details).</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>Default normalization:</para>
+        <orderedlist>
+            <listitem>
+                <para>RFC normalization</para>
+            </listitem>
+            <listitem>
+                <para>Convert to lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Reduce consecutive forward slashes to a single character</para>
+            </listitem>
+        </orderedlist>
+        <para>All normalization options:</para>
+        <itemizedlist>
+            <listitem>
+                <para>RFC normalization</para>
+            </listitem>
+            <listitem>
+                <para>Convert to lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Convert \ characters to /</para>
+            </listitem>
+            <listitem>
+                <para>Reduce consecutive forward slashes to a single character</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>RESPONSE_BODY</title>
+        <para><emphasis role="bold">Description:</emphasis> Response body data.</para>
+        <para><emphasis role="bold">Type:</emphasis> Scalar</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>This variable can only used in combination with the <literal>StreamInspect</literal>
+            directive.</para>
+    </section>
+    <section>
+        <title>RESPONSE_CONTENT_TYPE</title>
+        <para><emphasis role="bold">Description:</emphasis> Contains response content type.</para>
+        <para><emphasis role="bold">Type:</emphasis> Scalar</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction
+                (<literal>RESPONSE_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Response content type is constructed from the response <literal>Content-Type</literal>
+            header. The value is first converted to keep only the content type part (and exclude
+            character encoding information, if any), then converted to lowercase.</para>
+    </section>
+    <section>
+        <title>RESPONSE_HEADERS</title>
+        <para><emphasis role="bold">Description:</emphasis> Response headers.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>SERVER_ADDR</title>
+        <para><emphasis role="bold">Description:</emphasis> Server IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Connection</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>SERVER_PORT</title>
+        <para><emphasis role="bold">Description:</emphasis> Server port, extracted from the TCP connection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Context:</emphasis> Connection</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>SITE_NAME</title>
+        <para><emphasis role="bold">Description:</emphasis> The name of the site to which the current transaction was assigned.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>UA</title>
+        <para><emphasis role="bold">Description:</emphasis> User agent information.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Context:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+</chapter>

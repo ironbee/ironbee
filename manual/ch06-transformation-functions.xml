@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="ch-transformation-functions">
+    <title>Transformation Functions</title>
+    <para>...</para>    
+    <section>
+        <title>compressWhitespace</title>
+        <para>Replaces various whitespace characters with spaces. In addition, consecutive
+            whitespace characters will be reduced down to a single space. Whitespace characters are:
+                <literal>0x20</literal>, <literal>\f</literal>, <literal>\t</literal>,
+                <literal>\n</literal>, <literal>\r</literal>, <literal>\v</literal>,
+                <literal>0xa0</literal> (non-breaking white space).</para>        
+    </section>
+    <section>
+        <title>sqlDecode</title>
+        <para>Decodes input in a way similar to how a DBMS would:</para>
+        <itemizedlist>
+            <listitem>
+                <para>Decodes hexadecimal literals that use the SQL standard format
+                        <literal>x'HEX_ENCODED_VALUE'</literal> (case insensitive)</para>
+            </listitem>
+            <listitem>
+                <para>Decodes hexadecimal literals that use the ODBC format
+                        <literal>0xHEX_ENCODED_VALUE</literal> (case insensitive)</para>
+            </listitem>
+            <listitem>
+                <para>Decodes backslash-escaped characters</para>
+            </listitem>
+        </itemizedlist>
+        <para>References:</para>
+        <itemizedlist>
+            <listitem>
+                <para>MySQL Reference: Hexadecimal Literals
+                    http://dev.mysql.com/doc/refman/5.6/en/hexadecimal-literals.html</para>
+            </listitem>
+            <listitem>
+                <para>String Literals
+                    http://dev.mysql.com/doc/refman/5.6/en/string-literals.html</para>
+            </listitem>
+        </itemizedlist>        
+    </section>
+</chapter>
