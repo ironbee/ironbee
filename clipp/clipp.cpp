@@ -290,6 +290,9 @@ void help()
     "                             connection.\n"
     "  @aggregate:<n>          -- Aggregate transactions into a connections\n"
     "                             of at least <n> transactions.\n"
+    "  @aggregate:uniform:min,max -- \n"
+    "    Aggregate transactions into a connections of <min> to <max>\n"
+    "    transactions chosen uniformly at random.\n"
     ;
 }
 
@@ -610,7 +613,29 @@ input_modifier_t init_aggregate_modifier(const string& arg)
         return AggregateModifier();
     }
     else {
-        return construct_modifier<AggregateModifier, size_t>(arg);
+        vector<string> subargs = split_on_char(arg, ':');
+        if (subargs.size() == 1) {
+            return construct_modifier<AggregateModifier, size_t>(subargs[0]);
+        }
+        else if (subargs.size() == 2) {
+            if (subargs[0] != "uniform") {
+                throw runtime_error(
+                    "Unknown distribution: " +
+                    subargs[0]
+                );
+            }
+            vector<string> subsubargs = split_on_char(subargs[1], ',');
+            if (subsubargs.size() != 2) {
+                throw runtime_error("Error parsing aggregate distribution.");
+            }
+            return AggregateModifier::uniform(
+                boost::lexical_cast<size_t>(subsubargs[0]),
+                boost::lexical_cast<size_t>(subsubargs[1])
+            );
+        }
+        else {
+            throw runtime_error("Error parsing aggregate arguments.");
+        }
     }
 }
 

@@ -26,6 +26,9 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/random.hpp>
+
+#include <ctime>
 
 using boost::bind;
 using namespace std;
@@ -40,14 +43,39 @@ size_t constant_dist(size_t n)
     return n;
 }
 
-struct AggregateModifier::State
+class random_dist
 {
-    State(distribution_t distribution_) :
-        distribution(distribution_)
+public:
+    random_dist() :
+        m_rng(clock())
     {
         // nop
     }
 
+protected:
+    boost::random::mt19937 m_rng;
+};
+
+class uniform_dist : random_dist
+{
+public:
+    uniform_dist(size_t min, size_t max) :
+        m_die(min, max)
+    {
+        // nop
+    }
+
+    size_t operator()()
+    {
+        return m_die(m_rng);
+    }
+
+private:
+    boost::random::uniform_int_distribution<> m_die;
+};
+
+struct AggregateModifier::State
+{
     //! Distribution of targets.
     distribution_t distribution;
 
@@ -58,9 +86,9 @@ struct AggregateModifier::State
 };
 
 AggregateModifier::AggregateModifier(size_t n) :
-    m_state(new State(bind(constant_dist, n)))
+    m_state(new State())
 {
-    // nop
+    m_state->distribution = bind(constant_dist, n);
 }
 
 bool AggregateModifier::operator()(Input::input_p& input)
@@ -95,6 +123,13 @@ bool AggregateModifier::operator()(Input::input_p& input)
     }
 
     return false;
+}
+
+AggregateModifier AggregateModifier::uniform(size_t min, size_t max)
+{
+    AggregateModifier mod;
+    mod.m_state->distribution = uniform_dist(min, max);
+    return mod;
 }
 
 } // CLIPP

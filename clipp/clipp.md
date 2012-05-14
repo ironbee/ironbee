@@ -313,6 +313,7 @@ if some of those events are repeated.
 
 **@aggregate**<br>
 **@aggregate**:*n*<br>
+**@aggregate**:*distribution*:*parameters*
 
 Aggregates multiple connections together.  The first connection provides the
 pre and post transactions events.  Subsequent transactions have their 
@@ -320,6 +321,11 @@ transactions appended to the first.  When there are no more inputs or when
 the number of transactions is at least *n*, the connection is passed on.  
 Note that the final connection may have less than *n* transactions, i.e.,
 it will have the remainder.
+
+If given a distrbution and distrbution parameters, the value of *n* will be
+chosen at random for each output input.  Supported distrbutions are:
+
+- uniform:*min*,*max* --- Uniform distribution from [*min*, *max*].
 
 Consumers
 ---------

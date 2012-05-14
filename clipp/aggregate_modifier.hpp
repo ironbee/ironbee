@@ -57,6 +57,15 @@ public:
     //! Process an input.
     bool operator()(Input::input_p& input);
 
+    /**
+     * Aggregate with sizes chosen uniformly from [@a min, @a max].
+     *
+     * @param[in] min Minimum size (except for last).
+     * @param[in] max Maximum size.
+     **/
+    static
+    AggregateModifier uniform(size_t min, size_t max);
+
 public:
     struct State;
     boost::shared_ptr<State> m_state;

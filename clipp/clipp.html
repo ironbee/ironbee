@@ -319,7 +319,8 @@ connection data in (out) event for each set of request (response) events, even
 if some of those events are repeated.</p>
 
 <p><strong>@aggregate</strong><br>
-<strong>@aggregate</strong>:<em>n</em><br></p>
+<strong>@aggregate</strong>:<em>n</em><br>
+<strong>@aggregate</strong>:<em>distribution</em>:<em>parameters</em></p>
 
 <p>Aggregates multiple connections together. The first connection provides the
 pre and post transactions events. Subsequent transactions have their
@@ -327,6 +328,13 @@ transactions appended to the first. When there are no more inputs or when
 the number of transactions is at least <em>n</em>, the connection is passed on.<br/>
 Note that the final connection may have less than <em>n</em> transactions, i.e.,
 it will have the remainder.</p>
+
+<p>If given a distrbution and distrbution parameters, the value of <em>n</em> will be
+chosen at random for each output input. Supported distrbutions are:</p>
+
+<ul>
+<li>uniform:<em>min</em>,<em>max</em> &#8212; Uniform distribution from [<em>min</em>, <em>max</em>].</li>
+</ul>
 
 <h2 id="consumers">Consumers</h2>
 
