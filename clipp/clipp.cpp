@@ -293,6 +293,10 @@ void help()
     "  @aggregate:uniform:min,max -- \n"
     "    Aggregate transactions into a connections of <min> to <max>\n"
     "    transactions chosen uniformly at random.\n"
+    "  @aggregate:binomial:t,p -- \n"
+    "    Aggregate transactions into a connections of <n> transactions\n"
+    "    chosen at random from a binomial distribution of t trials with\n"
+    "    p chance of success.\n"
     ;
 }
 
@@ -618,20 +622,28 @@ input_modifier_t init_aggregate_modifier(const string& arg)
             return construct_modifier<AggregateModifier, size_t>(subargs[0]);
         }
         else if (subargs.size() == 2) {
-            if (subargs[0] != "uniform") {
+            vector<string> subsubargs = split_on_char(subargs[1], ',');
+            if (subsubargs.size() != 2) {
+                throw runtime_error("Error parsing aggregate distribution.");
+            }
+            if (subargs[0] == "uniform") {
+                return AggregateModifier::uniform(
+                    boost::lexical_cast<unsigned int>(subsubargs[0]),
+                    boost::lexical_cast<unsigned int>(subsubargs[1])
+                );
+            }
+            else if (subargs[0] == "binomial") {
+                return AggregateModifier::binomial(
+                    boost::lexical_cast<unsigned int>(subsubargs[0]),
+                    boost::lexical_cast<double>(subsubargs[1])
+                );
+            }
+            else {
                 throw runtime_error(
                     "Unknown distribution: " +
                     subargs[0]
                 );
             }
-            vector<string> subsubargs = split_on_char(subargs[1], ',');
-            if (subsubargs.size() != 2) {
-                throw runtime_error("Error parsing aggregate distribution.");
-            }
-            return AggregateModifier::uniform(
-                boost::lexical_cast<size_t>(subsubargs[0]),
-                boost::lexical_cast<size_t>(subsubargs[1])
-            );
         }
         else {
             throw runtime_error("Error parsing aggregate arguments.");

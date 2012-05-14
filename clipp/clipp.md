@@ -326,6 +326,8 @@ If given a distrbution and distrbution parameters, the value of *n* will be
 chosen at random for each output input.  Supported distrbutions are:
 
 - uniform:*min*,*max* --- Uniform distribution from [*min*, *max*].
+- binomial:*t*,*p* --- Binomial distribution of *t* trials with *p* chance of
+  success.
 
 Consumers
 ---------

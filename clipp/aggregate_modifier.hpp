@@ -64,7 +64,19 @@ public:
      * @param[in] max Maximum size.
      **/
     static
-    AggregateModifier uniform(size_t min, size_t max);
+    AggregateModifier uniform(unsigned int min, unsigned int max);
+
+    /**
+     * Aggregate with sizes chosen from bionomial distribution.
+     *
+     * n is chosen as the number of successful trials out of @a t where
+     * success occurs with probability @a p.
+     *
+     * @param[in] t Number of trials.
+     * @param[in] p Probability of success.
+     **/
+    static
+    AggregateModifier binomial(unsigned int t, double p);
 
 public:
     struct State;

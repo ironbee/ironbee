@@ -43,36 +43,33 @@ size_t constant_dist(size_t n)
     return n;
 }
 
+template <typename DistributionType>
 class random_dist
 {
 public:
-    random_dist() :
-        m_rng(clock())
-    {
-        // nop
-    }
-
-protected:
-    boost::random::mt19937 m_rng;
-};
-
-class uniform_dist : random_dist
-{
-public:
-    uniform_dist(size_t min, size_t max) :
-        m_die(min, max)
+    explicit
+    random_dist(DistributionType dist) :
+        m_rng(clock()),
+        m_dist(dist)
     {
         // nop
     }
 
     size_t operator()()
     {
-        return m_die(m_rng);
+        return m_dist(m_rng);
     }
 
-private:
-    boost::random::uniform_int_distribution<> m_die;
+protected:
+    boost::random::mt19937 m_rng;
+    DistributionType       m_dist;
 };
+
+template <typename DistributionType>
+random_dist<DistributionType> make_random_dist(DistributionType dist)
+{
+    return random_dist<DistributionType>(dist);
+}
 
 struct AggregateModifier::State
 {
@@ -125,10 +122,24 @@ bool AggregateModifier::operator()(Input::input_p& input)
     return false;
 }
 
-AggregateModifier AggregateModifier::uniform(size_t min, size_t max)
+AggregateModifier AggregateModifier::uniform(
+    unsigned int min,
+    unsigned int max
+)
 {
     AggregateModifier mod;
-    mod.m_state->distribution = uniform_dist(min, max);
+    mod.m_state->distribution = make_random_dist(
+        boost::random::uniform_int_distribution<>(min, max)
+    );
+    return mod;
+}
+
+AggregateModifier AggregateModifier::binomial(unsigned int t, double p)
+{
+    AggregateModifier mod;
+    mod.m_state->distribution = make_random_dist(
+        boost::random::binomial_distribution<>(t, p)
+    );
     return mod;
 }
 
