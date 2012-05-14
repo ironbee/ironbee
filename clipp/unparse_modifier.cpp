@@ -174,6 +174,10 @@ void add_events(Input::Transaction& tx, const data_t::txdata_t txdata)
 
 bool UnparseModifier::operator()(Input::input_p& input)
 {
+    if (! input) {
+        return true;
+    }
+
     boost::shared_ptr<data_t> data = boost::make_shared<data_t>();
     data->old_source   = input->source;
 

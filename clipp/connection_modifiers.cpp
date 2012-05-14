@@ -117,6 +117,10 @@ SetLocalIPModifier::SetLocalIPModifier(const std::string& ip) :
 
 bool SetLocalIPModifier::operator()(Input::input_p& in_out)
 {
+    if (! in_out) {
+        return true;
+    }
+
     SetLocalIP delegate(m_ip);
     // ConnectionOpened events only occur in pre-transaction
     BOOST_FOREACH(
@@ -138,6 +142,10 @@ SetLocalPortModifier::SetLocalPortModifier(uint32_t port) :
 
 bool SetLocalPortModifier::operator()(Input::input_p& in_out)
 {
+    if (! in_out) {
+        return true;
+    }
+
     SetLocalPort delegate(m_port);
     // ConnectionOpened events only occur in pre-transaction
     BOOST_FOREACH(
@@ -159,6 +167,10 @@ SetRemoteIPModifier::SetRemoteIPModifier(const std::string& ip) :
 
 bool SetRemoteIPModifier::operator()(Input::input_p& in_out)
 {
+    if (! in_out) {
+        return true;
+    }
+
     SetRemoteIP delegate(m_ip);
     // ConnectionOpened events only occur in pre-transaction
     BOOST_FOREACH(
@@ -180,6 +192,10 @@ SetRemotePortModifier::SetRemotePortModifier(uint32_t port) :
 
 bool SetRemotePortModifier::operator()(Input::input_p& in_out)
 {
+    if (! in_out) {
+        return true;
+    }
+
     SetRemotePort delegate(m_port);
     // ConnectionOpened events only occur in pre-transaction
     BOOST_FOREACH(

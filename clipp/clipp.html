@@ -366,6 +366,14 @@ false otherwise. Returning false is useful, e.g., for filters. If false is
 returned, <code>clipp</code> will stop processing the Input and ask the Generator for the
 next input.</p>
 
+<p>When the generator returns false, a singular, i.e., NULL, input will be sent
+through the modifier chain. This allows modifiers to detect end-of-input
+conditions and produce additional input if appropriate, e.g., for
+aggregation or reordering. Modifiers that are not concerend with end-of-input
+conditions should immediately return true when passed a singular input. The
+chain will be complete when the generator returns false and a singular input
+reaches the consumer.</p>
+
 <p>Consumer take a <code>const input_p&amp;</code> parameter. They are, however, allowed to
 modify the pointed to Input if that helps them. The Input will be not be
 read after the Consumer runs. Consumers should return true if they were able

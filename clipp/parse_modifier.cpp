@@ -180,6 +180,10 @@ struct data_t
 
 bool ParseModifier::operator()(Input::input_p& input)
 {
+    if (! input) {
+        return true;
+    }
+
     boost::shared_ptr<data_t> data = boost::make_shared<data_t>();
     data->old_source   = input->source;
     data->transactions = input->connection.transactions;

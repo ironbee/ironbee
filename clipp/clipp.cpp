@@ -27,13 +27,9 @@
  * to an internal IronBee engine.  The primary purpose of clipp is to be
  * extendible, allowing additional generators and consumers to be written.
  *
- * In the near future, clipp will also support transformations which take
- * inputs and produce inputs.  Transformations can be used to filter, modify,
- * or aggregate inputs.
- *
  * To add a new generator:
  *   -# Write your generator.  This should be a functional that takes a
- *      @c input_t& as a single argument, fills that argument with a new
+ *      @c input_p& as a single argument, fills that argument with a new
  *      input, and returns true.  If the input can not be produced, it should
  *      return false.
  *   -# Write a factory for your generator.  This should be a functin(al) that
@@ -43,9 +39,19 @@
  *   -# Add your factory to the @c generator_factory_map at the top of main.
  *
  * To add a new consumer: Follow the directions above for generators, except
- * that consumers take a @c const @c input_t& and return true if it is able
+ * that consumers take a @c const @c input_p& and return true if it is able
  * to consume the input.  It should also be added to the
  * @c consumer_factory_map instead of the @c generator_factory_map.
+ *
+ * To add a new modifier: Follow the direcitons above for generators.
+ * modifiers take a non-const @c input_p& as input and return true if
+ * processing of that input should continue.  Modifiers will be passed a
+ * singular (NULL) input once the generator is complete.  This singular
+ * input can be used to detect end-of-input conditions.  Modifiers that are
+ * not concerned with end-of-input conditions should immediately return true
+ * when passed a singular input.  Modifiers may alter the input passed in or
+ * even change it to point to a new input.  Modifiers should be added to
+ * @c modifier_factory_map.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -447,18 +453,26 @@ int main(int argc, char** argv)
            return 1;
         }
 
-        // Append consumer modifiers.
+        // Append consumer modifiers
         copy(
             consumer_chain.modifiers.begin(), consumer_chain.modifiers.end(),
             back_inserter(chain.modifiers)
         );
+
+        // Generate modifiers.
+        typedef pair<string, input_modifier_t> modifier_info_t;
+        list<modifier_info_t> modifiers;
         BOOST_FOREACH(
             const component_t& modifier_component,
             chain.modifiers
         ) {
-            input_modifier_t modifier;
+            modifiers.push_back(modifier_info_t(
+                modifier_component.name,
+                input_modifier_t()
+            ));
+            modifier_info_t& modifier_info = modifiers.back();
             try {
-                modifier = construct_component<input_modifier_t>(
+                modifier_info.second = construct_component<input_modifier_t>(
                     modifier_component,
                     modifier_factory_map
                 );
@@ -468,7 +482,6 @@ int main(int argc, char** argv)
                      << modifier_component.name << ": " << e.what() << endl;
                 return 1;
             }
-            generator = modify_generator(generator, modifier);
         }
 
         // Process inputs.
@@ -488,13 +501,46 @@ int main(int argc, char** argv)
                 continue;
             }
 
+            if (generator_continue && ! input) {
+                cerr << "Generator said it provided input, but didn't."
+                     << endl;
+                continue;
+            }
+
             if (! generator_continue) {
+                // Only stop if the singular input reaches the consumer.
+                input.reset();
+            }
+
+            bool modifier_continue = true;
+            BOOST_FOREACH(const modifier_info_t& modifier_info, modifiers) {
+                try {
+                    modifier_continue = modifier_info.second(input);
+                }
+                catch (const exception& e) {
+                    cerr << "Error applying modifier "
+                         << modifier_info.first << ": " << e.what()
+                         << endl;
+                    modifier_continue = false;
+                    break;
+                }
+                // If pushing through a singular input, apply to all
+                // modifier.
+                if (input && ! modifier_continue) {
+                    break;
+                }
+            }
+            if (! modifier_continue) {
+                continue;
+            }
+
+            if (! input && ! generator_continue) {
+                // Chain complete; leave loop.
                 break;
             }
 
             if (! input) {
-                cerr << "Generator said it provided input, but didn't."
-                     << endl;
+                cerr << "Input lost during modification." << endl;
                 continue;
             }
 
