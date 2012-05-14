@@ -92,12 +92,16 @@ Formally, the configuration grammar is, in pseudo-BNF:
     base          := component
     component     := name [ COLON configuration ]
     configuration := quoted | unquoted
-    quoted        := /"[^"]+"/
+    quoted        := +(escaped | non_quote)
+    escaped       := BACKSLASH char
+    char          := /./
+    nonquote      := /[^"]/
     unquoted      := /[^\s]+/
     name          := /[a-z_]+/
     AT            := "@"
     COLON         := ":"
     WS            := " "
+    BACKSLASH     := "\"
     
 The grammar is likely to change in in the near future.  
 

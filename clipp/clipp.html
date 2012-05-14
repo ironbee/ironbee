@@ -100,12 +100,16 @@ modifier      := AT component
 base          := component
 component     := name [ COLON configuration ]
 configuration := quoted | unquoted
-quoted        := /&quot;[^&quot;]+&quot;/
+quoted        := +(escaped | non_quote)
+escaped       := BACKSLASH char
+char          := /./
+nonquote      := /[^&quot;]/
 unquoted      := /[^\s]+/
 name          := /[a-z_]+/
 AT            := &quot;@&quot;
 COLON         := &quot;:&quot;
 WS            := &quot; &quot;
+BACKSLASH     := &quot;\&quot;
 </code></pre>
 
 <p>The grammar is likely to change in in the near future. </p>
