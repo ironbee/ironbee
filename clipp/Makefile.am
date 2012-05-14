@@ -24,7 +24,8 @@ clipp_SOURCES = \
     htp_generator.cpp \
     connection_modifiers.cpp \
     parse_modifier.cpp \
-    unparse_modifier.cpp
+    unparse_modifier.cpp \
+    aggregate_modifier.cpp
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \

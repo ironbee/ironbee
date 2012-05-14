@@ -305,6 +305,16 @@ connection data in and connection data out events.  It generates a single
 connection data in (out) event for each set of request (response) events, even
 if some of those events are repeated.
 
+**@aggregate**<br>
+**@aggregate**:*n*<br>
+
+Aggregates multiple connections together.  The first connection provides the
+pre and post transactions events.  Subsequent transactions have their 
+transactions appended to the first.  When there are no more inputs or when
+the number of transactions is at least *n*, the connection is passed on.  
+Note that the final connection may have less than *n* transactions, i.e.,
+it will have the remainder.
+
 Consumers
 ---------
 

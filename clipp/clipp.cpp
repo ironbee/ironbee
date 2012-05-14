@@ -72,6 +72,7 @@
 #include "connection_modifiers.hpp"
 #include "parse_modifier.hpp"
 #include "unparse_modifier.hpp"
+#include "aggregate_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -211,6 +212,8 @@ input_modifier_t construct_argless_modifier(const string& arg)
 //! Construct raw generator, interpreting @a arg as @e request,response.
 input_generator_t init_raw_generator(const string& arg);
 
+//! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
+input_modifier_t init_aggregate_modifier(const string& arg);
 
 ///@}
 
@@ -276,6 +279,10 @@ void help()
     "  @set_remote_port:<port> -- Change remote port to <port>.\n"
     "  @parse                  -- Parse connection data events.\n"
     "  @unparse                -- Unparse parsed events.\n"
+    "  @aggregate              -- Aggregate all transactions into a single\n"
+    "                             connection.\n"
+    "  @aggregate:<n>          -- Aggregate transactions into a connections\n"
+    "                             of at least <n> transactions.\n"
     ;
 }
 
@@ -364,6 +371,7 @@ int main(int argc, char** argv)
     modifier_factory_map["parse"] = construct_argless_modifier<ParseModifier>;
     modifier_factory_map["unparse"] =
         construct_argless_modifier<UnparseModifier>;
+    modifier_factory_map["aggregate"] = init_aggregate_modifier;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -589,27 +597,14 @@ input_generator_t init_raw_generator(const string& arg)
     return RawGenerator(subargs[0], subargs[1]);
 }
 
-//! Helper function for modify_generator()
-bool modify_generator_function(
-    input_generator_t generator,
-    input_modifier_t  modifier,
-    input_p&          input
-)
+input_modifier_t init_aggregate_modifier(const string& arg)
 {
-    if (generator(input)) {
-        return modifier(input);
+    if (arg.empty()) {
+        return AggregateModifier();
     }
     else {
-        return false;
+        return construct_modifier<AggregateModifier, size_t>(arg);
     }
-}
-
-input_generator_t modify_generator(
-    input_generator_t generator,
-    input_modifier_t  modifier
-)
-{
-    return bind(modify_generator_function, generator, modifier, _1);
 }
 
 template <typename ResultType, typename MapType>

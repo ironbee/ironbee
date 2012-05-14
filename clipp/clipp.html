@@ -312,6 +312,16 @@ connection data in and connection data out events. It generates a single
 connection data in (out) event for each set of request (response) events, even
 if some of those events are repeated.</p>
 
+<p><strong>@aggregate</strong><br>
+<strong>@aggregate</strong>:<em>n</em><br></p>
+
+<p>Aggregates multiple connections together. The first connection provides the
+pre and post transactions events. Subsequent transactions have their
+transactions appended to the first. When there are no more inputs or when
+the number of transactions is at least <em>n</em>, the connection is passed on.<br/>
+Note that the final connection may have less than <em>n</em> transactions, i.e.,
+it will have the remainder.</p>
+
 <h2 id="consumers">Consumers</h2>
 
 <p><strong>ironbee</strong>:<em>path</em></p>
