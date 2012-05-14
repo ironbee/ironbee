@@ -65,6 +65,14 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
     ib_status_t rc;
     ib_flags_t result;
 
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(str_fn != NULL);
+    assert(ex_fn != NULL);
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(pflags != NULL);
+
     /* Initialize the output field pointer */
     *fout = NULL;
 
@@ -77,7 +85,9 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        assert (in != NULL);
+        if (in == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
         rc = str_fn(IB_STROP_COW, mp, (char *)in, &out, &result);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -99,7 +109,9 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        assert (bs != NULL);
+        if (bs == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
         din = ib_bytestr_const_ptr(bs);
         dlen = ib_bytestr_length(bs);
         rc = ex_fn(IB_STROP_COW, mp,

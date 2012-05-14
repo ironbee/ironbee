@@ -80,12 +80,10 @@ typedef ib_status_t (* inplace_fn_t)(uint8_t *buf,
  *
  * @returns Status code.
  */
-typedef ib_status_t (* outplace_fn_t)(/*ib_flags_t flags, */
-                                      const uint8_t *data_in,
+typedef ib_status_t (* outplace_fn_t)(const uint8_t *data_in,
                                       size_t dlen_in,
                                       uint8_t *data_out,
-                                      size_t dlen_out
-                                      /* ib_flags_t *result */);
+                                      size_t dlen_out);
 
 /**
  * Count the amount of whitespace in a string
@@ -366,7 +364,6 @@ static ib_status_t ws_compress(const uint8_t *data_in,
     const uint8_t *oend;
     uint8_t *optr;
     ib_bool_t in_wspc = IB_FALSE;
-    /* ib_bool_t modified = IB_FALSE; */
 
     assert(data_in != NULL);
     assert(data_out != NULL);
