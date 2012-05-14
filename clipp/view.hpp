@@ -27,6 +27,8 @@
 
 #include "input.hpp"
 
+#include <boost/shared_ptr.hpp>
+
 namespace IronBee {
 namespace CLIPP {
 
@@ -44,7 +46,8 @@ public:
     bool operator()(const Input::input_p& input);
 
 private:
-    bool m_id_only;
+    struct State;
+    boost::shared_ptr<State> m_state;
 };
 
 /**

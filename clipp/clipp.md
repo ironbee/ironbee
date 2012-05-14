@@ -269,8 +269,14 @@ characters are represented by `[`*X*`]` where *X* is the decimal value.
 
 **@view:id**
 
-This modifier is identical to `@view` except only the IDs of each event are 
+This modifier is identical to `@view` except only the IDs of each input are 
 displayed.
+
+**@view:summary**
+
+This modifier is identical to `@view` except a summary of each input is 
+displayed.  The summary is the ID, connection information, and number of
+transactions.
 
 **@set_local_ip**:*ip*<br>
 **@set_local_port**:*port*<br>
@@ -326,6 +332,7 @@ are interpreted.
 
 **view**
 **view:id**
+**view:summary**
 
 These consumer are identical to the modifiers of the same name except that they behave as a consumer, i.e., can appear as the final chain.
 

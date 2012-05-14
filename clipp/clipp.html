@@ -276,8 +276,14 @@ characters are represented by <code>[</code><em>X</em><code>]</code> where <em>X
 
 <p><strong>@view:id</strong></p>
 
-<p>This modifier is identical to <code>@view</code> except only the IDs of each event are
+<p>This modifier is identical to <code>@view</code> except only the IDs of each input are
 displayed.</p>
+
+<p><strong>@view:summary</strong></p>
+
+<p>This modifier is identical to <code>@view</code> except a summary of each input is
+displayed. The summary is the ID, connection information, and number of
+transactions.</p>
 
 <p><strong>@set_local_ip</strong>:<em>ip</em><br>
 <strong>@set_local_port</strong>:<em>port</em><br>
@@ -331,7 +337,8 @@ and feeds all events to it. The pre- and post- delay attributes of Events
 are interpreted.</p>
 
 <p><strong>view</strong>
-<strong>view:id</strong></p>
+<strong>view:id</strong>
+<strong>view:summary</strong></p>
 
 <p>These consumer are identical to the modifiers of the same name except that they behave as a consumer, i.e., can appear as the final chain.</p>
 

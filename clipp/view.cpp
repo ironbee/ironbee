@@ -25,11 +25,18 @@
 #include "view.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/function.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
 namespace IronBee {
 namespace CLIPP {
+
+struct ViewConsumer::State
+{
+    boost::function<void(const Input::input_p&)> viewer;
+};
 
 namespace {
 
@@ -182,20 +189,7 @@ struct ViewDelegate :
     }
 };
 
-}
-
-ViewConsumer::ViewConsumer(const std::string& arg) :
-    m_id_only(false)
-{
-    if (arg == "id") {
-        m_id_only = true;
-    }
-    else if (! arg.empty()) {
-        throw runtime_error("Unknown View argument: " + arg);
-    }
-}
-
-bool ViewConsumer::operator()(const input_p& input)
+void view_full(const input_p& input)
 {
     if (input->id.empty()) {
         cout << "---- No ID Provided ----" << endl;
@@ -203,11 +197,76 @@ bool ViewConsumer::operator()(const input_p& input)
     else {
         cout << "---- " << input->id << " ----" << endl;
     }
-    if (! m_id_only) {
-        ViewDelegate viewer;
-        input->connection.dispatch(viewer);
+    ViewDelegate viewer;
+    input->connection.dispatch(viewer);
+}
+
+void view_id(const input_p& input)
+{
+    if (input->id.empty()) {
+        cout << "---- No ID Provided ----" << endl;
+    }
+    else {
+        cout << "---- " << input->id << " ----" << endl;
+    }
+}
+
+void view_summary(const input_p& input)
+{
+    string id("NO ID");
+
+    if (! input->id.empty()) {
+        id = input->id;
     }
 
+    size_t num_txs = input->connection.transactions.size();
+
+    if (input->connection.pre_transaction_events.empty()) {
+        // no IP information.
+        cout << boost::format("%36s NO CONNECTION INFO %5d") % id % num_txs
+             << endl;
+    }
+    const ConnectionEvent& connection_event =
+        dynamic_cast<ConnectionEvent&>(
+            *input->connection.pre_transaction_events.front()
+        );
+    cout << boost::format("%-40s %20s <-> %-20s %5d txs") % id %
+        (boost::format("%s:%d") %
+            connection_event.local_ip % connection_event.local_port
+        ) %
+        (boost::format("%s:%d") %
+            connection_event.remote_ip % connection_event.remote_port
+        ) %
+        num_txs
+         << endl;
+}
+
+}
+
+ViewConsumer::ViewConsumer(const std::string& arg) :
+    m_state(new State())
+{
+    if (arg == "id") {
+        m_state->viewer = view_id;
+    }
+    else if (arg == "summary") {
+        m_state->viewer = view_summary;
+    }
+    else if (arg.empty()) {
+        m_state->viewer = view_full;
+    }
+    else {
+        throw runtime_error("Unknown View argument: " + arg);
+    }
+}
+
+bool ViewConsumer::operator()(const input_p& input)
+{
+    if ( ! input ) {
+        return true;
+    }
+
+    m_state->viewer(input);
     return true;
 }
 
