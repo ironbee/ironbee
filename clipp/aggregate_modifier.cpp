@@ -24,25 +24,41 @@
 
 #include "aggregate_modifier.hpp"
 
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
+
+using boost::bind;
 using namespace std;
 
 namespace IronBee {
 namespace CLIPP {
 
+typedef boost::function<size_t()> distribution_t;
+
+size_t constant_dist(size_t n)
+{
+    return n;
+}
+
 struct AggregateModifier::State
 {
-    State(size_t n_) :
-        n(n_)
+    State(distribution_t distribution_) :
+        distribution(distribution_)
     {
         // nop
     }
 
-    const size_t   n;
+    //! Distribution of targets.
+    distribution_t distribution;
+
+    //! Current target.
+    size_t         n;
+    //! Current aggregate.
     Input::input_p aggregate;
 };
 
 AggregateModifier::AggregateModifier(size_t n) :
-    m_state(new State(n))
+    m_state(new State(bind(constant_dist, n)))
 {
     // nop
 }
@@ -58,6 +74,7 @@ bool AggregateModifier::operator()(Input::input_p& input)
 
     if (! m_state->aggregate) {
         m_state->aggregate = input;
+        m_state->n = m_state->distribution();
     }
     else {
         copy(
