@@ -599,7 +599,7 @@ _eof_trans:
         if (rc != IB_OK) {
             ib_log_error(ib_engine,
                          "Failed to start block \"%s\" on %s:%d: %s",
-                         blkname, lineno, file, ib_status_to_string(rc));
+                         blkname, file, lineno, ib_status_to_string(rc));
         }
     }
 	break;
