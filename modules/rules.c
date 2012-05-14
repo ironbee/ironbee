@@ -174,7 +174,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     }
 
     /* Make sure that we have an operator */
-    if (! at || strlen(at+1) == 0) {
+    if ( (at == NULL) || strlen(at+1) == 0) {
         ib_log_error(cp->ib,  "Invalid rule syntax '%s'", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1135,7 +1135,8 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     op = ib_list_node_next_const(targets);
     if ( (op == NULL) || (op->data == NULL) ) {
         ib_log_error(cp->ib,  "No operator for rule");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        rc = IB_EINVAL;
+        goto cleanup;
     }
 
     /* Allocate a rule */
@@ -1143,7 +1144,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_log_error(cp->ib,  "Failed to allocate rule: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        goto cleanup;
     }
 
     /* Parse the targets */
@@ -1152,7 +1153,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
         ib_log_error(cp->ib,
                      "Error parsing rule targets: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        goto cleanup;
     }
 
     /* Parse the operator */
@@ -1161,7 +1162,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
         ib_log_error(cp->ib,
                      "Error parsing rule targets: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        goto cleanup;
     }
 
     /* Parse all of the modifiers */
@@ -1172,7 +1173,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
             ib_log_error(cp->ib,
                          "Error parsing rule modifier \"%s\": %s",
                          mod->data, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            goto cleanup;
         }
     }
 
@@ -1181,20 +1182,22 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_log_error(cp->ib,  "Error registering rule: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        goto cleanup;
     }
 
     /* Disable the entire chain if this rule is invalid */
+cleanup:
     if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
         rc = ib_rule_chain_invalidate(cp->ib, rule);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib,  "Error invalidating rule chain: %s",
+            ib_log_error(cp->ib, "Error invalidating rule chain: %s",
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         else {
-            ib_log_debug2(cp->ib, "Invalidated all rules in chain '%s'",
-                         rule->meta.chain_id);
+            const char *chain = \
+                rule->meta.chain_id == NULL ? "UNKNOWN" : rule->meta.chain_id;
+            ib_log_debug2(cp->ib, "Invalidated all rules in chain '%s'", chain);
         }
     }
 

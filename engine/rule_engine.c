@@ -1674,6 +1674,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     }
     rule->phase_meta = phase_meta;
     rule->meta.phase = PHASE_NONE;
+    rule->opinst = NULL;
 
     /* Meta tags list */
     lst = NULL;
@@ -2219,20 +2220,24 @@ ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_status_t tmp_rc;
+    ib_flags_t orig;
 
     if (rule == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+    orig = rule->flags;
     rule->flags &= ~IB_RULE_FLAG_VALID;
 
-    /* Invalidate the entire chain */
+    /* Invalidate the entire chain upwards */
     if (rule->chained_from != NULL) {
         tmp_rc = ib_rule_chain_invalidate(ib, rule->chained_from);
         if (tmp_rc != IB_OK) {
             rc = tmp_rc;
         }
     }
-    if (rule->chained_rule != NULL) {
+
+    /* If this rule was previously valid, walk down the chain, too */
+    if ( (orig & IB_RULE_FLAG_VALID) && (rule->chained_rule != NULL) ) {
         tmp_rc = ib_rule_chain_invalidate(ib, rule->chained_rule);
         if (tmp_rc != IB_OK) {
             rc = tmp_rc;
