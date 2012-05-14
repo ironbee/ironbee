@@ -86,6 +86,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/call_traits.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/exception/all.hpp>
 
 #include <string>
 
@@ -346,6 +347,16 @@ construct_component(const component_t& component, const MapType& map);
 
 ///@}
 
+#define CLIPP_CATCH(message, action) \
+ catch (const boost::exception& e) { \
+     cerr << (message) << ": " << diagnostic_information(e) << endl; \
+     (action); \
+ } \
+ catch (const exception& e) { \
+     cerr << (message) << ": " << e.what() << endl; \
+     (action); \
+ }
+
 /**
  * Main
  *
@@ -418,11 +429,7 @@ int main(int argc, char** argv)
         try {
             chains = ConfigurationParser::parse_file(path);
         }
-        catch (const exception& e) {
-            cerr << "Error parsing configuration file " << path
-                 << ": " << e.what() << endl;
-            return 1;
-        }
+        CLIPP_CATCH("Error parsing configuraiton file", {return 1;});
 
         copy(
             chains.begin(), chains.end(),
@@ -437,10 +444,8 @@ int main(int argc, char** argv)
     try {
         chains = ConfigurationParser::parse_string(configuration);
     }
-    catch (const exception& e) {
-        cerr << "Error parsing configuration: " << e.what() << endl;
-        return 1;
-    }
+    CLIPP_CATCH("Error parsing configuration", {return 1;});
+
     copy(
         chains.begin(), chains.end(),
         back_inserter(all_chains)
@@ -462,10 +467,7 @@ int main(int argc, char** argv)
             consumer_factory_map
         );
     }
-    catch (const exception& e) {
-        cerr << "Error constructing consumer: " << e.what() << endl;
-        return 1;
-    }
+    CLIPP_CATCH("Error constructing consumer", {return 1;});
 
     // Loop through components, generating and processing input generators
     // as needed to limit the scope of each input generator.  As input
@@ -479,11 +481,10 @@ int main(int argc, char** argv)
                 generator_factory_map
             );
         }
-        catch (const exception& e) {
-            cerr << "Error constructing generator " << chain.base.name
-                 << ": " << e.what() << endl;
-           return 1;
-        }
+        CLIPP_CATCH(
+            "Error constructing generator " + chain.base.name,
+            {return 1;}
+        );
 
         // Append consumer modifiers
         copy(
@@ -509,11 +510,10 @@ int main(int argc, char** argv)
                     modifier_factory_map
                 );
             }
-            catch (const exception& e) {
-                cerr << "Error constructing modifier "
-                     << modifier_component.name << ": " << e.what() << endl;
-                return 1;
-            }
+            CLIPP_CATCH(
+                "Error constructing modifier " + modifier_component.name,
+                {return 1;}
+            );
         }
 
         // Process inputs.
@@ -528,10 +528,7 @@ int main(int argc, char** argv)
             try {
                 generator_continue = generator(input);
             }
-            catch (const exception& e) {
-                cerr << "Error generating input: " << e.what() << endl;
-                continue;
-            }
+            CLIPP_CATCH("Error generating input", {continue;});
 
             if (generator_continue && ! input) {
                 cerr << "Generator said it provided input, but didn't."
@@ -549,13 +546,12 @@ int main(int argc, char** argv)
                 try {
                     modifier_continue = modifier_info.second(input);
                 }
-                catch (const exception& e) {
+                CLIPP_CATCH(
                     cerr << "Error applying modifier "
-                         << modifier_info.first << ": " << e.what()
-                         << endl;
-                    modifier_continue = false;
-                    break;
-                }
+                         << modifier_info.first,
+                    {modifier_continue = false; break;}
+                );
+
                 // If pushing through a singular input, apply to all
                 // modifier.
                 if (input && ! modifier_continue) {
@@ -579,10 +575,8 @@ int main(int argc, char** argv)
             try {
                 consumer_continue = consumer(input);
             }
-            catch (const exception& e) {
-                cerr << "Error consuming input: " << e.what() << endl;
-                continue;
-            }
+            CLIPP_CATCH("Error consuming input", {continue;});
+
             if (! consumer_continue) {
                 cerr << "Consumer refusing input." << endl;
             }
