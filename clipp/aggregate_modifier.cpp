@@ -155,5 +155,17 @@ AggregateModifier AggregateModifier::binomial(unsigned int t, double p)
     return mod;
 }
 
+AggregateModifier AggregateModifier::geometric(double p)
+{
+    if (p < 0 || p >= 1) {
+        throw runtime_error("p must be in [0,1)");
+    }
+    AggregateModifier mod;
+    mod.m_state->distribution = make_random_dist(
+        boost::random::geometric_distribution<>(p)
+    );
+    return mod;
+}
+
 } // CLIPP
 } // IronBee

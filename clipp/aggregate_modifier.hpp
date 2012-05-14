@@ -78,6 +78,17 @@ public:
     static
     AggregateModifier binomial(unsigned int t, double p);
 
+    /**
+     * Aggregate with sizes chosen from geometric distribution.
+     *
+     * n is chosen as the number trials before a failure of probability
+     * 1-@a p.
+     *
+     * @param[in] p Probability of success.
+     **/
+    static
+    AggregateModifier geometric(double p);
+
 public:
     struct State;
     boost::shared_ptr<State> m_state;

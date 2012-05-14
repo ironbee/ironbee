@@ -328,6 +328,7 @@ chosen at random for each output input.  Supported distrbutions are:
 - uniform:*min*,*max* --- Uniform distribution from [*min*, *max*].
 - binomial:*t*,*p* --- Binomial distribution of *t* trials with *p* chance of
   success.
+- geometric:*p* --- Geometric distribution with *p* chance of success.
 
 Consumers
 ---------

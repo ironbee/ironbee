@@ -297,6 +297,10 @@ void help()
     "    Aggregate transactions into a connections of n transactions\n"
     "    chosen at random from a binomial distribution of <t> trials with\n"
     "    <p> chance of success.\n"
+    "  @aggregate:geometric:p -- \n"
+    "    Aggregate transactions into a connections of n transactions\n"
+    "    chosen at random from a geometric distribution with <p> chance of\n"
+    "    success.\n"
     ;
 }
 
@@ -623,19 +627,36 @@ input_modifier_t init_aggregate_modifier(const string& arg)
         }
         else if (subargs.size() == 2) {
             vector<string> subsubargs = split_on_char(subargs[1], ',');
-            if (subsubargs.size() != 2) {
-                throw runtime_error("Error parsing aggregate distribution.");
-            }
             if (subargs[0] == "uniform") {
+                if (subsubargs.size() != 2) {
+                    throw runtime_error(
+                        "Expected two distribution arguments."
+                    );
+                }
                 return AggregateModifier::uniform(
                     boost::lexical_cast<unsigned int>(subsubargs[0]),
                     boost::lexical_cast<unsigned int>(subsubargs[1])
                 );
             }
             else if (subargs[0] == "binomial") {
+                if (subsubargs.size() != 2) {
+                    throw runtime_error(
+                        "Expected two distribution arguments."
+                    );
+                }
                 return AggregateModifier::binomial(
                     boost::lexical_cast<unsigned int>(subsubargs[0]),
                     boost::lexical_cast<double>(subsubargs[1])
+                );
+            }
+            else if (subargs[0] == "geometric") {
+                if (subsubargs.size() != 1) {
+                    throw runtime_error(
+                        "Expected one distribution arguments."
+                    );
+                }
+                return AggregateModifier::geometric(
+                    boost::lexical_cast<double>(subsubargs[0])
                 );
             }
             else {
