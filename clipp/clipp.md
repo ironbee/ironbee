@@ -259,6 +259,11 @@ opened event has bogus information.
 You may omit response blocks in which case they default to the empty string.  
 You may not omit request blocks.
 
+**echo**:*request*: --- Generate a event with request line *request*.
+
+This is mostly intended for debugging.  There is no response body and the
+request is a single line.  Connection information is bogus.
+
 Modifiers
 ---------
 

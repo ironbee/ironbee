@@ -22,6 +22,7 @@ clipp_SOURCES = \
     apache_generator.cpp \
     suricata_generator.cpp \
     htp_generator.cpp \
+    echo_generator.cpp \
     connection_modifiers.cpp \
     parse_modifier.cpp \
     unparse_modifier.cpp \

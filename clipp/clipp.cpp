@@ -65,6 +65,7 @@
 #include "apache_generator.hpp"
 #include "suricata_generator.hpp"
 #include "htp_generator.hpp"
+#include "echo_generator.hpp"
 
 #include "ironbee_consumer.hpp"
 #include "pb_consumer.hpp"
@@ -266,6 +267,7 @@ void help()
     "  apache:<path>   -- Read <path> as apache NCSA format.\n"
     "  suricata:<path> -- Read <path> as suricata format.\n"
     "  htp:<path>      -- Read <path> as libHTP test format.\n"
+    "  echo:<request>  -- Single connection with request as request line.\n"
     "\n"
     "Consumers:\n"
     "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
@@ -371,6 +373,7 @@ int main(int argc, char** argv)
     generator_factory_map["suricata"] =
         construct_generator<SuricataGenerator>;
     generator_factory_map["htp"]      = construct_generator<HTPGenerator>;
+    generator_factory_map["echo"]     = construct_generator<EchoGenerator>;
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
