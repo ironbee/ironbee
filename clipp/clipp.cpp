@@ -294,9 +294,9 @@ void help()
     "    Aggregate transactions into a connections of <min> to <max>\n"
     "    transactions chosen uniformly at random.\n"
     "  @aggregate:binomial:t,p -- \n"
-    "    Aggregate transactions into a connections of <n> transactions\n"
-    "    chosen at random from a binomial distribution of t trials with\n"
-    "    p chance of success.\n"
+    "    Aggregate transactions into a connections of n transactions\n"
+    "    chosen at random from a binomial distribution of <t> trials with\n"
+    "    <p> chance of success.\n"
     ;
 }
 
