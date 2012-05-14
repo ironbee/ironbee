@@ -89,6 +89,16 @@ public:
     static
     AggregateModifier geometric(double p);
 
+    /**
+     * Aggregate with sizes chosen from poisson distribution.
+     *
+     * n is chosen from a poisson distribution with mean @a mean.
+     *
+     * @param[in] mean Mean of distribution.
+     **/
+    static
+    AggregateModifier poisson(double mean);
+
 public:
     struct State;
     boost::shared_ptr<State> m_state;

@@ -301,6 +301,9 @@ void help()
     "    Aggregate transactions into a connections of n transactions\n"
     "    chosen at random from a geometric distribution with <p> chance of\n"
     "    success.\n"
+    "  @aggregate:poisson:mean -- \n"
+    "    Aggregate transactions into a connections of n transactions\n"
+    "    chosen at random from a poisson distribution with mean <mean>.\n"
     ;
 }
 
@@ -652,10 +655,20 @@ input_modifier_t init_aggregate_modifier(const string& arg)
             else if (subargs[0] == "geometric") {
                 if (subsubargs.size() != 1) {
                     throw runtime_error(
-                        "Expected one distribution arguments."
+                        "Expected one distribution argument."
                     );
                 }
                 return AggregateModifier::geometric(
+                    boost::lexical_cast<double>(subsubargs[0])
+                );
+            }
+            else if (subargs[0] == "poisson") {
+                if (subsubargs.size() != 1) {
+                    throw runtime_error(
+                        "Expected one distribution argument."
+                    );
+                }
+                return AggregateModifier::poisson(
                     boost::lexical_cast<double>(subsubargs[0])
                 );
             }

@@ -329,6 +329,7 @@ chosen at random for each output input.  Supported distrbutions are:
 - binomial:*t*,*p* --- Binomial distribution of *t* trials with *p* chance of
   success.
 - geometric:*p* --- Geometric distribution with *p* chance of success.
+- poisson:*mean* --- Poisson distribution with mean *mean*.
 
 Consumers
 ---------

@@ -57,7 +57,11 @@ public:
 
     size_t operator()()
     {
-        return m_dist(m_rng);
+        size_t result = m_dist(m_rng);
+        if (result < 1) {
+            result = 1;
+        }
+        return result;
     }
 
 protected:
@@ -163,6 +167,15 @@ AggregateModifier AggregateModifier::geometric(double p)
     AggregateModifier mod;
     mod.m_state->distribution = make_random_dist(
         boost::random::geometric_distribution<>(p)
+    );
+    return mod;
+}
+
+AggregateModifier AggregateModifier::poisson(double mean)
+{
+    AggregateModifier mod;
+    mod.m_state->distribution = make_random_dist(
+        boost::random::poisson_distribution<>(mean)
     );
     return mod;
 }
