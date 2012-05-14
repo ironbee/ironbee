@@ -27,6 +27,7 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/random.hpp>
+#include <boost/make_shared.hpp>
 
 #include <ctime>
 
@@ -35,6 +36,8 @@ using namespace std;
 
 namespace IronBee {
 namespace CLIPP {
+
+namespace  {
 
 typedef boost::function<size_t()> distribution_t;
 
@@ -75,15 +78,24 @@ random_dist<DistributionType> make_random_dist(DistributionType dist)
     return random_dist<DistributionType>(dist);
 }
 
+struct data_t
+{
+    list<boost::any> sources;
+};
+
+} // Anonymous
+
 struct AggregateModifier::State
 {
     //! Distribution of targets.
     distribution_t distribution;
 
     //! Current target.
-    size_t         n;
+    size_t n;
     //! Current aggregate.
     Input::input_p aggregate;
+    //! Current data.
+    boost::shared_ptr<data_t> data;
 };
 
 AggregateModifier::AggregateModifier(size_t n) :
@@ -104,6 +116,9 @@ bool AggregateModifier::operator()(Input::input_p& input)
     if (! m_state->aggregate) {
         m_state->aggregate = input;
         m_state->n = m_state->distribution();
+        m_state->data = boost::make_shared<data_t>();
+        m_state->data->sources.push_back(input->source);
+        m_state->aggregate->source = m_state->data;
     }
     else {
         copy(
@@ -111,6 +126,7 @@ bool AggregateModifier::operator()(Input::input_p& input)
             input->connection.transactions.end(),
             back_inserter(m_state->aggregate->connection.transactions)
         );
+        m_state->data->sources.push_back(input->source);
     }
 
     if (
@@ -120,6 +136,7 @@ bool AggregateModifier::operator()(Input::input_p& input)
     {
         input.swap(m_state->aggregate);
         m_state->aggregate.reset();
+        m_state->data.reset();
         return true;
     }
 
