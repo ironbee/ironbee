@@ -249,6 +249,9 @@ bool PBGenerator::operator()(Input::input_p& input)
         return false;
     }
 
+    // Reset Input
+    *input = Input::Input();
+
     uint32_t raw_size;
     uint32_t size;
 
@@ -269,9 +272,6 @@ bool PBGenerator::operator()(Input::input_p& input)
     if (! data->pb_input.ParseFromZeroCopyStream(&unzipped_in)) {
         throw runtime_error("Failed to parse input->");
     }
-
-    // Reset Input
-    *input = Input::Input();
 
     // Input
     if (data->pb_input.has_id()) {
