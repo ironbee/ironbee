@@ -2137,7 +2137,7 @@ int main(int argc, char* argv[])
     /* Register handlers */
     rc = register_handlers(ironbee);
     if (rc != IB_OK) {
-        fprintf(stderr, "Failed to register one or more handlers\n");
+        fatal_error("Failed to register one or more handlers\n");
     }
 
     /* Set the engine's debug flags from the command line args */
@@ -2156,8 +2156,11 @@ int main(int argc, char* argv[])
     /* Parse the config file. */
     rc = ib_cfgparser_create(&cp, ironbee);
     if ((rc == IB_OK) && (cp != NULL)) {
-        ib_cfgparser_parse(cp, settings.config_file);
+        rc = ib_cfgparser_parse(cp, settings.config_file);
         ib_cfgparser_destroy(cp);
+        if (rc != IB_OK) {
+            fatal_error("Error parsing configuration: %d\n", rc);
+        }
     }
 
     /* Set all contexts' debug flags from the command line args

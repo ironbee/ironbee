@@ -1188,10 +1188,10 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     /* Disable the entire chain if this rule is invalid */
 cleanup:
     if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
-        rc = ib_rule_chain_invalidate(cp->ib, rule);
-        if (rc != IB_OK) {
+        ib_status_t irc = ib_rule_chain_invalidate(cp->ib, rule);
+        if (irc != IB_OK) {
             ib_log_error(cp->ib, "Error invalidating rule chain: %s",
-                         ib_status_to_string(rc));
+                         ib_status_to_string(irc));
             IB_FTRACE_RET_STATUS(rc);
         }
         else {
@@ -1202,7 +1202,7 @@ cleanup:
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**

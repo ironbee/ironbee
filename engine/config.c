@@ -147,6 +147,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     char *bol = 0;                             /**< buf[bol] = begin line. */
 
     ib_status_t rc = IB_OK;
+    unsigned error_count = 0;
+    ib_status_t error_rc = IB_OK;
 
     if (fd == -1) {
         ec = errno;
@@ -176,7 +178,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                 cp, buf, nbytes, file, lineno, IB_TRUE);
             ++lineno;
             if (rc != IB_OK) {
-                goto failure;
+                ++error_count;
+                error_rc = rc;
             }
 
             break;
@@ -217,7 +220,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                         cp, bol, eol-bol+1, file, lineno, IB_FALSE);
                     ++lineno;
                     if (rc != IB_OK) {
-                        goto failure;
+                        ++error_count;
+                        error_rc = rc;
                     }
                     bol = eol+1;
                     eol = (char *)memchr(bol, '\n', buf+buflen-bol);
@@ -251,15 +255,18 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
     free(buf);
     close(fd);
-    ib_log_debug3(cp->ib, "Done reading config \"%s\" via fd=%d errno=%d", file, fd, errno);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-
-failure:
+    ib_log_debug3(cp->ib,
+                  "Done reading config \"%s\" via fd=%d errno=%d",
+                  file, fd, errno);
+    if ( (error_count == 0) && (rc == IB_OK) ) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (rc == IB_OK) {
+        rc = error_rc;
+    }
     ib_log_error(cp->ib,
-        "Error parsing config file: %s", ib_status_to_string(rc));
-    free(buf);
-    close(fd);
+                 "%u Error(s) parsing config file: %s",
+                 error_count, ib_status_to_string(rc));
     IB_FTRACE_RET_STATUS(rc);
 }
 
