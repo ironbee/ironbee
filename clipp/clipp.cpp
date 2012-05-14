@@ -489,9 +489,9 @@ int main(int argc, char** argv)
         bool generator_continue = true;
         bool consumer_continue  = true;
         while (generator_continue && consumer_continue) {
-            if (! input) {
-                input = boost::make_shared<Input::Input>();
-            }
+            // Make new input for each run.  Extra allocations but avoids
+            // some pitfalls.
+            input = boost::make_shared<Input::Input>();
 
             try {
                 generator_continue = generator(input);
