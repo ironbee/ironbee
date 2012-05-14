@@ -81,23 +81,22 @@ ib_status_t ib_parsed_name_value_pair_list_add(
     ib_parsed_name_value_pair_list_t *ele;
 
     ele = ib_mpool_alloc(headers->mpool, sizeof(*ele));
-
     if (ele == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_bytestr_alias_mem(&ele->name,
-                              headers->mpool,
-                              (const uint8_t *)name,
-                              name_len);
+    rc = ib_bytestr_dup_mem(&ele->name,
+                            headers->mpool,
+                            (const uint8_t *)name,
+                            name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_bytestr_alias_mem(&ele->value,
-                              headers->mpool,
-                              (const uint8_t *)value,
-                              value_len);
+    rc = ib_bytestr_dup_mem(&ele->value,
+                            headers->mpool,
+                            (const uint8_t *)value,
+                            value_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -174,11 +173,11 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    if (status != NULL) {
-        rc = ib_bytestr_alias_mem(&line_tmp->protocol,
-                                  tx->mp,
-                                  (const uint8_t *)protocol,
-                                  protocol_len);
+    if (protocol != NULL) {
+        rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                tx->mp,
+                                (const uint8_t *)protocol,
+                                protocol_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -195,10 +194,10 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
 
 
     if (status != NULL) {
-        rc = ib_bytestr_alias_mem(&line_tmp->status,
-                                  tx->mp,
-                                  (const uint8_t *)status,
-                                  status_len);
+        rc = ib_bytestr_dup_mem(&line_tmp->status,
+                                tx->mp,
+                                (const uint8_t *)status,
+                                status_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -214,10 +213,10 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
     }
 
     if (msg != NULL) {
-        rc = ib_bytestr_alias_mem(&line_tmp->msg,
-                                  tx->mp,
-                                  (const uint8_t *)msg,
-                                  msg_len);
+        rc = ib_bytestr_dup_mem(&line_tmp->msg,
+                                tx->mp,
+                                (const uint8_t *)msg,
+                                msg_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -272,10 +271,10 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
         }
     }
     else {
-        ib_bytestr_alias_mem(&line_tmp->raw,
-                             tx->mp,
-                             (const uint8_t *)raw,
-                             raw_len);
+        ib_bytestr_dup_mem(&line_tmp->raw,
+                           tx->mp,
+                           (const uint8_t *)raw,
+                           raw_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -314,10 +313,10 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     }
 
     if (method != NULL) {
-        rc = ib_bytestr_alias_mem(&line_tmp->method,
-                                  tx->mp,
-                                  (const uint8_t *)method,
-                                  method_len);
+        rc = ib_bytestr_dup_mem(&line_tmp->method,
+                                tx->mp,
+                                (const uint8_t *)method,
+                                method_len);
     }
     else {
         rc = ib_bytestr_dup_mem(&line_tmp->method,
@@ -330,10 +329,10 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     }
 
     if (uri != NULL) {
-        rc = ib_bytestr_alias_mem(&line_tmp->uri,
-                                  tx->mp,
-                                  (const uint8_t *)uri,
-                                  uri_len);
+        rc = ib_bytestr_dup_mem(&line_tmp->uri,
+                                tx->mp,
+                                (const uint8_t *)uri,
+                                uri_len);
     }
     else {
         rc = ib_bytestr_dup_mem(&line_tmp->uri,
@@ -343,10 +342,10 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     }
 
     if (protocol != NULL) {
-        rc = ib_bytestr_alias_mem(&line_tmp->protocol,
-                                  tx->mp,
-                                  (const uint8_t *)protocol,
-                                  protocol_len);
+        rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                tx->mp,
+                                (const uint8_t *)protocol,
+                                protocol_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -401,10 +400,10 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
         }
     }
     else {
-        ib_bytestr_alias_mem(&line_tmp->raw,
-                             tx->mp,
-                             (const uint8_t *)raw,
-                             raw_len);
+        ib_bytestr_dup_mem(&line_tmp->raw,
+                           tx->mp,
+                           (const uint8_t *)raw,
+                           raw_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }

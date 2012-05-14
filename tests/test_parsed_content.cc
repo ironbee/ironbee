@@ -29,6 +29,15 @@
 #include <ironbee/parsed_content.h>
 #include <ironbee/mpool.h>
 
+// TODO: Put this in the base fixture
+#define ASSERT_MEMEQ(a,b,n) \
+        ASSERT_PRED3(ibtest_assert_memeq,(a),(b),(n))
+
+bool ibtest_assert_memeq(const void *v1, const void *v2, size_t n)
+{
+        return memcmp(v1, v2, n) ? false : true;
+}
+
 #include <list>
 
 class ParsedContentTest : public BaseFixture {
@@ -216,14 +225,14 @@ TEST_F(ParsedContentHeaderTest, list_ok)
     ASSERT_EQ(IB_OK, rc);
 
     std::list<const char*>::const_iterator it = names.begin();
-    ASSERT_STREQ(name1, *it);
-    ASSERT_STREQ(name2, *(++it));
-    ASSERT_STREQ(name3, *(++it));
+    ASSERT_MEMEQ(name1, *it, strlen(name1));
+    ASSERT_MEMEQ(name2, *(++it), strlen(name2));
+    ASSERT_MEMEQ(name3, *(++it), strlen(name3));
 
     it = values.begin();
-    ASSERT_STREQ(value1, *it);
-    ASSERT_STREQ(value2, *(++it));
-    ASSERT_STREQ(value3, *(++it));
+    ASSERT_MEMEQ(value1, *it, strlen(value1));
+    ASSERT_MEMEQ(value2, *(++it), strlen(value2));
+    ASSERT_MEMEQ(value3, *(++it), strlen(value3));
 
     ib_tx_destroy(tx);
     ib_conn_destroy(c);
