@@ -127,6 +127,12 @@ AggregateModifier AggregateModifier::uniform(
     unsigned int max
 )
 {
+    if (min > max) {
+        throw runtime_error("Min must be less than or equal to max.");
+    }
+    if (min == 0 || max == 0) {
+        throw runtime_error("Min and max must be positive.");
+    }
     AggregateModifier mod;
     mod.m_state->distribution = make_random_dist(
         boost::random::uniform_int_distribution<>(min, max)
@@ -136,6 +142,12 @@ AggregateModifier AggregateModifier::uniform(
 
 AggregateModifier AggregateModifier::binomial(unsigned int t, double p)
 {
+    if (t == 0 || p <= 0) {
+        throw runtime_error("t and p must be positive.");
+    }
+    if (p > 1) {
+        throw runtime_error("p must be less than or equal to 1.");
+    }
     AggregateModifier mod;
     mod.m_state->distribution = make_random_dist(
         boost::random::binomial_distribution<>(t, p)
