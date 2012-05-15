@@ -316,22 +316,6 @@ void help()
 ///@{
 
 /**
- * Combine @a generator and @a modifier into a single generator.
- *
- * Returns a generator that calls @a generator, passes the result to
- * @a modifier, and then provides the result as its own.  It will only call
- * @a modifier if @a generator returns true.
- *
- * @param[in] generator
- * @param[in] modifier
- * @returns Composition of @a modifier and @a generator.
- **/
-input_generator_t modify_generator(
-    input_generator_t generator,
-    input_modifier_t  modifier
-);
-
-/**
  * Constructs a component from a parsed representation.
  *
  * @tparam ResultType Type of component to construct.
@@ -345,8 +329,53 @@ template <typename ResultType, typename MapType>
 ResultType
 construct_component(const component_t& component, const MapType& map);
 
+//! List of chains.
+typedef list<chain_t> chain_list_t;
+
+/**
+ * Load a configuration file.
+ *
+ * @param[out] chains List to append chains to.
+ * @param[in]  path   Path to configuration file.
+ * @throw Exception on error.
+ **/
+void load_configuration_file(
+    chain_list_t& chains,
+    const string& path
+);
+
+/**
+ * Load configuration from text..
+ *
+ * @param[out] chains List to append chains to.
+ * @param[in]  config Configuration text.
+ * @throw Exception on error.
+ **/
+void load_configuration_text(
+    chain_list_t& chains,
+    const string& config
+);
+
 ///@}
 
+/**
+ * Helper macro for catching exceptions.
+ *
+ * This macro turns exceptions into error messages.
+ *
+ * Example:
+ * @code
+ * try {
+ *   ...
+ * }
+ * CLIPP_CATCH("Doing something", {return false;});
+ * @endcode
+ *
+ * @param message Message to prepend to error message.  Best passed as string
+ *                or @c const @c char*.
+ * @param action  Action to take on exception.  Best passed as block, i.e.,
+ *                @c {...}
+ **/
 #define CLIPP_CATCH(message, action) \
  catch (const boost::exception& e) { \
      cerr << (message) << ": " << diagnostic_information(e) << endl; \
@@ -364,6 +393,10 @@ construct_component(const component_t& component, const MapType& map);
  *
  * Component writers: Add your component to the generator maps at the top of
  * this function.
+ *
+ * @param[in] argc Number of arguments.
+ * @param[in] argv Arguments.
+ * @return Exit code.
  **/
 int main(int argc, char** argv)
 {
@@ -413,8 +446,7 @@ int main(int argc, char** argv)
         args.push_back(argv[i]);
     }
 
-    list<chain_t> all_chains;
-    chain_vec_t   chains;
+    list<chain_t> chains;
     // Parse flags.
     while (args.front() == "-c") {
         args.pop_front();
@@ -427,14 +459,9 @@ int main(int argc, char** argv)
         args.pop_front();
 
         try {
-            chains = ConfigurationParser::parse_file(path);
+            load_configuration_file(chains, path);
         }
         CLIPP_CATCH("Error parsing configuraiton file", {return 1;});
-
-        copy(
-            chains.begin(), chains.end(),
-            back_inserter(all_chains)
-        );
     }
 
     // Convert argv to configuration.
@@ -442,25 +469,20 @@ int main(int argc, char** argv)
     string configuration = boost::algorithm::join(args, " ");
 
     try {
-        chains = ConfigurationParser::parse_string(configuration);
+        load_configuration_text(chains, configuration);
     }
     CLIPP_CATCH("Error parsing configuration", {return 1;});
 
-    copy(
-        chains.begin(), chains.end(),
-        back_inserter(all_chains)
-    );
-
     // Basic validation.
-    if (all_chains.size() < 2) {
+    if (chains.size() < 2) {
         cerr << "Need at least a generator and a consumer." << endl;
         help();
         return 1;
     }
     // Last component must be consumer.
     input_consumer_t consumer;
-    chain_t consumer_chain = all_chains.back();
-    all_chains.pop_back();
+    chain_t consumer_chain = chains.back();
+    chains.pop_back();
     try {
         consumer = construct_component<input_consumer_t>(
             consumer_chain.base,
@@ -473,7 +495,7 @@ int main(int argc, char** argv)
     // as needed to limit the scope of each input generator.  As input
     // generators can make use of significant memory, it is good to only have
     // one around at a time.
-    BOOST_FOREACH(chain_t& chain, all_chains) {
+    BOOST_FOREACH(chain_t& chain, chains) {
         input_generator_t generator;
         try {
             generator = construct_component<input_generator_t>(
@@ -692,4 +714,30 @@ construct_component(const component_t& component, const MapType& map)
     }
 
     return i->second(component.arg);
+}
+
+void load_configuration_file(
+    chain_list_t& chains,
+    const string& path
+)
+{
+    chain_vec_t file_chains;
+    file_chains = ConfigurationParser::parse_file(path);
+    copy(
+        file_chains.begin(), file_chains.end(),
+        back_inserter(chains)
+    );
+}
+
+void load_configuration_text(
+    chain_list_t& chains,
+    const string& config
+)
+{
+    chain_vec_t text_chains;
+    text_chains = ConfigurationParser::parse_string(config);
+    copy(
+        text_chains.begin(), text_chains.end(),
+        back_inserter(chains)
+    );
 }
