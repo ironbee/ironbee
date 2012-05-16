@@ -22,8 +22,10 @@ Dir.glob('*.req').each do |test|
         failure = true
         continue
     end    
-    if ! system(clipp,"raw:#{base}.req,#{base}.resp","ironbee:#{config}")
+    test_cmd = "#{clipp} raw:#{base}.req,#{base}.resp ironbee:#{config}"
+    if ! system(test_cmd)
         puts "FAIL -- clipp existed non-zero"
+        puts "Command: #{test_cmd}"
         failure = true
     else
         puts "PASS"
