@@ -118,6 +118,7 @@ struct ViewDelegate :
     {
         cout << "=== CONNECTION_DATA_IN ===" << endl;
         data_event(event);
+        cout << endl;
     }
 
     //! CONNECTION_DATA_OUT
@@ -125,6 +126,7 @@ struct ViewDelegate :
     {
         cout << "=== CONNECTION_DATA_OUT ===" << endl;
         data_event(event);
+        cout << endl;
     }
 
     //! REQUEST_STARTED
@@ -149,6 +151,7 @@ struct ViewDelegate :
     {
         cout << "=== REQUEST_BODY ===" << endl;
         data_event(event);
+        cout << endl;
     }
 
     //! REQUEST_FINISHED
@@ -180,6 +183,7 @@ struct ViewDelegate :
     {
         cout << "=== RESPONSE BODY ===" << endl;
         data_event(event);
+        cout << endl;
     }
 
     //! RESPONSE_FINISHED
