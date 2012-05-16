@@ -117,6 +117,9 @@ typedef enum {
 #define IB_TX_FRES_SEENTRAILER  (1 << 15) /**< Response trailer seen */
 #define IB_TX_FRES_FINISHED     (1 << 16) /**< Response finished  */
 #define IB_TX_FSUSPICIOUS       (1 << 17) /**< Transaction is suspicious */
+#define IB_TX_BLOCK_ADVISORY    (1 << 18) /**< Blocking this tx is advised */
+#define IB_TX_BLOCK_PHASE       (1 << 19) /**< Block tx after this phase */
+#define IB_TX_BLOCK_IMMEDIATE   (1 << 20) /**< Block tx ASAP */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???

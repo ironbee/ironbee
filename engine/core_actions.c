@@ -498,6 +498,155 @@ static ib_status_t act_setvar_execute(void *cbdata,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Set the tx IB_TX_BLOCK_ADVISORY flag and set TX.BLOCK=1 in the TX DPI.
+ * 
+ * @param[in] cbdata unused.
+ * @param[in] rule The rule structure.
+ * @param[out] tx The transaction we are going to modify.
+ * @param[in] flags Flags. Unused.
+ */
+static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    tx->flags |= IB_TX_BLOCK_ADVISORY;
+
+    rc = ib_data_add_num(tx->dpi, "TX.BLOCK", 1, NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Set the tx IB_TX_BLOCK_PHASE flag in the tx.
+ * 
+ * @param[in] cbdata unused.
+ * @param[in] rule The rule structure.
+ * @param[out] tx The transaction we are going to modify.
+ * @param[in] flags Flags. Unused.
+ */
+static ib_status_t act_block_phase_execute(ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    tx->flags |= IB_TX_BLOCK_PHASE;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Set the tx IB_TX_BLOCK_IMMEDIATE flag in the tx.
+ * 
+ * @param[in] cbdata unused.
+ * @param[in] rule The rule structure.
+ * @param[out] tx The transaction we are going to modify.
+ * @param[in] flags Flags. Unused.
+ */
+static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    tx->flags |= IB_TX_BLOCK_IMMEDIATE;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Internal block action structure.
+ *
+ * This holds a pointer to the block callback that will be used.
+ */
+struct act_block_t {
+    ib_status_t(*execute)(ib_tx_t*); /**< What block method should be used. */
+};
+typedef struct act_block_t act_block_t;
+
+/**
+ * Executes the function stored in cbdata.
+ * 
+ * @param[in] cbdata unused.
+ * @param[in] rule The rule structure.
+ * @param[out] tx The transaction we are going to modify.
+ * @param[in] flags Flags. Unused.
+ */
+static ib_status_t act_block_execute(void* cbdata,
+                                     ib_rule_t *rule,
+                                     ib_tx_t *tx,
+                                     ib_flags_t flags)
+{
+    IB_FTRACE_INIT();
+    assert(cbdata!=NULL);
+    assert(tx!=NULL);
+
+    ib_status_t rc = ((const act_block_t*)cbdata)->execute(tx);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Create / initialize a new instance of an action.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] ctx Context.
+ * @param[in] mp Memory pool.
+ * @param[in] params Parameters. These may be "immediate", "phase", or 
+ *            "advise". If null "advise" is assumed.
+ *            These select the type of block that will be put in place
+ *            by deciding which callback (act_block_phase_execute,
+ *            act_block_immediate_execute, or act_block_advise_execute)
+ *            is assigned to the rule data object.
+ * @param[out] inst The instance being initialized.
+ *
+ * @return IB_OK on success or IB_EALLOC if the callback data
+ *         cannot be initialized for the rule.
+ */
+static ib_status_t act_block_create(ib_engine_t *ib,
+                                    ib_context_t *ctx,
+                                    ib_mpool_t *mp,
+                                    const char *params,
+                                    ib_action_inst_t *inst)
+{
+    IB_FTRACE_INIT();
+
+    act_block_t *act_block = 
+        (act_block_t*)ib_mpool_alloc(mp, sizeof(*act_block));
+
+    if ( act_block == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* When params are NULL, use advisory blocking by default. */
+    if ( params == NULL ) {
+        act_block->execute = &act_block_advisory_execute;
+    }
+
+    /* Just note that a block should be done, according to this rule. */
+    else if ( ! strcasecmp("advisory", params) ) {
+        act_block->execute = &act_block_advisory_execute;
+    }
+
+    /* Block at the end of the phase. */
+    else if ( ! strcasecmp("phase", params) ) {
+        act_block->execute = &act_block_phase_execute;
+    }
+
+    /* Immediate blocking. Block ASAP. */
+    else if ( ! strcasecmp("immediate", params) ) {
+        act_block->execute = &act_block_immediate_execute;
+
+    /* As with params == NULL, the default is to use an advisory block. */
+    } else {
+        act_block->execute = &act_block_advisory_execute;
+    }
+
+    /* Assign the built up context object. */
+    inst->data = act_block;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT();
@@ -532,6 +681,17 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, /* no create function */
                             NULL, /* no destroy function */
                             act_event_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the block action */
+    rc = ib_action_register(ib,
+                            "block",
+                            IB_ACT_FLAG_NONE,
+                            act_block_create,
+                            NULL,
+                            act_block_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
