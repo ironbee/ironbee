@@ -73,13 +73,6 @@ ibmod_rules_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
                       -lm
 
 if BUILD_DEV_MODULES
-pkglib_LTLIBRARIES += ibmod_trace.la 
-ibmod_trace_la_SOURCES = trace.c
-ibmod_trace_la_CFLAGS = ${AM_CFLAGS}
-ibmod_trace_la_LDFLAGS = $(AM_LDFLAGS)
-endif
-
-if BUILD_DEV_MODULES
 pkglib_LTLIBRARIES += ibmod_fields.la 
 ibmod_fields_la_SOURCES = fields.c
 ibmod_fields_la_CFLAGS = ${AM_CFLAGS}

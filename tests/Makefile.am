@@ -147,13 +147,6 @@ test_config_SOURCES = test_config.cc test_main.cc
 test_config_LDADD = $(MODULE_TEST_LDADD)
 
 
-if BUILD_DEV_MODULES
-check_PROGRAMS += test_module_trace
-test_module_trace_SOURCES = \
-    test_module_trace.cc test_main.cc ibtest_util.hh ibtest_util.cc
-test_module_trace_LDADD = $(MODULE_TEST_LDADD) 
-endif
-
 test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
                                 test_main.cc ibtest_util.cc
 test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
