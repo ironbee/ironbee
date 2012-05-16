@@ -73,8 +73,8 @@ TEST_F(TestTransaction, basic)
     ib_tx.t.request_started = 2;
     EXPECT_EQ(ib_tx.t.request_started, ptime_to_ib(tx.request_started_time()));
 
-    ib_tx.t.request_headers = 3;
-    EXPECT_EQ(ib_tx.t.request_headers, ptime_to_ib(tx.request_headers_time()));
+    ib_tx.t.request_header = 3;
+    EXPECT_EQ(ib_tx.t.request_header, ptime_to_ib(tx.request_header_time()));
 
     ib_tx.t.request_body = 4;
     EXPECT_EQ(ib_tx.t.request_body, ptime_to_ib(tx.request_body_time()));
@@ -85,8 +85,8 @@ TEST_F(TestTransaction, basic)
     ib_tx.t.response_started = 6;
     EXPECT_EQ(ib_tx.t.response_started, ptime_to_ib(tx.response_started_time()));
 
-    ib_tx.t.response_headers = 7;
-    EXPECT_EQ(ib_tx.t.response_headers, ptime_to_ib(tx.response_headers_time()));
+    ib_tx.t.response_header = 7;
+    EXPECT_EQ(ib_tx.t.response_header, ptime_to_ib(tx.response_header_time()));
 
     ib_tx.t.response_body = 8;
     EXPECT_EQ(ib_tx.t.response_body, ptime_to_ib(tx.response_body_time()));
@@ -117,8 +117,8 @@ TEST_F(TestTransaction, basic)
 
     ib_parsed_name_value_pair_list_wrapper_t plw;
     plw.head = (ib_parsed_name_value_pair_list_t*)1239;
-    ib_tx.request_headers = &plw;
-    EXPECT_EQ(ib_tx.request_headers->head, tx.request_headers().ib());
+    ib_tx.request_header = &plw;
+    EXPECT_EQ(ib_tx.request_header->head, tx.request_header().ib());
 
     ib_tx.flags = 0;
     EXPECT_EQ(ib_tx.flags, tx.flags());
@@ -128,15 +128,13 @@ TEST_F(TestTransaction, basic)
     EXPECT_FALSE(tx.is_none());
     EXPECT_FALSE(tx.is_error());
     EXPECT_TRUE(tx.is_pipelined());
-    EXPECT_FALSE(tx.is_seen_data_in());
-    EXPECT_FALSE(tx.is_seen_data_out());
     EXPECT_FALSE(tx.is_request_started());
-    EXPECT_FALSE(tx.is_request_seen_headers());
+    EXPECT_FALSE(tx.is_request_seen_header());
     EXPECT_FALSE(tx.is_request_no_body());
     EXPECT_FALSE(tx.is_request_seen_body());
     EXPECT_FALSE(tx.is_request_finished());
     EXPECT_FALSE(tx.is_response_started());
-    EXPECT_FALSE(tx.is_response_seen_headers());
+    EXPECT_FALSE(tx.is_response_seen_header());
     EXPECT_FALSE(tx.is_response_seen_body());
     EXPECT_FALSE(tx.is_response_finished());
     EXPECT_TRUE(tx.is_suspicious());

@@ -59,9 +59,9 @@ boost::posix_time::ptime ConstTransaction::request_started_time() const
     return ib_to_ptime(ib()->t.request_started);
 }
 
-boost::posix_time::ptime ConstTransaction::request_headers_time() const
+boost::posix_time::ptime ConstTransaction::request_header_time() const
 {
-    return ib_to_ptime(ib()->t.request_headers);
+    return ib_to_ptime(ib()->t.request_header);
 }
 
 boost::posix_time::ptime ConstTransaction::request_body_time() const
@@ -79,9 +79,9 @@ boost::posix_time::ptime ConstTransaction::response_started_time() const
     return ib_to_ptime(ib()->t.response_started);
 }
 
-boost::posix_time::ptime ConstTransaction::response_headers_time() const
+boost::posix_time::ptime ConstTransaction::response_header_time() const
 {
-    return ib_to_ptime(ib()->t.response_headers);
+    return ib_to_ptime(ib()->t.response_header);
 }
 
 boost::posix_time::ptime ConstTransaction::response_body_time() const
@@ -139,9 +139,9 @@ ParsedRequestLine ConstTransaction::request_line() const
     return ParsedRequestLine(ib()->request_line);
 }
 
-ParsedNameValue ConstTransaction::request_headers() const
+ParsedNameValue ConstTransaction::request_header() const
 {
-    return ParsedNameValue(ib()->request_headers->head);
+    return ParsedNameValue(ib()->request_header->head);
 }
 
 // Transaction

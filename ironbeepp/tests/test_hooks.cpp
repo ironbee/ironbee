@@ -55,7 +55,7 @@ protected:
     {
         CB_NOT_CALLED,
         CB_NULL,
-        CB_HEADERS,
+        CB_HEADER_DATA,
         CB_REQUEST_LINE,
         CB_RESPONSE_LINE,
         CB_CONNECTION,
@@ -114,7 +114,7 @@ protected:
             ParsedNameValue parsed_name_value
         )
         {
-            m_info.which = CB_HEADERS;
+            m_info.which = CB_HEADER_DATA;
             m_info.engine = engine;
             m_info.transaction = transaction;
             m_info.event = event;
@@ -308,7 +308,7 @@ protected:
         EXPECT_EQ(&ib_data, (info.*which_member).ib());
     }
 
-    void test_headers_data(
+    void test_header_data(
         Engine::state_event_e event,
         handler_info_t&       info
     )
@@ -316,7 +316,7 @@ protected:
         test_one_argument<ib_parsed_name_value_pair_list_t>(
             event,
             info,
-            CB_HEADERS,
+            CB_HEADER_DATA,
             &handler_info_t::parsed_name_value
         );
     }
@@ -410,10 +410,10 @@ TEST_F(TestHooks, Basic)
     test_null(Engine::configuration_finished, info);
 
 
-    H.request_headers_data(handler);
-    test_headers_data(Engine::request_headers_data, info);
-    H.response_headers_data(handler);
-    test_headers_data(Engine::response_headers_data, info);
+    H.request_header_data(handler);
+    test_header_data(Engine::request_header_data, info);
+    H.response_header_data(handler);
+    test_header_data(Engine::response_header_data, info);
     H.request_started(handler);
     test_request_line(Engine::request_started, info);
     H.response_started(handler);
@@ -444,22 +444,22 @@ TEST_F(TestHooks, Basic)
     test_transaction(Engine::transaction_finished, info);
     H.handle_context_transaction(handler);
     test_transaction(Engine::handle_context_transaction, info);
-    H.handle_request_headers(handler);
-    test_transaction(Engine::handle_request_headers, info);
+    H.handle_request_header(handler);
+    test_transaction(Engine::handle_request_header, info);
     H.handle_request(handler);
     test_transaction(Engine::handle_request, info);
-    H.handle_response_headers(handler);
-    test_transaction(Engine::handle_response_headers, info);
+    H.handle_response_header(handler);
+    test_transaction(Engine::handle_response_header, info);
     H.handle_response(handler);
     test_transaction(Engine::handle_response, info);
     H.handle_postprocess(handler);
     test_transaction(Engine::handle_postprocess, info);
-    H.request_headers(handler);
-    test_transaction(Engine::request_headers, info);
+    H.request_header_finished(handler);
+    test_transaction(Engine::request_header_finished, info);
     H.request_finished(handler);
     test_transaction(Engine::request_finished, info);
-    H.response_headers(handler);
-    test_transaction(Engine::response_headers, info);
+    H.response_header_finished(handler);
+    test_transaction(Engine::response_header_finished, info);
     H.response_finished(handler);
     test_transaction(Engine::response_finished, info);
     H.request_body_data(handler);

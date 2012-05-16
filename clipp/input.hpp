@@ -91,9 +91,13 @@ public:
     virtual
     void request_started(const RequestEvent& event) {}
 
-    //! REQUEST_HEADERS
+    //! REQUEST_HEADER
     virtual
-    void request_headers(const HeaderEvent& event) {}
+    void request_header(const HeaderEvent& event) {}
+
+    //! REQUEST_HEADER_FINISHED
+    virtual
+    void request_header_finished(const NullEvent& event) {}
 
     //! REQUEST_BODY
     virtual
@@ -107,9 +111,13 @@ public:
     virtual
     void response_started(const ResponseEvent& event) {}
 
-    //! RESPONSE_HEADERS
+    //! RESPONSE_HEADER
     virtual
-    void response_headers(const HeaderEvent& event) {}
+    void response_header(const HeaderEvent& event) {}
+
+    //! RESPONSE_HEADER_FINISHED
+    virtual
+    void response_header_finished(const NullEvent& event) {}
 
     //! RESPONSE_BODY
     virtual
@@ -155,9 +163,13 @@ public:
     virtual
     void request_started(RequestEvent& event) {}
 
-    //! REQUEST_HEADERS
+    //! REQUEST_HEADER
     virtual
-    void request_headers(HeaderEvent& event) {}
+    void request_header(HeaderEvent& event) {}
+
+    //! REQUEST_HEADER_FINISHED
+    virtual
+    void request_header_finished(NullEvent& event) {}
 
     //! REQUEST_BODY
     virtual
@@ -171,9 +183,13 @@ public:
     virtual
     void response_started(ResponseEvent& event) {}
 
-    //! RESPONSE_HEADERS
+    //! RESPONSE_HEADER
     virtual
-    void response_headers(HeaderEvent& event) {}
+    void response_header(HeaderEvent& event) {}
+
+    //! RESPONSE_HEADER_FINISHED
+    virtual
+    void response_header_finished(NullEvent& event) {}
 
     //! RESPONSE_BODY
     virtual
@@ -231,11 +247,13 @@ enum event_e {
     CONNECTION_DATA_OUT,
     CONNECTION_CLOSED,
     REQUEST_STARTED,
-    REQUEST_HEADERS,
+    REQUEST_HEADER,
+    REQUEST_HEADER_FINISHED,
     REQUEST_BODY,
     REQUEST_FINISHED,
     RESPONSE_STARTED,
-    RESPONSE_HEADERS,
+    RESPONSE_HEADER,
+    RESPONSE_HEADER_FINISHED,
     RESPONSE_BODY,
     RESPONSE_FINISHED
 };
@@ -273,7 +291,10 @@ struct Event
 };
 
 /**
- * No associated data: REQUEST_FINISHED, RESPONSE_FINISHED, CONNECTION_CLOSED.
+ * No associated data:
+ *   REQUEST_HEADER_FINISHED, REQUEST_FINISHED,
+ *   RESPONSE_HEADER_FINISHED, RESPONSE_FINISHED,
+ *   CONNECTION_CLOSED.
  *
  * @sa Event
  **/
@@ -289,9 +310,11 @@ struct NullEvent :
     void dispatch(Delegate& to) const
     {
         switch (which) {
-            case REQUEST_FINISHED:  to.request_finished(*this); break;
-            case RESPONSE_FINISHED: to.response_finished(*this); break;
-            case CONNECTION_CLOSED: to.connection_closed(*this); break;
+            case REQUEST_HEADER_FINISHED:  to.request_header_finished(*this); break;
+            case REQUEST_FINISHED:         to.request_finished(*this); break;
+            case RESPONSE_HEADER_FINISHED: to.request_header_finished(*this); break;
+            case RESPONSE_FINISHED:        to.response_finished(*this); break;
+            case CONNECTION_CLOSED:        to.connection_closed(*this); break;
             default:
                 throw std::logic_error("Invalid NullEvent.");
         }
@@ -302,9 +325,11 @@ struct NullEvent :
     void dispatch(ModifierDelegate& to)
     {
         switch (which) {
-            case REQUEST_FINISHED:  to.request_finished(*this); break;
-            case RESPONSE_FINISHED: to.response_finished(*this); break;
-            case CONNECTION_CLOSED: to.connection_closed(*this); break;
+            case REQUEST_HEADER_FINISHED:  to.request_header_finished(*this); break;
+            case REQUEST_FINISHED:         to.request_finished(*this); break;
+            case RESPONSE_HEADER_FINISHED: to.request_header_finished(*this); break;
+            case RESPONSE_FINISHED:        to.response_finished(*this); break;
+            case CONNECTION_CLOSED:        to.connection_closed(*this); break;
             default:
                 throw std::logic_error("Invalid NullEvent.");
         }
@@ -522,7 +547,7 @@ typedef std::pair<Buffer, Buffer> header_t;
 typedef std::list<header_t> header_list_t;
 
 /**
- * Headers data: REQUEST_HEADERS, RESPONSE_HEADERS.
+ * Header data: REQUEST_HEADER, RESPONSE_HEADER.
  **/
 struct HeaderEvent :
     public Event
@@ -539,8 +564,8 @@ struct HeaderEvent :
     void dispatch(Delegate& to) const
     {
         switch (which) {
-            case REQUEST_HEADERS: to.request_headers(*this); break;
-            case RESPONSE_HEADERS: to.response_headers(*this); break;
+            case REQUEST_HEADER: to.request_header(*this); break;
+            case RESPONSE_HEADER: to.response_header(*this); break;
             default:
                 throw std::logic_error("Invalid HeaderEvent.");
         }
@@ -551,8 +576,8 @@ struct HeaderEvent :
     void dispatch(ModifierDelegate& to)
     {
         switch (which) {
-            case REQUEST_HEADERS: to.request_headers(*this); break;
-            case RESPONSE_HEADERS: to.response_headers(*this); break;
+            case REQUEST_HEADER: to.request_header(*this); break;
+            case RESPONSE_HEADER: to.response_header(*this); break;
             default:
                 throw std::logic_error("Invalid HeaderEvent.");
         }
@@ -590,8 +615,11 @@ struct Transaction
         const Buffer& protocol
     );
 
-    //! Add REQUEST_HEADERS to back of events.
-    HeaderEvent& request_headers();
+    //! Add REQUEST_HEADER to back of events.
+    HeaderEvent& request_header();
+
+    //! Add REQUEST_HEADER_FINISHED to back of events.
+    NullEvent& request_header_finished();
 
     //! Add REQUEST_BODY to back of events.
     DataEvent& request_body(const Buffer& data);
@@ -607,8 +635,11 @@ struct Transaction
         const Buffer& message
     );
 
-    //! Add RESPONSE_HEADERS to back of events.
-    HeaderEvent& response_headers();
+    //! Add RESPONSE_HEADER to back of events.
+    HeaderEvent& response_header();
+
+    //! Add RESPONSE_HEADER_FINISHED to back of events.
+    NullEvent& response_header_finished();
 
     //! Add RESPONSE_BODY to back of events.
     DataEvent& response_body(const Buffer& data);

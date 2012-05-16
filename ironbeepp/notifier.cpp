@@ -119,12 +119,25 @@ Notifier Notifier::request_started(
     return *this;
 }
 
-Notifier Notifier::request_headers_data(
+Notifier Notifier::request_header_data(
     Transaction                       transaction,
-    const std::list<ParsedNameValue>& headers
+    const std::list<ParsedNameValue>& header
 )
 {
-    return request_headers_data(transaction, headers.begin(), headers.end());
+    return request_header_data(transaction, header.begin(), header.end());
+}
+
+Notifier Notifier::request_header_finished(
+    Transaction transaction
+)
+{
+    Internal::throw_if_error(
+        ib_state_notify_request_header_finished(
+            m_engine.ib(),
+            transaction.ib()
+        )
+    );
+    return *this;
 }
 
 Notifier Notifier::request_body_data(
@@ -170,12 +183,25 @@ Notifier Notifier::response_started(
     return *this;
 }
 
-Notifier Notifier::response_headers_data(
+Notifier Notifier::response_header_data(
     Transaction                       transaction,
-    const std::list<ParsedNameValue>& headers
+    const std::list<ParsedNameValue>& header
 )
 {
-    return response_headers_data(transaction, headers.begin(), headers.end());
+    return response_header_data(transaction, header.begin(), header.end());
+}
+
+Notifier Notifier::response_header_finished(
+    Transaction transaction
+)
+{
+    Internal::throw_if_error(
+        ib_state_notify_response_header_finished(
+            m_engine.ib(),
+            transaction.ib()
+        )
+    );
+    return *this;
 }
 
 Notifier Notifier::response_body_data(

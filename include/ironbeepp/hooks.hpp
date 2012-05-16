@@ -116,7 +116,7 @@ public:
             Engine::state_event_e,
             ParsedNameValue
         )
-    > headers_data_t;
+    > header_data_t;
 
     /**
      * Call back type that takes RequestLine argument.
@@ -249,16 +249,16 @@ public:
      );
 
     /**
-     * Register headers data callback.
+     * Register header data callback.
      *
      * @param[in] event Event to register for.
      * @param[in] f     Functional to register.
      * @returns @c *this for call chaining.
      * @throw einval if callback type is not appropriate for @a event.
      **/
-    HooksRegistrar& headers_data(
+    HooksRegistrar& header_data(
         Engine::state_event_e event,
-        headers_data_t        f
+        header_data_t        f
      );
 
     /**
@@ -376,7 +376,7 @@ public:
     HooksRegistrar& configuration_finished(null_t f);
 
     /**
-     * Register callback for request_headers_data.
+     * Register callback for request_header_data.
      *
      * @sa Engine::state_event_e
      *
@@ -384,10 +384,10 @@ public:
      * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      **/
-    HooksRegistrar& request_headers_data(headers_data_t f);
+    HooksRegistrar& request_header_data(header_data_t f);
 
     /**
-     * Register callback for response_headers_data.
+     * Register callback for response_header_data.
      *
      * @sa Engine::state_event_e
      *
@@ -395,7 +395,7 @@ public:
      * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      **/
-    HooksRegistrar& response_headers_data(headers_data_t f);
+    HooksRegistrar& response_header_data(header_data_t f);
 
     /**
      * Register callback for request_started.
@@ -563,7 +563,7 @@ public:
     HooksRegistrar& handle_context_transaction(transaction_t f);
 
     /**
-     * Register callback for handle_request_headers.
+     * Register callback for handle_request_header.
      *
      * @sa Engine::state_event_e
      *
@@ -571,7 +571,7 @@ public:
      * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      **/
-    HooksRegistrar& handle_request_headers(transaction_t f);
+    HooksRegistrar& handle_request_header(transaction_t f);
 
     /**
      * Register callback for handle_request.
@@ -585,7 +585,7 @@ public:
     HooksRegistrar& handle_request(transaction_t f);
 
     /**
-     * Register callback for handle_response_headers.
+     * Register callback for handle_response_header.
      *
      * @sa Engine::state_event_e
      *
@@ -593,7 +593,7 @@ public:
      * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      **/
-    HooksRegistrar& handle_response_headers(transaction_t f);
+    HooksRegistrar& handle_response_header(transaction_t f);
 
     /**
      * Register callback for handle_response.
@@ -618,7 +618,7 @@ public:
     HooksRegistrar& handle_postprocess(transaction_t f);
 
     /**
-     * Register callback for request_headers.
+     * Register callback for request_header_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -626,7 +626,7 @@ public:
      * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      **/
-    HooksRegistrar& request_headers(transaction_t f);
+    HooksRegistrar& request_header_finished(transaction_t f);
 
     /**
      * Register callback for request_finished.
@@ -640,7 +640,7 @@ public:
     HooksRegistrar& request_finished(transaction_t f);
 
     /**
-     * Register callback for response_headers.
+     * Register callback for response_header_finished.
      *
      * @sa Engine::state_event_e
      *
@@ -648,7 +648,7 @@ public:
      * @returns @c *this for call chaining.
      * @throw IronBee++ exception on failure.
      **/
-    HooksRegistrar& response_headers(transaction_t f);
+    HooksRegistrar& response_header_finished(transaction_t f);
 
     /**
      * Register callback for response_finished.

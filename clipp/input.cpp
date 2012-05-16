@@ -214,10 +214,19 @@ RequestEvent& Transaction::request_started(
     return *event;
 }
 
-HeaderEvent& Transaction::request_headers()
+HeaderEvent& Transaction::request_header()
 {
     boost::shared_ptr<HeaderEvent> event =
-        make_shared<HeaderEvent>(REQUEST_HEADERS);
+        make_shared<HeaderEvent>(REQUEST_HEADER);
+    events.push_back(event);
+
+    return *event;
+}
+
+NullEvent& Transaction::request_header_finished()
+{
+    boost::shared_ptr<NullEvent> event =
+        make_shared<NullEvent>(REQUEST_HEADER_FINISHED);
     events.push_back(event);
 
     return *event;
@@ -265,10 +274,19 @@ ResponseEvent& Transaction::response_started(
     return *event;
 }
 
-HeaderEvent& Transaction::response_headers()
+HeaderEvent& Transaction::response_header()
 {
     boost::shared_ptr<HeaderEvent> event =
-        make_shared<HeaderEvent>(RESPONSE_HEADERS);
+        make_shared<HeaderEvent>(RESPONSE_HEADER);
+    events.push_back(event);
+
+    return *event;
+}
+
+NullEvent& Transaction::response_header_finished()
+{
+    boost::shared_ptr<NullEvent> event =
+        make_shared<NullEvent>(RESPONSE_HEADER_FINISHED);
     events.push_back(event);
 
     return *event;

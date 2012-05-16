@@ -105,8 +105,6 @@ typedef enum {
 #define IB_TX_FHTTP09           (1 <<  1) /**< Transaction is HTTP/0.9 */
 #define IB_TX_FPIPELINED        (1 <<  2) /**< Transaction is pipelined */
 #define IB_TX_FPARSED_DATA      (1 <<  3) /**< Transaction with parsed data */
-#define IB_TX_FSEENDATAIN       (1 <<  4) /**< Transaction had data in */
-#define IB_TX_FSEENDATAOUT      (1 <<  5) /**< Transaction had data out */
 #define IB_TX_FREQ_STARTED      (1 <<  6) /**< Request started */
 #define IB_TX_FREQ_SEENHEADER   (1 <<  7) /**< Request header seen */
 #define IB_TX_FREQ_NOBODY       (1 <<  8) /**< Request should not have body */

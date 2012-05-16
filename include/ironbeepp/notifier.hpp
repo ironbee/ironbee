@@ -99,18 +99,23 @@ public:
         ParsedRequestLine parsed_request_line
     );
 
-    //! Notify request_headers_data event.
+    //! Notify request_header_data event.
     template <typename Iterator>
-    Notifier request_headers_data(
+    Notifier request_header_data(
         Transaction       transaction,
-        Iterator          headers_begin,
-        Iterator          headers_end
+        Iterator          header_begin,
+        Iterator          header_end
     );
 
-    //! Notify request_headers_data event.
-    Notifier request_headers_data(
+    //! Notify request_header_data event.
+    Notifier request_header_data(
         Transaction                       transaction,
-        const std::list<ParsedNameValue>& headers
+        const std::list<ParsedNameValue>& header
+    );
+
+    //! Notify request_header_finished event.
+    Notifier request_header_finished(
+        Transaction transaction
     );
 
     //! Notify request_body_data event.
@@ -130,18 +135,23 @@ public:
         ParsedResponseLine parsed_response_line
     );
 
-    //! Notify response_headers_data event.
+    //! Notify response_header_data event.
     template <typename Iterator>
-    Notifier response_headers_data(
+    Notifier response_header_data(
         Transaction       transaction,
-        Iterator          headers_begin,
-        Iterator          headers_end
+        Iterator          header_begin,
+        Iterator          header_end
     );
 
-    //! Notify response_headers_data event.
-    Notifier response_headers_data(
+    //! Notify response_header_data event.
+    Notifier response_header_data(
         Transaction                       transaction,
-        const std::list<ParsedNameValue>& headers
+        const std::list<ParsedNameValue>& header
+    );
+
+    //! Notify response_header_finished event.
+    Notifier response_header_finished(
+        Transaction transaction
     );
 
     //! Notify response_body_data event.
@@ -160,17 +170,17 @@ private:
 };
 
 template <typename Iterator>
-Notifier Notifier::request_headers_data(
+Notifier Notifier::request_header_data(
     Transaction       transaction,
-    Iterator          headers_begin,
-    Iterator          headers_end
+    Iterator          header_begin,
+    Iterator          header_end
 )
 {
     Internal::throw_if_error(
-        ib_state_notify_request_headers_data(
+        ib_state_notify_request_header_data(
             m_engine.ib(),
             transaction.ib(),
-            Internal::make_pnv_list(transaction, headers_begin, headers_end)
+            Internal::make_pnv_list(transaction, header_begin, header_end)
         )
     );
 
@@ -178,17 +188,17 @@ Notifier Notifier::request_headers_data(
 }
 
 template <typename Iterator>
-Notifier Notifier::response_headers_data(
+Notifier Notifier::response_header_data(
     Transaction       transaction,
-    Iterator          headers_begin,
-    Iterator          headers_end
+    Iterator          header_begin,
+    Iterator          header_end
 )
 {
     Internal::throw_if_error(
-        ib_state_notify_response_headers_data(
+        ib_state_notify_response_header_data(
             m_engine.ib(),
             transaction.ib(),
-            Internal::make_pnv_list(transaction, headers_begin, headers_end)
+            Internal::make_pnv_list(transaction, header_begin, header_end)
         )
     );
 

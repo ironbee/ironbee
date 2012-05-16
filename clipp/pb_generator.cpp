@@ -117,6 +117,8 @@ struct pb_to_event :
                 break;
             }
             case Input::CONNECTION_CLOSED:
+            case Input::REQUEST_HEADER_FINISHED:
+            case Input::RESPONSE_HEADER_FINISHED:
             case Input::REQUEST_FINISHED:
             case Input::RESPONSE_FINISHED:
             {
@@ -204,8 +206,8 @@ struct pb_to_event :
                 }
                 break;
             }
-            case Input::REQUEST_HEADERS:
-            case Input::RESPONSE_HEADERS:
+            case Input::REQUEST_HEADER:
+            case Input::RESPONSE_HEADER:
             {
                 // HeaderEvent
                 boost::shared_ptr<Input::HeaderEvent> specific =

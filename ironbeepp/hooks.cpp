@@ -46,20 +46,20 @@ ib_status_t null(
 }
 
 /**
- * Hooks handler for headers_data callbacks.
+ * Hooks handler for header_data callbacks.
  *
  * @param[in] ib_engine  The IronBee engine.
  * @param[in] ib_tx      Transaction.
  * @param[in] event      Which event happened.
- * @param[in] ib_headers Data of event.
+ * @param[in] ib_header Data of event.
  * @param[in] cbdata     Callback data: contains C++ functional to forward to.
  * @returns Status code reflecting any exceptions thrown.
  **/
-ib_status_t headers_data(
+ib_status_t header_data(
     ib_engine_t*          ib_engine,
     ib_tx_t*              ib_tx,
     ib_state_event_type_t event,
-    ib_parsed_header_t*   ib_headers,
+    ib_parsed_header_t*   ib_header,
     void*                 cbdata
 )
 {
@@ -67,15 +67,15 @@ ib_status_t headers_data(
 
     assert(ib_engine != NULL);
     /* ib_tx may be NULL */
-    assert(ib_headers != NULL);
+    assert(ib_header != NULL);
     assert(cbdata != NULL);
 
     IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
-        Internal::data_to_value<HooksRegistrar::headers_data_t>(cbdata)(
+        Internal::data_to_value<HooksRegistrar::header_data_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
-            ParsedNameValue(ib_headers)
+            ParsedNameValue(ib_header)
         )
     ));
 }
@@ -320,9 +320,9 @@ HooksRegistrar& HooksRegistrar::null(
     return *this;
 }
 
-HooksRegistrar& HooksRegistrar::headers_data(
+HooksRegistrar& HooksRegistrar::header_data(
     Engine::state_event_e event,
-    headers_data_t        f
+    header_data_t        f
 )
 {
     if (f.empty()) {
@@ -335,8 +335,8 @@ HooksRegistrar& HooksRegistrar::headers_data(
         ib_hook_parsed_header_data_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
-            &Internal::Hooks::headers_data,
-            Internal::value_to_data<headers_data_t>(
+            &Internal::Hooks::header_data,
+            Internal::value_to_data<header_data_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -518,18 +518,18 @@ HooksRegistrar& HooksRegistrar::configuration_finished(null_t f)
     );
 }
 
-HooksRegistrar& HooksRegistrar::request_headers_data(headers_data_t f)
+HooksRegistrar& HooksRegistrar::request_header_data(header_data_t f)
 {
-    return headers_data(
-        Engine::request_headers_data,
+    return header_data(
+        Engine::request_header_data,
         f
     );
 }
 
-HooksRegistrar& HooksRegistrar::response_headers_data(headers_data_t f)
+HooksRegistrar& HooksRegistrar::response_header_data(header_data_t f)
 {
-    return headers_data(
-        Engine::response_headers_data,
+    return header_data(
+        Engine::response_header_data,
         f
     );
 }
@@ -654,10 +654,10 @@ HooksRegistrar& HooksRegistrar::handle_context_transaction(transaction_t f)
     );
 }
 
-HooksRegistrar& HooksRegistrar::handle_request_headers(transaction_t f)
+HooksRegistrar& HooksRegistrar::handle_request_header(transaction_t f)
 {
     return transaction(
-        Engine::handle_request_headers,
+        Engine::handle_request_header,
         f
     );
 }
@@ -670,10 +670,10 @@ HooksRegistrar& HooksRegistrar::handle_request(transaction_t f)
     );
 }
 
-HooksRegistrar& HooksRegistrar::handle_response_headers(transaction_t f)
+HooksRegistrar& HooksRegistrar::handle_response_header(transaction_t f)
 {
     return transaction(
-        Engine::handle_response_headers,
+        Engine::handle_response_header,
         f
     );
 }
@@ -694,10 +694,10 @@ HooksRegistrar& HooksRegistrar::handle_postprocess(transaction_t f)
     );
 }
 
-HooksRegistrar& HooksRegistrar::request_headers(transaction_t f)
+HooksRegistrar& HooksRegistrar::request_header_finished(transaction_t f)
 {
     return transaction(
-        Engine::request_headers,
+        Engine::request_header_finished,
         f
     );
 }
@@ -710,10 +710,10 @@ HooksRegistrar& HooksRegistrar::request_finished(transaction_t f)
     );
 }
 
-HooksRegistrar& HooksRegistrar::response_headers(transaction_t f)
+HooksRegistrar& HooksRegistrar::response_header_finished(transaction_t f)
 {
     return transaction(
-        Engine::response_headers,
+        Engine::response_header_finished,
         f
     );
 }

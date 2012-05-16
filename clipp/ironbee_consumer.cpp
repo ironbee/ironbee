@@ -173,21 +173,33 @@ public:
         m_engine.notify().request_started(m_transaction, prl);
     }
 
-    void request_headers(const Input::HeaderEvent& event)
+    void request_header(const Input::HeaderEvent& event)
     {
         if (! m_transaction) {
             throw runtime_error(
-                "REQUEST_HEADERS event fired outside "
+                "REQUEST_HEADER_FINISHED event fired outside "
                 "of connection lifetime."
             );
         }
 
         adapt_header adaptor(m_transaction.memory_pool());
-        m_engine.notify().request_headers_data(
+        m_engine.notify().request_header_data(
             m_transaction,
             boost::make_transform_iterator(event.headers.begin(), adaptor),
             boost::make_transform_iterator(event.headers.end(),   adaptor)
         );
+    }
+
+    void request_header_finished(const Input::NullEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "REQUEST_HEADER_FINISHED event fired outside "
+                "of connection lifetime."
+            );
+        }
+        m_engine.notify().request_header_finished(m_transaction);
+        m_transaction = IronBee::Transaction();
     }
 
     void request_body(const Input::DataEvent& event)
@@ -249,21 +261,33 @@ public:
         m_engine.notify().response_started(m_transaction, prl);
     }
 
-    void response_headers(const Input::HeaderEvent& event)
+    void response_header(const Input::HeaderEvent& event)
     {
         if (! m_transaction) {
             throw runtime_error(
-                "RESPONSE_HEADERS event fired outside "
+                "RESPONSE_HEADER event fired outside "
                 "of connection lifetime."
             );
         }
 
         adapt_header adaptor(m_transaction.memory_pool());
-        m_engine.notify().response_headers_data(
+        m_engine.notify().response_header_data(
             m_transaction,
             boost::make_transform_iterator(event.headers.begin(), adaptor),
             boost::make_transform_iterator(event.headers.end(),   adaptor)
         );
+    }
+
+    void response_header_finished(const Input::NullEvent& event)
+    {
+        if (! m_transaction) {
+            throw runtime_error(
+                "RESPONSE_HEADER_FINISHED event fired outside "
+                "of connection lifetime."
+            );
+        }
+        m_engine.notify().response_header_finished(m_transaction);
+        m_transaction = IronBee::Transaction();
     }
 
     void response_body(const Input::DataEvent& event)

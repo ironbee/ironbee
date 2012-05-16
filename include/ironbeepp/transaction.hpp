@@ -129,8 +129,8 @@ public:
     //! Start of request.
     boost::posix_time::ptime request_started_time() const;
 
-    //! Start of request headers.
-    boost::posix_time::ptime request_headers_time() const;
+    //! Start of request header.
+    boost::posix_time::ptime request_header_time() const;
 
     //! Start of request body.
     boost::posix_time::ptime request_body_time() const;
@@ -141,8 +141,8 @@ public:
     //! Start of response.
     boost::posix_time::ptime response_started_time() const;
 
-    //! Start of response headers.
-    boost::posix_time::ptime response_headers_time() const;
+    //! Start of response header.
+    boost::posix_time::ptime response_header_time() const;
 
     //! Start of response body.
     boost::posix_time::ptime response_body_time() const;
@@ -176,12 +176,12 @@ public:
     ParsedRequestLine request_line() const;
 
     /**
-     * Parsed headers.
+     * Parsed header.
      *
-     * This method returns the first parsed header.  Later headers can be
-     * accessed via ParsedNameValue::next().
+     * This method returns the first parsed header.  Later individual
+     * headers can be accessed via ParsedNameValue::next().
      **/
-    ParsedNameValue request_headers() const;
+    ParsedNameValue request_header() const;
 
     /**
      * @name Flags
@@ -197,17 +197,19 @@ public:
     enum flags_e {
         flag_none                  = IB_TX_FNONE,
         flag_error                 = IB_TX_FERROR,
+        flag_http09                = IB_TX_FHTTP09,
         flag_pipelined             = IB_TX_FPIPELINED,
-        flag_seen_data_in          = IB_TX_FSEENDATAIN,
-        flag_seen_data_out         = IB_TX_FSEENDATAOUT,
+        flag_parsed_data           = IB_TX_FPARSED_DATA,
         flag_request_started       = IB_TX_FREQ_STARTED,
-        flag_request_seen_headers  = IB_TX_FREQ_SEENHEADERS,
+        flag_request_seen_header   = IB_TX_FREQ_SEENHEADER,
         flag_request_no_body       = IB_TX_FREQ_NOBODY,
         flag_request_seen_body     = IB_TX_FREQ_SEENBODY,
+        flag_request_seen_trailer  = IB_TX_FREQ_SEENTRAILER,
         flag_request_finished      = IB_TX_FREQ_FINISHED,
         flag_response_started      = IB_TX_FRES_STARTED,
-        flag_response_seen_headers = IB_TX_FRES_SEENHEADERS,
+        flag_response_seen_header  = IB_TX_FRES_SEENHEADER,
         flag_response_seen_body    = IB_TX_FRES_SEENBODY,
+        flag_response_seen_trailer = IB_TX_FRES_SEENTRAILER,
         flag_response_finished     = IB_TX_FRES_FINISHED,
         flag_suspicious            = IB_TX_FSUSPICIOUS
     };
@@ -233,28 +235,16 @@ public:
         return flags() & flag_pipelined;
     }
 
-    //! flags() & flag_seen_data_in
-    bool is_seen_data_in() const
-    {
-        return flags() & flag_seen_data_in;
-    }
-
-    //! flags() & flag_seen_data_out
-    bool is_seen_data_out() const
-    {
-        return flags() & flag_seen_data_out;
-    }
-
     //! flags() & flag_request_started
     bool is_request_started() const
     {
         return flags() & flag_request_started;
     }
 
-    //! flags() & flag_request_seen_headers
-    bool is_request_seen_headers() const
+    //! flags() & flag_request_seen_header
+    bool is_request_seen_header() const
     {
-        return flags() & flag_request_seen_headers;
+        return flags() & flag_request_seen_header;
     }
 
     //! flags() & flag_request_no_body
@@ -281,10 +271,10 @@ public:
         return flags() & flag_response_started;
     }
 
-    //! flags() & flag_response_seen_headers
-    bool is_response_seen_headers() const
+    //! flags() & flag_response_seen_header
+    bool is_response_seen_header() const
     {
-        return flags() & flag_response_seen_headers;
+        return flags() & flag_response_seen_header;
     }
 
     //! flags() & flag_response_seen_body
