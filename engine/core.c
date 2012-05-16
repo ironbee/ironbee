@@ -3290,7 +3290,6 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     }
 
 
-#if 0
     /* Alias ARGS fields */
     rc = ib_data_get(tx->dpi, "request_uri_params", &f);
     if (rc == IB_OK) {
@@ -3303,7 +3302,6 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
             ib_log_error_tx(tx, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
         }
     }
-#endif
 
     /**
      * Alias connection remote and server addresses
