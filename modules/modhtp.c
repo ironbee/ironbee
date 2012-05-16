@@ -1734,7 +1734,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  tx->parsed_uri->fragment,
                                  NULL);
 
-        rc = ib_data_add_list(itx->dpi, "request_header", &f);
+        rc = ib_data_add_list(itx->dpi, "request_headers", &f);
         if (   (tx->request_headers != NULL)
             && table_size(tx->request_headers)
             && (rc == IB_OK))
@@ -1744,7 +1744,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_headers);
-            ib_log_debug3_tx(itx, "Adding request_header fields");
+            ib_log_debug3_tx(itx, "Adding request_headers fields");
             while ((key = table_iterator_next(tx->request_headers,
                                               (void *)&h)) != NULL)
             {
@@ -1774,11 +1774,11 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
         }
         else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3_tx(itx, "No request header");
+            ib_log_debug3_tx(itx, "No request headers");
         }
         else {
             ib_log_error_tx(itx,
-                         "Failed to create request header list: %s",
+                         "Failed to create request headers list: %s",
                          ib_status_to_string(rc));
         }
 
@@ -1898,7 +1898,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
 
         /// @todo Need a table type that can have more than one
         ///       of the same header.
-        rc = ib_data_add_list(itx->dpi, "response_header", &f);
+        rc = ib_data_add_list(itx->dpi, "response_headers", &f);
         if (   (tx->response_headers != NULL)
             && table_size(tx->response_headers)
             && (rc == IB_OK))
@@ -1937,11 +1937,11 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
         }
         else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3_tx(itx, "No response header");
+            ib_log_debug3_tx(itx, "No response headers");
         }
         else {
             ib_log_error_tx(itx,
-                         "Failed to create response header list: %s",
+                         "Failed to create response headers list: %s",
                          ib_status_to_string(rc));
         }
     }
