@@ -74,6 +74,7 @@ typedef struct {
     ib_rule_phase_t        phase;           /**< Phase number */
     uint8_t                severity;        /**< Rule severity */
     uint8_t                confidence;      /**< Rule confidence */
+    uint16_t               revision;        /**< Rule revision # */
     ib_flags_t             flags;           /**< Rule meta-data flags */
 } ib_rule_meta_t;
 

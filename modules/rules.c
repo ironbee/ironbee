@@ -732,6 +732,20 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    /* Revision modifier */
+    if ( (strcasecmp(name, "rev") == 0) ||
+         (strcasecmp(name, "revision") == 0) )
+    {
+        int rev = value ? atoi(value) : 0;
+
+        if (rev > UINT16_MAX) {
+            ib_log_error(cp->ib,  "Invalid revision: %s", value);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        rule->meta.revision = (uint16_t)rev;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     /* Phase modifiers (Not valid for stream rules) */
     if (ib_rule_is_stream(rule) == IB_FALSE) {
         ib_rule_phase_t phase = PHASE_NONE;
