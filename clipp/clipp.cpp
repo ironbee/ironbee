@@ -66,6 +66,7 @@
 #include "suricata_generator.hpp"
 #include "htp_generator.hpp"
 #include "echo_generator.hpp"
+#include "pcap_generator.hpp"
 
 #include "ironbee_consumer.hpp"
 #include "pb_consumer.hpp"
@@ -214,6 +215,9 @@ input_modifier_t construct_argless_modifier(const string& arg)
 //! Construct raw generator, interpreting @a arg as @e request,response.
 input_generator_t init_raw_generator(const string& arg);
 
+//! Construct pcap generator, interpreting @a arg as @e <path>:<filter>
+input_generator_t init_pcap_generator(const string& arg);
+
 //! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
 input_modifier_t init_aggregate_modifier(const string& arg);
 
@@ -269,6 +273,10 @@ void help()
     "  suricata:<path> -- Read <path> as suricata format.\n"
     "  htp:<path>      -- Read <path> as libHTP test format.\n"
     "  echo:<request>  -- Single connection with request as request line.\n"
+    "  pcap:<path>     -- Read <path> as PCAP containing only HTTP traffic.\n"
+    "  pcap:<path>:<filter> --\n"
+    "    Read <path> as PCAP using <filter> as PCAP filter selecting HTTP\n"
+    "    traffic.\n"
     "\n"
     "Consumers:\n"
     "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
@@ -418,6 +426,7 @@ int main(int argc, char** argv)
         construct_generator<SuricataGenerator>;
     generator_factory_map["htp"]      = construct_generator<HTPGenerator>;
     generator_factory_map["echo"]     = construct_generator<EchoGenerator>;
+    generator_factory_map["pcap"]     = init_pcap_generator;
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
@@ -635,6 +644,19 @@ input_generator_t init_raw_generator(const string& arg)
     }
 
     return RawGenerator(subargs[0], subargs[1]);
+}
+
+input_generator_t init_pcap_generator(const string& arg)
+{
+    vector<string> subargs = split_on_char(arg, ':');
+    if (subargs.size() == 1) {
+        subargs.push_back("");
+    }
+    if (subargs.size() != 2) {
+        throw runtime_error("Could not parse pcap arg.");
+    }
+
+    return PCAPGenerator(subargs[0], subargs[1]);
 }
 
 input_modifier_t init_aggregate_modifier(const string& arg)

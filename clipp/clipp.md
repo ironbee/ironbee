@@ -268,6 +268,22 @@ You may not omit request blocks.
 This is mostly intended for debugging.  There is no response body and the
 request is a single line.  Connection information is bogus.
 
+**pcap**:*path*<br>
+**pcap**:*path*:*filter*
+
+Generates inputs based on reassembled PCAP.
+
+The PCAP is reassembled via libNIDS.  It is somewhat fragile and may get
+transaction boundaries wrong if there a connection has traffic flowing
+simultaneously in both directions.  It generates connection data events so 
+use @parse if you want parsed events.
+
+Note that only complete streams are generated as inputs.  In particular, this
+means that you will need both directions of traffic to get any inputs, e.g.,
+use symmetric filters such as
+
+    src 1.2.3.4 or dst 1.2.3.4
+
 Modifiers
 ---------
 

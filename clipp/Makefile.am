@@ -28,6 +28,7 @@ clipp_SOURCES = \
     suricata_generator.cpp \
     htp_generator.cpp \
     echo_generator.cpp \
+    pcap_generator.cpp \
     connection_modifiers.cpp \
     parse_modifier.cpp \
     unparse_modifier.cpp \
@@ -41,7 +42,8 @@ clipp_LDFLAGS = \
     -lboost_filesystem \
     -lboost_program_options \
     -lboost_regex \
-    -lprotobuf
+    -lprotobuf \
+    -lnids -lnet -lpcap
 clipp_LDADD = \
     $(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/engine/libironbee.la
