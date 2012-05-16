@@ -89,7 +89,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Request Header",
         IB_OP_FLAG_PHASE,
-        handle_request_headers_event
+        handle_request_header_event
     },
     {
         IB_FALSE,
@@ -107,7 +107,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
         "Response Header",
         IB_OP_FLAG_PHASE,
-        handle_response_headers_event
+        handle_response_header_event
     },
     {
         IB_FALSE,
@@ -163,7 +163,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
         "Response Header Stream",
         IB_OP_FLAG_STREAM,
-        response_headers_data_event
+        response_header_data_event
     },
     {
         IB_TRUE,
@@ -949,7 +949,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
  * @param[in] ib Engine
  * @param[in] event Event type
  * @param[in] tx Transaction
- * @param[in] headers Parsed headers
+ * @param[in] header Parsed header
  * @param[in,out] rule_result Result of rule execution
  *
  * @returns Status code
@@ -957,7 +957,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
 static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
                                               ib_rule_t *rule,
                                               ib_tx_t *tx,
-                                              ib_parsed_header_t *headers,
+                                              ib_parsed_header_t *header,
                                               ib_num_t *rule_result)
 {
     IB_FTRACE_INIT();
@@ -968,7 +968,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(rule != NULL);
-    assert(headers != NULL);
+    assert(header != NULL);
     assert(rule_result != NULL);
     assert(rule->phase_meta->is_stream == IB_TRUE);
 
@@ -981,7 +981,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
      * correct behavior should be.
      */
     *rule_result = 0;
-    for (nvpair = headers;  nvpair != NULL;  nvpair = nvpair->next) {
+    for (nvpair = header;  nvpair != NULL;  nvpair = nvpair->next) {
         ib_num_t result;
 
         /* Create a field to hold the data */
@@ -1030,7 +1030,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
  * @param[in] tx Transaction.
  * @param[in] event Event type.
  * @param[in] txdata Transaction data (or NULL)
- * @param[in] headers Parsed headers (or NULL)
+ * @param[in] header Parsed header (or NULL)
  * @param[in] meta Phase meta data
  *
  * @returns Status code
@@ -1039,16 +1039,16 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     ib_state_event_type_t event,
                                     ib_txdata_t *txdata,
-                                    ib_parsed_header_t *headers,
+                                    ib_parsed_header_t *header,
                                     const ib_rule_phase_meta_t *meta)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
-    assert( (txdata != NULL) || (headers != NULL) );
+    assert( (txdata != NULL) || (header != NULL) );
     assert(meta != NULL);
     assert( (meta->hook_type != IB_STATE_HOOK_TXDATA) || (txdata != NULL) );
-    assert( (meta->hook_type != IB_STATE_HOOK_HEADER) || (headers != NULL) );
+    assert( (meta->hook_type != IB_STATE_HOOK_HEADER) || (header != NULL) );
 
     ib_context_t            *ctx = tx->ctx;
     ib_ruleset_phase_t      *ruleset_phase =
@@ -1106,8 +1106,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         if (txdata != NULL) {
             rc = execute_stream_txdata_rule(ib, rule, tx, txdata, &result);
         }
-        else if (headers != NULL) {
-            rc = execute_stream_header_rule(ib, rule, tx, headers, &result);
+        else if (header != NULL) {
+            rc = execute_stream_header_rule(ib, rule, tx, header, &result);
         }
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error executing rule %s: %s",
@@ -1155,7 +1155,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
  * @param[in] event Event type.
- * @param[in] headers Parsed headers
+ * @param[in] header Parsed header
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t)
  *
  * @returns Status code
@@ -1163,18 +1163,18 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
 static ib_status_t run_stream_header_rules(ib_engine_t *ib,
                                            ib_tx_t *tx,
                                            ib_state_event_type_t event,
-                                           ib_parsed_header_t *headers,
+                                           ib_parsed_header_t *header,
                                            void *cbdata)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
-    assert(headers != NULL);
+    assert(header != NULL);
     assert(cbdata != NULL);
 
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
     ib_status_t rc;
-    rc = run_stream_rules(ib, tx, event, NULL, headers, meta);
+    rc = run_stream_rules(ib, tx, event, NULL, header, meta);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1289,7 +1289,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
 
     /* Now, process the request line */
     if (hdrs != NULL && hdrs->head != NULL) {
-        ib_log_debug_tx(tx, "Running header line through stream headers");
+        ib_log_debug_tx(tx, "Running header line through stream header");
         rc = run_stream_header_rules(ib, tx, event,
                                      hdrs->head, cbdata);
         if (rc != IB_OK) {
@@ -1299,11 +1299,11 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
         }
     }
 
-    /* Process the request headers */
-    if (tx->request_headers != NULL && tx->request_headers->head != NULL) {
-        ib_log_debug_tx(tx, "Running headers through stream headers");
+    /* Process the request header */
+    if (tx->request_header != NULL && tx->request_header->head != NULL) {
+        ib_log_debug_tx(tx, "Running header through stream header");
         rc = run_stream_header_rules(ib, tx, event,
-                                     tx->request_headers->head,
+                                     tx->request_header->head,
                                      cbdata);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error processing tx request line: %s",

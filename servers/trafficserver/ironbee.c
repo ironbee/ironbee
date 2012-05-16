@@ -138,7 +138,7 @@ static ironbee_direction_t ironbee_direction_req = {
     "request",
     TSHttpTxnClientReqGet,
     //ib_state_notify_conn_data_in
-    ib_state_notify_request_headers_data,
+    ib_state_notify_request_header_data,
     ib_state_notify_request_body_data,
     ib_state_notify_request_finished
 };
@@ -147,7 +147,7 @@ static ironbee_direction_t ironbee_direction_resp = {
     "response",
     TSHttpTxnClientRespGet,
     //ib_state_notify_conn_data_out
-    ib_state_notify_response_headers_data,
+    ib_state_notify_response_header_data,
     ib_state_notify_response_body_data,
     ib_state_notify_response_finished
 };
@@ -888,8 +888,8 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                                                     line, n_len,
                                                     lptr, v_len);
         }
-        rv = ib_state_notify_request_headers_data(ironbee, data->tx, ibhdrs);
-        rv = ib_state_notify_request_headers(ironbee, data->tx);
+        rv = ib_state_notify_request_header_data(ironbee, data->tx, ibhdrs);
+        rv = ib_state_notify_request_header_finished(ironbee, data->tx);
     }
     else {
         //ib_parsed_header_t *ibhdr = NULL, *newhdr;
@@ -936,11 +936,11 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                                                     line, n_len,
                                                     lptr, v_len);
         }
-        rv = ib_state_notify_response_headers_data(ironbee, data->tx, ibhdrs);
-        rv = ib_state_notify_response_headers(ironbee, data->tx);
+        rv = ib_state_notify_response_header_data(ironbee, data->tx, ibhdrs);
+        rv = ib_state_notify_response_header_finished(ironbee, data->tx);
     }
 
-    /* Now manipulate headers as requested by ironbee */
+    /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
         TSMLoc field_loc;
         if (hdr->dir != ibd->dir)

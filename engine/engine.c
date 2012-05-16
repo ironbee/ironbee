@@ -82,9 +82,9 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
     IB_STATE_HOOK_CONN,     /**< handle_context_conn_event */
     IB_STATE_HOOK_CONN,     /**< handle_connect_event */
     IB_STATE_HOOK_TX,       /**< handle_context_tx_event */
-    IB_STATE_HOOK_TX,       /**< handle_request_headers_event */
+    IB_STATE_HOOK_TX,       /**< handle_request_header_event */
     IB_STATE_HOOK_TX,       /**< handle_request_event */
-    IB_STATE_HOOK_TX,       /**< handle_response_headers_event */
+    IB_STATE_HOOK_TX,       /**< handle_response_header_event */
     IB_STATE_HOOK_TX,       /**< handle_response_event */
     IB_STATE_HOOK_CONN,     /**< handle_disconnect_event */
     IB_STATE_HOOK_TX,       /**< handle_postprocess_event */
@@ -99,13 +99,13 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
 
     /* Parser States */
     IB_STATE_HOOK_REQLINE,  /**< request_started_event */
-    IB_STATE_HOOK_TX,       /**< request_headers_event */
-    IB_STATE_HOOK_HEADER,   /**< request_headers_data_event */
+    IB_STATE_HOOK_HEADER,   /**< request_header_data_event */
+    IB_STATE_HOOK_TX,       /**< request_header_finished_event */
     IB_STATE_HOOK_TXDATA,   /**< request_body_data_event */
     IB_STATE_HOOK_TX,       /**< request_finished_event */
     IB_STATE_HOOK_RESPLINE, /**< response_started_event */
-    IB_STATE_HOOK_TX,       /**< response_headers_event */
-    IB_STATE_HOOK_HEADER,   /**< response_headers_data_event */
+    IB_STATE_HOOK_HEADER,   /**< response_header_data_event */
+    IB_STATE_HOOK_TX,       /**< response_header_finished_event */
     IB_STATE_HOOK_TXDATA,   /**< response_body_data_event */
     IB_STATE_HOOK_TX        /**< response_finished_event */
 };
@@ -131,7 +131,7 @@ ib_status_t ib_check_hook(
 
     expected_hook_type = ib_state_event_hook_types[event];
     if ( expected_hook_type != hook_type ) {
-        ib_log_error(ib,
+        ib_log_debug(ib,
                      "Event/hook mismatch: "
                      "Event type %s expected %d but received %d",
                      ib_state_event_name(event),
@@ -942,9 +942,9 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(handle_context_conn_event),
     IB_STRINGIFY(handle_connect_event),
     IB_STRINGIFY(handle_context_tx_event),
-    IB_STRINGIFY(handle_request_headers_event),
+    IB_STRINGIFY(handle_request_header_event),
     IB_STRINGIFY(handle_request_event),
-    IB_STRINGIFY(handle_response_headers_event),
+    IB_STRINGIFY(handle_response_header_event),
     IB_STRINGIFY(handle_response_event),
     IB_STRINGIFY(handle_disconnect_event),
     IB_STRINGIFY(handle_postprocess_event),
@@ -959,13 +959,13 @@ static const char *ib_state_event_name_list[] = {
 
     /* Parser States */
     IB_STRINGIFY(request_started_event),
-    IB_STRINGIFY(request_headers_event),
-    IB_STRINGIFY(request_headers_data_event),
+    IB_STRINGIFY(request_header_data_event),
+    IB_STRINGIFY(request_header_finished_event),
     IB_STRINGIFY(request_body_data_event),
     IB_STRINGIFY(request_finished_event),
     IB_STRINGIFY(response_started_event),
-    IB_STRINGIFY(response_headers_event),
-    IB_STRINGIFY(response_headers_data_event),
+    IB_STRINGIFY(response_header_data_event),
+    IB_STRINGIFY(response_header_finished_event),
     IB_STRINGIFY(response_body_data_event),
     IB_STRINGIFY(response_finished_event),
 
@@ -1230,7 +1230,7 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
 ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_headers_data_fn_t cb,
+    ib_state_header_data_fn_t cb,
     void *cdata)
 {
     IB_FTRACE_INIT();
@@ -1247,7 +1247,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    hook->callback.headersdata = cb;
+    hook->callback.headerdata = cb;
     hook->cdata = cdata;
     hook->next = NULL;
 
@@ -1259,7 +1259,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
 ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_headers_data_fn_t cb)
+    ib_state_header_data_fn_t cb)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;

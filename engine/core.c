@@ -92,39 +92,39 @@ static ib_core_cfg_t core_global_cfg;
 #define IB_ALPART_HEADER                  (1<< 0)
 #define IB_ALPART_EVENTS                  (1<< 1)
 #define IB_ALPART_HTTP_REQUEST_METADATA   (1<< 2)
-#define IB_ALPART_HTTP_REQUEST_HEADERS    (1<< 3)
+#define IB_ALPART_HTTP_REQUEST_HEADER     (1<< 3)
 #define IB_ALPART_HTTP_REQUEST_BODY       (1<< 4)
-#define IB_ALPART_HTTP_REQUEST_TRAILERS   (1<< 5)
+#define IB_ALPART_HTTP_REQUEST_TRAILER    (1<< 5)
 #define IB_ALPART_HTTP_RESPONSE_METADATA  (1<< 6)
-#define IB_ALPART_HTTP_RESPONSE_HEADERS   (1<< 7)
+#define IB_ALPART_HTTP_RESPONSE_HEADER    (1<< 7)
 #define IB_ALPART_HTTP_RESPONSE_BODY      (1<< 8)
-#define IB_ALPART_HTTP_RESPONSE_TRAILERS  (1<< 9)
+#define IB_ALPART_HTTP_RESPONSE_TRAILER   (1<< 9)
 #define IB_ALPART_DEBUG_FIELDS            (1<<10)
 
 /* NOTE: Make sure to add new parts from above to any groups below. */
 
 #define IB_ALPARTS_ALL \
     IB_ALPART_HEADER|IB_ALPART_EVENTS| \
-    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADERS|\
-    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILERS| \
-    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADERS| \
-    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILERS| \
+    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADER |\
+    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILER | \
+    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADER | \
+    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILER | \
     IB_ALPART_DEBUG_FIELDS
 
 #define IB_ALPARTS_DEFAULT \
     IB_ALPART_HEADER|IB_ALPART_EVENTS| \
-    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADERS|\
-    IB_ALPART_HTTP_REQUEST_TRAILERS| \
-    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADERS| \
-    IB_ALPART_HTTP_RESPONSE_TRAILERS
+    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADER |\
+    IB_ALPART_HTTP_REQUEST_TRAILER | \
+    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADER | \
+    IB_ALPART_HTTP_RESPONSE_TRAILER 
 
 #define IB_ALPARTS_REQUEST \
-    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADERS|\
-    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILERS
+    IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADER |\
+    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILER 
 
 #define IB_ALPARTS_RESPONSE \
-    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADERS| \
-    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILERS
+    IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADER | \
+    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILER 
 
 
 /* -- Utilities -- */
@@ -1993,7 +1993,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
     return strlen(*(const char **)chunk);
 }
 
-static size_t ib_auditlog_gen_headers_flist(ib_auditlog_part_t *part,
+static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
                                             const uint8_t **chunk)
 {
     ib_engine_t *ib = part->log->ib;
@@ -2648,7 +2648,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
  * @param[in] mpool Memory pool to user for allocations
  * @param[in,out] list List to add the fields to
  * @param[in] label Label string ("request"/"response")
- * @param[in] headers Parsed header fields data
+ * @param[in] header  Parsed header fields data
  *
  * @return Status code
  */
@@ -2657,7 +2657,7 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
     ib_mpool_t *mpool,
     ib_list_t *list,
     const char *label,
-    ib_parsed_header_wrapper_t *headers)
+    ib_parsed_header_wrapper_t *header )
 {
     IB_FTRACE_INIT();
     ib_parsed_name_value_pair_list_t *nvpair;
@@ -2665,7 +2665,7 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
     ib_field_t *f;
 
     /* Loop through all of the header name/value pairs */
-    for (nvpair = headers->head;
+    for (nvpair = header ->head;
          nvpair != NULL;
          nvpair = nvpair->next)
     {
@@ -2676,7 +2676,7 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
                              IB_FTYPE_BYTESTR,
                              ib_ftype_bytestr_mutable_in(nvpair->value));
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to create %s headers field: %s",
+            ib_log_error_tx(tx, "Failed to create %s header field: %s",
                             label, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -2697,7 +2697,7 @@ static ib_status_t ib_auditlog_add_part_http_head_fields(
 }
 
 /**
- * Add request headers to the audit log
+ * Add request header to the audit log
  *
  * @param[in,out] log Audit log to log to
  *
@@ -2740,10 +2740,10 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
     }
 
     /* Add the request header fields */
-    if (tx->request_headers != NULL) {
+    if (tx->request_header != NULL) {
         rc = ib_auditlog_add_part_http_head_fields(tx, mpool,
                                                    list, "request",
-                                                   tx->request_headers);
+                                                   tx->request_header);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -2751,10 +2751,10 @@ static ib_status_t ib_auditlog_add_part_http_request_head(ib_auditlog_t *log)
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
-                              "http-request-headers",
+                              "http-request-header",
                               "application/octet-stream",
                               list,
-                              ib_auditlog_gen_headers_flist,
+                              ib_auditlog_gen_header_flist,
                               NULL);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -2792,7 +2792,7 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
 }
 
 /**
- * Add response headers to the audit log
+ * Add response header to the audit log
  *
  * @param[in,out] log Audit log to log to
  *
@@ -2836,10 +2836,10 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
     }
 
     /* Add the response header fields */
-    if (tx->response_headers != NULL) {
+    if (tx->response_header != NULL) {
         rc = ib_auditlog_add_part_http_head_fields(tx, mpool,
                                                    list, "response",
-                                                   tx->response_headers);
+                                                   tx->response_header);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -2847,10 +2847,10 @@ static ib_status_t ib_auditlog_add_part_http_response_head(ib_auditlog_t *log)
 
     /* Add the part to the auditlog. */
     rc = ib_auditlog_part_add(log,
-                              "http-response-headers",
+                              "http-response-header",
                               "application/octet-stream",
                               list,
-                              ib_auditlog_gen_headers_flist,
+                              ib_auditlog_gen_header_flist,
                               NULL);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -2988,13 +2988,13 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_METADATA) {
         ib_auditlog_add_part_http_response_meta(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADERS) {
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_HEADER) {
         ib_auditlog_add_part_http_request_head(log);
     }
     if (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY) {
         ib_auditlog_add_part_http_request_body(log);
     }
-    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADERS) {
+    if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_HEADER) {
         ib_auditlog_add_part_http_response_head(log);
     }
     if (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY) {
@@ -3269,7 +3269,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    assert(event == request_headers_event);
+    assert(event == request_header_finished_event);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -3370,7 +3370,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    assert(event == response_headers_event);
+    assert(event == response_header_finished_event);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -5137,13 +5137,13 @@ static IB_STRVAL_MAP(core_parts_map) = {
     IB_STRVAL_PAIR("header", IB_ALPART_HEADER),
     IB_STRVAL_PAIR("events", IB_ALPART_EVENTS),
     IB_STRVAL_PAIR("requestmetadata", IB_ALPART_HTTP_REQUEST_METADATA),
-    IB_STRVAL_PAIR("requestheaders", IB_ALPART_HTTP_REQUEST_HEADERS),
+    IB_STRVAL_PAIR("requestheader", IB_ALPART_HTTP_REQUEST_HEADER),
     IB_STRVAL_PAIR("requestbody", IB_ALPART_HTTP_REQUEST_BODY),
-    IB_STRVAL_PAIR("requesttrailers", IB_ALPART_HTTP_REQUEST_TRAILERS),
+    IB_STRVAL_PAIR("requesttrailer", IB_ALPART_HTTP_REQUEST_TRAILER),
     IB_STRVAL_PAIR("responsemetadata", IB_ALPART_HTTP_RESPONSE_METADATA),
-    IB_STRVAL_PAIR("responseheaders", IB_ALPART_HTTP_RESPONSE_HEADERS),
+    IB_STRVAL_PAIR("responseheader", IB_ALPART_HTTP_RESPONSE_HEADER),
     IB_STRVAL_PAIR("responsebody", IB_ALPART_HTTP_RESPONSE_BODY),
-    IB_STRVAL_PAIR("responsetrailers", IB_ALPART_HTTP_RESPONSE_TRAILERS),
+    IB_STRVAL_PAIR("responsetrailer", IB_ALPART_HTTP_RESPONSE_TRAILER),
     IB_STRVAL_PAIR("debugfields", IB_ALPART_DEBUG_FIELDS),
 
     /* End */
@@ -5481,16 +5481,16 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, tx_started_event,
                         core_hook_tx_started, NULL);
     /*
-     * @todo Need the parser to parse headers before context, but others after
-     * context so that the personality can change based on headers (Host, uri
+     * @todo Need the parser to parse the header before context, but others after
+     * context so that the personality can change based on the header (Host, uri
      * path, etc)
      */
     /*
      * ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header,NULL);
      */
-    ib_hook_tx_register(ib, request_headers_event,
+    ib_hook_tx_register(ib, request_header_finished_event,
                         parser_hook_req_header, NULL);
-    ib_hook_tx_register(ib, response_headers_event,
+    ib_hook_tx_register(ib, response_header_finished_event,
                         parser_hook_resp_header, NULL);
 
     /* Register logevent hooks. */

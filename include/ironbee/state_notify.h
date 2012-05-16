@@ -102,86 +102,66 @@ ib_status_t DLL_PUBLIC ib_state_notify_conn_closed(ib_engine_t *ib,
                                                    ib_conn_t *conn);
 
 /**
- * Notify the state machine that the request started.
+ * Notify the state machine that the request started and the
+ * request line is available.
  *
  * The @a req parsed request object will be stored in @a tx for use after
  * the context has been determined.
  *
- * @note This is an optional event. Unless the plugin can detect that
- *       a request has started prior to receiving the headers, then you
- *       should just call @ref ib_state_notify_request_headers() when the
- *       headers are received which will automatically notify that the
- *       request has started.
- *
  * @param[in] ib Engine handle
- * @param[in] tx Transaction data
- * @param[in] req The parsed request object. If this is null the hooks for
- *            parsed content are not fired.
+ * @param[in] tx Transaction
+ * @param[in] line The parsed request line object.
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_request_started(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_req_line_t *req);
+    ib_parsed_req_line_t *line);
 
 
 /**
- * Notify the state machine that the request headers are available.
+ * Notify the state machine that more request header data is available.
  *
- * If headers are delivered incrementally @a headers should not be reused.
+ * If headers are delivered incrementally @a header should not be reused.
  *
- * To communicate the aggregate headers to the proper call backs this will
- * aggregate headers. This is done by storing the first @a headers.
+ * To communicate the aggregate header to the proper call backs this will
+ * aggregate header. This is done by storing the first @a header.
  * This is an optimistic optimization to avoid memory allocations.
  *
- * Upon subsequent calls to ib_state_notify_request_headers_data the
- * original @a headers structure is appended to
+ * Upon subsequent calls to ib_state_notify_request_header_data the
+ * original @a header structure is appended to
  * (using ib_parsed_name_value_pair_list_append).
  *
- * After all headers are received @a tx->request_headers is list
- * of all headers and is available via @a tx when
- * ib_state_notify_request_headers is called.
+ * After the header is received @a tx->request_header contains a list
+ * of all name/value pairs and is available via @a tx when
+ * ib_state_notify_request_header_finished() is called.
  *
- * @param[in] ib IronBee engine.
- * @param[in] tx Transaction object.
- * @param[in] headers If NULL, the callbacks are not fired.
- *
- * @returns Status code.
- */
-ib_status_t ib_state_notify_request_headers_data(
-    ib_engine_t *ib,
-    ib_tx_t *tx,
-    ib_parsed_header_wrapper_t *headers);
-
-/**
- * Notify the state machine that the response headers are available.
- *
- * @param[in] ib IronBee engine.
- * @param[in] tx Transaction object.
- * @param[in] headers If NULL, the callbacks are not fired.
+ * @param[in] ib Engine handle
+ * @param[in] tx Transaction
+ * @param[in] header Parsed header wrapper object
  *
  * @returns Status code.
  */
-ib_status_t ib_state_notify_response_headers_data(
+ib_status_t ib_state_notify_request_header_data(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_header_wrapper_t *headers);
+    ib_parsed_header_wrapper_t *header);
 
 /**
- * Notify the state machine that request headers are available.
+ * Notify the state machine that the request header is available.
  *
  * @param ib Engine handle
- * @param tx Transaction data
+ * @param tx Transaction
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_state_notify_request_headers(
+ib_status_t DLL_PUBLIC ib_state_notify_request_header_finished(
     ib_engine_t *ib,
     ib_tx_t *tx);
 
 /**
- * Notify the state machine that the request body is available.
+ * Notify the state machine that more request body data is available.
  *
  * @param ib Engine handle
  * @param tx Transaction
@@ -194,7 +174,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_body_data(ib_engine_t *ib,
                                                          ib_txdata_t *txdata);
 
 /**
- * Notify the state machine that a request finished.
+ * Notify the state machine that the entire request is finished.
  *
  * @param ib Engine handle
  * @param tx Transaction data
@@ -205,39 +185,50 @@ ib_status_t DLL_PUBLIC ib_state_notify_request_finished(ib_engine_t *ib,
                                                         ib_tx_t *tx);
 
 /**
- * Notify the state machine that a response started.
+ * Notify the state machine that a response started and that the
+ * response line is available.
  *
- * @note This is an optional event. Unless the plugin can detect that
- *       a response has started prior to receiving the headers, then you
- *       should just call @ref ib_state_notify_response_headers() when the
- *       headers are received which will automatically notify that the
- *       request has started.
+ * @note The line may be NULL for HTTP/0.9 requests which do not
+ *       have a response line.
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction data
- * @param[in] resp The parsed response line. If this is null the call backs
- *            to handle the parsed content are not fired.
+ * @param[in] line The parsed response line object (NULL for HTTP/0.9)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_state_notify_response_started(
     ib_engine_t *ib,
     ib_tx_t *tx,
-    ib_parsed_resp_line_t *resp);
+    ib_parsed_resp_line_t *line);
 
 /**
- * Notify the state machine that the response headers are available.
+ * Notify the state machine that more response header data is available.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] tx Transaction object.
+ * @param[in] header Parsed header wrapper object
+ *
+ * @returns Status code.
+ */
+ib_status_t ib_state_notify_response_header_data(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_parsed_header_wrapper_t *header);
+
+/**
+ * Notify the state machine that the response header is available.
  *
  * @param ib Engine handle
  * @param tx Transaction data
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_state_notify_response_headers(ib_engine_t *ib,
-                                                        ib_tx_t *tx);
+ib_status_t DLL_PUBLIC ib_state_notify_response_header_finished(ib_engine_t *ib,
+                                                                ib_tx_t *tx);
 
 /**
- * Notify the state machine that the response body is available.
+ * Notify the state machine that more response body data is available.
  *
  * @param ib Engine handle
  * @param tx Transaction
@@ -250,7 +241,7 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_body_data(ib_engine_t *ib,
                                                           ib_txdata_t *txdata);
 
 /**
- * Notify the state machine that a response finished.
+ * Notify the state machine that the entire response is finished.
  *
  * @param ib Engine handle
  * @param tx Transaction data

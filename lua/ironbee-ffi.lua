@@ -95,9 +95,9 @@ ffi.cdef [[
         handle_context_conn_event,
         handle_connect_event,
         handle_context_tx_event,
-        handle_request_headers_event,
+        handle_request_header_event,
         handle_request_event,
-        handle_response_headers_event,
+        handle_response_header_event,
         handle_response_event,
         handle_disconnect_event,
         handle_postprocess_event,
@@ -108,13 +108,13 @@ ffi.cdef [[
         conn_data_out_event,
         conn_closed_event,
         request_started_event,
-        request_headers_event,
-        request_headers_data_event,
+        request_header_data_event,
+        request_header_finished_event,
         request_body_data_event,
         request_finished_event,
         response_started_event,
-        response_headers_event,
-        response_headers_data_event,
+        response_header_data_event,
+        response_header_finished_event,
         response_body_data_event,
         response_finished_event,
         IB_STATE_EVENT_NUM
@@ -258,11 +258,11 @@ ffi.cdef [[
         struct {
             ib_time_t       started;
             ib_time_t       request_started;
-            ib_time_t       request_headers;
+            ib_time_t       request_header;
             ib_time_t       request_body;
             ib_time_t       request_finished;
             ib_time_t       response_started;
-            ib_time_t       response_headers;
+            ib_time_t       response_header;
             ib_time_t       response_body;
             ib_time_t       response_finished;
             ib_time_t       postprocess;
@@ -276,10 +276,10 @@ ffi.cdef [[
         ib_flags_t          flags;
 
         ib_parsed_req_line_t *request_line;
-        ib_parsed_header_wrapper_t *request_headers;
+        ib_parsed_header_wrapper_t *request_header;
 
         ib_parsed_resp_line_t *response_line;
-        ib_parsed_header_wrapper_t *response_headers;
+        ib_parsed_header_wrapper_t *response_header;
     };
 
     /* Parsed Name Value Pair List Node */
@@ -1243,11 +1243,11 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newConn(arg)
     elseif c_event == c.handle_context_tx_event then
         l_arg = newTx(arg)
-    elseif c_event == c.handle_request_headers_event then
+    elseif c_event == c.handle_request_header_event then
         l_arg = newTx(arg)
     elseif c_event == c.handle_request_event then
         l_arg = newTx(arg)
-    elseif c_event == c.handle_response_headers_event then
+    elseif c_event == c.handle_response_header_event then
         l_arg = newTx(arg)
     elseif c_event == c.handle_response_event then
         l_arg = newTx(arg)
@@ -1265,7 +1265,7 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newConn(arg)
     elseif c_event == c.request_started_event then
         l_arg = newTx(arg)
-    elseif c_event == c.request_headers_event then
+    elseif c_event == c.request_header_finished_event then
         l_arg = newTx(arg)
     elseif c_event == c.request_body_data_event then
         l_arg = newTx(arg)
@@ -1273,7 +1273,7 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newTx(arg)
     elseif c_event == c.response_started_event then
         l_arg = newTx(arg)
-    elseif c_event == c.response_headers_event then
+    elseif c_event == c.response_header_finished_event then
         l_arg = newTx(arg)
     elseif c_event == c.response_body_data_event then
         l_arg = newTx(arg)

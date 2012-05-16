@@ -57,7 +57,7 @@ typedef enum {
     IB_SERVER_RESPONSE = 0x02
 } ib_server_direction_t;
 
-/* Functions to modify HTTP Request/Response Headers
+/* Functions to modify HTTP Request/Response Header
  *
  * We support header actions as in httpd's mod_headers, with semantics
  * as documented at
@@ -232,7 +232,7 @@ ib_status_t ib_server_error_header(
 );
 
 /**
- * Function to modify HTTP Request/Response Headers
+ * Function to modify HTTP Request/Response Header
  *
  * We support header actions as in httpd's mod_headers, with semantics
  * as documented at

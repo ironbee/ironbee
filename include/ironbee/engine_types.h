@@ -100,23 +100,25 @@ typedef enum {
 #define IB_CONN_FCLOSED         (1 << 5) /**< Connection closed */
 
 /* Transaction Flags */
-/// @todo Do we need anymore???
 #define IB_TX_FNONE             (0)
-#define IB_TX_FERROR            (1 << 0) /**< Transaction had an error */
-#define IB_TX_FHTTP09           (1 << 1) /**< Transaction is HTTP/0.9 */
-#define IB_TX_FPIPELINED        (1 << 2) /**< Transaction is pipelined */
-#define IB_TX_FSEENDATAIN       (1 << 3) /**< Transaction had data in */
-#define IB_TX_FSEENDATAOUT      (1 << 4) /**< Transaction had data out */
-#define IB_TX_FREQ_STARTED      (1 << 5) /**< Request started */
-#define IB_TX_FREQ_SEENHEADERS  (1 << 6) /**< Request headers seen */
-#define IB_TX_FREQ_NOBODY       (1 << 7) /**< Request should not have body */
-#define IB_TX_FREQ_SEENBODY     (1 << 8) /**< Request body seen */
-#define IB_TX_FREQ_FINISHED     (1 << 9) /**< Request finished */
-#define IB_TX_FRES_STARTED      (1 <<10) /**< Response started */
-#define IB_TX_FRES_SEENHEADERS  (1 <<11) /**< Response headers seen */
-#define IB_TX_FRES_SEENBODY     (1 <<12) /**< Response body seen */
-#define IB_TX_FRES_FINISHED     (1 <<13) /**< Response finished  */
-#define IB_TX_FSUSPICIOUS       (1 <<14) /**< Transaction is suspicious */
+#define IB_TX_FERROR            (1 <<  0) /**< Transaction had an error */
+#define IB_TX_FHTTP09           (1 <<  1) /**< Transaction is HTTP/0.9 */
+#define IB_TX_FPIPELINED        (1 <<  2) /**< Transaction is pipelined */
+#define IB_TX_FPARSED_DATA      (1 <<  3) /**< Transaction with parsed data */
+#define IB_TX_FSEENDATAIN       (1 <<  4) /**< Transaction had data in */
+#define IB_TX_FSEENDATAOUT      (1 <<  5) /**< Transaction had data out */
+#define IB_TX_FREQ_STARTED      (1 <<  6) /**< Request started */
+#define IB_TX_FREQ_SEENHEADER   (1 <<  7) /**< Request header seen */
+#define IB_TX_FREQ_NOBODY       (1 <<  8) /**< Request should not have body */
+#define IB_TX_FREQ_SEENBODY     (1 <<  9) /**< Request body seen */
+#define IB_TX_FREQ_SEENTRAILER  (1 << 10) /**< Request trailer seen */
+#define IB_TX_FREQ_FINISHED     (1 << 11) /**< Request finished */
+#define IB_TX_FRES_STARTED      (1 << 12) /**< Response started */
+#define IB_TX_FRES_SEENHEADER   (1 << 13) /**< Response header seen */
+#define IB_TX_FRES_SEENBODY     (1 << 14) /**< Response body seen */
+#define IB_TX_FRES_SEENTRAILER  (1 << 15) /**< Response trailer seen */
+#define IB_TX_FRES_FINISHED     (1 << 16) /**< Response finished  */
+#define IB_TX_FSUSPICIOUS       (1 << 17) /**< Transaction is suspicious */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
@@ -189,11 +191,11 @@ struct ib_tx_t {
     struct {
         ib_time_t       started;         /**< Tx started time */
         ib_time_t       request_started; /**< Request started time */
-        ib_time_t       request_headers; /**< Request headers time */
+        ib_time_t       request_header;  /**< Request header time */
         ib_time_t       request_body;    /**< Request body time */
         ib_time_t       request_finished;/**< Request finished time */
         ib_time_t       response_started;/**< Response started time */
-        ib_time_t       response_headers;/**< Response headers time */
+        ib_time_t       response_header; /**< Response header time */
         ib_time_t       response_body;   /**< Response body time */
         ib_time_t       response_finished;/**< Response finished time */
         ib_time_t       postprocess;     /**< Postprocess time */
@@ -209,11 +211,11 @@ struct ib_tx_t {
 
     /* Request */
     ib_parsed_req_line_t *request_line;  /**< Request line */
-    ib_parsed_header_wrapper_t *request_headers;/**< Request headers */
+    ib_parsed_header_wrapper_t *request_header;/**< Request header */
 
     /* Response */
     ib_parsed_resp_line_t *response_line;/**< Response line */
-    ib_parsed_header_wrapper_t *response_headers;/**< Response headers */
+    ib_parsed_header_wrapper_t *response_header;/**< Response header */
 };
 
 /** Site Structure */

@@ -53,7 +53,7 @@ extern "C" {
 typedef enum {
     IB_STREAM_DATA,                      /**< Data is available */
     IB_STREAM_FLUSH,                     /**< Data should be flushed */
-    IB_STREAM_EOH,                       /**< End of Headers */
+    IB_STREAM_EOH,                       /**< End of Header */
     IB_STREAM_EOB,                       /**< End of Body */
     IB_STREAM_EOS,                       /**< End of Stream */
     IB_STREAM_ERROR,                     /**< Error */

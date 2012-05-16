@@ -46,7 +46,7 @@ extern "C" {
 struct ib_tx_t;
 
 /**
- * A link list element representing HTTP headers.
+ * A link list element representing the HTTP header.
  */
 typedef struct ib_parsed_name_value_pair_list_t {
     ib_bytestr_t *name;  /**< Name. */
@@ -105,7 +105,8 @@ typedef struct ib_parsed_name_value_pair_list ib_parsed_trailer_t;
 
 
 /**
- * Callback for iterating through a list of headers.
+ * Callback for iterating through a list of name/value
+ * pairs within the HTTP header.
  * IB_OK must be returned. Otherwise the loop will terminate prematurely.
  */
 typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
@@ -115,19 +116,19 @@ typedef ib_status_t (*ib_parsed_tx_each_header_callback)(const char *name,
                                                          void* user_data);
 
 /**
- * Construct a headers (or trailers) object.
+ * Construct a HTTP header (or trailer) object.
  *
- * This calloc's @a **headers from @a mp.
- * Then @a mp is stored in @a **headers so that all future list elements
+ * This calloc's @a **header from @a mp.
+ * Then @a mp is stored in @a **header so that all future list elements
  * are allocated from the same memory pool and all released when the pool
  * is released.
  *
- * @param[out] headers The headers object that will be constructed.
- * @param[in] tx The transaction that will allocate the headers object.
+ * @param[out] header The header object that will be constructed.
+ * @param[in] tx The transaction that will allocate the header object.
  * @returns IB_OK or IB_EALLOC if mp could not allocate memory.
  */
 ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
-    ib_parsed_name_value_pair_list_wrapper_t **headers,
+    ib_parsed_name_value_pair_list_wrapper_t **header,
     struct ib_tx_t *tx);
 
 /**
@@ -139,7 +140,7 @@ ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
  * will be released when the list elements allocated out of @a mp are
  * released.
  *
- * @param[out] headers The list the the header object will be stored in.
+ * @param[out] header The list the the header object will be stored in.
  * @param[in] name The char* that will be stored as the start of the name.
  * @param[in] name_len The length of the string starting at @a name.
  * @param[in] value The char* that will be stored as the start of the value.
@@ -148,14 +149,14 @@ ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_wrapper_create(
  *          allocated.
  */
 ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_add(
-    ib_parsed_name_value_pair_list_wrapper_t *headers,
+    ib_parsed_name_value_pair_list_wrapper_t *header,
     const char *name,
     size_t name_len,
     const char *value,
     size_t value_len);
 
 /**
- * Apply @a callback to each name-value header pair in @a headers.
+ * Apply @a callback to each name-value header pair in @a header.
  *
  * This function may also be used for ib_parsed_trailer_t* objects as
  * they are typedefs of the same struct.
@@ -167,7 +168,7 @@ ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_add(
  * return IB_OK. The last return code from @a callback is the return code
  * of this function.
  *
- * @param[in] headers The list to be iterated through.
+ * @param[in] header The list to be iterated through.
  * @param[in] callback The function supplied by the caller to process the
  *            name-value pairs.
  * @param[in] user_data A pointer that is forwarded to the callback so
@@ -177,7 +178,7 @@ ib_status_t DLL_PUBLIC ib_parsed_name_value_pair_list_add(
  *          and that return code is returned.
  */
 ib_status_t DLL_PUBLIC ib_parsed_tx_each_header(
-    ib_parsed_name_value_pair_list_wrapper_t *headers,
+    ib_parsed_name_value_pair_list_wrapper_t *header,
     ib_parsed_tx_each_header_callback callback,
     void* user_data);
 

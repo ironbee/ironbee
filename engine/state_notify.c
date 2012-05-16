@@ -677,22 +677,22 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
  * @param ib Engine.
  * @param tx Transaction.
  * @param event Event.
- * @param headers Connection data.
+ * @param header Connection data.
  *
  * @returns Status code.
  */
-static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
-                                           ib_tx_t *tx,
-                                           ib_state_event_type_t event,
-                                           ib_parsed_header_wrapper_t *headers)
+static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
+                                               ib_tx_t *tx,
+                                               ib_state_event_type_t event,
+                                               ib_parsed_header_wrapper_t *header)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(headers != NULL);
+    assert(header != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_headers(%p,%p,%d,%p)", ib, tx, event, headers);
+    ib_log_debug3_tx(tx, "ib_state_notify_header_data(%p,%p,%d,%p)",ib, tx, event, header);
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
@@ -706,10 +706,10 @@ static ib_status_t ib_state_notify_headers(ib_engine_t *ib,
     CALL_HOOKS(&rc,
                ib->hook[event],
                event,
-               headersdata,
+               headerdata,
                ib,
                tx,
-               headers->head);
+               header->head);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
         IB_FTRACE_RET_STATUS(rc);
@@ -746,10 +746,8 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Under certain circumstances there is no data. Guard against that. */
-    if ( ib_log_get_level(ib) >= 9 && txdata != NULL ) {
-        ib_log_debug3_tx(tx, "TX DATA EVENT: %s",
-                     ib_state_event_name(event));
+    if (ib_log_get_level(ib) >= 9) {
+        ib_log_debug3_tx(tx, "TX DATA EVENT: %s", ib_state_event_name(event));
     }
 
     /* This transaction is now the current (for pipelined). */
@@ -764,56 +762,53 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_state_notify_request_headers_data(
-    ib_engine_t *ib,
-    ib_tx_t *tx,
-    ib_parsed_header_wrapper_t *headers)
+ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
+                                                ib_tx_t *tx,
+                                                ib_parsed_header_wrapper_t *header)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(headers != NULL);
+    assert(header != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_request_headers_data(%p,%p,%p)", ib, tx, headers);
+    ib_log_debug3_tx(tx, "ib_state_notify_request_header_data(%p,%p,%p)", ib, tx, header);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     /* Mark the time. */
-    tx->t.request_started = ib_clock_get_time();
-
-    /* Mark the time. */
-    tx->t.request_started = ib_clock_get_time();
-
-    if ( tx->request_headers == NULL ) {
-        tx->request_headers = headers;
+    if (tx->t.request_started == 0) {
+        tx->t.request_started = ib_clock_get_time();
     }
 
+    if ( tx->request_header == NULL ) {
+        tx->request_header = header;
+    }
     else {
-        rc = ib_parsed_name_value_pair_list_append(tx->request_headers,
-                                                   headers);
+        rc = ib_parsed_name_value_pair_list_append(tx->request_header,
+                                                   header);
 
-        if ( rc != IB_OK ) {
+        if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
     /* Call the parser with the data. */
-    rc = iface->request_header_data(pi, tx, headers);
+    rc = iface->request_header_data(pi, tx, header);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_headers(ib, tx, request_headers_data_event, headers);
+    rc = ib_state_notify_header_data(ib, tx, request_header_data_event, header);
     IB_FTRACE_RET_STATUS(rc);
 }
 
 
 /**
- * @ref request_headers_event occurs.
+ * @ref request_header_finished_event occurs.
  *
  * When the event is notified, additional events are notified immediately
  * prior to it:
@@ -823,9 +818,9 @@ ib_status_t ib_state_notify_request_headers_data(
  * And immediately following it:
  *
  *  - @ref handle_context_tx_event
- *  - @ref handle_request_headers_event
+ *  - @ref handle_request_header_event
  */
-ib_status_t ib_state_notify_request_headers(
+ib_status_t ib_state_notify_request_header_finished(
     ib_engine_t *ib,
     ib_tx_t *tx)
 {
@@ -834,16 +829,16 @@ ib_status_t ib_state_notify_request_headers(
     assert(ib != NULL);
     assert(tx != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_request_headers(%p,%p)", ib, tx);
+    ib_log_debug3_tx(tx, "ib_state_notify_request_header_finished(%p,%p)", ib, tx);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     /* Validate. */
-    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADERS)) {
+    if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
         ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(request_headers_event));
+                     ib_state_event_name(request_header_finished_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -854,7 +849,7 @@ ib_status_t ib_state_notify_request_headers(
     }
 
     /* Mark the time. */
-    tx->t.request_headers = ib_clock_get_time();
+    tx->t.request_header = ib_clock_get_time();
 
     /// @todo Seems this gets there too late.
     rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOH);
@@ -862,9 +857,9 @@ ib_status_t ib_state_notify_request_headers(
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADERS);
+    ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADER);
 
-    rc = ib_state_notify_tx(ib, request_headers_event, tx);
+    rc = ib_state_notify_tx(ib, request_header_finished_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -881,13 +876,13 @@ ib_status_t ib_state_notify_request_headers(
     }
 
     /* Call the parser with the data. */
-    rc = iface->request_headers_finished(pi, tx);
+    rc = iface->request_header_finished(pi, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_tx(ib, handle_request_headers_event, tx);
+    rc = ib_state_notify_tx(ib, handle_request_header_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -908,10 +903,10 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Validate. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADERS)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
         ib_log_debug3_tx(tx, "Automatically triggering %s",
-                         ib_state_event_name(request_headers_event));
-        ib_state_notify_request_headers(ib, tx);
+                         ib_state_event_name(request_header_finished_event));
+        ib_state_notify_request_header_finished(ib, tx);
     }
 
     /* On the first call, record the time and mark that there is a body. */
@@ -971,10 +966,10 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADERS)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
         ib_log_debug3_tx(tx, "Automatically triggering %s",
-                     ib_state_event_name(request_headers_event));
-        ib_state_notify_request_headers(ib, tx);
+                     ib_state_event_name(request_header_finished_event));
+        ib_state_notify_request_header_finished(ib, tx);
     }
 
     /* Mark the time. */
@@ -1038,39 +1033,52 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_state_notify_response_headers_data(
-    ib_engine_t *ib,
-    ib_tx_t *tx,
-    ib_parsed_header_wrapper_t *headers)
+ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
+                                                 ib_tx_t *tx,
+                                                 ib_parsed_header_wrapper_t *header)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(headers != NULL);
+    assert(header != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_response_headers_data(%p,%p,%p)", ib, tx, headers);
+    ib_log_debug3_tx(tx, "ib_state_notify_response_header_data(%p,%p,%p)", ib, tx, header);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     /* Mark the time. */
-    tx->t.request_started = ib_clock_get_time();
+    if (tx->t.response_started == 0) {
+        tx->t.response_started = ib_clock_get_time();
+    }
+
+    if ( tx->response_header == NULL ) {
+        tx->response_header = header;
+    }
+    else {
+        rc = ib_parsed_name_value_pair_list_append(tx->response_header,
+                                                   header);
+
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
 
     /* Call the parser with the data. */
-    rc = iface->response_header_data(pi, tx, headers);
+    rc = iface->response_header_data(pi, tx, header);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_headers(ib, tx, response_headers_data_event, headers);
+    rc = ib_state_notify_header_data(ib, tx, response_header_data_event, header);
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
- * @ref response_headers_event occurs.
+ * @ref response_header_event occurs.
  *
  * When the event is notified, additional events are notified
  * immediately prior to it:
@@ -1079,26 +1087,26 @@ ib_status_t ib_state_notify_response_headers_data(
  *
  * And immediately following it:
  *
- *  - @ref handle_response_headers_event
+ *  - @ref handle_response_header_event
  */
-ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
-                                             ib_tx_t *tx)
+ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
+                                                     ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
     assert(tx != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_response_headers(%p,%p)", ib, tx);
+    ib_log_debug3_tx(tx, "ib_state_notify_response_header_finished(%p,%p)", ib, tx);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     /* Validate. */
-    if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADERS)) {
+    if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
         ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(response_headers_event));
+                     ib_state_event_name(response_header_finished_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1109,23 +1117,23 @@ ib_status_t ib_state_notify_response_headers(ib_engine_t *ib,
     }
 
     /* Mark the time. */
-    tx->t.response_headers = ib_clock_get_time();
+    tx->t.response_header = ib_clock_get_time();
 
-    ib_tx_flags_set(tx, IB_TX_FRES_SEENHEADERS);
+    ib_tx_flags_set(tx, IB_TX_FRES_SEENHEADER);
 
-    rc = ib_state_notify_tx(ib, response_headers_event, tx);
+    rc = ib_state_notify_tx(ib, response_header_finished_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Call the parser with the data. */
-    rc = iface->response_headers_finished(pi, tx);
+    rc = iface->response_header_finished(pi, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Notify the engine and any callbacks of the data. */
-    rc = ib_state_notify_tx(ib, handle_response_headers_event, tx);
+    rc = ib_state_notify_tx(ib, handle_response_header_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1154,18 +1162,18 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Validate. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADERS)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
         /* For HTTP/0.9 there are no headers, but the even still
          * needs to be notified.
          */
         if (ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
-            rc = ib_state_notify_response_headers(ib, tx);
+            rc = ib_state_notify_response_header_finished(ib, tx);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
         else {
-            ib_log_error_tx(tx, "Received response body data event before response headers event: tx=%p", tx);
+            ib_log_error_tx(tx, "Received response body data event before response header finished event: tx=%p", tx);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
@@ -1210,8 +1218,8 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADERS)) {
-        ib_log_error_tx(tx, "Received response finished event before response headers event: tx=%p", tx);
+    if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
+        ib_log_error_tx(tx, "Received response finished event before response header event: tx=%p", tx);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 

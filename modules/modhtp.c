@@ -75,6 +75,7 @@ struct modhtp_context_t {
     modhtp_cfg_t   *modcfg;       /**< Module config structure */
     htp_cfg_t      *htp_cfg;      /**< Parser config handle */
     htp_connp_t    *htp;          /**< Parser handle */
+    int            parsed_data;   /**< Set when processing parsed data */
 };
 
 /** Module Configuration Structure */
@@ -380,12 +381,20 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     ib_status_t rc;
     htp_tx_t *tx;
 
-    /* Create the transaction structure. */
-    ib_log_debug3(ib, "Creating transaction structure");
-    rc = ib_tx_create(&itx, iconn, NULL);
-    if (rc != IB_OK) {
-        /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+    /* If this is a parsed data transaction, then use the existing
+     * transaction structure, otherwise create one.
+     */
+    if (modctx->parsed_data != 0) {
+        itx = iconn->tx;
+    }
+    else {
+        /* Create the transaction structure. */
+        ib_log_debug3(ib, "Creating transaction structure");
+        rc = ib_tx_create(&itx, iconn, NULL);
+        if (rc != IB_OK) {
+            /// @todo Set error.
+            IB_FTRACE_RET_INT(HTP_ERROR);
+        }
     }
 
     /* Store this as the current transaction. */
@@ -422,7 +431,6 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     ib_parsed_req_line_t *req_line;
     ib_tx_t *itx;
     ib_status_t rc;
-
 
     /* Use the current parser transaction to generate fields. */
     ib_log_debug3(ib, "LIBHTP: state=%d", connp->in_status);
@@ -466,6 +474,14 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
                         iconn->local_ipstr);
         /// @todo Probably should set a flag here
         itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
+    }
+
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
     }
 
     /* Allocate and fill the parsed request line object */
@@ -530,13 +546,13 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     }
 
     /* Fetch the ironbee transaction and notify the engine
-     * that the request headers are now available.
+     * that the request header is now available.
      */
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
         ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in request headers: 0x%08x",
+                     "HTP parser flagged an event in request header: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
@@ -553,6 +569,14 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                      iconn->local_ipstr);
         /// @todo Probably should set a flag here
         itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
+    }
+
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
     }
 
     /* Copy the request fields into a parse name value pair list object */
@@ -586,16 +610,15 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
         }
     }
 
-    /* The full headers are now available. */
-    rc = ib_state_notify_request_headers_data(ib, itx, ibhdrs);
+    rc = ib_state_notify_request_header_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Error generating request headers: %s",
+        ib_log_error_tx(itx, "Error notifying request header data: %s",
                      ib_status_to_string(rc));
     }
 
-    rc = ib_state_notify_request_headers(ib, itx);
+    rc = ib_state_notify_request_header_finished(ib, itx);
     if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Error notifying request headers: %s",
+        ib_log_error_tx(itx, "Error notifying request header finished: %s",
                      ib_status_to_string(rc));
     }
 
@@ -633,6 +656,14 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
                      "HTP parser flagged an event in request body: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
+
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
     }
 
     /* Notify the engine of any request body data. */
@@ -682,6 +713,14 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
+    }
+
     /// @todo Notify tx_datain_event w/request trailer
     ib_log_debug_tx(itx,
         "TODO: tx_datain_event w/request trailer: tx=%p", itx);
@@ -719,6 +758,14 @@ static int modhtp_htp_request(htp_connp_t *connp)
                      "HTP parser flagged an event in request: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+    }
+
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
     }
 
     ib_state_notify_request_finished(ib, itx);
@@ -759,6 +806,13 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
+    }
 
     /* Allocate and fill the parsed response line object */
     // FIXME: libhtp bstr_{ptr,len} should work for NULL bstr
@@ -815,15 +869,23 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     }
 
     /* Fetch the ironbee transaction and notify the engine
-     * that the response headers are now available.
+     * that the response header is now available.
      */
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
         ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in response headers: 0x%08x",
+                     "HTP parser flagged an event in response header: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+    }
+
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
     }
 
     /* Copy the response fields into a parse name value pair list object */
@@ -858,16 +920,15 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
         }
     }
 
-    /* The full headers are now available. */
-    rc = ib_state_notify_response_headers_data(ib, itx, ibhdrs);
+    rc = ib_state_notify_response_header_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Error generating response headers: %s",
+        ib_log_error_tx(itx, "Error notifying response header data: %s",
                      ib_status_to_string(rc));
     }
 
-    rc = ib_state_notify_response_headers(ib, itx);
+    rc = ib_state_notify_response_header_finished(ib, itx);
     if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Error notifying response headers: %s",
+        ib_log_error_tx(itx, "Error notifying response header finished: %s",
                      ib_status_to_string(rc));
     }
 
@@ -907,6 +968,13 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
+    }
 
     /* Notify the engine of any response body data. */
     if (txdata->data != NULL) {
@@ -954,6 +1022,14 @@ static int modhtp_htp_response(htp_connp_t *connp)
                      "HTP parser flagged an event in response: 0x%08x",
                      tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+    }
+
+    /* The engine may have already been notified if the parser is
+     * receiving already parsed data.  In this case the engine
+     * must not be notified again and instead return.
+     */
+    if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+        IB_FTRACE_RET_INT(HTP_OK);
     }
 
     ib_state_notify_response_finished(ib, itx);
@@ -1363,9 +1439,10 @@ static ib_status_t modhtp_send_header_data(const char *name,
     return rc;
 }
 
+
 static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
                                                     ib_tx_t *tx,
-                                                    ib_parsed_header_wrapper_t *headers)
+                                                    ib_parsed_header_wrapper_t *header)
 {
     IB_FTRACE_INIT();
 
@@ -1396,8 +1473,8 @@ static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t modhtp_iface_request_headers_finished(ib_provider_inst_t *pi,
-                                                         ib_tx_t *tx)
+static ib_status_t modhtp_iface_request_header_finished(ib_provider_inst_t *pi,
+                                                        ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
@@ -1494,7 +1571,7 @@ static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
 
 static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
                                                      ib_tx_t *tx,
-                                                     ib_parsed_header_wrapper_t *headers)
+                                                     ib_parsed_header_wrapper_t *header)
 {
     IB_FTRACE_INIT();
 
@@ -1525,7 +1602,7 @@ static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t modhtp_iface_response_headers_finished(ib_provider_inst_t *pi,
+static ib_status_t modhtp_iface_response_header_finished(ib_provider_inst_t *pi,
                                                           ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
@@ -1657,8 +1734,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  tx->parsed_uri->fragment,
                                  NULL);
 
-#if 0
-        rc = ib_data_add_list(itx->dpi, "request_headers", &f);
+        rc = ib_data_add_list(itx->dpi, "request_header", &f);
         if (   (tx->request_headers != NULL)
             && table_size(tx->request_headers)
             && (rc == IB_OK))
@@ -1668,7 +1744,7 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_headers);
-            ib_log_debug3_tx(itx, "Adding request_headers fields");
+            ib_log_debug3_tx(itx, "Adding request_header fields");
             while ((key = table_iterator_next(tx->request_headers,
                                               (void *)&h)) != NULL)
             {
@@ -1698,14 +1774,13 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
         }
         else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3_tx(itx, "No request headers");
+            ib_log_debug3_tx(itx, "No request header");
         }
         else {
             ib_log_error_tx(itx,
-                         "Failed to create request headers list: %s",
+                         "Failed to create request header list: %s",
                          ib_status_to_string(rc));
         }
-#endif
 
         rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
         if (   (tx->request_cookies != NULL)
@@ -1797,7 +1872,6 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
                                                            ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
-#if 0
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
@@ -1824,7 +1898,7 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
 
         /// @todo Need a table type that can have more than one
         ///       of the same header.
-        rc = ib_data_add_list(itx->dpi, "response_headers", &f);
+        rc = ib_data_add_list(itx->dpi, "response_header", &f);
         if (   (tx->response_headers != NULL)
             && table_size(tx->response_headers)
             && (rc == IB_OK))
@@ -1863,15 +1937,14 @@ static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *p
         }
         else if (rc == IB_OK) {
             /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3_tx(itx, "No response headers");
+            ib_log_debug3_tx(itx, "No response header");
         }
         else {
             ib_log_error_tx(itx,
-                         "Failed to create response headers list: %s",
+                         "Failed to create response header list: %s",
                          ib_status_to_string(rc));
         }
     }
-#endif
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1890,12 +1963,12 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 
     modhtp_iface_request_line,
     modhtp_iface_request_header_data,
-    modhtp_iface_request_headers_finished,
+    modhtp_iface_request_header_finished,
     modhtp_iface_request_body_data,
 
     modhtp_iface_response_line,
     modhtp_iface_response_header_data,
-    modhtp_iface_response_headers_finished,
+    modhtp_iface_response_header_finished,
     modhtp_iface_response_body_data,
 
     modhtp_iface_gen_request_header_fields,

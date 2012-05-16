@@ -315,14 +315,14 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
     else if (strcmp("RequestStarted", event_name) == 0) {
         event = request_started_event;
     }
-    else if (strcmp("RequestHeaders", event_name) == 0) {
-        event = request_headers_event;
+    else if (strcmp("RequestHeaderFinished", event_name) == 0) {
+        event = request_header_finished_event;
     }
-    else if (strcmp("RequestHeadersData", event_name) == 0) {
-        event = request_headers_data_event;
+    else if (strcmp("RequestHeaderData", event_name) == 0) {
+        event = request_header_data_event;
     }
-    else if (strcmp("HandleRequestHeaders", event_name) == 0) {
-        event = handle_request_headers_event;
+    else if (strcmp("HandleRequestHeader", event_name) == 0) {
+        event = handle_request_header_event;
     }
     else if (strcmp("HandleContextTx", event_name) == 0) {
         event = handle_context_tx_event;
@@ -342,14 +342,14 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
     else if (strcmp("ResponseStarted", event_name) == 0) {
         event = response_started_event;
     }
-    else if (strcmp("ResponseHeaders", event_name) == 0) {
-        event = response_headers_event;
+    else if (strcmp("ResponseHeaderFinished", event_name) == 0) {
+        event = response_header_finished_event;
     }
-    else if (strcmp("ResponseHeadersData", event_name) == 0) {
-        event = response_headers_data_event;
+    else if (strcmp("ResponseHeaderData", event_name) == 0) {
+        event = response_header_data_event;
     }
-    else if (strcmp("HandleResponseHeaders", event_name) == 0) {
-        event = handle_response_headers_event;
+    else if (strcmp("HandleResponseHeader", event_name) == 0) {
+        event = handle_response_header_event;
     }
     else if (strcmp("ResponseBody", event_name) == 0) {
         event = response_body_data_event;
@@ -1164,14 +1164,14 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
     /// @todo No longer needed.
     switch(event) {
         /* Normal Event Handlers */
-        case handle_request_headers_event:
-            funcname = "onEventHandleRequestHeaders";
+        case handle_request_header_event:
+            funcname = "onEventHandleRequestHeader";
             break;
         case handle_request_event:
             funcname = "onEventHandleRequest";
             break;
-        case handle_response_headers_event:
-            funcname = "onEventHandleResponseHeaders";
+        case handle_response_header_event:
+            funcname = "onEventHandleResponseHeader";
             break;
         case handle_response_event:
             funcname = "onEventHandleResponse";
@@ -1193,11 +1193,11 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
             break;
 
         /* Request Handlers */
-        case request_headers_event:
-            funcname = "onEventRequestHeaders";
+        case request_header_finished_event:
+            funcname = "onEventRequestHeader";
             break;
-        case request_headers_data_event:
-            funcname = "onEventRequestHeadersData";
+        case request_header_data_event:
+            funcname = "onEventRequestHeaderData";
             break;
         case request_body_data_event:
             funcname = "onEventRequestBody";
@@ -1213,11 +1213,11 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
         case response_started_event:
             funcname = "onEventResponseStarted";
             break;
-        case response_headers_data_event:
-            funcname = "onEventResponseDataHeaders";
+        case response_header_data_event:
+            funcname = "onEventResponseDataHeader";
             break;
-        case response_headers_event:
-            funcname = "onEventResponseHeaders";
+        case response_header_finished_event:
+            funcname = "onEventResponseHeader";
             break;
         case response_body_data_event:
             funcname = "onEventResponseBody";
@@ -1906,7 +1906,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, request_headers_event,
+    rc = ib_hook_tx_register(ib, request_header_finished_event,
                              modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
@@ -1920,7 +1920,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, handle_request_headers_event,
+    rc = ib_hook_tx_register(ib, handle_request_header_event,
                              modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
@@ -1962,14 +1962,14 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, response_headers_event,
+    rc = ib_hook_tx_register(ib, response_header_finished_event,
                              modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
     }
-    rc = ib_hook_tx_register(ib, handle_response_headers_event,
+    rc = ib_hook_tx_register(ib, handle_response_header_event,
                              modlua_handle_tx_event,
                              NULL);
     if (rc != IB_OK) {

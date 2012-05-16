@@ -388,11 +388,11 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         request_header_data,
-        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_header_wrapper_t *headers)
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_header_wrapper_t *header)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
-        request_headers_finished,
+        request_header_finished,
         (ib_provider_inst_t *pi, ib_tx_t *tx)
     );
     IB_PROVIDER_FUNC(
@@ -410,11 +410,11 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         response_header_data,
-        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_header_wrapper_t *headers)
+        (ib_provider_inst_t *pi, ib_tx_t *tx, ib_parsed_header_wrapper_t *header)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
-        response_headers_finished,
+        response_header_finished,
         (ib_provider_inst_t *pi, ib_tx_t *tx)
     );
     IB_PROVIDER_FUNC(

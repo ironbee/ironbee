@@ -792,20 +792,20 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *   tx_finished_event [label="tx_finished",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_finished_event"]
  *
  *   request_started_event [label="request_started *",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_started_event"]
- *   request_headers_event [label="request_headers",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_headers_event"]
+ *   request_header_finished_event [label="request_header_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_header_finished_event"]
  *   request_body_data_event [label="request_body",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_body_data_event"]
  *   request_finished_event [label="request_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_finished_event"]
  *   response_started_event [label="response_started *",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_started_event"]
- *   response_headers_event [label="response_headers",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_headers_event"]
+ *   response_header_finished_event [label="response_header_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_header_finished_event"]
  *   response_body_data_event [label="response_body",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_body_data_event"]
  *   response_finished_event [label="response_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_finished_event"]
  *
  *   handle_context_conn_event [label="handle_context_conn **",style=bold,shape=parallelogram,URL="\ref handle_context_conn_event"]
  *   handle_connect_event [label="handle_connect",style=bold,shape=parallelogram,URL="\ref handle_connect_event"]
  *   handle_context_tx_event [label="handle_context_tx **",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_context_tx_event"]
- *   handle_request_headers_event [label="handle_request_headers",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_request_headers_event"]
+ *   handle_request_header_event [label="handle_request_header",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_request_header_event"]
  *   handle_request_event [label="handle_request",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_request_event"]
- *   handle_response_headers_event [label="handle_response_headers",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_response_headers_event"]
+ *   handle_response_header_event [label="handle_response_header",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_response_header_event"]
  *   handle_response_event [label="handle_response",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_response_event"]
  *   handle_disconnect_event [label="handle_disconnect",style=bold,shape=parallelogram,URL="\ref handle_disconnect_event"]
  *   handle_postprocess_event [label="handle_postprocess",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_postprocess_event"]
@@ -833,16 +833,16 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *
  *   request -> tx_data_in_event [dir=none,weight=100.0]
  *   tx_data_in_event -> request_started_event [style=dotted,arrowhead=none,weight=1.5]
- *   tx_data_in_event -> request_headers_event [style=dotted,arrowhead=none,weight=1.5]
+ *   tx_data_in_event -> request_header_finished_event [style=dotted,arrowhead=none,weight=1.5]
  *   tx_data_in_event -> request_body_data_event [style=dotted,arrowhead=none,weight=1.5]
  *
  *   tx_started_event -> request_started_event [weight=5.0]
- *   request_started_event -> request_headers_event [weight=1.0]
- *   request_headers_event -> context_tx_selected [weight=1.0]
+ *   request_started_event -> request_header_finished_event [weight=1.0]
+ *   request_header_finished_event -> context_tx_selected [weight=1.0]
  *   context_tx_selected -> handle_context_tx_event [weight=1.0]
- *   handle_context_tx_event -> handle_request_headers_event [weight=1.0]
- *   handle_request_headers_event -> request_started_event [label="HTTP\nPipeline\nRequest",style=dashed,weight=10.0]
- *   handle_request_headers_event -> request_body_data_event [weight=1.0]
+ *   handle_context_tx_event -> handle_request_header_event [weight=1.0]
+ *   handle_request_header_event -> request_started_event [label="HTTP\nPipeline\nRequest",style=dashed,weight=10.0]
+ *   handle_request_header_event -> request_body_data_event [weight=1.0]
  *   request_body_data_event -> handle_request_event [weight=1.0]
  *   handle_request_event -> request_finished_event [weight=1.0]
  *   request_finished_event -> tx_process_event [weight=1.0]
@@ -856,12 +856,12 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *   tx_data_out_event -> tx_data_out_event [weight=0.1]
  *
  *   tx_data_out_event -> response_started_event [style=dotted,arrowhead=none,weight=1.5]
- *   tx_data_out_event -> response_headers_event [style=dotted,arrowhead=none,weight=1.5]
+ *   tx_data_out_event -> response_header_finished_event [style=dotted,arrowhead=none,weight=1.5]
  *   tx_data_out_event -> response_body_data_event [style=dotted,arrowhead=none,weight=1.5]
  *
- *   response_started_event -> response_headers_event [weight=1.0]
- *   response_headers_event -> handle_response_headers_event [weight=1.0]
- *   handle_response_headers_event -> response_body_data_event [weight=1.0]
+ *   response_started_event -> response_header_finished_event [weight=1.0]
+ *   response_header_finished_event -> handle_response_header_event [weight=1.0]
+ *   handle_response_header_event -> response_body_data_event [weight=1.0]
  *   response_body_data_event -> handle_response_event [weight=1.0]
  *   handle_response_event -> response_finished_event [weight=5.0]
  *   response_finished_event -> response_started_event [label="HTTP\nPipeline\nResponse",style=dashed,weight=10.0]
@@ -900,9 +900,9 @@ typedef enum {
     handle_context_conn_event,     /**< Handle connection context chosen */
     handle_connect_event,          /**< Handle a connect */
     handle_context_tx_event,       /**< Handle transaction context chosen */
-    handle_request_headers_event,  /**< Handle the request headers */
+    handle_request_header_event,   /**< Handle the request header */
     handle_request_event,          /**< Handle the full request */
-    handle_response_headers_event, /**< Handle the response headers */
+    handle_response_header_event, /**< Handle the response header */
     handle_response_event,         /**< Handle the full response */
     handle_disconnect_event,       /**< Handle a disconnect */
     handle_postprocess_event,      /**< Handle transaction post processing */
@@ -917,13 +917,13 @@ typedef enum {
 
     /* Parser States */
     request_started_event,         /**< Parser notified request has started */
-    request_headers_event,         /**< Parser notified of request headers */
-    request_headers_data_event,    /**< Parser notified of request headers data */
+    request_header_data_event,     /**< Parser notified of request header data */
+    request_header_finished_event, /**< Parser notified of request header */
     request_body_data_event,       /**< Parser notified of request body */
     request_finished_event,        /**< Parser notified request finished */
     response_started_event,        /**< Parser notified response started */
-    response_headers_event,        /**< Parser notified of response headers */
-    response_headers_data_event,   /**< Parser notified of response headers data*/
+    response_header_data_event,    /**< Parser notified of response header data*/
+    response_header_finished_event,/**< Parser notified of response header */
     response_body_data_event,      /**< Parser notified of response body */
     response_finished_event,       /**< Parser notified response finished */
 
@@ -969,19 +969,19 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
 
 
 /**
- * Data event for parsed headers.
+ * Data event for parsed header.
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
  * @param[in] event Which event trigger the callback.
- * @param[in] headers Parsed connection headers.
+ * @param[in] header Parsed connection header.
  * @param[in] cbdata Callback data
  */
-typedef ib_status_t (*ib_state_headers_data_fn_t)(
+typedef ib_status_t (*ib_state_header_data_fn_t)(
     ib_engine_t *ib,
     ib_tx_t *tx,
     ib_state_event_type_t event,
-    ib_parsed_header_t *headers,
+    ib_parsed_header_t *header,
     void *cbdata);
 
 /**
@@ -1276,7 +1276,7 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
 );
 
 /**
- * Register a callback for a headers data event.
+ * Register a callback for a header data event.
  *
  * @param[in] ib IronBee engine.
  * @param[in] event The specific event.
@@ -1288,11 +1288,11 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
 ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_headers_data_fn_t cb,
+    ib_state_header_data_fn_t cb,
     void *cbdata);
 
 /**
- * Unregister a callback for a headers data event.
+ * Unregister a callback for a header data event.
  *
  * @param[in] ib IronBee engine.
  * @param[in] event The specific event.
@@ -1303,7 +1303,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
 ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
-    ib_state_headers_data_fn_t cb);
+    ib_state_header_data_fn_t cb);
 
 /**
  * Register a callback for a request line event.

@@ -1581,7 +1581,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         /* Register the request trace handler. */
         rc = ib_hook_tx_register(
             ib,
-            request_headers_event,
+            request_header_finished_event,
             trace_tx_request,
             trace_ctx
         );
@@ -1593,7 +1593,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         /* Register the response trace handler. */
         rc = ib_hook_tx_register(
             ib,
-            response_headers_event,
+            response_header_finished_event,
             trace_tx_response,
             trace_ctx
         );
@@ -1626,7 +1626,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
         rc = ib_hook_tx_register(
             ib,
-            request_headers_event,
+            request_header_finished_event,
             print_user_agent,
             NULL
         );
