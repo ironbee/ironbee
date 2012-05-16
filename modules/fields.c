@@ -380,14 +380,14 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-static ib_status_t fields_tx_headers(ib_engine_t *ib,
+static ib_status_t fields_tx_header_finished(ib_engine_t *ib,
                                      ib_tx_t *tx,
                                      ib_state_event_type_t event,
                                      void *data)
 {
     IB_FTRACE_INIT();
 
-    assert(event == request_headers_event);
+    assert(event == request_header_finished_event);
 
     ib_list_node_t *node;
     ib_status_t rc = IB_OK;
@@ -463,10 +463,10 @@ static ib_status_t fields_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the TX headers callback */
+    /* Register the TX header_finished callback */
     rc = ib_hook_tx_register(ib,
-                             request_headers_event,
-                             fields_tx_headers,
+                             request_header_finished_event,
+                             fields_tx_header_finished,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Hook register returned %d", rc);
