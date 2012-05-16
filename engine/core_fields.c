@@ -33,6 +33,33 @@
 
 /* -- Field Generation Routines -- */
 
+/* Placeholder for as-of-yet-initialized bytestring fields. */
+static const uint8_t core_placeholder_value[] = {
+    '_', '_', 'c', 'o', 'r', 'e', '_', '_',
+    'p', 'l', 'a', 'c', 'e', 'h', 'o', 'l',
+    'd', 'e', 'r', '_', '_', 'v', 'a', 'l',
+    'u', 'e', '_', '_',  0,   0,   0,   0
+};
+
+static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
+                                                  const char *name)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc = ib_data_add_bytestr_ex(dpi,
+                                            (const char *)name,
+                                            strlen(name),
+                                            (uint8_t *)core_placeholder_value,
+                                            0,
+                                            NULL);
+    if (rc != IB_OK) {
+        ib_log_error(dpi->pr->ib,
+                     "Failed to generate \"%s\" placeholder field: %s",
+                     name, ib_status_to_string(rc));
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
                                                 const char *name,
                                                 ib_bytestr_t *val)
@@ -67,6 +94,144 @@ static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
 
 
 /* -- Hooks -- */
+
+static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
+                                               ib_tx_t *tx,
+                                               ib_state_event_type_t event,
+                                               void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->dpi != NULL);
+    assert(event == tx_started_event);
+
+    ib_status_t rc;
+
+    /* Core Request Fields */
+    rc = ib_data_add_stream(tx->dpi, "request_body", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_line");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_method");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_protocol");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_raw");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_scheme");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_username");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_password");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_host");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_host");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_port");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_path");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_query");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_fragment");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Core Request Collections */
+    rc = ib_data_add_list(tx->dpi, "request_headers", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_list(tx->dpi, "request_cookies", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_list(tx->dpi, "request_uri_params", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Core Response Fields */
+    rc = ib_data_add_stream(tx->dpi, "response_body", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_line");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_protocol");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_status");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_message");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Core Response Collections */
+    rc = ib_data_add_list(tx->dpi, "response_headers", NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
 
 /*
  * Callback used to generate request fields.
@@ -169,6 +334,9 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     assert(ib != NULL);
     assert(mod != NULL);
 
+
+    ib_hook_tx_register(ib, tx_started_event,
+                        core_gen_placeholder_fields, NULL);
 
     ib_hook_tx_register(ib, handle_context_tx_event,
                         core_gen_request_header_fields, NULL);
