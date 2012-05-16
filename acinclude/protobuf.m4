@@ -33,6 +33,7 @@ if test "${test_paths}" != "no"; then
             PROTOBUF_LDFLAGS="-L${x}/$libsubdir"
             break
         fi
+        AS_UNSET([ac_cv_header_google_protobuf_descriptor_h])
     done
 fi
 
