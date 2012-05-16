@@ -6,7 +6,12 @@ check-local:
 		$(abs_builddir)/clipp \
 		$(abs_builddir)/tests/ironbee.conf
 
-CPPFLAGS += -Wno-shadow ${PROTOBUF_CPPFLAGS}
+# Avoid shadow warnings as error in clipp builds.
+#
+# NOTE: this must be done in CPPFLAGS vs clipp_CPPFLAGS because
+#       of option ordering.
+CPPFLAGS += -Wno-shadow
+
 clipp_SOURCES = \
     clipp.cpp \
     configuration_parser.cpp \
@@ -27,6 +32,8 @@ clipp_SOURCES = \
     parse_modifier.cpp \
     unparse_modifier.cpp \
     aggregate_modifier.cpp
+clipp_CFLAGS = $(PROTOBUF_CFLAGS)
+clipp_CPPFLAGS = $(AM_CPPFLAGS) ${PROTOBUF_CPPFLAGS}
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \
