@@ -113,6 +113,9 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         din = ib_bytestr_const_ptr(bs);
+        if (din == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
         dlen = ib_bytestr_length(bs);
         rc = ex_fn(IB_STROP_COW, mp,
                    (uint8_t *)din, dlen,
