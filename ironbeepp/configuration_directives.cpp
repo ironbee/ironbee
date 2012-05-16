@@ -295,7 +295,6 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
     map<string, int64_t> value_map
 )
 {
-    typedef List<ib_strval_t*> list_t;
     typedef map<string, int64_t>::value_type value_type;
 
     MemoryPool mp = m_engine.main_memory_pool();
