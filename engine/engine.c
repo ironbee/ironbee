@@ -646,8 +646,15 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     ib_status_t rc;
     char namebuf[64];
     ib_tx_t *tx = NULL;
+    ib_core_cfg_t *corecfg;
 
     ib_engine_t *ib = conn->ib;
+
+    rc = ib_context_module_config(ib->ctx, ib_core_module(), (void*)&corecfg);
+
+    if ( rc != IB_OK ) {
+        ib_log_alert(ib, "Failed to retrieve core module configuration.");
+    }
 
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
@@ -679,6 +686,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->er_ipstr = conn->remote_ipstr;
     tx->hostname = IB_DSTR_EMPTY;
     tx->path = IB_DSTR_URI_ROOT_PATH;
+    tx->block_status = corecfg->block_status;
 
     conn->tx_count++;
     ib_tx_generate_id(tx);

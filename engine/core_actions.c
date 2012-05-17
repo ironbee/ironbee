@@ -647,12 +647,101 @@ static ib_status_t act_block_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+struct act_status_t {
+    int block_status;
+};
+typedef struct act_status_t act_status_t;
+
+/**
+ * Set the @c block_status value in @a tx.
+ *
+ * @param[in] cbdata The @c act_status_t that contains the @c block_status
+ *            to assign to @c tx->block_status.
+ * @param[in] rule The rule. Unused.
+ * @param[out] tx The field in this struct, @c block_status, is set.
+ * @param[in] flags The flags used to create this rule. Unused.
+ *
+ * @returns IB_OK.
+ */
+static ib_status_t act_status_execute(void* cbdata,
+                                      ib_rule_t *rule,
+                                      ib_tx_t *tx,
+                                      ib_flags_t flags)
+{
+    IB_FTRACE_INIT();
+
+    assert(cbdata != NULL);
+    assert(tx != NULL);
+
+    /* NOTE: Range validation of block_status is done in act_status_create. */
+    tx->block_status = ((act_status_t*)cbdata)->block_status;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Create an action that sets the TX's block_status value.
+ *
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The current context. Unused.
+ * @param[in] mp The memory pool that will allocate the act_status_t 
+ *            holder for the status value.
+ * @param[in] params The parameters. This is a string representing
+ *            an integer from 200 to 599, inclusive.
+ * @param[out] inst The action instance that will be initalized.
+ * 
+ * @return IB_OK on success. IB_EALLOC on an allocation error from mp.
+ *         IB_EINVAL if @a param is NULL or not convertable with
+ *         @c atoi(const char*) to an integer in the range 200 through 599,
+ *         inclusive.
+ */
+static ib_status_t act_status_create(ib_engine_t *ib,
+                                     ib_context_t *ctx,
+                                     ib_mpool_t *mp,
+                                     const char *params,
+                                     ib_action_inst_t *inst)
+{
+    IB_FTRACE_INIT();
+
+    assert(inst!=NULL);
+    assert(mp!=NULL);
+
+    act_status_t *act_status =
+        (act_status_t *) ib_mpool_alloc(mp, sizeof(*act_status));
+    int block_status;
+
+    if ( act_status == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    if ( params == NULL ) {
+        ib_log_error(ib, "Action \"status\" must be given a parameter "
+                         "x where 200 <= x < 600.");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    block_status = atoi(params);
+
+    if ( block_status < 200 || block_status >= 600 ) {
+        ib_log_error(ib, "Action \"status\" must be given a parameter "
+                         "x where 200 <= x < 600. It was given %s.",
+                         params);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    act_status->block_status = block_status;
+
+    inst->data = act_status;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
 
-    /* Register the set flag action */
+    /* Register the set flag action. */
     rc = ib_action_register(ib,
                             "setflag",
                             IB_ACT_FLAG_NONE,
@@ -663,7 +752,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the set variable action */
+    /* Register the set variable action. */
     rc = ib_action_register(ib,
                             "setvar",
                             IB_ACT_FLAG_NONE,
@@ -674,7 +763,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the event action */
+    /* Register the event action. */
     rc = ib_action_register(ib,
                             "event",
                             IB_ACT_FLAG_NONE,
@@ -685,13 +774,24 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the block action */
+    /* Register the block action. */
     rc = ib_action_register(ib,
                             "block",
                             IB_ACT_FLAG_NONE,
                             act_block_create,
                             NULL,
                             act_block_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the status action to modify how block is performed. */
+    rc = ib_action_register(ib,
+                            "status",
+                            IB_ACT_FLAG_NONE,
+                            act_status_create,
+                            NULL,
+                            act_status_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

@@ -209,6 +209,7 @@ struct ib_tx_t {
     const char         *path;            /**< Path used in the request */
     //struct sockaddr_storage er_addr;   /**< Effective remote address */
     ib_flags_t          flags;           /**< Transaction flags */
+    ib_num_t            block_status;    /**< TX specific block status to use.*/
 
     /* Request */
     ib_parsed_req_line_t *request_line;  /**< Request line */
