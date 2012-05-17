@@ -1100,10 +1100,10 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
  *    in libhtp, the parsed functions implemented here will reconstruct
  *    a normalized raw HTTP stream and call the data_in/data_out functions
  *    as if it was receiving a raw stream.
- * 
+ *
  * The interfaces for the two modes are cyclic (raw data functions call
  * the parsed versions and vice versa) and some care is taken to detect
- * which mode is in use so that calls do not endlessly recurse. However, 
+ * which mode is in use so that calls do not endlessly recurse. However,
  * no effort was taken to prevent an incorrectly written server from
  * causing problems and infinite recursion.
  *

@@ -116,15 +116,15 @@ static ib_core_cfg_t core_global_cfg;
     IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADER |\
     IB_ALPART_HTTP_REQUEST_TRAILER | \
     IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADER | \
-    IB_ALPART_HTTP_RESPONSE_TRAILER 
+    IB_ALPART_HTTP_RESPONSE_TRAILER
 
 #define IB_ALPARTS_REQUEST \
     IB_ALPART_HTTP_REQUEST_METADATA|IB_ALPART_HTTP_REQUEST_HEADER |\
-    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILER 
+    IB_ALPART_HTTP_REQUEST_BODY|IB_ALPART_HTTP_REQUEST_TRAILER
 
 #define IB_ALPARTS_RESPONSE \
     IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADER | \
-    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILER 
+    IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILER
 
 
 /* -- Utilities -- */
@@ -4590,7 +4590,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
 
         if (rc != IB_OK) {
-            ib_log_error(ib, 
+            ib_log_error(ib,
                          "Could not set DeafultBlockStatus %s",
                          p1_unescaped);
             IB_FTRACE_RET_STATUS(rc);
@@ -4600,7 +4600,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         if ( status < 200 || status >= 600 )
         {
-            ib_log_debug2(ib, 
+            ib_log_debug2(ib,
                           "DefaultBlockStatus must be 200 <= status < 600.");
             ib_log_debug2(ib, "DefaultBlockStatus may not be %d", status);
             IB_FTRACE_RET_STATUS(IB_EINVAL);

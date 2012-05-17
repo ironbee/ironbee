@@ -500,7 +500,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
 
 /**
  * Set the tx IB_TX_BLOCK_ADVISORY flag and set TX.BLOCK=1 in the TX DPI.
- * 
+ *
  * @param[in] cbdata unused.
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
@@ -521,7 +521,7 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
 
 /**
  * Set the tx IB_TX_BLOCK_PHASE flag in the tx.
- * 
+ *
  * @param[in] cbdata unused.
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
@@ -538,7 +538,7 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx)
 
 /**
  * Set the tx IB_TX_BLOCK_IMMEDIATE flag in the tx.
- * 
+ *
  * @param[in] cbdata unused.
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
@@ -565,7 +565,7 @@ typedef struct act_block_t act_block_t;
 
 /**
  * Executes the function stored in cbdata.
- * 
+ *
  * @param[in] cbdata unused.
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
@@ -591,7 +591,7 @@ static ib_status_t act_block_execute(void* cbdata,
  * @param[in] ib IronBee engine.
  * @param[in] ctx Context.
  * @param[in] mp Memory pool.
- * @param[in] params Parameters. These may be "immediate", "phase", or 
+ * @param[in] params Parameters. These may be "immediate", "phase", or
  *            "advise". If null "advise" is assumed.
  *            These select the type of block that will be put in place
  *            by deciding which callback (act_block_phase_execute,
@@ -610,7 +610,7 @@ static ib_status_t act_block_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    act_block_t *act_block = 
+    act_block_t *act_block =
         (act_block_t*)ib_mpool_alloc(mp, sizeof(*act_block));
 
     if ( act_block == NULL ) {
@@ -684,12 +684,12 @@ static ib_status_t act_status_execute(void* cbdata,
  *
  * @param[in] ib The IronBee engine.
  * @param[in] ctx The current context. Unused.
- * @param[in] mp The memory pool that will allocate the act_status_t 
+ * @param[in] mp The memory pool that will allocate the act_status_t
  *            holder for the status value.
  * @param[in] params The parameters. This is a string representing
  *            an integer from 200 to 599, inclusive.
  * @param[out] inst The action instance that will be initalized.
- * 
+ *
  * @return IB_OK on success. IB_EALLOC on an allocation error from mp.
  *         IB_EINVAL if @a param is NULL or not convertable with
  *         @c atoi(const char*) to an integer in the range 200 through 599,
