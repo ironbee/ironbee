@@ -112,6 +112,7 @@ void convert_connection_data(
     const span_t&        data,
     Input::event_e       start_event,
     Input::event_e       header_event,
+    Input::event_e       header_finished_event,
     Input::event_e       body_event,
     Input::event_e       finished_event,
     double               pre_delay,
@@ -156,6 +157,9 @@ void convert_connection_data(
         specific->headers.swap(headers);
         events.push_back(specific);
     }
+    events.push_back(
+        boost::make_shared<Input::NullEvent>(header_finished_event)
+    );
 
     // Remainder is body.
     if (! input.empty()) {
@@ -218,6 +222,7 @@ bool ParseModifier::operator()(Input::input_p& input)
                         from_buffer(specific.data),
                         Input::REQUEST_STARTED,
                         Input::REQUEST_HEADER,
+                        Input::REQUEST_HEADER_FINISHED,
                         Input::REQUEST_BODY,
                         Input::REQUEST_FINISHED,
                         specific.pre_delay,
@@ -242,6 +247,7 @@ bool ParseModifier::operator()(Input::input_p& input)
                         from_buffer(specific.data),
                         Input::RESPONSE_STARTED,
                         Input::RESPONSE_HEADER,
+                        Input::RESPONSE_HEADER_FINISHED,
                         Input::RESPONSE_BODY,
                         Input::RESPONSE_FINISHED,
                         specific.pre_delay,
