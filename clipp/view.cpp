@@ -92,7 +92,7 @@ struct ViewDelegate :
 
     //! Output HeaderEven& eventt
     static
-    void headers_event(const HeaderEvent& event)
+    void header_event(const HeaderEvent& event)
     {
         BOOST_FOREACH(const header_t& header, event.headers) {
             cout << header.first << ": " << header.second << endl;
@@ -140,10 +140,17 @@ struct ViewDelegate :
         }
     }
 
-    //! REQUEST_HEADERS
-    void request_headers(const HeaderEvent& event) {
-        cout << "=== REQUEST_HEADERS ===" << endl;
-        headers_event(event);
+    //! REQUEST_HEADER
+    void request_header(const HeaderEvent& event)
+    {
+        cout << "=== REQUEST_HEADER ===" << endl;
+        header_event(event);
+    }
+
+    //! REQUEST HEADER FINISHED
+    void request_header_finished(const NullEvent& event)
+    {
+        cout << "=== REQUEST_HEADER_FINISHED ===" << endl;
     }
 
     //! REQUEST_BODY
@@ -171,11 +178,17 @@ struct ViewDelegate :
         }
     }
 
-    //! RESPONSE_HEADERS
-    void response_headers(const HeaderEvent& event)
+    //! RESPONSE_HEADER
+    void response_header(const HeaderEvent& event)
     {
-        cout << "=== RESPONSE HEADERS ===" << endl;
-        headers_event(event);
+        cout << "=== RESPONSE HEADER ===" << endl;
+        header_event(event);
+    }
+
+    //! RESPONSE HEADER FINISHED
+    void response_header_finished(const NullEvent& event)
+    {
+        cout << "=== RESPONSE_HEADER_FINISHED ===" << endl;
     }
 
     //! RESPONSE_BODY
