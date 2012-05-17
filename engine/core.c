@@ -237,6 +237,7 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
  * @param ap Variable length parameter list
  */
 static void core_logger(FILE *fh, int level,
+                        const ib_engine_t *ib,
                         const ib_tx_t *tx,
                         const char *prefix, const char *file, int line,
                         const char *fmt, va_list ap)
@@ -248,6 +249,7 @@ static void core_logger(FILE *fh, int level,
     struct tm *tminfo;
     time_t timet;
     int ec = 0;
+    ib_bool_t log_lineinfo = IB_FALSE;
 
     if (fmt2 == NULL || tx_info == NULL) {
         fprintf(fh, "Cannot allocate memory to log.");
@@ -271,9 +273,19 @@ static void core_logger(FILE *fh, int level,
     tminfo = localtime(&timet);
     strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
 
-    if ((file != NULL) && (line > 0)) {
+    if ( (file != NULL) && (line > 0) ) {
+        ib_core_cfg_t *corecfg = NULL;
+        ib_status_t rc = ib_context_module_config(ib_context_main(ib),
+                                                  ib_core_module(),
+                                                  (void *)&corecfg);
+        if ( (rc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
+            log_lineinfo = IB_TRUE;
+        }
+    }
+
+    if (log_lineinfo == IB_TRUE) {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %s(%s:%d) %s%s\n",
+                      "%s %s(%30s:%-5d) %s%s\n",
                       time_info,
                       (prefix?prefix:""), file, line, tx_info, fmt);
     }
@@ -1322,6 +1334,7 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
  */
 static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                                int level,
+                               const ib_engine_t *ib,
                                const ib_tx_t *tx,
                                const char *prefix,
                                const char *file, int line,
@@ -1375,20 +1388,20 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
 
     // If it's not the core log provider, we're done: we know nothing
     // about it's data, so don't try to treat it as a file handle!
-    main_ctx = ib_context_main(ctx->ib);
+    main_ctx = ib_context_main(ib);
     ib_context_module_config(
         main_ctx, ib_core_module(), (void *)&main_core_config);
     main_lp = main_core_config->pi.logger->pr;
     if ( (main_lp != lpi->pr)
          || (iface->logger != (ib_log_logger_fn_t)core_logger) ) {
-        iface->logger(lpi->data, level, tx, prefix_with_pid, file, line, fmt, ap);
+        iface->logger(lpi->data, level, ib, tx, prefix_with_pid, file, line, fmt, ap);
         goto done;
     }
 
     // If no interface, do *something*
     //  Note that this should be the same as the default case
     if (iface == NULL) {
-        core_logger(stderr, level, tx, prefix_with_pid, file, line, fmt, ap);
+        core_logger(stderr, level, ib, tx, prefix_with_pid, file, line, fmt, ap);
         goto done;
     }
 
@@ -1427,7 +1440,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
      * the first parameter (if the interface is implemented and not
      * just abstract).
      */
-    iface->logger(fp, level, tx, prefix_with_pid, file, line, fmt, ap);
+    iface->logger(fp, level, ib, tx, prefix_with_pid, file, line, fmt, ap);
 
 done:
     free(prefix_with_pid);
@@ -1449,6 +1462,7 @@ done:
  */
 static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                               int level,
+                              const ib_engine_t *ib,
                               const ib_tx_t *tx,
                               const char *prefix,
                               const char *file, int line,
@@ -1481,7 +1495,7 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     /// @todo Probably should not need this check
     if (iface != NULL) {
         iface->logger((lpi->pr->data?lpi->pr->data:lpi->data),
-                      level, tx, prefix, file, line, fmt, ap);
+                      level, ib, tx, prefix, file, line, fmt, ap);
     }
 
     va_end(ap);

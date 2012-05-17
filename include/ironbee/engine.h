@@ -1866,28 +1866,29 @@ const char DLL_PUBLIC *ib_log_level_to_string(ib_log_level_t level);
  */
 typedef void (*ib_log_logger_fn_t)(void *cbdata,
                                    ib_log_level_t level,
+                                   const ib_engine_t *ib,
                                    const ib_tx_t *tx,
                                    const char *prefix,
                                    const char *file, int line,
                                    const char *fmt, va_list ap)
-                                   VPRINTF_ATTRIBUTE(7);
+                                   VPRINTF_ATTRIBUTE(8);
 
 /** Log Generic */
 #define ib_log(ib,lvl,...) ib_log_ex((ib), (lvl), NULL, NULL, NULL, 0, __VA_ARGS__)
 /** Log Emergency */
-#define ib_log_emergency(ib,...) ib_log_ex((ib), IB_LOG_EMERGENCY, NULL, "EMERGENCY - ", NULL, 0, __VA_ARGS__)
+#define ib_log_emergency(ib,...) ib_log_ex((ib), IB_LOG_EMERGENCY, NULL, "EMERGENCY - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Alert */
-#define ib_log_alert(ib,...)     ib_log_ex((ib), IB_LOG_ALERT,     NULL, "ALERT     - ", NULL, 0, __VA_ARGS__)
+#define ib_log_alert(ib,...)     ib_log_ex((ib), IB_LOG_ALERT,     NULL, "ALERT     - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Critical */
-#define ib_log_critical(ib,...)  ib_log_ex((ib), IB_LOG_CRITICAL,  NULL, "CRITICAL  - ", NULL, 0, __VA_ARGS__)
+#define ib_log_critical(ib,...)  ib_log_ex((ib), IB_LOG_CRITICAL,  NULL, "CRITICAL  - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Error */
-#define ib_log_error(ib,...)     ib_log_ex((ib), IB_LOG_ERROR,     NULL, "ERROR     - ", NULL, 0, __VA_ARGS__)
+#define ib_log_error(ib,...)     ib_log_ex((ib), IB_LOG_ERROR,     NULL, "ERROR     - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Warning */
-#define ib_log_warning(ib,...)   ib_log_ex((ib), IB_LOG_WARNING,   NULL, "WARNING   - ", NULL, 0, __VA_ARGS__)
+#define ib_log_warning(ib,...)   ib_log_ex((ib), IB_LOG_WARNING,   NULL, "WARNING   - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Notice */
-#define ib_log_notice(ib,...)    ib_log_ex((ib), IB_LOG_NOTICE,    NULL, "NOTICE    - ", NULL, 0, __VA_ARGS__)
+#define ib_log_notice(ib,...)    ib_log_ex((ib), IB_LOG_NOTICE,    NULL, "NOTICE    - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Info */
-#define ib_log_info(ib,...)      ib_log_ex((ib), IB_LOG_INFO,      NULL, "INFO      - ", NULL, 0, __VA_ARGS__)
+#define ib_log_info(ib,...)      ib_log_ex((ib), IB_LOG_INFO,      NULL, "INFO      - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Debug */
 #define ib_log_debug(ib,...)     ib_log_ex((ib), IB_LOG_DEBUG,     NULL, "DEBUG     - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Debug2 */
@@ -1900,19 +1901,19 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
 /** Log Generic (Transaction form) */
 #define ib_log_tx(tx,lvl,...) ib_log_ex(tx->ib, (lvl), tx, NULL, NULL, 0, __VA_ARGS__)
 /** Log Emergency (Transaction form) */
-#define ib_log_emergency_tx(tx,...) ib_log_ex(tx->ib, IB_LOG_EMERGENCY, tx, "EMERGENCY - ", NULL, 0, __VA_ARGS__)
+#define ib_log_emergency_tx(tx,...) ib_log_ex(tx->ib, IB_LOG_EMERGENCY, tx, "EMERGENCY - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Alert (Transaction form) */
-#define ib_log_alert_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_ALERT,     tx, "ALERT     - ", NULL, 0, __VA_ARGS__)
+#define ib_log_alert_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_ALERT,     tx, "ALERT     - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Critical (Transaction form) */
-#define ib_log_critical_tx(tx,...)  ib_log_ex(tx->ib, IB_LOG_CRITICAL,  tx, "CRITICAL  - ", NULL, 0, __VA_ARGS__)
+#define ib_log_critical_tx(tx,...)  ib_log_ex(tx->ib, IB_LOG_CRITICAL,  tx, "CRITICAL  - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Error (Transaction form) */
-#define ib_log_error_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_ERROR,     tx, "ERROR     - ", NULL, 0, __VA_ARGS__)
+#define ib_log_error_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_ERROR,     tx, "ERROR     - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Warning (Transaction form) */
-#define ib_log_warning_tx(tx,...)   ib_log_ex(tx->ib, IB_LOG_WARNING,   tx, "WARNING   - ", NULL, 0, __VA_ARGS__)
+#define ib_log_warning_tx(tx,...)   ib_log_ex(tx->ib, IB_LOG_WARNING,   tx, "WARNING   - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Notice (Transaction form) */
-#define ib_log_notice_tx(tx,...)    ib_log_ex(tx->ib, IB_LOG_NOTICE,    tx, "NOTICE    - ", NULL, 0, __VA_ARGS__)
+#define ib_log_notice_tx(tx,...)    ib_log_ex(tx->ib, IB_LOG_NOTICE,    tx, "NOTICE    - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Info (Transaction form) */
-#define ib_log_info_tx(tx,...)      ib_log_ex(tx->ib, IB_LOG_INFO,      tx, "INFO      - ", NULL, 0, __VA_ARGS__)
+#define ib_log_info_tx(tx,...)      ib_log_ex(tx->ib, IB_LOG_INFO,      tx, "INFO      - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Debug (Transaction form) */
 #define ib_log_debug_tx(tx,...)     ib_log_ex(tx->ib, IB_LOG_DEBUG,     tx, "DEBUG     - ", __FILE__, __LINE__, __VA_ARGS__)
 /** Log Debug2 (Transaction form) */

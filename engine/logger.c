@@ -59,6 +59,7 @@
  * @param ap Variable argument list
  */
 static void default_logger(FILE *fp, int level,
+                           const ib_engine_t *ib,
                            const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)
@@ -70,6 +71,7 @@ static void default_logger(FILE *fp, int level,
     struct tm *tminfo;
     time_t timet;
     int ec = 0;
+    ib_bool_t log_lineinfo = IB_FALSE;
 
     if (level > 4) {
         IB_FTRACE_RET_VOID();
@@ -91,9 +93,19 @@ static void default_logger(FILE *fp, int level,
     tminfo = localtime(&timet);
     strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
 
-    if ((file != NULL) && (line > 0)) {
+    if ( (file != NULL) && (line > 0) ) {
+        ib_core_cfg_t *corecfg = NULL;
+        ib_status_t rc = ib_context_module_config(ib_context_main(ib),
+                                                  ib_core_module(),
+                                                  (void *)&corecfg);
+        if ( (rc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
+            log_lineinfo = IB_TRUE;
+        }
+    }
+
+    if (log_lineinfo == IB_TRUE) {
         ec = snprintf(fmt2, 1024,
-                      "%s %s[%d] (%s:%d) %s%s\n",
+                      "%s %s[%d] (%30s:%-5d) %s%s\n",
                       time_info,
                       (prefix?prefix:""), level, file, line, tx_info, fmt);
     }
@@ -381,13 +393,13 @@ void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
         if (pi != NULL) {
             api = (IB_PROVIDER_API_TYPE(logger) *)pi->pr->api;
 
-            api->vlogmsg(pi, ctx, level, tx, prefix, file, line, fmt, ap);
+            api->vlogmsg(pi, ctx, level, ib, tx, prefix, file, line, fmt, ap);
 
             IB_FTRACE_RET_VOID();
         }
     }
 
-    default_logger(stderr, level, tx, prefix, file, line, fmt, ap);
+    default_logger(stderr, level, ib, tx, prefix, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }
