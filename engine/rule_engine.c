@@ -420,9 +420,7 @@ static ib_status_t execute_block(ib_engine_t *ib, ib_tx_t *tx)
     assert(tx != NULL);
     assert(tx->ctx != NULL);
 
-    rc = ib->plugin->err_fn(tx->ctx,
-                            tx->block_status,
-                            ib->plugin->err_data);
+    rc = ib_server_error_response(ib->plugin, tx->ctx, tx->block_status);
 
     IB_FTRACE_RET_STATUS(rc);
 }
