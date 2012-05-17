@@ -400,6 +400,34 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
 }
 
 /**
+ * Translate a block by a rule into a error reported to the server plugin.
+ *
+ * @param ib IronBee engine containing the plugin callbacks.
+ * @param tx Transaction containing the active context.
+ *
+ * @returns The result of calling ib->plugin->err_fn.
+ */
+static ib_status_t execute_block(ib_engine_t *ib, ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    /* Store the final return code here. */
+    ib_status_t rc;
+
+    assert(ib != NULL);
+    assert(ib->plugin != NULL);
+    assert(ib->plugin->err_fn != NULL);
+    assert(tx != NULL);
+    assert(tx->ctx != NULL);
+
+    rc = ib->plugin->err_fn(tx->ctx,
+                            tx->block_status,
+                            ib->plugin->err_data);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * Execute a rule on a list of values
  * @internal
  *
@@ -745,14 +773,19 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
      * returns an error.  This needs further discussion to determine what the
      * correct behavior should be.
      */
-    if (*rule_result != 0) {
-        actions = rule->true_actions;
-    }
-    else {
-        actions = rule->false_actions;
-    }
+    actions = (*rule_result != 0)?  rule->true_actions: rule->false_actions;
+    
     trc = execute_actions(ib, rule, tx, *rule_result, actions);
-    if (trc != IB_OK) {
+    if ( trc == IB_DECLINED ) {
+        if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
+            ib_log_info_tx(tx,
+                "Rule %s caused immediate blocked.", rule->meta.id);
+            ib_log_info_tx(tx,
+                "Aborting chained rules because of immediate block.");
+            IB_FTRACE_RET_STATUS(IB_DECLINED);
+        }
+    }
+    else if (trc != IB_OK) {
         ib_log_error_tx(tx,
                      "Error executing action for rule %s", rule->meta.id);
         rc = trc;
@@ -788,6 +821,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
 
 /**
  * Run a set of phase rules.
+ *
  * @internal
  *
  * @param[in] ib Engine.
@@ -795,7 +829,8 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
  * @param[in] event Event type.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t).
  *
- * @returns Status code.
+ * @returns Status code. IB_OK on success. IB_DECLINED to singnal that 
+ *          rule processing should not continue.
  */
 static ib_status_t run_phase_rules(ib_engine_t *ib,
                                    ib_tx_t *tx,
@@ -813,6 +848,9 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     ib_ruleset_phase_t         *ruleset_phase;
     ib_list_t                  *rules;
     ib_list_node_t             *node = NULL;
+
+    /* Boolean indicating if to block at the end of this phase. */
+    int                         block_phase = 0;
 
     ruleset_phase = &(ctx->rules->ruleset.phases[meta->phase_num]);
     assert(ruleset_phase != NULL);
@@ -864,11 +902,40 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                                      tx,
                                      MAX_CHAIN_RECURSION,
                                      &rule_result);
-        if (rule_rc != IB_OK) {
+
+        /* Handle declined return code. Did this block? */
+        if( rule_rc == IB_DECLINED ) {
+            if ( tx->flags & IB_TX_BLOCK_PHASE ) {
+                ib_log_info_tx(tx,
+                               "Rule %s resulted in phase block: %s",
+                               rule->meta.id, ib_status_to_string(rule_rc));
+                block_phase = 1;
+            }
+            else if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
+                ib_log_info_tx(tx,
+                               "Rule %s resulted in immediate block: %s",
+                               rule->meta.id, ib_status_to_string(rule_rc));
+                ib_log_info_tx(tx,
+                              "Rule processing is aborter by immedate block.");
+                execute_block(ib, tx);
+                IB_FTRACE_RET_STATUS(IB_DECLINED);
+            }
+            else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
+                ib_log_info_tx(tx,
+                               "Rule %s resulted in advisory block: %s",
+                               rule->meta.id, ib_status_to_string(rule_rc));
+            }
+        }
+        else if (rule_rc != IB_OK) {
             ib_log_error_tx(tx,
                          "Error executing rule %s: %s",
                          rule->meta.id, ib_status_to_string(rule_rc));
         }
+    }
+
+    if ( block_phase != 0 ) {
+        execute_block(ib, tx);
+        IB_FTRACE_RET_STATUS(IB_DECLINED);
     }
 
     /*
@@ -1033,7 +1100,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
  * @param[in] header Parsed header (or NULL)
  * @param[in] meta Phase meta data
  *
- * @returns Status code
+ * @returns Status code IB_OK or IB_DECLINED if rule processing should not
+ *          continue.
  */
 static ib_status_t run_stream_rules(ib_engine_t *ib,
                                     ib_tx_t *tx,
@@ -1055,6 +1123,9 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         &(ctx->rules->ruleset.phases[meta->phase_num]);
     ib_list_t               *rules = ruleset_phase->rule_list;
     ib_list_node_t          *node = NULL;
+
+    /* Boolean indicating if to block at the end of this phase. */
+    int                         block_phase = 0;
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {
@@ -1126,18 +1197,43 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * returns an error.  This needs further discussion to determine what
          * the correct behavior should be.
          */
-        if (result != 0) {
-            actions = rule->true_actions;
-        }
-        else {
-            actions = rule->false_actions;
-        }
+        actions = (result != 0)?  rule->true_actions: rule->false_actions;
+
         rc = execute_actions(ib, rule, tx, result, actions);
-        if (rc != IB_OK) {
+
+        /* Handle declined return code. Did this block? */
+        if( rc == IB_DECLINED ) {
+            if ( tx->flags & IB_TX_BLOCK_PHASE ) {
+                ib_log_info_tx(tx,
+                               "Rule %s resulted in phase block: %s",
+                               rule->meta.id, ib_status_to_string(rc));
+                block_phase = 1;
+            }
+            else if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
+                ib_log_info_tx(tx,
+                               "Rule %s resulted in immediate block: %s",
+                               rule->meta.id, ib_status_to_string(rc));
+                ib_log_info_tx(tx,
+                              "Rule processing is aborter by immedate block.");
+                execute_block(ib, tx);
+                IB_FTRACE_RET_STATUS(IB_DECLINED);
+            }
+            else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
+                ib_log_info_tx(tx,
+                               "Rule %s resulted in advisory block: %s",
+                               rule->meta.id, ib_status_to_string(rc));
+            }
+        }
+        else if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "Error executing action for rule %s: %s",
                          rule->meta.id, ib_status_to_string(rc));
         }
+    }
+
+    if ( block_phase != 0 ) {
+        execute_block(ib, tx);
+        IB_FTRACE_RET_STATUS(IB_DECLINED);
     }
 
     /*
