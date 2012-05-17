@@ -163,6 +163,8 @@ The remaining Events may only occur in a Transaction.
 **request header** --- Contains zero or more headers, each of which is a name
 and value.
 
+**request header finished** --- Contains no data.
+
 **request body** -- Contains data.
 
 **request finished** --- Contains no data.
@@ -172,6 +174,8 @@ protocol.
 
 **response header** --- Contains zero or more headers, each of which is a name
 and value.
+
+**response header finished** --- Contains no data.
 
 **response body** -- Contains data.
 

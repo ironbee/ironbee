@@ -172,6 +172,8 @@ and ports.</p>
 <p><strong>request header</strong> &#8212; Contains zero or more headers, each of which is a name
 and value.</p>
 
+<p><strong>request header finished</strong> &#8212; Contains no data.</p>
+
 <p><strong>request body</strong> &#8211; Contains data.</p>
 
 <p><strong>request finished</strong> &#8212; Contains no data.</p>
@@ -181,6 +183,8 @@ protocol.</p>
 
 <p><strong>response header</strong> &#8212; Contains zero or more headers, each of which is a name
 and value.</p>
+
+<p><strong>response header finished</strong> &#8212; Contains no data.</p>
 
 <p><strong>response body</strong> &#8211; Contains data.</p>
 
@@ -275,6 +279,23 @@ You may not omit request blocks.</p>
 
 <p>This is mostly intended for debugging. There is no response body and the
 request is a single line. Connection information is bogus.</p>
+
+<p><strong>pcap</strong>:<em>path</em><br>
+<strong>pcap</strong>:<em>path</em>:<em>filter</em></p>
+
+<p>Generates inputs based on reassembled PCAP.</p>
+
+<p>The PCAP is reassembled via libNIDS. It is somewhat fragile and may get
+transaction boundaries wrong if there a connection has traffic flowing
+simultaneously in both directions. It generates connection data events so
+use @parse if you want parsed events.</p>
+
+<p>Note that only complete streams are generated as inputs. In particular, this
+means that you will need both directions of traffic to get any inputs, e.g.,
+use symmetric filters such as</p>
+
+<pre><code>src 1.2.3.4 or dst 1.2.3.4
+</code></pre>
 
 <h2 id="modifiers">Modifiers</h2>
 
