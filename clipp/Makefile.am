@@ -6,11 +6,12 @@ check-local:
 		$(abs_builddir)/clipp \
 		$(abs_builddir)/tests/ironbee.conf
 
-# Avoid shadow warnings as error in clipp builds.
+# Avoid various warnings as error in clipp builds because protobuf is not
+# careful about warnings.
 #
 # NOTE: this must be done in CPPFLAGS vs clipp_CPPFLAGS because
 #       of option ordering.
-CPPFLAGS += -Wno-shadow
+CPPFLAGS += -Wno-shadow -Wno-extra
 
 clipp_SOURCES = \
     clipp.cpp \
