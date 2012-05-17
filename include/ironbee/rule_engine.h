@@ -81,10 +81,10 @@ typedef struct {
 /**
  * Rule engine: Target fields
  */
-typedef struct {
+struct ib_rule_target_t {
     const char            *field_name;    /**< The field name */
     ib_list_t             *tfn_list;      /**< List of transformations */
-} ib_rule_target_t;
+};
 
 /**
  * Rule phase meta data

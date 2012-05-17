@@ -4650,6 +4650,34 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
+    else if (strcasecmp("RuleEngineLogData", name) == 0) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        ib_rule_log_level_t level;
+        if (strcasecmp("Fast", p1_unescaped) == 0) {
+            level = IB_RULE_LOG_FAST;
+        }
+        else if (strcasecmp("RuleExec", p1_unescaped) == 0) {
+            level = IB_RULE_LOG_EXEC;
+        }
+        else if (strcasecmp("Full", p1_unescaped) == 0) {
+            level = IB_RULE_LOG_FULL;
+        }
+        else if (strcasecmp("Debug", p1_unescaped) == 0) {
+            level = IB_RULE_LOG_DEBUG;
+        }
+        else if (strcasecmp("Trace", p1_unescaped) == 0) {
+            level = IB_RULE_LOG_TRACE;
+        }
+        else {
+            ib_log_error(ib,
+                         "Invalid value for %s: \"%s\"",
+                         name, p1_unescaped);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        ib_log_debug2(ib, "%s: %d", name, level);
+        rc = ib_context_set_num(ctx, "rule_log_level", level);
+        IB_FTRACE_RET_STATUS(rc);
+    }
     else if (strcasecmp("LoadModule", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         char *absfile;
@@ -5197,6 +5225,12 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
 
+    /* Rule logging level */
+    IB_DIRMAP_INIT_PARAM1(
+        "RuleEngineLogData",
+        core_dir_param1,
+        NULL
+    ),
 
     /* End */
     IB_DIRMAP_INIT_LAST
@@ -5271,6 +5305,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->data               = MODULE_NAME_STR;
     corecfg->module_base_path   = X_MODULE_BASE_PATH;
     corecfg->rule_base_path     = X_RULE_BASE_PATH;
+    corecfg->rule_log_level     = IB_RULE_LOG_FAST;
     corecfg->block_status       = 500;
 
     /* Define the logger provider API. */
@@ -5532,6 +5567,14 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NULSTR,
         ib_core_cfg_t,
         logevent
+    ),
+
+    /* Rule logging */
+    IB_CFGMAP_INIT_ENTRY(
+        "rule_log_level",
+        IB_FTYPE_NUM,
+        ib_core_cfg_t,
+        rule_log_level
     ),
 
     /* Parser */

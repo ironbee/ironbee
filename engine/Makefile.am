@@ -16,6 +16,7 @@ libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
                         core_tfns.c \
                         core_operators.c \
                         core_actions.c \
+                        rule_logger.c \
                         rule_engine.c \
                         state_notify.c \
                         config-parser.h \

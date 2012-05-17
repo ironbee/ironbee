@@ -90,6 +90,7 @@ typedef enum {
  * Rule engine: Basic rule type
  */
 typedef struct ib_rule_t ib_rule_t;
+typedef struct ib_rule_target_t ib_rule_target_t;
 
 
 /**

@@ -1833,6 +1833,17 @@ typedef enum {
 } ib_log_level_t;
 
 /**
+ * Rule log level.
+ **/
+typedef enum {
+    IB_RULE_LOG_FAST,     /**< Fast, simple, one-per-line rule log */
+    IB_RULE_LOG_EXEC,     /**< Log rule execution */
+    IB_RULE_LOG_FULL,     /**< Normal rule execution */
+    IB_RULE_LOG_DEBUG,    /**< Developer oriented information */
+    IB_RULE_LOG_TRACE,    /**< Reserved for future use */
+} ib_rule_log_level_t;
+
+/**
  * String to level conversion.
  */
 ib_log_level_t DLL_PUBLIC ib_log_string_to_level(const char* s);
