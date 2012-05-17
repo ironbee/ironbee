@@ -4591,7 +4591,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         if (rc != IB_OK) {
             ib_log_error(ib,
-                         "Could not set DeafultBlockStatus %s",
+                         "Could not set DefaultBlockStatus %s",
                          p1_unescaped);
             IB_FTRACE_RET_STATUS(rc);
         }

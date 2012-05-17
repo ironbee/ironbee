@@ -690,10 +690,10 @@ static ib_status_t act_status_execute(void* cbdata,
  *            holder for the status value.
  * @param[in] params The parameters. This is a string representing
  *            an integer from 200 to 599, inclusive.
- * @param[out] inst The action instance that will be initalized.
+ * @param[out] inst The action instance that will be initialized.
  *
  * @return IB_OK on success. IB_EALLOC on an allocation error from mp.
- *         IB_EINVAL if @a param is NULL or not convertable with
+ *         IB_EINVAL if @a param is NULL or not convertible with
  *         @c atoi(const char *) to an integer in the range 200 through 599,
  *         inclusive.
  */
