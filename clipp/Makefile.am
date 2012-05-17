@@ -34,17 +34,22 @@ clipp_SOURCES = \
     parse_modifier.cpp \
     unparse_modifier.cpp \
     aggregate_modifier.cpp
-clipp_CFLAGS = $(PROTOBUF_CFLAGS)
-clipp_CPPFLAGS = $(AM_CPPFLAGS) ${PROTOBUF_CPPFLAGS}
+clipp_CFLAGS = $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS)
+clipp_CPPFLAGS = $(AM_CPPFLAGS) \
+    ${PROTOBUF_CPPFLAGS} \
+    $(NIDS_CPPFLAGS) \
+    $(NET_CPPFLAGS)
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \
+    $(NIDS_LDFLAGS) \
+    $(NET_LDFLAGS) \
     -lboost_system \
     -lboost_filesystem \
     -lboost_program_options \
     -lboost_regex \
     -lprotobuf \
-    -lnids -lnet -lpcap
+    -lnids -lnet -lpcap 
 clipp_LDADD = \
     $(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/engine/libironbee.la

@@ -362,6 +362,8 @@ CHECK_TS()
 CHECK_GEOIP()
 CHECK_OSSP_UUID()
 CHECK_PROTOBUF()
+CHECK_NIDS()
+CHECK_NET()
 
 if test "${enable_clipp}" = "yes" ; then
   if test "${enable_cpp}" != "yes" ; then
@@ -369,6 +371,12 @@ if test "${enable_clipp}" = "yes" ; then
   fi
   if test "${HAVE_PROTOBUF}" != "yes" ; then
     AC_MSG_ERROR([protobuf is required for clipp])
+  fi
+  if test "${HAVE_NIDS}" != "yes" ; then
+    AC_MSG_ERROR([libnids is required for clipp])
+  fi
+  if test "${HAVE_NET}" != "yes" ; then
+    AC_MSG_ERROR([libnet is required for clipp])
   fi
 fi
 
