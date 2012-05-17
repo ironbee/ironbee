@@ -66,12 +66,12 @@ chain_vec_t parse(const std::string& input)
     using boost::phoenix::push_back;
 
     typedef string::const_iterator iterator;
-    typedef qi::rule<iterator, char()>          char_rule;
-    typedef qi::rule<iterator, string()>      string_rule;
-    typedef qi::rule<iterator, component_t()> component_rule;
-    typedef qi::rule<iterator, chain_t()>     chain_rule;
+    typedef qi::rule<iterator, char()>            char_rule;
+    typedef qi::rule<iterator, string()>          string_rule;
+    typedef qi::rule<iterator, component_t()>     component_rule;
+    typedef qi::rule<iterator, chain_t()>         chain_rule;
     typedef qi::rule<iterator, component_vec_t()> component_vec_rule;
-    typedef qi::rule<iterator, chain_vec_t()>   chains_rule;
+    typedef qi::rule<iterator, chain_vec_t()>     chains_rule;
 
     char_rule   escaped = lit('\\') >> char_;
     string_rule quoted_cfg_string =
