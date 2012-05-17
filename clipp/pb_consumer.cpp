@@ -126,7 +126,7 @@ public:
         }
     }
 
-    void request_headers(const Input::HeaderEvent& event)
+    void request_header(const Input::HeaderEvent& event)
     {
         PB::HeaderEvent& pb = *m_pb_event.mutable_header_event();
         BOOST_FOREACH(const Input::header_t& header, event.headers)
@@ -135,6 +135,11 @@ public:
             h.set_name(header.first.data, header.first.length);
             h.set_value(header.second.data, header.second.length);
         }
+    }
+
+    void request_header_finished(const Input::NullEvent& event)
+    {
+        // nop
     }
 
     void request_body(const Input::DataEvent& event)
@@ -166,10 +171,15 @@ public:
         }
     }
 
-    void response_headers(const Input::HeaderEvent& event)
+    void response_header(const Input::HeaderEvent& event)
     {
-        // Forward to request_headers
-        request_headers(event);
+        // Forward to request_header
+        request_header(event);
+    }
+
+    void response_header_finished(const Input::NullEvent& event)
+    {
+        // nop
     }
 
     void response_body(const Input::DataEvent& event)
