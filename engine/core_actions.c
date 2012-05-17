@@ -559,7 +559,8 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
  * This holds a pointer to the block callback that will be used.
  */
 struct act_block_t {
-    ib_status_t(*execute)(ib_tx_t*); /**< What block method should be used. */
+    /**! What block method should be used. */
+    ib_status_t(*execute)(ib_tx_t *);
 };
 typedef struct act_block_t act_block_t;
 
@@ -580,7 +581,7 @@ static ib_status_t act_block_execute(void* cbdata,
     assert(cbdata!=NULL);
     assert(tx!=NULL);
 
-    ib_status_t rc = ((const act_block_t*)cbdata)->execute(tx);
+    ib_status_t rc = ((const act_block_t *)cbdata)->execute(tx);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -611,7 +612,7 @@ static ib_status_t act_block_create(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     act_block_t *act_block =
-        (act_block_t*)ib_mpool_alloc(mp, sizeof(*act_block));
+        (act_block_t *)ib_mpool_alloc(mp, sizeof(*act_block));
 
     if ( act_block == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -675,7 +676,7 @@ static ib_status_t act_status_execute(void* cbdata,
     assert(tx != NULL);
 
     /* NOTE: Range validation of block_status is done in act_status_create. */
-    tx->block_status = ((act_status_t*)cbdata)->block_status;
+    tx->block_status = ((act_status_t *)cbdata)->block_status;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -693,7 +694,7 @@ static ib_status_t act_status_execute(void* cbdata,
  *
  * @return IB_OK on success. IB_EALLOC on an allocation error from mp.
  *         IB_EINVAL if @a param is NULL or not convertable with
- *         @c atoi(const char*) to an integer in the range 200 through 599,
+ *         @c atoi(const char *) to an integer in the range 200 through 599,
  *         inclusive.
  */
 static ib_status_t act_status_create(ib_engine_t *ib,

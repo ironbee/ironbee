@@ -650,7 +650,11 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
 
     ib_engine_t *ib = conn->ib;
 
-    rc = ib_context_module_config(ib->ctx, ib_core_module(), (void*)&corecfg);
+    rc = ib_context_module_config(
+        ib->ctx,
+        ib_core_module(),
+        (void *)&corecfg
+    );
 
     if ( rc != IB_OK ) {
         ib_log_alert(ib, "Failed to retrieve core module configuration.");
