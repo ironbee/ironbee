@@ -64,13 +64,20 @@ span_t fetch_line(span_t& span)
     span_t line;
 
     const char* new_begin = span.begin();
-    parse(
+    bool success = parse(
         new_begin, span.end(),
         raw[*(ascii::char_ - ascii::char_("\n\r"))]
             >> omit[lit("\r\n") | "\n\r" | "\n" | "\r"],
         line
     );
-    span = span_t(new_begin, span.end());
+    if (success) {
+        span = span_t(new_begin, span.end());
+    }
+    else {
+        // No end of line, return entire buffer as line.
+        span = span_t(span.end(), span.end());
+        return span_t(new_begin, span.end());
+    }
 
     return line;
 }
@@ -80,8 +87,11 @@ three_span_t parse_first_line(const span_t& span)
     using namespace boost::spirit::qi;
 
     three_span_t result;
+    // Parse should only fail on an empty span in which case an empty
+    // result is fine.
     parse(
         span.begin(), span.end(),
+        omit[*space] >>
         raw[+ascii::char_-' '] >> -(omit[+space] >>
             raw[+ascii::char_-' '] >> -(omit[+space] >>
                 raw[+ascii::char_])),
@@ -96,12 +106,19 @@ two_span_t parse_header(const span_t& span)
     using namespace boost::spirit::qi;
 
     two_span_t result;
-    parse(
+    // Parse should never fail.
+    bool success = parse(
         span.begin(), span.end(),
-        raw[+(ascii::char_ - ':')] >>
+        raw[*(ascii::char_ - ':')] >>
             -(omit[lit(':') >> *space] >> raw[+ascii::char_]),
         result
     );
+    if (! success) {
+        throw logic_error(
+            "Insanity error: Parse header fialed."
+            "Please report as bug."
+        );
+    }
 
     return result;
 }
