@@ -1539,10 +1539,14 @@ static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
 
     assert(pi != NULL);
     assert(tx != NULL);
-    assert(line != NULL);
 
     ib_conndata_t conndata = {0};
     ib_status_t rc;
+
+    /* This is not valid for HTTP/0.9 requests. */
+    if (line == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {

@@ -238,10 +238,10 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert((line != NULL) && (line->raw != NULL));
-    assert((line != NULL) && (line->protocol != NULL));
-    assert((line != NULL) && (line->status != NULL));
-    assert((line != NULL) && (line->msg != NULL));
+    assert((line == NULL) || (line->raw != NULL));
+    assert((line == NULL) || (line->protocol != NULL));
+    assert((line == NULL) || (line->status != NULL));
+    assert((line == NULL) || (line->msg != NULL));
 
     ib_log_debug3_tx(tx, "ib_state_notify_resp_line(%p,%p,%d,%p)", ib, tx, event, line);
 
@@ -1008,7 +1008,6 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(line != NULL);
 
     ib_log_debug3_tx(tx, "ib_state_notify_response_started(%p,%p,%p)", ib, tx, line);
 
