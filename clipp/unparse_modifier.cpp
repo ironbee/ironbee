@@ -109,7 +109,7 @@ public:
         m_txdata.first += c_eol;
     }
 
-    void request_headers(const Input::HeaderEvent& event)
+    void request_header(const Input::HeaderEvent& event)
     {
         headers(m_txdata.first, event);
     }
@@ -150,7 +150,7 @@ public:
 
     }
 
-    void response_headers(const Input::HeaderEvent& event)
+    void response_header(const Input::HeaderEvent& event)
     {
         headers(m_txdata.second, event);
     }
