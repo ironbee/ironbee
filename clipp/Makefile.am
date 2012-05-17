@@ -24,6 +24,7 @@ clipp_SOURCES = \
     ironbee_consumer.cpp \
     clipp.pb.cc \
     pb_consumer.cpp \
+    null_consumer.cpp \
     pb_generator.cpp \
     apache_generator.cpp \
     suricata_generator.cpp \

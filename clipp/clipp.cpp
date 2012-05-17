@@ -70,6 +70,7 @@
 
 #include "ironbee_consumer.hpp"
 #include "pb_consumer.hpp"
+#include "null_consumer.hpp"
 
 #include "connection_modifiers.hpp"
 #include "parse_modifier.hpp"
@@ -181,6 +182,13 @@ input_consumer_t construct_consumer(const string& arg)
     return T(arg);
 }
 
+//! Generic consumer constructor for no-args.  Ignores @a arg.
+template <typename T>
+input_consumer_t construct_argless_consumer(const string& arg)
+{
+    return T();
+}
+
 //! Generic modifier constructor.  Converts @a arg to @a ArgType.
 template <typename T, typename ArgType>
 input_modifier_t construct_modifier(const string& arg)
@@ -284,6 +292,7 @@ void help()
     "  view           -- Output to stdout for human consumption.\n"
     "  view:id        -- Output IDs to stdout for human consumption.\n"
     "  view:summary   -- Output summary to stdout for human consumption.\n"
+    "  null           -- Discard.\n"
     "\n"
     "Modifiers:\n"
     "  @view                   -- Output to stdout for human consumption.\n"
@@ -433,6 +442,8 @@ int main(int argc, char** argv)
     consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
     consumer_factory_map["writepb"] = construct_consumer<PBConsumer>;
     consumer_factory_map["view"]    = construct_consumer<ViewConsumer>;
+    consumer_factory_map["null"]    =
+        construct_argless_consumer<NullConsumer>;
 
     // Declare modifiers.
     modifier_factory_map_t modifier_factory_map;
