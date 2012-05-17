@@ -637,7 +637,8 @@ static ib_status_t act_block_create(ib_engine_t *ib,
         act_block->execute = &act_block_immediate_execute;
 
     /* As with params == NULL, the default is to use an advisory block. */
-    } else {
+    }
+    else {
         act_block->execute = &act_block_advisory_execute;
     }
 
