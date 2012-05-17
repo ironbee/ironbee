@@ -90,6 +90,7 @@ struct ib_core_cfg_t {
     const char      *data;              /**< Active data provider key */
     const char      *module_base_path;  /**< Module base path. */
     const char      *rule_base_path;    /**< Rule base path. */
+    ib_num_t         block_status;      /**< Status codes when blocking. */
 };
 
 

@@ -4582,6 +4582,34 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_num(ctx, "logger.log_level", level);
         IB_FTRACE_RET_STATUS(rc);
     }
+    /* Set the default block status for responding to blocked transactions. */
+    else if ( strcasecmp("DefaultBlockStatus", name) == 0 ) {
+        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+        int status;
+
+        rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
+
+        if (rc != IB_OK) {
+            ib_log_error(ib, 
+                         "Could not set DeafultBlockStatus %s",
+                         p1_unescaped);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        status  = atoi(p1);
+
+        if ( status < 200 || status >= 600 )
+        {
+            ib_log_debug2(ib, 
+                          "DefaultBlockStatus must be 200 <= status < 600.");
+            ib_log_debug2(ib, "DefaultBlockStatus may not be %d", status);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        corecfg->block_status = status;
+        ib_log_debug2(ib, "DefaultBlockStatus: %d", status);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
     else if (
         strcasecmp("DebugLog", name) == 0 ||
         strcasecmp("Log", name) == 0
@@ -5040,6 +5068,13 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
 
+    /* Blocking */
+    IB_DIRMAP_INIT_PARAM1(
+        "DefaultBlockStatus",
+        core_dir_param1,
+        NULL
+    ),
+
     /* Logging */
     IB_DIRMAP_INIT_PARAM1(
         "DebugLogLevel",
@@ -5236,6 +5271,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->data               = MODULE_NAME_STR;
     corecfg->module_base_path   = X_MODULE_BASE_PATH;
     corecfg->rule_base_path     = X_RULE_BASE_PATH;
+    corecfg->block_status       = 500;
 
     /* Define the logger provider API. */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGGER,
