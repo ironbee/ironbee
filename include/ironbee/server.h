@@ -307,7 +307,7 @@ ib_status_t ib_server_filter_data(
 
 #else
 #define ib_server_error_response(svr,ctx,status) \
-    (svr)->err_fn ? (svr)->err_fn(ctx, status, (svr)->err_fn_data) \
+    (svr)->err_fn ? (svr)->err_fn(ctx, status, (svr)->err_data) \
                   : IB_ENOTIMPL;
 #define ib_server_error_header(svr,ctx,name,val) \
     (svr)->err_hdr_fn ? (svr)->err_hdr_fn(ctx, name, val, (svr)->err_hdr_data) \
