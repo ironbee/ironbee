@@ -49,6 +49,10 @@ void ib_trace_msg(const char *file,
                   const char *func,
                   const char *msg)
 {
+    if (! ib_trace_fh) {
+        return;
+    }
+
     const char *sep = func?"() - ":"";
 
     fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s\n",
@@ -64,6 +68,10 @@ void ib_trace_num(const char *file,
                   intmax_t num)
 
 {
+    if (! ib_trace_fh) {
+        return;
+    }
+
     const char *sep = func?"() - ":"";
     const char *sep2 = msg?" ":"";
 
@@ -82,6 +90,10 @@ void ib_trace_unum(const char *file,
                    uintmax_t unum)
 
 {
+    if (! ib_trace_fh) {
+        return;
+    }
+
     const char *sep = func?"() - ":"";
     const char *sep2 = msg?" ":"";
 
@@ -100,6 +112,10 @@ void ib_trace_ptr(const char *file,
                   void *ptr)
 
 {
+    if (! ib_trace_fh) {
+        return;
+    }
+
     const char *sep = func?"() - ":"";
     const char *sep2 = msg?" ":"";
 
@@ -118,6 +134,10 @@ void ib_trace_str(const char *file,
                   const char *str)
 
 {
+    if (! ib_trace_fh) {
+        return;
+    }
+
     const char *sep = func?"() - ":"";
     const char *sep2 = msg?" ":"";
     const char *real_str = (str != NULL) ? str : "(null)";
@@ -136,6 +156,10 @@ void ib_trace_status(const char *file,
                      const char *msg,
                      ib_status_t rc)
 {
+    if (! ib_trace_fh) {
+        return;
+    }
+
     const char *sep = func?"() - ":"";
     const char *sep2 = msg?" ":"";
 
