@@ -695,16 +695,26 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 
         /* Execute the action */
         arc = execute_action(ib, rule, tx, result, action);
+
+        /* If it declined, then it may have blocked. */
         if (arc == IB_DECLINED) {
-            ib_log_error_tx(tx,
-                            "Action %s/%s did not run",
-                            name, action->action->name);
+
+            /* Block immediate aborts. Other blocks continue processing. */
+            if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
+                IB_FTRACE_RET_STATUS(IB_DECLINED);
+            }
+
+            rc = IB_DECLINED;
         }
         else if (arc != IB_OK) {
             ib_log_error_tx(tx,
                             "Action %s/%s returned an error: %d",
                             name, action->action->name, arc);
-            rc = arc;
+
+            /* Only report the first error, or IB_DECLINED if a rule blocked. */
+            if ( rc == IB_OK ){
+                rc = arc;
+            }
         }
     }
 
@@ -807,7 +817,11 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
                                  tx,
                                  recursion,
                                  rule_result);
-        if (trc != IB_OK) {
+
+        if (trc == IB_DECLINED) {
+            rc = trc;
+        }
+        else if (trc != IB_OK) {
             ib_log_error_tx(tx, "Error executing chained rule %s",
                          rule->chained_rule->meta.id);
             rc = trc;

@@ -505,18 +505,18 @@ static ib_status_t act_setvar_execute(void *cbdata,
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
+ *
+ * @return IB_DECLINED
  */
 static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
-    ib_status_t rc;
-
     tx->flags |= IB_TX_BLOCK_ADVISORY;
 
-    rc = ib_data_add_num(tx->dpi, "TX.BLOCK", 1, NULL);
+    ib_data_add_num(tx->dpi, "FLAGS.BLOCK", 1, NULL);
 
-    IB_FTRACE_RET_STATUS(rc);
+    IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
 
 /**
@@ -526,6 +526,8 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
+ *
+ * @return IB_DECLINED
  */
 static ib_status_t act_block_phase_execute(ib_tx_t *tx)
 {
@@ -533,7 +535,7 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx)
 
     tx->flags |= IB_TX_BLOCK_PHASE;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
 
 /**
@@ -543,6 +545,8 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx)
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
+ *
+ * @returns IB_DECLINED.
  */
 static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
 {
@@ -550,7 +554,7 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
 
     tx->flags |= IB_TX_BLOCK_IMMEDIATE;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
 
 /**
