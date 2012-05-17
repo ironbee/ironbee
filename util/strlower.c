@@ -244,7 +244,7 @@ ib_status_t ib_strlower(ib_strop_t op,
 #else
         rc = copy_on_write(mp,
                            (uint8_t *)str_in, len+1,
-                           (uint8_t **)out, &len, result);
+                           (uint8_t **)&out, &len, result);
 #endif
         break;
     }
