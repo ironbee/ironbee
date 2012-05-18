@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1258 
+personal_ws-1.1 en 1264 
 refactor
 cfg
 api
@@ -78,6 +78,7 @@ eof
 NULLed
 bing
 EOH
+ruleid
 ConstModule
 ParsedRequestLine
 dso
@@ -382,6 +383,7 @@ pri
 UNPARSEABLE
 ovector
 ninit
+rIP
 onEventTxStarted
 copyless
 versa
@@ -757,6 +759,7 @@ testval
 RuleBasePath
 secondlife
 ibcli
+rPort
 ConstParsedResponseLine
 HandleRequest
 foos
@@ -866,6 +869,7 @@ DelegateType
 ConstParsedNameValue
 malloced
 listFields
+RuleEngineLogData
 docallback
 usedefaults
 IronBeeUtilField
@@ -1198,6 +1202,7 @@ REQBDY
 afpc
 onEventConnOpened
 nelts
+actionname
 timeval
 blkend
 aaa
@@ -1233,6 +1238,7 @@ cabc
 tVConn
 IronBeeRule
 IronBeeEngineLog
+RuleExec
 rtorrent
 atexit
 aho

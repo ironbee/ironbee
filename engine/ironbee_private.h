@@ -185,7 +185,7 @@ struct ib_matcher_t {
 };
 
 /**
- * Rule execution results for loggging.
+ * Rule execution results for logging.
  * @internal
  */
 struct ib_rule_target_result_t {

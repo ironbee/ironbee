@@ -847,7 +847,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
  * @param[in] event Event type.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t).
  *
- * @returns Status code. IB_OK on success. IB_DECLINED to singnal that
+ * @returns Status code. IB_OK on success. IB_DECLINED to signal that
  *          rule processing should not continue.
  */
 static ib_status_t run_phase_rules(ib_engine_t *ib,
@@ -934,7 +934,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                                "Rule %s resulted in immediate block: %s",
                                rule->meta.id, ib_status_to_string(rule_rc));
                 ib_log_info_tx(tx,
-                              "Rule processing is aborter by immedate block.");
+                              "Rule processing is aborted by immediate block.");
                 execute_block(ib, tx);
                 IB_FTRACE_RET_STATUS(IB_DECLINED);
             }
@@ -1232,7 +1232,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                                "Rule %s resulted in immediate block: %s",
                                rule->meta.id, ib_status_to_string(rc));
                 ib_log_info_tx(tx,
-                              "Rule processing is aborter by immedate block.");
+                              "Rule processing is aborted by immediate block.");
                 execute_block(ib, tx);
                 IB_FTRACE_RET_STATUS(IB_DECLINED);
             }
