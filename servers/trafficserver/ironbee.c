@@ -161,12 +161,12 @@ typedef struct {
  * Callback functions for Ironbee to signal to us
  */
 static ib_server_header_action_t ib_header_callback
-                                          (void *x, ib_server_direction_t dir,
+                                          (ib_tx_t *tx, ib_server_direction_t dir,
                                            ib_server_header_action_t action,
                                            const char *hdr, const char *value,
                                            void *cbdata)
 {
-    ib_txn_ctx *ctx = x;
+    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     hdr_do *header;
     /* Logic for whether we're in time for the requested action */
     /* Output headers can change any time before they're sent */
@@ -260,9 +260,9 @@ errordoc_free:
     }
 }
 
-static ib_status_t ib_error_callback(void *x, int status, void *cbdata)
+static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
-    ib_txn_ctx *ctx = x;
+    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     TSDebug("ironbee", "ib_error_callback with status=%d", status);
     if (status >= 200 && status < 600) {
         /* We can't return an error after the response has started */
@@ -277,9 +277,10 @@ static ib_status_t ib_error_callback(void *x, int status, void *cbdata)
     }
     return IB_ENOTIMPL;
 }
-static ib_status_t ib_errhdr_callback(void *x, const char *hdr, const char *val, void *cbdata)
+
+static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *val, void *cbdata)
 {
-    ib_txn_ctx *ctx = x;
+    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     hdr_list *hdrs;
     /* We can't return an error after the response has started */
     if (ctx->state & START_RESPONSE)
@@ -293,9 +294,10 @@ static ib_status_t ib_errhdr_callback(void *x, const char *hdr, const char *val,
     ctx->err_hdrs = hdrs;
     return IB_OK;
 }
-static ib_status_t ib_errdata_callback(void *x, const char *data, void *cbdata)
+
+static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbdata)
 {
-    ib_txn_ctx *ctx = x;
+    ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     /* We can't return an error after the response has started */
     if (ctx->state & START_RESPONSE)
         return IB_DECLINED;

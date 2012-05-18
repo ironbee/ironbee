@@ -385,7 +385,7 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
     assert(tx);
     assert(tx->ctx);
 
-    rc = ib_server_error_response(ib->server, tx->ctx, tx->block_status);
+    rc = ib_server_error_response(ib->server, tx, tx->block_status);
 
     IB_FTRACE_RET_STATUS(rc);
 }
