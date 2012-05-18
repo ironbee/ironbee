@@ -176,7 +176,7 @@ static ib_server_header_action_t ib_header_callback
         (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
         return IB_HDR_ERROR;  /* too late for requested op */
 
-    header = TSmalloc(sizeof(hdr_do));
+    header = TSmalloc(sizeof(*header));
     header->next = ctx->hdr_actions;
     ctx->hdr_actions = header;
     header->dir = dir;
@@ -287,7 +287,7 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
         return IB_DECLINED;
     if (!hdr || !val)
         return IB_EINVAL;
-    hdrs = TSmalloc(sizeof(hdr_list));
+    hdrs = TSmalloc(sizeof(*hdrs));
     hdrs->hdr = TSstrdup(hdr);
     hdrs->value = TSstrdup(val);
     hdrs->next = ctx->err_hdrs;
@@ -1075,8 +1075,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     TSError("ironbee: ib_conn_create: %d\n", rc);
                     return rc; // FIXME - figure out what to do
                 }
-                ssndata = TSmalloc(sizeof(ib_ssn_ctx));
-                memset(ssndata, 0, sizeof(ib_ssn_ctx));
+                ssndata = TSmalloc(sizeof(*ssndata));
+                memset(ssndata, 0, sizeof(*ssndata));
                 ssndata->iconn = iconn;
                 ssndata->txnp = txnp;
                 ssndata->txn_count = ssndata->closing = 0;
@@ -1088,8 +1088,8 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* create a txn cont (request ctx) */
             mycont = TSContCreate(ironbee_plugin, NULL);
-            txndata = TSmalloc(sizeof(ib_txn_ctx));
-            memset(txndata, 0, sizeof(ib_txn_ctx));
+            txndata = TSmalloc(sizeof(*txndata));
+            memset(txndata, 0, sizeof(*txndata));
             txndata->ssn = ssndata;
             txndata->txnp = txnp;
             TSContDataSet(mycont, txndata);
