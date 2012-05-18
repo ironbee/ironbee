@@ -578,7 +578,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         }
 
         /* Create a rule target execution result object */
-        if (target_results != NULL) { 
+        if (target_results != NULL) {
             ib_rule_target_result_t *target_result =
                 (ib_rule_target_result_t *)
                 ib_mpool_alloc(tx->mp, sizeof(*target_result));
@@ -847,7 +847,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
  * @param[in] event Event type.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t).
  *
- * @returns Status code. IB_OK on success. IB_DECLINED to singnal that 
+ * @returns Status code. IB_OK on success. IB_DECLINED to singnal that
  *          rule processing should not continue.
  */
 static ib_status_t run_phase_rules(ib_engine_t *ib,
