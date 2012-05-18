@@ -25,6 +25,15 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include <ironbee/types.h>
+#include <ironbee/mpool.h>
+#include <ironbee/hash.h>
+#include <ironbee/clock.h>
+#include <ironbee/uuid.h>
+#include <ironbee/parsed_content.h>
+
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -184,7 +193,7 @@ struct ib_tx_t {
     const char         *id;              /**< Transaction ID */
     ib_conn_t          *conn;            /**< Connection */
     ib_context_t       *ctx;             /**< Config context */
-    void               *pctx;            /**< Plugin context */
+    void               *sctx;            /**< Server context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_provider_inst_t *epi;             /**< Log event provider instance */
     ib_hash_t          *data;            /**< Generic data store */

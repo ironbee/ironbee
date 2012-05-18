@@ -18,16 +18,21 @@
 #ifndef _IB_PARSED_CONTENT_H_
 #define _IB_PARSED_CONTENT_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @file
  * @brief IronBee &mdash; Interface for handling parsed content.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
+
+#include <ironbee/bytestr.h>
+#include <ironbee/field.h>
+#include <ironbee/types.h>
+#include <ironbee/mpool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @defgroup IronBeeParsedContent Parsed Content
@@ -37,11 +42,6 @@ extern "C" {
  *
  * @{
  */
-
-#include <ironbee/bytestr.h>
-#include <ironbee/field.h>
-#include <ironbee/types.h>
-#include <ironbee/mpool.h>
 
 struct ib_tx_t;
 

@@ -25,6 +25,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>, Nick Kew <nkew@qualys.com>
  */
 
+#include <ironbee/engine_types.h>
 #include <ironbee/types.h>
 #include <ironbee/release.h>
 
@@ -80,39 +81,43 @@ typedef enum {
 } ib_server_header_action_t;
 
 typedef ib_status_t (*ib_server_error_fn_t)(
-    void *ctx,
+    ib_tx_t *tx,
     int status,
     void *cbdata
 );
 typedef ib_status_t (*ib_server_error_hdr_fn_t)(
-    void *ctx,
+    ib_tx_t *tx,
     const char *name,
     const char *value,
     void *cbdata
 );
 typedef ib_status_t (*ib_server_error_data_fn_t)(
-    void *ctx,
+    ib_tx_t *tx,
     const char *data,
     void *cbdata
 );
 typedef ib_server_header_action_t (*ib_server_header_fn_t)(
-    void *ctx, ib_server_direction_t dir,
+    ib_tx_t *tx,
+    ib_server_direction_t dir,
     ib_server_header_action_t action,
     const char *hdr,
     const char *value,
     void *cbdata
 );
+
+#ifdef HAVE_FILTER_DATA_API
 typedef ib_status_t (*ib_server_filter_init_fn_t)(
-    void *ctx,
+    ib_tx_t *tx,
     ib_server_direction_t dir,
     void *cbdata
 );
 typedef ib_status_t (*ib_server_filter_data_fn_t)(
-    void *ctx,
+    ib_tx_t *tx,
     ib_server_direction_t dir,
     const char *block, size_t len,
     void *cbdata
 );
+#endif /* HAVE_FILTER_DATA_API */
 
 struct ib_server_t {
     /* Header */
@@ -180,17 +185,15 @@ struct ib_server_t {
  * In the second instance, the server takes an enumerated special
  * action, or returns NOTIMPL if that's not supported.
  *
- * @param[in] svr The ib_server_t
- * @param[in] ctx Application pointer from the server
- * @param[in] status Action requested
- * @param[in] cbdata Callback data.
+ * @param[in] svr Server object
+ * @param[in] tx Transaction
+ * @param[in] status Status code
  * @return indication of whether the requested error action is supported
  */
 ib_status_t ib_server_error_response(
     ib_server_t *svr,
-    void        *ctx,
-    int          status,
-    void        *cbdata
+    ib_tx_t     *tx,
+    int          status
 );
 
 /**
@@ -198,19 +201,17 @@ ib_status_t ib_server_error_response(
  * Any values set here will only take effect if an HTTP response
  * code is also set using ib_server_error_response.
  *
- * @param[in] svr The ib_server_t
- * @param[in] ctx Application pointer from the server
+ * @param[in] svr Server object
+ * @param[in] tx Transaction object
  * @param[in] hdr Header to set
  * @param[in] value Value to set header to.
- * @param[in] cbdata Callback data.
  * @return indication of whether the requested error action is supported
  */
 ib_status_t ib_server_error_header(
     ib_server_t *svr,
-    void        *ctx,
+    ib_tx_t     *tx,
     const char  *hdr,
-    const char  *value,
-    void        *cbdata
+    const char  *value
 );
 
 /**
@@ -226,9 +227,8 @@ ib_status_t ib_server_error_header(
  */
 ib_status_t ib_server_error_header(
     ib_server_t *svr,
-    void        *ctx,
-    const char  *data,
-    void        *cbdata
+    ib_tx_t     *tx,
+    const char  *data
 );
 
 /**
@@ -253,6 +253,7 @@ ib_status_t ib_server_error_header(
 ib_server_header_action_t ib_server_header(
     ib_server_t               *svr,
     void                      *ctx,
+    ib_tx_t                   *tx,
     ib_server_direction_t      dir,
     ib_server_header_action_t  action,
     const char                *hdr,
@@ -303,28 +304,33 @@ ib_status_t ib_server_filter_data(
     size_t          len,
     void           *cbdata
 );
-#endif
+#endif /* HAVE_FILTER_DATA_API */
 
-#else
-#define ib_server_error_response(svr,ctx,status) \
-    (svr)->err_fn ? (svr)->err_fn(ctx, status, (svr)->err_data) \
+#else /* DOXYGEN */
+
+#define ib_server_error_response(svr,tx,status) \
+    (svr)->err_fn ? (svr)->err_fn(tx, status, (svr)->err_data) \
                   : IB_ENOTIMPL;
-#define ib_server_error_header(svr,ctx,name,val) \
-    (svr)->err_hdr_fn ? (svr)->err_hdr_fn(ctx, name, val, (svr)->err_hdr_data) \
+#define ib_server_error_header(svr,tx,name,val) \
+    (svr)->err_hdr_fn ? (svr)->err_hdr_fn(tx, name, val, (svr)->err_hdr_data) \
                       : IB_ENOTIMPL;
-#define ib_server_error_body(svr,ctx,data) \
-    (svr)->err_data_fn ? (svr)->err_data_fn(ctx, data, (svr)->err_data_data) \
+#define ib_server_error_body(svr,tx,data) \
+    (svr)->err_data_fn ? (svr)->err_data_fn(tx, data, (svr)->err_data_data) \
                        : IB_ENOTIMPL;
-#define ib_server_header(svr,ctx,dir,action,hdr,value) \
-    (svr)->hdr_fn ? (svr)->hdr_fn(ctx, dir, action, hdr, value, (svr)->hdr_data) \
+#define ib_server_header(svr,tx,dir,action,hdr,value) \
+    (svr)->hdr_fn ? (svr)->hdr_fn(tx,dir,action,hdr,value,(svr)->hdr_data) \
                   : IB_HDR_NOTIMPL;
-#define ib_server_filter_init(svr,ctx,dir) \
-    (svr)->init_fn ? (svr)->init_fn(ctx, dir, (svr)->init_data) \
+
+#ifdef HAVE_FILTER_DATA_API
+#define ib_server_filter_init(svr,tx,dir) \
+    (svr)->init_fn ? (svr)->init_fn(tx, dir, (svr)->init_data) \
                    : IB_ENOTIMPL;
-#define ib_server_filter_data(svr,ctx,dir,data,len) \
-    (svr)->data_fn ? (svr)->data_fn(ctx, dir, data, len, (svr)->data_data) \
+#define ib_server_filter_data(svr,tx,dir,data,len) \
+    (svr)->data_fn ? (svr)->data_fn(tx,dir,data,len,(svr)->data_data) \
                    : IB_ENOTIMPL;
-#endif
+#endif /* HAVE_FILTER_DATA_API */
+
+#endif /* DOXYGEN */
 
 /**
  * @} IronBeePlugins
