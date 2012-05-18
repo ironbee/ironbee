@@ -575,7 +575,7 @@ ffi.cdef [[
     ib_config_cb_blkend_fn_t modlua_blkend_wrapper(void);
 
     /* Misc */
-    ib_status_t ib_engine_create(ib_engine_t **pib, void *plugin);
+    ib_status_t ib_engine_create(ib_engine_t **pib, void *server);
     ib_status_t ib_context_create_main(ib_engine_t *ib);
 
     /* Logging */

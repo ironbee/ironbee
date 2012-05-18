@@ -91,7 +91,7 @@ struct ib_engine_t {
     const char         *sensor_hostname;  /**< Sensor hostname */
 
     /// @todo Only these should be private
-    ib_server_t        *plugin;           /**< Info about the server plugin */
+    ib_server_t        *server;           /**< Info about the server */
     ib_array_t         *modules;          /**< Array tracking modules */
     ib_array_t         *filters;          /**< Array tracking filters */
     ib_array_t         *contexts;         /**< Configuration contexts */

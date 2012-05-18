@@ -130,12 +130,12 @@ struct ib_auditlog_part_t {
  * initialize the engine configuration context.
  *
  * @param pib Address which new handle is written
- * @param plugin Information on the server plugin instantiating the engine
+ * @param server Information on the server instantiating the engine
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
-                                        ib_server_t *plugin);
+                                        ib_server_t *server);
 
 /**
  * Initialize the engine configuration context.
@@ -194,7 +194,7 @@ ib_mpool_t DLL_PUBLIC *ib_engine_pool_config_get(ib_engine_t *ib);
 /**
  * Get the engine temporary memory pool.
  *
- * This pool should be destroyed by the plugin after the
+ * This pool should be destroyed by the server after the
  * configuration phase. Therefore is should not be used for
  * anything except temporary allocations which are required
  * for performing configuration.
@@ -208,7 +208,7 @@ ib_mpool_t DLL_PUBLIC *ib_engine_pool_temp_get(ib_engine_t *ib);
 /**
  * Destroy the engine temporary memory pool.
  *
- * This should be called by the plugin after configuration is
+ * This should be called by the server after configuration is
  * completed. After this call, any allocations in the temporary
  * pool will be invalid and no future allocations can be made to
  * to this pool.
@@ -568,13 +568,13 @@ void DLL_PUBLIC ib_conn_destroy(ib_conn_t *conn);
  *
  * @param ptx Address which new transaction is written
  * @param conn Connection structure
- * @param pctx Plugin transaction context
+ * @param sctx Server transaction context
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
                                     ib_conn_t *conn,
-                                    void *pctx);
+                                    void *sctx);
 
 /**
  * Set transaction flags.
@@ -702,14 +702,14 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *
  * @dot
  * digraph legend1 {
- *   plugin_state [label="Plugin\nstate",shape=octagon]
- *   plugin_async_state [label="Plugin\nasyncronous\nstate",shape=octagon,peripheries=2]
+ *   server_state [label="Server\nstate",shape=octagon]
+ *   server_async_state [label="Server\nasyncronous\nstate",shape=octagon,peripheries=2]
  *   parser_state [label="Parser\nstate",shape=ellipse]
  *   engine_state [label="Engine\nstate",shape=diamond]
  *   handler_state [label="Handler\nstate",shape=parallelogram]
  *   entity [label="Entity",shape=box]
  *   note [label="Note",shape=note]
- *   {rank=same; plugin_state plugin_async_state parser_state engine_state handler_state note}
+ *   {rank=same; server_state server_async_state parser_state engine_state handler_state note}
  * }
  * @enddot
  * @dot
@@ -743,11 +743,11 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  * }
  * @enddot
  *
- * Plugin states are triggered by the plugin and parser states by the
+ * Server states are triggered by the server and parser states by the
  * parser. These states cause the engine to trigger both the engine and
  * handler states. The engine states are meant to be synchronization
  * points. The handler states are meant to be handled by modules to do
- * detection and take actions, while the plugin and parser states are
+ * detection and take actions, while the server and parser states are
  * to be used to generate fields and anything else needed in the handler
  * states.
  *
@@ -758,7 +758,7 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  * - Transaction Data event hook callbacks receive a @ref ib_txdata_t
  *   parameter.
  *
- * @note Config contexts and some fields are populated during the plugin
+ * @note Config contexts and some fields are populated during the server
  *       events and thus the following handler event is what should be used
  *       to use these contexts and fields for detection.
  *
@@ -907,13 +907,13 @@ typedef enum {
     handle_disconnect_event,       /**< Handle a disconnect */
     handle_postprocess_event,      /**< Handle transaction post processing */
 
-    /* Plugin States */
-    cfg_started_event,             /**< Plugin notified config started */
-    cfg_finished_event,            /**< Plugin notified config finished */
-    conn_opened_event,             /**< Plugin notified connection opened */
-    conn_data_in_event,            /**< Plugin notified of incoming data */
-    conn_data_out_event,           /**< Plugin notified of outgoing data */
-    conn_closed_event,             /**< Plugin notified connection closed */
+    /* Server States */
+    cfg_started_event,             /**< Server notified config started */
+    cfg_finished_event,            /**< Server notified config finished */
+    conn_opened_event,             /**< Server notified connection opened */
+    conn_data_in_event,            /**< Server notified of incoming data */
+    conn_data_out_event,           /**< Server notified of outgoing data */
+    conn_closed_event,             /**< Server notified connection closed */
 
     /* Parser States */
     request_started_event,         /**< Parser notified request has started */

@@ -361,19 +361,19 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
 }
 
 /**
- * Perform a block operation by signaling an error to the server plugin.
+ * Perform a block operation by signaling an error to the server.
  *
- * The server plugin is signaled with
+ * The server is signaled with
  * ib_server_error_response(ib_server_t *, ib_context_t *, int) using
  * @a tx and @a ib to provide the @c ib_context_t* and @c ib_server_t*,
  * respectively.
  *
- * @param ib IronBee engine containing the plugin callbacks.
+ * @param ib IronBee engine containing the server callbacks.
  * @param tx Transaction containing the active context.
  *
- * @returns The result of calling @c ib->plugin->err_fn.
+ * @returns The result of calling ib_server_error_response().
  */
-static ib_status_t report_block_to_server_plugin(ib_engine_t *ib, ib_tx_t *tx)
+static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
@@ -381,11 +381,11 @@ static ib_status_t report_block_to_server_plugin(ib_engine_t *ib, ib_tx_t *tx)
     ib_status_t rc;
 
     assert(ib);
-    assert(ib->plugin);
+    assert(ib->server);
     assert(tx);
     assert(tx->ctx);
 
-    rc = ib_server_error_response(ib->plugin, tx->ctx, tx->block_status);
+    rc = ib_server_error_response(ib->server, tx->ctx, tx->block_status);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -939,7 +939,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                                rule->meta.id, ib_status_to_string(rule_rc));
                 ib_log_info_tx(tx,
                               "Rule processing is aborted by immediate block.");
-                report_block_to_server_plugin(ib, tx);
+                report_block_to_server(ib, tx);
                 IB_FTRACE_RET_STATUS(IB_DECLINED);
             }
             else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
@@ -956,7 +956,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     }
 
     if ( block_phase != 0 ) {
-        report_block_to_server_plugin(ib, tx);
+        report_block_to_server(ib, tx);
         IB_FTRACE_RET_STATUS(IB_DECLINED);
     }
 
@@ -1237,7 +1237,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                                rule->meta.id, ib_status_to_string(rc));
                 ib_log_info_tx(tx,
                               "Rule processing is aborted by immediate block.");
-                report_block_to_server_plugin(ib, tx);
+                report_block_to_server(ib, tx);
                 IB_FTRACE_RET_STATUS(IB_DECLINED);
             }
             else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
@@ -1254,7 +1254,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     }
 
     if ( block_phase != 0 ) {
-        report_block_to_server_plugin(ib, tx);
+        report_block_to_server(ib, tx);
         IB_FTRACE_RET_STATUS(IB_DECLINED);
     }
 

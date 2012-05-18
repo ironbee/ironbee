@@ -203,7 +203,7 @@ static ib_status_t ib_unregister_hook(
 
 /* -- Main Engine Routines -- */
 
-ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *plugin)
+ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 {
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
@@ -261,22 +261,22 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *plugin)
     }
     (*pib)->ctx = (*pib)->ectx;
 
-    /* Check plugin for ABI compatibility with this engine */
-    if (plugin == NULL) {
-        ib_log_error(*pib,  "Error in ib_create: plugin info required");
+    /* Check server for ABI compatibility with this engine */
+    if (server == NULL) {
+        ib_log_error(*pib,  "Error in ib_create: server info required");
         rc = IB_EINVAL;
         goto failed;
     }
-    if (plugin->vernum > IB_VERNUM) {
+    if (server->vernum > IB_VERNUM) {
         ib_log_alert(*pib,
-                     "Plugin %s (built against engine version %s) is not "
+                     "Server %s (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
-                     plugin->filename, plugin->version, IB_VERSION, plugin->abinum, IB_ABINUM);
+                     server->filename, server->version, IB_VERSION, server->abinum, IB_ABINUM);
         rc = IB_EINCOMPAT;
         goto failed;
     }
-    (*pib)->plugin = plugin;
+    (*pib)->server = server;
 
     /* Sensor info. */
     (*pib)->sensor_name = IB_DSTR_UNKNOWN;
@@ -471,8 +471,8 @@ void ib_engine_destroy(ib_engine_t *ib)
         }
 
         ib_log_debug3(ib, "Destroy IB handle (%d,%d,%s,%s): %p",
-               ib->plugin->vernum, ib->plugin->abinum,
-               ib->plugin->filename, ib->plugin->name, ib);
+               ib->server->vernum, ib->server->abinum,
+               ib->server->filename, ib->server->name, ib);
 
         ib_mpool_destroy(ib->mp);
     }
@@ -639,7 +639,7 @@ static ib_status_t ib_tx_generate_id(ib_tx_t *tx)
 
 ib_status_t ib_tx_create(ib_tx_t **ptx,
                          ib_conn_t *conn,
-                         void *pctx)
+                         void *sctx)
 {
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
@@ -685,7 +685,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->ib = ib;
     tx->mp = pool;
     tx->ctx = ib->ctx;
-    tx->pctx = pctx;
+    tx->sctx = sctx;
     tx->conn = conn;
     tx->er_ipstr = conn->remote_ipstr;
     tx->hostname = IB_DSTR_EMPTY;
@@ -784,7 +784,6 @@ void ib_tx_destroy(ib_tx_t *tx)
     /// @todo Probably need to update state???
     ib_mpool_destroy(tx->mp);
 }
-
 
 ib_status_t ib_site_create(ib_site_t **psite,
                            ib_engine_t *ib,
@@ -961,7 +960,7 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(handle_disconnect_event),
     IB_STRINGIFY(handle_postprocess_event),
 
-    /* Plugin States */
+    /* Server States */
     IB_STRINGIFY(cfg_started_event),
     IB_STRINGIFY(cfg_finished_event),
     IB_STRINGIFY(conn_opened_event),
