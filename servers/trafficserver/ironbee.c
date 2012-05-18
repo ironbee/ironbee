@@ -1232,6 +1232,7 @@ static int check_ts_version(void)
  * @param[in] ap Var args list to match the format
  */
 static void ironbee_logger(void *dummy, int level,
+                           const ib_engine_t *ib,
                            const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)

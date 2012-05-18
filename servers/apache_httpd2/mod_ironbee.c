@@ -218,6 +218,7 @@ ib_engine_t DLL_LOCAL *ironbee = NULL;
 
 /// @todo Change to use ib_provider_inst_t
 static void ironbee_logger(server_rec *s, int level,
+                           const ib_engine_t *ib,
                            const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)
