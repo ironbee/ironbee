@@ -76,6 +76,7 @@ public:
     void request_started(const Input::RequestEvent& event)
     {
         UnparseModifier::unparse_request_line(m_txdata.first, event);
+        m_txdata.first += c_eol;
     }
 
     void request_header(const Input::HeaderEvent& event)
@@ -91,6 +92,7 @@ public:
     void response_started(const Input::ResponseEvent& event)
     {
         UnparseModifier::unparse_response_line(m_txdata.second, event);
+        m_txdata.second += c_eol;
     }
 
     void response_header(const Input::HeaderEvent& event)
@@ -216,7 +218,6 @@ void UnparseModifier::unparse_request_line(
             );
         }
     }
-    out += c_eol;
 }
 
 void UnparseModifier::unparse_response_line(
@@ -249,7 +250,6 @@ void UnparseModifier::unparse_response_line(
             );
         }
     }
-    out += c_eol;
 }
 
 } // CLIPP
