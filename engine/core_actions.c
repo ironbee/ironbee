@@ -512,9 +512,57 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
-    tx->flags |= IB_TX_BLOCK_ADVISORY;
+    ib_status_t rc;
+    ib_field_t *ib_flags_field;
+    ib_field_t *ib_block_field;
+    ib_num_t ib_num_one = 1;
 
-    ib_data_add_num(tx->dpi, "FLAGS.BLOCK", 1, NULL);
+    /* Don't re-set the flag because it bloats the DPI value FLAGS
+     * with lots of BLOCK entries. */
+    if (!ib_tx_flags_isset(tx, IB_TX_BLOCK_ADVISORY)) {
+
+        /* Set the flag in the transaction. */
+        ib_tx_flags_set(tx, IB_TX_BLOCK_ADVISORY);
+
+        /* Get the FLAGS list of values or create it if missing. */
+        rc = ib_data_get(tx->dpi, "FLAGS", &ib_flags_field);
+        if (rc == IB_ENOENT) {
+
+            rc = ib_data_add_list(tx->dpi, "FLAGS", &ib_flags_field);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Could not create FLAGS field: %s",
+                                    ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+        }
+        else if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Could not retrieve FLAGS field: %s",
+                                ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Create the IB_FTYPE_NUM field to add to FLAGS. */
+        rc = ib_field_create(&ib_block_field,
+                             tx->mp,
+                             "BLOCK",
+                             5,
+                             IB_FTYPE_NUM,
+                             &ib_num_one);
+        if ( rc != IB_OK ) {
+            ib_log_error_tx(tx, "Failed to create the IB_NUM field BLOCK: %s",
+                                ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add BLOCK=1 to FLAGS. */
+        rc = ib_field_list_add(ib_flags_field, ib_block_field);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Could not add blocked field to flags: %s",
+                                ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
 
     IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
@@ -533,7 +581,7 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
-    tx->flags |= IB_TX_BLOCK_PHASE;
+    ib_tx_flags_set(tx, IB_TX_BLOCK_PHASE);
 
     IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
@@ -552,7 +600,7 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
-    tx->flags |= IB_TX_BLOCK_IMMEDIATE;
+    ib_tx_flags_set(tx, IB_TX_BLOCK_IMMEDIATE);
 
     IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
