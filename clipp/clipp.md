@@ -360,6 +360,21 @@ chosen at random for each output input.  Supported distrbutions are:
 - geometric:*p* --- Geometric distribution with *p* chance of success.
 - poisson:*mean* --- Poisson distribution with mean *mean*.
 
+**@edit**:*which*
+
+Edit part of each input in an editor.  The environmental variable, `EDITOR`
+determines which editor to use or `vi` if it is unset.  The *which* paramter 
+can be any of:
+
+- request --- Request line.
+- request_header --- Request header (all lines).
+- request_body --- Request body.
+- response --- Response line.
+- response_header --- Response header (all lines).
+- response_body --- Response body.
+
+If the editor exits non-zero then the original text is used.
+
 Consumers
 ---------
 

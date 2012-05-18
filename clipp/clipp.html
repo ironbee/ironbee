@@ -370,6 +370,23 @@ chosen at random for each output input. Supported distrbutions are:</p>
 <li>poisson:<em>mean</em> &#8212; Poisson distribution with mean <em>mean</em>.</li>
 </ul>
 
+<p><strong>@edit</strong>:<em>which</em></p>
+
+<p>Edit part of each input in an editor. The environmental variable, <code>EDITOR</code>
+determines which editor to use or <code>vi</code> if it is unset. The <em>which</em> paramter
+can be any of:</p>
+
+<ul>
+<li>request &#8212; Request line.</li>
+<li>request_header &#8212; Request header (all lines).</li>
+<li>request_body &#8212; Request body.</li>
+<li>response &#8212; Response line.</li>
+<li>response_header &#8212; Response header (all lines).</li>
+<li>response_body &#8212; Response body.</li>
+</ul>
+
+<p>If the editor exits non-zero then the original text is used.</p>
+
 <h2 id="consumers">Consumers</h2>
 
 <p><strong>ironbee</strong>:<em>path</em></p>

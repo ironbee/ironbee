@@ -76,6 +76,7 @@
 #include "parse_modifier.hpp"
 #include "unparse_modifier.hpp"
 #include "aggregate_modifier.hpp"
+#include "edit_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -324,6 +325,13 @@ void help()
     "  @aggregate:poisson:mean -- \n"
     "    Aggregate transactions into a connections of n transactions\n"
     "    chosen at random from a poisson distribution with mean <mean>.\n"
+    "  @edit:which -- Edit part of each input with EDITOR.  <which> can be:\n"
+    "    - request -- request line.\n"
+    "    - request_header -- request header.\n"
+    "    - request_body -- request body.\n"
+    "    - response -- response line.\n"
+    "    - response_header -- response header.\n"
+    "    - response_body -- response body.\n"
     ;
 }
 
@@ -460,6 +468,7 @@ int main(int argc, char** argv)
     modifier_factory_map["unparse"] =
         construct_argless_modifier<UnparseModifier>;
     modifier_factory_map["aggregate"] = init_aggregate_modifier;
+    modifier_factory_map["edit"] = construct_modifier<EditModifier>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
