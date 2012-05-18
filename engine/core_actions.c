@@ -499,12 +499,9 @@ static ib_status_t act_setvar_execute(void *cbdata,
 }
 
 /**
- * Set the tx IB_TX_BLOCK_ADVISORY flag and set TX.BLOCK=1 in the TX DPI.
+ * Set the IB_TX_BLOCK_ADVISORY flag and set the DPI value @c FLAGS:BLOCK=1.
  *
- * @param[in] cbdata unused.
- * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
- * @param[in] flags Flags. Unused.
  *
  * @return IB_DECLINED
  */
@@ -568,12 +565,9 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
 }
 
 /**
- * Set the tx IB_TX_BLOCK_PHASE flag in the tx.
+ * Set the IB_TX_BLOCK_PHASE flag in the tx.
  *
- * @param[in] cbdata unused.
- * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
- * @param[in] flags Flags. Unused.
  *
  * @return IB_DECLINED
  */
@@ -587,12 +581,9 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx)
 }
 
 /**
- * Set the tx IB_TX_BLOCK_IMMEDIATE flag in the tx.
+ * Set the IB_TX_BLOCK_IMMEDIATE flag in the tx.
  *
- * @param[in] cbdata unused.
- * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
- * @param[in] flags Flags. Unused.
  *
  * @returns IB_DECLINED.
  */
@@ -606,20 +597,25 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
 }
 
 /**
+ * The function that implements flagging a particular block type.
+ */
+typedef ib_status_t(*act_block_execution_t)(ib_tx_t *);
+
+/**
  * Internal block action structure.
  *
  * This holds a pointer to the block callback that will be used.
  */
 struct act_block_t {
-    /**! What block method should be used. */
-    ib_status_t(*execute)(ib_tx_t *);
+    act_block_execution_t execute; /**< What block method should be used. */
 };
 typedef struct act_block_t act_block_t;
 
 /**
  * Executes the function stored in cbdata.
  *
- * @param[in] cbdata unused.
+ * @param[in] cbdata Cast to an @c act_block_t and the @c execute field is
+ *            called on the given @a tx.
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
@@ -630,8 +626,9 @@ static ib_status_t act_block_execute(void* cbdata,
                                      ib_flags_t flags)
 {
     IB_FTRACE_INIT();
-    assert(cbdata!=NULL);
-    assert(tx!=NULL);
+
+    assert(cbdata);
+    assert(tx);
 
     ib_status_t rc = ((const act_block_t *)cbdata)->execute(tx);
 
@@ -645,10 +642,10 @@ static ib_status_t act_block_execute(void* cbdata,
  * @param[in] ctx Context.
  * @param[in] mp Memory pool.
  * @param[in] params Parameters. These may be "immediate", "phase", or
- *            "advise". If null "advise" is assumed.
+ *            "advise". If null, "advisory" is assumed.
  *            These select the type of block that will be put in place
- *            by deciding which callback (act_block_phase_execute,
- *            act_block_immediate_execute, or act_block_advise_execute)
+ *            by deciding which callback (act_block_phase_execute(),
+ *            act_block_immediate_execute(), or act_block_advise_execute())
  *            is assigned to the rule data object.
  * @param[out] inst The instance being initialized.
  *
@@ -665,7 +662,6 @@ static ib_status_t act_block_create(ib_engine_t *ib,
 
     act_block_t *act_block =
         (act_block_t *)ib_mpool_alloc(mp, sizeof(*act_block));
-
     if ( act_block == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -688,9 +684,9 @@ static ib_status_t act_block_create(ib_engine_t *ib,
     /* Immediate blocking. Block ASAP. */
     else if ( ! strcasecmp("immediate", params) ) {
         act_block->execute = &act_block_immediate_execute;
+    }
 
     /* As with params == NULL, the default is to use an advisory block. */
-    }
     else {
         act_block->execute = &act_block_advisory_execute;
     }
@@ -701,15 +697,18 @@ static ib_status_t act_block_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Holds the status code that a @c status action will set in the @c tx.
+ */
 struct act_status_t {
-    int block_status;
+    int block_status; /**< The status to copy into @c tx->block_status. */
 };
 typedef struct act_status_t act_status_t;
 
 /**
  * Set the @c block_status value in @a tx.
  *
- * @param[in] cbdata The @c act_status_t that contains the @c block_status
+ * @param[in] cbdata The act_status_t that contains the @c block_status
  *            to assign to @c tx->block_status.
  * @param[in] rule The rule. Unused.
  * @param[out] tx The field in this struct, @c block_status, is set.
@@ -724,8 +723,8 @@ static ib_status_t act_status_execute(void* cbdata,
 {
     IB_FTRACE_INIT();
 
-    assert(cbdata != NULL);
-    assert(tx != NULL);
+    assert(cbdata);
+    assert(tx);
 
     /* NOTE: Range validation of block_status is done in act_status_create. */
     tx->block_status = ((act_status_t *)cbdata)->block_status;
@@ -746,7 +745,7 @@ static ib_status_t act_status_execute(void* cbdata,
  *
  * @return IB_OK on success. IB_EALLOC on an allocation error from mp.
  *         IB_EINVAL if @a param is NULL or not convertible with
- *         @c atoi(const char *) to an integer in the range 200 through 599,
+ *         @c atoi(const @c char*) to an integer in the range 200 through 599,
  *         inclusive.
  */
 static ib_status_t act_status_create(ib_engine_t *ib,
@@ -757,19 +756,19 @@ static ib_status_t act_status_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    assert(inst!=NULL);
-    assert(mp!=NULL);
+    assert(inst);
+    assert(mp);
 
-    act_status_t *act_status =
-        (act_status_t *) ib_mpool_alloc(mp, sizeof(*act_status));
+    act_status_t *act_status;
     int block_status;
 
-    if ( act_status == NULL ) {
+    act_status = (act_status_t *) ib_mpool_alloc(mp, sizeof(*act_status));
+    if (act_status == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    if ( params == NULL ) {
-        ib_log_error(ib, "Action \"status\" must be given a parameter "
+    if (params == NULL) {
+        ib_log_error(ib, "Action status must be given a parameter "
                          "x where 200 <= x < 600.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -777,7 +776,7 @@ static ib_status_t act_status_create(ib_engine_t *ib,
     block_status = atoi(params);
 
     if ( block_status < 200 || block_status >= 600 ) {
-        ib_log_error(ib, "Action \"status\" must be given a parameter "
+        ib_log_error(ib, "Action status must be given a parameter "
                          "x where 200 <= x < 600. It was given %s.",
                          params);
         IB_FTRACE_RET_STATUS(IB_EINVAL);

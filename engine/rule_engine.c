@@ -361,25 +361,29 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
 }
 
 /**
- * Translate a block by a rule into a error reported to the server plugin.
+ * Perform a block operation by signaling an error to the server plugin.
+ *
+ * The server plugin is signaled with
+ * ib_server_error_response(ib_server_t *, ib_context_t *, int) using
+ * @a tx and @a ib to provide the @c ib_context_t* and @c ib_server_t*,
+ * respectively.
  *
  * @param ib IronBee engine containing the plugin callbacks.
  * @param tx Transaction containing the active context.
  *
- * @returns The result of calling ib->plugin->err_fn.
+ * @returns The result of calling @c ib->plugin->err_fn.
  */
-static ib_status_t execute_block(ib_engine_t *ib, ib_tx_t *tx)
+static ib_status_t report_block_to_server_plugin(ib_engine_t *ib, ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
     /* Store the final return code here. */
     ib_status_t rc;
 
-    assert(ib != NULL);
-    assert(ib->plugin != NULL);
-    assert(ib->plugin->err_fn != NULL);
-    assert(tx != NULL);
-    assert(tx->ctx != NULL);
+    assert(ib);
+    assert(ib->plugin);
+    assert(tx);
+    assert(tx->ctx);
 
     rc = ib_server_error_response(ib->plugin, tx->ctx, tx->block_status);
 
@@ -489,10 +493,10 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                                               ib_list_t *target_results)
 {
     IB_FTRACE_INIT();
-    assert(ib != NULL);
-    assert(rule != NULL);
-    assert(tx != NULL);
-    assert(rule_result != NULL);
+    assert(ib);
+    assert(rule);
+    assert(tx);
+    assert(rule_result);
     ib_list_node_t      *node = NULL;
     ib_operator_inst_t  *opinst = rule->opinst;
 
@@ -789,15 +793,15 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     if ( trc == IB_DECLINED ) {
         if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
             ib_log_info_tx(tx,
-                "Rule %s caused immediate blocked.", rule->meta.id);
+                "Rule %s caused immediate block.", rule->meta.id);
             ib_log_info_tx(tx,
-                "Aborting chained rules because of immediate block.");
+                "Aborting chain rules because of immediate block.");
             IB_FTRACE_RET_STATUS(IB_DECLINED);
         }
     }
     else if (trc != IB_OK) {
         ib_log_error_tx(tx,
-                     "Error executing action for rule %s", rule->meta.id);
+                     "Failed to execute action for rule %s", rule->meta.id);
         rc = trc;
     }
 
@@ -867,7 +871,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     ib_list_t                  *rules;
     ib_list_node_t             *node = NULL;
 
-    /* Boolean indicating if to block at the end of this phase. */
+    /* Boolean indicating a block at the end of this phase. */
     int                         block_phase = 0;
 
     ruleset_phase = &(ctx->rules->ruleset.phases[meta->phase_num]);
@@ -935,7 +939,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                                rule->meta.id, ib_status_to_string(rule_rc));
                 ib_log_info_tx(tx,
                               "Rule processing is aborted by immediate block.");
-                execute_block(ib, tx);
+                report_block_to_server_plugin(ib, tx);
                 IB_FTRACE_RET_STATUS(IB_DECLINED);
             }
             else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
@@ -952,7 +956,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     }
 
     if ( block_phase != 0 ) {
-        execute_block(ib, tx);
+        report_block_to_server_plugin(ib, tx);
         IB_FTRACE_RET_STATUS(IB_DECLINED);
     }
 
@@ -1142,7 +1146,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     ib_list_t               *rules = ruleset_phase->rule_list;
     ib_list_node_t          *node = NULL;
 
-    /* Boolean indicating if to block at the end of this phase. */
+    /* Boolean indicating a block at the end of this phase. */
     int                         block_phase = 0;
 
     /* Sanity check */
@@ -1215,7 +1219,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * returns an error.  This needs further discussion to determine what
          * the correct behavior should be.
          */
-        actions = (result != 0)?  rule->true_actions: rule->false_actions;
+        actions = (result)?  rule->true_actions: rule->false_actions;
 
         rc = execute_actions(ib, rule, tx, result, actions);
 
@@ -1233,7 +1237,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                                rule->meta.id, ib_status_to_string(rc));
                 ib_log_info_tx(tx,
                               "Rule processing is aborted by immediate block.");
-                execute_block(ib, tx);
+                report_block_to_server_plugin(ib, tx);
                 IB_FTRACE_RET_STATUS(IB_DECLINED);
             }
             else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
@@ -1250,7 +1254,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     }
 
     if ( block_phase != 0 ) {
-        execute_block(ib, tx);
+        report_block_to_server_plugin(ib, tx);
         IB_FTRACE_RET_STATUS(IB_DECLINED);
     }
 
