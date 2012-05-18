@@ -36,6 +36,42 @@ class UnparseModifier
 public:
     //! Call operator.
     bool operator()(Input::input_p& in_out);
+
+    /**
+     * Unparse header list into header text block.
+     *
+     * @param[out] out     String to append text to.
+     * @param[in]  headers Headers to unparse.
+     **/
+    static
+    void unparse_headers(
+        std::string&                out,
+        const Input::header_list_t& headers
+    );
+
+    /**
+     * Unparse request line into text block.
+     *
+     * @param[out] out   String to append text to.
+     * @parma[in]  event RequestEvent to unparse.
+     **/
+    static
+    void unparse_request_line(
+        std::string&               out,
+        const Input::RequestEvent& event
+    );
+
+    /**
+     * Unparse response line into text block.
+     *
+     * @param[out] out   String to append text to.
+     * @parma[in]  event ResponseEvent to unparse.
+     **/
+    static
+    void unparse_response_line(
+        std::string&               out,
+        const Input::ResponseEvent& event
+    );
 };
 
 } // CLIPP

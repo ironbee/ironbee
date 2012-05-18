@@ -49,29 +49,17 @@ class UnparseDelegate :
 {
 private:
     static
-    void headers(string& dst, const Input::HeaderEvent& event)
+    void headers(string& out, const Input::HeaderEvent& event)
     {
-        BOOST_FOREACH(const Input::header_t& header, event.headers) {
-            if (header.first.data) {
-                dst.append(header.first.data, header.first.length);
-                dst += ": ";
-                if (header.second.data) {
-                    dst.append(
-                        header.second.data,
-                        header.second.length
-                    );
-                }
-                dst += c_eol;
-            }
-        }
+        UnparseModifier::unparse_headers(out, event.headers);
     }
 
     static
-    void body(string& dst, const Input::DataEvent& event)
+    void body(string& out, const Input::DataEvent& event)
     {
         if (event.data.data) {
-            dst += c_eol;
-            dst.append(event.data.data, event.data.length);
+            out += c_eol;
+            out.append(event.data.data, event.data.length);
         }
     }
 
@@ -87,26 +75,7 @@ public:
 
     void request_started(const Input::RequestEvent& event)
     {
-        if (event.raw.data) {
-            m_txdata.first.append(event.raw.data, event.raw.length);
-        }
-        else {
-            if (event.method.data) {
-                m_txdata.first.append(event.method.data, event.method.length);
-                m_txdata.first.append(" ");
-            }
-            if (event.uri.data) {
-                m_txdata.first.append(event.uri.data, event.uri.length);
-                m_txdata.first.append(" ");
-            }
-            if (event.protocol.data) {
-                m_txdata.first.append(
-                    event.protocol.data,
-                    event.protocol.length
-                );
-            }
-        }
-        m_txdata.first += c_eol;
+        UnparseModifier::unparse_request_line(m_txdata.first, event);
     }
 
     void request_header(const Input::HeaderEvent& event)
@@ -121,33 +90,7 @@ public:
 
     void response_started(const Input::ResponseEvent& event)
     {
-        if (event.raw.data) {
-            m_txdata.second.append(event.raw.data, event.raw.length);
-        }
-        else {
-            if (event.protocol.data) {
-                m_txdata.second.append(
-                    event.protocol.data,
-                    event.protocol.length
-                );
-                m_txdata.second.append(" ");
-            }
-            if (event.status.data) {
-                m_txdata.second.append(
-                    event.status.data,
-                    event.status.length
-                );
-                m_txdata.second.append(" ");
-            }
-            if (event.message.data) {
-                m_txdata.second.append(
-                    event.message.data,
-                    event.message.length
-                );
-            }
-        }
-        m_txdata.second += c_eol;
-
+        UnparseModifier::unparse_response_line(m_txdata.second, event);
     }
 
     void response_header(const Input::HeaderEvent& event)
@@ -226,6 +169,87 @@ bool UnparseModifier::operator()(Input::input_p& input)
     input->connection.transactions.swap(new_transactions);
 
     return true;
+}
+
+void UnparseModifier::unparse_headers(
+    std::string&                out,
+    const Input::header_list_t& headers
+)
+{
+    BOOST_FOREACH(const Input::header_t& header, headers) {
+        if (header.first.data) {
+            out.append(header.first.data, header.first.length);
+            out += ": ";
+            if (header.second.data) {
+                out.append(
+                    header.second.data,
+                    header.second.length
+                );
+            }
+            out += c_eol;
+        }
+    }
+}
+
+
+void UnparseModifier::unparse_request_line(
+    std::string&               out,
+    const Input::RequestEvent& event
+)
+{
+    if (event.raw.data) {
+        out.append(event.raw.data, event.raw.length);
+    }
+    else {
+        if (event.method.data) {
+            out.append(event.method.data, event.method.length);
+            out.append(" ");
+        }
+        if (event.uri.data) {
+            out.append(event.uri.data, event.uri.length);
+            out.append(" ");
+        }
+        if (event.protocol.data) {
+            out.append(
+                event.protocol.data,
+                event.protocol.length
+            );
+        }
+    }
+    out += c_eol;
+}
+
+void UnparseModifier::unparse_response_line(
+    std::string&               out,
+    const Input::ResponseEvent& event
+)
+{
+    if (event.raw.data) {
+        out.append(event.raw.data, event.raw.length);
+    }
+    else {
+        if (event.protocol.data) {
+            out.append(
+                event.protocol.data,
+                event.protocol.length
+            );
+            out.append(" ");
+        }
+        if (event.status.data) {
+            out.append(
+                event.status.data,
+                event.status.length
+            );
+            out.append(" ");
+        }
+        if (event.message.data) {
+            out.append(
+                event.message.data,
+                event.message.length
+            );
+        }
+    }
+    out += c_eol;
 }
 
 } // CLIPP
