@@ -263,10 +263,13 @@ errordoc_free:
 static ib_status_t ib_error_callback(void *x, int status, void *cbdata)
 {
     ib_txn_ctx *ctx = x;
+    TSDebug("ironbee", "ib_error_callback with status=%d", status);
     if (status >= 200 && status < 600) {
         /* We can't return an error after the response has started */
-        if (ctx->state & START_RESPONSE)
+        if (ctx->state & START_RESPONSE) {
+            TSDebug("ironbee", "Too late to change status=%d", status);
             return IB_DECLINED;
+        }
         /* ironbee wants to return an HTTP status.  We'll oblige */
         /* FIXME: would the semantics work for 1xx?  Do we care? */
         ctx->status = status;
@@ -348,8 +351,10 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
         if (data->ssn) {
             --data->ssn->txn_count;
             if (data->ssn->txn_count == 0 && data->ssn->closing) {
-                if (data->ssn->iconn) /* notify_conn_closed calls conn_destroy */
+                if (data->ssn->iconn) { /* notify_conn_closed calls conn_destroy */
+                    TSDebug("ironbee", "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
                     ib_state_notify_conn_closed(ironbee, data->ssn->iconn);
+                }
                 TSfree(data->ssn);
             }
         }
@@ -374,8 +379,10 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
      */
     if (data) {
         if (data->txn_count == 0) { /* TXN_CLOSE happened already */
-            if (data->iconn) /* notify_conn_closed calls conn_destroy */
+            if (data->iconn) { /* notify_conn_closed calls conn_destroy */
+                TSDebug("ironbee", "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
                 ib_state_notify_conn_closed(ironbee, data->iconn);
+            }
             TSfree(data);
         }
         else {
@@ -433,6 +440,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         ib_txdata_t itxdata;
         itxdata.data = (uint8_t *)ibd->data->buf;
         itxdata.dlen = ibd->data->buflen;
+        TSDebug("ironbee", "process_data: calling ib_state_notify_%s_body() %s:%d", ((ibd->ibd->dir == IBD_REQ)?"request":"response"), __FILE__, __LINE__);
         (*ibd->ibd->ib_notify_body)(ironbee, data->tx, &itxdata);
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
@@ -502,6 +510,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     ib_txdata_t itxdata;
                     itxdata.data = (uint8_t *)ibd->data->buf;
                     itxdata.dlen = ibd->data->buflen;
+                    TSDebug("ironbee", "process_data: calling ib_state_notify_%s_body() %s:%d", ((ibd->ibd->dir == IBD_REQ)?"request":"response"), __FILE__, __LINE__);
                     (*ibd->ibd->ib_notify_body)(ironbee, data->tx,
                                                 (ilength!=0) ? &itxdata : NULL);
                 }
@@ -605,6 +614,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
             TSVConnShutdown(TSTransformOutputVConnGet(contp), 0, 1);
 
             data = TSContDataGet(contp);
+            TSDebug("ironbee", "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
             (*ibd->ibd->ib_notify_end)(ironbee, data->tx);
             break;
         case TS_EVENT_VCONN_WRITE_READY:
@@ -872,6 +882,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                                        method, m_len,
                                        uri, u_len,
                                        protocol, p_len);
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_started()");
         ib_state_notify_request_started(ironbee, data->tx, rline);
 
         /* now loop over req header lines */
@@ -888,7 +899,9 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                                                     line, n_len,
                                                     lptr, v_len);
         }
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_header_data()");
         rv = ib_state_notify_request_header_data(ironbee, data->tx, ibhdrs);
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_header_finished()");
         rv = ib_state_notify_request_header_finished(ironbee, data->tx);
     }
     else {
@@ -919,6 +932,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                                         protocol, p_len,
                                         code, c_len,
                                         msg, m_len);
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_started()");
         ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
         rv = ib_state_notify_response_started(ironbee, data->tx, rline);
 
@@ -936,7 +950,9 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                                                     line, n_len,
                                                     lptr, v_len);
         }
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_header_data()");
         rv = ib_state_notify_response_header_data(ironbee, data->tx, ibhdrs);
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_header_finished()");
         rv = ib_state_notify_response_header_finished(ironbee, data->tx);
     }
 
@@ -1063,6 +1079,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 ssndata->txnp = txnp;
                 ssndata->txn_count = ssndata->closing = 0;
                 TSContDataSet(contp, ssndata);
+                TSDebug("ironbee", "ironbee_plugin: calling ib_state_notify_conn_opened()");
                 ib_state_notify_conn_opened(ironbee, iconn);
             }
             ++ssndata->txn_count;
@@ -1158,6 +1175,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             status = process_hdr(txndata, txnp, &ironbee_direction_req);
             txndata->state |= HDRS_IN;
             if (status >= 200 && status < 600) {
+                TSDebug("ironbee", "Status is set to error with %d contp=%p", status, contp);
                 TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
             }
@@ -1459,6 +1477,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
                           ironbee_conn_init, NULL);
 
 
+    TSDebug("ironbee", "ironbee_init: calling ib_state_notify_cfg_started()");
     ib_state_notify_cfg_started(ironbee);
     ctx = ib_context_main(ironbee);
 
@@ -1473,6 +1492,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
         ib_cfgparser_parse(cp, configfile);
         ib_cfgparser_destroy(cp);
     }
+    TSDebug("ironbee", "ironbee_init: calling ib_state_notify_cfg_finished()");
     ib_state_notify_cfg_finished(ironbee);
 
 
