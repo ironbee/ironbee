@@ -156,18 +156,9 @@ void convert_connection_data(
 
     // Headers
     Input::header_list_t headers;
-    while (! input.empty()) {
-        span_t current_line = fetch_line(input);
-        if (current_line.empty()) {
-            // End of headers
-            break;
-        }
-        two_span_t info = parse_header(current_line);
-        headers.push_back(make_pair(
-            to_buffer(info.get<0>()),
-            to_buffer(info.get<1>())
-        ));
-    }
+    const char* begin = input.begin();
+    ParseModifier::parse_header_block(headers, begin, input.end());
+    input = span_t(begin, input.end());
     if (! headers.empty()) {
         boost::shared_ptr<Input::HeaderEvent> specific =
             boost::make_shared<Input::HeaderEvent>(header_event);
@@ -280,6 +271,53 @@ bool ParseModifier::operator()(Input::input_p& input)
     input->connection.transactions.swap(new_transactions);
 
     return true;
+}
+
+void ParseModifier::parse_header_block(
+    Input::header_list_t& headers,
+    const char*& begin, const char* end
+)
+{
+    span_t input(begin, end);
+    while (! input.empty()) {
+        span_t current_line = fetch_line(input);
+        if (current_line.empty()) {
+            // End of headers
+            break;
+        }
+        two_span_t info = parse_header(current_line);
+        headers.push_back(make_pair(
+            to_buffer(info.get<0>()),
+            to_buffer(info.get<1>())
+        ));
+    }
+    begin = input.begin();
+}
+
+void ParseModifier::parse_request_line(
+    Input::RequestEvent& event,
+    const char* begin, const char* end
+)
+{
+    span_t input(begin, end);
+    three_span_t info = parse_first_line(input);
+    event.raw      = to_buffer(input);
+    event.method   = to_buffer(info.get<0>());
+    event.uri      = to_buffer(info.get<1>());
+    event.protocol = to_buffer(info.get<2>());
+}
+
+void ParseModifier::parse_response_line(
+    Input::ResponseEvent& event,
+    const char* begin, const char* end
+)
+{
+    span_t input(begin, end);
+    three_span_t info = parse_first_line(input);
+    event.raw      = to_buffer(input);
+    event.protocol = to_buffer(info.get<0>());
+    event.status   = to_buffer(info.get<1>());
+    event.message  = to_buffer(info.get<2>());
 }
 
 } // CLIPP

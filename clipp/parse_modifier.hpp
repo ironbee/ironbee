@@ -36,6 +36,46 @@ class ParseModifier
 public:
     //! Call operator.
     bool operator()(Input::input_p& in_out);
+
+    /**
+     * Parse block of header text into list of headers.
+     *
+     * @param[out]    headers List to append headers to.
+     * @param[in,out] begin   Beginning of block; will be updated to point to
+     *                        just past end of headers.
+     * @param[end]    end     End of block.  Can be past last header.
+     **/
+    static
+    void parse_header_block(
+        Input::header_list_t& headers,
+        const char*& begin, const char* end
+    );
+
+    /**
+     * Parse request line block into RequestEvent.  Does not set @c which.
+     *
+     * @param[out] event Event to fill.
+     * @param[in]  begin Beginning of block.
+     * @param[in]  end   End of block.
+     **/
+    static
+    void parse_request_line(
+        Input::RequestEvent& event,
+        const char* begin, const char* end
+    );
+
+    /**
+     * Parse response line block into ResponseEvent.  Does not set @c which.
+     *
+     * @param[out] event Event to fill.
+     * @param[in]  begin Beginning of block.
+     * @param[in]  end   End of block.
+     **/
+    static
+    void parse_response_line(
+        Input::ResponseEvent& event,
+        const char* begin, const char* end
+    );
 };
 
 } // CLIPP
