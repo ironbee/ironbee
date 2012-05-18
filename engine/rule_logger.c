@@ -69,7 +69,7 @@ void ib_log_rule_field(ib_engine_t *ib,
         const char *s;
         rc = ib_field_value(f, ib_ftype_nulstr_out(&s));
         if (rc != IB_OK) {
-            return;
+            IB_FTRACE_RET_VOID();
         }
         ib_log_debug3(ib, "%s = '%s'", label, s);
     }
@@ -77,7 +77,7 @@ void ib_log_rule_field(ib_engine_t *ib,
         const ib_bytestr_t *bs;
         rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            return;
+            IB_FTRACE_RET_VOID();
         }
         ib_log_debug3(ib, "%s = '%.*s'",
                      label,
