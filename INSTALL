@@ -4,12 +4,6 @@ Get the code:
 
   git clone git://github.com/ironbee/ironbee.git
 
-Update code from submodules:
-
-  cd ironbee
-  git submodule init
-  git submodule update
-
 Build:
 
   ./autogen.sh

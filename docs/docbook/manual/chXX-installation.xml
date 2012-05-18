@@ -385,8 +385,6 @@ sudo make install</programlisting></section>
             <title>Build and Install IronBee</title>
         <programlisting>git clone git://github.com/ironbee/ironbee.git
 cd ironbee
-git submodule init
-git submodule update
 ./autogen.sh
 ./configure 
 make
