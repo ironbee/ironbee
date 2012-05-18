@@ -385,7 +385,18 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
     assert(tx);
     assert(tx->ctx);
 
+    ib_log_debug_tx(tx, "Setting HTTP error response: status=%d",
+                    tx->block_status);
     rc = ib_server_error_response(ib->server, tx, tx->block_status);
+    if (rc == IB_DECLINED) {
+        ib_log_notice_tx(tx,
+                         "Server not willing to set HTTP error response.");
+    }
+    else if (rc != IB_OK) {
+        ib_log_error_tx(tx,
+                        "Server failed to set HTTP error response: %s",
+                        ib_status_to_string(rc));
+    }
 
     IB_FTRACE_RET_STATUS(rc);
 }
