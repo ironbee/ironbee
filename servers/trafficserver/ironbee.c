@@ -145,7 +145,8 @@ static ironbee_direction_t ironbee_direction_req = {
 static ironbee_direction_t ironbee_direction_resp = {
     IBD_RESP,
     "response",
-    TSHttpTxnClientRespGet,
+    //TSHttpTxnClientRespGet,
+    TSHttpTxnServerRespGet,
     //ib_state_notify_conn_data_out
     ib_state_notify_response_header_data,
     ib_state_notify_response_body_data,
@@ -742,6 +743,8 @@ static int get_line(char * const line, size_t *lenp)
  * @param[in,out] txnp ATS transaction pointer
  * @param[in,out] ibd unknown
  */
+// FIXME: This needs to return an error if it fails, not an HTTP status
+//        code, otherwise we cannot tell if hdr_get() failed.
 static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                        ironbee_direction_t *ibd)
 {
@@ -856,6 +859,11 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     /* parse into lines and feed to ironbee as parsed data */
     if (ibd->dir == IBD_REQ) {
+        // FIXME: We should not need to parse.
+        //        Use:
+        //          TSHttpHdrMethodGet()
+        //          TSHttpHdrUriGet() (or version from workarond above)
+        //          TSHttpHdrVersionGet()
         char *method, *uri, *protocol;
         size_t m_len, u_len, p_len, n_len, v_len;
         ib_parsed_header_wrapper_t *ibhdrs;
@@ -879,6 +887,10 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         /* protocol is the rest of the line, but tolerate trailing whitespace */
         protocol = lptr;
         p_len = strcspn(protocol, " \t\r\n");
+
+        // FIXME: This does not need the raw line as it will be built by
+        //        ironbee if left NULL, so just pass in what parsed values
+        //        that TS has access to.
         rv = ib_parsed_req_line_create(data->tx, &rline,
                                        line, line_len,
                                        method, m_len,
@@ -907,6 +919,11 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         rv = ib_state_notify_request_header_finished(ironbee, data->tx);
     }
     else {
+        // FIXME: We should not need to parse.
+        //        Use:
+        //          TSHttpHdrVersionGet()
+        //          TSHttpHdrStatusGet()
+        //          TSHttpHdrReasonGet()
         //ib_parsed_header_t *ibhdr = NULL, *newhdr;
         ib_parsed_header_wrapper_t *ibhdrs;
         ib_parsed_resp_line_t *rline;
@@ -929,6 +946,9 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         msg = lptr;
         m_len = line_len - (lptr - line);
 
+        // FIXME: This does not need the raw line as it will be built by
+        //        ironbee if left NULL, so just pass in what parsed values
+        //        that TS has access to.
         rv = ib_parsed_resp_line_create(data->tx, &rline,
                                         line, line_len,
                                         protocol, p_len,
@@ -1111,11 +1131,24 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
-            /* HTTP RESPONSE */
+        /* HTTP RESPONSE */
         case TS_EVENT_HTTP_READ_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
 
+            /* Feed ironbee the headers if not done alread. */
+            if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
+                status = process_hdr(txndata, txnp, &ironbee_direction_resp);
+                // FIXME: Need to know if this fails as it (I think) means
+                //        that the response did not come from the server and
+                //        that ironbee should ignore it.
+
+                if (ib_tx_flags_isset(txndata->tx, IB_TX_FRES_SEENHEADER)) {
+                    txndata->state |= HDRS_OUT;
+                }
+            }
+
             /* hook to examine output headers */
+            // FIXME: I think this is now only used for error_response
             /* Not sure why we can't do it right now, but it seems headers
              * are not yet available.
              * Can we use another case switch in this function?
@@ -1127,26 +1160,23 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSContDataSet(connp, txndata);
             TSHttpTxnHookAdd(txnp, TS_HTTP_RESPONSE_TRANSFORM_HOOK, connp);
 
-            txndata->state |= START_RESPONSE;
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
-            /* hook for processing response headers */
-            /* If ironbee has sent us into an error response then
-             * we came here in our error path, with nonzero status
-             * FIXME: tests
-             */
+        /* hook for processing response headers */
+        /* If ironbee has sent us into an error response then
+         * we came here in our error path, with nonzero status
+         * FIXME: tests
+         */
         case TS_EVENT_HTTP_SEND_RESPONSE_HDR:
             txndata = TSContDataGet(contp);
-            if (txndata->status == 0) {
-                status = process_hdr(txndata, txnp, &ironbee_direction_resp);
-                txndata->state |= HDRS_OUT;
-                if (status >= 200 && status < 600)
-                    TSError("IB Error response %d ignored (too late)", status);
-            }
-            else {
+
+            if (txndata->status != 0) {
                 error_response(txnp, txndata);
             }
+
+            txndata->state |= START_RESPONSE;
+
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
