@@ -454,9 +454,11 @@ ib_provider_inst_t DLL_PUBLIC *ib_parser_provider_get_instance(ib_context_t *ctx
  *
  * @param ctx Config context
  * @param ppi Parser provider instance
+ *
+ * @returns Status code
  */
-void DLL_PUBLIC ib_parser_provider_set_instance(ib_context_t *ctx,
-                                                ib_provider_inst_t *ppi);
+ib_status_t DLL_PUBLIC ib_parser_provider_set_instance(ib_context_t *ctx,
+                                                       ib_provider_inst_t *ppi);
 
 
 /* Data */

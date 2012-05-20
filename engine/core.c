@@ -4911,7 +4911,6 @@ static ib_status_t core_set_value(ib_context_t *ctx,
     IB_FTRACE_INIT();
     ib_engine_t *ib = ctx->ib;
     ib_core_cfg_t *corecfg;
-    ib_provider_inst_t *pi;
     ib_status_t rc;
 
     /* Get the core module config. */
@@ -4922,6 +4921,8 @@ static ib_status_t core_set_value(ib_context_t *ctx,
     }
 
     if (strcasecmp("parser", name) == 0) {
+        ib_provider_inst_t *pi;
+
         if (strcmp(MODULE_NAME_STR, corecfg->parser) == 0) {
             IB_FTRACE_RET_STATUS(IB_OK);
         }
@@ -4934,8 +4935,13 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                          IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
-        ib_parser_provider_set_instance(ctx, pi);
-        pi = ib_parser_provider_get_instance(ctx);
+
+        rc = ib_parser_provider_set_instance(ctx, pi);
+        if (rc != IB_OK) {
+            ib_log_alert(ib, "Failed to set %s provider instance: %s",
+                         IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
     else if (strcasecmp("audit", name) == 0) {
         /* Lookup the audit log provider. */
