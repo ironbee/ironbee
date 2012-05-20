@@ -21,9 +21,6 @@ LoadModule "ibmod_radix.so"
 LoadModule "ibmod_ac.so"
 LoadModule "ibmod_rules.so"
 
-### Main Context (need separate directives for these)
-Set parser "htp"
-
 # Parse the user agent
 #LoadModule "ibmod_user_agent.so"
 

@@ -2004,6 +2004,43 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t modhtp_context_close(ib_engine_t *ib,
+                                        ib_module_t *m,
+                                        ib_context_t *ctx,
+                                        void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_provider_inst_t *pi;
+
+    /* If there is not a parser set, then use this parser. */
+    pi = ib_parser_provider_get_instance(ctx);
+    if (pi == NULL) {
+        ib_log_info(ib, "Using \"%s\" parser by default in context %s.",
+                    MODULE_NAME_STR, ib_context_full_get(ctx));
+
+        /* Lookup/set this parser provider instance. */
+        rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
+                                         MODULE_NAME_STR, &pi,
+                                         ib_engine_pool_main_get(ib), NULL);
+        if (rc != IB_OK) {
+            ib_log_alert(ib, "Failed to create %s parser instance: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = ib_parser_provider_set_instance(ctx, pi);
+        if (rc != IB_OK) {
+            ib_log_alert(ib, "Failed to set %s as default parser: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        pi = ib_parser_provider_get_instance(ctx);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {
     IB_CFGMAP_INIT_ENTRY(
         MODULE_NAME_STR ".personality",
@@ -2031,7 +2068,7 @@ IB_MODULE_INIT(
     NULL,                                /**< Callback data */
     NULL,                                /**< Context open function */
     NULL,                                /**< Callback data */
-    NULL,                                /**< Context close function */
+    modhtp_context_close,                /**< Context close function */
     NULL,                                /**< Callback data */
     NULL,                                /**< Context destroy function */
     NULL                                 /**< Callback data */
