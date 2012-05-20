@@ -3074,6 +3074,7 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
 
 
 /* -- Parser Implementation -- */
+// FIXME: This should move to state_notify and/or core_fields
 
 /**
  * Handle the connection starting.
@@ -3128,6 +3129,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    // FIXME: This should move to state_notify
     rc = iface->init(pi, conn);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3156,6 +3158,7 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Create connection fields. */
+    // FIXME: This should move to core_fields.c
     rc = ib_data_add_bytestr(conn->dpi,
                              "server_addr",
                              (uint8_t *)conn->local_ipstr,
@@ -3196,6 +3199,7 @@ static ib_status_t parser_hook_connect(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    // FIXME: This should move to state_notify
     rc = iface->connect(pi, conn);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3233,6 +3237,7 @@ static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    // FIXME: This should move to state_notify
     rc = iface->disconnect(pi, conn);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3269,6 +3274,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 
     /* This function is required, so no NULL check. */
 
+    // FIXME: This should move to state_notify
     rc = iface->gen_request_header_fields(pi, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -3276,6 +3282,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
 
 
     /* Alias ARGS fields */
+    // FIXME: This should move to core_fields.c
     rc = ib_data_get(tx->dpi, "request_uri_params", &f);
     if (rc == IB_OK) {
         rc = ib_data_add_named(tx->dpi, f, "args", 4);
@@ -3291,6 +3298,7 @@ static ib_status_t parser_hook_req_header(ib_engine_t *ib,
     /**
      * Alias connection remote and server addresses
      */
+    // FIXME: This should move to core_fields.c
 
     /* Server address */
     rc = ib_data_get(tx->conn->dpi, "server_addr", &f);
@@ -3367,6 +3375,7 @@ static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
 
     /* This function is required, so no NULL check. */
 
+    // FIXME: This should move to state_notify
     rc = iface->gen_response_header_fields(pi, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -5406,6 +5415,7 @@ static ib_status_t core_init(ib_engine_t *ib,
                         filter_ctl_config, fbuffer);
 
     /* Register parser hooks. */
+    // FIXME: These should move to state_notify functions
     ib_hook_conn_register(ib, conn_started_event,
                           core_hook_conn_started, NULL);
     ib_hook_conn_register(ib, handle_connect_event,
