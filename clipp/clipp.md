@@ -297,7 +297,7 @@ Modifiers
 **@view**
 
 All Events are output to standard out in human readable format.  Unprintable
-characters are represented by `[`*X*`]` where *X* is the decimal value.
+characters are represented by `[`*X*`]` where *X* is the hex value.
 
 **@view:id**
 

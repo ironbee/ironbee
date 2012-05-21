@@ -59,7 +59,9 @@ void output_with_escapes(const char* b, const char* e)
                 cout.write(i, j - i);
                 i = j;
             }
-            cout << "[" << static_cast<uint32_t>(*i) << "]";
+            // Workaround for boost::format bug.
+            int value = *i;
+            cout << (boost::format("[%02x]") % (value & 0xff));
             ++i;
         }
     }
