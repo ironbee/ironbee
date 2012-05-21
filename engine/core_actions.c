@@ -944,7 +944,7 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
     assert(tx->ib->server);
 
     ib_server_header_action_t rc;
-    act_header_set_t *act_header_set = (act_header_set_t*)cbdata;
+    act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
 
     rc = ib_server_header(tx->ib->server,
                           tx,
@@ -982,7 +982,7 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
     assert(tx->ib->server);
 
     ib_server_header_action_t rc;
-    act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
+    act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
 
     rc = ib_server_header(tx->ib->server,
                           tx,
@@ -1020,7 +1020,7 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
     assert(tx->ib->server);
 
     ib_server_header_action_t rc;
-    act_header_set_t *act_header_set = (act_header_set_t*)cbdata;
+    act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
 
     rc = ib_server_header(tx->ib->server,
                           tx,
@@ -1058,7 +1058,7 @@ static ib_status_t act_del_response_header_execute(void* cbdata,
     assert(tx->ib->server);
 
     ib_server_header_action_t rc;
-    act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
+    act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
 
     rc = ib_server_header(tx->ib->server,
                           tx,
