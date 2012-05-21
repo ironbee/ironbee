@@ -962,11 +962,15 @@ static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
  * @details Register lua function. RuleExt lua:/path/to/rule.lua phase:REQUEST
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
+ * @param[in] file Name of configuration file being parsed
+ * @param[in] lineno Line number in configuration file
  * @param[in] name The directive name.
  * @param[in] vars The list of variables passed to @c name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
+                                        const char *file,
+                                        unsigned int lineno,
                                         const char *name,
                                         const ib_list_t *vars,
                                         void *cbdata)
@@ -1118,11 +1122,15 @@ static ib_status_t rules_ruleext_params(ib_cfgparser_t *cp,
  * @details Register a Rule directive to the engine.
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
+ * @param[in] file Name of configuration file being parsed
+ * @param[in] lineno Line number in configuration file
  * @param[in] name The directive name.
  * @param[in] vars The list of variables passed to @c name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
+                                     const char *file,
+                                     unsigned int lineno,
                                      const char *name,
                                      const ib_list_t *vars,
                                      void *cbdata)
@@ -1225,11 +1233,15 @@ cleanup:
  *
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
+ * @param[in] file Name of configuration file being parsed
+ * @param[in] lineno Line number in configuration file
  * @param[in] name The directive name.
  * @param[in] vars The list of variables passed to @c name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t rules_streaminspect_params(ib_cfgparser_t *cp,
+                                              const char *file,
+                                              unsigned int lineno,
                                               const char *name,
                                               const ib_list_t *vars,
                                               void *cbdata)

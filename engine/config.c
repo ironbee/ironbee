@@ -301,6 +301,8 @@ static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
 }
 
 ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
+                                      const char *file,
+                                      unsigned int lineno,
                                       ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
@@ -309,13 +311,15 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->stack, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to push context %p(%s): %s",
+        ib_log_error(ib, "%s:%u: Failed to push context %p(%s): %s",
+                     file, lineno,
                      ctx, ib_context_full_get(ctx), ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+    ib_log_debug3(ib, "%s:%u Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+                  file, lineno,
                   cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
                   cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
                   cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
@@ -324,6 +328,8 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 }
 
 ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
+                                     const char *file,
+                                     unsigned int lineno,
                                      ib_context_t **pctx)
 {
     IB_FTRACE_INIT();
@@ -338,7 +344,9 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     /* Remove the last item. */
     rc = ib_list_pop(cp->stack, &ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to pop context: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Failed to pop context: %s",
+                     file, lineno,
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -350,7 +358,8 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+    ib_log_debug3(ib, "%s:%u Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+                  file, lineno,
                   cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
                   cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
                   cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
@@ -359,6 +368,8 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
 }
 
 ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
+                                               const char *file,
+                                               unsigned int lineno,
                                                const char *name)
 {
     IB_FTRACE_INIT();
@@ -367,7 +378,8 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->block, (void *)name);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to push block %p: %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Failed to push block %p: %s",
+                     file, lineno, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     cp->cur_blkname = name;
@@ -376,6 +388,8 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 }
 
 ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
+                                              const char *file,
+                                              unsigned int lineno,
                                               const char **pname)
 {
     IB_FTRACE_INIT();
@@ -389,7 +403,8 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
 
     rc = ib_list_pop(cp->block, &name);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to pop block: %s", ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Failed to pop block : %s",
+                     file, lineno, ib_status_to_string(rc));
         cp->cur_blkname = NULL;
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -467,7 +482,7 @@ ib_status_t ib_config_register_directive(
 
 ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                                         const char *file,
-                                        unsigned lineno,
+                                        unsigned int lineno,
                                         const char *name,
                                         ib_list_t *args)
 {
@@ -503,10 +518,12 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 || (strcasecmp("yes", p1) == 0)
                 || (strcasecmp("true", p1) == 0))
             {
-                rc = rec->cb.fn_onoff(cp, name, 1, rec->cbdata_cb);
+                rc = rec->cb.fn_onoff(cp, file, lineno,
+                                      name, IB_TRUE, rec->cbdata_cb);
             }
             else {
-                rc = rec->cb.fn_onoff(cp, name, 0, rec->cbdata_cb);
+                rc = rec->cb.fn_onoff(cp, file, lineno,
+                                      name, IB_FALSE, rec->cbdata_cb);
             }
             break;
         case IB_DIRTYPE_PARAM1:
@@ -519,7 +536,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 break;
             }
             ib_list_shift(args, &p1);
-            rc = rec->cb.fn_param1(cp, name, p1, rec->cbdata_cb);
+            rc = rec->cb.fn_param1(cp, file, lineno, name, p1, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_PARAM2:
             if (nargs != 2) {
@@ -532,10 +549,10 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             }
             ib_list_shift(args, &p1);
             ib_list_shift(args, &p2);
-            rc = rec->cb.fn_param2(cp, name, p1, p2, rec->cbdata_cb);
+            rc = rec->cb.fn_param2(cp, file, lineno, name, p1, p2, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_LIST:
-            rc = rec->cb.fn_list(cp, name, args, rec->cbdata_cb);
+            rc = rec->cb.fn_list(cp, file, lineno, name, args, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_OPFLAGS:
             i = 0;
@@ -584,7 +601,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 i++;
             }
 
-            rc = rec->cb.fn_opflags(cp, name, flags, fmask, rec->cbdata_cb);
+            rc = rec->cb.fn_opflags(cp, file, lineno, name, flags, fmask, rec->cbdata_cb);
             break;
         case IB_DIRTYPE_SBLK1:
             if (nargs != 1) {
@@ -594,7 +611,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                 break;
             }
             ib_list_shift(args, &p1);
-            rc = rec->cb.fn_sblk1(cp, name, p1, rec->cbdata_cb);
+            rc = rec->cb.fn_sblk1(cp, file, lineno, name, p1, rec->cbdata_cb);
             break;
         default:
             rc = IB_EINVAL;
@@ -609,7 +626,7 @@ ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
                                   const char *name,
                                   ib_list_t *args)
 {
-    ib_status_t rc = ib_cfgparser_block_push(cp, name);
+    ib_status_t rc = ib_cfgparser_block_push(cp, file, lineno, name);
     if (rc != IB_OK) {
         return rc;
     }
@@ -627,7 +644,7 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     ib_status_t rc;
 
     /* Finished with this block. */
-    rc = ib_cfgparser_block_pop(cp, NULL);
+    rc = ib_cfgparser_block_pop(cp, file, lineno, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -641,7 +658,7 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     switch (rec->type) {
         case IB_DIRTYPE_SBLK1:
             if (rec->fn_blkend != NULL) {
-                rc = rec->fn_blkend(cp, name, rec->cbdata_blkend);
+                rc = rec->fn_blkend(cp, file, lineno, name, rec->cbdata_blkend);
             }
             break;
         default:

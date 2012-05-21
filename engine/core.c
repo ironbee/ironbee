@@ -4160,6 +4160,8 @@ static ib_status_t core_abs_module_path(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
+                                       const char *file,
+                                       unsigned int lineno,
                                        const char *name,
                                        const char *p1,
                                        void *cbdata)
@@ -4218,13 +4220,14 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
                      rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    ib_cfgparser_context_push(cp, ctx);
+    ib_cfgparser_context_push(cp, file, lineno, ctx);
 
-    ib_log_debug2(ib, "Opening context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "%s:%u: Opening context %p for \"%s\"",
+                  file, lineno, ctx, name);
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error opening context for \"%s\": %s",
-                     name, ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Error opening context for \"%s\": %s",
+                     file, lineno, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -4244,6 +4247,8 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
+                                     const char *file,
+                                     unsigned int lineno,
                                      const char *name,
                                      void *cbdata)
 {
@@ -4260,17 +4265,19 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
     ib_log_debug2(ib, "Processing site block \"%s\"", name);
 
     /* Pop the current items off the stack */
-    rc = ib_cfgparser_context_pop(cp, &ctx);
+    rc = ib_cfgparser_context_pop(cp, file, lineno, &ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to pop context for \"%s\": %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Failed to pop context for \"%s\": %s",
+                     file, lineno, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug2(ib, "Closing context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "%s:%u: Closing context %p for \"%s\"",
+                  file, lineno, ctx, name);
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error closing context for \"%s\": %s",
-                     name, ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Error closing context for \"%s\": %s",
+                     file, lineno, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -4290,6 +4297,8 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
+                                      const char *file,
+                                      unsigned int lineno,
                                       const char *name,
                                       const char *p1,
                                       void *cbdata)
@@ -4313,18 +4322,21 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     rc = core_unescape(ib, &p1_unescaped, p1);
     if ( rc != IB_OK ) {
         ib_log_debug2(ib,
-                     "Failed to unescape parameter %s=%s.", name, p1);
+                     "%s:%u: Failed to unescape parameter %s=%s.",
+                      file, lineno, name, p1);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_log_debug2(ib,
-                 "Creating location \"%s\" for site \"%s\"",
-                 p1_unescaped,
-                 site->name);
+                  "%s:%u: Creating location \"%s\" for site \"%s\"",
+                  file, lineno,
+                  p1_unescaped,
+                  site->name);
     rc = ib_site_loc_create(site, &loc, p1_unescaped);
     if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Failed to create location \"%s:%s\": %s",
+                     "%s:%u: Failed to create location \"%s:%s\": %s",
+                     file, lineno,
                      site->name,
                      p1_unescaped,
                      rc);
@@ -4341,18 +4353,23 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                            loc);
     if (rc != IB_OK) {
         ib_log_debug2(ib,
-                     "Failed to create context for \"%s:%s\": %s",
+                     "%s:%u: Failed to create context for \"%s:%s\": %s",
+                      file, lineno,
                      site->name,
                      loc->path,
                      rc);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    ib_cfgparser_context_push(cp, ctx);
+    ib_cfgparser_context_push(cp, file, lineno, ctx);
 
-    ib_log_debug2(ib, "Opening context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "%s:%u: Opening context %p for \"%s\"",
+                  file, lineno,
+                  ctx, name);
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error opening context for \"%s\": %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Error opening context for \"%s\": %s",
+                     file, lineno,
+                     name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -4372,6 +4389,8 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
+                                    const char *file,
+                                    unsigned int lineno,
                                     const char *name,
                                     void *cbdata)
 {
@@ -4380,20 +4399,23 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
     ib_context_t *ctx;
     ib_status_t rc;
 
-    ib_log_debug2(ib, "Processing location block \"%s\"", name);
+    ib_log_debug2(ib, "%s:%u: Processing location block \"%s\"",
+                  file, lineno, name);
 
     /* Pop the current items off the stack */
-    rc = ib_cfgparser_context_pop(cp, &ctx);
+    rc = ib_cfgparser_context_pop(cp, file, lineno, &ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to pop context for \"%s\": %s", name, ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Failed to pop context for \"%s\": %s",
+                     file, lineno, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug2(ib, "Closing context %p for \"%s\"", ctx, name);
+    ib_log_debug2(ib, "%s:%u: Closing context %p for \"%s\"",
+                  file, lineno, ctx, name);
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error closing context for \"%s\": %s",
-                     name, ib_status_to_string(rc));
+        ib_log_error(ib, "%s:%u: Error closing context for \"%s\": %s",
+                     file, lineno, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -4411,6 +4433,8 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
+                                     const char *file,
+                                     unsigned int lineno,
                                      const char *name,
                                      const ib_list_t *args,
                                      void *cbdata)
@@ -4434,7 +4458,8 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
         rc = core_unescape(ib, &p_unescaped, p);
 
         if ( rc != IB_OK ) {
-            ib_log_debug(ib, "Failed to unescape %s=%s", name, p);
+            ib_log_debug(ib, "%s:%u: Failed to unescape %s=%s",
+                         file, lineno, name, p);
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -4461,8 +4486,9 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                  */
                 p_unescaped++;
             }
-            ib_log_debug2(ib, "Adding host \"%s\" to site \"%s\"",
-                         p_unescaped, cp->cur_site->name);
+            ib_log_debug2(ib, "%s:%u: Adding host \"%s\" to site \"%s\"",
+                          file, lineno,
+                          p_unescaped, cp->cur_site->name);
             rc = ib_site_hostname_add(cp->cur_site, p_unescaped);
         }
     }
@@ -4481,6 +4507,8 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
+                                   const char *file,
+                                   unsigned int lineno,
                                    const char *name,
                                    const char *p1,
                                    void *cbdata)
@@ -4877,6 +4905,8 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
+                                          const char *file,
+                                          unsigned int lineno,
                                           const char *name,
                                           ib_flags_t flags,
                                           ib_flags_t fmask,
@@ -5008,6 +5038,8 @@ static ib_status_t core_set_value(ib_context_t *ctx,
  * @returns Status code
  */
 static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
+                                   const char *file,
+                                   unsigned int lineno,
                                    const char *name,
                                    const char *p1,
                                    const char *p2,

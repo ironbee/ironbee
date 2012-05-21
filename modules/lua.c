@@ -2077,6 +2077,8 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
 
 /* C config callback wrapper for all Lua implemented config directives. */
 static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
+                                          const char *file,
+                                          unsigned int lineno,
                                           const char *name,
                                           ib_list_t *args,
                                           void *cbdata)
@@ -2165,6 +2167,8 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
 
 /* C blkend callback wrapper for all Lua implemented config directives. */
 static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
+                                             const char *file,
+                                             unsigned int lineno,
                                              const char *name,
                                              void *cbdata)
 {
@@ -2257,6 +2261,8 @@ ib_config_cb_blkend_fn_t modlua_blkend_wrapper(void)
 }
 
 static ib_status_t modlua_dir_param1(ib_cfgparser_t *cp,
+                                     const char *file,
+                                     unsigned int lineno,
                                      const char *name,
                                      const char *p1,
                                      void *cbdata)
