@@ -1074,7 +1074,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              * what we can and must do: create a new contp whose
              * lifetime is our ssn
              */
-            mycont = TSContCreate(ironbee_plugin, NULL);
+            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
             TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, mycont);
             TSContDataSet(mycont, NULL);
 
@@ -1107,7 +1107,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             ++ssndata->txn_count;
 
             /* create a txn cont (request ctx) */
-            mycont = TSContCreate(ironbee_plugin, NULL);
+            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
             txndata = TSmalloc(sizeof(*txndata));
             memset(txndata, 0, sizeof(*txndata));
             txndata->ssn = ssndata;
@@ -1561,7 +1561,7 @@ void TSPluginInit(int argc, const char *argv[])
         goto Lerror;
     }
 
-    cont = TSContCreate(ironbee_plugin, NULL);
+    cont = TSContCreate(ironbee_plugin, TSMutexCreate());
 
     /* connection initialization & cleanup */
     TSHttpHookAdd(TS_HTTP_SSN_START_HOOK, cont);
