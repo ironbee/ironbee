@@ -278,6 +278,7 @@ void help()
     "  -c <path> -- Load <path> as CLIPP configuration.\n"
     "\n"
     "Generators:\n"
+    "Note: For the following, paths can be - to use stdin.\n"
     "  pb:<path>       -- Read <path> as protobuf.\n"
     "  modsec:<path>   -- Read <path> as modsec audit log.\n"
     "                     One transaction per connection.\n"
@@ -287,6 +288,7 @@ void help()
     "  suricata:<path> -- Read <path> as suricata format.\n"
     "  htp:<path>      -- Read <path> as libHTP test format.\n"
     "  echo:<request>  -- Single connection with request as request line.\n"
+    "Note: pcap does not support reading from stdin.\n"
     "  pcap:<path>     -- Read <path> as PCAP containing only HTTP traffic.\n"
     "  pcap:<path>:<filter> --\n"
     "    Read <path> as PCAP using <filter> as PCAP filter selecting HTTP\n"
@@ -718,6 +720,9 @@ input_generator_t init_raw_generator(const string& arg)
     vector<string> subargs = split_on_char(arg, ',');
     if (subargs.size() != 2) {
         throw runtime_error("Raw inputs must be _request_,_response_.");
+    }
+    if (subargs[0] == "-" && subargs[1] == "-") {
+        throw runtime_error("Only one input to raw can be stdin.");
     }
 
     return RawGenerator(subargs[0], subargs[1]);

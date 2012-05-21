@@ -52,13 +52,24 @@ size_t remaining(ifstream& f)
 //! Load @a file into @a buffer.
 void load(vector<char>& buffer, const string& file)
 {
-    ifstream in(file.c_str());
-    if (! in) {
-        throw runtime_error("Could not read " + file);
+    if (file == "-") {
+        buffer.clear();
+        string line;
+        while (getline(cin, line)) {
+            line += "\n";
+            buffer.reserve(buffer.size() + line.length());
+            buffer.insert(buffer.end(), line.begin(), line.end());
+        }
     }
-    size_t length = remaining(in);
-    buffer = vector<char>(length);
-    in.read(&*buffer.begin(), length);
+    else {
+        ifstream in(file.c_str());
+        if (! in) {
+            throw runtime_error("Could not read " + file);
+        }
+        size_t length = remaining(in);
+        buffer = vector<char>(length);
+        in.read(&*buffer.begin(), length);
+    }
 }
 
 }

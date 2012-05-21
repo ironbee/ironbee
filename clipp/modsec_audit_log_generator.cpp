@@ -37,6 +37,7 @@
 #endif
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <stdexcept>
 #include <fstream>
@@ -53,17 +54,31 @@ struct ModSecAuditLogGenerator::State
         on_error_t    on_error_
     ) :
         id(path),
-        on_error(on_error_),
-        input(boost::make_shared<ifstream>(path.c_str())),
-        parser(*input)
+        on_error(on_error_)
     {
-        // nop
+        if (path == "-") {
+            input = &cin;
+        }
+        else {
+            input = new ifstream(path.c_str(), ios::binary);
+            if (! *input) {
+                throw runtime_error("Could not open " + path + " for reading.");
+            }
+        }
+        parser.reset(new ModSecAuditLog::Parser(*input));
     }
 
-    string                     id;
-    on_error_t                 on_error;
-    boost::shared_ptr<istream> input;
-    ModSecAuditLog::Parser     parser;
+    ~State()
+    {
+        if (id != "-") {
+            delete input;
+        }
+    }
+
+    string                                    id;
+    on_error_t                                on_error;
+    istream*                                  input;
+    boost::scoped_ptr<ModSecAuditLog::Parser> parser;
 };
 
 ModSecAuditLogGenerator::ModSecAuditLogGenerator(
@@ -87,14 +102,14 @@ bool ModSecAuditLogGenerator::operator()(Input::input_p& out_input)
     bool result;
     while (! have_entry) {
         try {
-            result = m_state->parser(*e);
+            result = (*m_state->parser)(*e);
         }
         catch (const exception& err) {
             if (m_state->on_error.empty()) {
                 throw;
             }
             if (m_state->on_error(err.what())) {
-                m_state->parser.recover();
+                m_state->parser->recover();
             }
         }
         if (! result) {
@@ -133,7 +148,7 @@ bool ModSecAuditLogGenerator::operator()(Input::input_p& out_input)
         );
     }
     catch (...) {
-        m_state->parser.recover();
+        m_state->parser->recover();
         throw;
     }
 

@@ -52,16 +52,28 @@ struct HTPGenerator::State
 {
     State(const string& path_) :
         path(path_),
-        input(path_.c_str(), ios::binary),
         produced_input(false)
     {
-        if (! input) {
-            throw runtime_error("Could not open " + path + " for reading.");
+        if (path == "-") {
+            input = &cin;
+        }
+        else {
+            input = new ifstream(path.c_str(), ios::binary);
+            if (! *input) {
+                throw runtime_error("Could not open " + path + " for reading.");
+            }
+        }
+    }
+
+    ~State()
+    {
+        if (path != "-") {
+            delete input;
         }
     }
 
     string   path;
-    ifstream input;
+    istream* input;
     bool     produced_input;
 };
 
@@ -104,7 +116,7 @@ bool HTPGenerator::operator()(Input::input_p& input)
     }
     m_state->produced_input = true;
 
-    if (! m_state->input) {
+    if (! *m_state->input) {
         return false;
     }
 
@@ -118,14 +130,14 @@ bool HTPGenerator::operator()(Input::input_p& input)
     string line;
     string* current_buffer = NULL;
 
-    while (m_state->input) {
-        getline(m_state->input, line);
+    while (*m_state->input) {
+        getline(*m_state->input, line);
         // remove CR
         size_t string_size = line.length();
         if (line[string_size-1] == '\r') {
             line.erase(string_size-1);
         }
-        if (! m_state->input) {
+        if (! *m_state->input) {
             break;
         }
 

@@ -215,6 +215,9 @@ first via `writepb`.
 Generators
 ----------
 
+All generators except pcap that take file system paths support using - to
+indicate stdin.
+
 **pb**:*path* 
 
 Generate Input from CLIPP Protobuf file.

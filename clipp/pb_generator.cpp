@@ -51,15 +51,29 @@ namespace CLIPP {
 
 struct PBGenerator::State
 {
-    State(const std::string& path) :
-        input(path.c_str(), ios::binary)
+    State(const std::string& path_) :
+        path(path_)
     {
-        if (! input) {
-            throw runtime_error("Could not open " + path + " for reading.");
+        if (path == "-") {
+            input = &cin;
+        }
+        else {
+            input = new ifstream(path.c_str(), ios::binary);
+            if (! *input) {
+                throw runtime_error("Could not open " + path + " for reading.");
+            }
         }
     }
 
-    ifstream input;
+    ~State()
+    {
+        if (path != "-") {
+            delete input;
+        }
+    }
+
+    string   path;
+    istream* input;
 };
 
 PBGenerator::PBGenerator()
@@ -247,7 +261,7 @@ struct pb_to_event :
 
 bool PBGenerator::operator()(Input::input_p& input)
 {
-    if (! m_state->input) {
+    if (! *m_state->input) {
         return false;
     }
 
@@ -257,8 +271,8 @@ bool PBGenerator::operator()(Input::input_p& input)
     uint32_t raw_size;
     uint32_t size;
 
-    m_state->input.read(reinterpret_cast<char*>(&raw_size), sizeof(uint32_t));
-    if (! m_state->input) {
+    m_state->input->read(reinterpret_cast<char*>(&raw_size), sizeof(uint32_t));
+    if (! *m_state->input) {
         return false;
     }
     size = ntohl(raw_size);
@@ -266,7 +280,7 @@ bool PBGenerator::operator()(Input::input_p& input)
     boost::shared_ptr<data_t> data = make_shared<data_t>(size);
     input->source = data;
 
-    m_state->input.read(data->buffer.get(), size);
+    m_state->input->read(data->buffer.get(), size);
 
     google::protobuf::io::ArrayInputStream in(data->buffer.get(), size);
     google::protobuf::io::GzipInputStream unzipped_in(&in);

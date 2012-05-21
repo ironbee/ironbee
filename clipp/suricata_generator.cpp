@@ -80,17 +80,29 @@ struct SuricataGenerator::State
 {
     State(const string& path) :
         prefix(path),
-        input(path.c_str(), ios::binary),
         line_number(0)
     {
-        if (! input) {
-            throw runtime_error("Could not open " + path + " for reading.");
+        if (prefix == "-") {
+            input = &cin;
+        }
+        else {
+            input = new ifstream(path.c_str(), ios::binary);
+            if (! *input) {
+                throw runtime_error("Could not open " + path + " for reading.");
+            }
         }
     }
 
-    string prefix;
-    ifstream input;
-    size_t line_number;
+    ~State()
+    {
+        if (prefix != "-") {
+            delete input;
+        }
+    }
+
+    string   prefix;
+    istream* input;
+    size_t   line_number;
 };
 
 SuricataGenerator::SuricataGenerator()
@@ -120,7 +132,7 @@ typedef boost::shared_ptr<data_t> data_p;
 
 bool SuricataGenerator::operator()(Input::input_p& input)
 {
-    if (! m_state->input) {
+    if (! *m_state->input) {
         return false;
     }
 
@@ -137,8 +149,8 @@ bool SuricataGenerator::operator()(Input::input_p& input)
     boost::smatch match;
     string line;
 
-    getline(m_state->input, line);
-    if (! m_state->input) {
+    getline(*m_state->input, line);
+    if (! *m_state->input) {
         return false;
     }
 

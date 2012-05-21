@@ -222,6 +222,9 @@ first via <code>writepb</code>.</p>
 
 <h2 id="generators">Generators</h2>
 
+<p>All generators except pcap that take file system paths support using - to
+indicate stdin.</p>
+
 <p><strong>pb</strong>:<em>path</em> </p>
 
 <p>Generate Input from CLIPP Protobuf file.</p>
@@ -386,6 +389,15 @@ can be any of:</p>
 </ul>
 
 <p>If the editor exits non-zero then the original text is used.</p>
+
+<p><strong>@limit</strong>:<em>n</em></p>
+
+<p>Stop chain after <em>n</em> inputs. If there are additional later chains, <code>clipp</code>
+move onto the next one.</p>
+
+<p><code>@limit</code> is written to play well with the other modifiers. However, it is
+good practice (and behaves most intuitively) if you place it last in the
+chain.</p>
 
 <h2 id="consumers">Consumers</h2>
 
