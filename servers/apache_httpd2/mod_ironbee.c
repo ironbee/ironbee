@@ -130,8 +130,9 @@ struct ironbee_tx_context {
 #define ap_is_HTTP_VALID_RESPONSE(x) (((x) >= 100)&&((x) < 600))
 #endif
 
-static ib_status_t ib_error_callback(void *vf, int status, void *cbdata)
+static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
+#if 0
     /* We're being called from a connection filter here.
      * So on input we have to anticipate the Request
      * while on output we're too late to do anything very interesting.
@@ -157,33 +158,45 @@ static ib_status_t ib_error_callback(void *vf, int status, void *cbdata)
                      status);
         return IB_ENOTIMPL;
     }
-
+#endif
     return IB_ENOTIMPL;
 }
-static ib_status_t ib_errdata_callback(void *vf, const char *data, void *cbdata)
+static ib_status_t ib_errdata_callback(ib_tx_t *tx,
+                                       const char *data,
+                                       void *cbdata)
 {
     return IB_ENOTIMPL;
 }
-static ib_status_t ib_errhdr_callback(void *vf, const char *hdr, const char *val, void *cbdata)
+static ib_status_t ib_errhdr_callback(ib_tx_t *tx,
+                                      const char *hdr,
+                                      const char *val,
+                                      void *cbdata)
 {
     return IB_ENOTIMPL;
 }
-static ib_server_header_action_t ib_header_callback
-                                          (void *ctx, ib_server_direction_t dir,
-                                           ib_server_header_action_t action,
-                                           const char *hdr, const char *value,
-                                           void *cbdata)
+static ib_server_header_action_t ib_header_callback(
+    ib_tx_t *ctx,
+    ib_server_direction_t dir,
+    ib_server_header_action_t action,
+    const char *hdr,
+    const char *value,
+    void *cbdata)
 {
     //ap_filter_t *f = ctx;
     return IB_HDR_NOTIMPL;
 }
 #ifdef HAVE_FILTER_DATA_API
-static ib_status_t ib_filter_init_callback(void *ctx, ib_server_direction_t dir, void *cbdata)
+static ib_status_t ib_filter_init_callback(
+    ib_tx_t *ctx,
+    ib_server_direction_t dir,
+    void *cbdata)
 {
     return IB_OK;
 }
-static ib_status_t ib_filter_data_callback(void *ctx, ib_server_direction_t dir,
-                                           const char *block, size_t len,
+static ib_status_t ib_filter_data_callback(ib_tx_t *ctx,
+                                           ib_server_direction_t dir,
+                                           const char *block,
+                                           size_t len,
                                            void *cbdata)
 {
     return IB_OK;

@@ -697,21 +697,18 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 
         /* If it declined, then it may have blocked. */
         if (arc == IB_DECLINED) {
-
-            /* Block immediate aborts. Other blocks continue processing. */
-            if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
-                IB_FTRACE_RET_STATUS(IB_DECLINED);
-            }
-
             rc = IB_DECLINED;
         }
+
+        /* Record an error status code unless a block rc is to be reported. */
         else if (arc != IB_OK) {
             ib_log_error_tx(tx,
                             "Action %s/%s returned an error: %d",
                             name, action->action->name, arc);
 
-            /* Only report the first error, or IB_DECLINED if a rule blocked. */
-            if ( rc == IB_OK ){
+            /* Only report errors codes if there is not a block signal 
+             * (IB_DECLINED) set to be returned. */
+            if (rc != IB_DECLINED) {
                 rc = arc;
             }
         }
