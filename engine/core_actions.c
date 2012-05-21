@@ -826,7 +826,7 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    act_header_del_t *act_header_del = 
+    act_header_del_t *act_header_del =
         (act_header_del_t *)ib_mpool_alloc(mp, sizeof(*act_header_del));
 
     if ( act_header_del == NULL ) {
@@ -872,7 +872,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
     size_t value_len;
     size_t params_len;
     char *equals_idx;
-    act_header_set_t *act_header_set = 
+    act_header_set_t *act_header_set =
         (act_header_set_t *)ib_mpool_alloc(mp, sizeof(*act_header_set));
 
     if (act_header_set == NULL) {
@@ -891,7 +891,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
         ib_log_error(ib, "Format for parameter is name=value: %s", params);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    
+
     /* Compute string lengths needed for parsing out name and value. */
     params_len = strlen(params);
     name_len = equals_idx - params;
@@ -905,7 +905,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
     }
 
     /* Terminate name with '\0'. This replaces the '=' that was copied.
-     * Notice that we strip the const-ness of this value to make this one 
+     * Notice that we strip the const-ness of this value to make this one
      * assignment. */
     ((char *)act_header_set->name)[name_len] = '\0';
 
@@ -945,11 +945,11 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
 
     ib_server_header_action_t rc;
     act_header_set_t *act_header_set = (act_header_set_t*)cbdata;
-    
+
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_REQUEST,
-                          IB_HDR_SET, 
+                          IB_HDR_SET,
                           act_header_set->name,
                           act_header_set->value);
     if (rc == IB_HDR_ERROR) {
@@ -983,11 +983,11 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
 
     ib_server_header_action_t rc;
     act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
-    
+
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_REQUEST,
-                          IB_HDR_UNSET, 
+                          IB_HDR_UNSET,
                           act_header_del->name,
                           "");
     if (rc == IB_HDR_ERROR) {
@@ -1025,7 +1025,7 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_RESPONSE,
-                          IB_HDR_SET, 
+                          IB_HDR_SET,
                           act_header_set->name,
                           act_header_set->value);
     if (rc == IB_HDR_ERROR) {
@@ -1059,11 +1059,11 @@ static ib_status_t act_del_response_header_execute(void* cbdata,
 
     ib_server_header_action_t rc;
     act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
-    
+
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_RESPONSE,
-                          IB_HDR_UNSET, 
+                          IB_HDR_UNSET,
                           act_header_del->name,
                           "");
     if (rc == IB_HDR_ERROR) {

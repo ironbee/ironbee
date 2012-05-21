@@ -706,7 +706,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
                             "Action %s/%s returned an error: %d",
                             name, action->action->name, arc);
 
-            /* Only report errors codes if there is not a block signal 
+            /* Only report errors codes if there is not a block signal
              * (IB_DECLINED) set to be returned. */
             if (rc != IB_DECLINED) {
                 rc = arc;
