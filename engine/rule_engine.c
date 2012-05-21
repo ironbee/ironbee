@@ -185,8 +185,10 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
     }
 };
 
-/* The rule engine uses recursion to walk through lists and chains.  These
- * define the limits to the depth of those recursions. */
+/**
+ * The rule engine uses recursion to walk through lists and chains.  These
+ * define the limits to the depth of those recursions.
+ */
 #define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
 #define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
 
@@ -307,7 +309,8 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
     if (IB_LIST_ELEMENTS(target->tfn_list) == 0) {
         *result = value;
         ib_log_debug3_tx(tx,
-                         "No transformations for field %s", target->field_name);
+                         "No transformations for field \"%s\"",
+                         target->field_name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (value == NULL) {
@@ -315,7 +318,7 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
     }
 
     ib_log_debug3_tx(tx,
-                     "Executing %d transformations on field %s",
+                     "Executing %d transformations on field \"%s\"",
                      IB_LIST_ELEMENTS(target->tfn_list), target->field_name);
 
     /*
@@ -329,13 +332,14 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
         /* Run it */
         ++n;
         ib_log_debug3_tx(tx,
-                         "Executing field transformation #%d '%s' on '%s'",
+                         "Executing field transformation #%d \"%s\" on \"%s\"",
                          n, tfn->name, target->field_name);
         ib_log_rule_field(ib, "before tfn", in_field);
         rc = ib_tfn_transform(ib, tx->mp, tfn, in_field, &out, &flags);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                            "Error executing field operator #%d field %s: %s",
+                            "Error executing field operator #%d "
+                            "field \"%s\": %s",
                             n, target->field_name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -344,7 +348,7 @@ static ib_status_t execute_field_tfns(ib_engine_t *ib,
         /* Verify that out isn't NULL */
         if (out == NULL) {
             ib_log_error_tx(tx,
-                            "Field operator #%d field %s returned NULL",
+                            "Field operator #%d field \"%s\" returned NULL",
                             n, target->field_name);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
@@ -459,12 +463,12 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
                 ib, tx, opinst, fname, nvalue, recursion, rule_result);
             if (rc != IB_OK) {
                 ib_log_debug_tx(tx,
-                             "Error executing %s on list element #%d: %s",
+                             "Error executing \"%s\" on list element #%d: %s",
                              opinst->op->name, n, ib_status_to_string(rc));
             }
         }
-        ib_log_debug3_tx(tx, "Operator %s, target %s (list %zd) => %d",
-                     opinst->op->name, fname, vlist->nelts, *rule_result);
+        ib_log_debug3_tx(tx, "Operator \"%s\", target \"%s\" (list %zd) => %d",
+                         opinst->op->name, fname, vlist->nelts, *rule_result);
     }
     else {
         /* Execute the operator */
@@ -472,8 +476,9 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
         rc = ib_operator_execute(ib, tx, opinst, value, &result);
         if (rc != IB_OK) {
             ib_log_debug_tx(tx,
-                         "Operator %s returned an error for field %s: %s",
-                         opinst->op->name, fname, ib_status_to_string(rc));
+                            "Operator \"%s\" returned an error "
+                            "for field \"%s\": %s",
+                            opinst->op->name, fname, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -521,7 +526,8 @@ static ib_status_t execute_phase_rule_targets_operators(
     rc = execute_field_tfns(ib, tx, target, operand, &tfnvalue);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                        "Error executing transformation for %s on %s: %s",
+                        "Error executing transformation "
+                        "for \"%s\" on \"%s\": %s",
                         opinst->op->name, fname, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -536,11 +542,12 @@ static ib_status_t execute_phase_rule_targets_operators(
                                &result);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                        "Operator %s returned an error for field %s: %s",
+                        "Operator \"%s\" returned an error "
+                        "for field \"%s\": %s",
                         opinst->op->name, fname, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_log_debug3_tx(tx, "Operator %s, field %s => %d",
+    ib_log_debug3_tx(tx, "Operator \"%s\", field \"%s\" => %d",
                      opinst->op->name, fname, result);
 
     /* Store the result */
@@ -591,18 +598,19 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     ib_operator_inst_t  *opinst = rule->opinst;
 
     /* Log what we're going to do */
-    ib_log_debug3_tx(tx, "Executing rule %s", rule->meta.id);
+    ib_log_debug3_tx(tx, "Executing rule \"%s\"", rule->meta.id);
 
     /* Special case: External rules */
     if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
         ib_status_t rc;
 
         /* Execute the operator */
-        ib_log_debug3_tx(tx, "Executing external rule");
+        ib_log_debug3_tx(tx, "Executing external rule \"%s\"",
+                         opinst->op->name);
         rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "External operator %s returned an error: %s",
+                         "External operator \"%s\" returned an error: %s",
                          opinst->op->name, ib_status_to_string(rc));
         }
         IB_FTRACE_RET_STATUS(rc);
@@ -633,7 +641,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
             }
         }
         else if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error getting field %s: %s",
+            ib_log_error_tx(tx, "Error getting field \"%s\": %s",
                             fname, ib_status_to_string(rc));
             continue;
         }
@@ -644,7 +652,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
             rc = ib_field_value(value, (void *)&value_list);
 
             if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Error getting field value %s: %s",
+                ib_log_error_tx(tx, "Error getting field value \"%s\": %s",
                                 value->name, rc);
                 continue;
             }
@@ -685,7 +693,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         *rule_result = ( (*rule_result) == 0);
     }
 
-    ib_log_debug3_tx(tx, "Rule %s Operator %s => %d",
+    ib_log_debug3_tx(tx, "Rule \"%s\" Operator \"%s\" => %d",
                      rule->meta.id, opinst->op->name, *rule_result);
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -714,14 +722,14 @@ static ib_status_t execute_action(ib_engine_t *ib,
     const char   *name = (result != 0) ? "True" : "False";
 
     ib_log_debug3_tx(tx,
-                     "Executing %s rule %s action %s",
+                     "Executing \"%s\" rule \"%s\" action %s",
                      rule->meta.id, name, action->action->name);
 
     /* Run it, check the results */
     rc = ib_action_execute(action, rule, tx);
     if (rc != IB_OK && rc != IB_DECLINED) {
         ib_log_error_tx(tx,
-                        "Action %s returned an error: %s",
+                        "Action \"%s\" returned an error: %s",
                         action->action->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -752,7 +760,8 @@ static ib_status_t execute_actions(ib_engine_t *ib,
     ib_status_t       rc = IB_OK;
     const char       *name = (result != 0) ? "True" : "False";
 
-    ib_log_debug3_tx(tx, "Executing %s rule %s actions", rule->meta.id, name);
+    ib_log_debug3_tx(tx, "Executing \"%s\" rule %s actions",
+                     rule->meta.id, name);
 
     /*
      * Loop through all of the fields
@@ -776,7 +785,7 @@ static ib_status_t execute_actions(ib_engine_t *ib,
         /* Record an error status code unless a block rc is to be reported. */
         else if (arc != IB_OK) {
             ib_log_error_tx(tx,
-                            "Action %s/%s returned an error: %d",
+                            "Action %s/\"%s\" returned an error: %d",
                             name, action->action->name, arc);
 
             /* Only report errors codes if there is not a block signal
@@ -850,7 +859,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
      */
     trc = execute_phase_rule_targets(ib, rule, tx, rule_result, results);
     if (trc != IB_OK) {
-        ib_log_error_tx(tx, "Error executing rule %s: %s",
+        ib_log_error_tx(tx, "Error executing rule \"%s\": %s",
                         rule->meta.id, ib_status_to_string(trc));
         rc = trc;
     }
@@ -874,7 +883,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     if ( trc == IB_DECLINED ) {
         if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
             ib_log_info_tx(tx,
-                "Rule %s caused immediate block.", rule->meta.id);
+                "Rule \"%s\" caused immediate block.", rule->meta.id);
             ib_log_info_tx(tx,
                 "Aborting chain rules because of immediate block.");
             IB_FTRACE_RET_STATUS(IB_DECLINED);
@@ -882,7 +891,8 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     }
     else if (trc != IB_OK) {
         ib_log_error_tx(tx,
-                     "Failed to execute action for rule %s", rule->meta.id);
+                        "Failed to execute action for rule \"%s\"",
+                        rule->meta.id);
         rc = trc;
     }
 
@@ -901,8 +911,8 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
      */
     if ( (*rule_result != 0) && (rule->chained_rule != NULL) ) {
         ib_log_debug3_tx(tx,
-                     "Chaining to rule %s",
-                     rule->chained_rule->meta.id);
+                         "Chaining to rule \"%s\"",
+                         rule->chained_rule->meta.id);
         trc = execute_phase_rule(ib,
                                  rule->chained_rule,
                                  tx,
@@ -913,13 +923,29 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
             rc = trc;
         }
         else if (trc != IB_OK) {
-            ib_log_error_tx(tx, "Error executing chained rule %s",
-                         rule->chained_rule->meta.id);
+            ib_log_error_tx(tx, "Error executing chained rule \"%s\"",
+                            rule->chained_rule->meta.id);
             rc = trc;
         }
     }
 
     IB_FTRACE_RET_STATUS(rc);
+}
+
+static inline ib_bool_t rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
+                                         const ib_rule_t *rule)
+{
+    IB_FTRACE_INIT();
+
+    /* Skip invalid / disabled rules */
+    if (ib_flags_all(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED) != IB_TRUE) {
+        IB_FTRACE_RET_UINT(IB_FALSE);
+    }
+    if (ib_flags_all(rule->flags, IB_RULE_FLAG_VALID) != IB_TRUE) {
+        IB_FTRACE_RET_UINT(IB_FALSE);
+    }
+    
+    IB_FTRACE_RET_UINT(IB_TRUE);
 }
 
 /**
@@ -957,27 +983,27 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
     ruleset_phase = &(ctx->rules->ruleset.phases[meta->phase_num]);
     assert(ruleset_phase != NULL);
-    rules = ruleset_phase->rule_list;
+    rules = ruleset_phase->phase_list;
     assert(rules != NULL);
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {
-        ib_log_error_tx(tx, "Rule engine: Phase %d (%s) is %d",
-                     meta->phase_num, meta->name, ruleset_phase->phase_num );
+        ib_log_error_tx(tx, "Rule engine: Phase %d/\"%s\" is %d",
+                        meta->phase_num, meta->name, ruleset_phase->phase_num );
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Walk through the rules & execute them */
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug3_tx(tx,
-                     "No rules for phase %d/%s in context %s",
-                      meta->phase_num, meta->name, ib_context_full_get(ctx));
+                         "No rules for phase %d/\"%s\" in context \"%s\"",
+                         meta->phase_num, meta->name, ib_context_full_get(ctx));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug3_tx(tx,
-                  "Executing %d rules for phase %d/%s in context %s",
-                  IB_LIST_ELEMENTS(rules),
-                  meta->phase_num, meta->name, ib_context_full_get(ctx));
+                     "Executing %d rules for phase %d/\"%s\" in context \"%s\"",
+                     IB_LIST_ELEMENTS(rules),
+                     meta->phase_num, meta->name, ib_context_full_get(ctx));
 
     /*
      * Loop through all of the rules for this phase, execute them.
@@ -987,15 +1013,17 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
      * correct behavior should be.
      */
     IB_LIST_LOOP(rules, node) {
-        ib_rule_t   *rule = (ib_rule_t *)node->data;
-        ib_num_t     rule_result = 0;
-        ib_status_t  rule_rc;
+        ib_rule_ctx_data_t *ctx_rule = (ib_rule_ctx_data_t *)node->data;
+        ib_rule_t          *rule;
+        ib_num_t            rule_result = 0;
+        ib_status_t         rule_rc;
 
         /* Skip invalid / disabled rules */
-        if ( (rule->flags & IB_RULE_FLAGS_RUNABLE) != IB_RULE_FLAGS_RUNABLE) {
+        rule = ctx_rule->rule;
+        if (rule_is_runnable(ctx_rule, rule) != IB_TRUE) {
             ib_log_debug2_tx(tx,
-                         "Not executing invalid/disabled phase rule %s",
-                         rule->meta.id);
+                             "Not executing invalid/disabled phase rule \"%s\"",
+                             rule->meta.id);
             continue;
         }
 
@@ -1010,13 +1038,13 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         if( rule_rc == IB_DECLINED ) {
             if ( tx->flags & IB_TX_BLOCK_PHASE ) {
                 ib_log_info_tx(tx,
-                               "Rule %s resulted in phase block: %s",
+                               "Rule \"%s\" resulted in phase block: %s",
                                rule->meta.id, ib_status_to_string(rule_rc));
                 block_phase = 1;
             }
             else if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
                 ib_log_info_tx(tx,
-                               "Rule %s resulted in immediate block: %s",
+                               "Rule \"%s\" resulted in immediate block: %s",
                                rule->meta.id, ib_status_to_string(rule_rc));
                 ib_log_info_tx(tx,
                               "Rule processing is aborted by immediate block.");
@@ -1025,13 +1053,13 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
             }
             else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
                 ib_log_info_tx(tx,
-                               "Rule %s resulted in advisory block: %s",
+                               "Rule \"%s\" resulted in advisory block: %s",
                                rule->meta.id, ib_status_to_string(rule_rc));
             }
         }
         else if (rule_rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "Error executing rule %s: %s",
+                         "Error executing rule \"%s\": %s",
                          rule->meta.id, ib_status_to_string(rule_rc));
         }
     }
@@ -1103,11 +1131,11 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     rc = ib_operator_execute(ib, tx, opinst, value, result);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                     "Operator %s returned an error: %s",
+                     "Operator \"%s\" returned an error: %s",
                      opinst->op->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_log_debug3_tx(tx, "Operator %s => %d", opinst->op->name, *result);
+    ib_log_debug3_tx(tx, "Operator \"%s\" => %d", opinst->op->name, *result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1155,7 +1183,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
         ib_num_t result = 0;
 
         /* Create a field to hold the data */
-        ib_log_debug_tx(tx, "nvpair: '%.*s'='%.*s'\n",
+        ib_log_debug_tx(tx, "nvpair: \"%.*s\"=\"%.*s\"\n",
                         (int)ib_bytestr_length(nvpair->name),
                         (const char *)ib_bytestr_const_ptr(nvpair->name),
                         (int)ib_bytestr_length(nvpair->value),
@@ -1168,7 +1196,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
                              ib_ftype_bytestr_in(nvpair->value));
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                            "Error creating field for header stream rule data: %s",
+                            "Error creating field for "
+                            "header stream rule data: %s",
                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -1177,7 +1206,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
         rc = ib_operator_execute(ib, tx, opinst, value, &result);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                            "Operator %s returned an error: %s",
+                            "Operator \"%s\" returned an error: %s",
                             opinst->op->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -1187,7 +1216,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
             *rule_result = result;
         }
     }
-    ib_log_debug3_tx(tx, "Operator %s => %d", opinst->op->name, *rule_result);
+    ib_log_debug3_tx(tx, "Operator \"%s\" => %d",
+                     opinst->op->name, *rule_result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1224,7 +1254,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     ib_context_t            *ctx = tx->ctx;
     ib_ruleset_phase_t      *ruleset_phase =
         &(ctx->rules->ruleset.phases[meta->phase_num]);
-    ib_list_t               *rules = ruleset_phase->rule_list;
+    ib_list_t               *rules = ruleset_phase->phase_list;
     ib_list_node_t          *node = NULL;
 
     /* Boolean indicating a block at the end of this phase. */
@@ -1232,7 +1262,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {
-        ib_log_error_tx(tx, "Rule engine: Stream %d (%s) is %d",
+        ib_log_error_tx(tx, "Rule engine: Stream %d/\"%s\" is %d",
                      meta->phase_num, meta->name, ruleset_phase->phase_num);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1240,12 +1270,12 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     /* Are there any rules?  If not, do a quick exit */
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_log_debug3_tx(tx,
-                      "No rules for stream %d/%s in context %s",
+                      "No rules for stream %d/\"%s\" in context \"%s\"",
                       meta->phase_num, meta->name, ib_context_full_get(ctx));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_log_debug3_tx(tx,
-                  "Executing %d rules for stream %d/%s in context %s",
+                  "Executing %d rules for stream %d/\"%s\" in context \"%s\"",
                   IB_LIST_ELEMENTS(rules),
                   meta->phase_num, meta->name, ib_context_full_get(ctx));
 
@@ -1257,16 +1287,19 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
      * correct behavior should be.
      */
     IB_LIST_LOOP(rules, node) {
-        ib_rule_t   *rule = (ib_rule_t *)node->data;
-        ib_list_t   *actions;
-        ib_num_t     result = 0;
-        ib_status_t  rc = IB_OK;
+        ib_rule_ctx_data_t *ctx_rule = (ib_rule_ctx_data_t *)node->data;
+        ib_rule_t          *rule;
+        ib_list_t          *actions;
+        ib_num_t            result = 0;
+        ib_status_t         rc = IB_OK;
 
         /* Skip invalid / disabled rules */
-        if ( (rule->flags & IB_RULE_FLAGS_RUNABLE) != IB_RULE_FLAGS_RUNABLE) {
+        rule = ctx_rule->rule;
+        if (rule_is_runnable(ctx_rule, rule) != IB_TRUE) {
             ib_log_debug2_tx(tx,
-                         "Not executing invalid/disabled stream rule %s",
-                         rule->meta.id);
+                             "Not executing invalid/disabled "
+                             "stream rule \"%s\"",
+                             rule->meta.id);
             continue;
         }
 
@@ -1284,7 +1317,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
             rc = execute_stream_header_rule(ib, rule, tx, header, &result);
         }
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error executing rule %s: %s",
+            ib_log_error_tx(tx, "Error executing rule \"%s\": %s",
                             rule->meta.id, ib_status_to_string(rc));
         }
 
@@ -1308,13 +1341,13 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         if( rc == IB_DECLINED ) {
             if ( tx->flags & IB_TX_BLOCK_PHASE ) {
                 ib_log_info_tx(tx,
-                               "Rule %s resulted in phase block: %s",
+                               "Rule \"%s\" resulted in phase block: %s",
                                rule->meta.id, ib_status_to_string(rc));
                 block_phase = 1;
             }
             else if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
                 ib_log_info_tx(tx,
-                               "Rule %s resulted in immediate block: %s",
+                               "Rule \"%s\" resulted in immediate block: %s",
                                rule->meta.id, ib_status_to_string(rc));
                 ib_log_info_tx(tx,
                               "Rule processing is aborted by immediate block.");
@@ -1323,14 +1356,14 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
             }
             else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
                 ib_log_info_tx(tx,
-                               "Rule %s resulted in advisory block: %s",
+                               "Rule \"%s\" resulted in advisory block: %s",
                                rule->meta.id, ib_status_to_string(rc));
             }
         }
         else if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "Error executing action for rule %s: %s",
-                         rule->meta.id, ib_status_to_string(rc));
+                            "Error executing action for rule \"%s\": %s",
+                            rule->meta.id, ib_status_to_string(rc));
         }
     }
 
@@ -1440,25 +1473,24 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
                         ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    if (
-        tx->request_line->method != NULL &&
-        ib_bytestr_const_ptr(tx->request_line->method) != NULL
-    ) {
+    if ( (tx->request_line->method != NULL) &&
+         (ib_bytestr_const_ptr(tx->request_line->method) != NULL) )
+    {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
             "method", 6,
             (const char *)ib_bytestr_const_ptr(tx->request_line->method),
             ib_bytestr_length(tx->request_line->method));
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error adding method to name/value pair list: %s",
+            ib_log_error_tx(tx,
+                            "Error adding method to name/value pair list: %s",
                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    if (
-        tx->request_line->uri != NULL &&
-        ib_bytestr_const_ptr(tx->request_line->uri) != NULL
-    ) {
+    if ( (tx->request_line->uri != NULL) &&
+         (ib_bytestr_const_ptr(tx->request_line->uri) != NULL) )
+    {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
             "uri", 4,
@@ -1470,24 +1502,24 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    if (
-        tx->request_line->protocol != NULL &&
-        ib_bytestr_const_ptr(tx->request_line->protocol) != NULL
-    ) {
+    if ( (tx->request_line->protocol != NULL) &&
+         (ib_bytestr_const_ptr(tx->request_line->protocol) != NULL) )
+    {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
             "protocol", 7,
             (const char *)ib_bytestr_const_ptr(tx->request_line->protocol),
             ib_bytestr_length(tx->request_line->protocol));
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error adding protocol to name/value pair list: %s",
+            ib_log_error_tx(tx,
+                            "Error adding protocol to name/value pair list: %s",
                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
     /* Now, process the request line */
-    if (hdrs != NULL && hdrs->head != NULL) {
+    if ( (hdrs != NULL) && (hdrs->head != NULL) ) {
         ib_log_debug_tx(tx, "Running header line through stream header");
         rc = run_stream_header_rules(ib, tx, event,
                                      hdrs->head, cbdata);
@@ -1499,7 +1531,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     }
 
     /* Process the request header */
-    if (tx->request_header != NULL && tx->request_header->head != NULL) {
+    if ( (tx->request_header != NULL) && (tx->request_header->head != NULL) ) {
         ib_log_debug_tx(tx, "Running header through stream header");
         rc = run_stream_header_rules(ib, tx, event,
                                      tx->request_header->head,
@@ -1526,7 +1558,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
  */
 static ib_status_t init_ruleset(ib_engine_t *ib,
                                 ib_mpool_t *mp,
-                                ib_rule_engine_t *rule_engine)
+                                ib_rule_context_t *ctx_rules)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -1538,26 +1570,36 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
          ++phase_num)
     {
         ib_ruleset_phase_t *ruleset_phase =
-            &(rule_engine->ruleset.phases[phase_num]);
+            &(ctx_rules->ruleset.phases[phase_num]);
         ruleset_phase->phase_num = (ib_rule_phase_t)phase_num;
         rc = find_phase_meta(phase_num, &(ruleset_phase->phase_meta));
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Rule set initialization: "
                          "failed to find phase meta data: %s",
-                         rc);
+                         ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        rc = ib_list_create(&(ruleset_phase->rule_list), mp);
+        rc = ib_list_create(&(ruleset_phase->phase_list), mp);
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Rule set initialization: "
                          "failed to create phase ruleset list: %s",
-                         rc);
+                         ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
+
+    /* Create a hash to hold operators by name */
+    rc = ib_hash_create_nocase(&(ctx_rules->rule_hash), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule set initialization: failed to create hash: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1632,7 +1674,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             default:
                 ib_log_error(ib,
                              "Unknown hook registration type %d for "
-                             "phase %d/%d/%s",
+                             "phase %d/%d/\"%s\"",
                              meta->phase_num, meta->event, meta->name);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
@@ -1647,7 +1689,8 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
         /* OK */
         if (rc != IB_OK) {
             ib_log_error(ib,
-                         "Hook %s registration for phase %d/%d/%s returned %s",
+                         "Hook \"%s\" registration for phase "
+                         "%d/%d/\"%s\" returned %s",
                          hook_type, meta->phase_num, meta->event, meta->name,
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -1688,12 +1731,60 @@ static ib_status_t create_rule_engine(ib_engine_t *ib,
     rc = ib_list_create(&(rule_engine->rule_list), mp);
     if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Rule engine failed to initialize rule list: %s",
+                     "Rule engine failed to create rule list: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_hash_create_nocase(&(rule_engine->rule_hash), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to create rule hash: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     *p_rule_engine = rule_engine;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Initialize a context's rule object.
+ * @internal
+ *
+ * @param[in] ib Engine
+ * @param[in,out] mp Memory pool to use for allocations
+ * @param[out] p_ctx_rules Pointer to new rule context object
+ *
+ * @returns Status code
+ */
+static ib_status_t create_rule_context(ib_engine_t *ib,
+                                       ib_mpool_t *mp,
+                                       ib_rule_context_t **p_ctx_rules)
+{
+    IB_FTRACE_INIT();
+    ib_rule_context_t *ctx_rules;
+    ib_status_t        rc;
+
+    /* Create the rule object */
+    ctx_rules =
+        (ib_rule_context_t *)ib_mpool_calloc(mp, 1, sizeof(*ctx_rules));
+    if (ctx_rules == NULL) {
+        ib_log_error(ib,
+                     "Rule engine failed to allocate context rule object");
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Create the rule list */
+    rc = ib_list_create(&(ctx_rules->rule_list), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to initialize rule list: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    *p_ctx_rules = ctx_rules;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1704,7 +1795,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Create the rule engine object */
-    rc = create_rule_engine(ib, ib->mp, &(ib->rules));
+    rc = create_rule_engine(ib, ib->mp, &(ib->rule_engine));
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Rule engine failed to create rule engine: %s",
@@ -1713,7 +1804,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
     }
 
     /* Register the rule callbacks */
-    rc = register_callbacks(ib, ib->mp, ib->rules);
+    rc = register_callbacks(ib, ib->mp, ib->rule_engine);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Rule engine failed to register phase callbacks: %s",
@@ -1737,7 +1828,7 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
     }
 
     /* Create the rule engine object */
-    rc = create_rule_engine(ib, ctx->mp, &(ctx->rules));
+    rc = create_rule_context(ib, ctx->mp, &(ctx->rules));
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Rule engine failed to initialize context rules: %s",
@@ -1752,6 +1843,179 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                      "Rule engine failed to initialize phase ruleset: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
+                                     ib_module_t *mod,
+                                     ib_context_t *ctx)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(mod != NULL);
+    assert(ctx != NULL);
+
+    ib_list_t      *all;
+    ib_list_node_t *node;
+    ib_flags_t      skip_flags;
+    ib_status_t     rc;
+    ib_context_t   *main_ctx = ib_context_main(ib);
+
+    /* Don't enable rules for the main context */
+    if (ctx == main_ctx) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Create the list of all rules */
+    rc = ib_list_create(&all, ctx->mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to initialize rule list: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Pass 0: Unmark all rules in the context's rule list */
+    IB_LIST_LOOP(ctx->rules->rule_list, node) {
+        ib_rule_t    *rule = (ib_rule_t *)ib_list_node_data(node);
+        ib_flags_clear(rule->flags, IB_RULE_FLAG_MARK);
+    }
+
+    /* Pass 1: Loop through all of the rules in the main context, add them
+     * to the list of all rules */
+    ib_log_debug2(ib, "Adding rules from %p\"%s\" to ctx \"%s\" temp list",
+                  (void*)main_ctx, ib_context_full_get(main_ctx),
+                  ib_context_full_get(ctx));
+    skip_flags = IB_RULE_FLAG_IN_CHAIN;
+    IB_LIST_LOOP(main_ctx->rules->rule_list, node) {
+        ib_rule_t          *ref = (ib_rule_t *)ib_list_node_data(node);
+        ib_rule_t          *rule;
+        ib_rule_ctx_data_t *ctx_rule;
+
+        ib_log_debug3(ib, "Looking at rule \"%s\" from \"%s\"",
+                      ref->meta.id, ib_context_full_get(ref->ctx));
+
+        /* If it's a chained rule, skip it */
+        if (ib_flags_any(ref->flags, skip_flags) == IB_TRUE) {
+            continue;
+        }
+
+        /* Find the appropriate version of the rule to use */
+        rc = ib_rule_lookup(ib, ctx, ref->meta.id, &rule);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Failed to lookup rule \"%s\": %s",
+                         ref->meta.id, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Create a rule ctx object for it, store it in the list */
+        ctx_rule = ib_mpool_alloc(ctx->mp, sizeof(*ctx_rule));
+        if (ctx_rule == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        ctx_rule->rule = rule;
+        if (ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX) == IB_TRUE) {
+            ctx_rule->flags = IB_RULECTX_FLAG_NONE;
+        }
+        else {
+            ctx_rule->flags = IB_RULECTX_FLAG_ENABLED;
+            ib_flags_set(rule->flags, IB_RULE_FLAG_MARK);
+        }
+        rc = ib_list_push(all, ctx_rule);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        ib_log_debug3(ib, "Adding rule \"%s\" from \"%s\" to ctx temp list",
+                      rule->meta.id, ib_context_full_get(rule->ctx));
+    }
+
+    /* Pass 2: Loop through all of the context's rules, add them
+     * to the list of all rules if they're not marked... */
+    ib_log_debug2(ib, "Adding ctx rules to ctx \"%s\" temp list",
+                  ib_context_full_get(ctx));
+    skip_flags = (IB_RULE_FLAG_MARK | IB_RULE_FLAG_IN_CHAIN);
+    IB_LIST_LOOP(ctx->rules->rule_list, node) {
+        ib_rule_t          *rule = (ib_rule_t *)ib_list_node_data(node);
+        ib_rule_ctx_data_t *ctx_rule;
+
+        /* If the rule is chained or marked */
+        if (ib_flags_all(rule->flags, skip_flags) == IB_TRUE) {
+            ib_log_debug3(ib, "Skipping marked/chained rule \"%s\" from \"%s\"",
+                          rule->meta.id, ib_context_full_get(rule->ctx));
+            continue;
+        }
+
+        /* Create a ctx object for it, store it in the list */
+        ctx_rule = ib_mpool_alloc(ctx->mp, sizeof(*ctx_rule));
+        if (ctx_rule == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        ctx_rule->rule = rule;
+        ib_flags_set(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED);
+        rc = ib_list_push(all, ctx_rule);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        ib_log_debug3(ib, "Adding rule \"%s\" from \"%s\" to ctx temp list",
+                      rule->meta.id, ib_context_full_get(rule->ctx));
+    }
+
+    /* Pass 3: Enable all tagged / enabled rules */
+    /* TODO */
+
+    /* Step 4: Add all enabled rules to the appropriate execution list */
+    ib_log_debug2(ib, "Adding enabled rules to ctx \"%s\" phase list",
+                  ib_context_full_get(ctx));
+    skip_flags = (IB_RULECTX_FLAG_ENABLED);
+    IB_LIST_LOOP(all, node) {
+        ib_rule_ctx_data_t *ctx_rule;
+        ib_ruleset_phase_t *ruleset_phase;
+        ib_list_t          *phase_list;
+        ib_rule_phase_t     phase_num;
+        ib_rule_t          *rule;
+
+        ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
+        assert(ctx_rule != NULL);
+        rule = ctx_rule->rule;
+
+        /* If it's not enabled, skip to the next rule */
+        if (ib_flags_all(ctx_rule->flags, skip_flags) == IB_FALSE) {
+            ib_log_debug3(ib, "Skipping disabled rule \"%s\" from \"%s\"",
+                          rule->meta.id, ib_context_full_get(rule->ctx));
+            continue;
+        }
+
+        /* Determine what phase list to add it into */
+        phase_num = rule->meta.phase;
+        ruleset_phase = &(ctx->rules->ruleset.phases[phase_num]);
+        assert(ruleset_phase != NULL);
+        assert(ruleset_phase->phase_meta == rule->phase_meta);
+        phase_list = ruleset_phase->phase_list;
+
+        /* Add it to the list */
+        rc = ib_list_push(phase_list, (void *)ctx_rule);
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Failed to add rule type=\"%s\" phase=%d "
+                         "context=\"%s\": %s",
+                         rule->phase_meta->is_stream ? "Stream" : "Normal",
+                         ruleset_phase,
+                         ib_context_full_get(ctx),
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        ib_log_debug(ib,
+                     "Enabled rule \"%s\" rev=%u type=\"%s\" phase=%d/\"%s\" "
+                     "for context \"%s\"",
+                     rule->meta.id, rule->meta.revision,
+                     rule->phase_meta->is_stream ? "Stream" : "Normal",
+                     ruleset_phase->phase_num,
+                     rule->phase_meta->name,
+                     ib_context_full_get(ctx));
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1785,9 +2049,7 @@ static ib_status_t chain_position(ib_engine_t *ib,
 
     /* Loop through all parent rules */
     while (rule != NULL) {
-        if (rule->flags & IB_RULE_FLAG_ENABLED) {
-            ++n;
-        }
+        ++n;
         rule = rule->chained_from;
     }; /* while (rule != NULL); */
     *pos = n;
@@ -1823,7 +2085,7 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    snprintf(idbuf, sizeof(idbuf), "%s/%d", rule->meta.chain_id, (int)pos);
+    snprintf(idbuf, sizeof(idbuf), "\"%s\"/%d", rule->meta.chain_id, (int)pos);
     rule->meta.id = ib_mpool_strdup(ib_rule_mpool(ib), idbuf);
     if (rule->meta.id == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -1833,6 +2095,8 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
 
 ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
+                                      const char *file,
+                                      unsigned int lineno,
                                       ib_bool_t is_stream,
                                       ib_rule_t **prule)
 {
@@ -1841,7 +2105,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     ib_rule_t                  *rule;
     ib_list_t                  *lst;
     ib_mpool_t                 *mp = ib_rule_mpool(ib);
-    ib_rule_engine_t           *rule_engine;
+    ib_rule_context_t          *context_rules;
     ib_rule_t                  *previous;
     const ib_rule_phase_meta_t *phase_meta;
 
@@ -1851,7 +2115,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     /* Initialize the context's rule set (if required) */
     rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize rules for context %s",
+        ib_log_error(ib, "Failed to initialize rules for context \"%s\"",
                      ib_context_full_get(ctx));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1871,9 +2135,19 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+    rule->flags = IB_RULE_FLAG_NONE;
     rule->phase_meta = phase_meta;
     rule->meta.phase = PHASE_NONE;
+    rule->meta.revision = 1;
+    rule->meta.config_file = file;
+    rule->meta.config_line = lineno;
+    rule->ctx = ctx;
     rule->opinst = NULL;
+
+    /* Note if this is the main context */
+    if (ctx == ib_context_main(ib)) {
+        rule->flags |= IB_RULE_FLAG_MAIN_CTX;
+    }
 
     /* Meta tags list */
     lst = NULL;
@@ -1916,8 +2190,8 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
     rule->false_actions = lst;
 
     /* Get the rule engine and previous rule */
-    rule_engine = ctx->rules;
-    previous = rule_engine->parser_data.previous;
+    context_rules = ctx->rules;
+    previous = context_rules->parser_data.previous;
 
     /*
      * If the previous rule has it's CHAIN flag set,
@@ -2043,14 +2317,81 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/* Lookup rule by ID */
+ib_status_t ib_rule_lookup(ib_engine_t *ib,
+                           ib_context_t *ctx,
+                           const char *id,
+                           ib_rule_t **rule)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(id != NULL);
+    assert(rule != NULL);
+
+    ib_context_t *main_ctx = ib_context_main(ib);
+    assert(main_ctx != NULL);
+
+    ib_status_t rc;
+
+    /* First, look in the context's rule set */
+    if ( (ctx != NULL) && (ctx != main_ctx) ) {
+        rc = ib_hash_get(ctx->rules->rule_hash, rule, id);
+        if (rc != IB_ENOENT) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* If not in the context's rule set, look in the main context */
+    rc = ib_hash_get(main_ctx->rules->rule_hash, rule, id);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/* Find rule matching a reference rule */
+ib_status_t ib_rule_match(ib_engine_t *ib,
+                          ib_context_t *ctx,
+                          const ib_rule_t *ref,
+                          ib_rule_t **rule)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(ref != NULL);
+    assert(rule != NULL);
+
+    ib_status_t rc;
+    ib_rule_t *match = NULL;
+
+    /* Lookup rule with matching ID */
+    rc = ib_rule_lookup(ib, ctx, ref->meta.id, &match);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Verify that phase's match */
+    if (ref->meta.phase != match->meta.phase) {
+        ib_log_error(ib,
+                     "\"%s\":%u: Rule phase mismatch @ \"%s\":%u",
+                     ref->meta.config_file, ref->meta.config_line,
+                     match->meta.config_file, match->meta.config_line);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    *rule = match;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_rule_register(ib_engine_t *ib,
                              ib_context_t *ctx,
                              ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
-    ib_status_t       rc;
-    ib_rule_engine_t *rule_engine;
-    ib_rule_phase_t   phase_num;
+    ib_status_t        rc;
+    ib_rule_context_t *context_rules;
+    ib_rule_phase_t    phase_num;
+    ib_rule_t         *lookup;
 
     assert(ib != NULL);
     assert(ctx != NULL);
@@ -2106,7 +2447,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     }
 
     /* Get the rule engine and previous rule */
-    rule_engine = ctx->rules;
+    context_rules = ctx->rules;
 
     /* Handle chained rule */
     if (rule->chained_from != NULL) {
@@ -2114,45 +2455,86 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         ib_log_debug3(ib,
-                     "Registered rule '%s' chained from rule '%s'",
+                     "Registered rule \"%s\" chained from rule \"%s\"",
                      rule->meta.id, rule->chained_from->meta.id);
     }
 
-    /* If the rule isn't chained to, add it to the appropriate list */
+    /* Put this rule in the hash */
+    lookup = NULL;
+    rc = ib_rule_match(ib, ctx, rule, &lookup);
+    if ( (rc != IB_OK) && (rc != IB_ENOENT) ) {
+        ib_log_error(ib,
+                     "Error finding matching rule "
+                     "for \"%s\" of context=\"%s\" @ \"%s\":%u: %s",
+                     rule->meta.id, ib_context_full_get(ctx),
+                     rule->meta.config_file, rule->meta.config_line,
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Now, if replace the existing rule if required */
+    if ( (lookup != NULL) &&
+         (rule->meta.revision <= lookup->meta.revision) )
+    {
+        ib_log_warning(ib,
+                       "Not replacing rule \"%s\" of context=\"%s\" "
+                       "rev=%u with rev=%u @ \"%s\":%u",
+                       rule->meta.id,
+                       ib_context_full_get(ctx),
+                       lookup->meta.revision,
+                       rule->meta.revision,
+                       rule->meta.config_file, rule->meta.config_line);
+        IB_FTRACE_RET_STATUS(IB_EEXIST);
+    }
     else {
-        ib_ruleset_phase_t *ruleset_phase;
-        ib_list_t          *rules;
-
-        ruleset_phase = &(rule_engine->ruleset.phases[phase_num]);
-        assert(ruleset_phase != NULL);
-        assert(ruleset_phase->phase_meta == rule->phase_meta);
-        rules = ruleset_phase->rule_list;
-
-        /* Add it to the list */
-        rc = ib_list_push(rules, (void *)rule);
+        rc = ib_hash_set(context_rules->rule_hash, rule->meta.id, rule);
         if (rc != IB_OK) {
             ib_log_error(ib,
-                         "Failed to add rule type=%s phase=%d context=%s: %s",
-                         rule->phase_meta->is_stream ? "Stream" : "Normal",
-                         ruleset_phase,
+                         "Error adding rule \"%s\" "
+                         "to context=\"%s\" hash @ \"%s\":%u: %s",
+                         rule->meta.id,
                          ib_context_full_get(ctx),
+                         rule->meta.config_file, rule->meta.config_line,
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
-
-        ib_log_debug(ib,
-                     "Registered rule %s for type %s phase %d of context %s",
-                     rule->meta.id,
-                     rule->phase_meta->is_stream ? "Stream" : "Normal",
-                     ruleset_phase->phase_num,
-                     ib_context_full_get(ctx));
+        else if (lookup == NULL) {
+            ib_log_debug(ib,
+                         "Added rule \"%s\" rev=%u "
+                         "to context=%p\"%s\" @ \"%s\":%u",
+                         rule->meta.id, rule->meta.revision,
+                         (void*)ctx, ib_context_full_get(ctx),
+                         rule->meta.config_file, rule->meta.config_line);
+        }
+        else {
+            ib_log_notice(ib,
+                          "Replaced rule \"%s\" of context=\"%s\" "
+                          "rev=%u with rev=%u @ \"%s\":%u",
+                          rule->meta.id,
+                          ib_context_full_get(ctx),
+                          lookup->meta.revision,
+                          rule->meta.revision,
+                          rule->meta.config_file, rule->meta.config_line);
+        }
     }
 
-    /* Enable & validate this rule */
-    rule->flags |= IB_RULE_FLAGS_RUNABLE;
+    /* Mark the rule as valid */
+    rule->flags |= IB_RULE_FLAG_VALID;
+    rc = ib_list_push(context_rules->rule_list, rule);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Error adding rule \"%s\" "
+                     "to context=\"%s\" list @ \"%s\":%u: %s",
+                     rule->meta.id,
+                     ib_context_full_get(ctx),
+                     rule->meta.config_file, rule->meta.config_line,
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
 
     /* Store off this rule for chaining */
-    rule_engine->parser_data.previous = rule;
+    context_rules->parser_data.previous = rule;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -2192,7 +2574,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
     }
 
     if (rule->meta.id != NULL) {
-        ib_log_error(ib, "Can't set rule id: already set to '%s'",
+        ib_log_error(ib, "Can't set rule id: already set to \"%s\"",
                      rule->meta.id);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -2233,14 +2615,14 @@ ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
         ib_mpool_calloc(ib_rule_mpool(ib), sizeof(**target), 1);
     if (target == NULL) {
         ib_log_error(ib,
-                     "Error allocating rule target object '%s'", name);
+                     "Error allocating rule target object \"%s\"", name);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Copy the name */
     (*target)->field_name = (char *)ib_mpool_strdup(ib_rule_mpool(ib), name);
     if ((*target)->field_name == NULL) {
-        ib_log_error(ib, "Error copying target field name '%s'", name);
+        ib_log_error(ib, "Error copying target field name \"%s\"", name);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -2248,7 +2630,7 @@ ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
     rc = ib_list_create(&((*target)->tfn_list), ib_rule_mpool(ib));
     if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Error creating field operator list for target '%s': %s",
+                     "Error creating field operator list for target \"%s\": %s",
                      name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2288,7 +2670,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
     /* Push the field */
     rc = ib_list_push(rule->target_fields, (void *)target);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to add target '%s' to rule '%s': %s",
+        ib_log_error(ib, "Failed to add target \"%s\" to rule \"%s\": %s",
                      target->field_name, rule->meta.id,
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -2313,12 +2695,12 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
     /* Lookup the transformation by name */
     rc = ib_tfn_lookup(ib, name, &tfn);
     if (rc == IB_ENOENT) {
-        ib_log_error(ib, "Transformation '%s' not found", name);
+        ib_log_error(ib, "Transformation \"%s\" not found", name);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Error looking up trans '%s' for target '%s': %s",
+                     "Error looking up trans \"%s\" for target \"%s\": %s",
                      name, target->field_name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2327,7 +2709,7 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
     rc = ib_list_push(target->tfn_list, tfn);
     if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Error adding transformation '%s' to list: %s",
+                     "Error adding transformation \"%s\" to list: %s",
                      name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2352,12 +2734,12 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
     /* Lookup the transformation by name */
     rc = ib_tfn_lookup(ib, name, &tfn);
     if (rc == IB_ENOENT) {
-        ib_log_error(ib, "Transformation '%s' not found", name);
+        ib_log_error(ib, "Transformation \"%s\" not found", name);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Error looking up trans '%s' for rule '%s': %s",
+                     "Error looking up trans \"%s\" for rule \"%s\": %s",
                      name, rule->meta.id, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2368,7 +2750,8 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
         rc = ib_rule_target_add_tfn(ib, target, name);
         if (rc != IB_OK) {
             ib_log_error(ib,
-                         "Error adding tfn '%s' to target '%s' rule '%s':%d",
+                         "Error adding tfn \"%s\" to target \"%s\" "
+                         "rule \"%s\":%d",
                          name, target->field_name, rule->meta.id);
         }
     }
@@ -2405,7 +2788,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
 
     /* Problems? */
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to add rule action '%s': %s",
+        ib_log_error(ib, "Failed to add rule action \"%s\": %s",
                      action->action->name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }

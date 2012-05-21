@@ -67,9 +67,16 @@ struct ib_hook_t {
 /**
  * @internal
  *
- * Rule engine per-context data
+ * Rule engine data
  */
 typedef struct ib_rule_engine_t ib_rule_engine_t;
+
+/**
+ * @internal
+ *
+ * Rule engine per-context data
+ */
+typedef struct ib_rule_context_t ib_rule_context_t;
 
 /**
  * @internal
@@ -101,7 +108,7 @@ struct ib_engine_t {
     ib_hash_t          *tfns;             /**< Hash tracking transformations */
     ib_hash_t          *operators;        /**< Hash tracking operators */
     ib_hash_t          *actions;          /**< Hash tracking rules */
-    ib_rule_engine_t   *rules;            /**< Rule engine data */
+    ib_rule_engine_t   *rule_engine;      /**< Rule engine data */
 
     /* Hooks */
     ib_hook_t *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
@@ -168,7 +175,7 @@ struct ib_context_t {
     ib_list_t               *filters;     /**< Context enabled filters */
 
     /* Rules associated with this context */
-    ib_rule_engine_t        *rules;       /**< Rule engine data */
+    ib_rule_context_t       *rules;       /**< Rule context data */
 };
 
 /**
@@ -251,6 +258,20 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
 ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                                     ib_module_t *mod,
                                     ib_context_t *ctx);
+
+/**
+ * @internal
+ * Close a context the rule engine.
+ *
+ * Called when a context is closed, performs rule engine rule fixups.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] mod Module object
+ * @param[in,out] ctx IronBee context
+ */
+ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
+                                     ib_module_t *mod,
+                                     ib_context_t *ctx);
 
 /**
  * @internal

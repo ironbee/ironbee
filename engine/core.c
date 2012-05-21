@@ -4142,6 +4142,9 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Notify the rule engine */
+    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -5457,6 +5460,14 @@ static ib_status_t core_ctx_open(ib_engine_t  *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Initialize the rule engine for the context */
+    rc = ib_rule_engine_ctx_init(ib, mod, ctx);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to initialize rule engine context: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -5487,9 +5498,10 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     FILE *orig_fp;
 
     /* Initialize the rule engine for the context */
-    rc = ib_rule_engine_ctx_init(ib, mod, ctx);
+    rc = ib_rule_engine_ctx_close(ib, mod, ctx);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize rule engine context: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to close rule engine context: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 

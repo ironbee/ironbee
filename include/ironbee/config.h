@@ -301,26 +301,6 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                                  ib_bool_t       more);
 
 /**
- * Get current configuration file name.
- *
- * @param cp Parser
- *
- * @returns File name
- */
-const char *ib_cfgparser_get_cur_filename(const ib_cfgparser_t *cp);
-#define ib_cfgparser_get_cur_filename(cp) ((cp)->cur_file)
-
-/**
- * Get current configuration line number.
- *
- * @param cp Parser
- *
- * @returns Line number
- */
-const char *ib_cfgparser_get_cur_line(const ib_cfgparser_t *cp);
-#define ib_cfgparser_get_cur_line(cp) ((cp)->cur_lineno)
-
-/**
  * Push a new context onto the stack and make it the current.
  *
  * @param cp Parser
