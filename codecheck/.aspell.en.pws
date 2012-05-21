@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1264 
+personal_ws-1.1 en 1270 
 refactor
 cfg
 api
@@ -436,6 +436,7 @@ dtype
 rsp
 spi
 Wchar
+delResponseHeader
 MyModule
 mymodule
 AdsBot
@@ -449,6 +450,7 @@ onEventHandleConnect
 SQL
 OSSP
 ConstServer
+setResponseHeader
 logError
 ConfigurationDirectivesRegistrar
 trimLeft
@@ -562,6 +564,7 @@ semc
 Metafunction
 IronBeeEngineMatcher
 UnitTesting
+sctx
 ConstFields
 unesc
 subkey
@@ -814,6 +817,7 @@ memcpy
 portably
 IronBeePlugins
 webserver
+delRequestHeader
 nagios
 ConnOpened
 ConfigurationParser
@@ -1204,6 +1208,7 @@ onEventConnOpened
 nelts
 actionname
 timeval
+setRequestHeader
 blkend
 aaa
 ConfigurationData
@@ -1257,6 +1262,7 @@ ConstLocation
 BinGet
 binget
 firefox
+ness
 addEvent
 ConstConfigurationParser
 unescaped

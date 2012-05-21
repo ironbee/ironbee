@@ -808,7 +808,7 @@ struct act_header_del_t {
 typedef struct act_header_del_t act_header_del_t;
 
 /**
- * Common create routine for delReponseHeader and delRequestHeader action.
+ * Common create routine for delResponseHeader and delRequestHeader action.
  *
  * @param[in] ib The IronBee engine.
  * @param[in] ctx The context.
@@ -816,7 +816,7 @@ typedef struct act_header_del_t act_header_del_t;
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
  *
- * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_del_header_create(ib_engine_t *ib,
                                          ib_context_t *ctx,
@@ -850,7 +850,7 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
 }
 
 /**
- * Common create routine for setReponseHeader and setRequestHeader actions.
+ * Common create routine for setResponseHeader and setRequestHeader actions.
  *
  * @param[in] ib The IronBee engine.
  * @param[in] ctx The context.
@@ -858,7 +858,7 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
  *
- * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_set_header_create(ib_engine_t *ib,
                                          ib_context_t *ctx,
@@ -929,7 +929,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
  *
- * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_set_request_header_execute(void* cbdata,
                                                   ib_rule_t *rule,
@@ -967,7 +967,7 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
  *
- * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_del_request_header_execute(void* cbdata,
                                                   ib_rule_t *rule,
@@ -1005,7 +1005,7 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
  *
- * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_set_response_header_execute(void* cbdata,
                                                   ib_rule_t *rule,
@@ -1043,7 +1043,7 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
  *
- * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t act_del_response_header_execute(void* cbdata,
                                                   ib_rule_t *rule,
