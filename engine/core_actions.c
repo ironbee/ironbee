@@ -943,7 +943,7 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
     assert(tx->ib);
     assert(tx->ib->server);
 
-    ib_status_t rc = IB_OK;
+    ib_server_header_action_t rc;
     act_header_set_t *act_header_set = (act_header_set_t*)cbdata;
     
     rc = ib_server_header(tx->ib->server,
@@ -952,8 +952,11 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
                           IB_HDR_SET, 
                           act_header_set->name,
                           act_header_set->value);
-                     
-    IB_FTRACE_RET_STATUS(rc);
+    if (rc == IB_HDR_ERROR) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 /**
  * Modify the headers.
@@ -978,7 +981,7 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
     assert(tx->ib);
     assert(tx->ib->server);
 
-    ib_status_t rc = IB_OK;
+    ib_server_header_action_t rc;
     act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
     
     rc = ib_server_header(tx->ib->server,
@@ -987,8 +990,11 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
                           IB_HDR_UNSET, 
                           act_header_del->name,
                           "");
+    if (rc == IB_HDR_ERROR) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
 
-    IB_FTRACE_RET_STATUS(rc);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 /**
  * Modify the headers.
@@ -1013,17 +1019,20 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
     assert(tx->ib);
     assert(tx->ib->server);
 
-    ib_status_t rc = IB_OK;
+    ib_server_header_action_t rc;
     act_header_set_t *act_header_set = (act_header_set_t*)cbdata;
-    
+
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_RESPONSE,
                           IB_HDR_SET, 
                           act_header_set->name,
                           act_header_set->value);
+    if (rc == IB_HDR_ERROR) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
 
-    IB_FTRACE_RET_STATUS(rc);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 /**
  * Modify the headers.
@@ -1048,7 +1057,7 @@ static ib_status_t act_del_response_header_execute(void* cbdata,
     assert(tx->ib);
     assert(tx->ib->server);
 
-    ib_status_t rc = IB_OK;
+    ib_server_header_action_t rc;
     act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
     
     rc = ib_server_header(tx->ib->server,
@@ -1057,8 +1066,11 @@ static ib_status_t act_del_response_header_execute(void* cbdata,
                           IB_HDR_UNSET, 
                           act_header_del->name,
                           "");
+    if (rc == IB_HDR_ERROR) {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
 
-    IB_FTRACE_RET_STATUS(rc);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
