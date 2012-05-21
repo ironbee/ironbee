@@ -75,9 +75,7 @@ typedef enum {
     IB_HDR_APPEND,
     IB_HDR_MERGE,
     IB_HDR_ADD,
-    IB_HDR_UNSET,
-    IB_HDR_ERROR,
-    IB_HDR_NOTIMPL
+    IB_HDR_UNSET
 } ib_server_header_action_t;
 
 typedef ib_status_t (*ib_server_error_fn_t)(
@@ -96,7 +94,7 @@ typedef ib_status_t (*ib_server_error_data_fn_t)(
     const char *data,
     void *cbdata
 );
-typedef ib_server_header_action_t (*ib_server_header_fn_t)(
+typedef ib_status_t (*ib_server_header_fn_t)(
     ib_tx_t *tx,
     ib_server_direction_t dir,
     ib_server_header_action_t action,
@@ -319,7 +317,7 @@ ib_status_t ib_server_filter_data(
                        : IB_ENOTIMPL;
 #define ib_server_header(svr,tx,dir,action,hdr,value) \
     (svr)->hdr_fn ? (svr)->hdr_fn(tx,dir,action,hdr,value,(svr)->hdr_data) \
-                  : IB_HDR_NOTIMPL;
+                  : IB_ENOTIMPL;
 
 #ifdef HAVE_FILTER_DATA_API
 #define ib_server_filter_init(svr,tx,dir) \

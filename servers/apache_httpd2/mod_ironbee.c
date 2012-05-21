@@ -174,7 +174,7 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx,
 {
     return IB_ENOTIMPL;
 }
-static ib_server_header_action_t ib_header_callback(
+static ib_status_t ib_header_callback(
     ib_tx_t *ctx,
     ib_server_direction_t dir,
     ib_server_header_action_t action,
@@ -183,7 +183,7 @@ static ib_server_header_action_t ib_header_callback(
     void *cbdata)
 {
     //ap_filter_t *f = ctx;
-    return IB_HDR_NOTIMPL;
+    return IB_ENOTIMPL;
 }
 #ifdef HAVE_FILTER_DATA_API
 static ib_status_t ib_filter_init_callback(

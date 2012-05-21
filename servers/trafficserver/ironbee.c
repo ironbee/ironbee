@@ -162,11 +162,10 @@ typedef struct {
 /**
  * Callback functions for Ironbee to signal to us
  */
-static ib_server_header_action_t ib_header_callback
-                                          (ib_tx_t *tx, ib_server_direction_t dir,
-                                           ib_server_header_action_t action,
-                                           const char *hdr, const char *value,
-                                           void *cbdata)
+static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
+                                      ib_server_header_action_t action,
+                                      const char *hdr, const char *value,
+                                      void *cbdata)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     hdr_do *header;
@@ -176,7 +175,7 @@ static ib_server_header_action_t ib_header_callback
 
     if (ctx->state & HDRS_OUT ||
         (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
-        return IB_HDR_ERROR;  /* too late for requested op */
+        return IB_ENOTIMPL;  /* too late for requested op */
 
     header = TSmalloc(sizeof(*header));
     header->next = ctx->hdr_actions;
