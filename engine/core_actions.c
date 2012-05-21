@@ -789,6 +789,278 @@ static ib_status_t act_status_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+
+/**
+ * Holds the name of the header and the value to set it to.
+ */
+struct act_header_set_t {
+    const char *name; /**< Name of the header to operate on. */
+    const char *value; /**< Value to replace the header with. */
+};
+typedef struct act_header_set_t act_header_set_t;
+
+/**
+ * Holds the name of the header to delete.
+ */
+struct act_header_del_t {
+    const char *name; /**< Name of the header to remove. */
+};
+typedef struct act_header_del_t act_header_del_t;
+
+/**
+ * Common create routine for delReponseHeader and delRequestHeader action.
+ *
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The context.
+ * @param[in] mp The memory pool this is allocated out of.
+ * @param[in] params Parameters of the format name=<header name>.
+ * @param[out] inst The action instance being initialized.
+ *
+ * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ */
+static ib_status_t act_del_header_create(ib_engine_t *ib,
+                                         ib_context_t *ctx,
+                                         ib_mpool_t *mp,
+                                         const char *params,
+                                          ib_action_inst_t *inst)
+{
+    IB_FTRACE_INIT();
+
+    act_header_del_t *act_header_del = 
+        (act_header_del_t *)ib_mpool_alloc(mp, sizeof(*act_header_del));
+
+    if ( act_header_del == NULL ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    if ( params == NULL || strlen(params) == 0 ) {
+        ib_log_error(ib, "Operation requires a parameter.");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    act_header_del->name = ib_mpool_strdup(mp, params);
+
+    if (act_header_del->name == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    inst->data = act_header_del;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Common create routine for setReponseHeader and setRequestHeader actions.
+ *
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The context.
+ * @param[in] mp The memory pool this is allocated out of.
+ * @param[in] params Parameters of the format name=<header name>.
+ * @param[out] inst The action instance being initialized.
+ *
+ * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ */
+static ib_status_t act_set_header_create(ib_engine_t *ib,
+                                         ib_context_t *ctx,
+                                         ib_mpool_t *mp,
+                                         const char *params,
+                                         ib_action_inst_t *inst)
+{
+    IB_FTRACE_INIT();
+
+    size_t name_len;
+    size_t value_len;
+    size_t params_len;
+    char *equals_idx;
+    act_header_set_t *act_header_set = 
+        (act_header_set_t *)ib_mpool_alloc(mp, sizeof(*act_header_set));
+
+    if (act_header_set == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    if (params == NULL || strlen(params) == 0) {
+        ib_log_error(ib, "Operation requires a parameter");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    equals_idx = index(params, '=');
+
+    /* If the returned value was NULL it is an error. */
+    if (equals_idx == NULL) {
+        ib_log_error(ib, "Format for parameter is name=value: %s", params);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    
+    /* Compute string lengths needed for parsing out name and value. */
+    params_len = strlen(params);
+    name_len = equals_idx - params;
+    value_len = params_len - name_len - 1;
+
+    act_header_set->name = (const char *)ib_mpool_memdup(mp,
+                                                         params,
+                                                         name_len+1);
+    if (act_header_set->name == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Terminate name with '\0'. This replaces the '=' that was copied.
+     * Notice that we strip the const-ness of this value to make this one 
+     * assignment. */
+    ((char *)act_header_set->name)[name_len] = '\0';
+
+    act_header_set->value = (value_len == 0)?
+        ib_mpool_strdup(mp, ""):
+        ib_mpool_strdup(mp, equals_idx+1);
+    if (act_header_set->value == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    inst->data = act_header_set;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Modify the headers.
+ *
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The context.
+ * @param[in] mp The memory pool this is allocated out of.
+ * @param[in] params Parameters of the format name=<header name>.
+ * @param[out] inst The action instance being initialized.
+ *
+ * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ */
+static ib_status_t act_set_request_header_execute(void* cbdata,
+                                                  ib_rule_t *rule,
+                                                  ib_tx_t *tx,
+                                                  ib_flags_t flags)
+{
+    IB_FTRACE_INIT();
+
+    assert(cbdata);
+    assert(tx);
+    assert(tx->ib);
+    assert(tx->ib->server);
+
+    ib_status_t rc = IB_OK;
+    act_header_set_t *act_header_set = (act_header_set_t*)cbdata;
+    
+    rc = ib_server_header(tx->ib->server,
+                          tx,
+                          IB_SERVER_REQUEST,
+                          IB_HDR_SET, 
+                          act_header_set->name,
+                          act_header_set->value);
+                     
+    IB_FTRACE_RET_STATUS(rc);
+}
+/**
+ * Modify the headers.
+ *
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The context.
+ * @param[in] mp The memory pool this is allocated out of.
+ * @param[in] params Parameters of the format name=<header name>.
+ * @param[out] inst The action instance being initialized.
+ *
+ * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ */
+static ib_status_t act_del_request_header_execute(void* cbdata,
+                                                  ib_rule_t *rule,
+                                                  ib_tx_t *tx,
+                                                  ib_flags_t flags)
+{
+    IB_FTRACE_INIT();
+
+    assert(cbdata);
+    assert(tx);
+    assert(tx->ib);
+    assert(tx->ib->server);
+
+    ib_status_t rc = IB_OK;
+    act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
+    
+    rc = ib_server_header(tx->ib->server,
+                          tx,
+                          IB_SERVER_REQUEST,
+                          IB_HDR_UNSET, 
+                          act_header_del->name,
+                          "");
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+/**
+ * Modify the headers.
+ *
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The context.
+ * @param[in] mp The memory pool this is allocated out of.
+ * @param[in] params Parameters of the format name=<header name>.
+ * @param[out] inst The action instance being initialized.
+ *
+ * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ */
+static ib_status_t act_set_response_header_execute(void* cbdata,
+                                                  ib_rule_t *rule,
+                                                  ib_tx_t *tx,
+                                                  ib_flags_t flags)
+{
+    IB_FTRACE_INIT();
+
+    assert(cbdata);
+    assert(tx);
+    assert(tx->ib);
+    assert(tx->ib->server);
+
+    ib_status_t rc = IB_OK;
+    act_header_set_t *act_header_set = (act_header_set_t*)cbdata;
+    
+    rc = ib_server_header(tx->ib->server,
+                          tx,
+                          IB_SERVER_RESPONSE,
+                          IB_HDR_SET, 
+                          act_header_set->name,
+                          act_header_set->value);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+/**
+ * Modify the headers.
+ *
+ * @param[in] ib The IronBee engine.
+ * @param[in] ctx The context.
+ * @param[in] mp The memory pool this is allocated out of.
+ * @param[in] params Parameters of the format name=<header name>.
+ * @param[out] inst The action instance being initialized.
+ *
+ * @return IB_OK on success. IB_EALLOC if a memory allocation failes.
+ */
+static ib_status_t act_del_response_header_execute(void* cbdata,
+                                                  ib_rule_t *rule,
+                                                  ib_tx_t *tx,
+                                                  ib_flags_t flags)
+{
+    IB_FTRACE_INIT();
+
+    assert(cbdata);
+    assert(tx);
+    assert(tx->ib);
+    assert(tx->ib->server);
+
+    ib_status_t rc = IB_OK;
+    act_header_del_t *act_header_del = (act_header_del_t*)cbdata;
+    
+    rc = ib_server_header(tx->ib->server,
+                          tx,
+                          IB_SERVER_RESPONSE,
+                          IB_HDR_UNSET, 
+                          act_header_del->name,
+                          "");
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT();
@@ -845,6 +1117,46 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             act_status_create,
                             NULL,
                             act_status_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_action_register(ib,
+                            "setRequestHeader",
+                            IB_ACT_FLAG_NONE,
+                            act_set_header_create,
+                            NULL,
+                            act_set_request_header_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_action_register(ib,
+                            "delRequestHeader",
+                            IB_ACT_FLAG_NONE,
+                            act_del_header_create,
+                            NULL,
+                            act_del_request_header_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_action_register(ib,
+                            "setResponseHeader",
+                            IB_ACT_FLAG_NONE,
+                            act_set_header_create,
+                            NULL,
+                            act_set_response_header_execute);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_action_register(ib,
+                            "delResponseHeader",
+                            IB_ACT_FLAG_NONE,
+                            act_del_header_create,
+                            NULL,
+                            act_del_response_header_execute);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
