@@ -68,6 +68,7 @@ typedef struct {
     /* Keep track of whether this is open and has active transactions */
     int txn_count;
     int closing;
+    TSMutex mutex;
 } ib_ssn_ctx;
 
 typedef struct {
@@ -352,13 +353,20 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
         }
         /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
         if (data->ssn) {
-            --data->ssn->txn_count;
-            if (data->ssn->txn_count == 0 && data->ssn->closing) {
+            /* If it's closing, the contp and with it the mutex are already gone.
+             * Trust TS not to create more TXNs after signalling SSN close!
+             */
+            if (data->ssn->closing) {
                 if (data->ssn->iconn) { /* notify_conn_closed calls conn_destroy */
                     TSDebug("ironbee", "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
                     ib_state_notify_conn_closed(ironbee, data->ssn->iconn);
                 }
                 TSfree(data->ssn);
+            }
+            else {
+                TSMutexLock(data->ssn->mutex);
+                --data->ssn->txn_count;
+                TSMutexUnlock(data->ssn->mutex);
             }
         }
         TSfree(data);
@@ -381,15 +389,18 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
      * for the TXN_CLOSE if there's a TXN
      */
     if (data) {
+        TSMutexLock(data->mutex);
         if (data->txn_count == 0) { /* TXN_CLOSE happened already */
             if (data->iconn) { /* notify_conn_closed calls conn_destroy */
                 TSDebug("ironbee", "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
                 ib_state_notify_conn_closed(ironbee, data->iconn);
             }
+            TSMutexUnlock(data->mutex);
             TSfree(data);
         }
         else {
             data->closing = 1;
+            TSMutexUnlock(data->mutex);
         }
     }
 }
@@ -1055,6 +1066,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 {
     TSVConn connp;
     TSCont mycont;
+    TSMutex conn_mutex;
     TSHttpTxn txnp = (TSHttpTxn) edata;
     TSHttpSsn ssnp = (TSHttpSsn) edata;
     ib_txn_ctx *txndata;
@@ -1074,9 +1086,13 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              * what we can and must do: create a new contp whose
              * lifetime is our ssn
              */
-            mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
+            conn_mutex = TSMutexCreate();
+            mycont = TSContCreate(ironbee_plugin, conn_mutex);
             TSHttpSsnHookAdd (ssnp, TS_HTTP_TXN_START_HOOK, mycont);
-            TSContDataSet(mycont, NULL);
+            ssndata = TSmalloc(sizeof(*ssndata));
+            memset(ssndata, 0, sizeof(*ssndata));
+            ssndata->mutex = conn_mutex;
+            TSContDataSet(mycont, ssndata);
 
             TSHttpSsnHookAdd (ssnp, TS_HTTP_SSN_CLOSE_HOOK, mycont);
 
@@ -1087,24 +1103,22 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* First req on a connection, we set up conn stuff */
 
             ssndata = TSContDataGet(contp);
-            if (ssndata == NULL) {
-                ib_conn_t *iconn = NULL;
+            TSMutexLock(ssndata->mutex);
+            if (ssndata->iconn == NULL) {
                 ib_status_t rc;
-                rc = ib_conn_create(ironbee, &iconn, contp);
+                rc = ib_conn_create(ironbee, &ssndata->iconn, contp);
                 if (rc != IB_OK) {
                     TSError("ironbee: ib_conn_create: %d\n", rc);
                     return rc; // FIXME - figure out what to do
                 }
-                ssndata = TSmalloc(sizeof(*ssndata));
-                memset(ssndata, 0, sizeof(*ssndata));
-                ssndata->iconn = iconn;
                 ssndata->txnp = txnp;
                 ssndata->txn_count = ssndata->closing = 0;
                 TSContDataSet(contp, ssndata);
                 TSDebug("ironbee", "ironbee_plugin: calling ib_state_notify_conn_opened()");
-                ib_state_notify_conn_opened(ironbee, iconn);
+                ib_state_notify_conn_opened(ironbee, ssndata->iconn);
             }
             ++ssndata->txn_count;
+            TSMutexUnlock(ssndata->mutex);
 
             /* create a txn cont (request ctx) */
             mycont = TSContCreate(ironbee_plugin, TSMutexCreate());
