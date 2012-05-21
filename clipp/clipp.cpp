@@ -53,10 +53,14 @@
  * even change it to point to a new input.  Modifiers should be added to
  * @c modifier_factory_map.
  *
+ * All components can thrown special exceptions to change behavior.  See
+ * control.hpp.
+ *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "input.hpp"
+#include "control.hpp"
 #include "configuration_parser.hpp"
 
 #include "modsec_audit_log_generator.hpp"
@@ -77,6 +81,7 @@
 #include "unparse_modifier.hpp"
 #include "aggregate_modifier.hpp"
 #include "edit_modifier.hpp"
+#include "limit_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -165,7 +170,7 @@ typedef map<string,modifier_factory_t> modifier_factory_map_t;
 /**
  * @name Constructor Helpers
  *
- * This functions can be used with bind to easily construct components.
+ * These functions can be used with bind to easily construct components.
  **/
 ///@{
 
@@ -332,6 +337,7 @@ void help()
     "    - response -- response line.\n"
     "    - response_header -- response header.\n"
     "    - response_body -- response body.\n"
+    "  @limit:n -- Stop chain after <n> inputs.\n"
     ;
 }
 
@@ -379,6 +385,26 @@ void load_configuration_file(
 void load_configuration_text(
     chain_list_t& chains,
     const string& config
+);
+
+//! Modifier with name.
+typedef pair<string, input_modifier_t> modifier_info_t;
+//! List of modifier infos.
+typedef list<modifier_info_t> modifier_info_list_t;
+
+/**
+ * Construct modifiers.
+ *
+ * On any exception, will output error message and rethrow.
+ *
+ * @param[out] modifier_infos       List to append to.
+ * @param[in]  modifier_components  Modifiers to build.
+ * @param[in]  modifier_factory_map Modifier factory map.
+ **/
+void construct_modifiers(
+     modifier_info_list_t&         modifier_infos,
+     const component_vec_t&        modifier_components,
+     const modifier_factory_map_t& modifier_factory_map
 );
 
 ///@}
@@ -469,6 +495,8 @@ int main(int argc, char** argv)
         construct_argless_modifier<UnparseModifier>;
     modifier_factory_map["aggregate"] = init_aggregate_modifier;
     modifier_factory_map["edit"] = construct_modifier<EditModifier>;
+    modifier_factory_map["limit"] =
+        construct_modifier<LimitModifier, size_t>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -520,6 +548,20 @@ int main(int argc, char** argv)
     }
     CLIPP_CATCH("Error constructing consumer", {return 1;});
 
+    // Construct consumer modifiers.
+    modifier_info_list_t consumer_modifiers;
+    try {
+        construct_modifiers(
+            consumer_modifiers,
+            consumer_chain.modifiers,
+            modifier_factory_map
+        );
+    }
+    catch (...) {
+        // construct_modifiers() will output error message.
+        return 1;
+    }
+
     // Loop through components, generating and processing input generators
     // as needed to limit the scope of each input generator.  As input
     // generators can make use of significant memory, it is good to only have
@@ -537,35 +579,25 @@ int main(int argc, char** argv)
             {return 1;}
         );
 
-        // Append consumer modifiers
-        copy(
-            consumer_chain.modifiers.begin(), consumer_chain.modifiers.end(),
-            back_inserter(chain.modifiers)
-        );
-
         // Generate modifiers.
-        typedef pair<string, input_modifier_t> modifier_info_t;
-        list<modifier_info_t> modifiers;
-        BOOST_FOREACH(
-            const component_t& modifier_component,
-            chain.modifiers
-        ) {
-            modifiers.push_back(modifier_info_t(
-                modifier_component.name,
-                input_modifier_t()
-            ));
-            modifier_info_t& modifier_info = modifiers.back();
-            try {
-                modifier_info.second = construct_component<input_modifier_t>(
-                    modifier_component,
-                    modifier_factory_map
-                );
-            }
-            CLIPP_CATCH(
-                "Error constructing modifier " + modifier_component.name,
-                {return 1;}
+        modifier_info_list_t modifiers;
+        try {
+            construct_modifiers(
+                modifiers,
+                chain.modifiers,
+                modifier_factory_map
             );
         }
+        catch (...) {
+            // construct_modifiers() will output error message.
+            return 1;
+        }
+
+        // Append consumer modifiers.
+        copy(
+            consumer_modifiers.begin(), consumer_modifiers.end(),
+            back_inserter(modifiers)
+        );
 
         // Process inputs.
         input_p input;
@@ -578,6 +610,12 @@ int main(int argc, char** argv)
 
             try {
                 generator_continue = generator(input);
+            }
+            catch (clipp_break) {
+                break;
+            }
+            catch (clipp_continue) {
+                continue;
             }
             CLIPP_CATCH("Error generating input", {continue;});
 
@@ -592,24 +630,37 @@ int main(int argc, char** argv)
                 input.reset();
             }
 
-            bool modifier_continue = true;
+            bool modifier_success = true;
+            bool modifier_break    = false;
+            bool modifier_continue = false;
             BOOST_FOREACH(const modifier_info_t& modifier_info, modifiers) {
                 try {
-                    modifier_continue = modifier_info.second(input);
+                    modifier_success = modifier_info.second(input);
+                }
+                catch (clipp_break) {
+                    modifier_break = true;
+                    break;
+                }
+                catch (clipp_continue) {
+                    modifier_continue = true;
+                    break;
                 }
                 CLIPP_CATCH(
                     cerr << "Error applying modifier "
                          << modifier_info.first,
-                    {modifier_continue = false; break;}
+                    {modifier_success = false; break;}
                 );
 
                 // If pushing through a singular input, apply to all
                 // modifier.
-                if (input && ! modifier_continue) {
+                if (input && ! modifier_success) {
                     break;
                 }
             }
-            if (! modifier_continue) {
+            if (modifier_break) {
+                break;
+            }
+            if (! modifier_success || modifier_continue) {
                 continue;
             }
 
@@ -625,6 +676,12 @@ int main(int argc, char** argv)
 
             try {
                 consumer_continue = consumer(input);
+            }
+            catch (clipp_break) {
+                break;
+            }
+            catch (clipp_continue) {
+                continue;
             }
             CLIPP_CATCH("Error consuming input", {continue;});
 
@@ -783,3 +840,33 @@ void load_configuration_text(
         back_inserter(chains)
     );
 }
+
+void construct_modifiers(
+    modifier_info_list_t&         modifier_infos,
+    const component_vec_t&        modifier_components,
+    const modifier_factory_map_t& modifier_factory_map
+)
+{
+    BOOST_FOREACH(
+        const component_t& modifier_component,
+        modifier_components
+    ) {
+        modifier_infos.push_back(modifier_info_t(
+            modifier_component.name,
+            input_modifier_t()
+        ));
+        modifier_info_t& modifier_info = modifier_infos.back();
+        try {
+            modifier_info.second = construct_component<input_modifier_t>(
+                modifier_component,
+                modifier_factory_map
+            );
+        }
+        CLIPP_CATCH(
+            "Error constructing modifier " + modifier_component.name,
+            {throw;}
+        );
+    }
+}
+
+

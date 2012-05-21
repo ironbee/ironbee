@@ -375,6 +375,15 @@ can be any of:
 
 If the editor exits non-zero then the original text is used.
 
+**@limit**:*n*
+
+Stop chain after *n* inputs.  If there are additional later chains, `clipp`
+move onto the next one.
+
+`@limit` is written to play well with the other modifiers.  However, it is 
+good practice (and behaves most intuitively) if you place it last in the 
+chain.
+
 Consumers
 ---------
 
