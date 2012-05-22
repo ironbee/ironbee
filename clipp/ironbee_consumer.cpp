@@ -78,6 +78,9 @@ public:
     {
         using namespace boost;
 
+        if (m_connection) {
+            m_connection.destroy();
+        }
         m_connection = IronBee::Connection::create(m_engine);
 
         char* local_ip = strndup(
@@ -109,6 +112,7 @@ public:
             );
         }
         m_engine.notify().connection_closed(m_connection);
+        m_connection.destroy();
         m_connection = IronBee::Connection();
     };
 
@@ -159,6 +163,9 @@ public:
             );
         }
 
+        if (m_transaction) {
+            m_transaction.destroy();
+        }
         m_transaction = IronBee::Transaction::create(m_connection);
 
         IronBee::ParsedRequestLine prl =
@@ -319,6 +326,7 @@ public:
         }
 
         m_engine.notify().response_finished(m_transaction);
+        m_transaction.destroy();
         m_transaction = IronBee::Transaction();
     }
 
