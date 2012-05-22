@@ -1215,8 +1215,9 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
-        ib_log_error_tx(tx, "Received response finished event before response header event: tx=%p", tx);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        ib_log_debug3_tx(tx, "Automatically triggering %s",
+                     ib_state_event_name(response_header_finished_event));
+        ib_state_notify_response_header_finished(ib, tx);
     }
 
     /* Mark the time. */
