@@ -946,6 +946,8 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
     ib_status_t rc;
     act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
     
+    ib_log_debug_tx(tx, "Setting request header %s=%s",
+                    act_header_set->name, act_header_set->value);
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_REQUEST,
@@ -981,6 +983,8 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
     ib_status_t rc;
     act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
     
+    ib_log_debug_tx(tx, "Deleting request header %s",
+                    act_header_del->name);
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_REQUEST,
@@ -1016,6 +1020,8 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
     ib_status_t rc;
     act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
 
+    ib_log_debug_tx(tx, "Setting response header %s=%s",
+                    act_header_set->name, act_header_set->value);
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_RESPONSE,
@@ -1052,6 +1058,8 @@ static ib_status_t act_del_response_header_execute(void* cbdata,
     ib_status_t rc;
     act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
     
+    ib_log_debug_tx(tx, "Deleting response header %s",
+                    act_header_del->name);
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_RESPONSE,

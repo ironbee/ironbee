@@ -998,9 +998,13 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         TSMLoc field_loc;
         if (hdr->dir != ibd->dir)
             continue;    /* it's not for us */
+
+        TSDebug("ironbee", "Manipulating HTTP headers");
+
         switch (hdr->action) {
             case IB_HDR_SET:  /* replace any previous instance == unset + add */
             case IB_HDR_UNSET:  /* unset it */
+                TSDebug("ironbee", "Remove HTTP Header %s", hdr->hdr);
                 /* Use a while loop in case there are multiple instances */
                 while (field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, hdr->hdr,
                                                       strlen(hdr->hdr)),
@@ -1013,6 +1017,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                 /* else fallthrough to ADD */
             case IB_HDR_ADD:  /* add it in, regardless of whether it exists */
 add_hdr:
+                TSDebug("ironbee", "Add HTTP Header %s=%s", hdr->hdr, hdr->value);
                 rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
                 if (rv != TS_SUCCESS)
                      TSError("Failed to add MIME header field");
@@ -1027,6 +1032,7 @@ add_hdr:
                 /* FIXME: implement this in full */
                 /* treat this as APPEND */
             case IB_HDR_APPEND: /* append it to any existing instance */
+                TSDebug("ironbee", "Merge/Append HTTP Header %s=%s", hdr->hdr, hdr->value);
                 field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, hdr->hdr,
                                                strlen(hdr->hdr));
                 if (field_loc == TS_NULL_MLOC) {
