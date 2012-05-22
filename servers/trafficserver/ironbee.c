@@ -335,6 +335,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
     if (data) {
         hdr_do *x;
+        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s", data->tx->conn, data->tx, data->tx->id);
         ib_tx_destroy(data->tx);
         if (data->out.output_buffer) {
             TSIOBufferDestroy(data->out.output_buffer);
@@ -359,6 +360,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
                 if (data->ssn->iconn) {
                     TSDebug("ironbee", "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
                     ib_state_notify_conn_closed(ironbee, data->ssn->iconn);
+                    TSDebug("ironbee", "CONN DESTROY: conn=%p", data->ssn->iconn);
                     ib_conn_destroy(data->ssn->iconn);
                 }
                 TSfree(data->ssn);
@@ -394,6 +396,7 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
             if (data->iconn) {
                 TSDebug("ironbee", "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
                 ib_state_notify_conn_closed(ironbee, data->iconn);
+                TSDebug("ironbee", "CONN DESTROY: conn=%p", data->iconn);
                 ib_conn_destroy(data->iconn);
             }
             TSMutexUnlock(data->mutex);
@@ -1112,6 +1115,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                     TSError("ironbee: ib_conn_create: %d\n", rc);
                     return rc; // FIXME - figure out what to do
                 }
+                TSDebug("ironbee", "CONN CREATE: conn=%p", ssndata->iconn);
                 ssndata->txnp = txnp;
                 ssndata->txn_count = ssndata->closing = 0;
                 TSContDataSet(contp, ssndata);
@@ -1142,6 +1146,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
             ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
+            TSDebug("ironbee", "TX CREATE: conn=%p tx=%p id=%s", ssndata->iconn, txndata->tx, txndata->tx->id);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
