@@ -356,9 +356,10 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
              * Trust TS not to create more TXNs after signalling SSN close!
              */
             if (data->ssn->closing) {
-                if (data->ssn->iconn) { /* notify_conn_closed calls conn_destroy */
+                if (data->ssn->iconn) {
                     TSDebug("ironbee", "ib_txn_ctx_destroy: calling ib_state_notify_conn_closed()");
                     ib_state_notify_conn_closed(ironbee, data->ssn->iconn);
+                    ib_conn_destroy(data->ssn->iconn);
                 }
                 TSfree(data->ssn);
             }
@@ -390,9 +391,10 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
     if (data) {
         TSMutexLock(data->mutex);
         if (data->txn_count == 0) { /* TXN_CLOSE happened already */
-            if (data->iconn) { /* notify_conn_closed calls conn_destroy */
+            if (data->iconn) {
                 TSDebug("ironbee", "ib_ssn_ctx_destroy: calling ib_state_notify_conn_closed()");
                 ib_state_notify_conn_closed(ironbee, data->iconn);
+                ib_conn_destroy(data->iconn);
             }
             TSMutexUnlock(data->mutex);
             TSfree(data);

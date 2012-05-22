@@ -665,9 +665,6 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     rc = ib_state_notify_conn(ib, conn_finished_event, conn);
 
-    ib_log_debug3(ib, "Destroying connection structure");
-    ib_conn_destroy(conn);
-
     IB_FTRACE_RET_STATUS(rc);
 }
 

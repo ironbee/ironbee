@@ -358,6 +358,9 @@ static apr_status_t ironbee_disconnection(void *data)
     ctx_in = (ironbee_conn_context *)apr_table_get(c->notes, "IRONBEE_CTX_IN");
     ib_state_notify_conn_closed(ironbee, ctx_in->iconn);
 
+    ib_conn_destroy(ctx_in->iconn);
+    ctx_in->iconn = NULL;
+
     return OK;
 }
 

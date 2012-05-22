@@ -2054,6 +2054,7 @@ static void run_connection(ib_engine_t* ib)
 end:
     /* Close the connection */
     ib_state_notify_conn_closed(ib, conn);
+    ib_conn_destroy(conn);
     conn = NULL;
 
     /* Print trace request/response count */
