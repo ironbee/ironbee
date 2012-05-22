@@ -72,8 +72,6 @@ public:
 
     void operator()(
         ConfigurationParser parser,
-        const char*         file,
-        unsigned int        lineno,
         const char*         name,
         const char*         param1
     )
@@ -86,8 +84,6 @@ public:
 
     void operator()(
         ConfigurationParser parser,
-        const char*         file,
-        unsigned int        lineno,
         const char*         name,
         const char*         param1,
         const char*         param2
@@ -102,8 +98,6 @@ public:
 
     void operator()(
         ConfigurationParser parser,
-        const char*         file,
-        unsigned int        lineno,
         const char*         name
     )
     {
@@ -114,8 +108,6 @@ public:
 
     void operator()(
         ConfigurationParser parser,
-        const char*         file,
-        unsigned int        lineno,
         const char*         name,
         bool                on
     )
@@ -128,8 +120,6 @@ public:
 
     void operator()(
         ConfigurationParser parser,
-        const char*         file,
-        unsigned int        lineno,
         const char*         name,
         List<const char*>   args
     )
@@ -144,8 +134,6 @@ public:
     }
     void operator()(
         ConfigurationParser parser,
-        const char*         file,
-        unsigned int        lineno,
         const char*         name,
         uint32_t            value,
         uint32_t            mask
@@ -178,15 +166,15 @@ TEST_F(TestConfigurationDirectives, Registrar)
     Handler handler2(info2);
 
     ConfigurationDirectivesRegistrar R(m_engine);
-    R.param1("null.conf", 1, "Param1", handler);
-    R.param2("null.conf", 2, "Param2", handler);
-    R.block("null.conf", 3, "Block", handler, handler2);
-    R.on_off("null.conf", 4, "OnOff", handler);
-    R.list("null.conf", 5, "List", handler);
+    R.param1("Param1", handler);
+    R.param2("Param2", handler);
+    R.block("Block", handler, handler2);
+    R.on_off("OnOff", handler);
+    R.list("List", handler);
     map<string,int64_t> value_map;
     value_map["a"] = (1 << 1) & (1 << 3);
     value_map["b"] = (1 << 7);
-    R.op_flags("null.conf", 6, "OpFlags", handler, value_map);
+    R.op_flags("OpFlags", handler, value_map);
 
     info = Info();
     P.parse_buffer("Param1 HelloWorld\n", "null.conf", 1, true);

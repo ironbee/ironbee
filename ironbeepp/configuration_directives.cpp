@@ -23,8 +23,6 @@ namespace {
 
 ib_status_t config_start_block(
     ib_cfgparser_t* cfgparser,
-    const char*     file,
-    unsigned int    lineno,
     const char*     name,
     const char*     param,
     void*           cbdata
@@ -37,8 +35,6 @@ ib_status_t config_start_block(
             ConfigurationDirectivesRegistrar::start_block_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
-            file,
-            lineno,
             name,
             param
         )
@@ -47,8 +43,6 @@ ib_status_t config_start_block(
 
 ib_status_t config_end_block(
     ib_cfgparser_t* cfgparser,
-    const char*     file,
-    unsigned int    lineno,
     const char*     name,
     void*           cbdata
 )
@@ -60,8 +54,6 @@ ib_status_t config_end_block(
             ConfigurationDirectivesRegistrar::end_block_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
-            file,
-            lineno,
             name
         )
     ));
@@ -69,8 +61,6 @@ ib_status_t config_end_block(
 
 ib_status_t config_param1(
     ib_cfgparser_t* cfgparser,
-    const char*     file,
-    unsigned int    lineno,
     const char*     name,
     const char*     param,
     void*           cbdata
@@ -83,8 +73,6 @@ ib_status_t config_param1(
             ConfigurationDirectivesRegistrar::param1_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
-            file,
-            lineno,
             name,
             param
         )
@@ -93,8 +81,6 @@ ib_status_t config_param1(
 
 ib_status_t config_param2(
     ib_cfgparser_t* cfgparser,
-    const char*     file,
-    unsigned int    lineno,
     const char*     name,
     const char*     param1,
     const char*     param2,
@@ -108,8 +94,6 @@ ib_status_t config_param2(
             ConfigurationDirectivesRegistrar::param2_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
-            file,
-            lineno,
             name,
             param1,
             param2
@@ -119,8 +103,6 @@ ib_status_t config_param2(
 
 ib_status_t config_list(
     ib_cfgparser_t* cfgparser,
-    const char*     file,
-    unsigned int    lineno,
     const char*     name,
     ib_list_t*      params,
     void*           cbdata
@@ -133,8 +115,6 @@ ib_status_t config_list(
             ConfigurationDirectivesRegistrar::list_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
-            file,
-            lineno,
             name,
             List<const char*>(params)
         )
@@ -143,8 +123,6 @@ ib_status_t config_list(
 
 ib_status_t config_on_off(
     ib_cfgparser_t* cfgparser,
-    const char*     file,
-    unsigned int    lineno,
     const char*     name,
     int             value,
     void*           cbdata
@@ -157,8 +135,6 @@ ib_status_t config_on_off(
             ConfigurationDirectivesRegistrar::on_off_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
-            file,
-            lineno,
             name,
             value
         )
@@ -167,8 +143,6 @@ ib_status_t config_on_off(
 
 ib_status_t config_op_flags(
     ib_cfgparser_t* cfgparser,
-    const char*     file,
-    unsigned int    lineno,
     const char*     name,
     uint32_t        value,
     uint32_t        mask,
@@ -182,8 +156,6 @@ ib_status_t config_op_flags(
             ConfigurationDirectivesRegistrar::op_flags_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
-            file,
-            lineno,
             name,
             value,
             mask
@@ -204,8 +176,6 @@ ConfigurationDirectivesRegistrar::ConfigurationDirectivesRegistrar(
 }
 
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::block(
-    const char*   file,
-    unsigned int  lineno,
     const char*   name,
     start_block_t start_function,
     end_block_t   end_function
@@ -232,10 +202,8 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::block(
 }
 
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::on_off(
-    const char*  file,
-    unsigned int lineno,
-    const char*  name,
-    on_off_t     function
+    const char* name,
+    on_off_t    function
 )
 {
     Internal::throw_if_error(ib_config_register_directive(
@@ -256,10 +224,8 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::on_off(
 }
 
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param1(
-    const char*  file,
-    unsigned int lineno,
-    const char*  name,
-    param1_t     function
+    const char* name,
+    param1_t    function
 )
 {
     Internal::throw_if_error(ib_config_register_directive(
@@ -280,10 +246,8 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param1(
 }
 
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param2(
-    const char*  file,
-    unsigned int lineno,
-    const char*  name,
-    param2_t     function
+    const char* name,
+    param2_t    function
 )
 {
     Internal::throw_if_error(ib_config_register_directive(
@@ -304,10 +268,8 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param2(
 }
 
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::list(
-    const char*  file,
-    unsigned int lineno,
-    const char*  name,
-    list_t       function
+    const char* name,
+    list_t      function
 )
 {
     Internal::throw_if_error(ib_config_register_directive(
@@ -328,8 +290,6 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::list(
 }
 
 ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
-    const char*          file,
-    unsigned int         lineno,
     const char*          name,
     op_flags_t           function,
     map<string, int64_t> value_map
