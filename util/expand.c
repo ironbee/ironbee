@@ -322,7 +322,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
 
     /* Check for minimum string length */
     if (str_len < (pre_len+1) ) {
-        *result = (char *)str;
+        *result = (char *)ib_mpool_memdup(mp, str, str_len);
         *result_len = str_len;
         IB_FTRACE_RET_STATUS(IB_OK);
     }

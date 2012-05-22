@@ -92,7 +92,8 @@ ib_status_t DLL_PUBLIC ib_expand_str(ib_mpool_t *mp,
  * @param[out] result Resulting string
  * @param[out] result_len Length of @a result
  *
- * @returns Status code
+ * @returns IB_OK on success or if no change is made. IB_EINVAL if prefix
+ *          or suffix is zero length. IB_EALLOC if a memory allocation failed.
  */
 ib_status_t DLL_PUBLIC ib_expand_str_ex(ib_mpool_t *mp,
                                         const char *str,
