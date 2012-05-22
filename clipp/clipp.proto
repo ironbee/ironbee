@@ -8,26 +8,26 @@ message ConnectionEvent {
 };
 
 message DataEvent {
-    required string data = 1;
+    required bytes data = 1;
 };
 
 message RequestEvent {
-    optional string raw      = 1;
-    optional string method   = 2;
-    optional string uri      = 3;
-    optional string protocol = 4;
+    optional bytes raw      = 1;
+    optional bytes method   = 2;
+    optional bytes uri      = 3;
+    optional bytes protocol = 4;
 };
 
 message ResponseEvent {
-    optional string raw      = 1;
-    optional string protocol = 2;
-    optional string status   = 3;
-    optional string message  = 4;
+    optional bytes raw      = 1;
+    optional bytes protocol = 2;
+    optional bytes status   = 3;
+    optional bytes message  = 4;
 };
 
 message Header {
-    required string name  = 1;
-    required string value = 2;
+    required bytes name  = 1;
+    required bytes value = 2;
 };
 
 message HeaderEvent {

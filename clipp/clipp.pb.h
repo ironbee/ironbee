@@ -221,14 +221,14 @@ class DataEvent : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required string data = 1;
+  // required bytes data = 1;
   inline bool has_data() const;
   inline void clear_data();
   static const int kDataFieldNumber = 1;
   inline const ::std::string& data() const;
   inline void set_data(const ::std::string& value);
   inline void set_data(const char* value);
-  inline void set_data(const char* value, size_t size);
+  inline void set_data(const void* value, size_t size);
   inline ::std::string* mutable_data();
   inline ::std::string* release_data();
 
@@ -307,47 +307,47 @@ class RequestEvent : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional string raw = 1;
+  // optional bytes raw = 1;
   inline bool has_raw() const;
   inline void clear_raw();
   static const int kRawFieldNumber = 1;
   inline const ::std::string& raw() const;
   inline void set_raw(const ::std::string& value);
   inline void set_raw(const char* value);
-  inline void set_raw(const char* value, size_t size);
+  inline void set_raw(const void* value, size_t size);
   inline ::std::string* mutable_raw();
   inline ::std::string* release_raw();
 
-  // optional string method = 2;
+  // optional bytes method = 2;
   inline bool has_method() const;
   inline void clear_method();
   static const int kMethodFieldNumber = 2;
   inline const ::std::string& method() const;
   inline void set_method(const ::std::string& value);
   inline void set_method(const char* value);
-  inline void set_method(const char* value, size_t size);
+  inline void set_method(const void* value, size_t size);
   inline ::std::string* mutable_method();
   inline ::std::string* release_method();
 
-  // optional string uri = 3;
+  // optional bytes uri = 3;
   inline bool has_uri() const;
   inline void clear_uri();
   static const int kUriFieldNumber = 3;
   inline const ::std::string& uri() const;
   inline void set_uri(const ::std::string& value);
   inline void set_uri(const char* value);
-  inline void set_uri(const char* value, size_t size);
+  inline void set_uri(const void* value, size_t size);
   inline ::std::string* mutable_uri();
   inline ::std::string* release_uri();
 
-  // optional string protocol = 4;
+  // optional bytes protocol = 4;
   inline bool has_protocol() const;
   inline void clear_protocol();
   static const int kProtocolFieldNumber = 4;
   inline const ::std::string& protocol() const;
   inline void set_protocol(const ::std::string& value);
   inline void set_protocol(const char* value);
-  inline void set_protocol(const char* value, size_t size);
+  inline void set_protocol(const void* value, size_t size);
   inline ::std::string* mutable_protocol();
   inline ::std::string* release_protocol();
 
@@ -435,47 +435,47 @@ class ResponseEvent : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // optional string raw = 1;
+  // optional bytes raw = 1;
   inline bool has_raw() const;
   inline void clear_raw();
   static const int kRawFieldNumber = 1;
   inline const ::std::string& raw() const;
   inline void set_raw(const ::std::string& value);
   inline void set_raw(const char* value);
-  inline void set_raw(const char* value, size_t size);
+  inline void set_raw(const void* value, size_t size);
   inline ::std::string* mutable_raw();
   inline ::std::string* release_raw();
 
-  // optional string protocol = 2;
+  // optional bytes protocol = 2;
   inline bool has_protocol() const;
   inline void clear_protocol();
   static const int kProtocolFieldNumber = 2;
   inline const ::std::string& protocol() const;
   inline void set_protocol(const ::std::string& value);
   inline void set_protocol(const char* value);
-  inline void set_protocol(const char* value, size_t size);
+  inline void set_protocol(const void* value, size_t size);
   inline ::std::string* mutable_protocol();
   inline ::std::string* release_protocol();
 
-  // optional string status = 3;
+  // optional bytes status = 3;
   inline bool has_status() const;
   inline void clear_status();
   static const int kStatusFieldNumber = 3;
   inline const ::std::string& status() const;
   inline void set_status(const ::std::string& value);
   inline void set_status(const char* value);
-  inline void set_status(const char* value, size_t size);
+  inline void set_status(const void* value, size_t size);
   inline ::std::string* mutable_status();
   inline ::std::string* release_status();
 
-  // optional string message = 4;
+  // optional bytes message = 4;
   inline bool has_message() const;
   inline void clear_message();
   static const int kMessageFieldNumber = 4;
   inline const ::std::string& message() const;
   inline void set_message(const ::std::string& value);
   inline void set_message(const char* value);
-  inline void set_message(const char* value, size_t size);
+  inline void set_message(const void* value, size_t size);
   inline ::std::string* mutable_message();
   inline ::std::string* release_message();
 
@@ -563,25 +563,25 @@ class Header : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required string name = 1;
+  // required bytes name = 1;
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 1;
   inline const ::std::string& name() const;
   inline void set_name(const ::std::string& value);
   inline void set_name(const char* value);
-  inline void set_name(const char* value, size_t size);
+  inline void set_name(const void* value, size_t size);
   inline ::std::string* mutable_name();
   inline ::std::string* release_name();
 
-  // required string value = 2;
+  // required bytes value = 2;
   inline bool has_value() const;
   inline void clear_value();
   static const int kValueFieldNumber = 2;
   inline const ::std::string& value() const;
   inline void set_value(const ::std::string& value);
   inline void set_value(const char* value);
-  inline void set_value(const char* value, size_t size);
+  inline void set_value(const void* value, size_t size);
   inline ::std::string* mutable_value();
   inline ::std::string* release_value();
 
@@ -1313,7 +1313,7 @@ inline void ConnectionEvent::set_remote_port(::google::protobuf::uint32 value) {
 
 // DataEvent
 
-// required string data = 1;
+// required bytes data = 1;
 inline bool DataEvent::has_data() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -1346,7 +1346,7 @@ inline void DataEvent::set_data(const char* value) {
   }
   data_->assign(value);
 }
-inline void DataEvent::set_data(const char* value, size_t size) {
+inline void DataEvent::set_data(const void* value, size_t size) {
   set_has_data();
   if (data_ == &::google::protobuf::internal::kEmptyString) {
     data_ = new ::std::string;
@@ -1375,7 +1375,7 @@ inline ::std::string* DataEvent::release_data() {
 
 // RequestEvent
 
-// optional string raw = 1;
+// optional bytes raw = 1;
 inline bool RequestEvent::has_raw() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -1408,7 +1408,7 @@ inline void RequestEvent::set_raw(const char* value) {
   }
   raw_->assign(value);
 }
-inline void RequestEvent::set_raw(const char* value, size_t size) {
+inline void RequestEvent::set_raw(const void* value, size_t size) {
   set_has_raw();
   if (raw_ == &::google::protobuf::internal::kEmptyString) {
     raw_ = new ::std::string;
@@ -1433,7 +1433,7 @@ inline ::std::string* RequestEvent::release_raw() {
   }
 }
 
-// optional string method = 2;
+// optional bytes method = 2;
 inline bool RequestEvent::has_method() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -1466,7 +1466,7 @@ inline void RequestEvent::set_method(const char* value) {
   }
   method_->assign(value);
 }
-inline void RequestEvent::set_method(const char* value, size_t size) {
+inline void RequestEvent::set_method(const void* value, size_t size) {
   set_has_method();
   if (method_ == &::google::protobuf::internal::kEmptyString) {
     method_ = new ::std::string;
@@ -1491,7 +1491,7 @@ inline ::std::string* RequestEvent::release_method() {
   }
 }
 
-// optional string uri = 3;
+// optional bytes uri = 3;
 inline bool RequestEvent::has_uri() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -1524,7 +1524,7 @@ inline void RequestEvent::set_uri(const char* value) {
   }
   uri_->assign(value);
 }
-inline void RequestEvent::set_uri(const char* value, size_t size) {
+inline void RequestEvent::set_uri(const void* value, size_t size) {
   set_has_uri();
   if (uri_ == &::google::protobuf::internal::kEmptyString) {
     uri_ = new ::std::string;
@@ -1549,7 +1549,7 @@ inline ::std::string* RequestEvent::release_uri() {
   }
 }
 
-// optional string protocol = 4;
+// optional bytes protocol = 4;
 inline bool RequestEvent::has_protocol() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -1582,7 +1582,7 @@ inline void RequestEvent::set_protocol(const char* value) {
   }
   protocol_->assign(value);
 }
-inline void RequestEvent::set_protocol(const char* value, size_t size) {
+inline void RequestEvent::set_protocol(const void* value, size_t size) {
   set_has_protocol();
   if (protocol_ == &::google::protobuf::internal::kEmptyString) {
     protocol_ = new ::std::string;
@@ -1611,7 +1611,7 @@ inline ::std::string* RequestEvent::release_protocol() {
 
 // ResponseEvent
 
-// optional string raw = 1;
+// optional bytes raw = 1;
 inline bool ResponseEvent::has_raw() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -1644,7 +1644,7 @@ inline void ResponseEvent::set_raw(const char* value) {
   }
   raw_->assign(value);
 }
-inline void ResponseEvent::set_raw(const char* value, size_t size) {
+inline void ResponseEvent::set_raw(const void* value, size_t size) {
   set_has_raw();
   if (raw_ == &::google::protobuf::internal::kEmptyString) {
     raw_ = new ::std::string;
@@ -1669,7 +1669,7 @@ inline ::std::string* ResponseEvent::release_raw() {
   }
 }
 
-// optional string protocol = 2;
+// optional bytes protocol = 2;
 inline bool ResponseEvent::has_protocol() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -1702,7 +1702,7 @@ inline void ResponseEvent::set_protocol(const char* value) {
   }
   protocol_->assign(value);
 }
-inline void ResponseEvent::set_protocol(const char* value, size_t size) {
+inline void ResponseEvent::set_protocol(const void* value, size_t size) {
   set_has_protocol();
   if (protocol_ == &::google::protobuf::internal::kEmptyString) {
     protocol_ = new ::std::string;
@@ -1727,7 +1727,7 @@ inline ::std::string* ResponseEvent::release_protocol() {
   }
 }
 
-// optional string status = 3;
+// optional bytes status = 3;
 inline bool ResponseEvent::has_status() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
@@ -1760,7 +1760,7 @@ inline void ResponseEvent::set_status(const char* value) {
   }
   status_->assign(value);
 }
-inline void ResponseEvent::set_status(const char* value, size_t size) {
+inline void ResponseEvent::set_status(const void* value, size_t size) {
   set_has_status();
   if (status_ == &::google::protobuf::internal::kEmptyString) {
     status_ = new ::std::string;
@@ -1785,7 +1785,7 @@ inline ::std::string* ResponseEvent::release_status() {
   }
 }
 
-// optional string message = 4;
+// optional bytes message = 4;
 inline bool ResponseEvent::has_message() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -1818,7 +1818,7 @@ inline void ResponseEvent::set_message(const char* value) {
   }
   message_->assign(value);
 }
-inline void ResponseEvent::set_message(const char* value, size_t size) {
+inline void ResponseEvent::set_message(const void* value, size_t size) {
   set_has_message();
   if (message_ == &::google::protobuf::internal::kEmptyString) {
     message_ = new ::std::string;
@@ -1847,7 +1847,7 @@ inline ::std::string* ResponseEvent::release_message() {
 
 // Header
 
-// required string name = 1;
+// required bytes name = 1;
 inline bool Header::has_name() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -1880,7 +1880,7 @@ inline void Header::set_name(const char* value) {
   }
   name_->assign(value);
 }
-inline void Header::set_name(const char* value, size_t size) {
+inline void Header::set_name(const void* value, size_t size) {
   set_has_name();
   if (name_ == &::google::protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
@@ -1905,7 +1905,7 @@ inline ::std::string* Header::release_name() {
   }
 }
 
-// required string value = 2;
+// required bytes value = 2;
 inline bool Header::has_value() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -1938,7 +1938,7 @@ inline void Header::set_value(const char* value) {
   }
   value_->assign(value);
 }
-inline void Header::set_value(const char* value, size_t size) {
+inline void Header::set_value(const void* value, size_t size) {
   set_has_value();
   if (value_ == &::google::protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
