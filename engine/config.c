@@ -681,18 +681,21 @@ void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp, int level,
     char *fmtbuf = NULL;
 
     snprintf(prebuf, 32, "CONFIG_%s", prefix == NULL ? "" : prefix);
-    snprintf(lnobuf, 16, "%u", line);
 
     if (cp->cur_file != NULL) {
+        snprintf(lnobuf, 16, "%u", cp->cur_lineno);
         fmtlen = strlen(fmt) + strlen(cp->cur_file) + strlen(lnobuf) + 8;
         fmtbuf = (char *)ib_mpool_alloc(cp->mp, fmtlen);
+    }
+    else {
+        lnobuf[0] = '\0';
     }
 
     /* Gracefully handle allocation failures */
     if (fmtbuf != NULL) {
         strcpy(fmtbuf, fmt);
         strcat(fmtbuf, " @ ");
-        strcat(fmtbuf, file);
+        strcat(fmtbuf, cp->cur_file);
         strcat(fmtbuf, ":");
         strcat(fmtbuf, lnobuf);
         fmt = fmtbuf;
