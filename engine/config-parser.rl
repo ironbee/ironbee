@@ -114,27 +114,26 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     incfile = ib_util_relative_file(mp, file, pval);
 
     if (access(incfile, R_OK) != 0) {
-        ib_log_error(cp->ib, "Cannot access included file \"%s\": %s",
-                     incfile, strerror(errno));
+        ib_log_error_cfg(cp, "Cannot access included file \"%s\": %s",
+                         incfile, strerror(errno));
         return IB_ENOENT;
     }
 
     statval = stat(incfile, &statbuf);
     if (statval != 0) {
-        ib_log_error(cp->ib,
-                     "Failed to stat include file \"%s\": %s",
-                     incfile, strerror(errno));
+        ib_log_error_cfg(cp,
+                         "Failed to stat include file \"%s\": %s",
+                         incfile, strerror(errno));
         return IB_ENOENT;
     }
 
     if (S_ISREG(statbuf.st_mode) == 0) {
-        ib_log_error(cp->ib,
-                     "Included file \"%s\" isn't a file", incfile);
+        ib_log_error_cfg(cp,
+	                 "Included file \"%s\" isn't a file", incfile);
         return IB_ENOENT;
     }
 
-    ib_log_debug(cp->ib, "Including '%s' from %s:%d",
-                 incfile, file, lineno);
+    ib_log_debug_cfg(cp, "Including '%s'", incfile);
     rc = ib_cfgparser_parse(cp, incfile);
     if (rc != IB_OK) {
         ib_log_error(cp->ib, "Error parsing included file \"%s\": %s",
@@ -153,9 +152,9 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     action mark { mark = fpc; }
     action error_action {
         rc = IB_EOTHER;
-        ib_log_error(ib_engine,
-                     "ERROR: parser error before \"%.*s\" on %s:%d",
-                     (int)(fpc - mark), mark, file, lineno);
+        ib_log_error_cfg(cp,
+                         "parser error before \"%.*s\"",
+                         (int)(fpc - mark), mark);
     }
 
     # Parameter
@@ -176,11 +175,11 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         ib_list_clear(plist);
     }
     action push_dir {
-        rc = ib_config_directive_process(cp, file, lineno, directive, plist);
+        rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine,
-                         "Failed to process directive \"%s\" on %s:%d: %s",
-                         directive, file, lineno, ib_status_to_string(rc));
+            ib_log_error_cfg(cp,
+                             "Failed to process directive \"%s\": %s",
+                             directive, ib_status_to_string(rc));
         }
         if (directive != NULL) {
             free(directive);
@@ -195,20 +194,20 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         ib_list_clear(plist);
     }
     action push_block {
-        rc = ib_config_block_start(cp, file, lineno, blkname, plist);
+        rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine,
-                         "Failed to start block \"%s\" on %s:%d: %s",
-                         blkname, file, lineno, ib_status_to_string(rc));
+            ib_log_error_cfg(cp,
+	                     "Failed to start block \"%s\": %s",
+                             blkname, ib_status_to_string(rc));
         }
     }
     action pop_block {
         blkname = (char *)cp->cur_blkname;
-        rc = ib_config_block_process(cp, file, lineno, blkname);
+        rc = ib_config_block_process(cp, blkname);
         if (rc != IB_OK) {
-            ib_log_error(ib_engine,
-                         "Failed to process block \"%s\" on %s:%d: %s",
-                         blkname, file, lineno, ib_status_to_string(rc));
+            ib_log_error_cfg(cp,
+                             "Failed to process block \"%s\": %s",
+                             blkname, ib_status_to_string(rc));
         }
         if (blkname != NULL) {
             free(blkname);
@@ -220,14 +219,12 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     action include_config {
         rc = include_config_fn(cp, mpcfg, mark, fpc, file, lineno);
         if (rc == IB_OK) {
-            ib_log_debug(ib_engine,
-                         "Done processing include direction on %s:%d",
-                         file, lineno);
+            ib_log_debug_cfg(cp, "Done processing include direction");
         }
         else {
-            ib_log_error(ib_engine,
-                         "Failed to process include directive on %s:%d: %s",
-                         file, lineno, ib_status_to_string(rc));
+            ib_log_error_cfg(cp,
+                             "Failed to process include directive: %s",
+                             ib_status_to_string(rc));
         }
     }
 

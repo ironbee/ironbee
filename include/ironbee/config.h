@@ -58,6 +58,8 @@ struct ib_cfgparser_t {
     ib_site_t              *cur_site;    /**< Current site */
     ib_loc_t               *cur_loc;     /**< Current location */
     const char             *cur_blkname; /**< Current block name */
+    const char             *cur_file;    /**< Current file name */
+    unsigned int            cur_lineno;  /**< Current line number */
 };
 
 /**
@@ -295,7 +297,29 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                                  size_t          length,
                                                  const char     *file,
                                                  unsigned        lineno,
+
                                                  ib_bool_t       more);
+
+/**
+ * Get current configuration file name.
+ *
+ * @param cp Parser
+ *
+ * @returns File name
+ */
+const char *ib_cfgparser_get_cur_filename(const ib_cfgparser_t *cp);
+#define ib_cfgparser_get_cur_filename(cp) ((cp)->cur_file)
+
+/**
+ * Get current configuration line number.
+ *
+ * @param cp Parser
+ *
+ * @returns Line number
+ */
+const char *ib_cfgparser_get_cur_line(const ib_cfgparser_t *cp);
+#define ib_cfgparser_get_cur_line(cp) ((cp)->cur_lineno)
+
 /**
  * Push a new context onto the stack and make it the current.
  *
@@ -400,8 +424,6 @@ ib_status_t DLL_PUBLIC ib_config_register_directive(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
-                                                   const char *file,
-                                                   unsigned lineno,
                                                    const char *name,
                                                    ib_list_t *args);
 
@@ -418,8 +440,6 @@ ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
-                                             const char *file,
-                                             unsigned lineno,
                                              const char *name,
                                              ib_list_t *args);
 
@@ -439,9 +459,46 @@ ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_config_block_process(ib_cfgparser_t *cp,
-                                               const char *file,
-                                               unsigned lineno,
                                                const char *name);
+
+
+/** Log Generic (Configuration form) */
+void DLL_PUBLIC ib_log_cfg(ib_cfgparser_t *cp,
+                           int level,
+                           const char *prefix,
+                           const char *file,
+                           int line,
+                           const char *fmt, ...) PRINTF_ATTRIBUTE(6, 0);
+void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp,
+                            int level,
+                            const char *prefix,
+                            const char *file,
+                            int line,
+                            const char *fmt,
+                            va_list ap);
+
+/** Log Emergency (Configuration form) */
+#define ib_log_emergency_cfg(cp,...) ib_log_cfg(cp, IB_LOG_EMERGENCY, "EMERGENCY", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Alert (Configuration form) */
+#define ib_log_alert_cfg(cp,...)     ib_log_cfg(cp, IB_LOG_ALERT,     "ALERT",     __FILE__, __LINE__, __VA_ARGS__)
+/** Log Critical (Configuration form) */
+#define ib_log_critical_cfg(cp,...)  ib_log_cfg(cp, IB_LOG_CRITICAL,  "CRITICAL",  __FILE__, __LINE__, __VA_ARGS__)
+/** Log Error (Configuration form) */
+#define ib_log_error_cfg(cp,...)     ib_log_cfg(cp, IB_LOG_ERROR,     "ERROR",     __FILE__, __LINE__, __VA_ARGS__)
+/** Log Warning (Configuration form) */
+#define ib_log_warning_cfg(cp,...)   ib_log_cfg(cp, IB_LOG_WARNING,   "WARNING",   __FILE__, __LINE__, __VA_ARGS__)
+/** Log Notice (Configuration form) */
+#define ib_log_notice_cfg(cp,...)    ib_log_cfg(cp, IB_LOG_NOTICE,    "NOTICE",    __FILE__, __LINE__, __VA_ARGS__)
+/** Log Info (Configuration form) */
+#define ib_log_info_cfg(cp,...)      ib_log_cfg(cp, IB_LOG_INFO,      "INFO",      __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug (Configuration form) */
+#define ib_log_debug_cfg(cp,...)     ib_log_cfg(cp, IB_LOG_DEBUG,     "DEBUG",     __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug2 (Configuration form) */
+#define ib_log_debug2_cfg(cp,...)    ib_log_cfg(cp, IB_LOG_DEBUG2,    "DEBUG2",    __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug3 (Configuration form) */
+#define ib_log_debug3_cfg(cp,...)    ib_log_cfg(cp, IB_LOG_DEBUG3,    "DEBUG3",    __FILE__, __LINE__, __VA_ARGS__)
+/** Log Trace (Configuration form) */
+#define ib_log_trace_cfg(cp,...)     ib_log_cfg(cp, IB_LOG_TRACE,     "TRACE",     __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * @} IronBeeConfig
