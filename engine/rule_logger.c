@@ -45,7 +45,7 @@
 /**
  * Prefix used for all rule engine log entries.
  */
-#define LOG_PREFIX "RULE_ENG  - "
+#define LOG_PREFIX "RULE_ENG"
 
 ib_rule_log_level_t ib_rule_log_level(ib_engine_t *ib)
 {

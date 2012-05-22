@@ -285,13 +285,13 @@ static void core_logger(FILE *fh, int level,
 
     if (log_lineinfo == IB_TRUE) {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %s(%30s:%-5d) %s%s\n",
+                      "%s %-22s- (%30s:%-5d) %s%s\n",
                       time_info,
                       (prefix?prefix:""), file, line, tx_info, fmt);
     }
     else {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %s%s%s\n",
+                      "%s %-22s- %s%s\n",
                       time_info,
                       (prefix?prefix:""), tx_info, fmt);
     }

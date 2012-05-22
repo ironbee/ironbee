@@ -675,13 +675,30 @@ void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp, int level,
 {
     IB_FTRACE_INIT();
 
-    char buf[128+1];
+    char prebuf[32+1];
+    char lnobuf[16+1];
+    size_t fmtlen;
+    char *fmtbuf = NULL;
 
-    snprintf(buf, 128, "%s:%u: CONFIG-%-15s -",
-             ib_cfgparser_get_cur_filename(cp),
-             ib_cfgparser_get_cur_line(cp),
-             prefix == NULL ? "" : prefix);
-    ib_vlog_ex(cp->ib, level, NULL, buf, file, line, fmt, ap);
+    snprintf(prebuf, 32, "CONFIG_%s", prefix == NULL ? "" : prefix);
+    snprintf(lnobuf, 16, "%u", line);
+
+    if (cp->cur_file != NULL) {
+        fmtlen = strlen(fmt) + strlen(cp->cur_file) + strlen(lnobuf) + 8;
+        fmtbuf = (char *)ib_mpool_alloc(cp->mp, fmtlen);
+    }
+
+    /* Gracefully handle allocation failures */
+    if (fmtbuf != NULL) {
+        strcpy(fmtbuf, fmt);
+        strcat(fmtbuf, " @ ");
+        strcat(fmtbuf, file);
+        strcat(fmtbuf, ":");
+        strcat(fmtbuf, lnobuf);
+        fmt = fmtbuf;
+    }
+
+    ib_vlog_ex(cp->ib, level, NULL, prebuf, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }
