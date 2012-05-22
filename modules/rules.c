@@ -470,7 +470,7 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
  *
  * @param cp IronBee configuration parser
  * @param rule Rule to operate on
- * @param targets_str List of one or more target field names separated 
+ * @param targets_str List of one or more target field names separated
  *                    by @c | or @c , .
  *
  * @returns
