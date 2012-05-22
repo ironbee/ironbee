@@ -170,7 +170,7 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
     }
 
 
-    IB_FTRACE_RET_STATUS(rc);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_fctl_data_add(ib_fctl_t *fc,
