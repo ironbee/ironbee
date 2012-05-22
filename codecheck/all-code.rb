@@ -1,5 +1,10 @@
 #!/usr/bin/env ruby
 
+# Exclude paths that match any of these regexs.
+EXCLUDE = [
+    %r{/config-parser\.[ch]$}   
+]
+
 def all_ironbee_code
   ironbee_dir = File.dirname(File.expand_path(File.dirname(__FILE__)))
   extensions  = ['.h','.c','.hh','.cc','.hpp','.cpp']
@@ -29,7 +34,7 @@ def all_ironbee_code
   Dir.chdir(ironbee_dir)
   globs.each do |glob|
     Dir.glob(glob).each do |path|
-      next if File.basename(path) =~ %r{^config-parser\.[ch]$}
+      next if EXCLUDE.find {|r| r =~ path}
       yield path
     end
   end
