@@ -470,72 +470,91 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
  *
  * @param cp IronBee configuration parser
  * @param rule Rule to operate on
- * @param target_str Target field name.
+ * @param targets_str List of one or more target field names separated 
+ *                    by @c | or @c , .
  *
- * @returns Status code
+ * @returns
+ *  - IB_OK if there is one or more targets.
+ *  - IB_EINVAL if not targets are found, including if the string is empty.
+ *  - IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t parse_targets(ib_cfgparser_t *cp,
                                  ib_rule_t *rule,
-                                 const char *target_str)
+                                 const char *targets_str)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     const char *cur;
-    char *copy;
+    char *targets_str_copy;
     ib_num_t num_targets = 0;
 
-    /* Copy the target string */
-    while(isspace(*target_str)) {
-        ++target_str;
+    /* Find the start of the target string. */
+    while(isspace(*targets_str)) {
+        ++targets_str;
     }
-    if (*target_str == '\0') {
-        ib_log_error_cfg(cp, "Rule targets is empty");
+
+    /* Fail on an empty target. */
+    if (*targets_str == '\0') {
+        ib_log_error_cfg(cp,  "Rule targets is empty");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), target_str);
-    if (copy == NULL) {
-        ib_log_error_cfg(cp, "Failed to copy rule targets");
+
+    /* Make a write-able copy for processing. */
+    targets_str_copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), targets_str);
+    if (targets_str_copy == NULL) {
+        ib_log_error_cfg(cp,  "Failed to copy rule targets");
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    /* Split it up */
-    for (cur = strtok(copy, "|,");  cur != NULL;  cur = strtok(NULL, "|,") ) {
-        const char *rewritten = NULL;
-        const char *tstr;
-        ib_list_t *tfns;
-        ib_rule_target_t *target;
+    /* For each rule target separated by '|' or ','... */
+    for (cur = strtok(targets_str_copy, "|,");
+         cur != NULL;
+         cur = strtok(NULL, "|,") )
+    {
+        const char *rewritten_target_str = NULL;
+        const char *final_target_str; /* Holder for the final target name. */
+        ib_list_t *transforms; /* Transforms to perform. */
+        ib_rule_target_t *ib_rule_target;
         ib_num_t not_found = 0;
 
-        rc = rewrite_target_tokens(cp, cur, &rewritten);
+        /* First, rewrite cur into rewritten_target_str. */
+        rc = rewrite_target_tokens(cp, cur, &rewritten_target_str);
         if (rc != IB_OK) {
             ib_log_error_cfg(cp, "Error rewriting target '%s'", cur);
             continue;
         }
 
-        /* Parse the target string */
-        rc = parse_target_string(cp, rewritten, &tstr, &tfns);
+        /* Parse the rewritten string into the final_target_str. */
+        rc = parse_target_string(cp,
+                                 rewritten_target_str,
+                                 &final_target_str,
+                                 &transforms);
         if (rc != IB_OK) {
             ib_log_error_cfg(cp, "Error parsing target string '%s'", cur);
             continue;
         }
 
         /* Create the target object */
-        rc = ib_rule_create_target(cp->ib, tstr, tfns, &target, &not_found);
+        rc = ib_rule_create_target(cp->ib,
+                                   final_target_str,
+                                   transforms,
+                                   &ib_rule_target,
+                                   &not_found);
         if (rc != IB_OK) {
             ib_log_error_cfg(cp,
-                             "Error creating rule target '%s': %s",
-                             tstr, ib_status_to_string(rc));
+                         "Error creating rule target '%s': %s",
+                         final_target_str, ib_status_to_string(rc));
             continue;
 
         }
         else if (not_found != 0) {
             ib_log_error_cfg(cp,
-                             "Rule target '%s': %d transformations not found",
-                             tstr, not_found);
+                         "Rule target '%s': %d transformations not found",
+                         final_target_str, not_found);
         }
 
         /* Add the target to the rule */
-        rc = ib_rule_add_target(cp->ib, rule, target);
+        rc = ib_rule_add_target(cp->ib, rule, ib_rule_target);
         if (rc != IB_OK) {
             ib_log_error_cfg(cp, "Failed to add rule target '%s'", cur);
             IB_FTRACE_RET_STATUS(rc);
