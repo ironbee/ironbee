@@ -946,7 +946,7 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
     ib_status_t rc;
     act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
     char *expanded_value;
-    
+
     rc = ib_data_expand_str(tx->dpi, act_header_set->value, &expanded_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -989,7 +989,7 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
 
     ib_status_t rc;
     act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
-    
+
     ib_log_debug_tx(tx, "Deleting request header %s",
                     act_header_del->name);
     rc = ib_server_header(tx->ib->server,
@@ -1070,7 +1070,7 @@ static ib_status_t act_del_response_header_execute(void* cbdata,
 
     ib_status_t rc;
     act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
-    
+
     ib_log_debug_tx(tx, "Deleting response header %s",
                     act_header_del->name);
     rc = ib_server_header(tx->ib->server,
