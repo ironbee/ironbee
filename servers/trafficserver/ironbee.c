@@ -186,7 +186,7 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
     header->hdr = TSstrdup(hdr);
     header->value = TSstrdup(value);
 
-    return IB_ENOTIMPL;
+    return IB_OK;
 }
 
 /**
