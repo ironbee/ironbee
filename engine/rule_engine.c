@@ -626,7 +626,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         if ( value->type == IB_FTYPE_LIST ) {
             ib_list_t *value_list;
             ib_list_node_t *value_node;
-            rc = ib_field_value(value, (void*)&value_list);
+            rc = ib_field_value(value, (void *)&value_list);
 
             if (rc!=IB_OK) {
                 ib_log_error_tx(tx, "Error getting field value %s: %s",
