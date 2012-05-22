@@ -1266,7 +1266,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
             /* Let the parser see the data. */
             ec = htp_connp_req_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
-                ib_log_error(ib, "LibHTP parser blocked: %d", ec);
+                ib_log_notice(ib, "LibHTP parser blocked: %d", ec);
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
@@ -1274,7 +1274,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
             }
             break;
         case STREAM_STATE_ERROR:
-            ib_log_error(ib, "LibHTP parser in \"error\" state");
+            ib_log_notice(ib, "LibHTP parser in \"error\" state");
             break;
         case STREAM_STATE_DATA_OTHER:
             ib_log_error(ib, "LibHTP parser in \"other\" state");
@@ -1319,7 +1319,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
             /* Let the parser see the data. */
             ec = htp_connp_res_data(htp, &tv, qcdata->data, qcdata->dlen);
             if (ec == STREAM_STATE_DATA_OTHER) {
-                ib_log_error(ib, "LibHTP parser blocked: %d", ec);
+                ib_log_notice(ib, "LibHTP parser blocked: %d", ec);
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
@@ -1327,7 +1327,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
             }
             break;
         case STREAM_STATE_ERROR:
-            ib_log_error(ib, "LibHTP parser in \"error\" state");
+            ib_log_notice(ib, "LibHTP parser in \"error\" state");
             break;
         case STREAM_STATE_DATA_OTHER:
             ib_log_error(ib, "LibHTP parser in \"other\" state");
