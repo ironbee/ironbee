@@ -215,15 +215,11 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
  *
  * @details Register a FieldTx directive to the engine.
  * @param[in] cp Configuration parser
- * @param[in] file Name of configuration file being parsed
- * @param[in] lineno Line number in configuration file
  * @param[in] directive The directive name.
  * @param[in] vars The list of variables passed to @c name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
-                                    const char *file,
-                                    unsigned int lineno,
                                     const char *directive,
                                     const ib_list_t *vars,
                                     void *cbdata)

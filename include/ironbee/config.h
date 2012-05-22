@@ -84,31 +84,23 @@ struct ib_strval_t {
 
 /** Callback for ending (processing) a block */
 typedef ib_status_t (*ib_config_cb_blkend_fn_t)(ib_cfgparser_t *cp,
-                                                const char *file,
-                                                unsigned int lineo,
                                                 const char *name,
                                                 void *cbdata);
 
 /** Callback for ONOFF directives */
 typedef ib_status_t (*ib_config_cb_onoff_fn_t)(ib_cfgparser_t *cp,
-                                                const char *file,
-                                                unsigned int lineo,
                                                const char *name,
-                                               ib_bool_t onoff,
+                                               int onoff,
                                                void *cbdata);
 
 /** Callback for PARAM1 directives */
 typedef ib_status_t (*ib_config_cb_param1_fn_t)(ib_cfgparser_t *cp,
-                                                const char *file,
-                                                unsigned int lineo,
                                                 const char *name,
                                                 const char *p1,
                                                 void *cbdata);
 
 /** Callback for PARAM2 directives */
 typedef ib_status_t (*ib_config_cb_param2_fn_t)(ib_cfgparser_t *cp,
-                                                const char *file,
-                                                unsigned int lineo,
                                                 const char *name,
                                                 const char *p1,
                                                 const char *p2,
@@ -116,16 +108,12 @@ typedef ib_status_t (*ib_config_cb_param2_fn_t)(ib_cfgparser_t *cp,
 
 /** Callback for LIST directives */
 typedef ib_status_t (*ib_config_cb_list_fn_t)(ib_cfgparser_t *cp,
-                                              const char *file,
-                                              unsigned int lineo,
                                               const char *name,
                                               const ib_list_t *list,
                                               void *cbdata);
 
 /** Callback for OPFLAGS directives */
 typedef ib_status_t (*ib_config_cb_opflags_fn_t)(ib_cfgparser_t *cp,
-                                                 const char *file,
-                                                 unsigned int lineo,
                                                  const char *name,
                                                  ib_flags_t val,
                                                  ib_flags_t mask,
@@ -133,8 +121,6 @@ typedef ib_status_t (*ib_config_cb_opflags_fn_t)(ib_cfgparser_t *cp,
 
 /** Callback for SBLK1 directives */
 typedef ib_status_t (*ib_config_cb_sblk1_fn_t)(ib_cfgparser_t *cp,
-                                               const char *file,
-                                               unsigned int lineo,
                                                const char *name,
                                                const char *p1,
                                                void *cbdata);
@@ -313,61 +299,45 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
 /**
  * Push a new context onto the stack and make it the current.
  *
- * @param[in] cp Parser
- * @param[in] file Name of configuration file being parsed
- * @param[in] lineno Line number in configuration file
- * @param[out] ctx New context
+ * @param cp Parser
+ * @param ctx New context
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_context_push(ib_cfgparser_t *cp,
-                                                 const char *file,
-                                                 unsigned int lineno,
                                                  ib_context_t *ctx);
 
 /**
  * Pop the current context off the stack and make the previous the current.
  *
- * @param[in] cp Parser
- * @param[in] file Name of configuration file being parsed
- * @param[in] lineno Line number in configuration file
- * @param[out] pctx Address which the removed context will be written (if non-NULL)
+ * @param cp Parser
+ * @param pctx Address which the removed context will be written (if non-NULL)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_context_pop(ib_cfgparser_t *cp,
-                                                const char *file,
-                                                unsigned int lineno,
                                                 ib_context_t **pctx);
 
 /**
  * Push a new block name onto the stack and make it the current.
  *
  * @param cp Parser
- * @param[in] file Name of configuration file being parsed
- * @param[in] lineno Line number in configuration file
  * @param name New block name
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
-                                               const char *file,
-                                               unsigned int lineno,
                                                const char *name);
 
 /**
  * Pop the current block name off the stack and make the previous the current.
  *
  * @param cp Parser
- * @param[in] file Name of configuration file being parsed
- * @param[in] lineno Line number in configuration file
  * @param pname Address which the removed name will be written (if non-NULL)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
-                                              const char *file,
-                                              unsigned int lineno,
                                               const char **pname);
 
 /**

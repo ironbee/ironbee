@@ -282,8 +282,6 @@ static ib_status_t geoip_lookup(
 }
 
 static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
-                                                  const char *file,
-                                                  unsigned int lineno,
                                                   const char *name,
                                                   const char *p1,
                                                   void *cbdata)
