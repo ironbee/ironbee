@@ -945,15 +945,22 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
 
     ib_status_t rc;
     act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
+    char *expanded_value;
     
+    rc = ib_data_expand_str(tx->dpi, act_header_set->value, &expanded_value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     ib_log_debug_tx(tx, "Setting request header %s=%s",
-                    act_header_set->name, act_header_set->value);
+                    act_header_set->name, expanded_value);
+
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_REQUEST,
                           IB_HDR_SET,
                           act_header_set->name,
-                          act_header_set->value);
+                          expanded_value);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1019,6 +1026,12 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
 
     ib_status_t rc;
     act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
+    char *expanded_value;
+
+    rc = ib_data_expand_str(tx->dpi, act_header_set->value, &expanded_value);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     ib_log_debug_tx(tx, "Setting response header %s=%s",
                     act_header_set->name, act_header_set->value);
@@ -1027,7 +1040,7 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
                           IB_SERVER_RESPONSE,
                           IB_HDR_SET,
                           act_header_set->name,
-                          act_header_set->value);
+                          expanded_value);
 
     IB_FTRACE_RET_STATUS(rc);
 }
