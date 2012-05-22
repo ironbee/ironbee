@@ -48,15 +48,14 @@ ib_status_t cleanup(
 {
     IB_FTRACE_INIT();
 
-    // We have no engine...
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(NULL,
-        Internal::data_to_value<MemoryPool::cleanup_t>(cbdata)()
-    ));
+    MemoryPool::cleanup_t callback =
+        Internal::data_to_value<MemoryPool::cleanup_t>(cbdata);
 
     // Now we need to clear our own callback data.
     delete reinterpret_cast<boost::any*>(cbdata);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    // We have no engine...
+    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(NULL, callback()));
 }
 
 } // extern "C"
