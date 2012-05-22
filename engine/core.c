@@ -273,6 +273,10 @@ static void core_logger(FILE *fh, int level,
     tminfo = localtime(&timet);
     strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
 
+    while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+        file += 3;
+    }
+
     if ( (file != NULL) && (line > 0) ) {
         ib_core_cfg_t *corecfg = NULL;
         ib_status_t rc = ib_context_module_config(ib_context_main(ib),
@@ -285,7 +289,7 @@ static void core_logger(FILE *fh, int level,
 
     if (log_lineinfo == IB_TRUE) {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %-22s- (%30s:%-5d) %s%s\n",
+                      "%s %-22s- (%22s:%-5d) %s%s\n",
                       time_info,
                       (prefix?prefix:""), file, line, tx_info, fmt);
     }

@@ -103,9 +103,13 @@ static void default_logger(FILE *fp, int level,
         }
     }
 
+    while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+        file += 3;
+    }
+
     if (log_lineinfo == IB_TRUE) {
         ec = snprintf(fmt2, 1024,
-                      "%s %-22s- [%d] (%30s:%-5d) %s%s\n",
+                      "%s %-22s- [%d] (%22s:%-5d) %s%s\n",
                       time_info,
                       (prefix?prefix:""), level, file, line, tx_info, fmt);
     }
