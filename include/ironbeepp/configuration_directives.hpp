@@ -70,6 +70,8 @@ public:
      **/
     typedef boost::function<void(
         ConfigurationParser,
+        const char*  file,
+        unsigned int lineno,
         const char*,
         const char*
     )> start_block_t;
@@ -81,6 +83,8 @@ public:
      **/
     typedef boost::function<void(
         ConfigurationParser,
+        const char*  file,
+        unsigned int lineno,
         const char*
     )> end_block_t;
 
@@ -93,6 +97,8 @@ public:
      * @returns *this
      **/
     ConfigurationDirectivesRegistrar& block(
+        const char*   file,
+        unsigned int  lineno,
         const char*   name,
         start_block_t start_function,
         end_block_t   end_function
@@ -105,6 +111,8 @@ public:
      **/
     typedef boost::function<void(
         ConfigurationParser,
+        const char*  file,
+        unsigned int lineno,
         const char*,
         bool
     )> on_off_t;
@@ -117,8 +125,10 @@ public:
       * @returns *this
       **/
     ConfigurationDirectivesRegistrar& on_off(
-        const char* name,
-        on_off_t    function
+        const char*  file,
+        unsigned int lineno,
+        const char*  name,
+        on_off_t     function
     );
 
     /**
@@ -128,6 +138,8 @@ public:
      **/
     typedef boost::function<void(
         ConfigurationParser,
+        const char*  file,
+        unsigned int lineno,
         const char*,
         const char*
     )> param1_t;
@@ -140,8 +152,10 @@ public:
      * @returns *this
      **/
     ConfigurationDirectivesRegistrar& param1(
-        const char* name,
-        param1_t    function
+        const char*  file,
+        unsigned int lineno,
+        const char*  name,
+        param1_t     function
     );
 
     /**
@@ -151,6 +165,8 @@ public:
      **/
     typedef boost::function<void(
         ConfigurationParser,
+        const char*  file,
+        unsigned int lineno,
         const char*,
         const char*,
         const char*
@@ -164,8 +180,10 @@ public:
      * @returns *this
      **/
     ConfigurationDirectivesRegistrar& param2(
-        const char* name,
-        param2_t    function
+        const char*  file,
+        unsigned int lineno,
+        const char*  name,
+        param2_t     function
     );
 
      /**
@@ -175,6 +193,8 @@ public:
       **/
     typedef boost::function<void(
         ConfigurationParser,
+        const char* file,
+        unsigned int lineno,
         const char*,
         List<const char*>
     )> list_t;
@@ -187,8 +207,10 @@ public:
       * @returns *this
       **/
     ConfigurationDirectivesRegistrar& list(
-        const char* name,
-        list_t      function
+        const char*  file,
+        unsigned int lineno,
+        const char*  name,
+        list_t       function
     );
 
     /**
@@ -200,6 +222,8 @@ public:
      **/
     typedef boost::function<void(
         ConfigurationParser,
+        const char *file,
+        unsigned int lineno,
         const char*,
         uint32_t,
         uint32_t
@@ -220,6 +244,8 @@ public:
      * @returns *this
      **/
     ConfigurationDirectivesRegistrar& op_flags(
+        const char *                   file,
+        unsigned int                   lineno,
         const char*                    name,
         op_flags_t                     function,
         std::map<std::string, int64_t> value_map
