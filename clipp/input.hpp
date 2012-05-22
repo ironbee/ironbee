@@ -312,7 +312,7 @@ struct NullEvent :
         switch (which) {
             case REQUEST_HEADER_FINISHED:  to.request_header_finished(*this); break;
             case REQUEST_FINISHED:         to.request_finished(*this); break;
-            case RESPONSE_HEADER_FINISHED: to.request_header_finished(*this); break;
+            case RESPONSE_HEADER_FINISHED: to.response_header_finished(*this); break;
             case RESPONSE_FINISHED:        to.response_finished(*this); break;
             case CONNECTION_CLOSED:        to.connection_closed(*this); break;
             default:
