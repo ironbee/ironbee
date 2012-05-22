@@ -174,6 +174,11 @@ Transaction Transaction::create(Connection connection)
     return Transaction(ib_tx);
 }
 
+void Transaction::destroy() const
+{
+    ib_tx_destroy(ib());
+}
+
 std::ostream& operator<<(std::ostream& o, const ConstTransaction& transaction)
 {
     if (! transaction) {

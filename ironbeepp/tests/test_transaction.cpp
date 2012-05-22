@@ -147,4 +147,6 @@ TEST_F(TestTransaction, create)
 
     ASSERT_TRUE(tx);
     EXPECT_EQ(c, tx.connection());
+
+    tx.destroy();
 }

@@ -375,6 +375,11 @@ public:
     static
     Transaction create(Connection connection);
 
+    /**
+     * Destroy transaction.
+     **/
+    void destroy() const;
+
 private:
     ib_type m_ib;
 };
