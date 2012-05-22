@@ -199,7 +199,6 @@ public:
             );
         }
         m_engine.notify().request_header_finished(m_transaction);
-        m_transaction = IronBee::Transaction();
     }
 
     void request_body(const Input::DataEvent& event)
@@ -231,14 +230,11 @@ public:
         if (! m_transaction) {
             throw runtime_error(
                 "REQUEST_FINISHED event fired outside "
-                "of connection lifetime."
+                "of transaction lifetime."
             );
         }
         m_engine.notify().request_finished(m_transaction);
-        m_transaction = IronBee::Transaction();
     }
-
-
 
     void response_started(const Input::ResponseEvent& event)
     {
@@ -287,7 +283,6 @@ public:
             );
         }
         m_engine.notify().response_header_finished(m_transaction);
-        m_transaction = IronBee::Transaction();
     }
 
     void response_body(const Input::DataEvent& event)
