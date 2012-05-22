@@ -111,6 +111,8 @@ TEST_F(TestConnection, create)
 
     ASSERT_TRUE(conn);
     ASSERT_EQ(m_engine.ib(), conn.engine().ib());
+
+    conn.destroy();
 }
 
 TEST_F(TestConnection, set)

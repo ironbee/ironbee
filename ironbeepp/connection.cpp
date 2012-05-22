@@ -143,6 +143,11 @@ void Connection::set_local_port(uint16_t port) const
     ib()->local_port = port;
 }
 
+void Connection::destroy() const
+{
+    ib_conn_destroy(ib());
+}
+
 std::ostream& operator<<(std::ostream& o, const ConstConnection& connection)
 {
     if (! connection) {

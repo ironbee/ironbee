@@ -323,6 +323,11 @@ public:
      **/
     void set_local_port(uint16_t port) const;
 
+    /**
+     * Destroy connection.
+     **/
+    void destroy() const;
+
 private:
     ib_type m_ib;
 };
