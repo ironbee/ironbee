@@ -1323,7 +1323,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
-                ib_log_error(ib, "LibHTP response parsing error: %d", ec);
+                ib_log_notice(ib, "LibHTP response parsing error: %d", ec);
             }
             break;
         case STREAM_STATE_ERROR:
