@@ -700,7 +700,7 @@ static ib_status_t execute_action(ib_engine_t *ib,
 
     /* Run it, check the results */
     rc = ib_action_execute(action, rule, tx);
-    if (rc != IB_OK) {
+    if (rc != IB_OK && rc != IB_DECLINED) {
         ib_log_error_tx(tx,
                         "Action %s returned an error: %s",
                         action->action->name, ib_status_to_string(rc));
