@@ -29,6 +29,7 @@ def all_ironbee_code
   Dir.chdir(ironbee_dir)
   globs.each do |glob|
     Dir.glob(glob).each do |path|
+      next if File.basename(path) =~ %r{^config-parser\.[ch]$}
       yield path
     end
   end
