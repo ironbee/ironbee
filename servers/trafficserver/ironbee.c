@@ -335,7 +335,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
     if (data) {
         hdr_do *x;
-        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s", data->tx->conn, data->tx, data->tx->id);
+        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d", data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
         ib_tx_destroy(data->tx);
         if (data->out.output_buffer) {
             TSIOBufferDestroy(data->out.output_buffer);
@@ -1152,7 +1152,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             TSHttpTxnHookAdd(txnp, TS_HTTP_READ_REQUEST_HDR_HOOK, mycont);
 
             ib_tx_create(&txndata->tx, ssndata->iconn, txndata);
-            TSDebug("ironbee", "TX CREATE: conn=%p tx=%p id=%s", ssndata->iconn, txndata->tx, txndata->tx->id);
+            TSDebug("ironbee", "TX CREATE: conn=%p tx=%p id=%s txn_count=%d", ssndata->iconn, txndata->tx, txndata->tx->id, txndata->ssn->txn_count);
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
