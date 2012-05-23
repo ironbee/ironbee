@@ -468,7 +468,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
     }
     else {
         /* Execute the operator */
-        ib_num_t result;
+        ib_num_t result = 0;
         rc = ib_operator_execute(ib, tx, opinst, value, &result);
         if (rc != IB_OK) {
             ib_log_debug_tx(tx,
@@ -1150,7 +1150,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
      */
     *rule_result = 0;
     for (nvpair = header;  nvpair != NULL;  nvpair = nvpair->next) {
-        ib_num_t result;
+        ib_num_t result = 0;
 
         /* Create a field to hold the data */
         ib_log_debug_tx(tx, "nvpair: '%.*s'='%.*s'\n",
