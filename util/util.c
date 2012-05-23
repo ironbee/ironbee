@@ -190,7 +190,7 @@ char *ib_util_path_join(ib_mpool_t *mp,
 
     /* Allocate & generate the include file name */
     len = plen;                /* Parent directory */
-    if (plen > 1) {
+    if ( (plen > 1) || ((plen == 1) && (*parent == '.')) ) {
         len += 1;              /* slash */
     }
     len += flen;               /* file name */
