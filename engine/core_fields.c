@@ -61,9 +61,9 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static inline void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
-                                                   const char *name,
-                                                   ib_bytestr_t *val)
+static void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
+                                            const char *name,
+                                            ib_bytestr_t *val)
 {
     ib_field_t *f;
 
@@ -93,9 +93,9 @@ static inline void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
     }
 }
 
-static inline void core_gen_tx_numeric_field(ib_tx_t *tx,
-                                             const char *name,
-                                             ib_num_t val)
+static void core_gen_tx_numeric_field(ib_tx_t *tx,
+                                      const char *name,
+                                      ib_num_t val)
 {
     ib_field_t *f;
 
@@ -124,9 +124,9 @@ static inline void core_gen_tx_numeric_field(ib_tx_t *tx,
     }
 }
 
-static inline void core_gen_conn_bytestr_alias_field(ib_conn_t *conn,
-                                                     const char *name,
-                                                     ib_bytestr_t *val)
+static void core_gen_conn_bytestr_alias_field(ib_conn_t *conn,
+                                              const char *name,
+                                              ib_bytestr_t *val)
 {
     ib_field_t *f;
 
@@ -156,9 +156,9 @@ static inline void core_gen_conn_bytestr_alias_field(ib_conn_t *conn,
     }
 }
 
-static inline void core_gen_conn_numeric_field(ib_conn_t *conn,
-                                               const char *name,
-                                               ib_num_t val)
+static void core_gen_conn_numeric_field(ib_conn_t *conn,
+                                        const char *name,
+                                        ib_num_t val)
 {
     ib_field_t *f;
 
