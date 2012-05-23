@@ -92,9 +92,9 @@ three_span_t parse_first_line(const span_t& span)
     parse(
         span.begin(), span.end(),
         omit[*space] >>
-        raw[+ascii::char_-' '] >> -(omit[+space] >>
-            raw[+ascii::char_-' '] >> -(omit[+space] >>
-                raw[+ascii::char_])),
+        raw[+(ascii::char_-' ')] >> omit[*space] >>
+        raw[*(ascii::char_-' ')] >> omit[*space] >>
+        raw[*ascii::char_] >> omit[*space],
         result
     );
 
