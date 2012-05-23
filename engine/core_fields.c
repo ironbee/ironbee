@@ -124,6 +124,8 @@ static void core_gen_tx_numeric_field(ib_tx_t *tx,
     }
 }
 
+#if 0
+// Currently unused
 static void core_gen_conn_bytestr_alias_field(ib_conn_t *conn,
                                               const char *name,
                                               ib_bytestr_t *val)
@@ -186,6 +188,7 @@ static void core_gen_conn_numeric_field(ib_conn_t *conn,
                        name, ib_status_to_string(rc));
     }
 }
+#endif
 
 
 /* -- Hooks -- */
