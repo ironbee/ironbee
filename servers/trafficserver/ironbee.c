@@ -879,38 +879,22 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         //          TSHttpHdrMethodGet()
         //          TSHttpHdrUriGet() (or version from workarond above)
         //          TSHttpHdrVersionGet()
-        char *method, *uri, *protocol;
-        size_t m_len, u_len, p_len, n_len, v_len;
         ib_parsed_header_wrapper_t *ibhdrs;
         ib_parsed_req_line_t *rline;
+        size_t n_len;
+        size_t v_len;
 
         line = (char*)icdatabuf;
         rv = get_line(line, &line_len);
-
-        /* method is alphanumeric */
-        method = line;
-        for (lptr = line; isalpha(*lptr); ++lptr);
-        m_len = lptr - line;
-        while (isspace(*lptr))
-            ++lptr;
-        /* uri for our purposes is anything-but-whitespace */
-        uri = lptr;
-        u_len = strcspn(uri, " \t\r\n");
-        lptr += u_len;
-        while (isspace(*lptr))
-            ++lptr;
-        /* protocol is the rest of the line, but tolerate trailing whitespace */
-        protocol = lptr;
-        p_len = strcspn(protocol, " \t\r\n");
 
         // FIXME: This does not need the raw line as it will be built by
         //        ironbee if left NULL, so just pass in what parsed values
         //        that TS has access to.
         rv = ib_parsed_req_line_create(data->tx, &rline,
                                        line, line_len,
-                                       method, m_len,
-                                       uri, u_len,
-                                       protocol, p_len);
+                                       NULL, 0,
+                                       NULL, 0,
+                                       NULL, 0);
         TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_started()");
         ib_state_notify_request_started(ironbee, data->tx, rline);
 
@@ -942,33 +926,21 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         //ib_parsed_header_t *ibhdr = NULL, *newhdr;
         ib_parsed_header_wrapper_t *ibhdrs;
         ib_parsed_resp_line_t *rline;
-        char *protocol, *code, *msg;
-        size_t p_len, c_len, m_len, n_len, v_len;
+        size_t n_len;
+        size_t v_len;
 
         line = (char*)icdatabuf;
         rv = get_line(line, &line_len);
         ib_log_debug_tx(data->tx, "RESP_LINE: %.*s", (int)line_len, line);
-
-        /* "protocol code msg". */
-        protocol = lptr = line;
-        while (!isspace(*lptr)) ++lptr;
-        p_len = lptr - line;
-        while (isspace(*lptr)) ++lptr;
-        code = lptr;
-        while (!isspace(*lptr)) ++lptr;
-        c_len = lptr - code;
-        while (isspace(*lptr)) ++lptr;
-        msg = lptr;
-        m_len = line_len - (lptr - line);
 
         // FIXME: This does not need the raw line as it will be built by
         //        ironbee if left NULL, so just pass in what parsed values
         //        that TS has access to.
         rv = ib_parsed_resp_line_create(data->tx, &rline,
                                         line, line_len,
-                                        protocol, p_len,
-                                        code, c_len,
-                                        msg, m_len);
+                                        NULL, 0,
+                                        NULL, 0,
+                                        NULL, 0);
         TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_started()");
         ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
         rv = ib_state_notify_response_started(ironbee, data->tx, rline);
