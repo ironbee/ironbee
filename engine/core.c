@@ -3077,9 +3077,6 @@ static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
 
 
 
-/* -- Parser Implementation -- */
-// FIXME: This should move to state_notify and/or core_fields
-
 /**
  * Handle the connection starting.
  *
@@ -3101,8 +3098,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
 
     assert(event == conn_started_event);
 
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -3123,266 +3118,11 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface on init");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    if (iface->init == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-
-    // FIXME: This should move to state_notify
-    rc = iface->init(pi, conn);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Handle a new connection.
- *
- * @param ib Engine.
- * @param event Event type.
- * @param conn Connection.
- * @param cbdata Callback data.
- *
- * @returns Status code.
- */
-static ib_status_t parser_hook_connect(ib_engine_t *ib,
-                                       ib_state_event_type_t event,
-                                       ib_conn_t *conn,
-                                       void *cbdata)
-{
-    IB_FTRACE_INIT();
-
-    assert(event == handle_connect_event);
-
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
-    ib_status_t rc;
-
-    /* Create connection fields. */
-    // FIXME: This should move to core_fields.c
-    rc = ib_data_add_bytestr(conn->dpi,
-                             "server_addr",
-                             (uint8_t *)conn->local_ipstr,
-                             strlen(conn->local_ipstr),
-                             NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_data_add_num(conn->dpi,
-                         "server_port",
-                         conn->local_port,
-                         NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_data_add_bytestr(conn->dpi,
-                             "remote_addr",
-                             (uint8_t *)conn->remote_ipstr,
-                             strlen(conn->remote_ipstr),
-                             NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_data_add_num(conn->dpi,
-                         "remote_port",
-                         conn->remote_port,
-                         NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface on connect");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    if (iface->connect == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-
-    // FIXME: This should move to state_notify
-    rc = iface->connect(pi, conn);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Handle a disconnection.
- *
- * @param ib Engine.
- * @param event Event type.
- * @param conn Connection.
- * @param cbdata Callback data.
- *
- * @returns Status code.
- */
-static ib_status_t parser_hook_disconnect(ib_engine_t *ib,
-                                          ib_state_event_type_t event,
-                                          ib_conn_t *conn,
-                                          void *cbdata)
-{
-    IB_FTRACE_INIT();
-
-    assert(event == handle_disconnect_event);
-
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(ib, "Failed to fetch parser interface on disconnect");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    if (iface->disconnect == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-
-    // FIXME: This should move to state_notify
-    rc = iface->disconnect(pi, conn);
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-/**
- * Handle the request header.
- *
- * @param ib Engine.
- * @param tx Transaction.
- * @param event Event type.
- * @param cbdata Callback data
- *
- * @returns Status code
- */
-static ib_status_t parser_hook_req_header(ib_engine_t *ib,
-                                          ib_tx_t *tx,
-                                          ib_state_event_type_t event,
-                                          void *cbdata)
-{
-    IB_FTRACE_INIT();
-
-    assert(event == request_header_finished_event);
-
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
-    ib_field_t *f;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert_tx(tx, "Failed to fetch parser interface on request header");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    /* This function is required, so no NULL check. */
-
-    // FIXME: This should move to state_notify
-    rc = iface->gen_request_header_fields(pi, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-
-    /* Alias ARGS fields */
-    // FIXME: This should move to core_fields.c
-    rc = ib_data_get(tx->dpi, "request_uri_params", &f);
-    if (rc == IB_OK) {
-        rc = ib_data_add_named(tx->dpi, f, "args", 4);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to alias ARGS: %s", ib_status_to_string(rc));
-        }
-        rc = ib_data_add_named(tx->dpi, f, "args_get", 8);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
-        }
-    }
-
-    /**
-     * Alias connection remote and server addresses
-     */
-    // FIXME: This should move to core_fields.c
-
-    /* Server address */
-    rc = ib_data_get(tx->conn->dpi, "server_addr", &f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_data_add(tx->dpi, f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Server port */
-    rc = ib_data_get(tx->conn->dpi, "server_port", &f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_data_add(tx->dpi, f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Remote address */
-    rc = ib_data_get(tx->conn->dpi, "remote_addr", &f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_data_add(tx->dpi, f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Remote port */
-    rc = ib_data_get(tx->conn->dpi, "remote_port", &f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_data_add(tx->dpi, f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Handle the response header.
- *
- * @param ib Engine.
- * @param tx Transaction.
- * @param event Event type.
- * @param cbdata Callback data.
- *
- * @returns Status code
- */
-static ib_status_t parser_hook_resp_header(ib_engine_t *ib,
-                                           ib_tx_t *tx,
-                                           ib_state_event_type_t event,
-                                           void *cbdata)
-{
-    IB_FTRACE_INIT();
 
-    assert(event == response_header_finished_event);
-
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert_tx(tx, "Failed to fetch parser interface response header");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
-
-    /* This function is required, so no NULL check. */
-
-    // FIXME: This should move to state_notify
-    rc = iface->gen_response_header_fields(pi, tx);
-    IB_FTRACE_RET_STATUS(rc);
-}
+/* -- Parser Implementation -- */
 
 /**
  * Parser provider registration function.
@@ -3409,6 +3149,7 @@ static ib_status_t parser_register(ib_engine_t *ib,
     }
 
     /* Verify that required interface functions are implemented. */
+    // FIXME: Update which are required
     if (   (iface->data_in == NULL) || (iface->data_out == NULL)
         || (iface->gen_request_header_fields == NULL)
         || (iface->gen_response_header_fields == NULL))
@@ -5418,14 +5159,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, handle_context_tx_event,
                         filter_ctl_config, fbuffer);
 
-    /* Register parser hooks. */
-    // FIXME: These should move to state_notify functions
+    /* Register hooks. */
     ib_hook_conn_register(ib, conn_started_event,
                           core_hook_conn_started, NULL);
-    ib_hook_conn_register(ib, handle_connect_event,
-                          parser_hook_connect, NULL);
-    ib_hook_conn_register(ib, handle_disconnect_event,
-                          parser_hook_disconnect, NULL);
     ib_hook_tx_register(ib, tx_started_event,
                         core_hook_tx_started, NULL);
     /*
@@ -5436,10 +5172,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     /*
      * ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header,NULL);
      */
-    ib_hook_tx_register(ib, request_header_finished_event,
-                        parser_hook_req_header, NULL);
-    ib_hook_tx_register(ib, response_header_finished_event,
-                        parser_hook_resp_header, NULL);
 
     /* Register logevent hooks. */
     ib_hook_tx_register(ib, handle_postprocess_event,

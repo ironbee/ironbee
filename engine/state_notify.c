@@ -83,15 +83,6 @@
     } while(0)
 
 
-/**
- * Notify the engine that a connection event has occurred.
- *
- * @param[in] ib Engine
- * @param[in] event Event
- * @param[in] conn Connection
- *
- * @returns Status code
- */
 static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
                                         ib_state_event_type_t event,
                                         ib_conn_t *conn)
@@ -119,15 +110,6 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Notify the engine that a connection data event has occurred.
- *
- * @param[in] ib Engine
- * @param[in] event Event
- * @param[in] conndata Connection data
- *
- * @returns Status code
- */
 static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
                                              ib_state_event_type_t event,
                                              ib_conndata_t *conndata)
@@ -157,15 +139,6 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Signal that the request line was received.
- *
- * @param[in] ib Engine
- * @param[in] event Event
- * @param[in] line Request line.
- *
- * @returns Status code
- */
 static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
                                             ib_tx_t *tx,
                                             ib_state_event_type_t event,
@@ -216,19 +189,6 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Signal that the response line was received.
- *
- * @note A NULL @a line is used for HTTP/0.9 requests which do not have
- * a response line.  In this case a fake response line is created.
- *
- * @param[in] ib Engine
- * @param[in] tx Transaction.
- * @param[in] event Event
- * @param[in] line Connection data
- *
- * @returns Status code
- */
 static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
                                              ib_tx_t *tx,
                                              ib_state_event_type_t event,
@@ -283,15 +243,6 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Notify the engine that a transaction event has occurred.
- *
- * @param[in] ib Engine
- * @param[in] event Event
- * @param[in] tx Transaction
- *
- * @returns Status code
- */
 static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
                                       ib_state_event_type_t event,
                                       ib_tx_t *tx)
@@ -416,16 +367,6 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Find the config context by executing context functions.
- *
- * @param[in] ib Engine
- * @param[in] type Context type
- * @param[in] data Data (type based on context type)
- * @param[in] pctx Address which context is written
- *
- * @returns Status code
- */
 static ib_status_t ib_context_get_ex(
     ib_engine_t *ib,
     ib_ctype_t type,
@@ -470,24 +411,6 @@ static ib_status_t ib_context_get_ex(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Notify engine of additional events when notification of a
- * conn_opened_event occurs.
- *
- * When the event is notified, additional events are notified immediately
- * prior to it:
- *
- *  - conn_started_event
- *
- * And immediately following it:
- *
- *  - handle_context_conn_event
- *  - handle_connect_event
- *
- * @param[in] ib IronBee Engine.
- * @param[in] conn Connection.
- * @returns Status code.
- */
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
@@ -498,6 +421,15 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 
     ib_log_debug3(ib, "ib_state_notify_conn_opened(%p,%p)", ib, conn);
 
+    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
     if (ib_conn_flags_isset(conn, IB_CONN_FOPENED)) {
         ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(conn_opened_event));
@@ -506,7 +438,13 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 
     ib_conn_flags_set(conn, IB_CONN_FOPENED);
 
-    ib_status_t rc = ib_state_notify_conn(ib, conn_started_event, conn);
+    /* Call the parser with the data. */
+    rc = iface->init(pi, conn);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_state_notify_conn(ib, conn_started_event, conn);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -525,6 +463,14 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     rc = ib_state_notify_conn(ib, handle_context_conn_event, conn);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Call the parser with the data. */
+    if (iface->connect != NULL) {
+        rc = iface->connect(pi, conn);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     rc = ib_state_notify_conn(ib, handle_connect_event, conn);
@@ -546,6 +492,11 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
     if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAIN)) {
         ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAIN);
     }
@@ -556,12 +507,7 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Run the data through the parser. */
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(ib, "Failed to fetch parser interface on data in");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    /* Call the parser with the data. */
     rc = iface->data_in(pi, conndata);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -582,6 +528,11 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
     if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAOUT)) {
         ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAOUT);
     }
@@ -592,26 +543,12 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Run the data through the parser. */
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(ib, "Failed to fetch parser interface on data out");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    /* Call the parser with the data. */
     rc = iface->data_out(pi, conndata);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * conn_closed_event occurs.
- *
- * When the event is notified, additional events are notified immediately
- * prior to it:
- *
- *  - handle_disconnect_event
- *  - conn_finished_event
- */
 ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
@@ -622,7 +559,14 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     ib_log_debug3(ib, "ib_state_notify_conn_closed(%p,%p)", ib, conn);
 
+    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     /* Validate. */
     if (ib_conn_flags_isset(conn, IB_CONN_FCLOSED)) {
@@ -664,20 +608,21 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_conn(ib, conn_finished_event, conn);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
-    IB_FTRACE_RET_STATUS(rc);
+    /* Call the parser with the data. */
+    if (iface->disconnect != NULL) {
+        rc = iface->disconnect(pi, conn);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Signal that the header data has been received.
- *
- * @param ib Engine.
- * @param tx Transaction.
- * @param event Event.
- * @param header Connection data.
- *
- * @returns Status code.
- */
 static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                ib_state_event_type_t event,
@@ -715,16 +660,6 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Signal that transaction data was received.
- *
- * @param[in] ib IronBee engine.
- * @param[in] tx Transaction.
- * @param[in] event The event type.
- * @param[in] txdata The transaction data chunk.
- *
- * @returns Status code.
- */
 static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                                           ib_tx_t *tx,
                                           ib_state_event_type_t event,
@@ -804,22 +739,8 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
 }
 
 
-/**
- * @ref request_header_finished_event occurs.
- *
- * When the event is notified, additional events are notified immediately
- * prior to it:
- *
- *  - @ref request_started_event (if not already notified)
- *
- * And immediately following it:
- *
- *  - @ref handle_context_tx_event
- *  - @ref handle_request_header_event
- */
-ib_status_t ib_state_notify_request_header_finished(
-    ib_engine_t *ib,
-    ib_tx_t *tx)
+ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
+                                                    ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
 
@@ -874,6 +795,10 @@ ib_status_t ib_state_notify_request_header_finished(
 
     /* Call the parser with the data. */
     rc = iface->request_header_finished(pi, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = iface->gen_request_header_fields(pi, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -932,18 +857,6 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * @ref request_finished_event occurs.
- *
- * When the event is notified, additional events are notified
- * immediately prior to it:
- *
- *  - @ref request_body_data_event (only if not already notified)
- *
- * And immediately following it:
- *
- *  - @ref tx_process_event
- */
 ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
@@ -1073,18 +986,6 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * @ref response_header_event occurs.
- *
- * When the event is notified, additional events are notified
- * immediately prior to it:
- *
- *  - @ref response_started_event (only if not already notified)
- *
- * And immediately following it:
- *
- *  - @ref handle_response_header_event
- */
 ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
                                                      ib_tx_t *tx)
 {
@@ -1127,20 +1028,16 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
+    rc = iface->gen_response_header_fields(pi, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_tx(ib, handle_response_header_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * @ref response_body_data_event occurs.
- *
- * When the event is notified, additional events are notified
- * immediately following it:
- *
- *  - @ref handle_response_event
- */
 ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                ib_txdata_t *txdata)

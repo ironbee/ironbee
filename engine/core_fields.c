@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/core.h>
 #include <ironbee_private.h>
 
@@ -60,9 +61,9 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
-                                                const char *name,
-                                                ib_bytestr_t *val)
+static inline void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
+                                                   const char *name,
+                                                   ib_bytestr_t *val)
 {
     ib_field_t *f;
 
@@ -80,14 +81,108 @@ static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
         return;
     }
 
-    ib_log_debug(tx->ib, "FIELD: \"%s\"=\"%.*s\"",
+    ib_log_debug(tx->ib, "TX FIELD: \"%s\"=\"%.*s\"",
                  name,
                  (int)ib_bytestr_length(val),
                  (char *)ib_bytestr_const_ptr(val));
 
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
-        ib_log_warning(tx->ib, "Failed add \"%s\" field to data store: %s",
+        ib_log_warning(tx->ib, "Failed add \"%s\" field to transaction data store: %s",
+                       name, ib_status_to_string(rc));
+    }
+}
+
+static inline void core_gen_tx_numeric_field(ib_tx_t *tx,
+                                             const char *name,
+                                             ib_num_t val)
+{
+    ib_field_t *f;
+
+    assert(tx != NULL);
+    assert(name != NULL);
+
+    ib_num_t num = val;
+    ib_status_t rc = ib_field_create(&f, tx->mp,
+                                     name, strlen(name),
+                                     IB_FTYPE_NUM,
+                                     &num);
+    if (rc != IB_OK) {
+        ib_log_warning(tx->ib, "Failed to create \"%s\" field: %s",
+                     name, ib_status_to_string(rc));
+        return;
+    }
+
+    ib_log_debug(tx->ib, "TX FIELD: \"%s\"=%d",
+                 name,
+                 (int)num);
+
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        ib_log_warning(tx->ib, "Failed add \"%s\" field to transaction data store: %s",
+                       name, ib_status_to_string(rc));
+    }
+}
+
+static inline void core_gen_conn_bytestr_alias_field(ib_conn_t *conn,
+                                                     const char *name,
+                                                     ib_bytestr_t *val)
+{
+    ib_field_t *f;
+
+    assert(conn != NULL);
+    assert(name != NULL);
+    assert(val != NULL);
+
+    ib_status_t rc = ib_field_create_no_copy(&f, conn->mp,
+                                             name, strlen(name),
+                                             IB_FTYPE_BYTESTR,
+                                             val);
+    if (rc != IB_OK) {
+        ib_log_warning(conn->ib, "Failed to create \"%s\" field: %s",
+                     name, ib_status_to_string(rc));
+        return;
+    }
+
+    ib_log_debug(conn->ib, "CONN FIELD: \"%s\"=\"%.*s\"",
+                 name,
+                 (int)ib_bytestr_length(val),
+                 (char *)ib_bytestr_const_ptr(val));
+
+    rc = ib_data_add(conn->dpi, f);
+    if (rc != IB_OK) {
+        ib_log_warning(conn->ib, "Failed add \"%s\" field to connection data store: %s",
+                       name, ib_status_to_string(rc));
+    }
+}
+
+static inline void core_gen_conn_numeric_field(ib_conn_t *conn,
+                                               const char *name,
+                                               ib_num_t val)
+{
+    ib_field_t *f;
+
+    assert(conn != NULL);
+    assert(name != NULL);
+
+    ib_num_t num = val;
+    ib_status_t rc = ib_field_create(&f, conn->mp,
+                                     name, strlen(name),
+                                     IB_FTYPE_NUM,
+                                     &num);
+    if (rc != IB_OK) {
+        ib_log_warning(conn->ib, "Failed to create \"%s\" field: %s",
+                     name, ib_status_to_string(rc));
+        return;
+    }
+
+    ib_log_debug(conn->ib, "CONN FIELD: \"%s\"=%d",
+                 name,
+                 (int)num);
+
+    rc = ib_data_add(conn->dpi, f);
+    if (rc != IB_OK) {
+        ib_log_warning(conn->ib, "Failed add \"%s\" field to transaction data store: %s",
                        name, ib_status_to_string(rc));
     }
 }
@@ -95,6 +190,7 @@ static inline void core_gen_bytestr_alias_field(ib_tx_t *tx,
 
 /* -- Hooks -- */
 
+// FIXME: This needs to go away and be replaced with dynamic fields
 static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                ib_state_event_type_t event,
@@ -234,6 +330,62 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
 }
 
 /*
+ * Callback used to generate connection fields.
+ */
+static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
+                                           ib_state_event_type_t event,
+                                           ib_conn_t *conn,
+                                           void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    ib_log_debug3(ib, "core_gen_connect_fields");
+
+    assert(ib != NULL);
+    assert(conn != NULL);
+    assert(event == handle_connect_event);
+
+    rc = ib_data_add_bytestr(conn->dpi,
+                             "server_addr",
+                             (uint8_t *)conn->local_ipstr,
+                             strlen(conn->local_ipstr),
+                             NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_num(conn->dpi,
+                         "server_port",
+                         conn->local_port,
+                         NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_bytestr(conn->dpi,
+                             "remote_addr",
+                             (uint8_t *)conn->remote_ipstr,
+                             strlen(conn->remote_ipstr),
+                             NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_num(conn->dpi,
+                         "remote_port",
+                         conn->remote_port,
+                         NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+/*
  * Callback used to generate request fields.
  */
 static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
@@ -242,24 +394,85 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                                                   void *cbdata)
 {
     IB_FTRACE_INIT();
+    ib_field_t *f;
+    ib_status_t rc;
+
+    ib_log_debug3_tx(tx, "core_gen_request_header_fields");
 
     assert(ib != NULL);
     assert(tx != NULL);
     assert(event == handle_context_tx_event);
 
-    ib_log_debug(ib, "core_gen_request_header_fields");
+    /**
+     * Alias connection remote and server addresses
+     */
 
-    core_gen_bytestr_alias_field(tx, "request_line",
-                                 tx->request_line->raw);
+    rc = ib_data_get(tx->conn->dpi, "server_addr", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
-    core_gen_bytestr_alias_field(tx, "request_method",
-                                 tx->request_line->method);
+    rc = ib_data_get(tx->conn->dpi, "server_port", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
-    core_gen_bytestr_alias_field(tx, "request_uri_raw",
-                                 tx->request_line->uri);
+    rc = ib_data_get(tx->conn->dpi, "remote_addr", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
-    core_gen_bytestr_alias_field(tx, "request_protocol",
-                                 tx->request_line->protocol);
+    rc = ib_data_get(tx->conn->dpi, "remote_port", &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_add(tx->dpi, f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    core_gen_tx_numeric_field(tx, "conn_tx_count",
+                              tx->conn->tx_count);
+
+    core_gen_tx_bytestr_alias_field(tx, "request_line",
+                                    tx->request_line->raw);
+
+    core_gen_tx_bytestr_alias_field(tx, "request_method",
+                                    tx->request_line->method);
+
+    core_gen_tx_bytestr_alias_field(tx, "request_uri_raw",
+                                    tx->request_line->uri);
+
+    core_gen_tx_bytestr_alias_field(tx, "request_protocol",
+                                    tx->request_line->protocol);
+
+    /* Alias ARGS fields */
+    // FIXME: This needs to include request_body_params as well, so
+    //        it should probably be a new collection with aliases to
+    //        each param.
+    rc = ib_data_get(tx->dpi, "request_uri_params", &f);
+    if (rc == IB_OK) {
+        rc = ib_data_add_named(tx->dpi, f, "args", 4);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to alias ARGS: %s", ib_status_to_string(rc));
+        }
+        rc = ib_data_add_named(tx->dpi, f, "args_get", 8);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
+        }
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -274,24 +487,24 @@ static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
+    ib_log_debug3_tx(tx, "core_gen_response_header_fields");
+
     assert(ib != NULL);
     assert(tx != NULL);
     assert(event == response_header_finished_event);
 
-    ib_log_debug(ib, "core_gen_response_header_fields");
-
     if (tx->response_line != NULL) {
-        core_gen_bytestr_alias_field(tx, "response_line",
-                                     tx->response_line->raw);
+        core_gen_tx_bytestr_alias_field(tx, "response_line",
+                                        tx->response_line->raw);
 
-        core_gen_bytestr_alias_field(tx, "response_protocol",
-                                     tx->response_line->protocol);
+        core_gen_tx_bytestr_alias_field(tx, "response_protocol",
+                                        tx->response_line->protocol);
 
-        core_gen_bytestr_alias_field(tx, "response_status",
-                                     tx->response_line->status);
+        core_gen_tx_bytestr_alias_field(tx, "response_status",
+                                        tx->response_line->status);
 
-        core_gen_bytestr_alias_field(tx, "response_message",
-                                     tx->response_line->msg);
+        core_gen_tx_bytestr_alias_field(tx, "response_message",
+                                        tx->response_line->msg);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -334,6 +547,9 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     assert(ib != NULL);
     assert(mod != NULL);
 
+
+    ib_hook_conn_register(ib, handle_connect_event,
+                          core_gen_connect_fields, NULL);
 
     ib_hook_tx_register(ib, tx_started_event,
                         core_gen_placeholder_fields, NULL);
