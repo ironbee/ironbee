@@ -738,7 +738,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
 
     /* Only when we are successful, commit changes to output variable. */
     *ptx = tx;
-    ib_log_debug3_tx(tx, "TX %p (mp=%p %s) CREATE", tx, tx->mp, ib_mpool_name(tx->mp));
+    ib_log_debug3_tx(tx, "TX CREATE p=%p id=%s", tx, tx->id);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -763,7 +763,7 @@ void ib_tx_destroy(ib_tx_t *tx)
     assert(tx->conn != NULL);
     assert(tx->conn->tx_first == tx);
 
-    ib_log_debug3_tx(tx, "TX %p (mp=%p %s) DESTROY", tx, tx->mp, ib_mpool_name(tx->mp));
+    ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
 
     /* Keep track of the first/current tx. */
     tx->conn->tx_first = tx->next;
