@@ -2147,7 +2147,11 @@ int main(int argc, char* argv[])
 #endif
 
     /* Notify the engine that the config process has started. */
-    ib_state_notify_cfg_started(ironbee);
+    rc = ib_state_notify_cfg_started(ironbee);
+    if (rc != IB_OK) {
+        fatal_error("ib_state_notify_cfg_started() failed: %s\n",
+                    ib_status_to_string(rc));
+    }
 
     /* Set the main context's debug flags from the command line args */
 #if DEBUG_ARGS_ENABLE
@@ -2160,7 +2164,8 @@ int main(int argc, char* argv[])
         rc = ib_cfgparser_parse(cp, settings.config_file);
         ib_cfgparser_destroy(cp);
         if (rc != IB_OK) {
-            fatal_error("Error parsing configuration: %d\n", rc);
+            fatal_error("Error parsing configuration: %s\n",
+                        ib_status_to_string(rc));
         }
     }
 
@@ -2189,7 +2194,11 @@ int main(int argc, char* argv[])
     }
 
     /* Notify the engine that the config process is finished. */
-    ib_state_notify_cfg_finished(ironbee);
+    rc = ib_state_notify_cfg_finished(ironbee);
+    if (rc != IB_OK) {
+        fatal_error("ib_state_notify_cfg_finished() failed: %s\n",
+                    ib_status_to_string(rc));
+    }
 
     /* Pass connection data to the engine. */
     run_connection(ironbee);
