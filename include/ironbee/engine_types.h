@@ -218,6 +218,7 @@ struct ib_tx_t {
     const char         *path;            /**< Path used in the request */
     //struct sockaddr_storage er_addr;   /**< Effective remote address */
     ib_flags_t          flags;           /**< Transaction flags */
+    // FIXME: block_status could be an int?
     ib_num_t            block_status;    /**< TX specific block status to use.*/
 
     /* Request */
