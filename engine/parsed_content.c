@@ -182,7 +182,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else {
+    else if (raw == NULL) {
         rc = ib_bytestr_dup_mem(&line_tmp->protocol,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -202,7 +202,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else {
+    else if (raw == NULL) {
         rc = ib_bytestr_dup_mem(&line_tmp->status,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -221,7 +221,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else {
+    else if (raw == NULL) {
         rc = ib_bytestr_dup_mem(&line_tmp->msg,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -278,6 +278,74 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
+
+        /* Now, if all components are missing, then parse them out
+         * from the raw line.  If only some are missing, then
+         * do not assume anything is parseable.
+         *
+         * NOTE: This is a strict HTTP parser and assumes single
+         *       space (0x20) component separators. Better is to
+         *       have the server parse the components properly.
+         */
+        if ((protocol == NULL) && (status == NULL) && (msg == NULL)) {
+            uint8_t *raw_end = (uint8_t *)(raw + raw_len) - 1;
+            uint8_t *ptr = (uint8_t *)raw;
+            const uint8_t *parsed_field = ptr;
+
+            ib_log_debug_tx(tx, "Parsing raw response line into components.");
+
+            /* Parse the protocol. */
+            while (ptr <= raw_end) {
+                if (*ptr == ' ') {
+                    break;
+                }
+                ++ptr;
+            }
+            rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                    tx->mp,
+                                    parsed_field,
+                                    (ptr - parsed_field));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            /* Parse the status. */
+            parsed_field = ++ptr;
+            while (ptr <= raw_end) {
+                if (*ptr == ' ') {
+                    break;
+                }
+                ++ptr;
+            }
+            rc = ib_bytestr_dup_mem(&line_tmp->status,
+                                    tx->mp,
+                                    parsed_field,
+                                    (ptr - parsed_field));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            /* Parse the message. */
+            parsed_field = ++ptr;
+            if (parsed_field <= raw_end) {
+                rc = ib_bytestr_dup_mem(&line_tmp->msg,
+                                        tx->mp,
+                                        parsed_field,
+                                        (raw_end - parsed_field) + 1);
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+            }
+            else {
+                rc = ib_bytestr_dup_mem(&line_tmp->msg,
+                                        tx->mp,
+                                        (const uint8_t *)"",
+                                        0);
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+            }
+        }
     }
 
     /* Commit back successfully created line. */
@@ -312,20 +380,28 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
+    /* Record the components if available. If the components are
+     * not available, but the raw line is, then it will be possible
+     * to parse the components out later on.  Otherwise, if there
+     * is no component and no raw line, then set default values.
+     */
     if (method != NULL) {
         rc = ib_bytestr_dup_mem(&line_tmp->method,
                                 tx->mp,
                                 (const uint8_t *)method,
                                 method_len);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
-    else {
+    else if (raw == NULL) {
         rc = ib_bytestr_dup_mem(&line_tmp->method,
                                 tx->mp,
                                 (const uint8_t *)"",
                                 0);
-    }
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     if (uri != NULL) {
@@ -333,12 +409,18 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 tx->mp,
                                 (const uint8_t *)uri,
                                 uri_len);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
-    else {
+    else if (raw == NULL) {
         rc = ib_bytestr_dup_mem(&line_tmp->uri,
                                 tx->mp,
                                 (const uint8_t *)"",
                                 0);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     if (protocol != NULL) {
@@ -350,7 +432,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else {
+    else if (raw == NULL) {
         rc = ib_bytestr_dup_mem(&line_tmp->protocol,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -406,6 +488,74 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                            raw_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Now, if all components are missing, then parse them out
+         * from the raw line.  If only some are missing, then
+         * do not assume anything is parseable.
+         *
+         * NOTE: This is a strict HTTP parser and assumes single
+         *       space (0x20) component separators. Better is to
+         *       have the server parse the components properly.
+         */
+        if ((method == NULL) && (uri == NULL) && (protocol == NULL)) {
+            uint8_t *raw_end = (uint8_t *)(raw + raw_len) - 1;
+            uint8_t *ptr = (uint8_t *)raw;
+            const uint8_t *parsed_field = ptr;
+
+            ib_log_debug_tx(tx, "Parsing raw request line into components.");
+
+            /* Parse the method. */
+            while (ptr <= raw_end) {
+                if (*ptr == ' ') {
+                    break;
+                }
+                ++ptr;
+            }
+            rc = ib_bytestr_dup_mem(&line_tmp->method,
+                                    tx->mp,
+                                    parsed_field,
+                                    (ptr - parsed_field));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            /* Parse the uri. */
+            parsed_field = ++ptr;
+            while (ptr <= raw_end) {
+                if (*ptr == ' ') {
+                    break;
+                }
+                ++ptr;
+            }
+            rc = ib_bytestr_dup_mem(&line_tmp->uri,
+                                    tx->mp,
+                                    parsed_field,
+                                    (ptr - parsed_field));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            /* Parse the protocol. */
+            parsed_field = ++ptr;
+            if (parsed_field <= raw_end) {
+                rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                        tx->mp,
+                                        parsed_field,
+                                        (raw_end - parsed_field) + 1);
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+            }
+            else {
+                rc = ib_bytestr_dup_mem(&line_tmp->protocol,
+                                        tx->mp,
+                                        (const uint8_t *)"",
+                                        0);
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+            }
         }
     }
 
