@@ -252,7 +252,7 @@ ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
                 pnv.name().const_data(),
                 pnv.name().length(),
                 pnv.value().const_data(),
-                pnv.name().length()
+                pnv.value().length()
             )
         );
     }
