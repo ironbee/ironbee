@@ -515,9 +515,6 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
                      ib_status_to_string(rc));
     }
     else if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in request line: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -551,9 +548,6 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in request header: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -652,9 +646,6 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in request body: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -707,9 +698,6 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in request trailer: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -754,9 +742,6 @@ static int modhtp_htp_request(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in request: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
     }
 
@@ -800,9 +785,6 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in response line: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
@@ -874,9 +856,6 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in response header: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
@@ -962,9 +941,6 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in response body: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
@@ -1018,9 +994,6 @@ static int modhtp_htp_response(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in response: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
@@ -1069,9 +1042,6 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
 
     if (tx->flags) {
-        ib_log_notice_tx(itx,
-                     "HTP parser flagged an event in response trailer: 0x%08x",
-                     tx->flags);
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
     }
 
