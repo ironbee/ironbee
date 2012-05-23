@@ -512,7 +512,7 @@ static ib_status_t execute_phase_rule_targets_operators(
     IB_FTRACE_INIT();
 
     ib_status_t rc;
-    ib_num_t result;
+    ib_num_t result = 0;
     ib_field_t *tfnvalue = NULL;  /* Value after transformations */
 
     const char *fname = target->field_name;
