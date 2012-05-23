@@ -497,7 +497,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
  * @param[out] target_results The results of the execution.
  * @returns IB_OK if the execution completed without error.
  *          If execute_field_tfns or execute_rule_operator fails
- *          then the return code from the failing call is returned 
+ *          then the return code from the failing call is returned
  *          immediately.
  */
 static ib_status_t execute_phase_rule_targets_operators(
