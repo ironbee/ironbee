@@ -411,7 +411,7 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
  * @param[in] fname Field name
  * @param[in] value Field value to operate on
  * @param[in] recursion Recursion limit -- won't recurse if recursion is zero
- * @param[out] rule_result Pointer to number in which to store the result
+ * @param[in, out] rule_result Pointer to number in which to store the result
  *
  * @returns Status code
  */
@@ -493,7 +493,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
  * @param[in] target Assigned to the target_result.
  * @param[in] opinst The operator instance.
  * @param[in] operand The field to operate on.
- * @param[out] rule_result The return code from the operator execution.
+ * @param[in,out] rule_result The return code from the operator execution.
  * @param[out] target_results The results of the execution.
  * @returns IB_OK if the execution completed without error.
  *          If execute_field_tfns or execute_rule_operator fails
@@ -572,7 +572,7 @@ static ib_status_t execute_phase_rule_targets_operators(
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
  * @param[in,out] tx Transaction
- * @param[out] rule_result Pointer to number in which to store the result
+ * @param[in,out] rule_result Pointer to number in which to store the result
  *
  * @returns Status code
  */

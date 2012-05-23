@@ -570,7 +570,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
  * @param[in,out] User data. A @c pcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
- * @param[in] result The result.
+ * @param[out] result The result.
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
 static ib_status_t pcre_operator_execute(ib_engine_t *ib,
