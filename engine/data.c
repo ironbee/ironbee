@@ -252,9 +252,28 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
 }
 
 /**
- * - IB_OK if a successful search is performed.
- * - IB_EINVAL if field is not a list or the pattern cannot compile.
- * - IB_ENOENT if the field name is not found.
+ * Return a list of fields whose name matches @pattern.
+ *
+ * The list @a field_name is retrieved from the @a dpi using @a api. Its
+ * members are iterated through and the names of those fields compared
+ * against @a pattern. If the name matches, the field is added to an
+ * ib_list_t* which will be returned via 2a result_field.
+ *
+ * @param[in] api The API to perform the get operation.
+ * @param[in] dpi The data provider instance passed to a call to a 
+ *                function available from @a api.
+ * @param[in] field_name The name of the field that is a list whose
+ *                       members will be filtered into a new list.
+ * @param[in] field_name_len Length of @a field_name.
+ * @param[in] pattern The regex to use to match member field names in
+ *                    @a field_name.
+ * @param[in] pattern_len The length of @a pattern.
+ * @param[out] result_field The result field.
+ *
+ * @returns
+ *  - IB_OK if a successful search is performed.
+ *  - IB_EINVAL if field is not a list or the pattern cannot compile.
+ *  - IB_ENOENT if the field name is not found.
  */
 static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
                                              ib_provider_inst_t *dpi,
@@ -262,7 +281,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
                                              size_t field_name_len,
                                              const char *pattern,
                                              size_t pattern_len,
-                                             ib_field_t **pf)
+                                             ib_field_t **result_field)
 {
     IB_FTRACE_INIT();
 
@@ -272,7 +291,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
     assert(pattern);
     assert(field_name_len>0);
     assert(pattern_len>0);
-    assert(pf);
+    assert(result_field);
 
     ib_status_t rc;
     char *pattern_str = NULL; /* NULL terminated string to pass to pcre. */
@@ -343,7 +362,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
         }
     }
 
-    rc = ib_field_create(pf,
+    rc = ib_field_create(result_field,
                          dpi->mp,
                          field_name,
                          field_name_len,
@@ -369,9 +388,19 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
     ib_status_t rc;
     char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, name_len);
     char *filter_start = memchr(name, DPI_LIST_FILTER_PREFIX, name_len);
-    char *filter_end = memrchr(name, DPI_LIST_FILTER_SUFFIX, name_len);
+    char *filter_end;
+    
     const char *error_msg;
     char *name_str = NULL;
+
+    if ( filter_start && filter_start + 1 < name + name_len ) {
+        filter_end = memchr(filter_start+1,
+                            DPI_LIST_FILTER_SUFFIX,
+                            name_len - (filter_start+1-name));
+    }
+    else {
+        filter_end = filter_start;
+    }
 
     /* Does the user mark that a filter is following? */
     if (filter_marker && filter_start && filter_end) {
