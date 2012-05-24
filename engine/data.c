@@ -252,8 +252,16 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
 }
 
 /**
+ * Get a subfield from @a dpi by @a api.
+ *
+ * If @a parent_field is a list (IB_FTYPE_LIST) then a case insensitive
+ * string comparison is done to find the first list element that matches.
+ *
+ * If @a parent_field is a dynamic field, then the field @a name
+ * is fetched from it and the return code from that operation is returned.
+ *
  * @param[in] api The API to perform the get operation.
- * @param[in] dpi The data provider instance passed to a call to a 
+ * @param[in] dpi The data provider instance passed to a call to a
  *                function available from @a api.
  * @param[in] parent_field The parent field that contains the requested field.
  *                         This must be an IB_FTYPE_LIST.
@@ -264,6 +272,9 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
  *
  * @returns
  *  - IB_OK on success.
+ *  - IB_ENOENT If the field is not found in the parent field.
+ *  - IB_EINVAL The parent field is not a list or a dynamic type.
+ *  - Other if a dynamic field fails.
  */
 static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
                                              ib_provider_inst_t *dpi,
@@ -292,7 +303,6 @@ static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
                                result_field,
                                name,
                                name_len);
-        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Check that our input field is a list type. */
@@ -312,13 +322,16 @@ static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
-    } else {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+
+        *result_field = NULL;
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+    }
+    /* We don't know what input type this is. Return IB_EINVAL. */
+    else {
+        rc = IB_EINVAL;
     }
 
-
-    *result_field = NULL;
-    IB_FTRACE_RET_STATUS(IB_ENOENT);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -452,10 +465,10 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
 
     char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, name_len);
 
-    /* 
-     * If there is a filter_marker then we are going to 
-     * extract sub-values. 
-     * 
+    /*
+     * If there is a filter_marker then we are going to
+     * extract sub-values.
+     *
      * A sub-value might be a pattern-match on a list: ARGV:/foo\d?/
      * Or a sub field: ARGV:my_var
      * Or a dynamic field: ARGV:my_var
