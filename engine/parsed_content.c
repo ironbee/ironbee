@@ -233,6 +233,9 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
 
     /* If no raw line is available, then create one. */
     if (raw == NULL) {
+        assert(protocol != NULL);
+        assert(status != NULL);
+
         if (protocol_len + status_len + msg_len == 0) {
             rc = ib_bytestr_dup_mem(&line_tmp->raw,
                                     tx->mp,
@@ -455,6 +458,9 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
         }
         else {
             uint8_t *ptr;
+
+            assert(method != NULL);
+            assert(uri != NULL);
 
             /* Create a correctly sized bytestr and manually copy
              * the data into it.
