@@ -383,6 +383,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
                                               const char **pname)
 {
+    IB_FTRACE_INIT();
     const char *name;
     ib_status_t rc;
 
