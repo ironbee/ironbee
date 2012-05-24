@@ -450,6 +450,19 @@ void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp,
                             int line,
                             const char *fmt,
                             va_list ap);
+void DLL_PUBLIC ib_log_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+                              const char *cfgfile, unsigned int cfgline,
+                              int level,
+                              const char *prefix,
+                              const char *file, int line,
+                              const char *fmt, ...) PRINTF_ATTRIBUTE(9, 0);
+void DLL_PUBLIC ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+                               const char *cfgfile, unsigned int cfgline,
+                               int level,
+                               const char *prefix,
+                               const char *file, int line,
+                               const char *fmt, va_list ap);
+
 
 /** Log Emergency (Configuration form) */
 #define ib_log_emergency_cfg(cp,...) ib_log_cfg(cp, IB_LOG_EMERGENCY, "EMERGENCY", __FILE__, __LINE__, __VA_ARGS__)
@@ -473,6 +486,40 @@ void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp,
 #define ib_log_debug3_cfg(cp,...)    ib_log_cfg(cp, IB_LOG_DEBUG3,    "DEBUG3",    __FILE__, __LINE__, __VA_ARGS__)
 /** Log Trace (Configuration form) */
 #define ib_log_trace_cfg(cp,...)     ib_log_cfg(cp, IB_LOG_TRACE,     "TRACE",     __FILE__, __LINE__, __VA_ARGS__)
+
+/** Log Emergency (Configuration / ex form) */
+#define ib_log_emergency_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib,mp,cfgfile,cfgline, IB_LOG_EMERGENCY, "EMERGENCY", __FILE__, __LINE__, __VA_ARGS__)
+/** Log Alert (Configuration / ex form) */
+#define ib_log_alert_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_ALERT,     "ALERT",     __FILE__, __LINE__, __VA_ARGS__)
+/** Log Critical (Configuration / ex form) */
+#define ib_log_critical_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_CRITICAL,  "CRITICAL",  __FILE__, __LINE__, __VA_ARGS__)
+/** Log Error (Configuration / ex form) */
+#define ib_log_error_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_ERROR,     "ERROR",     __FILE__, __LINE__, __VA_ARGS__)
+/** Log Warning (Configuration / ex form) */
+#define ib_log_warning_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_WARNING,   "WARNING",   __FILE__, __LINE__, __VA_ARGS__)
+/** Log Notice (Configuration / ex form) */
+#define ib_log_notice_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_NOTICE,    "NOTICE",    __FILE__, __LINE__, __VA_ARGS__)
+/** Log Info (Configuration / ex form) */
+#define ib_log_info_cfg_ex(ib, mp, cfgfile, cfgline,...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_INFO,      "INFO",      __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug (Configuration / ex form) */
+#define ib_log_debug_cfg_ex(ib, mp, cfgfile, cfgline,...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_DEBUG,     "DEBUG",     __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug2 (Configuration / ex form) */
+#define ib_log_debug2_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_DEBUG2,    "DEBUG2",    __FILE__, __LINE__, __VA_ARGS__)
+/** Log Debug3 (Configuration / ex form) */
+#define ib_log_debug3_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_DEBUG3,    "DEBUG3",    __FILE__, __LINE__, __VA_ARGS__)
+/** Log Trace (Configuration / ex form) */
+#define ib_log_trace_cfg_ex(ib, mp, cfgfile, cfgline, ...) \
+    ib_log_cfg_ex(ib, mp, cfgfile, cfgline, IB_LOG_TRACE,     "TRACE",     __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * @} IronBeeConfig
