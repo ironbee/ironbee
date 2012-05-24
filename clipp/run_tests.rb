@@ -2,6 +2,7 @@
 
 require 'erb'
 require 'tempfile'
+require 'tmpdir'
 
 TESTDIR = File.join(File.dirname(__FILE__), 'tests')
 
@@ -22,20 +23,20 @@ Dir.glob('*.erb').each do |test|
     STDOUT.flush
     
     erb = ERB.new(IO.read(test))
-    Tempfile.open('clipp_tests') do |clipp_config|
+    tmppath = File.join(Dir::tmpdir, 'clipp_tests.conf')
+    File.open(tmppath, 'w') do |clipp_config|
         clipp_config.write(erb.result(binding))
-        clipp_config.close
-        
-        test_cmd = "#{clipp} -c #{clipp_config.path}"
-        if ! system(test_cmd)
-            puts "FAIL -- clipp existed non-zero"
-            puts "Command: #{test_cmd}"
-            failure = true
-        else
-            puts "PASS"
-        end
-        clipp_config.unlink
     end
+        
+    test_cmd = "#{clipp} -c #{tmppath}"
+    if ! system(test_cmd)
+        puts "FAIL -- clipp existed non-zero"
+        puts "Command: #{test_cmd}"
+        failure = true
+    else
+        puts "PASS"
+    end
+    File.unlink(tmppath) if ! failure
 end
 
 exit 1 if failure
