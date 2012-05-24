@@ -387,6 +387,12 @@ move onto the next one.
 good practice (and behaves most intuitively) if you place it last in the 
 chain.
 
+**@select**:*which*
+
+Only allow certain inputs through.  Inputs are indexed starting with 1.
+*which* is a comma separated list of either single indices are ranges of
+indices specified as `i-j`.
+
 Consumers
 ---------
 
