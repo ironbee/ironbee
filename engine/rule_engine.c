@@ -31,6 +31,7 @@
 #include <ironbee/util.h>
 #include <ironbee/field.h>
 #include <ironbee/debug.h>
+#include <ironbee/config.h>
 #include <ironbee/mpool.h>
 #include <ironbee/transformation.h>
 #include <ironbee/operator.h>
@@ -596,13 +597,13 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     assert(rule_result);
     ib_list_node_t      *node = NULL;
     ib_operator_inst_t  *opinst = rule->opinst;
+    ib_status_t          rc = IB_OK;
 
     /* Log what we're going to do */
     ib_log_debug3_tx(tx, "Executing rule \"%s\"", rule->meta.id);
 
     /* Special case: External rules */
     if ( (rule->flags & IB_RULE_FLAG_EXTERNAL) != 0) {
-        ib_status_t rc;
 
         /* Execute the operator */
         ib_log_debug3_tx(tx, "Executing external rule \"%s\"",
@@ -610,8 +611,8 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "External operator \"%s\" returned an error: %s",
-                         opinst->op->name, ib_status_to_string(rc));
+                            "External operator \"%s\" returned an error: %s",
+                            opinst->op->name, ib_status_to_string(rc));
         }
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -629,7 +630,6 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         const char       *fname = target->field_name;
         assert(fname != NULL);
         ib_field_t       *value = NULL;     /* Value from the DPI */
-        ib_status_t       rc = IB_OK;
 
         /* Get the field value */
         rc = ib_data_get(tx->dpi, fname, &value);
@@ -672,7 +672,6 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                 /* Capture failure to report back to the caller. */
                 if (tmp_rc != IB_OK) {
                     rc = tmp_rc;
-                    // FIXME: rc keeps getting overwritten and is never checked
                 }
             }
         }
@@ -684,7 +683,6 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                                                       value,
                                                       rule_result,
                                                       target_results);
-            // FIXME: rc is not checked
         }
     }
 
@@ -696,7 +694,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     ib_log_debug3_tx(tx, "Rule \"%s\" Operator \"%s\" => %d",
                      rule->meta.id, opinst->op->name, *rule_result);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -1784,6 +1782,15 @@ static ib_status_t create_rule_context(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Create the rule enable list */
+    rc = ib_list_create(&(ctx_rules->enable_list), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to initialize rule list: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     *p_ctx_rules = ctx_rules;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1848,6 +1855,107 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Enable rules that match tag / id
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx Current IronBee context
+ * @param[in] enable Enable data
+ * @param[in,out] rules List of rules to search for matches to @a enable
+ *
+ * @returns Status code
+ */
+static ib_status_t enable_rules(ib_engine_t *ib,
+                                ib_context_t *ctx,
+                                const ib_rule_enable_t *enable,
+                                ib_list_t *ctx_rule_list)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(enable != NULL);
+    assert(ctx_rule_list != NULL);
+
+    ib_list_node_t *node;
+    unsigned int matches = 0;
+
+    switch (enable->enable_type) {
+
+    case RULE_ENABLE_ID :
+        ib_log_debug3_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                             "Looking for rule with ID \"%s\"",
+                             enable->enable_str);
+        IB_LIST_LOOP(ctx_rule_list, node) {
+            ib_rule_ctx_data_t *ctx_rule;
+            ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
+            if (strcasecmp(enable->enable_str, ctx_rule->rule->meta.id) == 0) {
+                ib_flags_set(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED);
+                ib_log_debug2_cfg_ex(ib, ctx->mp,
+                                     enable->file, enable->lineno,
+                                     "Enabled ID matched rule \"%s\"",
+                                     ctx_rule->rule->meta.id);
+                IB_FTRACE_RET_STATUS(IB_OK);
+                
+            }
+        }
+        ib_log_error_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                            "No rule with ID of \"%s\" to enable",
+                            enable->enable_str);
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        break;
+
+    case RULE_ENABLE_TAG :
+        ib_log_debug3_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                             "Looking for rules with tag \"%s\"",
+                             enable->enable_str);
+        IB_LIST_LOOP(ctx_rule_list, node) {
+            const ib_list_node_t *tagnode;
+            ib_rule_ctx_data_t   *ctx_rule;
+            ib_rule_t            *rule;
+
+            ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
+            rule = ctx_rule->rule;
+
+            IB_LIST_LOOP_CONST(rule->meta.tags, tagnode) {
+                const char *tag;
+
+                tag = (const char *)ib_list_node_data_const(tagnode);
+                if (strcasecmp(tag, enable->enable_str) == 0) {
+                    ++matches;
+                    ib_flags_set(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED);
+                    ib_log_debug2_cfg_ex(ib, ctx->mp,
+                                         enable->file, enable->lineno,
+                                         "Enabled tag \"%s\" matched "
+                                         "rule \"%s\" from ctx=\"%s\"",
+                                         enable->enable_str,
+                                         rule->meta.id,
+                                         ib_context_full_get(rule->ctx));
+                    break;
+                }
+            }
+        }
+        if (matches == 0) {
+            ib_log_warning_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                                  "No rules with tag of \"%s\" to enable",
+                                  enable->enable_str);
+        }
+        else {
+            ib_log_debug_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                                "Enabled %u rules with tag of \"%s\"",
+                                matches, enable->enable_str);
+        }
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        break;
+
+    default:
+        assert(0 && "Invalid rule enable type");
+        
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                                      ib_module_t *mod,
                                      ib_context_t *ctx)
@@ -1886,8 +1994,8 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
 
     /* Pass 1: Loop through all of the rules in the main context, add them
      * to the list of all rules */
-    ib_log_debug2(ib, "Adding rules from %p\"%s\" to ctx \"%s\" temp list",
-                  (void*)main_ctx, ib_context_full_get(main_ctx),
+    ib_log_debug2(ib, "Adding rules from \"%s\" to ctx \"%s\" temp list",
+                  ib_context_full_get(main_ctx),
                   ib_context_full_get(ctx));
     skip_flags = IB_RULE_FLAG_IN_CHAIN;
     IB_LIST_LOOP(main_ctx->rules->rule_list, node) {
@@ -1964,9 +2072,24 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
     }
 
     /* Pass 3: Enable all tagged / enabled rules */
-    /* TODO */
+    ib_log_debug2(ib, "Enabling id/tagged rules in \"%s\" temp list",
+                  ib_context_full_get(ctx));
+    IB_LIST_LOOP(ctx->rules->enable_list, node) {
+        const ib_rule_enable_t *enable;
 
-    /* Step 4: Add all enabled rules to the appropriate execution list */
+        enable = (const ib_rule_enable_t *)ib_list_node_data(node);
+
+        /* Find rule */
+        rc = enable_rules(ib, ctx, enable, all);
+        if (rc != IB_OK) {
+            ib_log_error_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                                "Error enabling id/tagged rules "
+                                "in \"%s\" temp list",
+                                ib_context_full_get(ctx));
+        }
+    }
+
+    /* Pass 4: Add all enabled rules to the appropriate execution list */
     ib_log_debug2(ib, "Adding enabled rules to ctx \"%s\" phase list",
                   ib_context_full_get(ctx));
     skip_flags = (IB_RULECTX_FLAG_ENABLED);
@@ -2501,9 +2624,9 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         else if (lookup == NULL) {
             ib_log_debug(ib,
                          "Added rule \"%s\" rev=%u "
-                         "to context=%p\"%s\" @ \"%s\":%u",
+                         "to context=\"%s\" @ \"%s\":%u",
                          rule->meta.id, rule->meta.revision,
-                         (void*)ctx, ib_context_full_get(ctx),
+                         ib_context_full_get(ctx),
                          rule->meta.config_file, rule->meta.config_line);
         }
         else {
@@ -2537,6 +2660,89 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     context_rules->parser_data.previous = rule;
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_rule_enable(ib_engine_t *ib,
+                           ib_context_t *ctx,
+                           ib_rule_enable_type_t etype,
+                           const char *name,
+                           const char *file,
+                           unsigned int lineno,
+                           const char *str)
+{
+    IB_FTRACE_INIT();
+    ib_status_t        rc;
+    ib_rule_enable_t  *enable;
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(name != NULL);
+    assert(str != NULL);
+
+    /* Check the string name */
+    if (*str == '\0') {
+        ib_log_error(ib, "Invalid %s \"\" @ \"%s\":%u: %s",
+                     name, file, lineno);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Just push it on the list */
+    enable = ib_mpool_alloc(ctx->mp, sizeof(*enable));
+    enable->enable_type = etype;
+    enable->enable_str = str;
+    enable->file = file;
+    enable->lineno = lineno;
+
+    /* Mark the rule as valid */
+    rc = ib_list_push(ctx->rules->enable_list, enable);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Error adding enable %s \"%s\" "
+                     "to context=\"%s\" list @ \"%s\":%u: %s",
+                     str, name,
+                     ib_context_full_get(ctx),
+                     file, lineno,
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_rule_enable_id(ib_engine_t *ib,
+                              ib_context_t *ctx,
+                              const char *file,
+                              unsigned int lineno,
+                              const char *id)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(id != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_rule_enable(ib, ctx, RULE_ENABLE_ID, "id", file, lineno, id);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_rule_enable_tag(ib_engine_t *ib,
+                               ib_context_t *ctx,
+                               const char *file,
+                               unsigned int lineno,
+                               const char *tag)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(tag != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_rule_enable(ib, ctx, RULE_ENABLE_TAG, "tag", file, lineno, tag);
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
