@@ -227,6 +227,10 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
  *
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
+ * @param[in] ctx Context.
+ * @param[in] cbdata Callback data.
+ *
+ * @returns IB_OK on success.
  */
 ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
                                     ib_module_t *mod,
