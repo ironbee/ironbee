@@ -395,8 +395,6 @@ ib_status_t DLL_PUBLIC ib_config_register_directive(
  * Process a directive.
  *
  * @param cp Config parser
- * @param file Name of configuration file being parsed
- * @param lineno Current line number being processed
  * @param name Directive name
  * @param args Directive arguments
  * @todo Need to pass back an error msg???
@@ -411,8 +409,6 @@ ib_status_t DLL_PUBLIC ib_config_directive_process(ib_cfgparser_t *cp,
  * Start a block.
  *
  * @param cp Config parser
- * @param file Name of configuration file being parsed
- * @param lineno Current line number being processed
  * @param name Block name
  * @param args Block arguments
  * @todo Need to pass back an error msg???
@@ -431,8 +427,6 @@ ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
  * block started.
  *
  * @param cp Config parser
- * @param file Name of configuration file being parsed
- * @param lineno Current line number being processed
  * @param name Block name
  * @todo Need to pass back an error msg???
  *

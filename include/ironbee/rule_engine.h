@@ -187,10 +187,10 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
  * Lookup rule by ID
  * @internal
  *
- * @param[in] ib IronBee Engine
- * @param[in] ctx Context to look in (or NULL)
- * @param[in] id ID to match
- * @param[out] Matching rule
+ * @param[in] ib IronBee Engine.
+ * @param[in] ctx Context to look in (or NULL).
+ * @param[in] id ID to match.
+ * @param[out] rule Matching rule.
  *
  * @returns Status code
  */
@@ -203,10 +203,10 @@ ib_status_t ib_rule_lookup(ib_engine_t *ib,
  * Find rule matching a reference rule.
  * @internal
  *
- * @param[in] ib IronBee Engine
- * @param[in] ctx Context to look in (or NULL)
- * @param[in] ref Reference rule
- * @param[out] Matching rule
+ * @param[in] ib IronBee Engine.
+ * @param[in] ctx Context to look in (or NULL).
+ * @param[in] ref Reference rule.
+ * @param[out] rule Matching rule.
  *
  * @returns Status code
  */
