@@ -284,7 +284,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
 
         /* Now, if all components are missing, then parse them out
          * from the raw line.  If only some are missing, then
-         * do not assume anything is parseable.
+         * do not assume anything is parsable.
          *
          * NOTE: This is a strict HTTP parser and assumes single
          *       space (0x20) component separators. Better is to
@@ -498,7 +498,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
 
         /* Now, if all components are missing, then parse them out
          * from the raw line.  If only some are missing, then
-         * do not assume anything is parseable.
+         * do not assume anything is parsable.
          *
          * NOTE: This is a strict HTTP parser and assumes single
          *       space (0x20) component separators. Better is to
