@@ -1184,7 +1184,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
     /* Allow "key:subkey" syntax, but still fall through
      * to a full key lookup if that fails.
      */
-    if ((subkey = strchr(name, ':')) != NULL) {
+    if ((subkey = memchr(name, ':', nlen)) != NULL) {
         size_t klen;
         size_t sklen;
 
