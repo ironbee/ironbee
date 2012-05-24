@@ -1153,7 +1153,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
     const ib_list_node_t *targets;
     const ib_list_node_t *op;
     const ib_list_node_t *mod;
-    ib_rule_t *rule;
+    ib_rule_t *rule = NULL;
 
     if (cbdata != NULL) {
         IB_FTRACE_MSG("Callback data is not null.");
@@ -1222,7 +1222,7 @@ static ib_status_t rules_rule_params(ib_cfgparser_t *cp,
 
     /* Disable the entire chain if this rule is invalid */
 cleanup:
-    if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
+    if ((rule != NULL) && ((rule->flags & IB_RULE_FLAG_VALID) == 0)) {
         ib_status_t irc = ib_rule_chain_invalidate(cp->ib, rule);
         if (irc != IB_OK) {
             ib_log_error_cfg(cp, "Error invalidating rule chain: %s",

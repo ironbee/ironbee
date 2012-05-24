@@ -96,6 +96,9 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
         break;
     }
 
@@ -127,6 +130,9 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         rc = ib_field_create_bytestr_alias(fout, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
         break;
     }
     default:

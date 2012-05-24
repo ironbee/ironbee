@@ -271,10 +271,10 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
         }
     }
     else {
-        ib_bytestr_dup_mem(&line_tmp->raw,
-                           tx->mp,
-                           (const uint8_t *)raw,
-                           raw_len);
+        rc = ib_bytestr_dup_mem(&line_tmp->raw,
+                                tx->mp,
+                                (const uint8_t *)raw,
+                                raw_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -482,10 +482,10 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
         }
     }
     else {
-        ib_bytestr_dup_mem(&line_tmp->raw,
-                           tx->mp,
-                           (const uint8_t *)raw,
-                           raw_len);
+        rc = ib_bytestr_dup_mem(&line_tmp->raw,
+                                tx->mp,
+                                (const uint8_t *)raw,
+                                raw_len);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }

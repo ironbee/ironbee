@@ -160,6 +160,11 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_check_hook() failed: %s",
@@ -208,6 +213,11 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
@@ -710,6 +720,11 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
     /* Mark the time. */
     if (tx->t.request_started == 0) {
         tx->t.request_started = ib_clock_get_time();
@@ -752,6 +767,11 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
@@ -823,6 +843,11 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     /* Validate. */
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
@@ -958,6 +983,11 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
     /* Mark the time. */
     if (tx->t.response_started == 0) {
         tx->t.response_started = ib_clock_get_time();
@@ -999,6 +1029,11 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
@@ -1053,6 +1088,11 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     /* Validate. */
     if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {

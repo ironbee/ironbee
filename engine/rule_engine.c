@@ -643,7 +643,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
             ib_list_node_t *value_node;
             rc = ib_field_value(value, (void *)&value_list);
 
-            if (rc!=IB_OK) {
+            if (rc != IB_OK) {
                 ib_log_error_tx(tx, "Error getting field value %s: %s",
                                 value->name, rc);
                 continue;
@@ -662,8 +662,9 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                         target_results);
 
                 /* Capture failure to report back to the caller. */
-                if (tmp_rc!=IB_OK) {
+                if (tmp_rc != IB_OK) {
                     rc = tmp_rc;
+                    // FIXME: rc keeps getting overwritten and is never checked
                 }
             }
         }
@@ -675,6 +676,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                                                       value,
                                                       rule_result,
                                                       target_results);
+            // FIXME: rc is not checked
         }
     }
 
