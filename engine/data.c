@@ -252,6 +252,76 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
 }
 
 /**
+ * @param[in] api The API to perform the get operation.
+ * @param[in] dpi The data provider instance passed to a call to a 
+ *                function available from @a api.
+ * @param[in] parent_field The parent field that contains the requested field.
+ *                         This must be an IB_FTYPE_LIST.
+ * @param[in] name The regex to use to match member field names in
+ *                 @a field_name.
+ * @param[in] name_len The length of @a pattern.
+ * @param[out] result_field The result field.
+ *
+ * @returns
+ *  - IB_OK on success.
+ */
+static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
+                                             ib_provider_inst_t *dpi,
+                                             const ib_field_t *parent_field,
+                                             const char *name,
+                                             size_t name_len,
+                                             ib_field_t **result_field)
+{
+    IB_FTRACE_INIT();
+
+    assert(api);
+    assert(dpi);
+    assert(parent_field);
+    assert(name);
+    assert(name_len>0);
+    assert(result_field);
+
+    ib_status_t rc;
+    ib_list_t *list; /* List of values to check stored in parent_field. */
+    ib_list_node_t *list_node; /* List node in list. */
+
+
+    /* Pull a value from a dynamic field. */
+    if(ib_field_is_dynamic(parent_field)) {
+        rc = ib_field_value_ex(parent_field,
+                               result_field,
+                               name,
+                               name_len);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Check that our input field is a list type. */
+    else if (parent_field->type == IB_FTYPE_LIST) {
+        rc = ib_field_value(parent_field, &list);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        IB_LIST_LOOP(list, list_node) {
+            ib_field_t *list_field = (ib_field_t *) list_node->data;
+
+            if (list_field->nlen == name_len &&
+                strncasecmp(list_field->name, name, name_len) == 0)
+            {
+                *result_field = list_field;
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+    } else {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+
+    *result_field = NULL;
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+/**
  * Return a list of fields whose name matches @pattern.
  *
  * The list @a field_name is retrieved from the @a dpi using @a api. Its
@@ -262,9 +332,9 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
  * @param[in] api The API to perform the get operation.
  * @param[in] dpi The data provider instance passed to a call to a
  *                function available from @a api.
- * @param[in] field_name The name of the field that is a list whose
- *                       members will be filtered into a new list.
- * @param[in] field_name_len Length of @a field_name.
+ * @param[in] parent_field The parent field whose member fields will
+ *                         be filtered with @a pattern.
+ *                         This must be an IB_FTYPE_LIST.
  * @param[in] pattern The regex to use to match member field names in
  *                    @a field_name.
  * @param[in] pattern_len The length of @a pattern.
@@ -277,8 +347,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
  */
 static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
                                              ib_provider_inst_t *dpi,
-                                             const char *field_name,
-                                             size_t field_name_len,
+                                             const ib_field_t *parent_field,
                                              const char *pattern,
                                              size_t pattern_len,
                                              ib_field_t **result_field)
@@ -287,9 +356,8 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
 
     assert(api);
     assert(dpi);
-    assert(field_name);
     assert(pattern);
-    assert(field_name_len>0);
+    assert(parent_field);
     assert(pattern_len>0);
     assert(result_field);
 
@@ -298,10 +366,14 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
     pcre *pcre_pattern = NULL; /* PCRE pattern. */
     const char *errptr = NULL; /* PCRE Error reporter. */
     int erroffset; /* PCRE Error offset into subject reporter. */
-    ib_field_t *field = NULL; /* Field identified by param field_name. */
     ib_list_t *list = NULL; /* Holds the value of field when fetched. */
     ib_list_node_t *list_node = NULL; /* A node in list. */
     ib_list_t *result_list = NULL; /* Holds matched list_node values. */
+
+    /* Check that our input field is a list type. */
+    if (parent_field->type != IB_FTYPE_LIST) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
     /* Allocate pattern_str to hold null terminated string. */
     pattern_str = (char *)malloc(pattern_len+1);
@@ -313,18 +385,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
     memcpy(pattern_str, pattern, pattern_len);
     pattern_str[pattern_len] = '\0';
 
-    rc = api->get(dpi, field_name, field_name_len, &field);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    if (field->type != IB_FTYPE_LIST) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    if (field == NULL) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
-    }
-
-    rc = ib_field_value(field, &list);
+    rc = ib_field_value(parent_field, &list);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -364,8 +425,8 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
 
     rc = ib_field_create(result_field,
                          dpi->mp,
-                         field_name,
-                         field_name_len,
+                         parent_field->name,
+                         parent_field->nlen,
                          IB_FTYPE_LIST,
                          result_list);
 
@@ -386,56 +447,89 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
     assert(dpi->pr->api != NULL);
 
     ib_status_t rc;
-    char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, name_len);
-    char *filter_start = memchr(name, DPI_LIST_FILTER_PREFIX, name_len);
-    char *filter_end;
-
     const char *error_msg;
     char *name_str = NULL;
 
-    if ( filter_start && filter_start + 1 < name + name_len ) {
-        filter_end = memchr(filter_start+1,
-                            DPI_LIST_FILTER_SUFFIX,
-                            name_len - (filter_start+1-name));
-    }
-    else {
-        filter_end = NULL;
-    }
+    char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, name_len);
 
-    /* Does the user mark that a filter is following? */
-    if (filter_marker && filter_start && filter_end) {
+    /* 
+     * If there is a filter_marker then we are going to 
+     * extract sub-values. 
+     * 
+     * A sub-value might be a pattern-match on a list: ARGV:/foo\d?/
+     * Or a sub field: ARGV:my_var
+     * Or a dynamic field: ARGV:my_var
+     */
+    if ( filter_marker ) {
 
-        /* Bad filter: FOO/: */
-        if (filter_marker != filter_start-1) {
-            rc = IB_EINVAL;
-            error_msg = "Filter start '/' does not immediately "
-                        "follow ':' in: %s";
-            goto error_handler;
+        /* If there is a filter mark (':') get the parent field. */
+        ib_field_t *parent_field;
+
+        char *filter_start = memchr(name, DPI_LIST_FILTER_PREFIX, name_len);
+        char *filter_end;
+
+        /* Fetch the field name, but the length is (filter_mark - name).
+         * That is, the string before the ':' we found. */
+        rc = api->get(dpi, name, filter_marker - name, &parent_field);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Bad filter: FOO:/ */
-        if (filter_start == filter_end) {
-            rc = IB_EINVAL;
-            error_msg = "Filter is not closed: %s";
-            goto error_handler;
+        if ( filter_start && filter_start + 1 < name + name_len ) {
+            filter_end = memchr(filter_start+1,
+                                DPI_LIST_FILTER_SUFFIX,
+                                name_len - (filter_start+1-name));
+        }
+        else {
+            filter_end = NULL;
         }
 
-        /* Bad filter: FOO:// */
-        if (filter_start == filter_end-1) {
-            rc = IB_EINVAL;
-            error_msg = "Filter is empty: %s";
-            goto error_handler;
+
+        /* Does the expansions use a pattern match or not? */
+        if (filter_start && filter_end) {
+
+            /* Bad filter: FOO/: */
+            if (filter_marker != filter_start-1) {
+                rc = IB_EINVAL;
+                error_msg = "Filter start '/' does not immediately "
+                            "follow ':' in: %s";
+                goto error_handler;
+            }
+
+            /* Bad filter: FOO:/ */
+            if (filter_start == filter_end) {
+                rc = IB_EINVAL;
+                error_msg = "Filter is not closed: %s";
+                goto error_handler;
+            }
+
+            /* Bad filter: FOO:// */
+            if (filter_start == filter_end-1) {
+                rc = IB_EINVAL;
+                error_msg = "Filter is empty: %s";
+                goto error_handler;
+            }
+
+            /* Validated that filter_start and filter_end are sane. */
+            rc = ib_data_get_filtered_list(api,
+                                           dpi,
+                                           parent_field,
+                                           filter_start+1,
+                                           filter_end - filter_start - 1,
+                                           pf);
         }
 
-        /* Validated that filter_start and filter_end are sane. */
-        rc = ib_data_get_filtered_list(api,
-                                       dpi,
-                                       name,
-                                       filter_marker - name,
-                                       filter_start+1,
-                                       filter_end - filter_start - 1,
-                                       pf);
+        /* No pattern match. Just extract the sub-field. */
+        else {
 
+            /* Handle extracting a subfield for a list of a dyanmic field. */
+            rc = ib_data_get_subfield(api,
+                                      dpi,
+                                      parent_field,
+                                      filter_marker+1,
+                                      name_len - (filter_marker+1-name),
+                                      pf);
+        }
     }
 
     /* Typical no-expansion fetch of a value. */
