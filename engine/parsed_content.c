@@ -159,7 +159,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                        size_t msg_len)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
+    ib_status_t rc = IB_OK;
 
     assert(tx != NULL);
     assert(tx->ib != NULL);
@@ -369,7 +369,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                       size_t protocol_len)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
+    ib_status_t rc = IB_OK;
 
     assert(tx != NULL);
     assert(tx->ib != NULL);
