@@ -944,7 +944,7 @@ static inline ib_bool_t rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_VALID) != IB_TRUE) {
         IB_FTRACE_RET_UINT(IB_FALSE);
     }
-    
+
     IB_FTRACE_RET_UINT(IB_TRUE);
 }
 

@@ -4143,7 +4143,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
     }
 
     /* Notify the rule engine */
-    
+
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

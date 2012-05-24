@@ -260,7 +260,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
  * ib_list_t* which will be returned via 2a result_field.
  *
  * @param[in] api The API to perform the get operation.
- * @param[in] dpi The data provider instance passed to a call to a 
+ * @param[in] dpi The data provider instance passed to a call to a
  *                function available from @a api.
  * @param[in] field_name The name of the field that is a list whose
  *                       members will be filtered into a new list.
@@ -389,7 +389,7 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
     char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, name_len);
     char *filter_start = memchr(name, DPI_LIST_FILTER_PREFIX, name_len);
     char *filter_end;
-    
+
     const char *error_msg;
     char *name_str = NULL;
 
