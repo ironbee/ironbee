@@ -182,7 +182,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else if (raw == NULL) {
+    else {
         rc = ib_bytestr_dup_mem(&line_tmp->protocol,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -202,7 +202,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else if (raw == NULL) {
+    else {
         rc = ib_bytestr_dup_mem(&line_tmp->status,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -221,7 +221,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else if (raw == NULL) {
+    else {
         rc = ib_bytestr_dup_mem(&line_tmp->msg,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -397,7 +397,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else if (raw == NULL) {
+    else {
         rc = ib_bytestr_dup_mem(&line_tmp->method,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -416,7 +416,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else if (raw == NULL) {
+    else {
         rc = ib_bytestr_dup_mem(&line_tmp->uri,
                                 tx->mp,
                                 (const uint8_t *)"",
@@ -435,7 +435,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else if (raw == NULL) {
+    else {
         rc = ib_bytestr_dup_mem(&line_tmp->protocol,
                                 tx->mp,
                                 (const uint8_t *)"",
