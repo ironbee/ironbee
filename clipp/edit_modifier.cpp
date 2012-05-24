@@ -131,7 +131,6 @@ void untextify_body(Input::Event& event, const string& text)
 {
     Input::DataEvent& specific =
         dynamic_cast<Input::DataEvent&>(event);
-    cout << "----" << text << "----" << endl;
     specific.data = Input::Buffer(text);
 }
 
@@ -212,7 +211,6 @@ bool EditModifier::operator()(Input::input_p& input)
                 data->buffers.push_back(string());
                 string& text = data->buffers.back();
                 m_state->textify(text, *event);
-                cout << "---" << text << "---\n";
                 ofstream of(tempfile.c_str());
                 if (! of) {
                     throw runtime_error(
