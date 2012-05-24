@@ -193,6 +193,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
 
     case IB_STROP_COW:
         rc = copy_on_write(mp, data_in, dlen_in, data_out, dlen_out, result);
+        break;
 
     default:
         IB_FTRACE_RET_STATUS(IB_EINVAL);
