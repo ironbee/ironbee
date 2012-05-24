@@ -399,7 +399,7 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
                             name_len - (filter_start+1-name));
     }
     else {
-        filter_end = filter_start;
+        filter_end = NULL;
     }
 
     /* Does the user mark that a filter is following? */
