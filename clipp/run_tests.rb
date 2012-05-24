@@ -30,7 +30,7 @@ Dir.glob('*.erb').each do |test|
         
     test_cmd = "#{clipp} -c #{tmppath}"
     if ! system(test_cmd)
-        puts "FAIL -- clipp existed non-zero"
+        puts "FAIL -- clipp exited non-zero"
         puts "Command: #{test_cmd}"
         failure = true
     else
