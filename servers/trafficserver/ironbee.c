@@ -900,11 +900,13 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
         /* now loop over req header lines */
         rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
+        // FIXME: Assumes CRLF (line_len + 2)?
         for (line += line_len + 2;
              get_line(line, &line_len) == 1;
              line += line_len + 2) {
             n_len = strcspn(line, ":");
             lptr = line + n_len + 1;
+            // FIXME: What about "Foo: \r"
             while (isspace(*lptr))
                 ++lptr;
             v_len = line_len - (lptr - line);
@@ -947,11 +949,16 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
         /* now loop over resp header lines */
         rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
+        if (rv != IB_OK) {
+            TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
+        }
+        // FIXME: Assumes CRLF (line_len + 2)?
         for (line += line_len + 2;
              get_line(line, &line_len) == 1;
              line += line_len + 2) {
             n_len = strcspn(line, ":");
             lptr = line + n_len + 1;
+            // FIXME: What about "Foo: \r"
             while (isspace(*lptr))
                 ++lptr;
             v_len = line_len - (lptr - line);

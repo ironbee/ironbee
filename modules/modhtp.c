@@ -390,7 +390,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     }
     else {
         /* Create the transaction structure. */
-        ib_log_debug3(ib, "Creating transaction structure");
+        ib_log_debug3(ib, "Creating ironbee transaction structure");
         rc = ib_tx_create(&itx, iconn, NULL);
         if (rc != IB_OK) {
             /// @todo Set error.
@@ -411,7 +411,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     }
 
     /* Associate the ironbee transaction with the libhtp transaction. */
-    ib_log_debug3_tx(itx, "LibHTP: associating itx=%p with tx=%p", itx, tx);
+    ib_log_debug3_tx(itx, "Storing itx=%p with tx=%p", itx, tx);
     htp_tx_set_user_data(tx, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
