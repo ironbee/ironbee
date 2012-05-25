@@ -91,6 +91,8 @@ struct eagain    : public error {};
 struct eother    : public error {};
 //! Translates to IB_EBADVAL.  See exception.hpp
 struct ebadval   : public error {};
+//! Translates to IB_EEXIST.  See exception.hpp
+struct eexist    : public error {};
 
 /**
  * String exception info explaining what happened.

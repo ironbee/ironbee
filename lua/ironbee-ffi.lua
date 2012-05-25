@@ -75,6 +75,7 @@ ffi.cdef [[
         IB_ETIMEDOUT,
         IB_EAGAIN,
         IB_EBADVAL,
+        IB_EEXIST,
         IB_EOTHER
     } ib_status_t;
     typedef enum {
@@ -646,6 +647,7 @@ IB_ENOENT        = ffi.cast("int", c.IB_ENOENT)
 IB_ETIMEDOUT     = ffi.cast("int", c.IB_ETIMEDOUT)
 IB_EAGAIN        = ffi.cast("int", c.IB_EAGAIN)
 IB_EBADVAL       = ffi.cast("int", c.IB_EBADVAL)
+IB_EEXIST        = ffi.cast("int", c.IB_EEXIST)
 IB_EOTHER        = ffi.cast("int", c.IB_EOTHER)
 
 -- ===============================================

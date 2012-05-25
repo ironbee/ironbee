@@ -47,6 +47,7 @@ TEST(TestCatch, ironbeepp_exception)
     EXPECT_EQ(IB_ETIMEDOUT, IBPP_TRY_CATCH(NULL, throw etimedout()));
     EXPECT_EQ(IB_EAGAIN,    IBPP_TRY_CATCH(NULL, throw eagain()));
     EXPECT_EQ(IB_EBADVAL,   IBPP_TRY_CATCH(NULL, throw ebadval()));
+    EXPECT_EQ(IB_EEXIST,    IBPP_TRY_CATCH(NULL, throw eexist()));
     EXPECT_EQ(IB_EOTHER,    IBPP_TRY_CATCH(NULL, throw eother()));
 }
 
