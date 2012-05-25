@@ -535,7 +535,7 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
         /* No pattern match. Just extract the sub-field. */
         else {
 
-            /* Handle extracting a subfield for a list of a dyanmic field. */
+            /* Handle extracting a subfield for a list of a dynamic field. */
             rc = ib_data_get_subfield(api,
                                       dpi,
                                       parent_field,

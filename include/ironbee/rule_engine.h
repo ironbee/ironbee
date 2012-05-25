@@ -121,7 +121,7 @@ struct ib_rule_t {
 };
 
 /**
- * Context-specifc rule object.  This is the type of the objects
+ * Context-specific rule object.  This is the type of the objects
  * stored in the 'rule_list' field of ib_ruleset_phase_t.
  */
 typedef struct {
@@ -143,7 +143,7 @@ typedef struct {
 typedef struct {
     ib_rule_phase_t             phase_num;   /**< Phase number */
     const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
-    ib_list_t                  *rule_list;   /**< Rules to exececute in phase */
+    ib_list_t                  *rule_list;   /**< Rules to execute in phase */
 } ib_ruleset_phase_t;
 
 /**
