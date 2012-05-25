@@ -1295,25 +1295,25 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
     const char *uri = NULL;
-    FILE *fp = NULL;            // The file pointer to write to
+    FILE *fp = NULL;            /* The file pointer to write to. */
     char *prefix_with_pid = NULL;
     size_t prefix_length = 0;
 
-    // Get the module context core configuration
+    /* Get the module context core configuration. */
     rc = ib_context_module_config(ctx, ib_core_module(),
                                   (void *)&corecfg);
 
-    // If not available, fall back to the core global configuration
+    /* If not available, fall back to the core global configuration. */
     if (rc != IB_OK) {
         corecfg = &core_global_cfg;
     }
 
-    // Check the log level, return if we're not interested
+    /* Check the log level, return if we're not interested. */
     if (level > (int)corecfg->log_level) {
         return;
     }
 
-    // Add pid and level to prefix.
+    /* Add pid and level to prefix. */
     if (prefix != NULL) {
         prefix_length = strlen(prefix);
     }
@@ -1331,11 +1331,11 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
       snprintf(prefix_with_pid, 1024, "[%d] ", getpid());
     }
 
-    // Get the current 'logger' provider interface
+    /* Get the current 'logger' provider interface. */
     iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
 
-    // If it's not the core log provider, we're done: we know nothing
-    // about it's data, so don't try to treat it as a file handle!
+    /* If it's not the core log provider, we're done: we know nothing.
+     * about it's data, so don't try to treat it as a file handle! */
     main_ctx = ib_context_main(ib);
     ib_context_module_config(
         main_ctx, ib_core_module(), (void *)&main_core_config);
@@ -1346,23 +1346,23 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
         goto done;
     }
 
-    // If no interface, do *something*
-    //  Note that this should be the same as the default case
+    /* If no interface, do *something*.
+     *  Note that this should be the same as the default case. */
     if (iface == NULL) {
         core_logger(stderr, level, ib, tx, prefix_with_pid, file, line, fmt, ap);
         goto done;
     }
 
-    // Get the current file pointer
+    /* Get the current file pointer. */
     fp = (FILE *) lpi->data;
 
-    // Pull the log URI from the core config
+    /* Pull the log URI from the core config. */
     if (fp == NULL) {
         if (corecfg != NULL) {
             uri = corecfg->log_uri;
         }
 
-        // If the URI looks like a file, try to open it
+        /* If the URI looks like a file, try to open it. */
         if ((uri != NULL) && (strncmp(uri, "file://", 7) == 0)) {
             const char *path = uri+7;
             fp = fopen( path, "a" );
@@ -1372,16 +1372,16 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
                         path, strerror(errno));
             }
         }
-        // Else no log URI specified.  Will use stderr below.
+        /* Else no log URI specified.  Will use stderr below. */
     }
 
-    // Finally, use stderr as a fallback
+    /* Finally, use stderr as a fallback. */
     if (fp == NULL) {
         fp = fdup(stderr);
     }
 
-    // Copy the file pointer to the interface data.  We do this to
-    // cache the file handle so we don't open it each time.
+    /* Copy the file pointer to the interface data.  We do this to
+     * cache the file handle so we don't open it each time. */
     lpi->data = fp;
 
     /* Just calls the interface logger with the provider instance data as
@@ -1719,7 +1719,6 @@ static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
 static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
 {
-    //ib_engine_t *ib = part->log->ib;
     ib_sdata_t *sdata;
     size_t dlen;
 
@@ -3093,7 +3092,7 @@ static ib_status_t parser_register(ib_engine_t *ib,
     }
 
     /* Verify that required interface functions are implemented. */
-    // FIXME: Update which are required
+    /// @todo Update which are required
     if (   (iface->data_in == NULL) || (iface->data_out == NULL)
         || (iface->gen_request_header_fields == NULL)
         || (iface->gen_response_header_fields == NULL))
@@ -3634,7 +3633,6 @@ static ib_status_t filter_buffer(ib_filter_t *f,
                                  ib_flags_t *pflags)
 {
     IB_FTRACE_INIT();
-//    ib_engine_t *ib = f->ib;
     ib_stream_t *buf = (ib_stream_t *)fdata->state;
     ib_sdata_t *sdata;
     ib_status_t rc;
@@ -4335,8 +4333,8 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         ib_log_debug2(ib, "%s: \"%s\"", name, p1_unescaped);
 
-        // Create a file URI from the file path, using memory
-        // from the context's mem pool.
+        /* Create a file URI from the file path, using memory
+         * from the context's mem pool. */
         if ( strstr(p1_unescaped, "://") == NULL )  {
             char *buf = (char *)ib_mpool_alloc( mp, 8+strlen(p1_unescaped) );
             strcpy( buf, "file://" );
@@ -5452,7 +5450,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    // Get the main context config, it's config, and it's logger
+    /* Get the main context config, it's config, and it's logger. */
     main_ctx = ib_context_main(ib);
     rc = ib_context_module_config(main_ctx, ib_core_module(),
                                   (void *)&main_core_config);
@@ -5464,7 +5462,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     main_lp = main_core_config->pi.logger->pr;
 
 
-    // Get the current context config.
+    /* Get the current context config. */
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
@@ -5487,11 +5485,11 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     }
     ib_log_provider_set_instance(ctx, lpi);
 
-    // Get the log provider
+    /* Get the log provider. */
     lp  = lpi->pr;
 
-    // If it's not the core log provider, we're done: we know nothing
-    // about it's data, so don't try to treat it as a file handle!
+    /* If it's not the core log provider, we're done: we know nothing
+     * about it's data, so don't try to treat it as a file handle! */
     if ( main_lp != lp ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -5539,10 +5537,10 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     ib_provider_t *main_lp;
     FILE *fp;
 
-    // Get the main context config, it's config, and it's logger
+    /* Get the main context config, it's config, and it's logger. */
     main_ctx = ib_context_main(ib);
 
-    // If the main context has already been destroyed nothing must be done.
+    /* If the main context has already been destroyed nothing must be done. */
     if (main_ctx == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -5557,7 +5555,7 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     main_lp = main_core_config->pi.logger->pr;
 
 
-    // Get the current context config.
+    /* Get the current context config. */
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
@@ -5565,15 +5563,15 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    // Get the current logger
+    /* Get the current logger. */
     lpi = corecfg->pi.logger;
     if (lpi == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     lp  = lpi->pr;
 
-    // If it's not the core log provider, we're done: we know nothing
-    // about it's data, so don't try to treat it as a file handle!
+    /* If it's not the core log provider, we're done: we know nothing
+     * about it's data, so don't try to treat it as a file handle! */
     if (main_lp != lp) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
