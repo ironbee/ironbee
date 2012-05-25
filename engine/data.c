@@ -45,9 +45,9 @@
 
 
 /* -- Constants -- */
-#define DPI_LIST_FILTER_MARKER ':'
-#define DPI_LIST_FILTER_PREFIX '/'
-#define DPI_LIST_FILTER_SUFFIX '/'
+const char DPI_LIST_FILTER_MARKER = ':';
+const char DPI_LIST_FILTER_PREFIX = '/';
+const char DPI_LIST_FILTER_SUFFIX = '/';
 
 /* -- Exported Data Access Routines -- */
 
