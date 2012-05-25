@@ -233,12 +233,13 @@ ib_status_t ib_rule_match(ib_engine_t *ib,
                           ib_context_t *ctx,
                           const ib_rule_t *ref,
                           ib_rule_t **rule);
+
 /**
  * Add an enable ID/Tag to the enable list for the specified context
  * @internal
  *
  * @param[in] ib IronBee engine
- * @parma[in] ctx IronBee context
+ * @param[in] ctx IronBee context
  * @param[in] etype Enable type (ID/Tag)
  * @param[in] name String description of @a etype
  * @param[in] file Configuration file name
@@ -259,7 +260,7 @@ ib_status_t ib_rule_enable(ib_engine_t *ib,
  * Add an enable ID to the enable list for the specified context
  *
  * @param[in] ib IronBee engine
- * @parma[in] ctx IronBee context
+ * @param[in] ctx IronBee context
  * @param[in] file Configuration file name
  * @param[in] lineno Line number in @a file
  * @param[in] id String of the id
@@ -276,7 +277,7 @@ ib_status_t ib_rule_enable_id(ib_engine_t *ib,
  * Add an enable tag to the enable list for the specified context
  *
  * @param[in] ib IronBee engine
- * @parma[in] ctx IronBee context
+ * @param[in] ctx IronBee context
  * @param[in] file Configuration file name
  * @param[in] lineno Line number in @a file
  * @param[in] tag String of the tag
