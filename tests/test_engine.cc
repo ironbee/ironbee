@@ -336,6 +336,8 @@ TEST(TestIronBee, test_dpi_name)
     out_field = NULL;
     ASSERT_IB_OK(api->get(dpi, "ARGV:/.*(1|3)/", 4, &out_field));
     ASSERT_TRUE(out_field);
+
+    ibtest_engine_destroy(ib);
 }
 
 // Test pattern matching a field.
