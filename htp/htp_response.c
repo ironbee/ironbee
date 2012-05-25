@@ -241,8 +241,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                 // We don't know the length of the response body, which means
                 // that the body will consume all data until the connection
                 // is closed.
-                //
-                // We don't need to do anything here.
+                d.len++;
             }
         }
     }
