@@ -63,6 +63,14 @@ typedef enum {
 } ib_rule_action_t;
 
 /**
+ * Rule enable type
+ */
+typedef enum {
+    RULE_ENABLE_ID,
+    RULE_ENABLE_TAG,
+} ib_rule_enable_type_t;
+
+/**
  * Rule engine: Rule meta data
  */
 typedef struct {
@@ -76,6 +84,8 @@ typedef struct {
     uint8_t                confidence;      /**< Rule confidence */
     uint16_t               revision;        /**< Rule revision # */
     ib_flags_t             flags;           /**< Rule meta-data flags */
+    const char            *config_file;     /**< File rule defined in */
+    unsigned int           config_line;     /**< Line number of rule def */
 } ib_rule_meta_t;
 
 /**
@@ -97,15 +107,8 @@ typedef struct ib_rule_phase_meta_t ib_rule_phase_meta_t;
 typedef struct {
     ib_rule_phase_t             phase_num;   /**< Phase number */
     const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
-    ib_list_t                  *rule_list;   /**< Rules to execute in phase */
+    ib_list_t                  *phase_list;  /**< Rules to execute in phase */
 } ib_ruleset_phase_t;
-
-/**
- * Set of rules for all phases
- */
-typedef struct {
-    ib_ruleset_phase_t     phases[IB_RULE_PHASE_COUNT];
-} ib_ruleset_t;
 
 /**
  * Rule engine: Rule
@@ -120,10 +123,19 @@ struct ib_rule_t {
     ib_list_t             *true_actions;    /**< Actions if condition True */
     ib_list_t             *false_actions;   /**< Actions if condition False */
     ib_list_t             *parent_rlist;    /**< Parent rule list */
+    ib_context_t          *ctx;             /**< Parent context */
     ib_rule_t             *chained_rule;    /**< Next rule in the chain */
     ib_rule_t             *chained_from;    /**< Ptr to rule chained from */
     ib_flags_t             flags;           /**< External, etc. */
 };
+
+/**
+ * Rule engine context data
+ */
+typedef struct {
+    ib_rule_t       *rule;         /**< The rule itself */
+    ib_flags_t       flags;        /**< Rule flags: same as ib_rule_t.flags */
+} ib_rule_ctx_data_t;
 
 /**
  * Rule engine parser data
@@ -133,12 +145,40 @@ typedef struct {
 } ib_rule_parser_data_t;
 
 /**
+ * Set of rules for all phases.
+ * The elements of the phases list are ib_rule_ctx_data_t objects.
+ */
+typedef struct {
+    ib_ruleset_phase_t     phases[IB_RULE_PHASE_COUNT];
+} ib_ruleset_t;
+
+/**
+ * Data on enable directives.
+ */
+typedef struct {
+    ib_rule_enable_type_t  enable_type;  /**< Enable by ID or Tag */
+    const char            *enable_str;   /**< String of ID or Tag */
+    const char            *file;         /**< Configuration file of enable */
+    unsigned int           lineno;       /**< Line number in config file */
+} ib_rule_enable_t;
+
+/**
+ * Rules data for each context; typedef in ironbee_private.h
+ */
+struct ib_rule_context_t {
+    ib_ruleset_t           ruleset;     /**< Rules to exec */
+    ib_list_t             *rule_list;   /**< All rules owned by this context */
+    ib_hash_t             *rule_hash;   /**< Hash of rules (by rule-id) */
+    ib_list_t             *enable_list; /**< IDs/tags enabled via RuleEnable */
+    ib_rule_parser_data_t  parser_data; /**< Rule parser specific data */
+};
+
+/**
  * Rule engine data; typedef in ironbee_private.h
  */
 struct ib_rule_engine_t {
-    ib_ruleset_t           ruleset;     /**< Rules to exec */
     ib_list_t             *rule_list;   /**< All rules owned by this context */
-    ib_rule_parser_data_t  parser_data; /**< Rule parser specific data */
+    ib_hash_t             *rule_hash;   /**< Hash of rules (by rule-id) */
 };
 
 /**
@@ -148,6 +188,8 @@ struct ib_rule_engine_t {
  *
  * @param[in] ib IronBee engine
  * @param[in] ctx Current IronBee context
+ * @param[in] file Name of configuration file being parsed
+ * @param[in] lineno Line number in configuration file
  * @param[in] is_stream IB_TRUE if this is an inspection rule else IB_FALSE
  * @param[out] prule Address which new rule is written
  *
@@ -155,8 +197,98 @@ struct ib_rule_engine_t {
  */
 ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
+                                      const char *file,
+                                      unsigned int lineno,
                                       ib_bool_t is_stream,
                                       ib_rule_t **prule);
+
+/**
+ * Lookup rule by ID
+ * @internal
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] ctx Context to look in (or NULL).
+ * @param[in] id ID to match.
+ * @param[out] rule Matching rule.
+ *
+ * @returns Status code
+ */
+ib_status_t ib_rule_lookup(ib_engine_t *ib,
+                           ib_context_t *ctx,
+                           const char *id,
+                           ib_rule_t **rule);
+
+/**
+ * Find rule matching a reference rule.
+ * @internal
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] ctx Context to look in (or NULL).
+ * @param[in] ref Reference rule.
+ * @param[out] rule Matching rule.
+ *
+ * @returns Status code
+ */
+ib_status_t ib_rule_match(ib_engine_t *ib,
+                          ib_context_t *ctx,
+                          const ib_rule_t *ref,
+                          ib_rule_t **rule);
+
+/**
+ * Add an enable ID/Tag to the enable list for the specified context
+ * @internal
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] etype Enable type (ID/Tag)
+ * @param[in] name String description of @a etype
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ * @param[in] str String of the id/tag
+ *
+ * @returns Status code
+ */
+ib_status_t ib_rule_enable(ib_engine_t *ib,
+                           ib_context_t *ctx,
+                           ib_rule_enable_type_t etype,
+                           const char *name,
+                           const char *file,
+                           unsigned int lineno,
+                           const char *str);
+
+/**
+ * Add an enable ID to the enable list for the specified context
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ * @param[in] id String of the id
+ *
+ * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
+ */
+ib_status_t ib_rule_enable_id(ib_engine_t *ib,
+                              ib_context_t *ctx,
+                              const char *file,
+                              unsigned int lineno,
+                              const char *id);
+
+/**
+ * Add an enable tag to the enable list for the specified context
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ * @param[in] tag String of the tag
+ *
+ * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
+ */
+ib_status_t ib_rule_enable_tag(ib_engine_t *ib,
+                               ib_context_t *ctx,
+                               const char *file,
+                               unsigned int lineno,
+                               const char *tag);
 
 /**
  * Set the execution phase of a rule (for phase rules).

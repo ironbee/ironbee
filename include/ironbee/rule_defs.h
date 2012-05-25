@@ -60,20 +60,19 @@ typedef enum {
  * expected to extract whatever fields, etc. it requires itself.
  */
 #define IB_RULE_FLAG_NONE        (0x0)     /**< No flags */
-#define IB_RULE_FLAG_ENABLED     (1 << 0)  /**< Rule is enabled */
-#define IB_RULE_FLAG_VALID       (1 << 1)  /**< Rule is valid */
-#define IB_RULE_FLAG_EXTERNAL    (1 << 2)  /**< External rule */
-#define IB_RULE_FLAG_CHAIN       (1 << 3)  /**< Rule is parent in a chain */
-#define IB_RULE_FLAG_IN_CHAIN    (1 << 4)  /**< Rule is part of a chain */
+#define IB_RULE_FLAG_VALID       (1 << 0)  /**< Rule is valid */
+#define IB_RULE_FLAG_EXTERNAL    (1 << 1)  /**< External rule */
+#define IB_RULE_FLAG_CHAIN       (1 << 2)  /**< Rule is parent in a chain */
+#define IB_RULE_FLAG_IN_CHAIN    (1 << 3)  /**< Rule is part of a chain */
+#define IB_RULE_FLAG_MAIN_CTX    (1 << 4)  /**< Rule owned by main context */
+#define IB_RULE_FLAG_MARK        (1 << 5)  /**< Mark used in list building */
 
 /**
  * Rule meta-flags:
- * RUNABLE: Only run the rule if it's enabled and valid
  * PHASE: Flags set for all phase rules
  * STREAM: Flags set for all stream rules
  * CHAIN: Rule is any part of a chain
  */
-#define IB_RULE_FLAGS_RUNABLE (IB_RULE_FLAG_ENABLED | IB_RULE_FLAG_VALID)
 #define IB_RULE_FLAGS_PHASE   \
     (IB_RULE_FLAG_ALLOW_TFNS | IB_RULE_FLAG_ALLOW_CHAIN)
 #define IB_RULE_FLAGS_STREAM  (IB_RULE_FLAG_NONE)
@@ -85,6 +84,12 @@ typedef enum {
 #define IB_RULEMD_FLAG_NONE        (0x0)     /**< No flags */
 #define IB_RULEMD_FLAG_EXPAND_MSG  (1 << 0)  /**< Expand rule message */
 #define IB_RULEMD_FLAG_EXPAND_DATA (1 << 1)  /**< Expand rule logdata */
+
+/**
+ * Rule context flags
+ */
+#define IB_RULECTX_FLAG_NONE          (0x0)  /**< No flags */
+#define IB_RULECTX_FLAG_ENABLED    (1 << 0)  /**< Rule is enabled */
 
 /**
  * Rule engine: Basic rule type

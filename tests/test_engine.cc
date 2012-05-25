@@ -24,6 +24,7 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "base_fixture.h"
 
 #include <ironbee/field.h>
 #include <ironbee/state_notify.h>
@@ -235,7 +236,7 @@ static ib_status_t dyn_get(
 }
 
 /// @test Test ironbee library - data provider
-TEST(TestIronBee, test_dpi)
+TEST(TestIronBee, test_dpi_dynf)
 {
     ib_engine_t *ib;
     ib_provider_inst_t *dpi;
@@ -301,6 +302,97 @@ TEST(TestIronBee, test_dpi)
     rc = ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(5, n);
+
+    ibtest_engine_destroy(ib);
+}
+
+TEST(TestIronBee, test_dpi_name)
+{
+    ib_engine_t *ib = NULL;
+    ib_provider_inst_t *dpi = NULL;
+    ib_field_t *list_field = NULL;
+    ib_field_t *out_field = NULL;
+
+    ibtest_engine_create(&ib);
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_provider_instance_create(ib,
+                                    IB_PROVIDER_TYPE_DATA,
+                                    IB_DSTR_CORE,
+                                    &dpi,
+                                    ib_engine_pool_main_get(ib),
+                                    NULL)
+    );
+    ASSERT_TRUE(dpi);
+
+    ASSERT_IB_OK(ib_data_add_list(dpi, "ARGV", &list_field));
+    ASSERT_IB_OK(ib_data_get(dpi, "ARGV", &out_field));
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+
+    ASSERT_IB_OK(api->get(dpi, "ARGV", 4, &out_field));
+    ASSERT_TRUE(out_field);
+    out_field = NULL;
+    ASSERT_IB_OK(api->get(dpi, "ARGV:/.*(1|3)/", 4, &out_field));
+    ASSERT_TRUE(out_field);
+}
+
+// Test pattern matching a field.
+TEST(TestIronBee, test_dpi_pcre)
+{
+    ib_engine_t *ib;
+    ib_provider_inst_t *dpi;
+    ib_field_t *list_field;
+    ib_field_t *out_field;
+    ib_list_t *list;
+    ib_list_t *out_list;
+    ib_field_t *field1;
+    ib_field_t *field2;
+    ib_field_t *field3;
+    ib_num_t num1 = 1;
+    ib_num_t num2 = 2;
+    ib_num_t num3 = 3;
+
+    ibtest_engine_create(&ib);
+
+    ASSERT_EQ(
+        IB_OK,
+        ib_provider_instance_create(ib,
+                                    IB_PROVIDER_TYPE_DATA,
+                                    IB_DSTR_CORE,
+                                    &dpi,
+                                    ib_engine_pool_main_get(ib),
+                                    NULL)
+    );
+    ASSERT_TRUE(dpi);
+
+    ASSERT_IB_OK(
+        ib_field_create(&field1, dpi->mp, "field1", 6, IB_FTYPE_NUM, &num1));
+    ASSERT_IB_OK(
+        ib_field_create(&field2, dpi->mp, "field2", 6, IB_FTYPE_NUM, &num2));
+    ASSERT_IB_OK(
+        ib_field_create(&field3, dpi->mp, "field3", 6, IB_FTYPE_NUM, &num3));
+    ASSERT_IB_OK(ib_data_add_list(dpi, "ARGV", &list_field));
+    ASSERT_IB_OK(ib_data_get(dpi, "ARGV", &out_field));
+
+    ASSERT_IB_OK(ib_field_value(list_field, &list));
+    ASSERT_IB_OK(ib_list_push(list, field1));
+    ASSERT_IB_OK(ib_list_push(list, field2));
+    ASSERT_IB_OK(ib_list_push(list, field3));
+
+    ASSERT_IB_OK(ib_data_get(dpi, "ARGV:/.*(1|3)/", &out_field));
+
+    ASSERT_IB_OK(ib_field_value(out_field, &out_list));
+    ASSERT_NE(list, out_list); /* Make sure it's a different list. */
+
+    ASSERT_EQ(2U, IB_LIST_ELEMENTS(out_list));
+
+    out_field = (ib_field_t *) IB_LIST_FIRST(out_list)->data;
+    ASSERT_FALSE(memcmp(out_field->name, field1->name, field1->nlen));
+
+    out_field = (ib_field_t *) IB_LIST_LAST(out_list)->data;
+    ASSERT_FALSE(memcmp(out_field->name, field3->name, field3->nlen));
 
     ibtest_engine_destroy(ib);
 }

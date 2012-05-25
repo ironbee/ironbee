@@ -46,6 +46,7 @@ const char *ib_status_to_string(ib_status_t status)
     case IB_EAGAIN:    return "EAGAIN";
     case IB_EOTHER:    return "EOTHER";
     case IB_EBADVAL:   return "EBADVAL";
+    case IB_EEXIST:    return "EEXIST";
     default:
         sprintf(buffer, "Unknown Status Code: %d", status);
         return buffer;

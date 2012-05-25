@@ -1178,70 +1178,14 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
                                  ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    const char *subkey;
     ib_status_t rc;
-
-    /* Allow "key:subkey" syntax, but still fall through
-     * to a full key lookup if that fails.
-     */
-    if ((subkey = strchr(name, ':')) != NULL) {
-        size_t klen;
-        size_t sklen;
-
-        subkey += 1; /* skip over ":" */
-        klen = (subkey - name) - 1;
-        sklen = nlen - klen - 1;
-
-        rc = ib_hash_get_ex(
-            (ib_hash_t *)dpi->data,
-            pf,
-            (void *)name, klen
-        );
-        if (rc == IB_OK) {
-            /* Try dynamic lookup. */
-            if(ib_field_is_dynamic(*pf)) {
-                rc = ib_field_value_ex(*pf, pf, (void *)subkey, sklen);
-                if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-                }
-                if (*pf == NULL) {
-                    IB_FTRACE_RET_STATUS(IB_ENOENT);
-                }
-                IB_FTRACE_RET_STATUS(IB_OK);
-            }
-            else if ((*pf)->type == IB_FTYPE_LIST) {
-                ib_list_node_t *node;
-                ib_list_t *list;
-                // @todo Remove mutable once list is const correct.
-                rc = ib_field_value(*pf, ib_ftype_list_mutable_out(&list));
-                if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-                }
-
-                /* Lookup the subkey value in the field list. */
-                IB_LIST_LOOP(list, node) {
-                    ib_field_t *sf = (ib_field_t *)ib_list_node_data(node);
-
-                    if (   (sf->nlen == sklen)
-                        && (strncasecmp(sf->name, subkey, sklen) == 0))
-                    {
-                        *pf = sf;
-                        IB_FTRACE_RET_STATUS(IB_OK);
-                    }
-                }
-                IB_FTRACE_RET_STATUS(IB_ENOENT);
-            }
-
-            ib_log_error(dpi->pr->ib,  "Trying to lookup subkey in non-list.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-    }
 
     rc = ib_hash_get_ex(
         (ib_hash_t *)dpi->data,
         pf,
         (void *)name, nlen
     );
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -4142,6 +4086,9 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Notify the rule engine */
+
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -5457,6 +5404,14 @@ static ib_status_t core_ctx_open(ib_engine_t  *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Initialize the rule engine for the context */
+    rc = ib_rule_engine_ctx_init(ib, mod, ctx);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to initialize rule engine context: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -5487,9 +5442,10 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     FILE *orig_fp;
 
     /* Initialize the rule engine for the context */
-    rc = ib_rule_engine_ctx_init(ib, mod, ctx);
+    rc = ib_rule_engine_ctx_close(ib, mod, ctx);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize rule engine context: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to close rule engine context: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 

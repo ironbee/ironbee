@@ -301,7 +301,7 @@ ib_bool_t ib_flags_all(ib_flags_t flags, ib_flags_t check);
  */
 ib_bool_t ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
 #define ib_flags_set(flags,flags_set) \
-    ( (flags) | (flags_set) )
+    ( (flags) |= (flags_set) )
 
 /**
  * Clear flag bits
@@ -313,7 +313,7 @@ ib_bool_t ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
  */
 ib_bool_t ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
 #define ib_flags_clear(flags,flags_clear) \
-    ( (flags) & (~(flags_clear)) )
+    ( (flags) &= (~(flags_clear)) )
 
 
 /**

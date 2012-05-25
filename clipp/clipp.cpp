@@ -82,6 +82,7 @@
 #include "aggregate_modifier.hpp"
 #include "edit_modifier.hpp"
 #include "limit_modifier.hpp"
+#include "select_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -235,6 +236,14 @@ input_generator_t init_pcap_generator(const string& arg);
 //! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
 input_modifier_t init_aggregate_modifier(const string& arg);
 
+/**
+ * Construct select modifier.
+ *
+ * @param[in] arg @a arg is a comma separated list of either single indices
+ *                are ranges: @a i-j.
+ **/
+input_modifier_t init_select_modifier(const string& arg);
+
 ///@}
 
 /**
@@ -340,6 +349,10 @@ void help()
     "    - response_header -- response header.\n"
     "    - response_body -- response body.\n"
     "  @limit:n -- Stop chain after <n> inputs.\n"
+    "  @select:indices --\n"
+    "    Only pass through <indices> inputs.\n"
+    "    Indices are 1 based.\n"
+    "    <indices> is comma separated list of single index or i-j ranges.\n"
     ;
 }
 
@@ -499,6 +512,7 @@ int main(int argc, char** argv)
     modifier_factory_map["edit"] = construct_modifier<EditModifier>;
     modifier_factory_map["limit"] =
         construct_modifier<LimitModifier, size_t>;
+    modifier_factory_map["select"] = init_select_modifier;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -808,6 +822,48 @@ input_modifier_t init_aggregate_modifier(const string& arg)
     }
 }
 
+input_modifier_t init_select_modifier(const string& arg)
+{
+    if (arg.empty()) {
+        throw runtime_error("@select requires an argument.");
+    }
+
+    SelectModifier::range_list_t select;
+    vector<string> subargs = split_on_char(arg, ',');
+    BOOST_FOREACH(const string& subarg, subargs) {
+        vector<string> subsubargs = split_on_char(subarg, '-');
+        if (subsubargs.size() == 1) {
+            subsubargs.push_back(subsubargs.front());
+        }
+        if (subsubargs.size() != 2) {
+            throw runtime_error("Could not parse subarg: " + subarg);
+        }
+        size_t left;
+        size_t right;
+        try {
+            left = boost::lexical_cast<size_t>(subsubargs.front());
+        }
+        catch (...) {
+            throw runtime_error("Error parsing: " + subsubargs.front());
+        }
+        try {
+            right = boost::lexical_cast<size_t>(subsubargs.back());
+        }
+        catch (...) {
+            throw runtime_error("Error parsing: " + subsubargs.back());
+        }
+
+        if (left > right) {
+            swap(left, right);
+        }
+
+        select.push_back(make_pair(left, right));
+    }
+
+    return SelectModifier(select);
+}
+
+
 template <typename ResultType, typename MapType>
 ResultType
 construct_component(const component_t& component, const MapType& map)
@@ -873,5 +929,3 @@ void construct_modifiers(
         );
     }
 }
-
-

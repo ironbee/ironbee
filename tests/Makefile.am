@@ -36,11 +36,12 @@ if LINUX
 LDFLAGS += -lrt
 endif
 
-LDFLAGS += $(HTP_LDFLAGS)
+LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS)
 
 # This is a common set of files for runnign tests of modules.
 MODULE_TEST_LDADD = $(LDADD) \
                     $(HTP_LDADD) \
+                    $(PCRE_LDADD) \
                     $(top_builddir)/engine/libironbee.la
 
 # Point the module base path to the modules build dir

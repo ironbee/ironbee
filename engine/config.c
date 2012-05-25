@@ -383,6 +383,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
                                               const char **pname)
 {
+    IB_FTRACE_INIT();
     const char *name;
     ib_status_t rc;
 
@@ -669,11 +670,39 @@ void DLL_PUBLIC ib_log_cfg(ib_cfgparser_t *cp, int level,
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp, int level,
-                            const char *prefix, const char *file, int line,
-                            const char *fmt, va_list ap)
+void DLL_PUBLIC ib_log_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+                              const char *cfgfile, unsigned int cfgline,
+                              int level,
+                              const char *prefix,
+                              const char *file, int line,
+                              const char *fmt, ...)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(mp != NULL);
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    ib_vlog_cfg_ex(ib, mp, cfgfile, cfgline,
+                   level, prefix, file, line, fmt, ap);
+
+    va_end(ap);
+
+    IB_FTRACE_RET_VOID();
+}
+
+void DLL_PUBLIC ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+                               const char *cfgfile, unsigned int cfgline,
+                               int level,
+                               const char *prefix,
+                               const char *file, int line,
+                               const char *fmt, va_list ap)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fmt != NULL);
 
     char prebuf[32+1];
     char lnobuf[16+1];
@@ -682,10 +711,10 @@ void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp, int level,
 
     snprintf(prebuf, 32, "CONFIG_%s", prefix == NULL ? "" : prefix);
 
-    if (cp->cur_file != NULL) {
-        snprintf(lnobuf, 16, "%u", cp->cur_lineno);
-        fmtlen = strlen(fmt) + strlen(cp->cur_file) + strlen(lnobuf) + 8;
-        fmtbuf = (char *)ib_mpool_alloc(cp->mp, fmtlen);
+    if (cfgfile != NULL) {
+        snprintf(lnobuf, 16, "%u", cfgline);
+        fmtlen = strlen(fmt) + strlen(cfgfile) + strlen(lnobuf) + 8;
+        fmtbuf = (char *)ib_mpool_alloc(mp, fmtlen);
     }
     else {
         lnobuf[0] = '\0';
@@ -695,13 +724,25 @@ void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp, int level,
     if (fmtbuf != NULL) {
         strcpy(fmtbuf, fmt);
         strcat(fmtbuf, " @ ");
-        strcat(fmtbuf, cp->cur_file);
+        strcat(fmtbuf, cfgfile);
         strcat(fmtbuf, ":");
         strcat(fmtbuf, lnobuf);
         fmt = fmtbuf;
     }
 
-    ib_vlog_ex(cp->ib, level, NULL, prebuf, file, line, fmt, ap);
+    ib_vlog_ex(ib, level, NULL, prebuf, file, line, fmt, ap);
+
+    IB_FTRACE_RET_VOID();
+}
+
+void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp, int level,
+                            const char *prefix, const char *file, int line,
+                            const char *fmt, va_list ap)
+{
+    IB_FTRACE_INIT();
+
+    ib_vlog_cfg_ex(cp->ib, cp->mp, cp->cur_file, cp->cur_lineno,
+                   level, prefix, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }

@@ -1940,7 +1940,7 @@ typedef void (*ib_log_logger_fn_t)(void *cbdata,
  * @param line Line number (or 0)
  * @param fmt Printf-like format string
  */
-void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
+void DLL_PUBLIC ib_log_ex(const ib_engine_t *ib, int level,
                           const ib_tx_t *tx,
                           const char *prefix, const char *file, int line,
                           const char *fmt, ...)
@@ -1961,10 +1961,10 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
  * @param fmt Printf-like format string
  * @param ap Argument list.
  */
-void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
-                          const ib_tx_t *tx,
-                          const char *prefix, const char *file, int line,
-                          const char *fmt,  va_list ap);
+void DLL_PUBLIC ib_vlog_ex(const ib_engine_t *ib, int level,
+                           const ib_tx_t *tx,
+                           const char *prefix, const char *file, int line,
+                           const char *fmt,  va_list ap);
 
 
 /**

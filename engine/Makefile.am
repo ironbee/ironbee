@@ -22,9 +22,9 @@ libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
                         config-parser.h \
                         ironbee_private.h \
                         $(top_builddir)/lua/ironbee.h
-libironbee_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)
-libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la
-libironbee_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS)
+libironbee_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) $(PCRE_CFLAGS)
+libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)
+libironbee_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS) 
 
 if DARWIN
 install-exec-hook: $(lib_LTLIBRARIES)

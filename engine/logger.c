@@ -355,10 +355,10 @@ void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
-                           const ib_tx_t *tx,
-                           const char *prefix, const char *file, int line,
-                           const char *fmt, ...)
+void DLL_PUBLIC ib_log_ex(const ib_engine_t *ib, int level,
+                          const ib_tx_t *tx,
+                          const char *prefix, const char *file, int line,
+                          const char *fmt, ...)
 {
     IB_FTRACE_INIT();
 
@@ -372,7 +372,7 @@ void DLL_PUBLIC ib_log_ex(ib_engine_t *ib, int level,
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_vlog_ex(ib_engine_t *ib, int level,
+void DLL_PUBLIC ib_vlog_ex(const ib_engine_t *ib, int level,
                            const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)

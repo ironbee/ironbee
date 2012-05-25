@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1270 
+personal_ws-1.1 en 1272 
 refactor
 cfg
 api
@@ -224,6 +224,7 @@ ptype
 vlogmsg
 ConstLists
 getString
+itx
 IronBeeConfigParser
 reutilize
 uncompiled
@@ -545,6 +546,7 @@ subprocess
 tristate
 libcurl
 subclassed
+parsable
 ptfn
 params
 endl
