@@ -572,6 +572,145 @@ ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
  */
 ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
 
+
+/**
+ * Return the configured rule logging level.
+ *
+ * This is used to determine if optional complex processing should be
+ * performed to log possibly option information.
+ *
+ * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
+ *
+ * @return The log level configured.
+ */
+ib_rule_log_level_t ib_rule_log_level(const ib_engine_t *ib);
+
+/**
+ * Return level of rule execution logging is enabled.
+ *
+ * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
+ *
+ * @return The log level configured.
+ */
+ib_rule_log_exec_t ib_rule_log_exec_level(const ib_engine_t *ib);
+
+/**
+ * Generic Logger for rules.
+ *
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
+ *          log header data.
+ *
+ * @param[in] level Log level
+ * @param[in] tx Transaction information
+ * @param[in] rule Rule to log (or NULL)
+ * @param[in] target Rule target (or NULL)
+ * @param[in] tfn Transformation (or NULL)
+ * @param[in] prefix String to prefix log header data (or NULL)
+ * @param[in] file Filename (or NULL)
+ * @param[in] line Line number (or 0)
+ * @param[in] fmt Printf-like format string
+ * @param[in] ap Argument list
+ */
+void ib_rule_vlog(ib_rule_log_level_t level,
+                  const ib_tx_t *tx,
+                  const ib_rule_t *rule,
+                  const ib_rule_target_t *target,
+                  const ib_tfn_t *tfn,
+                  const char *prefix,
+                  const char *file,
+                  int line,
+                  const char *fmt,
+                  va_list ap);
+
+/**
+ * Generic Logger for rules.
+ *
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
+ *          log header data.
+ *
+ * @param[in] level Log level
+ * @param[in] tx Transaction information
+ * @param[in] rule Rule to log (or NULL)
+ * @param[in] target Rule target (or NULL)
+ * @param[in] tfn Transformation (or NULL)
+ * @param[in] prefix String to prefix log header data (or NULL)
+ * @param[in] file Filename (or NULL)
+ * @param[in] line Line number (or 0)
+ * @param[in] fmt Printf-like format string
+ */
+void ib_rule_log(ib_rule_log_level_t level,
+                 const ib_tx_t *tx,
+                 const ib_rule_t *rule,
+                 const ib_rule_target_t *target,
+                 const ib_tfn_t *tfn,
+                 const char *prefix,
+                 const char *file,
+                 int line,
+                 const char *fmt, ...)
+    PRINTF_ATTRIBUTE(9, 0);
+
+/**
+ * Rule execution logging
+ *
+ * @param[in] tx Transaction information
+ * @param[in] rule Rule to log
+ * @param[in] result_type Log true or false results?
+ * @param[in] results List of target results
+ * @param[in] actions List of actions executed
+ * @param[in] file Source file name
+ * @param[in] line Source line number
+ */
+void ib_rule_log_exec_ex(const ib_tx_t *tx,
+                         const ib_rule_t *rule,
+                         ib_bool_t result_type,
+                         const ib_list_t *results,
+                         const ib_list_t *actions,
+                         const char *file,
+                         int line);
+
+/**
+ * Log a field's value
+ *
+ * @param[in] tx Transaction
+ * @param[in] rule Rule to log (or NULL)
+ * @param[in] target Rule target (or NULL)
+ * @param[in] tfn Transformation (or NULL)
+ * @param[in] label Label string
+ * @param[in] f Field
+ */
+void ib_rule_log_field(const ib_tx_t *tx,
+                       const ib_rule_t *rule,
+                       const ib_rule_target_t *target,
+                       const ib_tfn_t *tfn,
+                       const char *label,
+                       const ib_field_t *f);
+
+/** Rule execution logging */
+#define ib_rule_log_exec(tx, rule, result_type, results, actions) \
+    ib_rule_log_exec_ex(tx, rule, result_type, results, actions, \
+                        __FILE__, __LINE__)
+
+/** Rule error logging */
+#define ib_rule_log_error(tx, rule, target, tfn, ...) \
+    ib_rule_log(IB_RULE_LOG_ERROR, tx, rule, target, tfn, \
+                "ERROR", __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule full logging */
+#define ib_rule_log_full(tx, rule, target, tfn, ...) \
+    ib_rule_log(IB_RULE_LOG_FULL, tx, rule, target, tfn, \
+                "FULL", __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule debug logging */
+#define ib_rule_log_debug(tx, rule, target, tfn, ...) \
+    ib_rule_log(IB_RULE_LOG_DEBUG, tx, rule, target, tfn, \
+                "DEBUG", __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule trace logging */
+#define ib_rule_log_trace(tx, rule, target, tfn, ...) \
+    ib_rule_log(IB_RULE_LOG_TRACE, tx, rule, target, tfn, \
+                "TRACE", __FILE__, __LINE__, __VA_ARGS__)
+
+
 /** @} */
 
 #ifdef __cplusplus

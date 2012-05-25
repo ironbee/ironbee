@@ -30,6 +30,7 @@
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 #include <ironbee/module.h>
+#include <ironbee/rule_defs.h>
 #include <ironbee/logformat.h>
 
 #include <stdio.h>
@@ -91,6 +92,8 @@ struct ib_core_cfg_t {
     const char      *module_base_path;  /**< Module base path. */
     const char      *rule_base_path;    /**< Rule base path. */
     ib_rule_log_level_t rule_log_level; /**< Rule logging level */
+    ib_rule_log_exec_t rule_log_exec;   /**< Rule exec logging level */
+    ib_bool_t        rule_log_fast;     /**< Fast rule logging enabled */
     ib_num_t         block_status;      /**< Status codes when blocking. */
 };
 

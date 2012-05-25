@@ -4362,33 +4362,53 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     }
     else if (strcasecmp("RuleEngineLogData", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_rule_log_level_t level;
-        if (strcasecmp("Off", p1_unescaped) == 0) {
-            level = IB_RULE_LOG_OFF;
+        ib_rule_log_level_t  level = IB_RULE_LOG_OFF;
+        ib_rule_log_exec_t   exec = IB_RULE_LOG_EXEC_OFF;
+        char                *p1_copy = ib_mpool_strdup(cp->mp, p1_unescaped);
+        char                *cur;
+
+        if (p1_copy == NULL) {
+            ib_log_error_cfg(cp, "Error copying \"%s\" for \"%s\"",
+                             p1_unescaped, name);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
-        else if (strcasecmp("Fast", p1_unescaped) == 0) {
-            level = IB_RULE_LOG_FAST;
-        }
-        else if (strcasecmp("RuleExec", p1_unescaped) == 0) {
-            level = IB_RULE_LOG_EXEC;
-        }
-        else if (strcasecmp("Full", p1_unescaped) == 0) {
-            level = IB_RULE_LOG_FULL;
-        }
-        else if (strcasecmp("Debug", p1_unescaped) == 0) {
-            level = IB_RULE_LOG_DEBUG;
-        }
-        else if (strcasecmp("Trace", p1_unescaped) == 0) {
-            level = IB_RULE_LOG_TRACE;
-        }
-        else {
-            ib_log_error(ib,
-                         "Invalid value for %s: \"%s\"",
-                         name, p1_unescaped);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+        
+        cur = strtok(p1_copy, ",");
+        do {
+            if (strcasecmp("Off", cur) == 0) {
+                level = IB_RULE_LOG_OFF;
+                exec  = IB_RULE_LOG_EXEC_OFF;
+                break;
+            }
+            else if (strcasecmp("Fast", cur) == 0) {
+                exec = IB_RULE_LOG_EXEC_FAST;
+            }
+            else if (strcasecmp("RuleExec", cur) == 0) {
+                exec = IB_RULE_LOG_EXEC_FULL;
+            }
+            else if (strcasecmp("Full", cur) == 0) {
+                level = IB_RULE_LOG_FULL;
+            }
+            else if (strcasecmp("Debug", cur) == 0) {
+                level = IB_RULE_LOG_DEBUG;
+            }
+            else if (strcasecmp("Trace", cur) == 0) {
+                level = IB_RULE_LOG_TRACE;
+            }
+            else {
+                ib_log_error(ib,
+                             "Invalid value for %s: \"%s\"",
+                             name, cur);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            cur = strtok(NULL, ",");
+        } while (cur != NULL);
         ib_log_debug2(ib, "%s: %d", name, level);
         rc = ib_context_set_num(ctx, "rule_log_level", level);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_context_set_num(ctx, "rule_log_exec", exec);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
@@ -5025,6 +5045,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->module_base_path   = X_MODULE_BASE_PATH;
     corecfg->rule_base_path     = X_RULE_BASE_PATH;
     corecfg->rule_log_level     = IB_RULE_LOG_OFF;
+    corecfg->rule_log_exec      = IB_RULE_LOG_EXEC_OFF;
     corecfg->block_status       = 500;
 
     /* Define the logger provider API. */
@@ -5286,6 +5307,12 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NUM,
         ib_core_cfg_t,
         rule_log_level
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "rule_log_exec",
+        IB_FTYPE_NUM,
+        ib_core_cfg_t,
+        rule_log_exec
     ),
 
     /* Parser */

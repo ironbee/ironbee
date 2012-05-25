@@ -35,6 +35,26 @@ extern "C" {
  */
 
 /**
+ * Rule log level.
+ **/
+typedef enum {
+    IB_RULE_LOG_OFF,          /**< Rule logging off */
+    IB_RULE_LOG_ERROR,        /**< Error in rule execution */
+    IB_RULE_LOG_FULL,         /**< Normal rule execution */
+    IB_RULE_LOG_DEBUG,        /**< Developer oriented information */
+    IB_RULE_LOG_TRACE,        /**< Reserved for future use */
+} ib_rule_log_level_t;
+
+/**
+ * Rule execution log level.
+ **/
+typedef enum {
+    IB_RULE_LOG_EXEC_OFF,     /**< Rule execution logging off */
+    IB_RULE_LOG_EXEC_FAST,    /**< Fast logging */
+    IB_RULE_LOG_EXEC_FULL,    /**< Full execution logging */
+} ib_rule_log_exec_t;
+
+/**
  * Rule phase number.
  */
 typedef enum {

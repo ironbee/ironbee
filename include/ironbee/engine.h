@@ -1807,6 +1807,7 @@ ib_status_t DLL_PUBLIC ib_matcher_exec_field(ib_matcher_t *m,
  **/
 typedef enum {
     IB_LOG_EMERGENCY = 0, /**< System unusable. */
+    IB_LOG_ALWAYS    = 0, /**< Always log. */
     IB_LOG_ALERT     = 1, /**< Crisis happened; immediate attention */
     IB_LOG_CRITICAL  = 2, /**< Crisis coming; immediate attention */
     IB_LOG_ERROR     = 3, /**< Error occurred; needs attention */
@@ -1818,18 +1819,6 @@ typedef enum {
     IB_LOG_DEBUG3    = 9, /**< As above, lowest priority */
     IB_LOG_TRACE     = 10 /**< Reserved for future use */
 } ib_log_level_t;
-
-/**
- * Rule log level.
- **/
-typedef enum {
-    IB_RULE_LOG_OFF,      /**< Rule logging off */
-    IB_RULE_LOG_FAST,     /**< Fast, simple, one-per-line rule log */
-    IB_RULE_LOG_EXEC,     /**< Log rule execution */
-    IB_RULE_LOG_FULL,     /**< Normal rule execution */
-    IB_RULE_LOG_DEBUG,    /**< Developer oriented information */
-    IB_RULE_LOG_TRACE,    /**< Reserved for future use */
-} ib_rule_log_level_t;
 
 /**
  * String to level conversion.
