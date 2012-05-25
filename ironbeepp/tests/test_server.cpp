@@ -45,7 +45,7 @@ TEST(TestServer, basic)
 
     EXPECT_EQ(cs, s);
     EXPECT_EQ(IB_VERNUM, cs.version_number());
-    EXPECT_EQ(IB_ABINUM, cs.abi_number());
+    EXPECT_EQ(static_cast<uint32_t>(IB_ABINUM), cs.abi_number());
     EXPECT_EQ(string(IB_VERSION), cs.version());
     EXPECT_EQ(filename, cs.filename());
     EXPECT_EQ(name, cs.name());
