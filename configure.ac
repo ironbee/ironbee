@@ -62,6 +62,26 @@ if test "$enable_debug" = "yes"; then
     echo "Debug mode enabled"
 fi
 
+
+dnl -----------------------------------------------
+dnl Checks for OS'.
+dnl -----------------------------------------------
+
+#check for os
+AC_MSG_CHECKING([host os])
+
+# If no host os was detected, try with uname
+if test -z "$host" ; then
+        host="`uname`"
+fi
+case "$host" in
+       *-*-openbsd*)
+                CFLAGS="${CFLAGS} -fgnu89-inline"
+       ;;
+esac
+AC_MSG_RESULT(ok)
+
+
 dnl -----------------------------------------------
 dnl Checks for programs.
 dnl -----------------------------------------------
