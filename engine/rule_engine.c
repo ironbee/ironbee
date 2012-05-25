@@ -1904,7 +1904,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                                      "Enabled ID matched rule \"%s\"",
                                      ctx_rule->rule->meta.id);
                 IB_FTRACE_RET_STATUS(IB_OK);
-                
+
             }
         }
         ib_log_error_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
@@ -1958,7 +1958,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
 
     default:
         assert(0 && "Invalid rule enable type");
-        
+
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
