@@ -279,6 +279,9 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
         }
         /* ironbee wants to return an HTTP status.  We'll oblige */
         /* FIXME: would the semantics work for 1xx?  Do we care? */
+        /* No, we don't care unless a use case arises for the proxy
+         * to initiate a 1xx response independently of the backend.
+         */
         ctx->status = status;
         return IB_OK;
     }
@@ -890,7 +893,10 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         size_t v_len;
 
         line = (char*)icdatabuf;
-        rv = get_line(line, &line_len);
+        if (get_line(line, &line_len) != 1) {
+            TSError("Malformed Request line");
+            goto process_hdr_cleanup;
+        }
 
         // FIXME: This does not need the raw line as it will be built by
         //        ironbee if left NULL, so just pass in what parsed values
@@ -905,16 +911,18 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
         /* now loop over req header lines */
         rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
-        // FIXME: Assumes CRLF (line_len + 2)?
+        // get_line ensures CRLF (line_len + 2)?
         for (line += line_len + 2;
              get_line(line, &line_len) == 1;
              line += line_len + 2) {
             n_len = strcspn(line, ":");
             lptr = line + n_len + 1;
-            // FIXME: What about "Foo: \r"
-            while (isspace(*lptr))
+            while (isspace(*lptr) && lptr < line + line_len)
                 ++lptr;
             v_len = line_len - (lptr - line);
+            /* Ironbee presumably wants to know of anything zero-length
+             * so don't reject on those grounds!
+             */
             rv = ib_parsed_name_value_pair_list_add(ibhdrs,
                                                     line, n_len,
                                                     lptr, v_len);
@@ -937,7 +945,10 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         size_t v_len;
 
         line = (char*)icdatabuf;
-        rv = get_line(line, &line_len);
+        if (get_line(line, &line_len) != 1) {
+            TSError("Malformed Response line");
+            goto process_hdr_cleanup;
+        }
         ib_log_debug_tx(data->tx, "RESP_LINE: %.*s", (int)line_len, line);
 
         // FIXME: This does not need the raw line as it will be built by
@@ -957,7 +968,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         if (rv != IB_OK) {
             TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
         }
-        // FIXME: Assumes CRLF (line_len + 2)?
+        // get_line ensures CRLF (line_len + 2)?
         for (line += line_len + 2;
              get_line(line, &line_len) == 1;
              line += line_len + 2) {
@@ -1035,7 +1046,7 @@ add_hdr:
                 break;
         }
     }
-
+process_hdr_cleanup:
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);
     TSIOBufferDestroy(iobufp);
