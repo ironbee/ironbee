@@ -385,13 +385,15 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
 
     /* Check that our input field is a list type. */
     if (parent_field->type != IB_FTYPE_LIST) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        rc = IB_EINVAL;
+        goto exit_label;
     }
 
     /* Allocate pattern_str to hold null terminated string. */
     pattern_str = (char *)malloc(pattern_len+1);
     if (pattern_str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        rc = IB_EALLOC;
+        goto exit_label;
     }
 
     /* Build a string to hand to the pcre library. */
@@ -400,20 +402,22 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
 
     rc = ib_field_value(parent_field, &list);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        goto free_and_exit_label;
     }
 
     pcre_pattern = pcre_compile(pattern_str, 0, &errptr, &erroffset, NULL);
     if (pcre_pattern == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        rc = IB_EINVAL;
+        goto free_and_exit_label;
     }
     if (errptr) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        rc = IB_EINVAL;
+        goto free_and_exit_label;
     }
 
     rc = ib_list_create(&result_list, dpi->mp);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        goto free_and_exit_label;
     }
 
     IB_LIST_LOOP(list, list_node) {
@@ -431,7 +435,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
         if (pcre_rc == 0) {
             rc = ib_list_push(result_list, list_node->data);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                goto free_and_exit_label;
             }
         }
     }
@@ -443,6 +447,12 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
                          IB_FTYPE_LIST,
                          result_list);
 
+    /* Go to this label after pattern_str is allocated. */
+    free_and_exit_label:
+    free(pattern_str);
+
+    /* Early exits (before pattern_str is allocated) go here. */
+    exit_label:
     IB_FTRACE_RET_STATUS(rc);
 }
 
