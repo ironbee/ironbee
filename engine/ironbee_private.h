@@ -238,7 +238,6 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
                                     void *cbdata);
 
 /**
- * @internal
  * Initialize the rule engine.
  *
  * Called when the rule engine is loaded, registers event handlers.
@@ -250,10 +249,10 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
                                 ib_module_t *mod);
 
 /**
- * @internal
  * Initialize a context the rule engine.
+ * @internal
  *
- * Called when a context is initialized, performs rule engine initialization.
+ * Called when a context is initialized; performs rule engine initialization.
  *
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
@@ -264,10 +263,9 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                                     ib_context_t *ctx);
 
 /**
- * @internal
- * Close a context the rule engine.
+ * Close a context for the rule engine.
  *
- * Called when a context is closed, performs rule engine rule fixups.
+ * Called when a context is closed; performs rule engine rule fixups.
  *
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
@@ -278,10 +276,9 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                                      ib_context_t *ctx);
 
 /**
- * @internal
  * Initialize the core transformations.
  *
- * Called when the rule engine is loaded, registers the core transformations.
+ * Called when the rule engine is loaded; registers the core transformations.
  *
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
@@ -290,7 +287,6 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib,
                                          ib_module_t *mod);
 
 /**
- * @internal
  * Initialize the core operators.
  *
  * Called when the rule engine is loaded, registers the core operators.
@@ -302,10 +298,9 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib,
                                    ib_module_t *mod);
 
 /**
- * @internal
  * Initialize the core actions.
  *
- * Called when the rule engine is loaded, registers the core actions.
+ * Called when the rule engine is loaded; registers the core actions.
  *
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object

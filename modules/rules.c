@@ -753,12 +753,10 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Revision modifier */
-    if ( (strcasecmp(name, "rev") == 0) ||
-         (strcasecmp(name, "revision") == 0) )
-    {
+    if (strcasecmp(name, "rev") == 0) {
         int rev = value ? atoi(value) : 0;
 
-        if (rev > UINT16_MAX) {
+        if ( (rev <= 0) || (rev > UINT16_MAX) ) {
             ib_log_error_cfg(cp, "Invalid revision: %s", value);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
@@ -983,7 +981,7 @@ static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
- * @param[in] vars The list of variables passed to @c name.
+ * @param[in] vars The list of variables passed to @a name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
@@ -1144,7 +1142,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
- * @param[in] vars The list of variables passed to @c name.
+ * @param[in] vars The list of variables passed to @a name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
@@ -1259,7 +1257,7 @@ cleanup:
  * @param[in,out] cp Configuration parser that contains the engine being
  *                configured.
  * @param[in] name The directive name.
- * @param[in] vars The list of variables passed to @c name.
+ * @param[in] vars The list of variables passed to @a name.
  * @param[in] cbdata User data. Unused.
  */
 static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,

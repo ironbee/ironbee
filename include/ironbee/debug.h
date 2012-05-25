@@ -247,6 +247,19 @@ void DLL_PUBLIC ib_trace_str(const char *file,
     } while(0)
 
 /**
+ * Return wrapper for functions which return an boolean value.
+ *
+ * @param rv Return value
+ */
+#define IB_FTRACE_RET_BOOL(rv) \
+    do { \
+        ib_bool_t __ib_ft_rv = rv; \
+        ib_trace_str(__FILE__, __LINE__, __ib_fname__, "returned", \
+                     ((__ib_ft_rv == IB_TRUE) ? "TRUE" : "FALSE")); \
+        return __ib_ft_rv; \
+    } while(0)
+
+/**
  * Return wrapper for functions which return a size_t value.
  *
  * @param rv Return value
@@ -310,6 +323,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 #define IB_FTRACE_RET_STATUS(rv) return (rv)
 #define IB_FTRACE_RET_INT(rv) return (rv)
 #define IB_FTRACE_RET_UINT(rv) return (rv)
+#define IB_FTRACE_RET_BOOL(rv) return (rv)
 #define IB_FTRACE_RET_SIZET(rv) return (rv)
 #define IB_FTRACE_RET_PTR(type,rv) return (rv)
 #define IB_FTRACE_RET_STR(rv) return (rv)

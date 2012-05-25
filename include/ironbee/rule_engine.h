@@ -102,16 +102,7 @@ struct ib_rule_target_t {
 typedef struct ib_rule_phase_meta_t ib_rule_phase_meta_t;
 
 /**
- * Ruleset for a single phase
- */
-typedef struct {
-    ib_rule_phase_t             phase_num;   /**< Phase number */
-    const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
-    ib_list_t                  *phase_list;  /**< Rules to execute in phase */
-} ib_ruleset_phase_t;
-
-/**
- * Rule engine: Rule
+ * Basic rule object.
  *
  * The typedef of ib_rule_t is done in ironbee/rule_engine.h
  */
@@ -130,11 +121,12 @@ struct ib_rule_t {
 };
 
 /**
- * Rule engine context data
+ * Context-specifc rule object.  This is the type of the objects
+ * stored in the 'rule_list' field of ib_ruleset_phase_t.
  */
 typedef struct {
     ib_rule_t       *rule;         /**< The rule itself */
-    ib_flags_t       flags;        /**< Rule flags: same as ib_rule_t.flags */
+    ib_flags_t       flags;        /**< Rule flags (IB_RULECTX_FLAG_xx) */
 } ib_rule_ctx_data_t;
 
 /**
@@ -143,6 +135,16 @@ typedef struct {
 typedef struct {
     ib_rule_t             *previous;     /**< Previous rule parsed */
 } ib_rule_parser_data_t;
+
+/**
+ * Ruleset for a single phase.
+ *  rule_list is a list of pointers to ib_rule_ctx_data_t objects.
+ */
+typedef struct {
+    ib_rule_phase_t             phase_num;   /**< Phase number */
+    const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
+    ib_list_t                  *rule_list;   /**< Rules to exececute in phase */
+} ib_ruleset_phase_t;
 
 /**
  * Set of rules for all phases.
@@ -204,7 +206,6 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
 
 /**
  * Lookup rule by ID
- * @internal
  *
  * @param[in] ib IronBee Engine.
  * @param[in] ctx Context to look in (or NULL).
@@ -220,7 +221,6 @@ ib_status_t ib_rule_lookup(ib_engine_t *ib,
 
 /**
  * Find rule matching a reference rule.
- * @internal
  *
  * @param[in] ib IronBee Engine.
  * @param[in] ctx Context to look in (or NULL).
@@ -236,7 +236,6 @@ ib_status_t ib_rule_match(ib_engine_t *ib,
 
 /**
  * Add an enable ID/Tag to the enable list for the specified context
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] ctx IronBee context
