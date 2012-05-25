@@ -1839,6 +1839,7 @@ typedef enum {
  * Rule log level.
  **/
 typedef enum {
+    IB_RULE_LOG_OFF,      /**< Rule logging off */
     IB_RULE_LOG_FAST,     /**< Fast, simple, one-per-line rule log */
     IB_RULE_LOG_EXEC,     /**< Log rule execution */
     IB_RULE_LOG_FULL,     /**< Normal rule execution */

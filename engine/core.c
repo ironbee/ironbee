@@ -4368,7 +4368,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     else if (strcasecmp("RuleEngineLogData", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_rule_log_level_t level;
-        if (strcasecmp("Fast", p1_unescaped) == 0) {
+        if (strcasecmp("Off", p1_unescaped) == 0) {
+            level = IB_RULE_LOG_OFF;
+        }
+        else if (strcasecmp("Fast", p1_unescaped) == 0) {
             level = IB_RULE_LOG_FAST;
         }
         else if (strcasecmp("RuleExec", p1_unescaped) == 0) {
