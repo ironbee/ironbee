@@ -59,6 +59,14 @@ ib_engine_t DLL_LOCAL *ironbee = NULL;
 TSTextLogObject ironbee_log;
 #define DEFAULT_LOG "ts-ironbee"
 
+typedef enum {
+    HDR_OK,
+    HDR_ERROR,
+    HDR_HTTP_STATUS
+} ib_hdr_outcome;
+#define IB_HDR_OUTCOME_IS_HTTP(outcome,data) \
+    (outcome == HDR_HTTP_STATUS && (data)->status >= 200 && (data)->status < 600)
+
 typedef struct {
     ib_conn_t *iconn;
     /* store the IPs here so we can clean them up and not leak memory */
@@ -472,7 +480,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         TSDebug("ironbee", "No more data, finishing");
         TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
         TSVIOReenable(ibd->data->output_vio);
-        /* FIXME - is this right here - can conn data be kept across reqs? */
         ibd->data->output_buffer = NULL;
         ibd->data->output_reader = NULL;
         ibd->data->output_vio = NULL;
@@ -757,11 +764,11 @@ static int get_line(char * const line, size_t *lenp)
  * @param[in,out] data Transaction context
  * @param[in,out] txnp ATS transaction pointer
  * @param[in,out] ibd unknown
+ * @return OK (nothing to tell), Error (something bad happened),
+ *         HTTP_STATUS (check data->status).
  */
-// FIXME: This needs to return an error if it fails, not an HTTP status
-//        code, otherwise we cannot tell if hdr_get() failed.
-static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
-                       ironbee_direction_t *ibd)
+static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
+                                  ironbee_direction_t *ibd)
 {
     int rv;
     TSMBuffer bufp;
@@ -795,7 +802,7 @@ static int process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv) {
         TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
-        return 0;
+        return HDR_ERROR;
     }
 
     /* Get the data into an IOBuffer so we can access them! */
@@ -1036,7 +1043,7 @@ add_hdr:
     TSIOBufferDestroy(iobufp);
     TSfree(icdatabuf);
 
-    return data->status;
+    return data->status == 0 ? HDR_OK : HDR_HTTP_STATUS;
 }
 
 /**
@@ -1060,7 +1067,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
     TSHttpSsn ssnp = (TSHttpSsn) edata;
     ib_txn_ctx *txndata;
     ib_ssn_ctx *ssndata;
-    int status = 0;
+    ib_hdr_outcome status;
 
     TSDebug("ironbee", "Entering ironbee_plugin with %d", event);
     switch (event) {
@@ -1146,7 +1153,10 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 // FIXME: Need to know if this fails as it (I think) means
                 //        that the response did not come from the server and
                 //        that ironbee should ignore it.
-
+                /* I've not seen a fail here.  AFAICT if either the origin
+                 * isn't responding or we're responding from cache. we
+                 * never reach here in the first place.
+                 */
                 if (ib_tx_flags_isset(txndata->tx, IB_TX_FRES_SEENHEADER)) {
                     txndata->state |= HDRS_OUT;
                 }
@@ -1158,7 +1168,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
              * are not yet available.
              * Can we use another case switch in this function?
              */
-            TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+            //TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
 
             /* hook an output filter to watch data */
             connp = TSTransformCreate(out_data_event, txnp);
@@ -1211,13 +1221,16 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             txndata = TSContDataGet(contp);
             status = process_hdr(txndata, txnp, &ironbee_direction_req);
             txndata->state |= HDRS_IN;
-            if (status >= 200 && status < 600) {
-                TSDebug("ironbee", "Status is set to error with %d contp=%p", status, contp);
+            if (IB_HDR_OUTCOME_IS_HTTP(status, txndata)) {
+                TSDebug("ironbee", "HTTP code %d contp=%p", txndata->status, contp);
                 TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
             }
             else {
                 /* Other nonzero statuses not supported */
+                if (status != HDR_OK) {
+                    TSError("Unhandled state arose in handling request headers");
+                }
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             }
             break;
