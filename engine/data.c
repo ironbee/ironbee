@@ -449,8 +449,8 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
                          result_list);
 
 
-    exit_label:
-    if (pattern_str ) {
+exit_label:
+    if (pattern_str) {
         free(pattern_str);
     }
     if (pcre_pattern) {
@@ -465,8 +465,6 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
                            ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
@@ -475,6 +473,8 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
     ib_status_t rc;
     const char *error_msg;
     char *name_str = NULL;
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
 
     char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, name_len);
 
@@ -566,7 +566,7 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 
     /* Error handling routine. */
-    error_handler:
+error_handler:
     name_str = malloc(name_len+1);
     if ( name_str == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
