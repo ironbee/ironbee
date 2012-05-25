@@ -273,15 +273,16 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
  * @returns
  *  - IB_OK on success.
  *  - IB_ENOENT If the field is not found in the parent field.
- *  - IB_EINVAL The parent field is not a list or a dynamic type.
+ *  - IB_EINVAL The parent field is not a list or a dynamic type. Also
+ *              returned if @a name_len is 0.
  *  - Other if a dynamic field fails.
  */
 static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
-                                             ib_provider_inst_t *dpi,
-                                             const ib_field_t *parent_field,
-                                             const char *name,
-                                             size_t name_len,
-                                             ib_field_t **result_field)
+                                        ib_provider_inst_t *dpi,
+                                        const ib_field_t *parent_field,
+                                        const char *name,
+                                        size_t name_len,
+                                        ib_field_t **result_field)
 {
     IB_FTRACE_INIT();
 
@@ -289,13 +290,15 @@ static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
     assert(dpi);
     assert(parent_field);
     assert(name);
-    assert(name_len>0);
     assert(result_field);
 
     ib_status_t rc;
     ib_list_t *list; /* List of values to check stored in parent_field. */
     ib_list_node_t *list_node; /* List node in list. */
 
+    if( name_len == 0 ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
     /* Pull a value from a dynamic field. */
     if(ib_field_is_dynamic(parent_field)) {
@@ -303,6 +306,7 @@ static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
                                result_field,
                                name,
                                name_len);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Check that our input field is a list type. */
@@ -326,21 +330,18 @@ static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
         *result_field = NULL;
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
-    /* We don't know what input type this is. Return IB_EINVAL. */
-    else {
-        rc = IB_EINVAL;
-    }
 
-    IB_FTRACE_RET_STATUS(rc);
+    /* We don't know what input type this is. Return IB_EINVAL. */
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 /**
- * Return a list of fields whose name matches @pattern.
+ * Return a list of fields whose name matches @a pattern.
  *
  * The list @a field_name is retrieved from the @a dpi using @a api. Its
  * members are iterated through and the names of those fields compared
  * against @a pattern. If the name matches, the field is added to an
- * ib_list_t* which will be returned via 2a result_field.
+ * @c ib_list_t* which will be returned via @a result_field.
  *
  * @param[in] api The API to perform the get operation.
  * @param[in] dpi The data provider instance passed to a call to a
@@ -402,22 +403,22 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
 
     rc = ib_field_value(parent_field, &list);
     if (rc != IB_OK) {
-        goto free_and_exit_label;
+        goto exit_label;
     }
 
     pcre_pattern = pcre_compile(pattern_str, 0, &errptr, &erroffset, NULL);
     if (pcre_pattern == NULL) {
         rc = IB_EINVAL;
-        goto free_and_exit_label;
+        goto exit_label;
     }
     if (errptr) {
         rc = IB_EINVAL;
-        goto free_and_exit_label;
+        goto exit_label;
     }
 
     rc = ib_list_create(&result_list, dpi->mp);
     if (rc != IB_OK) {
-        goto free_and_exit_label;
+        goto exit_label;
     }
 
     IB_LIST_LOOP(list, list_node) {
@@ -435,7 +436,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
         if (pcre_rc == 0) {
             rc = ib_list_push(result_list, list_node->data);
             if (rc != IB_OK) {
-                goto free_and_exit_label;
+                goto exit_label;
             }
         }
     }
@@ -447,12 +448,14 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
                          IB_FTYPE_LIST,
                          result_list);
 
-    /* Go to this label after pattern_str is allocated. */
-    free_and_exit_label:
-    free(pattern_str);
 
-    /* Early exits (before pattern_str is allocated) go here. */
     exit_label:
+    if (pattern_str ) {
+        free(pattern_str);
+    }
+    if (pcre_pattern) {
+        pcre_free(pcre_pattern);
+    }
     IB_FTRACE_RET_STATUS(rc);
 }
 
