@@ -48,8 +48,6 @@
 #include <ironbee/util.h>
 #include <ironbee/debug.h>
 
-#define PARSED_TXDATA 1
-
 
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
