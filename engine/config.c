@@ -653,9 +653,9 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-void DLL_PUBLIC ib_log_cfg(ib_cfgparser_t *cp, int level,
-                           const char *prefix, const char *file, int line,
-                           const char *fmt, ...)
+void ib_log_cfg(ib_cfgparser_t *cp, int level,
+                const char *prefix, const char *file, int line,
+                const char *fmt, ...)
 {
     IB_FTRACE_INIT();
     assert(cp != NULL);
@@ -670,12 +670,12 @@ void DLL_PUBLIC ib_log_cfg(ib_cfgparser_t *cp, int level,
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_log_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
-                              const char *cfgfile, unsigned int cfgline,
-                              int level,
-                              const char *prefix,
-                              const char *file, int line,
-                              const char *fmt, ...)
+void ib_log_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+                   const char *cfgfile, unsigned int cfgline,
+                   int level,
+                   const char *prefix,
+                   const char *file, int line,
+                   const char *fmt, ...)
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
@@ -692,27 +692,29 @@ void DLL_PUBLIC ib_log_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
-                               const char *cfgfile, unsigned int cfgline,
-                               int level,
-                               const char *prefix,
-                               const char *file, int line,
-                               const char *fmt, va_list ap)
+void ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+                    const char *cfgfile, unsigned int cfgline,
+                    int level,
+                    const char *prefix,
+                    const char *file, int line,
+                    const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(mp != NULL);
     assert(fmt != NULL);
 
-    char prebuf[32+1];
-    char lnobuf[16+1];
+    const size_t MAX_PREBUF = 32;
+    const size_t MAX_LNOBUF = 16;
+    char prebuf[MAX_PREBUF+1];
+    char lnobuf[MAX_LNOBUF+1];
     size_t fmtlen;
     char *fmtbuf = NULL;
 
-    snprintf(prebuf, 32, "CONFIG_%s", prefix == NULL ? "" : prefix);
+    snprintf(prebuf, MAX_PREBUF, "CONFIG_%s", prefix == NULL ? "" : prefix);
 
     if (cfgfile != NULL) {
-        snprintf(lnobuf, 16, "%u", cfgline);
+        snprintf(lnobuf, MAX_LNOBUF, "%u", cfgline);
         fmtlen = strlen(fmt) + strlen(cfgfile) + strlen(lnobuf) + 8;
         fmtbuf = (char *)ib_mpool_alloc(mp, fmtlen);
     }
@@ -735,9 +737,9 @@ void DLL_PUBLIC ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_vlog_cfg(ib_cfgparser_t *cp, int level,
-                            const char *prefix, const char *file, int line,
-                            const char *fmt, va_list ap)
+void ib_vlog_cfg(ib_cfgparser_t *cp, int level,
+                 const char *prefix, const char *file, int line,
+                 const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
 

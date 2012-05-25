@@ -139,11 +139,12 @@ void ib_rule_log_fast_ex(ib_tx_t *tx,
                          int line)
 {
     IB_FTRACE_INIT();
+    const size_t MAX_ACTBUF = 128;
     const ib_list_node_t *node;
     ib_time_t now = ib_clock_get_time();
-    char actbuf[128 + 1];
+    char actbuf[MAX_ACTBUF + 1];
     char *cur = actbuf;
-    size_t remain = 128;
+    size_t remain = MAX_ACTBUF;
     ib_bool_t first = IB_TRUE;
 
     if (ib_rule_log_level(tx->ib) != IB_RULE_LOG_FAST) {
