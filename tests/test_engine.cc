@@ -34,8 +34,24 @@
 #include "config-parser.h"
 #include "ibtest_util.hh"
 
+class TestIronBee : public testing::Test {
+    public:
+    
+    ib_engine_t *ib;
+
+    void SetUp() {
+        ib = NULL;
+        ibtest_engine_create(&ib);
+    }
+
+    void TearDown() {
+        ibtest_engine_destroy(ib);
+        ib = NULL;
+    }
+};
+
 /// @test Test ironbee library - ib_engine_create()
-TEST(TestIronBee, test_engine_create_null_server)
+TEST(TestIronBeeX, test_engine_create_null_server)
 {
     ib_engine_t *ib;
     ib_status_t rc;
@@ -50,19 +66,14 @@ TEST(TestIronBee, test_engine_create_null_server)
     ib_shutdown();
 }
 
-/// @test Test ironbee library - ib_engine_create() and ib_engine_destroy()
-TEST(TestIronBee, test_engine_create_and_destroy)
+TEST_F(TestIronBee, test_engine_create_and_destroy)
 {
-    ib_engine_t *ib;
-
-    ibtest_engine_create(&ib);
-    ibtest_engine_destroy(ib);
+    ASSERT_TRUE(ib);
 }
 
 /// @test Test ironbee library - test configuration
-TEST(TestIronBee, test_engine_config_basic)
+TEST_F(TestIronBee, test_engine_config_basic)
 {
-    ib_engine_t *ib;
     const char *cfgbuf =
         "#Log /tmp/ironbee-debug.log\n"
         "LogLevel 9\n"
@@ -76,9 +87,7 @@ TEST(TestIronBee, test_engine_config_basic)
         "  Hostname *\n"
         "</Site>\n";
 
-    ibtest_engine_create(&ib);
     ibtest_engine_config_buf(ib, cfgbuf, strlen(cfgbuf), "test.conf", 1);
-    ibtest_engine_destroy(ib);
 }
 
 static ib_status_t foo2bar(ib_engine_t *ib,
@@ -159,9 +168,8 @@ static ib_status_t foo2bar(ib_engine_t *ib,
 }
 
 /// @test Test ironbee library - transformation registration
-TEST(TestIronBee, test_tfn)
+TEST_F(TestIronBee, test_tfn)
 {
-    ib_engine_t *ib;
     ib_status_t rc;
     ib_tfn_t *tfn = (ib_tfn_t *)-1;
     ib_flags_t flags;
@@ -169,8 +177,6 @@ TEST(TestIronBee, test_tfn)
     ib_field_t *fin;
     ib_field_t *fout;
     ib_bytestr_t *bs;
-
-    ibtest_engine_create(&ib);
 
     ASSERT_EQ(IB_OK, ib_tfn_register(ib, "foo2bar", foo2bar, NULL));
     ASSERT_EQ(IB_OK, ib_tfn_lookup(ib, "foo2bar", &tfn));
@@ -205,8 +211,6 @@ TEST(TestIronBee, test_tfn)
     ASSERT_NE((ib_tfn_t *)-1, tfn);
     ASSERT_TRUE(IB_TFN_CHECK_FMODIFIED(flags));
     ASSERT_NE(fin, fout);
-
-    ibtest_engine_destroy(ib);
 }
 
 static ib_status_t dyn_get(
@@ -236,16 +240,13 @@ static ib_status_t dyn_get(
 }
 
 /// @test Test ironbee library - data provider
-TEST(TestIronBee, test_dpi_dynf)
+TEST_F(TestIronBee, test_dpi_dynf)
 {
-    ib_engine_t *ib;
     ib_provider_inst_t *dpi;
     ib_field_t *dynf;
     ib_field_t *f;
     ib_status_t rc;
     ib_num_t n;
-
-    ibtest_engine_create(&ib);
 
     ASSERT_EQ(
         IB_OK,
@@ -302,18 +303,13 @@ TEST(TestIronBee, test_dpi_dynf)
     rc = ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(5, n);
-
-    ibtest_engine_destroy(ib);
 }
 
-TEST(TestIronBee, test_dpi_name)
+TEST_F(TestIronBee, test_dpi_name)
 {
-    ib_engine_t *ib = NULL;
     ib_provider_inst_t *dpi = NULL;
     ib_field_t *list_field = NULL;
     ib_field_t *out_field = NULL;
-
-    ibtest_engine_create(&ib);
 
     ASSERT_EQ(
         IB_OK,
@@ -341,9 +337,8 @@ TEST(TestIronBee, test_dpi_name)
 }
 
 // Test pattern matching a field.
-TEST(TestIronBee, test_dpi_pcre)
+TEST_F(TestIronBee, test_dpi_pcre)
 {
-    ib_engine_t *ib;
     ib_provider_inst_t *dpi;
     ib_field_t *list_field;
     ib_field_t *out_field;
@@ -355,8 +350,6 @@ TEST(TestIronBee, test_dpi_pcre)
     ib_num_t num1 = 1;
     ib_num_t num2 = 2;
     ib_num_t num3 = 3;
-
-    ibtest_engine_create(&ib);
 
     ASSERT_EQ(
         IB_OK,
@@ -395,6 +388,4 @@ TEST(TestIronBee, test_dpi_pcre)
 
     out_field = (ib_field_t *) IB_LIST_LAST(out_list)->data;
     ASSERT_FALSE(memcmp(out_field->name, field3->name, field3->nlen));
-
-    ibtest_engine_destroy(ib);
 }
