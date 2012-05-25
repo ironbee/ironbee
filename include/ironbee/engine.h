@@ -786,9 +786,7 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *   conn_finished_event [label="conn_finished",style=bold,shape=diamond,URL="\ref conn_finished_event"]
  *
  *   tx_started_event [label="tx_started",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_started_event"]
- *   tx_data_in_event [label="tx_data_in",style=solid,shape=octagon,peripheries=2,URL="\ref tx_data_in_event"]
  *   tx_process_event [label="tx_process",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_process_event"]
- *   tx_data_out_event [label="tx_data_out",style=solid,shape=octagon,peripheries=2,URL="\ref tx_data_out_event"]
  *   tx_finished_event [label="tx_finished",style=filled,fillcolor="#e6e6e6",shape=diamond,URL="\ref tx_finished_event"]
  *
  *   request_started_event [label="request_started *",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_started_event"]
@@ -822,19 +820,12 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *   start -> conn_started_event [weight=500.0]
  *   incoming -> conn_data_in_event [dir=none,weight=100.0]
  *   conn_data_in_event -> conn_data_in_event [weight=0.1]
- *   conn_data_in_event -> tx_data_in_event [weight=0.1]
- *   tx_data_in_event -> tx_data_in_event [weight=0.1]
  *
  *   conn_started_event -> conn_opened_event [weight=100.0]
  *   conn_opened_event -> context_conn_selected [weight=100.0]
  *   context_conn_selected -> handle_context_conn_event [weight=100.0]
  *   handle_context_conn_event -> handle_connect_event [weight=100.0]
  *   handle_connect_event -> tx_started_event [weight=100.0]
- *
- *   request -> tx_data_in_event [dir=none,weight=100.0]
- *   tx_data_in_event -> request_started_event [style=dotted,arrowhead=none,weight=1.5]
- *   tx_data_in_event -> request_header_finished_event [style=dotted,arrowhead=none,weight=1.5]
- *   tx_data_in_event -> request_body_data_event [style=dotted,arrowhead=none,weight=1.5]
  *
  *   tx_started_event -> request_started_event [weight=5.0]
  *   request_started_event -> request_header_finished_event [weight=1.0]
@@ -849,15 +840,8 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *
  *   tx_process_event -> response_started_event [weight=1.0]
  *
- *   response -> tx_data_out_event [dir=none,weight=100.0]
  *   outgoing -> conn_data_out_event [dir=none,weight=100.0]
  *   conn_data_out_event -> conn_data_out_event [weight=0.1]
- *   conn_data_out_event -> tx_data_out_event [weight=0.1]
- *   tx_data_out_event -> tx_data_out_event [weight=0.1]
- *
- *   tx_data_out_event -> response_started_event [style=dotted,arrowhead=none,weight=1.5]
- *   tx_data_out_event -> response_header_finished_event [style=dotted,arrowhead=none,weight=1.5]
- *   tx_data_out_event -> response_body_data_event [style=dotted,arrowhead=none,weight=1.5]
  *
  *   response_started_event -> response_header_finished_event [weight=1.0]
  *   response_header_finished_event -> handle_response_header_event [weight=1.0]
