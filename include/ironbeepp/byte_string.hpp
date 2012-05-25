@@ -30,6 +30,7 @@
 #ifndef __IBPP__BYTE_STRING__
 #define __IBPP__BYTE_STRING__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>

@@ -33,6 +33,8 @@
 #ifndef __IBPP__CONFIGURATION_DIRECTIVES__
 #define __IBPP__CONFIGURATION_DIRECTIVES__
 
+#include <ironbeepp/abi_compatibility.hpp>
+
 #include <ironbeepp/list.hpp>
 #include <ironbeepp/engine.hpp>
 

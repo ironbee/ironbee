@@ -17,39 +17,27 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Clock
+ * @brief IronBee++ &mdash; API Compatibility
  *
- * This file defines ib_to_ptime() and ptime_to_ib() to convert between
- * boost's ptime and IronBee's ib_time_t.
+ * This file is a compile time assert that the expected IronBee ABI matches
+ * the provided IronBee ABI.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP__CLOCK__
-#define __IBPP__CLOCK__
+#ifndef __IBPP__ABI_COMPATIBILITY__
+#define __IBPP__ABI_COMPATIBILITY__
 
-#include <ironbeepp/abi_compatibility.hpp>
+#include <ironbee/release.h>
 
-#include <ironbee/clock.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/static_assert.hpp>
 
 namespace IronBee {
 
-/**
- * Convert ib_time_t (microseconds since epoch) to ptime.
- *
- * @param[in] t Microseconds since epoch.
- * @return @a t as ptime.
- **/
-boost::posix_time::ptime ib_to_ptime(ib_time_t t);
-
-/**
- * Convert ptime to ib_time_t (microseconds since epoch).
- *
- * @param[in] t Time.
- * @return @a t as microseconds since epoch.
- **/
-ib_time_t ptime_to_ib(const boost::posix_time::ptime& t);
+// Update following line when IronBee ABI changes.
+#if IB_ABINUM!=201205171
+#error "ABI mismatch between IronBee++ and IronBee"
+#endif
 
 } // IronBee
 

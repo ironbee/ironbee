@@ -30,6 +30,7 @@
 #ifndef __IBPP__CONTEXT__
 #define __IBPP__CONTEXT__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 
 #include <ostream>

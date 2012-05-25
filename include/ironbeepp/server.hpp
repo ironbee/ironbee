@@ -30,6 +30,7 @@
 #ifndef __IBPP__SERVER__
 #define __IBPP__SERVER__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 
 #include <ironbee/server.h>

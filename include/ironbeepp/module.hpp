@@ -27,6 +27,7 @@
 #ifndef __IBPP__MODULE__
 #define __IBPP__MODULE__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/engine.hpp>

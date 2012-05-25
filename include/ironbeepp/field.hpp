@@ -27,6 +27,7 @@
 #ifndef __IBPP__FIELD__
 #define __IBPP__FIELD__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>

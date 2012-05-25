@@ -31,6 +31,7 @@
 #ifndef __IBPP__PARSED_NAME_VALUE__
 #define __IBPP__PARSED_NAME_VALUE__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/transaction.hpp>

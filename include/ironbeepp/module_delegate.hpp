@@ -28,6 +28,7 @@
 #ifndef __IBPP__MODULE_DELEGATE__
 #define __IBPP__MODULE_DELEGATE__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
 

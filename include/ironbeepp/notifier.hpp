@@ -28,6 +28,7 @@
 #ifndef __IBPP__NOTIFIER__
 #define __IBPP__NOTIFIER__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/transaction.hpp>

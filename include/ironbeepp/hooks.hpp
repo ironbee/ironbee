@@ -25,6 +25,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/engine.hpp>
 
 #include <boost/function.hpp>

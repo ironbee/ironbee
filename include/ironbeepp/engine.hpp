@@ -27,6 +27,7 @@
 #ifndef __IBPP__ENGINE__
 #define __IBPP__ENGINE__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <iostream>
 

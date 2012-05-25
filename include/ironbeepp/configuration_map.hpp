@@ -36,6 +36,7 @@
 #ifndef __IBPP__CONFIGURATION_MAP__
 #define __IBPP__CONFIGURATION_MAP__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/field.hpp>
 
 #include <ironbee/cfgmap.h>

@@ -99,6 +99,7 @@
 #ifndef __IBPP__MODULE_BOOTSTRAP__
 #define __IBPP__MODULE_BOOTSTRAP__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>

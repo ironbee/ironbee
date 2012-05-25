@@ -27,6 +27,8 @@
 #ifndef __IBPP__IRONBEE__
 #define __IBPP__IRONBEE__
 
+#include <ironbeepp/abi_compatibility.hpp>
+
 namespace IronBee {
 
 /**

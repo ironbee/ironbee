@@ -32,6 +32,7 @@
 #ifndef __IBPP__CONFIGURATION_PARSER__
 #define __IBPP__CONFIGURATION_PARSER__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/list.hpp>
 

@@ -31,6 +31,7 @@
 #ifndef __IBPP__PARSED_REQUEST_LINE__
 #define __IBPP__PARSED_REQUEST_LINE__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 
 #include <ostream>

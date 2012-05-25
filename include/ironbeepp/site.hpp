@@ -31,6 +31,7 @@
 #ifndef __IBPP__SITE__
 #define __IBPP__SITE__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/list.hpp>
 #include <ironbeepp/engine.hpp>

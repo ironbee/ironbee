@@ -30,6 +30,8 @@
 #ifndef __IBPP__COMMON_SEMANTICS__
 #define __IBPP__COMMON_SEMANTICS__
 
+#include <ironbeepp/abi_compatibility.hpp>
+
 #include <boost/operators.hpp>
 
 namespace IronBee {

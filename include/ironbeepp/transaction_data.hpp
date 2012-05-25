@@ -30,6 +30,7 @@
 #ifndef __IBPP__TRANSACTION_DATA__
 #define __IBPP__TRANSACTION_DATA__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 
 #include <ironbee/engine.h>

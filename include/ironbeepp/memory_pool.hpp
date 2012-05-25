@@ -27,6 +27,7 @@
 #ifndef __IBPP__MEMORY_POOL__
 #define __IBPP__MEMORY_POOL__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 
 #include <boost/function.hpp>

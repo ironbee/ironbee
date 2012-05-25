@@ -25,6 +25,7 @@
 #ifndef __IBPP__ALL__
 #define __IBPP__ALL__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/clock.hpp>
 #include <ironbeepp/configuration_directives.hpp>

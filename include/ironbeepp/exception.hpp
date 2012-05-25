@@ -51,6 +51,8 @@
 #ifndef __IBPP__EXCEPTION__
 #define __IBPP__EXCEPTION__
 
+#include <ironbeepp/abi_compatibility.hpp>
+
 #include <boost/exception/all.hpp>
 
 #include <string>

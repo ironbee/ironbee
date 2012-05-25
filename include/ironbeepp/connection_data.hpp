@@ -30,6 +30,7 @@
 #ifndef __IBPP__CONNECTION_DATA__
 #define __IBPP__CONNECTION_DATA__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 
 #include <ostream>

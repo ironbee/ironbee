@@ -30,6 +30,7 @@
 #ifndef __IBPP__LIST__
 #define __IBPP__LIST__
 
+#include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>
