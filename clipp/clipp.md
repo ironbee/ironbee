@@ -402,6 +402,12 @@ headers will be changed.  If no header is present, no change is made (i.e.,
 does not add headers).  If a header appears multiple times, all instances are
 changed.
 
+**@fillbody**
+
+Adds any missing body events and replaces the contents of body events with an
+appropriate number (based on Content-Length) or @s.  This is useful for input
+sources that lack bodies or for sanitizing sensitive bodies.
+
 Consumers
 ---------
 

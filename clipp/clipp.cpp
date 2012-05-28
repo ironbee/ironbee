@@ -84,6 +84,7 @@
 #include "limit_modifier.hpp"
 #include "select_modifier.hpp"
 #include "header_modifiers.hpp"
+#include "fill_body_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -364,6 +365,7 @@ void help()
     "  @set:key:value  -- Set all headers of <key> to <value>\n"
     "  @set:>key:value -- Set request headers of <key> to <value>\n"
     "  @set:<key:value -- Set response headers of <key> to <value>\n"
+    "  @fillbody -- Add missing bodies and replace contents with @s.\n"
     ;
 }
 
@@ -525,6 +527,8 @@ int main(int argc, char** argv)
         construct_modifier<LimitModifier, size_t>;
     modifier_factory_map["select"] = init_select_modifier;
     modifier_factory_map["set"] = init_set_modifier;
+    modifier_factory_map["fillbody"] =
+         construct_argless_modifier<FillBodyModifier>;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
