@@ -40,6 +40,35 @@ string Buffer::to_s() const
     return string(data, length);
 }
 
+bool Buffer::operator==(const Buffer& other) const
+{
+    // Shortcut self compare
+    if (&other == this) {
+        return true;
+    }
+
+    if (other.length != length) {
+        return false;
+    }
+
+    return equal(
+        other.data, other.data + other.length,
+        data
+    );
+}
+
+bool Buffer::operator==(const string& s) const
+{
+    if (s.length() != length) {
+        return false;
+    }
+
+    return equal(
+        s.begin(), s.end(),
+        data
+    );
+}
+
 Event::Event(event_e which_) :
     which(which_),
     pre_delay(0),
@@ -423,7 +452,7 @@ Input::Input()
     // nop
 }
 
-Input::Input(const std::string& id_) :
+Input::Input(const string& id_) :
     id(id_)
 {
     // nop

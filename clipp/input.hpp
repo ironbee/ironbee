@@ -39,6 +39,7 @@
 #pragma clang diagnostic pop
 #endif
 #include <boost/any.hpp>
+#include <boost/operators.hpp>
 
 #include <string>
 #include <list>
@@ -206,7 +207,9 @@ public:
  * This structure is a data pointer and length.  It's primary use is to refer
  * to substrings without copying.
  **/
-struct Buffer
+struct Buffer :
+    boost::equality_comparable<Buffer, std::string>,
+    boost::equality_comparable<Buffer>
 {
     //! Default constructor.  Buffer is empty string.
     Buffer();
@@ -229,6 +232,12 @@ struct Buffer
 
     //! Convert to string.  Makes a copy.
     std::string to_s() const;
+
+    //! Compare buffer and buffer.
+    bool operator==(const Input::Buffer& other) const;
+
+    //! Compare buffer and string.
+    bool operator==(const std::string& s) const;
 
     //! Pointer to buffer.  Not necessarily null terminated.
     const char* data;
