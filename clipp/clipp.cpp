@@ -83,6 +83,7 @@
 #include "edit_modifier.hpp"
 #include "limit_modifier.hpp"
 #include "select_modifier.hpp"
+#include "header_modifiers.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -244,6 +245,13 @@ input_modifier_t init_aggregate_modifier(const string& arg);
  **/
 input_modifier_t init_select_modifier(const string& arg);
 
+/**
+ * Construct set modifier.
+ *
+ * @param[in] arg @a arg is either >key:value, <key:value, or key:value.
+ **/
+input_modifier_t init_set_modifier(const string& arg);
+
 ///@}
 
 /**
@@ -353,6 +361,9 @@ void help()
     "    Only pass through <indices> inputs.\n"
     "    Indices are 1 based.\n"
     "    <indices> is comma separated list of single index or i-j ranges.\n"
+    "  @set:key:value  -- Set all headers of <key> to <value>\n"
+    "  @set:>key:value -- Set request headers of <key> to <value>\n"
+    "  @set:<key:value -- Set response headers of <key> to <value>\n"
     ;
 }
 
@@ -513,6 +524,7 @@ int main(int argc, char** argv)
     modifier_factory_map["limit"] =
         construct_modifier<LimitModifier, size_t>;
     modifier_factory_map["select"] = init_select_modifier;
+    modifier_factory_map["set"] = init_set_modifier;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -863,6 +875,34 @@ input_modifier_t init_select_modifier(const string& arg)
     return SelectModifier(select);
 }
 
+input_modifier_t init_set_modifier(const string& arg)
+{
+    SetModifier::which_e which = SetModifier::BOTH;
+
+    string modified_arg;
+    if (arg[0] == '<') {
+        which = SetModifier::RESPONSE;
+        modified_arg = arg.substr(1);
+    }
+    else if (arg[0] == '>') {
+        which = SetModifier::REQUEST;
+        modified_arg = arg.substr(1);
+    }
+    else {
+        modified_arg = arg;
+    }
+
+    // We don't use split_on_char because we want all to : and all after :
+    // even if there are later :s.
+    size_t colon_i = modified_arg.find_first_of(':');
+    if (colon_i == string::npos) {
+        throw runtime_error("Could not parse: " + arg);
+    }
+    const string key   = modified_arg.substr(0, colon_i);
+    const string value = modified_arg.substr(colon_i + 1);
+
+    return SetModifier(which, key, value);
+}
 
 template <typename ResultType, typename MapType>
 ResultType

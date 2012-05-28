@@ -393,6 +393,15 @@ Only allow certain inputs through.  Inputs are indexed starting with 1.
 *which* is a comma separated list of either single indices are ranges of
 indices specified as `i-j`.
 
+**@set**:*key*:*value*
+
+Set headers with key *key* to value *value*.  By default, changes both 
+request and response headers.  If *key* is prefixed with >, then only request
+headers will be changed.  If *key* is prefixed with <, then only response
+headers will be changed.  If no header is present, no change is made (i.e., 
+does not add headers).  If a header appears multiple times, all instances are
+changed.
+
 Consumers
 ---------
 

@@ -405,6 +405,15 @@ chain.</p>
 <em>which</em> is a comma separated list of either single indices are ranges of
 indices specified as <code>i-j</code>.</p>
 
+<p><strong>@set</strong>:<em>key</em>:<em>value</em></p>
+
+<p>Set headers with key <em>key</em> to value <em>value</em>. By default, changes both
+request and response headers. If <em>key</em> is prefixed with &gt;, then only request
+headers will be changed. If <em>key</em> is prefixed with &lt;, then only response
+headers will be changed. If no header is present, no change is made (i.e.,
+does not add headers). If a header appears multiple times, all instances are
+changed.</p>
+
 <h2 id="consumers">Consumers</h2>
 
 <p><strong>ironbee</strong>:<em>path</em></p>

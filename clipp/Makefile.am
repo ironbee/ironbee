@@ -37,7 +37,8 @@ clipp_SOURCES = \
     aggregate_modifier.cpp \
     edit_modifier.cpp \
     limit_modifier.cpp \
-    select_modifier.cpp
+    select_modifier.cpp \
+    header_modifiers.cpp
 clipp_CFLAGS = $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS)
 clipp_CPPFLAGS = $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
