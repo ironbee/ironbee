@@ -375,6 +375,8 @@ can be any of:
 - response --- Response line.
 - response_header --- Response header (all lines).
 - response_body --- Response body.
+- connection_in ---- Connection data in.
+- connection_out ---- Connection data out.
 
 If the editor exits non-zero then the original text is used.
 

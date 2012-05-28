@@ -357,6 +357,8 @@ void help()
     "    - response -- response line.\n"
     "    - response_header -- response header.\n"
     "    - response_body -- response body.\n"
+    "    - connection_in -- connection data in.\n"
+    "    - connection_out -- connection data out.\n"
     "  @limit:n -- Stop chain after <n> inputs.\n"
     "  @select:indices --\n"
     "    Only pass through <indices> inputs.\n"

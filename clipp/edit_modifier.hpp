@@ -44,6 +44,8 @@ public:
      * - response -- Response line.
      * - response_body -- Response body.
      * - response_header -- Response headers.
+     * - connection_in -- Connection Data in
+     * - connection_out -- Connection data out.
      **/
     explicit
     EditModifier(const std::string& what);

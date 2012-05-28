@@ -119,7 +119,7 @@ void untextify_header(Input::Event& event, const string& text)
     );
 }
 
-void textify_body(string& text, const Input::Event& event)
+void textify_data(string& text, const Input::Event& event)
 {
     const Input::DataEvent& specific =
         dynamic_cast<const Input::DataEvent&>(event);
@@ -127,7 +127,7 @@ void textify_body(string& text, const Input::Event& event)
     text = specific.data.to_s();
 }
 
-void untextify_body(Input::Event& event, const string& text)
+void untextify_data(Input::Event& event, const string& text)
 {
     Input::DataEvent& specific =
         dynamic_cast<Input::DataEvent&>(event);
@@ -170,14 +170,24 @@ EditModifier::EditModifier(const string& which) :
         m_state->which     = Input::RESPONSE_HEADER;
     }
     else if (which == "request_body") {
-        m_state->textify   = textify_body;
-        m_state->untextify = untextify_body;
+        m_state->textify   = textify_data;
+        m_state->untextify = untextify_data;
         m_state->which     = Input::REQUEST_BODY;
     }
     else if (which == "response_body") {
-        m_state->textify   = textify_body;
-        m_state->untextify = untextify_body;
+        m_state->textify   = textify_data;
+        m_state->untextify = untextify_data;
         m_state->which     = Input::RESPONSE_BODY;
+    }
+    else if (which == "connection_in") {
+        m_state->textify   = textify_data;
+        m_state->untextify = untextify_data;
+        m_state->which     = Input::CONNECTION_DATA_IN;
+    }
+    else if (which == "connection_out") {
+        m_state->textify   = textify_data;
+        m_state->untextify = untextify_data;
+        m_state->which     = Input::CONNECTION_DATA_OUT;
     }
     else {
         throw runtime_error("Unknown which: " + which);
