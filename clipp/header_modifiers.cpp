@@ -26,9 +26,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/foreach.hpp>
-
-#include <fstream>
-#include <iostream>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace std;
 using boost::make_shared;
@@ -72,7 +70,16 @@ private:
     void modify_header(Input::HeaderEvent& event)
     {
         BOOST_FOREACH(Input::header_t& header, event.headers) {
-            if (header.first == m_key) {
+            if (
+                header.first.length == m_key.length() &&
+                boost::iequals(
+                    m_key,
+                    boost::make_iterator_range(
+                        header.first.data,
+                        header.first.data + header.first.length
+                    )
+                )
+            ) {
                 header.second = Input::Buffer(m_value);
             }
         }
