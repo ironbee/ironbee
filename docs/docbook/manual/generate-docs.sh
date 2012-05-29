@@ -1,30 +1,33 @@
 #!/bin/sh
 
-HOME=.
+set -x
+HOME=${1:-.}
+OBJDIR=${2:-.}
+
 FOP=$HOME/fop-1.0/fop
-XMLINPUT=ironbee-reference-manual.xml
-OUTPUT=./output
+XMLINPUT=$HOME/ironbee-reference-manual.xml
+OUTPUT=$OBJDIR/output
 VERSION="0.2.0"
 
 # Generate a clean directory structure
 rm -rf $OUTPUT
-mkdir $OUTPUT
-mkdir $OUTPUT/html
-mkdir $OUTPUT/html-chunked
+mkdir $OUTPUT || exit 1
+mkdir $OUTPUT/html || exit 1
+mkdir $OUTPUT/html-chunked || exit 1
 
 # Generate PDF
-$FOP -c $HOME/fop.xconf -xml $XMLINPUT -xsl $HOME/pdf.xsl -pdf $OUTPUT/ironbee-reference-manual.pdf
+$FOP -c $OBJDIR/fop.xconf -xml $XMLINPUT -xsl $HOME/pdf.xsl -pdf $OUTPUT/ironbee-reference-manual.pdf || exit 1
 
 # Generate HTML/single
-$FOP -xml $XMLINPUT -xsl $HOME/html.xsl -foout /dev/null -param base.dir $OUTPUT/
-mv $OUTPUT/index.html $OUTPUT/ironbee-reference-manual.html
+$FOP -xml $XMLINPUT -xsl $HOME/html.xsl -foout /dev/null -param base.dir $OUTPUT/ || exit 1
+mv $OUTPUT/index.html $OUTPUT/ironbee-reference-manual.html || exit 1
 # XXX Copy extra files to $OUTPUT
 
 # Generate HTML/chunked
-$FOP -xml $XMLINPUT -xsl $HOME/html-chunked.xsl -foout /dev/null -param base.dir $OUTPUT/html-chunked/
+$FOP -xml $XMLINPUT -xsl $HOME/html-chunked.xsl -foout /dev/null -param base.dir $OUTPUT/html-chunked/ || exit 1
 # XXX Copy extra files to $OUTPUT/html-chunked/
 
 # Cover page
-cp $HOME/resources/index.html $OUTPUT/index.html
-perl -pi -e s/\\\$version/$VERSION/ $OUTPUT/index.html
+cp $HOME/resources/index.html $OUTPUT/index.html || exit 1
+perl -pi -e s/\\\$version/$VERSION/ $OUTPUT/index.html || exit 1
 
