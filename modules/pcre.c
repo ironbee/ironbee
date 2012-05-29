@@ -507,11 +507,11 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* We have a match! Now populate TX.0-9 in tx->dpi. */
+    /* We have a match! Now populate TX:0-9 in tx->dpi. */
     for (i=0; i<matches; i++)
     {
-        /* Build the field name. Typically TX.0, TX.1 ... TX.9 */
-        sprintf(full_field_name, "%s.%d", field_name, i);
+        /* Build the field name. Typically TX:0, TX:1 ... TX:9 */
+        sprintf(full_field_name, "%s:%d", field_name, i);
 
         /* Readability. Mark the start and length of the string. */
         match_start = subject+ovector[i*2];
@@ -536,15 +536,41 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
             }
         }
 
-        ib_data_get(tx->dpi, full_field_name, &ib_field);
+        ib_field = NULL;
 
-        if (ib_field == NULL) {
-            ib_data_add_bytestr(tx->dpi,
-                                full_field_name,
-                                (uint8_t*)subject+ovector[i*2],
-                                match_len,
-                                NULL);
+        rc = ib_data_get(tx->dpi, full_field_name, &ib_field);
+
+        /* A field exists. */
+        if (ib_field != NULL && ib_field->type == IB_FTYPE_LIST) {
+            ib_list_t *list;
+            rc = ib_field_mutable_value(ib_field,
+                                        ib_ftype_list_mutable_out(&list));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            if (IB_LIST_ELEMENTS(list) > 0) {
+                /* Replace the field we are working on. */
+                ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(list));
+
+                ib_bytestr_dup_mem(&field_value,
+                                   tx->mp,
+                                   (const uint8_t*)match_start,
+                                   match_len);
+                ib_field_setv_no_copy(
+                    ib_field,
+                    ib_ftype_bytestr_mutable_in(field_value)
+                );
+            }
+            else {
+                ib_data_add_bytestr(tx->dpi,
+                                    full_field_name,
+                                    (uint8_t*)subject+ovector[i*2],
+                                    match_len,
+                                    NULL);
+            }
         }
+        /* No field. Create a new one. */
         else {
             ib_bytestr_dup_mem(&field_value,
                                tx->mp,

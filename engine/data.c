@@ -110,31 +110,46 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
 
     /* Check that our input field is a list type. */
     else if (parent_field->type == IB_FTYPE_LIST) {
+        ib_list_t *result_list;
+
+        /* Make the result list */
+        rc = ib_list_create(&result_list, dpi->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Fetch the parent list. */
         rc = ib_field_value(parent_field, &list);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Create a destination list. */
-        rc = ib_data_add_list_ex(dpi, name, name_len, result_field);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
+        ib_util_log_debug("Iterating over list of size %d.",
+                          IB_LIST_ELEMENTS(list));
 
         IB_LIST_LOOP(list, list_node) {
-            ib_field_t *list_field = (ib_field_t *) list_node->data;
+            ib_field_t *list_field =
+                (ib_field_t *) IB_LIST_NODE_DATA(list_node);
 
             if (list_field->nlen == name_len &&
                 strncasecmp(list_field->name, name, name_len) == 0)
             {
-                rc = ib_field_list_add(*result_field, list_field);
+                rc = ib_list_push(result_list, list_field);
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(rc);
                 }
             }
         }
 
-        IB_FTRACE_RET_STATUS(IB_OK);
+        /* Send back the result_list inside of result_field. */
+        rc = ib_field_create(result_field,
+                             dpi->mp,
+                             name,
+                             name_len,
+                             IB_FTYPE_LIST,
+                             result_list);
+
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* We don't know what input type this is. Return IB_EINVAL. */
@@ -319,7 +334,7 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
         ib_field_t *parent;
         const char *parent_name = name;
         const char *child_name = filter_marker + 1;
-        size_t parent_nlen = filter_marker - name - 1;
+        size_t parent_nlen = filter_marker - name;
         size_t child_nlen = nlen - parent_nlen - 1;
 
         /* Get or create the parent field. */
@@ -432,7 +447,7 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = api->add(dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -466,7 +481,7 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = api->add(dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -501,7 +516,7 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = api->add(dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -534,7 +549,7 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = api->add(dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -568,7 +583,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = api->add(dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
     ib_util_log_debug("SBUFFER field creation returned: %s", ib_status_to_string(rc));
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;

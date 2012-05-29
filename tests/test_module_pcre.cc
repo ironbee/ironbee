@@ -145,21 +145,40 @@ TEST_F(PcreModuleTest, test_load_module)
 TEST_F(PcreModuleTest, matches)
 {
     ib_field_t *ib_field;
+    const ib_list_t *ib_list;
 
     const ib_bytestr_t *ib_bytestr;
     char* s;
     size_t s_sz;
     ib_status_t rc;
 
-    ib_data_get(ib_tx->dpi, "TX.0", &ib_field);
+    /* Check TX:0 */
+    ib_data_get(ib_tx->dpi, "TX:0", &ib_field);
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
-    ib_data_get(ib_tx->dpi, "TX.1", &ib_field);
+    /* Check TX:1 */
+    ib_data_get(ib_tx->dpi, "TX:1", &ib_field);
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
-    ib_data_get(ib_tx->dpi, "TX.2", &ib_field);
+    /* Check TX:2 */
+    ib_data_get(ib_tx->dpi, "TX:2", &ib_field);
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
+    ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
@@ -173,7 +192,12 @@ TEST_F(PcreModuleTest, matches)
     s[s_sz] = '\0';
     ASSERT_STREQ("header4", s);
 
-    ib_data_get(ib_tx->dpi, "TX.3", &ib_field);
-    ASSERT_EQ(static_cast<ib_field_t*>(NULL), ib_field);
+    ib_data_get(ib_tx->dpi, "TX:3", &ib_field);
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
+    ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
+    ASSERT_EQ(0U, IB_LIST_ELEMENTS(ib_list));
+    //ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
+    //ASSERT_EQ(static_cast<ib_field_t*>(NULL), ib_field);
 }
 
