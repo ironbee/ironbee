@@ -1399,6 +1399,60 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * @brief Parse a RuleDisable directive.
+ * @details Handle the RuleDisable directive to the engine.
+ *
+ * @param[in,out] cp Configuration parser that contains the engine being
+ *                configured.
+ * @param[in] name The directive name.
+ * @param[in] vars The list of variables passed to @c name.
+ * @param[in] cbdata User data. Unused.
+ */
+static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
+                                            const char *name,
+                                            const ib_list_t *vars,
+                                            void *cbdata)
+{
+    IB_FTRACE_INIT();
+    const ib_list_node_t *node;
+    ib_status_t rc = IB_OK;
+
+    if (cbdata != NULL) {
+        IB_FTRACE_MSG("Callback data is not null.");
+    }
+
+    /* Loop through all of the parameters in the list */
+    IB_LIST_LOOP_CONST(vars, node) {
+        const char *param = (const char *)node->data;
+
+        if (strcasecmp(param, "all") == 0) {
+            rc = ib_rule_disable_all(cp->ib, cp->cur_ctx,
+                                     cp->cur_file, cp->cur_lineno);
+        }
+        else if (strncasecmp(param, "id:", 3) == 0) {
+            const char *id = param + 3;
+            rc = ib_rule_disable_id(cp->ib, cp->cur_ctx,
+                                    cp->cur_file, cp->cur_lineno,
+                                    id);
+        }
+        else if (strncasecmp(param, "tag:", 4) == 0) {
+            const char *tag = param + 4;
+            rc = ib_rule_disable_tag(cp->ib, cp->cur_ctx,
+                                     cp->cur_file, cp->cur_lineno,
+                                     tag);
+        }
+        else {
+            ib_log_error_cfg(cp, "Invalid %s parameter \"%s\"", name, param);
+            rc = IB_EINVAL;
+            continue;
+        }
+    }
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 
 static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 
@@ -1424,6 +1478,12 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "RuleEnable",
         parse_ruleenable_params,
+        NULL
+    ),
+
+    IB_DIRMAP_INIT_LIST(
+        "RuleDisable",
+        parse_ruledisable_params,
         NULL
     ),
 
