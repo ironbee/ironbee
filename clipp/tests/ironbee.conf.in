@@ -20,7 +20,7 @@ Set parser "htp"
     Rule REQUEST_HEADERS:User-Agent "@rx (?i:WordPress/4.01|Windows NT 5.1;\)|bwww- perl|Mozilla/4.0\(|nikto|PycURL|windows-update-agent)" id:1010 phase:REQUEST_HEADER block event "msg:Robot detected"
     Rule ARGS|REQUEST_HEADERS "@rx (?i)(:fromcharcode|alert|eval)\s*\(" id:1011 phase:REQUEST_HEADER block event "msg:JavaScript attack fragment        detected"
     Rule ARGS|REQUEST_HEADERS "@rx (?i)insert into" id:1012 phase:REQUEST_HEADER block event "msg:SQLi INSERT INTO detected"
-    Rule REMOTE_ADDR "@ipmatch 10.10.10.10" id:1013 phase:REQUEST_HEADER allow      "msg:Qualys Scanner"
+    Rule REMOTE_ADDR "@ipmatch 10.10.10.10" id:1013 phase:REQUEST_HEADER      "msg:Qualys Scanner"
     Rule REQUEST_HEADERS:Host "@rx ^[\d\.]+$" id:1014 phase:REQUEST_HEADER block  "msg:Host is an IP address"
     Rule REQUEST_LINE "@rx shortcode/index.php" id:1015 phase:REQUEST_HEADER block event "msg:variable vulnerable to XSS in Wordpress" chain
     Rule ARGS:inputname "@rx (?i)(script|alert|onmouse|javascript)" 

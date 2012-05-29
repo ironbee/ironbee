@@ -3,24 +3,62 @@
 require 'erb'
 require 'tempfile'
 require 'tmpdir'
+require 'open3'
 
 TESTDIR = File.join(File.dirname(__FILE__), 'tests')
+FAIL_MESSAGES = [
+    / (CONFIG_)?(ERROR|CRITICAL|ALERT|EMERGENCY)\s+-/
+]
+WHITELIST_MESSAGES = [
+    /Failed to create LuaJIT state./
+]
 
 if ARGV.size != 2
     puts "Usage: #{$0} <path to clipp> <path to config>"
     exit 1
 end
 
-clipp  = ARGV[0]
+$clipp  = ARGV[0]
 config = ARGV[1]
+
+def run_clipp(config_path)
+    result = nil
+    Open3.popen3($clipp, '-c', config_path) do |cin, cout, cerr, wt|
+        cin.close
+        
+        while true
+            reads = IO.select([cout, cerr])[0]
+            break if reads.find {|i| i.eof?}
+            
+            reads.each do |i|
+                line = i.gets
+                print line
+                if result.nil?
+                    is_fail  = ! FAIL_MESSAGES.find      {|x| x=~ line}.nil?
+                    is_white = ! WHITELIST_MESSAGES.find {|x| x=~ line}.nil?
+                    if is_fail && ! is_white
+                        result = "Failure message: #{line}"
+                    end 
+                end
+            end
+        end
+        
+        cout.close
+        cerr.close
+    end
+    exit_status = $?
+    if exit_status != 0 && result.nil?
+        result = "Non-zero exit status"
+    end
+    result
+end
 
 failure = false
 
 Dir.chdir(TESTDIR)
 Dir.glob('*.erb').each do |test|
     base = File.basename(test,'.erb')
-    print base
-    STDOUT.flush
+    puts "Running #{base}"
     
     erb = ERB.new(IO.read(test))
     tmppath = File.join(Dir::tmpdir, 'clipp_tests.conf')
@@ -28,13 +66,11 @@ Dir.glob('*.erb').each do |test|
         clipp_config.write(erb.result(binding))
     end
         
-    test_cmd = "#{clipp} -c #{tmppath}"
-    if ! system(test_cmd)
-        puts "FAIL -- clipp exited non-zero"
-        puts "Command: #{test_cmd}"
-        failure = true
-    else
-        puts "PASS"
+    result = run_clipp(tmppath)
+    if result
+        puts "#{base} FAIL #{result}"
+    else 
+        puts "#{base} PASS"
     end
     File.unlink(tmppath) if ! failure
 end
