@@ -1867,6 +1867,31 @@ static ib_status_t enable_rules(ib_engine_t *ib,
 
     switch (enable->enable_type) {
 
+    case RULE_ENABLE_ALL :
+        IB_LIST_LOOP(ctx_rule_list, node) {
+            ib_rule_ctx_data_t *ctx_rule;
+            ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
+
+            ++matches;
+            ib_flags_set(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED);
+            ib_log_debug2_cfg_ex(ib, ctx->mp,
+                                 enable->file, enable->lineno,
+                                 "Enabled rule all matched \"%s\"",
+                                 ctx_rule->rule->meta.id);
+        }
+        if (matches == 0) {
+            ib_log_warning_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                                  "No rules with enabled by ALL",
+                                  enable->enable_str);
+        }
+        else {
+            ib_log_debug_cfg_ex(ib, ctx->mp, enable->file, enable->lineno,
+                                "Enabled %u rules by ALL",
+                                matches, enable->enable_str);
+        }
+        IB_FTRACE_RET_STATUS(IB_OK);
+        break;
+
     case RULE_ENABLE_ID :
         /* Note: We return from the loop before because the rule
          * IDs are unique */
@@ -1932,7 +1957,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                                 "Enabled %u rules with tag of \"%s\"",
                                 matches, enable->enable_str);
         }
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        IB_FTRACE_RET_STATUS(IB_OK);
         break;
 
     default:
@@ -2674,13 +2699,15 @@ ib_status_t ib_rule_enable(ib_engine_t *ib,
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(name != NULL);
-    assert(str != NULL);
 
     /* Check the string name */
-    if (*str == '\0') {
-        ib_log_error(ib, "Invalid %s \"\" @ \"%s\":%u: %s",
-                     name, file, lineno);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    if (etype != RULE_ENABLE_ALL) {
+        assert(str != NULL);
+        if (*str == '\0') {
+            ib_log_error(ib, "Invalid %s \"\" @ \"%s\":%u: %s",
+                         name, file, lineno);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
     }
 
     /* Just push it on the list */
@@ -2696,13 +2723,30 @@ ib_status_t ib_rule_enable(ib_engine_t *ib,
         ib_log_error_cfg_ex(ib, ctx->mp, file, lineno,
                             "Error adding enable %s \"%s\" "
                             "to context=\"%s\" list: %s",
-                            str, name,
+                            str == NULL ? "<None>" : str,
+                            name,
                             ib_context_full_get(ctx),
                             ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_rule_enable_all(ib_engine_t *ib,
+                               ib_context_t *ctx,
+                               const char *file,
+                               unsigned int lineno)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_rule_enable(ib, ctx, RULE_ENABLE_ALL, "all", file, lineno, NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_rule_enable_id(ib_engine_t *ib,

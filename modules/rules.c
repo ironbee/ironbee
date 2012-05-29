@@ -1372,7 +1372,11 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
     IB_LIST_LOOP_CONST(vars, node) {
         const char *param = (const char *)node->data;
 
-        if (strncasecmp(param, "id:", 3) == 0) {
+        if (strcasecmp(param, "all") == 0) {
+            rc = ib_rule_enable_all(cp->ib, cp->cur_ctx,
+                                    cp->cur_file, cp->cur_lineno);
+        }
+        else if (strncasecmp(param, "id:", 3) == 0) {
             const char *id = param + 3;
             rc = ib_rule_enable_id(cp->ib, cp->cur_ctx,
                                    cp->cur_file, cp->cur_lineno,

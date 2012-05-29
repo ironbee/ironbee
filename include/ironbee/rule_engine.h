@@ -68,6 +68,7 @@ typedef enum {
 typedef enum {
     RULE_ENABLE_ID,
     RULE_ENABLE_TAG,
+    RULE_ENABLE_ALL,
 } ib_rule_enable_type_t;
 
 /**
@@ -254,6 +255,21 @@ ib_status_t ib_rule_enable(ib_engine_t *ib,
                            const char *file,
                            unsigned int lineno,
                            const char *str);
+
+/**
+ * Add all rules for the specified context
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] ctx IronBee context
+ * @param[in] file Configuration file name
+ * @param[in] lineno Line number in @a file
+ *
+ * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
+ */
+ib_status_t ib_rule_enable_all(ib_engine_t *ib,
+                               ib_context_t *ctx,
+                               const char *file,
+                               unsigned int lineno);
 
 /**
  * Add an enable ID to the enable list for the specified context
