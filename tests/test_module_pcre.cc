@@ -197,7 +197,5 @@ TEST_F(PcreModuleTest, matches)
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
     ASSERT_EQ(0U, IB_LIST_ELEMENTS(ib_list));
-    //ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
-    //ASSERT_EQ(static_cast<ib_field_t*>(NULL), ib_field);
 }
 
