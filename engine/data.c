@@ -321,7 +321,7 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
 
         /* If the child and the field do not have the same name,
          * set the field name to be the name it is stored under. */
-        if (memcmp(child_name, 
+        if (memcmp(child_name,
                    field->name,
                    (child_nlen<field->nlen)?child_nlen : field->nlen))
         {
@@ -331,7 +331,7 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
 
         ib_field_list_add(parent, field);
     }
-    
+
     /* Normal add. */
     else {
         rc = api->add(dpi, field, name, nlen);
