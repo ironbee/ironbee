@@ -514,6 +514,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 
     ib_field_t         *req_agent = NULL;
     ib_status_t         rc = IB_OK;
+    const ib_list_t *bs_list;
     const ib_bytestr_t *bs;
 
     /* Extract the User-Agent header field from the provider instance */
@@ -522,6 +523,29 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
         ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+    if (req_agent->type != IB_FTYPE_LIST) {
+        ib_log_error_tx(tx, "Expected request_headers:User-Agent to "
+                            "return list of values.");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rc = ib_field_value_type(req_agent,
+                             ib_ftype_list_out(&bs_list),
+                             IB_FTYPE_LIST);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx,
+                        "Cannot retrieve request_headers:User-Agent: %d",
+                        rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (IB_LIST_ELEMENTS(bs_list) == 0) {
+        ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    req_agent = (ib_field_t*)IB_LIST_NODE_DATA(IB_LIST_LAST(bs_list));
 
     /* Found it: copy the data into a newly allocated string buffer */
     rc = ib_field_value_type(req_agent, ib_ftype_bytestr_out(&bs), IB_FTYPE_BYTESTR);
