@@ -5024,7 +5024,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->data               = MODULE_NAME_STR;
     corecfg->module_base_path   = X_MODULE_BASE_PATH;
     corecfg->rule_base_path     = X_RULE_BASE_PATH;
-    corecfg->rule_log_level     = IB_RULE_LOG_FAST;
+    corecfg->rule_log_level     = IB_RULE_LOG_OFF;
     corecfg->block_status       = 500;
 
     /* Define the logger provider API. */
