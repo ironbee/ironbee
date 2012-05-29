@@ -189,6 +189,12 @@ typedef enum {
 } ib_ftype_t;
 
 /**
+ * Field numerical value types.
+ */
+typedef int64_t ib_num_t;
+typedef uint64_t ib_unum_t;
+
+/**
  * Assert @a v is proper type.
  */
 static inline void *ib_ftype_generic_mutable_in(void *v)

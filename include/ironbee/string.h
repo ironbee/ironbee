@@ -26,6 +26,7 @@
  */
 
 #include <ironbee/build.h>
+#include <ironbee/field.h>     /* For ib_num_t */
 
 #include <string.h>
 

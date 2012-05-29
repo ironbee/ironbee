@@ -29,6 +29,7 @@
 #include <ironbee/radix.h>
 
 #include <ironbee/debug.h>
+#include <ironbee/field.h>     /* For ib_num_t */
 
 #include "ironbee_util_private.h"
 

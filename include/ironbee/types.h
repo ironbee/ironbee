@@ -49,8 +49,6 @@ typedef void ib_dso_sym_t;
 
 typedef uint32_t ib_flags_t;
 typedef uint64_t ib_flags64_t;
-typedef int64_t ib_num_t;
-typedef uint64_t ib_unum_t;
 typedef struct ib_cfgmap_t ib_cfgmap_t;
 typedef struct ib_cfgmap_init_t ib_cfgmap_init_t;
 typedef struct ib_field_t ib_field_t;

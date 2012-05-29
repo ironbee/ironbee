@@ -289,7 +289,7 @@ uint8_t DLL_PUBLIC *ib_bytestr_ptr(ib_bytestr_t *bs);
  *
  * @returns 1 if @a bs is read-only and 0 otherwise.
  **/
-ib_num_t ib_bytestr_read_only( const ib_bytestr_t *bs );
+int ib_bytestr_read_only( const ib_bytestr_t *bs );
 
 /**
  * Make byte string read only.
