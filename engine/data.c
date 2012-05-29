@@ -276,9 +276,9 @@ exit_label:
  * @param[in] nlen Length of @name.
  *
  * @returns
- *   - IB_OK on succes.
+ *   - IB_OK on success.
  *   - IB_EINVAL if The parent field exists but is not a list.
- *   - IB_EALLOC on memory allcation errors.
+ *   - IB_EALLOC on memory allocation errors.
  */
 static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
                                         ib_provider_inst_t *dpi,
