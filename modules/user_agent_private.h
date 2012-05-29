@@ -87,7 +87,6 @@ typedef struct modua_match_ruleset_s {
 } modua_match_ruleset_t;
 
 /**
- * @internal
  * Initialize the user agent category rules.
  *
  * Initializes the rules used to categorize user agent strings.
@@ -101,7 +100,6 @@ ib_status_t modua_ruleset_init(modua_match_rule_t **failed_rule,
                                unsigned int *failed_field_rule_num);
 
 /**
- * @internal
  * Get the match rule set.
  *
  * Returns the set of match rules.  Rules must be previously initialized via

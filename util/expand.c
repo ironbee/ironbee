@@ -42,7 +42,6 @@
 
 /**
  * Join two memory blocks into a single buffer
- * @internal
  *
  * @param[in] mp Memory pool
  * @param[in] p1 Pointer to block 1
@@ -93,7 +92,6 @@ static ib_status_t join2(ib_mpool_t *mp,
 
 /**
  * Join three memory blocks into a single buffer
- * @internal
  *
  * @param[in] mp Memory pool
  * @param[in] p1 Pointer to block 1
@@ -150,7 +148,6 @@ static ib_status_t join3(ib_mpool_t *mp,
 
 /**
  * Join a field with strings before and after it
- * @internal
  *
  * @param[in] mp Memory pool
  * @param[in] f Field to join

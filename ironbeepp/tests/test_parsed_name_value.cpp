@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals &mdash; ParsedNameValue Tests
- * @internal
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals -- Data Implementation
- * @internal
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

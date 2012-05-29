@@ -41,8 +41,6 @@
 #include <stdio.h>
 
 /**
- * @internal
- *
  * Internal hook structure
  */
 typedef struct ib_hook_t ib_hook_t;
@@ -65,22 +63,16 @@ struct ib_hook_t {
 };
 
 /**
- * @internal
- *
  * Rule engine data
  */
 typedef struct ib_rule_engine_t ib_rule_engine_t;
 
 /**
- * @internal
- *
  * Rule engine per-context data
  */
 typedef struct ib_rule_context_t ib_rule_context_t;
 
 /**
- * @internal
- *
  * Engine handle.
  */
 struct ib_engine_t {
@@ -115,8 +107,6 @@ struct ib_engine_t {
 };
 
 /**
- * @internal
- *
  * Configuration context data.
  */
 typedef struct ib_context_data_t ib_context_data_t;
@@ -151,8 +141,6 @@ struct ib_auditlog_cfg_t {
 };
 
 /**
- * @internal
- *
  * Configuration context.
  */
 struct ib_context_t {
@@ -179,8 +167,6 @@ struct ib_context_t {
 };
 
 /**
- * @internal
- *
  * Matcher.
  */
 struct ib_matcher_t {
@@ -193,7 +179,6 @@ struct ib_matcher_t {
 
 /**
  * Rule execution results for logging.
- * @internal
  */
 struct ib_rule_target_result_t {
     ib_rule_target_t  *target;      /**< Target of rule */
@@ -250,7 +235,6 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
 
 /**
  * Initialize a context the rule engine.
- * @internal
  *
  * Called when a context is initialized; performs rule engine initialization.
  *
@@ -404,7 +388,6 @@ void ib_rule_log_fast_ex(ib_tx_t *tx,
 
 /**
  * Log a field's value
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] label Label string

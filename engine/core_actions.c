@@ -62,7 +62,6 @@ typedef struct {
 
 /**
  * Create function for the setflags action.
- * @internal
  *
  * @param[in] ib IronBee engine (unused)
  * @param[in] ctx Current context.
@@ -96,7 +95,6 @@ static ib_status_t act_setflags_create(ib_engine_t *ib,
 
 /**
  * Execute function for the "set flag" action
- * @internal
  *
  * @param[in] data Name of the flag to set
  * @param[in] rule The matched rule
@@ -129,7 +127,6 @@ static ib_status_t act_setflag_execute(void *data,
 
 /**
  * Event action execution callback.
- * @internal
  *
  * Create and event and log it.
  *
@@ -226,7 +223,6 @@ static ib_status_t act_event_execute(void *data,
 
 /**
  * Create function for the setvar action.
- * @internal
  *
  * @param[in] ib IronBee engine (unused)
  * @param[in] ctx Current context.
@@ -316,7 +312,6 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
 
 /**
  * Execute function for the "set variable" action
- * @internal
  *
  * @param[in] data Name of the flag to set
  * @param[in] rule The matched rule

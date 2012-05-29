@@ -85,7 +85,6 @@ int ib_state_event_cbdata_type(ib_state_event_type_t);
 
 
 /**
- * @internal
  * List of callback data types for event id to type lookups.
  */
 static int ib_state_event_name_cbdata_type_list[] = {
@@ -246,7 +245,6 @@ static void mod_perf_stats_event_start(
 }
 
 /**
- * @internal
  * Handle event stops.
  *
  * Counters are updated and displayed.
@@ -604,8 +602,8 @@ static ib_status_t mod_perf_stats_event_stop_txdata_callback(
 }
 
 /**
- * @internal
  * Called when module is loaded
+ *
  * Start event hooks are registered here.
  *
  * @param[in] ib IronBee object
@@ -705,7 +703,6 @@ static ib_status_t perf_stats_init(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Initialize a context for the perf_stats module.
  *
  * This is a hack.

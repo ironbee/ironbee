@@ -78,7 +78,6 @@ typedef struct ib_cfgmap_handlers_data_t ib_cfgmap_handlers_data_t;
 
 /**
  * Translate field getter to cfgmap getter.
- * @internal
  *
  * @sa ib_field_get_fn_t.
  */

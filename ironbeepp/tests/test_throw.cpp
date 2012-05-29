@@ -17,8 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals -- Throw Tests
- * @internal
+ * @brief IronBee++ Internals &mdash; Throw Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

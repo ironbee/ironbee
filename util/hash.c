@@ -40,14 +40,12 @@
 /**
  * @defgroup IronBeeHashInternal Hash Internal
  * @ingroup IronBeeHash
- * @internal
  *
  * @{
  */
 
 /**
  * Default size to use for ib_hash_create().
- * @internal
  *
  * Must be a power of 2.
  **/
@@ -65,7 +63,6 @@ typedef struct ib_hash_iterator_t ib_hash_iterator_t;
 
 /**
  * Entry in a ib_hash_t.
- * @internal
  **/
 struct ib_hash_entry_t {
     /** Key. */
@@ -82,7 +79,6 @@ struct ib_hash_entry_t {
 
 /**
  * External iterator for ib_hash_t.
- * @internal
  *
  * The end of the sequence is indicated by @c current_entry being NULL.
  * Any iterator is invalidated by any mutating operation on the hash.
@@ -127,7 +123,6 @@ struct ib_hash_t {
 
 /**
  * Search for an entry in @a hash matching @key.
- * @internal
  *
  * @param[in]  hash       Hash table.
  * @param[out] hash_entry Hash entry.
@@ -147,7 +142,6 @@ static ib_status_t ib_hash_find_entry(
 
 /**
  * Search for a hash entry in the list of entries starting at @a first.
- * @internal
  *
  * @param[in] hash       Hash table.
  * @param[in] first      Beginning of list to search.
@@ -167,7 +161,6 @@ static ib_hash_entry_t *ib_hash_find_htentry(
 
 /**
  * Return iterator pointing to first entry of @a hash.
- * @internal
  *
  * @sa IB_HASH_LOOP()
  *
@@ -181,7 +174,6 @@ static ib_hash_iterator_t ib_hash_first(
 
 /**
  * Move @a iterator to the next entry.
- * @internal
  *
  * @sa IB_HASH_LOOP()
  *
@@ -213,7 +205,6 @@ static void ib_hash_next(
 
 /**
  * Resize the number of slots in @a hash.
- * @internal
  *
  * @returns
  * - IB_OK on success.

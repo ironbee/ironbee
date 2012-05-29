@@ -59,7 +59,6 @@ typedef struct modradix_provider_data_t modradix_provider_data_t;
 IB_MODULE_DECLARE();
 
 /**
- * @internal
  * Internal structure for storing prefixes
  */
 struct modradix_provider_data_t {
@@ -67,7 +66,8 @@ struct modradix_provider_data_t {
 };
 
 /**
- * @internal
+ * Content associated with a prefix.
+ *
  * This content will be associated to the registered prefix instances
  * If a match occur and data != NULL, this callback will be called.
  * If data is NULL the match() function will be considered as if
@@ -317,7 +317,6 @@ static ib_status_t modradix_init(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Module structure.
  *
  * This structure defines some metadata, config data and various functions.

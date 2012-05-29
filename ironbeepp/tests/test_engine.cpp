@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals &mdash; Engine Tests
- * @internal
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

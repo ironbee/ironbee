@@ -20,7 +20,6 @@
  * @brief IronBee &mdash; Utility Array Functions
  * @author Brian Rectanus <brectanus@qualys.com>
  *
- * @internal
  * This is a dynamic array implemented as an array of arrays allocated
  * in chunks (size ninit) as needed.
  *

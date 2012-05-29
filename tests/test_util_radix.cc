@@ -36,8 +36,7 @@
 
 /* -- Helper functions -- */
 
-/* 
- * @internal
+/** 
  * Helper functions for printing node info
  */
 void padding(int i)
@@ -47,8 +46,7 @@ void padding(int i)
     printf("..");
 }
 
-/* 
- * @internal
+/** 
  * Helper functions for printing node info
  */
 void printBin(uint8_t *prefix,
@@ -69,8 +67,7 @@ void pdata(void* d) {
     printf("%s", data);
 }
 
-/* 
- * @internal
+/** 
  * Helper functions for printing node info
  */
 void printKey(ib_radix_prefix_t *prefix)
@@ -80,8 +77,7 @@ void printKey(ib_radix_prefix_t *prefix)
 }
 
 #if 0
-/* 
- * @internal
+/** 
  * Helper function, prints user data recursively with indentation accumulated
  * from the tree level
  */
@@ -121,8 +117,7 @@ static void ib_radix_node_print_ud(ib_radix_t *radix,
                            bitlen + node->prefix->prefixlen, ud);
 }
 
-/* 
- * @internal
+/** 
  * Helper function, prints user data
  */
 static void ib_radix_print(ib_radix_t *radix,

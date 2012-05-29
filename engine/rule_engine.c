@@ -195,7 +195,6 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 
 /**
  * Test the validity of a phase number
- * @internal
  *
  * @param phase_num Phase number to check
  *
@@ -211,7 +210,6 @@ static inline ib_bool_t is_phase_num_valid(ib_rule_phase_t phase_num)
 
 /**
  * Find a rule's matching phase meta data, matching the only the phase number.
- * @internal
  *
  * @param[in] phase_num Phase number (PHASE_xxx)
  * @param[out] phase_meta Matching rule phase meta-data
@@ -241,7 +239,6 @@ static ib_status_t find_phase_meta(ib_rule_phase_t phase_num,
 /**
  * Find a rule's matching phase meta data, matching the phase number and
  * the phase's stream type.
- * @internal
  *
  * @param[in] is_stream IB_TRUE if this is a "stream inspection" rule
  * @param[in] phase_num Phase number (PHASE_xxx)
@@ -278,7 +275,6 @@ static ib_status_t find_phase_stream_meta(
 
 /**
  * Execute a field's transformations.
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction
@@ -409,7 +405,6 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
 
 /**
  * Execute a rule on a list of values
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction
@@ -576,7 +571,6 @@ static ib_status_t execute_phase_rule_targets_operators(
 
 /**
  * Execute a single rule's operator on all target fields.
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
@@ -700,7 +694,6 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
 /**
  * Execute a single rule action
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
@@ -738,7 +731,6 @@ static ib_status_t execute_action(ib_engine_t *ib,
 
 /**
  * Execute a rule's actions
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
@@ -800,7 +792,6 @@ static ib_status_t execute_actions(ib_engine_t *ib,
 
 /**
  * Execute a single phase rule, it's actions, and it's chained rules.
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] event Event type
@@ -950,8 +941,6 @@ static inline ib_bool_t rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
 /**
  * Run a set of phase rules.
  *
- * @internal
- *
  * @param[in] ib Engine.
  * @param[in,out] tx Transaction.
  * @param[in] event Event type.
@@ -1078,7 +1067,6 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
 /**
  * Execute a single stream txdata rule, and it's actions
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] event Event type
@@ -1141,7 +1129,6 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
 
 /**
  * Execute a single stream header rule, and it's actions
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] event Event type
@@ -1223,7 +1210,6 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
 
 /**
  * Run a set of stream rules.
- * @internal
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
@@ -1381,7 +1367,6 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
 
 /**
  * Run stream header rules
- * @internal
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
@@ -1411,7 +1396,6 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
 
 /**
  * Run stream TXDATA rules
- * @internal
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
@@ -1443,7 +1427,6 @@ static ib_status_t run_stream_txdata_rules(ib_engine_t *ib,
 
 /**
  * Run stream TX rules (aka request header)
- * @internal
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
@@ -1547,7 +1530,6 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
 
 /**
  * Initialize rule set objects.
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] mp Memory pool to use for allocations
@@ -1604,7 +1586,6 @@ static ib_status_t init_ruleset(ib_engine_t *ib,
 
 /**
  * Register rules callbacks
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] mp Memory pool to use for allocations
@@ -1701,7 +1682,6 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
 
 /**
  * Initialize a rule engine object.
- * @internal
  *
  * @param[in] ib Engine
  * @param[in,out] mp Memory pool to use for allocations
@@ -1749,7 +1729,6 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
 
 /**
  * Initialize a context's rule object.
- * @internal
  *
  * @param[in] ib Engine
  * @param[in,out] mp Memory pool to use for allocations
@@ -2163,7 +2142,6 @@ ib_mpool_t *ib_rule_mpool(ib_engine_t *ib)
 
 /**
  * Calculate a rule's position in a chain.
- * @internal
  *
  * @param[in] ib IronBee Engine
  * @param[in] rule The rule
@@ -2190,7 +2168,6 @@ static ib_status_t chain_position(ib_engine_t *ib,
 
 /**
  * Generate the id for a chained rule.
- * @internal
  *
  * @param[in] ib IronBee Engine
  * @param[in,out] rule The rule

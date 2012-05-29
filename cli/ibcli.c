@@ -190,7 +190,6 @@ ib_server_t ibplugin = {
 
 
 /**
- * @internal
  * Test if a dump flag bit(s) are set.
  *
  * @param[in] flags Flag bits to test.
@@ -203,7 +202,6 @@ static ib_num_t test_dump_flags(ib_flags_t flags)
 }
 
 /**
- * @internal
  * Print usage.
  *
  * Print terse usage and exit.
@@ -218,7 +216,6 @@ static void usage(void)
 }
 
 /**
- * @internal
  * Print help for a single command line option.
  *
  * Prints a pretty help message for a single command line option.
@@ -255,7 +252,6 @@ static void print_option(const char *opt,
 }
 
 /**
- * @internal
  * Print help message.
  *
  * Print pretty help message.
@@ -293,7 +289,6 @@ static void help(void)
 }
 
 /**
- * @internal
  * Add a request header field / value.
  *
  * Attempts to add the specified request header name and value to the list
@@ -355,7 +350,6 @@ static ib_status_t add_request_header(const char *str,
 }
 
 /**
- * @internal
  * Handle a fatal error.
  *
  * Print a meaningful message and exit.
@@ -374,7 +368,6 @@ static void fatal_error(const char *fmt, ...)
 }
 
 /**
- * @internal
  * Command line processing.
  *
  * Command line processing for the IronBee CLI
@@ -608,7 +601,6 @@ static ib_status_t command_line(int argc, char *argv[])
 
 #if DEBUG_ARGS_ENABLE
 /**
- * @internal
  * Set debug option values.
  *
  * Set the values from --debug-{level,uri} options.
@@ -633,7 +625,6 @@ static void set_debug( ib_context_t *ctx )
 #endif
 
 /**
- * @internal
  * Initialize the connection.
  *
  * Sets the connection local/remote address/port
@@ -663,7 +654,6 @@ static ib_status_t ironbee_conn_init(
 }
 
 /**
- * @internal
  * Trace request processing.
  *
  * @param[in] ib IronBee object
@@ -697,7 +687,6 @@ static ib_status_t trace_tx_request(
 }
 
 /**
- * @internal
  * Trace request processing.
  *
  * @param[in] ib IronBee object
@@ -741,7 +730,6 @@ static ib_status_t trace_tx_response(
 }
 
 /**
- * @internal
  * Print a field.
  *
  * Prints a field name and value; handles various field types.
@@ -864,7 +852,6 @@ static void print_field(const char *label,
 }
 
 /**
- * @internal
  * Build a path by appending the field name to an existing path.
  *
  * @param[in] path Base path
@@ -913,7 +900,6 @@ static const char *build_path( const char *path, ib_field_t *field )
 }
 
 /**
- * @internal
  * Print transaction details.
  *
  * Extract the address & ports from the transaction & print them.
@@ -970,7 +956,6 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
 }
 
 /**
- * @internal
  * Print transaction details.
  *
  * Extract the address & ports from the transaction & print them.
@@ -1119,7 +1104,6 @@ static ib_status_t print_user_agent(
 }
 
 /**
- * @internal
  * Print GeoIP fields
  *
  * Extract the GeoIP fields from the data provider instance, and print
@@ -1185,7 +1169,6 @@ static ib_status_t print_geoip(
 }
 
 /**
- * @internal
  * Create function for the 'print' action.
  *
  * @param[in] ib IronBee engine
@@ -1230,7 +1213,6 @@ static ib_status_t action_print_create(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "print" action
  *
  * @param[in] data C-style string to log
@@ -1268,7 +1250,6 @@ static ib_status_t action_print_execute(void *data,
 }
 
 /**
- * @internal
  * Create function for the 'printvar' action.
  *
  * @param[in] ib IronBee engine
@@ -1302,7 +1283,6 @@ static ib_status_t action_printvar_create(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Execute function for the "print" action
  *
  * @param[in] data C-style string to log
@@ -1337,7 +1317,6 @@ static ib_status_t action_printvar_execute(void *data,
 
 /**
  * Create function for the print operator
- * @internal
  *
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
@@ -1425,7 +1404,6 @@ static ib_status_t op_print_create(ib_engine_t *ib,
 
 /**
  * Execute function for the "print" operator
- * @internal
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
@@ -1482,7 +1460,6 @@ static ib_status_t op_print_execute(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Register event handlers.
  *
  * Register event handlers to print specific pieces of data; which ones are
@@ -1657,7 +1634,6 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
 }
 
 /**
- * @internal
  * Add a line to the request header buffer.
  *
  * This function adds a line to header.  This function uses malloc() &
@@ -1701,7 +1677,6 @@ static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
 }
 
 /**
- * @internal
  * Simulate the reception of request header.
  *
  * Do the work to simulate the receiving of the header, replacing / adding
@@ -1846,7 +1821,6 @@ static ib_status_t send_header(ib_engine_t* ib,
 }
 
 /**
- * @internal
  * Send a file to IB as either connection input data or connection output data
  *
  * Reads from the file pointer into the buffer, calls the appropriate
@@ -1895,7 +1869,6 @@ static ib_status_t send_file(ib_engine_t* ib,
 }
 
 /**
- * @internal
  * Run connection.
  *
  * Do the work to simulate a transaction on a connection
@@ -1988,7 +1961,6 @@ end:
 }
 
 /**
- * @internal
  * Run connection.
  *
  * Do the work to simulate a connection and it's traffic
@@ -2069,7 +2041,6 @@ end:
 
 
 /**
- * @internal
  * Perform clean up operations.
  *
  * Clean up, free memory, etc.
@@ -2092,7 +2063,6 @@ static void clean_up( void )
 
 
 /**
- * @internal
  * Main.
  *
  * Main program for the IronBee command line client.

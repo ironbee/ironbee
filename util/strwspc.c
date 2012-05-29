@@ -38,7 +38,6 @@
 
 /**
  * Count the amount of whitespace in a string function
- * @internal
  *
  * @param[in] minlen Minimum length of a run of whitespace to count
  * @param[in] data String to analyze
@@ -54,7 +53,6 @@ typedef void (* count_fn_t)(size_t minlen,
 
 /**
  * In-place whitespace removal/compression function
- * @internal
  *
  * @param[in,out] buf Buffer to operate on
  * @param[in] dlen_in Input length
@@ -69,7 +67,6 @@ typedef ib_status_t (* inplace_fn_t)(uint8_t *buf,
                                      ib_flags_t *result);
 /**
  * Non-in-place whitespace removal/compression function
- * @internal
  *
  * @param[in] flags Incoming flags
  * @param[in] data_in Input buffer
@@ -87,7 +84,6 @@ typedef ib_status_t (* outplace_fn_t)(const uint8_t *data_in,
 
 /**
  * Count the amount of whitespace in a string
- * @internal
  *
  * @param[in] minlen Minimum length of a run of whitespace to count
  * @param[in] data String to analyze
@@ -134,7 +130,6 @@ static void ws_count(ib_bool_t force_other_zero,
 
 /**
  * Count the amount of whitespace in a string for whitespace removal
- * @internal
  *
  * @param[in] minlen Minimum length of a run of whitespace to count
  * @param[in] data String to analyze
@@ -155,7 +150,6 @@ static void ws_remove_count(size_t minlen,
 
 /**
  * In-place whitespace removal
- * @internal
  *
  * @param[in,out] buf Buffer to operate on
  * @param[in] dlen_in Input length
@@ -209,7 +203,6 @@ static ib_status_t ws_remove_inplace(uint8_t *buf,
 
 /**
  * Non-inline whitespace removal
- * @internal
  *
  * @param[in] data_in Input buffer
  * @param[in] dlen_in Length of @a data_in
@@ -256,7 +249,6 @@ static ib_status_t ws_remove(const uint8_t *data_in,
 
 /**
  * Count the amount of whitespace in a string for whitespace compression
- * @internal
  *
  * @param[in] minlen Minimum length of a run of whitespace to count
  * @param[in] data String to analyze
@@ -277,7 +269,6 @@ static void ws_compress_count(size_t minlen,
 
 /**
  * Inline whitespace compression
- * @internal
  *
  * @param[in,out] buf Buffer to operate on
  * @param[in] dlen_in Input length
@@ -345,7 +336,6 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
 
 /**
  * Non-inline whitespace compression
- * @internal
  *
  * @param[in] data_in Input buffer
  * @param[in] dlen_in Length of @a data_in
@@ -400,7 +390,6 @@ static ib_status_t ws_compress(const uint8_t *data_in,
 
 /**
  * Perform whitespace removal / compression
- * @internal
  *
  * @param[in] op String trim operation
  * @param[in] mp Memory pool

@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Configuration Map Implementation
- * @internal
  *
  * @sa configuration_map.hpp
  *

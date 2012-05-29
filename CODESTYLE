@@ -109,6 +109,8 @@ directly related to code formatting.
  * @returns Status code
  */
 
-* All private functions SHOULD have doxygen documentation such as above,
-  but marked with @internal and located in the C implementation file.
+* All private functions SHOULD have doxygen documentation such as above.  Any
+  doxygen documentation in .c or _private.h files is automatically treated as
+  private.  If a private function must be in a public header file surround it
+  and the code in question with '@cond internal' and '@endcond internal'.
 

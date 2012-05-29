@@ -44,18 +44,16 @@ extern "C" {
  */
 
 /**
- * @internal
  * Universal Unique ID Structure.
  *
  * This is a UUID.  UUIDs are generated via version 4 (random).
  */
-typedef union ib_uuid_t ib_uuid_t;
-union ib_uuid_t {
+typedef union {
     uint8_t       byte[16];
     uint16_t      uint16[8];
     uint32_t      uint32[4];
     uint64_t      uint64[2];
-};
+} ib_uuid_t;
 
 /**
  * Initialize UUID library.

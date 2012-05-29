@@ -39,7 +39,6 @@
 
 /**
  * Simple in-place ASCII lowercase function.
- * @internal
  *
  * @param[in] inflags Incoming flags
  * @param[in,out] data Data to translate to lowercase

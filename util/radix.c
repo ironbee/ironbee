@@ -1069,8 +1069,6 @@ ib_status_t ib_radix_match_all_data(ib_radix_t *radix,
 }
 
 /*
- * @internal
- *
  * Create a binary representation (in_addr) of IP, allocating mem from mp
  *
  * @param ip ascii representation
@@ -1098,8 +1096,6 @@ static inline struct in_addr *ib_radix_get_IPV4_addr(const char *ip,
 }
 
 /*
- * @internal
- *
  * Create a binary representation (in6_addr) of IP, allocating mem from mp
  *
  * @param ip ascii representation

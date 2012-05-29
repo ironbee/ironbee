@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals -- ModuleDelegate implementation.
- * @internal
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

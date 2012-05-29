@@ -77,7 +77,6 @@ extern "C" {
 
 
 /**
- * @internal
  * Memory buffers structure. Size must be n * IB_MPOOL_DEFAULT_PAGE_SIZE
  */
 struct ib_mpool_buffer_t {
@@ -102,7 +101,6 @@ struct ib_mpool_cleanup_t {
 };
 
 /**
- * @internal
  * Memory pool structure.
  * The behavior of ib_mpool_t can be changed by tuning sizes and definitions
  * but right now, this is how empty memory (not allocated) of buffers
@@ -149,7 +147,6 @@ struct ib_mpool_t {
 /* Helper Macros for ib_mpool_t / ib_mpool_buffer_t */
 
 /**
- * @internal
  * Allocates mem for a var in a buffer. The address is pointed by ptr.
  *
  * @param buf Pointer to the buffer
@@ -163,7 +160,6 @@ struct ib_mpool_t {
     } while (0)
 
 /**
- * @internal
  * Reset the allocations of vars inside a buffer
  *
  * @param buf Pointer to the buffer
@@ -174,7 +170,6 @@ struct ib_mpool_t {
     } while (0)
 
 /**
- * @internal
  * Returns the available mem (free mem) of a buffer
  *
  * @param buf Pointer to the buffer
@@ -183,7 +178,6 @@ struct ib_mpool_t {
     ((int)((int)(buf)->size - (int)(buf)->used))
 
 /**
- * @internal
  * Determines if certain size can be allocated in a buffer
  *
  * @param buf Pointer to the buffer
@@ -193,7 +187,6 @@ struct ib_mpool_t {
     (( (int)((int)(buf)->size - (int)(buf)->used) > (int)(rsize)))
 
 /**
- * @internal
  * Creates a new buffer of size rsize
  *
  * @param buf Pointer to the buffer
@@ -218,7 +211,6 @@ struct ib_mpool_t {
     } while(0)
 
 /**
- * @internal
  * Adds a buffer to the indexed[] lists
  *
  * @param pool Pointer to the pool
@@ -239,7 +231,6 @@ struct ib_mpool_t {
     } while (0)
 
 /**
- * @internal
  * Get the index that should be used for a buffer with 'size' available
  *
  * @param size Size of empty mem at the buffer to index
@@ -258,7 +249,6 @@ struct ib_mpool_t {
     } while(0)
 
 /**
- * @internal
  * Get the starting index where a buffer ready to allocate 'size' can be found
  *
  * @param size Size of the var to be allocated
@@ -275,7 +265,6 @@ struct ib_mpool_t {
 
 
 /**
- * @internal
  * Dynamic Shared Object (DSO) structure.
  */
 struct ib_dso_t {
@@ -284,7 +273,6 @@ struct ib_dso_t {
 };
 
 /**
- * @internal
  * Field value structure.
  *
  * This allows for multiple types of values to be stored within a field.
@@ -307,7 +295,6 @@ struct ib_field_val_t {
 };
 
 /**
- * @internal
  * Dynamic array structure.
  */
 struct ib_array_t {
@@ -320,7 +307,6 @@ struct ib_array_t {
 };
 
 /**
- * @internal
  * Calculate the extent index from the array index for an array.
  *
  * @param arr Array
@@ -332,7 +318,6 @@ struct ib_array_t {
     ((idx) / (arr)->ninit)
 
 /**
- * @internal
  * Calculate the data index from the array and extent indexes for an array.
  *
  * @param arr Array
@@ -345,7 +330,6 @@ struct ib_array_t {
     ((idx) - ((extent_idx) * (arr)->ninit))
 
 /**
- * @internal
  * Set to 1 the specified bit index of a byte array
  * Warning: The bit offset/index starts from the HSB
  *
@@ -356,7 +340,6 @@ struct ib_array_t {
     (byte[bit / 8] |= (0x01 << (7 - (bit % 8))));
 
 /**
- * @internal
  * Read a bit from the specified byte
  * Warning: The bit offset/index starts from the HSB
  *
@@ -368,7 +351,6 @@ struct ib_array_t {
     ((byte >> (7 - ((bit) % 8)) ) & 0x01)
 
 /**
- * @internal
  * Calculate the size in bytes to hold a prefix of length bits
  *
  * @param bits The number of bits we want to store
@@ -378,7 +360,6 @@ struct ib_array_t {
     (((bits) % 8 == 0) ? ((bits) / 8) : ((bits) / 8) + 1)
 
 /**
- * @internal
  * Set to 1 the specified bit index of a byte
  * Warning: The bit offset/index starts from the HSB
  *
@@ -389,7 +370,6 @@ struct ib_array_t {
     (byte |= (0x01 << (7 - (bit % 8))));
 
 /**
- * @internal
  * Read the HSB of a byte
  *
  * @param byte Byte to look at (uint8_t)
@@ -399,7 +379,6 @@ struct ib_array_t {
     (((byte) >> 7) & 0x01)
 
 /**
- * @internal
  * Prefix for radix nodes
  */
 struct ib_radix_prefix_t {
@@ -408,7 +387,6 @@ struct ib_radix_prefix_t {
 };
 
 /**
- * @internal
  * Radix node structure
  */
 struct ib_radix_node_t {
@@ -421,7 +399,6 @@ struct ib_radix_node_t {
 };
 
 /**
- * @internal
  * Radix tree structure
  */
 struct ib_radix_t {
@@ -437,7 +414,6 @@ struct ib_radix_t {
 };
 
 /**
- * @internal
  * Matching functions type helper
  */
 enum {
@@ -446,7 +422,6 @@ enum {
 };
 
 /**
- * @internal
  * Return if the given prefix is IPV4
  *
  * @param[in] cidr const char * with format ip/mask where mask is optional
@@ -455,7 +430,6 @@ enum {
 #define IB_RADIX_IS_IPV4(cidr) ((strchr(cidr, ':') == NULL) ? 1 : 0)
 
 /**
- * @internal
  * Return if the given prefix is IPV6
  *
  * @param cidr const char * with format ip/mask where mask is optional
@@ -464,7 +438,6 @@ enum {
 #define IB_RADIX_IS_IPV6(cidr) ((strchr(cidr, ':') != NULL) ? 1 : 0)
 
 /**
- * @internal
  * Determine if the given prefix is IPV4
  *
  * @param[in] cidr const char * with format ip/mask where mask is optional
@@ -477,7 +450,6 @@ enum {
     ib_radix_is_ipv4_ex((cidr), (len), &result)
 
 /**
- * @internal
  * Determine if the given prefix is IPV6
  *
  * @param[in] cidr const char * with format ip/mask where mask is optional
@@ -490,7 +462,6 @@ enum {
     ib_radix_is_ipv6_ex((cidr), (len), &result)
 
 /**
- * @internal
  * Determine if the given prefix is IPV4
  *
  * @param[in] str const char * with format ip/mask where mask is optional
@@ -504,7 +475,6 @@ ib_status_t ib_radix_is_ipv4_ex(const char *str,
                                 ib_num_t *result);
 
 /**
- * @internal
  * Determine if the given prefix is IPv6
  *
  * @param[in] str const char * with format ip/mask where mask is optional
@@ -557,7 +527,6 @@ ib_status_t ib_radix_strchr_nul_error(const char *str,
 typedef struct ib_ac_bintree_t ib_ac_bintree_t;
 
 /**
- * @internal
  * Aho Corasick state state, used to represent a state
  */
 struct ib_ac_state_t {
@@ -585,7 +554,6 @@ struct ib_ac_state_t {
 };
 
 /**
- * @internal
  * binary tree that performs the Aho Corasick goto function for a given
  * state and letter
  */

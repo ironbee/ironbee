@@ -368,7 +368,6 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
 }
 
 /**
- * @internal
  * Handle request_header events to add fields.
  *
  * Adds fields to the transaction DPI.

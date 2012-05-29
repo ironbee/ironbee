@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Field Implementation
- * @internal
  *
  * @sa field.hpp
  *

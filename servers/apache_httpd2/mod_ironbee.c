@@ -101,8 +101,6 @@ typedef struct ironbee_conn_context ironbee_conn_context;
 typedef struct ironbee_tx_context ironbee_tx_context;
 
 /**
- * @internal
- *
  * Context used for connection buffering/inspecting data.
  */
 struct ironbee_conn_context {
@@ -117,8 +115,6 @@ struct mod_ib_conn_ctx {
 };
 
 /**
- * @internal
- *
  * Context used for transaction processing.
  */
 struct ironbee_tx_context {
@@ -296,8 +292,6 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 /* -- Private Functions -- */
 
 /**
- * @internal
- *
  * Sends bucket data to ironbee for processing.
  */
 static void process_bucket(ap_filter_t *f, apr_bucket *b)
@@ -342,8 +336,6 @@ static void process_bucket(ap_filter_t *f, apr_bucket *b)
 }
 
 /**
- * @internal
- *
  * Called by the connection cleanup routine, handling a disconnect.
  */
 static apr_status_t ironbee_disconnection(void *data)
@@ -365,8 +357,6 @@ static apr_status_t ironbee_disconnection(void *data)
 }
 
 /**
- * @internal
- *
  * Cleanup.
  */
 static apr_status_t ironbee_module_cleanup(void *data)
@@ -377,8 +367,6 @@ static apr_status_t ironbee_module_cleanup(void *data)
 }
 
 /**
- * @internal
- *
  * Called when the child process exits.
  */
 static apr_status_t ironbee_child_exit(void *data)
@@ -393,8 +381,6 @@ static apr_status_t ironbee_child_exit(void *data)
 }
 
 /**
- * @internal
- *
  * Called when the child process is created.
  */
 static void ironbee_child_init(apr_pool_t *p, server_rec *s)
@@ -416,8 +402,6 @@ static void ironbee_child_init(apr_pool_t *p, server_rec *s)
 }
 
 /**
- * @internal
- *
  * Setup the connection structures, filters and a disconnect handler.
  */
 static int ironbee_pre_connection(conn_rec *c, void *csd)
@@ -487,8 +471,6 @@ static int ironbee_pre_connection(conn_rec *c, void *csd)
 /* -- IronBee Hooks -- */
 
 /**
- * @internal
- *
  * Called to initialize data in a new connection.
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
@@ -561,8 +543,6 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
 
 #ifdef IB_DEBUG
 /**
- * @internal
- *
  * Just logs data that comes from the primary input filter.
  *
  * Anything this filter sees should be what Apache sees.
@@ -599,8 +579,6 @@ static int ironbee_dbg_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
 #endif
 
 /**
- * @internal
- *
  * "Sniffs" the input (request) data from the connection stream and tries
  * to determine who closed a connection and why.
  */
@@ -789,8 +767,6 @@ static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
 
 
 /**
- * @internal
- *
  * "Sniffs" the output (response) data from the connection stream.
  */
 static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
@@ -841,8 +817,6 @@ static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
 /* -- Configuration -- */
 
 /**
- * @internal
- *
  * Called to create a configuration context.
  */
 static void *ironbee_create_config(apr_pool_t *p, server_rec *s)
@@ -862,8 +836,6 @@ static void *ironbee_create_config(apr_pool_t *p, server_rec *s)
 }
 
 /**
- * @internal
- *
  * Called to merge the parent and child configuration contexts.
  */
 static void *ironbee_merge_config(apr_pool_t *p, void *parent, void *child)
@@ -1013,8 +985,6 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
 }
 
 /**
- * @internal
- *
  * Called to handle the "IronBeeEnable" configuration directive.
  */
 static const char *ironbee_cmd_ibenable(cmd_parms *cmd,
@@ -1029,8 +999,6 @@ static const char *ironbee_cmd_ibenable(cmd_parms *cmd,
 }
 
 /**
- * @internal
- *
  * Called to handle the "IronBeeConfig" configuration directive.
  */
 static const char *ironbee_cmd_ibconfig(cmd_parms *cmd,
@@ -1045,8 +1013,6 @@ static const char *ironbee_cmd_ibconfig(cmd_parms *cmd,
 }
 
 /**
- * @internal
- *
  * "IronBeeBufferSize" and "IronBeeBufferFlushSize" configuration directives.
  */
 static const char *ironbee_cmd_sz(cmd_parms *cmd, void *dummy, const char *p1)
@@ -1059,8 +1025,6 @@ static const char *ironbee_cmd_sz(cmd_parms *cmd, void *dummy, const char *p1)
 }
 
 /**
- * @internal
- *
  * Declares all configuration directives.
  */
 static const command_rec ironbee_cmds[] = {
@@ -1099,8 +1063,6 @@ static const command_rec ironbee_cmds[] = {
 /* -- Misc Modules Stuff -- */
 
 /**
- * @internal
- *
  * Register functions to handle filters and hooks.
  */
 static void ironbee_register_hooks(apr_pool_t *p)
@@ -1150,8 +1112,6 @@ static void ironbee_register_hooks(apr_pool_t *p)
 }
 
 /**
- * @internal
- *
  * Declare the module.
  */
 module AP_MODULE_DECLARE_DATA ironbee_module = {

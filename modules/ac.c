@@ -67,7 +67,6 @@ typedef struct modac_cpatt_t modac_cpatt_t;
 IB_MODULE_DECLARE();
 
 /**
- * @internal
  * Internal representation of AC compiled patterns.
  */
 struct modac_provider_data_t {
@@ -258,7 +257,6 @@ static void nop_ac_match(ib_ac_t *orig,
 }
 
 /**
- * @internal
  * @brief Read the given file into memory and return the malloced buffer.
  * @param[in] filename Filename to read.
  * @param[in,out] buffer Character buffer pointer that will be malloced
@@ -611,7 +609,6 @@ static ib_status_t modac_init(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Module structure.
  *
  * This structure defines some metadata, config data and various functions.

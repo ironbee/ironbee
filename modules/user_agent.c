@@ -52,7 +52,6 @@ IB_MODULE_DECLARE();
 static const modua_match_ruleset_t *modua_match_ruleset = NULL;
 
 /**
- * @internal
  * Skip spaces, return pointer to first non-space.
  *
  * Skips spaces in the passed in string.
@@ -70,7 +69,6 @@ static char *skip_space(char *str)
 }
 
 /**
- * @internal
  * Parse the user agent header.
  *
  * Attempt to tokenize the user agent string passed in, splitting up
@@ -177,7 +175,6 @@ static ib_status_t modua_parse_uastring(char *str,
 #define RESULT_NE(av,mv) ( ((av) != (mv)) ? YES : NO )
 
 /**
- * @internal
  * Match a field against the specified match rule.
  *
  * Attempts to match the field string (or NULL) against the field match rule.
@@ -228,7 +225,6 @@ static modua_matchresult_t modua_frule_match(const char *str,
 }
 
 /**
- * @internal
  * Apply the user agent category rules.
  *
  * Walks through the internal static category rules, attempts to apply
@@ -267,7 +263,6 @@ static int modua_mrule_match( const char *fields[],
 }
 
 /**
- * @internal
  * Apply the user agent category rules.
  *
  * Walks through the internal static category rules, attempts to apply
@@ -314,7 +309,6 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
 }
 
 /**
- * @internal
  * Store a field in the agent list
  *
  * Creates a new field and adds it to the agent list field list.
@@ -371,7 +365,6 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Parse the user agent header, splitting into component fields.
  *
  * Attempt to tokenize the user agent string passed in, storing the
@@ -488,7 +481,6 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Handle request_header events for user agent extraction.
  *
  * Extract the "request_headers" field (a list) from the transactions's
@@ -559,7 +551,6 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Handle request_header events for remote IP extraction.
  *
  * Extract the "request_headers" field (a list) from the transactions's
@@ -651,7 +642,6 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Called to initialize the user agent module (when the module is loaded).
  *
  * Registers a handler for the request_header_finished_event event.

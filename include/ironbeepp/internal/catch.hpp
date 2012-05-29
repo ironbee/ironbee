@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals -- Catch
- * @internal
  *
  * This file provides IBPP_TRY_CATCH(), a macro to aid in converting C++
  * exceptions into ib_status_t return values.
@@ -43,7 +42,6 @@ namespace Internal {
 
 /**
  * Handle an IronBee++ exception.
- * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
  * ib_log_error().  Otherwise, uses ib_util_log_error().
@@ -62,7 +60,6 @@ ib_status_t ibpp_caught_ib_exception(
 
 /**
  * Log, if possible, a boost::exception.
- * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
  * ib_log_error().  Otherwise, uses ib_util_log_error().
@@ -79,7 +76,6 @@ ib_status_t ibpp_caught_boost_exception(
 
 /**
  * Log, if possible, a std::exception.
- * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
  * ib_log_error().  Otherwise, uses ib_util_log_error().
@@ -96,7 +92,6 @@ ib_status_t ibpp_caught_std_exception(
 
 /**
  * Log, if possible, an exception we know nothing about.
- * @internal
  *
  * If @a engine is non-NULL, then uses it to emit a log error via
  * ib_log_error().  Otherwise, uses ib_util_log_error().
@@ -109,7 +104,6 @@ ib_status_t ibpp_caught_unknown_exception(
 
 /**
  * Turn an Ironbee::Engine into an ib_engine_t*.
- * @internal
  *
  * @param[in] engine Engine to transform.
  *
@@ -119,7 +113,6 @@ ib_engine_t* normalize_engine(Engine& engine);
 
 /**
  * Overload of previous function to handle trivial case.
- * @internal
  *
  * @param[in] engine Engine.
  *
@@ -132,7 +125,6 @@ ib_engine_t* normalize_engine(ib_engine_t* engine);
 
 /**
  * Helper macro for implementing IBPP_TRY_CATCH().
- * @internal
  *
  * @sa IBPP_TRY_CATCH()
  *
@@ -152,7 +144,6 @@ ib_engine_t* normalize_engine(ib_engine_t* engine);
 
 /**
  * Helper macro for implementing IBPP_TRY_CATCH().
- * @internal
  *
  * @sa IBPP_TRY_CATCH()
  *
@@ -172,7 +163,6 @@ ib_engine_t* normalize_engine(ib_engine_t* engine);
 
 /**
  * Macro to translate exceptions to log messages and return values.
- * @internal
  *
  * This will evaluate @a statement instead a try block and catch any
  * exceptions.  If an exception is thrown, an error message will be logged

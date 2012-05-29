@@ -134,13 +134,14 @@ struct ib_dirmap_init_t {
     const char                   *name;      /**< Directive name */
     ib_dirtype_t                  type;      /**< Directive type */
     union {
+        /** @cond internal */
         /**
-         * @internal
          * C90/C++ always initializes the first member vs C99 which has
          * designated initializers, so in order to support initialization
          * there must be a generic function as the first member.
          */
         ib_void_fn_t              _init;
+        /** @endcond */
         ib_config_cb_onoff_fn_t   fn_onoff;  /**< On|Off directive */
         ib_config_cb_param1_fn_t  fn_param1; /**< 1 param directive */
         ib_config_cb_param2_fn_t  fn_param2; /**< 2 param directive */
@@ -157,8 +158,8 @@ struct ib_dirmap_init_t {
 };
 
 
+/** @cond internal */
 /**
- * @internal
  * Helper macro to use designated initializers to typecheck @a cb argument to
  * @c IB_DIRMAP_INIT_X macros.  If we are in C, uses designated initializers,
  * but if we are in C++, uses generic @c _init member.
@@ -168,6 +169,7 @@ struct ib_dirmap_init_t {
 #else
 #define IB_DIRMAP_INIT_CB_HELPER(name,cb) { .name = (cb) }
 #endif
+/** @endcond */
 
 /**
  * Defines a configuration directive map initialization structure.

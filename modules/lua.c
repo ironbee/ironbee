@@ -932,7 +932,6 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Get the lua runtime from the connection.
  *
  * @param conn Connection
@@ -954,7 +953,6 @@ static modlua_runtime_t *modlua_runtime_get(ib_conn_t *conn)
 /* -- Event Handlers -- */
 
 /**
- * @internal
  * Initialize the lua runtime for the configuration.
  *
  * @param ib Engine
@@ -1383,7 +1381,6 @@ static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,
 }
 
 /**
- * @internal
  * Generic event handler for Lua transaction data events.
  *
  * @param ib Engine

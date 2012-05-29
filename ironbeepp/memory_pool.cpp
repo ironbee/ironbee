@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals &mdash; Memory Pool Implementation
- * @internal
  *
  * @sa memory_pool.hpp
  *

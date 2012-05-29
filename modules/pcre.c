@@ -72,7 +72,6 @@ typedef struct modpcre_cpatt_t pcre_rule_data_t;
 IB_MODULE_DECLARE();
 
 /**
- * @internal
  * Module Configuration Structure.
  */
 struct modpcre_cfg_t {
@@ -82,7 +81,6 @@ struct modpcre_cfg_t {
 };
 
 /**
- * @internal
  * Internal representation of PCRE compiled patterns.
  */
 struct modpcre_cpatt_t {
@@ -835,7 +833,6 @@ static IB_CFGMAP_INIT_STRUCTURE(modpcre_config_map) = {
 };
 
 /**
- * @internal
  * Module structure.
  *
  * This structure defines some metadata, config data and various functions.

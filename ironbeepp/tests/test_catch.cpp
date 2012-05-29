@@ -17,8 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals -- Catch Tests
- * @internal
+ * @brief IronBee++ Internals &mdash; Catch Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

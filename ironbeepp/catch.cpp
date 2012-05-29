@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals -- Catch
- * @internal
  *
  * @sa catch.hpp
  *

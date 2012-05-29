@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Clock Implementation
- * @internal
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

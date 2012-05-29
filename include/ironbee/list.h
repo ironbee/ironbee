@@ -71,8 +71,8 @@ typedef struct ib_list_node_t ib_list_node_t;
     ntype *head; /**< First node in list */ \
     ntype *tail /**< Last node in list */
 
+/** @cond internal */
 /**
- * @internal
  * List node structure.
  */
 struct ib_list_node_t {
@@ -81,13 +81,13 @@ struct ib_list_node_t {
 };
 
 /**
- * @internal
  * List structure.
  */
 struct ib_list_t {
     ib_mpool_t       *mp;
     IB_LIST_REQ_FIELDS(ib_list_node_t);       /* Required fields */
 };
+/** @endcond */
 
 /**
  * Number of list elements

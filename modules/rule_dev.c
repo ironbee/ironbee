@@ -51,7 +51,6 @@ IB_MODULE_DECLARE();
 
 /**
  * Execute function for the "true" operator
- * @internal
  *
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
@@ -82,7 +81,6 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
 
 /**
  * Execute function for the "false" operator
- * @internal
  *
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
@@ -110,7 +108,6 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
 
 /**
  * Create function for the log action.
- * @internal
  *
  * @param[in] ib IronBee engine (unused)
  * @param[in] ctx Current context.
@@ -155,7 +152,6 @@ static ib_status_t act_log_create(ib_engine_t *ib,
 
 /**
  * Execute function for the "debuglog" action
- * @internal
  *
  * @param[in] data C-style string to log
  * @param[in] rule The matched rule
@@ -196,7 +192,6 @@ static ib_status_t act_debuglog_execute(void *data,
 
 /**
  * Called to initialize the rule development module
- * @internal
  *
  * Registers rule development operators and actions.
  *

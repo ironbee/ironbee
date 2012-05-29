@@ -45,8 +45,6 @@ static struct _ibutil_logger_t {
 } _ibutil_logger;
 
 /**
- * @internal
- *
  * Builtin Logger.
  */
 static void _builtin_logger(FILE *fh, int level,

@@ -43,7 +43,6 @@
 
 /**
  * Search start from the left for the first non-whitespace.
- * @internal
  *
  * @param[in] str String to search
  * @param[in] len Length of string
@@ -77,7 +76,6 @@ static size_t find_nonws_left(const uint8_t *str,
 /**
  * Return a zero-length string that may be an alias into the original
  * or a new allocation.
- * @internal
  *
  * @param[in] op String modification operation
  * @param[in] mp Memory pool
@@ -129,7 +127,6 @@ static ib_status_t zero_len_ex(ib_strop_t op,
 /**
  * Return a zero-length string that may be an alias into the original
  * or a new allocation.
- * @internal
  *
  * @param[in] op String modification operation
  * @param[in] mp Memory pool
@@ -179,7 +176,6 @@ static ib_status_t zero_len(ib_strop_t op,
 
 /**
  * Left trim the input string
- * @internal
  *
  * @param[in] op String modification operation
  * @param[in] mp Memory pool
@@ -235,7 +231,6 @@ static ib_status_t trim_left(ib_strop_t op,
 
 /**
  * Search start from the right for the first non-whitespace.
- * @internal
  *
  * @param[in] str String to search
  * @param[in] len Length of string
@@ -268,7 +263,6 @@ static size_t find_nonws_right(const uint8_t *str,
 /**
  * Return a zero-length string that may be an alias into the original
  * or a new allocation.
- * @internal
  *
  * @param[in] op String modification operation
  * @param[in] mp Memory pool
@@ -329,7 +323,6 @@ static ib_status_t trim_right_ex(ib_strop_t op,
 /**
  * Return a zero-length string that may be an alias into the original
  * or a new allocation.
- * @internal
  *
  * @param[in] op String modification operation
  * @param[in] mp Memory pool

@@ -75,7 +75,6 @@ ib_status_t ib_ac_create(ib_ac_t **ac_tree,
 }
 
 /**
- * @internal
  * Returns the state that would result of applying the
  * aho corasick goto() function to a given state with the given letter
  *
@@ -110,7 +109,6 @@ ib_ac_child_for_code(ib_ac_state_t *parent_state,
 }
 
 /**
- * @internal
  * Adds state to parent state, if it is not already there
  *
  * @param parent the state where we want to link the new state
@@ -238,7 +236,6 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
 }
 
 /**
- * @internal
  * Link branches that are subpatterns of other to produce it's output
  *
  * @param ac_tree the matcher that holds the patterns
@@ -283,7 +280,6 @@ static void ib_ac_link_outputs(ib_ac_t *ac_tree,
 }
 
 /**
- * @internal
  * Remove unuseful failure links to skip using an invalid transition
  *
  * @param ac_tree the matcher that holds the patterns
@@ -344,7 +340,6 @@ static void ib_ac_unlink_unuseful(ib_ac_t *ac_tree,
 }
 
 /**
- * @internal
  * Add items to the bintree for fast goto() transitions. Recursive calls
  *
  * @param states states array sorted by it's letter
@@ -412,7 +407,6 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
 }
 
 /**
- * @internal
  * Builds balanced binary tree of the children states of the given state
  *
  * @param ac_tree the ac tree matcher
@@ -491,7 +485,6 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
 }
 
 /**
- * @internal
  * Constructs fail links of branches (the failure transition function)
  *
  * @param ac_tree the ac tree matcher
@@ -579,7 +572,6 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
 }
 
 /**
- * @internal
  * Search the state to go to for the given state and letter. It represents
  * the goto() function of aho corasick using a balanced binary tree for
  * fast searching
@@ -641,9 +633,8 @@ ib_status_t ib_ac_build_links(ib_ac_t *ac_tree)
 }
 
 /**
- * @internal
- *
  * Wrapper for the callback call
+ *
  * @param ac_ctx the matching context
  * @param ac_ctx the state where a pattern match (output) is found
  *

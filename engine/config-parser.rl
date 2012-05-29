@@ -45,7 +45,7 @@
 
 /**
  * Finite state machine type.
- * @internal
+ * 
  * Contains state information for Ragel's parser.
  * Many of these values and names come from the Ragel documentation, section
  * 5.1 Variable Used by Ragel. p35 of The Ragel Guide 6.7 found at

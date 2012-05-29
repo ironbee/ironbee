@@ -61,9 +61,8 @@ typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    ib_field_t **data_out,
                                    ib_flags_t *pflags);
 
+/** @cond internal */
 /**
- * @internal
- *
  * Transformation.
  */
 struct ib_tfn_t {
@@ -71,6 +70,7 @@ struct ib_tfn_t {
     ib_tfn_fn_t         fn_execute;        /**< Tfn execute function */
     void               *fndata;            /**< Tfn function data */
 };
+/** @endcond **/
 
 /** Set if transformation modified the value. */
 #define IB_TFN_NONE                (0x0)

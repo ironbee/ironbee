@@ -26,8 +26,6 @@
 #include "ironbee.h"
 
 /**
- * @internal
- *
  * Register the module table with ironbee.
  *
  * Currently a module MUST call this to register itself with the
@@ -66,7 +64,6 @@ static int register_module(lua_State *L)
 }
 
 /**
- * @internal
  *
  * Log to debug log
  *
@@ -112,7 +109,6 @@ static int log_debug(lua_State *L)
 }
 
 /**
- * @internal
  *
  * Map Lua methods to C functions.
  */

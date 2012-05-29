@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals -- Data
- * @internal
  *
  * This file provides data_to_value() and value_to_data(), functions that
  * enable the storage of C++ data in void*'s with appropriate destructors
@@ -51,7 +50,6 @@ extern "C" {
 
 /**
  * C function used by value_to_data().
- * @internal
  *
  * You should never need to use this directly.
  * @param[in] data Data to clean up (delete).
@@ -63,7 +61,6 @@ ib_status_t data_cleanup(void* data);
 
 /**
  * Convert a @c void* generated with value_to_data() to a @a ValueType.
- * @internal
  *
  * This attempts to extract the value in @a data, assuming it is of type
  * @a ValueType.  If @a ValueType does not match the original type stored in
@@ -93,7 +90,6 @@ ValueType data_to_value(void* data)
 
 /**
  * Store a copy of @a value and provide a @c void* for data_to_value().
- * @internal
  *
  * This _copies_ @a value and returns a @c void* containing information to
  * recover the value.  It also registers a clean up function with @a mpool so

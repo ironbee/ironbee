@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ &mdash; Internal Throw
- * @internal
  *
  * This is the opposite of catch.hpp.  It converts status codes into
  * exceptions.
@@ -36,7 +35,6 @@ namespace Internal {
 
 /**
  * Throw exception if @a status != IB_OK.
- * @internal
  *
  * The message is "Error reported from C API."
  *

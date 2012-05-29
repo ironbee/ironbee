@@ -92,7 +92,6 @@ static ib_lock_t g_lua_lock;
 
 /**
  * Lookup a phase name in the phase name table.
- * @internal
  *
  * @param[in] str Phase name string to lookup
  * @param[in] is_stream IB_TRUE if this is a stream phase
@@ -130,7 +129,6 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*,
 
 /**
  * Parse rule's operator.
- * @internal
  *
  * Parses the rule's operator string @a str and, stores the results in the
  * rule object @a rule.
@@ -265,7 +263,6 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
 
 /**
  * Rewrite the target string if required
- * @internal
  *
  * Parses the rule's target field list string @a target_str, looking for
  * the '#' and '&' tokens at the start of it.
@@ -342,7 +339,6 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
 
 /**
  * Parse the transformations from a target string
- * @internal
  *
  * @param[in] ib Engine
  * @param[in] str Target field string to parse
@@ -463,7 +459,6 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
 
 /**
  * Parse a rule's target string.
- * @internal
  *
  * Parses the rule's target field list string @a target_str, and stores the
  * results in the rule object @a rule.
@@ -576,7 +571,6 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
 
 /**
  * Attempt to register a string as an action.
- * @internal
  *
  * Treats the rule's modifier string @a name as a action, and registers
  * the appropriate action with @a rule.
@@ -634,7 +628,6 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
 
 /**
  * Parse a rule's modifier string.
- * @internal
  *
  * Parses the rule's modifier string @a modifier_str, and stores the results
  * in the rule object @a rule.

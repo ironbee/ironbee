@@ -332,7 +332,6 @@ ib_server_t DLL_LOCAL ibplugin = {
 };
 
 /**
- * @internal
  * Handle transaction context destroy.
  *
  * Handles TS_EVENT_HTTP_TXN_CLOSE (transaction close) close event from the
@@ -385,7 +384,6 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 }
 
 /**
- * @internal
  * Handle session context destroy.
  *
  * Handles TS_EVENT_HTTP_SSN_CLOSE (session close) close event from the
@@ -419,7 +417,6 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
 }
 
 /**
- * @internal
  * Process data from ATS.
  *
  * Process data from one of the ATS events.
@@ -585,7 +582,6 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
 }
 
 /**
- * @internal
  * Handle a data event from ATS.
  *
  * Handles all data events from ATS, uses process_data to handle the data
@@ -660,7 +656,6 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 }
 
 /**
- * @internal
  * Handle a outgoing data event from ATS.
  *
  * Handles all outgoing data events from ATS, uses process_data to handle the
@@ -688,7 +683,6 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
 }
 
 /**
- * @internal
  * Handle a incoming data event from ATS.
  *
  * Handles all incoming data events from ATS, uses process_data to handle the
@@ -715,7 +709,6 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
     return data_event(contp, event, &direction);
 }
 /**
- * @internal
  * Parse lines in an HTTP header buffer
  *
  * Given a line terminated by "\r\n", this finds the end-of-line.
@@ -757,7 +750,6 @@ static int get_line(char * const line, size_t *lenp)
 }
 
 /**
- * @internal
  * Process an HTTP header from ATS.
  *
  * Handles an HTTP header, called from ironbee_plugin.
@@ -1056,7 +1048,6 @@ process_hdr_cleanup:
 }
 
 /**
- * @internal
  * Plugin for the IronBee ATS.
  *
  * Handles some ATS events.
@@ -1296,7 +1287,6 @@ static int check_ts_version(void)
 }
 
 /**
- * @internal
  * IronBee ATS logger.
  *
  * Performs IronBee logging for the ATS plugin.
@@ -1354,7 +1344,6 @@ static void ironbee_logger(void *dummy, int level,
 }
 
 /**
- * @internal
  * Convert an IP address into a string.
  *
  * @param[in,out] addr IP address structure
@@ -1373,7 +1362,6 @@ static void addr2str(const struct sockaddr *addr, char *str, int *port)
 }
 
 /**
- * @internal
  * Initialize the IB connection.
  *
  * Initializes an IronBee connection from a ATS continuation
@@ -1456,7 +1444,6 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
 #define TRACEFILE NULL
 
 /**
- * @internal
  * Handle ATS shutdown for IronBee plugin.
  *
  * Registered via atexit() during initialization, destroys the IB engine,
@@ -1470,7 +1457,6 @@ static void ibexit(void)
 }
 
 /**
- * @internal
  * Initialize IronBee for ATS.
  *
  * Performs IB initializations for the ATS plugin.
@@ -1559,7 +1545,6 @@ static int ironbee_init(const char *configfile, const char *logfile)
 }
 
 /**
- * @internal
  * Initialize the IronBee ATS plugin.
  *
  * Performs initializations required by ATS.

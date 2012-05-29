@@ -67,7 +67,6 @@ typedef struct ib_field_callback_data_t ib_field_callback_data_t;
 #endif
 
 /**
- * @internal
  * List of callback data types for event id to type lookups.
  */
 static const ib_state_hook_type_t ib_state_event_hook_types[] = {
@@ -606,7 +605,6 @@ void ib_conn_destroy(ib_conn_t *conn)
 }
 
 /**
- * @internal
  * Merge the base_uuid with tx data and generate the tx id string.
  */
 static ib_status_t ib_tx_generate_id(ib_tx_t *tx)
@@ -934,8 +932,6 @@ ib_status_t ib_site_loc_create_default(ib_site_t *site,
 /* -- State Routines -- */
 
 /**
- * @internal
- *
  * List of state names for id to name lookups.
  *
  * @warning Remember to update ib_state_event_type_t.

@@ -273,7 +273,7 @@ exit_label:
  * the list @c FOO. If @a name is @c FOO:BAR then the field @c BAR
  * will be stored in the list @c FOO in the @a dpi.
  *
- * Note that in cases where @a field has a name other than @c BAR, 
+ * Note that in cases where @a field has a name other than @c BAR,
  * @a field 's name will be set to @c BAR using the @a dpi memory pool
  * for storage.
  *
@@ -282,7 +282,7 @@ exit_label:
  *                function available from @a api.
  * @param[in,out] field The field to add to the DPI. This is an out-parameter
  *                in the case where, first, @a name specifies a subfield
- *                that @a field should be stored under and, second, 
+ *                that @a field should be stored under and, second,
  *                @c field->name is different than the subfield.
  * @param[in] name Name of @a field.
  * @param[in] nlen Length of @name.

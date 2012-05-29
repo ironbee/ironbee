@@ -19,8 +19,6 @@
  * @file
  * @brief IronBee &mdash; Lock Utilities
  * @author Sam Baskinger <sbaskinger@qualys.com>
- *
- * @internal
  */
 
 #include "ironbee_config_auto.h"

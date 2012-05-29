@@ -40,7 +40,6 @@
 
 /**
  * Simple ASCII lowercase function.
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -152,7 +151,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
 
 /**
  * Simple ASCII lowercase function.
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -183,7 +181,6 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
 
 /**
  * Simple ASCII trim (left) transformation.
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -212,7 +209,6 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
 
 /**
  * Simple ASCII trim (right) transformation.
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -241,7 +237,6 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
 
 /**
  * Simple ASCII trim transformation.
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -270,7 +265,6 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
 
 /**
  * Remove all whitespace from a string
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -299,7 +293,6 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
 
 /**
  * Compress whitespace in a string
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -328,7 +321,6 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
 
 /**
  * Length transformation
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -444,7 +436,6 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 
 /**
  * Count transformation
- * @internal
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
@@ -498,7 +489,6 @@ static ib_status_t tfn_count(ib_engine_t *ib,
 
 /**
  * Get maximum / minimum of a list of values
- * @internal
  *
  * @param[in] is_max IB_TRUE for max, IB_FALSE for min
  * @param[in] mp Memory pool to use for allocations.

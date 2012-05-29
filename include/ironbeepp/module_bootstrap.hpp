@@ -117,7 +117,6 @@ namespace Internal {
 
 /**
  * Context open handler for delegate.  Forwards to delegate.
- * @internal
  *
  * @tparam DelegateType Type of @a *delegate.
  * @param[in] delegate Pointer to delegate.
@@ -136,7 +135,6 @@ void delegate_context_open(
 
 /**
  * Context close handler for delegate.  Forwards to delegate.
- * @internal
  *
  * @tparam DelegateType Type of @a *delegate.
  * @param[in] delegate Pointer to delegate.
@@ -155,7 +153,6 @@ void delegate_context_close(
 
 /**
  * Context destroy handler for delegate.  Forwards to delegate.
- * @internal
  *
  * @tparam DelegateType Type of @a *delegate.
  * @param[in] delegate Pointer to delegate.
@@ -174,7 +171,6 @@ void delegate_context_destroy(
 
 /**
  * Finalizer for delegates &mdash; destroys delegate.
- * @internal
  *
  * This is called at module finalization.  It destroys the delegate causing
  * the destructor to be called.
@@ -194,7 +190,6 @@ void delegate_finalize(
 
 /**
  * Initialize handler for delegate.  Forwards to delegate.
- * @internal
  *
  * @tparam DelegateType Type of @a *delegate.
  * @param[in] delegate Pointer to delegate.
@@ -211,7 +206,6 @@ void delegate_initialize(
 
 /**
  * @c on_load handlers for delegates.
- * @internal
  *
  * Constructs delegate and connects hooks to delegate.
  *
@@ -260,7 +254,6 @@ void delegate_on_load(
 
 /**
  * Fill in the ib_module_t.
- * @internal
  *
  * This function will fill in @a ib_module using the other arguments.
  *

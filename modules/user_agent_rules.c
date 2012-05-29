@@ -987,7 +987,6 @@ static modua_match_ruleset_t modua_match_ruleset =
 };
 
 /**
- * @internal
  * Initialize the specified match rule.
  *
  * Initialize a field match rule by storing of the length of it's string.

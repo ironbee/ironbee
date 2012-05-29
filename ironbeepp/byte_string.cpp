@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Byte String Implementation
- * @internal
  *
  * @sa byte_string.hpp
  *

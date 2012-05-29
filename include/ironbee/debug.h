@@ -54,8 +54,8 @@ extern "C" {
  */
 void DLL_PUBLIC ib_trace_init(const char *fn);
 
+/** @cond internal */
 /**
- * @internal
  * Log a generic trace message.
  *
  * @param file Source filename (typically __FILE__)
@@ -69,7 +69,6 @@ void DLL_PUBLIC ib_trace_msg(const char *file,
                              const char *msg);
 
 /**
- * @internal
  * Log a numeric trace message.
  *
  * @param file Source filename (typically __FILE__)
@@ -85,7 +84,6 @@ void DLL_PUBLIC ib_trace_num(const char *file,
                              intmax_t num);
 
 /**
- * @internal
  * Log a status code.
  *
  * @param file Source filename (typically __FILE__)
@@ -101,7 +99,6 @@ void DLL_PUBLIC ib_trace_status(const char *file,
                                 ib_status_t rc);
 
 /**
- * @internal
  * Log a unsigned numeric trace message.
  *
  * @param file Source filename (typically __FILE__)
@@ -117,7 +114,6 @@ void DLL_PUBLIC ib_trace_unum(const char *file,
                               uintmax_t unum);
 
 /**
- * @internal
  * Log a pointer address trace message.
  *
  * @param file Source filename (typically __FILE__)
@@ -133,7 +129,6 @@ void DLL_PUBLIC ib_trace_ptr(const char *file,
                              void *ptr);
 
 /**
- * @internal
  * Log a string trace message.
  *
  * @param file Source filename (typically __FILE__)
@@ -149,7 +144,6 @@ void DLL_PUBLIC ib_trace_str(const char *file,
                              const char *str);
 
 /**
- * @internal
  * Current function name.
  *
  * In C, __FUNCTION__, __PRETTY_FUNCTION__, and __func__ are all (probably)
@@ -169,6 +163,8 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 #else
 #define IB_CURRENT_FUNCTION "(unknown function due to unknown compiler)"
 #endif
+
+/** @endcond */
 
 /**
  * Initialize function tracing for a function.
@@ -309,6 +305,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
     } while(0)
 
 #else
+/** @cond internal */
 #define ib_trace_init(fn)
 #define ib_trace_msg(file,line,func,msg)
 #define ib_trace_num(file,line,func,msg,num)
@@ -316,6 +313,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 #define ib_trace_unum(file,line,func,msg,unum)
 #define ib_trace_ptr(file,line,func,msg,ptr)
 #define ib_trace_str(file,line,func,msg,str)
+/** @endcond */
 
 #define IB_FTRACE_INIT(name)
 #define IB_FTRACE_MSG(msg)

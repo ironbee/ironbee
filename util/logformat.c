@@ -22,8 +22,6 @@
  */
 
 /**
- * @internal
- *
  * Logformat helper for custom index file formats
  */
 

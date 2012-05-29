@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Internals -- Engine Implementation
- * @internal
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

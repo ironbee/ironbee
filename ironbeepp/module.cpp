@@ -18,7 +18,6 @@
 /**
  * @file
  * @brief IronBee++ Module Implementation
- * @internal
  *
  * @sa module.hpp
  *
