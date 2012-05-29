@@ -266,12 +266,24 @@ exit_label:
 }
 
 /**
- * Add a field to the @a dpi respecting a sub-field named by @c FIELD:SUBFIELD.
+ * Add a field to the @a dpi allowing for subfield notation.
+ *
+ * That is, a field may be stored in a normal field, such as @c FOO.
+ * A field may also be stored in a subfield, that is a child field of
+ * the list @c FOO. If @a name is @c FOO:BAR then the field @c BAR
+ * will be stored in the list @c FOO in the @a dpi.
+ *
+ * Note that in cases where @a field has a name other than @c BAR, 
+ * @a field 's name will be set to @c BAR using the @a dpi memory pool
+ * for storage.
  *
  * @param[in] api The API to perform the add operation.
  * @param[in] dpi The data provider instance passed to a call to a
  *                function available from @a api.
- * @param[in] field The field to add to the DPI.
+ * @param[in,out] field The field to add to the DPI. This is an out-parameter
+ *                in the case where, first, @a name specifies a subfield
+ *                that @a field should be stored under and, second, 
+ *                @c field->name is different than the subfield.
  * @param[in] name Name of @a field.
  * @param[in] nlen Length of @name.
  *
@@ -288,13 +300,19 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
 {
     IB_FTRACE_INIT();
 
+    assert(api);
+    assert(dpi);
+    assert(field);
+    assert(name);
+
     ib_status_t rc;
-    char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, nlen);
+    char *filter_marker;
 
     if (nlen == 0) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, nlen);
 
     /* Add using a subfield. */
     if ( filter_marker ) {
@@ -319,16 +337,25 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
             IB_FTRACE_RET_STATUS(rc);
         }
 
+        /* Ensure that the parent field is a list type. */
+        if (parent->type != IB_FTYPE_LIST) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
         /* If the child and the field do not have the same name,
          * set the field name to be the name it is stored under. */
         if (memcmp(child_name,
                    field->name,
-                   (child_nlen<field->nlen)?child_nlen : field->nlen))
+                   (child_nlen < field->nlen) ? child_nlen : field->nlen))
         {
-            field->name = ib_mpool_memdup(dpi->mp, child_name, child_nlen);
             field->nlen = child_nlen;
+            field->name = ib_mpool_memdup(dpi->mp, child_name, child_nlen);
+            if (field->name == NULL) {
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
         }
 
+        /* If the list already exists, add the value. */
         ib_field_list_add(parent, field);
     }
 
@@ -347,13 +374,14 @@ ib_status_t ib_data_add(ib_provider_inst_t *dpi,
                         ib_field_t *f)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_status_t rc;
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
     IB_FTRACE_RET_STATUS(rc);
@@ -365,13 +393,14 @@ ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
                               size_t klen)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_status_t rc;
 
     rc = ib_data_add_internal(api, dpi, f, key, klen);
     IB_FTRACE_RET_STATUS(rc);
@@ -384,14 +413,15 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_field_t *f;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_field_t *f;
+    ib_status_t rc;
 
     if (pf != NULL) {
         *pf = NULL;
@@ -413,18 +443,19 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
 ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
                                   const char *name,
                                   size_t nlen,
-                                  char *val,
+                                  const char *val,
                                   ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_field_t *f;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_field_t *f;
+    ib_status_t rc;
 
     if (pf != NULL) {
         *pf = NULL;
@@ -451,14 +482,15 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
                                    ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_field_t *f;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_field_t *f;
+    ib_status_t rc;
 
     if (pf != NULL) {
         *pf = NULL;
@@ -483,14 +515,15 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
                                 ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_field_t *f;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_field_t *f;
+    ib_status_t rc;
 
     if (pf != NULL) {
         *pf = NULL;
@@ -515,14 +548,15 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
                                   ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_field_t *f;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_field_t *f;
+    ib_status_t rc;
 
     if (pf != NULL) {
         *pf = NULL;
@@ -668,13 +702,14 @@ ib_status_t ib_data_get_all(ib_provider_inst_t *dpi,
                             ib_list_t *list)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+    ib_status_t rc;
 
     rc = api->get_all(dpi, list);
     IB_FTRACE_RET_STATUS(rc);
@@ -687,6 +722,11 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                                const char *tfn)
 {
     IB_FTRACE_INIT();
+
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
 
@@ -695,10 +735,6 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
     size_t fnlen;
     size_t tlen;
     ib_status_t rc;
-
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
 
     /* No tfn just means a normal get. */
     if (tfn == NULL) {
@@ -806,12 +842,12 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
 
+    ib_status_t rc;
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
 
@@ -825,12 +861,12 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
                                char **result)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
 
+    ib_status_t rc;
     rc = ib_expand_str(dpi->mp,
                        str,
                        IB_VARIABLE_EXPANSION_PREFIX,
@@ -849,12 +885,12 @@ ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
                                   size_t *result_len)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
 
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
 
+    ib_status_t rc;
     rc = ib_expand_str_ex(dpi->mp,
                           str,
                           slen,

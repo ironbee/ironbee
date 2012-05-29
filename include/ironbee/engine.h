@@ -1418,7 +1418,7 @@ ib_status_t DLL_PUBLIC ib_data_add_num_ex(ib_provider_inst_t *dpi,
 ib_status_t DLL_PUBLIC ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
                                              const char *name,
                                              size_t nlen,
-                                             char *val,
+                                             const char *val,
                                              ib_field_t **pf);
 
 /**
@@ -1544,7 +1544,7 @@ ib_status_t DLL_PUBLIC ib_data_add_num(ib_provider_inst_t *dpi,
  */
 ib_status_t DLL_PUBLIC ib_data_add_nulstr(ib_provider_inst_t *dpi,
                                           const char *name,
-                                          char *val,
+                                          const char *val,
                                           ib_field_t **pf);
 
 #define ib_data_add_nulstr(dpi,name,val,pf) \
