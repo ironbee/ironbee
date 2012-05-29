@@ -49,6 +49,298 @@ const char DPI_LIST_FILTER_MARKER = ':';
 const char DPI_LIST_FILTER_PREFIX = '/';
 const char DPI_LIST_FILTER_SUFFIX = '/';
 
+/* Internal helper functions */
+
+/**
+ * Get a subfield from @a dpi by @a api.
+ *
+ * If @a parent_field is a list (IB_FTYPE_LIST) then a case insensitive
+ * string comparison is done to find the first list element that matches.
+ *
+ * If @a parent_field is a dynamic field, then the field @a name
+ * is fetched from it and the return code from that operation is returned.
+ *
+ * @param[in] api The API to perform the get operation.
+ * @param[in] dpi The data provider instance passed to a call to a
+ *                function available from @a api.
+ * @param[in] parent_field The parent field that contains the requested field.
+ *                         This must be an IB_FTYPE_LIST.
+ * @param[in] name The regex to use to match member field names in
+ *                 @a field_name.
+ * @param[in] name_len The length of @a pattern.
+ * @param[out] result_field The result field.
+ *
+ * @returns
+ *  - IB_OK on success.
+ *  - IB_EINVAL The parent field is not a list or a dynamic type. Also
+ *              returned if @a name_len is 0.
+ *  - Other if a dynamic field fails.
+ */
+static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
+                                        ib_provider_inst_t *dpi,
+                                        const ib_field_t *parent_field,
+                                        const char *name,
+                                        size_t name_len,
+                                        ib_field_t **result_field)
+{
+    IB_FTRACE_INIT();
+
+    assert(api);
+    assert(dpi);
+    assert(parent_field);
+    assert(name);
+    assert(result_field);
+
+    ib_status_t rc;
+    ib_list_t *list; /* List of values to check stored in parent_field. */
+    ib_list_node_t *list_node; /* List node in list. */
+
+    if( name_len == 0 ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Pull a value from a dynamic field. */
+    if(ib_field_is_dynamic(parent_field)) {
+        rc = ib_field_value_ex(parent_field,
+                               result_field,
+                               name,
+                               name_len);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Check that our input field is a list type. */
+    else if (parent_field->type == IB_FTYPE_LIST) {
+        rc = ib_field_value(parent_field, &list);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Create a destination list. */
+        rc = ib_data_add_list_ex(dpi, name, name_len, result_field);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        IB_LIST_LOOP(list, list_node) {
+            ib_field_t *list_field = (ib_field_t *) list_node->data;
+
+            if (list_field->nlen == name_len &&
+                strncasecmp(list_field->name, name, name_len) == 0)
+            {
+                rc = ib_field_list_add(*result_field, list_field);
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+            }
+        }
+
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* We don't know what input type this is. Return IB_EINVAL. */
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}
+
+/**
+ * Return a list of fields whose name matches @a pattern.
+ *
+ * The list @a field_name is retrieved from the @a dpi using @a api. Its
+ * members are iterated through and the names of those fields compared
+ * against @a pattern. If the name matches, the field is added to an
+ * @c ib_list_t* which will be returned via @a result_field.
+ *
+ * @param[in] api The API to perform the get operation.
+ * @param[in] dpi The data provider instance passed to a call to a
+ *                function available from @a api.
+ * @param[in] parent_field The parent field whose member fields will
+ *                         be filtered with @a pattern.
+ *                         This must be an IB_FTYPE_LIST.
+ * @param[in] pattern The regex to use to match member field names in
+ *                    @a field_name.
+ * @param[in] pattern_len The length of @a pattern.
+ * @param[out] result_field The result field.
+ *
+ * @returns
+ *  - IB_OK if a successful search is performed.
+ *  - IB_EINVAL if field is not a list or the pattern cannot compile.
+ *  - IB_ENOENT if the field name is not found.
+ */
+static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
+                                             ib_provider_inst_t *dpi,
+                                             const ib_field_t *parent_field,
+                                             const char *pattern,
+                                             size_t pattern_len,
+                                             ib_field_t **result_field)
+{
+    IB_FTRACE_INIT();
+
+    assert(api);
+    assert(dpi);
+    assert(pattern);
+    assert(parent_field);
+    assert(pattern_len>0);
+    assert(result_field);
+
+    ib_status_t rc;
+    char *pattern_str = NULL; /* NULL terminated string to pass to pcre. */
+    pcre *pcre_pattern = NULL; /* PCRE pattern. */
+    const char *errptr = NULL; /* PCRE Error reporter. */
+    int erroffset; /* PCRE Error offset into subject reporter. */
+    ib_list_t *list = NULL; /* Holds the value of field when fetched. */
+    ib_list_node_t *list_node = NULL; /* A node in list. */
+    ib_list_t *result_list = NULL; /* Holds matched list_node values. */
+
+    /* Check that our input field is a list type. */
+    if (parent_field->type != IB_FTYPE_LIST) {
+        rc = IB_EINVAL;
+        goto exit_label;
+    }
+
+    /* Allocate pattern_str to hold null terminated string. */
+    pattern_str = (char *)malloc(pattern_len+1);
+    if (pattern_str == NULL) {
+        rc = IB_EALLOC;
+        goto exit_label;
+    }
+
+    /* Build a string to hand to the pcre library. */
+    memcpy(pattern_str, pattern, pattern_len);
+    pattern_str[pattern_len] = '\0';
+
+    rc = ib_field_value(parent_field, &list);
+    if (rc != IB_OK) {
+        goto exit_label;
+    }
+
+    pcre_pattern = pcre_compile(pattern_str, 0, &errptr, &erroffset, NULL);
+    if (pcre_pattern == NULL) {
+        rc = IB_EINVAL;
+        goto exit_label;
+    }
+    if (errptr) {
+        rc = IB_EINVAL;
+        goto exit_label;
+    }
+
+    rc = ib_list_create(&result_list, dpi->mp);
+    if (rc != IB_OK) {
+        goto exit_label;
+    }
+
+    IB_LIST_LOOP(list, list_node) {
+        int pcre_rc;
+        ib_field_t *list_field = (ib_field_t *) list_node->data;
+        pcre_rc = pcre_exec(pcre_pattern,
+                            NULL,
+                            list_field->name,
+                            list_field->nlen,
+                            0,
+                            0,
+                            NULL,
+                            0);
+
+        if (pcre_rc == 0) {
+            rc = ib_list_push(result_list, list_node->data);
+            if (rc != IB_OK) {
+                goto exit_label;
+            }
+        }
+    }
+
+    rc = ib_field_create(result_field,
+                         dpi->mp,
+                         parent_field->name,
+                         parent_field->nlen,
+                         IB_FTYPE_LIST,
+                         result_list);
+
+
+exit_label:
+    if (pattern_str) {
+        free(pattern_str);
+    }
+    if (pcre_pattern) {
+        pcre_free(pcre_pattern);
+    }
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Add a field to the @a dpi respecting a sub-field named by @c FIELD:SUBFIELD.
+ *
+ * @param[in] api The API to perform the add operation.
+ * @param[in] dpi The data provider instance passed to a call to a
+ *                function available from @a api.
+ * @param[in] field The field to add to the DPI.
+ * @param[in] name Name of @a field.
+ * @param[in] nlen Length of @name.
+ *
+ * @returns
+ *   - IB_OK on succes.
+ *   - IB_EINVAL if The parent field exists but is not a list.
+ *   - IB_EALLOC on memory allcation errors.
+ */
+static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
+                                        ib_provider_inst_t *dpi,
+                                        ib_field_t *field,
+                                        const char *name,
+                                        size_t nlen)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+    char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, nlen);
+
+    if (nlen == 0) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+
+    /* Add using a subfield. */
+    if ( filter_marker ) {
+        ib_field_t *parent;
+        const char *parent_name = name;
+        const char *child_name = filter_marker + 1;
+        size_t parent_nlen = filter_marker - name - 1;
+        size_t child_nlen = nlen - parent_nlen - 1;
+
+        /* Get or create the parent field. */
+        rc = api->get(dpi, parent_name, parent_nlen, &parent);
+        /* If the field does not exist, make one. */
+        if (rc == IB_ENOENT) {
+
+            /* Try to add the list that does not exist. */
+            rc = ib_data_add_list_ex(dpi, parent_name, parent_nlen, &parent);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+        else if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* If the child and the field do not have the same name,
+         * set the field name to be the name it is stored under. */
+        if (memcmp(child_name, 
+                   field->name,
+                   (child_nlen<field->nlen)?child_nlen : field->nlen))
+        {
+            field->name = ib_mpool_memdup(dpi->mp, child_name, child_nlen);
+            field->nlen = child_nlen;
+        }
+
+        ib_field_list_add(parent, field);
+    }
+    
+    /* Normal add. */
+    else {
+        rc = api->add(dpi, field, name, nlen);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /* -- Exported Data Access Routines -- */
 
 ib_status_t ib_data_add(ib_provider_inst_t *dpi,
@@ -63,7 +355,7 @@ ib_status_t ib_data_add(ib_provider_inst_t *dpi,
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
 
-    rc = api->add(dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -81,7 +373,7 @@ ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
 
-    rc = api->add(dpi, f, key, klen);
+    rc = ib_data_add_internal(api, dpi, f, key, klen);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -251,214 +543,6 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Get a subfield from @a dpi by @a api.
- *
- * If @a parent_field is a list (IB_FTYPE_LIST) then a case insensitive
- * string comparison is done to find the first list element that matches.
- *
- * If @a parent_field is a dynamic field, then the field @a name
- * is fetched from it and the return code from that operation is returned.
- *
- * @param[in] api The API to perform the get operation.
- * @param[in] dpi The data provider instance passed to a call to a
- *                function available from @a api.
- * @param[in] parent_field The parent field that contains the requested field.
- *                         This must be an IB_FTYPE_LIST.
- * @param[in] name The regex to use to match member field names in
- *                 @a field_name.
- * @param[in] name_len The length of @a pattern.
- * @param[out] result_field The result field.
- *
- * @returns
- *  - IB_OK on success.
- *  - IB_ENOENT If the field is not found in the parent field.
- *  - IB_EINVAL The parent field is not a list or a dynamic type. Also
- *              returned if @a name_len is 0.
- *  - Other if a dynamic field fails.
- */
-static ib_status_t ib_data_get_subfield(IB_PROVIDER_API_TYPE(data) *api,
-                                        ib_provider_inst_t *dpi,
-                                        const ib_field_t *parent_field,
-                                        const char *name,
-                                        size_t name_len,
-                                        ib_field_t **result_field)
-{
-    IB_FTRACE_INIT();
-
-    assert(api);
-    assert(dpi);
-    assert(parent_field);
-    assert(name);
-    assert(result_field);
-
-    ib_status_t rc;
-    ib_list_t *list; /* List of values to check stored in parent_field. */
-    ib_list_node_t *list_node; /* List node in list. */
-
-    if( name_len == 0 ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Pull a value from a dynamic field. */
-    if(ib_field_is_dynamic(parent_field)) {
-        rc = ib_field_value_ex(parent_field,
-                               result_field,
-                               name,
-                               name_len);
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Check that our input field is a list type. */
-    else if (parent_field->type == IB_FTYPE_LIST) {
-        rc = ib_field_value(parent_field, &list);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        IB_LIST_LOOP(list, list_node) {
-            ib_field_t *list_field = (ib_field_t *) list_node->data;
-
-            if (list_field->nlen == name_len &&
-                strncasecmp(list_field->name, name, name_len) == 0)
-            {
-                *result_field = list_field;
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-
-        *result_field = NULL;
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
-    }
-
-    /* We don't know what input type this is. Return IB_EINVAL. */
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
-}
-
-/**
- * Return a list of fields whose name matches @a pattern.
- *
- * The list @a field_name is retrieved from the @a dpi using @a api. Its
- * members are iterated through and the names of those fields compared
- * against @a pattern. If the name matches, the field is added to an
- * @c ib_list_t* which will be returned via @a result_field.
- *
- * @param[in] api The API to perform the get operation.
- * @param[in] dpi The data provider instance passed to a call to a
- *                function available from @a api.
- * @param[in] parent_field The parent field whose member fields will
- *                         be filtered with @a pattern.
- *                         This must be an IB_FTYPE_LIST.
- * @param[in] pattern The regex to use to match member field names in
- *                    @a field_name.
- * @param[in] pattern_len The length of @a pattern.
- * @param[out] result_field The result field.
- *
- * @returns
- *  - IB_OK if a successful search is performed.
- *  - IB_EINVAL if field is not a list or the pattern cannot compile.
- *  - IB_ENOENT if the field name is not found.
- */
-static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
-                                             ib_provider_inst_t *dpi,
-                                             const ib_field_t *parent_field,
-                                             const char *pattern,
-                                             size_t pattern_len,
-                                             ib_field_t **result_field)
-{
-    IB_FTRACE_INIT();
-
-    assert(api);
-    assert(dpi);
-    assert(pattern);
-    assert(parent_field);
-    assert(pattern_len>0);
-    assert(result_field);
-
-    ib_status_t rc;
-    char *pattern_str = NULL; /* NULL terminated string to pass to pcre. */
-    pcre *pcre_pattern = NULL; /* PCRE pattern. */
-    const char *errptr = NULL; /* PCRE Error reporter. */
-    int erroffset; /* PCRE Error offset into subject reporter. */
-    ib_list_t *list = NULL; /* Holds the value of field when fetched. */
-    ib_list_node_t *list_node = NULL; /* A node in list. */
-    ib_list_t *result_list = NULL; /* Holds matched list_node values. */
-
-    /* Check that our input field is a list type. */
-    if (parent_field->type != IB_FTYPE_LIST) {
-        rc = IB_EINVAL;
-        goto exit_label;
-    }
-
-    /* Allocate pattern_str to hold null terminated string. */
-    pattern_str = (char *)malloc(pattern_len+1);
-    if (pattern_str == NULL) {
-        rc = IB_EALLOC;
-        goto exit_label;
-    }
-
-    /* Build a string to hand to the pcre library. */
-    memcpy(pattern_str, pattern, pattern_len);
-    pattern_str[pattern_len] = '\0';
-
-    rc = ib_field_value(parent_field, &list);
-    if (rc != IB_OK) {
-        goto exit_label;
-    }
-
-    pcre_pattern = pcre_compile(pattern_str, 0, &errptr, &erroffset, NULL);
-    if (pcre_pattern == NULL) {
-        rc = IB_EINVAL;
-        goto exit_label;
-    }
-    if (errptr) {
-        rc = IB_EINVAL;
-        goto exit_label;
-    }
-
-    rc = ib_list_create(&result_list, dpi->mp);
-    if (rc != IB_OK) {
-        goto exit_label;
-    }
-
-    IB_LIST_LOOP(list, list_node) {
-        int pcre_rc;
-        ib_field_t *list_field = (ib_field_t *) list_node->data;
-        pcre_rc = pcre_exec(pcre_pattern,
-                            NULL,
-                            list_field->name,
-                            list_field->nlen,
-                            0,
-                            0,
-                            NULL,
-                            0);
-
-        if (pcre_rc == 0) {
-            rc = ib_list_push(result_list, list_node->data);
-            if (rc != IB_OK) {
-                goto exit_label;
-            }
-        }
-    }
-
-    rc = ib_field_create(result_field,
-                         dpi->mp,
-                         parent_field->name,
-                         parent_field->nlen,
-                         IB_FTYPE_LIST,
-                         result_list);
-
-
-exit_label:
-    if (pattern_str) {
-        free(pattern_str);
-    }
-    if (pcre_pattern) {
-        pcre_free(pcre_pattern);
-    }
-    IB_FTRACE_RET_STATUS(rc);
-}
-
 ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
                            const char *name,
                            size_t name_len,
@@ -549,7 +633,7 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
         else {
 
             /* Handle extracting a subfield for a list of a dynamic field. */
-            rc = ib_data_get_subfield(api,
+            rc = ib_data_get_subfields(api,
                                       dpi,
                                       parent_field,
                                       filter_marker+1,
