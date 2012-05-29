@@ -109,7 +109,6 @@ static ib_status_t ib_cfgmap_handle_get(
 
 /**
  * Translate field setter to cfgmap setter.
- * @internal
  *
  * @sa ib_field_set_fn_t.
  */
