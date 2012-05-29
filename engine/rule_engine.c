@@ -1973,13 +1973,13 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Pass 0: Unmark all rules in the context's rule list */
+    /* Step 1: Unmark all rules in the context's rule list */
     IB_LIST_LOOP(ctx->rules->rule_list, node) {
         ib_rule_t    *rule = (ib_rule_t *)ib_list_node_data(node);
         ib_flags_clear(rule->flags, IB_RULE_FLAG_MARK);
     }
 
-    /* Pass 1: Loop through all of the rules in the main context, add them
+    /* Step 2: Loop through all of the rules in the main context, add them
      * to the list of all rules */
     ib_log_debug2(ib, "Adding rules from \"%s\" to ctx \"%s\" temp list",
                   ib_context_full_get(main_ctx),
@@ -2027,7 +2027,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                       rule->meta.id, ib_context_full_get(rule->ctx));
     }
 
-    /* Pass 2: Loop through all of the context's rules, add them
+    /* Step 3: Loop through all of the context's rules, add them
      * to the list of all rules if they're not marked... */
     ib_log_debug2(ib, "Adding ctx rules to ctx \"%s\" temp list",
                   ib_context_full_get(ctx));
@@ -2058,7 +2058,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                       rule->meta.id, ib_context_full_get(rule->ctx));
     }
 
-    /* Pass 3: Enable all tagged / enabled rules */
+    /* Step 4: Enable all tagged / enabled rules */
     ib_log_debug2(ib, "Enabling id/tagged rules in \"%s\" temp list",
                   ib_context_full_get(ctx));
     IB_LIST_LOOP(ctx->rules->enable_list, node) {
@@ -2076,7 +2076,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         }
     }
 
-    /* Pass 4: Add all enabled rules to the appropriate execution list */
+    /* Step 5: Add all enabled rules to the appropriate execution list */
     ib_log_debug2(ib, "Adding enabled rules to ctx \"%s\" phase list",
                   ib_context_full_get(ctx));
     skip_flags = IB_RULECTX_FLAG_ENABLED;
