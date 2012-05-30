@@ -33,7 +33,7 @@ It consumes the event streams, sending them to a local IronBee engine.</p>
 <pre><code>clipp modsec:february.log @view ironbee:ironbee.conf
 </code></pre>
 
-<p><code>@view@</code> is a modifier. It takes event streams as inputs, displays them to
+<p><code>@view</code> is a modifier. It takes event streams as inputs, displays them to
 standard out, and passes them on to the next element in the stage.</p>
 
 <p>Multiple generators are possible:</p>
@@ -306,6 +306,9 @@ use symmetric filters such as</p>
 
 <p>All Events are output to standard out in human readable format. Unprintable
 characters are represented by <code>[</code><em>X</em><code>]</code> where <em>X</em> is the hex value.</p>
+
+<p>If the string encoders (modp) library is available, URL decoded versions of
+the raw request line and URI are also output.</p>
 
 <p><strong>@view:id</strong></p>
 

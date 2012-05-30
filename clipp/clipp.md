@@ -29,7 +29,7 @@ As previous, but also display the event stream to standard out:
 
     clipp modsec:february.log @view ironbee:ironbee.conf
 
-`@view@` is a modifier. It takes event streams as inputs, displays them to 
+`@view` is a modifier. It takes event streams as inputs, displays them to 
 standard out, and passes them on to the next element in the stage.
 
 Multiple generators are possible:
@@ -298,6 +298,9 @@ Modifiers
 
 All Events are output to standard out in human readable format.  Unprintable
 characters are represented by `[`*X*`]` where *X* is the hex value.
+
+If the string encoders (modp) library is available, URL decoded versions of
+the raw request line and URI are also output.
 
 **@view:id**
 
