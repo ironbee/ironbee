@@ -365,6 +365,11 @@ CHECK_PROTOBUF()
 CHECK_NIDS()
 CHECK_NET()
 
+if test "${HAVE_NIDS}" != "no" ; then
+    AC_DEFINE([HAVE_NIDS], [1], [Have libnids library.])
+fi
+AM_CONDITIONAL(HAVE_NIDS, test "${HAVE_NIDS}" != "no")
+
 if test "${enable_clipp}" = "yes" ; then
   if test "${enable_cpp}" != "yes" ; then
     AC_MSG_ERROR([C++ is required for clipp])
@@ -373,9 +378,10 @@ if test "${enable_clipp}" = "yes" ; then
     AC_MSG_ERROR([protobuf is required for clipp])
   fi
   if test "${HAVE_NIDS}" != "yes" ; then
-    AC_MSG_ERROR([libnids is required for clipp])
-  fi
-  if test "${HAVE_NET}" != "yes" ; then
+    echo "*******************************************************"
+    echo "* Warning: libnids missing; no pcap support in clipp. *"
+    echo "*******************************************************"
+  elif test "${HAVE_NET}" != "yes" ; then
     AC_MSG_ERROR([libnet is required for clipp])
   fi
 fi

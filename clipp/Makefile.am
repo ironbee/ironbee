@@ -30,7 +30,6 @@ clipp_SOURCES = \
     suricata_generator.cpp \
     htp_generator.cpp \
     echo_generator.cpp \
-    pcap_generator.cpp \
     connection_modifiers.cpp \
     parse_modifier.cpp \
     unparse_modifier.cpp \
@@ -40,6 +39,11 @@ clipp_SOURCES = \
     select_modifier.cpp \
     header_modifiers.cpp \
     fill_body_modifier.cpp
+
+if HAVE_NIDS
+clipp_SOURCES += pcap_generator.cpp
+endif
+
 clipp_CFLAGS = $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS)
 clipp_CPPFLAGS = $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
@@ -54,8 +58,12 @@ clipp_LDFLAGS = \
     -lboost_filesystem \
     -lboost_program_options \
     -lboost_regex \
-    -lprotobuf \
-    -lnids -lnet -lpcap 
+    -lprotobuf
+
+if HAVE_NIDS
+clipp_LDFLAGS += -lnids -lnet -lpcap 
+endif
+
 clipp_LDADD = \
     $(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/engine/libironbee.la
