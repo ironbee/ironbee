@@ -364,26 +364,37 @@ CHECK_OSSP_UUID()
 CHECK_PROTOBUF()
 CHECK_NIDS()
 CHECK_NET()
+CHECK_MODP()
 
 if test "${HAVE_NIDS}" != "no" ; then
     AC_DEFINE([HAVE_NIDS], [1], [Have libnids library.])
 fi
 AM_CONDITIONAL(HAVE_NIDS, test "${HAVE_NIDS}" != "no")
 
+if test "${HAVE_MODP}" != "no" ; then
+    AC_DEFINE([HAVE_MODP], [1], [Have modp library.])
+fi
+AM_CONDITIONAL(HAVE_MODP, test "${HAVE_MODP}" != "no")
+
 if test "${enable_clipp}" = "yes" ; then
-  if test "${enable_cpp}" != "yes" ; then
-    AC_MSG_ERROR([C++ is required for clipp])
-  fi
-  if test "${HAVE_PROTOBUF}" != "yes" ; then
-    AC_MSG_ERROR([protobuf is required for clipp])
-  fi
-  if test "${HAVE_NIDS}" != "yes" ; then
-    echo "*******************************************************"
-    echo "* Warning: libnids missing; no pcap support in clipp. *"
-    echo "*******************************************************"
-  elif test "${HAVE_NET}" != "yes" ; then
-    AC_MSG_ERROR([libnet is required for clipp])
-  fi
+    if test "${enable_cpp}" != "yes" ; then
+        AC_MSG_ERROR([C++ is required for clipp])
+    fi
+    if test "${HAVE_PROTOBUF}" != "yes" ; then
+        AC_MSG_ERROR([protobuf is required for clipp])
+    fi
+    if test "${HAVE_NIDS}" != "yes" ; then
+        echo "*******************************************************"
+        echo "* Warning: libnids missing; no pcap support in clipp. *"
+        echo "*******************************************************"
+    elif test "${HAVE_NET}" != "yes" ; then
+        AC_MSG_ERROR([libnet is required for clipp])
+    fi
+    if test "${HAVE_MODP}" != "yes" ; then
+        echo "********************************************************"
+        echo "* Warning: modp missing; no decoding support in clipp. *"
+        echo "********************************************************"
+    fi
 fi
 
 # Workaround for issue with gcc 4.6 and APR on Darwin

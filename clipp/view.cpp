@@ -22,11 +22,17 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
 #include "view.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/function.hpp>
 #include <boost/format.hpp>
+
+#ifdef HAVE_MODP
+#include <modp_burl.h>
+#endif
 
 using namespace std;
 
@@ -138,8 +144,10 @@ struct ViewDelegate :
              << event.method << " " << event.uri << " " << event.uri
              << " ===" << endl;
         if (event.raw.data) {
-            cout << event.raw << endl;
+            cout << "RAW: " << event.raw << endl;
         }
+        urldecode("DECODED RAW: ", event.raw.data, event.raw.length);
+        urldecode("DECODED URI: ", event.uri.data, event.uri.length);
     }
 
     //! REQUEST_HEADER
@@ -205,6 +213,24 @@ struct ViewDelegate :
     void response_finished(const NullEvent& event)
     {
         cout << "=== RESPONSE FINISHED ===" << endl;
+    }
+
+private:
+    void urldecode(const char* prefix, const char* data, size_t length)
+    {
+#ifdef HAVE_MODP
+        if (! data) {
+            return;
+        }
+
+        string decoded = modp::url_decode(data, length);
+        if (
+            decoded.length() != length ||
+            ! equal(decoded.begin(), decoded.end(), data)
+        ) {
+            cout << prefix << decoded << endl;
+        }
+#endif
     }
 };
 

@@ -48,20 +48,23 @@ clipp_CFLAGS = $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS)
 clipp_CPPFLAGS = $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
     $(NIDS_CPPFLAGS) \
-    $(NET_CPPFLAGS)
+    $(NET_CPPFLAGS) \
+    $(MODP_CPPFLAGS)
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \
-    $(NIDS_LDFLAGS) \
-    $(NET_LDFLAGS) \
     -lboost_system \
     -lboost_filesystem \
     -lboost_program_options \
     -lboost_regex \
     -lprotobuf
 
+if HAVE_MODP
+clipp_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
+endif
+
 if HAVE_NIDS
-clipp_LDFLAGS += -lnids -lnet -lpcap 
+clipp_LDFLAGS += $(NIDS_LDFLAGS) $(NET_LDFLAGS) -lnids -lnet -lpcap 
 endif
 
 clipp_LDADD = \
