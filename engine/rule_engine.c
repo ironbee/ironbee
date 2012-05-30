@@ -1848,7 +1848,7 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
 }
 
 /**
- * Enable/disble an individual rule
+ * Enable/disable an individual rule
  *
  * @param[in] value IB_TRUE:Enable, IB_FALSE:Disable
  * @param[in,out] rule Rule to enable/disable
@@ -2138,7 +2138,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
     }
 
     /* Step 5: Enable marked enabled rules */
-    ib_log_debug2(ib, "Enabling specfied rules in \"%s\" temp list",
+    ib_log_debug2(ib, "Enabling specified rules in \"%s\" temp list",
                   ib_context_full_get(ctx));
     IB_LIST_LOOP(ctx->rules->enable_list, node) {
         const ib_rule_enable_t *enable;
