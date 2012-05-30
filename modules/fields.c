@@ -129,16 +129,16 @@ static ib_status_t parse_type(ib_cfgparser_t *cp,
             ib_status_t rc;
             rc = parse_type(cp, mp, str+5, element_type, NULL);
             if (rc != IB_OK) {
-                ib_log_error(cp->ib, "Invalid type '%s'", str);
+                ib_cfg_log_error(cp, "Invalid type '%s'", str);
             }
         }
     }
     else {
-        ib_log_error(cp->ib, "Invalid type '%s'", str);
+        ib_cfg_log_error(cp, "Invalid type '%s'", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug2(cp->ib, "Parsed type '%s' -> %d", str, (int)(*type) );
+    ib_cfg_log_debug2(cp, "Parsed type '%s' -> %d", str, (int)(*type) );
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -192,8 +192,8 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
         ib_bytestr_t *bs;
         rc = ib_bytestr_dup_nulstr(&bs, mp, str);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib,
-                         "Failed to create bytestr for '%s': %d", str, rc);
+            ib_cfg_log_error(cp,
+                             "Failed to create bytestr for '%s': %d", str, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
         rc = ib_field_create(pfield,
@@ -245,7 +245,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     /* Get the field name string */
     name_node = ib_list_first_const(vars);
     if ( (name_node == NULL) || (name_node->data == NULL) ) {
-        ib_log_error(cp->ib, "No name specified for field");
+        ib_cfg_log_error(cp, "No name specified for field");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     name_str = (const char *)(name_node->data);
@@ -253,7 +253,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     /* Get type name string */
     type_node = ib_list_node_next_const(name_node);
     if ( (type_node == NULL) || (type_node->data == NULL) ) {
-        ib_log_error(cp->ib, "No type specified for field");
+        ib_cfg_log_error(cp, "No type specified for field");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     type_str = (const char *)(type_node->data);
@@ -261,8 +261,8 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     /* Parse the type name */
     rc = parse_type(cp, mp, type_str, &type_num, &element_type);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib,
-                     "Error parsing type string '%s': %d", type_str, rc);
+        ib_cfg_log_error(cp,
+                         "Error parsing type string '%s': %d", type_str, rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -275,19 +275,19 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
         /* Check for errors */
         if (element_type == IB_FTYPE_LIST) {
             if (value_node != NULL) {
-                ib_log_error(cp->ib, "Value(s) not for LIST:LIST field");
+                ib_cfg_log_error(cp, "Value(s) not for LIST:LIST field");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
         else if (element_type == IB_FTYPE_GENERIC) {
             if (value_node != NULL) {
-                ib_log_error(cp->ib, "Values but no type for LIST field");
+                ib_cfg_log_error(cp, "Values but no type for LIST field");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
         else {
             if (value_node == NULL) {
-                ib_log_error(cp->ib, "LIST type specified, but not values");
+                ib_cfg_log_error(cp, "LIST type specified, but not values");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
@@ -299,15 +299,15 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
                              type_num,
                              NULL);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, "Error creating field: %d", rc);
+            ib_cfg_log_error(cp, "Error creating field: %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(cp->ib,
-                     "Field %s: type %s / %s",
-                     name_str,
-                     g_type_names[type_num],
-                     g_type_names[element_type]);
+        ib_cfg_log_debug(cp,
+                         "Field %s: type %s / %s",
+                         name_str,
+                         g_type_names[type_num],
+                         g_type_names[element_type]);
 
         /* Parse the values */
         element_num = 1;
@@ -323,16 +323,16 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
             rc = parse_value(cp, mp, value_node->data,
                              element_type, buf, &vfield);
             if (rc != IB_OK) {
-                ib_log_error(cp->ib,
-                             "Error parse value '%s' type %s: %d",
-                             value_node->data, g_type_names[element_type], rc);
+                ib_cfg_log_error(cp, "Error parse value '%s' type %s: %d",
+                                 value_node->data, g_type_names[element_type],
+                                 rc);
                 IB_FTRACE_RET_STATUS(rc);
             }
 
             /* Add the field to the list */
             rc = ib_field_list_add(field, vfield);
             if (rc != IB_OK) {
-                ib_log_error(cp->ib, "Error pushing value on list: %d", rc);
+                ib_cfg_log_error(cp, "Error pushing value on list: %d", rc);
                 IB_FTRACE_RET_STATUS(rc);
             }
 
@@ -344,24 +344,24 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
         /* Parse the value and create a field to contain it */
         rc = parse_value(cp, mp, value_node->data, type_num, name_str, &field);
         if (rc != IB_OK) {
-            ib_log_error(cp->ib, "Error parse value '%s': %d", rc);
+            ib_cfg_log_error(cp, "Error parse value '%s': %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
     else {
-        ib_log_error(cp->ib, "No value specified for field %s", name_str);
+        ib_cfg_log_error(cp, "No value specified for field %s", name_str);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Add the field to the list */
     rc = ib_list_push(g_field_list, field);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, "Error pushing value on list: %d", rc);
+        ib_cfg_log_error(cp, "Error pushing value on list: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_log_debug(cp->ib,
-                 "Created field %p '%s' of type %d '%s'",
-                 (void *)field, name_str, (int)type_num, type_str);
+    ib_cfg_log_debug(cp,
+                     "Created field %p '%s' of type %d '%s'",
+                     (void *)field, name_str, (int)type_num, type_str);
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);

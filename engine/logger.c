@@ -109,13 +109,13 @@ static void default_logger(FILE *fp, int level,
 
     if (log_lineinfo == IB_TRUE) {
         ec = snprintf(fmt2, 1024,
-                      "%s %-22s- [%d] (%22s:%-5d) %s%s\n",
+                      "%s %-23s- [%d] (%23s:%-5d) %s%s\n",
                       time_info,
                       (prefix?prefix:""), level, file, line, tx_info, fmt);
     }
     else {
         ec = snprintf(fmt2, 1024,
-                      "%s %-22s- [%d] %s%s\n",
+                      "%s %-23s- [%d] %s%s\n",
                       time_info,
                       (prefix?prefix:""), level, tx_info, fmt);
     }

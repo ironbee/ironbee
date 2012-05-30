@@ -289,13 +289,13 @@ static void core_logger(FILE *fh, int level,
 
     if (log_lineinfo == IB_TRUE) {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %-22s- (%22s:%-5d) %s%s\n",
+                      "%s %-23s- (%23s:%-5d) %s%s\n",
                       time_info,
                       (prefix?prefix:""), file, line, tx_info, fmt);
     }
     else {
         ec = snprintf(fmt2, fmt2_sz,
-                      "%s %-22s- %s%s\n",
+                      "%s %-23s- %s%s\n",
                       time_info,
                       (prefix?prefix:""), tx_info, fmt);
     }
@@ -4368,7 +4368,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         char                *cur;
 
         if (p1_copy == NULL) {
-            ib_log_error_cfg(cp, "Error copying \"%s\" for \"%s\"",
+            ib_cfg_log_error(cp, "Error copying \"%s\" for \"%s\"",
                              p1_unescaped, name);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
@@ -4376,7 +4376,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         cur = strtok(p1_copy, ",");
         do {
             if (strcasecmp("Off", cur) == 0) {
-                level = IB_RULE_LOG_OFF;
+                level = IB_RULE_LOG_ERROR;
                 exec  = IB_RULE_LOG_EXEC_OFF;
                 break;
             }

@@ -116,34 +116,34 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     incfile = ib_util_relative_file(mp, file, pval);
 
     if (access(incfile, R_OK) != 0) {
-        ib_log_error_cfg(cp, "Cannot access included file \"%s\": %s",
+        ib_cfg_log_error(cp, "Cannot access included file \"%s\": %s",
                          incfile, strerror(errno));
         return IB_ENOENT;
     }
 
     statval = stat(incfile, &statbuf);
     if (statval != 0) {
-        ib_log_error_cfg(cp,
+        ib_cfg_log_error(cp,
                          "Failed to stat include file \"%s\": %s",
                          incfile, strerror(errno));
         return IB_ENOENT;
     }
 
     if (S_ISREG(statbuf.st_mode) == 0) {
-        ib_log_error_cfg(cp,
+        ib_cfg_log_error(cp,
 	                 "Included file \"%s\" isn't a file", incfile);
         return IB_ENOENT;
     }
 
-    ib_log_debug_cfg(cp, "Including '%s'", incfile);
+    ib_cfg_log_debug(cp, "Including '%s'", incfile);
     rc = ib_cfgparser_parse(cp, incfile);
     if (rc != IB_OK) {
-        ib_log_error(cp->ib, "Error parsing included file \"%s\": %s",
-                     incfile, ib_status_to_string(rc));
+        ib_cfg_log_error(cp, "Error parsing included file \"%s\": %s",
+	                 incfile, ib_status_to_string(rc));
         return rc;
     }
 
-    ib_log_debug(cp->ib, "Done processing include file \"%s\"", incfile);
+    ib_cfg_log_debug(cp, "Done processing include file \"%s\"", incfile);
     return IB_OK;
 }
 
@@ -540,7 +540,7 @@ _eof_trans:
 #line 153 "config-parser.rl"
 	{
         rc = IB_EOTHER;
-        ib_log_error_cfg(cp,
+        ib_cfg_log_error(cp,
                          "parser error before \"%.*s\"",
                          (int)(( fsm.p) - mark), mark);
     }
@@ -573,7 +573,7 @@ _eof_trans:
 	{
         rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
-            ib_log_error_cfg(cp,
+            ib_cfg_log_error(cp,
                              "Failed to process directive \"%s\": %s",
                              directive, ib_status_to_string(rc));
         }
@@ -596,7 +596,7 @@ _eof_trans:
 	{
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
-            ib_log_error_cfg(cp,
+            ib_cfg_log_error(cp,
 	                     "Failed to start block \"%s\": %s",
                              blkname, ib_status_to_string(rc));
         }
@@ -608,7 +608,7 @@ _eof_trans:
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
         if (rc != IB_OK) {
-            ib_log_error_cfg(cp,
+            ib_cfg_log_error(cp,
                              "Failed to process block \"%s\": %s",
                              blkname, ib_status_to_string(rc));
         }
@@ -623,10 +623,10 @@ _eof_trans:
 	{
         rc = include_config_fn(cp, mpcfg, mark, ( fsm.p), file, lineno);
         if (rc == IB_OK) {
-            ib_log_debug_cfg(cp, "Done processing include direction");
+            ib_cfg_log_debug(cp, "Done processing include direction");
         }
         else {
-            ib_log_error_cfg(cp,
+            ib_cfg_log_error(cp,
                              "Failed to process include directive: %s",
                              ib_status_to_string(rc));
         }
@@ -834,7 +834,7 @@ _again:
 #line 153 "config-parser.rl"
 	{
         rc = IB_EOTHER;
-        ib_log_error_cfg(cp,
+        ib_cfg_log_error(cp,
                          "parser error before \"%.*s\"",
                          (int)(( fsm.p) - mark), mark);
     }
@@ -851,7 +851,7 @@ _again:
 	{
         rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
-            ib_log_error_cfg(cp,
+            ib_cfg_log_error(cp,
                              "Failed to process directive \"%s\": %s",
                              directive, ib_status_to_string(rc));
         }

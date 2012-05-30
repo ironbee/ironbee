@@ -340,7 +340,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     /* Remove the last item. */
     rc = ib_list_pop(cp->stack, &ctx);
     if (rc != IB_OK) {
-        ib_log_error_cfg(cp,
+        ib_cfg_log_error(cp,
                          "Failed to pop context: %s",
                          ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -354,7 +354,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug3_cfg(cp, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+    ib_cfg_log_debug3(cp, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
                       cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
                       cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
                       cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
@@ -370,7 +370,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
 
     rc = ib_list_push(cp->block, (void *)name);
     if (rc != IB_OK) {
-        ib_log_error_cfg(cp,
+        ib_cfg_log_error(cp,
                          "Failed to push block %p: %s",
                          name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -393,7 +393,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
 
     rc = ib_list_pop(cp->block, &name);
     if (rc != IB_OK) {
-        ib_log_error_cfg(cp,
+        ib_cfg_log_error(cp,
                          "Failed to pop block: %s",
                          ib_status_to_string(rc));
         cp->cur_blkname = NULL;
@@ -495,7 +495,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
     switch (rec->type) {
         case IB_DIRTYPE_ONOFF:
             if (nargs != 1) {
-                ib_log_error_cfg(cp,
+                ib_cfg_log_error(cp,
                                  "OnOff directive \"%s\" "
                                  "takes one parameter, not %d",
                                  name, nargs);
@@ -515,7 +515,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_PARAM1:
             if (nargs != 1) {
-                ib_log_error_cfg(cp,
+                ib_cfg_log_error(cp,
                                  "Param1 directive \"%s\" "
                                  "takes one parameter, not %d",
                                  name, nargs);
@@ -527,7 +527,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_PARAM2:
             if (nargs != 2) {
-                ib_log_error_cfg(cp,
+                ib_cfg_log_error(cp,
                                  "Param2 directive \"%s\" "
                                  "takes two parameters, not %d",
                                  name, nargs);
@@ -558,7 +558,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                     fmask = ~0;
                 }
 
-                ib_log_debug3(ib, "Processing %s option: %s", name, opname);
+                ib_cfg_log_debug3(cp, "Processing %s option: %s", name, opname);
 
                 /* Remove the operator from the name if required.
                  * and determine the numeric value of the option
@@ -570,7 +570,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
 
                 rc = cfgp_opval(opname, rec->valmap, &val);
                 if (rc != IB_OK) {
-                    ib_log_error(ib, "Invalid %s option: %s", name, opname);
+                    ib_cfg_log_error(cp, "Invalid %s option: %s", name, opname);
                     IB_FTRACE_RET_STATUS(rc);
                 }
 
@@ -592,7 +592,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             break;
         case IB_DIRTYPE_SBLK1:
             if (nargs != 1) {
-                ib_log_error_cfg(cp,
+                ib_cfg_log_error(cp,
                                  "SBlk1 directive \"%s\" "
                                  "takes one parameter, not %d",
                              name, nargs);
@@ -653,7 +653,7 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-void ib_log_cfg(ib_cfgparser_t *cp, int level,
+void ib_cfg_log(ib_cfgparser_t *cp, int level,
                 const char *prefix, const char *file, int line,
                 const char *fmt, ...)
 {
@@ -663,14 +663,14 @@ void ib_log_cfg(ib_cfgparser_t *cp, int level,
     va_list ap;
     va_start(ap, fmt);
 
-    ib_vlog_cfg(cp, level, prefix, file, line, fmt, ap);
+    ib_cfg_vlog(cp, level, prefix, file, line, fmt, ap);
 
     va_end(ap);
 
     IB_FTRACE_RET_VOID();
 }
 
-void ib_log_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+void ib_cfg_log_ex(const ib_engine_t *ib,
                    const char *cfgfile, unsigned int cfgline,
                    int level,
                    const char *prefix,
@@ -679,20 +679,18 @@ void ib_log_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
-    assert(mp != NULL);
 
     va_list ap;
     va_start(ap, fmt);
 
-    ib_vlog_cfg_ex(ib, mp, cfgfile, cfgline,
-                   level, prefix, file, line, fmt, ap);
+    ib_cfg_vlog_ex(ib, cfgfile, cfgline, level, prefix, file, line, fmt, ap);
 
     va_end(ap);
 
     IB_FTRACE_RET_VOID();
 }
 
-void ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
+void ib_cfg_vlog_ex(const ib_engine_t *ib,
                     const char *cfgfile, unsigned int cfgline,
                     int level,
                     const char *prefix,
@@ -701,7 +699,6 @@ void ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
-    assert(mp != NULL);
     assert(fmt != NULL);
 
     const size_t MAX_PREBUF = 32;
@@ -711,12 +708,12 @@ void ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
     size_t fmtlen;
     char *fmtbuf = NULL;
 
-    snprintf(prebuf, MAX_PREBUF, "CONFIG_%s", prefix == NULL ? "" : prefix);
+    snprintf(prebuf, MAX_PREBUF, "CONFIG/%s", prefix == NULL ? "" : prefix);
 
     if (cfgfile != NULL) {
         snprintf(lnobuf, MAX_LNOBUF, "%u", cfgline);
         fmtlen = strlen(fmt) + strlen(cfgfile) + strlen(lnobuf) + 8;
-        fmtbuf = (char *)ib_mpool_alloc(mp, fmtlen);
+        fmtbuf = (char *)malloc(fmtlen);
     }
     else {
         lnobuf[0] = '\0';
@@ -734,16 +731,20 @@ void ib_vlog_cfg_ex(const ib_engine_t *ib, ib_mpool_t *mp,
 
     ib_vlog_ex(ib, level, NULL, prebuf, file, line, fmt, ap);
 
+    if (fmtbuf != NULL) {
+        free(fmtbuf);
+    }
+
     IB_FTRACE_RET_VOID();
 }
 
-void ib_vlog_cfg(ib_cfgparser_t *cp, int level,
+void ib_cfg_vlog(ib_cfgparser_t *cp, int level,
                  const char *prefix, const char *file, int line,
                  const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
 
-    ib_vlog_cfg_ex(cp->ib, cp->mp, cp->cur_file, cp->cur_lineno,
+    ib_cfg_vlog_ex(cp->ib, cp->cur_file, cp->cur_lineno,
                    level, prefix, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
