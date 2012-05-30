@@ -69,6 +69,7 @@ Dir.glob('*.erb').each do |test|
     result = run_clipp(tmppath)
     if result
         puts "#{base} FAIL #{result}"
+        failure = true
     else 
         puts "#{base} PASS"
     end
