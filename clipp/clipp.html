@@ -422,6 +422,24 @@ changed.</p>
 appropriate number (based on Content-Length) or @s. This is useful for input
 sources that lack bodies or for sanitizing sensitive bodies.</p>
 
+<p><strong>@ironbee</strong>:<em>config</em>:<em>behavior</em></p>
+
+<p>Run IronBee as a modifier. By default, this behaves as the consumer except
+as a modifier, i.e., there can be later components. </p>
+
+<p><em>behavior</em> is optional and can be <code>allow</code> or <code>block</code> with <code>allow</code> as the
+default. If set to <code>block</code>, then inputs are blocked (prevented from
+continuing) by default.</p>
+
+<p>In addition to the above, IronBee rules can use the <code>clipp</code> action to control
+clipp:</p>
+
+<ul>
+<li><code>clipp:allow</code> &#8211; Override behavior, allowing input to continue on.</li>
+<li><code>clipp:block</code> &#8211; Override behavior, preventing input from continuing.</li>
+<li><code>clipp:break</code> &#8211; Abort current chain, moving on to next chain.</li>
+</ul>
+
 <h2 id="consumers">Consumers</h2>
 
 <p><strong>ironbee</strong>:<em>path</em></p>

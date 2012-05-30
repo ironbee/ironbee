@@ -22,9 +22,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#include "ironbee_consumer.hpp"
+#include "ironbee.hpp"
+#include "control.hpp"
 
 #include <ironbeepp/all.hpp>
+#include <ironbee/action.h>
+#include <ironbee/debug.h>
 #include <boost/make_shared.hpp>
 
 using namespace std;
@@ -349,44 +352,166 @@ void load_configuration(IronBee::Engine engine, const std::string& path)
     engine.notify().configuration_finished();
 }
 
+enum action_e {
+    ACTION_ALLOW,
+    ACTION_BLOCK,
+    ACTION_BREAK
+};
+
+// We need symbols to have the instance data point to as C++ doesn't allow
+// casting integers to void*s.
+static const action_e c_allow = ACTION_ALLOW;
+static const action_e c_block = ACTION_BLOCK;
+static const action_e c_break = ACTION_BREAK;
+
+extern "C" {
+
+ib_status_t clipp_action_create(
+    ib_engine_t*      ib,
+    ib_context_t*     ctx,
+    ib_mpool_t*       mp,
+    const char*       params,
+    ib_action_inst_t* inst,
+    void*             cbdata
+)
+{
+    IB_FTRACE_INIT();
+
+    static const string allow_arg("allow");
+    static const string block_arg("block");
+    static const string break_arg("break");
+
+    // const_cast is necessary because of C APIs lack of type safety.
+    if (params == allow_arg) {
+        inst->data = const_cast<action_e*>(&c_allow);
+    }
+    else if (params == block_arg) {
+        inst->data = const_cast<action_e*>(&c_block);
+    }
+    else if (params == break_arg) {
+        inst->data = const_cast<action_e*>(&c_break);
+    }
+    else {
+        ib_log_error(ib, "Unknown argument for clipp: %s", params);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-struct IronBeeConsumer::EngineState
+ib_status_t clipp_action_execute(
+    void*      data,
+    ib_rule_t* rule,
+    ib_tx_t*   tx,
+    ib_flags_t flags,
+    void*      cbdata
+)
 {
-    EngineState() :
+    IB_FTRACE_INIT();
+
+    action_e action      = *reinterpret_cast<action_e*>(data);
+    action_e* out_action = reinterpret_cast<action_e*>(cbdata);
+
+    *out_action = action;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+} // extern "C"
+
+} // Anonymous
+
+struct IronBeeConsumer::State
+{
+    boost::function<bool(Input::input_p&)> modifier;
+};
+
+IronBeeConsumer::IronBeeConsumer(const string& config_path) :
+    m_state(make_shared<State>())
+{
+    m_state->modifier = IronBeeModifier(config_path);
+}
+
+bool IronBeeConsumer::operator()(const Input::input_p& input)
+{
+    // Insist the input not modified.
+    Input::input_p copy = input;
+    m_state->modifier(copy);
+
+    return true;
+}
+
+struct IronBeeModifier::State
+{
+    State() :
         server_value(__FILE__, "clipp")
     {
         IronBee::initialize();
         engine = IronBee::Engine::create(server_value.get());
     }
 
-    ~EngineState()
+    ~State()
     {
         engine.destroy();
         IronBee::shutdown();
     }
 
+    behavior_e           behavior;
+    action_e             current_action;
     IronBee::Engine      engine;
     IronBee::ServerValue server_value;
 };
 
-IronBeeConsumer::IronBeeConsumer()
+IronBeeModifier::IronBeeModifier(
+    const string& config_path,
+    behavior_e    behavior
+) :
+    m_state(make_shared<State>())
 {
-    // nop
+    m_state->behavior = behavior;
+
+    ib_status_t rc = ib_action_register(
+        m_state->engine.ib(),
+        "clipp",
+        IB_ACT_FLAG_NONE,
+        clipp_action_create,
+        NULL,
+        NULL,
+        NULL,
+        clipp_action_execute,
+        reinterpret_cast<void*>(&m_state->current_action)
+    );
+    if (rc != IB_OK) {
+        throw runtime_error("Could not register clipp action.");
+    }
+
+    load_configuration(m_state->engine, config_path);
 }
 
-IronBeeConsumer::IronBeeConsumer(const string& config_path) :
-    m_engine_state(make_shared<EngineState>())
+bool IronBeeModifier::operator()(Input::input_p& input)
 {
-    load_configuration(m_engine_state->engine, config_path);
-}
+    if (! input) {
+        return true;
+    }
 
-bool IronBeeConsumer::operator()(const Input::input_p& input)
-{
-    IronBeeDelegate delegate(m_engine_state->engine);
+    IronBeeDelegate delegate(m_state->engine);
+
+    switch (m_state->behavior) {
+        case ALLOW:  m_state->current_action = ACTION_ALLOW;  break;
+        case BLOCK: m_state->current_action = ACTION_BLOCK; break;
+        default:
+            throw logic_error("Unknown behavior.  Please report as bug.");
+    }
+
     input->connection.dispatch(delegate, true);
 
-    return true;
+    switch (m_state->current_action) {
+        case ACTION_ALLOW: return true;
+        case ACTION_BLOCK: return false;
+        case ACTION_BREAK: throw clipp_break();
+        default:
+            throw logic_error("Unknown clipp action.  Please report as bug.");
+    }
 }
 
 } // CLIPP

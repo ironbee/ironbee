@@ -410,6 +410,22 @@ Adds any missing body events and replaces the contents of body events with an
 appropriate number (based on Content-Length) or @s.  This is useful for input
 sources that lack bodies or for sanitizing sensitive bodies.
 
+**@ironbee**:*config*:*behavior*
+
+Run IronBee as a modifier.  By default, this behaves as the consumer except
+as a modifier, i.e., there can be later components.  
+
+*behavior* is optional and can be `allow` or `block` with `allow` as the 
+default.  If set to `block`, then inputs are blocked (prevented from 
+continuing) by default.
+
+In addition to the above, IronBee rules can use the `clipp` action to control
+clipp:
+
+- `clipp:allow` -- Override behavior, allowing input to continue on.
+- `clipp:block` -- Override behavior, preventing input from continuing.
+- `clipp:break` -- Abort current chain, moving on to next chain.
+
 Consumers
 ---------
 

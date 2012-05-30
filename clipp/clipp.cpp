@@ -76,7 +76,8 @@
 #include "pcap_generator.hpp"
 #endif
 
-#include "ironbee_consumer.hpp"
+// Generator and modifier
+#include "ironbee.hpp"
 #include "pb_consumer.hpp"
 #include "null_consumer.hpp"
 
@@ -244,6 +245,9 @@ input_generator_t init_pcap_generator(const string& arg);
 //! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
 input_modifier_t init_aggregate_modifier(const string& arg);
 
+//! Construct ironbee modifiers.  @a arg is <config path>:<default behavior>.
+input_modifier_t init_ironbee_modifier(const string& arg);
+
 /**
  * Construct select modifier.
  *
@@ -376,6 +380,14 @@ void help()
     "  @set:>key:value -- Set request headers of <key> to <value>\n"
     "  @set:<key:value -- Set response headers of <key> to <value>\n"
     "  @fillbody -- Add missing bodies and replace contents with @s.\n"
+    "  @ironbee:config:behavior --\n"
+    "    Run data through ironbee.\n"
+    "    <behavior> is either 'allow' or 'block' and determines whether\n"
+    "    the modifier passes data through or blocks data by default.\n"
+    "    Rules may change the default behavior via the 'clipp' action.\n"
+    "    clipp:allow passes data through; clipp:block blocks data;\n"
+    "    and clipp:break stops the current chain.\n"
+    "    <behavior> is optional and defaults to 'allow'.\n"
     ;
 }
 
@@ -541,6 +553,7 @@ int main(int argc, char** argv)
     modifier_factory_map["set"] = init_set_modifier;
     modifier_factory_map["fillbody"] =
          construct_argless_modifier<FillBodyModifier>;
+    modifier_factory_map["ironbee"] = init_ironbee_modifier;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
@@ -920,6 +933,34 @@ input_modifier_t init_set_modifier(const string& arg)
     const string value = modified_arg.substr(colon_i + 1);
 
     return SetModifier(which, key, value);
+}
+
+input_modifier_t init_ironbee_modifier(const string& arg)
+{
+    IronBeeModifier::behavior_e behavior = IronBeeModifier::ALLOW;
+    string config_path;
+
+    vector<string> subargs = split_on_char(arg, ':');
+    if (subargs.size() == 2) {
+        config_path = subargs[0];
+        if (subargs[1] == "allow") {
+            behavior = IronBeeModifier::ALLOW;
+        }
+        else if (subargs[1] == "block") {
+            behavior = IronBeeModifier::BLOCK;
+        }
+        else {
+            throw runtime_error("Unknown @ironbee behavior: " + subargs[1]);
+        }
+    }
+    else if (subargs.size() == 1) {
+        config_path = subargs[0];
+    }
+    else {
+        throw runtime_error("Could not parse @ironbee arg: " + arg);
+    }
+
+    return IronBeeModifier(config_path, behavior);
 }
 
 template <typename ResultType, typename MapType>

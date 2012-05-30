@@ -17,13 +17,13 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP IronBee Consumer
+ * @brief IronBee &mdash; CLIPP IronBee Consumer and Modifier.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IRONBEE_CLIPP__IRONBEE_CONSUMER__
-#define __IRONBEE_CLIPP__IRONBEE_CONSUMER__
+#ifndef __IRONBEE_CLIPP__IRONBEE__
+#define __IRONBEE_CLIPP__IRONBEE__
 
 #include "input.hpp"
 
@@ -47,16 +47,44 @@ namespace CLIPP {
 class IronBeeConsumer
 {
 public:
-    IronBeeConsumer();
-
     explicit
     IronBeeConsumer(const std::string& config_path);
 
     bool operator()(const Input::input_p& input);
 
 private:
-    struct EngineState;
-    boost::shared_ptr<EngineState> m_engine_state;
+    struct State;
+    boost::shared_ptr<State> m_state;
+};
+
+/**
+ * CLIPP modifier that feeds inputs to an internal IronBee Engine.
+ *
+ * This behaves as IronBeeConsumer (see above), but as a modifier.  Default
+ * behavior is to pass data on, but this can be changed to block.  IronBee
+ * rules can use the @c clipp rule action to change behavior on a per-input
+ * basis.  The @c clipp rule action takes a parameter: @c pass, @c block, or
+ * @c break.
+ **/
+class IronBeeModifier
+{
+public:
+    //! Behavior in absence of @c clipp rule actions.
+    enum behavior_e {
+        ALLOW,
+        BLOCK
+    };
+
+    IronBeeModifier(
+        const std::string& config_path,
+        behavior_e         behavior = ALLOW
+    );
+
+    bool operator()(Input::input_p& input);
+
+private:
+    struct State;
+    boost::shared_ptr<State> m_state;
 };
 
 } // CLIPP
