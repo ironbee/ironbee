@@ -95,11 +95,11 @@ extern "C" {
  * module/plugin tries to load that was built with a number greater than
  * this, then it is not compatible.
  *
- * Format is a decimal number based on date ABI changed: YYYYMMDDn
- *   YYYY: 4-digit year
- *     MM: 2-digit month
- *     DD: 2-digit day
- *      n: Revision number if changes more than once in a day (default=0)
+ * Format is a decimal number based on date ABI changed: @e YYYYMMDDn
+ * - @e YYYY: 4-digit year
+ * - @e   MM: 2-digit month
+ * - @e   DD: 2-digit day
+ * - @e    n: Revision number if changes more than once in a day (default=0)
  */
 #define IB_ABINUM    2012053001
 
