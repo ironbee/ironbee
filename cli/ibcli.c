@@ -1176,6 +1176,7 @@ static ib_status_t print_geoip(
  * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
@@ -1183,7 +1184,8 @@ static ib_status_t action_print_create(ib_engine_t *ib,
                                        ib_context_t *ctx,
                                        ib_mpool_t *mp,
                                        const char *parameters,
-                                       ib_action_inst_t *inst)
+                                       ib_action_inst_t *inst,
+                                       void *cbdata)
 {
     IB_FTRACE_INIT();
     char *str;
@@ -1219,13 +1221,15 @@ static ib_status_t action_print_create(ib_engine_t *ib,
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
 static ib_status_t action_print_execute(void *data,
                                         ib_rule_t *rule,
                                         ib_tx_t *tx,
-                                        ib_flags_t flags)
+                                        ib_flags_t flags,
+                                        void *cbdata)
 {
     IB_FTRACE_INIT();
     const char *cstr = (const char *)data;
@@ -1257,6 +1261,7 @@ static ib_status_t action_print_execute(void *data,
  * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
@@ -1264,7 +1269,8 @@ static ib_status_t action_printvar_create(ib_engine_t *ib,
                                           ib_context_t *ctx,
                                           ib_mpool_t *mp,
                                           const char *parameters,
-                                          ib_action_inst_t *inst)
+                                          ib_action_inst_t *inst,
+                                          void *cbdata)
 {
     IB_FTRACE_INIT();
     char *varname;
@@ -1289,13 +1295,15 @@ static ib_status_t action_printvar_create(ib_engine_t *ib,
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
 static ib_status_t action_printvar_execute(void *data,
                                            ib_rule_t *rule,
                                            ib_tx_t *tx,
-                                           ib_flags_t flags)
+                                           ib_flags_t flags,
+                                           void *cbdata)
 {
     IB_FTRACE_INIT();
     const char *varname = (const char *)data;
@@ -1490,9 +1498,9 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     rc = ib_action_register(ib,
                             "print",
                             IB_ACT_FLAG_NONE,
-                            action_print_create,
-                            NULL, /* no destroy function */
-                            action_print_execute);
+                            action_print_create, NULL,
+                            NULL, /* no destroy function */ NULL,
+                            action_print_execute, NULL);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register print action: %d\n", rc);
         IB_FTRACE_RET_STATUS(rc);
@@ -1502,9 +1510,9 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     rc = ib_action_register(ib,
                             "printvar",
                             IB_ACT_FLAG_NONE,
-                            action_printvar_create,
-                            NULL, /* no destroy function */
-                            action_printvar_execute);
+                            action_printvar_create, NULL,
+                            NULL, /* no destroy function */ NULL,
+                            action_printvar_execute, NULL);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register printvar action: %d\n", rc);
         IB_FTRACE_RET_STATUS(rc);

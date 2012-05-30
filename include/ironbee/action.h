@@ -50,17 +50,21 @@ typedef struct ib_action_inst_t ib_action_inst_t;
  * @param[in] ib IronBee engine.
  * @param[in] ctx Current context.
  * @param[in] pool Memory pool to be used for allocating needed memory.
- * @param[in] parameters Unparsed string with the parameters to
- *                       initialize the action instance.
+ * @param[in] data Unparsed string with the parameters to
+ *                 initialize the action instance.
  * @param[in,out] act_inst Pointer to the action instance to be initialized.
+ * @param[in] cbdata Callback data passed to ib_action_register().
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_action_create_fn_t)(ib_engine_t *ib,
-                                              ib_context_t *ctx,
-                                              ib_mpool_t *pool,
-                                              const char *data,
-                                              ib_action_inst_t *act_inst);
+typedef ib_status_t (* ib_action_create_fn_t)(
+    ib_engine_t      *ib,
+    ib_context_t     *ctx,
+    ib_mpool_t       *pool,
+    const char       *data,
+    ib_action_inst_t *act_inst,
+    void             *cbdata
+);
 
 /**
  * Action instance destruction callback type.
@@ -68,11 +72,15 @@ typedef ib_status_t (* ib_action_create_fn_t)(ib_engine_t *ib,
  * This frees any resources allocated to the instance but does not free
  * the instance itself.
  *
- * @param act_inst Action Instance to be destroyed.
+ * @param[in] act_inst Action Instance to be destroyed.
+ * @param[in] cbdata Callback data passed to ib_action_register().
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_action_destroy_fn_t)(ib_action_inst_t *act_inst);
+typedef ib_status_t (* ib_action_destroy_fn_t)(
+    ib_action_inst_t *act_inst,
+    void             *cbdata
+);
 
 /**
  * Action instance execution callback type
@@ -81,23 +89,30 @@ typedef ib_status_t (* ib_action_destroy_fn_t)(ib_action_inst_t *act_inst);
  * @param[in] rule The rule executing this action.
  * @param[in] tx The transaction for this action.
  * @param[in] flags The action instance flags
+ * @param[in] cbdata Callback data passed to ib_action_register().
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_action_execute_fn_t)(void *data,
-                                               ib_rule_t *rule,
-                                               ib_tx_t *tx,
-                                               ib_flags_t flags);
+typedef ib_status_t (* ib_action_execute_fn_t)(
+    void       *data,
+    ib_rule_t  *rule,
+    ib_tx_t    *tx,
+    ib_flags_t flags,
+    void       *cbdata
+);
 
 /** Action Structure */
 typedef struct ib_action_t ib_action_t;
 
 struct ib_action_t {
-    char                  *name;       /**< Name of the action. */
-    ib_flags_t             flags;      /**< Action flags */
-    ib_action_create_fn_t  fn_create;  /**< Instance creation function. */
-    ib_action_destroy_fn_t fn_destroy; /**< Instance destroy function. */
-    ib_action_execute_fn_t fn_execute; /**< Instance execution function. */
+    char                   *name;       /**< Name of the action. */
+    ib_flags_t              flags;      /**< Action flags */
+    ib_action_create_fn_t   fn_create;  /**< Instance creation function. */
+    void                   *cbdata_create; /**< Callback data for above. */
+    ib_action_destroy_fn_t  fn_destroy; /**< Instance destroy function. */
+    void                   *cbdata_destroy; /**< Callback data for above. */
+    ib_action_execute_fn_t  fn_execute; /**< Instance execution function. */
+    void                   *cbdata_execute; /**< Callback data for execute. */
 };
 
 /** Action flags */
@@ -125,19 +140,27 @@ struct ib_action_inst_t {
  * @param[in] flags Action instance flags.
  * @param[in] fn_create A pointer to the instance creation function.
  *                      (May be NULL)
+ * @param[in] cbdata_create Callback data for @a fn_create.
  * @param[in] fn_destroy A pointer to the instance destruction function.
  *                       (May be NULL)
+ * @param[in] cbdata_destroy Callback data for @a fn_destroy.
  * @param[in] fn_execute A pointer to the action function.
  *                       (May be NULL)
+ * @param[in] cbdata_execute Callback data for @a fn_execute.
  *
  * @returns IB_OK on success, IB_EINVAL if the name is not unique.
  */
-ib_status_t ib_action_register(ib_engine_t *ib,
-                               const char *name,
-                               ib_flags_t flags,
-                               ib_action_create_fn_t fn_create,
-                               ib_action_destroy_fn_t fn_destroy,
-                               ib_action_execute_fn_t fn_execute);
+ib_status_t ib_action_register(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_flags_t              flags,
+    ib_action_create_fn_t   fn_create,
+    void                   *cbdata_create,
+    ib_action_destroy_fn_t  fn_destroy,
+    void                   *cbdata_destroy,
+    ib_action_execute_fn_t  fn_execute,
+    void                   *cbdata_execute
+);
 
 /**
  * Create an action instance.

@@ -32,12 +32,17 @@
 
 #include <string.h>
 
-ib_status_t ib_action_register(ib_engine_t *ib,
-                               const char *name,
-                               ib_flags_t flags,
-                               ib_action_create_fn_t fn_create,
-                               ib_action_destroy_fn_t fn_destroy,
-                               ib_action_execute_fn_t fn_execute)
+ib_status_t ib_action_register(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_flags_t              flags,
+    ib_action_create_fn_t   fn_create,
+    void                   *cbdata_create,
+    ib_action_destroy_fn_t  fn_destroy,
+    void                   *cbdata_destroy,
+    ib_action_execute_fn_t  fn_execute,
+    void                   *cbdata_execute
+)
 {
     IB_FTRACE_INIT();
     ib_hash_t *action_hash = ib->actions;
@@ -61,11 +66,14 @@ ib_status_t ib_action_register(ib_engine_t *ib,
     if (act == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    act->name = name_copy;
-    act->flags = flags;
-    act->fn_create = fn_create;
-    act->fn_destroy = fn_destroy;
-    act->fn_execute = fn_execute;
+    act->name           = name_copy;
+    act->flags          = flags;
+    act->fn_create      = fn_create;
+    act->cbdata_create  = cbdata_create;
+    act->fn_destroy     = fn_destroy;
+    act->cbdata_destroy = cbdata_destroy;
+    act->fn_execute     = fn_execute;
+    act->cbdata_execute = cbdata_execute;
 
     rc = ib_hash_set(action_hash, name_copy, act);
 
@@ -100,7 +108,14 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
     (*act_inst)->flags = flags;
 
     if (action->fn_create != NULL) {
-        rc = action->fn_create(ib, ctx, pool, parameters, *act_inst);
+        rc = action->fn_create(
+            ib,
+            ctx,
+            pool,
+            parameters,
+            *act_inst,
+            action->cbdata_create
+        );
     }
     else {
         rc = IB_OK;
@@ -116,7 +131,10 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
 
     if (act_inst != NULL && act_inst->action != NULL
         && act_inst->action->fn_destroy != NULL) {
-        rc = act_inst->action->fn_destroy(act_inst);
+        rc = act_inst->action->fn_destroy(
+            act_inst,
+            act_inst->action->cbdata_destroy
+        );
     }
     else {
         rc = IB_OK;
@@ -134,10 +152,13 @@ ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
 
     if (act_inst != NULL && act_inst->action != NULL
         && act_inst->action->fn_execute != NULL) {
-        rc = act_inst->action->fn_execute(act_inst->data,
-                                          rule,
-                                          tx,
-                                          act_inst->flags);
+        rc = act_inst->action->fn_execute(
+            act_inst->data,
+            rule,
+            tx,
+            act_inst->flags,
+            act_inst->action->cbdata_execute
+        );
     }
     else {
         rc = IB_OK;

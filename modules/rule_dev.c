@@ -241,9 +241,9 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     rc = ib_action_register(ib,
                             "debuglog",
                             IB_ACT_FLAG_NONE,
-                            act_log_create,
-                            NULL, /* no destroy function */
-                            act_debuglog_execute);
+                            act_log_create, NULL,
+                            NULL, /* no destroy function */, NULL,
+                            act_debuglog_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -252,9 +252,9 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     rc = ib_action_register(ib,
                             "dlog",
                             IB_ACT_FLAG_NONE,
-                            act_log_create,
-                            NULL, /* no destroy function */
-                            act_debuglog_execute);
+                            act_log_create, NULL,
+                            NULL, /* no destroy function */, NULL,
+                            act_debuglog_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

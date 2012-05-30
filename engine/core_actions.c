@@ -68,6 +68,7 @@ typedef struct {
  * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
@@ -75,7 +76,8 @@ static ib_status_t act_setflags_create(ib_engine_t *ib,
                                        ib_context_t *ctx,
                                        ib_mpool_t *mp,
                                        const char *parameters,
-                                       ib_action_inst_t *inst)
+                                       ib_action_inst_t *inst,
+                                       void *cbdata)
 {
     IB_FTRACE_INIT();
     char *str;
@@ -100,13 +102,15 @@ static ib_status_t act_setflags_create(ib_engine_t *ib,
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
 static ib_status_t act_setflag_execute(void *data,
                                        ib_rule_t *rule,
                                        ib_tx_t *tx,
-                                       ib_flags_t flags)
+                                       ib_flags_t flags,
+                                       void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -134,13 +138,15 @@ static ib_status_t act_setflag_execute(void *data,
  * @param[in] rule The rule executing this action.
  * @param[in] tx The transaction for this action.
  * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
  *
  * @returns IB_OK if successful.
  */
 static ib_status_t act_event_execute(void *data,
                                      ib_rule_t *rule,
                                      ib_tx_t *tx,
-                                     ib_flags_t flags)
+                                     ib_flags_t flags,
+                                     void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
@@ -229,6 +235,7 @@ static ib_status_t act_event_execute(void *data,
  * @param[in] mp Memory pool to use for allocation
  * @param[in] params Constant parameters from the rule definition
  * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
@@ -236,7 +243,8 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
                                      ib_context_t *ctx,
                                      ib_mpool_t *mp,
                                      const char *params,
-                                     ib_action_inst_t *inst)
+                                     ib_action_inst_t *inst,
+                                     void *cbdata)
 {
     IB_FTRACE_INIT();
     size_t nlen;                 /* Name length */
@@ -317,13 +325,15 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
-static ib_status_t act_setvar_execute(void *cbdata,
+static ib_status_t act_setvar_execute(void *data,
                                       ib_rule_t *rule,
                                       ib_tx_t *tx,
-                                      ib_flags_t flags)
+                                      ib_flags_t flags,
+                                      void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_field_t *cur = NULL;
@@ -335,7 +345,7 @@ static ib_status_t act_setvar_execute(void *cbdata,
     size_t bslen = 0;
 
     /* Data should be a setvar_data_t created in our create function */
-    const setvar_data_t *svdata = (const setvar_data_t *)cbdata;
+    const setvar_data_t *svdata = (const setvar_data_t *)data;
 
     /* Pull the data out of the bytestr */
     if (svdata->type == IB_FTYPE_BYTESTR) {
@@ -609,23 +619,24 @@ typedef struct act_block_t act_block_t;
 /**
  * Executes the function stored in cbdata.
  *
- * @param[in] cbdata Cast to an @c act_block_t and the @c execute field is
+ * @param[in] data Cast to an @c act_block_t and the @c execute field is
  *            called on the given @a tx.
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
  */
-static ib_status_t act_block_execute(void* cbdata,
+static ib_status_t act_block_execute(void* data,
                                      ib_rule_t *rule,
                                      ib_tx_t *tx,
-                                     ib_flags_t flags)
+                                     ib_flags_t flags,
+                                     void *cbdata)
 {
     IB_FTRACE_INIT();
 
-    assert(cbdata);
+    assert(data);
     assert(tx);
 
-    ib_status_t rc = ((const act_block_t *)cbdata)->execute(tx);
+    ib_status_t rc = ((const act_block_t *)data)->execute(tx);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -643,6 +654,7 @@ static ib_status_t act_block_execute(void* cbdata,
  *            act_block_immediate_execute(), or act_block_advise_execute())
  *            is assigned to the rule data object.
  * @param[out] inst The instance being initialized.
+ * @param[in] cbdata Unused.
  *
  * @return IB_OK on success or IB_EALLOC if the callback data
  *         cannot be initialized for the rule.
@@ -651,7 +663,8 @@ static ib_status_t act_block_create(ib_engine_t *ib,
                                     ib_context_t *ctx,
                                     ib_mpool_t *mp,
                                     const char *params,
-                                    ib_action_inst_t *inst)
+                                    ib_action_inst_t *inst,
+                                    void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -703,7 +716,7 @@ typedef struct act_status_t act_status_t;
 /**
  * Set the @c block_status value in @a tx.
  *
- * @param[in] cbdata The act_status_t that contains the @c block_status
+ * @param[in] data The act_status_t that contains the @c block_status
  *            to assign to @c tx->block_status.
  * @param[in] rule The rule. Unused.
  * @param[out] tx The field in this struct, @c block_status, is set.
@@ -711,18 +724,19 @@ typedef struct act_status_t act_status_t;
  *
  * @returns IB_OK.
  */
-static ib_status_t act_status_execute(void* cbdata,
+static ib_status_t act_status_execute(void* data,
                                       ib_rule_t *rule,
                                       ib_tx_t *tx,
-                                      ib_flags_t flags)
+                                      ib_flags_t flags,
+                                      void *cbdata)
 {
     IB_FTRACE_INIT();
 
-    assert(cbdata);
+    assert(data);
     assert(tx);
 
     /* NOTE: Range validation of block_status is done in act_status_create. */
-    tx->block_status = ((act_status_t *)cbdata)->block_status;
+    tx->block_status = ((act_status_t *)data)->block_status;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -737,6 +751,7 @@ static ib_status_t act_status_execute(void* cbdata,
  * @param[in] params The parameters. This is a string representing
  *            an integer from 200 to 599, inclusive.
  * @param[out] inst The action instance that will be initialized.
+ * @param[in] cbdata Unused.
  *
  * @return IB_OK on success. IB_EALLOC on an allocation error from mp.
  *         IB_EINVAL if @a param is NULL or not convertible with
@@ -747,7 +762,8 @@ static ib_status_t act_status_create(ib_engine_t *ib,
                                      ib_context_t *ctx,
                                      ib_mpool_t *mp,
                                      const char *params,
-                                     ib_action_inst_t *inst)
+                                     ib_action_inst_t *inst,
+                                     void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -810,6 +826,7 @@ typedef struct act_header_del_t act_header_del_t;
  * @param[in] mp The memory pool this is allocated out of.
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
+ * @param[in] cbdata Unused.
  *
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
@@ -817,7 +834,8 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
                                          ib_context_t *ctx,
                                          ib_mpool_t *mp,
                                          const char *params,
-                                          ib_action_inst_t *inst)
+                                         ib_action_inst_t *inst,
+                                         void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -852,6 +870,7 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
  * @param[in] mp The memory pool this is allocated out of.
  * @param[in] params Parameters of the format name=<header name>.
  * @param[out] inst The action instance being initialized.
+ * @param[in] cbdata Unused.
  *
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
@@ -859,7 +878,8 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
                                          ib_context_t *ctx,
                                          ib_mpool_t *mp,
                                          const char *params,
-                                         ib_action_inst_t *inst)
+                                         ib_action_inst_t *inst,
+                                         void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -915,31 +935,21 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Modify the headers.
- *
- * @param[in] ib The IronBee engine.
- * @param[in] ctx The context.
- * @param[in] mp The memory pool this is allocated out of.
- * @param[in] params Parameters of the format name=<header name>.
- * @param[out] inst The action instance being initialized.
- *
- * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
- */
-static ib_status_t act_set_request_header_execute(void* cbdata,
+static ib_status_t act_set_request_header_execute(void* data,
                                                   ib_rule_t *rule,
                                                   ib_tx_t *tx,
-                                                  ib_flags_t flags)
+                                                  ib_flags_t flags,
+                                                  void *cbdata)
 {
     IB_FTRACE_INIT();
 
-    assert(cbdata);
+    assert(data);
     assert(tx);
     assert(tx->ib);
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
+    act_header_set_t *act_header_set = (act_header_set_t *)data;
     char *expanded_value;
 
     rc = ib_data_expand_str(tx->dpi, act_header_set->value, &expanded_value);
@@ -959,31 +969,22 @@ static ib_status_t act_set_request_header_execute(void* cbdata,
 
     IB_FTRACE_RET_STATUS(rc);
 }
-/**
- * Modify the headers.
- *
- * @param[in] ib The IronBee engine.
- * @param[in] ctx The context.
- * @param[in] mp The memory pool this is allocated out of.
- * @param[in] params Parameters of the format name=<header name>.
- * @param[out] inst The action instance being initialized.
- *
- * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
- */
-static ib_status_t act_del_request_header_execute(void* cbdata,
+
+static ib_status_t act_del_request_header_execute(void* data,
                                                   ib_rule_t *rule,
                                                   ib_tx_t *tx,
-                                                  ib_flags_t flags)
+                                                  ib_flags_t flags,
+                                                  void *cbdata)
 {
     IB_FTRACE_INIT();
 
-    assert(cbdata);
+    assert(data);
     assert(tx);
     assert(tx->ib);
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
+    act_header_del_t *act_header_del = (act_header_del_t *)data;
 
     ib_log_debug_tx(tx, "Deleting request header %s",
                     act_header_del->name);
@@ -996,31 +997,22 @@ static ib_status_t act_del_request_header_execute(void* cbdata,
 
     IB_FTRACE_RET_STATUS(rc);
 }
-/**
- * Modify the headers.
- *
- * @param[in] ib The IronBee engine.
- * @param[in] ctx The context.
- * @param[in] mp The memory pool this is allocated out of.
- * @param[in] params Parameters of the format name=<header name>.
- * @param[out] inst The action instance being initialized.
- *
- * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
- */
-static ib_status_t act_set_response_header_execute(void* cbdata,
+
+static ib_status_t act_set_response_header_execute(void* data,
                                                   ib_rule_t *rule,
                                                   ib_tx_t *tx,
-                                                  ib_flags_t flags)
+                                                  ib_flags_t flags,
+                                                  void *cbdata)
 {
     IB_FTRACE_INIT();
 
-    assert(cbdata);
+    assert(data);
     assert(tx);
     assert(tx->ib);
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_set_t *act_header_set = (act_header_set_t *)cbdata;
+    act_header_set_t *act_header_set = (act_header_set_t *)data;
     char *expanded_value;
 
     rc = ib_data_expand_str(tx->dpi, act_header_set->value, &expanded_value);
@@ -1040,31 +1032,21 @@ static ib_status_t act_set_response_header_execute(void* cbdata,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/**
- * Modify the headers.
- *
- * @param[in] ib The IronBee engine.
- * @param[in] ctx The context.
- * @param[in] mp The memory pool this is allocated out of.
- * @param[in] params Parameters of the format name=<header name>.
- * @param[out] inst The action instance being initialized.
- *
- * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
- */
-static ib_status_t act_del_response_header_execute(void* cbdata,
+static ib_status_t act_del_response_header_execute(void* data,
                                                   ib_rule_t *rule,
                                                   ib_tx_t *tx,
-                                                  ib_flags_t flags)
+                                                  ib_flags_t flags,
+                                                  void *cbdata)
 {
     IB_FTRACE_INIT();
 
-    assert(cbdata);
+    assert(data);
     assert(tx);
     assert(tx->ib);
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_del_t *act_header_del = (act_header_del_t *)cbdata;
+    act_header_del_t *act_header_del = (act_header_del_t *)data;
 
     ib_log_debug_tx(tx, "Deleting response header %s",
                     act_header_del->name);
@@ -1087,9 +1069,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "setflag",
                             IB_ACT_FLAG_NONE,
-                            act_setflags_create,
-                            NULL, /* no destroy function */
-                            act_setflag_execute);
+                            act_setflags_create, NULL,
+                            NULL, /* no destroy function */ NULL,
+                            act_setflag_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1098,9 +1080,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "setvar",
                             IB_ACT_FLAG_NONE,
-                            act_setvar_create,
-                            NULL, /* no destroy function */
-                            act_setvar_execute);
+                            act_setvar_create, NULL,
+                            NULL, /* no destroy function */ NULL,
+                            act_setvar_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1109,9 +1091,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "event",
                             IB_ACT_FLAG_NONE,
-                            NULL, /* no create function */
-                            NULL, /* no destroy function */
-                            act_event_execute);
+                            NULL, /* no create function */ NULL,
+                            NULL, /* no destroy function */ NULL,
+                            act_event_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1120,9 +1102,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "block",
                             IB_ACT_FLAG_NONE,
-                            act_block_create,
-                            NULL,
-                            act_block_execute);
+                            act_block_create, NULL,
+                            NULL, NULL,
+                            act_block_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1131,9 +1113,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "status",
                             IB_ACT_FLAG_NONE,
-                            act_status_create,
-                            NULL,
-                            act_status_execute);
+                            act_status_create, NULL,
+                            NULL, NULL,
+                            act_status_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1141,9 +1123,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "setRequestHeader",
                             IB_ACT_FLAG_NONE,
-                            act_set_header_create,
-                            NULL,
-                            act_set_request_header_execute);
+                            act_set_header_create, NULL,
+                            NULL, NULL,
+                            act_set_request_header_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1151,9 +1133,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "delRequestHeader",
                             IB_ACT_FLAG_NONE,
-                            act_del_header_create,
-                            NULL,
-                            act_del_request_header_execute);
+                            act_del_header_create, NULL,
+                            NULL, NULL,
+                            act_del_request_header_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1161,9 +1143,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "setResponseHeader",
                             IB_ACT_FLAG_NONE,
-                            act_set_header_create,
-                            NULL,
-                            act_set_response_header_execute);
+                            act_set_header_create, NULL,
+                            NULL, NULL,
+                            act_set_response_header_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1171,9 +1153,9 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "delResponseHeader",
                             IB_ACT_FLAG_NONE,
-                            act_del_header_create,
-                            NULL,
-                            act_del_response_header_execute);
+                            act_del_header_create, NULL,
+                            NULL, NULL,
+                            act_del_response_header_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

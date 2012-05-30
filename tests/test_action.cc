@@ -42,9 +42,9 @@ TEST_F(ActionTest, RegisterTest) {
     status = ib_action_register(ib_engine,
                                 "test_action",
                                 IB_ACT_FLAG_NONE,
-                                NULL,
-                                NULL,
-                                NULL);
+                                NULL, NULL,
+                                NULL, NULL,
+                                NULL, NULL);
     EXPECT_EQ(IB_OK, status);
 }
 
@@ -53,16 +53,16 @@ TEST_F(ActionTest, RegisterDup) {
     status = ib_action_register(ib_engine,
                                 "test_action",
                                 IB_ACT_FLAG_NONE,
-                                NULL,
-                                NULL,
-                                NULL);
+                                NULL, NULL,
+                                NULL, NULL,
+                                NULL, NULL);
     ASSERT_EQ(IB_OK, status);
     status = ib_action_register(ib_engine,
                                 "test_action",
                                 IB_ACT_FLAG_NONE,
-                                NULL,
-                                NULL,
-                                NULL);
+                                NULL, NULL,
+                                NULL, NULL,
+                                NULL, NULL);
     EXPECT_EQ(IB_EINVAL, status);
 }
 
@@ -72,9 +72,9 @@ TEST_F(ActionTest, CallAction) {
     status = ib_action_register(ib_engine,
                                 "test_action",
                                 IB_ACT_FLAG_NONE,
-                                NULL,
-                                NULL,
-                                NULL);
+                                NULL, NULL,
+                                NULL, NULL,
+                                NULL, NULL);
     ASSERT_EQ(IB_OK, status);
 
     status = ib_action_inst_create(ib_engine,
@@ -96,7 +96,8 @@ static ib_status_t create_fn(ib_engine_t *ib,
                              ib_context_t *ctx,
                              ib_mpool_t *mp,
                              const char *params,
-                             ib_action_inst_t *inst)
+                             ib_action_inst_t *inst,
+                             void *cbdata)
 {
     inst->data = ib_mpool_strdup(mp, params);
     return IB_OK;
@@ -105,7 +106,8 @@ static ib_status_t create_fn(ib_engine_t *ib,
 static ib_status_t execute_fn(void *data,
                               ib_rule_t *rule,
                               ib_tx_t *tx,
-                              ib_flags_t flags)
+                              ib_flags_t flags,
+                              void *cbdata)
 {
     action_executed = true;
     action_str = (const char *)data;
@@ -121,9 +123,9 @@ TEST_F(ActionTest, ExecuteAction) {
     status = ib_action_register(ib_engine,
                                 "test_action",
                                 IB_ACT_FLAG_NONE,
-                                create_fn,
-                                NULL,
-                                execute_fn);
+                                create_fn, NULL,
+                                NULL, NULL,
+                                execute_fn, NULL);
     ASSERT_EQ(IB_OK, status);
 
     status = ib_action_inst_create(ib_engine,
