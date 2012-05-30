@@ -121,7 +121,8 @@ static ib_status_t act_log_create(ib_engine_t *ib,
                                   ib_context_t *ctx,
                                   ib_mpool_t *mp,
                                   const char *parameters,
-                                  ib_action_inst_t *inst)
+                                  ib_action_inst_t *inst,
+                                  void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -163,7 +164,8 @@ static ib_status_t act_log_create(ib_engine_t *ib,
 static ib_status_t act_debuglog_execute(void *data,
                                         ib_rule_t *rule,
                                         ib_tx_t *tx,
-                                        ib_flags_t flags)
+                                        ib_flags_t flags,
+                                        void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -242,7 +244,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                             "debuglog",
                             IB_ACT_FLAG_NONE,
                             act_log_create, NULL,
-                            NULL, /* no destroy function */, NULL,
+                            NULL, NULL, /* no destroy function */
                             act_debuglog_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -253,7 +255,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                             "dlog",
                             IB_ACT_FLAG_NONE,
                             act_log_create, NULL,
-                            NULL, /* no destroy function */, NULL,
+                            NULL, NULL, /* no destroy function */
                             act_debuglog_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
