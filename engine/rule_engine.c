@@ -625,17 +625,18 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         const char       *fname = target->field_name;
         assert(fname != NULL);
         ib_field_t       *value = NULL;     /* Value from the DPI */
+        ib_status_t       getrc;            /* Status from ib_data_get() */
 
         /* Get the field value */
-        rc = ib_data_get(tx->dpi, fname, &value);
-        if (rc == IB_ENOENT) {
+        getrc = ib_data_get(tx->dpi, fname, &value);
+        if (getrc == IB_ENOENT) {
             ib_bool_t allow_null =
                 ib_flags_all(opinst->op->flags, IB_OP_FLAG_ALLOW_NULL);
             if (allow_null == IB_FALSE) {
                 continue;
             }
         }
-        else if (rc != IB_OK) {
+        else if (getrc != IB_OK) {
             ib_log_error_tx(tx, "Error getting field \"%s\": %s",
                             fname, ib_status_to_string(rc));
             continue;
@@ -648,13 +649,13 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
             if (rc != IB_OK) {
                 ib_log_error_tx(tx, "Error getting field value \"%s\": %s",
-                                value->name, rc);
+                                value->name, ib_status_to_string(rc));
                 continue;
             }
 
             /* Run operations on each list element. */
             IB_LIST_LOOP(value_list, value_node) {
-                const ib_status_t tmp_rc =
+                ib_status_t tmp_rc =
                     execute_phase_rule_targets_operators(
                         ib,
                         tx,
@@ -666,6 +667,10 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
                 /* Capture failure to report back to the caller. */
                 if (tmp_rc != IB_OK) {
+                    ib_log_error_tx(tx,
+                                    "Error running operator \"%s\": %s",
+                                    opinst->op->name,
+                                    ib_status_to_string(rc));
                     rc = tmp_rc;
                 }
             }
@@ -678,6 +683,11 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                                                       value,
                                                       rule_result,
                                                       target_results);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "Error running operator \"%s\": %s",
+                                opinst->op->name, ib_status_to_string(rc));
+            }
         }
     }
 
