@@ -73,7 +73,11 @@ Dir.glob('*.erb').each do |test|
     else 
         puts "#{base} PASS"
     end
-    File.unlink(tmppath) if ! failure
+    if failure
+        puts "Configuration at #{tmppath}"
+    else
+        File.unlink(tmppath) if ! failure
+    end
 end
 
 exit 1 if failure
