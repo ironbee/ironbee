@@ -2154,7 +2154,7 @@ ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
 
 /**
  * @defgroup IronBeeFilter Filter
- * @ingroup IronBee
+ * @ingroup IronBeeEngine
  * @{
  */
 
