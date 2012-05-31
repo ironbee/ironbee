@@ -2065,7 +2065,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
     ib_log_debug2(ib, "Adding rules from \"%s\" to ctx \"%s\" temp list",
                   ib_context_full_get(main_ctx),
                   ib_context_full_get(ctx));
-    skip_flags = IB_RULE_FLAG_IN_CHAIN;
+    skip_flags = IB_RULE_FLAG_CHCHILD;
     IB_LIST_LOOP(main_ctx->rules->rule_list, node) {
         ib_rule_t          *ref = (ib_rule_t *)ib_list_node_data(node);
         ib_rule_t          *rule;
@@ -2112,7 +2112,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
      * to the list of all rules if they're not marked... */
     ib_log_debug2(ib, "Adding ctx rules to ctx \"%s\" temp list",
                   ib_context_full_get(ctx));
-    skip_flags = (IB_RULE_FLAG_MARK | IB_RULE_FLAG_IN_CHAIN);
+    skip_flags = (IB_RULE_FLAG_MARK | IB_RULE_FLAG_CHCHILD);
     IB_LIST_LOOP(ctx->rules->rule_list, node) {
         ib_rule_t          *rule = (ib_rule_t *)ib_list_node_data(node);
         ib_rule_ctx_data_t *ctx_rule;
@@ -2429,14 +2429,14 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
      * chain to that rule & update the current rule.
      */
     if (  (previous != NULL) &&
-          ((previous->flags & IB_RULE_FLAG_CHAIN) != 0) )
+          ((previous->flags & IB_RULE_FLAG_CHPARENT) != 0) )
     {
         previous->chained_rule = rule;
         rule->chained_from = previous;
         rule->meta.phase = previous->meta.phase;
         rule->phase_meta = previous->phase_meta;
         rule->meta.chain_id = previous->meta.chain_id;
-        rule->flags |= IB_RULE_FLAG_IN_CHAIN;
+        rule->flags |= IB_RULE_FLAG_CHCHILD;
     }
 
     /* Good */
@@ -2503,7 +2503,7 @@ ib_status_t ib_rule_set_chain(ib_engine_t *ib,
     assert ((rule->phase_meta->flags & PHASE_FLAG_ALLOW_CHAIN) != 0);
 
     /* Set the chain flags */
-    rule->flags |= IB_RULE_FLAGS_CHAIN;
+    rule->flags |= IB_RULE_FLAG_CHPARENT;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -2662,8 +2662,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* If the "chain" flag is set, the chain ID is the rule's ID */
-    if (rule->flags & IB_RULE_FLAGS_CHAIN) {
+    /* If either of the chain flags is set, the chain ID is the rule's ID */
+    if (ib_flags_any(rule->flags, IB_RULE_FLAG_CHAIN) == IB_TRUE) {
         if (rule->chained_from != NULL) {
             rule->meta.chain_id = rule->chained_from->meta.chain_id;
         }
@@ -2682,12 +2682,14 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 
     /* Handle chained rule */
     if (rule->chained_from != NULL) {
-        if ( (rule->chained_from->flags & IB_RULE_FLAG_VALID) == 0) {
+        if (ib_flags_all(rule->chained_from->flags, IB_RULE_FLAG_VALID)
+            != IB_TRUE)
+        {
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         ib_log_debug3(ib,
-                     "Registered rule \"%s\" chained from rule \"%s\"",
-                     rule->meta.id, rule->chained_from->meta.id);
+                      "Registered rule \"%s\" chained from rule \"%s\"",
+                      rule->meta.id, rule->chained_from->meta.id);
     }
 
     /* Put this rule in the hash */

@@ -79,25 +79,14 @@ typedef enum {
  * operator, passing NULL in as the field pointer.  The external rule is
  * expected to extract whatever fields, etc. it requires itself.
  */
-#define IB_RULE_FLAG_NONE        (0x0)     /**< No flags */
-#define IB_RULE_FLAG_VALID       (1 << 0)  /**< Rule is valid */
-#define IB_RULE_FLAG_EXTERNAL    (1 << 1)  /**< External rule */
-#define IB_RULE_FLAG_CHAIN       (1 << 2)  /**< Rule is parent in a chain */
-#define IB_RULE_FLAG_IN_CHAIN    (1 << 3)  /**< Rule is part of a chain */
-#define IB_RULE_FLAG_MAIN_CTX    (1 << 4)  /**< Rule owned by main context */
-#define IB_RULE_FLAG_MARK        (1 << 5)  /**< Mark used in list building */
-
-/**
- * Rule meta-flags:
- * PHASE: Flags set for all phase rules
- * STREAM: Flags set for all stream rules
- * CHAIN: Rule is any part of a chain
- */
-#define IB_RULE_FLAGS_PHASE   \
-    (IB_RULE_FLAG_ALLOW_TFNS | IB_RULE_FLAG_ALLOW_CHAIN)
-#define IB_RULE_FLAGS_STREAM  (IB_RULE_FLAG_NONE)
-#define IB_RULE_FLAGS_CHAIN   (IB_RULE_FLAG_CHAIN | IB_RULE_FLAG_IN_CHAIN)
-
+#define IB_RULE_FLAG_NONE     (0x0)     /**< No flags */
+#define IB_RULE_FLAG_VALID    (1 << 0)  /**< Rule is valid */
+#define IB_RULE_FLAG_EXTERNAL (1 << 1)  /**< External rule */
+#define IB_RULE_FLAG_CHPARENT (1 << 2)  /**< Rule is parent in a chain */
+#define IB_RULE_FLAG_CHCHILD  (1 << 3)  /**< Rule is child in a chain */
+#define IB_RULE_FLAG_MAIN_CTX (1 << 4)  /**< Rule owned by main context */
+#define IB_RULE_FLAG_MARK     (1 << 5)  /**< Mark used in list building */
+#define IB_RULE_FLAG_CHAIN    (IB_RULE_FLAG_CHPARENT|IB_RULE_FLAG_CHCHILD)
 /**
  * Rule meta-data flags
  */
