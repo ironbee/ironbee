@@ -388,6 +388,78 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
 }
 
 
+/**
+ * Create an alias list collection.
+ *
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param cbdata Callback data
+ *
+ * @returns Status code
+ */
+static ib_status_t create_header_alias_list(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    const char *name,
+    ib_parsed_header_wrapper_t *header)
+{
+    IB_FTRACE_INIT();
+    ib_field_t *f;
+    ib_list_t *header_list;
+    ib_status_t rc;
+    ib_parsed_name_value_pair_list_t *nvpair;
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(name != NULL);
+    assert(header != NULL);
+
+    /* Create the list */
+    rc = ib_data_add_list(tx->dpi, name, &f);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&header_list));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Loop through the list & alias everything */
+    for(nvpair = header->head;  nvpair != NULL;  nvpair = nvpair->next) {
+
+        /* Create a byte string field */
+        rc = ib_field_create_bytestr_alias(
+            &f, tx->mp,
+            (const char *)ib_bytestr_const_ptr(nvpair->name),
+            ib_bytestr_length(nvpair->name),
+            (uint8_t *)ib_bytestr_const_ptr(nvpair->value),
+            ib_bytestr_length(nvpair->value));
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                            "Error creating bytestr alias of '%.*s' for %s: %s",
+                            (int)ib_bytestr_length(nvpair->name),
+                            (const char *)ib_bytestr_ptr(nvpair->name),
+                            name,
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the field to the list */
+        rc = ib_list_push(header_list, f);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error adding alias of '%.*s' to %s list: %s",
+                            (int)ib_bytestr_length(nvpair->name),
+                            (const char *)ib_bytestr_ptr(nvpair->name),
+                            name,
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /*
  * Callback used to generate request fields.
  */
@@ -477,6 +549,17 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
         }
     }
 
+    /* Create the aliased request header list */
+    if (tx->request_header != NULL) {
+        rc = create_header_alias_list(ib,
+                                      tx,
+                                      "request_headers",
+                                      tx->request_header);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -489,6 +572,7 @@ static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
                                                    void *cbdata)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
 
     ib_log_debug3_tx(tx, "core_gen_response_header_fields");
 
@@ -508,6 +592,17 @@ static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
 
         core_gen_tx_bytestr_alias_field(tx, "response_message",
                                         tx->response_line->msg);
+    }
+
+    /* Create the aliased response header list */
+    if (tx->response_header != NULL) {
+        rc = create_header_alias_list(ib,
+                                      tx,
+                                      "response_headers",
+                                      tx->response_header);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

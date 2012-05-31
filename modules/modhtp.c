@@ -586,23 +586,23 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
         table_iterator_reset(tx->request_headers);
         while (table_iterator_next(tx->request_headers, (void *)&hdr) != NULL)
         {
-            rc = ib_parsed_name_value_pair_list_add(
-                ibhdrs,
-                bstr_ptr(hdr->name),
-                bstr_len(hdr->name),
-                bstr_ptr(hdr->value),
-                bstr_len(hdr->value));
+            rc = ib_parsed_name_value_pair_list_add(ibhdrs,
+                                                    bstr_ptr(hdr->name),
+                                                    bstr_len(hdr->name),
+                                                    bstr_ptr(hdr->value),
+                                                    bstr_len(hdr->value));
             if (rc != IB_OK) {
                 ib_log_error_tx(itx,
-                             "Error adding request header name / value: %s",
-                             ib_status_to_string(rc));
+                                "Error adding request header name / value: %s",
+                                ib_status_to_string(rc));
                 continue;
             }
-            ib_log_debug3_tx(itx, "Added request header field %.*s='%.*s'",
-                         (int)bstr_len(hdr->name),
-                         (char *)bstr_ptr(hdr->name),
-                         (int)bstr_len(hdr->value),
-                         (char *)bstr_ptr(hdr->value));
+            ib_log_debug3_tx(itx,
+                             "Added request header field %.*s='%.*s'",
+                             (int)bstr_len(hdr->name),
+                             (char *)bstr_ptr(hdr->name),
+                             (int)bstr_len(hdr->value),
+                             (char *)bstr_ptr(hdr->value));
         }
     }
 
@@ -1645,8 +1645,9 @@ static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi,
-                                                          ib_tx_t *itx)
+static ib_status_t modhtp_iface_gen_request_header_fields(
+    ib_provider_inst_t *pi,
+    ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
     ib_context_t *ctx = itx->ctx;
@@ -1720,54 +1721,6 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                  tx->parsed_uri->fragment,
                                  NULL);
 
-        rc = ib_data_add_list(itx->dpi, "request_headers", &f);
-        if (   (tx->request_headers != NULL)
-            && table_size(tx->request_headers)
-            && (rc == IB_OK))
-        {
-            bstr *key = NULL;
-            htp_header_t *h = NULL;
-
-            /// @todo Make this a function
-            table_iterator_reset(tx->request_headers);
-            ib_log_debug3_tx(itx, "Adding request_headers fields");
-            while ((key = table_iterator_next(tx->request_headers,
-                                              (void *)&h)) != NULL)
-            {
-                ib_field_t *lf;
-
-                /* Create a list field as an alias into htp memory. */
-                rc = ib_field_create_bytestr_alias(&lf,
-                                           itx->mp,
-                                           bstr_ptr(h->name),
-                                           bstr_len(h->name),
-                                           (uint8_t *)bstr_ptr(h->value),
-                                           bstr_len(h->value));
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                 "Failed to create field: %s",
-                                 ib_status_to_string(rc));
-                }
-
-                /* Add the field to the field list. */
-                rc = ib_field_list_add(f, lf);
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                 "Failed to add field: %s",
-                                 ib_status_to_string(rc));
-                }
-            }
-        }
-        else if (rc == IB_OK) {
-            /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3_tx(itx, "No request headers");
-        }
-        else {
-            ib_log_error_tx(itx,
-                         "Failed to create request headers list: %s",
-                         ib_status_to_string(rc));
-        }
-
         rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
         if (   (tx->request_cookies != NULL)
             && table_size(tx->request_cookies)
@@ -1792,13 +1745,17 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(value),
                                            bstr_len(value));
                 if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx, "Failed to create field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx,
+                                     "Failed to create field: %s",
+                                     ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx, "Failed to add field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx,
+                                     "Failed to add field: %s",
+                                     ib_status_to_string(rc));
                 }
             }
         }
@@ -1806,7 +1763,9 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             ib_log_debug3_tx(itx, "No request cookies");
         }
         else {
-            ib_log_error_tx(itx, "Failed to create request cookies list: %s", ib_status_to_string(rc));
+            ib_log_error_tx(itx,
+                            "Failed to create request cookies list: %s",
+                            ib_status_to_string(rc));
         }
 
         rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
@@ -1833,13 +1792,17 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
                                            (uint8_t *)bstr_ptr(value),
                                            bstr_len(value));
                 if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx, "Failed to create field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx,
+                                     "Failed to create field: %s",
+                                     ib_status_to_string(rc));
                 }
 
                 /* Add the field to the field list. */
                 rc = ib_field_list_add(f, lf);
                 if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx, "Failed to add field: %s", ib_status_to_string(rc));
+                    ib_log_debug3_tx(itx,
+                                     "Failed to add field: %s",
+                                     ib_status_to_string(rc));
                 }
             }
         }
@@ -1847,90 +1810,20 @@ static ib_status_t modhtp_iface_gen_request_header_fields(ib_provider_inst_t *pi
             ib_log_debug3_tx(itx, "No request URI parameters");
         }
         else {
-            ib_log_error_tx(itx, "Failed to create request URI parameters: %s", ib_status_to_string(rc));
+            ib_log_error_tx(itx,
+                            "Failed to create request URI parameters: %s",
+                            ib_status_to_string(rc));
         }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t modhtp_iface_gen_response_header_fields(ib_provider_inst_t *pi,
-                                                           ib_tx_t *itx)
+static ib_status_t modhtp_iface_gen_response_header_fields(
+    ib_provider_inst_t *pi,
+    ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
-    ib_context_t *ctx = itx->ctx;
-    ib_conn_t *iconn = itx->conn;
-    ib_field_t *f;
-    modhtp_cfg_t *modcfg;
-    modhtp_context_t *modctx;
-    htp_tx_t *tx;
-    ib_status_t rc;
-
-    /* Get the module config. */
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Fetch context from the connection. */
-    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
-
-    /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
-    tx = modctx->htp->out_tx;
-    if (tx != NULL) {
-
-        /// @todo Need a table type that can have more than one
-        ///       of the same header.
-        rc = ib_data_add_list(itx->dpi, "response_headers", &f);
-        if (   (tx->response_headers != NULL)
-            && table_size(tx->response_headers)
-            && (rc == IB_OK))
-        {
-            bstr *key = NULL;
-            htp_header_t *h = NULL;
-
-            /// @todo Make this a function
-            table_iterator_reset(tx->response_headers);
-            while ((key = table_iterator_next(tx->response_headers,
-                                              (void *)&h)) != NULL)
-            {
-                ib_field_t *lf;
-
-                /* Create a list field as an alias into htp memory. */
-                rc = ib_field_create_bytestr_alias(&lf,
-                                           itx->mp,
-                                           bstr_ptr(h->name),
-                                           bstr_len(h->name),
-                                           (uint8_t *)bstr_ptr(h->value),
-                                           bstr_len(h->value));
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                 "Failed to create field: %s",
-                                 ib_status_to_string(rc));
-                }
-
-                /* Add the field to the field list. */
-                rc = ib_field_list_add(f, lf);
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                 "Failed to add field: %s",
-                                 ib_status_to_string(rc));
-                }
-            }
-        }
-        else if (rc == IB_OK) {
-            /// @todo May be an error depending on HTTP protocol version
-            ib_log_debug3_tx(itx, "No response headers");
-        }
-        else {
-            ib_log_error_tx(itx,
-                         "Failed to create response headers list: %s",
-                         ib_status_to_string(rc));
-        }
-    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
