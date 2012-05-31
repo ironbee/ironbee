@@ -393,6 +393,10 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
     pcre_rule_data_t *rule_data = NULL;
     ib_status_t rc;
 
+    if (pattern == NULL) {
+        ib_log_error(ib, "No pattern for %s operator", op_inst->op->name);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
     rc = modpcre_compile_internal(pool,
                                   &rule_data,
                                   pattern,
