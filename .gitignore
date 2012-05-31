@@ -58,6 +58,7 @@ Makefile.in
 /tests/test_operator
 /tests/test_luajit
 !/tests/test_util_*.cc
+!/tests/test_module_*.cc
 /tests/*_details.xml
 /tests/*_memcheck.xml
 /tests/*_stderr.log
