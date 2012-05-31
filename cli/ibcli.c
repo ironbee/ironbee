@@ -428,8 +428,13 @@ static ib_status_t command_line(int argc, char *argv[])
             static int glob_flags = 0;
             int globrc = glob(optarg, glob_flags, NULL, &settings.req_files);
             if (globrc != 0) {
-                fatal_error("Failed to glob on requests: %d (errno %d)\n",
-                            globrc, errno);
+                if (errno == ENOENT) {
+                    fatal_error("Invalid request file \"%s\"\n", optarg);
+                }
+                else {
+                    fatal_error("Failed to glob on requests: %d (errno %d)\n",
+                                globrc, errno);
+                }
             }
             else if (settings.req_files.gl_pathc == 0) {
                 fprintf(stderr,
@@ -444,8 +449,13 @@ static ib_status_t command_line(int argc, char *argv[])
             static int glob_flags = 0;
             int globrc = glob(optarg, glob_flags, NULL, &settings.rsp_files);
             if (globrc != 0) {
-                fatal_error("Failed to glob on responses: %d (errno %d)\n",
-                            globrc, errno);
+                if (errno == ENOENT) {
+                    fatal_error("Invalid response file \"%s\"\n", optarg);
+                }
+                else {
+                    fatal_error("Failed to glob on responses: %d (errno %d)\n",
+                                globrc, errno);
+                }
             }
             else if (settings.rsp_files.gl_pathc == 0) {
                 fprintf(stderr,
