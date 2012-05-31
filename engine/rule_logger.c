@@ -301,6 +301,9 @@ static void log_exec_fast(const ib_tx_t *tx,
             break;
         }
     }
+    if (*actbuf == '\0') {
+        strcpy(actbuf, "<NONE>");
+    }
 
     /*
      * Log all of the targets whose result that matched the result type.
