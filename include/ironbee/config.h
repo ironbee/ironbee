@@ -460,7 +460,7 @@ void DLL_PUBLIC ib_cfg_log(ib_cfgparser_t *cp,
                            const char *fmt, ...) PRINTF_ATTRIBUTE(6, 0);
 
 /**
- * Log configuration data (vargs version)
+ * Log configuration data (variable args version)
  *
  * @param[in] cp Configuration parser
  * @param[in] level Log level
@@ -498,7 +498,7 @@ void DLL_PUBLIC ib_cfg_log_ex(const ib_engine_t *ib,
                               const char *fmt, ...) PRINTF_ATTRIBUTE(8, 0);
 
 /**
- * Log configuration data (varargs / ex version)
+ * Log configuration data (variable args / ex version)
  *
  * @param[in] ib IronBee engine
  * @param[in] cfgfile Configuration file name

@@ -41,6 +41,7 @@ otheres others
 tranformations Transformations
 yse use
 signalled signaled
+varargs variable args
 childs children
 operatore operator
 thead thread
@@ -49,4 +50,5 @@ addres address
 maintaing maintaining
 tranformation transformation
 hlpr helper
+vargs variable args
 allcation allocation
