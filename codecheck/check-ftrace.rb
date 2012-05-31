@@ -34,7 +34,9 @@ Dir.glob( '**/*.[ch]' ).each do |path|
         in_ftrace_function = true
       end
     elsif line =~ /\breturn(\s|;)/ && in_ftrace_function
-      error["MISSING FTRACE_RET: #{current_function}"]
+      if line !~ /"return/
+          error["MISSING FTRACE_RET: #{current_function}"]
+      end
     end
     
     prev_line = line
