@@ -318,7 +318,6 @@ fi
 dnl Checks for various external dependencies
 sinclude(acinclude/htp.m4)
 sinclude(acinclude/pcre.m4)
-sinclude(acinclude/xml2.m4)
 sinclude(acinclude/apxs.m4)
 sinclude(acinclude/apr.m4)
 sinclude(acinclude/apu.m4)
@@ -333,7 +332,6 @@ sinclude(acinclude/protobuf.m4)
 # Required libs
 CHECK_HTP()
 CHECK_PCRE()
-CHECK_XML2()
 AX_BOOST_BASE(1.46,
               [], 
               [if test "$enable_cpp" = "yes" ; then
