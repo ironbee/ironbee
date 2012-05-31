@@ -26,9 +26,9 @@ core
 aclocal.m4
 /config.log
 /config.status
-/config.guess
-/config.sub
 /config.cache
+config.guess
+config.sub
 /configure.in
 /configure
 libtool
