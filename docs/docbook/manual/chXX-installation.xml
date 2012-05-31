@@ -6,15 +6,14 @@
     <title>Installation</title>
     <para>...</para>
     <section>
-        <title>Officially Supported Operating Systems</title>
+        <title>Tested Operating Systems</title>
         <para>We have provided a table below of the operating systems that are offically supported
-            by IronBee. Our definition of a officially supported operating system is one that we
-            perform build, functionality, and regression testing on. This is not to say that IronBee
-            will not work for you if your OS is not listed on this table, it probably will as long
-            as you can meet the general dependencies outlined in the section "General
-            Dependencies".</para>
+            by IronBee. Our definition of a tested operating system is one that we perform build,
+            functionality, and regression testing on. This is not to say that IronBee will not work
+            for you if your OS is not listed on this table, it probably will as long as you can meet
+            the general dependencies outlined in the section "General Dependencies".</para>
         <table border="1">
-            <caption>Offically Supported Operating Systems</caption>
+            <caption>Tested Operating Systems</caption>
             <tr>
                 <th>Operating System</th>
                 <th>Version(s)</th>
@@ -38,7 +37,7 @@
             <tr>
                 <td>Ubuntu-LTS</td>
                 <td>Current and previous version</td>
-                <td>https://wiki.ubuntu.com/LTS</td>
+                <td>https://wiki.ubuntu.com/LTS/</td>
             </tr>
             <tr>
                 <td>Ubuntu(non-LTS release)</td>
@@ -46,9 +45,9 @@
                 <td>http://www.ubuntu.com/</td>
             </tr>
             <tr>
-                <td>FreeBSD</td>
-                <td>Current and previous version</td>
-                <td>http://www.freebsd.org/</td>
+                <td>OSX</td>
+                <td>Lion</td>
+                <td>http://www.apple.com/</td>
             </tr>
         </table>
     </section>        
@@ -59,72 +58,29 @@
             <caption>Build Tool Dependencies</caption>
             <tr>
                 <th>Dependency</th>
+                <th>Version</th>
                 <th>Description</th>
                 <th>Website</th>
             </tr>
             <tr>
-                <td>C/C++ compiler</td>
-                <td>Currently only gcc has been tested.</td>
-                <td>http://gcc.gnu.org/</td>
+                <td>C compiler</td>
+                <td>gcc 4.6+ or clang 3.0 </td>
+                <td>Currently gcc and clang have been tested.</td>
+                <td>http://gcc.gnu.org/ or http://clang.llvm.org/</td>
             </tr>
             <tr>
                 <td>GNU Build System</td>
+                <td>autoconf 2.9+</td>
                 <td>Autotools(Automake,Autoconf,Libtool)</td>
                 <td>http://www.gnu.org/software/hello/manual/autoconf/The-GNU-Build-System.html</td>
             </tr>
             <tr>
                 <td>pkg-config</td>
+                <td>any</td>
                 <td>Helper tool used when compiling applications and libraries.</td>
                 <td>http://pkg-config.freedesktop.org/wiki/</td>
             </tr>
         </table>
-        
-        <table border="1">
-            <caption>Libraries</caption>
-            <tr>
-                <th>Dependency</th>
-                <th>Description</th>
-                <th>Website</th>
-            </tr>
-            <tr>
-                <td>PCRE</td>
-                <td>Regular Expression Library.</td>
-                <td>http://www.pcre.org/</td>
-            </tr>
-            <tr>
-                <td>LuaJIT</td>
-                <td>Embeddable scripting language(included)</td>
-                <td>http://www.luajit.org/</td>
-            </tr>
-            <tr>
-                <td>LibHTP</td>
-                <td>Security-aware parser for the HTTP protocol.</td>
-                <td>http://www.libhtp.org/</td>
-            </tr>
-            <tr>
-                <td>zlib</td>
-                <td>Compression library, required for LibHTP.</td>
-                <td>http://www.zlib.net/</td>
-           </tr>
-            <tr>
-                <td>Libxml2</td>
-                <td>XML C parser and toolkit.</td>
-                <td>http://xmlsoft.org/</td>
-           </tr>
-        </table>
-        
-        <table border="1">
-            <caption>HTTP Server</caption>
-            <tr>
-                <th>Dependency</th>
-                <th>Description</th>
-            </tr>
-            <tr>
-                <td>Apache HTTPD Server</td>
-                <td>Apache foundation's open source HTTP server. http://httpd.apache.org/</td>
-            </tr>
-        </table>
-        
         <table border="1">
             <caption>Software Version Control</caption>
             <tr>
@@ -132,241 +88,120 @@
                 <th>Description</th>
             </tr>
             <tr>
-                <td>Subversion</td>
-                <td>Subversion is needed to access the LibHTP source repository. http://subversion.apache.org/</td>
-            </tr>
-            <tr>
                 <td>Git</td>
                 <td>Git is needed to access the IronBee source repository. http://git-scm.com/</td>
+            </tr>
+        </table>
+        
+        <table border="1">
+            <caption>Libraries for IronBee</caption>
+            <tr>
+                <th>Dependency</th>
+                <th>Version</th>
+                <th>Description</th>
+                <th>Website</th>
+            </tr>
+            <tr>
+                <td>PCRE</td>
+                <td>8.0+</td>
+                <td>Regular Expression Library.</td>
+                <td>http://www.pcre.org/</td>
+            </tr>
+            <tr>
+                <td>LibHTP</td>
+                <td>latest</td>
+                <td>Security-aware parser for the HTTP protocol.</td>
+                <td>https://github.com/ironbee/libhtp</td>
+            </tr>
+            <tr>
+                <td>PThread</td>
+                <td>NA</td>
+                <td>POSIX threads</td>
+                <td>NA</td>
+                <td/>
+            </tr>
+            <tr>
+                <td>ossp-uuid</td>
+                <td>1.6.2+</td>
+                <td>OSSP UUID library.</td>
+                <td>http://www.ossp.org/pkg/lib/uuid/</td>
+            </tr>
+        </table>
+        <table border="1">
+            <caption>Libraries for IronBee C++ Wrapper and Utilities</caption>
+            <tr>
+                <th>Dependency</th>
+                <th>Version</th>
+                <th>Description</th>
+                <th>Website</th>
+            </tr>
+            <tr>
+                <td>C++ Compiler</td>
+                <td>g++ 4.6+ or clang++ 3.0</td>
+                <td>Currently gcc and clang have been tested.</td>
+                <td>http://gcc.gnu.org/ or http://clang.llvm.org/</td>
+            </tr>
+            <tr>
+                <td>Boost</td>
+                <td>1.46+</td>
+                <td>General purpose C++ library.</td>
+                <td>http://www.boost.org/</td>
+            </tr>
+        </table>
+        <table border="1">
+            <caption>Libraries for IronBee C++ CLI (clipp)</caption>
+            <tr>
+                <th>Dependency</th>
+                <th>Version</th>
+                <th>Description</th>
+                <th>Website</th>
+            </tr>
+            <tr>
+                <td>protobuf-cpp</td>
+                <td>2.4.1+</td>
+                <td>Generic serialization library.</td>
+                <td>https://developers.google.com/protocol-buffers/</td>
+            </tr>
+            <tr>
+                <td>libpcap</td>
+                <td>1.1.1+</td>
+                <td>Packet capture library (optional).</td>
+                <td>http://www.tcpdump.org/</td>
+            </tr>
+            <tr>
+                <td>libnids</td>
+                <td>latest</td>
+                <td>TCP reassembly library (optional).</td>
+                <td>http://libnids.sourceforge.net/</td>
+            </tr>
+            <tr>
+                <td>libnet</td>
+                <td>latest</td>
+                <td>Generic networking library (optional).</td>
+                <td>http://libnet.sourceforge.net/</td>
+            </tr>
+            <tr>
+                <td>stringencoders</td>
+                <td>3.10+</td>
+                <td>String encoder library (optional).</td>
+                <td>https://code.google.com/p/stringencoders/</td>
+            </tr>
+        </table>
+        
+        <table border="1">
+            <caption>Server</caption>
+            <tr>
+                <th>Dependency</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>Apache Traffic Server</td>
+                <td>Apache foundation's Traffic Server. http://trafficserver.apache.org/</td>
             </tr>
         </table>       
     </section>
     <section>
     <title>Resloving Dependencies</title>
-      <section>
-          <title>OS Specific Instructions For Dependency Resolution(except LibHTP)</title>
-                <variablelist>
-                    <varlistentry>
-                <term>Fedora/RHEL/CentOS/</term>
-                     <listitem>
-                     <variablelist>
-                 <note>
-                     <para>If you are using RHEL or CentOS and you don't want to compile Git from
-                                    source you have the option of using the packages from the EPEL
-                                    repository. Instructions for adding this repository to your
-                                    system can be found here http://fedoraproject.org/wiki/EPEL/FAQ
-                                    under the heading "How can I install the packages from the EPEL
-                                    software repository?". For your convenience I have added the
-                                    command to add the repo for RHEL/CentOS 5 and 6 below. You can
-                                    use the appropriate command for all supported architectures as
-                                    the package itself is architecture independent.</para>
-                                <para><emphasis role="bold">CentOS/EPEL 5</emphasis></para>
-                        <programlisting>sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm</programlisting>
-                                <para><emphasis role="bold">CentOS/EPEL 6</emphasis></para>
-                                <programlisting>sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/6/i386/epel-release-6.5.noarch.rpm</programlisting>
-                 </note>       
-                <varlistentry>
-                <term>Install Required Libraries and Build Tools</term>
-                <listitem>
-                  <programlisting>sudo yum -y install pcre pcre-devel gcc gcc-c++ automake autoconf libtool make zlib zlib-devel pkgconfig httpd httpd-devel libxml2 libxml2-devel</programlisting>
-                 </listitem>
-                </varlistentry>
-                    <varlistentry>
-                        <term>Install Git</term>
-                         <listitem>
-                         <para>You will need to have Git installed to download LibHTP and IronBee
-                                        from their respective public source code
-                                        repositories..</para>    
-                         <programlisting>sudo yum -y install git</programlisting>
-                         </listitem>
-                    </varlistentry>
-                        <varlistentry>
-                            <term>Install Doxygen and Graphviz(Optional)</term>
-                            <listitem>
-                                <para>If you will be building Doxygen documentation via the "make doxygen" command, you will need to install Doxygen and Graphviz.</para>    
-                                <programlisting>sudo yum -y install doxygen graphviz</programlisting>
-                            </listitem>
-                        </varlistentry>
-                        <varlistentry>
-                            <term>Install Java (Optional)</term>
-                            <listitem>
-                                <para>If you will be building the Docbook manual you will need to install Java. Oracle Java can be downloaded from http://www.java.com/download/.</para>    
-                            </listitem>
-                        </varlistentry>
-                     </variablelist>
-                     </listitem>
-                        </varlistentry>
-        <varlistentry>
-            <term>Debian/Ubuntu</term>
-            <listitem>
-                <variablelist>
-                    <varlistentry>
-                        <term>Install Required Libraries and Build Tools</term>
-                        <listitem>
-                            <programlisting>sudo apt-get install libpcre3 libpcre3-dev build-essential autoconf automake libtool apache2-mpm-prefork apache2-threaded-dev libxml2 libxml2-dev pkg-config libapr1</programlisting>
-                        </listitem>
-                    </varlistentry>
-                    <varlistentry>
-                        <term>Install Git</term>
-                        <listitem>
-                            <para>You will need to have Subversion and Git installed to download LibHTP
-                                and IronBee from their respective public source code
-                                repositories..</para>    
-                            <programlisting>sudo apt-get install git-core</programlisting>
-                        </listitem>
-                    </varlistentry>
-                    <varlistentry>
-                        <term>Install Doxygen and Graphviz(Optional)</term>
-                        <listitem>
-                            <para>If you will be building Doxygen documentation via the "make doxygen" command, you will need to install Doxygen and Graphviz.</para>    
-                            <programlisting>sudo apt-get install doxygen graphviz</programlisting>
-                        </listitem>
-                    </varlistentry>
-                    <varlistentry>
-                        <term>Install Java (Optional)</term>
-                        <listitem>
-                            <para>If you will be building the Docbook documentation you will need to
-                                    install Java. Oracle Java is included as a package is not
-                                    included in the main distribution but can be added. We will go
-                                    over adding the required repository to Debian(non-free) and
-                                    Ubuntu(partner) below. You also have the option of manually
-                                    downloading and install Oracle Java from
-                                    http://www.java.com/download/.</para>
-                            <variablelist>
-                                        <varlistentry>
-                                            <term>Ubuntu 8.04 "Hardy"</term>
-                                            <listitem>
-                                            <programlisting>sudo apt-get install sun-java6-jre</programlisting>
-                                            </listitem>
-                                        </varlistentry>
-                                        <varlistentry>
-                                            <term>Ubuntu 10.04 "Lucid"</term>
-                                            <listitem>
-                                            <programlisting>sudo apt-get install
-python-software-properties
-sudo add-apt-repository "deb http://archive.canonical.com/ lucid partner"
-sudo apt-get update
-sudo apt-get install sun-java6-jre</programlisting>
-                                                </listitem>
-                                        </varlistentry>
-                                        <varlistentry>
-                                            <term>Ubuntu 10.10 "Maverick"</term>
-                                            <listitem>
-                                            <programlisting>sudo apt-get install python-software-properties
-sudo add-apt-repository "deb http://archive.canonical.com/ maverick partner"
-sudo apt-get update
-sudo apt-get install sun-java6-jre</programlisting>
-                                         </listitem>
-                                        </varlistentry>
-                                        <varlistentry>
-                                            <term>Ubuntu 11.04 "Natty"</term>
-                                            <listitem>
-                                                <programlisting>sudo apt-get install python-software-properties
-sudo add-apt-repository "deb http://archive.canonical.com/ natty partner"
-sudo apt-get update
-sudo apt-get install sun-java6-jre</programlisting>
-                                            </listitem>
-                                        </varlistentry>
-                                        <varlistentry>
-                                            <term>Debian 5.0 "Lenny"</term>
-                                            <listitem>
-                                            <para>Enable non-free repo by adding "non-free" to your
-                                                existing "main" line in your apt sources
-                                                list.</para>
-                                            <programlisting>deb http://ftp.us.debian.org/debian/ lenny main
-deb-src http://ftp.us.debian.org/debian/ lenny main
-                                        
-deb http://security.debian.org/ lenny/updates main
-deb-src http://security.debian.org/ lenny/updates main    </programlisting>
-                                            
-                                            <para>Becomes:</para>
-                                            <programlisting>deb http://ftp.us.debian.org/debian/ lenny main non-free
-deb-src http://ftp.us.debian.org/debian/ lenny main non-free
-
-deb http://security.debian.org/ lenny/updates main non-free
-deb-src http://security.debian.org/ lenny/updates main non-free</programlisting>
-                                            <programlisting>sudo apt-get update 
-sudo apt-get install sun-java6-jre</programlisting>
-                                                </listitem>
-                                        </varlistentry>
-                                        <varlistentry>
-                                            <term>Debian 6.0 "Squeeze"</term>
-                                            <listitem>
-                                                <para>Enable non-free repo by adding "non-free" to
-                                                  your existing "main" line in your apt sources
-                                                  list.</para>
-                                                <programlisting>deb http://ftp.us.debian.org/debian/ squeeze main
-deb-src http://ftp.us.debian.org/debian/ squeeze main
-
-deb http://security.debian.org/ squeeze/updates main
-deb-src http://security.debian.org/ squeeze/updates main
-
-deb http://ftp.us.debian.org/debian/ squeeze-updates main
-deb-src http://ftp.us.debian.org/debian/ squeeze-updates main  </programlisting>
-                                                <para>Becomes:</para>
-                                                <programlisting>deb http://ftp.us.debian.org/debian/ squeeze main non-free
-deb-src http://ftp.us.debian.org/debian/ squeeze main non-free
-
-deb http://security.debian.org/ squeeze/updates main non-free
-deb-src http://security.debian.org/ squeeze/updates main non-free
-
-deb http://ftp.us.debian.org/debian/ squeeze-updates main non-free
-deb-src http://ftp.us.debian.org/debian/ squeeze-updates main non-free</programlisting>
-                                                <programlisting>sudo apt-get update 
-sudo apt-get install sun-java6-jre</programlisting>
-                                            </listitem>
-                                        </varlistentry>
-                                    </variablelist>
-                        </listitem>
-                    </varlistentry>
-                </variablelist>
-            </listitem>
-        </varlistentry>
-            <varlistentry>
-                <term>FreeBSD7/8</term>
-                <listitem>
-                    <variablelist>
-                        <varlistentry>
-                            <term>Install Required Libraries and Build Tools</term>
-                            <listitem>
-                                <programlisting>pkg_add -r autoconf262 automake110 gcc45 pcre libtool gmake pkg-config libxml2 apr-ipv6-devrandom-gdbm-db42 apache22</programlisting>
-                            </listitem>
-                        </varlistentry>
-                        <varlistentry>
-                            <term>Install Git</term>
-                            <listitem>
-                                <para>You will need to have Git installed to download LibHTP and
-                                        IronBee from their respective public source code
-                                        repositories..</para>    
-                                <programlisting>pkg_add -r git</programlisting>
-                            </listitem>
-                        </varlistentry>
-                        <varlistentry>
-                            <term>Install Doxygen and Graphviz(Optional)</term>
-                            <listitem>
-                                <para>If you will be building Doxygen documentation via the "make doxygen" command, you will need to install Doxygen and Graphviz.</para>    
-                                <programlisting>pkg_add -r doxygen graphviz</programlisting>
-                            </listitem>
-                        </varlistentry>
-                        <varlistentry>
-                            <term>Install Java (Optional)</term>
-                            <listitem>
-                                <para>There are multiple methods of installing Oracle Java on
-                                    FreeBSD, probably the easiest is to rebuild the JRE package
-                                    found here
-                                    http://www.freebsdfoundation.org/downloads/java.shtml. After you
-                                    have agreed to the liscense and download the file you can
-                                    install the port by following the instructions below.</para>
-                                <programlisting>mv diablo-latte-freebsd7-i386-1.6.0_07-b02.tar.bz2 /usr/ports/distfiles/
-cd /usr/ports/java/diablo-jre16/
-make install                           </programlisting>    
-                            </listitem>
-                        </varlistentry>
-                    </variablelist>
-                </listitem>
-            </varlistentry>
-                </variablelist>
-          </section>
       <section><title>Installing LibHTP</title>
             <para>In the future LibHTP will be integrated into the ironbee build process but until
                 that time you will have to download, build and install LibHTP from it's public git
@@ -382,187 +217,41 @@ sudo make install</programlisting></section>
         <title>Installing IronBee</title>
         <para>...</para>
         <section>
-            <title>Build and Install IronBee</title>
-        <programlisting>git clone git://github.com/ironbee/ironbee.git
+            <title>Initial Setup</title>
+            <programlisting># Clone the repository
+git clone git://github.com/ironbee/ironbee.git
 cd ironbee
-./autogen.sh
-./configure 
+
+# Generate the autotools utilities
+./autogen.sh</programlisting>
+        </section>
+        <section>
+            <title>Build and Install IronBee</title>
+        <programlisting>./configure 
 make
 sudo make install</programlisting>
             </section>
+        <section>
+            <title>Build C++ Wrapper and Utilities (Optional)</title>
+            <para>...</para>
+            <programlisting>./configure --enable-cpp
+make
+sudo make install</programlisting>
+        </section>
     <section>
         <title>Build and Run Unit Tests(Optional)</title>
         <para>...</para>
-        <programlisting>cd ironbee
-make check</programlisting>
+        <programlisting>make check</programlisting>
     </section>
     <section>
         <title>Build Doxygen Documents(Optional)</title>
         <para>...</para>
-        <programlisting>cd ironbee
-make doxygen</programlisting>
+        <programlisting>make doxygen</programlisting>
     </section>
     <section>
         <title>Build Docbook Manual(Optional)</title>
         <para>...</para>
-        <programlisting>cd ironbee
-make manual</programlisting>
+        <programlisting>make manual</programlisting>
     </section>
-        <section>
-            <title>Build With PCRE JIT Support(Experimental)</title>
-            <para>Using PCRE with Just-In-Time Compilation can significantly speed up matching. For
-                more details on how this works see the following:
-                http://sljit.sourceforge.net/pcre.html.</para>
-            <variablelist>
-                <varlistentry>
-                    <term>Installation</term>
-                    <listitem>
-                        <para>Build and Install PCRE with JIT support.</para>
-                        <programlisting>wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/Testing/pcre-8.20-RC3.tar.gz
-tar -xzvf pcre-8.20-RC3.tar.gz
-cd pcre-8.20-RC3
-./configure --prefix=/usr/local/ironbee/ --enable-jit --enable-utf8 --enable-unicode-properties
-make
-sudo make install</programlisting>
-                        <para>Build and Install IronBee with JIT support.</para>
-                        <para>Use the steps outlined in Section 1.4.1 "Installing IronBee" and
-                            modify the configure line to enable support for JIT and tell IronBee
-                            where to find your JIT enabled version of PCRE. </para>
-                        <programlisting>./configure --enable-pcre-jit --with-pcre=/usr/local/ironbee/</programlisting>
-                        </listitem>
-                 </varlistentry>
-                <varlistentry>
-                    <term>Post Installation Configuration</term>
-                    <listitem>
-                        <para>Force use of the new PCRE lib by using LD_PRELOAD. For Ubuntu/Debian
-                            you can simply edit the file "/etc/apache2/envvars" and add/modify the
-                            following line.</para>
-                        <programlisting>export LD_PRELOAD=/usr/local/ironbee/lib/libpcre.so</programlisting>
-                    </listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>Troubleshooting</term>
-                    <listitem>
-                        <para>An easy way to tell if you are using the correct PCRE version is to
-                            look at the apache error log. The "compiled" and "loaded" PCRE versions
-                            should match. Below is an example where I did not correctly configure
-                            LD_PRELOAD</para>
-                        <programlisting>[Thu Oct 13 15:54:49 2011] [debug] mod_ironbee.c(173): IronBee: ERROR - PCRE Status: compiled="8.20 2011-10-10" loaded="7.8 2008-09-05"</programlisting>
-                    </listitem>
-                </varlistentry>
-            </variablelist>
-        </section>
-        </section>
-    <section>
-        <title>Post Installation Configuration</title>
-        <section>
-            <title>OS Specific Instructions Post Installation Configuration</title>
-            <variablelist>
-                <varlistentry>
-                    <term>Fedora/RHEL5/CentOS5</term>
-                        <listitem>
-                        <variablelist>
-                                <varlistentry>
-                                    <term>Create the IronBee Configuration File(s)</term>
-                                    <listitem>
-                                        <para>Create the file /etc/httpd/conf.d/mod_ironbee.conf with the
-                                            following contents:.</para>
-                                        <programlisting>LoadFile /usr/local/lib/libhtp.so
-LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
-
-CoreDumpDirectory /tmp
-
-&lt;IfModule ironbee_module>
-   LogLevel debug
-   IronBeeEnable on
-   IronBeeConfig /usr/local/ironbee/etc/ironbee.conf.example
-&lt;/IfModule></programlisting>
-                                    </listitem>
-                                </varlistentry>
-                            <varlistentry>
-                                <term>Restart the Webserver</term>
-                                <listitem>
-                                    <programlisting>service httpd restart</programlisting>
-                                    <para>You can ensure that Apache started successfully with IronBee by checking the Apache error log located at /var/log/httpd/error_log.</para>
-                                </listitem>
-                            </varlistentry>
-                        </variablelist>
-                        </listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>Debian/Ubuntu</term>
-                    <listitem>
-                        <variablelist>
-                            <varlistentry>
-                                <term>Create the IronBee Configuration File(s)</term>
-                                <listitem>
-                                    <para>Create the file /etc/apache2/mods-available/ironbee.load
-                                        with the following contents:.</para>
-                                    <programlisting>LoadFile /usr/local/lib/libhtp.so
-LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
-
-CoreDumpDirectory /tmp
-</programlisting>
-                                    <para>Create the file /etc/apache2/mods-available/ironbee.conf
-                                    with the following contents:.</para>
-                                    <programlisting>&lt;IfModule ironbee_module>
-   LogLevel debug
-   IronBeeEnable on
-   IronBeeConfig /usr/local/ironbee/etc/ironbee.conf.example
-&lt;/IfModule></programlisting>                                   
-                                </listitem>
-                            </varlistentry>
-                            <varlistentry>
-                                <term>Enable Ironbee</term>
-                                <listitem>
-                                    <programlisting>sudo a2enmod ironbee</programlisting>
-                                </listitem>
-                            </varlistentry>                            
-                            <varlistentry>
-                                <term>Restart the Webserver</term>
-                                <listitem>
-                                    <programlisting>sudo /etc/init.d/apache2 restart</programlisting>
-                                    <para>You can ensure that Apache started successfully with IronBee by checking the Apache error log located at /var/log/apache2/error.log.</para>
-                                </listitem>
-                            </varlistentry>
-                        </variablelist>
-                    </listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term>FreeBSD7/8</term>
-                    <listitem>
-                        <variablelist>
-                            <varlistentry>
-                                <term>Create the IronBee Configuration File(s)</term>
-                                <listitem>
-                                    <para>Create the file
-                                        /usr/local/etc/apache22/Includes/mod_ironbee.conf with the
-                                        following contents:.</para>
-                                    <programlisting>LoadFile /usr/local/lib/libhtp.so
-LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
-
-CoreDumpDirectory /tmp
-
-&lt;IfModule ironbee_module>
-   LogLevel debug
-   IronBeeEnable on
-   IronBeeConfig /usr/local/ironbee/etc/ironbee.conf.example
-&lt;/IfModule></programlisting>                                   
-                                </listitem>
-                            </varlistentry>                            
-                            <varlistentry>
-                                <term>Restart the Webserver</term>
-                                <listitem>
-                                    <programlisting>sudo /usr/local/sbin/apachectl restart</programlisting>
-                                    <para>You can ensure that Apache started successfully with
-                                        IronBee by checking the Apache error log located at
-                                        /var/log/httpd-error.log</para>
-                                </listitem>
-                            </varlistentry>
-                        </variablelist>
-                    </listitem>
-                </varlistentry>
-                </variablelist>
-        </section>
-    </section>   
+        </section>   
 </chapter>
