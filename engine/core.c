@@ -4372,7 +4372,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                              p1_unescaped, name);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
-        
+
         cur = strtok(p1_copy, ",");
         do {
             if (strcasecmp("Off", cur) == 0) {
