@@ -100,6 +100,7 @@ typedef struct ib_operator_t ib_operator_t;
 struct ib_operator_t {
     char                    *name;       /**< Name of the operator. */
     ib_flags_t               flags;      /**< Operator flags */
+    void                    *data;       /**< Operator data. */
     ib_operator_create_fn_t  fn_create;  /**< Instance creation function. */
     ib_operator_destroy_fn_t fn_destroy; /**< Instance destroy function. */
     ib_operator_execute_fn_t fn_execute; /**< Instance execution function. */
@@ -133,6 +134,11 @@ struct ib_operator_inst_t {
  * @param[in] ib Ironbee engine
  * @param[in] name The name of the operator.
  * @param[in] flags Operator flags.
+ * @param[in] op_data Operator data. This is stored in 
+ *            ib_operator_t.data. Calls to ib_operator_create_fn_t,
+ *            ib_operator_destroy_fn_t, and ib_operator_execute_fn_t
+ *            can access this data by fetching
+ *            ib_operator_inst_t.op.data.
  * @param[in] fn_create A pointer to the instance creation function.
  *                      (May be NULL)
  * @param[in] fn_destroy A pointer to the instance destruction function.
@@ -145,6 +151,7 @@ struct ib_operator_inst_t {
 ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
                                             const char *name,
                                             ib_flags_t flags,
+                                            void *op_data,
                                             ib_operator_create_fn_t fn_create,
                                             ib_operator_destroy_fn_t fn_destroy,
                                             ib_operator_execute_fn_t fn_execute);

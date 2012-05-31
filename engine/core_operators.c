@@ -985,6 +985,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "streq",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               strop_create,
                               NULL, /* no destroy function */
                               op_streq_execute);
@@ -996,6 +997,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "contains",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               strop_create,
                               NULL, /* no destroy function */
                               op_contains_execute);
@@ -1007,6 +1009,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "ipmatch",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               op_ipmatch_create,
                               NULL, /* no destroy function */
                               op_ipmatch_execute);
@@ -1022,6 +1025,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "eq",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               op_numcmp_create,
                               NULL, /* no destroy function */
                               op_eq_execute);
@@ -1033,6 +1037,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "ne",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               op_numcmp_create,
                               NULL, /* no destroy function */
                               op_ne_execute);
@@ -1044,6 +1049,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "gt",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               op_numcmp_create,
                               NULL, /* no destroy function */
                               op_gt_execute);
@@ -1055,6 +1061,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "lt",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               op_numcmp_create,
                               NULL, /* no destroy function */
                               op_lt_execute);
@@ -1066,6 +1073,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "ge",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               op_numcmp_create,
                               NULL, /* no destroy function */
                               op_ge_execute);
@@ -1077,6 +1085,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "le",
                               IB_OP_FLAG_PHASE,
+                              NULL,
                               op_numcmp_create,
                               NULL, /* no destroy function */
                               op_le_execute);
@@ -1093,6 +1102,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "checkflag",
                               IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
+                              NULL,
                               strop_create,
                               NULL, /* no destroy function */
                               op_checkflag_execute);
@@ -1104,6 +1114,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_operator_register(ib,
                               "exists",
                               IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
+                              NULL,
                               NULL, /* No create function */
                               NULL, /* no destroy function */
                               op_exists_execute);

@@ -1050,6 +1050,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         rc = ib_operator_register(cp->ib,
                                   file_name,
                                   IB_OP_FLAG_PHASE,
+                                  NULL,
                                   &lua_operator_create,
                                   &lua_operator_destroy,
                                   &lua_operator_execute);

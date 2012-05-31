@@ -54,6 +54,9 @@
 #define MODULE_NAME        ac
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
+/* Name that a hash of tx-specific data is stored under in @c tx->data. */
+#define MODULE_DATA_STR    MODULE_NAME_STR "_DATA"
+
 /* Informational extra data.. version of this module (should be better to
  * register it with the module itself) */
 #define AC_MAJOR           0
@@ -75,7 +78,6 @@ struct modac_provider_data_t {
 
 /* Instantiate a module global configuration. */
 typedef struct modac_provider_data_t modac_provider_data_t;
-
 
 /* -- Matcher Interface -- */
 
@@ -591,12 +593,14 @@ static ib_status_t modac_init(ib_engine_t *ib,
     ib_operator_register(ib,
                          "pm",
                          IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
+                         NULL,
                          &pm_operator_create,
                          &pm_operator_destroy,
                          &pm_operator_execute);
     ib_operator_register(ib,
                          "pmf",
                          IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
+                         NULL,
                          &pmf_operator_create,
                          &pm_operator_destroy,
                          &pm_operator_execute);
