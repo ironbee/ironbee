@@ -1,15 +1,16 @@
 ACLOCAL_AMFLAGS = -I../acinclude
 EXTRA_DIST = gtest \
-       TestIronBeeModuleRulesLua.operator_test.config \
        AhoCorasickModuleTest.config \
        ahocorasick.patterns \
-       PcreModuleTest.test_load_module.config \
-       test_module_rules_lua.lua \
        base_fixture.h \
-       test_ironbee_lua_api.conf \
+       DfaModuleTest.matches.config \
+       gtest_executor.sh \
        PcreModuleTest.matches.config \
-       gtest_executor.sh
- 
+       PcreModuleTest.test_load_module.config \
+       test_ironbee_lua_api.conf \
+       TestIronBeeModuleRulesLua.operator_test.config \
+       test_module_rules_lua.lua
+
 include $(top_srcdir)/build/tests.mk
 
 LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
@@ -29,7 +30,7 @@ endif
 
 if DARWIN
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
-LDFLAGS += -pagezero_size 10000 -image_base 100000000 
+LDFLAGS += -pagezero_size 10000 -image_base 100000000
 endif
 
 if LINUX
@@ -78,14 +79,15 @@ check_PROGRAMS = test_gtest \
 TESTS=$(check_PROGRAMS)
 
 BUILT_SOURCES = \
-    $(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
     $(abs_builddir)/AhoCorasickModuleTest.config \
     $(abs_builddir)/ahocorasick.patterns \
-    $(abs_builddir)/PcreModuleTest.test_load_module.config \
-    $(abs_builddir)/test_module_rules_lua.lua \
-    $(abs_builddir)/test_ironbee_lua_api.conf \
+    $(abs_builddir)/DfaModuleTest.matches.config \
+    $(abs_builddir)/gtest_executor.sh \
     $(abs_builddir)/PcreModuleTest.matches.config \
-    $(abs_builddir)/gtest_executor.sh
+    $(abs_builddir)/PcreModuleTest.test_load_module.config \
+    $(abs_builddir)/test_ironbee_lua_api.conf \
+    $(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
+    $(abs_builddir)/test_module_rules_lua.lua
 
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
@@ -144,7 +146,7 @@ test_engine_SOURCES = test_engine.cc test_main.cc \
                       ibtest_util.cc
 test_engine_LDADD = $(MODULE_TEST_LDADD)
 
-test_config_SOURCES = test_config.cc test_main.cc 
+test_config_SOURCES = test_config.cc test_main.cc
 test_config_LDADD = $(MODULE_TEST_LDADD)
 
 
@@ -176,7 +178,9 @@ test_operator_LDADD = $(MODULE_TEST_LDADD)
 test_action_SOURCES = test_action.cc test_main.cc
 test_action_LDADD = $(MODULE_TEST_LDADD)
 
-test_module_pcre_SOURCES = test_module_pcre.cc test_main.cc
+test_module_pcre_SOURCES = test_module_pcre.cc \
+                           test_module_dfa.cc \
+			   test_main.cc
 test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 
 test_luajit_SOURCES = test_main.cc \

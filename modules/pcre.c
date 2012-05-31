@@ -52,7 +52,7 @@
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Name that a hash of tx-specific data is stored under in @c tx->data. */
-#define MODULE_DATA_STR    (MODULE_NAME_STR "_DATA")
+#define MODULE_DATA_STR    MODULE_NAME_STR "_DATA"
 
 /* How many matches will PCRE find and populate. */
 #define MATCH_MAX 10
@@ -992,6 +992,8 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
                               &erroffset);
 
     if (rc==IB_OK) {
+        ib_log_debug(ib, "Compiled DFA operator pattern: %s", pattern);
+
         /* We compute the length of the string buffer as such:
          * +2 for the 0x prefix.
          * +1 for the \0 string terminations.
@@ -1003,8 +1005,13 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
 
         snprintf(id, id_sz, "%p", op_inst);
         rule_data->id = id;
+        ib_log_debug(ib, "Created DFA operator with ID %s.", id);
         op_inst->data = rule_data;
     }
+    else {
+        ib_log_error(ib, "Failed to parse DFA operator pattern: %s", pattern);
+    }
+
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1037,18 +1044,32 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     rc = ib_hash_get(tx->data, rule_data, MODULE_DATA_STR);
 
     if (rc == IB_OK && *rule_data != NULL) {
+        ib_log_debug2_tx(tx,
+                         "Found rule data hash in tx data named "
+                         MODULE_DATA_STR);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx data.");
+    ib_log_debug2_tx(tx, "Creating rule data hash " MODULE_DATA_STR);
+
     rc = ib_hash_create(rule_data, tx->mp);
     if (rc != IB_OK) {
+        ib_log_debug2_tx(tx,
+                         "Failed to create hash " MODULE_DATA_STR ": %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     rc = ib_hash_set(tx->data, MODULE_DATA_STR, *rule_data);
     if (rc != IB_OK) {
+        ib_log_debug2_tx(tx,
+                         "Failed to store hash " MODULE_DATA_STR ": %d", rc);
         *rule_data = NULL;
     }
+
+    ib_log_debug2_tx(tx,
+                     "Returning rule hash " MODULE_DATA_STR " at %p.", 
+                     *rule_data);
 
     IB_FTRACE_RET_STATUS(rc);
 
@@ -1104,9 +1125,9 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_hash_set(rule_data, id, workspace);
+    rc = ib_hash_set(rule_data, id, *workspace);
     if (rc != IB_OK) {
-        workspace = NULL;
+        *workspace = NULL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -1143,7 +1164,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_hash_get(rule_data, workspace, id);
+    rc = ib_hash_get(rule_data, workspace, id);
     if (rc != IB_OK) {
         *workspace = NULL;
     }
@@ -1245,9 +1266,18 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
                                 rule_data->id);
             IB_FTRACE_RET_STATUS(ib_rc);
         }
+
+        ib_log_debug_tx(tx,
+                       "Created DFA workspace at %p for id %s.",
+                        dfa_workspace,
+                        rule_data->id);
     }
     else if (ib_rc == IB_OK) {
         options = PCRE_PARTIAL_SOFT | PCRE_DFA_RESTART;
+        ib_log_debug_tx(tx,
+                        "Reusing existing DFA workspace %p for id %s.", 
+                        dfa_workspace,
+                        rule_data->id);
     }
 
     /* Actually do the DFA match. */
