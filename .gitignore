@@ -24,13 +24,13 @@ core
 *_config_auto_gen.h
 *_config_auto_gen.h.in
 aclocal.m4
-config.log
-config.status
-config.guess
-config.sub
-config.cache
-configure.in
-configure
+/config.log
+/config.status
+/config.guess
+/config.sub
+/config.cache
+/configure.in
+/configure
 libtool
 stamp-h1
 depcomp
@@ -39,12 +39,12 @@ ltmain.sh
 missing
 Makefile
 Makefile.in
-acinclude/libtool*
-acinclude/lt*
-autom4te.cache/
+/acinclude/libtool*
+/acinclude/lt*
+/autom4te.cache/
 .deps/
 .libs/
-build/config.rpath
+/build/config.rpath
 
 # Build Generated files:
 /ironbeepp/tests/**details.xml
@@ -65,12 +65,13 @@ build/config.rpath
 /docs/doxygen_internal/
 /docs/doxygen_external/
 /docs/docbook/manual/output/
-libs/luajit-2.0-ironbee/
-libs/libhtp/
-ironbee.pc
-libs/.build-luajit
-cli/ibcli
-cpp/ibcli_cpp
+/docs/docbook/manual/.fop/
+/libs/luajit-2.0-ironbee/
+/libs/libhtp/
+/ironbee.pc
+/libs/.build-luajit
+/cli/ibcli
+/cpp/ibcli_cpp
 
 /ironbeepp/tests/test_byte_string
 /ironbeepp/tests/test_catch
