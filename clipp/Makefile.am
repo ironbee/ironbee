@@ -49,10 +49,12 @@ clipp_CPPFLAGS = $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
     $(NIDS_CPPFLAGS) \
     $(NET_CPPFLAGS) \
-    $(MODP_CPPFLAGS)
+    $(MODP_CPPFLAGS) \
+    $(BOOST_CPPFLAGS)
 clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \
+    $(BOOST_LDFLAGS) \
     -lboost_system \
     -lboost_filesystem \
     -lboost_program_options \
