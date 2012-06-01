@@ -1053,10 +1053,12 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         rc = ib_operator_register(cp->ib,
                                   file_name,
                                   IB_OP_FLAG_PHASE,
-                                  NULL,
                                   &lua_operator_create,
+                                  NULL,
                                   &lua_operator_destroy,
-                                  &lua_operator_execute);
+                                  NULL,
+                                  &lua_operator_execute,
+                                  NULL);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
                              "Failed to register lua operator: %s",

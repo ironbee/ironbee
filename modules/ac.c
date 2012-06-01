@@ -828,17 +828,21 @@ static ib_status_t modac_init(ib_engine_t *ib,
     ib_operator_register(ib,
                          "pm",
                          IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
-                         NULL,
                          &pm_operator_create,
+                         NULL,
                          &pm_operator_destroy,
-                         &pm_operator_execute);
+                         NULL,
+                         &pm_operator_execute,
+                         NULL);
     ib_operator_register(ib,
                          "pmf",
                          IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
-                         NULL,
                          &pmf_operator_create,
+                         NULL,
                          &pm_operator_destroy,
-                         &pm_operator_execute);
+                         NULL,
+                         &pm_operator_execute,
+                         NULL);
 
     ib_log_debug(ib,
                  "AC Status: compiled=\"%d.%d %s\" AC Matcher registered",

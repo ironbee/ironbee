@@ -1536,10 +1536,12 @@ static ib_status_t register_handlers(ib_engine_t* ib)
                               (IB_OP_FLAG_ALLOW_NULL|
                                IB_OP_FLAG_PHASE|
                                IB_OP_FLAG_STREAM),
-                              NULL,
                               op_print_create,
+                              NULL,
                               NULL,                  /* no destroy function */
-                              op_print_execute);
+                              NULL,
+                              op_print_execute,
+                              NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

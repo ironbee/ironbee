@@ -34,10 +34,12 @@
 ib_status_t ib_operator_register(ib_engine_t *ib,
                                  const char *name,
                                  ib_flags_t flags,
-                                 void *op_data,
                                  ib_operator_create_fn_t fn_create,
+                                 void *cd_create,
                                  ib_operator_destroy_fn_t fn_destroy,
-                                 ib_operator_execute_fn_t fn_execute)
+                                 void *cd_destroy,
+                                 ib_operator_execute_fn_t fn_execute,
+                                 void *cd_execute)
 {
     IB_FTRACE_INIT();
     ib_hash_t *operator_hash = ib->operators;
@@ -68,7 +70,9 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
     }
     op->name = name_copy;
     op->flags = flags;
-    op->data = op_data;
+    op->cd_create = cd_create;
+    op->cd_destroy = cd_destroy;
+    op->cd_execute = cd_execute;
     op->fn_create = fn_create;
     op->fn_destroy = fn_destroy;
     op->fn_execute = fn_execute;

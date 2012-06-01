@@ -1388,28 +1388,34 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
     ib_operator_register(ib,
                          "pcre",
                          IB_OP_FLAG_PHASE,
-                         NULL,
                          pcre_operator_create,
+                         NULL,
                          pcre_operator_destroy,
-                         pcre_operator_execute);
+                         NULL,
+                         pcre_operator_execute,
+                         NULL);
 
     /* An alias of pcre. The same callbacks are registered. */
     ib_operator_register(ib,
                          "rx",
                          IB_OP_FLAG_PHASE,
-                         NULL,
                          pcre_operator_create,
+                         NULL,
                          pcre_operator_destroy,
-                         pcre_operator_execute);
+                         NULL,
+                         pcre_operator_execute,
+                         NULL);
 
     /* Register a pcre operator that uses pcre_dfa_exec to match streams. */
     ib_operator_register(ib,
                          "dfa",
                          IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
-                         NULL,
                          dfa_operator_create,
+                         NULL,
                          dfa_operator_destroy,
-                         dfa_operator_execute);
+                         NULL,
+                         dfa_operator_execute,
+                         NULL);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
