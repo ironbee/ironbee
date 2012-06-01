@@ -773,7 +773,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
 
     rc = initialize_ac_ctx(tx, ac, rule, &ac_ctx);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Cannot inialize AhoCorasic context: %d", rc);
+        ib_log_error_tx(tx, "Cannot initialize AhoCorasic context: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
     }
 

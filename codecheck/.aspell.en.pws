@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1283 
+personal_ws-1.1 en 1288 
 refactor
 cfg
 api
@@ -18,9 +18,11 @@ ConnFinished
 dat
 DBs
 abcdefxxx
+dfa
 Mobi
 tokenize
 HandleConnect
+pcreapi
 bol
 cplusplus
 ConstMemoryPools
@@ -765,8 +767,8 @@ yahooseeker
 tfns
 Deallocate
 dynf
-SubPool
 subpool
+SubPool
 testval
 RuleBasePath
 secondlife
@@ -946,6 +948,7 @@ incrementor
 IronBeeLog
 TxDataIn
 ahocorasic
+AhoCorasic
 backend
 AuditLogDirMode
 MyList
@@ -1104,6 +1107,7 @@ aabc
 automata
 AuditLogBaseDir
 SubclassType
+optimizations
 gcdata
 KLen
 IronBeeUtilStream
@@ -1121,6 +1125,7 @@ accessor
 ibtest
 pslen
 ABCD
+workspace
 adjval
 ConfigurationDirectives
 AuditLogIndexFormat

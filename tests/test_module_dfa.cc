@@ -72,7 +72,7 @@ public:
 
 TEST_F(DfaModuleTest, matches)
 {
-    /* Not mucn more to check right now. */
+    /* Not much more to check right now. */
     /* If we do not crash, we are generally OK. */
     ASSERT_TRUE(ib_tx);
 }

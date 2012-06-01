@@ -465,7 +465,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
  *
  * @returns
  *   - IB_OK on success.
- *   - IB_EACLLOC on memory allocation failures.
+ *   - IB_EALLOC on memory allocation failures.
  *   - IB_ENOENT if a match was not found.
  *   - IB_EINVAL if an unexpected error is returned by @c pcre_exec.
  */
