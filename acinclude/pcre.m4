@@ -78,7 +78,8 @@ fi
         save_LDFLAGS=$LDFLAGS
         CFLAGS="${PCRE_CFLAGS} ${CFLAGS}"
         LDFLAGS="${LDFLAGS} ${PCRE_LDADD}"
-        AC_TRY_COMPILE([ #include <pcre.h> ],
+        AC_TRY_COMPILE([ #include <stdio.h>
+                         #include <pcre.h> ],
             [ const char* patt = "bar";
               pcre *re;
               const char *error;
