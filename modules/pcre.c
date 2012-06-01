@@ -1288,6 +1288,13 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
                         dfa_workspace,
                         rule_data->id);
     }
+    else {
+        ib_log_error_tx(tx,
+                        "Unexpected error fetching dfa data "
+                        "for dfa operator %s",
+                        rule_data->id);
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
 
     /* Actually do the DFA match. */
     matches = pcre_dfa_exec(rule_data->cpatt,
