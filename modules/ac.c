@@ -24,6 +24,7 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -46,6 +47,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
 #include <ironbee/field.h>
@@ -78,6 +80,172 @@ struct modac_provider_data_t {
 
 /* Instantiate a module global configuration. */
 typedef struct modac_provider_data_t modac_provider_data_t;
+
+/**
+ * Workspace data stored per rule per transaction in tx->data.
+ *
+ * This is not directly stored in tx->data but in an ib_hash_t that is
+ * stored in tx->data at the key MODULE_DATA_STR.
+ */
+struct modac_workspace_t {
+    ib_ac_context_t *ctx; /**< Context. */
+};
+typedef struct modac_workspace_t modac_workspace_t;
+
+/* -- Helper Internal Functions -- */
+
+/**
+ * Get or create an ib_hash_t inside of @c tx->data for storing tx rule data.
+ *
+ * The hash is stored at the key @c MODULE_DATA_STR.
+ *
+ * @param[in] tx The transaction containing @c tx->data which holds
+ *            the @a rule_data object.
+ * @param[out] rule_data The fetched or created rule data hash. This is set
+ *             to NULL on failure.
+ *
+ * @return
+ *   - IB_OK on success.
+ *   - IB_EALLOC on allocation failure
+ */
+static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
+                                                ib_hash_t **rule_data)
+{
+    IB_FTRACE_INIT();
+
+    assert(tx);
+    assert(tx->mp);
+
+    ib_status_t rc;
+
+    /* Get or create the hash that contains the rule data. */
+    rc = ib_hash_get(tx->data, rule_data, MODULE_DATA_STR);
+
+    if (rc == IB_OK && *rule_data != NULL) {
+        ib_log_debug2_tx(tx,
+                         "Found rule data hash in tx data named "
+                         MODULE_DATA_STR);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx data.");
+    ib_log_debug2_tx(tx, "Creating rule data hash " MODULE_DATA_STR);
+
+    rc = ib_hash_create(rule_data, tx->mp);
+    if (rc != IB_OK) {
+        ib_log_debug2_tx(tx,
+                         "Failed to create hash " MODULE_DATA_STR ": %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_hash_set(tx->data, MODULE_DATA_STR, *rule_data);
+    if (rc != IB_OK) {
+        ib_log_debug2_tx(tx,
+                         "Failed to store hash " MODULE_DATA_STR ": %d", rc);
+        *rule_data = NULL;
+    }
+
+    ib_log_debug2_tx(tx,
+                     "Returning rule hash " MODULE_DATA_STR " at %p.",
+                     *rule_data);
+
+    IB_FTRACE_RET_STATUS(rc);
+
+}
+
+/**
+ * Create the per-transaction data for use with the dfa operator.
+ *
+ * @param[in,out] tx Transaction to store the value in.
+ * @param[in] ac The Ahocorasic engine object.
+ * @param[in] id The operator identifier used to get it's workspace.
+ * @param[out] workspace Created.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_EALLOC on an allocation error.
+ */
+static ib_status_t alloc_ac_tx_data(ib_tx_t *tx,
+                                    ib_ac_t *ac,
+                                    const char *id,
+                                    modac_workspace_t **workspace)
+{
+    IB_FTRACE_INIT();
+
+    assert(tx);
+    assert(tx->mp);
+    assert(id);
+    assert(workspace);
+
+    ib_hash_t *rule_data;
+    ib_status_t rc;
+
+    rc = get_or_create_rule_data_hash(tx, &rule_data);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    *workspace = (modac_workspace_t *)ib_mpool_alloc(tx->mp,
+                                                     sizeof(**workspace));
+
+    if (*workspace == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    (*workspace)->ctx =
+        (ib_ac_context_t*)ib_mpool_alloc(tx->mp, sizeof(*(*workspace)->ctx));
+    if ((*workspace)->ctx == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    ib_ac_init_ctx((*workspace)->ctx, ac);
+
+    rc = ib_hash_set(rule_data, id, *workspace);
+    if (rc != IB_OK) {
+        *workspace = NULL;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Return the per-transaction data for use with the dfa operator.
+ *
+ * @param[in,out] tx Transaction to store the value in.
+ * @param[in] id The operator identifier used to get it's workspace.
+ * @param[out] workspace Retrieved.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_ENOENT if the structure does not exist. Call alloc_ac_tx_data then.
+ *   - IB_EALLOC on an allocation error.
+ */
+static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
+                                   const char *id,
+                                   modac_workspace_t **workspace)
+{
+    IB_FTRACE_INIT();
+
+    assert(tx);
+    assert(tx->mp);
+    assert(id);
+    assert(workspace);
+
+    ib_hash_t *rule_data;
+    ib_status_t rc;
+
+    rc = get_or_create_rule_data_hash(tx, &rule_data);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_hash_get(rule_data, workspace, id);
+    if (rc != IB_OK) {
+        *workspace = NULL;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
 
 /* -- Matcher Interface -- */
 
@@ -505,6 +673,60 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
+                                     ib_ac_t *ac,
+                                     const ib_rule_t *rule,
+                                     ib_ac_context_t **ac_ctx)
+{
+    IB_FTRACE_INIT();
+
+    assert(tx);
+    assert(ac);
+    assert(ac_ctx);
+    assert(rule);
+    assert(rule->meta.id);
+
+    ib_status_t rc;
+
+    /* Stream rules maintain state across calls. 
+     * If a rule is a stream rule, try to fetch the rule context data. */
+    if (ib_rule_is_stream(rule)) {
+        modac_workspace_t *workspace;
+
+        ib_log_debug_tx(tx, "Fetching stream rule data.");
+
+        rc = get_dfa_tx_data(tx, rule->meta.id, &workspace);
+
+        if (rc == IB_ENOENT || workspace == NULL) {
+            rc = alloc_ac_tx_data(tx, ac, rule->meta.id, &workspace);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "Unexpected error creating tx data: %d",
+                                rc);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+        else if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Unexpected error retrieving tx data: %d", rc);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        *ac_ctx = workspace->ctx;
+    }
+
+    /* Create a new context for every operator call. */
+    else {
+        *ac_ctx = (ib_ac_context_t*)ib_mpool_alloc(tx->mp, sizeof(**ac_ctx));
+        if (*ac_ctx == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+
+        ib_ac_init_ctx(*ac_ctx, ac);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 static ib_status_t pm_operator_execute(ib_engine_t *ib,
                                        ib_tx_t *tx,
                                        const ib_rule_t *rule,
@@ -515,8 +737,13 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
+    assert(ib);
+    assert(tx);
+    assert(rule);
+    assert(data);
+
     ib_ac_t *ac = (ib_ac_t *)data;
-    ib_ac_context_t ac_ctx;
+    ib_ac_context_t *ac_ctx;
     ib_status_t rc;
 
     const char* subject;
@@ -528,6 +755,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
+
         subject_len = strlen(subject);
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
@@ -543,16 +771,20 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ib_ac_init_ctx(&ac_ctx, ac);
+    rc = initialize_ac_ctx(tx, ac, rule, &ac_ctx);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx, "Cannot inialize AhoCorasic context: %d", rc);
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
-    rc = ib_ac_consume(&ac_ctx, subject, subject_len, 0, tx->mp);
+    rc = ib_ac_consume(ac_ctx, subject, subject_len, 0, tx->mp);
 
     if (rc == IB_ENOENT) {
         *result = 0;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (rc == IB_OK) {
-        *result = (ac_ctx.match_cnt > 0) ? 1 : 0;
+        *result = (ac_ctx->match_cnt > 0) ? 1 : 0;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 

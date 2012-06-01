@@ -51,9 +51,10 @@ public:
 
 TEST_F(AhoCorasickModuleTest, test_pm_rule)
 {
-    ib_tx_t tx; /**< We do need a transaction for the memory pool. */
+    ib_tx_t *tx; /**< We do need a transaction for the memory pool. */
 
     ib_rule_t *rule;
+    ib_conn_t *conn;
     ib_operator_t op;
     ib_operator_inst_t *op_inst = NULL;
     ib_num_t result;
@@ -66,7 +67,9 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     strcpy(str1, "string1");
     strcpy(str2, "string2");
 
-    tx.mp = ib_engine->mp;
+    conn = buildIronBeeConnection();
+
+    ib_tx_create(&tx, conn, ib_engine->ectx);
 
     // Create field 1.
     ASSERT_EQ(IB_OK,
@@ -99,6 +102,8 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
                                 __LINE__,
                                 IB_TRUE,
                                 &rule));
+    rule->meta.id = "fake-id";
+
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
@@ -112,14 +117,14 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field1, &result));
+        ib_engine, tx, rule, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field2, &result));
+        ib_engine, tx, rule, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -127,12 +132,12 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
 
 TEST_F(AhoCorasickModuleTest, test_pmf_rule)
 {
-    ib_tx_t tx; /**< We do need a transaction for the memory pool. */
-
     ib_operator_t op;
     ib_operator_inst_t *op_inst = NULL;
     ib_num_t result;
     ib_rule_t *rule;
+    ib_tx_t *tx;
+    ib_conn_t *conn;
 
     ib_field_t* field1;
     ib_field_t* field2;
@@ -142,7 +147,9 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     strcpy(str1, "string1");
     strcpy(str2, "string2");
 
-    tx.mp = ib_engine->mp;
+    conn = buildIronBeeConnection();
+
+    ib_tx_create(&tx, conn, ib_engine->ectx);
 
     // Create field 1.
     ASSERT_EQ(IB_OK,
@@ -175,6 +182,8 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
                                 __LINE__,
                                 IB_TRUE,
                                 &rule));
+    rule->meta.id = "fake-id";
+
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
@@ -188,14 +197,14 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field1, &result));
+        ib_engine, tx, rule, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_TRUE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field2, &result));
+        ib_engine, tx, rule, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
