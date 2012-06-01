@@ -232,8 +232,8 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
      * which contain neither a line nor headers.
      */
     if ((line == NULL) && !ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
-        ib_log_error_tx(tx, "Invalid response line");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        ib_log_notice_tx(tx, "Invalid response line");
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     tx->response_line = line;
