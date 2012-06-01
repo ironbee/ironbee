@@ -40,7 +40,8 @@
 #pragma message "Warning: GCC optimization turned on off GCC 4.4"
 #endif
 
-void ib_field_util_log_debug(  const char       *prefix,
+void ib_field_util_log_debug(
+    const char       *prefix,
     const ib_field_t *f
 )
 {
