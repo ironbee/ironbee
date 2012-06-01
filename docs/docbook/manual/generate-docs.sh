@@ -7,7 +7,7 @@ OBJDIR=${2:-.}
 FOP=$HOME/fop-1.0/fop
 XMLINPUT=$HOME/ironbee-reference-manual.xml
 OUTPUT=$OBJDIR/output
-VERSION="0.2.0"
+VERSION="0.3.0"
 
 # Generate a clean directory structure
 rm -rf $OUTPUT
