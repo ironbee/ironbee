@@ -724,6 +724,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
             rc = ib_field_mutable_value(ib_field,
                                         ib_ftype_list_mutable_out(&list));
             if (rc != IB_OK) {
+                free(full_field_name);
                 IB_FTRACE_RET_STATUS(rc);
             }
 
@@ -761,6 +762,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
         }
     }
 
+    free(full_field_name);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
