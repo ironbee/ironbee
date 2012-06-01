@@ -427,17 +427,44 @@ static ib_status_t create_header_alias_list(
 
     /* Loop through the list & alias everything */
     for(nvpair = header->head;  nvpair != NULL;  nvpair = nvpair->next) {
+        assert(nvpair);
+        assert(nvpair->value);
+        ib_bytestr_t *bs = NULL;
+        if (ib_bytestr_ptr(nvpair->value) != NULL) {
+            rc = ib_bytestr_alias_mem(
+                &bs,
+                tx->mp,
+                ib_bytestr_ptr(nvpair->value),
+                ib_bytestr_length(nvpair->value)
+            );
+        }
+        else {
+            rc = ib_bytestr_dup_mem(&bs, tx->mp, (const uint8_t *)"", 0);
+        }
+        if (rc != IB_OK) {
+            ib_log_error_tx(
+                tx,
+                "Error creating bytestring of '%.*s' for %s: %s",
+                (int)ib_bytestr_length(nvpair->name),
+                (const char *)ib_bytestr_ptr(nvpair->name),
+                name,
+                ib_status_to_string(rc)
+            );
+            IB_FTRACE_RET_STATUS(rc);
+        }
 
         /* Create a byte string field */
-        rc = ib_field_create_bytestr_alias(
-            &f, tx->mp,
+        rc = ib_field_create(
+            &f,
+            tx->mp,
             (const char *)ib_bytestr_const_ptr(nvpair->name),
             ib_bytestr_length(nvpair->name),
-            (uint8_t *)ib_bytestr_const_ptr(nvpair->value),
-            ib_bytestr_length(nvpair->value));
+            IB_FTYPE_BYTESTR,
+            ib_ftype_bytestr_in(bs)
+        );
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                            "Error creating bytestr alias of '%.*s' for %s: %s",
+                            "Error creating fieldof '%.*s' for %s: %s",
                             (int)ib_bytestr_length(nvpair->name),
                             (const char *)ib_bytestr_ptr(nvpair->name),
                             name,
