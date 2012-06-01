@@ -89,7 +89,7 @@
         <para>Extract parameters transported in the request URI. The parameter supplied to this
             directive should be a regular expression with named captures. On a match, the named
             captures will be placed in the <literal>ARGS_EXTRA</literal> collection. A new effective
-            path will be constructed (using backreferences?).</para>
+            path will be constructed (using back references?).</para>
     </section>
     <section>
         <title>Variable: ARGS_URI</title>

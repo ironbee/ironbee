@@ -103,7 +103,7 @@
                     we will probably implement a similar feature in the future.</para>
             </listitem>
             <listitem>
-                <para>All rules that generate events must use the <literal>msg</literal> modifer to
+                <para>All rules that generate events must use the <literal>msg</literal> modifier to
                     provide a message. This is because IronBee does not use machine-generated rule
                     messages. In ModSecurity, machine-generated messages have shown to have little
                     value, especially as rules increase in complexity. They are often a source of

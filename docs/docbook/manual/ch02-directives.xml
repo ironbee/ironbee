@@ -102,7 +102,7 @@
                     <para><emphasis role="bold">%T</emphasis> Transaction timestamp (YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ)</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">%f</emphasis> Auditlog filename (relative to <literal>AuditLogBaseDir</literal>)</para>
+                    <para><emphasis role="bold">%f</emphasis> Audit log filename (relative to <literal>AuditLogBaseDir</literal>)</para>
                 </listitem>
             </itemizedlist>
         </para>
@@ -540,7 +540,7 @@
     </section>
     <section>
         <title>ResponseBodyBufferLimit</title>
-        <para><emphasis role="bold">Description:</emphasis> Configures the size of the responset
+        <para><emphasis role="bold">Description:</emphasis> Configures the size of the response
             body buffer.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>ResponseBodyBufferLimit LIMIT_IN_BYTES</literal></para>
@@ -560,7 +560,7 @@
         <para>When <literal>Reject</literal> is configured, the transaction with a body larger than
             the buffer will be blocked. With <literal>RollOver</literal> selected, the buffer will
             be used to keep as much data as possible, but any overflowing data will be allowed to
-            the backend. Reesponse headers will be sent before the first overflow batch. In
+            the backend. Response headers will be sent before the first overflow batch. In
             detection-only mode, <literal>Reject</literal> is converted to
                 <literal>RollOver</literal>.</para>
     </section>

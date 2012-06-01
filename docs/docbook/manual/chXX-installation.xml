@@ -7,7 +7,7 @@
     <para>...</para>
     <section>
         <title>Tested Operating Systems</title>
-        <para>We have provided a table below of the operating systems that are offically supported
+        <para>We have provided a table below of the operating systems that are officially supported
             by IronBee. Our definition of a tested operating system is one that we perform build,
             functionality, and regression testing on. This is not to say that IronBee will not work
             for you if your OS is not listed on this table, it probably will as long as you can meet
@@ -20,7 +20,7 @@
                 <th>Website</th>
             </tr>
             <tr>
-                <td>Redhat Enterprise Linux</td>
+                <td>Red Hat Enterprise Linux</td>
                 <td>Current and previous version.</td>
                 <td>http://www.redhat.com/rhel/</td>
             </tr>
@@ -45,7 +45,7 @@
                 <td>http://www.ubuntu.com/</td>
             </tr>
             <tr>
-                <td>OSX</td>
+                <td>OS X</td>
                 <td>Lion</td>
                 <td>http://www.apple.com/</td>
             </tr>
@@ -201,7 +201,7 @@
         </table>       
     </section>
     <section>
-    <title>Resloving Dependencies</title>
+    <title>Resolving Dependencies</title>
       <section><title>Installing LibHTP</title>
             <para>In the future LibHTP will be integrated into the ironbee build process but until
                 that time you will have to download, build and install LibHTP from it's public git

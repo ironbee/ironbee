@@ -129,7 +129,7 @@
                             <literal>vendorPrefix/vendorRuleId[-revision]</literal>. Example:
                             <literal>ib/10001-2</literal>. Vendor rule ID and revision must be
                         integers. Vendor prefix is a word that can contain any ASCII letter or
-                        digit, as wel as the colon character. The colon should be used by vendors to
+                        digit, as well as the colon character. The colon should be used by vendors to
                         differentiate among rule sets. For example:
                             <literal>ib:default/10001-2</literal> and
                             <literal>ib:extra/10001-2</literal> represent two separate rules, each
@@ -158,8 +158,8 @@
                 </listitem>
                 <listitem>
                     <para><literal>tag</literal> - assigns one or more tags to the rule; tags are
-                        used to classify rules and events (as events inherite all tags from the rule
-                        that generates them). Tag values must be contructed from ASCII letters,
+                        used to classify rules and events (as events inherit all tags from the rule
+                        that generates them). Tag values must be constructed from ASCII letters,
                         digits, and underscore characters. The forward slash character is used to
                         establish a tag hierarchy.</para>
                 </listitem>
@@ -306,7 +306,7 @@
                         is needed. Content types such as
                             <literal>application/x-www-form-urlencoded</literal> and
                             <literal>multipart/form-data</literal> must be parsed before
-                        fine-grained analysis can be underten. In many cases we may need to process
+                        fine-grained analysis can be undertaken. In many cases we may need to process
                         a body in more than one way to support all the desired approaches to
                         analysis.</para>
                 </listitem>
